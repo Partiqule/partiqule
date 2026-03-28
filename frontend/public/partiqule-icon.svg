@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <!-- Background circle — crop to circle for Instagram/TikTok, use as square for others -->
+  <rect x="0" y="0" width="400" height="400" rx="0" fill="#052e16"/>
+
+  <!-- Tree trunk -->
+  <rect x="188" y="258" width="24" height="80" rx="6" fill="#4ade80"/>
+
+  <!-- Tree body -->
+  <ellipse cx="200" cy="218" rx="80" ry="72" fill="#4ade80"/>
+  <ellipse cx="200" cy="172" rx="58" ry="52" fill="#86efac"/>
+
+  <!-- Floating particles -->
+  <circle cx="302" cy="118" r="12"  fill="#4ade80" opacity="0.85"/>
+  <circle cx="320" cy="218" r="8"   fill="#4ade80" opacity="0.55"/>
+  <circle cx="96"  cy="148" r="10"  fill="#86efac" opacity="0.7"/>
+  <circle cx="88"  cy="238" r="7"   fill="#4ade80" opacity="0.5"/>
+  <circle cx="272" cy="98"  r="8"   fill="#86efac" opacity="0.65"/>
+  <circle cx="132" cy="102" r="7"   fill="#4ade80" opacity="0.5"/>
+  <circle cx="308" cy="268" r="5.5" fill="#86efac" opacity="0.45"/>
+  <circle cx="108" cy="296" r="5"   fill="#4ade80" opacity="0.4"/>
+  <circle cx="200" cy="82"  r="6"   fill="#4ade80" opacity="0.35"/>
+  <circle cx="340" cy="160" r="5"   fill="#86efac" opacity="0.3"/>
+</svg>
