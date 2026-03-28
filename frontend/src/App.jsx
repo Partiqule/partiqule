@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "https://partiqule-production.up.railway.app";
+const API_BASE = "";
 
-const scoreLabel   = (s) => s<=2?"Very Low":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
+const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#d97706":s<=8?"#dc2626":"#991b1b";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fffbeb":s<=8?"#fef2f2":"#fee2e2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fffbeb":s<=8?"#fff5f5":"#fff0f0";
@@ -134,9 +134,9 @@ const RiskBar = ({score}) => {
   return (
     <div style={{marginTop:20}}>
       <div style={{display:"flex", justifyContent:"space-between", fontSize:11, color:"#aaa", marginBottom:7}}>
-        <span>Safer</span>
-        <span style={{fontWeight:600, color:scoreColor(score), fontSize:12}}>{pctHigher>50?`Higher risk than ${pctHigher}% of products`:`Lower risk than ${100-pctHigher}% of products`}</span>
-        <span>Riskier</span>
+        <span>Safer ←</span>
+        <span style={{fontWeight:600, color:scoreColor(score), fontSize:12}}>{pctHigher>50?`More dangerous than ${pctHigher}% of products`:`Safer than ${100-pctHigher}% of products`}</span>
+        <span>→ Riskier</span>
       </div>
       <div style={{position:"relative", height:12, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
         <div style={{position:"absolute", top:"50%", left:`${pct}%`, transform:"translate(-50%,-50%)", width:22, height:22, borderRadius:"50%", background:"#fff", border:`3px solid ${scoreColor(score)}`, boxShadow:"0 2px 10px rgba(0,0,0,0.25)", transition:"left 1.2s cubic-bezier(.4,0,.2,1)"}}/>
@@ -597,7 +597,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:40}}>
             {/* Average score */}
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
-              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Risk Score</div>
+              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Danger Score</div>
               <div style={{display:"flex", alignItems:"flex-end", gap:8, marginBottom:10}}>
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:48, color:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", lineHeight:1}}>{avg}</span>
                 <span style={{fontSize:14, color:muted, marginBottom:8}}>/10</span>
@@ -1621,7 +1621,7 @@ export default function App() {
               <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.score), borderRadius:20, padding:isMobile?"24px 20px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.score)}`, textAlign:"center"}}>
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
-                  <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>Microplastics Risk Score</div>
+                  <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>Danger Score <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span></div>
                   {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}>✓ Verified</div>}
                   {result.confidence && (
                     <div style={{fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10,
@@ -1637,7 +1637,7 @@ export default function App() {
                 <div style={{display:"flex",justifyContent:"center",marginBottom:4}}><ScoreArc score={result.score}/></div>
                 <RiskBar score={result.score}/>
 
-                <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 6px"}}>{scoreLabel(result.score)} Risk</div>
+                <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 6px"}}>{scoreLabel(result.score)} Danger</div>
 
                 {/* Peer comparison — compact subtitle */}
                 {result.peer_comparison && (
