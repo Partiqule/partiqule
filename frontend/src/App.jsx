@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "const API_BASE = "https://partiqule-production.up.railway.app";
+const API_BASE = "https://partiqule-production.up.railway.app";
 
 const scoreLabel   = (s) => s<=2?"Very Low":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#d97706":s<=8?"#dc2626":"#991b1b";
