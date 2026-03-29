@@ -1088,6 +1088,7 @@ const BarcodeScanner = ({onDetect, onClose}) => {
   const html5QrRef  = useRef(null);
   const [status,   setStatus]   = useState("starting");
   const [errorMsg, setErrorMsg] = useState("");
+  const [scanned,  setScanned]  = useState(null); // holds barcode value on success
   const lastDetected   = useRef("");
   const detectionCount = useRef(0);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -1133,7 +1134,12 @@ const BarcodeScanner = ({onDetect, onClose}) => {
             const val = codes[0].rawValue;
             if (val === lastDetected.current) { detectionCount.current++; }
             else { lastDetected.current = val; detectionCount.current = 1; }
-            if (detectionCount.current >= 2) { onDetect(val); return; }
+            if (detectionCount.current >= 2) {
+              setScanned(val);
+              setStatus("success");
+              onDetect(val);
+              return;
+            }
           }
           animFrame = requestAnimationFrame(scanLoop);
         }).catch(()=>{ animFrame = requestAnimationFrame(scanLoop); });
@@ -1170,6 +1176,8 @@ const BarcodeScanner = ({onDetect, onClose}) => {
             { fps: 15, qrbox: { width: 280, height: 180 } },
             (decodedText) => {
               html5QrCode.stop().catch(()=>{});
+              setScanned(decodedText);
+              setStatus("success");
               onDetect(decodedText);
             },
             () => {} // ignore per-frame errors
@@ -1262,6 +1270,15 @@ const BarcodeScanner = ({onDetect, onClose}) => {
                 <div style={{fontSize:32, marginBottom:12}}>📷</div>
                 <div style={{color:"#fca5a5", fontSize:14, lineHeight:1.6}}>{errorMsg}</div>
               </div>
+            </div>
+          )}
+
+          {status === "success" && (
+            <div style={{position:"absolute", inset:0, background:"rgba(5,46,22,0.92)", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16}}>
+              <div style={{width:64, height:64, borderRadius:"50%", background:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32}}>✓</div>
+              <div style={{color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18}}>Barcode captured!</div>
+              <div style={{color:"#86efac", fontSize:13, fontFamily:"monospace"}}>{scanned}</div>
+              <div style={{color:"rgba(255,255,255,0.5)", fontSize:13}}>Looking up product…</div>
             </div>
           )}
         </div>
@@ -1858,10 +1875,14 @@ export default function App() {
       {scanning && (
         <BarcodeScanner
           onDetect={(barcode) => {
-            setScanning(false);
-            const q = `product with barcode ${barcode}`;
-            setQuery(q);
-            analyze(q);
+            // Small delay so user sees the success state inside scanner
+            // before it closes and loading begins
+            setTimeout(() => {
+              setScanning(false);
+              const q = `product with barcode ${barcode}`;
+              setQuery(q);
+              analyze(q);
+            }, 800);
           }}
           onClose={() => setScanning(false)}
         />
