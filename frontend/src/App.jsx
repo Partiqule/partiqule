@@ -583,16 +583,18 @@ const ShareBadge = ({result}) => {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    ctx.fillStyle = "#666";
+    ctx.fillStyle = "#888";
     ctx.font = "11px system-ui";
-    ctx.fillText("🔬  Plastic Danger", RX+14, 128);
+    ctx.fillText("🔬  Plastic Danger", RX+14, 126);
+
     ctx.fillStyle = plasticColor;
-    ctx.font = "bold 36px system-ui";
-    ctx.fillText(`${ps}/10`, RX+14, 168);
+    ctx.font = "bold 32px system-ui";
+    ctx.fillText(`${ps}/10`, RX+14, 162);
+
     const plasticLabel = ps<=3?"Minimal":ps<=6?"Moderate":ps<=8?"High":"Very High";
     ctx.fillStyle = plasticColor;
-    ctx.font = "bold 12px system-ui";
-    ctx.fillText(plasticLabel, RX+14+ctx.measureText(`${ps}/10`).width+10, 168);
+    ctx.font = "12px system-ui";
+    ctx.fillText(plasticLabel, RX+14, 180);
 
     // ── RIGHT: Health score box ──
     if (hs) {
@@ -605,16 +607,18 @@ const ShareBadge = ({result}) => {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      ctx.fillStyle = "#666";
+      ctx.fillStyle = "#888";
       ctx.font = "11px system-ui";
-      ctx.fillText("❤️  Health Concern", RX+14, 222);
+      ctx.fillText("❤️  Health Concern", RX+14, 220);
+
       ctx.fillStyle = healthColor;
-      ctx.font = "bold 36px system-ui";
-      ctx.fillText(`${hs}/10`, RX+14, 262);
+      ctx.font = "bold 32px system-ui";
+      ctx.fillText(`${hs}/10`, RX+14, 256);
+
       const healthLabel = hs<=3?"Low":hs<=6?"Moderate":hs<=8?"High":"Very High";
       ctx.fillStyle = healthColor;
-      ctx.font = "bold 12px system-ui";
-      ctx.fillText(healthLabel, RX+14+ctx.measureText(`${hs}/10`).width+10, 262);
+      ctx.font = "12px system-ui";
+      ctx.fillText(healthLabel, RX+14, 274);
     }
 
     // ── Summary ──
