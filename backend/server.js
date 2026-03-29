@@ -5,7 +5,17 @@ const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://partiqule.vercel.app",
+    "https://partiqule.com",
+    "https://www.partiqule.com",
+    /\.vercel\.app$/,
+    "http://localhost:3000",
+  ],
+  methods: ["GET","POST"],
+  credentials: true,
+}));
 app.use(express.json());
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
