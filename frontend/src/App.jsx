@@ -25,9 +25,9 @@ function getShareUrl(productName) {
 }
 
 const EXAMPLES = [
-  {label:"Lipton tea bags",        hint:"7/10 — plastic mesh!"},
-  {label:"Styrofoam coffee cup",   hint:"10/10 — high danger!"},
-  {label:"Glad Press'n Seal wrap", hint:"8/10 — pure plastic"},
+  {label:"Lipton tea bags",        hint:"plastic mesh!"},
+  {label:"Styrofoam coffee cup",   hint:"high danger!"},
+  {label:"Glad Press'n Seal wrap", hint:"pure plastic"},
 ];
 
 const MOST_SEARCHED = [
@@ -518,6 +518,88 @@ const ProductCard = ({product, isDark}) => {
 };
 
 // ── MOST SEARCHED ─────────────────────────────────────────────
+// ── ANALYTICS TRACK ──────────────────────────────────────────
+function track(event, props = {}) {
+  if (typeof window !== "undefined" && window.plausible) {
+    window.plausible(event, { props });
+  }
+}
+
+// ── LOADING STATE ─────────────────────────────────────────────
+const LOADING_FACTS = [
+  "The average person consumes about 5 grams of microplastics per week — the weight of a credit card.",
+  "Microplastics have been found in human blood, lungs, breast milk and placentas.",
+  "A single fleece jacket can release up to 700,000 microfibers in one wash cycle.",
+  "93% of bottled water tested globally contains microplastic particles.",
+  "Heating food in plastic containers can release millions of particles per litre.",
+  "Babies ingest up to 10x more microplastics than adults relative to body weight.",
+  "Non-stick pan coatings can begin flaking PTFE particles at everyday cooking temperatures.",
+  "Microplastics have been detected in the air we breathe indoors and outdoors.",
+];
+
+const LoadingState = () => {
+  const [step,    setStep]    = useState(0);
+  const [progress,setProgress]= useState(0);
+  const [factIdx, setFactIdx] = useState(()=>Math.floor(Math.random()*LOADING_FACTS.length));
+
+  const steps = ["Identifying product…","Analyzing materials…","Checking plastic types…","Verifying score…"];
+
+  useEffect(() => {
+    const start = Date.now();
+    const duration = 10000;
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const raw = elapsed / duration;
+      const p = Math.min(95, Math.round((1 - Math.pow(1 - raw, 2)) * 100));
+      setProgress(p);
+      if (p < 95) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    const stepTimers = [
+      setTimeout(()=>setStep(1), 1800),
+      setTimeout(()=>setStep(2), 4000),
+      setTimeout(()=>setStep(3), 7000),
+    ];
+    const factTimer = setInterval(()=>setFactIdx(i=>(i+1)%LOADING_FACTS.length), 4000);
+    return () => { stepTimers.forEach(clearTimeout); clearInterval(factTimer); };
+  }, []);
+
+  return (
+    <div style={{margin:"24px auto 0", maxWidth:540, textAlign:"center"}}>
+      <div style={{fontSize:22, fontWeight:700, color:"#fff", marginBottom:8, minHeight:34}}>
+        {steps[step]}
+      </div>
+      <div style={{fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:24}}>
+        This takes 10–15 seconds — we run two AI passes for accuracy
+      </div>
+      <div style={{display:"flex", justifyContent:"center", gap:10, marginBottom:20, flexWrap:"wrap"}}>
+        {steps.map((s,i)=>(
+          <div key={i} style={{display:"flex", alignItems:"center", gap:5, fontSize:13,
+            color: i < step ? "#4ade80" : i === step ? "#fff" : "rgba(255,255,255,0.25)",
+            fontWeight: i === step ? 600 : 400, transition:"all 0.3s"}}>
+            {i < step
+              ? <span style={{color:"#4ade80", fontSize:14}}>✓</span>
+              : i === step
+                ? <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1s ease-in-out infinite"}}/>
+                : <div style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>
+            }
+            {s}
+          </div>
+        ))}
+      </div>
+      <div style={{height:6, background:"rgba(255,255,255,0.1)", borderRadius:99, marginBottom:24, overflow:"hidden"}}>
+        <div style={{height:"100%", width:`${progress}%`, background:"linear-gradient(to right, #16a34a, #4ade80)", borderRadius:99, transition:"width 0.3s ease"}}/>
+      </div>
+      <div style={{background:"rgba(255,255,255,0.07)", borderRadius:14, padding:"20px 24px", border:"1px solid rgba(255,255,255,0.12)", textAlign:"left"}}>
+        <div style={{fontSize:11, color:"#4ade80", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:8}}>Did you know?</div>
+        <div style={{fontSize:15, color:"rgba(255,255,255,0.85)", lineHeight:1.7}}>{LOADING_FACTS[factIdx]}</div>
+      </div>
+      <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
+    </div>
+  );
+};
+
 const MostSearched = ({onSelect, isDark, isMobile}) => {
   const surface = isDark?"#1e2433":"#fff";
   const border  = isDark?"#2a3347":"#eee";
