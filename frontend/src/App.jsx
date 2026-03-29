@@ -26,7 +26,7 @@ function getShareUrl(productName) {
 
 // ── WORST OFFENDERS DATA ──────────────────────────────────────
 const WORST_OFFENDERS = [
-  {name:"Lipton Tea Bags",         score:9,  category:"food_beverage", plastics:["Nylon","Polypropylene"],   why:"Each bag releases ~11 billion plastic particles per cup when steeped in hot water.",      published:"Jan 2026"},
+  {name:"Lipton Tea Bags",         score:7,  category:"food_beverage", plastics:["Nylon","Polypropylene"],   why:"Each bag releases ~11 billion plastic particles per cup when steeped in hot water.",      published:"Jan 2026"},
   {name:"Styrofoam Coffee Cup",    score:10, category:"food_beverage", plastics:["Polystyrene"],             why:"Leaches styrene and benzene into hot liquids — both suspected carcinogens.",             published:"Jan 2026"},
   {name:"Non-stick Frying Pan",    score:9,  category:"kitchen",       plastics:["PTFE","PFAS"],             why:"Scratched coatings flake PTFE particles directly into food during cooking.",             published:"Feb 2026"},
   {name:"Keurig K-Cups",           score:8,  category:"food_beverage", plastics:["Polypropylene","LDPE"],    why:"Plastic pod + hot water under pressure = significant leaching with every brew.",           published:"Feb 2026"},
@@ -41,13 +41,13 @@ const WORST_OFFENDERS = [
 ];
 
 const EXAMPLES = [
-  {label:"Lipton tea bags",        hint:"9/10 — plastic mesh!"},
+  {label:"Lipton tea bags",        hint:"7/10 — plastic mesh!"},
   {label:"Styrofoam coffee cup",   hint:"10/10 — worst offender"},
-  {label:"Glad Press'n Seal wrap", hint:"9/10 — pure plastic"},
+  {label:"Glad Press'n Seal wrap", hint:"8/10 — pure plastic"},
 ];
 
 const MOST_SEARCHED = [
-  {label:"Lipton tea bags",        score:9, category:"food_beverage"},
+  {label:"Lipton tea bags",        score:7, category:"food_beverage"},
   {label:"Non-stick frying pan",   score:8, category:"kitchen"},
   {label:"Plastic water bottle",   score:8, category:"food_beverage"},
   {label:"Synthetic fleece jacket",score:7, category:"clothing"},
