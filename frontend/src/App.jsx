@@ -1559,10 +1559,10 @@ export default function App() {
                 <IconShield size={13} color="#86efac"/> AI-Powered Risk Analysis
               </div>
               <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?34:52, fontWeight:700, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-1.5px", lineHeight:1.15}}>
-                How much plastic are<br/>you consuming?
+                Scan anything.<br/>Know everything.
               </h1>
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
-                {isMobile ? "Search any product for its microplastics risk score." : "Search any product to instantly get its microplastics risk score and discover plastic-free alternatives."}
+                {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives — instantly."}
               </p>
 
               {/* Mobile barcode button — hide on Safari which doesn't support BarcodeDetector */}
