@@ -24,25 +24,9 @@ function getShareUrl(productName) {
   return `${window.location.origin}/scan/${toSlug(productName)}`;
 }
 
-// ── WORST OFFENDERS DATA ──────────────────────────────────────
-const WORST_OFFENDERS = [
-  {name:"Lipton Tea Bags",         score:7,  category:"food_beverage", plastics:["Nylon","Polypropylene"],   why:"Each bag releases ~11 billion plastic particles per cup when steeped in hot water.",      published:"Jan 2026"},
-  {name:"Styrofoam Coffee Cup",    score:10, category:"food_beverage", plastics:["Polystyrene"],             why:"Leaches styrene and benzene into hot liquids — both suspected carcinogens.",             published:"Jan 2026"},
-  {name:"Non-stick Frying Pan",    score:9,  category:"kitchen",       plastics:["PTFE","PFAS"],             why:"Scratched coatings flake PTFE particles directly into food during cooking.",             published:"Feb 2026"},
-  {name:"Keurig K-Cups",           score:8,  category:"food_beverage", plastics:["Polypropylene","LDPE"],    why:"Plastic pod + hot water under pressure = significant leaching with every brew.",           published:"Feb 2026"},
-  {name:"Synthetic Fleece Jacket", score:8,  category:"clothing",      plastics:["Polyester","Nylon"],       why:"A single wash releases up to 700,000 microfibers into waterways.",                       published:"Feb 2026"},
-  {name:"Plastic Food Wrap",       score:9,  category:"food_beverage", plastics:["PVC","Phthalates"],        why:"PVC wrap leaches phthalates into fatty foods like cheese and meat.",                     published:"Mar 2026"},
-  {name:"Tide Pods",               score:7,  category:"kitchen",       plastics:["PVA Film"],                why:"The PVA dissolving film passes through wastewater treatment into the food chain.",       published:"Mar 2026"},
-  {name:"Baby Formula Bottle",     score:6,  category:"baby",          plastics:["Polypropylene"],           why:"Heating PP bottles releases millions of microplastic particles per litre.",              published:"Mar 2026"},
-  {name:"Liquid Foundation",       score:6,  category:"personal_care", plastics:["Acrylates","Microbeads"],  why:"Many foundations contain plastic film-formers that wash directly into waterways.",        published:"Mar 2026"},
-  {name:"Plastic Water Bottle",    score:8,  category:"food_beverage", plastics:["PET","Antimony"],          why:"A litre of bottled water contains an average of 240 microplastic particles.",             published:"Mar 2026"},
-  {name:"Disposable Coffee Cup",   score:8,  category:"food_beverage", plastics:["PE Lining","LDPE"],        why:"The polyethylene lining sheds trillions of particles when filled with hot liquid.",        published:"Mar 2026"},
-  {name:"Wet Wipes",               score:7,  category:"personal_care", plastics:["Polyester","Polyethylene"],"why":"Most wet wipes are made of synthetic fibers that never fully biodegrade.",            published:"Mar 2026"},
-];
-
 const EXAMPLES = [
   {label:"Lipton tea bags",        hint:"7/10 — plastic mesh!"},
-  {label:"Styrofoam coffee cup",   hint:"10/10 — worst offender"},
+  {label:"Styrofoam coffee cup",   hint:"10/10 — high danger!"},
   {label:"Glad Press'n Seal wrap", hint:"8/10 — pure plastic"},
 ];
 
@@ -861,422 +845,6 @@ const BarcodeScanner = ({onDetect, onClose}) => {
   );
 };
 
-// ── WORST OFFENDERS PAGE ─────────────────────────────────────
-const WorstOffendersPage = ({isDark, surface, border, text, muted, isMobile, onScan}) => {
-  const [filter, setFilter]     = useState("all");
-  const [toast,  setToast]      = useState("");
-  const categories = ["all","food_beverage","clothing","kitchen","personal_care","baby"];
-  const filtered = filter==="all" ? WORST_OFFENDERS : WORST_OFFENDERS.filter(o=>o.category===filter);
-
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(()=>setToast(""), 2200);
-  };
-
-  return (
-    <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px", position:"relative"}}>
-
-      {/* Toast notification */}
-      {toast && (
-        <div style={{position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", background:"#052e16", color:"#4ade80", padding:"10px 20px", borderRadius:10, fontSize:13, fontWeight:600, zIndex:999, boxShadow:"0 4px 20px rgba(0,0,0,0.3)", animation:"fadeUp 0.2s ease"}}>
-          ✓ {toast}
-        </div>
-      )}
-      {/* Header */}
-      <div style={{marginBottom:32}}>
-        <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"#fef2f2", color:"#dc2626", fontSize:12, fontWeight:600, padding:"4px 12px", borderRadius:20, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-          <IconFire size={12} color="#dc2626"/> Weekly Worst Offenders
-        </div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 10px", letterSpacing:"-0.5px"}}>The Plastic Hall of Shame</h1>
-        <p style={{fontSize:15, color:muted, margin:0, lineHeight:1.6}}>The everyday products with the highest microplastics risk — ranked and explained. Updated weekly.</p>
-      </div>
-
-      {/* Category filter */}
-      <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:28}}>
-        {categories.map(cat => {
-          const meta = cat==="all" ? {label:"All",color:"#374151",bg:"#f3f4f6"} : (categoryMeta[cat]||{label:cat,color:"#6b7280",bg:"#f9fafb"});
-          const active = filter===cat;
-          return (
-            <button key={cat} onClick={()=>setFilter(cat)}
-              style={{padding:"6px 14px", borderRadius:20, border:`1.5px solid ${active?meta.color:border}`, background:active?meta.bg:"none", color:active?meta.color:muted, fontSize:13, fontWeight:active?600:400, cursor:"pointer", transition:"all 0.15s"}}>
-              {meta.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Articles */}
-      <div style={{display:"flex", flexDirection:"column", gap:16}}>
-        {filtered.map((item, i) => {
-          const cat = categoryMeta[item.category]||categoryMeta.other;
-          return (
-            <div key={i} style={{background:surface, borderRadius:16, border:`1.5px solid ${border}`, overflow:"hidden", transition:"all 0.2s"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="#dc2626"; e.currentTarget.style.transform="translateY(-1px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
-
-              {/* Red accent top bar */}
-              <div style={{height:3, background:`linear-gradient(to right, #dc2626, #ef4444)`, opacity: item.score/10}}/>
-
-              <div style={{padding:isMobile?"16px":"24px 28px"}}>
-                <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16, marginBottom:12}}>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap"}}>
-                      <span style={{background:cat.bg, color:cat.color, fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</span>
-                      <span style={{fontSize:12, color:muted}}>{item.published}</span>
-                    </div>
-                    <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?17:20, color:text, margin:"0 0 8px", letterSpacing:"-0.3px"}}>{item.name}</h2>
-                    <p style={{fontSize:14, color:isDark?"#94a3b8":"#444", lineHeight:1.65, margin:"0 0 12px"}}>{item.why}</p>
-                    {/* Plastic chips */}
-                    <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
-                      {item.plastics.map((p,j)=>(
-                        <span key={j} style={{fontSize:11, fontWeight:600, padding:"2px 10px", borderRadius:20, background:isDark?"#2a1a1a":"#fef2f2", color:"#dc2626", border:"1px solid #fecaca"}}>{p}</span>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Score */}
-                  <div style={{flexShrink:0, textAlign:"center"}}>
-                    <div style={{width:56, height:56, borderRadius:"50%", background:scoreBg(item.score), display:"flex", alignItems:"center", justifyContent:"center", marginBottom:4}}>
-                      <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:scoreColor(item.score)}}>{item.score}</span>
-                    </div>
-                    <div style={{fontSize:10, color:scoreColor(item.score), fontWeight:600}}>{scoreLabel(item.score)}</div>
-                  </div>
-                </div>
-
-                {/* Action row */}
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:12, borderTop:`1px solid ${border}`}}>
-                  <button onClick={()=>onScan(item.name)}
-                    style={{display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:8, border:"none", background:"#052e16", color:"#4ade80", fontSize:13, fontWeight:600, cursor:"pointer"}}>
-                    <IconSearch size={13} color="#4ade80"/> Scan this product
-                  </button>
-                  <button onClick={()=>{
-                    const url = getShareUrl(item.name);
-                    navigator.clipboard.writeText(url).then(()=>showToast("Link copied to clipboard!"));
-                  }} style={{display:"flex", alignItems:"center", gap:5, padding:"8px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>
-                    <IconShare size={13} color={muted}/> Share
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* SEO footer note */}
-      <div style={{marginTop:40, padding:"20px 24px", background:isDark?"#1e2433":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
-        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:14, color:text, marginBottom:6}}>About our scores</div>
-        <p style={{fontSize:13, color:muted, margin:0, lineHeight:1.6}}>Partiqule uses a two-pass AI scoring system trained on peer-reviewed microplastics research. Each product is analyzed for material composition, packaging risk, usage frequency, and exposure type. Scores are verified against published studies and updated regularly.</p>
-      </div>
-    </div>
-  );
-};
-
-// ── ANALYTICS HELPER ─────────────────────────────────────────
-function track(event, props = {}) {
-  try {
-    if (window.plausible) window.plausible(event, { props });
-  } catch(e) {}
-}
-
-// ── ADMIN PAGE ────────────────────────────────────────────────
-const STORAGE_KEY = "pq_products_override";
-
-const EMPTY_PRODUCT = {
-  id:"", name:"", brand:"", category:"food_beverage",
-  plasticScore:"", material:"", description:"", price:"", affiliateUrl:"", tags:""
-};
-
-const AdminPage = ({isDark, surface, border, text, muted}) => {
-  const [products,   setProducts]   = useState(()=>{
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); } catch { return []; }
-  });
-  const [form,       setForm]       = useState(EMPTY_PRODUCT);
-  const [editing,    setEditing]    = useState(null);
-  const [toast,      setToast]      = useState("");
-  const [filter,     setFilter]     = useState("");
-
-  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(""), 2500); };
-
-  const save = () => {
-    if (!form.name.trim() || !form.brand.trim() || !form.affiliateUrl.trim()) {
-      showToast("Name, brand and URL are required"); return;
-    }
-    const product = {
-      ...form,
-      id: form.id || `custom-${Date.now()}`,
-      plasticScore: parseInt(form.plasticScore) || 3,
-      tags: form.tags.split(",").map(t=>t.trim()).filter(Boolean),
-    };
-    let updated;
-    if (editing !== null) {
-      updated = products.map((p,i) => i===editing ? product : p);
-      showToast("Product updated");
-    } else {
-      updated = [product, ...products];
-      showToast("Product added");
-    }
-    setProducts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    setForm(EMPTY_PRODUCT); setEditing(null);
-  };
-
-  const remove = (i) => {
-    const updated = products.filter((_,idx)=>idx!==i);
-    setProducts(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    showToast("Product removed");
-  };
-
-  const edit = (i) => {
-    const p = products[i];
-    setForm({...p, tags: Array.isArray(p.tags) ? p.tags.join(", ") : p.tags});
-    setEditing(i);
-    window.scrollTo(0,0);
-  };
-
-  const exportJSON = () => {
-    const blob = new Blob([JSON.stringify(products, null, 2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href=url; a.download="partiqule-products.json"; a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const filtered = products.filter(p =>
-    p.name?.toLowerCase().includes(filter.toLowerCase()) ||
-    p.brand?.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  const cats = ["food_beverage","clothing","personal_care","kitchen","baby","other"];
-  const inp = {
-    width:"100%", padding:"10px 14px", borderRadius:8,
-    border:`1.5px solid ${border}`, background:isDark?"#1a2030":"#fafafa",
-    color:text, fontSize:14, outline:"none", boxSizing:"border-box"
-  };
-
-  return (
-    <div style={{maxWidth:900, margin:"0 auto", padding:"32px 24px 80px"}}>
-      {toast && (
-        <div style={{position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", background:"#052e16", color:"#4ade80", padding:"10px 20px", borderRadius:10, fontSize:13, fontWeight:600, zIndex:999, boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}>
-          ✓ {toast}
-        </div>
-      )}
-
-      {/* Header */}
-      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:32, flexWrap:"wrap", gap:12}}>
-        <div>
-          <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:28, color:text, margin:"0 0 4px"}}>Product Admin</h1>
-          <div style={{fontSize:13, color:muted}}>{products.length} custom products · partiqule.com/admin?key=••••</div>
-        </div>
-        <button onClick={exportJSON} style={{padding:"8px 18px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>
-          Export JSON
-        </button>
-      </div>
-
-      {/* Form */}
-      <div style={{background:surface, borderRadius:16, padding:"24px", border:`1.5px solid ${border}`, marginBottom:32}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 20px"}}>
-          {editing !== null ? "Edit Product" : "Add New Product"}
-        </h2>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12}}>
-          {[
-            {key:"name",        label:"Product Name *",    full:true},
-            {key:"brand",       label:"Brand *"},
-            {key:"price",       label:"Price (e.g. $20–30)"},
-            {key:"plasticScore",label:"Plastic Score (1–10)"},
-            {key:"material",    label:"Material"},
-            {key:"description", label:"Description"},
-          ].map(f => (
-            <div key={f.key} style={f.full?{gridColumn:"1/-1"}:{}}>
-              <div style={{fontSize:12, color:muted, marginBottom:5}}>{f.label}</div>
-              <input value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}
-                style={inp} placeholder={f.label}/>
-            </div>
-          ))}
-        </div>
-
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:12, color:muted, marginBottom:5}}>Category</div>
-          <select value={form.category} onChange={e=>setForm(p=>({...p,category:e.target.value}))}
-            style={{...inp, cursor:"pointer"}}>
-            {cats.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:12, color:muted, marginBottom:5}}>Affiliate URL * (Amazon, Impact, direct brand)</div>
-          <input value={form.affiliateUrl} onChange={e=>setForm(p=>({...p,affiliateUrl:e.target.value}))}
-            style={inp} placeholder="https://..."/>
-        </div>
-
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:12, color:muted, marginBottom:5}}>Tags (comma separated — used for matching)</div>
-          <input value={form.tags} onChange={e=>setForm(p=>({...p,tags:e.target.value}))}
-            style={inp} placeholder="shampoo, bar, plastic-free, hair"/>
-        </div>
-
-        <div style={{display:"flex", gap:10}}>
-          <button onClick={save}
-            style={{padding:"10px 24px", borderRadius:8, border:"none", background:"#052e16", color:"#4ade80", fontWeight:600, fontSize:14, cursor:"pointer"}}>
-            {editing !== null ? "Save Changes" : "Add Product"}
-          </button>
-          {editing !== null && (
-            <button onClick={()=>{setForm(EMPTY_PRODUCT); setEditing(null);}}
-              style={{padding:"10px 18px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:14, cursor:"pointer"}}>
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Search */}
-      {products.length > 0 && (
-        <input value={filter} onChange={e=>setFilter(e.target.value)}
-          placeholder="Search products…" style={{...inp, marginBottom:16}}/>
-      )}
-
-      {/* Product list */}
-      {filtered.length === 0 && (
-        <div style={{textAlign:"center", padding:"48px 0", color:muted}}>
-          {products.length === 0
-            ? "No custom products yet — add your first one above."
-            : "No products match your search."}
-        </div>
-      )}
-
-      <div style={{display:"flex", flexDirection:"column", gap:10}}>
-        {filtered.map((p,i)=>(
-          <div key={p.id||i} style={{background:surface, borderRadius:12, padding:"16px 20px", border:`1.5px solid ${border}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:3}}>
-                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:15, color:text}}>{p.name}</span>
-                <span style={{fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:20,
-                  background: p.plasticScore<=3?"#f0fdf4":p.plasticScore<=6?"#fffbeb":"#fef2f2",
-                  color: p.plasticScore<=3?"#16a34a":p.plasticScore<=6?"#d97706":"#dc2626"}}>
-                  {p.plasticScore}/10
-                </span>
-                <span style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f3f4f6", padding:"2px 8px", borderRadius:20}}>{p.category}</span>
-              </div>
-              <div style={{fontSize:12, color:muted}}>{p.brand} · {p.price}</div>
-              <div style={{fontSize:11, color:muted, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:500}}>
-                {p.affiliateUrl}
-              </div>
-            </div>
-            <div style={{display:"flex", gap:8, flexShrink:0}}>
-              <button onClick={()=>edit(i)}
-                style={{padding:"6px 14px", borderRadius:7, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, cursor:"pointer"}}>
-                Edit
-              </button>
-              <button onClick={()=>remove(i)}
-                style={{padding:"6px 14px", borderRadius:7, border:"none", background:"#fef2f2", color:"#dc2626", fontSize:12, cursor:"pointer", fontWeight:600}}>
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Instructions */}
-      <div style={{marginTop:40, padding:"20px 24px", background:isDark?"#1e2433":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
-        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:14, color:text, marginBottom:8}}>How to use</div>
-        <div style={{fontSize:13, color:muted, lineHeight:1.7}}>
-          Products added here are saved in your browser and exported as JSON. To make them permanent in the app, click <strong>Export JSON</strong>, then paste the contents into <code>products.js</code> in the backend and push to GitHub.<br/><br/>
-          Bookmark this page: <strong>partiqule.com/admin?key=RowenaRavenclaw2024!</strong>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ── LOADING STATE ─────────────────────────────────────────────
-const LOADING_FACTS = [
-  "The average person ingests about 5 grams of plastic per week — the weight of a credit card.",
-  "Plastic tea bags release up to 11 billion microplastic particles per cup.",
-  "Microplastics have been found in human blood, lungs, placentas, and breast milk.",
-  "A single fleece jacket sheds up to 700,000 microfibers in one wash cycle.",
-  "Non-stick pans start shedding PTFE particles at temperatures above 260°C.",
-  "Bottled water contains an average of 240 microplastic particles per litre.",
-  "93% of bottled water samples tested globally contained microplastics.",
-  "PVC cling wrap leaches phthalates into fatty foods like cheese within hours.",
-];
-
-const LoadingState = () => {
-  const [step,    setStep]    = useState(0);
-  const [progress,setProgress]= useState(0);
-  const [factIdx, setFactIdx] = useState(()=>Math.floor(Math.random()*LOADING_FACTS.length));
-
-  const steps = ["Identifying product…","Analyzing materials…","Checking plastic types…","Verifying score…"];
-
-  useEffect(() => {
-    // Progress bar — smoothly fills over ~10 seconds, slows near end
-    const start = Date.now();
-    const duration = 10000;
-    const tick = () => {
-      const elapsed = Date.now() - start;
-      const raw = elapsed / duration;
-      // Ease out — fast start, slow near end, never quite reaches 100
-      const p = Math.min(95, Math.round((1 - Math.pow(1 - raw, 2)) * 100));
-      setProgress(p);
-      if (p < 95) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-
-    // Step through loading messages
-    const stepTimers = [
-      setTimeout(()=>setStep(1), 1800),
-      setTimeout(()=>setStep(2), 4000),
-      setTimeout(()=>setStep(3), 7000),
-    ];
-
-    // Rotate facts every 4 seconds
-    const factTimer = setInterval(()=>setFactIdx(i=>(i+1)%LOADING_FACTS.length), 4000);
-
-    return () => { stepTimers.forEach(clearTimeout); clearInterval(factTimer); };
-  }, []);
-
-  return (
-    <div style={{margin:"24px auto 0", maxWidth:540, textAlign:"center"}}>
-
-      {/* Current step — large and prominent */}
-      <div style={{fontSize:22, fontWeight:700, color:"#fff", marginBottom:8, minHeight:34}}>
-        {steps[step]}
-      </div>
-      <div style={{fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:24}}>
-        This takes 10–15 seconds — we run two AI passes for accuracy
-      </div>
-
-      {/* Step indicators */}
-      <div style={{display:"flex", justifyContent:"center", gap:10, marginBottom:20, flexWrap:"wrap"}}>
-        {steps.map((s,i)=>(
-          <div key={i} style={{display:"flex", alignItems:"center", gap:5, fontSize:13,
-            color: i < step ? "#4ade80" : i === step ? "#fff" : "rgba(255,255,255,0.25)",
-            fontWeight: i === step ? 600 : 400, transition:"all 0.3s"}}>
-            {i < step
-              ? <span style={{color:"#4ade80", fontSize:14}}>✓</span>
-              : i === step
-                ? <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1s ease-in-out infinite"}}/>
-                : <div style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>
-            }
-            {s}
-          </div>
-        ))}
-      </div>
-
-      {/* Progress bar — thicker */}
-      <div style={{height:6, background:"rgba(255,255,255,0.1)", borderRadius:99, marginBottom:24, overflow:"hidden"}}>
-        <div style={{height:"100%", width:`${progress}%`, background:"linear-gradient(to right, #16a34a, #4ade80)", borderRadius:99, transition:"width 0.3s ease"}}/>
-      </div>
-
-      {/* Did you know fact — bigger */}
-      <div style={{background:"rgba(255,255,255,0.07)", borderRadius:14, padding:"20px 24px", border:"1px solid rgba(255,255,255,0.12)", textAlign:"left"}}>
-        <div style={{fontSize:11, color:"#4ade80", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:8}}>Did you know?</div>
-        <div style={{fontSize:15, color:"rgba(255,255,255,0.85)", lineHeight:1.7}}>{LOADING_FACTS[factIdx]}</div>
-      </div>
-
-      <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
-    </div>
-  );
-};
-
-// ── ABOUT PAGE ────────────────────────────────────────────────
 const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => {
   const stats = [
     {number:"205+", label:"Plastic-free alternatives in our database"},
@@ -1459,11 +1027,10 @@ export default function App() {
       setTimeout(()=>analyze(name), 100);
       return;
     }
-    if (path.startsWith("/worst")) { setPage("worst"); return; }
     if (path === "/privacy") { setPage("privacy"); return; }
     if (path === "/about") { setPage("about"); return; }
 
-    const known = ["/", "/worst", "/worst-offenders", "/science", "/history", "/privacy", "/about"];
+    const known = ["/", "/science", "/history", "/privacy", "/about"];
     const isScanPath = path.startsWith("/scan/");
     if (!known.includes(path) && !isScanPath) setPage("404");
   }, []);
@@ -1567,9 +1134,7 @@ export default function App() {
           ) : (
             /* Desktop nav */
             <nav style={{display:"flex", gap:24, alignItems:"center"}}>
-              <span onClick={()=>{setPage("worst"); setResult(null);}} style={{fontSize:14, color:page==="worst"?"#dc2626":muted, cursor:"pointer", fontWeight:page==="worst"?600:400, display:"flex", alignItems:"center", gap:5}}>
-                <IconFire size={13} color={page==="worst"?"#dc2626":muted}/> Worst Offenders
-              </span>
+
               <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
@@ -1585,7 +1150,6 @@ export default function App() {
         {isMobile && menuOpen && (
           <div style={{background:surface, borderTop:`1px solid ${border}`, padding:"12px 16px", display:"flex", flexDirection:"column", gap:4}}>
             {[
-              {label:"🔥 Worst Offenders", pg:"worst"},
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"My Scans",           pg:"history"},
@@ -1617,11 +1181,7 @@ export default function App() {
             Go to Partiqule →
           </button>
         </div>
-      ) : page === "worst" ? (
-        <WorstOffendersPage isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}
-          onScan={(name)=>{setPage("home"); setQuery(name); analyze(name);}}
-        />
-      ) : page === "history" ? (
+      ) ) : page === "history" ? (
         <HistoryPage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
           onSelect={(item)=>{setResult(item); setPage("home");}}
@@ -2012,7 +1572,6 @@ export default function App() {
         <div style={{marginBottom:20, color:"#666", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
         <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
           {[
-            {label:"Worst Offenders", pg:"worst",   path:"/worst-offenders"},
             {label:"About",           pg:"about",   path:"/about"},
             {label:"The Science",     pg:"science",  path:"/science"},
             {label:"My Scans",        pg:"history",  path:"/history"},
