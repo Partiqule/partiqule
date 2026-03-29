@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "https://partiqule-production.up.railway.app";
+const API_BASE = "";
 
 const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#d97706":s<=8?"#dc2626":"#991b1b";
@@ -1220,15 +1220,24 @@ const LoadingState = () => {
   }, []);
 
   return (
-    <div style={{marginTop:32, maxWidth:480, margin:"32px auto 0"}}>
+    <div style={{margin:"24px auto 0", maxWidth:540, textAlign:"center"}}>
+
+      {/* Current step — large and prominent */}
+      <div style={{fontSize:22, fontWeight:700, color:"#fff", marginBottom:8, minHeight:34}}>
+        {steps[step]}
+      </div>
+      <div style={{fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:24}}>
+        This takes 10–15 seconds — we run two AI passes for accuracy
+      </div>
+
       {/* Step indicators */}
-      <div style={{display:"flex", justifyContent:"center", gap:8, marginBottom:20, flexWrap:"wrap"}}>
+      <div style={{display:"flex", justifyContent:"center", gap:10, marginBottom:20, flexWrap:"wrap"}}>
         {steps.map((s,i)=>(
-          <div key={i} style={{display:"flex", alignItems:"center", gap:5, fontSize:12,
-            color: i < step ? "#4ade80" : i === step ? "#fff" : "rgba(255,255,255,0.3)",
+          <div key={i} style={{display:"flex", alignItems:"center", gap:5, fontSize:13,
+            color: i < step ? "#4ade80" : i === step ? "#fff" : "rgba(255,255,255,0.25)",
             fontWeight: i === step ? 600 : 400, transition:"all 0.3s"}}>
             {i < step
-              ? <span style={{color:"#4ade80"}}>✓</span>
+              ? <span style={{color:"#4ade80", fontSize:14}}>✓</span>
               : i === step
                 ? <div style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",animation:"pulse 1s ease-in-out infinite"}}/>
                 : <div style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>
@@ -1238,15 +1247,15 @@ const LoadingState = () => {
         ))}
       </div>
 
-      {/* Progress bar */}
-      <div style={{height:4, background:"rgba(255,255,255,0.1)", borderRadius:99, marginBottom:20, overflow:"hidden"}}>
+      {/* Progress bar — thicker */}
+      <div style={{height:6, background:"rgba(255,255,255,0.1)", borderRadius:99, marginBottom:24, overflow:"hidden"}}>
         <div style={{height:"100%", width:`${progress}%`, background:"linear-gradient(to right, #16a34a, #4ade80)", borderRadius:99, transition:"width 0.3s ease"}}/>
       </div>
 
-      {/* Did you know fact */}
-      <div style={{background:"rgba(255,255,255,0.06)", borderRadius:12, padding:"14px 18px", border:"1px solid rgba(255,255,255,0.1)"}}>
-        <div style={{fontSize:10, color:"#4ade80", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Did you know?</div>
-        <div style={{fontSize:13, color:"rgba(255,255,255,0.8)", lineHeight:1.6}}>{LOADING_FACTS[factIdx]}</div>
+      {/* Did you know fact — bigger */}
+      <div style={{background:"rgba(255,255,255,0.07)", borderRadius:14, padding:"20px 24px", border:"1px solid rgba(255,255,255,0.12)", textAlign:"left"}}>
+        <div style={{fontSize:11, color:"#4ade80", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.12em", marginBottom:8}}>Did you know?</div>
+        <div style={{fontSize:15, color:"rgba(255,255,255,0.85)", lineHeight:1.7}}>{LOADING_FACTS[factIdx]}</div>
       </div>
 
       <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}`}</style>
@@ -1521,28 +1530,22 @@ export default function App() {
                 {isMobile ? "Search any product for its microplastics risk score." : "Search any product to instantly get its microplastics risk score and discover plastic-free alternatives."}
               </p>
 
-              {/* Search mode toggle — compact on mobile */}
-              <div style={{display:"flex", justifyContent:"center", gap:6, marginBottom:16, flexWrap:"nowrap"}}>
-                {[{id:"name",label:isMobile?"Name":"Product name"},{id:"url",label:"URL"}].map(m=>(
-                  <button key={m.id} onClick={()=>setSearchMode(m.id)}
-                    style={{padding:"6px 14px", borderRadius:20, border:`1px solid ${searchMode===m.id?"rgba(255,255,255,0.6)":"rgba(255,255,255,0.2)"}`, background:searchMode===m.id?"rgba(255,255,255,0.15)":"transparent", color:searchMode===m.id?"#fff":"rgba(255,255,255,0.6)", fontSize:13, fontWeight:searchMode===m.id?600:400, cursor:"pointer", transition:"all 0.15s", whiteSpace:"nowrap"}}>
-                    {m.label}
-                  </button>
-                ))}
-                {isMobile && (
+              {/* Mobile barcode button only */}
+              {isMobile && (
+                <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
                   <button onClick={()=>setScanning(true)}
-                    style={{padding:"6px 12px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:4, whiteSpace:"nowrap"}}
+                    style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
                     onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.5)";}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}>
-                    <IconCamera size={13} color="rgba(255,255,255,0.7)"/>{isMobile?"":"Barcode"}
+                    <IconCamera size={13} color="rgba(255,255,255,0.7)"/> Scan Barcode
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, border:"none", overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
                 <div style={{display:"flex", alignItems:"center", paddingLeft:16, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
-                  placeholder={searchMode==="url"?"Paste Amazon, Target, Walmart URL…":"Search any product…"}
+                  placeholder="Search any product…"
                   style={{flex:1, padding:"14px 12px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111"}}/>
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
                   style={{padding:"14px 28px", border:"none", background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999", fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default", whiteSpace:"nowrap", transition:"background 0.15s", flexShrink:0}}>
@@ -1560,19 +1563,21 @@ export default function App() {
                 <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
               </div>
 
-              <div style={{marginBottom:8, fontSize:12, color:"#4ade80", opacity:0.8}}>Try these — the scores might shock you:</div>
-              <div style={{display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center"}}>
-                {EXAMPLES.map(ex=>(
-                  <button key={ex.label} onClick={()=>{setQuery(ex.label); analyze(ex.label);}}
-                    style={{padding:"7px 14px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"#d1fae5", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
-                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.4)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}>
-                    <IconFire size={12} color="#fca5a5"/>{ex.label}
-                    <span style={{fontSize:11, color:"#fca5a5", fontWeight:700}}>{ex.hint}</span>
-                  </button>
-                ))}
-              </div>
-              {loading&&<LoadingState/>}
+              {!loading && <>
+                <div style={{marginBottom:8, fontSize:12, color:"#4ade80", opacity:0.8}}>Try these — the scores might shock you:</div>
+                <div style={{display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center"}}>
+                  {EXAMPLES.map(ex=>(
+                    <button key={ex.label} onClick={()=>{setQuery(ex.label); analyze(ex.label);}}
+                      style={{padding:"7px 14px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"#d1fae5", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
+                      onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.4)";}}
+                      onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}>
+                      <IconFire size={12} color="#fca5a5"/>{ex.label}
+                      <span style={{fontSize:11, color:"#fca5a5", fontWeight:700}}>{ex.hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </>}
+              {loading && <div style={{marginTop:8}}><LoadingState/></div>}
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
             </div>
           </section>
