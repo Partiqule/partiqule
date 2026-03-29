@@ -1274,11 +1274,14 @@ const BarcodeScanner = ({onDetect, onClose}) => {
           )}
 
           {status === "success" && (
-            <div style={{position:"absolute", inset:0, background:"rgba(5,46,22,0.92)", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16}}>
+            <div style={{position:"absolute", inset:0, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:20, padding:24}}>
               <div style={{width:64, height:64, borderRadius:"50%", background:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32}}>✓</div>
-              <div style={{color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18}}>Barcode captured!</div>
-              <div style={{color:"#86efac", fontSize:13, fontFamily:"monospace"}}>{scanned}</div>
-              <div style={{color:"rgba(255,255,255,0.5)", fontSize:13}}>Looking up product…</div>
+              <div style={{color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:20, textAlign:"center"}}>Barcode captured!</div>
+              <div style={{color:"#86efac", fontSize:13, fontFamily:"monospace", background:"rgba(255,255,255,0.08)", padding:"6px 14px", borderRadius:8}}>{scanned}</div>
+              <div style={{display:"flex", alignItems:"center", gap:10, color:"rgba(255,255,255,0.6)", fontSize:14}}>
+                <div style={{width:18, height:18, border:"2px solid rgba(255,255,255,0.2)", borderTop:"2px solid #4ade80", borderRadius:"50%", animation:"spin 0.8s linear infinite"}}/>
+                Scanning product…
+              </div>
             </div>
           )}
         </div>
@@ -1875,14 +1878,11 @@ export default function App() {
       {scanning && (
         <BarcodeScanner
           onDetect={(barcode) => {
-            setTimeout(() => {
-              setScanning(false);
-              setResult(null);
-              setError(null);
-              setPage("home");
-              setQuery(barcode);
-              analyze(barcode);
-            }, 2000);
+            setResult(null);
+            setError(null);
+            setPage("home");
+            setQuery(barcode);
+            analyze(barcode).finally(() => setScanning(false));
           }}
           onClose={() => setScanning(false)}
         />
