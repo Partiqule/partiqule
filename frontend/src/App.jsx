@@ -1079,243 +1079,9 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   );
 };
 
-const IconCamera = ({size=20,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>;
 
 // ── BARCODE SCANNER ───────────────────────────────────────────
-const BarcodeScanner = ({onDetect, onClose}) => {
-  const videoRef    = useRef(null);
-  const streamRef   = useRef(null);
-  const html5QrRef  = useRef(null);
-  const [status,   setStatus]   = useState("starting");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [scanned,  setScanned]  = useState(null); // holds barcode value on success
-  const lastDetected   = useRef("");
-  const detectionCount = useRef(0);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const hasNative = "BarcodeDetector" in window;
 
-  useEffect(() => {
-    if (hasNative) {
-      // ── Android / Chrome: native BarcodeDetector ──────────────
-      let animFrame;
-      let canvas, ctx;
-
-      const startCamera = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment", width:{ideal:1280}, height:{ideal:720} }
-          });
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play();
-            setStatus("scanning");
-            scanLoop();
-          }
-        } catch(e) {
-          setStatus("error");
-          setErrorMsg(e.name === "NotAllowedError"
-            ? "Camera access denied. Please allow camera in your browser settings."
-            : "Could not access camera. Try typing the product name instead.");
-        }
-      };
-
-      const scanLoop = () => {
-        if (!videoRef.current || videoRef.current.readyState < 2) {
-          animFrame = requestAnimationFrame(scanLoop); return;
-        }
-        if (!canvas) { canvas = document.createElement("canvas"); ctx = canvas.getContext("2d"); }
-        canvas.width  = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        ctx.drawImage(videoRef.current, 0, 0);
-        const detector = new window.BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"]});
-        detector.detect(canvas).then(codes => {
-          if (codes.length > 0) {
-            const val = codes[0].rawValue;
-            if (val === lastDetected.current) { detectionCount.current++; }
-            else { lastDetected.current = val; detectionCount.current = 1; }
-            if (detectionCount.current >= 2) {
-              try {
-                setScanned(val);
-                setStatus("success");
-                onDetect(val);
-              } catch(e) { console.error("Scan callback error:", e); }
-              return;
-            }
-          }
-          animFrame = requestAnimationFrame(scanLoop);
-        }).catch(()=>{ animFrame = requestAnimationFrame(scanLoop); });
-      };
-
-      startCamera();
-      return () => {
-        cancelAnimationFrame(animFrame);
-        if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-      };
-
-    } else {
-      // ── iOS / Safari: html5-qrcode library ────────────────────
-      const scriptId = "html5qrcode-script";
-
-      const startHtml5Qr = () => {
-        const containerId = "html5qr-container";
-        try {
-          // Must explicitly list formats — default only scans QR codes
-          const formats = window.Html5QrcodeSupportedFormats || {};
-          const formatsToSupport = [
-            formats.EAN_13 ?? 9,
-            formats.EAN_8  ?? 10,
-            formats.UPC_A  ?? 14,
-            formats.UPC_E  ?? 15,
-            formats.CODE_128 ?? 6,
-            formats.CODE_39  ?? 4,
-            formats.QR_CODE  ?? 0,
-          ];
-          const html5QrCode = new window.Html5Qrcode(containerId, { formatsToSupport, verbose: false });
-          html5QrRef.current = html5QrCode;
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 15, qrbox: { width: 280, height: 180 } },
-            (decodedText) => {
-              try {
-                html5QrCode.stop().catch(()=>{});
-                setScanned(decodedText);
-                setStatus("success");
-                onDetect(decodedText);
-              } catch(e) { console.error("Scan callback error:", e); }
-            },
-            () => {} // ignore per-frame errors
-          ).then(() => setStatus("scanning"))
-            .catch(e => {
-              setStatus("error");
-              setErrorMsg(e?.message?.includes("Permission") || e?.message?.includes("denied")
-                ? "Camera access denied. Please allow camera in your browser settings."
-                : "Could not start camera. Try typing the product name instead.");
-            });
-        } catch(e) {
-          setStatus("error");
-          setErrorMsg("Could not start camera. Try typing the product name instead.");
-        }
-      };
-
-      if (!document.getElementById(scriptId)) {
-        const script = document.createElement("script");
-        script.id  = scriptId;
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js";
-        script.onload  = () => startHtml5Qr();
-        script.onerror = () => { setStatus("error"); setErrorMsg("Failed to load scanner. Try typing the product name instead."); };
-        document.head.appendChild(script);
-      } else if (window.Html5Qrcode) {
-        startHtml5Qr();
-      } else {
-        // Script tag exists but still loading — wait
-        const wait = setInterval(() => {
-          if (window.Html5Qrcode) { clearInterval(wait); startHtml5Qr(); }
-        }, 100);
-        return () => clearInterval(wait);
-      }
-
-      return () => {
-        if (html5QrRef.current) {
-          html5QrRef.current.stop().catch(()=>{});
-        }
-      };
-    }
-  }, []);
-
-  return (
-    <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:1000, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center"}}>
-      <div style={{width:"100%", maxWidth:480, padding:"0 16px"}}>
-
-        {/* Header */}
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20}}>
-          <div>
-            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:20, color:"#fff"}}>Scan Barcode</div>
-            <div style={{fontSize:13, color:"#86efac", marginTop:2}}>Point camera at any product barcode</div>
-          </div>
-          <button onClick={onClose} style={{width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.1)", border:"none", color:"#fff", fontSize:20, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}}>×</button>
-        </div>
-
-        {/* Camera viewport */}
-        <div style={{position:"relative", borderRadius:16, overflow:"hidden", background:"#000", aspectRatio:"4/3"}}>
-
-          {/* Native video (Android) */}
-          {hasNative && <video ref={videoRef} style={{width:"100%", height:"100%", objectFit:"cover"}} playsInline muted/>}
-
-          {/* html5-qrcode container (iOS) */}
-          {!hasNative && <div id="html5qr-container" style={{width:"100%", height:"100%", minHeight:280}}/>}
-
-          {/* Scanning overlay */}
-          {status === "scanning" && hasNative && (
-            <>
-              {[{t:12,l:12,r:"auto",b:"auto"},{t:12,l:"auto",r:12,b:"auto"},{t:"auto",l:12,r:"auto",b:12},{t:"auto",l:"auto",r:12,b:12}].map((pos,i)=>(
-                <div key={i} style={{position:"absolute", ...pos, width:28, height:28,
-                  borderTop:(i<2)?"3px solid #4ade80":"none",
-                  borderBottom:(i>=2)?"3px solid #4ade80":"none",
-                  borderLeft:(i===0||i===2)?"3px solid #4ade80":"none",
-                  borderRight:(i===1||i===3)?"3px solid #4ade80":"none",
-                }}/>
-              ))}
-              <div style={{position:"absolute", left:16, right:16, height:2, background:"linear-gradient(to right, transparent, #4ade80, transparent)", animation:"scanline 2s ease-in-out infinite"}}/>
-              <style>{`@keyframes scanline { 0%,100%{top:20%} 50%{top:75%} }`}</style>
-            </>
-          )}
-
-          {status === "starting" && (
-            <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:12}}>
-              <div style={{width:32, height:32, border:"3px solid rgba(255,255,255,0.2)", borderTop:"3px solid #4ade80", borderRadius:"50%", animation:"spin 0.8s linear infinite"}}/>
-              <div style={{color:"#86efac", fontSize:14}}>Starting camera…</div>
-            </div>
-          )}
-
-          {status === "error" && (
-            <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", padding:24}}>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:32, marginBottom:12}}>📷</div>
-                <div style={{color:"#fca5a5", fontSize:14, lineHeight:1.6}}>{errorMsg}</div>
-              </div>
-            </div>
-          )}
-
-          {status === "success" && (
-            <div style={{position:"absolute", inset:0, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:20, padding:24}}>
-              <div style={{width:64, height:64, borderRadius:"50%", background:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32}}>✓</div>
-              <div style={{color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:20, textAlign:"center"}}>Barcode captured!</div>
-              <div style={{color:"#86efac", fontSize:13, fontFamily:"monospace", background:"rgba(255,255,255,0.08)", padding:"6px 14px", borderRadius:8}}>{scanned}</div>
-              <div style={{display:"flex", alignItems:"center", gap:10, color:"rgba(255,255,255,0.6)", fontSize:14}}>
-                <div style={{width:18, height:18, border:"2px solid rgba(255,255,255,0.2)", borderTop:"2px solid #4ade80", borderRadius:"50%", animation:"spin 0.8s linear infinite"}}/>
-                Scanning product…
-              </div>
-            </div>
-          )}
-        </div>
-
-        {status === "scanning" && (
-          <div style={{marginTop:16, textAlign:"center", fontSize:13, color:"rgba(255,255,255,0.5)"}}>
-            Hold steady. Auto-detects when barcode is in frame.
-          </div>
-        )}
-
-        {/* Manual entry fallback */}
-        <div style={{marginTop:20, padding:"16px", background:"rgba(255,255,255,0.06)", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)"}}>
-          <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:8}}>Or type barcode manually</div>
-          <div style={{display:"flex", gap:8}}>
-            <input
-              placeholder="e.g. 012345678901"
-              style={{flex:1, padding:"10px 14px", borderRadius:8, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"#fff", fontSize:15, outline:"none", fontFamily:"monospace"}}
-              onKeyDown={e=>{ if(e.key==="Enter" && e.target.value.trim()) onDetect(e.target.value.trim()); }}
-            />
-            <button
-              onClick={e=>{ const inp = e.target.closest("div").querySelector("input"); if(inp.value.trim()) onDetect(inp.value.trim()); }}
-              style={{padding:"10px 16px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontWeight:600, fontSize:14, cursor:"pointer"}}>
-              Go
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => {
   const stats = [
@@ -1787,7 +1553,6 @@ function useWindowWidth() {
 export default function App() {
   const [query,       setQuery]      = useState("");
   const [searchMode,  setSearchMode] = useState("name");
-  const [scanning,    setScanning]   = useState(false);
   const [result,      setResult]     = useState(null);
   const [loading,     setLoading]    = useState(false);
   const [error,       setError]      = useState(null);
@@ -1877,21 +1642,6 @@ export default function App() {
   return (
     <div style={{minHeight:"100vh", background:bg, fontFamily:"system-ui,-apple-system,sans-serif", transition:"background 0.3s"}}>
       <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0;transform:translateY(40px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}.score-reveal{animation:slideInUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
-
-      {/* BARCODE SCANNER MODAL */}
-      {scanning && (
-        <BarcodeScanner
-          onDetect={async (barcode) => {
-            setResult(null);
-            setError(null);
-            setPage("home");
-            setQuery(barcode);
-            try {
-              await analyze(barcode);
-            } catch(e) {}
-            setScanning(false);
-          }}
-          onClose={() => setScanning(false)}
         />
       )}
 
@@ -2048,18 +1798,6 @@ export default function App() {
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
-
-              {/* Barcode button — works on Android via BarcodeDetector, iOS via html5-qrcode */}
-              {isMobile && (
-                <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
-                  <button onClick={()=>setScanning(true)}
-                    style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
-                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.5)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}>
-                    <IconCamera size={13} color="rgba(255,255,255,0.7)"/> Scan Barcode
-                  </button>
-                </div>
-              )}
 
               <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, border:"none", overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
                 <div style={{display:"flex", alignItems:"center", paddingLeft:16, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
