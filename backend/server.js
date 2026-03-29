@@ -77,6 +77,56 @@ const CATEGORY_AVERAGES = {
   other:         { avg: 5.5, label: "consumer products"   },
 };
 
+// ── WEB SEARCH FOR PRODUCT DETAILS ───────────────────────────
+// Determines if a product needs a web search for accurate material data
+function needsSearch(productName) {
+  const name = productName.toLowerCase();
+  // Skip search for generic/obvious products — we already know what they're made of
+  const obvious = [
+    "styrofoam","plastic bag","cling wrap","plastic wrap","disposable cup",
+    "plastic bottle","plastic straw","zip lock","ziplock","fleece jacket",
+    "polyester","nylon","teflon","non-stick","keurig","lipton tea bag",
+    "cotton","linen","wool","glass","stainless steel","cast iron","ceramic",
+    "wooden spoon","bamboo","wood"
+  ];
+  if (obvious.some(o => name.includes(o))) return false;
+  // Search for anything branded, specific, or ambiguous
+  return true;
+}
+
+async function searchProductDetails(productName) {
+  const res = await fetch(ANTHROPIC_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 800,
+      tools: [{
+        type: "web_search_20250305",
+        name: "web_search",
+      }],
+      system: "You are a product research assistant. Search for the exact materials, ingredients, and composition of the product. Return only a plain text summary of what the product is made of — no JSON, no markdown.",
+      messages: [{
+        role: "user",
+        content: `Search for: "${productName}" materials composition ingredients what is it made of. Focus on: main material, any plastic components, coating or finish, packaging material. Return a concise 3-5 sentence factual summary of what this product is physically made of.`
+      }]
+    })
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json();
+  // Extract text from response (may include tool_use blocks)
+  const text = data.content
+    .filter(b => b.type === "text")
+    .map(b => b.text)
+    .join("").trim();
+  return text.length > 20 ? text : null;
+}
+
 // ── CLAUDE API CALL ───────────────────────────────────────────
 async function callClaude(system, userPrompt, maxTokens=800) {
   const res = await fetch(ANTHROPIC_API, {
@@ -102,12 +152,18 @@ async function callClaude(system, userPrompt, maxTokens=800) {
 }
 
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
-async function pass1(productName) {
+async function pass1(productName, materialContext = null) {
+  const contextSection = materialContext
+    ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
+    : "";
+
   return callClaude(
     `You are a senior microplastics research scientist with expertise in polymer chemistry, toxicology, and consumer product safety. You analyze products with rigorous scientific accuracy. Always respond with raw JSON only — no markdown, no preamble.`,
     `Analyze "${productName}" for microplastics risk with scientific rigor.
-
+${contextSection}
 If this is a barcode, identify the most likely consumer product and analyze that.
+
+IMPORTANT: If real product data is provided above, base your material analysis on that factual data. Do not assume plastic content if the product is confirmed to be wood, glass, stainless steel, ceramic, or other natural materials. Only identify plastics that are actually present.
 
 Consider:
 - Specific plastic polymers present (PET, HDPE, PVC, LDPE, PP, PS, nylon, polyester, PTFE, BPA, PFAS, etc.)
@@ -196,11 +252,23 @@ app.post("/analyze", async (req, res) => {
   try {
     const category = detectCategory(productName);
 
-    // ── Run both passes in parallel for speed ──
+    // ── Search for real product material data if needed ──
+    let materialContext = null;
+    if (needsSearch(productName)) {
+      console.log(`Searching product details: ${productName}`);
+      try {
+        materialContext = await searchProductDetails(productName);
+        if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
+      } catch (err) {
+        console.warn("Search failed, continuing without:", err.message);
+      }
+    }
+
+    // ── Run both passes — pass1 gets real material data ──
     console.log(`Analyzing: ${productName}`);
     const [p1, p2] = await Promise.all([
-      pass1(productName),
-      pass1(productName).then(p1data => safePass2(productName, p1data))
+      pass1(productName, materialContext),
+      pass1(productName, materialContext).then(p1data => safePass2(productName, p1data))
     ]);
 
     // Merge pass1 + pass2 results
