@@ -1847,6 +1847,7 @@ export default function App() {
 
               <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
+              <span onClick={()=>{setPage("methodology"); setResult(null);}} style={{fontSize:14, color:page==="methodology"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="methodology"?600:400}}>How it Works</span>
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
                 {isDark?<IconSun size={17} color="#f59e0b"/>:<IconMoon size={17} color="#6b7280"/>}
@@ -1862,6 +1863,7 @@ export default function App() {
             {[
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
+              {label:"How it Works",       pg:"methodology"},
               {label:"My Scans",           pg:"history"},
             ].map(item=>(
               <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
