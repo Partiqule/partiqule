@@ -1152,13 +1152,23 @@ const BarcodeScanner = ({onDetect, onClose}) => {
       const startHtml5Qr = () => {
         const containerId = "html5qr-container";
         try {
-          const html5QrCode = new window.Html5Qrcode(containerId, { verbose: false });
+          // Must explicitly list formats — default only scans QR codes
+          const formats = window.Html5QrcodeSupportedFormats;
+          const formatsToSupport = [
+            formats.EAN_13,
+            formats.EAN_8,
+            formats.UPC_A,
+            formats.UPC_E,
+            formats.CODE_128,
+            formats.CODE_39,
+            formats.QR_CODE,
+          ];
+          const html5QrCode = new window.Html5Qrcode(containerId, { formatsToSupport, verbose: false });
           html5QrRef.current = html5QrCode;
           html5QrCode.start(
             { facingMode: "environment" },
             { fps: 15, qrbox: { width: 280, height: 180 } },
             (decodedText) => {
-              // Fire immediately on first clean read — html5-qrcode is already reliable
               html5QrCode.stop().catch(()=>{});
               onDetect(decodedText);
             },
