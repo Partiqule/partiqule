@@ -145,6 +145,20 @@ const DIRECT_SWAPS = {
   "area rug":         ["ht-008", "ht-007", "gd-005"],
   "shower curtain":   ["ht-009", "ht-007", "ba-001"],
 
+  // Toys
+  "barbie":           ["ty-001", "ty-002", "ty-003"],
+  "doll":             ["ty-001", "ty-002", "ty-003"],
+  "action figure":    ["ty-001", "ty-004", "ty-003"],
+  "plastic toy":      ["ty-001", "ty-004", "ty-003"],
+  "lego":             ["ty-004", "ty-001", "ty-003"],
+  "building blocks":  ["ty-004", "ty-001", "ty-003"],
+  "play kitchen":     ["ty-005", "ty-001", "ty-004"],
+  "stuffed animal":   ["ty-002", "ty-001", "ty-003"],
+  "plush toy":        ["ty-002", "ty-001", "ty-003"],
+  "toy":              ["ty-001", "ty-002", "ty-004"],
+  "kids toy":         ["ty-001", "ty-002", "ty-004"],
+  "children toy":     ["ty-001", "ty-002", "ty-004"],
+
   // Food brands
   "peanut butter":    ["fd-001", "fb-009", "fs-003"],
   "olive oil":        ["fd-003", "fd-001", "fb-009"],
@@ -2799,6 +2813,68 @@ const products = [
     affiliateUrl: `https://www.amazon.com/s?k=stainless+steel+dustpan+set&tag=partiqule-20`,
     price: "$18–28",
     tags: ["dustpan", "cleaning", "stainless", "broom", "floor cleaning", "natural", "kitchen"]
+  },
+
+  // ── TOYS ─────────────────────────────────────────────────────
+  {
+    id: "ty-001",
+    name: "Wooden Doll Set",
+    brand: "Hape",
+    category: "other",
+    plasticScore: 1,
+    material: "FSC-certified beech wood, non-toxic paint",
+    description: "Zero plastic — safe for children with skin contact during play",
+    affiliateUrl: `https://www.amazon.com/s?k=Hape+wooden+doll+set+kids&tag=partiqule-20`,
+    price: "$20–40",
+    tags: ["doll", "dolls", "toy", "toys", "kids toys", "wooden toy", "barbie alternative", "children", "natural toy", "plastic-free toy"]
+  },
+  {
+    id: "ty-002",
+    name: "Organic Cotton Stuffed Animal",
+    brand: "Under the Nile",
+    category: "other",
+    plasticScore: 1,
+    material: "100% organic cotton, natural stuffing",
+    description: "No synthetic fibers or plastic pellets — safe for young children",
+    affiliateUrl: `https://www.amazon.com/s?k=organic+cotton+stuffed+animal+toy&tag=partiqule-20`,
+    price: "$18–35",
+    tags: ["stuffed animal", "plush", "toy", "toys", "kids", "organic", "cotton", "soft toy", "teddy", "children"]
+  },
+  {
+    id: "ty-003",
+    name: "Natural Rubber Toy Set",
+    brand: "Hevea",
+    category: "other",
+    plasticScore: 1,
+    material: "100% natural rubber, food-grade paint",
+    description: "Natural rubber doesn't leach plasticizers — ideal for teething and play",
+    affiliateUrl: `https://www.amazon.com/s?k=Hevea+natural+rubber+toy+baby&tag=partiqule-20`,
+    price: "$15–30",
+    tags: ["rubber toy", "natural toy", "toy", "kids", "children", "teething", "baby toy", "plastic-free"]
+  },
+  {
+    id: "ty-004",
+    name: "Wooden Building Blocks",
+    brand: "Melissa & Doug",
+    category: "other",
+    plasticScore: 1,
+    material: "Solid hardwood, non-toxic finish",
+    description: "Classic wood blocks — no plastic microparticles shed during play",
+    affiliateUrl: `https://www.amazon.com/s?k=Melissa+Doug+wooden+building+blocks&tag=partiqule-20`,
+    price: "$20–35",
+    tags: ["blocks", "building blocks", "toy", "wooden toy", "kids", "children", "toddler", "lego alternative", "plastic-free toy"]
+  },
+  {
+    id: "ty-005",
+    name: "Waldorf Wooden Play Kitchen Set",
+    brand: "PlanToys",
+    category: "other",
+    plasticScore: 1,
+    material: "Rubberwood, non-toxic water-based dyes",
+    description: "Plastic play kitchens shed particles — wood is safer for imaginative play",
+    affiliateUrl: `https://www.amazon.com/s?k=PlanToys+wooden+play+kitchen+set&tag=partiqule-20`,
+    price: "$50–120",
+    tags: ["play kitchen", "toy kitchen", "toy", "kids", "wooden toy", "plastic-free", "children", "pretend play"]
   }
 ];
 

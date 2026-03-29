@@ -130,12 +130,18 @@ const RiskBar = ({score}) => {
 };
 
 // ── SCAN VS SAFE SPLIT VIEW ───────────────────────────────────
-const SplitView = ({result, isDark}) => {
-  // Only show if we have an alternative that's actually relevant — same category or AI suggested
-  const best = result.alternatives?.find(p => p.category === result.category || p.source === "ai")
-    || result.alternatives?.[0];
-  // Don't show if score is already very low (nothing to compare against)
-  if (!best || result.score <= 3) return null;
+const SplitView = ({result, isDark, onScan}) => {
+  // Priority: same-category static alternative → any static alternative → AI alternative
+  const sameCat = result.alternatives?.find(p => p.category === result.category);
+  const anyStatic = result.alternatives?.[0];
+  const aiAlt = result.ai_alternatives?.[0];
+
+  // Use same-category static if available, else AI alternative, else any static
+  // Never show if score is already low
+  const best = sameCat || (aiAlt ? null : anyStatic);
+  const useAi = !sameCat && aiAlt;
+
+  if ((!best && !useAi) || result.score <= 3) return null;
   const surface = isDark?"#1e2433":"#fff";
   const border  = isDark?"#2a3347":"#eee";
   const text    = isDark?"#f1f5f9":"#111";
@@ -160,14 +166,31 @@ const SplitView = ({result, isDark}) => {
         {/* Safe side */}
         <div style={{background:"#f0fdf4", borderRadius:"0 12px 12px 0", padding:"20px", border:"1.5px solid #16a34a33", borderLeft:"none"}}>
           <div style={{fontSize:11, color:"#16a34a", textTransform:"uppercase", fontWeight:700, marginBottom:6}}>Better Choice</div>
-          <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{best.name}</div>
-          <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{best.score}</div>
-            <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
-          </div>
-          <a href={best.affiliateUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12, color:"#fff", fontWeight:600, marginTop:8, padding:"5px 14px", background:"#16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, textDecoration:"none"}}>
-            Shop now <IconArrow size={11} color="#fff"/>
-          </a>
+          {useAi ? (
+            <>
+              <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:6, lineHeight:1.3}}>{aiAlt.name}</div>
+              <div style={{fontSize:12, color:"#16a34a", marginBottom:8, lineHeight:1.4}}>{aiAlt.material}</div>
+              <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
+                <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{aiAlt.estimated_score}</div>
+                <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
+              </div>
+              <button onClick={()=>onScan && onScan(aiAlt.name)}
+                style={{fontSize:12, color:"#16a34a", fontWeight:600, marginTop:4, padding:"5px 14px", background:"#f0fdf4", border:"1.5px solid #16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, cursor:"pointer"}}>
+                Scan this → <IconArrow size={11} color="#16a34a"/>
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{best.name}</div>
+              <div style={{display:"flex", alignItems:"center", gap:8}}>
+                <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{best.score}</div>
+                <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
+              </div>
+              <a href={best.affiliateUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12, color:"#fff", fontWeight:600, marginTop:8, padding:"5px 14px", background:"#16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, textDecoration:"none"}}>
+                Shop now <IconArrow size={11} color="#fff"/>
+              </a>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -1274,6 +1297,29 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         </p>
       </div>
 
+      {/* AI Environmental Transparency */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>A note on AI energy and water use</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          We know this question is coming — and we'd rather address it directly than hope nobody asks.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          Each Partiqule scan runs two AI passes to generate your score. Based on current lifecycle research, a single AI query uses roughly 5–10ml of water when you account for data centre cooling and electricity generation. Two passes means a scan uses approximately <strong style={{color:text}}>15–20ml of water</strong> — about the same as brushing your teeth.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          We're not pretending AI is free. It isn't. But we think the trade-off is worth being transparent about. If a scan helps you replace a non-stick pan you cook on every day, or switch away from tea bags releasing 11 billion plastic particles per cup, the environmental payback is significant and ongoing. One scan. Years of impact.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          We also use Claude Haiku — Anthropic's most efficient model — specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy. And we cache results so the same product is never scored twice unnecessarily.
+        </p>
+        <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:14, padding:"20px 24px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+          <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:8}}>Our commitment</div>
+          <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:0}}>
+            As Partiqule grows, we'll publish an annual transparency note on our AI usage, water and energy estimates, and what we're doing to reduce them. We believe the tools that expose environmental harm should hold themselves to the same standard.
+          </p>
+        </div>
+      </div>
+
       {/* Contact */}
       <div>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
@@ -1287,7 +1333,254 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
   );
 };
 
-// ── TERMS OF SERVICE PAGE ─────────────────────────────────────
+// ── METHODOLOGY PAGE ──────────────────────────────────────────
+const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
+  const steps = [
+    {
+      number: "01",
+      title: "Human-defined scoring parameters",
+      color: "#16a34a",
+      content: [
+        {
+          heading: "Founded by domain experts",
+          body: "Partiqule was built by Paul and Sara Gonzalez, who bring a combined 20 years of experience across technology, compliance, and audit. The scoring framework was designed drawing on published peer-reviewed research in polymer chemistry, toxicology, and consumer product safety — not generated by AI."
+        },
+        {
+          heading: "Parameters we defined",
+          body: null,
+          list: [
+            "A weighted scoring system where plastic danger accounts for 70% of the overall score and broader health concerns account for 30%",
+            "Specific plastic polymers flagged as high-risk (PET, HDPE, PVC, LDPE, PP, PS, nylon, polyester, PTFE, BPA, PFAS) based on published leaching and exposure studies",
+            "Exposure weighting rules — daily-use products with direct food or skin contact receive higher penalties than occasional-use items",
+            "A natural materials exemption — products confirmed to be wood, glass, stainless steel, ceramic, or organic cotton do not receive exposure penalties regardless of use frequency",
+            "Health concern categories — artificial dyes (FD&C), ultra-processing, allergens, endocrine disruptors, and known carcinogens — each with defined scoring thresholds",
+          ]
+        },
+        {
+          heading: null,
+          body: "These parameters are hardcoded into the AI prompts and cannot be overridden by the AI's own judgment. The AI applies them — it does not define them."
+        }
+      ]
+    },
+    {
+      number: "02",
+      title: "AI analysis — two-pass system",
+      color: "#2563eb",
+      content: [
+        {
+          heading: "Why two passes?",
+          body: "Each product scan runs two independent AI passes using Anthropic's Claude. The two-pass structure was designed specifically to reduce hallucination and catch cases where the first pass may have over- or under-scored a product."
+        },
+        {
+          heading: "Pass 1 — Research & analysis",
+          body: "The AI searches for real material data on the specific product, then analyzes it against the parameters we defined. It identifies specific plastic polymers present, scores the product and packaging separately, identifies health concerns beyond plastics, and suggests relevant plastic-free alternatives."
+        },
+        {
+          heading: "Pass 2 — Independent audit",
+          body: "A second independent AI instance reviews Pass 1's output as a skeptical auditor. It applies the exposure weighting rules, checks that natural material products aren't penalized unfairly, calculates the final weighted score, and flags low-confidence results for regression toward category averages."
+        }
+      ]
+    },
+    {
+      number: "03",
+      title: "Human quality review",
+      color: "#d97706",
+      content: [
+        {
+          heading: "What we check before results go live",
+          body: null,
+          list: [
+            "Spot testing: We regularly scan products we own or have researched independently and verify the AI's material identification against manufacturer specs, safety data sheets, or published studies",
+            "Category audits: We periodically review all cached results in a product category to check for scoring inconsistencies or outliers",
+            "Anomaly review: Any product scoring significantly above or below category average triggers a manual review of the AI's reasoning chain",
+            "Alternative relevance: We verify that suggested alternatives are genuinely relevant to the scanned product — a common failure mode we identified early and corrected in the matching logic",
+            "Cache invalidation: When we update scoring parameters or identify a systematic error, we clear the result cache so all products are rescored under the new rules",
+          ]
+        }
+      ]
+    },
+    {
+      number: "04",
+      title: "Affiliate product standards",
+      color: "#7c3aed",
+      content: [
+        {
+          heading: "How alternatives are selected",
+          body: "Products recommended as safer alternatives on Partiqule meet the following criteria, verified by us:"
+        },
+        {
+          heading: null,
+          body: null,
+          list: [
+            "The alternative must score materially lower on plastic danger than the scanned product",
+            "Alternatives are filtered using material-based heuristics we defined — stainless steel, organic cotton, glass, bamboo, and natural rubber all receive low scores; synthetic materials and known plastics receive high scores",
+            "Affiliate links are clearly disclosed with '#ad · affiliate links' labeling on every results page",
+            "Affiliate relationships have zero influence on scoring — the danger score is calculated independently before any alternative is suggested",
+          ]
+        }
+      ]
+    },
+    {
+      number: "05",
+      title: "Ongoing maintenance",
+      color: "#0891b2",
+      content: [
+        {
+          heading: null,
+          body: null,
+          list: [
+            "Scoring parameters are reviewed when new peer-reviewed research is published on microplastics or chemical exposure",
+            "The AI model version is reviewed periodically to ensure accuracy has not regressed",
+            "An annual transparency note is published on the About page disclosing AI usage, estimated energy and water footprint, and any methodology changes",
+            "User feedback is monitored — products that generate unusual concern or contradiction are flagged for manual review",
+          ]
+        }
+      ]
+    }
+  ];
+
+  return (
+    <div style={{maxWidth:760, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+      {/* Header */}
+      <div style={{marginBottom:40}}>
+        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
+        <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
+          Every score on Partiqule reflects a combination of expert-defined parameters, AI analysis, and human quality review. This page explains exactly how that works — because we think the tools that expose hidden harm should be fully transparent about their own process.
+        </p>
+        <div style={{fontSize:13, color:muted, opacity:0.6, fontStyle:"italic"}}>Methodology last reviewed: March 2026</div>
+      </div>
+
+      {/* Key stats bar */}
+      <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:12, marginBottom:40}}>
+        {[
+          {number:"20+", label:"Years combined expertise"},
+          {number:"2",   label:"AI passes per scan"},
+          {number:"210+",label:"Products in database"},
+          {number:"100%",label:"Affiliate-independent scoring"},
+        ].map((s,i) => (
+          <div key={i} style={{background:surface, borderRadius:14, padding:"20px 16px", border:`1.5px solid ${border}`, textAlign:"center"}}>
+            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", marginBottom:4}}>{s.number}</div>
+            <div style={{fontSize:12, color:muted, lineHeight:1.4}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Founders callout */}
+      <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"24px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:48}}>
+        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>About the founders</div>
+        <p style={{fontSize:15, color:muted, lineHeight:1.8, margin:0}}>
+          Partiqule was built by <strong style={{color:text}}>Paul and Sara Gonzalez</strong>, who bring a combined 20 years of experience across technology, compliance, and audit. The scoring methodology, parameters, and quality review processes described on this page were designed and are maintained by them — not generated by AI. The AI applies the framework; Paul and Sara built it.
+        </p>
+      </div>
+
+      {/* Steps */}
+      {steps.map((step, si) => (
+        <div key={si} style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+          <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
+            <div style={{width:48, height:48, borderRadius:12, background:`${step.color}15`, border:`1.5px solid ${step.color}44`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+              <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, color:step.color}}>{step.number}</span>
+            </div>
+            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>{step.title}</h2>
+          </div>
+          {step.content.map((block, bi) => (
+            <div key={bi} style={{marginBottom:16, paddingLeft:68}}>
+              {block.heading && (
+                <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:6}}>{block.heading}</div>
+              )}
+              {block.body && (
+                <p style={{fontSize:15, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>{block.body}</p>
+              )}
+              {block.list && (
+                <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                  {block.list.map((item, li) => (
+                    <div key={li} style={{display:"flex", alignItems:"flex-start", gap:10}}>
+                      <div style={{width:6, height:6, borderRadius:"50%", background:step.color, flexShrink:0, marginTop:7}}/>
+                      <span style={{fontSize:15, color:muted, lineHeight:1.7}}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {/* Scoring example */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
+          <div style={{width:48, height:48, borderRadius:12, background:"#052e1615", border:"1.5px solid #052e1644", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, color:"#052e16"}}>eg.</span>
+          </div>
+          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Worked example — Non-stick frying pan</h2>
+        </div>
+        <div style={{paddingLeft:68}}>
+          <p style={{fontSize:15, color:muted, lineHeight:1.8, marginBottom:20}}>
+            Here's exactly how Partiqule scores a non-stick frying pan, step by step.
+          </p>
+          <div style={{display:"flex", flexDirection:"column", gap:12}}>
+            {[
+              {step:"Web search", detail:"AI searches for real material specs — confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle"},
+              {step:"Pass 1 — Material analysis", detail:"PTFE identified as primary plastic concern. Product score: 8. Packaging score: 4. Exposure type: ingestion (PTFE particles enter food during cooking). Frequency: daily."},
+              {step:"Pass 1 — Health analysis", detail:"PFAS chemicals in PTFE coating flagged. Health score: 8. Concerns: PFAS are known endocrine disruptors with links to thyroid disruption and elevated cholesterol."},
+              {step:"Pass 2 — Audit", detail:"Daily use penalty applied (+2). Ingestion penalty applied (+1). Combined score: 70% × 8 (plastic) + 30% × 8 (health) = 8.0. Rounded to 8. Confidence: high."},
+              {step:"Overall score", detail:"Overall: 8/10 High. Plastic danger: 8/10. Health concern: 8/10. Break-even: cast iron pan at ~200 uses."},
+              {step:"Human review", detail:"Paul cross-references against Environmental Working Group PFAS database. Score confirmed accurate. Cast iron and stainless steel shown as alternatives."},
+            ].map((row, i) => (
+              <div key={i} style={{display:"grid", gridTemplateColumns:"180px 1fr", gap:16, padding:"14px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
+                <div style={{fontSize:13, fontWeight:700, color:"#16a34a"}}>{row.step}</div>
+                <div style={{fontSize:14, color:muted, lineHeight:1.6}}>{row.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Research sources */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
+          <div style={{width:48, height:48, borderRadius:12, background:"#0891b215", border:"1.5px solid #0891b244", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, color:"#0891b2"}}>refs</span>
+          </div>
+          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Research sources</h2>
+        </div>
+        <div style={{paddingLeft:68}}>
+          <p style={{fontSize:15, color:muted, lineHeight:1.8, marginBottom:20}}>
+            The scoring parameters on Partiqule are grounded in published peer-reviewed research. Key studies that informed our framework:
+          </p>
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {[
+              {citation:"Ragusa et al. (2021)", title:"Plasticenta: First evidence of microplastics in human placenta", journal:"Environment International"},
+              {citation:"Leslie et al. (2022)", title:"Discovery and quantification of plastic particle pollution in human blood", journal:"Environment International"},
+              {citation:"WWF / University of Newcastle (2019)", title:"No Plastic in Nature: Assessing Plastic Ingestion from Nature to People", journal:"WWF Report — ~5g/week estimate"},
+              {citation:"Schwabl et al. (2019)", title:"Detection of various microplastics in human stool", journal:"Annals of Internal Medicine"},
+              {citation:"Li et al. (2020)", title:"Microplastic release from the degradation of polypropylene feeding bottles during infant formula preparation", journal:"Nature Food"},
+              {citation:"Kosuth et al. (2018)", title:"Anthropogenic contamination of tap water, beer, and sea salt", journal:"PLOS ONE — bottled water study"},
+              {citation:"Hernandez et al. (2019)", title:"Plastic teabags release billions of microparticles and nanoparticles into tea", journal:"Environmental Science & Technology"},
+            ].map((ref, i) => (
+              <div key={i} style={{padding:"12px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
+                <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:2}}>{ref.citation} — {ref.title}</div>
+                <div style={{fontSize:12, color:muted, fontStyle:"italic"}}>{ref.journal}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer note */}
+      <div style={{background:isDark?"#1e2433":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
+        <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:8}}>Questions about our methodology?</div>
+        <p style={{fontSize:14, color:muted, lineHeight:1.7, margin:0}}>
+          We welcome scrutiny. If you believe a score is inaccurate, or have published research that should inform our parameters, email us at{" "}
+          <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
+          We read every message.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ── PRIVACY PAGE ──────────────────────────────────────────────
 const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   const sections = [
     { title:"1. Overview", body:"Partiqule provides product information and microplastics exposure scores to help you make more informed decisions. By using Partiqule, you agree to these Terms." },
@@ -1369,8 +1662,9 @@ export default function App() {
     }
     if (path === "/privacy") { setPage("privacy"); return; }
     if (path === "/about") { setPage("about"); return; }
+    if (path === "/methodology") { setPage("methodology"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/about"];
+    const known = ["/", "/science", "/history", "/privacy", "/about", "/methodology"];
     const isScanPath = path.startsWith("/scan/");
     if (!known.includes(path) && !isScanPath) setPage("404");
   }, []);
@@ -1512,6 +1806,8 @@ export default function App() {
         <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "about" ? (
         <AboutPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset}/>
+      ) : page === "methodology" ? (
+        <MethodologyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{fontSize:64, marginBottom:16}}>🔬</div>
@@ -1777,7 +2073,7 @@ export default function App() {
                   </div>
                 )}
 
-                <SplitView result={result} isDark={isDark}/>
+                <SplitView result={result} isDark={isDark} onScan={(name)=>{setResult(null); setQuery(name); analyze(name);}}/>
                 <ShareBadge result={result}/>
               </div>
 
@@ -1935,10 +2231,11 @@ export default function App() {
         <div style={{marginBottom:20, color:"#666", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
         <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
           {[
-            {label:"About",           pg:"about",   path:"/about"},
-            {label:"The Science",     pg:"science",  path:"/science"},
-            {label:"My Scans",        pg:"history",  path:"/history"},
-            {label:"Terms of Service", pg:"privacy",  path:"/privacy"},
+            {label:"About",           pg:"about",       path:"/about"},
+            {label:"The Science",     pg:"science",     path:"/science"},
+            {label:"My Scans",        pg:"history",     path:"/history"},
+            {label:"How It Works",    pg:"methodology", path:"/methodology"},
+            {label:"Terms of Service",pg:"privacy",     path:"/privacy"},
           ].map(item=>(
             <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({},"",item.path); window.scrollTo(0,0);}}
               style={{color:"#555", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}

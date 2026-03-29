@@ -1,60 +1,79 @@
 // ============================================================
-// Amazon Product Advertising API 5.0 Integration
+// Amazon Creators API Integration (replaces PA API 5.0)
 // ============================================================
-// SETUP (after getting 3 qualifying sales):
-//   1. Go to affiliate-program.amazon.com → Tools → Product Advertising API
-//   2. Request access (takes 1-2 weeks after 3 sales)
-//   3. Once approved, get your credentials from the PA API console
-//   4. Add to your .env file:
-//      AMAZON_ACCESS_KEY=your_access_key
-//      AMAZON_SECRET_KEY=your_secret_key
-//      AMAZON_PARTNER_TAG=partiqule-20  (your Associates tag)
-//      AMAZON_REGION=us-east-1
+// SETUP (after hitting 10 qualifying sales in 30 days):
+//
+//   1. Go to affiliate-program.amazon.com/creatorsapi
+//   2. Click "Create App" → give it a name like "Partiqule"
+//   3. Click "Add New Credential" → copy the Client ID and Client Secret
+//   4. Add to Railway environment variables:
+//        AMAZON_CLIENT_ID=amzn1.application-oa2-client.xxxxx
+//        AMAZON_CLIENT_SECRET=your-client-secret
+//        AMAZON_PARTNER_TAG=partiqule-20
+//
+//   Note: PA API keys (ACCESS_KEY / SECRET_KEY) do NOT work here.
+//   Creators API uses OAuth 2.0 (Login with Amazon) instead of AWS signing.
+//
+//   The site falls back to the static product database automatically
+//   if these credentials are not set — no code changes needed.
 // ============================================================
 
-const crypto = require("crypto");
+const PARTNER_TAG   = process.env.AMAZON_PARTNER_TAG || "partiqule-20";
+const CLIENT_ID     = process.env.AMAZON_CLIENT_ID;
+const CLIENT_SECRET = process.env.AMAZON_CLIENT_SECRET;
 
-const AMAZON_HOST   = "webservices.amazon.com";
-const AMAZON_REGION = process.env.AMAZON_REGION || "us-east-1";
-const ACCESS_KEY    = process.env.AMAZON_ACCESS_KEY;
-const SECRET_KEY    = process.env.AMAZON_SECRET_KEY;
-const PARTNER_TAG   = process.env.AMAZON_PARTNER_TAG;
+// Token cache — access tokens expire after 1 hour
+let cachedToken    = null;
+let tokenExpiresAt = 0;
 
-// ── CHECK IF PA API IS CONFIGURED ────────────────────────────
+// ── CHECK IF CONFIGURED ──────────────────────────────────────
 function isPaApiConfigured() {
-  return !!(ACCESS_KEY && SECRET_KEY && PARTNER_TAG);
+  return !!(CLIENT_ID && CLIENT_SECRET && PARTNER_TAG);
 }
 
-// ── AWS SIGNATURE V4 SIGNING ──────────────────────────────────
-function sign(key, msg) {
-  return crypto.createHmac("sha256", key).update(msg).digest();
+// ── GET OAUTH ACCESS TOKEN ───────────────────────────────────
+async function getAccessToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt - 60000) {
+    return cachedToken;
+  }
+
+  const body = new URLSearchParams({
+    grant_type:    "client_credentials",
+    client_id:     CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    scope:         "advertising::audiences",
+  });
+
+  const res = await fetch("https://api.amazon.com/auth/o2/token", {
+    method:  "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body:    body.toString(),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`LWA token error ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  cachedToken    = data.access_token;
+  tokenExpiresAt = Date.now() + (data.expires_in * 1000);
+  console.log("Amazon Creators API: access token obtained");
+  return cachedToken;
 }
 
-function getSignatureKey(key, dateStamp, region, service) {
-  const kDate    = sign(Buffer.from("AWS4" + key, "utf8"), dateStamp);
-  const kRegion  = sign(kDate, region);
-  const kService = sign(kRegion, service);
-  const kSigning = sign(kService, "aws4_request");
-  return kSigning;
-}
-
-function sha256(payload) {
-  return crypto.createHash("sha256").update(payload).digest("hex");
-}
-
-// ── SEARCH AMAZON PRODUCTS ────────────────────────────────────
+// ── SEARCH AMAZON PRODUCTS ───────────────────────────────────
 async function searchAmazonProducts(keyword, category = null, maxResults = 3) {
   if (!isPaApiConfigured()) return null;
 
-  const now         = new Date();
-  const amzDate     = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
-  const dateStamp   = amzDate.slice(0, 8);
-  const endpoint    = "/paapi5/searchitems";
-  const service     = "ProductAdvertisingAPI";
-  const contentType = "application/json; charset=utf-8";
-  const target      = "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems";
+  let token;
+  try {
+    token = await getAccessToken();
+  } catch(e) {
+    console.error("Failed to get Amazon access token:", e.message);
+    return null;
+  }
 
-  // Map our categories to Amazon search indexes
   const searchIndexMap = {
     clothing:      "FashionWomen",
     food_beverage: "GroceryAndGourmetFood",
@@ -65,90 +84,54 @@ async function searchAmazonProducts(keyword, category = null, maxResults = 3) {
   };
   const searchIndex = searchIndexMap[category] || "All";
 
-  // Build search query — add "plastic-free" or "eco" to bias toward better alternatives
-  const searchKeyword = keyword;
-
+  // Creators API uses camelCase (PA API used PascalCase)
   const payload = JSON.stringify({
-    Keywords:     searchKeyword,
-    SearchIndex:  searchIndex,
-    ItemCount:    maxResults,
-    PartnerTag:   PARTNER_TAG,
-    PartnerType:  "Associates",
-    Marketplace:  "www.amazon.com",
-    Resources: [
-      "Images.Primary.Medium",
-      "ItemInfo.Title",
-      "ItemInfo.ByLineInfo",
-      "Offers.Listings.Price",
-      "Offers.Listings.DeliveryInfo.IsPrimeEligible",
-      "ItemInfo.Features",
-      "BrowseNodeInfo.BrowseNodes",
+    keywords:    keyword,
+    searchIndex: searchIndex,
+    itemCount:   maxResults,
+    partnerTag:  PARTNER_TAG,
+    partnerType: "Associates",
+    marketplace: "www.amazon.com",
+    resources: [
+      "images.primary.medium",
+      "itemInfo.title",
+      "itemInfo.byLineInfo",
+      "offersV2.listings.price",
+      "offersV2.listings.deliveryInfo.isPrimeEligible",
+      "itemInfo.features",
     ]
   });
 
-  const payloadHash   = sha256(payload);
-  const canonicalUri  = endpoint;
-  const canonicalQS   = "";
-  const canonicalHeaders =
-    `content-encoding:amz-1.0\n` +
-    `content-type:${contentType}\n` +
-    `host:${AMAZON_HOST}\n` +
-    `x-amz-date:${amzDate}\n` +
-    `x-amz-target:${target}\n`;
-  const signedHeaders  = "content-encoding;content-type;host;x-amz-date;x-amz-target";
-  const canonicalReq   =
-    `POST\n${canonicalUri}\n${canonicalQS}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-
-  const credentialScope = `${dateStamp}/${AMAZON_REGION}/${service}/aws4_request`;
-  const stringToSign    =
-    `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${sha256(canonicalReq)}`;
-
-  const signingKey  = getSignatureKey(SECRET_KEY, dateStamp, AMAZON_REGION, service);
-  const signature   = crypto.createHmac("sha256", signingKey).update(stringToSign).digest("hex");
-
-  const authorization =
-    `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY}/${credentialScope}, ` +
-    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-  const response = await fetch(`https://${AMAZON_HOST}${endpoint}`, {
-    method: "POST",
+  const res = await fetch("https://affiliate-program.amazon.com/creatorsapi/paapi/searchItems", {
+    method:  "POST",
     headers: {
-      "content-encoding": "amz-1.0",
-      "content-type":     contentType,
-      "host":             AMAZON_HOST,
-      "x-amz-date":       amzDate,
-      "x-amz-target":     target,
-      "Authorization":    authorization,
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${token}`,
     },
     body: payload,
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    console.error("Amazon PA API error:", response.status, err);
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("Creators API error:", res.status, err);
     return null;
   }
 
-  const data = await response.json();
-
-  if (!data.SearchResult?.Items) {
-    console.log("Amazon PA API: no results for", keyword);
+  const data = await res.json();
+  if (!data.searchResult?.items) {
+    console.log("Creators API: no results for", keyword);
     return null;
   }
 
-  // Parse into our product format
-  return data.SearchResult.Items.map(item => {
-    const title      = item.ItemInfo?.Title?.DisplayValue || "Unknown product";
-    const brand      = item.ItemInfo?.ByLineInfo?.Brand?.DisplayValue || "";
-    const price      = item.Offers?.Listings?.[0]?.Price?.DisplayAmount || "See on Amazon";
-    const imageUrl   = item.Images?.Primary?.Medium?.URL || null;
-    const asin       = item.ASIN;
-    const isPrime    = item.Offers?.Listings?.[0]?.DeliveryInfo?.IsPrimeEligible || false;
-    const features   = item.ItemInfo?.Features?.DisplayValues || [];
+  return data.searchResult.items.map(item => {
+    const title      = item.itemInfo?.title?.displayValue || "Unknown product";
+    const brand      = item.itemInfo?.byLineInfo?.brand?.displayValue || "";
+    const price      = item.offersV2?.listings?.[0]?.price?.displayAmount || "See on Amazon";
+    const imageUrl   = item.images?.primary?.medium?.url || null;
+    const asin       = item.asin;
+    const isPrime    = item.offersV2?.listings?.[0]?.deliveryInfo?.isPrimeEligible || false;
+    const features   = item.itemInfo?.features?.displayValues || [];
     const affiliateUrl = `https://www.amazon.com/dp/${asin}?tag=${PARTNER_TAG}`;
-
-    // Derive a plastic score estimate from the title/features
-    // (Claude already scored the original product — these are alternatives so we want low scores)
     const plasticScore = estimatePlasticScore(title, features);
 
     return {
@@ -159,7 +142,7 @@ async function searchAmazonProducts(keyword, category = null, maxResults = 3) {
       score:       plasticScore,
       plasticScore,
       material:    features[0] || "See product details",
-      description: features[1] || (isPrime ? "Prime eligible" : ""),
+      description: features[1] || (isPrime ? "✓ Prime eligible" : ""),
       price,
       affiliateUrl,
       imageUrl,
@@ -168,31 +151,21 @@ async function searchAmazonProducts(keyword, category = null, maxResults = 3) {
   });
 }
 
-// ── ESTIMATE PLASTIC SCORE FOR AMAZON RESULTS ────────────────
-// Since Amazon returns alternatives (not the scanned product),
-// we use heuristics to estimate if the alternative is actually better
+// ── ESTIMATE PLASTIC SCORE FROM TITLE/FEATURES ───────────────
 function estimatePlasticScore(title, features) {
   const text = (title + " " + features.join(" ")).toLowerCase();
-
-  // Strong low-plastic signals
-  if (/stainless steel|cast iron|glass|ceramic|bamboo|organic cotton|merino wool|linen|beeswax|silicone food/i.test(text)) return 1;
+  if (/stainless steel|cast iron|glass|ceramic|bamboo|organic cotton|merino wool|linen|beeswax/i.test(text)) return 1;
   if (/plastic.free|bpa.free|pfas.free|compostable|biodegradable|natural rubber/i.test(text)) return 2;
   if (/cotton|wool|hemp|wood|cork|recycled/i.test(text)) return 3;
-
-  // High plastic signals
-  if (/plastic|polyester|nylon|synthetic|polypropylene|polycarbonate/i.test(text)) return 7;
+  if (/plastic|polyester|nylon|synthetic|polypropylene/i.test(text)) return 7;
   if (/disposable|single.use/i.test(text)) return 8;
-
-  return 3; // Default — assume it's a decent alternative since we searched for eco-friendly terms
+  return 3;
 }
 
-// ── GET ALTERNATIVES VIA PA API ───────────────────────────────
-// Main function called from server.js
-// Returns null if PA API not configured (falls back to static DB)
+// ── MAIN FUNCTION CALLED FROM server.js ──────────────────────
 async function getAmazonAlternatives(productName, category, analyzedPlastics = []) {
   if (!isPaApiConfigured()) return null;
 
-  // Build a targeted search query for plastic-free alternatives
   const categoryKeywords = {
     clothing:      "organic cotton natural fiber",
     food_beverage: "stainless steel glass reusable",
@@ -202,7 +175,6 @@ async function getAmazonAlternatives(productName, category, analyzedPlastics = [
     other:         "eco plastic-free natural",
   };
 
-  // Extract the core product type from the name
   const words = productName.toLowerCase()
     .replace(/plastic|disposable|synthetic/g, "")
     .split(/\s+/)
@@ -213,13 +185,12 @@ async function getAmazonAlternatives(productName, category, analyzedPlastics = [
   const ecoModifier = categoryKeywords[category] || "plastic-free eco";
   const searchQuery = `${words} ${ecoModifier}`.trim();
 
-  console.log(`PA API search: "${searchQuery}" in category: ${category}`);
+  console.log(`Creators API search: "${searchQuery}" (${category})`);
 
   try {
-    const results = await searchAmazonProducts(searchQuery, category, 3);
-    return results;
+    return await searchAmazonProducts(searchQuery, category, 3);
   } catch(e) {
-    console.error("PA API search failed:", e.message);
+    console.error("Creators API search failed:", e.message);
     return null;
   }
 }
