@@ -1633,6 +1633,15 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {citation:"Li et al. (2020)", title:"Microplastic release from the degradation of polypropylene feeding bottles during infant formula preparation", journal:"Nature Food"},
               {citation:"Kosuth et al. (2018)", title:"Anthropogenic contamination of tap water, beer, and sea salt", journal:"PLOS ONE (bottled water study)"},
               {citation:"Hernandez et al. (2019)", title:"Plastic teabags release billions of microparticles and nanoparticles into tea", journal:"Environmental Science & Technology"},
+              {citation:"Marfella et al. (2024)", title:"Microplastics and nanoplastics in atheromas and cardiovascular events", journal:"New England Journal of Medicine — microplastics linked to increased heart attack and stroke risk"},
+              {citation:"Yan et al. (2024)", title:"Bioaccumulation of microplastics in decedent human brains", journal:"Nature Medicine — higher concentrations found in brains with dementia diagnosis"},
+              {citation:"Thompson et al. (2024)", title:"Twenty years of microplastics pollution research: what have we learned?", journal:"Science"},
+              {citation:"Zhang et al. (2025)", title:"Microplastics and human health: toxicological pathways and public health implications", journal:"Frontiers in Public Health"},
+              {citation:"Monteiro et al. (2025)", title:"Ultra-processed foods and human health: the main thesis and the evidence", journal:"The Lancet — links UPFs to chronic disease, cognitive decline and stroke"},
+              {citation:"FDA Total Diet Study (2024)", title:"Analytical results of testing food for PFAS from environmental contamination", journal:"U.S. FDA — PFAS detected across seafood, meat and dairy in ongoing national testing"},
+              {citation:"Landrigan et al. (2025)", title:"Microplastic and nanoplastic pollution and associated potential disease risks", journal:"The Lancet Planetary Health — comprehensive review of metabolic, cardiovascular and cancer risks"},
+              {citation:"EWG / FDA (2025)", title:"FDA announces phase-out of petroleum-based synthetic food dyes", journal:"FDA press release — Red 3 banned, further petroleum-based dyes under review"},
+              {citation:"UNC Gillings School of Global Public Health (2025)", title:"Cookware and food processing as pathways of PFAS dietary exposure", journal:"NC Health News — 143 million Americans estimated to have detectable PFAS in tap water"},
             ].map((ref, i) => (
               <div key={i} style={{padding:"12px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
                 <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:2}}>{ref.citation} — {ref.title}</div>
