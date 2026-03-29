@@ -1328,7 +1328,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           {[
             {title:"Radical transparency", body:"Our scoring methodology is open. We show you the breakdown — materials, packaging, usage, manufacturing — so you can judge for yourself, not just trust a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
-            {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free, requires no account, and will always stay that way."},
+            {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free and requires no account."},
             {title:"Science first", body:"Every score is grounded in published research. We link our sources, cite our methodology, and update scores when the science changes."},
           ].map((v,i)=>(
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
@@ -1366,53 +1366,37 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
   );
 };
 
-// ── PRIVACY PAGE ─────────────────────────────────────────────
-const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => (
-  <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-    <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Privacy Policy</h1>
-    <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: March 2026</p>
-
-    {[
-      {
-        title:"The short version",
-        body:"Partiqule doesn't require an account. We don't collect your name, email, or any personal information. Your scan history is stored only on your own device — we never see it. We use privacy-friendly analytics that don't track you across the web."
-      },
-      {
-        title:"What we collect",
-        body:"We use Plausible Analytics — a privacy-first tool that collects no personal data, uses no cookies, and is fully GDPR compliant. It tells us how many people visit the site and which pages are popular, nothing more. We cannot identify you individually. Your scan history (My Scans) is stored in your browser's localStorage — it never leaves your device and we have no access to it."
-      },
-      {
-        title:"Affiliate links",
-        body:"Some product recommendations on Partiqule are affiliate links, primarily through Amazon Associates. If you click a link and make a purchase, we may earn a small commission at no extra cost to you. This is how we fund free access to the site. Affiliate links are clearly marked with '#ad · affiliate links' on the page. We only recommend products we genuinely believe are safer alternatives — affiliate relationships never influence our scoring."
-      },
-      {
-        title:"Third party services",
-        body:"When you click through to Amazon, Grove Collaborative, or any other retailer, you leave Partiqule and their own privacy policies apply. We are not responsible for the privacy practices of external sites. Our AI scoring is powered by Anthropic's Claude — your search queries are sent to Anthropic's API to generate scores. Anthropic's privacy policy applies to that processing."
-      },
-      {
-        title:"Cookies",
-        body:"Partiqule does not use cookies. Plausible Analytics is cookieless. Your scan history is stored in localStorage, not cookies, and is never transmitted to us."
-      },
-      {
-        title:"Children's privacy",
-        body:"Partiqule is not directed at children under 13. We do not knowingly collect any information from children."
-      },
-      {
-        title:"Your rights",
-        body:"Since we don't collect personal data, there is nothing to access, correct or delete on our end. If you want to clear your scan history, use the 'Clear' button in My Scans — this deletes it from your device immediately."
-      },
-      {
-        title:"Contact",
-        body:"Questions about this policy? Email paul@partiqule.com and we'll respond within a few days."
-      },
-    ].map((section, i) => (
-      <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < 7 ? `1px solid ${border}` : "none"}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{section.title}</h2>
-        <p style={{fontSize:15, color:muted, lineHeight:1.8, margin:0}}>{section.body}</p>
-      </div>
-    ))}
-  </div>
-);
+// ── TERMS OF SERVICE PAGE ─────────────────────────────────────
+const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
+  const sections = [
+    { title:"1. Overview", body:"Partiqule provides product information and microplastics exposure scores to help you make more informed decisions. By using Partiqule, you agree to these Terms." },
+    { title:"2. Informational Use Only (Not Medical Advice)", body:"Partiqule's scores, analyses, and recommendations are provided for informational and educational purposes only. They are based on available research and modeling, and are not medical, health, or safety advice.\n\nYou should not rely on Partiqule as a substitute for professional medical or scientific guidance. Use of the platform is at your own risk." },
+    { title:"3. How Our Scoring Works", body:"Our product scores are generated using a combination of AI analysis and research-based weighting factors, including material composition, usage patterns, and exposure pathways.\n\nWhile we aim for accuracy and transparency, we do not guarantee that any score, analysis, or recommendation is complete, accurate, or up to date." },
+    { title:"4. No Warranties", body:"Partiqule is provided \"as is\" and \"as available.\" We make no warranties, express or implied, including but not limited to:\n\n• Accuracy or completeness of information\n• Fitness for a particular purpose\n• Reliability or availability of the service" },
+    { title:"5. Limitation of Liability", body:"To the fullest extent permitted by law, Partiqule and its creators shall not be liable for any indirect, incidental, or consequential damages resulting from:\n\n• Your use of (or inability to use) the service\n• Decisions made based on Partiqule content\n• Third-party products or services" },
+    { title:"6. Third-Party Services and Links", body:"Partiqule may link to third-party websites (including retailers). We are not responsible for their content, products, or privacy practices.\n\nOur scoring system is powered in part by AI services provided by Anthropic. By using Partiqule, you acknowledge that queries may be processed by third-party providers." },
+    { title:"7. Affiliate Disclosure", body:"Some links on Partiqule are affiliate links. This means we may earn a commission if you make a purchase through them, at no additional cost to you.\n\nAffiliate relationships do not influence our scoring or recommendations." },
+    { title:"8. Acceptable Use", body:"You agree not to:\n\n• Misuse or attempt to disrupt the service\n• Attempt to reverse engineer or manipulate scoring systems\n• Use the platform for unlawful purposes" },
+    { title:"9. Intellectual Property", body:"All content, branding, and scoring methodology on Partiqule are owned by Partiqule and may not be copied, reproduced, or distributed without permission." },
+    { title:"10. Changes to the Service", body:"We may update, modify, or discontinue parts of the service at any time without notice." },
+    { title:"11. Changes to These Terms", body:"We may update these Terms from time to time. Continued use of Partiqule after changes means you accept the updated Terms." },
+    { title:"12. Contact", body:"Questions about these Terms? Email paul@partiqule.com." },
+  ];
+  return (
+    <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+      <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Terms of Service</h1>
+      <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: March 2026</p>
+      {sections.map((s, i) => (
+        <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
+          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{s.title}</h2>
+          {s.body.split("\n\n").map((para, j) => (
+            <p key={j} style={{fontSize:15, color:muted, lineHeight:1.8, margin:"0 0 12px", whiteSpace:"pre-line"}}>{para}</p>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
 function useWindowWidth() {
@@ -2019,7 +2003,7 @@ export default function App() {
             {label:"About",           pg:"about",   path:"/about"},
             {label:"The Science",     pg:"science",  path:"/science"},
             {label:"My Scans",        pg:"history",  path:"/history"},
-            {label:"Privacy Policy",  pg:"privacy",  path:"/privacy"},
+            {label:"Terms of Service", pg:"privacy",  path:"/privacy"},
           ].map(item=>(
             <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({},"",item.path); window.scrollTo(0,0);}}
               style={{color:"#555", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}
