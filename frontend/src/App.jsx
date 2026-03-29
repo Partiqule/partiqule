@@ -1681,6 +1681,18 @@ export default function App() {
 
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
+                {/* Break-even stat */}
+                {result.break_even && (
+                  <div style={{marginTop:16, background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"14px 18px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, textAlign:"left"}}>
+                    <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>♻️ Sustainability Break-Even</div>
+                    <div style={{fontSize:14, color:isDark?"#86efac":"#15803d", fontWeight:600, marginBottom:4}}>
+                      ~{result.break_even.uses} uses to offset with {result.break_even.alternative_name}
+                    </div>
+                    <div style={{fontSize:12, color:isDark?"#4ade80":"#166534", opacity:0.8, lineHeight:1.5}}>{result.break_even.note}</div>
+                    <div style={{fontSize:10, color:isDark?"#166534":"#86efac", marginTop:6, opacity:0.6}}>{result.break_even.source}</div>
+                  </div>
+                )}
+
                 <SplitView result={result} isDark={isDark}/>
                 <ShareBadge result={result}/>
               </div>

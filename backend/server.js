@@ -134,7 +134,7 @@ Return ONLY this JSON:
 // ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
 async function pass2(productName, pass1Result) {
   return callClaude(
-    `You are a microplastics scoring auditor. Your job is to review an initial analysis and produce a final verified score. Always respond with raw JSON only.`,
+    `You are a microplastics scoring auditor and lifecycle analysis expert. Your job is to review an initial analysis, produce a final verified score, and calculate sustainability break-even points for alternatives. Always respond with raw JSON only.`,
     `Review this initial microplastics analysis for "${productName}" and produce a verified final score.
 
 Initial analysis:
@@ -148,6 +148,29 @@ Apply these scoring rules:
 5. Score must be an integer 1-10.
 6. Refine concerns to be highly specific — mention actual plastic names, not generic statements.
 
+BREAK-EVEN CALCULATION:
+For the most likely reusable alternative to this product, calculate how many uses are needed before the alternative has a lower total environmental footprint than single-use.
+
+Base your estimate on real lifecycle analysis principles:
+- Manufacturing footprint of reusable item (energy, materials, transport)
+- Footprint of single-use item being replaced (production + disposal)
+- Factor in washing energy cost for items that need cleaning
+- Use conservative real-world estimates
+
+Reference break-even benchmarks for accuracy:
+- Stainless steel bottle vs plastic bottles: ~50 uses (some studies say 30-100 depending on material)
+- Cotton tote bag vs plastic bags: ~130 uses (UNEP / Danish EPA data)
+- Organic cotton tote: ~150 uses (higher manufacturing footprint)
+- Beeswax wrap vs cling film: ~6-10 uses
+- Bamboo toothbrush vs plastic: ~1 use (similar manufacturing, biodegradable end-of-life)
+- Cast iron pan vs non-stick: ~200 uses
+- Glass food container vs plastic: ~25 uses
+- Menstrual cup vs disposable pads: ~3 months of use
+- Safety razor vs disposable: ~10 uses
+- Reusable coffee cup vs disposable: ~20-55 uses depending on material
+- Cloth nappy vs disposable: ~150 uses
+- Silicone food bag vs zip-lock: ~15 uses
+
 Return ONLY this JSON:
 {
   "final_score": 7,
@@ -156,9 +179,15 @@ Return ONLY this JSON:
   "refined_concerns": ["very specific concern mentioning plastic name", "concern 2", "concern 3"],
   "summary": "2 clear sentences summarizing the risk for a general audience",
   "confidence": "high|medium|low",
-  "confidence_note": "short note on what would improve confidence"
+  "confidence_note": "short note on what would improve confidence",
+  "break_even": {
+    "uses": 50,
+    "alternative_name": "stainless steel water bottle",
+    "note": "After 50 uses, a stainless bottle has a lower total footprint than single-use plastic bottles",
+    "source": "Lifecycle analysis estimate based on manufacturing and disposal footprint"
+  }
 }`,
-    600
+    700
   );
 }
 
@@ -237,6 +266,7 @@ app.post("/analyze", async (req, res) => {
       peer_comparison:     peerComparison,
       breakdown:           p1.product_breakdown || null,
       scan_next:           p1.scan_next || [],
+      break_even:          p2?.break_even || null,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,
