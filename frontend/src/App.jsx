@@ -1550,7 +1550,7 @@ function useWindowWidth() {
 }
 
 // ── MAIN APP ──────────────────────────────────────────────────
-export default function App() {
+function App() {
   const [query,       setQuery]      = useState("");
   const [searchMode,  setSearchMode] = useState("name");
   const [result,      setResult]     = useState(null);
