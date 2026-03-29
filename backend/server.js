@@ -158,20 +158,50 @@ async function pass1(productName, materialContext = null) {
     : "";
 
   return callClaude(
-    `You are a senior microplastics research scientist with expertise in polymer chemistry, toxicology, and consumer product safety. You analyze products with rigorous scientific accuracy. Always respond with raw JSON only — no markdown, no preamble.`,
-    `Analyze "${productName}" for microplastics risk with scientific rigor.
+    `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble.
+
+KEY RESEARCH FINDINGS THAT MUST INFORM YOUR SCORING:
+
+MICROPLASTICS:
+- Marfella et al. (2024), NEJM: Polypropylene (PP) found in 58% of carotid artery plaques, PVC in 12%. Patients with detectable microplastics had significantly higher risk of heart attack and stroke. PP and PVC in food-contact products must be scored HIGH (8-9).
+- Yan et al. (2024), Nature Medicine: Microplastics accumulate in human brain, kidney and liver. Brain concentrations increased between 2016 and 2024 samples. Higher concentrations found in dementia patients. Daily-use ingestion/inhalation products carry elevated neurological risk.
+- Leslie et al. (2022), Environment International: Microplastics detected in 100% of human blood samples tested.
+- Ragusa et al. (2021), Environment International: Microplastics found in human placentas — fetal exposure is confirmed.
+- Li et al. (2020), Nature Food: Heating polypropylene baby bottles releases millions of microplastic particles per litre.
+- Hernandez et al. (2019), Environmental Science & Technology: Nylon and PET tea bags release billions of particles per cup.
+
+PFAS / NON-STICK:
+- FDA Total Diet Study (2024): PFAS detected in seafood, meat and dairy from environmental contamination. Non-stick cookware (PTFE/PFAS) is a primary dietary exposure pathway.
+- PFAS are known endocrine disruptors linked to thyroid disruption, elevated cholesterol, reduced fertility and cancer. Non-stick pans with PTFE must score 8-9 on both plastic danger and health concern.
+
+ULTRA-PROCESSED FOODS:
+- Monteiro et al. (2025), The Lancet: Ultra-processed foods (UPFs) consistently linked to chronic disease, cardiovascular risk, cognitive decline and stroke. UPF health scores should reflect severity: heavily processed snacks/drinks = 6-8, minimally processed whole foods = 1-3.
+
+ARTIFICIAL DYES:
+- FDA (2025): Red 3 banned. FDA announced phase-out of all petroleum-based synthetic dyes. Products containing Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2, Green 3 should score 6-8 on health concern.
+- Multiple studies link synthetic dyes to hyperactivity in children and potential carcinogenicity.`,
+
+    `Analyze "${productName}" for microplastics and health risk with scientific rigor.
 ${contextSection}
 If this is a barcode, identify the most likely consumer product and analyze that.
 
 IMPORTANT: If real product data is provided above, base your material analysis on that factual data. Do not assume plastic content if the product is confirmed to be wood, glass, stainless steel, ceramic, or other natural materials. Only identify plastics that are actually present.
 
-Consider:
-- Specific plastic polymers present (PET, HDPE, PVC, LDPE, PP, PS, nylon, polyester, PTFE, BPA, PFAS, etc.)
-- Whether plastic contacts food, skin, or is inhaled
-- Heat exposure (does it get hot? heated plastics leach more)
-- Mechanical wear (friction, washing, chewing release particles)
-- Packaging material vs product material
-- Frequency and duration of typical use
+PLASTIC SCORING — apply the research findings in your system prompt:
+- PP and PVC in food-contact products: score 8-9 (NEJM 2024 cardiovascular evidence)
+- PTFE/PFAS non-stick coatings: score 8-9 (known endocrine disruptors, FDA PFAS data)
+- Nylon/PET tea bags: score 7-8 (billions of particles per cup, Hernandez 2019)
+- PP baby bottles heated: score 8-9 (millions of particles per litre, Li 2020)
+- Daily ingestion/inhalation products: apply +1 to +2 neurological risk penalty (Yan 2024 brain accumulation)
+- Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2, no penalties
+
+HEALTH SCORING — separate from plastic, apply research:
+- Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
+- PFAS/non-stick cookware: score 8-9 health concern
+- Ultra-processed foods (chips, instant noodles, packaged snacks, soft drinks): score 6-8
+- Heavy processing with emulsifiers, preservatives, flavor enhancers: score 5-7
+- Whole, natural, minimally processed products: score 1-3
+- No non-plastic health concerns (wooden spoon, glass jar): score 1
 
 Return ONLY this JSON:
 {
@@ -200,18 +230,8 @@ Return ONLY this JSON:
     {"name": "second alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
     {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
-}
-
-HEALTH SCORE GUIDANCE (separate from plastic score):
-Score 1-10 based on broader chemical and health concerns EXCLUDING microplastics (already covered above).
-Consider: artificial additives/dyes/preservatives, endocrine disruptors, pesticide residues, ultra-processing, heavy metals, PFAS in non-plastic form, allergens, carcinogens, alcohol/tobacco content.
-- 1-2: Natural, whole, minimal processing, no concerning additives
-- 3-4: Minor processing, generally safe additives
-- 5-6: Some concerning additives or moderate processing
-- 7-8: Significant chemical concerns, known harmful additives
-- 9-10: Serious health concerns beyond plastics (carcinogens, heavy metals, etc.)
-Note: If the product has NO non-plastic health concerns (e.g. a wooden spoon), set health_score to 1 and health_concerns to [].`,
-    1400
+}`,
+    1600
   );
 }
 
@@ -219,21 +239,23 @@ Note: If the product has NO non-plastic health concerns (e.g. a wooden spoon), s
 async function pass2(productName, pass1Result) {
   const plastics = (pass1Result.identified_plastics || []).join(", ") || "none identified";
   return callClaude(
-    `You are a microplastics scoring auditor. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text. Keep all string values under 20 words.`,
-    `Score "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category} identified_plastics:${plastics}
+    `You are a scientific auditor reviewing microplastics and health risk scores. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text. Keep all string values under 20 words.`,
+    `Audit the score for "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category} identified_plastics:${plastics}
 
-CRITICAL RULE: Exposure frequency and type penalties ONLY apply if the product itself contains plastic that the user is actually exposed to. If the product is made of natural materials (wood, glass, stainless steel, cotton, ceramic, etc.) and identified_plastics is empty or minimal, do NOT apply exposure penalties — the score should be low regardless of usage frequency. A wooden spoon used daily is still low risk.
+CRITICAL RULE: Exposure penalties ONLY apply if the product itself contains plastic the user is actually exposed to. Natural materials (wood, glass, stainless steel, cotton, ceramic) score low regardless of frequency. A wooden spoon used daily is still low risk.
 
-Scoring rules (apply only when plastic is actually present):
-- Daily use +1 to +2, weekly +0.5
-- Ingestion +1, skin contact +0.5, inhalation +1
-- 70% product_score + 30% packaging_score
-- Integer 1-10
+RESEARCH-BASED SCORING RULES:
+- PP or PVC in food-contact products: base score must be 8-9 (Marfella et al. 2024, NEJM — found in arterial plaques, linked to heart attack/stroke)
+- PTFE/PFAS non-stick coatings: base score must be 8-9 (FDA 2024 PFAS data, known endocrine disruptors)
+- Daily ingestion or inhalation of any plastic: apply +2 neurological penalty (Yan et al. 2024, Nature Medicine — brain accumulation confirmed)
+- Weekly use: +0.5, skin contact: +0.5, inhalation: +1
+- 70% product_score + 30% packaging_score base calculation
+- Final score: integer 1-10
 
 Break-even benchmarks (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, container→glass:25, pads→menstrual cup:90, razor→safety:10, zipbag→silicone:15, shopping bag→tote:130, shampoo→bar:6, synthetic clothing→natural:30. Furniture/electronics/appliances/natural materials=null.
 
 Return ONLY valid JSON under 400 tokens:
-{"final_score":7,"score_reasoning":"max 15 words","exposure_multiplier":"daily","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words total","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
+{"final_score":7,"score_reasoning":"max 15 words citing specific research where relevant","exposure_multiplier":"daily","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words total","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
     800
   );
 }
@@ -376,6 +398,7 @@ app.post("/analyze", async (req, res) => {
 });
 
 app.get("/cache-stats", (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
+app.get("/cache-clear", (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
 app.get("/health",      (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured — using static database",
