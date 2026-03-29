@@ -1181,7 +1181,7 @@ export default function App() {
             Go to Partiqule →
           </button>
         </div>
-      ) ) : page === "history" ? (
+      ) : page === "history" ? (
         <HistoryPage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
           onSelect={(item)=>{setResult(item); setPage("home");}}
