@@ -497,132 +497,149 @@ const ShareBadge = ({result}) => {
   const label       = scoreLabel(result.score);
 
   const buildCanvas = () => {
-    const canvas  = document.createElement("canvas");
-    const dpr     = window.devicePixelRatio || 1;
-    const W = 600, H = 380;
+    const canvas = document.createElement("canvas");
+    const dpr    = window.devicePixelRatio || 1;
+    const W = 600, H = 400;
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    const hasHealth  = result.health_score && result.overall_score;
-    const bgColor    = result.score<=4?"#f0fdf4":result.score<=6?"#fffbeb":"#fff5f5";
+    const os = result.overall_score || result.score;
+    const ps = result.score;
+    const hs = result.health_score;
+    const hasAll = os && ps && hs;
 
-    // Background
+    const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
+    const plasticColor = ps<=3?"#16a34a":ps<=6?"#ca8a04":ps<=8?"#ea580c":"#dc2626";
+    const healthColor  = hs ? (hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626") : "#aaa";
+
+    const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
+
+    // ── Background ──
     ctx.fillStyle = bgColor;
     ctx.beginPath();
     ctx.roundRect(0, 0, W, H, 20);
     ctx.fill();
 
-    // Top accent bar
+    // Top bar
     ctx.fillStyle = "#052e16";
     ctx.fillRect(0, 0, W, 6);
 
-    // Logo
+    // ── Logo + tagline top left ──
     ctx.fillStyle = "#052e16";
-    ctx.font = "bold 17px system-ui";
-    ctx.fillText("🔬 Partiqule", 32, 42);
-
-    // Product name
-    ctx.fillStyle = "#111";
-    ctx.font = "bold 24px system-ui";
-    const name = safeName?.length > 38 ? safeName.slice(0,35)+"…" : safeName;
-    ctx.fillText(name, 32, 84);
-
-    // ── LEFT: Big plastic score ──
-    ctx.fillStyle = color;
-    ctx.font = "bold 88px system-ui";
-    ctx.fillText(result.score, 32, 196);
+    ctx.font = "bold 16px system-ui";
+    ctx.fillText("🔬 Partiqule", 32, 40);
     ctx.fillStyle = "#aaa";
-    ctx.font = "bold 28px system-ui";
-    ctx.fillText("/ 10", 108, 196);
+    ctx.font = "12px system-ui";
+    ctx.fillText("Scan anything. Know everything.", 32, 58);
 
-    // Danger pill
-    const pillBg = result.score<=4?"#dcfce7":result.score<=6?"#fef9c3":"#fee2e2";
-    ctx.fillStyle = pillBg;
+    // ── Product name ──
+    ctx.fillStyle = "#111";
+    ctx.font = "bold 22px system-ui";
+    const name = safeName?.length > 36 ? safeName.slice(0,33)+"…" : safeName;
+    ctx.fillText(name, 32, 96);
+
+    // ── LEFT: Big overall score ──
+    ctx.fillStyle = overallColor;
+    ctx.font = "bold 100px system-ui";
+    ctx.fillText(os, 32, 220);
+    ctx.fillStyle = "#bbb";
+    ctx.font = "bold 26px system-ui";
+    ctx.fillText("/ 10", 32 + (os >= 10 ? 128 : 80), 220);
+
+    // Overall label
+    const overallLabel = os<=3?"Minimal":os<=6?"Moderate":os<=8?"High":"Very High";
+    const oBgColor = os<=3?"#dcfce7":os<=6?"#fef9c3":os<=8?"#ffedd5":"#fee2e2";
+    ctx.fillStyle = oBgColor;
     ctx.beginPath();
-    ctx.roundRect(32, 210, 165, 28, 14);
+    ctx.roundRect(32, 234, 200, 30, 15);
     ctx.fill();
-    ctx.fillStyle = color;
+    ctx.fillStyle = overallColor;
     ctx.font = "bold 13px system-ui";
-    ctx.fillText(`🔬 ${label} Danger`, 46, 229);
+    ctx.fillText(`⚖️ ${overallLabel} Overall`, 48, 254);
 
-    if (hasHealth) {
-      // ── RIGHT: Health + Overall score boxes ──
-      const healthColor = result.health_score<=3?"#16a34a":result.health_score<=6?"#ca8a04":result.health_score<=8?"#ea580c":"#dc2626";
-      const healthBg    = result.health_score<=3?"#f0fdf4":result.health_score<=6?"#fefce8":result.health_score<=8?"#fff7ed":"#fef2f2";
-      const overallColor = result.overall_score<=3?"#16a34a":result.overall_score<=6?"#ca8a04":result.overall_score<=8?"#ea580c":"#dc2626";
-      const overallBg   = result.overall_score<=3?"#f0fdf4":result.overall_score<=6?"#fefce8":result.overall_score<=8?"#fff7ed":"#fef2f2";
+    // Overall sub-label
+    ctx.fillStyle = "#aaa";
+    ctx.font = "11px system-ui";
+    ctx.fillText("70% plastic · 30% health", 32, 282);
 
-      // Health score box
+    // ── DIVIDER ──
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W/2 - 10, 108);
+    ctx.lineTo(W/2 - 10, 300);
+    ctx.stroke();
+
+    // ── RIGHT: Plastic score box ──
+    const RX = W/2 + 10;
+    const plasticBg = ps<=3?"#f0fdf4":ps<=6?"#fefce8":ps<=8?"#fff7ed":"#fef2f2";
+    ctx.fillStyle = plasticBg;
+    ctx.beginPath();
+    ctx.roundRect(RX, 108, W-RX-20, 82, 12);
+    ctx.fill();
+    ctx.strokeStyle = plasticColor + "55";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#666";
+    ctx.font = "11px system-ui";
+    ctx.fillText("🔬  Plastic Danger", RX+14, 128);
+    ctx.fillStyle = plasticColor;
+    ctx.font = "bold 36px system-ui";
+    ctx.fillText(`${ps}/10`, RX+14, 168);
+    const plasticLabel = ps<=3?"Minimal":ps<=6?"Moderate":ps<=8?"High":"Very High";
+    ctx.fillStyle = plasticColor;
+    ctx.font = "bold 12px system-ui";
+    ctx.fillText(plasticLabel, RX+14+ctx.measureText(`${ps}/10`).width+10, 168);
+
+    // ── RIGHT: Health score box ──
+    if (hs) {
+      const healthBg = hs<=3?"#f0fdf4":hs<=6?"#fefce8":hs<=8?"#fff7ed":"#fef2f2";
       ctx.fillStyle = healthBg;
       ctx.beginPath();
-      ctx.roundRect(320, 108, 240, 60, 12);
+      ctx.roundRect(RX, 202, W-RX-20, 82, 12);
       ctx.fill();
-      ctx.strokeStyle = healthColor + "44";
+      ctx.strokeStyle = healthColor + "55";
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.fillStyle = "#666";
       ctx.font = "11px system-ui";
-      ctx.fillText("❤️  Health concern", 336, 128);
+      ctx.fillText("❤️  Health Concern", RX+14, 222);
       ctx.fillStyle = healthColor;
-      ctx.font = "bold 28px system-ui";
-      ctx.fillText(`${result.health_score}/10`, 336, 158);
+      ctx.font = "bold 36px system-ui";
+      ctx.fillText(`${hs}/10`, RX+14, 262);
+      const healthLabel = hs<=3?"Low":hs<=6?"Moderate":hs<=8?"High":"Very High";
       ctx.fillStyle = healthColor;
-      ctx.font = "12px system-ui";
-      const healthLabel = result.health_score<=3?"Low":result.health_score<=6?"Moderate":"High";
-      ctx.fillText(healthLabel, 390, 158);
-
-      // Overall score box
-      ctx.fillStyle = overallBg;
-      ctx.beginPath();
-      ctx.roundRect(320, 182, 240, 68, 12);
-      ctx.fill();
-      ctx.strokeStyle = overallColor + "44";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.fillStyle = "#666";
-      ctx.font = "11px system-ui";
-      ctx.fillText("⚖️  Overall score", 336, 202);
-      ctx.fillStyle = overallColor;
-      ctx.font = "bold 34px system-ui";
-      ctx.fillText(`${result.overall_score}/10`, 336, 236);
-      ctx.fillStyle = "#aaa";
-      ctx.font = "10px system-ui";
-      ctx.fillText("50% plastic · 50% health", 336, 246);
+      ctx.font = "bold 12px system-ui";
+      ctx.fillText(healthLabel, RX+14+ctx.measureText(`${hs}/10`).width+10, 262);
     }
 
     // ── Summary ──
     ctx.fillStyle = "#555";
-    ctx.font = "14px system-ui";
+    ctx.font = "13px system-ui";
     const words = (result.summary || "").split(" ");
-    let line = "", y = hasHealth ? 290 : 160, lineH = 20;
-    const startX = hasHealth ? 32 : 220;
-    const maxW   = hasHealth ? W - 64 : 340;
-    if (!hasHealth) ctx.save(), ctx.translate(220, 0);
+    let line = "", y = 316, lineH = 19;
     for (const word of words) {
       const test = line + (line ? " " : "") + word;
-      if (ctx.measureText(test).width > maxW && line) {
-        ctx.fillText(line, hasHealth ? startX : 0, y);
-        line = word; y += lineH;
-        if (y > (hasHealth ? 330 : 255)) { ctx.fillText(line+"…", hasHealth ? startX : 0, y); break; }
+      if (ctx.measureText(test).width > W-64 && line) {
+        ctx.fillText(line, 32, y); line = word; y += lineH;
+        if (y > 356) { ctx.fillText(line+"…", 32, y); break; }
       } else { line = test; }
     }
-    if (y <= (hasHealth ? 330 : 255)) ctx.fillText(line, hasHealth ? startX : 0, y);
-    if (!hasHealth) ctx.restore();
+    if (y <= 356) ctx.fillText(line, 32, y);
 
-    // Divider + footer
+    // ── Footer ──
     ctx.strokeStyle = "#e5e7eb";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(32, hasHealth ? 342 : 282);
-    ctx.lineTo(W-32, hasHealth ? 342 : 282);
+    ctx.moveTo(32, 368); ctx.lineTo(W-32, 368);
     ctx.stroke();
-    ctx.fillStyle = "#aaa";
+    ctx.fillStyle = "#bbb";
     ctx.font = "12px system-ui";
-    ctx.fillText("partiqule.com · Know what's in your products", 32, hasHealth ? 366 : 310);
+    ctx.fillText("partiqule.com · Scan anything. Know everything.", 32, 388);
 
     return canvas;
   };
@@ -637,8 +654,8 @@ const ShareBadge = ({result}) => {
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
-              title: `${safeName} — Danger Score ${result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule and got a danger score of ${result.score}/10. Check what's in your products at partiqule.com`,
+              title: `${safeName} — Overall Score ${result.overall_score||result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule — Overall score ${result.overall_score||result.score}/10. 🔬 Plastic danger: ${result.score}/10${result.health_score ? ` · ❤️ Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
