@@ -131,8 +131,11 @@ const RiskBar = ({score}) => {
 
 // ── SCAN VS SAFE SPLIT VIEW ───────────────────────────────────
 const SplitView = ({result, isDark}) => {
-  const best = result.alternatives?.[0];
-  if (!best) return null;
+  // Only show if we have an alternative that's actually relevant — same category or AI suggested
+  const best = result.alternatives?.find(p => p.category === result.category || p.source === "ai")
+    || result.alternatives?.[0];
+  // Don't show if score is already very low (nothing to compare against)
+  if (!best || result.score <= 3) return null;
   const surface = isDark?"#1e2433":"#fff";
   const border  = isDark?"#2a3347":"#eee";
   const text    = isDark?"#f1f5f9":"#111";
@@ -146,9 +149,9 @@ const SplitView = ({result, isDark}) => {
           <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{result.product_name?.length>40?result.product_name.slice(0,37)+"…":result.product_name}</div>
           <div style={{display:"flex", alignItems:"center", gap:8}}>
             <div style={{fontSize:28, fontWeight:800, color:scoreColor(result.score), fontFamily:"'Outfit',sans-serif"}}>{result.score}</div>
-            <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600}}>/10 risk</div>
+            <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600}}>/10 danger</div>
           </div>
-          <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600, marginTop:6, padding:"4px 10px", background:`${scoreColor(result.score)}15`, borderRadius:20, display:"inline-block"}}>{scoreLabel(result.score)} Risk</div>
+          <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600, marginTop:6, padding:"4px 10px", background:`${scoreColor(result.score)}15`, borderRadius:20, display:"inline-block"}}>{scoreLabel(result.score)} Danger</div>
         </div>
         {/* VS divider */}
         <div style={{display:"flex", alignItems:"center", justifyContent:"center", background:isDark?"#131929":"#f5f5f5", padding:"0 14px", zIndex:1}}>
@@ -160,7 +163,7 @@ const SplitView = ({result, isDark}) => {
           <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{best.name}</div>
           <div style={{display:"flex", alignItems:"center", gap:8}}>
             <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{best.score}</div>
-            <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 risk</div>
+            <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
           </div>
           <a href={best.affiliateUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12, color:"#fff", fontWeight:600, marginTop:8, padding:"5px 14px", background:"#16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, textDecoration:"none"}}>
             Shop now <IconArrow size={11} color="#fff"/>
@@ -979,9 +982,25 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           Every scan runs a two-pass AI analysis powered by Anthropic's Claude — a senior research scientist pass that identifies specific plastic polymers, followed by an auditor pass that verifies and weights the final score based on exposure frequency, route, and confidence.
         </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Scores are weighted by what matters most: how often you use it, whether it contacts your food or skin, and whether heat or friction release particles during normal use. The result is a 1–10 danger score grounded in peer-reviewed microplastics research.
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          Scores are weighted by what matters most: how often you use it, whether it contacts your food or skin, and whether heat or friction release particles during normal use.
         </p>
+        <div style={{background:isDark?"#1e2433":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
+          <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.05em"}}>Three scores, one picture</div>
+          {[
+            {label:"🔬 Plastic Danger Score", desc:"The primary score. 1–10 based on plastic polymer content, leaching risk, heat exposure, and how plastic contacts your body. This is the hero number.", color:"#dc2626"},
+            {label:"❤️ Health Concern Score", desc:"Secondary score for broader chemical concerns beyond plastics — artificial additives, endocrine disruptors, ultra-processing, pesticide residues, heavy metals.", color:"#7c3aed"},
+            {label:"⚖️ Overall Score", desc:"Weighted combination: 70% Plastic Danger + 30% Health Concern. Gives you one number that reflects the full picture while keeping plastic front and centre.", color:"#16a34a"},
+          ].map((s,i)=>(
+            <div key={i} style={{display:"flex", gap:12, marginBottom: i<2?14:0}}>
+              <div style={{width:3, borderRadius:99, background:s.color, flexShrink:0}}/>
+              <div>
+                <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:3}}>{s.label}</div>
+                <div style={{fontSize:13, color:muted, lineHeight:1.6}}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Values */}
@@ -1441,6 +1460,67 @@ export default function App() {
                 <RiskBar score={result.score}/>
 
                 <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 6px"}}>{scoreLabel(result.score)} Danger</div>
+
+                {/* Health score — secondary badge */}
+                {result.health_score && (
+                  <div style={{marginBottom:8}}>
+                    <div style={{display:"inline-flex", alignItems:"center", gap:6,
+                      background:isDark?"#1e1e2e":"#f8f7ff",
+                      border:`1px solid ${result.health_score<=3?"#bbf7d0":result.health_score<=6?"#e9d5ff":"#fecaca"}`,
+                      borderRadius:20, padding:"5px 14px"}}>
+                      <span style={{fontSize:11, color:muted, fontWeight:500}}>❤️ Health concern:</span>
+                      <span style={{fontSize:13, fontWeight:700,
+                        color:result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626"}}>
+                        {result.health_score}/10
+                      </span>
+                      <span style={{fontSize:11,
+                        color:result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626"}}>
+                        {result.health_score<=3?"Low":result.health_score<=6?"Moderate":"High"}
+                      </span>
+                    </div>
+                    {result.health_note && (
+                      <div style={{fontSize:11, color:muted, marginTop:4, fontStyle:"italic", paddingLeft:4}}>{result.health_note}</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Overall score — weighted composite */}
+                {result.overall_score && result.health_score && (
+                  <div style={{marginBottom:8}}>
+                    <div style={{display:"inline-flex", alignItems:"center", gap:8,
+                      background:isDark?"#1a1a2e":"#f0f4ff",
+                      border:"1px solid #c7d2fe",
+                      borderRadius:20, padding:"6px 16px"}}>
+                      <span style={{fontSize:11, color:muted, fontWeight:500}}>⚖️ Overall:</span>
+                      <span style={{fontSize:15, fontWeight:800,
+                        color:result.overall_score<=3?"#16a34a":result.overall_score<=6?"#d97706":"#dc2626",
+                        fontFamily:"'Outfit',sans-serif"}}>
+                        {result.overall_score}/10
+                      </span>
+                      <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>70% plastic · 30% health</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Overall score — weighted summary */}
+                {result.overall_score && result.health_score && (
+                  <div style={{
+                    display:"inline-flex", alignItems:"center", gap:10,
+                    background:isDark?"#1a1a2e":"#fafafa",
+                    border:`1.5px solid ${isDark?"#2a2a4a":"#e5e7eb"}`,
+                    borderRadius:12, padding:"8px 18px", marginBottom:4
+                  }}>
+                    <div style={{fontSize:11, color:muted, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em"}}>Overall Score</div>
+                    <div style={{display:"flex", alignItems:"baseline", gap:3}}>
+                      <span style={{fontSize:22, fontWeight:800, fontFamily:"'Outfit',sans-serif",
+                        color:scoreColor(result.overall_score)}}>{result.overall_score}</span>
+                      <span style={{fontSize:12, color:muted}}>/10</span>
+                    </div>
+                    <div style={{fontSize:10, color:muted, maxWidth:120, lineHeight:1.4}}>
+                      70% plastic · 30% health
+                    </div>
+                  </div>
+                )}
 
                 {/* Peer comparison — compact subtitle */}
                 {result.peer_comparison && (

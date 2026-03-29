@@ -182,6 +182,9 @@ Return ONLY this JSON:
   "packaging_score": 6,
   "exposure_frequency": "daily|weekly|occasional|rare",
   "exposure_type": "ingestion|skin_contact|inhalation|mixed",
+  "health_score": 5,
+  "health_concerns": ["specific non-plastic health concern 1", "specific concern 2"],
+  "health_note": "one sentence explaining the main non-plastic health consideration",
   "product_breakdown": {
     "materials": { "score": 7, "label": "specific material analysis mentioning plastic types" },
     "packaging": { "score": 6, "label": "packaging material and leaching risk" },
@@ -197,7 +200,17 @@ Return ONLY this JSON:
     {"name": "second alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
     {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
-}`,
+}
+
+HEALTH SCORE GUIDANCE (separate from plastic score):
+Score 1-10 based on broader chemical and health concerns EXCLUDING microplastics (already covered above).
+Consider: artificial additives/dyes/preservatives, endocrine disruptors, pesticide residues, ultra-processing, heavy metals, PFAS in non-plastic form, allergens, carcinogens, alcohol/tobacco content.
+- 1-2: Natural, whole, minimal processing, no concerning additives
+- 3-4: Minor processing, generally safe additives
+- 5-6: Some concerning additives or moderate processing
+- 7-8: Significant chemical concerns, known harmful additives
+- 9-10: Serious health concerns beyond plastics (carcinogens, heavy metals, etc.)
+Note: If the product has NO non-plastic health concerns (e.g. a wooden spoon), set health_score to 1 and health_concerns to [].`,
     1400
   );
 }
@@ -275,6 +288,10 @@ app.post("/analyze", async (req, res) => {
     const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
     const catAvg        = CATEGORY_AVERAGES[finalCategory] || CATEGORY_AVERAGES.other;
     const finalScore    = p2?.final_score ?? p1.product_score ?? 5;
+    const healthScore   = p1.health_score || null;
+    const overallScore  = healthScore
+      ? Math.min(10, Math.max(1, Math.round(finalScore * 0.7 + healthScore * 0.3)))
+      : null;
 
     // Peer comparison
     const peerPct = Math.round(((finalScore - 1) / 9) * 100);
@@ -322,6 +339,10 @@ app.post("/analyze", async (req, res) => {
       breakdown:           p1.product_breakdown || null,
       scan_next:           p1.scan_next || [],
       break_even:          p2?.break_even || null,
+      health_score:        p1.health_score || null,
+      health_concerns:     p1.health_concerns || [],
+      health_note:         p1.health_note || null,
+      overall_score:       overallScore,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,
