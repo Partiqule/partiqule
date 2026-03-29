@@ -25,9 +25,9 @@ function getShareUrl(productName) {
 }
 
 const EXAMPLES = [
-  {label:"Lipton tea bags",        hint:"plastic mesh!"},
-  {label:"Styrofoam coffee cup",   hint:"high danger!"},
-  {label:"Glad Press'n Seal wrap", hint:"pure plastic"},
+  {label:"Lipton tea bags",        hint:"7/10 — plastic mesh!"},
+  {label:"Styrofoam coffee cup",   hint:"10/10 — high danger!"},
+  {label:"Glad Press'n Seal wrap", hint:"8/10 — pure plastic"},
 ];
 
 const MOST_SEARCHED = [
