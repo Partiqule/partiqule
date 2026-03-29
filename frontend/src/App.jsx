@@ -1083,83 +1083,129 @@ const IconCamera = ({size=20,color="currentColor"}) => <svg width={size} height=
 
 // ── BARCODE SCANNER ───────────────────────────────────────────
 const BarcodeScanner = ({onDetect, onClose}) => {
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const [status, setStatus] = useState("starting"); // starting | scanning | error
+  const videoRef    = useRef(null);
+  const streamRef   = useRef(null);
+  const html5QrRef  = useRef(null);
+  const [status,   setStatus]   = useState("starting");
   const [errorMsg, setErrorMsg] = useState("");
-  const lastDetected = useRef("");
+  const lastDetected   = useRef("");
   const detectionCount = useRef(0);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const hasNative = "BarcodeDetector" in window;
 
   useEffect(() => {
-    let animFrame;
-    let canvas, ctx;
+    if (hasNative) {
+      // ── Android / Chrome: native BarcodeDetector ──────────────
+      let animFrame;
+      let canvas, ctx;
 
-    const startCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: {ideal:1280}, height: {ideal:720} }
-        });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setStatus("scanning");
-          scanLoop();
+      const startCamera = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment", width:{ideal:1280}, height:{ideal:720} }
+          });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+            setStatus("scanning");
+            scanLoop();
+          }
+        } catch(e) {
+          setStatus("error");
+          setErrorMsg(e.name === "NotAllowedError"
+            ? "Camera access denied. Please allow camera in your browser settings."
+            : "Could not access camera. Try typing the product name instead.");
         }
-      } catch(e) {
-        setStatus("error");
-        setErrorMsg(e.name === "NotAllowedError"
-          ? "Camera access denied. Please allow camera in your browser settings."
-          : "Could not access camera. Try pasting a URL or typing the product name.");
-      }
-    };
+      };
 
-    const scanLoop = () => {
-      if (!videoRef.current || videoRef.current.readyState < 2) {
-        animFrame = requestAnimationFrame(scanLoop);
-        return;
-      }
-      if (!canvas) {
-        canvas = document.createElement("canvas");
-        ctx = canvas.getContext("2d");
-      }
-      canvas.width  = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      ctx.drawImage(videoRef.current, 0, 0);
-
-      // Use BarcodeDetector API if available (Chrome/Edge on Android)
-      if ("BarcodeDetector" in window) {
+      const scanLoop = () => {
+        if (!videoRef.current || videoRef.current.readyState < 2) {
+          animFrame = requestAnimationFrame(scanLoop); return;
+        }
+        if (!canvas) { canvas = document.createElement("canvas"); ctx = canvas.getContext("2d"); }
+        canvas.width  = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        ctx.drawImage(videoRef.current, 0, 0);
         const detector = new window.BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"]});
         detector.detect(canvas).then(codes => {
           if (codes.length > 0) {
             const val = codes[0].rawValue;
-            if (val === lastDetected.current) {
-              detectionCount.current++;
-            } else {
-              lastDetected.current = val;
-              detectionCount.current = 1;
-            }
-            // Require 2 consistent reads to avoid false positives
-            if (detectionCount.current >= 2) {
-              onDetect(val);
-              return;
-            }
+            if (val === lastDetected.current) { detectionCount.current++; }
+            else { lastDetected.current = val; detectionCount.current = 1; }
+            if (detectionCount.current >= 2) { onDetect(val); return; }
           }
           animFrame = requestAnimationFrame(scanLoop);
         }).catch(()=>{ animFrame = requestAnimationFrame(scanLoop); });
+      };
+
+      startCamera();
+      return () => {
+        cancelAnimationFrame(animFrame);
+        if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      };
+
+    } else {
+      // ── iOS / Safari: html5-qrcode library ────────────────────
+      const scriptId = "html5qrcode-script";
+
+      const startHtml5Qr = () => {
+        const containerId = "html5qr-container";
+        try {
+          const html5QrCode = new window.Html5Qrcode(containerId);
+          html5QrRef.current = html5QrCode;
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333 },
+            (decodedText) => {
+              if (decodedText === lastDetected.current) {
+                detectionCount.current++;
+              } else {
+                lastDetected.current = decodedText;
+                detectionCount.current = 1;
+              }
+              if (detectionCount.current >= 2) {
+                html5QrCode.stop().catch(()=>{});
+                onDetect(decodedText);
+              }
+            },
+            () => {} // ignore errors during scanning
+          ).then(() => setStatus("scanning"))
+            .catch(e => {
+              setStatus("error");
+              setErrorMsg(e?.message?.includes("Permission")
+                ? "Camera access denied. Please allow camera in your browser settings."
+                : "Could not access camera. Try typing the product name instead.");
+            });
+        } catch(e) {
+          setStatus("error");
+          setErrorMsg("Could not start camera. Try typing the product name instead.");
+        }
+      };
+
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id  = scriptId;
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js";
+        script.onload  = () => startHtml5Qr();
+        script.onerror = () => { setStatus("error"); setErrorMsg("Failed to load scanner. Try typing the product name instead."); };
+        document.head.appendChild(script);
+      } else if (window.Html5Qrcode) {
+        startHtml5Qr();
       } else {
-        // Safari doesn't support BarcodeDetector — show friendly message
-        setStatus("error");
-        setErrorMsg("Barcode scanning isn't supported in this browser. Try Chrome or Firefox on your phone, or just type the product name in the search bar instead.");
+        // Script tag exists but still loading — wait
+        const wait = setInterval(() => {
+          if (window.Html5Qrcode) { clearInterval(wait); startHtml5Qr(); }
+        }, 100);
+        return () => clearInterval(wait);
       }
-    };
 
-    startCamera();
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    };
+      return () => {
+        if (html5QrRef.current) {
+          html5QrRef.current.stop().catch(()=>{});
+        }
+      };
+    }
   }, []);
 
   return (
@@ -1177,27 +1223,29 @@ const BarcodeScanner = ({onDetect, onClose}) => {
 
         {/* Camera viewport */}
         <div style={{position:"relative", borderRadius:16, overflow:"hidden", background:"#000", aspectRatio:"4/3"}}>
-          <video ref={videoRef} style={{width:"100%", height:"100%", objectFit:"cover"}} playsInline muted/>
+
+          {/* Native video (Android) */}
+          {hasNative && <video ref={videoRef} style={{width:"100%", height:"100%", objectFit:"cover"}} playsInline muted/>}
+
+          {/* html5-qrcode container (iOS) */}
+          {!hasNative && <div id="html5qr-container" style={{width:"100%", height:"100%"}}/>}
 
           {/* Scanning overlay */}
-          {status === "scanning" && (
+          {status === "scanning" && hasNative && (
             <>
-              {/* Corner brackets */}
               {[{t:12,l:12,r:"auto",b:"auto"},{t:12,l:"auto",r:12,b:"auto"},{t:"auto",l:12,r:"auto",b:12},{t:"auto",l:"auto",r:12,b:12}].map((pos,i)=>(
                 <div key={i} style={{position:"absolute", ...pos, width:28, height:28,
-                  borderTop: (i<2)?"3px solid #4ade80":"none",
+                  borderTop:(i<2)?"3px solid #4ade80":"none",
                   borderBottom:(i>=2)?"3px solid #4ade80":"none",
-                  borderLeft: (i===0||i===2)?"3px solid #4ade80":"none",
+                  borderLeft:(i===0||i===2)?"3px solid #4ade80":"none",
                   borderRight:(i===1||i===3)?"3px solid #4ade80":"none",
                 }}/>
               ))}
-              {/* Scan line animation */}
               <div style={{position:"absolute", left:16, right:16, height:2, background:"linear-gradient(to right, transparent, #4ade80, transparent)", animation:"scanline 2s ease-in-out infinite"}}/>
               <style>{`@keyframes scanline { 0%,100%{top:20%} 50%{top:75%} }`}</style>
             </>
           )}
 
-          {/* Status messages */}
           {status === "starting" && (
             <div style={{position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:12}}>
               <div style={{width:32, height:32, border:"3px solid rgba(255,255,255,0.2)", borderTop:"3px solid #4ade80", borderRadius:"50%", animation:"spin 0.8s linear infinite"}}/>
@@ -1228,7 +1276,7 @@ const BarcodeScanner = ({onDetect, onClose}) => {
             <input
               placeholder="e.g. 012345678901"
               style={{flex:1, padding:"10px 14px", borderRadius:8, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"#fff", fontSize:15, outline:"none", fontFamily:"monospace"}}
-              onKeyDown={e=>{ if(e.key==="Enter" && e.target.value.trim()) { onDetect(e.target.value.trim()); }}}
+              onKeyDown={e=>{ if(e.key==="Enter" && e.target.value.trim()) onDetect(e.target.value.trim()); }}
             />
             <button
               onClick={e=>{ const inp = e.target.closest("div").querySelector("input"); if(inp.value.trim()) onDetect(inp.value.trim()); }}
@@ -1970,8 +2018,8 @@ export default function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              {/* Barcode button — Android only. iOS WebKit doesn't support BarcodeDetector regardless of browser */}
-              {isMobile && !isIOS && (
+              {/* Barcode button — works on Android via BarcodeDetector, iOS via html5-qrcode */}
+              {isMobile && (
                 <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
                   <button onClick={()=>setScanning(true)}
                     style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
