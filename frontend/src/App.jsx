@@ -1150,7 +1150,7 @@ const BarcodeScanner = ({onDetect, onClose}) => {
       } else {
         // Safari doesn't support BarcodeDetector — show friendly message
         setStatus("error");
-        setErrorMsg("Barcode scanning isn't supported in Safari. Try Chrome on your phone, or just type the product name in the search bar instead.");
+        setErrorMsg("Barcode scanning isn't supported in this browser. Try Chrome or Firefox on your phone, or just type the product name in the search bar instead.");
       }
     };
 
@@ -1969,8 +1969,8 @@ export default function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              {/* Mobile barcode button — hide on Safari which doesn't support BarcodeDetector */}
-              {isMobile && "BarcodeDetector" in window && (
+              {/* Mobile barcode button — show on all mobile browsers, scanner handles unsupported gracefully */}
+              {isMobile && (
                 <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
                   <button onClick={()=>setScanning(true)}
                     style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
