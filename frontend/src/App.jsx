@@ -1152,30 +1152,23 @@ const BarcodeScanner = ({onDetect, onClose}) => {
       const startHtml5Qr = () => {
         const containerId = "html5qr-container";
         try {
-          const html5QrCode = new window.Html5Qrcode(containerId);
+          const html5QrCode = new window.Html5Qrcode(containerId, { verbose: false });
           html5QrRef.current = html5QrCode;
           html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.333 },
+            { fps: 15, qrbox: { width: 280, height: 180 } },
             (decodedText) => {
-              if (decodedText === lastDetected.current) {
-                detectionCount.current++;
-              } else {
-                lastDetected.current = decodedText;
-                detectionCount.current = 1;
-              }
-              if (detectionCount.current >= 2) {
-                html5QrCode.stop().catch(()=>{});
-                onDetect(decodedText);
-              }
+              // Fire immediately on first clean read — html5-qrcode is already reliable
+              html5QrCode.stop().catch(()=>{});
+              onDetect(decodedText);
             },
-            () => {} // ignore errors during scanning
+            () => {} // ignore per-frame errors
           ).then(() => setStatus("scanning"))
             .catch(e => {
               setStatus("error");
-              setErrorMsg(e?.message?.includes("Permission")
+              setErrorMsg(e?.message?.includes("Permission") || e?.message?.includes("denied")
                 ? "Camera access denied. Please allow camera in your browser settings."
-                : "Could not access camera. Try typing the product name instead.");
+                : "Could not start camera. Try typing the product name instead.");
             });
         } catch(e) {
           setStatus("error");
@@ -1228,7 +1221,7 @@ const BarcodeScanner = ({onDetect, onClose}) => {
           {hasNative && <video ref={videoRef} style={{width:"100%", height:"100%", objectFit:"cover"}} playsInline muted/>}
 
           {/* html5-qrcode container (iOS) */}
-          {!hasNative && <div id="html5qr-container" style={{width:"100%", height:"100%"}}/>}
+          {!hasNative && <div id="html5qr-container" style={{width:"100%", height:"100%", minHeight:280}}/>}
 
           {/* Scanning overlay */}
           {status === "scanning" && hasNative && (
