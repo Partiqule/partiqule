@@ -334,7 +334,7 @@ const products = [
     plasticScore: 1,
     material: "Specially woven nylon filter",
     description: "Captures microfibers from synthetic clothes in the wash",
-    affiliateUrl: `https://www.amazon.com/dp/B07D9QJZK6?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Guppyfriend+Guppyfriend+Washing+Bag&tag=partiqule-20`,
     price: "$30",
     tags: ["laundry", "microfiber", "filter", "accessory", "washing", "synthetic", "fleece"]
   },
@@ -348,7 +348,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 food-grade stainless steel",
     description: "Zero plastic contact with your drink, lifetime warranty",
-    affiliateUrl: `https://www.amazon.com/dp/B001D5VRJU?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Klean+Kanteen+stainless+water+bottle&tag=${AMAZON_TAG}`,
     price: "$30–40",
     tags: ["water bottle", "stainless", "reusable", "drink", "bottle", "cup", "mug", "travel"]
   },
@@ -360,7 +360,7 @@ const products = [
     plasticScore: 2,
     material: "Pure platinum silicone",
     description: "Replaces Ziploc & single-use plastic bags, no leaching",
-    affiliateUrl: `https://www.amazon.com/dp/B01N0YWJNG?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Stasher+Stasher+Silicone+Food+Bags&tag=partiqule-20`,
     price: "$12–20",
     tags: ["food storage", "silicone", "reusable", "bags", "ziploc", "sandwich bag", "freezer bag", "snack bag", "food bag"]
   },
@@ -372,7 +372,7 @@ const products = [
     plasticScore: 1,
     material: "Organic cotton, beeswax, jojoba oil",
     description: "Replaces plastic wrap & cling film, fully compostable",
-    affiliateUrl: `https://www.amazon.com/dp/B00KGUAPM4?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Bees+Wrap+Bees+Wrap+Beeswax+Food+Wrap&tag=partiqule-20`,
     price: "$18–22",
     tags: ["food wrap", "beeswax", "plastic-free", "compostable", "cling wrap", "saran wrap", "plastic wrap", "food cover", "ziploc"]
   },
@@ -384,7 +384,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass with silicone sleeve",
     description: "Zero plastic, pure taste, durable protective sleeve",
-    affiliateUrl: `https://www.amazon.com/dp/B004M8QJJE?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Lifefactory+Lifefactory+Glass+Water+Bottle&tag=partiqule-20`,
     price: "$25–35",
     tags: ["water bottle", "glass", "reusable", "drink", "bottle", "tea", "coffee", "beverage"]
   },
@@ -410,7 +410,7 @@ const products = [
     plasticScore: 1,
     material: "Glass bottle, no plastic tube",
     description: "Chewable tablets, no microbeads, glass packaging",
-    affiliateUrl: `https://www.amazon.com/dp/B08QRTV5LW?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Bite+Bite+Toothpaste+Bits&tag=partiqule-20`,
     price: "$12/month",
     tags: ["toothpaste", "plastic-free", "oral care", "glass", "teeth", "dental"]
   },
@@ -422,7 +422,7 @@ const products = [
     plasticScore: 1,
     material: "Cardboard packaging, natural ingredients",
     description: "Zero plastic, aluminum-free, compostable tube",
-    affiliateUrl: `https://www.amazon.com/dp/B01J4VIPZY?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Meow+Meow+Tweet+Meow+Meow+Tweet+Deodorant&tag=partiqule-20`,
     price: "$14–16",
     tags: ["deodorant", "plastic-free", "natural", "cardboard", "antiperspirant"]
   },
@@ -434,7 +434,7 @@ const products = [
     plasticScore: 1,
     material: "Organic cotton, comes in recycled case",
     description: "Replaces 1,750 single-use cotton pads, washable",
-    affiliateUrl: `https://www.amazon.com/dp/B085BVHJQR?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=LastObject+LastObject+Reusable+Cotton+Rounds&tag=partiqule-20`,
     price: "$18",
     tags: ["cotton rounds", "reusable", "skincare", "zero waste", "makeup remover", "face", "toner", "pads"]
   },
@@ -448,7 +448,7 @@ const products = [
     plasticScore: 1,
     material: "Natural loofah, bamboo handle",
     description: "No plastic bristles shedding into your food or water",
-    affiliateUrl: `https://www.amazon.com/dp/B00GWQPNDU?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Full+Circle+Full+Circle+Loofah+Dish+Brush&tag=partiqule-20`,
     price: "$8–12",
     tags: ["dish brush", "bamboo", "loofah", "kitchen", "cleaning", "sponge", "scrubber", "dishes"]
   },
@@ -460,7 +460,7 @@ const products = [
     plasticScore: 1,
     material: "Cellulose & cotton",
     description: "Replaces 17 rolls of paper towels, fully compostable",
-    affiliateUrl: `https://www.amazon.com/dp/B07BFWTZ5J?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=SUPERSCANDI+Swedish+Dishcloths+by+SUPERSCANDI&tag=partiqule-20`,
     price: "$14–18",
     tags: ["dish cloth", "cellulose", "kitchen", "paper towel", "towel", "cloth", "wipe", "cleaning"]
   },
@@ -472,7 +472,7 @@ const products = [
     plasticScore: 1,
     material: "Dissolvable sheets, cardboard box",
     description: "No plastic jug, replaces Tide Pods and liquid detergent",
-    affiliateUrl: `https://www.amazon.com/dp/B09ZYX1234?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Ecover+Ecover+Laundry+Detergent+Sheets&tag=partiqule-20`,
     price: "$16–20",
     tags: ["laundry", "detergent", "plastic-free", "sheets", "washing", "tide", "pods", "clothes wash"]
   },
@@ -484,7 +484,7 @@ const products = [
     plasticScore: 1,
     material: "100% ceramic, no PTFE/PFAS coating",
     description: "No non-stick plastic coating to flake into food",
-    affiliateUrl: `https://www.amazon.com/dp/B001KLSKGE?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Xtrema+Xtrema+Pure+Ceramic+Cookware&tag=partiqule-20`,
     price: "$60–120",
     tags: ["cookware", "ceramic", "non-stick", "nonstick", "kitchen", "pfas-free", "pan", "frying pan", "pot", "teflon"]
   },
@@ -498,7 +498,7 @@ const products = [
     plasticScore: 2,
     material: "Full-grain genuine leather",
     description: "No synthetic rubber, no microplastic shedding against skin",
-    affiliateUrl: `https://www.amazon.com/dp/B07WQHD9MK?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Barton+Watch+Bands+Leather+Watch+Band+by+Barton&tag=partiqule-20`,
     price: "$20–35",
     tags: ["watch band", "watch strap", "leather", "sport band", "wristband", "apple watch", "fitbit", "accessory", "wearable"]
   },
@@ -522,7 +522,7 @@ const products = [
     plasticScore: 1,
     material: "316L stainless steel",
     description: "Zero plastic, zero microfiber shedding, lifetime durability",
-    affiliateUrl: `https://www.amazon.com/dp/B08STLMN45?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Pantheon+Stainless+Steel+Watch+Band&tag=partiqule-20`,
     price: "$15–30",
     tags: ["watch band", "metal band", "stainless", "apple watch", "watch strap", "accessory", "wearable", "sport band"]
   },
@@ -548,7 +548,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass, silicone nipple",
     description: "Zero plastic leaching into baby formula or milk",
-    affiliateUrl: `https://www.amazon.com/dp/B0019EQCPY?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Green+Sprouts+Green+Sprouts+Glass+Baby+Bottles&tag=partiqule-20`,
     price: "$14–18",
     tags: ["baby bottle", "glass", "infant", "feeding", "formula", "milk", "bottle", "newborn"]
   },
@@ -572,7 +572,7 @@ const products = [
     plasticScore: 2,
     material: "Food-grade silicone",
     description: "No BPA/BPS, much safer than soft plastic bibs",
-    affiliateUrl: `https://www.amazon.com/dp/B01N4I0MRS?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Bumkins+Bumkins+Silicone+Bib&tag=partiqule-20`,
     price: "$10–14",
     tags: ["bib", "silicone", "baby", "feeding", "toddler", "mealtime", "food"]
   },
@@ -586,7 +586,7 @@ const products = [
     plasticScore: 1,
     material: "Glazed ceramic with silicone lid",
     description: "Zero plastic contact with your drink, dishwasher safe",
-    affiliateUrl: `https://www.amazon.com/dp/B07WX1234?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=W&P+W&P+Porter+Ceramic+Mug&tag=partiqule-20`,
     price: "$30–38",
     tags: ["mug", "coffee", "tea", "ceramic", "travel mug", "cup", "reusable", "to-go"]
   },
@@ -598,7 +598,7 @@ const products = [
     plasticScore: 1,
     material: "Hemp, cotton, beeswax, tree resin, jojoba",
     description: "Breathable alternative to plastic wrap — keeps food fresh naturally",
-    affiliateUrl: `https://www.amazon.com/dp/B00KGUAA11?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Abeego+Abeego+Beeswax+Wrap+Set&tag=partiqule-20`,
     price: "$20–28",
     tags: ["food wrap", "beeswax", "plastic-free", "compostable", "cling wrap", "food storage"]
   },
@@ -610,7 +610,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 pro-grade stainless steel",
     description: "Double-wall insulated, zero plastic touching your water",
-    affiliateUrl: `https://www.amazon.com/dp/B01ACAXNS4?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Hydro+Flask+Hydro+Flask+Water+Bottle&tag=partiqule-20`,
     price: "$30–50",
     tags: ["water bottle", "stainless", "insulated", "reusable", "hydro flask", "bottle"]
   },
@@ -622,7 +622,7 @@ const products = [
     plasticScore: 1,
     material: "Stainless steel mesh, no plastic",
     description: "Use loose leaf tea instead of plastic mesh tea bags",
-    affiliateUrl: `https://www.amazon.com/dp/B000AQSMPO?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Finum+Bamboo+Loose+Leaf+Tea+Infuser&tag=partiqule-20`,
     price: "$8–14",
     tags: ["tea", "tea bag", "loose leaf", "infuser", "strainer", "lipton alternative", "plastic-free"]
   },
@@ -634,7 +634,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass, BPA-free lids",
     description: "No plastic-food contact, oven and microwave safe",
-    affiliateUrl: `https://www.amazon.com/dp/B00BSYZJ5E?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Pyrex+Glass+Food+Storage+Containers&tag=partiqule-20`,
     price: "$25–45",
     tags: ["food storage", "container", "glass", "tupperware", "leftover", "meal prep", "microwave"]
   },
@@ -646,7 +646,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel",
     description: "Zero plastic touching food, lasts decades not months",
-    affiliateUrl: `https://www.amazon.com/dp/B008KNYB3G?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=PlanetBox+Stainless+Steel+Lunch+Box&tag=partiqule-20`,
     price: "$50–70",
     tags: ["lunch box", "bento", "stainless", "food container", "kids", "school lunch", "meal prep"]
   },
@@ -658,7 +658,7 @@ const products = [
     plasticScore: 2,
     material: "Food-grade silicone, no BPA",
     description: "Collapses to pocket size, replaces thousands of plastic straws",
-    affiliateUrl: `https://www.amazon.com/dp/B07GXHKSH1?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=FinalStraw+Reusable+Silicone+Straw+Set&tag=partiqule-20`,
     price: "$15–20",
     tags: ["straw", "reusable", "silicone", "plastic-free", "smoothie", "drink"]
   },
@@ -696,7 +696,7 @@ const products = [
     plasticScore: 1,
     material: "Bamboo handle, castor bean bristles",
     description: "Fully biodegradable handle, no plastic microfiber shedding",
-    affiliateUrl: `https://www.amazon.com/dp/B00CNDER7K?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Brush+with+Bamboo+Bamboo+Toothbrush&tag=partiqule-20`,
     price: "$5–9",
     tags: ["toothbrush", "bamboo", "dental", "oral care", "plastic-free", "biodegradable"]
   },
@@ -732,7 +732,7 @@ const products = [
     plasticScore: 2,
     material: "Aluminum tube, zinc oxide mineral UV filter",
     description: "No chemical UV filters, minimal plastic packaging",
-    affiliateUrl: `https://www.amazon.com/dp/B001BKUCLC?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Badger+Mineral+Sunscreen+by+Badger&tag=partiqule-20`,
     price: "$16–22",
     tags: ["sunscreen", "SPF", "mineral", "zinc oxide", "plastic-free", "reef-safe", "face"]
   },
@@ -780,7 +780,7 @@ const products = [
     plasticScore: 1,
     material: "Paper wrapped bar, organic ingredients",
     description: "Multi-use soap, zero plastic packaging, no synthetic fragrance",
-    affiliateUrl: `https://www.amazon.com/dp/B000158YOM?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Dr.+Bronners+Dr.+Bronners+Castile+Soap+Bar&tag=partiqule-20`,
     price: "$5–8",
     tags: ["soap", "body wash", "bar soap", "plastic-free", "organic", "face wash", "castile"]
   },
@@ -806,7 +806,7 @@ const products = [
     plasticScore: 1,
     material: "100% cast iron, pre-seasoned",
     description: "Lasts generations, zero plastic coating to shed into food",
-    affiliateUrl: `https://www.amazon.com/dp/B00006JSUA?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Lodge+Cast+Iron+Skillet+by+Lodge&tag=partiqule-20`,
     price: "$25–45",
     tags: ["frying pan", "skillet", "cast iron", "cookware", "non-stick alternative", "pan", "oven safe"]
   },
@@ -818,7 +818,7 @@ const products = [
     plasticScore: 1,
     material: "18/10 stainless steel, no coating",
     description: "No PFAS, no PTFE — safe at any temperature",
-    affiliateUrl: `https://www.amazon.com/dp/B00005AL4L?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=All-Clad+Stainless+Steel+Cookware+Set&tag=partiqule-20`,
     price: "$200–400",
     tags: ["cookware", "pot", "pan", "stainless", "non-stick alternative", "pfas-free", "oven safe", "cooking"]
   },
@@ -830,7 +830,7 @@ const products = [
     plasticScore: 1,
     material: "Solid bamboo, food-safe oil finish",
     description: "Plastic cutting boards shed microplastics with every cut — bamboo doesn't",
-    affiliateUrl: `https://www.amazon.com/dp/B000PII2JI?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Teakhaus+Bamboo+Cutting+Board&tag=partiqule-20`,
     price: "$20–40",
     tags: ["cutting board", "chopping board", "bamboo", "kitchen", "plastic-free", "wood"]
   },
@@ -842,7 +842,7 @@ const products = [
     plasticScore: 1,
     material: "Beeswax, carnauba wax, orange oil",
     description: "Conditions bamboo and wood cutting boards naturally",
-    affiliateUrl: `https://www.amazon.com/dp/B001B1BNLG?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Howard+Beeswax+Wood+Conditioner&tag=partiqule-20`,
     price: "$8–12",
     tags: ["cutting board", "wood conditioner", "bamboo", "kitchen care", "natural"]
   },
@@ -854,7 +854,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel",
     description: "No microplastic shedding vs plastic bowls, especially with acidic foods",
-    affiliateUrl: `https://www.amazon.com/dp/B00008CM67?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Cuisinart+Stainless+Steel+Mixing+Bowls&tag=partiqule-20`,
     price: "$20–35",
     tags: ["mixing bowl", "bowl", "stainless", "kitchen", "baking", "plastic alternative"]
   },
@@ -866,7 +866,7 @@ const products = [
     plasticScore: 2,
     material: "Certified compostable Mater-Bi bioplastic",
     description: "Breaks down in 10–45 days vs 500 years for plastic bags",
-    affiliateUrl: `https://www.amazon.com/dp/B0000BYSCC?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=BioBag+Compostable+Trash+Bags&tag=partiqule-20`,
     price: "$10–16",
     tags: ["trash bag", "garbage bag", "compostable", "plastic-free", "kitchen", "bin liner"]
   },
@@ -878,7 +878,7 @@ const products = [
     plasticScore: 2,
     material: "Food-grade silicone, fiberglass mesh",
     description: "Replaces parchment paper and non-stick sprays indefinitely",
-    affiliateUrl: `https://www.amazon.com/dp/B0000CCY3B?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Silpat+Silicone+Baking+Mat&tag=partiqule-20`,
     price: "$20–30",
     tags: ["baking mat", "silicone mat", "baking", "kitchen", "oven", "cookie sheet", "parchment alternative"]
   },
@@ -1000,7 +1000,7 @@ const products = [
     plasticScore: 1,
     material: "Recycled plastic (ironically catches microplastics)",
     description: "Catches 26% of microfibers released during laundry — throw it in every wash",
-    affiliateUrl: `https://www.amazon.com/dp/B078RLTQ89?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Cora+Ball+Cora+Ball+Microfiber+Filter&tag=partiqule-20`,
     price: "$38",
     tags: ["laundry", "microfiber", "filter", "washing machine", "microplastic filter", "synthetic clothes"]
   },
@@ -1124,7 +1124,7 @@ const products = [
     plasticScore: 1,
     material: "100% New Zealand wool",
     description: "Replaces plastic dryer sheets that leave synthetic coating on fabrics",
-    affiliateUrl: `https://www.amazon.com/dp/B00QJSZA98?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Friendsheep+Wool+Dryer+Balls&tag=partiqule-20`,
     price: "$20–30",
     tags: ["dryer balls", "laundry", "dryer sheets alternative", "wool", "fabric softener", "natural"]
   },
@@ -1160,7 +1160,7 @@ const products = [
     plasticScore: 2,
     material: "Natural tree rubber, no PVC",
     description: "PVC yoga mats shed microplastics during practice — natural rubber doesn't",
-    affiliateUrl: `https://www.amazon.com/dp/B001CO9JAQ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Manduka+Natural+Yoga+Mat&tag=partiqule-20`,
     price: "$80–120",
     tags: ["yoga mat", "mat", "natural rubber", "exercise", "fitness", "workout", "pilates", "yoga"]
   },
@@ -1332,7 +1332,7 @@ const products = [
     plasticScore: 2,
     material: "100% natural rubber",
     description: "Natural rubber toys don't break down into microplastics like cheap vinyl toys",
-    affiliateUrl: `https://www.amazon.com/dp/B0002AR0I8?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Kong+Natural+Rubber+Dog+Toy&tag=partiqule-20`,
     price: "$10–18",
     tags: ["dog toy", "pet toy", "rubber", "natural", "chew toy", "kong", "dog", "pet"]
   },
@@ -1344,7 +1344,7 @@ const products = [
     plasticScore: 2,
     material: "Certified compostable plant starch",
     description: "Conventional plastic poop bags take 1000 years — compostable breaks down in weeks",
-    affiliateUrl: `https://www.amazon.com/dp/B005K9ATWI?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Earth+Rated+Compostable+Dog+Waste+Bags&tag=partiqule-20`,
     price: "$12–18",
     tags: ["dog bags", "poop bags", "compostable", "pet", "dog", "waste bags", "biodegradable bags"]
   },
@@ -1368,7 +1368,7 @@ const products = [
     plasticScore: 2,
     material: "Stainless steel basin, minimal plastic pump",
     description: "Plastic fountains leach into water — stainless is much safer for pets",
-    affiliateUrl: `https://www.amazon.com/dp/B001MXGX74?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Pioneer+Pet+Stainless+Steel+Pet+Water+Fountain&tag=partiqule-20`,
     price: "$35–55",
     tags: ["pet fountain", "cat fountain", "dog water", "stainless", "pet", "water fountain"]
   },
@@ -1394,7 +1394,7 @@ const products = [
     plasticScore: 2,
     material: "ABS body, steel nib — refillable indefinitely",
     description: "One fountain pen replaces thousands of disposable plastic ballpoints",
-    affiliateUrl: `https://www.amazon.com/dp/B0002T401Y?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Lamy+Refillable+Fountain+Pen&tag=partiqule-20`,
     price: "$25–35",
     tags: ["pen", "fountain pen", "refillable", "office", "writing", "stationery", "plastic-free pen"]
   },
@@ -1406,7 +1406,7 @@ const products = [
     plasticScore: 1,
     material: "Wood barrel, graphite core — no plastic",
     description: "Wooden pencils are fully plastic-free vs mechanical plastic pencils",
-    affiliateUrl: `https://www.amazon.com/dp/B00006IE2B?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Faber-Castell+Beeswax+Pencils&tag=partiqule-20`,
     price: "$5–10",
     tags: ["pencil", "wooden pencil", "office", "stationery", "writing", "plastic-free", "school"]
   },
@@ -1418,7 +1418,7 @@ const products = [
     plasticScore: 1,
     material: "Natural cork, wood frame",
     description: "Plastic foam boards vs natural cork — cork is fully biodegradable",
-    affiliateUrl: `https://www.amazon.com/dp/B00006IDVZ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Quartet+Cork+Bulletin+Board&tag=partiqule-20`,
     price: "$20–40",
     tags: ["bulletin board", "cork board", "office", "cork", "natural", "desk", "pinboard"]
   },
@@ -1688,7 +1688,7 @@ const products = [
     plasticScore: 1,
     material: "Glass jar, metal lid",
     description: "Plastic peanut butter jars leach into fatty oils — glass is completely inert",
-    affiliateUrl: `https://www.amazon.com/dp/B000LKZ78A?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=MaraNatha+Glass+Jar+Peanut+Butter&tag=partiqule-20`,
     price: "$8–12",
     tags: ["peanut butter", "nut butter", "glass jar", "food", "grocery", "plastic-free food"]
   },
@@ -1700,7 +1700,7 @@ const products = [
     plasticScore: 1,
     material: "Tin canister, no plastic mesh bags",
     description: "Direct replacement for plastic-mesh tea bags — loose leaf has zero plastic",
-    affiliateUrl: `https://www.amazon.com/dp/B000ELIBOU?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Harney+&+Sons+Loose+Leaf+Organic+Tea&tag=partiqule-20`,
     price: "$10–16",
     tags: ["tea", "loose leaf tea", "tea bags alternative", "lipton alternative", "organic tea", "tin"]
   },
@@ -1712,7 +1712,7 @@ const products = [
     plasticScore: 1,
     material: "Dark glass bottle",
     description: "Plastic olive oil containers leach phthalates into oil — glass is inert",
-    affiliateUrl: `https://www.amazon.com/dp/B00ET0ZXUI?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=California+Olive+Ranch+Glass+Bottle+Olive+Oil&tag=partiqule-20`,
     price: "$12–18",
     tags: ["olive oil", "cooking oil", "glass bottle", "food", "grocery", "kitchen"]
   },
@@ -1724,7 +1724,7 @@ const products = [
     plasticScore: 1,
     material: "Paper bag, no plastic liner",
     description: "Most cereal bags have plastic liners — paper-packaged oats have none",
-    affiliateUrl: `https://www.amazon.com/dp/B004VLVG0A?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Bobs+Red+Mill+Cardboard+Packaged+Oats&tag=partiqule-20`,
     price: "$6–10",
     tags: ["oats", "oatmeal", "cereal", "breakfast", "paper packaging", "grocery", "food"]
   },
@@ -1736,7 +1736,7 @@ const products = [
     plasticScore: 2,
     material: "BPA-free steel can",
     description: "BPA-free canned fish — far better than pouches with plastic lining",
-    affiliateUrl: `https://www.amazon.com/dp/B00475LKLE?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Wild+Planet+Canned+Wild+Salmon&tag=partiqule-20`,
     price: "$8–14",
     tags: ["salmon", "canned fish", "bpa-free", "food", "protein", "grocery", "tuna alternative"]
   },
@@ -1760,7 +1760,7 @@ const products = [
     plasticScore: 2,
     material: "Kraft paper bag with valve",
     description: "Paper-lined bags over plastic bags — degrades naturally after use",
-    affiliateUrl: `https://www.amazon.com/dp/B00AIIBITS?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Death+Wish+Coffee+Paper+Packaged+Coffee&tag=partiqule-20`,
     price: "$18–24",
     tags: ["coffee", "coffee beans", "ground coffee", "paper bag", "keurig alternative", "plastic-free coffee"]
   },
@@ -1772,7 +1772,7 @@ const products = [
     plasticScore: 1,
     material: "Glass bottle, metal lid",
     description: "Plastic maple syrup bottles leach into the sweet, acidic liquid over time",
-    affiliateUrl: `https://www.amazon.com/dp/B001E5E0Y6?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Coombs+Family+Farms+Glass+Bottle+Maple+Syrup&tag=partiqule-20`,
     price: "$12–18",
     tags: ["maple syrup", "syrup", "glass bottle", "food", "breakfast", "grocery", "sweetener"]
   },
@@ -1786,7 +1786,7 @@ const products = [
     plasticScore: 2,
     material: "Recycled HDPE bottle, plant-based formula",
     description: "Concentrated plant soap — one bottle makes many spray bottles of cleaner",
-    affiliateUrl: `https://www.amazon.com/dp/B00013YZ9I?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Dr.+Bronners+Castile+Soap+Cleaning+Spray&tag=partiqule-20`,
     price: "$10–16",
     tags: ["cleaning spray", "cleaner", "castile", "natural cleaner", "kitchen", "bathroom", "all purpose"]
   },
@@ -1798,7 +1798,7 @@ const products = [
     plasticScore: 2,
     material: "Recycled bottle, plant-based surfactants",
     description: "No synthetic fragrance, recycled packaging vs virgin plastic",
-    affiliateUrl: `https://www.amazon.com/dp/B00AIGMZZU?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Seventh+Generation+Seventh+Generation+Dish+Soap&tag=partiqule-20`,
     price: "$5–9",
     tags: ["dish soap", "dishwashing", "natural", "kitchen", "seventh generation", "eco dish soap"]
   },
@@ -1822,7 +1822,7 @@ const products = [
     plasticScore: 1,
     material: "Natural volcanic pumice",
     description: "Synthetic scrubbers shed plastic particles — pumice stone is a natural mineral",
-    affiliateUrl: `https://www.amazon.com/dp/B00004SU35?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Pumie+Natural+Pumice+Stone+Scrubber&tag=partiqule-20`,
     price: "$5–10",
     tags: ["scrubber", "sponge alternative", "pumice", "natural", "cleaning", "toilet scrubber", "kitchen"]
   },
@@ -1896,7 +1896,7 @@ const products = [
     plasticScore: 1,
     material: "100% natural loofah gourd",
     description: "Synthetic shower poufs shed enormous amounts of microplastics — loofah is a plant",
-    affiliateUrl: `https://www.amazon.com/dp/B00001YUBA?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Aquis+Natural+Loofah+Sponge&tag=partiqule-20`,
     price: "$4–8",
     tags: ["loofah", "shower sponge", "bath sponge", "natural", "body wash", "shower", "exfoliate"]
   },
@@ -1908,7 +1908,7 @@ const products = [
     plasticScore: 1,
     material: "Natural silk, candelilla wax, glass dispenser",
     description: "Nylon dental floss = microplastics in your mouth daily — silk is plastic-free",
-    affiliateUrl: `https://www.amazon.com/dp/B00KXMO4AY?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Radius+Silk+Dental+Floss&tag=partiqule-20`,
     price: "$8–12",
     tags: ["dental floss", "floss", "silk", "oral care", "natural", "plastic-free", "dental"]
   },
@@ -1946,7 +1946,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel, multiple tiers",
     description: "Traditional tiffin — zero plastic food contact, lasts decades",
-    affiliateUrl: `https://www.amazon.com/dp/B001XKF5UQ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=To-Go+Ware+Stainless+Steel+Tiffin+Lunch+Box&tag=partiqule-20`,
     price: "$35–55",
     tags: ["lunch box", "tiffin", "stainless", "food container", "lunch", "meal prep", "work lunch"]
   },
@@ -1958,7 +1958,7 @@ const products = [
     plasticScore: 1,
     material: "Glass jars, stainless lids",
     description: "Spices in plastic containers absorb plastic odors and potentially chemicals",
-    affiliateUrl: `https://www.amazon.com/dp/B00005N8PZ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Kamenstein+Glass+Spice+Jars+Set&tag=partiqule-20`,
     price: "$25–40",
     tags: ["spice jars", "spice rack", "glass", "kitchen", "cooking", "storage", "spices"]
   },
@@ -1994,7 +1994,7 @@ const products = [
     plasticScore: 1,
     material: "Solid acacia wood",
     description: "Plastic fruit bowls leach when acidic fruit sits in them — wood is naturally inert",
-    affiliateUrl: `https://www.amazon.com/dp/B0015VLWCK?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Lipper+International+Wooden+Fruit+Bowl&tag=partiqule-20`,
     price: "$20–35",
     tags: ["fruit bowl", "bowl", "wooden", "kitchen", "counter top", "natural", "acacia"]
   },
@@ -2020,7 +2020,7 @@ const products = [
     plasticScore: 2,
     material: "Cotton knit with nitrile coating fingertips only",
     description: "Mostly natural fiber vs full synthetic gloves — much less microplastic contact",
-    affiliateUrl: `https://www.amazon.com/dp/B003T1VQVE?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Atlas+Natural+Cotton+Garden+Gloves&tag=partiqule-20`,
     price: "$8–14",
     tags: ["garden gloves", "gloves", "gardening", "outdoor", "cotton", "natural", "work gloves"]
   },
@@ -2082,7 +2082,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel, bamboo case",
     description: "Eliminate disposable plastic cutlery on every trip or lunch",
-    affiliateUrl: `https://www.amazon.com/dp/B001LJJQR8?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=To-Go+Ware+Stainless+Steel+Travel+Cutlery&tag=partiqule-20`,
     price: "$12–18",
     tags: ["travel cutlery", "reusable cutlery", "stainless", "fork", "spoon", "knife", "travel", "plastic-free cutlery"]
   },
@@ -2130,7 +2130,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel, no plastic lining",
     description: "Insulated stainless thermos — zero plastic touching your hot coffee",
-    affiliateUrl: `https://www.amazon.com/dp/B00005C0IE?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Thermos+Stainless+Steel+Coffee+Thermos&tag=partiqule-20`,
     price: "$25–40",
     tags: ["thermos", "coffee thermos", "travel mug", "stainless", "coffee", "insulated", "flask"]
   },
@@ -2144,7 +2144,7 @@ const products = [
     plasticScore: 2,
     material: "Medical-grade silicone",
     description: "Conventional pads and tampons contain up to 90% plastic — cup replaces all of them",
-    affiliateUrl: `https://www.amazon.com/dp/B00286JCYQ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=DivaCup+Menstrual+Cup&tag=partiqule-20`,
     price: "$28–38",
     tags: ["menstrual cup", "period cup", "silicone", "period", "feminine care", "plastic-free period", "reusable"]
   },
@@ -2182,7 +2182,7 @@ const products = [
     plasticScore: 1,
     material: "Organic beeswax, aluminum tube",
     description: "Plastic tube diaper creams vs metal tubes — aluminum is infinitely recyclable",
-    affiliateUrl: `https://www.amazon.com/dp/B00AIPJPXW?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Earth+Mama+Beeswax+Diaper+Cream&tag=partiqule-20`,
     price: "$8–12",
     tags: ["diaper cream", "baby", "beeswax", "natural", "rash cream", "infant", "organic"]
   },
@@ -2206,7 +2206,7 @@ const products = [
     plasticScore: 1,
     material: "Maple wood, water-based paint",
     description: "Plastic rattles babies chew on — wooden rattles are completely plastic-free",
-    affiliateUrl: `https://www.amazon.com/dp/B000UVLFH4?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Haba+Wooden+Baby+Rattle&tag=partiqule-20`,
     price: "$12–18",
     tags: ["baby rattle", "rattle", "wooden", "baby toy", "newborn", "infant toy", "natural toy"]
   },
@@ -2218,7 +2218,7 @@ const products = [
     plasticScore: 2,
     material: "100% natural rubber",
     description: "Silicone pacifiers are better than plastic — natural rubber is the gold standard",
-    affiliateUrl: `https://www.amazon.com/dp/B001SGHGNA?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Natursutten+Natural+Rubber+Pacifier&tag=partiqule-20`,
     price: "$10–16",
     tags: ["pacifier", "dummy", "natural rubber", "baby", "infant", "newborn", "soother"]
   },
@@ -2230,7 +2230,7 @@ const products = [
     plasticScore: 1,
     material: "100% organic cotton",
     description: "Microfiber baby washcloths shed synthetic particles on baby's sensitive skin",
-    affiliateUrl: `https://www.amazon.com/dp/B00JM4CCPK?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Burts+Bees+Baby+Organic+Cotton+Baby+Washcloths&tag=partiqule-20`,
     price: "$14–20",
     tags: ["baby washcloth", "washcloth", "organic cotton", "baby", "infant", "bath", "face cloth"]
   },
@@ -2244,7 +2244,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass, stainless steel frame",
     description: "Plastic coffee makers leach into your daily cup — glass French press doesn't",
-    affiliateUrl: `https://www.amazon.com/dp/B00012D60O?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Bodum+Glass+French+Press&tag=partiqule-20`,
     price: "$30–50",
     tags: ["french press", "coffee maker", "glass", "coffee", "plastic-free coffee", "cafetiere"]
   },
@@ -2256,7 +2256,7 @@ const products = [
     plasticScore: 1,
     material: "Brushed stainless steel interior",
     description: "Plastic electric kettles leach microplastics when water boils — stainless doesn't",
-    affiliateUrl: `https://www.amazon.com/dp/B003LNOVXG?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Cuisinart+Stainless+Steel+Kettle&tag=partiqule-20`,
     price: "$40–70",
     tags: ["kettle", "electric kettle", "stainless", "tea kettle", "coffee kettle", "boil water"]
   },
@@ -2280,7 +2280,7 @@ const products = [
     plasticScore: 1,
     material: "18/8 stainless steel",
     description: "Plastic colanders shed microplastics into pasta and vegetables",
-    affiliateUrl: `https://www.amazon.com/dp/B00004OCKL?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=OXO+Stainless+Steel+Colander&tag=partiqule-20`,
     price: "$20–35",
     tags: ["colander", "strainer", "stainless", "kitchen", "pasta", "cooking", "drainer"]
   },
@@ -2292,7 +2292,7 @@ const products = [
     plasticScore: 1,
     material: "Burgundy clay ceramic",
     description: "Non-stick plastic-coated baking pans vs pure ceramic — ceramic is inert at all temps",
-    affiliateUrl: `https://www.amazon.com/dp/B0000VLIEJ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Emile+Henry+Ceramic+Baking+Dish&tag=partiqule-20`,
     price: "$40–80",
     tags: ["baking dish", "casserole dish", "ceramic", "oven dish", "cooking", "baking", "roasting pan"]
   },
@@ -2304,7 +2304,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass",
     description: "Plastic measuring cups degrade and shed with heat — glass is permanent",
-    affiliateUrl: `https://www.amazon.com/dp/B0000CFMZR?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Pyrex+Glass+Measuring+Cups&tag=partiqule-20`,
     price: "$12–22",
     tags: ["measuring cup", "kitchen", "glass", "baking", "cooking", "measuring", "pyrex"]
   },
@@ -2316,7 +2316,7 @@ const products = [
     plasticScore: 1,
     material: "Stainless steel blade, wood handle",
     description: "Plastic graters shed into food — stainless graters last forever",
-    affiliateUrl: `https://www.amazon.com/dp/B00004S7V8?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Microplane+Stainless+Steel+Grater&tag=partiqule-20`,
     price: "$15–25",
     tags: ["grater", "cheese grater", "stainless", "kitchen", "cooking", "zester"]
   },
@@ -2426,7 +2426,7 @@ const products = [
     plasticScore: 1,
     material: "Glass bottle, rosewater",
     description: "Face mists in glass vs plastic spray bottles — glass preserves the formula better too",
-    affiliateUrl: `https://www.amazon.com/dp/B00KDA30Z0?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Heritage+Store+Rose+Water+Glass+Spray&tag=partiqule-20`,
     price: "$8–12",
     tags: ["rose water", "face mist", "toner", "glass bottle", "skincare", "spray", "facial mist"]
   },
@@ -2438,7 +2438,7 @@ const products = [
     plasticScore: 1,
     material: "100% natural calcium bentonite clay, glass jar",
     description: "Face masks with synthetic thickeners vs pure mineral clay in glass",
-    affiliateUrl: `https://www.amazon.com/dp/B0014P8L9W?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Aztec+Secret+Natural+Clay+Face+Mask&tag=partiqule-20`,
     price: "$12–18",
     tags: ["face mask", "clay mask", "skin care", "glass jar", "natural", "bentonite", "pores"]
   },
@@ -2476,7 +2476,7 @@ const products = [
     plasticScore: 1,
     material: "Surgical-grade stainless steel",
     description: "Plastic tongue scrapers vs stainless — plastic scratches and harbors bacteria",
-    affiliateUrl: `https://www.amazon.com/dp/B00064JDTQ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Dr.+Tungs+Stainless+Steel+Tongue+Scraper&tag=partiqule-20`,
     price: "$8–12",
     tags: ["tongue scraper", "oral care", "stainless", "dental", "plastic-free", "tongue cleaner"]
   },
@@ -2550,7 +2550,7 @@ const products = [
     plasticScore: 1,
     material: "Borosilicate glass, stainless spout",
     description: "Oil in plastic dispensers absorbs plastic odors — glass keeps oil pure",
-    affiliateUrl: `https://www.amazon.com/dp/B00004OCNL?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=OXO+Glass+Oil+Dispenser&tag=partiqule-20`,
     price: "$18–28",
     tags: ["oil dispenser", "olive oil", "glass", "kitchen", "cooking", "pouring bottle", "vinegar dispenser"]
   },
@@ -2574,7 +2574,7 @@ const products = [
     plasticScore: 1,
     material: "Stainless steel, rubber grip",
     description: "Plastic can openers break quickly — quality stainless lasts decades",
-    affiliateUrl: `https://www.amazon.com/dp/B00004RFLT?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Kuhn+Rikon+Stainless+Steel+Can+Opener&tag=partiqule-20`,
     price: "$12–20",
     tags: ["can opener", "kitchen", "stainless", "opener", "tool", "cooking", "utensil"]
   },
@@ -2588,7 +2588,7 @@ const products = [
     plasticScore: 1,
     material: "Organic cotton mesh",
     description: "Thin plastic produce bags at supermarkets — cotton mesh bags are the direct swap",
-    affiliateUrl: `https://www.amazon.com/dp/B01LZY5FH2?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Purifyou+Reusable+Produce+Bags&tag=partiqule-20`,
     price: "$12–18",
     tags: ["produce bags", "grocery bags", "mesh bag", "reusable", "shopping", "vegetables", "fruit bag"]
   },
@@ -2600,7 +2600,7 @@ const products = [
     plasticScore: 2,
     material: "ASTM D6400 certified compostable",
     description: "For the compost bin — certified compostable breaks down with your food waste",
-    affiliateUrl: `https://www.amazon.com/dp/B00013YZ9G?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=If+You+Care+Compostable+Bin+Liners&tag=partiqule-20`,
     price: "$8–14",
     tags: ["compost bag", "bin liner", "compostable", "food waste", "kitchen", "composting", "biodegradable"]
   },
@@ -2648,7 +2648,7 @@ const products = [
     plasticScore: 1,
     material: "Beeswax, carnauba wax, mineral spirits",
     description: "Spray polishes in plastic bottles vs natural wax in metal tins",
-    affiliateUrl: `https://www.amazon.com/dp/B00005WJ5Z?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Howard+Natural+Beeswax+Polish&tag=partiqule-20`,
     price: "$10–16",
     tags: ["furniture polish", "wood polish", "beeswax", "natural", "home care", "wood care", "polish"]
   },
@@ -2698,7 +2698,7 @@ const products = [
     plasticScore: 1,
     material: "100% cast iron",
     description: "Enameled and non-stick coated pots shed PTFE — cast iron is completely inert",
-    affiliateUrl: `https://www.amazon.com/dp/B00063RWNQ?tag=${AMAZON_TAG}`,
+    affiliateUrl: `https://www.amazon.com/s?k=Lodge+Cast+Iron+Dutch+Oven&tag=partiqule-20`,
     price: "$45–80",
     tags: ["dutch oven", "cast iron", "pot", "cooking", "oven", "baking", "braising"]
   },
