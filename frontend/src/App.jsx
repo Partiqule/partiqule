@@ -3,9 +3,9 @@ import { useState, useEffect, useRef } from "react";
 const API_BASE = "https://partiqule-production.up.railway.app";
 
 const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
-const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#d97706":s<=8?"#dc2626":"#991b1b";
-const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fffbeb":s<=8?"#fef2f2":"#fee2e2";
-const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fffbeb":s<=8?"#fff5f5":"#fff0f0";
+const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
+const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
+const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
 
 const categoryMeta = {
   clothing:      {label:"Clothing",      color:"#6366f1",bg:"#eef2ff"},
@@ -320,6 +320,71 @@ const EducationSection = ({isDark, isMobile=false}) => {
   );
 };
 
+// ── PLASTIC SCORE DROPDOWN ────────────────────────────────────
+const PlasticScoreDropdown = ({result, isDark, muted}) => {
+  const [open, setOpen] = useState(false);
+  const ps = result.score;
+  const color  = scoreColor(ps);
+  const bg     = isDark?"#1e2433":scoreBg(ps);
+  const borderColor = ps<=3?"#bbf7d0":ps<=6?"#fde68a":ps<=8?"#fed7aa":"#fecaca";
+  const plabel = scoreLabel(ps);
+
+  return (
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{
+        width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:8}}>
+          <span style={{fontSize:14}}>🔬</span>
+          <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>
+            Plastic Danger
+          </span>
+          <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{ps}/10</span>
+          <span style={{fontSize:11, color, fontWeight:600, background:`${color}18`, padding:"2px 8px", borderRadius:10}}>
+            {plabel}
+          </span>
+        </div>
+        <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block",
+          transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+
+      {open && (
+        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+          {result.score_reasoning && (
+            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"12px 0 10px", fontStyle:"italic"}}>
+              {result.score_reasoning}
+            </p>
+          )}
+          {result.identified_plastics?.length > 0 && (
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:11, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>Plastics identified</div>
+              <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                {result.identified_plastics.map((p,i)=>(
+                  <span key={i} style={{fontSize:12, fontWeight:700, padding:"3px 10px", borderRadius:16,
+                    background:isDark?"#2a1a1a":"#fef2f2", color:"#dc2626", border:"1px solid #fecaca"}}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.concerns?.length > 0 && (
+            <div style={{display:"flex", flexDirection:"column", gap:6}}>
+              {result.concerns.map((c,i)=>(
+                <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
+                  <span style={{color, fontSize:12, marginTop:2, flexShrink:0}}>•</span>
+                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── HEALTH SCORE DROPDOWN ─────────────────────────────────────
 const HealthScoreDropdown = ({result, isDark, muted}) => {
   const [open, setOpen] = useState(false);
@@ -328,10 +393,10 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
   const hn = result.health_note;
   const isHigh = hs >= 7;
   const isMed  = hs >= 4 && hs < 7;
-  const color  = hs<=3?"#16a34a":hs<=6?"#7c3aed":"#dc2626";
-  const bg     = hs<=3?(isDark?"#1a2a1a":"#f0fdf4"):hs<=6?(isDark?"#1e1a2e":"#f5f3ff"):(isDark?"#2a1a1a":"#fef2f2");
-  const borderColor = hs<=3?"#bbf7d0":hs<=6?"#ddd6fe":"#fecaca";
-  const hlabel = hs<=3?"Low":hs<=6?"Moderate":"High";
+  const color  = hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626";
+  const bg     = hs<=3?(isDark?"#1a2a1a":"#f0fdf4"):hs<=6?(isDark?"#1e1a00":"#fefce8"):hs<=8?(isDark?"#1e1200":"#fff7ed"):(isDark?"#2a1a1a":"#fef2f2");
+  const borderColor = hs<=3?"#bbf7d0":hs<=6?"#fde68a":hs<=8?"#fed7aa":"#fecaca";
+  const hlabel = hs<=3?"Low":hs<=6?"Moderate":hs<=8?"High":"Very High";
 
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
@@ -484,10 +549,10 @@ const ShareBadge = ({result}) => {
 
     if (hasHealth) {
       // ── RIGHT: Health + Overall score boxes ──
-      const healthColor = result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626";
-      const healthBg    = result.health_score<=3?"#f0fdf4":result.health_score<=6?"#f5f3ff":"#fef2f2";
-      const overallColor = result.overall_score<=3?"#16a34a":result.overall_score<=6?"#d97706":"#dc2626";
-      const overallBg   = result.overall_score<=3?"#f0fdf4":result.overall_score<=6?"#fffbeb":"#fff5f5";
+      const healthColor = result.health_score<=3?"#16a34a":result.health_score<=6?"#ca8a04":result.health_score<=8?"#ea580c":"#dc2626";
+      const healthBg    = result.health_score<=3?"#f0fdf4":result.health_score<=6?"#fefce8":result.health_score<=8?"#fff7ed":"#fef2f2";
+      const overallColor = result.overall_score<=3?"#16a34a":result.overall_score<=6?"#ca8a04":result.overall_score<=8?"#ea580c":"#dc2626";
+      const overallBg   = result.overall_score<=3?"#f0fdf4":result.overall_score<=6?"#fefce8":result.overall_score<=8?"#fff7ed":"#fef2f2";
 
       // Health score box
       ctx.fillStyle = healthBg;
@@ -1593,10 +1658,12 @@ export default function App() {
 
             {/* LEFT */}
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
-              <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.score), borderRadius:20, padding:isMobile?"24px 20px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.score)}`, textAlign:"center"}}>
+              <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:20, padding:isMobile?"24px 20px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
-                  <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>Danger Score <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span></div>
+                  <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
+                    {result.overall_score ? "Overall Score" : "Danger Score"} <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
+                  </div>
                   {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}>✓ Verified</div>}
                   {result.confidence && (
                     <div style={{fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10,
@@ -1609,40 +1676,38 @@ export default function App() {
 
                 <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?22:28,fontWeight:700,color:text,margin:"0 0 24px",letterSpacing:"-0.5px",wordBreak:"break-word"}}>{result.product_name?.length > 60 ? result.product_name.slice(0,57)+"…" : result.product_name}</h2>
 
-                <div style={{display:"flex",justifyContent:"center",marginBottom:4}}><ScoreArc score={result.score}/></div>
-                <RiskBar score={result.score}/>
+                {/* Hero score — overall if available, else plastic */}
+                <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
+                  <ScoreArc score={result.overall_score||result.score}/>
+                </div>
+                <RiskBar score={result.overall_score||result.score}/>
 
-                <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 6px"}}>{scoreLabel(result.score)} Danger</div>
+                {/* Hero label */}
+                {result.overall_score ? (
+                  <div style={{marginBottom:16}}>
+                    <div style={{display:"inline-block",background:scoreBg(result.overall_score),color:scoreColor(result.overall_score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 4px"}}>
+                      {scoreLabel(result.overall_score)} Overall
+                    </div>
+                    <div style={{fontSize:11,color:muted,marginTop:4}}>70% plastic danger · 30% health concern</div>
+                  </div>
+                ) : (
+                  <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 16px"}}>{scoreLabel(result.score)} Danger</div>
+                )}
 
-                {/* Health score — expandable dropdown */}
+                {/* Plastic score dropdown */}
+                <PlasticScoreDropdown result={result} isDark={isDark} muted={muted}/>
+
+                {/* Health score dropdown */}
                 {result.health_score && (
                   <HealthScoreDropdown result={result} isDark={isDark} muted={muted}/>
                 )}
 
-                {/* Overall score — weighted composite */}
-                {result.overall_score && result.health_score && (
-                  <div style={{marginBottom:8}}>
-                    <div style={{display:"inline-flex", alignItems:"center", gap:8,
-                      background:isDark?"#1a1a2e":"#f0f4ff",
-                      border:"1px solid #c7d2fe",
-                      borderRadius:20, padding:"6px 16px"}}>
-                      <span style={{fontSize:11, color:muted, fontWeight:500}}>⚖️ Overall:</span>
-                      <span style={{fontSize:15, fontWeight:800,
-                        color:result.overall_score<=3?"#16a34a":result.overall_score<=6?"#d97706":"#dc2626",
-                        fontFamily:"'Outfit',sans-serif"}}>
-                        {result.overall_score}/10
-                      </span>
-                      <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>50% plastic · 50% health</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Peer comparison — compact subtitle */}
+                {/* Peer comparison */}
                 {result.peer_comparison && (
                   <div style={{fontSize:12, color:muted, marginBottom:16, fontStyle:"italic"}}>{result.peer_comparison}</div>
                 )}
 
-                {/* Identified plastics — prominent red chips */}
+                {/* Identified plastics */}
                 {result.identified_plastics?.length > 0 && (
                   <div style={{marginBottom:16}}>
                     <div style={{fontSize:11, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Plastics detected</div>
@@ -1657,7 +1722,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Exposure badges — compact row */}
+                {/* Exposure badges */}
                 {(result.exposure_frequency || result.exposure_type) && (
                   <div style={{display:"flex", gap:6, justifyContent:"center", marginBottom:14, flexWrap:"wrap"}}>
                     {result.exposure_frequency && result.exposure_frequency !== "unknown" && (
