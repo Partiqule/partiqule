@@ -137,27 +137,12 @@ Return ONLY this JSON:
   "confidence_reason": "why confidence is high/medium/low",
   "scan_next": ["related product 1", "related product 2", "related product 3"],
   "ai_alternatives": [
-    {
-      "name": "specific product name e.g. Klean Kanteen stainless steel bottle",
-      "reason": "one sentence on why this is safer and what plastic it avoids",
-      "material": "what it is made of",
-      "estimated_score": 2
-    },
-    {
-      "name": "second alternative",
-      "reason": "why safer",
-      "material": "material",
-      "estimated_score": 1
-    },
-    {
-      "name": "third alternative",
-      "reason": "why safer",
-      "material": "material",
-      "estimated_score": 2
-    }
+    {"name": "specific product name", "reason": "max 10 words why safer", "material": "max 5 words", "estimated_score": 2},
+    {"name": "second alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
+    {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
 }`,
-    1200
+    1400
   );
 }
 
