@@ -754,9 +754,9 @@ const BarcodeScanner = ({onDetect, onClose}) => {
           animFrame = requestAnimationFrame(scanLoop);
         }).catch(()=>{ animFrame = requestAnimationFrame(scanLoop); });
       } else {
-        // Fallback: prompt user to type barcode
+        // Safari doesn't support BarcodeDetector — show friendly message
         setStatus("error");
-        setErrorMsg("Live barcode scanning isn't supported in this browser. Try Chrome on Android, or type the barcode number manually.");
+        setErrorMsg("Barcode scanning isn't supported in Safari. Try Chrome on your phone, or just type the product name in the search bar instead.");
       }
     };
 
@@ -1263,6 +1263,54 @@ const LoadingState = () => {
   );
 };
 
+// ── PRIVACY PAGE ─────────────────────────────────────────────
+const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => (
+  <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+    <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Privacy Policy</h1>
+    <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: March 2026</p>
+
+    {[
+      {
+        title:"The short version",
+        body:"Partiqule doesn't require an account. We don't collect your name, email, or any personal information. Your scan history is stored only on your own device — we never see it. We use privacy-friendly analytics that don't track you across the web."
+      },
+      {
+        title:"What we collect",
+        body:"We use Plausible Analytics — a privacy-first tool that collects no personal data, uses no cookies, and is fully GDPR compliant. It tells us how many people visit the site and which pages are popular, nothing more. We cannot identify you individually. Your scan history (My Scans) is stored in your browser's localStorage — it never leaves your device and we have no access to it."
+      },
+      {
+        title:"Affiliate links",
+        body:"Some product recommendations on Partiqule are affiliate links, primarily through Amazon Associates. If you click a link and make a purchase, we may earn a small commission at no extra cost to you. This is how we fund free access to the site. Affiliate links are clearly marked with '#ad · affiliate links' on the page. We only recommend products we genuinely believe are safer alternatives — affiliate relationships never influence our scoring."
+      },
+      {
+        title:"Third party services",
+        body:"When you click through to Amazon, Grove Collaborative, or any other retailer, you leave Partiqule and their own privacy policies apply. We are not responsible for the privacy practices of external sites. Our AI scoring is powered by Anthropic's Claude — your search queries are sent to Anthropic's API to generate scores. Anthropic's privacy policy applies to that processing."
+      },
+      {
+        title:"Cookies",
+        body:"Partiqule does not use cookies. Plausible Analytics is cookieless. Your scan history is stored in localStorage, not cookies, and is never transmitted to us."
+      },
+      {
+        title:"Children's privacy",
+        body:"Partiqule is not directed at children under 13. We do not knowingly collect any information from children."
+      },
+      {
+        title:"Your rights",
+        body:"Since we don't collect personal data, there is nothing to access, correct or delete on our end. If you want to clear your scan history, use the 'Clear' button in My Scans — this deletes it from your device immediately."
+      },
+      {
+        title:"Contact",
+        body:"Questions about this policy? Email paul@partiqule.com and we'll respond within a few days."
+      },
+    ].map((section, i) => (
+      <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < 7 ? `1px solid ${border}` : "none"}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{section.title}</h2>
+        <p style={{fontSize:15, color:muted, lineHeight:1.8, margin:0}}>{section.body}</p>
+      </div>
+    ))}
+  </div>
+);
+
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
 function useWindowWidth() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
@@ -1312,8 +1360,9 @@ export default function App() {
       return;
     }
     if (path.startsWith("/worst")) { setPage("worst"); return; }
+    if (path === "/privacy") { setPage("privacy"); return; }
 
-    const known = ["/", "/worst", "/worst-offenders", "/science", "/history"];
+    const known = ["/", "/worst", "/worst-offenders", "/science", "/history", "/privacy"];
     const isScanPath = path.startsWith("/scan/");
     if (!known.includes(path) && !isScanPath) setPage("404");
   }, []);
@@ -1452,6 +1501,8 @@ export default function App() {
 
       {page === "admin" ? (
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
+      ) : page === "privacy" ? (
+        <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{fontSize:64, marginBottom:16}}>🔬</div>
@@ -1530,8 +1581,8 @@ export default function App() {
                 {isMobile ? "Search any product for its microplastics risk score." : "Search any product to instantly get its microplastics risk score and discover plastic-free alternatives."}
               </p>
 
-              {/* Mobile barcode button only */}
-              {isMobile && (
+              {/* Mobile barcode button — hide on Safari which doesn't support BarcodeDetector */}
+              {isMobile && "BarcodeDetector" in window && (
                 <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
                   <button onClick={()=>setScanning(true)}
                     style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
@@ -1859,6 +1910,7 @@ export default function App() {
             {label:"Worst Offenders", pg:"worst",   path:"/worst-offenders"},
             {label:"The Science",     pg:"science",  path:"/science"},
             {label:"My Scans",        pg:"history",  path:"/history"},
+            {label:"Privacy Policy",  pg:"privacy",  path:"/privacy"},
           ].map(item=>(
             <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({},"",item.path); window.scrollTo(0,0);}}
               style={{color:"#555", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}
