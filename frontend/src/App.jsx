@@ -332,14 +332,16 @@ const ShareBadge = ({result}) => {
   const buildCanvas = () => {
     const canvas  = document.createElement("canvas");
     const dpr     = window.devicePixelRatio || 1;
-    const W = 600, H = 340;
+    const W = 600, H = 380;
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
+    const hasHealth  = result.health_score && result.overall_score;
+    const bgColor    = result.score<=4?"#f0fdf4":result.score<=6?"#fffbeb":"#fff5f5";
+
     // Background
-    const bgColor = result.score<=4?"#f0fdf4":result.score<=6?"#fffbeb":"#fff5f5";
     ctx.fillStyle = bgColor;
     ctx.beginPath();
     ctx.roundRect(0, 0, W, H, 20);
@@ -351,60 +353,109 @@ const ShareBadge = ({result}) => {
 
     // Logo
     ctx.fillStyle = "#052e16";
-    ctx.font = "bold 18px system-ui";
-    ctx.fillText("🔬 Partiqule", 32, 44);
+    ctx.font = "bold 17px system-ui";
+    ctx.fillText("🔬 Partiqule", 32, 42);
 
     // Product name
     ctx.fillStyle = "#111";
-    ctx.font = "bold 26px system-ui";
-    const name = safeName?.length > 35 ? safeName.slice(0,32)+"…" : safeName;
-    ctx.fillText(name, 32, 100);
+    ctx.font = "bold 24px system-ui";
+    const name = safeName?.length > 38 ? safeName.slice(0,35)+"…" : safeName;
+    ctx.fillText(name, 32, 84);
 
-    // Big score
+    // ── LEFT: Big plastic score ──
     ctx.fillStyle = color;
-    ctx.font = "bold 96px system-ui";
-    ctx.fillText(result.score, 32, 210);
+    ctx.font = "bold 88px system-ui";
+    ctx.fillText(result.score, 32, 196);
     ctx.fillStyle = "#aaa";
-    ctx.font = "bold 32px system-ui";
-    ctx.fillText("/ 10", 110, 210);
+    ctx.font = "bold 28px system-ui";
+    ctx.fillText("/ 10", 108, 196);
 
-    // Danger label pill
+    // Danger pill
     const pillBg = result.score<=4?"#dcfce7":result.score<=6?"#fef9c3":"#fee2e2";
     ctx.fillStyle = pillBg;
     ctx.beginPath();
-    ctx.roundRect(32, 228, 170, 32, 16);
+    ctx.roundRect(32, 210, 165, 28, 14);
     ctx.fill();
     ctx.fillStyle = color;
-    ctx.font = "bold 14px system-ui";
-    ctx.fillText(`${label} Danger`, 50, 249);
+    ctx.font = "bold 13px system-ui";
+    ctx.fillText(`🔬 ${label} Danger`, 46, 229);
 
-    // Summary
+    if (hasHealth) {
+      // ── RIGHT: Health + Overall score boxes ──
+      const healthColor = result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626";
+      const healthBg    = result.health_score<=3?"#f0fdf4":result.health_score<=6?"#f5f3ff":"#fef2f2";
+      const overallColor = result.overall_score<=3?"#16a34a":result.overall_score<=6?"#d97706":"#dc2626";
+      const overallBg   = result.overall_score<=3?"#f0fdf4":result.overall_score<=6?"#fffbeb":"#fff5f5";
+
+      // Health score box
+      ctx.fillStyle = healthBg;
+      ctx.beginPath();
+      ctx.roundRect(320, 108, 240, 60, 12);
+      ctx.fill();
+      ctx.strokeStyle = healthColor + "44";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#666";
+      ctx.font = "11px system-ui";
+      ctx.fillText("❤️  Health concern", 336, 128);
+      ctx.fillStyle = healthColor;
+      ctx.font = "bold 28px system-ui";
+      ctx.fillText(`${result.health_score}/10`, 336, 158);
+      ctx.fillStyle = healthColor;
+      ctx.font = "12px system-ui";
+      const healthLabel = result.health_score<=3?"Low":result.health_score<=6?"Moderate":"High";
+      ctx.fillText(healthLabel, 390, 158);
+
+      // Overall score box
+      ctx.fillStyle = overallBg;
+      ctx.beginPath();
+      ctx.roundRect(320, 182, 240, 68, 12);
+      ctx.fill();
+      ctx.strokeStyle = overallColor + "44";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = "#666";
+      ctx.font = "11px system-ui";
+      ctx.fillText("⚖️  Overall score", 336, 202);
+      ctx.fillStyle = overallColor;
+      ctx.font = "bold 34px system-ui";
+      ctx.fillText(`${result.overall_score}/10`, 336, 236);
+      ctx.fillStyle = "#aaa";
+      ctx.font = "10px system-ui";
+      ctx.fillText("70% plastic · 30% health", 336, 246);
+    }
+
+    // ── Summary ──
     ctx.fillStyle = "#555";
-    ctx.font = "15px system-ui";
+    ctx.font = "14px system-ui";
     const words = (result.summary || "").split(" ");
-    let line = "", y = 155, lineH = 22;
-    const maxW = 340;
-    ctx.save();
-    ctx.translate(220, 0);
+    let line = "", y = hasHealth ? 290 : 160, lineH = 20;
+    const startX = hasHealth ? 32 : 220;
+    const maxW   = hasHealth ? W - 64 : 340;
+    if (!hasHealth) ctx.save(), ctx.translate(220, 0);
     for (const word of words) {
       const test = line + (line ? " " : "") + word;
       if (ctx.measureText(test).width > maxW && line) {
-        ctx.fillText(line, 0, y); line = word; y += lineH;
-        if (y > 250) { ctx.fillText(line+"…", 0, y); break; }
+        ctx.fillText(line, hasHealth ? startX : 0, y);
+        line = word; y += lineH;
+        if (y > (hasHealth ? 330 : 255)) { ctx.fillText(line+"…", hasHealth ? startX : 0, y); break; }
       } else { line = test; }
     }
-    if (y <= 250) ctx.fillText(line, 0, y);
-    ctx.restore();
+    if (y <= (hasHealth ? 330 : 255)) ctx.fillText(line, hasHealth ? startX : 0, y);
+    if (!hasHealth) ctx.restore();
 
     // Divider + footer
     ctx.strokeStyle = "#e5e7eb";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(32, 278); ctx.lineTo(W-32, 278);
+    ctx.moveTo(32, hasHealth ? 342 : 282);
+    ctx.lineTo(W-32, hasHealth ? 342 : 282);
     ctx.stroke();
     ctx.fillStyle = "#aaa";
-    ctx.font = "13px system-ui";
-    ctx.fillText("partiqule.com · Know what's in your products", 32, 310);
+    ctx.font = "12px system-ui";
+    ctx.fillText("partiqule.com · Know what's in your products", 32, hasHealth ? 366 : 310);
 
     return canvas;
   };
