@@ -1723,6 +1723,7 @@ export default function App() {
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   // Read slug from URL on first load
   useEffect(() => {
@@ -1969,8 +1970,8 @@ export default function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              {/* Mobile barcode button — show on all mobile browsers, scanner handles unsupported gracefully */}
-              {isMobile && (
+              {/* Barcode button — Android only. iOS WebKit doesn't support BarcodeDetector regardless of browser */}
+              {isMobile && !isIOS && (
                 <div style={{display:"flex", justifyContent:"center", marginBottom:16}}>
                   <button onClick={()=>setScanning(true)}
                     style={{padding:"6px 16px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"rgba(255,255,255,0.6)", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
