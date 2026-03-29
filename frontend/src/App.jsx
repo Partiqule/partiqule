@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
@@ -1135,9 +1135,11 @@ const BarcodeScanner = ({onDetect, onClose}) => {
             if (val === lastDetected.current) { detectionCount.current++; }
             else { lastDetected.current = val; detectionCount.current = 1; }
             if (detectionCount.current >= 2) {
-              setScanned(val);
-              setStatus("success");
-              onDetect(val);
+              try {
+                setScanned(val);
+                setStatus("success");
+                onDetect(val);
+              } catch(e) { console.error("Scan callback error:", e); }
               return;
             }
           }
@@ -1159,15 +1161,15 @@ const BarcodeScanner = ({onDetect, onClose}) => {
         const containerId = "html5qr-container";
         try {
           // Must explicitly list formats — default only scans QR codes
-          const formats = window.Html5QrcodeSupportedFormats;
+          const formats = window.Html5QrcodeSupportedFormats || {};
           const formatsToSupport = [
-            formats.EAN_13,
-            formats.EAN_8,
-            formats.UPC_A,
-            formats.UPC_E,
-            formats.CODE_128,
-            formats.CODE_39,
-            formats.QR_CODE,
+            formats.EAN_13 ?? 9,
+            formats.EAN_8  ?? 10,
+            formats.UPC_A  ?? 14,
+            formats.UPC_E  ?? 15,
+            formats.CODE_128 ?? 6,
+            formats.CODE_39  ?? 4,
+            formats.QR_CODE  ?? 0,
           ];
           const html5QrCode = new window.Html5Qrcode(containerId, { formatsToSupport, verbose: false });
           html5QrRef.current = html5QrCode;
@@ -1175,10 +1177,12 @@ const BarcodeScanner = ({onDetect, onClose}) => {
             { facingMode: "environment" },
             { fps: 15, qrbox: { width: 280, height: 180 } },
             (decodedText) => {
-              html5QrCode.stop().catch(()=>{});
-              setScanned(decodedText);
-              setStatus("success");
-              onDetect(decodedText);
+              try {
+                html5QrCode.stop().catch(()=>{});
+                setScanned(decodedText);
+                setStatus("success");
+                onDetect(decodedText);
+              } catch(e) { console.error("Scan callback error:", e); }
             },
             () => {} // ignore per-frame errors
           ).then(() => setStatus("scanning"))
@@ -1848,7 +1852,7 @@ export default function App() {
   };
 
   const analyze = async (q=query) => {
-    if (!q.trim()) return;
+    if (!q.trim()) return Promise.resolve();
     setLoading(true); setError(null); setResult(null);
     track("Scan", { product: q.trim() });
     try {
@@ -1877,12 +1881,15 @@ export default function App() {
       {/* BARCODE SCANNER MODAL */}
       {scanning && (
         <BarcodeScanner
-          onDetect={(barcode) => {
+          onDetect={async (barcode) => {
             setResult(null);
             setError(null);
             setPage("home");
             setQuery(barcode);
-            analyze(barcode).finally(() => setScanning(false));
+            try {
+              await analyze(barcode);
+            } catch(e) {}
+            setScanning(false);
           }}
           onClose={() => setScanning(false)}
         />
@@ -2425,3 +2432,32 @@ export default function App() {
     </div>
   );
 }
+
+// ── ERROR BOUNDARY ────────────────────────────────────────────
+// Catches any runtime crash and shows a recovery screen instead of blank white
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error, info) { console.error("Partiqule crash:", error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{minHeight:"100vh", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
+          <div style={{fontSize:48}}>🔬</div>
+          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:24, color:"#fff"}}>Something went wrong</div>
+          <div style={{fontSize:14, color:"#86efac", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
+          <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#4ade80", color:"#052e16", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:8}}>
+            Reload Partiqule
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const AppWithBoundary = () => (
+  <ErrorBoundary><App /></ErrorBoundary>
+);
+
+export { AppWithBoundary as default };
