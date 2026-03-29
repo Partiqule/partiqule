@@ -1875,14 +1875,14 @@ export default function App() {
       {scanning && (
         <BarcodeScanner
           onDetect={(barcode) => {
-            // Small delay so user sees the success state inside scanner
-            // before it closes and loading begins
             setTimeout(() => {
               setScanning(false);
-              const q = `product with barcode ${barcode}`;
-              setQuery(q);
-              analyze(q);
-            }, 800);
+              setResult(null);
+              setError(null);
+              setPage("home");
+              setQuery(barcode);
+              analyze(barcode);
+            }, 2000);
           }}
           onClose={() => setScanning(false)}
         />
