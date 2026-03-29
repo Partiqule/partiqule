@@ -335,121 +335,140 @@ const EducationSection = ({isDark, isMobile=false}) => {
 
 // ── SHARE BADGE (with copy-as-image) ─────────────────────────
 const ShareBadge = ({result}) => {
-  const [copied,      setCopied]      = useState(false);
-  const [imgLoading,  setImgLoading]  = useState(false);
+  const [sharing,     setSharing]     = useState(false);
+  const [done,        setDone]        = useState(false);
   const safeName    = (result.product_name || "").startsWith("http") ? "Scanned product" : result.product_name;
   const displayName = safeName?.length > 40 ? safeName.slice(0, 37) + "…" : safeName;
   const color       = scoreColor(result.score);
   const label       = scoreLabel(result.score);
 
-  const copyText = () => {
-    const shareUrl = getShareUrl(safeName);
-    const text = `🔬 Partiqule Result\n${safeName}\nMicroplastics Risk: ${result.score}/10 (${label})\n\n${shareUrl}`;
-    navigator.clipboard.writeText(text).then(()=>{setCopied(true); setTimeout(()=>setCopied(false),2000);});
+  const buildCanvas = () => {
+    const canvas  = document.createElement("canvas");
+    const dpr     = window.devicePixelRatio || 1;
+    const W = 600, H = 340;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    // Background
+    const bgColor = result.score<=4?"#f0fdf4":result.score<=6?"#fffbeb":"#fff5f5";
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, W, H, 20);
+    ctx.fill();
+
+    // Top accent bar
+    ctx.fillStyle = "#052e16";
+    ctx.fillRect(0, 0, W, 6);
+
+    // Logo
+    ctx.fillStyle = "#052e16";
+    ctx.font = "bold 18px system-ui";
+    ctx.fillText("🔬 Partiqule", 32, 44);
+
+    // Product name
+    ctx.fillStyle = "#111";
+    ctx.font = "bold 26px system-ui";
+    const name = safeName?.length > 35 ? safeName.slice(0,32)+"…" : safeName;
+    ctx.fillText(name, 32, 100);
+
+    // Big score
+    ctx.fillStyle = color;
+    ctx.font = "bold 96px system-ui";
+    ctx.fillText(result.score, 32, 210);
+    ctx.fillStyle = "#aaa";
+    ctx.font = "bold 32px system-ui";
+    ctx.fillText("/ 10", 110, 210);
+
+    // Danger label pill
+    const pillBg = result.score<=4?"#dcfce7":result.score<=6?"#fef9c3":"#fee2e2";
+    ctx.fillStyle = pillBg;
+    ctx.beginPath();
+    ctx.roundRect(32, 228, 170, 32, 16);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.font = "bold 14px system-ui";
+    ctx.fillText(`${label} Danger`, 50, 249);
+
+    // Summary
+    ctx.fillStyle = "#555";
+    ctx.font = "15px system-ui";
+    const words = (result.summary || "").split(" ");
+    let line = "", y = 155, lineH = 22;
+    const maxW = 340;
+    ctx.save();
+    ctx.translate(220, 0);
+    for (const word of words) {
+      const test = line + (line ? " " : "") + word;
+      if (ctx.measureText(test).width > maxW && line) {
+        ctx.fillText(line, 0, y); line = word; y += lineH;
+        if (y > 250) { ctx.fillText(line+"…", 0, y); break; }
+      } else { line = test; }
+    }
+    if (y <= 250) ctx.fillText(line, 0, y);
+    ctx.restore();
+
+    // Divider + footer
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(32, 278); ctx.lineTo(W-32, 278);
+    ctx.stroke();
+    ctx.fillStyle = "#aaa";
+    ctx.font = "13px system-ui";
+    ctx.fillText("partiqule.com · Know what's in your products", 32, 310);
+
+    return canvas;
   };
 
-  const copyImage = async () => {
-    setImgLoading(true);
+  const share = async () => {
+    setSharing(true);
     try {
-      // Build a canvas image card
-      const canvas  = document.createElement("canvas");
-      const dpr     = window.devicePixelRatio || 1;
-      const W = 600, H = 340;
-      canvas.width  = W * dpr;
-      canvas.height = H * dpr;
-      const ctx = canvas.getContext("2d");
-      ctx.scale(dpr, dpr);
-
-      // Background
-      const bgColor = result.score<=4?"#f0fdf4":result.score<=6?"#fffbeb":"#fff5f5";
-      ctx.fillStyle = bgColor;
-      ctx.beginPath();
-      ctx.roundRect(0, 0, W, H, 20);
-      ctx.fill();
-
-      // Top accent bar
-      ctx.fillStyle = "#052e16";
-      ctx.fillRect(0, 0, W, 6);
-
-      // Logo text
-      ctx.fillStyle = "#052e16";
-      ctx.font = "bold 18px system-ui";
-      ctx.fillText("🔬 Partiqule", 32, 44);
-
-      // Product name
-      ctx.fillStyle = "#111";
-      ctx.font = "bold 26px system-ui";
-      const name = safeName?.length > 35 ? safeName.slice(0,32)+"…" : safeName;
-      ctx.fillText(name, 32, 100);
-
-      // Big score number
-      ctx.fillStyle = color;
-      ctx.font = "bold 96px system-ui";
-      ctx.fillText(result.score, 32, 210);
-
-      // /10
-      ctx.fillStyle = "#aaa";
-      ctx.font = "bold 32px system-ui";
-      ctx.fillText("/ 10", 110, 210);
-
-      // Risk label pill
-      const pillBg = result.score<=4?"#dcfce7":result.score<=6?"#fef9c3":"#fee2e2";
-      ctx.fillStyle = pillBg;
-      ctx.beginPath();
-      ctx.roundRect(32, 228, 160, 32, 16);
-      ctx.fill();
-      ctx.fillStyle = color;
-      ctx.font = "bold 14px system-ui";
-      ctx.fillText(`${label} Risk`, 50, 249);
-
-      // Summary (wrapped)
-      ctx.fillStyle = "#555";
-      ctx.font = "15px system-ui";
-      const words   = (result.summary || "").split(" ");
-      let line = "", y = 155, lineH = 22;
-      const maxW = 340;
-      ctx.save();
-      ctx.translate(220, 0);
-      for (const word of words) {
-        const test = line + (line ? " " : "") + word;
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line, 0, y); line = word; y += lineH;
-          if (y > 250) { ctx.fillText(line+"…", 0, y); break; }
-        } else { line = test; }
-      }
-      if (y <= 250) ctx.fillText(line, 0, y);
-      ctx.restore();
-
-      // Divider
-      ctx.strokeStyle = "#e5e7eb";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(32, 278); ctx.lineTo(W-32, 278);
-      ctx.stroke();
-
-      // Footer
-      ctx.fillStyle = "#aaa";
-      ctx.font = "13px system-ui";
-      ctx.fillText("partiqule.com · Know what's in your products", 32, 310);
-
-      // Copy to clipboard
+      const canvas = buildCanvas();
       canvas.toBlob(async (blob) => {
         try {
-          await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
-          setCopied(true); setTimeout(()=>setCopied(false), 2500);
-        } catch {
-          // Fallback: download the image
-          const url = URL.createObjectURL(blob);
-          const a   = document.createElement("a");
-          a.href = url; a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
-          a.click(); URL.revokeObjectURL(url);
-          setCopied(true); setTimeout(()=>setCopied(false), 2500);
+          // Mobile: use native share sheet if available — lets users save to photos or share to any app
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
+            const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
+            await navigator.share({
+              title: `${safeName} — Danger Score ${result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule and got a danger score of ${result.score}/10. Check what's in your products at partiqule.com`,
+              files: [file],
+            });
+          } else if (navigator.clipboard?.write) {
+            // Desktop: copy image to clipboard
+            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+            setDone(true);
+            setTimeout(() => setDone(false), 2500);
+          } else {
+            // Fallback: download the image
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setDone(true);
+            setTimeout(() => setDone(false), 2500);
+          }
+        } catch(e) {
+          // If share was cancelled by user, silently fail
+          if (e.name !== "AbortError") {
+            // Last resort: download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
         }
-        setImgLoading(false);
+        setSharing(false);
       }, "image/png");
     } catch(e) {
       console.error(e);
-      setImgLoading(false);
+      setSharing(false);
     }
   };
 
@@ -461,19 +480,13 @@ const ShareBadge = ({result}) => {
           <div style={{width:34, height:34, borderRadius:8, background:scoreBg(result.score), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, color}}>{result.score}</div>
           <div>
             <div style={{fontSize:12, fontWeight:600, color:"#111"}}>{displayName}</div>
-            <div style={{fontSize:11, color}}>{label} Risk</div>
+            <div style={{fontSize:11, color}}>{label} Danger</div>
           </div>
         </div>
-        <div style={{display:"flex", gap:6}}>
-          <button onClick={copyText} style={{display:"flex", alignItems:"center", gap:4, padding:"6px 10px", borderRadius:7, border:"1px solid #e0e0e0", background:"#fff", fontSize:12, fontWeight:600, color:"#555", cursor:"pointer"}}>
-            <IconShare size={12} color="#555"/>Text
-          </button>
-          <button onClick={copyImage} disabled={imgLoading} style={{display:"flex", alignItems:"center", gap:4, padding:"6px 10px", borderRadius:7, border:"none", background:"#052e16", fontSize:12, fontWeight:600, color:"#4ade80", cursor:"pointer"}}>
-            {imgLoading ? "…" : <><IconShare size={12} color="#4ade80"/>Image</>}
-          </button>
-        </div>
+        <button onClick={share} disabled={sharing} style={{display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:8, border:"none", background:"#052e16", fontSize:13, fontWeight:600, color:"#4ade80", cursor:"pointer"}}>
+          {sharing ? "…" : done ? "✓ Copied!" : <><IconShare size={13} color="#4ade80"/> Share</>}
+        </button>
       </div>
-      {copied && <div style={{fontSize:11, color:"#16a34a", marginTop:6, textAlign:"center"}}>✓ {copied?"Copied to clipboard!":""}</div>}
     </div>
   );
 };
