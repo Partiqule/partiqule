@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const API_BASE = "https://partiqule-production.up.railway.app";
+const API_BASE = "";
 
 const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#d97706":s<=8?"#dc2626":"#991b1b";
@@ -1768,14 +1768,48 @@ export default function App() {
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
                   <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
-                  <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
-                    #ad · affiliate links
+                  {result.alternatives?.length > 0 && (
+                    <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
+                      #ad · affiliate links
+                    </div>
+                  )}
+                </div>
+
+                {/* Affiliate alternatives from static DB */}
+                {result.alternatives?.length > 0 && (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {result.alternatives.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
                   </div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {result.alternatives?.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
-                </div>
-                <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through these links — at no extra cost to you. This funds free access to Partiqule.</p>
+                )}
+
+                {/* AI-generated alternatives — no affiliate link */}
+                {result.ai_alternatives?.length > 0 && (
+                  <div style={{marginTop: result.alternatives?.length > 0 ? 16 : 0}}>
+                    {result.alternatives?.length > 0 && (
+                      <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
+                    )}
+                    <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                      {result.ai_alternatives.map((alt, i) => (
+                        <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                            <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                          </div>
+                          <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
+                          <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                          <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                            style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                            <IconSearch size={12} color="#16a34a"/> Scan this product →
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.alternatives?.length > 0 && (
+                  <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
+                )}
               </div>
 
               {/* BUNDLE */}

@@ -125,9 +125,29 @@ Return ONLY this JSON:
   "raw_concerns": ["specific concern 1", "specific concern 2", "specific concern 3", "specific concern 4"],
   "confidence": "high|medium|low",
   "confidence_reason": "why confidence is high/medium/low",
-  "scan_next": ["related product 1", "related product 2", "related product 3"]
+  "scan_next": ["related product 1", "related product 2", "related product 3"],
+  "ai_alternatives": [
+    {
+      "name": "specific product name e.g. Klean Kanteen stainless steel bottle",
+      "reason": "one sentence on why this is safer and what plastic it avoids",
+      "material": "what it is made of",
+      "estimated_score": 2
+    },
+    {
+      "name": "second alternative",
+      "reason": "why safer",
+      "material": "material",
+      "estimated_score": 1
+    },
+    {
+      "name": "third alternative",
+      "reason": "why safer",
+      "material": "material",
+      "estimated_score": 2
+    }
+  ]
 }`,
-    900
+    1200
   );
 }
 
@@ -244,6 +264,13 @@ app.post("/analyze", async (req, res) => {
         affiliateUrl: p.affiliateUrl,
         imageUrl:     p.imageUrl || null,
         source:       p.source || "static",
+      })),
+      ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+        name:            a.name || "",
+        reason:          a.reason || "",
+        material:        a.material || "",
+        estimated_score: a.estimated_score || 2,
+        source:          "ai",
       }))
     };
 
