@@ -294,50 +294,100 @@ const EducationSection = ({isDark, isMobile=false}) => {
   const text    = isDark?"#f1f5f9":"#111";
   const muted   = isDark?"#64748b":"#666";
   const bg      = isDark?"#131929":"#fafafa";
-  const px      = isMobile?"16px":"40px";
-  const stats = [
+
+  const plasticStats = [
     {number:"74,000", label:"microplastic particles the average person consumes per year",  color:"#16a34a", bg:"#f0fdf4"},
     {number:"5mm",    label:"maximum size of a microplastic — many are invisible to the naked eye", color:"#059669", bg:"#ecfdf5"},
     {number:"1950s",  label:"when large-scale plastic production began polluting our food chain",    color:"#047857", bg:"#d1fae5"},
     {number:"100%",   label:"of human blood samples tested in 2022 contained microplastics",        color:"#052e16", bg:"#bbf7d0"},
   ];
-  const faqs = [
+
+  const plasticFaqs = [
     {q:"What are microplastics?", a:"Microplastics are tiny plastic particles less than 5mm in size. They come from the breakdown of larger plastic products, synthetic textiles, and plastic packaging. They've been found in human blood, lungs, placentas, and breast milk."},
     {q:"How do I ingest microplastics?", a:"Through drinking water, eating seafood, breathing indoor air, using plastic food containers (especially when heated), wearing synthetic clothing, and using personal care products with plastic packaging."},
     {q:"Are microplastics dangerous?", a:"Research is ongoing, but studies have linked microplastic exposure to inflammation, hormonal disruption, and potential carcinogenic effects. The WHO has called for more research, particularly around nanoplastics that can cross cell membranes."},
-    {q:"How does Partiqule score products?", a:"Our AI analyzes each product based on its materials, manufacturing process, packaging, and usage patterns. It cross-references known research on microplastic release to generate a 1–10 risk score."},
+    {q:"How does Partiqule score plastic danger?", a:"Our AI analyzes each product's materials, manufacturing process, packaging, and usage patterns. It cross-references known research on microplastic release to generate a plastic danger score from 1 to 10."},
   ];
+
+  const healthStats = [
+    {number:"11,000+", label:"synthetic food additives approved for use in the US food supply", color:"#7c3aed", bg:"#f5f3ff"},
+    {number:"40%",     label:"of processed foods contain artificial dyes linked to hyperactivity", color:"#6d28d9", bg:"#ede9fe"},
+    {number:"80%",     label:"of packaged foods contain ultra-processed ingredients", color:"#5b21b6", bg:"#ddd6fe"},
+    {number:"1,000+",  label:"chemicals in everyday products are known or suspected endocrine disruptors", color:"#4c1d95", bg:"#c4b5fd"},
+  ];
+
+  const healthFaqs = [
+    {q:"What are artificial dyes?", a:"Synthetic colorants like Red 40, Yellow 5, and Blue 1 are petroleum-derived and used widely in candy, cereals, and drinks. Studies have linked them to hyperactivity in children and allergic reactions. The EU requires warning labels on products containing them."},
+    {q:"What are endocrine disruptors?", a:"Chemicals that interfere with the body's hormone system. They're found in plastics (BPA, phthalates), pesticide residues, non-stick coatings (PFAS), and some personal care ingredients. Exposure has been linked to thyroid disruption, reduced fertility, and developmental issues."},
+    {q:"What is ultra-processing?", a:"Ultra-processed foods go far beyond basic cooking. They typically contain additives, emulsifiers, preservatives, and flavor enhancers not found in home kitchens. Research consistently links high ultra-processed food intake to increased risk of obesity, cardiovascular disease, and some cancers."},
+    {q:"How does Partiqule score health concerns?", a:"The health score covers non-plastic risks: artificial additives, endocrine disruptors, ultra-processing, allergens, and known carcinogens. It contributes 30% of the overall score, with plastic danger making up the remaining 70%."},
+  ];
+
   return (
     <section style={{background:bg, borderTop:`1px solid ${border}`, padding:isMobile?"40px 16px":"64px 40px"}}>
       <div style={{maxWidth:1100, margin:"0 auto"}}>
+
+        {/* Section 1: Microplastics */}
         <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
-          <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1e1f3a":"#eef2ff", color:"#6366f1", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-            <IconBook size={13} color="#6366f1"/> The Science
+          <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1a2a1a":"#f0fdf4", color:"#16a34a", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
+            🔬 Microplastics
           </div>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:36, fontWeight:700, color:text, margin:"0 0 16px", letterSpacing:"-1px"}}>What are microplastics?</h2>
-          <p style={{fontSize:17, color:muted, maxWidth:600, margin:"0 auto", lineHeight:1.7}}>
+          <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>What are microplastics?</h2>
+          <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
             Tiny plastic particles that have infiltrated our food, water, air and bodies. Here's what the science says.
           </p>
         </div>
 
-        {/* Stats grid */}
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:56}}>
-          {stats.map((s,i) => (
-            <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8}}>{s.number}</div>
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
+          {plasticStats.map((s,i) => (
+            <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8}}>{s.number}</div>
               <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* FAQ */}
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20}}>
-          {faqs.map((faq,i) => (
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20, marginBottom:isMobile?48:80}}>
+          {plasticFaqs.map((faq,i) => (
             <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
               <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
             </div>
           ))}
         </div>
+
+        {/* Divider */}
+        <div style={{borderTop:`1.5px solid ${border}`, marginBottom:isMobile?40:64}}/>
+
+        {/* Section 2: Broader health concerns */}
+        <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
+          <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1e1a2e":"#f5f3ff", color:"#7c3aed", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
+            ❤️ Health Concerns
+          </div>
+          <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>Beyond plastics</h2>
+          <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
+            Microplastics are just one part of the picture. Everyday products contain a range of chemicals and additives that affect your health in ways that have nothing to do with plastic.
+          </p>
+        </div>
+
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
+          {healthStats.map((s,i) => (
+            <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:800, color:isDark?"#c4b5fd":s.color, marginBottom:8}}>{s.number}</div>
+              <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20}}>
+          {healthFaqs.map((faq,i) => (
+            <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
+              <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </section>
   );
@@ -1854,7 +1904,7 @@ export default function App() {
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
             <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>The Science</h1>
-            <p style={{fontSize:15, color:muted, margin:0}}>What microplastics are, where they come from, and why they matter</p>
+            <p style={{fontSize:15, color:muted, margin:0}}>Microplastics, harmful chemicals, and why everyday products matter more than you think</p>
           </div>
           <EducationSection isDark={isDark} isMobile={isMobile}/>
         </div>
