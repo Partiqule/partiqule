@@ -134,21 +134,27 @@ Return ONLY this JSON:
 // ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
 async function pass2(productName, pass1Result) {
   return callClaude(
-    `You are a microplastics scoring auditor. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text.`,
-    `Score "${productName}" using this analysis:
-product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} exposure_frequency:${pass1Result.exposure_frequency} exposure_type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category}
+    `You are a microplastics scoring auditor. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text. Keep all string values under 20 words.`,
+    `Score "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category}
 
-Rules: daily+1-2, weekly+0.5, ingestion+1, skin+0.5, inhalation+1, 70% product+30% packaging. Integer 1-10.
+Rules: daily+1-2, weekly+0.5, ingestion+1, skin+0.5, inhalation+1, 70/30 product/packaging split. Integer 1-10.
 
-BREAK-EVEN: Only include if a clear reusable swap exists for this exact product type. Benchmarks:
-plastic bottle→stainless:50, disposable cup→reusable:40, cling wrap→beeswax wrap:8, plastic toothbrush→bamboo:1, non-stick pan→cast iron:200, plastic container→glass:25, disposable period products→menstrual cup:90, disposable razor→safety razor:10, zip bags→silicone bags:15, plastic bags→cotton tote:130, shampoo bottle→shampoo bar:6, synthetic clothes→natural fiber:30.
-For furniture, electronics, appliances, cars, or anything with no clear reusable swap: use null.
+Break-even benchmarks (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, container→glass:25, pads→menstrual cup:90, razor→safety:10, zipbag→silicone:15, shopping bag→tote:130, shampoo→bar:6, synthetic clothing→natural:30. Furniture/electronics/appliances=null.
 
-Return ONLY this JSON:
-{"final_score":7,"score_reasoning":"brief","exposure_multiplier":"daily","refined_concerns":["concern 1","concern 2","concern 3"],"summary":"2 sentences","confidence":"high","confidence_note":"brief","break_even":{"uses":50,"alternative_name":"name","note":"brief explanation","source":"Lifecycle analysis estimate"}}
-Or if no swap exists: use "break_even":null`,
-    500
+Return ONLY valid JSON under 400 tokens:
+{"final_score":7,"score_reasoning":"max 15 words","exposure_multiplier":"daily","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words total","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
+    800
   );
+}
+
+// ── SAFE PASS2 WRAPPER ────────────────────────────────────────
+async function safePass2(productName, pass1Result) {
+  try {
+    return await pass2(productName, pass1Result);
+  } catch (err) {
+    console.error("Pass2 failed, using pass1 fallback:", err.message);
+    return null;
+  }
 }
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
@@ -172,8 +178,7 @@ app.post("/analyze", async (req, res) => {
     console.log(`Analyzing: ${productName}`);
     const [p1, p2] = await Promise.all([
       pass1(productName),
-      pass1(productName).then(p1data => pass2(productName, p1data))
-        .catch(() => null) // if pass2 fails, fall back to pass1
+      pass1(productName).then(p1data => safePass2(productName, p1data))
     ]);
 
     // Merge pass1 + pass2 results
