@@ -136,14 +136,17 @@ async function pass2(productName, pass1Result) {
   return callClaude(
     `You are a microplastics scoring auditor. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text.`,
     `Score "${productName}" using this analysis:
-product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} exposure_frequency:${pass1Result.exposure_frequency} exposure_type:${pass1Result.exposure_type} confidence:${pass1Result.confidence}
+product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} exposure_frequency:${pass1Result.exposure_frequency} exposure_type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category}
 
 Rules: daily+1-2, weekly+0.5, ingestion+1, skin+0.5, inhalation+1, 70% product+30% packaging. Integer 1-10.
 
-Break-even uses (reusable vs single-use): stainless bottle=50, cotton tote=130, beeswax wrap=8, bamboo toothbrush=1, cast iron=200, glass container=25, menstrual cup=90, safety razor=10, reusable coffee cup=40, silicone bag=15.
+BREAK-EVEN: Only include if a clear reusable swap exists for this exact product type. Benchmarks:
+plastic bottle→stainless:50, disposable cup→reusable:40, cling wrap→beeswax wrap:8, plastic toothbrush→bamboo:1, non-stick pan→cast iron:200, plastic container→glass:25, disposable period products→menstrual cup:90, disposable razor→safety razor:10, zip bags→silicone bags:15, plastic bags→cotton tote:130, shampoo bottle→shampoo bar:6, synthetic clothes→natural fiber:30.
+For furniture, electronics, appliances, cars, or anything with no clear reusable swap: use null.
 
 Return ONLY this JSON:
-{"final_score":7,"score_reasoning":"how score was calculated","exposure_multiplier":"daily","refined_concerns":["specific plastic concern 1","concern 2","concern 3"],"summary":"2 sentences for general audience","confidence":"high","confidence_note":"brief note","break_even":{"uses":50,"alternative_name":"stainless steel bottle","note":"brief break-even explanation","source":"Lifecycle analysis estimate"}}`,
+{"final_score":7,"score_reasoning":"brief","exposure_multiplier":"daily","refined_concerns":["concern 1","concern 2","concern 3"],"summary":"2 sentences","confidence":"high","confidence_note":"brief","break_even":{"uses":50,"alternative_name":"name","note":"brief explanation","source":"Lifecycle analysis estimate"}}
+Or if no swap exists: use "break_even":null`,
     500
   );
 }
