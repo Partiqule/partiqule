@@ -1263,6 +1263,109 @@ const LoadingState = () => {
   );
 };
 
+// ── ABOUT PAGE ────────────────────────────────────────────────
+const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => {
+  const stats = [
+    {number:"205+", label:"Plastic-free alternatives in our database"},
+    {number:"10",   label:"Plastic types we identify per product"},
+    {number:"2",    label:"AI passes for every single score"},
+    {number:"Free", label:"Always. No sign-up. No ads."},
+  ];
+  return (
+    <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+
+      {/* Hero */}
+      <div style={{marginBottom:56}}>
+        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:14}}>About Partiqule</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 20px", letterSpacing:"-1px", lineHeight:1.15}}>
+          Make plastic visible.
+        </h1>
+        <p style={{fontSize:isMobile?17:20, color:muted, lineHeight:1.8, maxWidth:640, margin:"0 0 28px"}}>
+          Most people have no idea what's in the products they use every day. We built Partiqule to change that — one scan at a time.
+        </p>
+        <button onClick={()=>onScan()}
+          style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
+          Try a free scan →
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:16, marginBottom:56}}>
+        {stats.map((s,i)=>(
+          <div key={i} style={{background:surface, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${border}`, textAlign:"center"}}>
+            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:"#16a34a", marginBottom:6}}>{s.number}</div>
+            <div style={{fontSize:13, color:muted, lineHeight:1.5}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mission */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          The average person consumes around 5 grams of microplastics every week — the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products carry no warning, no label, and no guidance on safer alternatives.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
+          Partiqule exists to give people the information they deserve. We believe that if you knew your tea bags were releasing 11 billion plastic particles per cup, you'd make a different choice. Our job is to make sure you know.
+        </p>
+      </div>
+
+      {/* How it works */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>How we score products</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          Every scan runs a two-pass AI analysis powered by Anthropic's Claude — a senior research scientist pass that identifies specific plastic polymers, followed by an auditor pass that verifies and weights the final score based on exposure frequency, route, and confidence.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
+          Scores are weighted by what matters most: how often you use it, whether it contacts your food or skin, and whether heat or friction release particles during normal use. The result is a 1–10 danger score grounded in peer-reviewed microplastics research.
+        </p>
+      </div>
+
+      {/* Values */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
+        <div style={{display:"flex", flexDirection:"column", gap:20}}>
+          {[
+            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the breakdown — materials, packaging, usage, manufacturing — so you can judge for yourself, not just trust a number."},
+            {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
+            {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free, requires no account, and will always stay that way."},
+            {title:"Science first", body:"Every score is grounded in published research. We link our sources, cite our methodology, and update scores when the science changes."},
+          ].map((v,i)=>(
+            <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
+              <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:8}}/>
+              <div>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{v.title}</div>
+                <div style={{fontSize:15, color:muted, lineHeight:1.7}}>{v.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* The impact */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this with microbeads — public pressure and consumer awareness led to bans across dozens of countries.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
+          We're not anti-plastic. We're pro-information. The goal is a world where every product that touches your food, your skin, or your family carries the same transparency as a nutrition label.
+        </p>
+      </div>
+
+      {/* Contact */}
+      <div>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
+          Questions, partnerships, press, or just want to say hi — reach us at{" "}
+          <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
+          We read every email.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── PRIVACY PAGE ─────────────────────────────────────────────
 const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => (
   <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
@@ -1361,8 +1464,9 @@ export default function App() {
     }
     if (path.startsWith("/worst")) { setPage("worst"); return; }
     if (path === "/privacy") { setPage("privacy"); return; }
+    if (path === "/about") { setPage("about"); return; }
 
-    const known = ["/", "/worst", "/worst-offenders", "/science", "/history", "/privacy"];
+    const known = ["/", "/worst", "/worst-offenders", "/science", "/history", "/privacy", "/about"];
     const isScanPath = path.startsWith("/scan/");
     if (!known.includes(path) && !isScanPath) setPage("404");
   }, []);
@@ -1469,6 +1573,7 @@ export default function App() {
               <span onClick={()=>{setPage("worst"); setResult(null);}} style={{fontSize:14, color:page==="worst"?"#dc2626":muted, cursor:"pointer", fontWeight:page==="worst"?600:400, display:"flex", alignItems:"center", gap:5}}>
                 <IconFire size={13} color={page==="worst"?"#dc2626":muted}/> Worst Offenders
               </span>
+              <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
@@ -1484,6 +1589,7 @@ export default function App() {
           <div style={{background:surface, borderTop:`1px solid ${border}`, padding:"12px 16px", display:"flex", flexDirection:"column", gap:4}}>
             {[
               {label:"🔥 Worst Offenders", pg:"worst"},
+              {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"My Scans",           pg:"history"},
             ].map(item=>(
@@ -1503,6 +1609,8 @@ export default function App() {
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
       ) : page === "privacy" ? (
         <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
+      ) : page === "about" ? (
+        <AboutPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{fontSize:64, marginBottom:16}}>🔬</div>
@@ -1908,6 +2016,7 @@ export default function App() {
         <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
           {[
             {label:"Worst Offenders", pg:"worst",   path:"/worst-offenders"},
+            {label:"About",           pg:"about",   path:"/about"},
             {label:"The Science",     pg:"science",  path:"/science"},
             {label:"My Scans",        pg:"history",  path:"/history"},
             {label:"Privacy Policy",  pg:"privacy",  path:"/privacy"},
