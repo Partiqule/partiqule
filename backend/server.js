@@ -290,7 +290,7 @@ app.post("/analyze", async (req, res) => {
     const finalScore    = p2?.final_score ?? p1.product_score ?? 5;
     const healthScore   = p1.health_score || null;
     const overallScore  = healthScore
-      ? Math.min(10, Math.max(1, Math.round(finalScore * 0.7 + healthScore * 0.3)))
+      ? Math.min(10, Math.max(1, Math.round(finalScore * 0.5 + healthScore * 0.5)))
       : null;
 
     // Peer comparison

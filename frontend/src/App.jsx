@@ -320,6 +320,108 @@ const EducationSection = ({isDark, isMobile=false}) => {
   );
 };
 
+// ── HEALTH SCORE DROPDOWN ─────────────────────────────────────
+const HealthScoreDropdown = ({result, isDark, muted}) => {
+  const [open, setOpen] = useState(false);
+  const hs = result.health_score;
+  const hc = result.health_concerns || [];
+  const hn = result.health_note;
+  const isHigh = hs >= 7;
+  const isMed  = hs >= 4 && hs < 7;
+  const color  = hs<=3?"#16a34a":hs<=6?"#7c3aed":"#dc2626";
+  const bg     = hs<=3?(isDark?"#1a2a1a":"#f0fdf4"):hs<=6?(isDark?"#1e1a2e":"#f5f3ff"):(isDark?"#2a1a1a":"#fef2f2");
+  const borderColor = hs<=3?"#bbf7d0":hs<=6?"#ddd6fe":"#fecaca";
+  const hlabel = hs<=3?"Low":hs<=6?"Moderate":"High";
+
+  return (
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
+      {/* Header row — always visible */}
+      <button onClick={()=>setOpen(o=>!o)} style={{
+        width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:8}}>
+          <span style={{fontSize:14}}>❤️</span>
+          <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>
+            Health Concern
+          </span>
+          <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{hs}/10</span>
+          <span style={{fontSize:11, color, fontWeight:600,
+            background:`${color}18`, padding:"2px 8px", borderRadius:10}}>
+            {hlabel}
+          </span>
+        </div>
+        <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block",
+          transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+
+      {/* Expanded content */}
+      {open && (
+        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+          {/* Health note */}
+          {hn && (
+            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"12px 0 10px", fontStyle:"italic"}}>
+              {hn}
+            </p>
+          )}
+
+          {/* Health concerns list */}
+          {hc.length > 0 && (
+            <div style={{display:"flex", flexDirection:"column", gap:6, marginBottom:12}}>
+              {hc.map((concern, i) => (
+                <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
+                  <span style={{color, fontSize:12, marginTop:2, flexShrink:0}}>•</span>
+                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{concern}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* High risk CTA */}
+          {isHigh && (
+            <div style={{
+              background:isDark?"#2a1515":"#fff5f5",
+              border:"1.5px solid #fca5a5",
+              borderRadius:10, padding:"12px 14px", marginTop:8
+            }}>
+              <div style={{fontSize:12, fontWeight:700, color:"#dc2626", marginBottom:4}}>
+                ⚠️ High health concern detected
+              </div>
+              <div style={{fontSize:12, color:isDark?"#fca5a5":"#7f1d1d", lineHeight:1.6, marginBottom:10}}>
+                This product has significant health concerns beyond microplastics. Consider switching to a safer alternative.
+              </div>
+              {result.ai_alternatives?.[0] && (
+                <button
+                  onClick={()=>{
+                    const el = document.getElementById("safer-alternatives");
+                    if (el) el.scrollIntoView({behavior:"smooth"});
+                  }}
+                  style={{fontSize:12, fontWeight:700, color:"#fff", background:"#dc2626",
+                    border:"none", borderRadius:8, padding:"7px 14px", cursor:"pointer"}}>
+                  See safer alternatives ↓
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Moderate risk nudge */}
+          {isMed && (
+            <div style={{
+              background:isDark?"#1e1a2e":"#faf5ff",
+              border:"1px solid #ddd6fe",
+              borderRadius:10, padding:"10px 14px", marginTop:8
+            }}>
+              <div style={{fontSize:12, color:isDark?"#c4b5fd":"#6d28d9", lineHeight:1.5}}>
+                💜 Moderate health concerns. Safer alternatives exist — scroll down to explore.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── SHARE BADGE (with copy-as-image) ─────────────────────────
 const ShareBadge = ({result}) => {
   const [sharing,     setSharing]     = useState(false);
@@ -424,7 +526,7 @@ const ShareBadge = ({result}) => {
       ctx.fillText(`${result.overall_score}/10`, 336, 236);
       ctx.fillStyle = "#aaa";
       ctx.font = "10px system-ui";
-      ctx.fillText("70% plastic · 30% health", 336, 246);
+      ctx.fillText("50% plastic · 50% health", 336, 246);
     }
 
     // ── Summary ──
@@ -1512,27 +1614,9 @@ export default function App() {
 
                 <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 6px"}}>{scoreLabel(result.score)} Danger</div>
 
-                {/* Health score — secondary badge */}
+                {/* Health score — expandable dropdown */}
                 {result.health_score && (
-                  <div style={{marginBottom:8}}>
-                    <div style={{display:"inline-flex", alignItems:"center", gap:6,
-                      background:isDark?"#1e1e2e":"#f8f7ff",
-                      border:`1px solid ${result.health_score<=3?"#bbf7d0":result.health_score<=6?"#e9d5ff":"#fecaca"}`,
-                      borderRadius:20, padding:"5px 14px"}}>
-                      <span style={{fontSize:11, color:muted, fontWeight:500}}>❤️ Health concern:</span>
-                      <span style={{fontSize:13, fontWeight:700,
-                        color:result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626"}}>
-                        {result.health_score}/10
-                      </span>
-                      <span style={{fontSize:11,
-                        color:result.health_score<=3?"#16a34a":result.health_score<=6?"#7c3aed":"#dc2626"}}>
-                        {result.health_score<=3?"Low":result.health_score<=6?"Moderate":"High"}
-                      </span>
-                    </div>
-                    {result.health_note && (
-                      <div style={{fontSize:11, color:muted, marginTop:4, fontStyle:"italic", paddingLeft:4}}>{result.health_note}</div>
-                    )}
-                  </div>
+                  <HealthScoreDropdown result={result} isDark={isDark} muted={muted}/>
                 )}
 
                 {/* Overall score — weighted composite */}
@@ -1548,27 +1632,7 @@ export default function App() {
                         fontFamily:"'Outfit',sans-serif"}}>
                         {result.overall_score}/10
                       </span>
-                      <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>70% plastic · 30% health</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Overall score — weighted summary */}
-                {result.overall_score && result.health_score && (
-                  <div style={{
-                    display:"inline-flex", alignItems:"center", gap:10,
-                    background:isDark?"#1a1a2e":"#fafafa",
-                    border:`1.5px solid ${isDark?"#2a2a4a":"#e5e7eb"}`,
-                    borderRadius:12, padding:"8px 18px", marginBottom:4
-                  }}>
-                    <div style={{fontSize:11, color:muted, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em"}}>Overall Score</div>
-                    <div style={{display:"flex", alignItems:"baseline", gap:3}}>
-                      <span style={{fontSize:22, fontWeight:800, fontFamily:"'Outfit',sans-serif",
-                        color:scoreColor(result.overall_score)}}>{result.overall_score}</span>
-                      <span style={{fontSize:12, color:muted}}>/10</span>
-                    </div>
-                    <div style={{fontSize:10, color:muted, maxWidth:120, lineHeight:1.4}}>
-                      70% plastic · 30% health
+                      <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>50% plastic · 50% health</span>
                     </div>
                   </div>
                 )}
@@ -1696,7 +1760,7 @@ export default function App() {
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
+                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
                   {result.alternatives?.length > 0 && (
                     <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
                       #ad · affiliate links
