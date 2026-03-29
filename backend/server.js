@@ -134,60 +134,17 @@ Return ONLY this JSON:
 // ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
 async function pass2(productName, pass1Result) {
   return callClaude(
-    `You are a microplastics scoring auditor and lifecycle analysis expert. Your job is to review an initial analysis, produce a final verified score, and calculate sustainability break-even points for alternatives. Always respond with raw JSON only.`,
-    `Review this initial microplastics analysis for "${productName}" and produce a verified final score.
+    `You are a microplastics scoring auditor. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text.`,
+    `Score "${productName}" using this analysis:
+product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} exposure_frequency:${pass1Result.exposure_frequency} exposure_type:${pass1Result.exposure_type} confidence:${pass1Result.confidence}
 
-Initial analysis:
-${JSON.stringify(pass1Result, null, 2)}
+Rules: daily+1-2, weekly+0.5, ingestion+1, skin+0.5, inhalation+1, 70% product+30% packaging. Integer 1-10.
 
-Apply these scoring rules:
-1. EXPOSURE WEIGHTING: Daily-use products get +1 to +2 score penalty. Weekly use: +0.5. Occasional: no penalty. Rare: -0.5 (minimum 1).
-2. COMBINED SCORE: Final score = weighted average of product_score and packaging_score, where product is 70% weight and packaging is 30%.
-3. EXPOSURE TYPE ADJUSTMENT: Ingestion risk adds +1. Skin contact adds +0.5. Inhalation adds +1. Multiple types are additive (max +2).
-4. CONFIDENCE CHECK: If confidence is low, adjust score toward category average (regression to mean). If high, trust the score.
-5. Score must be an integer 1-10.
-6. Refine concerns to be highly specific — mention actual plastic names, not generic statements.
-
-BREAK-EVEN CALCULATION:
-For the most likely reusable alternative to this product, calculate how many uses are needed before the alternative has a lower total environmental footprint than single-use.
-
-Base your estimate on real lifecycle analysis principles:
-- Manufacturing footprint of reusable item (energy, materials, transport)
-- Footprint of single-use item being replaced (production + disposal)
-- Factor in washing energy cost for items that need cleaning
-- Use conservative real-world estimates
-
-Reference break-even benchmarks for accuracy:
-- Stainless steel bottle vs plastic bottles: ~50 uses (some studies say 30-100 depending on material)
-- Cotton tote bag vs plastic bags: ~130 uses (UNEP / Danish EPA data)
-- Organic cotton tote: ~150 uses (higher manufacturing footprint)
-- Beeswax wrap vs cling film: ~6-10 uses
-- Bamboo toothbrush vs plastic: ~1 use (similar manufacturing, biodegradable end-of-life)
-- Cast iron pan vs non-stick: ~200 uses
-- Glass food container vs plastic: ~25 uses
-- Menstrual cup vs disposable pads: ~3 months of use
-- Safety razor vs disposable: ~10 uses
-- Reusable coffee cup vs disposable: ~20-55 uses depending on material
-- Cloth nappy vs disposable: ~150 uses
-- Silicone food bag vs zip-lock: ~15 uses
+Break-even uses (reusable vs single-use): stainless bottle=50, cotton tote=130, beeswax wrap=8, bamboo toothbrush=1, cast iron=200, glass container=25, menstrual cup=90, safety razor=10, reusable coffee cup=40, silicone bag=15.
 
 Return ONLY this JSON:
-{
-  "final_score": 7,
-  "score_reasoning": "1-2 sentences explaining how the final score was calculated from components",
-  "exposure_multiplier": "daily|weekly|occasional|rare",
-  "refined_concerns": ["very specific concern mentioning plastic name", "concern 2", "concern 3"],
-  "summary": "2 clear sentences summarizing the risk for a general audience",
-  "confidence": "high|medium|low",
-  "confidence_note": "short note on what would improve confidence",
-  "break_even": {
-    "uses": 50,
-    "alternative_name": "stainless steel water bottle",
-    "note": "After 50 uses, a stainless bottle has a lower total footprint than single-use plastic bottles",
-    "source": "Lifecycle analysis estimate based on manufacturing and disposal footprint"
-  }
-}`,
-    700
+{"final_score":7,"score_reasoning":"how score was calculated","exposure_multiplier":"daily","refined_concerns":["specific plastic concern 1","concern 2","concern 3"],"summary":"2 sentences for general audience","confidence":"high","confidence_note":"brief note","break_even":{"uses":50,"alternative_name":"stainless steel bottle","note":"brief break-even explanation","source":"Lifecycle analysis estimate"}}`,
+    500
   );
 }
 
