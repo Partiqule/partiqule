@@ -305,7 +305,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
     {q:"What are microplastics?", a:"Microplastics are tiny plastic particles less than 5mm in size. They come from the breakdown of larger plastic products, synthetic textiles, and plastic packaging. They've been found in human blood, lungs, placentas, and breast milk."},
     {q:"How do I ingest microplastics?", a:"Through drinking water, eating seafood, breathing indoor air, using plastic food containers (especially when heated), wearing synthetic clothing, and using personal care products with plastic packaging."},
     {q:"Are microplastics dangerous?", a:"Research is ongoing, but studies have linked microplastic exposure to inflammation, hormonal disruption, and potential carcinogenic effects. The WHO has called for more research, particularly around nanoplastics that can cross cell membranes."},
-    {q:"How does Partiqule score products?", a:"Our AI analyzes each product based on its materials, manufacturing process, packaging, and usage patterns — then cross-references known research on microplastic release to generate a 1–10 risk score."},
+    {q:"How does Partiqule score products?", a:"Our AI analyzes each product based on its materials, manufacturing process, packaging, and usage patterns. It cross-references known research on microplastic release to generate a 1–10 risk score."},
   ];
   return (
     <section style={{background:bg, borderTop:`1px solid ${border}`, padding:isMobile?"40px 16px":"64px 40px"}}>
@@ -316,7 +316,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
           </div>
           <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:36, fontWeight:700, color:text, margin:"0 0 16px", letterSpacing:"-1px"}}>What are microplastics?</h2>
           <p style={{fontSize:17, color:muted, maxWidth:600, margin:"0 auto", lineHeight:1.7}}>
-            Tiny plastic particles that have infiltrated our food, water, air — and bodies. Here's what the science says.
+            Tiny plastic particles that have infiltrated our food, water, air and bodies. Here's what the science says.
           </p>
         </div>
 
@@ -500,7 +500,7 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
               borderRadius:10, padding:"10px 14px", marginTop:8
             }}>
               <div style={{fontSize:12, color:isDark?"#c4b5fd":"#6d28d9", lineHeight:1.5}}>
-                💜 Moderate health concerns. Safer alternatives exist — scroll down to explore.
+                💜 Moderate health concerns. Safer alternatives exist. Scroll down to explore.
               </div>
             </div>
           )}
@@ -681,8 +681,8 @@ const ShareBadge = ({result}) => {
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
-              title: `${safeName} — Overall Score ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule — Overall score ${result.overall_score||result.score}/10. 🔬 Plastic danger: ${result.score}/10${result.health_score ? ` · ❤️ Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
+              title: `${safeName}: Overall Score ${result.overall_score||result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule. Overall score ${result.overall_score||result.score}/10. 🔬 Plastic danger: ${result.score}/10${result.health_score ? ` · ❤️ Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -836,7 +836,7 @@ const LoadingState = () => {
         {steps[step]}
       </div>
       <div style={{fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:24}}>
-        This takes 10–15 seconds — we run two AI passes for accuracy
+        This takes 10 to 15 seconds. We run two AI passes for accuracy.
       </div>
       <div style={{display:"flex", justifyContent:"center", gap:10, marginBottom:20, flexWrap:"wrap"}}>
         {steps.map((s,i)=>(
@@ -959,7 +959,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                 <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Highest Risk Found</div>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:6, lineHeight:1.3}}>{highest.product_name}</div>
                 <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"#fee2e2", color:"#dc2626", padding:"4px 12px", borderRadius:20, fontSize:13, fontWeight:700}}>
-                  {highest.score}/10 — {highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk
+                  {highest.score}/10: {highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk
                 </div>
                 <div style={{fontSize:12, color:muted, marginTop:10, cursor:"pointer", color:"#16a34a", fontWeight:600}} onClick={()=>onSelect(highest)}>
                   View result →
@@ -1167,7 +1167,7 @@ const BarcodeScanner = ({onDetect, onClose}) => {
 
         {status === "scanning" && (
           <div style={{marginTop:16, textAlign:"center", fontSize:13, color:"rgba(255,255,255,0.5)"}}>
-            Hold steady — auto-detects when barcode is in frame
+            Hold steady. Auto-detects when barcode is in frame.
           </div>
         )}
 
@@ -1209,7 +1209,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           Make plastic visible.
         </h1>
         <p style={{fontSize:isMobile?17:20, color:muted, lineHeight:1.8, maxWidth:640, margin:"0 0 28px"}}>
-          Most people have no idea what's in the products they use every day. We built Partiqule to change that — one scan at a time.
+          Most people have no idea what's in the products they use every day. We built Partiqule to change that, one scan at a time.
         </p>
         <button onClick={()=>onScan()}
           style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
@@ -1270,7 +1270,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the breakdown — materials, packaging, usage, manufacturing — so you can judge for yourself, not just trust a number."},
+            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown: materials, packaging, usage, and manufacturing. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
             {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free and requires no account."},
             {title:"Science first", body:"Every score is grounded in published research. We link our sources, cite our methodology, and update scores when the science changes."},
@@ -1286,11 +1286,37 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         </div>
       </div>
 
+      {/* Founders & human oversight */}
+      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Overseen by humans.</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:20}}>
+          Partiqule was founded by <strong style={{color:text}}>Paul and Sara Gonzalez</strong>, who bring a combined 20 years of experience across technology, compliance, and audit. Every scoring parameter, weighting rule, and quality check on this platform was defined by them based on peer-reviewed research. The AI applies the framework. Paul and Sara built it.
+        </p>
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16}}>
+          {[
+            {name:"Paul Gonzalez", role:"Product & Scoring Methodology", detail:"Leads product development, defines the scoring parameters, and conducts quality review of AI outputs before results go live."},
+            {name:"Sara Gonzalez", role:"Compliance & Audit", detail:"Oversees the audit framework, monitors for scoring anomalies, and ensures affiliate relationships never influence product scores."},
+          ].map((person, i) => (
+            <div key={i} style={{background:surface, borderRadius:14, padding:"20px 22px", border:`1.5px solid ${border}`}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
+              <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
+              <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{person.detail}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:16, padding:"14px 18px", background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+          <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
+            For a full breakdown of our scoring methodology, quality review process, and research sources, see our{" "}
+            <span onClick={()=>{window.history.pushState({},"","/methodology"); window.dispatchEvent(new PopStateEvent("popstate"));}} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>How It Works</span> page.
+          </span>
+        </div>
+      </div>
+
       {/* The impact */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this with microbeads — public pressure and consumer awareness led to bans across dozens of countries.
+          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this happen with microbeads. Public pressure and consumer awareness led to bans across dozens of countries.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           We're not anti-plastic. We're pro-information. The goal is a world where every product that touches your food, your skin, or your family carries the same transparency as a nutrition label.
@@ -1301,7 +1327,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>A note on AI energy and water use</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We know this question is coming — and we'd rather address it directly than hope nobody asks.
+          We know this question is coming. We'd rather address it directly than hope nobody asks.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           Each Partiqule scan runs two AI passes to generate your score. Based on current lifecycle research, a single AI query uses roughly 5–10ml of water when you account for data centre cooling and electricity generation. Two passes means a scan uses approximately <strong style={{color:text}}>15–20ml of water</strong> — about the same as brushing your teeth.
@@ -1310,7 +1336,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           We're not pretending AI is free. It isn't. But we think the trade-off is worth being transparent about. If a scan helps you replace a non-stick pan you cook on every day, or switch away from tea bags releasing 11 billion plastic particles per cup, the environmental payback is significant and ongoing. One scan. Years of impact.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We also use Claude Haiku — Anthropic's most efficient model — specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy. And we cache results so the same product is never scored twice unnecessarily.
+          We also use Claude Haiku, Anthropic's most efficient model, specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy and cache results so the same product is never scored twice unnecessarily.
         </p>
         <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:14, padding:"20px 24px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
           <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:8}}>Our commitment</div>
@@ -1324,7 +1350,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Questions, partnerships, press, or just want to say hi — reach us at{" "}
+          Questions, partnerships, press, or just want to say hi? Reach us at{" "}
           <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
           We read every email.
         </p>
@@ -1343,7 +1369,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       content: [
         {
           heading: "Founded by domain experts",
-          body: "Partiqule was built by Paul and Sara Gonzalez, who bring a combined 20 years of experience across technology, compliance, and audit. The scoring framework was designed drawing on published peer-reviewed research in polymer chemistry, toxicology, and consumer product safety — not generated by AI."
+          body: "Partiqule was built by Paul and Sara Gonzalez, who bring a combined 20 years of experience across technology, compliance, and audit. The scoring framework was designed drawing on published peer-reviewed research in polymer chemistry, toxicology, and consumer product safety. It was not generated by AI."
         },
         {
           heading: "Parameters we defined",
@@ -1352,19 +1378,19 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "A weighted scoring system where plastic danger accounts for 70% of the overall score and broader health concerns account for 30%",
             "Specific plastic polymers flagged as high-risk (PET, HDPE, PVC, LDPE, PP, PS, nylon, polyester, PTFE, BPA, PFAS) based on published leaching and exposure studies",
             "Exposure weighting rules — daily-use products with direct food or skin contact receive higher penalties than occasional-use items",
-            "A natural materials exemption — products confirmed to be wood, glass, stainless steel, ceramic, or organic cotton do not receive exposure penalties regardless of use frequency",
-            "Health concern categories — artificial dyes (FD&C), ultra-processing, allergens, endocrine disruptors, and known carcinogens — each with defined scoring thresholds",
+            "A natural materials exemption . Products confirmed to be wood, glass, stainless steel, ceramic, or organic cotton do not receive exposure penalties regardless of use frequency",
+            "Health concern categories : artificial dyes (FD&C), ultra-processing, allergens, endocrine disruptors, and known carcinogens. Each has defined scoring thresholds",
           ]
         },
         {
           heading: null,
-          body: "These parameters are hardcoded into the AI prompts and cannot be overridden by the AI's own judgment. The AI applies them — it does not define them."
+          body: "These parameters are hardcoded into the AI prompts and cannot be overridden by the AI's own judgment. The AI applies them. It does not define them."
         }
       ]
     },
     {
       number: "02",
-      title: "AI analysis — two-pass system",
+      title: "AI analysis: two-pass system",
       color: "#2563eb",
       content: [
         {
@@ -1372,11 +1398,11 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           body: "Each product scan runs two independent AI passes using Anthropic's Claude. The two-pass structure was designed specifically to reduce hallucination and catch cases where the first pass may have over- or under-scored a product."
         },
         {
-          heading: "Pass 1 — Research & analysis",
+          heading: "Pass 1: Research and analysis",
           body: "The AI searches for real material data on the specific product, then analyzes it against the parameters we defined. It identifies specific plastic polymers present, scores the product and packaging separately, identifies health concerns beyond plastics, and suggests relevant plastic-free alternatives."
         },
         {
-          heading: "Pass 2 — Independent audit",
+          heading: "Pass 2: Independent audit",
           body: "A second independent AI instance reviews Pass 1's output as a skeptical auditor. It applies the exposure weighting rules, checks that natural material products aren't penalized unfairly, calculates the final weighted score, and flags low-confidence results for regression toward category averages."
         }
       ]
@@ -1393,7 +1419,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "Spot testing: We regularly scan products we own or have researched independently and verify the AI's material identification against manufacturer specs, safety data sheets, or published studies",
             "Category audits: We periodically review all cached results in a product category to check for scoring inconsistencies or outliers",
             "Anomaly review: Any product scoring significantly above or below category average triggers a manual review of the AI's reasoning chain",
-            "Alternative relevance: We verify that suggested alternatives are genuinely relevant to the scanned product — a common failure mode we identified early and corrected in the matching logic",
+            "Alternative relevance: We verify that suggested alternatives are genuinely relevant to the scanned product — a common failure mode we identified and corrected",
             "Cache invalidation: When we update scoring parameters or identify a systematic error, we clear the result cache so all products are rescored under the new rules",
           ]
         }
@@ -1413,9 +1439,9 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           body: null,
           list: [
             "The alternative must score materially lower on plastic danger than the scanned product",
-            "Alternatives are filtered using material-based heuristics we defined — stainless steel, organic cotton, glass, bamboo, and natural rubber all receive low scores; synthetic materials and known plastics receive high scores",
+            "Alternatives are filtered using material-based heuristics we defined . Stainless steel, organic cotton, glass, bamboo, and natural rubber all receive low scores. Synthetic materials and known plastics receive high scores",
             "Affiliate links are clearly disclosed with '#ad · affiliate links' labeling on every results page",
-            "Affiliate relationships have zero influence on scoring — the danger score is calculated independently before any alternative is suggested",
+            "Affiliate relationships have zero influence on scoring . The danger score is calculated independently before any alternative is suggested",
           ]
         }
       ]
@@ -1432,7 +1458,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "Scoring parameters are reviewed when new peer-reviewed research is published on microplastics or chemical exposure",
             "The AI model version is reviewed periodically to ensure accuracy has not regressed",
             "An annual transparency note is published on the About page disclosing AI usage, estimated energy and water footprint, and any methodology changes",
-            "User feedback is monitored — products that generate unusual concern or contradiction are flagged for manual review",
+            "User feedback is monitored . Products that generate unusual concern or contradiction are flagged for manual review",
           ]
         }
       ]
@@ -1446,7 +1472,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
-          Every score on Partiqule reflects a combination of expert-defined parameters, AI analysis, and human quality review. This page explains exactly how that works — because we think the tools that expose hidden harm should be fully transparent about their own process.
+          Every score on Partiqule reflects a combination of expert-defined parameters, AI analysis, and human quality review. This page explains exactly how that works. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
         <div style={{fontSize:13, color:muted, opacity:0.6, fontStyle:"italic"}}>Methodology last reviewed: March 2026</div>
       </div>
@@ -1520,10 +1546,10 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           </p>
           <div style={{display:"flex", flexDirection:"column", gap:12}}>
             {[
-              {step:"Web search", detail:"AI searches for real material specs — confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle"},
-              {step:"Pass 1 — Material analysis", detail:"PTFE identified as primary plastic concern. Product score: 8. Packaging score: 4. Exposure type: ingestion (PTFE particles enter food during cooking). Frequency: daily."},
-              {step:"Pass 1 — Health analysis", detail:"PFAS chemicals in PTFE coating flagged. Health score: 8. Concerns: PFAS are known endocrine disruptors with links to thyroid disruption and elevated cholesterol."},
-              {step:"Pass 2 — Audit", detail:"Daily use penalty applied (+2). Ingestion penalty applied (+1). Combined score: 70% × 8 (plastic) + 30% × 8 (health) = 8.0. Rounded to 8. Confidence: high."},
+              {step:"Web search", detail:"AI searches for real material specs and confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle"},
+              {step:"Pass 1: Material analysis", detail:"PTFE identified as primary plastic concern. Product score: 8. Packaging score: 4. Exposure type: ingestion (PTFE particles enter food during cooking). Frequency: daily."},
+              {step:"Pass 1: Health analysis", detail:"PFAS chemicals in PTFE coating flagged. Health score: 8. Concerns: PFAS are known endocrine disruptors with links to thyroid disruption and elevated cholesterol."},
+              {step:"Pass 2: Audit", detail:"Daily use penalty applied (+2). Ingestion penalty applied (+1). Combined score: 70% × 8 (plastic) + 30% × 8 (health) = 8.0. Rounded to 8. Confidence: high."},
               {step:"Overall score", detail:"Overall: 8/10 High. Plastic danger: 8/10. Health concern: 8/10. Break-even: cast iron pan at ~200 uses."},
               {step:"Human review", detail:"Paul cross-references against Environmental Working Group PFAS database. Score confirmed accurate. Cast iron and stainless steel shown as alternatives."},
             ].map((row, i) => (
@@ -1552,10 +1578,10 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             {[
               {citation:"Ragusa et al. (2021)", title:"Plasticenta: First evidence of microplastics in human placenta", journal:"Environment International"},
               {citation:"Leslie et al. (2022)", title:"Discovery and quantification of plastic particle pollution in human blood", journal:"Environment International"},
-              {citation:"WWF / University of Newcastle (2019)", title:"No Plastic in Nature: Assessing Plastic Ingestion from Nature to People", journal:"WWF Report — ~5g/week estimate"},
+              {citation:"WWF / University of Newcastle (2019)", title:"No Plastic in Nature: Assessing Plastic Ingestion from Nature to People", journal:"WWF Report (~5g/week estimate)"},
               {citation:"Schwabl et al. (2019)", title:"Detection of various microplastics in human stool", journal:"Annals of Internal Medicine"},
               {citation:"Li et al. (2020)", title:"Microplastic release from the degradation of polypropylene feeding bottles during infant formula preparation", journal:"Nature Food"},
-              {citation:"Kosuth et al. (2018)", title:"Anthropogenic contamination of tap water, beer, and sea salt", journal:"PLOS ONE — bottled water study"},
+              {citation:"Kosuth et al. (2018)", title:"Anthropogenic contamination of tap water, beer, and sea salt", journal:"PLOS ONE (bottled water study)"},
               {citation:"Hernandez et al. (2019)", title:"Plastic teabags release billions of microparticles and nanoparticles into tea", journal:"Environmental Science & Technology"},
             ].map((ref, i) => (
               <div key={i} style={{padding:"12px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
@@ -1879,7 +1905,7 @@ export default function App() {
                 Scan anything.<br/>Know everything.
               </h1>
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
-                {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives — instantly."}
+                {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
               {/* Mobile barcode button — hide on Safari which doesn't support BarcodeDetector */}
