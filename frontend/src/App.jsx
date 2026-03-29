@@ -1294,8 +1294,8 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         </p>
         <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16}}>
           {[
-            {name:"Paul Gonzalez", role:"Product & Scoring Methodology", detail:"Leads product development, defines the scoring parameters, and conducts quality review of AI outputs before results go live."},
-            {name:"Sara Gonzalez", role:"Compliance & Audit", detail:"Oversees the audit framework, monitors for scoring anomalies, and ensures affiliate relationships never influence product scores."},
+            {name:"Paul Miller", role:"Co-Founder, Co-Founder, Product & Scoring Methodology", detail:"Leads product development, defines the scoring parameters, and conducts quality review of AI outputs before results go live."},
+            {name:"Sara Miller", role:"Co-Founder, Co-Founder, Compliance & Audit", detail:"Oversees the audit framework, monitors for scoring anomalies, and ensures affiliate relationships never influence product scores."},
           ].map((person, i) => (
             <div key={i} style={{background:surface, borderRadius:14, padding:"20px 22px", border:`1.5px solid ${border}`}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
