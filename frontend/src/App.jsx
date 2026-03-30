@@ -482,7 +482,7 @@ const PlasticScoreDropdown = ({result, isDark, muted}) => {
             <div style={{display:"flex", flexDirection:"column", gap:6}}>
               {result.concerns.map((c,i)=>(
                 <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
-                  <span style={{color, fontSize:12, marginTop:2, flexShrink:0}}>•</span>
+                  <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
                   <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c}</span>
                 </div>
               ))}
@@ -574,7 +574,7 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
             <div style={{display:"flex", flexDirection:"column", gap:6, marginBottom:12}}>
               {hc.map((concern, i) => (
                 <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
-                  <span style={{color, fontSize:12, marginTop:2, flexShrink:0}}>•</span>
+                  <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
                   <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{concern}</span>
                 </div>
               ))}
@@ -1294,7 +1294,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
             {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
           ].map((v,i)=>(
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
-              <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:8}}/>
+              <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:6}}/>
               <div>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{v.title}</div>
                 <div style={{fontSize:15, color:muted, lineHeight:1.7}}>{v.body}</div>
@@ -1591,7 +1591,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                 <div style={{display:"flex", flexDirection:"column", gap:8}}>
                   {block.list.map((item, li) => (
                     <div key={li} style={{display:"flex", alignItems:"flex-start", gap:10}}>
-                      <div style={{width:6, height:6, borderRadius:"50%", background:step.color, flexShrink:0, marginTop:7}}/>
+                      <div style={{width:6, height:6, borderRadius:"50%", background:step.color, flexShrink:0, marginTop:6}}/>
                       <span style={{fontSize:15, color:muted, lineHeight:1.7}}>{item}</span>
                     </div>
                   ))}
@@ -2013,30 +2013,42 @@ function App() {
               @keyframes float4 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-8px) translateX(-14px)} }
               @keyframes float5 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(12px)} }
             `}</style>
-            {/* Particle dots scattered across the hero */}
+            {/* Particle dots scattered across the hero — circles + diamonds */}
             {[
-              {s:10, x:"8%",  y:"20%", a:0.25, anim:"float1", dur:"6s"},
-              {s:6,  x:"15%", y:"65%", a:0.18, anim:"float2", dur:"8s"},
-              {s:14, x:"88%", y:"15%", a:0.2,  anim:"float3", dur:"7s"},
-              {s:8,  x:"92%", y:"70%", a:0.15, anim:"float1", dur:"9s"},
-              {s:5,  x:"75%", y:"30%", a:0.3,  anim:"float4", dur:"5s"},
-              {s:12, x:"25%", y:"82%", a:0.15, anim:"float5", dur:"10s"},
-              {s:7,  x:"60%", y:"78%", a:0.2,  anim:"float2", dur:"7.5s"},
-              {s:9,  x:"45%", y:"12%", a:0.18, anim:"float3", dur:"6.5s"},
-              {s:5,  x:"82%", y:"50%", a:0.25, anim:"float1", dur:"8.5s"},
-              {s:11, x:"5%",  y:"48%", a:0.15, anim:"float4", dur:"9.5s"},
-              {s:4,  x:"38%", y:"88%", a:0.2,  anim:"float5", dur:"7s"},
-              {s:8,  x:"70%", y:"8%",  a:0.22, anim:"float2", dur:"6s"},
-              {s:6,  x:"52%", y:"92%", a:0.15, anim:"float3", dur:"11s"},
-              {s:10, x:"20%", y:"35%", a:0.12, anim:"float1", dur:"8s"},
-              {s:5,  x:"95%", y:"38%", a:0.2,  anim:"float5", dur:"7.5s"},
+              {s:10, x:"8%",  y:"20%", a:0.25, anim:"float1", dur:"6s",   shape:"circle"},
+              {s:6,  x:"15%", y:"65%", a:0.18, anim:"float2", dur:"8s",   shape:"circle"},
+              {s:14, x:"88%", y:"15%", a:0.2,  anim:"float3", dur:"7s",   shape:"circle"},
+              {s:8,  x:"92%", y:"70%", a:0.15, anim:"float1", dur:"9s",   shape:"diamond"},
+              {s:5,  x:"75%", y:"30%", a:0.3,  anim:"float4", dur:"5s",   shape:"circle"},
+              {s:12, x:"25%", y:"82%", a:0.15, anim:"float5", dur:"10s",  shape:"circle"},
+              {s:7,  x:"60%", y:"78%", a:0.2,  anim:"float2", dur:"7.5s", shape:"diamond"},
+              {s:9,  x:"45%", y:"12%", a:0.18, anim:"float3", dur:"6.5s", shape:"circle"},
+              {s:5,  x:"82%", y:"50%", a:0.25, anim:"float1", dur:"8.5s", shape:"circle"},
+              {s:11, x:"5%",  y:"48%", a:0.15, anim:"float4", dur:"9.5s", shape:"diamond"},
+              {s:4,  x:"38%", y:"88%", a:0.2,  anim:"float5", dur:"7s",   shape:"circle"},
+              {s:8,  x:"70%", y:"8%",  a:0.22, anim:"float2", dur:"6s",   shape:"circle"},
+              {s:6,  x:"52%", y:"92%", a:0.15, anim:"float3", dur:"11s",  shape:"diamond"},
+              {s:10, x:"20%", y:"35%", a:0.12, anim:"float1", dur:"8s",   shape:"circle"},
+              {s:5,  x:"95%", y:"38%", a:0.2,  anim:"float5", dur:"7.5s", shape:"circle"},
+              {s:7,  x:"33%", y:"18%", a:0.2,  anim:"float3", dur:"9s",   shape:"diamond"},
+              {s:4,  x:"67%", y:"55%", a:0.18, anim:"float4", dur:"6.5s", shape:"circle"},
+              {s:9,  x:"12%", y:"85%", a:0.12, anim:"float2", dur:"8s",   shape:"circle"},
+              {s:5,  x:"78%", y:"42%", a:0.2,  anim:"float1", dur:"7s",   shape:"diamond"},
+              {s:6,  x:"42%", y:"72%", a:0.15, anim:"float5", dur:"9.5s", shape:"circle"},
+              {s:8,  x:"55%", y:"25%", a:0.18, anim:"float3", dur:"7.5s", shape:"circle"},
+              {s:4,  x:"3%",  y:"72%", a:0.22, anim:"float4", dur:"6s",   shape:"diamond"},
+              {s:6,  x:"86%", y:"85%", a:0.15, anim:"float2", dur:"10s",  shape:"circle"},
+              {s:10, x:"48%", y:"5%",  a:0.12, anim:"float1", dur:"8.5s", shape:"circle"},
+              {s:5,  x:"22%", y:"52%", a:0.2,  anim:"float5", dur:"7s",   shape:"diamond"},
             ].map((p,i)=>(
               <div key={i} style={{
                 position:"absolute", left:p.x, top:p.y,
-                width:p.s, height:p.s, borderRadius:"50%",
+                width:p.s, height:p.s,
+                borderRadius: p.shape==="circle" ? "50%" : "2px",
+                transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
                 background:"white", opacity:p.a,
                 animation:`${p.anim} ${p.dur} ease-in-out infinite`,
-                animationDelay:`${i*0.4}s`,
+                animationDelay:`${i*0.3}s`,
                 pointerEvents:"none"
               }}/>
             ))}
@@ -2189,6 +2201,34 @@ function App() {
               </div>
             )}
             <MostSearched onSelect={(label)=>{setQuery(label); analyze(label);}} isDark={isDark} isMobile={isMobile}/>
+
+            {/* Illustrated trust strip */}
+            <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+              <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
+                {[
+                  {emoji:"🔬", title:"Science-backed", body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
+                  {emoji:"🤝", title:"No brand influence", body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
+                  {emoji:"♻️", title:"Sustainability scored", body:"Single-use products and disposables get penalised — not just plastic content"},
+                  {emoji:"🆓", title:"Always free", body:"No account, no paywall, no ads. Just answers about what is in your products"},
+                ].map((item,i) => (
+                  <div key={i} style={{
+                    background:isDark?"#1e2433":"#fff",
+                    borderRadius:16, padding:"24px 20px", textAlign:"center",
+                    border:`1.5px solid ${isDark?"#2a3347":"#f0fdf4"}`,
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:12,
+                  }}>
+                    <div style={{
+                      width:64, height:64, borderRadius:"50%",
+                      background:isDark?"#1a2a1a":"#f0fdf4",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:28
+                    }}>{item.emoji}</div>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
+                    <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </>
       ) : (
