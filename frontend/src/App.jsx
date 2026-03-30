@@ -985,8 +985,24 @@ const LOADING_FACTS = [
   "93% of bottled water tested globally contains microplastic particles.",
   "Heating food in plastic containers can release millions of particles per litre.",
   "Babies ingest up to 10x more microplastics than adults relative to body weight.",
-  "Non-stick pan coatings can begin flaking PTFE particles at everyday cooking temperatures.",
+  "Non-stick pan coatings can begin releasing PTFE particles at everyday cooking temperatures.",
   "Microplastics have been detected in the air we breathe indoors and outdoors.",
+  "A 2024 study in the New England Journal of Medicine found microplastics in arterial plaques — linked to higher risk of heart attack and stroke.",
+  "Lipton tea bags release approximately 11 billion microplastic particles per single cup of tea.",
+  "Synthetic gum base in mainstream chewing gum is made from polyvinyl acetate — a plastic you literally chew and swallow.",
+  "Microplastics were found in 100% of human blood samples tested in a 2022 Environment International study.",
+  "The FDA has begun phasing out all petroleum-based synthetic food dyes, including Red 40 and Yellow 5.",
+  "PFAS — found in non-stick cookware, food packaging, and stain-resistant clothing — are linked to thyroid disruption, reduced fertility and elevated cholesterol.",
+  "A 2024 Nature Medicine study found microplastics accumulating in human brain tissue — at higher concentrations in people with dementia.",
+  "Microplastics have been detected in human placentas, meaning unborn babies are exposed before birth.",
+  "Ultra-processed foods are linked to chronic disease, cardiovascular risk and cognitive decline according to a 2025 Lancet review.",
+  "The plastic in synthetic clothing — polyester, nylon, acrylic — sheds microfibers every time it's worn and washed.",
+  "Single-use paper towels are chemically bleached with chlorine and typically wrapped in plastic film — a sustainability double-hit.",
+  "Stainless steel, cast iron, glass and ceramic cookware produce zero microplastic particles during cooking.",
+  "Switching from a plastic water bottle to stainless steel can eliminate over 50 plastic-to-mouth exposures per week.",
+  "Wet wipes contain polyester or polypropylene fibers — each wipe sheds synthetic fibers directly onto your skin.",
+  "BPA-free plastics often contain BPS or BPF, which studies show have similar hormone-disrupting effects to BPA.",
+  "Food stored in glass containers has zero plastic leaching risk — even when heated, frozen or acidic foods are involved.",
 ];
 
 const LoadingState = () => {
@@ -2291,7 +2307,40 @@ function App() {
                 </div>
               </div>
             )}
-            <MostSearched onSelect={(label)=>{setQuery(label); analyze(label);}} isDark={isDark} isMobile={isMobile}/>
+            {/* SCAN BY CATEGORY */}
+            <div style={{maxWidth:1100, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+              <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>
+                What are you curious about?
+              </h2>
+              <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:28}}>Tap a category to see what common products actually score</p>
+              <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)", gap:isMobile?10:14}}>
+                {[
+                  {emoji:"🍳", label:"Kitchen & Cookware", searches:["non-stick frying pan","plastic cutting board","Tupperware food containers","cling wrap"], color:"#d97706", bg:isDark?"#1e1a00":"#fffbeb"},
+                  {emoji:"🧴", label:"Personal Care", searches:["plastic shampoo bottle","synthetic loofah","disposable razor","wet wipes"], color:"#db2777", bg:isDark?"#1e0a14":"#fdf2f8"},
+                  {emoji:"👕", label:"Clothing & Textiles", searches:["polyester fleece jacket","synthetic yoga pants","nylon activewear","spandex leggings"], color:"#6366f1", bg:isDark?"#0e0e1e":"#eef2ff"},
+                  {emoji:"🍔", label:"Food & Drink", searches:["lipton tea bags","plastic water bottle","styrofoam coffee cup","chewing gum"], color:"#0891b2", bg:isDark?"#001e20":"#ecfeff"},
+                  {emoji:"👶", label:"Baby & Kids", searches:["plastic baby bottle","disposable diapers","plastic teething toy","baby food pouch"], color:"#7c3aed", bg:isDark?"#0e0a1e":"#f5f3ff"},
+                  {emoji:"🚗", label:"Vehicles", searches:["Tesla Model Y","Kia Sportage","Cadillac Escalade","Rivian R1S"], color:"#16a34a", bg:isDark?"#0a1e0a":"#f0fdf4"},
+                ].map((cat, i) => (
+                  <div key={i} style={{background:cat.bg, borderRadius:14, padding:"20px", border:`1.5px solid ${cat.color}22`}}>
+                    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:12}}>
+                      <span style={{fontSize:22}}>{cat.emoji}</span>
+                      <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, color:cat.color}}>{cat.label}</span>
+                    </div>
+                    <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                      {cat.searches.map((s, j) => (
+                        <button key={j} onClick={()=>{setQuery(s); analyze(s);}}
+                          style={{background:"rgba(255,255,255,0.6)", border:`1px solid ${cat.color}33`, borderRadius:8, padding:"6px 10px", fontSize:12, color:isDark?"#f1f5f9":"#333", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
+                          onMouseEnter={e=>{e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color; e.currentTarget.style.color=cat.color;}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.6)"; e.currentTarget.style.borderColor=`${cat.color}33`; e.currentTarget.style.color=isDark?"#f1f5f9":"#333";}}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* Illustrated trust strip */}
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
