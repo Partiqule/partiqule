@@ -2902,13 +2902,12 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     .filter(w => w.length > 2)
     .filter((w, i, arr) => arr.indexOf(w) === i); // dedupe
 
+  // Score-based matching — require meaningful relevance
   const scored = products
     .filter(p => p.plasticScore <= 4)
     .map(p => {
       let score = 0;
-      // Strong category match
       if (category && p.category === category) score += 10;
-      // Match words against tags
       allWords.forEach(word => {
         p.tags.forEach(tag => {
           if (tag.includes(word) || word.includes(tag)) score += 4;
@@ -2916,19 +2915,18 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
         if (p.name.toLowerCase().includes(word)) score += 3;
         if (p.brand.toLowerCase().includes(word)) score += 2;
       });
-      // Full phrase matches
       queries.forEach(q => {
         p.tags.forEach(tag => { if (q.includes(tag)) score += 6; });
         if (p.name.toLowerCase().includes(q.slice(0, 15))) score += 5;
       });
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore > 0 || (category && p.category === category))
+    .filter(p => p.relevanceScore > 0)  // must have SOME relevance — no random fallbacks
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
 
-  // 3. Fallback — best low-score products in same category
-  if (scored.length < limit && category) {
+  // 3. Same-category fallback only if we have a strong category match
+  if (scored.length < limit && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
     const fallbacks = products
       .filter(p => p.plasticScore <= 2 && p.category === category && !scored.find(s => s.id === p.id))
       .sort((a, b) => a.plasticScore - b.plasticScore)
