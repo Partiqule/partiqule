@@ -150,14 +150,14 @@ const SplitView = ({result, isDark, onScan}) => {
       <div style={{fontSize:12, color:"#aaa", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12, textAlign:"center"}}>Side-by-Side Comparison</div>
       <div style={{display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:0, alignItems:"stretch"}}>
         {/* Risky side */}
-        <div style={{background:scoreBg(result.score), borderRadius:"12px 0 0 12px", padding:"20px", border:`1.5px solid ${scoreColor(result.score)}33`, borderRight:"none"}}>
-          <div style={{fontSize:11, color:scoreColor(result.score), textTransform:"uppercase", fontWeight:700, marginBottom:6}}>Your Product</div>
+        <div style={{background:scoreBg(result.overall_score||result.score), borderRadius:"12px 0 0 12px", padding:"20px", border:`1.5px solid ${scoreColor(result.overall_score||result.score)}33`, borderRight:"none"}}>
+          <div style={{fontSize:11, color:scoreColor(result.overall_score||result.score), textTransform:"uppercase", fontWeight:700, marginBottom:6}}>Your Product</div>
           <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{result.product_name?.length>40?result.product_name.slice(0,37)+"…":result.product_name}</div>
           <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <div style={{fontSize:28, fontWeight:800, color:scoreColor(result.score), fontFamily:"'Outfit',sans-serif"}}>{result.score}</div>
-            <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600}}>/10 danger</div>
+            <div style={{fontSize:28, fontWeight:800, color:scoreColor(result.overall_score||result.score), fontFamily:"'Outfit',sans-serif"}}>{result.overall_score||result.score}</div>
+            <div style={{fontSize:12, color:scoreColor(result.overall_score||result.score), fontWeight:600}}>/10 overall</div>
           </div>
-          <div style={{fontSize:12, color:scoreColor(result.score), fontWeight:600, marginTop:6, padding:"4px 10px", background:`${scoreColor(result.score)}15`, borderRadius:20, display:"inline-block"}}>{scoreLabel(result.score)} Danger</div>
+          <div style={{fontSize:12, color:scoreColor(result.overall_score||result.score), fontWeight:600, marginTop:6, padding:"4px 10px", background:`${scoreColor(result.overall_score||result.score)}15`, borderRadius:20, display:"inline-block"}}>{scoreLabel(result.overall_score||result.score)} Overall</div>
         </div>
         {/* VS divider */}
         <div style={{display:"flex", alignItems:"center", justifyContent:"center", background:isDark?"#131929":"#f5f5f5", padding:"0 14px", zIndex:1}}>
