@@ -2309,34 +2309,50 @@ function App() {
             )}
             {/* Fun stat graphic */}
             <div style={{maxWidth:900, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{background:"#052e16", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", textAlign:"center"}}>
-                {/* Background particles */}
+              <div style={{background:isDark?"#1e2433":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", textAlign:"center", border:`1.5px solid ${isDark?"#2a3347":"#d1e8d1"}`}}>
+                {/* Green floating particles */}
                 {[
-                  {s:8,x:"5%",y:"20%",a:0.2},{s:5,x:"92%",y:"15%",a:0.15},{s:12,x:"88%",y:"70%",a:0.18},
-                  {s:6,x:"8%",y:"75%",a:0.2},{s:9,x:"50%",y:"8%",a:0.12},{s:4,x:"70%",y:"90%",a:0.15},
-                  {s:7,x:"25%",y:"85%",a:0.1},{s:5,x:"78%",y:"45%",a:0.18},{s:10,x:"15%",y:"45%",a:0.12},
+                  {s:8, x:"5%",  y:"20%", a:0.25, shape:"circle"},
+                  {s:5, x:"92%", y:"15%", a:0.2,  shape:"diamond"},
+                  {s:12,x:"88%", y:"70%", a:0.18, shape:"circle"},
+                  {s:6, x:"8%",  y:"75%", a:0.22, shape:"diamond"},
+                  {s:9, x:"50%", y:"8%",  a:0.15, shape:"circle"},
+                  {s:4, x:"70%", y:"90%", a:0.2,  shape:"circle"},
+                  {s:7, x:"25%", y:"85%", a:0.15, shape:"diamond"},
+                  {s:5, x:"78%", y:"45%", a:0.2,  shape:"circle"},
+                  {s:10,x:"15%", y:"45%", a:0.15, shape:"circle"},
+                  {s:4, x:"40%", y:"92%", a:0.18, shape:"diamond"},
+                  {s:6, x:"62%", y:"12%", a:0.2,  shape:"circle"},
+                  {s:8, x:"96%", y:"42%", a:0.15, shape:"diamond"},
                 ].map((p,i)=>(
-                  <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:"50%",background:"white",opacity:p.a,pointerEvents:"none"}}/>
+                  <div key={i} style={{
+                    position:"absolute", left:p.x, top:p.y,
+                    width:p.s, height:p.s,
+                    borderRadius: p.shape==="circle" ? "50%" : "2px",
+                    transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
+                    background:"#16a34a", opacity:p.a,
+                    pointerEvents:"none"
+                  }}/>
                 ))}
                 <div style={{position:"relative", zIndex:1}}>
-                  <div style={{fontSize:isMobile?13:14, color:"#4ade80", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>The scale of the problem</div>
+                  <div style={{fontSize:isMobile?13:14, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>The scale of the problem</div>
                   <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?24:32, marginBottom:32}}>
                     {[
-                      {number:"5g", label:"plastic consumed per person per week", sub:"weight of a credit card"},
-                      {number:"11B", label:"microplastic particles per cup of nylon tea bag tea", sub:"Hernandez et al. 2019"},
-                      {number:"100%", label:"of human blood samples tested contained microplastics", sub:"Leslie et al. 2022"},
-                      {number:"700K", label:"microfibers released per wash from a single fleece jacket", sub:"Environment International"},
+                      {number:"5g",   label:"plastic consumed per person per week",                    sub:"weight of a credit card"},
+                      {number:"11B",  label:"microplastic particles per cup of nylon tea bag tea",     sub:"Hernandez et al. 2019"},
+                      {number:"100%", label:"of human blood samples tested contained microplastics",   sub:"Leslie et al. 2022"},
+                      {number:"700K", label:"microfibers released per wash from a single fleece jacket",sub:"Environment International"},
                     ].map((s,i)=>(
                       <div key={i}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?28:36, color:"#4ade80", lineHeight:1, marginBottom:8}}>{s.number}</div>
-                        <div style={{fontSize:12, color:"rgba(255,255,255,0.75)", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
-                        <div style={{fontSize:10, color:"rgba(255,255,255,0.35)", fontStyle:"italic"}}>{s.sub}</div>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?28:36, color:"#16a34a", lineHeight:1, marginBottom:8}}>{s.number}</div>
+                        <div style={{fontSize:12, color:isDark?"#94a3b8":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
+                        <div style={{fontSize:10, color:isDark?"#475569":"#999", fontStyle:"italic"}}>{s.sub}</div>
                       </div>
                     ))}
                   </div>
-                  <div style={{fontSize:isMobile?15:17, color:"rgba(255,255,255,0.6)", lineHeight:1.7, maxWidth:520, margin:"0 auto"}}>
+                  <div style={{fontSize:isMobile?15:17, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:520, margin:"0 auto"}}>
                     Most products carry no warning. No label. No guidance on what to do instead.
-                    <span style={{color:"#4ade80", fontWeight:600}}> That's why Partiqule exists.</span>
+                    <span style={{color:"#16a34a", fontWeight:700}}> That's why Partiqule exists.</span>
                   </div>
                 </div>
               </div>
