@@ -156,12 +156,22 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
     const text = data.content.map(b => b.text || "").join("").trim();
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response");
-    // Sanitise common Claude JSON issues: smart quotes, trailing commas
-    const clean = match[0]
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/,(\s*[}\]])/g, '$1');
-    return JSON.parse(clean);
+    let clean = match[0];
+    // Fix common Claude JSON issues
+    clean = clean.replace(/[\u2018\u2019]/g, "\\'");   // smart single quotes
+    clean = clean.replace(/[\u201C\u201D]/g, '\\"');   // smart double quotes
+    clean = clean.replace(/,(\s*[}\]])/g, '$1');        // trailing commas
+    try {
+      return JSON.parse(clean);
+    } catch(e) {
+      // If still failing, try a more aggressive fix — replace all unescaped single quotes inside strings
+      const fixed = clean.replace(/"([^"]*?)'/g, (m, p1) => `"${p1.replace(/'/g, "\\'")}` );
+      try { return JSON.parse(fixed); } catch(e2) {
+        // Last resort — strip all control characters and try again
+        const stripped = clean.replace(/[\x00-\x1F\x7F]/g, ' ');
+        return JSON.parse(stripped);
+      }
+    }
   }
 }
 
@@ -178,7 +188,7 @@ async function callClaudeVision(imageBase64, mediaType) {
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1800,
-      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble.
+      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions. Write dont instead of don't, Press n Seal instead of Press'n Seal.
 
 SCORING RULES:
 - PP/PVC in food-contact products: score 8-9 (NEJM 2024)
@@ -228,7 +238,13 @@ SCORING RULES:
   const text = data.content.map(b => b.text || "").join("").trim();
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON in vision response");
-  return JSON.parse(match[0]);
+  let clean = match[0]
+    .replace(/[\u2018\u2019]/g, "\\'")
+    .replace(/[\u201C\u201D]/g, '\\"')
+    .replace(/,(\s*[}\]])/g, '$1');
+  try { return JSON.parse(clean); } catch(e) {
+    return JSON.parse(clean.replace(/[\x00-\x1F\x7F]/g, ' '));
+  }
 }
 
 async function pass1(productName, materialContext = null) {
@@ -237,7 +253,7 @@ async function pass1(productName, materialContext = null) {
     : "";
 
   return callClaude(
-    `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble.
+    `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions. Write dont instead of don't, Press n Seal instead of Press'n Seal.
 
 KEY RESEARCH FINDINGS THAT MUST INFORM YOUR SCORING:
 
