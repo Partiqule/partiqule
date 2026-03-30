@@ -2601,10 +2601,19 @@ const products = [
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
+// Generic words that appear in too many unrelated products to be useful for matching
+const STOPWORDS = new Set([
+  "bag", "bags", "cup", "cups", "box", "boxes", "can", "cans",
+  "set", "sets", "kit", "kits", "pad", "pads", "pan", "pans",
+  "pot", "pots", "bar", "bars", "the", "and", "for", "its",
+  "new", "pro", "eco", "use", "one", "all", "free", "with"
+]);
+
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   const queries = [query, fallbackQuery].filter(Boolean).map(q => q.toLowerCase().trim());
   const allWords = [...new Set(
-    queries.flatMap(q => q.split(/\s+/)).filter(w => w.length > 2)
+    queries.flatMap(q => q.split(/\s+/))
+      .filter(w => w.length > 2 && !STOPWORDS.has(w))
   )];
 
   // Hard block: other category (vehicles, electronics, etc) gets no DB alternatives
