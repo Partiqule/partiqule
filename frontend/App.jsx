@@ -2051,15 +2051,15 @@ function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
+              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
                 <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
-                  style={{flex:1, padding:"14px 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0}}/>
+                  style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
 
                 {/* Camera button */}
                 <label title="Photo a product label, tag, or packaging"
-                  style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee", alignSelf:"stretch"}}>
+                  style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
                   <input type="file" accept="image/*" style={{display:"none"}}
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
@@ -2090,13 +2090,13 @@ function App() {
                           body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
                         });
                         if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests — please wait a moment and try again."); return; }
-                        if (!idResp.ok) throw new Error("Could not identify product");
+                        if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
                         const data = await idResp.json();
                         if (!data.product_name) throw new Error("Nothing detected");
                         setQuery(data.product_name);
-                        setLoading(false);
                         setResult(data);
                         saveToHistory(data);
+                        setLoading(false);
                       } catch(err) {
                         console.error("Image scan error:", err);
                         setLoading(false); setQuery("");
@@ -2110,19 +2110,14 @@ function App() {
                   </svg>
                 </label>
 
-                {/* Scan button — fixed width, never squishes */}
+                {/* Scan button */}
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                  style={{
-                    width: isMobile ? 58 : 80, minWidth: isMobile ? 58 : 80,
-                    height: 52, flexShrink: 0, border: "none",
-                    background: query.trim() ? "#052e16" : "#e0e0e0",
-                    color: query.trim() ? "#4ade80" : "#999",
-                    fontWeight: 700, fontSize: isMobile ? 14 : 15,
-                    cursor: query.trim() ? "pointer" : "default",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "background 0.15s", whiteSpace: "nowrap",
-                  }}>
-                  {loading ? "…" : "Scan"}
+                  style={{width:isMobile?58:80, minWidth:isMobile?58:80, height:52, flexShrink:0, border:"none",
+                    background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999",
+                    fontWeight:700, fontSize:isMobile?14:15, cursor:query.trim()?"pointer":"default",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    transition:"background 0.15s", whiteSpace:"nowrap"}}>
+                  {loading?"…":"Scan"}
                 </button>
               </div>
 
