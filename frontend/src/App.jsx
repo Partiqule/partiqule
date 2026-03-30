@@ -946,8 +946,39 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
+  const [priceFilter, setPriceFilter] = useState("all");
   const avg = history.length ? Math.round(history.reduce((a,h)=>a+h.score,0)/history.length*10)/10 : 0;
   const highest = history.length ? history.reduce((a,h)=>h.score>a.score?h:a, history[0]) : null;
+
+  // Collect all alternatives from scan history, deduplicate by name
+  const allAlts = [];
+  const seen = new Set();
+  history.forEach(item => {
+    (item.alternatives || []).forEach(alt => {
+      if (!seen.has(alt.name) && alt.affiliateUrl) {
+        seen.add(alt.name);
+        allAlts.push({...alt, fromProduct: item.product_name, fromScore: item.score});
+      }
+    });
+  });
+
+  // Price filter logic
+  const parsePrice = (priceStr) => {
+    if (!priceStr || priceStr === "See on Amazon") return null;
+    const match = priceStr.replace(/[$,]/g, "").match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : null;
+  };
+
+  const filteredAlts = allAlts.filter(alt => {
+    if (priceFilter === "all") return true;
+    const price = parsePrice(alt.price);
+    if (!price) return priceFilter === "all";
+    if (priceFilter === "under15") return price < 15;
+    if (priceFilter === "under30") return price < 30;
+    if (priceFilter === "under50") return price < 50;
+    if (priceFilter === "over50") return price >= 50;
+    return true;
+  });
 
   const formatDate = (iso) => {
     if (!iso) return "Recently";
@@ -972,10 +1003,10 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   }, {});
 
   return (
-    <div style={{maxWidth:800, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
+    <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scan History</h1>
-        <p style={{fontSize:15, color:muted, margin:0}}>Every product you've scanned with Partiqule</p>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scans</h1>
+        <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
       </div>
 
       {history.length === 0 ? (
@@ -989,57 +1020,118 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
         <>
           {/* Stats cards */}
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:40}}>
-            {/* Average score */}
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
               <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Danger Score</div>
               <div style={{display:"flex", alignItems:"flex-end", gap:8, marginBottom:10}}>
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:48, color:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", lineHeight:1}}>{avg}</span>
                 <span style={{fontSize:14, color:muted, marginBottom:8}}>/10</span>
               </div>
-              {/* Mini bar */}
               <div style={{height:6, borderRadius:99, background:"#e5e7eb", overflow:"hidden"}}>
                 <div style={{height:"100%", width:`${(avg/10)*100}%`, background:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", borderRadius:99, transition:"width 1s ease"}}/>
               </div>
               <div style={{fontSize:12, color:muted, marginTop:8}}>Across {history.length} scan{history.length!==1?"s":""}</div>
             </div>
-
-            {/* Highest risk */}
             {highest && (
               <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
                 <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Highest Risk Found</div>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:6, lineHeight:1.3}}>{highest.product_name}</div>
                 <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"#fee2e2", color:"#dc2626", padding:"4px 12px", borderRadius:20, fontSize:13, fontWeight:700}}>
-                  {highest.score}/10: {highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk
+                  {highest.score}/10 — {highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk
                 </div>
-                <div style={{fontSize:12, color:muted, marginTop:10, cursor:"pointer", color:"#16a34a", fontWeight:600}} onClick={()=>onSelect(highest)}>
+                <div style={{fontSize:12, color:"#16a34a", fontWeight:600, marginTop:10, cursor:"pointer"}} onClick={()=>onSelect(highest)}>
                   View result →
                 </div>
               </div>
             )}
           </div>
 
+          {/* Recommended alternatives */}
+          {filteredAlts.length > 0 && (
+            <div style={{marginBottom:48}}>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:20}}>
+                <div>
+                  <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 4px"}}>
+                    Recommended Alternatives
+                  </h2>
+                  <p style={{fontSize:13, color:muted, margin:0}}>Safer swaps based on what you've scanned · #ad affiliate links</p>
+                </div>
+                {/* Price filter */}
+                <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
+                  {[
+                    {key:"all", label:"All prices"},
+                    {key:"under15", label:"Under $15"},
+                    {key:"under30", label:"Under $30"},
+                    {key:"under50", label:"Under $50"},
+                    {key:"over50", label:"$50+"},
+                  ].map(f => (
+                    <button key={f.key} onClick={()=>setPriceFilter(f.key)}
+                      style={{padding:"5px 12px", borderRadius:20, border:`1.5px solid ${priceFilter===f.key?"#16a34a":border}`,
+                        background:priceFilter===f.key?"#052e16":"none",
+                        color:priceFilter===f.key?"#4ade80":muted,
+                        fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap"}}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)", gap:12}}>
+                {filteredAlts.slice(0,9).map((alt, i) => (
+                  <a key={i} href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
+                    style={{textDecoration:"none", display:"block", background:surface, borderRadius:14,
+                      border:`1.5px solid ${border}`, overflow:"hidden", transition:"all 0.15s"}}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateY(-2px)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
+                    {/* Score badge */}
+                    <div style={{padding:"12px 14px 0"}}>
+                      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8}}>
+                        <div style={{fontSize:10, fontWeight:700, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}>
+                          {alt.score}/10 danger
+                        </div>
+                        {alt.price && alt.price !== "See on Amazon" && (
+                          <div style={{fontSize:12, fontWeight:700, color:text}}>{alt.price}</div>
+                        )}
+                      </div>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:text, marginBottom:4, lineHeight:1.3}}>
+                        {alt.name?.length > 45 ? alt.name.slice(0,42)+"…" : alt.name}
+                      </div>
+                      {alt.brand && (
+                        <div style={{fontSize:11, color:muted, marginBottom:6}}>{alt.brand}</div>
+                      )}
+                      <div style={{fontSize:11, color:muted, lineHeight:1.5, marginBottom:10}}>
+                        Safer swap for: <span style={{color:text, fontWeight:500}}>{alt.fromProduct?.length>30?alt.fromProduct.slice(0,27)+"…":alt.fromProduct}</span>
+                      </div>
+                    </div>
+                    <div style={{padding:"8px 14px 12px"}}>
+                      <div style={{width:"100%", padding:"7px", borderRadius:8, background:"#052e16", color:"#4ade80", fontSize:12, fontWeight:600, textAlign:"center"}}>
+                        Shop now →
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              {filteredAlts.length === 0 && priceFilter !== "all" && (
+                <div style={{textAlign:"center", padding:"32px", color:muted, fontSize:14}}>
+                  No alternatives found in this price range. <button onClick={()=>setPriceFilter("all")} style={{color:"#16a34a", background:"none", border:"none", fontWeight:600, cursor:"pointer"}}>Show all</button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Timeline */}
-          <div>
+          <div style={{marginBottom:8}}>
+            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 24px"}}>Scan History</h2>
             {Object.entries(grouped).map(([date, items]) => (
               <div key={date} style={{marginBottom:36}}>
-                {/* Date label */}
                 <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:16}}>
                   <div style={{fontSize:12, fontWeight:600, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", whiteSpace:"nowrap"}}>{date}</div>
                   <div style={{flex:1, height:1, background:border}}/>
                 </div>
-
-                {/* Items */}
                 <div style={{position:"relative", paddingLeft:28}}>
-                  {/* Vertical line */}
                   <div style={{position:"absolute", left:9, top:8, bottom:8, width:2, background:border, borderRadius:2}}/>
-
                   {items.map((item, i) => (
-                    <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}}
-                      onClick={()=>onSelect(item)}>
-                      {/* Timeline dot */}
+                    <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}} onClick={()=>onSelect(item)}>
                       <div style={{position:"absolute", left:-24, top:16, width:12, height:12, borderRadius:"50%", background:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", border:`2px solid ${surface}`, zIndex:1}}/>
-
-                      {/* Card */}
                       <div style={{background:surface, borderRadius:12, padding:"16px 20px", border:`1.5px solid ${border}`, transition:"all 0.15s"}}
                         onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateX(3px)";}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
@@ -1056,7 +1148,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                         {item.category && (
                           <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
                             {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#7c3aed",bg:"#f5f3ff"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
-                            <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view alternatives →</span>
+                            <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result →</span>
                           </div>
                         )}
                       </div>
