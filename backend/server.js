@@ -156,7 +156,12 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
     const text = data.content.map(b => b.text || "").join("").trim();
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response");
-    return JSON.parse(match[0]);
+    // Sanitise common Claude JSON issues: smart quotes, trailing commas
+    const clean = match[0]
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/,(\s*[}\]])/g, '$1');
+    return JSON.parse(clean);
   }
 }
 
@@ -412,6 +417,74 @@ app.post("/scan-image", async (req, res) => {
   } catch(err) {
     console.error("scan-image error:", err);
     res.status(500).json({ error: "Image scan failed" });
+  }
+});
+
+// ── IDENTIFY IMAGE — cheap vision call, returns product name only ─
+app.post("/identify-image", async (req, res) => {
+  const { image, mediaType } = req.body;
+  if (!image) return res.status(400).json({ error: "No image provided" });
+  try {
+    const response = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 60,
+        system: "You identify products from photos of labels, tags, and packaging. Read the brand name and product name visible in the image. Respond with ONLY the product name in 2-6 words. No explanation, no punctuation.",
+        messages: [{ role: "user", content: [
+          { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
+          { type: "text", text: "Brand and product name:" }
+        ]}]
+      })
+    });
+    if (response.status === 429) return res.status(429).json({ error: "Rate limit" });
+    if (!response.ok) throw new Error(`Anthropic ${response.status}`);
+    const data = await response.json();
+    const productName = data.content?.[0]?.text?.trim();
+    if (!productName) return res.status(400).json({ error: "Could not identify product" });
+    res.json({ productName });
+  } catch(err) {
+    console.error("identify-image error:", err);
+    res.status(500).json({ error: "Image identification failed" });
+  }
+});
+
+// ── IDENTIFY IMAGE — returns product name only, then full analyze runs separately ──
+app.post("/identify-image", async (req, res) => {
+  const { image, mediaType } = req.body;
+  if (!image) return res.status(400).json({ error: "No image provided" });
+  try {
+    const response = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 60,
+        system: "You identify consumer products from photos of labels, packaging, or clothing tags. Read any visible brand names, product names, or text. Respond with ONLY the product name, 2-6 words. Examples: 'Tide Original Liquid Detergent', 'Levi 501 Jeans', 'Brawny Paper Towels'. Nothing else.",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
+            { type: "text", text: "Product name:" }
+          ]
+        }]
+      })
+    });
+    if (response.status === 429) return res.status(429).json({ error: "Rate limit" });
+    if (!response.ok) throw new Error(`Anthropic ${response.status}`);
+    const data = await response.json();
+    const productName = data.content?.[0]?.text?.trim();
+    if (!productName) return res.status(400).json({ error: "Could not identify product" });
+    console.log(`Image identified as: ${productName}`);
+    res.json({ productName });
+  } catch(err) {
+    console.error("identify-image error:", err);
+    res.status(500).json({ error: "Image identification failed" });
   }
 });
 
