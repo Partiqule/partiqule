@@ -6,16 +6,26 @@ const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 
 const app = express();
 app.use(cors({
-  origin: [
-    "https://partiqule.vercel.app",
-    "https://partiqule.com",
-    "https://www.partiqule.com",
-    /\.vercel\.app$/,
-    "http://localhost:3000",
-  ],
-  methods: ["GET","POST"],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      "https://partiqule.com",
+      "https://www.partiqule.com",
+      "https://partiqule.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ];
+    if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS blocked: ${origin}`));
+  },
+  methods: ["GET","POST","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
   credentials: true,
 }));
+app.options("*", cors()); // handle preflight for all routes
 app.use(express.json({ limit: "10mb" }));
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
