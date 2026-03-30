@@ -258,7 +258,7 @@ const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
       {/* Always-visible header with sub-score pills */}
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", background:"none", border:"none", cursor:"pointer", padding:"18px 24px", textAlign:"left"}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:open?0:12}}>
-          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0}}>Why this score?</h3>
+          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0, display:"flex", alignItems:"center", gap:8}}><img src="/category.svg" style={{width:20,height:20}}/> Why this score?</h3>
           <span style={{fontSize:12, color:muted, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
         </div>
 
@@ -1406,13 +1406,16 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         {/* Founder cards */}
         <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16, marginBottom:24}}>
           {[
-            {name:"Paul Miller", role:"Co-Founder, Product Development", detail:"Leads product development and defines the scoring framework behind every result."},
-            {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale."},
+            {name:"Paul Miller", role:"Co-Founder, Product Development", detail:"Leads product development and defines the scoring framework behind every result.", photo:"/paul.jpg"},
+            {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale.", photo:"/sara.jpg"},
           ].map((person, i) => (
-            <div key={i} style={{background:surface, borderRadius:14, padding:"20px 22px", border:`1.5px solid ${border}`}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
-              <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
-              <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{person.detail}</div>
+            <div key={i} style={{background:surface, borderRadius:14, padding:"24px 22px", border:`1.5px solid ${border}`, display:"flex", gap:16, alignItems:"flex-start"}}>
+              <img src={person.photo} alt={person.name} style={{width:72, height:72, borderRadius:"50%", objectFit:"cover", flexShrink:0, border:"2px solid #16a34a"}}/>
+              <div>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
+                <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
+                <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{person.detail}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -2171,7 +2174,7 @@ function App() {
               </p>
 
               <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
-                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IconSearch size={18} color="#bbb"/></div>
+                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><img src="/search.svg" style={{width:20,height:20,opacity:0.5}}/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
                   style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
@@ -2362,10 +2365,10 @@ function App() {
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
               <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
                 {[
-                  {emoji:"🔬", title:"Science-backed", body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
-                  {emoji:"🤝", title:"No brand influence", body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
-                  {emoji:"♻️", title:"Sustainability scored", body:"Single-use products and disposables get penalised — not just plastic content"},
-                  {emoji:"🆓", title:"Always free", body:"No account, no paywall, no ads. Just answers about what is in your products"},
+                  {icon:"/score.svg",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
+                  {icon:"/safety.svg",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
+                  {icon:"/verified.svg", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
+                  {icon:"/scan.svg",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
                 ].map((item,i) => (
                   <div key={i} style={{
                     background:isDark?"#1e2433":"#fff",
@@ -2373,12 +2376,9 @@ function App() {
                     border:`1.5px solid ${isDark?"#2a3347":"#f0fdf4"}`,
                     display:"flex", flexDirection:"column", alignItems:"center", gap:12,
                   }}>
-                    <div style={{
-                      width:64, height:64, borderRadius:"50%",
-                      background:isDark?"#1a2a1a":"#f0fdf4",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:28
-                    }}>{item.emoji}</div>
+                    <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                      <img src={item.icon} alt={item.title} style={{width:36, height:36}}/>
+                    </div>
                     <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
                     <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
                   </div>
@@ -2533,7 +2533,7 @@ function App() {
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
+                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><img src="/products.svg" style={{width:22,height:22}}/> Safer Alternatives</h3>
                   {result.alternatives?.some(p => {
                     const compatCats = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category]||[];
                     return compatCats.includes(p.category);
