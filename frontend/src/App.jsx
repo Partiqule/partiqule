@@ -1426,7 +1426,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
             {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale.", photo:"/sara.jpg"},
           ].map((person, i) => (
             <div key={i} style={{background:surface, borderRadius:14, padding:"24px 22px", border:`1.5px solid ${border}`, display:"flex", gap:18, alignItems:"flex-start"}}>
-              <div style={{width:90, height:90, borderRadius:"50%", flexShrink:0, overflow:"hidden", border:"2px solid #16a34a"}}>
+              <div style={{width:110, height:110, borderRadius:"50%", flexShrink:0, overflow:"hidden", border:"2px solid #16a34a"}}>
                 <img src={person.photo} alt={person.name} style={{
                   width:"170%", height:"170%",
                   objectFit:"cover",
