@@ -2570,8 +2570,8 @@ function App() {
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
                   <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
                   {result.alternatives?.some(p => {
-                    const compatCats = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category]||[];
-                    return compatCats.includes(p.category);
+                    const cc = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category];
+                    return !cc || cc.includes(p.category);
                   }) && result.category !== "other" && (
                     <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
                       #ad · affiliate links
@@ -2589,11 +2589,13 @@ function App() {
                     personal_care: ["personal_care"],
                     baby:          ["baby","personal_care","clothing"],
                     other:         [],
-                  }[cat] || [];
+                  }[cat];
+                  // If category is unknown/unmapped, show all DB alternatives (don't filter)
+                  const hasCompatFilter = compatCats !== undefined && cat !== "other";
 
-                  // DB alternatives — only category-compatible ones
+                  // DB alternatives — category-compatible or unfiltered if category unknown
                   const dbAlts = (result.alternatives || [])
-                    .filter(p => compatCats.includes(p.category))
+                    .filter(p => !hasCompatFilter || compatCats.includes(p.category))
                     .slice(0, 3);
 
                   // AI alternatives — deduplicated against DB, fill up to 3
