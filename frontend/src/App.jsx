@@ -2051,15 +2051,15 @@ function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, border:"none", overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
-                <div style={{display:"flex", alignItems:"center", paddingLeft:16, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
+              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
+                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
-                  style={{flex:1, padding:"14px 12px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111"}}/>
+                  style={{flex:1, padding:"14px 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0}}/>
 
-                {/* Barcode camera button */}
+                {/* Camera button */}
                 <label title="Photo a product label, tag, or packaging"
-                  style={{display:"flex", alignItems:"center", justifyContent:"center", padding:"0 14px", cursor:"pointer", borderRight:"1px solid #eee", flexShrink:0}}>
+                  style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:"100%", flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
                   <input type="file" accept="image/*" style={{display:"none"}}
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
@@ -2068,7 +2068,6 @@ function App() {
                       setResult(null); setError(null); setPage("home");
                       setLoading(true); setQuery("Reading label…");
                       try {
-                        // Compress image before sending — full iPhone photos are 3-5MB
                         const base64 = await new Promise((res, rej) => {
                           const img = new Image();
                           const url = URL.createObjectURL(file);
@@ -2080,30 +2079,23 @@ function App() {
                             canvas.height = Math.round(img.height * ratio);
                             canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
                             URL.revokeObjectURL(url);
-                            const data = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
-                            res(data);
+                            res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
                           };
                           img.onerror = rej;
                           img.src = url;
                         });
-                        // Send image directly to analyze — Claude identifies + scores in one pass
-                        const resp = await fetch(`${API_BASE}/analyze`, {
+                        const idResp = await fetch(`${API_BASE}/identify-image`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ image: base64, mediaType: file.type || "image/jpeg" })
+                          body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
                         });
-                        if (resp.status === 429) {
-                          setLoading(false); setQuery("");
-                          setError("The scanner is busy — please wait a moment and try again.");
-                          return;
-                        }
-                        if (!resp.ok) throw new Error("Scan failed");
-                        const data = await resp.json();
-                        if (!data.product_name) throw new Error("Nothing detected");
-                        setQuery(data.product_name);
+                        if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests — please wait a moment and try again."); return; }
+                        if (!idResp.ok) throw new Error("Could not identify product");
+                        const { productName } = await idResp.json();
+                        if (!productName) throw new Error("Nothing detected");
+                        setQuery(productName);
                         setLoading(false);
-                        setResult(data);
-                        saveToHistory(data);
+                        analyze(productName);
                       } catch(err) {
                         console.error("Image scan error:", err);
                         setLoading(false); setQuery("");
@@ -2117,9 +2109,19 @@ function App() {
                   </svg>
                 </label>
 
+                {/* Scan button — fixed width, never squishes */}
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                  style={{padding:"14px 28px", border:"none", background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999", fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default", whiteSpace:"nowrap", transition:"background 0.15s", flexShrink:0}}>
-                  {loading?"…":"Scan"}
+                  style={{
+                    width: isMobile ? 58 : 80, minWidth: isMobile ? 58 : 80,
+                    height: 52, flexShrink: 0, border: "none",
+                    background: query.trim() ? "#052e16" : "#e0e0e0",
+                    color: query.trim() ? "#4ade80" : "#999",
+                    fontWeight: 700, fontSize: isMobile ? 14 : 15,
+                    cursor: query.trim() ? "pointer" : "default",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "background 0.15s", whiteSpace: "nowrap",
+                  }}>
+                  {loading ? "…" : "Scan"}
                 </button>
               </div>
 
