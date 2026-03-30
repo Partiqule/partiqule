@@ -73,6 +73,22 @@ const IconTag        = ({size=22,color="#16a34a"}) => <svg width={size} height={
 const IconHistory    = ({size=18,color="#6b7280"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7v3l4-4-4-4v3zm1 10h-2V8h2v4.41l2.29 2.3-1.41 1.41L14 13.83V13z"/></svg>;
 const IconInstagram  = ({size=18,color="#fff"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>;
 const IconShare      = ({size=16,color="#6b7280"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 16c-.8 0-1.5.3-2 .8l-7.1-4.1c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.1c-.1.2-.1.4-.1.7 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>;
+
+// ── CUSTOM BRAND ICONS ────────────────────────────────────────
+const IcoScore       = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><polyline points="6,32 16,32 22,14 30,50 38,22 44,40 52,32 58,32" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="30" cy="50" r="4" fill="#3EC44A"/></svg>;
+const IcoSafety      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 6L10 16v16c0 13 10 22 22 26 12-4 22-13 22-26V16L32 6z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M22 32l6 6 14-12" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoVerified    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><rect x="10" y="10" width="44" height="44" rx="6" fill="#3EC44A" opacity="0.15"/><path d="M20 10h-6a4 4 0 00-4 4v36a4 4 0 004 4h28a4 4 0 004-4V14a4 4 0 00-4-4h-6" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M24 10a4 4 0 014-4h8a4 4 0 014 4v2H24v-2z" stroke="#3EC44A" strokeWidth="2.5"/><path d="M22 32l6 6 14-12" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoScan        = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M8 22V12a4 4 0 014-4h10" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M56 22V12a4 4 0 00-4-4H42" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M8 42v10a4 4 0 004 4h10" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M56 42v10a4 4 0 01-4 4H42" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#3EC44A" strokeWidth="3" strokeLinecap="round"/><rect x="20" y="20" width="24" height="24" rx="4" fill="#3EC44A" opacity="0.18"/></svg>;
+const IcoSearch      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="28" cy="28" r="16" fill="#3EC44A" opacity="0.15"/><circle cx="28" cy="28" r="16" stroke="#3EC44A" strokeWidth="2.5"/><line x1="40" y1="40" x2="54" y2="54" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+const IcoProducts    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M8 26L32 8l24 18v28a4 4 0 01-4 4H12a4 4 0 01-4-4V26z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M24 56V36h16v20" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const IcoCategory    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M14 24h28l-4 24H18L14 24z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M42 28h6a6 6 0 010 12h-6" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="10" y1="56" x2="50" y2="56" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M22 18c0-4 4-4 4-8" stroke="#3EC44A" strokeWidth="2" strokeLinecap="round"/><path d="M30 18c0-4 4-4 4-8" stroke="#3EC44A" strokeWidth="2" strokeLinecap="round"/></svg>;
+const IcoIngredients = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="6" fill="#3EC44A" opacity="0.1"/><line x1="22" y1="20" x2="52" y2="20" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="22" y1="32" x2="52" y2="32" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="22" y1="44" x2="52" y2="44" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><circle cx="12" cy="20" r="3.5" fill="#3EC44A"/><circle cx="12" cy="32" r="3.5" fill="#3EC44A"/><circle cx="12" cy="44" r="3.5" fill="#3EC44A"/></svg>;
+const IcoRating      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 8l6 12 14 2-10 10 2 14-12-6-12 6 2-14L12 22l14-2z" fill="#3EC44A" opacity="0.85" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
+const IcoSaved       = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 52S10 40 10 24a12 12 0 0122-6.7A12 12 0 0154 24c0 16-22 28-22 28z" fill="#3EC44A" opacity="0.8" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
+const IcoInfo        = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="24" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5"/><line x1="32" y1="28" x2="32" y2="44" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><circle cx="32" cy="21" r="2.5" fill="#3EC44A"/></svg>;
+const IcoProfile     = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="22" r="12" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5"/><path d="M10 56a22 22 0 0144 0" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/></svg>;
+
+
 const IconTrash      = ({size=15,color="#9ca3af"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/></svg>;
 const IconMoon       = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>;
 const IconSun        = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-12.37-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0zM7.05 18.36l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0z"/></svg>;
@@ -258,7 +274,7 @@ const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
       {/* Always-visible header with sub-score pills */}
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", background:"none", border:"none", cursor:"pointer", padding:"18px 24px", textAlign:"left"}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:open?0:12}}>
-          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0, display:"flex", alignItems:"center", gap:8}}><img src="/category.svg" style={{width:20,height:20}}/> Why this score?</h3>
+          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0, display:"flex", alignItems:"center", gap:8}}><IcoCategory size={20}/> Why this score?</h3>
           <span style={{fontSize:12, color:muted, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
         </div>
 
@@ -307,7 +323,7 @@ const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
           ))}
           {result.confidence_note && result.confidence !== "high" && (
             <div style={{fontSize:11, color:muted, background:isDark?"#1a2030":"#f8fafc", padding:"8px 12px", borderRadius:8, marginTop:4}}>
-              💡 {result.confidence_note}
+              <IcoInfo size={14}/> {result.confidence_note}
             </div>
           )}
         </div>
@@ -433,7 +449,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {/* Section 2: Broader health concerns */}
         <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
           <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1e1a2e":"#f5f3ff", color:"#7c3aed", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-            ❤️ Health Concerns
+            Health Concerns
           </div>
           <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>Beyond plastics</h2>
           <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
@@ -482,7 +498,7 @@ const PlasticScoreDropdown = ({result, isDark, muted}) => {
         padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8
       }}>
         <div style={{display:"flex", alignItems:"center", gap:8}}>
-          <span style={{fontSize:14}}>🔬</span>
+          <IcoSafety size={18}/>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>
             Plastic Danger
           </span>
@@ -588,7 +604,7 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
         padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8
       }}>
         <div style={{display:"flex", alignItems:"center", gap:8}}>
-          <span style={{fontSize:14}}>❤️</span>
+          <IcoIngredients size={18}/>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>
             Health Concern
           </span>
@@ -2034,7 +2050,7 @@ function App() {
               <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("methodology"); setResult(null);}} style={{fontSize:14, color:page==="methodology"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="methodology"?600:400}}>How it Works</span>
-              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
+              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={14}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
                 {isDark?<IconSun size={17} color="#f59e0b"/>:<IconMoon size={17} color="#6b7280"/>}
               </button>
@@ -2050,7 +2066,7 @@ function App() {
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"How it Works",       pg:"methodology"},
-              {label:"My Scans",           pg:"history"},
+              {label:"My Scans",           pg:"history", icon:<IcoSaved size={16}/>},
             ].map(item=>(
               <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
                 style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
@@ -2174,7 +2190,7 @@ function App() {
               </p>
 
               <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
-                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><img src="/search.svg" style={{width:20,height:20,opacity:0.5}}/></div>
+                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IcoSearch size={20}/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
                   style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
@@ -2365,10 +2381,10 @@ function App() {
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
               <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
                 {[
-                  {icon:"/score.svg",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
-                  {icon:"/safety.svg",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
-                  {icon:"/verified.svg", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
-                  {icon:"/scan.svg",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
+                  {icon:"score",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
+                  {icon:"safety",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
+                  {icon:"verified", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
+                  {icon:"scan",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
                 ].map((item,i) => (
                   <div key={i} style={{
                     background:isDark?"#1e2433":"#fff",
@@ -2377,7 +2393,7 @@ function App() {
                     display:"flex", flexDirection:"column", alignItems:"center", gap:12,
                   }}>
                     <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                      <img src={item.icon} alt={item.title} style={{width:36, height:36}}/>
+                      {item.icon==="score"&&<IcoScore size={36}/>}{item.icon==="safety"&&<IcoSafety size={36}/>}{item.icon==="verified"&&<IcoVerified size={36}/>}{item.icon==="scan"&&<IcoScan size={36}/>}
                     </div>
                     <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
                     <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
@@ -2399,9 +2415,9 @@ function App() {
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
-                    {result.overall_score ? "Overall Score" : "Danger Score"} <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
+                    {result.overall_score ? <><IcoRating size={14}/> Overall Score</> : <><IcoScore size={14}/> Danger Score</>} <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
                   </div>
-                  {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}>✓ Verified</div>}
+                  {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
                   {result.confidence && (
                     <div style={{fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10,
                       background:result.confidence==="high"?"#f0fdf4":result.confidence==="medium"?"#fffbeb":"#fef2f2",
@@ -2504,7 +2520,7 @@ function App() {
 
               {result.concerns?.length>0&&(
                 <div className="fade-up" style={{background:isDark?"#1e2433":"#fffbeb", borderRadius:16, padding:"28px 32px", border:`1.5px solid ${isDark?"#2a3347":"#fde68a"}`, borderLeft:"4px solid #d97706"}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:17,color:text,margin:"0 0 18px",display:"flex",alignItems:"center",gap:8}}><IconWarning size={18} color="#d97706"/> Key Concerns</h3>
+                  <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:17,color:text,margin:"0 0 18px",display:"flex",alignItems:"center",gap:8}}><IcoInfo size={20}/> Key Concerns</h3>
                   {result.concerns.map((c,i)=>(
                     <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:14,fontSize:14,color:isDark?"#94a3b8":"#444",lineHeight:1.6}}>
                       <div style={{width:22,height:22,borderRadius:"50%",background:"#fef2f2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}><IconWarning size={12} color="#dc2626"/></div>
@@ -2533,7 +2549,7 @@ function App() {
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><img src="/products.svg" style={{width:22,height:22}}/> Safer Alternatives</h3>
+                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
                   {result.alternatives?.some(p => {
                     const compatCats = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category]||[];
                     return compatCats.includes(p.category);
@@ -2590,7 +2606,7 @@ function App() {
                               <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
                               <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
                                 style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                                <IconSearch size={12} color="#16a34a"/> Scan this product →
+                                <IcoSearch size={14}/> Scan this product →
                               </button>
                             </div>
                           ))}
