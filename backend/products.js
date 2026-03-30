@@ -2921,7 +2921,7 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       });
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore > 0)  // must have SOME relevance — no random fallbacks
+    .filter(p => p.relevanceScore >= 4)  // require meaningful relevance — score must match keywords
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
 

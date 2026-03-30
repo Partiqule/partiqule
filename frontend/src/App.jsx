@@ -245,6 +245,70 @@ const BundleCard = ({category, isDark}) => {
 };
 
 // ── SOURCE CITATIONS ──────────────────────────────────────────
+// ── SCORE BREAKDOWN (collapsible) ────────────────────────────
+const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
+  const [open, setOpen] = useState(false);
+  const labels = {materials:"Materials", packaging:"Packaging", usage:"Usage & Exposure", manufacturing:"Manufacturing"};
+  const icons  = {materials:"🧱", packaging:"📦", usage:"🤲", manufacturing:"🏭"};
+  const bd = result.breakdown;
+  if (!bd) return null;
+
+  return (
+    <div className="fade-up" style={{background:surface, borderRadius:16, border:`1.5px solid ${border}`, overflow:"hidden"}}>
+      {/* Always-visible header with sub-score pills */}
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", background:"none", border:"none", cursor:"pointer", padding:"18px 24px", textAlign:"left"}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:open?0:12}}>
+          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0}}>Why this score?</h3>
+          <span style={{fontSize:12, color:muted, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+        </div>
+
+        {/* Sub-score pills — always visible */}
+        {!open && (
+          <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+            {Object.entries(bd).map(([key, val]) => (
+              <div key={key} style={{display:"flex", alignItems:"center", gap:4, background:isDark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)", borderRadius:8, padding:"4px 10px"}}>
+                <span style={{fontSize:11}}>{icons[key]}</span>
+                <span style={{fontSize:11, color:muted}}>{labels[key]}</span>
+                <span style={{fontSize:12, fontWeight:700, color:scoreColor(val.score)}}>{val.score}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </button>
+
+      {/* Expanded detail */}
+      {open && (
+        <div style={{padding:"0 24px 20px", borderTop:`1px solid ${border}`}}>
+          {result.score_reasoning && (
+            <p style={{fontSize:12, color:muted, margin:"14px 0 16px", lineHeight:1.5, fontStyle:"italic"}}>{result.score_reasoning}</p>
+          )}
+          {Object.entries(bd).map(([key, val]) => (
+            <div key={key} style={{marginBottom:16}}>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
+                <div style={{display:"flex", alignItems:"center", gap:7, fontSize:13, fontWeight:600, color:text}}>
+                  <span style={{fontSize:15}}>{icons[key]}</span>{labels[key]}
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:8}}>
+                  <div style={{width:80, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                    <div style={{height:"100%", width:`${(val.score/10)*100}%`, background:scoreColor(val.score), borderRadius:99, transition:"width 1s ease"}}/>
+                  </div>
+                  <span style={{fontSize:13, fontWeight:700, color:scoreColor(val.score), minWidth:20}}>{val.score}</span>
+                </div>
+              </div>
+              <div style={{fontSize:12, color:muted, lineHeight:1.5, paddingLeft:22}}>{val.label}</div>
+            </div>
+          ))}
+          {result.confidence_note && result.confidence !== "high" && (
+            <div style={{fontSize:11, color:muted, background:isDark?"#1a2030":"#f8fafc", padding:"8px 12px", borderRadius:8, marginTop:4}}>
+              💡 {result.confidence_note}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SourceCitations = ({category, isDark}) => {
   const [open, setOpen] = useState(false);
   const sources = SOURCES[category] || SOURCES.other;
@@ -2361,38 +2425,9 @@ function App() {
                 <ShareBadge result={result}/>
               </div>
 
-              {/* SCORE BREAKDOWN — score_reasoning lives here now */}
+              {/* SCORE BREAKDOWN — collapsible */}
               {result.breakdown && (
-                <div className="fade-up" style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:16,color:text,margin:"0 0 4px"}}>Why this score?</h3>
-                  {result.score_reasoning && <p style={{fontSize:12,color:muted,margin:"0 0 16px",lineHeight:1.5,fontStyle:"italic"}}>{result.score_reasoning}</p>}
-                  {Object.entries(result.breakdown).map(([key, val])=>{
-                    const labels = {materials:"Materials",packaging:"Packaging",usage:"Usage & Exposure",manufacturing:"Manufacturing"};
-                    const icons  = {materials:"🧵",packaging:"📦",usage:"🤲",manufacturing:"🏭"};
-                    return (
-                      <div key={key} style={{marginBottom:16}}>
-                        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
-                          <div style={{display:"flex", alignItems:"center", gap:7, fontSize:13, fontWeight:600, color:text}}>
-                            <span style={{fontSize:15}}>{icons[key]}</span>{labels[key]}
-                          </div>
-                          <div style={{display:"flex", alignItems:"center", gap:8}}>
-                            <div style={{width:80, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
-                              <div style={{height:"100%", width:`${(val.score/10)*100}%`, background:scoreColor(val.score), borderRadius:99, transition:"width 1s ease"}}/>
-                            </div>
-                            <span style={{fontSize:13, fontWeight:700, color:scoreColor(val.score), minWidth:20}}>{val.score}</span>
-                          </div>
-                        </div>
-                        <div style={{fontSize:12, color:muted, lineHeight:1.5, paddingLeft:22}}>{val.label}</div>
-                      </div>
-                    );
-                  })}
-                  {/* Confidence note lives here too */}
-                  {result.confidence_note && result.confidence !== "high" && (
-                    <div style={{fontSize:11, color:muted, background:isDark?"#1a2030":"#f8fafc", padding:"8px 12px", borderRadius:8, marginTop:8}}>
-                      💡 {result.confidence_note}
-                    </div>
-                  )}
-                </div>
+                <ScoreBreakdown result={result} isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
               )}
 
               {result.concerns?.length>0&&(
