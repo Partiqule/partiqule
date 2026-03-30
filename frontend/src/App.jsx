@@ -2058,67 +2058,50 @@ function App() {
                   style={{flex:1, padding:"14px 12px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111"}}/>
 
                 {/* Barcode camera button */}
-                <label title="Scan a barcode — take a photo of the barcode on any product"
-                  style={{display:"flex", alignItems:"center", justifyContent:"center", padding:"0 14px", cursor:"pointer", borderRight:"1px solid #eee", flexShrink:0, position:"relative"}}
-                  onMouseEnter={e=>e.currentTarget.querySelector(".barcode-tooltip").style.display="block"}
-                  onMouseLeave={e=>e.currentTarget.querySelector(".barcode-tooltip").style.display="none"}>
-                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                <label title="Scan a barcode"
+                  style={{display:"flex", alignItems:"center", justifyContent:"center", padding:"0 14px", cursor:"pointer", borderRight:"1px solid #eee", flexShrink:0}}>
+                  <input type="file" accept="image/*" style={{display:"none"}}
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       e.target.value = "";
-
-                      // Show loading immediately
-                      setLoading(true);
-                      setError(null);
-                      setResult(null);
-                      setQuery("Reading barcode…");
-
+                      setResult(null); setError(null); setPage("home");
+                      setLoading(true); setQuery("Reading barcode…");
                       try {
-                        // Load ZXing browser library from unpkg
-                        if (!window.ZXingBrowser) {
-                          await new Promise((resolve, reject) => {
+                        if (!window.Quagga) {
+                          await new Promise((res, rej) => {
                             const s = document.createElement("script");
-                            s.src = "https://unpkg.com/@zxing/browser@0.1.4/umd/index.min.js";
-                            s.onload = resolve;
-                            s.onerror = reject;
+                            s.src = "https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js";
+                            s.onload = res; s.onerror = rej;
                             document.head.appendChild(s);
                           });
                         }
-
-                        // Create image element from file
-                        const url = URL.createObjectURL(file);
-                        const img = document.createElement("img");
-                        img.src = url;
-                        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-
-                        // Decode barcode from image
-                        const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
-                        const result = await reader.decodeFromImageElement(img);
-                        URL.revokeObjectURL(url);
-
-                        const barcode = result.getText();
-                        setQuery(`barcode: ${barcode}`);
-                        analyze(`product with barcode ${barcode}`);
+                        const src = URL.createObjectURL(file);
+                        const barcode = await new Promise((res, rej) => {
+                          window.Quagga.decodeSingle({
+                            src, numOfWorkers: 0,
+                            inputStream: { size: 1200 },
+                            decoder: { readers: ["ean_reader","ean_8_reader","upc_reader","upc_e_reader","code_128_reader","code_39_reader"] },
+                            locate: true,
+                          }, (result) => {
+                            URL.revokeObjectURL(src);
+                            result?.codeResult?.code ? res(result.codeResult.code) : rej(new Error("No barcode found"));
+                          });
+                        });
+                        setQuery(barcode);
+                        analyze(barcode);
                       } catch(err) {
-                        console.error("Barcode decode error:", err);
-                        setLoading(false);
-                        setQuery("");
-                        setError("Couldn't read that barcode. Make sure the barcode is clear and well-lit, then try again — or type the product name instead.");
+                        setLoading(false); setQuery("");
+                        setError("Couldn't read that barcode — make sure the barcode fills the frame and is well lit. You can also just type the product name.");
                       }
                     }}
                   />
-                  {/* Barcode icon */}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
                     <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
                     <line x1="7" y1="8" x2="7" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/>
                     <line x1="13" y1="8" x2="13" y2="16"/><line x1="16" y1="8" x2="16" y2="16"/>
                   </svg>
-                  {/* Tooltip — desktop only */}
-                  <div className="barcode-tooltip" style={{display:"none", position:"absolute", bottom:"calc(100% + 8px)", left:"50%", transform:"translateX(-50%)", background:"#052e16", color:"#4ade80", fontSize:11, fontWeight:600, padding:"5px 10px", borderRadius:6, whiteSpace:"nowrap", pointerEvents:"none", zIndex:99}}>
-                    📷 Photo a barcode
-                  </div>
                 </label>
 
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
@@ -2127,12 +2110,9 @@ function App() {
                 </button>
               </div>
 
-              {/* Barcode hint — mobile only */}
-              {isMobile && (
+              {isMobile && !loading && (
                 <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
-                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>
-                    📷 Tap the barcode icon to scan a product label
-                  </span>
+                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>📷 Tap the barcode icon to scan any product label</span>
                 </div>
               )}
 
