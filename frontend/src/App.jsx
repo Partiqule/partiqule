@@ -2068,12 +2068,23 @@ function App() {
                       setResult(null); setError(null); setPage("home");
                       setLoading(true); setQuery("Reading label…");
                       try {
-                        // Convert image to base64
+                        // Compress image before sending — full iPhone photos are 3-5MB
                         const base64 = await new Promise((res, rej) => {
-                          const reader = new FileReader();
-                          reader.onload = () => res(reader.result.split(",")[1]);
-                          reader.onerror = rej;
-                          reader.readAsDataURL(file);
+                          const img = new Image();
+                          const url = URL.createObjectURL(file);
+                          img.onload = () => {
+                            const canvas = document.createElement("canvas");
+                            const MAX = 1200;
+                            const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                            canvas.width  = Math.round(img.width  * ratio);
+                            canvas.height = Math.round(img.height * ratio);
+                            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                            URL.revokeObjectURL(url);
+                            const data = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+                            res(data);
+                          };
+                          img.onerror = rej;
+                          img.src = url;
                         });
                         // Send image directly to analyze — Claude identifies + scores in one pass
                         const resp = await fetch(`${API_BASE}/analyze`, {
