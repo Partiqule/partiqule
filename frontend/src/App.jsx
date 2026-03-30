@@ -464,12 +464,14 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
   const hs = result.health_score;
   const hc = result.health_concerns || [];
   const hn = result.health_note;
+  const hb = result.health_breakdown || null;
   const isHigh = hs >= 7;
   const isMed  = hs >= 4 && hs < 7;
   const color  = hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626";
   const bg     = hs<=3?(isDark?"#1a2a1a":"#f0fdf4"):hs<=6?(isDark?"#1e1a00":"#fefce8"):hs<=8?(isDark?"#1e1200":"#fff7ed"):(isDark?"#2a1a1a":"#fef2f2");
   const borderColor = hs<=3?"#bbf7d0":hs<=6?"#fde68a":hs<=8?"#fed7aa":"#fecaca";
   const hlabel = hs<=3?"Low":hs<=6?"Moderate":hs<=8?"High":"Very High";
+  const subColor = (s) => s<=3?"#16a34a":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
@@ -496,9 +498,37 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
       {/* Expanded content */}
       {open && (
         <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+
+          {/* Sub-score breakdown */}
+          {hb && (
+            <div style={{display:"flex", flexDirection:"column", gap:6, margin:"12px 0"}}>
+              {[
+                {key:"chemical",      icon:"🧪", label:"Chemical concerns"},
+                {key:"sustainability",icon:"♻️", label:"Sustainability impact"},
+                {key:"manufacturing", icon:"⚙️", label:"Manufacturing"},
+              ].map(sub => {
+                const item = hb[sub.key];
+                if (!item) return null;
+                const sc = subColor(item.score);
+                return (
+                  <div key={sub.key} style={{background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)", borderRadius:8, padding:"8px 10px"}}>
+                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3}}>
+                      <div style={{display:"flex", alignItems:"center", gap:5}}>
+                        <span style={{fontSize:12}}>{sub.icon}</span>
+                        <span style={{fontSize:11, fontWeight:600, color:sc}}>{sub.label}</span>
+                      </div>
+                      <span style={{fontSize:12, fontWeight:800, color:sc, fontFamily:"'Outfit',sans-serif"}}>{item.score}/10</span>
+                    </div>
+                    <div style={{fontSize:11, color:muted, lineHeight:1.5}}>{item.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Health note */}
           {hn && (
-            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"12px 0 10px", fontStyle:"italic"}}>
+            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"0 0 10px", fontStyle:"italic"}}>
               {hn}
             </p>
           )}
@@ -545,12 +575,12 @@ const HealthScoreDropdown = ({result, isDark, muted}) => {
           {/* Moderate risk nudge */}
           {isMed && (
             <div style={{
-              background:isDark?"#1e1a2e":"#faf5ff",
-              border:"1px solid #ddd6fe",
+              background:isDark?"#1e1a00":"#fefce8",
+              border:"1px solid #fde68a",
               borderRadius:10, padding:"10px 14px", marginTop:8
             }}>
-              <div style={{fontSize:12, color:isDark?"#c4b5fd":"#6d28d9", lineHeight:1.5}}>
-                💜 Moderate health concerns. Safer alternatives exist. Scroll down to explore.
+              <div style={{fontSize:12, color:isDark?"#fde68a":"#92400e", lineHeight:1.5}}>
+                💛 Moderate health and sustainability concerns. Safer alternatives exist. Scroll down to explore.
               </div>
             </div>
           )}

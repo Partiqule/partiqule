@@ -195,13 +195,31 @@ PLASTIC SCORING — apply the research findings in your system prompt:
 - Daily ingestion/inhalation products: apply +1 to +2 neurological risk penalty (Yan 2024 brain accumulation)
 - Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2, no penalties
 
-HEALTH SCORING — separate from plastic, apply research:
+HEALTH & SUSTAINABILITY SCORING — separate from plastic, apply research:
 - Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
 - PFAS/non-stick cookware: score 8-9 health concern
 - Ultra-processed foods (chips, instant noodles, packaged snacks, soft drinks): score 6-8
 - Heavy processing with emulsifiers, preservatives, flavor enhancers: score 5-7
 - Whole, natural, minimally processed products: score 1-3
 - No non-plastic health concerns (wooden spoon, glass jar): score 1
+
+The health_score must reflect THREE sub-components combined:
+1. Chemical concerns (additives, dyes, PFAS, preservatives) — weighted 40%
+2. Sustainability impact (single-use waste, disposability, environmental burden) — weighted 40%
+3. Manufacturing concerns (bleaching, chemical treatment, processing) — weighted 20%
+
+SUSTAINABILITY SCORING RULES (for health_score calculation):
+- Single-use disposable by design (paper towels, disposable cups, plastic bags, wipes, razors): sustainability score 8-9
+- Frequently replaced short-life products (synthetic sponges, plastic wrap, cheap synthetic clothing): sustainability score 6-7
+- Chemically treated disposables (bleached paper towels, fragranced wipes, chlorinated paper): add +1
+- Plastic packaging on a fundamentally non-plastic product: add +1
+- Durable, reusable, long-life products: sustainability score 1-2
+- Biodegradable or compostable without chemical treatment: sustainability score 1-3
+
+EXAMPLES:
+- Brawny paper towels: chemical=3, sustainability=8, manufacturing=5 → health_score = (3×0.4)+(8×0.4)+(5×0.2) = 1.2+3.2+1.0 = 5 → round to 5
+- Reusable glass bottle: chemical=1, sustainability=1, manufacturing=1 → health_score = 1
+- Synthetic wet wipes: chemical=6, sustainability=9, manufacturing=5 → health_score = (6×0.4)+(9×0.4)+(5×0.2) = 2.4+3.6+1.0 = 7
 
 Return ONLY this JSON:
 {
@@ -213,8 +231,13 @@ Return ONLY this JSON:
   "exposure_frequency": "daily|weekly|occasional|rare",
   "exposure_type": "ingestion|skin_contact|inhalation|mixed",
   "health_score": 5,
-  "health_concerns": ["specific non-plastic health concern 1", "specific concern 2"],
-  "health_note": "one sentence explaining the main non-plastic health consideration",
+  "health_concerns": ["specific non-plastic health concern 1", "sustainability concern e.g. single-use waste", "chemical treatment concern"],
+  "health_note": "one sentence covering the main chemical AND sustainability concern",
+  "health_breakdown": {
+    "chemical": { "score": 3, "label": "specific chemical concerns e.g. bleaching agents, dyes, preservatives" },
+    "sustainability": { "score": 8, "label": "disposability and waste impact e.g. single-use by design, plastic packaging" },
+    "manufacturing": { "score": 5, "label": "processing and treatment concerns e.g. chlorine bleaching, chemical treatment" }
+  },
   "product_breakdown": {
     "materials": { "score": 7, "label": "specific material analysis mentioning plastic types" },
     "packaging": { "score": 6, "label": "packaging material and leaching risk" },
@@ -364,6 +387,7 @@ app.post("/analyze", async (req, res) => {
       health_score:        p1.health_score || null,
       health_concerns:     p1.health_concerns || [],
       health_note:         p1.health_note || null,
+      health_breakdown:    p1.health_breakdown || null,
       overall_score:       overallScore,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
