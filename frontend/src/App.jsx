@@ -723,24 +723,25 @@ const ShareBadge = ({result}) => {
   const label       = scoreLabel(result.overall_score || result.score);
 
   const buildCanvas = () => {
-    const canvas = document.createElement("canvas");
-    const dpr    = window.devicePixelRatio || 1;
-    const W = 600, H = 400;
-    canvas.width  = W * dpr;
-    canvas.height = H * dpr;
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const dpr    = window.devicePixelRatio || 1;
+      const W = 600, H = 400;
+      canvas.width  = W * dpr;
+      canvas.height = H * dpr;
+      const ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
 
-    const os = result.overall_score || result.score;
-    const ps = result.score;
-    const hs = result.health_score;
-    const hasAll = os && ps && hs;
+      const os = result.overall_score || result.score;
+      const ps = result.score;
+      const hs = result.health_score;
 
-    const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
-    const plasticColor = ps<=3?"#16a34a":ps<=6?"#ca8a04":ps<=8?"#ea580c":"#dc2626";
-    const healthColor  = hs ? (hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626") : "#aaa";
+      const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
+      const plasticColor = ps<=3?"#16a34a":ps<=6?"#ca8a04":ps<=8?"#ea580c":"#dc2626";
+      const healthColor  = hs ? (hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626") : "#aaa";
+      const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
 
-    const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
+      const drawContent = (logoImg) => {
 
     // ── Background ──
     ctx.fillStyle = bgColor;
@@ -753,12 +754,27 @@ const ShareBadge = ({result}) => {
     ctx.fillRect(0, 0, W, 6);
 
     // ── Logo + tagline top left ──
+    // Draw logo from image if available, else fallback to drawn circle
+    if (logoImg) {
+      // Clip to circle for the icon (it has dark bg — clip to just the tree area)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(46, 40, 16, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logoImg, 30, 24, 32, 32);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#16a34a";
+      ctx.beginPath();
+      ctx.arc(46, 40, 14, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = "#052e16";
     ctx.font = "bold 16px system-ui";
-    ctx.fillText("🔬 Partiqule", 32, 40);
+    ctx.fillText("Partiqule", 68, 45);
     ctx.fillStyle = "#aaa";
     ctx.font = "12px system-ui";
-    ctx.fillText("Scan anything. Know everything.", 32, 58);
+    ctx.fillText("Scan anything. Know everything.", 32, 68);
 
     // ── Product name ──
     ctx.fillStyle = "#111";
@@ -871,13 +887,21 @@ const ShareBadge = ({result}) => {
     ctx.font = "12px system-ui";
     ctx.fillText("partiqule.com · Scan anything. Know everything.", 32, 388);
 
-    return canvas;
+        resolve(canvas);
+      }; // end drawContent
+
+      // Load the logo then draw
+      const logoImg = new Image();
+      logoImg.onload = () => drawContent(logoImg);
+      logoImg.onerror = () => drawContent(null);
+      logoImg.src = "/partiqule-icon.svg";
+    }); // end Promise
   };
 
   const share = async () => {
     setSharing(true);
     try {
-      const canvas = buildCanvas();
+      const canvas = await buildCanvas();
       canvas.toBlob(async (blob) => {
         try {
           // Mobile: use native share sheet if available — lets users save to photos or share to any app
