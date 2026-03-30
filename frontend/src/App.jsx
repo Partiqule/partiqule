@@ -2477,7 +2477,16 @@ function App() {
                 </div>
 
                 {/* AI alternatives first when no DB matches OR when category is "other" (vehicles etc) */}
-                {result.ai_alternatives?.length > 0 && (!result.alternatives?.length || result.category === "other") && (
+                {result.ai_alternatives?.length > 0 && (
+                  !result.alternatives?.length ||
+                  result.category === "other" ||
+                  !(result.alternatives || []).some(p =>
+                    p.category === result.category ||
+                    (result.category === "food_beverage" && p.category === "kitchen") ||
+                    (result.category === "kitchen" && p.category === "food_beverage") ||
+                    (result.category === "baby" && ["personal_care","clothing"].includes(p.category))
+                  )
+                ) && (
                   <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:8}}>
                     {result.ai_alternatives.map((alt, i) => (
                       <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
@@ -2496,12 +2505,20 @@ function App() {
                   </div>
                 )}
 
-                {/* Affiliate alternatives from DB — skip for "other" category (vehicles, electronics) */}
-                {result.alternatives?.length > 0 && result.category !== "other" && (
-                  <div style={{display:"flex", flexDirection:"column", gap:10}}>
-                    {result.alternatives.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
-                  </div>
-                )}
+                {/* Affiliate alternatives from DB — only show if they match the product category */}
+                {(() => {
+                  const relevantAlts = (result.alternatives || []).filter(p =>
+                    p.category === result.category ||
+                    (result.category === "food_beverage" && p.category === "kitchen") ||
+                    (result.category === "kitchen" && p.category === "food_beverage") ||
+                    (result.category === "baby" && ["personal_care","clothing"].includes(p.category))
+                  );
+                  return relevantAlts.length > 0 && result.category !== "other" ? (
+                    <div style={{display:"flex", flexDirection:"column", gap:10}}>
+                      {relevantAlts.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                    </div>
+                  ) : null;
+                })()}
 
                 {/* AI alternatives as secondary suggestions below DB results — only for standard categories */}
                 {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && result.category !== "other" && (

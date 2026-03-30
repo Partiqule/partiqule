@@ -312,6 +312,7 @@ PLASTIC SCORING — apply the research findings in your system prompt:
 - VEHICLES (cars, trucks, SUVs): score 3-5 regardless of plastic content — interior plastic is NOT food contact and exposure pathway is minimal. Do not apply daily-use penalties to vehicles. Off-gassing of VOCs is the main concern, not microplastic ingestion.
 - ELECTRIC VEHICLES get a 1-2 point bonus (lower score) vs equivalent gas vehicles — no tailpipe particulates, better air filtration, increasingly sustainable interiors. Rivian, Tesla, Lucid, Polestar, Hyundai Ioniq: score 2-3. Older EVs (Bolt, Leaf): score 3-4. Gas SUVs and trucks: score 4-6.
 - Only score an EV higher if it is documented to use poor quality or excessive plastic interiors.
+- CHEWING GUM: Mainstream commercial gum base is synthetic polymer — polyvinyl acetate (PVA) and polyethylene are literally plastic. You chew and ingest microplastics. Score 7-8 on plastic danger for brands like Big Red, Wrigley, Extra, Orbit, Trident, 5 Gum, Big 5. Only natural chicle, tree resin, or natural rubber base gums score low (2-3).
 
 HEALTH & SUSTAINABILITY SCORING — separate from plastic, apply research:
 - Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
@@ -403,6 +404,7 @@ EV SCORING BONUS — electric vehicles should score 1-2 points LOWER than equiva
 - Legacy EV conversions (Chevy Bolt, Nissan Leaf older models): similar interior to gas equivalents — score 3-5
 - EXCEPTION: If an EV is documented to use excessive cheap plastic interiors, score normally — do not reward EVs that do not deserve it
 - Gas/diesel SUVs and trucks (Escalade, Suburban, F-150, RAM): score 4-6 — more VOCs, exhaust particulates, traditional vinyl/synthetic leather
+- CHEWING GUM: Mainstream gum base is synthetic polymer (polyvinyl acetate, polyethylene) — direct ingestion of plastic. Score must be 7-8. Only natural chicle/tree resin gums score low.
 
 RESEARCH-BASED SCORING RULES:
 - PP or PVC in food-contact products: base score must be 8-9 (Marfella et al. 2024, NEJM — found in arterial plaques, linked to heart attack/stroke)
