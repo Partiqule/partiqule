@@ -295,6 +295,7 @@ PLASTIC SCORING — apply the research findings in your system prompt:
 - PP baby bottles heated: score 8-9 (millions of particles per litre, Li 2020)
 - Daily ingestion/inhalation products: apply +1 to +2 neurological risk penalty (Yan 2024 brain accumulation)
 - Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2, no penalties
+- VEHICLES (cars, trucks, SUVs): score 3-5 regardless of plastic content — interior plastic is NOT food contact and exposure pathway is minimal. Do not apply daily-use penalties to vehicles. Off-gassing of VOCs is the main concern, not microplastic ingestion.
 
 HEALTH & SUSTAINABILITY SCORING — separate from plastic, apply research:
 - Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
@@ -367,6 +368,15 @@ async function pass2(productName, pass1Result) {
     `Audit the score for "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category} identified_plastics:${plastics}
 
 CRITICAL RULE: Exposure penalties ONLY apply if the product itself contains plastic the user is actually exposed to. Natural materials (wood, glass, stainless steel, cotton, ceramic) score low regardless of frequency. A wooden spoon used daily is still low risk.
+
+VEHICLE SCORING RULES — apply these for any car, truck, SUV, or automobile:
+- Vehicles contain plastic but exposure pathway is LOW — you are not ingesting or inhaling plastic from a car interior under normal use
+- Interior plastics (dashboard, trim, seats) are a contained environment — NOT food contact, NOT skin absorption
+- Vehicle plastic danger score should be 3-5 regardless of plastic content — the exposure pathway is minimal
+- Do NOT apply daily use penalties to vehicles — time in a car is not equivalent to ingesting plastic
+- Health concern: mainly off-gassing of VOCs from new interiors, microfibre shedding from fabric seats — score 3-5
+- Break-even for vehicles: null — there is no direct swap alternative
+- Alternatives for vehicles: focus on lower-VOC options, air purifiers, or more sustainable vehicle choices like EVs or hybrids
 
 RESEARCH-BASED SCORING RULES:
 - PP or PVC in food-contact products: base score must be 8-9 (Marfella et al. 2024, NEJM — found in arterial plaques, linked to heart attack/stroke)

@@ -632,8 +632,8 @@ const ShareBadge = ({result}) => {
   const [done,        setDone]        = useState(false);
   const safeName    = (result.product_name || "").startsWith("http") ? "Scanned product" : result.product_name;
   const displayName = safeName?.length > 40 ? safeName.slice(0, 37) + "…" : safeName;
-  const color       = scoreColor(result.score);
-  const label       = scoreLabel(result.score);
+  const color       = scoreColor(result.overall_score || result.score);
+  const label       = scoreLabel(result.overall_score || result.score);
 
   const buildCanvas = () => {
     const canvas = document.createElement("canvas");
@@ -2429,19 +2429,37 @@ function App() {
                   )}
                 </div>
 
-                {/* Affiliate alternatives from static DB */}
+                {/* AI alternatives first when no DB matches — most relevant for niche products */}
+                {result.ai_alternatives?.length > 0 && !result.alternatives?.length && (
+                  <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:8}}>
+                    {result.ai_alternatives.map((alt, i) => (
+                      <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                          <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                        </div>
+                        <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
+                        <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                        <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                          style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                          <IconSearch size={12} color="#16a34a"/> Scan this product →
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Affiliate alternatives from DB — shown when we have matches */}
                 {result.alternatives?.length > 0 && (
-                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"flex", flexDirection:"column", gap:10}}>
                     {result.alternatives.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
                   </div>
                 )}
 
-                {/* AI-generated alternatives — no affiliate link */}
-                {result.ai_alternatives?.length > 0 && (
-                  <div style={{marginTop: result.alternatives?.length > 0 ? 16 : 0}}>
-                    {result.alternatives?.length > 0 && (
-                      <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
-                    )}
+                {/* AI alternatives as "more suggestions" below DB results */}
+                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && (
+                  <div style={{marginTop:16}}>
+                    <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
                     <div style={{display:"flex", flexDirection:"column", gap:8}}>
                       {result.ai_alternatives.map((alt, i) => (
                         <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
