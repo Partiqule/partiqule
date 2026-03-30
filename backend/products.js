@@ -2881,68 +2881,57 @@ const products = [
 // ── FIND ALTERNATIVES ────────────────────────────────────────
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   const queries = [query, fallbackQuery].filter(Boolean).map(q => q.toLowerCase().trim());
+  const allWords = [...new Set(
+    queries.flatMap(q => q.split(/\s+/)).filter(w => w.length > 2)
+  )];
 
-  // Category compatibility — only return products that make sense for the scanned item
-  // This prevents water bottles showing up for gum, socks for food, etc.
-  const CATEGORY_COMPATIBLE = {
-    food_beverage:  ["food_beverage", "kitchen"],      // food → food/kitchen alternatives only
-    kitchen:        ["kitchen", "food_beverage"],
-    clothing:       ["clothing"],
-    personal_care:  ["personal_care"],
-    baby:           ["baby", "personal_care", "clothing"],
-    other:          [],  // no DB alternatives for other (vehicles, electronics)
-  };
-  const compatibleCats = CATEGORY_COMPATIBLE[category] || [];
+  // Hard block: vehicles/electronics get no DB alternatives
+  if (category === "other") return [];
 
-  // 1. Direct swap map
+  // 1. Direct swap map — exact keyword match gets priority
   for (const q of queries) {
     for (const [keyword, ids] of Object.entries(DIRECT_SWAPS)) {
-      if (q.includes(keyword) || keyword.includes(q.split(" ").filter(w=>w.length>3)[0]||"__")) {
-        const swaps = ids
-          .map(id => products.find(p => p.id === id))
-          .filter(Boolean)
-          .slice(0, limit);
+      if (q.includes(keyword) || keyword.includes(q.split(" ").filter(w => w.length > 3)[0] || "__")) {
+        const swaps = ids.map(id => products.find(p => p.id === id)).filter(Boolean).slice(0, limit);
         if (swaps.length > 0) return swaps;
       }
     }
   }
 
-  // 2. Score-based matching — compatible categories only
-  const allWords = queries
-    .flatMap(q => q.split(/\s+/))
-    .filter(w => w.length > 2)
-    .filter((w, i, arr) => arr.indexOf(w) === i);
-
+  // 2. Pure relevance scoring — no category blocking
+  //    Every product in DB gets a relevance score against the query
   const scored = products
     .filter(p => p.plasticScore <= 4)
-    .filter(p => compatibleCats.length === 0 ? false : compatibleCats.includes(p.category))
     .map(p => {
       let score = 0;
-      if (category && p.category === category) score += 10;
+      // Category match bonus
+      if (category && p.category === category) score += 8;
+      // Tag matches
       allWords.forEach(word => {
         p.tags.forEach(tag => {
-          if (tag.includes(word) || word.includes(tag)) score += 4;
+          if (tag.includes(word) || word.includes(tag)) score += 5;
         });
-        if (p.name.toLowerCase().includes(word)) score += 3;
+        if (p.name.toLowerCase().includes(word)) score += 4;
         if (p.brand.toLowerCase().includes(word)) score += 2;
+        if (p.material?.toLowerCase().includes(word)) score += 2;
       });
+      // Full phrase matches
       queries.forEach(q => {
-        p.tags.forEach(tag => { if (q.includes(tag)) score += 6; });
-        if (p.name.toLowerCase().includes(q.slice(0, 15))) score += 5;
+        p.tags.forEach(tag => { if (q.includes(tag)) score += 7; });
+        if (p.name.toLowerCase().includes(q.slice(0, 20))) score += 6;
       });
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore >= 2)  // category-filtered so just need some relevance
+    .filter(p => p.relevanceScore > 0)
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
 
-  // 3. Same-category fallback only for known consumer categories
-  if (scored.length < limit && compatibleCats.length > 0 && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
-    const fallbacks = products
-      .filter(p => p.plasticScore <= 2 && compatibleCats.includes(p.category) && !scored.find(s => s.id === p.id))
+  // 3. If still nothing, return top low-score products in same category
+  if (scored.length === 0 && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
+    return products
+      .filter(p => p.plasticScore <= 2 && p.category === category)
       .sort((a, b) => a.plasticScore - b.plasticScore)
-      .slice(0, limit - scored.length);
-    return [...scored, ...fallbacks];
+      .slice(0, limit);
   }
 
   return scored;

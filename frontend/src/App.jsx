@@ -2569,10 +2569,7 @@ function App() {
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
                   <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
-                  {result.alternatives?.some(p => {
-                    const cc = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category];
-                    return !cc || cc.includes(p.category);
-                  }) && result.category !== "other" && (
+                  {result.alternatives?.length > 0 && result.category !== "other" && (
                     <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
                       #ad · affiliate links
                     </div>
@@ -2582,21 +2579,18 @@ function App() {
                 {/* UNIFIED ALTERNATIVES — max 3, DB first, AI fills gaps, no duplicates */}
                 {(() => {
                   const cat = result.category;
-                  const compatCats = {
-                    food_beverage: ["food_beverage","kitchen"],
-                    kitchen:       ["kitchen","food_beverage"],
-                    clothing:      ["clothing"],
-                    personal_care: ["personal_care"],
-                    baby:          ["baby","personal_care","clothing"],
-                    other:         [],
-                  }[cat];
-                  // If category is unknown/unmapped, show all DB alternatives (don't filter)
-                  const hasCompatFilter = compatCats !== undefined && cat !== "other";
 
-                  // DB alternatives — category-compatible or unfiltered if category unknown
-                  const dbAlts = (result.alternatives || [])
-                    .filter(p => !hasCompatFilter || compatCats.includes(p.category))
-                    .slice(0, 3);
+                  // DB alternatives — backend already handles relevance and category logic
+                  const dbAlts = (result.alternatives || []).slice(0, 3);
+
+                  // AI alternatives — deduplicate against DB, fill to 3
+                  const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
+                  const aiAlts = (result.ai_alternatives || [])
+                    .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
+                    .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
+                    .slice(0, 3 - dbAlts.length);
+
+                  const hasAffiliate = dbAlts.length > 0 && cat !== "other";
 
                   // AI alternatives — deduplicated against DB, fill up to 3
                   const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
