@@ -1084,23 +1084,23 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 
 
 const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => {
-  const stats = [
-    {number:"205+", label:"Plastic-free alternatives in our database"},
-    {number:"10",   label:"Plastic types we identify per product"},
-    {number:"2",    label:"AI passes for every single score"},
-    {number:"Free", label:"Always. No sign-up. No ads."},
-  ];
   return (
     <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
 
-      {/* Hero */}
+      {/* Hero blurb */}
       <div style={{marginBottom:56}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:14}}>About Partiqule</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 20px", letterSpacing:"-1px", lineHeight:1.15}}>
-          Make plastic visible.
-        </h1>
-        <p style={{fontSize:isMobile?17:20, color:muted, lineHeight:1.8, maxWidth:640, margin:"0 0 28px"}}>
-          Most people have no idea what's in the products they use every day. We built Partiqule to change that, one scan at a time.
+        <p style={{fontSize:isMobile?17:20, color:muted, lineHeight:1.85, marginBottom:16}}>
+          The average person consumes around 5 grams of microplastics every week, equating to the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products come with no warning, no labeling, and no guidance on safer alternatives.
+        </p>
+        <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:600, lineHeight:1.7, marginBottom:20}}>
+          Partiqule exists to change that.
+        </p>
+        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:24}}>
+          We believe people deserve clear, accessible information about what they're buying and bringing into their homes. Because when you understand what's in your products — including hidden plastic exposure — you can make better decisions for yourself and your family.
+        </p>
+        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:32}}>
+          Our job is simple: make the invisible visible, so you can choose with confidence.
         </p>
         <button onClick={()=>onScan()}
           style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
@@ -1108,63 +1108,29 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:16, marginBottom:56}}>
-        {stats.map((s,i)=>(
-          <div key={i} style={{background:surface, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${border}`, textAlign:"center"}}>
-            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:"#16a34a", marginBottom:6}}>{s.number}</div>
-            <div style={{fontSize:13, color:muted, lineHeight:1.5}}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Mission */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          The average person consumes around 5 grams of microplastics every week — the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products carry no warning, no label, and no guidance on safer alternatives.
+          Plastic is everywhere — in the packaging around your food, the coating on your pan, the fabric of your clothes, and increasingly, in your body. For most people, this exposure is invisible. There's no label, no warning, no easy way to know which products carry the most risk or what to use instead.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          Partiqule is built to close that gap. We combine peer-reviewed science with AI-powered analysis to give every person access to the kind of information that used to require a toxicologist.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Partiqule exists to give people the information they deserve. We believe that if you knew your tea bags were releasing 11 billion plastic particles per cup, you'd make a different choice. Our job is to make sure you know.
+          Every score we produce is grounded in published research — from the New England Journal of Medicine to Nature Medicine to The Lancet. We flag what matters, explain why it matters, and show you what to do about it.
         </p>
       </div>
 
-      {/* How it works */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>How we score products</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan runs a two-pass AI analysis powered by Anthropic's Claude — a senior research scientist pass that identifies specific plastic polymers, followed by an auditor pass that verifies and weights the final score based on exposure frequency, route, and confidence.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Scores are weighted by what matters most: how often you use it, whether it contacts your food or skin, and whether heat or friction release particles during normal use.
-        </p>
-        <div style={{background:isDark?"#1e2433":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
-          <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:14, textTransform:"uppercase", letterSpacing:"0.05em"}}>Three scores, one picture</div>
-          {[
-            {label:"🔬 Plastic Danger Score", desc:"The primary score. 1–10 based on plastic polymer content, leaching risk, heat exposure, and how plastic contacts your body. This is the hero number.", color:"#dc2626"},
-            {label:"❤️ Health Concern Score", desc:"Secondary score for broader chemical concerns beyond plastics — artificial additives, endocrine disruptors, ultra-processing, pesticide residues, heavy metals.", color:"#7c3aed"},
-            {label:"⚖️ Overall Score", desc:"Weighted combination: 70% Plastic Danger + 30% Health Concern. Gives you one number that reflects the full picture while keeping plastic front and centre.", color:"#16a34a"},
-          ].map((s,i)=>(
-            <div key={i} style={{display:"flex", gap:12, marginBottom: i<2?14:0}}>
-              <div style={{width:3, borderRadius:99, background:s.color, flexShrink:0}}/>
-              <div>
-                <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:3}}>{s.label}</div>
-                <div style={{fontSize:13, color:muted, lineHeight:1.6}}>{s.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Values */}
+      {/* What we stand for */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown: materials, packaging, usage, and manufacturing. Judge for yourself rather than just trusting a number."},
+            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown: materials, packaging, usage, and health concerns. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
             {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free and requires no account."},
-            {title:"Science first", body:"Every score is grounded in published research. We link our sources, cite our methodology, and update scores when the science changes."},
+            {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
           ].map((v,i)=>(
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
               <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:8}}/>
@@ -1179,14 +1145,16 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
 
       {/* Founders & human oversight */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Overseen by humans.</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:20}}>
-          Partiqule was founded by <strong style={{color:text}}>Paul and Sara Miller</strong>, who bring a combined 20 years of experience across technology, compliance, and audit. Every scoring parameter, weighting rule, and quality check on this platform was defined by them based on peer-reviewed research. The AI applies the framework. Paul and Sara built it.
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Guided by expertise.</h2>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:24}}>
+          Partiqule was founded by <strong style={{color:text}}>Paul and Sara Miller</strong>, combining 20+ years of experience across technology and operations. Every scoring framework, weighting decision, and quality standard on this platform is grounded in peer-reviewed research and intentionally designed by its founders. AI powers the scale — but the system itself is human-built and continuously refined.
         </p>
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16}}>
+
+        {/* Founder cards */}
+        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16, marginBottom:24}}>
           {[
-            {name:"Paul Miller", role:"Co-Founder, Product & Scoring Methodology", detail:"Leads product development, defines the scoring parameters, and conducts quality review of AI outputs before results go live."},
-            {name:"Sara Miller", role:"Co-Founder, Compliance & Audit", detail:"Oversees the audit framework, monitors for scoring anomalies, and ensures affiliate relationships never influence product scores."},
+            {name:"Paul Miller", role:"Co-Founder, Product Development", detail:"Leads product development and defines the scoring framework behind every result."},
+            {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale."},
           ].map((person, i) => (
             <div key={i} style={{background:surface, borderRadius:14, padding:"20px 22px", border:`1.5px solid ${border}`}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
@@ -1195,7 +1163,28 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
             </div>
           ))}
         </div>
-        <div style={{marginTop:16, padding:"14px 18px", background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+
+        {/* Founders story */}
+        <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:16}}>
+          <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we built this</div>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
+            We started Partiqule after what we now call our "plastic awakening."
+          </p>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
+            One night, after putting our kids to bed, we sat down expecting to casually watch something and landed on <em>The Plastic Detox</em>. What we thought would be background noise quickly became a turning point. The documentary follows couples facing infertility challenges who, working with researcher Shanna Swan, explore the impact of microplastics on their fertility — highlighting how everyday exposures from food packaging to clothing to household items can accumulate in ways most of us never consider.
+          </p>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
+            As parents who experienced fertility challenges with our second child, this hit close to home. We were paying attention to things like sugar and ingredients, but we had almost no awareness of how much plastic we were interacting with daily.
+          </p>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
+            So we started asking questions. What products are actually safe? How much plastic exposure is too much? Are there better alternatives, and are they realistic for everyday life? Where do we even start? There was no simple, trustworthy tool to guide us.
+          </p>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:0}}>
+            So we built one. Partiqule started as a way for our family to make more informed decisions — one product at a time. Today, it's a tool designed to help others do the same. At the end of the day, we're just two parents trying to do better for our family, and hoping to make it easier for yours.
+          </p>
+        </div>
+
+        <div style={{padding:"14px 18px", background:isDark?"#1e2433":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
           <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
             For a full breakdown of our scoring methodology, quality review process, and research sources, see our{" "}
             <span onClick={()=>{window.history.pushState({},"","/methodology"); window.dispatchEvent(new PopStateEvent("popstate"));}} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>How It Works</span> page.
@@ -1207,7 +1196,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this happen with microbeads. Public pressure and consumer awareness led to bans across dozens of countries.
+          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this happen with microbeads — public pressure and consumer awareness led to bans across dozens of countries.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           We're not anti-plastic. We're pro-information. The goal is a world where every product that touches your food, your skin, or your family carries the same transparency as a nutrition label.
