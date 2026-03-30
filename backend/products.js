@@ -2606,7 +2606,8 @@ const STOPWORDS = new Set([
   "bag", "bags", "cup", "cups", "box", "boxes", "can", "cans",
   "set", "sets", "kit", "kits", "pad", "pads", "pan", "pans",
   "pot", "pots", "bar", "bars", "the", "and", "for", "its",
-  "new", "pro", "eco", "use", "one", "all", "free", "with"
+  "new", "pro", "eco", "use", "one", "all", "free", "with",
+  "water", "baby", "kids", "child", "mini", "size", "type"
 ]);
 
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
