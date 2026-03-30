@@ -923,26 +923,31 @@ const LoadingState = () => {
   const [progress,setProgress]= useState(0);
   const [factIdx, setFactIdx] = useState(()=>Math.floor(Math.random()*LOADING_FACTS.length));
 
-  const steps = ["Identifying product…","Analyzing materials…","Checking plastic types…","Verifying score…"];
+  const steps = [
+    "Searching for product data…",
+    "Running material analysis…",
+    "Auditing the score…",
+    "Finding safer alternatives…"
+  ];
 
   useEffect(() => {
     const start = Date.now();
-    const duration = 10000;
+    const duration = 22000; // scans typically take 15-25s
     const tick = () => {
       const elapsed = Date.now() - start;
       const raw = elapsed / duration;
-      const p = Math.min(95, Math.round((1 - Math.pow(1 - raw, 2)) * 100));
+      const p = Math.min(92, Math.round((1 - Math.pow(1 - raw, 2.2)) * 100));
       setProgress(p);
-      if (p < 95) requestAnimationFrame(tick);
+      if (p < 92) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
 
     const stepTimers = [
-      setTimeout(()=>setStep(1), 1800),
-      setTimeout(()=>setStep(2), 4000),
-      setTimeout(()=>setStep(3), 7000),
+      setTimeout(()=>setStep(1), 4000),   // web search done
+      setTimeout(()=>setStep(2), 12000),  // pass1 done
+      setTimeout(()=>setStep(3), 18000),  // pass2 done
     ];
-    const factTimer = setInterval(()=>setFactIdx(i=>(i+1)%LOADING_FACTS.length), 4000);
+    const factTimer = setInterval(()=>setFactIdx(i=>(i+1)%LOADING_FACTS.length), 5000);
     return () => { stepTimers.forEach(clearTimeout); clearInterval(factTimer); };
   }, []);
 
@@ -952,7 +957,7 @@ const LoadingState = () => {
         {steps[step]}
       </div>
       <div style={{fontSize:14, color:"rgba(255,255,255,0.4)", marginBottom:24}}>
-        This takes 10 to 15 seconds. We run two AI passes for accuracy.
+        This takes 15–25 seconds — we search the web then run two AI passes for accuracy.
       </div>
       <div style={{display:"flex", justifyContent:"center", gap:10, marginBottom:20, flexWrap:"wrap"}}>
         {steps.map((s,i)=>(
@@ -2422,7 +2427,7 @@ function App() {
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
                   <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
-                  {result.alternatives?.length > 0 && (
+                  {result.alternatives?.length > 0 && result.category !== "other" && (
                     <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
                       #ad · affiliate links
                     </div>
@@ -2449,8 +2454,8 @@ function App() {
                   </div>
                 )}
 
-                {/* Affiliate alternatives from DB — shown when we have matches */}
-                {result.alternatives?.length > 0 && (
+                {/* Affiliate alternatives from DB — skip for "other" category (vehicles, electronics) */}
+                {result.alternatives?.length > 0 && result.category !== "other" && (
                   <div style={{display:"flex", flexDirection:"column", gap:10}}>
                     {result.alternatives.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
                   </div>
