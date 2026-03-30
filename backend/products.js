@@ -25,15 +25,15 @@ const DIRECT_SWAPS = {
   "food wrap":        ["fb-003", "fb-002", "fb-004"],
   "tupperware":       ["fb-002", "fb-003", "fb-004"],
   "plastic container":["fb-002", "fb-003", "fb-004"],
-  "water bottle":     ["fb-001", "fb-004", "fb-002"],
-  "plastic bottle":   ["fb-001", "fb-004", "fb-002"],
-  "disposable cup":   ["fb-001", "fb-004", "fb-002"],
-  "styrofoam":        ["fb-001", "fb-004", "fb-002"],
-  "k-cup":            ["fb-001", "fb-004", "fb-002"],
-  "keurig":           ["fb-001", "fb-004", "fb-002"],
-  "tea bag":          ["fb-004", "fb-001", "fb-002"],
-  "lipton":           ["fb-004", "fb-001", "fb-002"],
-  "straw":            ["fb-001", "fb-004", "fb-002"],
+  "water bottle":     ["fb-001", "fb-004", "fb-007"],
+  "plastic bottle":   ["fb-001", "fb-004", "fb-007"],
+  "disposable cup":   ["fb-001", "fb-005", "fb-004"],
+  "styrofoam":        ["fb-001", "fb-005", "fb-004"],
+  "k-cup":            ["fb-012", "fb-001", "fb-005"],
+  "keurig":           ["fb-012", "fb-001", "fb-005"],
+  "tea bag":          ["fb-008", "fb-001", "fb-004"],
+  "lipton":           ["fb-008", "fb-001", "fb-004"],
+  "straw":            ["fb-011", "fb-001", "fb-004"],
 
   // Clothing
   "lululemon":        ["ct-001", "ct-003", "ct-005"],
@@ -2922,17 +2922,9 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       });
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore > 0)
+    .filter(p => p.relevanceScore >= 13)
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
-
-  // 3. If still nothing, return top low-score products in same category
-  if (scored.length === 0 && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
-    return products
-      .filter(p => p.plasticScore <= 2 && p.category === category)
-      .sort((a, b) => a.plasticScore - b.plasticScore)
-      .slice(0, limit);
-  }
 
   return scored;
 }

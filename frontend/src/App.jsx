@@ -2567,37 +2567,41 @@ function App() {
             {/* RIGHT */}
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
               <div className="fade-up">
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
-                  {result.alternatives?.length > 0 && result.category !== "other" && (
-                    <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
-                      #ad · affiliate links
-                    </div>
-                  )}
-                </div>
-
                 {/* UNIFIED ALTERNATIVES — max 3, DB first, AI fills gaps, no duplicates */}
                 {(() => {
                   const cat = result.category;
 
-                  // DB alternatives — backend already handles relevance and category logic
+                  // DB alternatives — only show if relevance threshold was met server-side
                   const dbAlts = (result.alternatives || []).slice(0, 3);
 
-                  // AI alternatives — deduplicate against DB, fill to 3
+                  // AI alternatives — deduplicate against DB, fill remaining slots up to 3
                   const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
                   const aiAlts = (result.ai_alternatives || [])
                     .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
                     .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                     .slice(0, 3 - dbAlts.length);
 
-
                   const hasAffiliate = dbAlts.length > 0 && cat !== "other";
+                  const hasAnything  = dbAlts.length > 0 || aiAlts.length > 0;
 
-                  if (!dbAlts.length && !aiAlts.length) return null;
+                  if (!hasAnything) return null;
 
                   return (
                     <div>
+                      {/* Header — only shown when there's content */}
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
+                        <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
+                        {hasAffiliate && (
+                          <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
+                            #ad · affiliate links
+                          </div>
+                        )}
+                      </div>
+
+                      {/* DB alternatives (curated, affiliate) */}
                       {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+
+                      {/* AI alternatives — shown below DB items, or solo when DB has no match */}
                       {aiAlts.length > 0 && (
                         <div style={{display:"flex", flexDirection:"column", gap:8, marginTop: dbAlts.length > 0 ? 10 : 0}}>
                           {dbAlts.length > 0 && (
@@ -2619,6 +2623,7 @@ function App() {
                           ))}
                         </div>
                       )}
+
                       {hasAffiliate && (
                         <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
                       )}
