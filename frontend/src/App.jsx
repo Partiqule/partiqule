@@ -2469,92 +2469,74 @@ function App() {
               <div className="fade-up">
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
                   <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IconCheck size={20} color="#16a34a"/> Safer Alternatives</h3>
-                  {result.alternatives?.length > 0 && result.category !== "other" && (
+                  {result.alternatives?.some(p => {
+                    const compatCats = {food_beverage:["food_beverage","kitchen"],kitchen:["kitchen","food_beverage"],clothing:["clothing"],personal_care:["personal_care"],baby:["baby","personal_care","clothing"]}[result.category]||[];
+                    return compatCats.includes(p.category);
+                  }) && result.category !== "other" && (
                     <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
                       #ad · affiliate links
                     </div>
                   )}
                 </div>
 
-                {/* AI alternatives first when no DB matches OR when category is "other" (vehicles etc) */}
-                {result.ai_alternatives?.length > 0 && (
-                  !result.alternatives?.length ||
-                  result.category === "other" ||
-                  !(result.alternatives || []).some(p =>
-                    p.category === result.category ||
-                    (result.category === "food_beverage" && p.category === "kitchen") ||
-                    (result.category === "kitchen" && p.category === "food_beverage") ||
-                    (result.category === "baby" && ["personal_care","clothing"].includes(p.category))
-                  )
-                ) && (
-                  <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:8}}>
-                    {result.ai_alternatives.filter((alt, i, arr) =>
-                      arr.findIndex(a => a.name?.toLowerCase().trim() === alt.name?.toLowerCase().trim()) === i
-                    ).map((alt, i) => (
-                      <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                          <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
-                        </div>
-                        <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
-                        <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                        <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                          style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                          <IconSearch size={12} color="#16a34a"/> Scan this product →
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Affiliate alternatives from DB — only show if they match the product category */}
+                {/* UNIFIED ALTERNATIVES — max 3, DB first, AI fills gaps, no duplicates */}
                 {(() => {
-                  const relevantAlts = (result.alternatives || []).filter(p =>
-                    p.category === result.category ||
-                    (result.category === "food_beverage" && p.category === "kitchen") ||
-                    (result.category === "kitchen" && p.category === "food_beverage") ||
-                    (result.category === "baby" && ["personal_care","clothing"].includes(p.category))
-                  );
-                  return relevantAlts.length > 0 && result.category !== "other" ? (
-                    <div style={{display:"flex", flexDirection:"column", gap:10}}>
-                      {relevantAlts.map(p=><ProductCard key={p.id} product={p} isDark={isDark}/>)}
-                    </div>
-                  ) : null;
-                })()}
+                  const cat = result.category;
+                  const compatCats = {
+                    food_beverage: ["food_beverage","kitchen"],
+                    kitchen:       ["kitchen","food_beverage"],
+                    clothing:      ["clothing"],
+                    personal_care: ["personal_care"],
+                    baby:          ["baby","personal_care","clothing"],
+                    other:         [],
+                  }[cat] || [];
 
-                {/* AI alternatives as secondary suggestions — deduplicated against DB results */}
-                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && result.category !== "other" && (() => {
-                  const shownNames = new Set((result.alternatives || []).map(p => p.name?.toLowerCase().trim()));
-                  const uniqueAiAlts = result.ai_alternatives.filter(alt =>
-                    !shownNames.has(alt.name?.toLowerCase().trim())
-                  );
-                  if (!uniqueAiAlts.length) return null;
+                  // DB alternatives — only category-compatible ones
+                  const dbAlts = (result.alternatives || [])
+                    .filter(p => compatCats.includes(p.category))
+                    .slice(0, 3);
+
+                  // AI alternatives — deduplicated against DB, fill up to 3
+                  const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
+                  const aiAlts = (result.ai_alternatives || [])
+                    .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
+                    .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
+                    .slice(0, 3 - dbAlts.length);
+
+                  const hasAffiliate = dbAlts.length > 0;
+
+                  if (!dbAlts.length && !aiAlts.length) return null;
+
                   return (
-                  <div style={{marginTop:16}}>
-                    <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
-                    <div style={{display:"flex", flexDirection:"column", gap:8}}>
-                      {uniqueAiAlts.map((alt, i) => (
-                        <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                            <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
-                          </div>
-                          <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
-                          <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                          <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                            style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                            <IconSearch size={12} color="#16a34a"/> Scan this product →
-                          </button>
+                    <div>
+                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                      {aiAlts.length > 0 && (
+                        <div style={{display:"flex", flexDirection:"column", gap:8, marginTop: dbAlts.length > 0 ? 10 : 0}}>
+                          {dbAlts.length > 0 && (
+                            <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:4}}>More suggestions from our AI</div>
+                          )}
+                          {aiAlts.map((alt, i) => (
+                            <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                              <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                                <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                              </div>
+                              <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
+                              <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                              <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                                style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                                <IconSearch size={12} color="#16a34a"/> Scan this product →
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
+                      {hasAffiliate && (
+                        <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
+                      )}
                     </div>
-                  </div>
                   );
                 })()}
-
-                {result.alternatives?.length > 0 && (
-                  <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
-                )}
               </div>
 
               {/* BUNDLE */}
