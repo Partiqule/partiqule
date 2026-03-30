@@ -138,15 +138,18 @@ async function searchProductDetails(productName) {
 }
 
 // ── CLAUDE API CALL ───────────────────────────────────────────
-// Robust JSON fixer — handles apostrophes, smart quotes, trailing commas, truncation
+// Robust JSON fixer — handles apostrophes, smart quotes, trailing commas
 function fixJson(raw) {
   let s = raw;
   // 1. Smart quotes → straight quotes
   s = s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
   // 2. Trailing commas before } or ]
   s = s.replace(/,(\s*[}\]])/g, '$1');
-  // 3. Escape unescaped apostrophes inside JSON string values
-  //    Walk char by char tracking if we're inside a string
+  // 3. Walk char by char to fix unescaped apostrophes inside JSON string values
+  //    In JSON, apostrophes inside strings don't need escaping — but they break
+  //    parsers when the AI wraps them in ways that confuse the string boundary.
+  //    Strategy: rebuild the string, and when inside a JSON string value,
+  //    replace bare ' with the unicode escape \u0027
   let result = '';
   let inString = false;
   let escaped = false;
@@ -155,7 +158,10 @@ function fixJson(raw) {
     if (escaped) { result += c; escaped = false; continue; }
     if (c === '\\') { result += c; escaped = true; continue; }
     if (c === '"') { inString = !inString; result += c; continue; }
-    if (inString && c === "'") { result += "\\'"; continue; }
+    if (inString && c === "'") {
+      result += '\\u0027'; // valid JSON unicode escape for apostrophe
+      continue;
+    }
     result += c;
   }
   return result;
