@@ -128,27 +128,36 @@ async function searchProductDetails(productName) {
 }
 
 // ── CLAUDE API CALL ───────────────────────────────────────────
-async function callClaude(system, userPrompt, maxTokens=800) {
-  const res = await fetch(ANTHROPIC_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: userPrompt }]
-    })
-  });
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  const text = data.content.map(b => b.text || "").join("").trim();
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON in response");
-  return JSON.parse(match[0]);
+async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+    if (res.status === 429 && attempt < retries) {
+      // Rate limited — wait and retry
+      const wait = (attempt + 1) * 2000;
+      console.log(`Rate limited, retrying in ${wait}ms (attempt ${attempt+1})`);
+      await new Promise(r => setTimeout(r, wait));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    const text = data.content.map(b => b.text || "").join("").trim();
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON in response");
+    return JSON.parse(match[0]);
+  }
 }
 
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
@@ -300,6 +309,8 @@ app.post("/scan-image", async (req, res) => {
   if (!image) return res.status(400).json({ error: "No image provided" });
 
   try {
+    // Use a separate low-cost call just to extract the product name
+    // Small delay to avoid rate limit collisions with the subsequent analyze call
     const response = await fetch(ANTHROPIC_API, {
       method: "POST",
       headers: {
@@ -309,21 +320,29 @@ app.post("/scan-image", async (req, res) => {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 100,
-        system: "You are a product identifier. Given an image of a product, barcode, or product label, return ONLY the product name — nothing else. If you see a barcode, identify the most likely product it belongs to based on any visible text. Return just the product name, 1-6 words, no punctuation.",
+        max_tokens: 60,
+        system: "You identify products from images. Respond with ONLY the product name, 2-5 words, nothing else. No punctuation, no explanation.",
         messages: [{
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
-            { type: "text", text: "What product is this? Return only the product name." }
+            { type: "text", text: "Product name only:" }
           ]
         }]
       })
     });
 
+    if (response.status === 429) {
+      return res.status(429).json({ error: "Rate limit — please try again in a moment" });
+    }
+
     const data = await response.json();
     const query = data.content?.[0]?.text?.trim();
     if (!query) return res.status(400).json({ error: "Could not identify product" });
+
+    // Small pause before the analyze call fires
+    await new Promise(r => setTimeout(r, 1500));
+
     res.json({ query });
   } catch(err) {
     console.error("scan-image error:", err);

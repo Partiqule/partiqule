@@ -2081,6 +2081,11 @@ function App() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ image: base64, mediaType: file.type || "image/jpeg" })
                         });
+                        if (resp.status === 429) {
+                          setLoading(false); setQuery("");
+                          setError("The scanner is busy — please wait a moment and try again.");
+                          return;
+                        }
                         if (!resp.ok) throw new Error("Scan failed");
                         const { query: detectedQuery } = await resp.json();
                         if (!detectedQuery) throw new Error("Nothing detected");
