@@ -397,10 +397,12 @@ const EducationSection = ({isDark, isMobile=false}) => {
 const PlasticScoreDropdown = ({result, isDark, muted}) => {
   const [open, setOpen] = useState(false);
   const ps = result.score;
+  const bd = result.breakdown || null;
   const color  = scoreColor(ps);
   const bg     = isDark?"#1e2433":scoreBg(ps);
   const borderColor = ps<=3?"#bbf7d0":ps<=6?"#fde68a":ps<=8?"#fed7aa":"#fecaca";
   const plabel = scoreLabel(ps);
+  const subColor = (s) => s<=3?"#16a34a":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
@@ -424,11 +426,43 @@ const PlasticScoreDropdown = ({result, isDark, muted}) => {
 
       {open && (
         <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+
+          {/* Sub-score breakdown */}
+          {bd && (
+            <div style={{display:"flex", flexDirection:"column", gap:6, margin:"12px 0"}}>
+              {[
+                {key:"materials",     icon:"🧱", label:"Materials"},
+                {key:"packaging",     icon:"📦", label:"Packaging"},
+                {key:"usage",         icon:"📅", label:"Usage & exposure"},
+                {key:"manufacturing", icon:"⚙️", label:"Manufacturing"},
+              ].map(sub => {
+                const item = bd[sub.key];
+                if (!item) return null;
+                const sc = subColor(item.score);
+                return (
+                  <div key={sub.key} style={{background:isDark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)", borderRadius:8, padding:"8px 10px"}}>
+                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:3}}>
+                      <div style={{display:"flex", alignItems:"center", gap:5}}>
+                        <span style={{fontSize:12}}>{sub.icon}</span>
+                        <span style={{fontSize:11, fontWeight:600, color:sc}}>{sub.label}</span>
+                      </div>
+                      <span style={{fontSize:12, fontWeight:800, color:sc, fontFamily:"'Outfit',sans-serif"}}>{item.score}/10</span>
+                    </div>
+                    <div style={{fontSize:11, color:muted, lineHeight:1.5}}>{item.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Score reasoning */}
           {result.score_reasoning && (
-            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"12px 0 10px", fontStyle:"italic"}}>
+            <p style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.6, margin:"0 0 10px", fontStyle:"italic"}}>
               {result.score_reasoning}
             </p>
           )}
+
+          {/* Plastics identified */}
           {result.identified_plastics?.length > 0 && (
             <div style={{marginBottom:10}}>
               <div style={{fontSize:11, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>Plastics identified</div>
@@ -442,6 +476,8 @@ const PlasticScoreDropdown = ({result, isDark, muted}) => {
               </div>
             </div>
           )}
+
+          {/* Concerns list */}
           {result.concerns?.length > 0 && (
             <div style={{display:"flex", flexDirection:"column", gap:6}}>
               {result.concerns.map((c,i)=>(
