@@ -300,6 +300,8 @@ PLASTIC SCORING — apply the research findings in your system prompt:
 - Daily ingestion/inhalation products: apply +1 to +2 neurological risk penalty (Yan 2024 brain accumulation)
 - Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2, no penalties
 - VEHICLES (cars, trucks, SUVs): score 3-5 regardless of plastic content — interior plastic is NOT food contact and exposure pathway is minimal. Do not apply daily-use penalties to vehicles. Off-gassing of VOCs is the main concern, not microplastic ingestion.
+- ELECTRIC VEHICLES get a 1-2 point bonus (lower score) vs equivalent gas vehicles — no tailpipe particulates, better air filtration, increasingly sustainable interiors. Rivian, Tesla, Lucid, Polestar, Hyundai Ioniq: score 2-3. Older EVs (Bolt, Leaf): score 3-4. Gas SUVs and trucks: score 4-6.
+- Only score an EV higher if it is documented to use poor quality or excessive plastic interiors.
 
 HEALTH & SUSTAINABILITY SCORING — separate from plastic, apply research:
 - Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
@@ -380,7 +382,17 @@ VEHICLE SCORING RULES — apply these for any car, truck, SUV, or automobile:
 - Do NOT apply daily use penalties to vehicles — time in a car is not equivalent to ingesting plastic
 - Health concern: mainly off-gassing of VOCs from new interiors, microfibre shedding from fabric seats — score 3-5
 - Break-even for vehicles: null — there is no direct swap alternative
-- Alternatives for vehicles: focus on lower-VOC options, air purifiers, or more sustainable vehicle choices like EVs or hybrids
+
+EV SCORING BONUS — electric vehicles should score 1-2 points LOWER than equivalent gas vehicles:
+- No tailpipe particulate emissions inside or outside cabin = significant health benefit
+- Better cabin air filtration systems standard on most EVs
+- Modern EVs (Tesla, Rivian, Lucid, Polestar, BMW i-series, Hyundai Ioniq, Ford Mustang Mach-E) increasingly use recycled, vegan, or natural interior materials
+- Rivian: uses plant-based materials, recycled content, consciously sustainable interior design — score 2-3
+- Tesla: vegan leather standard, glass roof reduces interior plastic — score 2-4
+- Lucid, Polestar: premium sustainable interior focus — score 2-3
+- Legacy EV conversions (Chevy Bolt, Nissan Leaf older models): similar interior to gas equivalents — score 3-5
+- EXCEPTION: If an EV is documented to use excessive cheap plastic interiors, score normally — do not reward EVs that do not deserve it
+- Gas/diesel SUVs and trucks (Escalade, Suburban, F-150, RAM): score 4-6 — more VOCs, exhaust particulates, traditional vinyl/synthetic leather
 
 RESEARCH-BASED SCORING RULES:
 - PP or PVC in food-contact products: base score must be 8-9 (Marfella et al. 2024, NEJM — found in arterial plaques, linked to heart attack/stroke)
