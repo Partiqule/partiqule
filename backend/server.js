@@ -161,6 +161,71 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
 }
 
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
+// Vision pass — identifies product from image AND scores it in one call
+async function callClaudeVision(imageBase64, mediaType) {
+  const res = await fetch(ANTHROPIC_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "anthropic-version": "2023-06-01",
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1800,
+      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown an image of a product or its barcode/label. First identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble.
+
+SCORING RULES:
+- PP/PVC in food-contact products: score 8-9 (NEJM 2024)
+- PTFE/PFAS non-stick: score 8-9
+- Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2
+- Single-use disposables: sustainability score 8-9
+- Chemical treatments (bleaching, dyes, PFAS): chemical score 6-8`,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+          { type: "text", text: `Identify this product from the image or barcode, then score it. Return ONLY this JSON:
+{
+  "product_name": "exact product name from label",
+  "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
+  "identified_plastics": ["plastic type 1"],
+  "product_score": 5,
+  "packaging_score": 4,
+  "exposure_frequency": "daily|weekly|occasional|rare",
+  "exposure_type": "ingestion|skin_contact|inhalation|mixed",
+  "health_score": 4,
+  "health_concerns": ["concern 1"],
+  "health_note": "one sentence summary",
+  "health_breakdown": {
+    "chemical": { "score": 3, "label": "chemical concerns" },
+    "sustainability": { "score": 5, "label": "sustainability impact" },
+    "manufacturing": { "score": 4, "label": "manufacturing concerns" }
+  },
+  "product_breakdown": {
+    "materials": { "score": 5, "label": "material analysis" },
+    "packaging": { "score": 4, "label": "packaging assessment" },
+    "usage": { "score": 6, "label": "usage exposure" },
+    "manufacturing": { "score": 4, "label": "manufacturing risks" }
+  },
+  "raw_concerns": ["concern 1"],
+  "confidence": "high|medium|low",
+  "confidence_reason": "why",
+  "scan_next": ["related product 1", "related product 2"],
+  "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
+}` }
+        ]
+      }]
+    })
+  });
+  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const text = data.content.map(b => b.text || "").join("").trim();
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("No JSON in vision response");
+  return JSON.parse(match[0]);
+}
+
 async function pass1(productName, materialContext = null) {
   const contextSection = materialContext
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
@@ -351,7 +416,70 @@ app.post("/scan-image", async (req, res) => {
 });
 
 app.post("/analyze", async (req, res) => {
-  let { query } = req.body;
+  let { query, image, mediaType } = req.body;
+
+  // If image provided, use vision to identify + analyze in one pass
+  if (image) {
+    try {
+      console.log("Image scan — using vision pass1");
+      const p1 = await callClaudeVision(image, mediaType || "image/jpeg");
+      const productName = p1.product_name || "Scanned product";
+
+      // Pass 2 audit using identified name
+      let p2 = null;
+      try { p2 = await pass2(productName, p1); } catch(e) { console.warn("Pass2 failed:", e.message); }
+
+      const plasticScore = p1.product_score ?? 5;
+      const healthScore  = p1.health_score  ?? 3;
+      const overallScore = Math.round((plasticScore * 0.7) + (healthScore * 0.3));
+      const finalScore   = p2?.final_score ?? Math.round((plasticScore * 0.7 + (p1.packaging_score ?? 3) * 0.3));
+
+      const category = p1.category || "other";
+      let finalAlternatives = findAlternatives(productName, category);
+      if (!finalAlternatives.length && p1.ai_alternatives?.length) {
+        finalAlternatives = p1.ai_alternatives.map(a => ({
+          id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 2,
+          material: a.material || "", description: a.reason || "", price: "", affiliateUrl: null, category
+        }));
+      }
+
+      const result = {
+        product_name: productName, category,
+        score: finalScore, overall_score: overallScore,
+        health_score: p1.health_score || null,
+        health_concerns: p1.health_concerns || [],
+        health_note: p1.health_note || null,
+        health_breakdown: p1.health_breakdown || null,
+        identified_plastics: p1.identified_plastics || [],
+        concerns: p2?.refined_concerns || p1.raw_concerns || [],
+        score_reasoning: p2?.score_reasoning || null,
+        summary: p2?.summary || null,
+        exposure_frequency: p1.exposure_frequency || "daily",
+        exposure_type: p1.exposure_type || "mixed",
+        breakdown: p1.product_breakdown || null,
+        scan_next: p1.scan_next || [],
+        break_even: p2?.break_even || null,
+        peer_comparison: null,
+        confidence: p2?.confidence || p1.confidence || "medium",
+        confidence_note: p2?.confidence_note || null,
+        cached: false,
+        scannedAt: new Date().toISOString(),
+        alternatives: finalAlternatives.map(p => ({
+          id: p.id, name: p.name, brand: p.brand || "",
+          score: p.score ?? 3, material: p.material || "",
+          description: p.description || "", price: p.price || "",
+          affiliateUrl: p.affiliateUrl, category: p.category || category
+        })),
+        ai_alternatives: p1.ai_alternatives || [],
+      };
+
+      return res.json(result);
+    } catch(err) {
+      console.error("Vision analyze error:", err);
+      return res.status(500).json({ error: err.message || "Image scan failed" });
+    }
+  }
+
   if (!query?.trim()) return res.status(400).json({ error: "Query is required" });
 
   const extracted    = extractProductFromUrl(query.trim());

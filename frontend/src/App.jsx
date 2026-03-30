@@ -2075,8 +2075,8 @@ function App() {
                           reader.onerror = rej;
                           reader.readAsDataURL(file);
                         });
-                        // Send to backend — Claude reads the barcode/product from the image
-                        const resp = await fetch(`${API_BASE}/scan-image`, {
+                        // Send image directly to analyze — Claude identifies + scores in one pass
+                        const resp = await fetch(`${API_BASE}/analyze`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ image: base64, mediaType: file.type || "image/jpeg" })
@@ -2087,10 +2087,12 @@ function App() {
                           return;
                         }
                         if (!resp.ok) throw new Error("Scan failed");
-                        const { query: detectedQuery } = await resp.json();
-                        if (!detectedQuery) throw new Error("Nothing detected");
-                        setQuery(detectedQuery);
-                        analyze(detectedQuery);
+                        const data = await resp.json();
+                        if (!data.product_name) throw new Error("Nothing detected");
+                        setQuery(data.product_name);
+                        setLoading(false);
+                        setResult(data);
+                        saveToHistory(data);
                       } catch(err) {
                         console.error("Image scan error:", err);
                         setLoading(false); setQuery("");
