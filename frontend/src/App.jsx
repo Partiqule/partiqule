@@ -2488,7 +2488,9 @@ function App() {
                   )
                 ) && (
                   <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:8}}>
-                    {result.ai_alternatives.map((alt, i) => (
+                    {result.ai_alternatives.filter((alt, i, arr) =>
+                      arr.findIndex(a => a.name?.toLowerCase().trim() === alt.name?.toLowerCase().trim()) === i
+                    ).map((alt, i) => (
                       <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                         <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
                           <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
@@ -2520,12 +2522,18 @@ function App() {
                   ) : null;
                 })()}
 
-                {/* AI alternatives as secondary suggestions below DB results — only for standard categories */}
-                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && result.category !== "other" && (
+                {/* AI alternatives as secondary suggestions — deduplicated against DB results */}
+                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && result.category !== "other" && (() => {
+                  const shownNames = new Set((result.alternatives || []).map(p => p.name?.toLowerCase().trim()));
+                  const uniqueAiAlts = result.ai_alternatives.filter(alt =>
+                    !shownNames.has(alt.name?.toLowerCase().trim())
+                  );
+                  if (!uniqueAiAlts.length) return null;
+                  return (
                   <div style={{marginTop:16}}>
                     <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
                     <div style={{display:"flex", flexDirection:"column", gap:8}}>
-                      {result.ai_alternatives.map((alt, i) => (
+                      {uniqueAiAlts.map((alt, i) => (
                         <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                           <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
                             <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
@@ -2541,7 +2549,8 @@ function App() {
                       ))}
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {result.alternatives?.length > 0 && (
                   <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
