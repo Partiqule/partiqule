@@ -2307,26 +2307,39 @@ function App() {
                 <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
               </div>
 
-              {!loading && <>
-                <div style={{marginBottom:8, fontSize:12, color:"#4ade80", opacity:0.8}}>Try these — the scores might shock you:</div>
-                <div style={{display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center"}}>
-                  {EXAMPLES.map(ex=>(
-                    <button key={ex.label} onClick={()=>{setQuery(ex.label); analyze(ex.label);}}
-                      style={{padding:"7px 14px", borderRadius:20, border:"1px solid rgba(255,255,255,0.2)", background:"rgba(255,255,255,0.08)", color:"#d1fae5", fontSize:13, cursor:"pointer", transition:"all 0.15s", display:"flex", alignItems:"center", gap:6}}
-                      onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.4)";}}
-                      onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor="rgba(255,255,255,0.2)";}}>
-                      <IconFire size={12} color="#fca5a5"/>{ex.label}
-                      <span style={{fontSize:11, color:"#fca5a5", fontWeight:700}}>{ex.hint}</span>
-                    </button>
-                  ))}
-                </div>
-              </>}
+              {!loading && null}
               {loading && <div style={{marginTop:8}}><LoadingState/></div>}
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
             </div>
           </section>
 
           <div style={{paddingTop:isMobile?32:56}}>
+
+            {/* Trust strip — moved up, first thing below hero */}
+            <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+              <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
+                {[
+                  {icon:"score",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
+                  {icon:"safety",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
+                  {icon:"verified", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
+                  {icon:"scan",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
+                ].map((item,i) => (
+                  <div key={i} style={{
+                    background:isDark?"#1e2433":"#fff",
+                    borderRadius:16, padding:"24px 20px", textAlign:"center",
+                    border:`1.5px solid ${isDark?"#2a3347":"#f0fdf4"}`,
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:12,
+                  }}>
+                    <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                      {item.icon==="score"&&<IcoScore size={36}/>}{item.icon==="safety"&&<IcoSafety size={36}/>}{item.icon==="verified"&&<IcoVerified size={36}/>}{item.icon==="scan"&&<IcoScan size={36}/>}
+                    </div>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
+                    <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* RECENTLY VIEWED CAROUSEL */}
             {history.length > 0 && (
               <div style={{maxWidth:1100, margin:"0 auto 40px", padding:`0 ${isMobile?"16px":"40px"}`}}>
@@ -2407,30 +2420,6 @@ function App() {
               </div>
             </div>
 
-                        {/* Illustrated trust strip */}
-            <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
-                {[
-                  {icon:"score",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
-                  {icon:"safety",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
-                  {icon:"verified", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
-                  {icon:"scan",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
-                ].map((item,i) => (
-                  <div key={i} style={{
-                    background:isDark?"#1e2433":"#fff",
-                    borderRadius:16, padding:"24px 20px", textAlign:"center",
-                    border:`1.5px solid ${isDark?"#2a3347":"#f0fdf4"}`,
-                    display:"flex", flexDirection:"column", alignItems:"center", gap:12,
-                  }}>
-                    <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                      {item.icon==="score"&&<IcoScore size={36}/>}{item.icon==="safety"&&<IcoSafety size={36}/>}{item.icon==="verified"&&<IcoVerified size={36}/>}{item.icon==="scan"&&<IcoScan size={36}/>}
-                    </div>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
-                    <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </>
       ) : (
