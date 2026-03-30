@@ -1087,19 +1087,22 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
   return (
     <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
 
-      {/* Hero blurb */}
-      <div style={{marginBottom:56}}>
-        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:14}}>About Partiqule</div>
-        <p style={{fontSize:isMobile?17:20, color:muted, lineHeight:1.85, marginBottom:16}}>
-          The average person consumes around 5 grams of microplastics every week, equating to the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products come with no warning, no labeling, and no guidance on safer alternatives.
+      {/* Hero header */}
+      <div style={{marginBottom:48}}>
+        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>About Partiqule</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 24px", letterSpacing:"-1px", lineHeight:1.15}}>
+          Make the invisible visible.
+        </h1>
+        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
+          The average person consumes around 5 grams of microplastics every week — the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products come with no warning, no labeling, and no guidance on safer alternatives.
         </p>
-        <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:600, lineHeight:1.7, marginBottom:20}}>
+        <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:700, lineHeight:1.5, marginBottom:16}}>
           Partiqule exists to change that.
         </p>
-        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:24}}>
+        <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
           We believe people deserve clear, accessible information about what they're buying and bringing into their homes. Because when you understand what's in your products — including hidden plastic exposure — you can make better decisions for yourself and your family.
         </p>
-        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:32}}>
+        <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
           Our job is simple: make the invisible visible, so you can choose with confidence.
         </p>
         <button onClick={()=>onScan()}
