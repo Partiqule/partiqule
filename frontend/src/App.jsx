@@ -2051,8 +2051,8 @@ function App() {
                 {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
               </p>
 
-              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, overflow:"hidden", boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
-                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0}}><IconSearch size={18} color="#bbb"/></div>
+              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
+                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IconSearch size={18} color="#bbb"/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
                   style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
@@ -2113,9 +2113,10 @@ function App() {
 
                 {/* Scan button */}
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                  style={{width:isMobile?58:80, minWidth:isMobile?58:80, height:52, flexShrink:0, border:"none",
+                  style={{width:isMobile?64:88, minWidth:isMobile?64:88, height:52, flexShrink:0, border:"none",
+                    borderRadius:"0 14px 14px 0",
                     background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999",
-                    fontWeight:700, fontSize:isMobile?14:15, cursor:query.trim()?"pointer":"default",
+                    fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default",
                     display:"flex", alignItems:"center", justifyContent:"center",
                     transition:"background 0.15s", whiteSpace:"nowrap"}}>
                   {loading?"…":"Scan"}
