@@ -153,8 +153,11 @@ function fixJson(raw) {
 
 async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
   for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
     const res = await fetch(ANTHROPIC_API, {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "anthropic-version": "2023-06-01",
@@ -167,6 +170,7 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
         messages: [{ role: "user", content: userPrompt }]
       })
     });
+    clearTimeout(timeout);
     if (res.status === 429 && attempt < retries) {
       const wait = (attempt + 1) * 2000;
       console.log(`Rate limited, retrying in ${wait}ms (attempt ${attempt+1})`);
@@ -489,19 +493,21 @@ app.post("/analyze", async (req, res) => {
     if (needsSearch(productName)) {
       console.log(`Searching product details: ${productName}`);
       try {
-        materialContext = await searchProductDetails(productName);
+        // Timeout search after 8 seconds to avoid blocking the whole request
+        materialContext = await Promise.race([
+          searchProductDetails(productName),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("Search timeout")), 8000))
+        ]);
         if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
       } catch (err) {
         console.warn("Search failed, continuing without:", err.message);
       }
     }
 
-    // ── Run both passes — pass1 gets real material data ──
+    // ── Pass 1 then Pass 2 sequentially (not parallel — pass2 needs pass1 output) ──
     console.log(`Analyzing: ${productName}`);
-    const [p1, p2] = await Promise.all([
-      pass1(productName, materialContext),
-      pass1(productName, materialContext).then(p1data => safePass2(productName, p1data))
-    ]);
+    const p1 = await pass1(productName, materialContext);
+    const p2 = await safePass2(productName, p1);
 
     // Merge pass1 + pass2 results
     const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
