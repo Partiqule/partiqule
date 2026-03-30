@@ -2308,39 +2308,73 @@ function App() {
               </div>
             )}
             {/* SCAN BY CATEGORY */}
-            <div style={{maxWidth:1100, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>
-                What are you curious about?
-              </h2>
-              <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:28}}>Tap a category to see what common products actually score</p>
-              <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)", gap:isMobile?10:14}}>
-                {[
-                  {emoji:"🍳", label:"Kitchen & Cookware", searches:["non-stick frying pan","plastic cutting board","Tupperware food containers","cling wrap"], color:"#d97706", bg:isDark?"#1e1a00":"#fffbeb"},
-                  {emoji:"🧴", label:"Personal Care", searches:["plastic shampoo bottle","synthetic loofah","disposable razor","wet wipes"], color:"#db2777", bg:isDark?"#1e0a14":"#fdf2f8"},
-                  {emoji:"👕", label:"Clothing & Textiles", searches:["polyester fleece jacket","synthetic yoga pants","nylon activewear","spandex leggings"], color:"#6366f1", bg:isDark?"#0e0e1e":"#eef2ff"},
-                  {emoji:"🍔", label:"Food & Drink", searches:["lipton tea bags","plastic water bottle","styrofoam coffee cup","chewing gum"], color:"#0891b2", bg:isDark?"#001e20":"#ecfeff"},
-                  {emoji:"👶", label:"Baby & Kids", searches:["plastic baby bottle","disposable diapers","plastic teething toy","baby food pouch"], color:"#7c3aed", bg:isDark?"#0e0a1e":"#f5f3ff"},
-                  {emoji:"🚗", label:"Vehicles", searches:["Tesla Model Y","Kia Sportage","Cadillac Escalade","Rivian R1S"], color:"#16a34a", bg:isDark?"#0a1e0a":"#f0fdf4"},
-                ].map((cat, i) => (
-                  <div key={i} style={{background:cat.bg, borderRadius:14, padding:"20px", border:`1.5px solid ${cat.color}22`}}>
-                    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:12}}>
-                      <span style={{fontSize:22}}>{cat.emoji}</span>
-                      <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, color:cat.color}}>{cat.label}</span>
-                    </div>
-                    <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                      {cat.searches.map((s, j) => (
-                        <button key={j} onClick={()=>{setQuery(s); analyze(s);}}
-                          style={{background:"rgba(255,255,255,0.6)", border:`1px solid ${cat.color}33`, borderRadius:8, padding:"6px 10px", fontSize:12, color:isDark?"#f1f5f9":"#333", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-                          onMouseEnter={e=>{e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color; e.currentTarget.style.color=cat.color;}}
-                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.6)"; e.currentTarget.style.borderColor=`${cat.color}33`; e.currentTarget.style.color=isDark?"#f1f5f9":"#333";}}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
+            {(() => {
+              const DEFAULTS = {
+                kitchen:       ["non-stick frying pan","plastic cutting board","Tupperware containers","cling wrap"],
+                personal_care: ["plastic shampoo bottle","disposable razor","wet wipes","synthetic loofah"],
+                clothing:      ["polyester fleece jacket","synthetic yoga pants","nylon activewear","spandex leggings"],
+                food_beverage: ["Lipton tea bags","plastic water bottle","Styrofoam coffee cup","chewing gum"],
+                baby:          ["plastic baby bottle","disposable diapers","plastic teething toy","baby food pouch"],
+                other:         ["Tesla Model Y","Kia Sportage","Cadillac Escalade","Rivian R1S"],
+              };
+              const CATS = [
+                {key:"kitchen",       emoji:"🍳", label:"Kitchen & Cookware",  color:"#d97706", bg:isDark?"#1e1a00":"#fffbeb"},
+                {key:"personal_care", emoji:"🧴", label:"Personal Care",        color:"#db2777", bg:isDark?"#1e0a14":"#fdf2f8"},
+                {key:"clothing",      emoji:"👕", label:"Clothing & Textiles",  color:"#6366f1", bg:isDark?"#0e0e1e":"#eef2ff"},
+                {key:"food_beverage", emoji:"🍔", label:"Food & Drink",          color:"#0891b2", bg:isDark?"#001e20":"#ecfeff"},
+                {key:"baby",          emoji:"👶", label:"Baby & Kids",           color:"#7c3aed", bg:isDark?"#0e0a1e":"#f5f3ff"},
+                {key:"other",         emoji:"🚗", label:"Vehicles & More",       color:"#16a34a", bg:isDark?"#0a1e0a":"#f0fdf4"},
+              ];
+
+              // Build per-category lists from real history, shuffle, pick 4
+              const byCategory = {};
+              history.forEach(item => {
+                const cat = item.category || "other";
+                if (!byCategory[cat]) byCategory[cat] = [];
+                const name = item.product_name;
+                if (name && !byCategory[cat].includes(name)) byCategory[cat].push(name);
+              });
+
+              const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+
+              return (
+                <div style={{maxWidth:1100, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+                  <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>
+                    What are you curious about?
+                  </h2>
+                  <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:28}}>
+                    {history.length > 4 ? "Based on what people have been scanning" : "Tap anything to get its score instantly"}
+                  </p>
+                  <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)", gap:isMobile?10:14}}>
+                    {CATS.map((cat, i) => {
+                      const fromHistory = byCategory[cat.key] || [];
+                      const defaults = DEFAULTS[cat.key] || [];
+                      // Mix: real scans first, fill with defaults, shuffle, take 4
+                      const combined = [...new Set([...fromHistory, ...defaults])];
+                      const searches = shuffle(combined).slice(0, 4);
+                      return (
+                        <div key={i} style={{background:cat.bg, borderRadius:14, padding:"18px", border:`1.5px solid ${cat.color}22`}}>
+                          <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
+                            <span style={{fontSize:20}}>{cat.emoji}</span>
+                            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:cat.color}}>{cat.label}</span>
+                          </div>
+                          <div style={{display:"flex", flexDirection:"column", gap:5}}>
+                            {searches.map((s, j) => (
+                              <button key={j} onClick={()=>{setQuery(s); analyze(s);}}
+                                style={{background:"rgba(255,255,255,0.55)", border:`1px solid ${cat.color}22`, borderRadius:8, padding:"5px 10px", fontSize:12, color:isDark?"#e2e8f0":"#333", cursor:"pointer", textAlign:"left", transition:"all 0.15s", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}
+                                onMouseEnter={e=>{e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color; e.currentTarget.style.color=cat.color;}}
+                                onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.55)"; e.currentTarget.style.borderColor=`${cat.color}22`; e.currentTarget.style.color=isDark?"#e2e8f0":"#333";}}>
+                                {s.length > 28 ? s.slice(0,25)+"…" : s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
 
             {/* Illustrated trust strip */}
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
