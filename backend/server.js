@@ -173,7 +173,7 @@ async function callClaudeVision(imageBase64, mediaType) {
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1800,
-      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown an image of a product or its barcode/label. First identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble.
+      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble.
 
 SCORING RULES:
 - PP/PVC in food-contact products: score 8-9 (NEJM 2024)
@@ -185,9 +185,9 @@ SCORING RULES:
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-          { type: "text", text: `Identify this product from the image or barcode, then score it. Return ONLY this JSON:
+          { type: "text", text: `Look at this photo of a product label, tag, or packaging. Read the brand name, product name, and any visible text to identify exactly what product this is. Then score it for microplastic and health risk. Return ONLY this JSON:
 {
-  "product_name": "exact product name from label",
+  "product_name": "brand + product name as shown on label e.g. Tide Original Liquid Detergent",
   "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
   "identified_plastics": ["plastic type 1"],
   "product_score": 5,

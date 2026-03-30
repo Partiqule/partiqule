@@ -2058,7 +2058,7 @@ function App() {
                   style={{flex:1, padding:"14px 12px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111"}}/>
 
                 {/* Barcode camera button */}
-                <label title="Scan a barcode"
+                <label title="Photo a product label, tag, or packaging"
                   style={{display:"flex", alignItems:"center", justifyContent:"center", padding:"0 14px", cursor:"pointer", borderRight:"1px solid #eee", flexShrink:0}}>
                   <input type="file" accept="image/*" style={{display:"none"}}
                     onChange={async (e) => {
@@ -2066,7 +2066,7 @@ function App() {
                       if (!file) return;
                       e.target.value = "";
                       setResult(null); setError(null); setPage("home");
-                      setLoading(true); setQuery("Reading barcode…");
+                      setLoading(true); setQuery("Reading label…");
                       try {
                         // Convert image to base64
                         const base64 = await new Promise((res, rej) => {
@@ -2096,15 +2096,13 @@ function App() {
                       } catch(err) {
                         console.error("Image scan error:", err);
                         setLoading(false); setQuery("");
-                        setError("Couldn't read that image. Try a clearer photo of the barcode or product label, or just type the product name.");
+                        setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
                       }
                     }}
                   />
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-                    <line x1="7" y1="8" x2="7" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/>
-                    <line x1="13" y1="8" x2="13" y2="16"/><line x1="16" y1="8" x2="16" y2="16"/>
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
                   </svg>
                 </label>
 
@@ -2116,7 +2114,7 @@ function App() {
 
               {isMobile && !loading && (
                 <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
-                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>📷 Tap the barcode icon to scan any product label</span>
+                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>📷 Tap to photo a product label, tag, or packaging</span>
                 </div>
               )}
 
