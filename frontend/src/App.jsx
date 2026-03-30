@@ -2013,7 +2013,7 @@ function App() {
               @keyframes float4 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-8px) translateX(-14px)} }
               @keyframes float5 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(12px)} }
             `}</style>
-            {/* Particle dots scattered across the hero — circles + diamonds */}
+            {/* Particle dots scattered across the hero — 40 particles */}
             {[
               {s:10, x:"8%",  y:"20%", a:0.25, anim:"float1", dur:"6s",   shape:"circle"},
               {s:6,  x:"15%", y:"65%", a:0.18, anim:"float2", dur:"8s",   shape:"circle"},
@@ -2040,6 +2040,21 @@ function App() {
               {s:6,  x:"86%", y:"85%", a:0.15, anim:"float2", dur:"10s",  shape:"circle"},
               {s:10, x:"48%", y:"5%",  a:0.12, anim:"float1", dur:"8.5s", shape:"circle"},
               {s:5,  x:"22%", y:"52%", a:0.2,  anim:"float5", dur:"7s",   shape:"diamond"},
+              {s:7,  x:"64%", y:"40%", a:0.16, anim:"float2", dur:"9s",   shape:"circle"},
+              {s:4,  x:"30%", y:"95%", a:0.14, anim:"float4", dur:"6.5s", shape:"diamond"},
+              {s:9,  x:"50%", y:"60%", a:0.12, anim:"float1", dur:"11s",  shape:"circle"},
+              {s:5,  x:"18%", y:"10%", a:0.2,  anim:"float3", dur:"7s",   shape:"circle"},
+              {s:8,  x:"97%", y:"22%", a:0.18, anim:"float5", dur:"8s",   shape:"diamond"},
+              {s:4,  x:"40%", y:"45%", a:0.14, anim:"float2", dur:"10s",  shape:"circle"},
+              {s:6,  x:"73%", y:"95%", a:0.12, anim:"float4", dur:"7.5s", shape:"circle"},
+              {s:10, x:"2%",  y:"30%", a:0.15, anim:"float1", dur:"9s",   shape:"diamond"},
+              {s:5,  x:"58%", y:"15%", a:0.2,  anim:"float3", dur:"6s",   shape:"circle"},
+              {s:7,  x:"35%", y:"60%", a:0.12, anim:"float5", dur:"8.5s", shape:"circle"},
+              {s:4,  x:"80%", y:"62%", a:0.18, anim:"float2", dur:"7s",   shape:"diamond"},
+              {s:11, x:"10%", y:"95%", a:0.1,  anim:"float4", dur:"12s",  shape:"circle"},
+              {s:5,  x:"90%", y:"45%", a:0.2,  anim:"float1", dur:"6.5s", shape:"circle"},
+              {s:6,  x:"28%", y:"40%", a:0.14, anim:"float3", dur:"9.5s", shape:"diamond"},
+              {s:8,  x:"62%", y:"68%", a:0.12, anim:"float5", dur:"8s",   shape:"circle"},
             ].map((p,i)=>(
               <div key={i} style={{
                 position:"absolute", left:p.x, top:p.y,

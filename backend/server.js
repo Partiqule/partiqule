@@ -128,6 +128,29 @@ async function searchProductDetails(productName) {
 }
 
 // ── CLAUDE API CALL ───────────────────────────────────────────
+// Robust JSON fixer — handles apostrophes, smart quotes, trailing commas, truncation
+function fixJson(raw) {
+  let s = raw;
+  // 1. Smart quotes → straight quotes
+  s = s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+  // 2. Trailing commas before } or ]
+  s = s.replace(/,(\s*[}\]])/g, '$1');
+  // 3. Escape unescaped apostrophes inside JSON string values
+  //    Walk char by char tracking if we're inside a string
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (escaped) { result += c; escaped = false; continue; }
+    if (c === '\\') { result += c; escaped = true; continue; }
+    if (c === '"') { inString = !inString; result += c; continue; }
+    if (inString && c === "'") { result += "\\'"; continue; }
+    result += c;
+  }
+  return result;
+}
+
 async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(ANTHROPIC_API, {
@@ -145,7 +168,6 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
       })
     });
     if (res.status === 429 && attempt < retries) {
-      // Rate limited — wait and retry
       const wait = (attempt + 1) * 2000;
       console.log(`Rate limited, retrying in ${wait}ms (attempt ${attempt+1})`);
       await new Promise(r => setTimeout(r, wait));
@@ -156,21 +178,10 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
     const text = data.content.map(b => b.text || "").join("").trim();
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response");
-    let clean = match[0];
-    // Fix common Claude JSON issues
-    clean = clean.replace(/[\u2018\u2019]/g, "\\'");   // smart single quotes
-    clean = clean.replace(/[\u201C\u201D]/g, '\\"');   // smart double quotes
-    clean = clean.replace(/,(\s*[}\]])/g, '$1');        // trailing commas
-    try {
-      return JSON.parse(clean);
-    } catch(e) {
-      // If still failing, try a more aggressive fix — replace all unescaped single quotes inside strings
-      const fixed = clean.replace(/"([^"]*?)'/g, (m, p1) => `"${p1.replace(/'/g, "\\'")}` );
-      try { return JSON.parse(fixed); } catch(e2) {
-        // Last resort — strip all control characters and try again
-        const stripped = clean.replace(/[\x00-\x1F\x7F]/g, ' ');
-        return JSON.parse(stripped);
-      }
+    try { return JSON.parse(fixJson(match[0])); }
+    catch(e) {
+      console.error("JSON parse failed, raw:", match[0].slice(0, 200));
+      throw new Error(`JSON parse error: ${e.message}`);
     }
   }
 }
@@ -238,13 +249,8 @@ SCORING RULES:
   const text = data.content.map(b => b.text || "").join("").trim();
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("No JSON in vision response");
-  let clean = match[0]
-    .replace(/[\u2018\u2019]/g, "\\'")
-    .replace(/[\u201C\u201D]/g, '\\"')
-    .replace(/,(\s*[}\]])/g, '$1');
-  try { return JSON.parse(clean); } catch(e) {
-    return JSON.parse(clean.replace(/[\x00-\x1F\x7F]/g, ' '));
-  }
+  try { return JSON.parse(fixJson(match[0])); }
+  catch(e) { throw new Error(`Vision JSON parse error: ${e.message}`); }
 }
 
 async function pass1(productName, materialContext = null) {
