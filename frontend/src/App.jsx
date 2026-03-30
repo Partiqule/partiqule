@@ -1169,7 +1169,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
 
         {/* Founders story */}
         <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:16}}>
-          <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we built this</div>
+          <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we started Partiqule</div>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
             We started Partiqule after what we now call our "plastic awakening."
           </p>
@@ -1634,8 +1634,6 @@ function App() {
   return (
     <div style={{minHeight:"100vh", background:bg, fontFamily:"system-ui,-apple-system,sans-serif", transition:"background 0.3s"}}>
       <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0;transform:translateY(40px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}.score-reveal{animation:slideInUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
-        />
-      )}
 
       {/* HEADER */}
       <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s"}}>
