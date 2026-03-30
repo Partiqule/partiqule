@@ -2056,6 +2056,64 @@ function App() {
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
                   style={{flex:1, padding:"14px 12px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111"}}/>
+                {/* Barcode camera button */}
+                <label title="Scan a barcode" style={{display:"flex", alignItems:"center", justifyContent:"center", padding:"0 14px", cursor:"pointer", borderRight:"1px solid #eee", flexShrink:0}}>
+                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      e.target.value = "";
+                      // Load ZXing from CDN if not already loaded
+                      if (!window.ZXing) {
+                        await new Promise((resolve, reject) => {
+                          const script = document.createElement("script");
+                          script.src = "https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.20.0/zxing.min.js";
+                          script.onload = resolve;
+                          script.onerror = reject;
+                          document.head.appendChild(script);
+                        });
+                      }
+                      try {
+                        const hints = new Map();
+                        const formats = [
+                          window.ZXing.BarcodeFormat.EAN_13,
+                          window.ZXing.BarcodeFormat.EAN_8,
+                          window.ZXing.BarcodeFormat.UPC_A,
+                          window.ZXing.BarcodeFormat.UPC_E,
+                          window.ZXing.BarcodeFormat.CODE_128,
+                          window.ZXing.BarcodeFormat.CODE_39,
+                          window.ZXing.BarcodeFormat.QR_CODE,
+                        ];
+                        hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+                        const reader = new window.ZXing.MultiFormatReader();
+                        reader.setHints(hints);
+                        const img = await createImageBitmap(file);
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const luminance = new window.ZXing.RGBLuminanceSource(imageData.data, canvas.width, canvas.height);
+                        const binaryBitmap = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(luminance));
+                        const decoded = reader.decode(binaryBitmap);
+                        const barcode = decoded.getText();
+                        setQuery(barcode);
+                        analyze(barcode);
+                      } catch(err) {
+                        // Could not decode — let user know
+                        setQuery("");
+                        alert("Couldn't read that barcode. Try a clearer photo with good lighting, or type the product name instead.");
+                      }
+                    }}
+                  />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                    <line x1="7" y1="12" x2="7" y2="12.01"/><line x1="12" y1="7" x2="12" y2="17"/>
+                    <line x1="17" y1="12" x2="17" y2="12.01"/><line x1="7" y1="7" x2="7" y2="17"/>
+                  </svg>
+                </label>
                 <button onClick={()=>analyze()} disabled={!query.trim()||loading}
                   style={{padding:"14px 28px", border:"none", background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999", fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default", whiteSpace:"nowrap", transition:"background 0.15s", flexShrink:0}}>
                   {loading?"…":"Scan"}
