@@ -2434,8 +2434,8 @@ function App() {
                   )}
                 </div>
 
-                {/* AI alternatives first when no DB matches — most relevant for niche products */}
-                {result.ai_alternatives?.length > 0 && !result.alternatives?.length && (
+                {/* AI alternatives first when no DB matches OR when category is "other" (vehicles etc) */}
+                {result.ai_alternatives?.length > 0 && (!result.alternatives?.length || result.category === "other") && (
                   <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:8}}>
                     {result.ai_alternatives.map((alt, i) => (
                       <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
@@ -2461,8 +2461,8 @@ function App() {
                   </div>
                 )}
 
-                {/* AI alternatives as "more suggestions" below DB results */}
-                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && (
+                {/* AI alternatives as secondary suggestions below DB results — only for standard categories */}
+                {result.ai_alternatives?.length > 0 && result.alternatives?.length > 0 && result.category !== "other" && (
                   <div style={{marginTop:16}}>
                     <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:12}}>More suggestions from our AI</div>
                     <div style={{display:"flex", flexDirection:"column", gap:8}}>
