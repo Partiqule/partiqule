@@ -2880,10 +2880,21 @@ const products = [
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
-  // Combine both queries for maximum matching surface
   const queries = [query, fallbackQuery].filter(Boolean).map(q => q.toLowerCase().trim());
 
-  // 1. Check direct swap map against ALL query variants
+  // Category compatibility — only return products that make sense for the scanned item
+  // This prevents water bottles showing up for gum, socks for food, etc.
+  const CATEGORY_COMPATIBLE = {
+    food_beverage:  ["food_beverage", "kitchen"],      // food → food/kitchen alternatives only
+    kitchen:        ["kitchen", "food_beverage"],
+    clothing:       ["clothing"],
+    personal_care:  ["personal_care"],
+    baby:           ["baby", "personal_care", "clothing"],
+    other:          [],  // no DB alternatives for other (vehicles, electronics)
+  };
+  const compatibleCats = CATEGORY_COMPATIBLE[category] || [];
+
+  // 1. Direct swap map
   for (const q of queries) {
     for (const [keyword, ids] of Object.entries(DIRECT_SWAPS)) {
       if (q.includes(keyword) || keyword.includes(q.split(" ").filter(w=>w.length>3)[0]||"__")) {
@@ -2896,15 +2907,15 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     }
   }
 
-  // 2. Score-based matching — search all query variants
+  // 2. Score-based matching — compatible categories only
   const allWords = queries
     .flatMap(q => q.split(/\s+/))
     .filter(w => w.length > 2)
-    .filter((w, i, arr) => arr.indexOf(w) === i); // dedupe
+    .filter((w, i, arr) => arr.indexOf(w) === i);
 
-  // Score-based matching — require meaningful relevance
   const scored = products
     .filter(p => p.plasticScore <= 4)
+    .filter(p => compatibleCats.length === 0 ? false : compatibleCats.includes(p.category))
     .map(p => {
       let score = 0;
       if (category && p.category === category) score += 10;
@@ -2921,14 +2932,14 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       });
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore >= 4)  // require meaningful relevance — score must match keywords
+    .filter(p => p.relevanceScore >= 2)  // category-filtered so just need some relevance
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
 
-  // 3. Same-category fallback only if we have a strong category match
-  if (scored.length < limit && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
+  // 3. Same-category fallback only for known consumer categories
+  if (scored.length < limit && compatibleCats.length > 0 && category && ["clothing","food_beverage","personal_care","kitchen","baby"].includes(category)) {
     const fallbacks = products
-      .filter(p => p.plasticScore <= 2 && p.category === category && !scored.find(s => s.id === p.id))
+      .filter(p => p.plasticScore <= 2 && compatibleCats.includes(p.category) && !scored.find(s => s.id === p.id))
       .sort((a, b) => a.plasticScore - b.plasticScore)
       .slice(0, limit - scored.length);
     return [...scored, ...fallbacks];

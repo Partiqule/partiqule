@@ -262,14 +262,21 @@ const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
           <span style={{fontSize:12, color:muted, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
         </div>
 
-        {/* Sub-score pills — always visible */}
+        {/* Sub-score rows — stacked vertically */}
         {!open && (
-          <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+          <div style={{display:"flex", flexDirection:"column", gap:8}}>
             {Object.entries(bd).map(([key, val]) => (
-              <div key={key} style={{display:"flex", alignItems:"center", gap:4, background:isDark?"rgba(255,255,255,0.06)":"rgba(0,0,0,0.04)", borderRadius:8, padding:"4px 10px"}}>
-                <span style={{fontSize:11}}>{icons[key]}</span>
-                <span style={{fontSize:11, color:muted}}>{labels[key]}</span>
-                <span style={{fontSize:12, fontWeight:700, color:scoreColor(val.score)}}>{val.score}</span>
+              <div key={key} style={{display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                <div style={{display:"flex", alignItems:"center", gap:6}}>
+                  <span style={{fontSize:13}}>{icons[key]}</span>
+                  <span style={{fontSize:13, color:muted}}>{labels[key]}</span>
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:8}}>
+                  <div style={{width:60, height:5, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                    <div style={{height:"100%", width:`${(val.score/10)*100}%`, background:scoreColor(val.score), borderRadius:99}}/>
+                  </div>
+                  <span style={{fontSize:13, fontWeight:700, color:scoreColor(val.score), minWidth:18, textAlign:"right"}}>{val.score}</span>
+                </div>
               </div>
             ))}
           </div>
