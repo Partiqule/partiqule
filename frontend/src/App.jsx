@@ -2307,76 +2307,42 @@ function App() {
                 </div>
               </div>
             )}
-            {/* SCAN BY CATEGORY */}
-            {(() => {
-              const DEFAULTS = {
-                kitchen:       ["non-stick frying pan","plastic cutting board","Tupperware containers","cling wrap"],
-                personal_care: ["plastic shampoo bottle","disposable razor","wet wipes","synthetic loofah"],
-                clothing:      ["polyester fleece jacket","synthetic yoga pants","nylon activewear","spandex leggings"],
-                food_beverage: ["Lipton tea bags","plastic water bottle","Styrofoam coffee cup","chewing gum"],
-                baby:          ["plastic baby bottle","disposable diapers","plastic teething toy","baby food pouch"],
-                other:         ["Tesla Model Y","Kia Sportage","Cadillac Escalade","Rivian R1S"],
-              };
-              const CATS = [
-                {key:"kitchen",       emoji:"🍳", label:"Kitchen & Cookware",  color:"#d97706", bg:isDark?"#1e1a00":"#fffbeb"},
-                {key:"personal_care", emoji:"🧴", label:"Personal Care",        color:"#db2777", bg:isDark?"#1e0a14":"#fdf2f8"},
-                {key:"clothing",      emoji:"👕", label:"Clothing & Textiles",  color:"#6366f1", bg:isDark?"#0e0e1e":"#eef2ff"},
-                {key:"food_beverage", emoji:"🍔", label:"Food & Drink",          color:"#0891b2", bg:isDark?"#001e20":"#ecfeff"},
-                {key:"baby",          emoji:"👶", label:"Baby & Kids",           color:"#7c3aed", bg:isDark?"#0e0a1e":"#f5f3ff"},
-                {key:"other",         emoji:"🚗", label:"Vehicles & More",       color:"#16a34a", bg:isDark?"#0a1e0a":"#f0fdf4"},
-              ];
-
-              // Build per-category lists from real history, shuffle, pick 4
-              const byCategory = {};
-              history.forEach(item => {
-                const cat = item.category || "other";
-                if (!byCategory[cat]) byCategory[cat] = [];
-                const name = item.product_name;
-                if (name && !byCategory[cat].includes(name)) byCategory[cat].push(name);
-              });
-
-              const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
-
-              return (
-                <div style={{maxWidth:1100, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-                  <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>
-                    What are you curious about?
-                  </h2>
-                  <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:28}}>
-                    {history.length > 4 ? "Based on what people have been scanning" : "Tap anything to get its score instantly"}
-                  </p>
-                  <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)", gap:isMobile?10:14}}>
-                    {CATS.map((cat, i) => {
-                      const fromHistory = byCategory[cat.key] || [];
-                      const defaults = DEFAULTS[cat.key] || [];
-                      // Mix: real scans first, fill with defaults, shuffle, take 4
-                      const combined = [...new Set([...fromHistory, ...defaults])];
-                      const searches = shuffle(combined).slice(0, 4);
-                      return (
-                        <div key={i} style={{background:cat.bg, borderRadius:14, padding:"18px", border:`1.5px solid ${cat.color}22`}}>
-                          <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
-                            <span style={{fontSize:20}}>{cat.emoji}</span>
-                            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:cat.color}}>{cat.label}</span>
-                          </div>
-                          <div style={{display:"flex", flexDirection:"column", gap:5}}>
-                            {searches.map((s, j) => (
-                              <button key={j} onClick={()=>{setQuery(s); analyze(s);}}
-                                style={{background:"rgba(255,255,255,0.55)", border:`1px solid ${cat.color}22`, borderRadius:8, padding:"5px 10px", fontSize:12, color:isDark?"#e2e8f0":"#333", cursor:"pointer", textAlign:"left", transition:"all 0.15s", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}
-                                onMouseEnter={e=>{e.currentTarget.style.background=cat.bg; e.currentTarget.style.borderColor=cat.color; e.currentTarget.style.color=cat.color;}}
-                                onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.55)"; e.currentTarget.style.borderColor=`${cat.color}22`; e.currentTarget.style.color=isDark?"#e2e8f0":"#333";}}>
-                                {s.length > 28 ? s.slice(0,25)+"…" : s}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+            {/* Fun stat graphic */}
+            <div style={{maxWidth:900, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+              <div style={{background:"#052e16", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", textAlign:"center"}}>
+                {/* Background particles */}
+                {[
+                  {s:8,x:"5%",y:"20%",a:0.2},{s:5,x:"92%",y:"15%",a:0.15},{s:12,x:"88%",y:"70%",a:0.18},
+                  {s:6,x:"8%",y:"75%",a:0.2},{s:9,x:"50%",y:"8%",a:0.12},{s:4,x:"70%",y:"90%",a:0.15},
+                  {s:7,x:"25%",y:"85%",a:0.1},{s:5,x:"78%",y:"45%",a:0.18},{s:10,x:"15%",y:"45%",a:0.12},
+                ].map((p,i)=>(
+                  <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:"50%",background:"white",opacity:p.a,pointerEvents:"none"}}/>
+                ))}
+                <div style={{position:"relative", zIndex:1}}>
+                  <div style={{fontSize:isMobile?13:14, color:"#4ade80", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>The scale of the problem</div>
+                  <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?24:32, marginBottom:32}}>
+                    {[
+                      {number:"5g", label:"plastic consumed per person per week", sub:"weight of a credit card"},
+                      {number:"11B", label:"microplastic particles per cup of nylon tea bag tea", sub:"Hernandez et al. 2019"},
+                      {number:"100%", label:"of human blood samples tested contained microplastics", sub:"Leslie et al. 2022"},
+                      {number:"700K", label:"microfibers released per wash from a single fleece jacket", sub:"Environment International"},
+                    ].map((s,i)=>(
+                      <div key={i}>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?28:36, color:"#4ade80", lineHeight:1, marginBottom:8}}>{s.number}</div>
+                        <div style={{fontSize:12, color:"rgba(255,255,255,0.75)", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
+                        <div style={{fontSize:10, color:"rgba(255,255,255,0.35)", fontStyle:"italic"}}>{s.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{fontSize:isMobile?15:17, color:"rgba(255,255,255,0.6)", lineHeight:1.7, maxWidth:520, margin:"0 auto"}}>
+                    Most products carry no warning. No label. No guidance on what to do instead.
+                    <span style={{color:"#4ade80", fontWeight:600}}> That's why Partiqule exists.</span>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            </div>
 
-            {/* Illustrated trust strip */}
+                        {/* Illustrated trust strip */}
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
               <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
                 {[
