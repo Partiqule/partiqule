@@ -1425,8 +1425,14 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
             {name:"Paul Miller", role:"Co-Founder, Product Development", detail:"Leads product development and defines the scoring framework behind every result.", photo:"/paul.jpg"},
             {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale.", photo:"/sara.jpg"},
           ].map((person, i) => (
-            <div key={i} style={{background:surface, borderRadius:14, padding:"24px 22px", border:`1.5px solid ${border}`, display:"flex", gap:16, alignItems:"flex-start"}}>
-              <img src={person.photo} alt={person.name} style={{width:72, height:72, borderRadius:"50%", objectFit:"cover", flexShrink:0, border:"2px solid #16a34a"}}/>
+            <div key={i} style={{background:surface, borderRadius:14, padding:"24px 22px", border:`1.5px solid ${border}`, display:"flex", gap:18, alignItems:"flex-start"}}>
+              <div style={{width:90, height:90, borderRadius:"50%", flexShrink:0, overflow:"hidden", border:"2px solid #16a34a"}}>
+                <img src={person.photo} alt={person.name} style={{
+                  width:"170%", height:"170%",
+                  objectFit:"cover",
+                  marginLeft:"-35%", marginTop:"-35%",
+                }}/>
+              </div>
               <div>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
                 <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
