@@ -294,6 +294,43 @@ async function safePass2(productName, pass1Result) {
 }
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
+// ── SCAN IMAGE — reads barcode or product label via Claude vision ──
+app.post("/scan-image", async (req, res) => {
+  const { image, mediaType } = req.body;
+  if (!image) return res.status(400).json({ error: "No image provided" });
+
+  try {
+    const response = await fetch(ANTHROPIC_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 100,
+        system: "You are a product identifier. Given an image of a product, barcode, or product label, return ONLY the product name — nothing else. If you see a barcode, identify the most likely product it belongs to based on any visible text. Return just the product name, 1-6 words, no punctuation.",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType || "image/jpeg", data: image } },
+            { type: "text", text: "What product is this? Return only the product name." }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const query = data.content?.[0]?.text?.trim();
+    if (!query) return res.status(400).json({ error: "Could not identify product" });
+    res.json({ query });
+  } catch(err) {
+    console.error("scan-image error:", err);
+    res.status(500).json({ error: "Image scan failed" });
+  }
+});
+
 app.post("/analyze", async (req, res) => {
   let { query } = req.body;
   if (!query?.trim()) return res.status(400).json({ error: "Query is required" });

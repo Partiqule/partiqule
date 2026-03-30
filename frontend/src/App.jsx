@@ -2068,31 +2068,28 @@ function App() {
                       setResult(null); setError(null); setPage("home");
                       setLoading(true); setQuery("Reading barcode…");
                       try {
-                        if (!window.Quagga) {
-                          await new Promise((res, rej) => {
-                            const s = document.createElement("script");
-                            s.src = "https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js";
-                            s.onload = res; s.onerror = rej;
-                            document.head.appendChild(s);
-                          });
-                        }
-                        const src = URL.createObjectURL(file);
-                        const barcode = await new Promise((res, rej) => {
-                          window.Quagga.decodeSingle({
-                            src, numOfWorkers: 0,
-                            inputStream: { size: 1200 },
-                            decoder: { readers: ["ean_reader","ean_8_reader","upc_reader","upc_e_reader","code_128_reader","code_39_reader"] },
-                            locate: true,
-                          }, (result) => {
-                            URL.revokeObjectURL(src);
-                            result?.codeResult?.code ? res(result.codeResult.code) : rej(new Error("No barcode found"));
-                          });
+                        // Convert image to base64
+                        const base64 = await new Promise((res, rej) => {
+                          const reader = new FileReader();
+                          reader.onload = () => res(reader.result.split(",")[1]);
+                          reader.onerror = rej;
+                          reader.readAsDataURL(file);
                         });
-                        setQuery(barcode);
-                        analyze(barcode);
+                        // Send to backend — Claude reads the barcode/product from the image
+                        const resp = await fetch(`${API_BASE}/scan-image`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ image: base64, mediaType: file.type || "image/jpeg" })
+                        });
+                        if (!resp.ok) throw new Error("Scan failed");
+                        const { query: detectedQuery } = await resp.json();
+                        if (!detectedQuery) throw new Error("Nothing detected");
+                        setQuery(detectedQuery);
+                        analyze(detectedQuery);
                       } catch(err) {
+                        console.error("Image scan error:", err);
                         setLoading(false); setQuery("");
-                        setError("Couldn't read that barcode — make sure the barcode fills the frame and is well lit. You can also just type the product name.");
+                        setError("Couldn't read that image. Try a clearer photo of the barcode or product label, or just type the product name.");
                       }
                     }}
                   />
