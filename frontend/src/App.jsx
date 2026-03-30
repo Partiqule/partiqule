@@ -1533,7 +1533,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           Questions, partnerships, press, or just want to say hi? Reach us at{" "}
-          <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
+          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
           We read every email.
         </p>
       </div>
@@ -1893,7 +1893,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:8}}>Questions about our methodology?</div>
         <p style={{fontSize:14, color:muted, lineHeight:1.7, margin:0}}>
           We welcome scrutiny. If you believe a score is inaccurate, or have published research that should inform our parameters, email us at{" "}
-          <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
+          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
           We read every message.
         </p>
       </div>
@@ -2223,7 +2223,7 @@ function App() {
                 <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IcoSearch size={20}/></div>
                 <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
-                  style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:isMobile?14:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
+                  style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
 
                 {/* Camera button — mobile only */}
                 {isMobile && (
@@ -2707,7 +2707,7 @@ function App() {
           <div style={{marginBottom:8}}>
             © 2026 Partiqule · <span style={{color:"#555"}}>Affiliate disclosure: we may earn commissions on recommended products.</span>
           </div>
-          <a href="mailto:paul@partiqule.com" style={{color:"#555", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
+          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#555", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
             onMouseEnter={e=>e.target.style.color="#4ade80"}
             onMouseLeave={e=>e.target.style.color="#555"}>
             paul@partiqule.com
