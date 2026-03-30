@@ -2096,7 +2096,7 @@ function App() {
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"How it Works",       pg:"methodology"},
-              {label:"My Scans",           pg:"history", icon:<IcoSaved size={16}/>},
+              {label:"My Scans",           pg:"history"},
             ].map(item=>(
               <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
                 style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
@@ -2307,7 +2307,7 @@ function App() {
                 <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
               </div>
 
-              {!loading && null}
+              
               {loading && <div style={{marginTop:8}}><LoadingState/></div>}
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
             </div>
@@ -2590,16 +2590,8 @@ function App() {
                     .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                     .slice(0, 3 - dbAlts.length);
 
+
                   const hasAffiliate = dbAlts.length > 0 && cat !== "other";
-
-                  // AI alternatives — deduplicated against DB, fill up to 3
-                  const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
-                  const aiAlts = (result.ai_alternatives || [])
-                    .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
-                    .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
-                    .slice(0, 3 - dbAlts.length);
-
-                  const hasAffiliate = dbAlts.length > 0;
 
                   if (!dbAlts.length && !aiAlts.length) return null;
 
