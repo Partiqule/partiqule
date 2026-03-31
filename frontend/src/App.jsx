@@ -40,13 +40,15 @@ const GlobeLoading = () => {
   const containerRef = useRef(null);
   const angleRef     = useRef(0);
   const frameRef     = useRef(null);
+  const glowRef      = useRef(Array.from({length:200}, () => 0));
+  const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
   const factIdxRef   = useRef(0);
-  const [flyingFacts, setFlyingFacts] = useState([]);
-  const [stage,       setStage]       = useState(0);
+  const [flyingFact, setFlyingFact] = useState(null); // one at a time
+  const [stage,      setStage]      = useState(0);
 
-  // rAF globe rotation — direct DOM manipulation, no re-renders
+  // rAF — rotation + per-particle glow, no re-renders
   useEffect(() => {
-    const CX = 155, CY = 155, R = 130;
+    const CX = 155, CY = 155, R = 128;
     const animate = () => {
       angleRef.current += 0.006;
       if (containerRef.current) {
@@ -61,11 +63,24 @@ const GlobeLoading = () => {
           const sx = CX + rx * R * persp;
           const sy = CY - p.y * R * persp;
           const sz = Math.max(1.5, 1.5 + persp * 4.5).toFixed(1);
-          const op = Math.max(0.05, Math.min(0.9, 0.08 + (rz + 1) * 0.4)).toFixed(2);
-          el.style.transform = `translate(${(sx - 3).toFixed(1)}px,${(sy - 3).toFixed(1)}px)`;
-          el.style.opacity   = op;
+          const baseOp = Math.max(0.05, Math.min(0.88, 0.08 + (rz + 1) * 0.40));
+
+          // Random glow pulse per particle
+          if (glowTimer.current[i] <= 0) {
+            glowTimer.current[i] = 50 + Math.floor(Math.random() * 220);
+            if (Math.random() < 0.28) glowRef.current[i] = 1.0;
+          } else {
+            glowTimer.current[i]--;
+          }
+          const g = glowRef.current[i];
+          if (g > 0) glowRef.current[i] = Math.max(0, g - 0.032);
+
+          el.style.transform = `translate(${(sx-3).toFixed(1)}px,${(sy-3).toFixed(1)}px)`;
+          el.style.opacity   = Math.min(1, baseOp + g * 0.82).toFixed(2);
           el.style.width     = sz + "px";
           el.style.height    = sz + "px";
+          el.style.background   = g > 0.4 ? "#86efac" : "#4ade80";
+          el.style.boxShadow    = g > 0.35 ? `0 0 ${Math.round(g*10)}px rgba(74,222,128,${(g*0.85).toFixed(2)})` : "none";
         });
       }
       frameRef.current = requestAnimationFrame(animate);
@@ -76,87 +91,79 @@ const GlobeLoading = () => {
 
   // Stage progression
   useEffect(() => {
-    const timers = [
+    const t = [
       setTimeout(() => setStage(1), 8000),
       setTimeout(() => setStage(2), 16000),
       setTimeout(() => setStage(3), 22000),
     ];
-    return () => timers.forEach(clearTimeout);
+    return () => t.forEach(clearTimeout);
   }, []);
 
-  // Launch particle off globe every 4 seconds
+  // One flying fact at a time
   useEffect(() => {
     const launch = () => {
       const fact = HEALTH_FACTS[factIdxRef.current];
       factIdxRef.current = (factIdxRef.current + 1) % HEALTH_FACTS.length;
-      // Pick point on visible front face using current rotation
-      const phi   = (Math.random() - 0.5) * Math.PI * 0.75;
-      const theta = angleRef.current + (Math.random() - 0.5) * 0.5;
-      const px    = Math.cos(phi) * Math.sin(theta);
-      const py    = Math.sin(phi);
-      const pz    = Math.cos(phi) * Math.cos(theta);
-      const persp = 2.6 / (2.6 + pz);
-      const sx    = 155 + px * 130 * persp;
-      const sy    = 155 - py * 130 * persp;
-      const id    = Date.now() + Math.random();
-      setFlyingFacts(prev => [...prev, { id, fact, x: sx, y: sy }]);
-      setTimeout(() => setFlyingFacts(prev => prev.filter(f => f.id !== id)), 4600);
+      setFlyingFact({ id: Date.now(), fact });
+      setTimeout(() => setFlyingFact(null), 3800);
     };
-    const t0 = setTimeout(launch, 700);
+    const t0 = setTimeout(launch, 800);
     const iv = setInterval(launch, 4000);
     return () => { clearTimeout(t0); clearInterval(iv); };
   }, []);
 
   return (
-    <div style={{display:"flex", flexDirection:"column", alignItems:"center", padding:"8px 0"}}>
+    <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
       <style>{`
-        @keyframes factFly {
-          0%   { opacity:0;   transform:translate(-50%,-50%) scale(0.25) translateY(0px); }
-          12%  { opacity:1;   transform:translate(-50%,-50%) scale(1)    translateY(0px); }
-          68%  { opacity:1;   transform:translate(-50%,-50%) scale(1)    translateY(-120px); }
-          88%  { opacity:0.4; transform:translate(-50%,-50%) scale(0.95) translateY(-150px); }
-          100% { opacity:0;   transform:translate(-50%,-50%) scale(0.9)  translateY(-170px); }
+        @keyframes factRise {
+          0%   { opacity:0; transform:translateX(-50%) translateY(20px) scale(0.5); }
+          14%  { opacity:1; transform:translateX(-50%) translateY(0px)  scale(1);   }
+          68%  { opacity:1; transform:translateX(-50%) translateY(-90px) scale(1);  }
+          88%  { opacity:0.4; transform:translateX(-50%) translateY(-118px) scale(0.96); }
+          100% { opacity:0; transform:translateX(-50%) translateY(-136px) scale(0.92); }
         }
-        @keyframes globePulse {
-          0%,100% { opacity:0.10; } 50% { opacity:0.22; }
+        @keyframes globeRing {
+          0%,100% { opacity:0.07; } 50% { opacity:0.18; }
         }
       `}</style>
 
-      {/* Globe */}
-      <div ref={containerRef} style={{position:"relative", width:310, height:310, marginBottom:24}}>
+      <div ref={containerRef} style={{position:"relative", width:310, height:310, marginBottom:28}}>
         {SPHERE_POINTS.map((_, i) => (
           <div key={i} data-pt={i} style={{
             position:"absolute", top:0, left:0, width:4, height:4,
             borderRadius:"50%", background:"#4ade80", pointerEvents:"none",
           }}/>
         ))}
+
+        {/* Single subtle ring — no ellipses that cause double-globe */}
         <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} width={310} height={310}>
-          <circle cx={155} cy={155} r={130} fill="none" stroke="#4ade80" strokeWidth={0.6} style={{animation:"globePulse 3s ease-in-out infinite"}}/>
-          <ellipse cx={155} cy={155} rx={130} ry={44} fill="none" stroke="#4ade80" strokeWidth={0.4} opacity={0.08}/>
-          <ellipse cx={155} cy={155} rx={44}  ry={130} fill="none" stroke="#4ade80" strokeWidth={0.4} opacity={0.08}/>
+          <circle cx={155} cy={155} r={128} fill="none" stroke="#4ade80" strokeWidth={0.6}
+            style={{animation:"globeRing 3.5s ease-in-out infinite"}}/>
         </svg>
-        {/* Flying fact particles */}
-        {flyingFacts.map(fp => (
-          <div key={fp.id} style={{
-            position:"absolute", left:fp.x, top:fp.y,
-            animation:"factFly 4.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards",
-            pointerEvents:"none", zIndex:20, width:188,
+
+        {/* One fact card at a time, rises from equator */}
+        {flyingFact && (
+          <div key={flyingFact.id} style={{
+            position:"absolute", left:"50%", top:80,
+            width:210, pointerEvents:"none", zIndex:20,
+            animation:"factRise 3.8s cubic-bezier(0.25,0.46,0.45,0.94) forwards",
           }}>
             <div style={{
-              background:"rgba(5,46,22,0.95)", border:"1.5px solid rgba(74,222,128,0.65)",
-              borderRadius:12, padding:"10px 14px", textAlign:"center",
-              boxShadow:"0 4px 24px rgba(74,222,128,0.18)", backdropFilter:"blur(8px)",
+              background:"rgba(5,46,22,0.96)",
+              border:"1.5px solid rgba(74,222,128,0.6)",
+              borderRadius:14, padding:"12px 16px", textAlign:"center",
+              boxShadow:"0 4px 28px rgba(74,222,128,0.2)",
             }}>
-              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,fontSize:24,color:"#4ade80",lineHeight:1,marginBottom:5}}>
-                {fp.fact.stat}
+              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,fontSize:26,color:"#4ade80",lineHeight:1,marginBottom:6}}>
+                {flyingFact.fact.stat}
               </div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.65)",lineHeight:1.45}}>
-                {fp.fact.text}
+              <div style={{fontSize:11, color:"rgba(255,255,255,0.65)", lineHeight:1.5}}>
+                {flyingFact.fact.text}
               </div>
             </div>
-            <div style={{width:7,height:7,borderRadius:"50%",background:"#4ade80",margin:"0 auto",boxShadow:"0 0 8px #4ade80"}}/>
+            <div style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",margin:"2px auto 0",boxShadow:"0 0 8px #4ade80"}}/>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Stage indicator */}
@@ -170,13 +177,14 @@ const GlobeLoading = () => {
             }}/>
           ))}
         </div>
-        <div style={{fontSize:13, color:"rgba(255,255,255,0.55)", letterSpacing:"0.02em"}}>
+        <div style={{fontSize:13, color:"rgba(255,255,255,0.5)", letterSpacing:"0.03em"}}>
           {STAGES[stage]}
         </div>
       </div>
     </div>
   );
 };
+
 
 
 const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
@@ -2241,27 +2249,11 @@ function App() {
             ))}
             <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1}}>
 
-              {/* Globe overlay — fades in over everything when loading */}
-              {loading && (
-                <div style={{
-                  position:"absolute", top:"50%", left:"50%",
-                  transform:"translate(-50%, -50%)",
-                  zIndex:10, width:"100%",
-                  display:"flex", justifyContent:"center",
-                  animation:"fadeIn 0.5s ease forwards",
-                }}>
-                  <style>{`@keyframes fadeIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.92)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}`}</style>
-                  <GlobeLoading/>
-                </div>
-              )}
-
-              {/* Hero content — fades out when loading */}
+              {/* Hero content — always rendered, just fades when loading */}
               <div style={{
-                transition:"opacity 0.45s ease, transform 0.45s ease",
+                transition:"opacity 0.4s ease",
                 opacity: loading ? 0 : 1,
-                transform: loading ? "scale(0.94) translateY(-12px)" : "scale(1) translateY(0)",
                 pointerEvents: loading ? "none" : "auto",
-                visibility: loading ? "hidden" : "visible",
               }}>
               <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", color:"#86efac", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:24, textTransform:"uppercase", letterSpacing:"0.05em", backdropFilter:"blur(4px)"}}>
                 <IconShield size={13} color="#86efac"/> AI-Powered Risk Analysis
@@ -2359,23 +2351,26 @@ function App() {
                   <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
                   <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
                 </div>
-              </div>
-
-              {/* Globe — fades in when scanning */}
-              <div style={{
-                transition:"opacity 0.5s ease, transform 0.5s ease",
-                opacity: loading ? 1 : 0,
-                transform: loading ? "translateY(0)" : "translateY(16px)",
-                pointerEvents:"none",
-                position: loading ? "relative" : "absolute",
-                width:"100%",
-              }}>
-                {loading && <GlobeLoading/>}
-              </div>
+              </div>{/* end hero content fade wrapper */}
 
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
             </div>
           </section>
+
+          {/* Fixed fullscreen globe overlay — covers entire viewport, centered */}
+          {loading && (
+            <div style={{
+              position:"fixed", top:0, left:0, right:0, bottom:0,
+              background:"#052e16",
+              zIndex:9999,
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center",
+              animation:"globeOverlayIn 0.4s ease forwards",
+            }}>
+              <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
+              <GlobeLoading/>
+            </div>
+          )}
 
           <div style={{paddingTop:isMobile?32:56}}>
 
