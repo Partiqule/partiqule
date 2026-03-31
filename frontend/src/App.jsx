@@ -488,7 +488,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
   const bg          = isDark ? "#1e2433" : scoreBg(score);
   const borderColor = score<=3?"#bbf7d0":score<=6?"#fde68a":score<=8?"#fed7aa":"#fecaca";
   return (
-    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8}}>
           <span style={{fontSize:16}}>{icon}</span>
@@ -499,14 +499,14 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
         <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
       </button>
       {open && (
-        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`, textAlign:"left"}}>
           {children}
           {concerns?.length > 0 && (
             <div style={{display:"flex", flexDirection:"column", gap:6, marginTop:10}}>
               {concerns.map((c,i)=>(
                 <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
                   <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
-                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c}</span>
+                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5, textAlign:"left"}}>{c}</span>
                 </div>
               ))}
             </div>
@@ -533,8 +533,8 @@ const ManufacturingBadge = ({mfg, isDark, muted}) => {
         <span style={{fontSize:11, color:muted, marginLeft:"auto", transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
       </button>
       {open && (
-        <div style={{padding:"10px 14px", background:isDark?"#1a2030":"#f9fafb", borderRadius:"0 0 10px 10px", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderTop:"none"}}>
-          <p style={{fontSize:12, color:muted, lineHeight:1.6, margin:"0 0 6px", fontStyle:"italic"}}>{mfg.label}</p>
+        <div style={{padding:"10px 14px", background:isDark?"#1a2030":"#f9fafb", borderRadius:"0 0 10px 10px", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderTop:"none", textAlign:"left"}}>
+          <p style={{fontSize:12, color:muted, lineHeight:1.6, margin:"0 0 6px", fontStyle:"italic", textAlign:"left"}}>{mfg.label}</p>
           {mfg.concerns?.map((c,i)=>(
             <div key={i} style={{fontSize:12, color:muted, lineHeight:1.5}}>• {c}</div>
           ))}
@@ -2458,11 +2458,6 @@ function App() {
                 <SplitView result={result} isDark={isDark} onScan={(name)=>{setResult(null); setQuery(name); analyze(name);}}/>
                 <ShareBadge result={result}/>
               </div>
-
-              {/* SCORE BREAKDOWN — collapsible */}
-              {result.breakdown && (
-                <ScoreBreakdown result={result} isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
-              )}
 
               {result.concerns?.length>0&&(
                 <div className="fade-up" style={{background:isDark?"#1e2433":"#fffbeb", borderRadius:16, padding:"28px 32px", border:`1.5px solid ${isDark?"#2a3347":"#fde68a"}`, borderLeft:"4px solid #d97706"}}>

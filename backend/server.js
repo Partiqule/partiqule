@@ -342,10 +342,17 @@ MANUFACTURING (production process — score conservatively, flag as estimated):
 - Unknown: score 4-5 and flag confidence as low.
 - Weight is low — do not let manufacturing dominate the final score.
 
+- ARTIFICIAL DYES in food (Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2): score materials 6-8. FDA banned Red 3 (2025) and is phasing out all petroleum-based dyes due to carcinogenicity and hyperactivity links. M&Ms, Skittles, Gummy Bears, Doritos, Froot Loops all contain multiple banned/flagged dyes — materials score 6-7.
+- ULTRA-PROCESSED FOODS with dyes + preservatives + artificial flavors: materials 6-8, usage 5-7 (daily consumption). Candy, chips, sodas, instant noodles = score 5-8 depending on chemical load.
+- Whole natural foods (fresh fruit, vegetables, unprocessed meat, plain water): materials 1, usage 1.
+
 CALIBRATION EXAMPLES to ensure differentiation:
 - Cascade dishwasher pods: materials=7 (PVA film+synthetic fragrance+optical brighteners), usage=5 (residue on dishes), packaging=3 (recyclable tub), sustainability=6 (PVA in waterways) → final ~6
 - Blueland dishwasher tablets: materials=1 (no PVA, no synthetic fragrance), usage=2, packaging=2, sustainability=1 → final ~1-2
 - Tide Original pods: materials=7, usage=5 (microfibers+fragrance residue on clothes daily), packaging=3, sustainability=6 → final ~6
+- M&Ms: materials=7 (Red 40, Yellow 5, Yellow 6, Blue 1 — petroleum dyes being phased out by FDA, linked to hyperactivity and carcinogenicity), usage=6 (daily candy consumption), packaging=4 → final ~6
+- Skittles: materials=7 (same artificial dyes + titanium dioxide), usage=6, packaging=4 → final ~6
+- Plain dark chocolate (no artificial dyes): materials=2, usage=2 → final ~2
 - Lululemon leggings (nylon/spandex): materials=7 (synthetic microfiber shedding), usage=6 (daily skin contact), packaging=2, sustainability=5 → final ~6
 - 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
