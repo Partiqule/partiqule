@@ -42,7 +42,7 @@ const GlobeLoading = ({isMobile}) => {
   const frameRef     = useRef(null);
   const glowRef      = useRef(Array.from({length:200}, () => 0));
   const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
-  const [activeFacts, setActiveFacts] = useState([]);
+  const shuffledFacts = useRef([...HEALTH_FACTS].sort(() => Math.random() - 0.5));
   const [stage, setStage] = useState(0);
 
   // Layout — computed once
@@ -124,7 +124,7 @@ const GlobeLoading = ({isMobile}) => {
     const launch = () => {
       if (count >= maxSlots) return;
       const slot = SLOTS[count];
-      const fact = HEALTH_FACTS[count % HEALTH_FACTS.length];
+      const fact = shuffledFacts.current[count % shuffledFacts.current.length];
       setActiveFacts(prev => [...prev, { id: Date.now() + count, slot, fact }]);
       count++;
     };
