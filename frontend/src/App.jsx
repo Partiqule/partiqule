@@ -2070,7 +2070,7 @@ function App() {
                 Scan anything.<br/>Know everything.
               </h1>
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
-                {isMobile ? "Get the full health picture on any product, free." : "Scan any product to get its danger score, health impact, and plastic-free alternatives. Instantly."}
+                {isMobile ? "Scan any product to understand its risks for you, your home and your planet." : "Scan any product to understand its risks for you, your home and your planet. Instantly."}
               </p>
 
               <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
@@ -2147,7 +2147,7 @@ function App() {
 
               {isMobile && !loading && (
                 <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
-                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>📷 Tap to photo a product label, tag, or packaging</span>
+                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>Tap to photo a product label, tag, or packaging</span>
                 </div>
               )}
 
@@ -2223,10 +2223,10 @@ function App() {
                 </div>
               </div>
             )}
-            {/* Fun stat graphic */}
-            <div style={{maxWidth:900, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{background:isDark?"#1e2433":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", textAlign:"center", border:`1.5px solid ${isDark?"#2a3347":"#d1e8d1"}`}}>
-                {/* Green floating particles */}
+            {/* Impact stats box */}
+            <div style={{maxWidth:960, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+              <div style={{background:isDark?"#1e2433":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", border:`1.5px solid ${isDark?"#2a3347":"#d1e8d1"}`}}>
+                {/* Floating particles */}
                 {[
                   {s:8, x:"5%",  y:"20%", a:0.25, shape:"circle"},
                   {s:5, x:"92%", y:"15%", a:0.2,  shape:"diamond"},
@@ -2236,39 +2236,64 @@ function App() {
                   {s:4, x:"70%", y:"90%", a:0.2,  shape:"circle"},
                   {s:7, x:"25%", y:"85%", a:0.15, shape:"diamond"},
                   {s:5, x:"78%", y:"45%", a:0.2,  shape:"circle"},
-                  {s:10,x:"15%", y:"45%", a:0.15, shape:"circle"},
-                  {s:4, x:"40%", y:"92%", a:0.18, shape:"diamond"},
-                  {s:6, x:"62%", y:"12%", a:0.2,  shape:"circle"},
-                  {s:8, x:"96%", y:"42%", a:0.15, shape:"diamond"},
                 ].map((p,i)=>(
-                  <div key={i} style={{
-                    position:"absolute", left:p.x, top:p.y,
-                    width:p.s, height:p.s,
-                    borderRadius: p.shape==="circle" ? "50%" : "2px",
-                    transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
-                    background:"#16a34a", opacity:p.a,
-                    pointerEvents:"none"
-                  }}/>
+                  <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:p.shape==="circle"?"50%":"2px", transform:p.shape==="diamond"?"rotate(45deg)":undefined, background:"#16a34a", opacity:p.a, pointerEvents:"none"}}/>
                 ))}
+
                 <div style={{position:"relative", zIndex:1}}>
-                  <div style={{fontSize:isMobile?13:14, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>The scale of the problem</div>
-                  <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?24:32, marginBottom:32}}>
-                    {[
-                      {number:"5g",   label:"plastic consumed per person per week",                    sub:"weight of a credit card"},
-                      {number:"11B",  label:"microplastic particles per cup of nylon tea bag tea",     sub:"Hernandez et al. 2019"},
-                      {number:"100%", label:"of human blood samples tested contained microplastics",   sub:"Leslie et al. 2022"},
-                      {number:"700K", label:"microfibers released per wash from a single fleece jacket",sub:"Environment International"},
-                    ].map((s,i)=>(
-                      <div key={i}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?28:36, color:"#16a34a", lineHeight:1, marginBottom:8}}>{s.number}</div>
-                        <div style={{fontSize:12, color:isDark?"#94a3b8":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
-                        <div style={{fontSize:10, color:isDark?"#475569":"#999", fontStyle:"italic"}}>{s.sub}</div>
+                  <div style={{fontSize:isMobile?13:14, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8, textAlign:"center"}}>Why it matters</div>
+                  <p style={{fontSize:isMobile?14:16, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:560, margin:"0 auto 40px", textAlign:"center"}}>
+                    The products around you affect more than you realize. Here is what the research says.
+                  </p>
+
+                  {/* Three spheres */}
+                  {[
+                    {
+                      label: "Your Health",
+                      color: "#16a34a",
+                      stats: [
+                        {number:"100%", label:"of human blood samples tested contained microplastics", sub:"Leslie et al. 2022"},
+                        {number:"58%",  label:"of arterial plaques studied contained polypropylene plastic", sub:"Marfella et al. NEJM 2024"},
+                        {number:"2024", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic dyes", sub:"FDA announcement"},
+                      ]
+                    },
+                    {
+                      label: "Your Home",
+                      color: "#2563eb",
+                      stats: [
+                        {number:"PVA",   label:"film in dishwasher and laundry pods enters waterways as microplastic after dissolving", sub:"peer-reviewed lifecycle analysis"},
+                        {number:"1,000+",label:"chemicals in everyday home products are known or suspected endocrine disruptors", sub:"Environmental Working Group"},
+                        {number:"10x",   label:"higher microplastic concentrations found in infants compared to adults", sub:"multiple peer-reviewed studies"},
+                      ]
+                    },
+                    {
+                      label: "The Planet",
+                      color: "#d97706",
+                      stats: [
+                        {number:"8M",    label:"tonnes of plastic enter the world's oceans every single year", sub:"UNEP estimate"},
+                        {number:"700K",  label:"microfibers released per wash from a single synthetic fleece jacket", sub:"Environment International"},
+                        {number:"500yr", label:"the time it takes a standard plastic bag to break down in landfill", sub:"environmental science consensus"},
+                      ]
+                    },
+                  ].map((sphere, si) => (
+                    <div key={si} style={{marginBottom: si < 2 ? (isMobile?36:40) : 0}}>
+                      <div style={{fontSize:12, fontWeight:700, color:sphere.color, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16, textAlign:isMobile?"center":"left"}}>{sphere.label}</div>
+                      <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:isMobile?16:24}}>
+                        {sphere.stats.map((s,i)=>(
+                          <div key={i} style={{textAlign:isMobile?"center":"left"}}>
+                            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?26:32, color:sphere.color, lineHeight:1, marginBottom:8}}>{s.number}</div>
+                            <div style={{fontSize:12, color:isDark?"#94a3b8":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
+                            <div style={{fontSize:10, color:isDark?"#475569":"#999", fontStyle:"italic"}}>{s.sub}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div style={{fontSize:isMobile?15:17, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:520, margin:"0 auto"}}>
+                      {si < 2 && <div style={{borderTop:`1px solid ${isDark?"#2a3347":"#d1e8d1"}`, marginTop:isMobile?28:32}}/>}
+                    </div>
+                  ))}
+
+                  <div style={{fontSize:isMobile?14:16, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:520, margin:"36px auto 0", textAlign:"center"}}>
                     Most products carry no warning. No label. No guidance on what to do instead.
-                    <span style={{color:"#16a34a", fontWeight:700}}> That's why Partiqule exists.</span>
+                    <span style={{color:"#16a34a", fontWeight:700}}> That is why Partiqule exists.</span>
                   </div>
                 </div>
               </div>
