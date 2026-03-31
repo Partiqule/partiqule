@@ -265,7 +265,7 @@ const BundleCard = ({category, isDark}) => {
 const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
   const [open, setOpen] = useState(false);
   const labels = {materials:"Materials", packaging:"Packaging", usage:"Usage & Exposure", manufacturing:"Manufacturing"};
-  const icons  = {materials:"🧱", packaging:"📦", usage:"🤲", manufacturing:"🏭"};
+  const icons  = {materials:"M", packaging:"P", usage:"U", manufacturing:"F"};
   const bd = result.breakdown;
   if (!bd) return null;
 
@@ -417,7 +417,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {/* Section 1: Microplastics */}
         <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
           <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1a2a1a":"#f0fdf4", color:"#16a34a", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-            🔬 Microplastics
+            Microplastics
           </div>
           <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>What are microplastics?</h2>
           <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
@@ -492,7 +492,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8}}>
-          <span style={{fontSize:16}}>{icon}</span>
+          <span style={{display:"flex", alignItems:"center", opacity: isHigh ? 1 : 0.6}}>{icon}</span>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{label}</span>
           <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
           {isHigh && <span style={{fontSize:11, color:"#dc2626", fontWeight:600, background:"#fef2f2", padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>}
@@ -527,7 +527,7 @@ const ManufacturingBadge = ({mfg, isDark, muted}) => {
   return (
     <div style={{marginBottom:10}}>
       <button onClick={()=>setOpen(o=>!o)} style={{display:"flex", alignItems:"center", gap:8, background:isDark?"#1e2433":"#f9fafb", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderRadius:10, padding:"7px 12px", cursor:"pointer", width:"100%"}}>
-        <span style={{fontSize:13}}>🏭</span>
+        <IcoVerified size={18}/>
         <span style={{fontSize:11, color:muted, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em"}}>Manufacturing</span>
         <span style={{fontSize:11, color, fontWeight:700}}>{score}/10</span>
         <span style={{fontSize:10, color:muted, fontStyle:"italic", marginLeft:2}}>— estimated</span>
@@ -539,7 +539,7 @@ const ManufacturingBadge = ({mfg, isDark, muted}) => {
           {mfg.concerns?.map((c,i)=>(
             <div key={i} style={{fontSize:12, color:muted, lineHeight:1.5}}>• {c}</div>
           ))}
-          <div style={{fontSize:10, color:muted, marginTop:8, opacity:0.6}}>⚠️ Manufacturing data is estimated where public supply chain information is unavailable.</div>
+          <div style={{fontSize:10, color:muted, marginTop:8, opacity:0.6, display:"flex", alignItems:"center", gap:4}}><IcoInfo size={12}/> Manufacturing data is estimated where public supply chain information is unavailable.</div>
         </div>
       )}
     </div>
@@ -636,7 +636,7 @@ const ShareBadge = ({result}) => {
     ctx.fill();
     ctx.fillStyle = overallColor;
     ctx.font = "bold 13px system-ui";
-    ctx.fillText(`⚖️ ${overallLabel} Overall`, 48, 254);
+    ctx.fillText(`${overallLabel} Overall`, 48, 254);
 
     // Overall sub-label
     ctx.fillStyle = "#aaa";
@@ -664,7 +664,7 @@ const ShareBadge = ({result}) => {
 
     ctx.fillStyle = "#888";
     ctx.font = "11px system-ui";
-    ctx.fillText("🔬  Plastic Danger", RX+14, 126);
+    ctx.fillText("Plastic Danger", RX+14, 126);
 
     ctx.fillStyle = plasticColor;
     ctx.font = "bold 32px system-ui";
@@ -746,7 +746,7 @@ const ShareBadge = ({result}) => {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
               title: `${safeName}: Overall Score ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Overall score ${result.overall_score||result.score}/10. 🔬 Plastic danger: ${result.score}/10${result.health_score ? ` · ❤️ Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
+              text: `I scanned ${safeName} on Partiqule. Overall score ${result.overall_score||result.score}/10. Plastic danger: ${result.score}/10${result.health_score ? ` · Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -1046,7 +1046,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 
       {history.length === 0 ? (
         <div style={{textAlign:"center", padding:"80px 0", color:muted}}>
-          <div style={{fontSize:48, marginBottom:16}}>🔬</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={48}/></div>
           <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:18, color:text, marginBottom:8}}>No scans yet</div>
           <div style={{fontSize:14, marginBottom:24}}>Search for a product to get started</div>
           <button onClick={()=>onSearch("")} style={{padding:"10px 24px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontWeight:600, fontSize:14, cursor:"pointer"}}>Start Scanning</button>
@@ -1957,7 +1957,7 @@ function App() {
         <MethodologyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
-          <div style={{fontSize:64, marginBottom:16}}>🔬</div>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
           <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:32, color:text, margin:"0 0 12px"}}>Page not found</h1>
           <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
           <button onClick={reset} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
@@ -2302,7 +2302,7 @@ function App() {
                   const d = result.dimensions;
                   return (<>
                     {/* 1. Materials */}
-                    <DimensionDropdown icon="🧪" label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
                       {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
                       {result.identified_plastics?.length > 0 && (
                         <div style={{marginTop:8,marginBottom:4}}>
@@ -2337,57 +2337,57 @@ function App() {
                     </DimensionDropdown>
 
                     {/* 2. Usage & Exposure */}
-                    <DimensionDropdown icon="⚠️" label="Usage & Exposure" score={d.usage_exposure?.score||5} concerns={d.usage_exposure?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoSafety size={20}/>} label="Usage & Exposure" score={d.usage_exposure?.score||5} concerns={d.usage_exposure?.concerns} isDark={isDark}>
                       {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
                         {d.usage_exposure?.frequency && d.usage_exposure.frequency !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#eff6ff",color:"#1d4ed8"}}>
-                            {d.usage_exposure.frequency === "daily" ? "📅 Daily use" : d.usage_exposure.frequency === "weekly" ? "📅 Weekly use" : d.usage_exposure.frequency === "occasional" ? "📅 Occasional" : "📅 Rare use"}
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#eff6ff",color:"#1d4ed8",display:"flex",alignItems:"center",gap:4}}>
+                            <IcoScore size={12}/>{d.usage_exposure.frequency === "daily" ? "Daily use" : d.usage_exposure.frequency === "weekly" ? "Weekly use" : d.usage_exposure.frequency === "occasional" ? "Occasional" : "Rare use"}
                           </span>
                         )}
                         {d.usage_exposure?.type && d.usage_exposure.type !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf4ff",color:"#7e22ce"}}>
-                            {d.usage_exposure.type === "ingestion" ? "⚠️ Ingestion risk" : d.usage_exposure.type === "skin_contact" ? "🖐 Skin contact" : d.usage_exposure.type === "inhalation" ? "💨 Inhalation risk" : "⚠️ Mixed exposure"}
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf4ff",color:"#7e22ce",display:"flex",alignItems:"center",gap:4}}>
+                            <IcoSafety size={12}/>{d.usage_exposure.type === "ingestion" ? "Ingestion risk" : d.usage_exposure.type === "skin_contact" ? "Skin contact" : d.usage_exposure.type === "inhalation" ? "Inhalation risk" : "Mixed exposure"}
                           </span>
                         )}
                         {d.usage_exposure?.intensity && d.usage_exposure.intensity !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fff7ed",color:"#c2410c"}}>
-                            {d.usage_exposure.intensity === "leave-on" ? "🕐 Leave-on" : d.usage_exposure.intensity === "rinse-off" ? "💧 Rinse-off" : "👆 Single contact"}
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fff7ed",color:"#c2410c",display:"flex",alignItems:"center",gap:4}}>
+                            <IcoScore size={12}/>{d.usage_exposure.intensity === "leave-on" ? "Leave-on" : d.usage_exposure.intensity === "rinse-off" ? "Rinse-off" : "Single contact"}
                           </span>
                         )}
                         {d.usage_exposure?.vulnerable && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf2f8",color:"#9d174d"}}>👶 Child product</span>
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf2f8",color:"#9d174d",display:"flex",alignItems:"center",gap:4}}><IcoProfile size={12}/> Child product</span>
                         )}
                       </div>
                     </DimensionDropdown>
 
                     {/* 3. Packaging */}
-                    <DimensionDropdown icon="📦" label="Packaging" score={d.packaging?.score||5} concerns={d.packaging?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoCategory size={20}/>} label="Packaging" score={d.packaging?.score||5} concerns={d.packaging?.concerns} isDark={isDark}>
                       {d.packaging?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.packaging.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>♻️ Refillable</span>}
+                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoSaved size={12}/> Refillable</span>}
                         {d.packaging?.primary && d.packaging.primary !== "unknown" && (
                           <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
-                            📦 {d.packaging.primary}
+                            {d.packaging.primary}
                           </span>
                         )}
                         {d.packaging?.end_of_life && d.packaging.end_of_life !== "unknown" && (
                           <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
-                            🗑 {d.packaging.end_of_life}
+                            {d.packaging.end_of_life}
                           </span>
                         )}
                       </div>
                     </DimensionDropdown>
 
                     {/* 4. Sustainability */}
-                    <DimensionDropdown icon="🌍" label="Sustainability" score={d.sustainability?.score||5} concerns={d.sustainability?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoSaved size={20}/>} label="Sustainability" score={d.sustainability?.score||5} concerns={d.sustainability?.concerns} isDark={isDark}>
                       {d.sustainability?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.sustainability.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>♻️ Reusable</span>}
-                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>✓ Replaces single-use</span>}
+                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoSaved size={12}/> Reusable</span>}
+                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoVerified size={12}/> Replaces single-use</span>}
                         {d.sustainability?.circularity && d.sustainability.circularity !== "unknown" && (
                           <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
-                            🔄 {d.sustainability.circularity}
+                            {d.sustainability.circularity}
                           </span>
                         )}
                       </div>
@@ -2398,7 +2398,7 @@ function App() {
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
-                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}>🔄 <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging, Sustainability and Manufacturing scores.</div>
+                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging, Sustainability and Manufacturing scores.</div>
                   </div>
                 )}
 
@@ -2426,17 +2426,19 @@ function App() {
                 {(result.exposure_frequency || result.exposure_type) && (
                   <div style={{display:"flex", gap:6, justifyContent:"center", marginBottom:14, flexWrap:"wrap"}}>
                     {result.exposure_frequency && result.exposure_frequency !== "unknown" && (
-                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#eff6ff", color:"#1d4ed8"}}>
-                        {result.exposure_frequency === "daily" ? "📅 Daily use" :
-                         result.exposure_frequency === "weekly" ? "📅 Weekly use" :
-                         result.exposure_frequency === "occasional" ? "📅 Occasional" : "📅 Rare use"}
+                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#eff6ff", color:"#1d4ed8", display:"flex", alignItems:"center", gap:4}}>
+                        <IcoScore size={12}/>
+                        {result.exposure_frequency === "daily" ? "Daily use" :
+                         result.exposure_frequency === "weekly" ? "Weekly use" :
+                         result.exposure_frequency === "occasional" ? "Occasional" : "Rare use"}
                       </div>
                     )}
                     {result.exposure_type && result.exposure_type !== "unknown" && (
-                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#fdf4ff", color:"#7e22ce"}}>
-                        {result.exposure_type === "ingestion" ? "⚠️ Ingestion risk" :
-                         result.exposure_type === "skin_contact" ? "🖐 Skin contact" :
-                         result.exposure_type === "inhalation" ? "💨 Inhalation risk" : "⚠️ Mixed exposure"}
+                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#fdf4ff", color:"#7e22ce", display:"flex", alignItems:"center", gap:4}}>
+                        <IcoSafety size={12}/>
+                        {result.exposure_type === "ingestion" ? "Ingestion risk" :
+                         result.exposure_type === "skin_contact" ? "Skin contact" :
+                         result.exposure_type === "inhalation" ? "Inhalation risk" : "Mixed exposure"}
                       </div>
                     )}
                   </div>
@@ -2447,7 +2449,7 @@ function App() {
                 {/* Break-even stat */}
                 {result.break_even && (
                   <div style={{marginTop:16, background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"14px 18px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, textAlign:"left"}}>
-                    <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>♻️ Sustainability Break-Even</div>
+                    <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}><IcoSaved size={14}/> Sustainability Break-Even</div>
                     <div style={{fontSize:14, color:isDark?"#86efac":"#15803d", fontWeight:600, marginBottom:4}}>
                       ~{result.break_even.uses} uses to offset with {result.break_even.alternative_name}
                     </div>
@@ -2556,7 +2558,7 @@ function App() {
               {/* SCAN NEXT */}
               {result.scan_next?.length > 0 && (
                 <div style={{background:surface, borderRadius:16, padding:"20px 24px", border:`1.5px solid ${border}`}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, margin:"0 0 14px"}}>🔍 Scan these next</h3>
+                  <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, margin:"0 0 14px"}}><IcoScan size={16}/> Scan these next</h3>
                   <div style={{display:"flex", flexDirection:"column", gap:8}}>
                     {result.scan_next.map((item,i)=>(
                       <button key={i} onClick={()=>{setResult(null); setQuery(item); analyze(item);}}
@@ -2639,7 +2641,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{minHeight:"100vh", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
-          <div style={{fontSize:48}}>🔬</div>
+          <div style={{display:"flex",justifyContent:"center"}}><IcoScan size={48}/></div>
           <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:24, color:"#fff"}}>Something went wrong</div>
           <div style={{fontSize:14, color:"#86efac", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
           <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#4ade80", color:"#052e16", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:8}}>
