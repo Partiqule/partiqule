@@ -34,12 +34,7 @@ const scoreCache    = new Map();
 // ── HELPERS ───────────────────────────────────────────────────
 
 function cacheKey(q) {
-  return q.toLowerCase().trim()
-    .replace(/\b(fresh lemon|lemon fresh|original scent|unscented|fragrance free|travel size|value pack|multi pack|family size|xl|large|small|mini|plus|pro|max|ultra|new formula|refill|refills|starter kit)\b/gi, "")
-    .replace(/[-]/g, " ")
-    .replace(/[^a-z0-9 ]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return q.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
 function cleanProductName(name) {
@@ -284,99 +279,111 @@ async function pass1(productName, materialContext = null) {
     : "";
 
   return callClaude(
-    `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions. Write dont instead of don't, Press n Seal instead of Press'n Seal.
+    `You are a senior research scientist specializing in polymer chemistry, toxicology, consumer product safety, and environmental impact. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
-KEY RESEARCH FINDINGS THAT MUST INFORM YOUR SCORING:
+KEY RESEARCH FINDINGS:
+MICROPLASTICS: Marfella et al. (2024) NEJM: PP found in 58% of carotid plaques — PP/PVC in food-contact products score 8-9. Yan et al. (2024) Nature Medicine: microplastics accumulate in human brain — daily ingestion/inhalation +2 penalty. Hernandez (2019): nylon/PET tea bags release billions of particles per cup. Li (2020): heated PP baby bottles release millions of particles per litre.
+PFAS: FDA (2024): PTFE/PFAS non-stick = primary dietary exposure — score 8-9, known endocrine disruptors.
+FOOD: Monteiro (2025) Lancet: ultra-processed foods linked to cardiovascular risk and cognitive decline — score 6-8. Whole natural foods score 1-3.
+DYES: FDA (2025): Red 3 banned, all petroleum dyes being phased out. Red 40, Yellow 5/6, Blue 1/2 = score 6-8.
+PACKAGING-ONLY PLASTIC: If a product is genuinely plastic-free but has incidental packaging (film pouch, wrapper, cap) that is discarded during use, the packaging score should be 2-4. Do NOT let discarded packaging dominate the materials score. Example: Blueland tablet in film pouch = materials score 1, packaging score 3.`,
 
-MICROPLASTICS:
-- Marfella et al. (2024), NEJM: Polypropylene (PP) found in 58% of carotid artery plaques, PVC in 12%. Patients with detectable microplastics had significantly higher risk of heart attack and stroke. PP and PVC in food-contact products must be scored HIGH (8-9).
-- Yan et al. (2024), Nature Medicine: Microplastics accumulate in human brain, kidney and liver. Brain concentrations increased between 2016 and 2024 samples. Higher concentrations found in dementia patients. Daily-use ingestion/inhalation products carry elevated neurological risk.
-- Leslie et al. (2022), Environment International: Microplastics detected in 100% of human blood samples tested.
-- Ragusa et al. (2021), Environment International: Microplastics found in human placentas — fetal exposure is confirmed.
-- Li et al. (2020), Nature Food: Heating polypropylene baby bottles releases millions of microplastic particles per litre.
-- Hernandez et al. (2019), Environmental Science & Technology: Nylon and PET tea bags release billions of particles per cup.
-
-PFAS / NON-STICK:
-- FDA Total Diet Study (2024): PFAS detected in seafood, meat and dairy from environmental contamination. Non-stick cookware (PTFE/PFAS) is a primary dietary exposure pathway.
-- PFAS are known endocrine disruptors linked to thyroid disruption, elevated cholesterol, reduced fertility and cancer. Non-stick pans with PTFE must score 8-9 on both plastic danger and health concern.
-
-ULTRA-PROCESSED FOODS:
-- Monteiro et al. (2025), The Lancet: Ultra-processed foods (UPFs) consistently linked to chronic disease, cardiovascular risk, cognitive decline and stroke. UPF health scores should reflect severity: heavily processed snacks/drinks = 6-8, minimally processed whole foods = 1-3.
-
-ARTIFICIAL DYES:
-- FDA (2025): Red 3 banned. FDA announced phase-out of all petroleum-based synthetic dyes. Products containing Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2, Green 3 should score 6-8 on health concern.
-- Multiple studies link synthetic dyes to hyperactivity in children and potential carcinogenicity.`,
-
-    `Analyze "${productName}" for microplastics and health risk with scientific rigor.
+    `Analyze "${productName}" across 5 dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing.
 ${contextSection}
 If this is a barcode, identify the most likely consumer product and analyze that.
+If real product data is provided above, use it as ground truth. Do not assume plastic if confirmed natural.
 
-IMPORTANT: If real product data is provided above, base your material analysis on that factual data. Do not assume plastic content if the product is confirmed to be wood, glass, stainless steel, ceramic, or other natural materials. Only identify plastics that are actually present.
+SCORING RULES BY DIMENSION:
 
-PLASTIC SCORING — apply the research findings in your system prompt:
-- PP and PVC in food-contact products: score 8-9 (NEJM 2024 cardiovascular evidence)
-- PTFE/PFAS non-stick coatings: score 8-9 (known endocrine disruptors, FDA PFAS data)
-- Nylon/PET tea bags: score 7-8 (billions of particles per cup, Hernandez 2019)
-- PP baby bottles heated: score 8-9 (millions of particles per litre, Li 2020)
-- Daily ingestion/inhalation products: apply +1 to +2 neurological risk penalty (Yan 2024 brain accumulation)
-- Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2, no penalties
-- VEHICLES (cars, trucks, SUVs): score 3-5 regardless of plastic content — interior plastic is NOT food contact and exposure pathway is minimal. Do not apply daily-use penalties to vehicles. Off-gassing of VOCs is the main concern, not microplastic ingestion.
-- ELECTRIC VEHICLES get a 1-2 point bonus (lower score) vs equivalent gas vehicles — no tailpipe particulates, better air filtration, increasingly sustainable interiors. Rivian, Tesla, Lucid, Polestar, Hyundai Ioniq: score 2-3. Older EVs (Bolt, Leaf): score 3-4. Gas SUVs and trucks: score 4-6.
-- Only score an EV higher if it is documented to use poor quality or excessive plastic interiors.
-- CHEWING GUM: Mainstream commercial gum base is synthetic polymer — polyvinyl acetate (PVA) and polyethylene are literally plastic. You chew and ingest microplastics. Score 7-8 on plastic danger for brands like Big Red, Wrigley, Extra, Orbit, Trident, 5 Gum, Big 5. Only natural chicle, tree resin, or natural rubber base gums score low (2-3).
+MATERIALS (what the product is physically made of):
+- PP/PVC in food contact: 8-9. PTFE/PFAS coatings: 8-9. Nylon/PET tea bags: 7-8.
+- Natural materials (wood, glass, stainless, ceramic, organic cotton, stone): 1-2.
+- Harmful chemicals (phthalates, BPA, synthetic dyes, PFAS, preservatives): add to concerns.
+- Coatings and treatments count even if the base material is safe.
+- PACKAGING-ONLY: if plastic is only in discarded packaging, materials score stays 1-3.
 
-HEALTH & SUSTAINABILITY SCORING — separate from plastic, apply research:
-- Products with synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, etc.): score 6-8
-- PFAS/non-stick cookware: score 8-9 health concern
-- Ultra-processed foods (chips, instant noodles, packaged snacks, soft drinks): score 6-8
-- Heavy processing with emulsifiers, preservatives, flavor enhancers: score 5-7
-- Whole, natural, minimally processed products: score 1-3
-- No non-plastic health concerns (wooden spoon, glass jar): score 1
+USAGE AND EXPOSURE (how using this product affects health):
+- Leave-on skin contact (moisturizer, deodorant): higher penalty than rinse-off.
+- Direct ingestion (food containers, tea bags, gum): highest penalty.
+- Inhalation (sprays, candles, synthetic textiles): significant penalty.
+- Frequency multiplier: daily +2, weekly +0.5, occasional 0.
+- Child/baby product: apply +1 vulnerable population flag.
+- VEHICLES: score 3-5 — interior plastic is not food contact. No daily-use penalty.
+- EVs score 1-2 points lower than gas equivalents (Rivian/Tesla/Lucid: 2-3, older EVs: 3-4).
+- CHEWING GUM: polyvinyl acetate and polyethylene = direct plastic ingestion. Score 7-8.
 
-The health_score must reflect THREE sub-components combined:
-1. Chemical concerns (additives, dyes, PFAS, preservatives) — weighted 40%
-2. Sustainability impact (single-use waste, disposability, environmental burden) — weighted 40%
-3. Manufacturing concerns (bleaching, chemical treatment, processing) — weighted 20%
+PACKAGING (what contains and ships the product):
+- Primary packaging that touches product: glass/steel/cardboard=1-2, plastic=6-8.
+- Refillable or concentrated systems (tablets, bars, refill pouches): score 1-3.
+- Single-use plastic primary packaging: score 7-9.
+- Secondary/shipping packaging: only add if excessive.
+- End of life: recyclable=lower, landfill/toxic=higher.
 
-SUSTAINABILITY SCORING RULES (for health_score calculation):
-- Single-use disposable by design (paper towels, disposable cups, plastic bags, wipes, razors): sustainability score 8-9
-- Frequently replaced short-life products (synthetic sponges, plastic wrap, cheap synthetic clothing): sustainability score 6-7
-- Chemically treated disposables (bleached paper towels, fragranced wipes, chlorinated paper): add +1
-- Plastic packaging on a fundamentally non-plastic product: add +1
-- Durable, reusable, long-life products: sustainability score 1-2
-- Biodegradable or compostable without chemical treatment: sustainability score 1-3
+SUSTAINABILITY (product lifecycle and planet impact):
+- Multi-use durable products replacing single-use: score 1-3.
+- Single-use by design (paper towels, disposable cups, plastic wrap): score 7-9.
+- Circular design (refillable, repairable, compostable): score 1-3.
+- Estimated uses to offset vs alternative (break-even).
+- Ethical sourcing certifications (organic, fair trade, B-Corp): lower score.
 
-EXAMPLES:
-- Brawny paper towels: chemical=3, sustainability=8, manufacturing=5 → health_score = (3×0.4)+(8×0.4)+(5×0.2) = 1.2+3.2+1.0 = 5 → round to 5
-- Reusable glass bottle: chemical=1, sustainability=1, manufacturing=1 → health_score = 1
-- Synthetic wet wipes: chemical=6, sustainability=9, manufacturing=5 → health_score = (6×0.4)+(9×0.4)+(5×0.2) = 2.4+3.6+1.0 = 7
+MANUFACTURING (production process — score conservatively, flag as estimated):
+- Known bad: fast fashion, PVC/chemical manufacturing, unregulated supply chains: 6-8.
+- Known good: certified organic, B-Corp, closed-loop, renewably powered: 1-3.
+- Unknown: score 4-5 and flag confidence as low.
+- Weight is low — do not let manufacturing dominate the final score.
+
+FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
+materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
 
 Return ONLY this JSON:
 {
   "product_name": "clean accurate product name",
   "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
-  "identified_plastics": ["specific plastic 1", "specific plastic 2"],
-  "product_score": 7,
-  "packaging_score": 6,
-  "exposure_frequency": "daily|weekly|occasional|rare",
-  "exposure_type": "ingestion|skin_contact|inhalation|mixed",
-  "health_score": 5,
-  "health_concerns": ["specific non-plastic health concern 1", "sustainability concern e.g. single-use waste", "chemical treatment concern"],
-  "health_note": "one sentence covering the main chemical AND sustainability concern",
-  "health_breakdown": {
-    "chemical": { "score": 3, "label": "specific chemical concerns e.g. bleaching agents, dyes, preservatives" },
-    "sustainability": { "score": 8, "label": "disposability and waste impact e.g. single-use by design, plastic packaging" },
-    "manufacturing": { "score": 5, "label": "processing and treatment concerns e.g. chlorine bleaching, chemical treatment" }
+  "identified_plastics": ["specific plastic type 1"],
+  "harmful_chemicals": ["phthalates", "BPA", "Red 40"],
+  "natural_materials": ["organic cotton", "glass"],
+  "materials": {
+    "score": 7,
+    "label": "specific material analysis e.g. PP food-contact plastic, PTFE coating",
+    "concerns": ["PP in direct food contact — cardiovascular risk (NEJM 2024)", "PTFE coating degrades above 260C"]
   },
-  "product_breakdown": {
-    "materials": { "score": 7, "label": "specific material analysis mentioning plastic types" },
-    "packaging": { "score": 6, "label": "packaging material and leaching risk" },
-    "usage": { "score": 8, "label": "how use pattern affects exposure" },
-    "manufacturing": { "score": 5, "label": "manufacturing process plastic risks" }
+  "usage_exposure": {
+    "score": 8,
+    "label": "daily ingestion risk — leave-on skin contact",
+    "frequency": "daily|weekly|occasional|rare",
+    "type": "ingestion|skin_contact|inhalation|mixed",
+    "intensity": "leave-on|rinse-off|single-contact",
+    "vulnerable": false,
+    "concerns": ["Direct plastic ingestion at every use", "Leave-on increases dermal absorption"]
   },
-  "raw_concerns": ["specific concern 1", "specific concern 2", "specific concern 3", "specific concern 4"],
+  "packaging": {
+    "score": 3,
+    "label": "refillable system — minimal plastic packaging",
+    "primary": "cardboard|glass|plastic|mixed",
+    "refillable": false,
+    "end_of_life": "recyclable|compostable|landfill|unknown",
+    "concerns": ["Outer cardboard recyclable, inner film liner is not"]
+  },
+  "sustainability": {
+    "score": 2,
+    "label": "strong circular design — replaces 50+ single-use items",
+    "reusable": true,
+    "replaces_single_use": true,
+    "replaces_count": 50,
+    "circularity": "refillable|repairable|compostable|recyclable|landfill",
+    "concerns": []
+  },
+  "manufacturing": {
+    "score": 5,
+    "label": "estimated — limited supply chain data",
+    "tier": "good|neutral|bad",
+    "confidence": "low",
+    "concerns": ["Supply chain data not publicly available"]
+  },
+  "summary": "max 30 words covering the main risk or safety story",
+  "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
-  "confidence_reason": "why confidence is high/medium/low",
+  "confidence_reason": "why",
   "scan_next": ["related product 1", "related product 2", "related product 3"],
   "ai_alternatives": [
     {"name": "specific product name", "reason": "max 10 words why safer", "material": "max 5 words", "estimated_score": 2},
@@ -384,57 +391,37 @@ Return ONLY this JSON:
     {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
 }`,
-    1600
+    1800
   );
 }
 
 // ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
 async function pass2(productName, pass1Result) {
-  const plastics = (pass1Result.identified_plastics || []).join(", ") || "none identified";
+  const p = pass1Result;
+  const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score} manufacturing:${p.manufacturing?.score}`;
+  const plastics = (p.identified_plastics || []).join(", ") || "none";
+
   return callClaude(
-    `You are a scientific auditor reviewing microplastics and health risk scores. Respond with valid JSON only — no markdown, no backticks, no trailing commas, no extra text. Keep all string values under 20 words.`,
-    `Audit the score for "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category} identified_plastics:${plastics}
+    `You are a scientific auditor reviewing a 5-dimension product risk score. Respond with valid JSON only — no markdown, no backticks, no trailing commas. Keep all string values under 20 words.`,
+    `Audit the 5-dimension scores for "${productName}":
+${scores}
+category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.frequency} type:${p.usage_exposure?.type}
 
-CRITICAL RULE: Exposure penalties ONLY apply if the product itself contains plastic the user is actually exposed to. Natural materials (wood, glass, stainless steel, cotton, ceramic) score low regardless of frequency. A wooden spoon used daily is still low risk.
+AUDIT RULES:
+MATERIALS: Only score plastic/chemical risk from materials user is exposed to during use. Discarded packaging (film pouch, wrapper, cap) must not drive materials above 3 for otherwise plastic-free products.
+USAGE: Daily plastic ingestion = usage 8-9. Leave-on skin contact daily = 7-8. Rinse-off = 1-2 lower. Vehicles = 3-5 max (not food contact). EVs score 1-2 lower than gas equivalents.
+PACKAGING: Refillable/concentrated systems = 1-3. Single-use plastic primary packaging = 7-9.
+SUSTAINABILITY: Multi-use replacing single-use = 1-3. Single-use disposables = 7-9.
+MANUFACTURING: Cap influence at 5%. Unknown = neutral 4-5. Only score high if documented harmful.
+CHEWING GUM: polyvinyl acetate = direct plastic ingestion. Materials 7-8, usage 8-9.
 
-PACKAGING-ONLY PLASTIC RULE: If a product is genuinely plastic-free but has minor incidental packaging plastic (a small film pouch, a sealed wrapper, a cap), do NOT let packaging drag the score above 3. The user is not exposed to the packaging plastic during normal product use. Examples:
-- Blueland tablets in a film pouch: score 1-2 (the cleaner itself is plastic-free, the pouch is discarded)
-- Bar soap in a plastic wrapper: score 1-2 (the soap is plastic-free)
-- Loose leaf tea in a plastic-lined bag: score 2-3 (tea itself is fine, bag is discarded)
-- Compare to: plastic water bottle (user drinks FROM the plastic) = score 7-9
+FINAL SCORE — compute exactly:
+final_score = round(materials x 0.40 + usage x 0.25 + packaging x 0.15 + sustainability x 0.15 + manufacturing x 0.05)
 
-VEHICLE SCORING RULES — apply these for any car, truck, SUV, or automobile:
-- Vehicles contain plastic but exposure pathway is LOW — you are not ingesting or inhaling plastic from a car interior under normal use
-- Interior plastics (dashboard, trim, seats) are a contained environment — NOT food contact, NOT skin absorption
-- Vehicle plastic danger score should be 3-5 regardless of plastic content — the exposure pathway is minimal
-- Do NOT apply daily use penalties to vehicles — time in a car is not equivalent to ingesting plastic
-- Health concern: mainly off-gassing of VOCs from new interiors, microfibre shedding from fabric seats — score 3-5
-- Break-even for vehicles: null — there is no direct swap alternative
+Break-even (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, container→glass:25, pads→menstrual cup:90, razor→safety:10, zipbag→silicone:15, bag→tote:130, shampoo→bar:6, clothing→natural:30. Vehicles/electronics/appliances/natural materials=null.
 
-EV SCORING BONUS — electric vehicles should score 1-2 points LOWER than equivalent gas vehicles:
-- No tailpipe particulate emissions inside or outside cabin = significant health benefit
-- Better cabin air filtration systems standard on most EVs
-- Modern EVs (Tesla, Rivian, Lucid, Polestar, BMW i-series, Hyundai Ioniq, Ford Mustang Mach-E) increasingly use recycled, vegan, or natural interior materials
-- Rivian: uses plant-based materials, recycled content, consciously sustainable interior design — score 2-3
-- Tesla: vegan leather standard, glass roof reduces interior plastic — score 2-4
-- Lucid, Polestar: premium sustainable interior focus — score 2-3
-- Legacy EV conversions (Chevy Bolt, Nissan Leaf older models): similar interior to gas equivalents — score 3-5
-- EXCEPTION: If an EV is documented to use excessive cheap plastic interiors, score normally — do not reward EVs that do not deserve it
-- Gas/diesel SUVs and trucks (Escalade, Suburban, F-150, RAM): score 4-6 — more VOCs, exhaust particulates, traditional vinyl/synthetic leather
-- CHEWING GUM: Mainstream gum base is synthetic polymer (polyvinyl acetate, polyethylene) — direct ingestion of plastic. Score must be 7-8. Only natural chicle/tree resin gums score low.
-
-RESEARCH-BASED SCORING RULES:
-- PP or PVC in food-contact products: base score must be 8-9 (Marfella et al. 2024, NEJM — found in arterial plaques, linked to heart attack/stroke)
-- PTFE/PFAS non-stick coatings: base score must be 8-9 (FDA 2024 PFAS data, known endocrine disruptors)
-- Daily ingestion or inhalation of any plastic: apply +2 neurological penalty (Yan et al. 2024, Nature Medicine — brain accumulation confirmed)
-- Weekly use: +0.5, skin contact: +0.5, inhalation: +1
-- 70% product_score + 30% packaging_score base calculation
-- Final score: integer 1-10
-
-Break-even benchmarks (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, container→glass:25, pads→menstrual cup:90, razor→safety:10, zipbag→silicone:15, shopping bag→tote:130, shampoo→bar:6, synthetic clothing→natural:30. Furniture/electronics/appliances/natural materials=null.
-
-Return ONLY valid JSON under 400 tokens:
-{"final_score":7,"score_reasoning":"max 15 words citing specific research where relevant","exposure_multiplier":"daily","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words total","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
+Return ONLY valid JSON:
+{"final_score":6,"materials_score":7,"usage_score":8,"packaging_score":3,"sustainability_score":2,"manufacturing_score":5,"score_reasoning":"max 15 words citing specific research","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
     800
   );
 }
@@ -553,11 +540,15 @@ app.post("/analyze", async (req, res) => {
     // Merge pass1 + pass2 results
     const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
     const catAvg        = CATEGORY_AVERAGES[finalCategory] || CATEGORY_AVERAGES.other;
-    const finalScore    = p2?.final_score ?? p1.product_score ?? 5;
-    const healthScore   = p1.health_score || null;
-    const overallScore  = healthScore
-      ? Math.min(10, Math.max(1, Math.round(finalScore * 0.5 + healthScore * 0.5)))
-      : null;
+    // ── Compute weighted final score server-side as source of truth ──
+    const mScore  = p2?.materials_score     ?? p1.materials?.score     ?? 5;
+    const uScore  = p2?.usage_score         ?? p1.usage_exposure?.score ?? 5;
+    const pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
+    const sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
+    const mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
+    const finalScore = Math.min(10, Math.max(1,
+      Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
+    ));
 
     // Peer comparison
     const peerPct = Math.round(((finalScore - 1) / 9) * 100);
@@ -565,16 +556,14 @@ app.post("/analyze", async (req, res) => {
       ? `Scores higher than ${peerPct}% of ${catAvg.label}`
       : `Scores lower than ${100 - peerPct}% of ${catAvg.label}`;
 
-    const aiProductName  = p1.product_name || productName;
+    const aiProductName = p1.product_name || productName;
 
     // ── Alternatives: try Amazon PA API first, fall back to static DB ──
     let finalAlternatives;
     if (isPaApiConfigured()) {
       console.log("Using Amazon PA API for alternatives");
       const amazonResults = await getAmazonAlternatives(
-        aiProductName,
-        finalCategory,
-        p1.identified_plastics || []
+        aiProductName, finalCategory, p1.identified_plastics || []
       );
       if (amazonResults && amazonResults.length > 0) {
         finalAlternatives = amazonResults;
@@ -592,24 +581,62 @@ app.post("/analyze", async (req, res) => {
     const result = {
       product_name:     cleanProductName(p1.product_name || productName),
       score:            finalScore,
-      summary:          p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+      summary:          p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
       concerns:         p2?.refined_concerns || p1.raw_concerns || [],
       category:         finalCategory,
+      // ── 5 dimensions ──
+      dimensions: {
+        materials: {
+          score:    mScore,
+          label:    p1.materials?.label    || "",
+          concerns: p1.materials?.concerns || [],
+        },
+        usage_exposure: {
+          score:     uScore,
+          label:     p1.usage_exposure?.label     || "",
+          frequency: p1.usage_exposure?.frequency || "unknown",
+          type:      p1.usage_exposure?.type      || "unknown",
+          intensity: p1.usage_exposure?.intensity || "unknown",
+          vulnerable: p1.usage_exposure?.vulnerable || false,
+          concerns:  p1.usage_exposure?.concerns  || [],
+        },
+        packaging: {
+          score:       pkScore,
+          label:       p1.packaging?.label       || "",
+          primary:     p1.packaging?.primary     || "unknown",
+          refillable:  p1.packaging?.refillable  || false,
+          end_of_life: p1.packaging?.end_of_life || "unknown",
+          concerns:    p1.packaging?.concerns    || [],
+        },
+        sustainability: {
+          score:            sScore,
+          label:            p1.sustainability?.label            || "",
+          reusable:         p1.sustainability?.reusable         || false,
+          replaces_single_use: p1.sustainability?.replaces_single_use || false,
+          replaces_count:   p1.sustainability?.replaces_count   || null,
+          circularity:      p1.sustainability?.circularity      || "unknown",
+          concerns:         p1.sustainability?.concerns         || [],
+        },
+        manufacturing: {
+          score:      mfScore,
+          label:      p1.manufacturing?.label      || "Estimated — limited supply chain data",
+          tier:       p1.manufacturing?.tier       || "neutral",
+          confidence: p1.manufacturing?.confidence || "low",
+          concerns:   p1.manufacturing?.concerns   || [],
+        },
+      },
+      // ── legacy fields kept for backward compat with other parts of UI ──
       identified_plastics: p1.identified_plastics || [],
-      exposure_frequency:  p2?.exposure_multiplier || p1.exposure_frequency || "unknown",
-      exposure_type:       p1.exposure_type || "unknown",
-      confidence:          p2?.confidence || p1.confidence || "medium",
+      harmful_chemicals:   p1.harmful_chemicals   || [],
+      natural_materials:   p1.natural_materials   || [],
+      exposure_frequency:  p1.usage_exposure?.frequency || "unknown",
+      exposure_type:       p1.usage_exposure?.type      || "unknown",
+      confidence:          p2?.confidence    || p1.confidence    || "medium",
       confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
       score_reasoning:     p2?.score_reasoning || "",
       peer_comparison:     peerComparison,
-      breakdown:           p1.product_breakdown || null,
-      scan_next:           p1.scan_next || [],
+      scan_next:           p1.scan_next  || [],
       break_even:          p2?.break_even || null,
-      health_score:        p1.health_score || null,
-      health_concerns:     p1.health_concerns || [],
-      health_note:         p1.health_note || null,
-      health_breakdown:    p1.health_breakdown || null,
-      overall_score:       overallScore,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,

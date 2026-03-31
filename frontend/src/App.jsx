@@ -481,7 +481,73 @@ const EducationSection = ({isDark, isMobile=false}) => {
 };
 
 // ── PLASTIC SCORE DROPDOWN ────────────────────────────────────
-const PlasticScoreDropdown = ({result, isDark, muted}) => {
+// ── DIMENSION DROPDOWN — reusable for all 4 main dimensions ──
+const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
+  const [open, setOpen] = useState(false);
+  const color       = scoreColor(score);
+  const bg          = isDark ? "#1e2433" : scoreBg(score);
+  const borderColor = score<=3?"#bbf7d0":score<=6?"#fde68a":score<=8?"#fed7aa":"#fecaca";
+  return (
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
+        <div style={{display:"flex", alignItems:"center", gap:8}}>
+          <span style={{fontSize:16}}>{icon}</span>
+          <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{label}</span>
+          <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
+          <span style={{fontSize:11, color, fontWeight:600, background:`${color}18`, padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>
+        </div>
+        <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+      {open && (
+        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${borderColor}`}}>
+          {children}
+          {concerns?.length > 0 && (
+            <div style={{display:"flex", flexDirection:"column", gap:6, marginTop:10}}>
+              {concerns.map((c,i)=>(
+                <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
+                  <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
+                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── MANUFACTURING BADGE — smaller, always shows estimated ──
+const ManufacturingBadge = ({mfg, isDark, muted}) => {
+  const [open, setOpen] = useState(false);
+  if (!mfg) return null;
+  const score = mfg.score || 5;
+  const color = scoreColor(score);
+  return (
+    <div style={{marginBottom:10}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{display:"flex", alignItems:"center", gap:8, background:isDark?"#1e2433":"#f9fafb", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderRadius:10, padding:"7px 12px", cursor:"pointer", width:"100%"}}>
+        <span style={{fontSize:13}}>🏭</span>
+        <span style={{fontSize:11, color:muted, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em"}}>Manufacturing</span>
+        <span style={{fontSize:11, color, fontWeight:700}}>{score}/10</span>
+        <span style={{fontSize:10, color:muted, fontStyle:"italic", marginLeft:2}}>— estimated</span>
+        <span style={{fontSize:11, color:muted, marginLeft:"auto", transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+      {open && (
+        <div style={{padding:"10px 14px", background:isDark?"#1a2030":"#f9fafb", borderRadius:"0 0 10px 10px", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderTop:"none"}}>
+          <p style={{fontSize:12, color:muted, lineHeight:1.6, margin:"0 0 6px", fontStyle:"italic"}}>{mfg.label}</p>
+          {mfg.concerns?.map((c,i)=>(
+            <div key={i} style={{fontSize:12, color:muted, lineHeight:1.5}}>• {c}</div>
+          ))}
+          <div style={{fontSize:10, color:muted, marginTop:8, opacity:0.6}}>⚠️ Manufacturing data is estimated where public supply chain information is unavailable.</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── LEGACY SHIMS — kept so other code that references these doesn't break ──
+const PlasticScoreDropdown = ({result, isDark, muted}) => null;
+const HealthScoreDropdown  = ({result, isDark, muted}) => null;
   const [open, setOpen] = useState(false);
   const ps = result.score;
   const bd = result.breakdown || null;
@@ -2462,17 +2528,113 @@ function App() {
                     </div>
                     <div style={{fontSize:11,color:muted,marginTop:4}}>70% plastic danger · 30% health concern</div>
                   </div>
-                ) : (
-                  <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 16px"}}>{scoreLabel(result.score)} Danger</div>
-                )}
+                    <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.score)} Overall</div>
+                    <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
 
-                {/* Plastic score dropdown */}
-                <PlasticScoreDropdown result={result} isDark={isDark} muted={muted}/>
+                {/* ── 5 DIMENSION DROPDOWNS ── */}
+                {result.dimensions ? (() => {
+                  const d = result.dimensions;
+                  return (<>
+                    {/* 1. Materials */}
+                    <DimensionDropdown icon="🧪" label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
+                      {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
+                      {result.identified_plastics?.length > 0 && (
+                        <div style={{marginTop:8,marginBottom:4}}>
+                          <div style={{fontSize:11,color:"#dc2626",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Plastics identified</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {result.identified_plastics.map((p,i)=>(
+                              <span key={i} style={{fontSize:12,fontWeight:700,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a1a":"#fef2f2",color:"#dc2626",border:"1px solid #fecaca"}}>{p}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {result.harmful_chemicals?.length > 0 && (
+                        <div style={{marginTop:8}}>
+                          <div style={{fontSize:11,color:"#d97706",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Harmful chemicals</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {result.harmful_chemicals.map((c,i)=>(
+                              <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a00":"#fffbeb",color:"#d97706",border:"1px solid #fde68a"}}>{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {result.natural_materials?.length > 0 && (
+                        <div style={{marginTop:8}}>
+                          <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Natural materials</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                            {result.natural_materials.map((m,i)=>(
+                              <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#1a2a1a":"#f0fdf4",color:"#16a34a",border:"1px solid #bbf7d0"}}>{m}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </DimensionDropdown>
 
-                {/* Health score dropdown */}
-                {result.health_score && (
-                  <HealthScoreDropdown result={result} isDark={isDark} muted={muted}/>
-                )}
+                    {/* 2. Usage & Exposure */}
+                    <DimensionDropdown icon="⚠️" label="Usage & Exposure" score={d.usage_exposure?.score||5} concerns={d.usage_exposure?.concerns} isDark={isDark}>
+                      {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                        {d.usage_exposure?.frequency && d.usage_exposure.frequency !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#eff6ff",color:"#1d4ed8"}}>
+                            {d.usage_exposure.frequency === "daily" ? "📅 Daily use" : d.usage_exposure.frequency === "weekly" ? "📅 Weekly use" : d.usage_exposure.frequency === "occasional" ? "📅 Occasional" : "📅 Rare use"}
+                          </span>
+                        )}
+                        {d.usage_exposure?.type && d.usage_exposure.type !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf4ff",color:"#7e22ce"}}>
+                            {d.usage_exposure.type === "ingestion" ? "⚠️ Ingestion risk" : d.usage_exposure.type === "skin_contact" ? "🖐 Skin contact" : d.usage_exposure.type === "inhalation" ? "💨 Inhalation risk" : "⚠️ Mixed exposure"}
+                          </span>
+                        )}
+                        {d.usage_exposure?.intensity && d.usage_exposure.intensity !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fff7ed",color:"#c2410c"}}>
+                            {d.usage_exposure.intensity === "leave-on" ? "🕐 Leave-on" : d.usage_exposure.intensity === "rinse-off" ? "💧 Rinse-off" : "👆 Single contact"}
+                          </span>
+                        )}
+                        {d.usage_exposure?.vulnerable && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf2f8",color:"#9d174d"}}>👶 Child product</span>
+                        )}
+                      </div>
+                    </DimensionDropdown>
+
+                    {/* 3. Packaging */}
+                    <DimensionDropdown icon="📦" label="Packaging" score={d.packaging?.score||5} concerns={d.packaging?.concerns} isDark={isDark}>
+                      {d.packaging?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.packaging.label}</p>}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>♻️ Refillable</span>}
+                        {d.packaging?.primary && d.packaging.primary !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                            📦 {d.packaging.primary}
+                          </span>
+                        )}
+                        {d.packaging?.end_of_life && d.packaging.end_of_life !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                            🗑 {d.packaging.end_of_life}
+                          </span>
+                        )}
+                      </div>
+                    </DimensionDropdown>
+
+                    {/* 4. Sustainability */}
+                    <DimensionDropdown icon="🌍" label="Sustainability" score={d.sustainability?.score||5} concerns={d.sustainability?.concerns} isDark={isDark}>
+                      {d.sustainability?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.sustainability.label}</p>}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>♻️ Reusable</span>}
+                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}>✓ Replaces single-use</span>}
+                        {d.sustainability?.circularity && d.sustainability.circularity !== "unknown" && (
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                            🔄 {d.sustainability.circularity}
+                          </span>
+                        )}
+                      </div>
+                    </DimensionDropdown>
+
+                    {/* 5. Manufacturing — smaller estimated badge */}
+                    <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
+                  </>);
+                })() : (<>
+                  {/* Fallback for cached results using old schema */}
+                  <PlasticScoreDropdown result={result} isDark={isDark} muted={muted}/>
+                  {result.health_score && <HealthScoreDropdown result={result} isDark={isDark} muted={muted}/>}
+                </>)}
 
                 {/* Peer comparison */}
                 {result.peer_comparison && (
@@ -2567,41 +2729,37 @@ function App() {
             {/* RIGHT */}
             <div style={{display:"flex", flexDirection:"column", gap:20}}>
               <div className="fade-up">
+                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
+                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
+                  {result.alternatives?.length > 0 && result.category !== "other" && (
+                    <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
+                      #ad · affiliate links
+                    </div>
+                  )}
+                </div>
+
                 {/* UNIFIED ALTERNATIVES — max 3, DB first, AI fills gaps, no duplicates */}
                 {(() => {
                   const cat = result.category;
 
-                  // DB alternatives — only show if relevance threshold was met server-side
+                  // DB alternatives — backend already handles relevance and category logic
                   const dbAlts = (result.alternatives || []).slice(0, 3);
 
-                  // AI alternatives — deduplicate against DB, fill remaining slots up to 3
+                  // AI alternatives — deduplicate against DB, fill to 3
                   const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
                   const aiAlts = (result.ai_alternatives || [])
                     .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
                     .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                     .slice(0, 3 - dbAlts.length);
 
-                  const hasAffiliate = dbAlts.length > 0 && cat !== "other";
-                  const hasAnything  = dbAlts.length > 0 || aiAlts.length > 0;
 
-                  if (!hasAnything) return null;
+                  const hasAffiliate = dbAlts.length > 0 && cat !== "other";
+
+                  if (!dbAlts.length && !aiAlts.length) return null;
 
                   return (
                     <div>
-                      {/* Header — only shown when there's content */}
-                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                        <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
-                        {hasAffiliate && (
-                          <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
-                            #ad · affiliate links
-                          </div>
-                        )}
-                      </div>
-
-                      {/* DB alternatives (curated, affiliate) */}
                       {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
-
-                      {/* AI alternatives — shown below DB items, or solo when DB has no match */}
                       {aiAlts.length > 0 && (
                         <div style={{display:"flex", flexDirection:"column", gap:8, marginTop: dbAlts.length > 0 ? 10 : 0}}>
                           {dbAlts.length > 0 && (
@@ -2623,7 +2781,6 @@ function App() {
                           ))}
                         </div>
                       )}
-
                       {hasAffiliate && (
                         <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
                       )}
