@@ -382,99 +382,105 @@ const EducationSection = ({isDark, isMobile=false}) => {
   const muted   = isDark?"#64748b":"#666";
   const bg      = isDark?"#131929":"#fafafa";
 
-  const plasticStats = [
-    {number:"74,000", label:"microplastic particles the average person consumes per year",  color:"#16a34a", bg:"#f0fdf4"},
-    {number:"5mm",    label:"maximum size of a microplastic — many are invisible to the naked eye", color:"#059669", bg:"#ecfdf5"},
-    {number:"1950s",  label:"when large-scale plastic production began polluting our food chain",    color:"#047857", bg:"#d1fae5"},
-    {number:"100%",   label:"of human blood samples tested in 2022 contained microplastics",        color:"#052e16", bg:"#bbf7d0"},
-  ];
-
-  const plasticFaqs = [
-    {q:"What are microplastics?", a:"Microplastics are tiny plastic particles less than 5mm in size. They come from the breakdown of larger plastic products, synthetic textiles, and plastic packaging. They've been found in human blood, lungs, placentas, and breast milk."},
-    {q:"How do I ingest microplastics?", a:"Through drinking water, eating seafood, breathing indoor air, using plastic food containers (especially when heated), wearing synthetic clothing, and using personal care products with plastic packaging."},
-    {q:"Are microplastics dangerous?", a:"Research is ongoing, but studies have linked microplastic exposure to inflammation, hormonal disruption, and potential carcinogenic effects. The WHO has called for more research, particularly around nanoplastics that can cross cell membranes."},
-    {q:"How does Partiqule score plastic danger?", a:"Our AI analyzes each product's materials, manufacturing process, packaging, and usage patterns. It cross-references known research on microplastic release to generate a plastic danger score from 1 to 10."},
-  ];
-
-  const healthStats = [
-    {number:"11,000+", label:"synthetic food additives approved for use in the US food supply", color:"#7c3aed", bg:"#f5f3ff"},
-    {number:"40%",     label:"of processed foods contain artificial dyes linked to hyperactivity", color:"#6d28d9", bg:"#ede9fe"},
-    {number:"80%",     label:"of packaged foods contain ultra-processed ingredients", color:"#5b21b6", bg:"#ddd6fe"},
-    {number:"1,000+",  label:"chemicals in everyday products are known or suspected endocrine disruptors", color:"#4c1d95", bg:"#c4b5fd"},
-  ];
-
-  const healthFaqs = [
-    {q:"What are artificial dyes?", a:"Synthetic colorants like Red 40, Yellow 5, and Blue 1 are petroleum-derived and used widely in candy, cereals, and drinks. Studies have linked them to hyperactivity in children and allergic reactions. The EU requires warning labels on products containing them."},
-    {q:"What are endocrine disruptors?", a:"Chemicals that interfere with the body's hormone system. They're found in plastics (BPA, phthalates), pesticide residues, non-stick coatings (PFAS), and some personal care ingredients. Exposure has been linked to thyroid disruption, reduced fertility, and developmental issues."},
-    {q:"What is ultra-processing?", a:"Ultra-processed foods go far beyond basic cooking. They typically contain additives, emulsifiers, preservatives, and flavor enhancers not found in home kitchens. Research consistently links high ultra-processed food intake to increased risk of obesity, cardiovascular disease, and some cancers."},
-    {q:"How does Partiqule score health concerns?", a:"The health score covers non-plastic risks: artificial additives, endocrine disruptors, ultra-processing, allergens, and known carcinogens. It contributes 30% of the overall score, with plastic danger making up the remaining 70%."},
+  const sections = [
+    {
+      tag: "Your Health",
+      tagColor: "#16a34a",
+      tagBg: isDark?"#1a2a1a":"#f0fdf4",
+      headline: "What your products are doing to your body",
+      subhead: "From microplastics in arterial plaques to artificial dyes being phased out by the FDA, the research on everyday product exposure has reached a turning point.",
+      stats: [
+        {number:"100%", label:"of human blood samples tested in 2022 contained microplastics", color:"#16a34a", bg:"#f0fdf4"},
+        {number:"58%",  label:"of carotid artery plaques studied in 2024 contained polypropylene (PP)", color:"#059669", bg:"#ecfdf5"},
+        {number:"11B",  label:"microplastic particles released per cup from nylon tea bags", color:"#047857", bg:"#d1fae5"},
+        {number:"2024", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic dyes", color:"#052e16", bg:"#bbf7d0"},
+      ],
+      faqs: [
+        {q:"What are microplastics and why do they matter?", a:"Microplastics are plastic particles under 5mm, many invisible to the naked eye. A 2024 New England Journal of Medicine study found polypropylene (PP) in 58% of carotid artery plaques. Patients with detectable microplastics had significantly higher rates of heart attack, stroke, and death over the following years."},
+        {q:"What are PFAS and where are they found?", a:"PFAS (per- and polyfluoroalkyl substances) are synthetic chemicals used in non-stick coatings, water-resistant clothing, food packaging, and some cleaning products. They are known endocrine disruptors linked to thyroid disruption, reduced fertility, elevated cholesterol, and several cancers. The FDA has flagged them as a priority health concern."},
+        {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods."},
+        {q:"How does Partiqule score personal health risk?", a:"The Materials score (40% weight) covers what the product is made of and its chemical risk. The Usage and Exposure score (25% weight) covers how using the product affects your body, accounting for frequency, contact type (ingestion, skin contact, inhalation), and whether the product is used by children."},
+      ],
+    },
+    {
+      tag: "Your Family and Home",
+      tagColor: "#2563eb",
+      tagBg: isDark?"#1e1f3a":"#eff6ff",
+      headline: "What is coming into your home",
+      subhead: "The packaging your products arrive in, the cleaning products you use around your family, and the exposure patterns of the people you live with all matter.",
+      stats: [
+        {number:"PVA",  label:"film in dishwasher and laundry pods dissolves but enters waterways as microplastic", color:"#2563eb", bg:"#eff6ff"},
+        {number:"1,000+", label:"chemicals in everyday products are known or suspected endocrine disruptors", color:"#1d4ed8", bg:"#dbeafe"},
+        {number:"10x",  label:"higher microplastic concentrations found in infants versus adults in some studies", color:"#1e40af", bg:"#bfdbfe"},
+        {number:"80%",  label:"of packaged household products contain ultra-processed or synthetic chemical ingredients", color:"#1e3a8a", bg:"#93c5fd"},
+      ],
+      faqs: [
+        {q:"Are cleaning products a health concern?", a:"Conventional cleaning products often contain synthetic fragrances, optical brighteners, and surfactants that leave residue on surfaces, dishes, and clothing. Dishwasher pods from brands like Cascade and Tide contain PVA film, which dissolves but enters waterways as microplastic. Genuinely plastic-free alternatives (Blueland, Branch Basics) avoid these entirely."},
+        {q:"Why does packaging matter for my home?", a:"Primary packaging that touches a product can leach chemicals, especially when heated or in contact with acidic foods. Single-use plastic packaging that enters your home regularly adds up over time. Refillable and concentrated formats reduce the volume of plastic and synthetic chemicals circulating through your household."},
+        {q:"Are baby and children's products more concerning?", a:"Yes. Children have higher surface-area-to-body-weight ratios, developing immune and hormonal systems, and different exposure patterns (more hand-to-mouth contact). A 2020 Nature Food study found that heating polypropylene baby bottles releases millions of microplastic particles per litre. Partiqule flags child products with a vulnerable population marker."},
+        {q:"How does Partiqule score home and packaging risk?", a:"The Packaging score (15% weight) covers what enters your home: primary packaging material, whether the product is refillable, and its end-of-life fate. Incidental packaging that is discarded before use (a film pouch on a cleaning tablet) does not penalise the product itself."},
+      ],
+    },
+    {
+      tag: "The Planet",
+      tagColor: "#d97706",
+      tagBg: isDark?"#1e1200":"#fffbeb",
+      headline: "The downstream impact of what we buy",
+      subhead: "Every product has a lifecycle. From how it is made to how it is disposed of, everyday purchasing decisions accumulate into something much larger.",
+      stats: [
+        {number:"8M",   label:"tonnes of plastic enter the world's oceans every year", color:"#d97706", bg:"#fffbeb"},
+        {number:"500",  label:"years for a standard plastic bag to break down in landfill", color:"#b45309", bg:"#fef3c7"},
+        {number:"700K", label:"microfibers released per wash from a single synthetic fleece jacket", color:"#92400e", bg:"#fde68a"},
+        {number:"1/3",  label:"of all plastic ever produced has ended up in nature", color:"#78350f", bg:"#fcd34d"},
+      ],
+      faqs: [
+        {q:"What is sustainability scoring and why does it matter?", a:"Single-use disposables (paper towels, plastic bags, disposable cups, wipes) generate ongoing waste regardless of what they are made of. Partiqule's Sustainability score (15% weight) rewards multi-use, refillable, repairable, and compostable products, and penalises products designed to be thrown away after a single use."},
+        {q:"Why does synthetic clothing contribute to ocean plastic?", a:"Polyester, nylon, acrylic, and spandex shed microscopic synthetic fibers every time they are washed. These microfibers pass through wastewater treatment and enter rivers and oceans. A single wash of a fleece jacket can release over 700,000 fibers. Natural fibers (cotton, wool, linen, hemp) do not shed synthetic microplastics."},
+        {q:"What is a break-even calculation?", a:"When Partiqule suggests a safer alternative, it estimates how many uses it takes for the alternative to offset the environmental cost of its own production. A stainless steel water bottle, for example, breaks even against single-use plastic bottles at around 50 uses. After that, every use is net positive."},
+        {q:"How does Partiqule score planet impact?", a:"Sustainability (15% weight) covers product longevity, replaceability of single-use items, and end-of-life circularity. Manufacturing (5% weight) covers production processes, flagged as estimated when supply chain data is not publicly available. Together they capture the downstream impact of buying a product."},
+      ],
+    },
   ];
 
   return (
     <section style={{background:bg, borderTop:`1px solid ${border}`, padding:isMobile?"40px 16px":"64px 40px"}}>
       <div style={{maxWidth:1100, margin:"0 auto"}}>
+        {sections.map((sec, si) => (
+          <div key={si} style={{marginBottom: si < sections.length - 1 ? (isMobile?48:80) : 0}}>
+            {/* Section header */}
+            <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
+              <div style={{display:"inline-flex", alignItems:"center", gap:6, background:sec.tagBg, color:sec.tagColor, fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
+                {sec.tag}
+              </div>
+              <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>{sec.headline}</h2>
+              <p style={{fontSize:16, color:muted, maxWidth:600, margin:"0 auto", lineHeight:1.75}}>{sec.subhead}</p>
+            </div>
 
-        {/* Section 1: Microplastics */}
-        <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
-          <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1a2a1a":"#f0fdf4", color:"#16a34a", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-            Microplastics
+            {/* Stats grid */}
+            <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
+              {sec.stats.map((s,i) => (
+                <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:28, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
+                  <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* FAQ grid */}
+            <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20}}>
+              {sec.faqs.map((faq,i) => (
+                <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
+                  <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
+                </div>
+              ))}
+            </div>
+
+            {si < sections.length - 1 && (
+              <div style={{borderTop:`1.5px solid ${border}`, marginTop:isMobile?40:64}}/>
+            )}
           </div>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>What are microplastics?</h2>
-          <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
-            Tiny plastic particles that have infiltrated our food, water, air and bodies. Here's what the science says.
-          </p>
-        </div>
-
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
-          {plasticStats.map((s,i) => (
-            <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8}}>{s.number}</div>
-              <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20, marginBottom:isMobile?48:80}}>
-          {plasticFaqs.map((faq,i) => (
-            <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
-              <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div style={{borderTop:`1.5px solid ${border}`, marginBottom:isMobile?40:64}}/>
-
-        {/* Section 2: Broader health concerns */}
-        <div style={{textAlign:"center", marginBottom:isMobile?32:48}}>
-          <div style={{display:"inline-flex", alignItems:"center", gap:6, background:isDark?"#1e1a2e":"#f5f3ff", color:"#7c3aed", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
-            Health Concerns
-          </div>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>Beyond plastics</h2>
-          <p style={{fontSize:16, color:muted, maxWidth:580, margin:"0 auto", lineHeight:1.75}}>
-            Microplastics are just one part of the picture. Everyday products contain a range of chemicals and additives that affect your health in ways that have nothing to do with plastic.
-          </p>
-        </div>
-
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
-          {healthStats.map((s,i) => (
-            <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:800, color:isDark?"#c4b5fd":s.color, marginBottom:8}}>{s.number}</div>
-              <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20}}>
-          {healthFaqs.map((faq,i) => (
-            <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
-              <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
-            </div>
-          ))}
-        </div>
-
+        ))}
       </div>
     </section>
   );
@@ -1210,7 +1216,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 // ── BARCODE SCANNER ───────────────────────────────────────────
 
 
-const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => {
+const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNavigate}) => {
   return (
     <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
 
@@ -1221,13 +1227,13 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           Know what's in your products.
         </h1>
         <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          The products you use every day — the food you eat, the clothes you wear, the cookware you cook with, the cleaning products in your home — have a measurable impact on your health, your family's health, and the health of the planet. Most of that impact is invisible. There's no label, no warning, no easy way to know what to trust.
+          The food you eat, the clothes you wear, the cookware you cook with, the cleaning products in your home. All of it has a measurable impact on your health, your family's health, and the health of the planet. Most of that impact is invisible. There's no label, no warning, no easy way to know what to trust.
         </p>
         <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:700, lineHeight:1.5, marginBottom:16}}>
           Partiqule exists to change that.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We score every product across five dimensions — materials, exposure, packaging, sustainability, and manufacturing — to give you a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
+          We score every product across five dimensions: materials, exposure, packaging, sustainability, and manufacturing. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
           Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
@@ -1248,7 +1254,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           Partiqule is built to close that gap. We combine peer-reviewed science with AI-powered analysis to give every person access to the kind of information that used to require a toxicologist. Scan anything — a cleaning product, a piece of clothing, a food item, a baby product — and get a complete health picture in seconds.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Every score we produce is grounded in published research — from the New England Journal of Medicine to Nature Medicine to The Lancet to the FDA. We flag what matters, explain why it matters, and show you what to do about it.
+          Every score we produce is grounded in published research, including the New England Journal of Medicine, Nature Medicine, The Lancet, and the FDA. We flag what matters, explain why it matters, and show you what to do about it.
         </p>
       </div>
 
@@ -1257,7 +1263,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions — materials, usage and exposure, packaging, sustainability, and manufacturing — because your health, your home, and the planet are all affected differently by the same product."},
+            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions: materials, usage and exposure, packaging, sustainability, and manufacturing. Your health, your home, and the planet are all affected differently by the same product."},
             {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all five dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
             {title:"Always free", body:"Knowledge about what you're putting in your body and home shouldn't cost money. Partiqule is free and requires no account."},
@@ -1308,26 +1314,32 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:16}}>
           <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we started Partiqule</div>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            We started Partiqule after what we now call our "plastic awakening."
+            We started Partiqule after what we now call our awakening to product health.
           </p>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            One night, after putting our kids to bed, we sat down expecting to casually watch something and landed on <em>The Plastic Detox</em>. What we thought would be background noise quickly became a turning point. The documentary follows couples facing infertility challenges who, working with researcher Shanna Swan, explore the impact of microplastics on their fertility — highlighting how everyday exposures from food packaging to clothing to household items can accumulate in ways most of us never consider.
+            It began with plastics. One night, after putting our kids to bed, we landed on <em>The Plastic Detox</em>. What we thought would be background noise quickly became a turning point. The documentary follows couples facing infertility challenges who, working with researcher Shanna Swan, explore the impact of microplastics on their fertility, highlighting how everyday exposures from food packaging to clothing to household items can accumulate in ways most of us never consider.
           </p>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            As parents who experienced fertility challenges with our second child, this hit close to home. We were paying attention to things like sugar and ingredients, but we had almost no awareness of how much plastic we were interacting with daily.
+            As parents who experienced fertility challenges with our second child, this hit close to home. We were paying attention to things like sugar and ingredients, but we had almost no awareness of how much plastic we were interacting with daily, or what that meant for our family's health.
           </p>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            So we started asking questions. What products are actually safe? How much plastic exposure is too much? Are there better alternatives, and are they realistic for everyday life? Where do we even start? There was no simple, trustworthy tool to guide us.
+            But the more we dug in, the bigger the picture became. It was not just plastic. It was the PFAS coating on the pan we cooked in every night. It was the artificial dyes in the snacks our kids loved. It was the synthetic chemicals in the cleaning products we used around the house every week. It was the PVA film in the laundry pods dissolving into the water supply. Each discovery led to another, and the thread connecting all of them was the same: the products most of us use without a second thought are doing things to our health, our children's health, and the planet that we were never told about.
+          </p>
+          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
+            So we started asking questions. What products are actually safe? How do you weigh the different kinds of risk? Are there realistic alternatives for everyday life? Where do you even start? There was no simple, trustworthy tool that looked at the full picture.
           </p>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:0}}>
-            So we built one. Partiqule started as a way for our family to make more informed decisions — one product at a time. Today, it's a tool designed to help others do the same. At the end of the day, we're just two parents trying to do better for our family, and hoping to make it easier for yours.
+            So we built one. Partiqule was designed to look at every product the way we wished something had looked at them for us: across materials, exposure, packaging, sustainability, and manufacturing. The full picture, not just one piece of it. We are just two parents trying to do better for our family, and hoping to make it easier for yours.
           </p>
         </div>
 
         <div style={{padding:"14px 18px", background:isDark?"#1e2433":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
           <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
-            For a full breakdown of our scoring methodology, quality review process, and research sources, see our{" "}
-            <span onClick={()=>{window.history.pushState({},"","/methodology"); window.dispatchEvent(new PopStateEvent("popstate"));}} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>How It Works</span> page.
+            Learn more:{" "}
+            <span onClick={()=>onNavigate("science")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>The Science</span>
+            {" "}behind our scores, or see a full breakdown of our process on the{" "}
+            <span onClick={()=>onNavigate("methodology")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>How It Works</span>
+            {" "}page.
           </span>
         </div>
       </div>
@@ -1336,10 +1348,10 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan is a small act of informed decision-making. When enough people start checking before they buy, manufacturers notice. We've already seen this happen — public pressure and consumer awareness led to bans on microbeads across dozens of countries, forced reformulations of PFAS-coated cookware, and drove major brands to rethink their packaging. That change started with information.
+          Every scan is a small act of informed decision-making. When enough people start checking before they buy, manufacturers notice. We have already seen this happen. Public pressure and consumer awareness led to bans on microbeads across dozens of countries, forced reformulations of PFAS-coated cookware, and drove major brands to rethink their packaging. That change started with information.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We're not anti-product. We're pro-information. The goal is a world where every product that touches your food, your skin, your children, or your home carries the same transparency as a nutrition label — covering not just ingredients, but materials, exposure risk, sustainability impact, and what to choose instead.
+          We're not anti-product. We're pro-information. The goal is a world where every product that touches your food, your skin, your children, or your home carries the same transparency as a nutrition label: materials, exposure risk, sustainability impact, and what to choose instead.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           Your health. Your family's health. The planet's health. That's the full picture Partiqule is built to give you.
@@ -1957,7 +1969,7 @@ function App() {
       ) : page === "privacy" ? (
         <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "about" ? (
-        <AboutPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset}/>
+        <AboutPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset} onNavigate={setPage}/>
       ) : page === "methodology" ? (
         <MethodologyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "404" ? (
@@ -1980,7 +1992,7 @@ function App() {
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
             <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>The Science</h1>
-            <p style={{fontSize:15, color:muted, margin:0}}>Microplastics, harmful chemicals, and why everyday products matter more than you think</p>
+            <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
           <EducationSection isDark={isDark} isMobile={isMobile}/>
         </div>
