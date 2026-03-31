@@ -2,6 +2,118 @@ import React, { useState, useEffect, useRef } from "react";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// ── GLOBE LOADING ─────────────────────────────────────────────
+// 100 points evenly distributed on a sphere (Fibonacci lattice)
+const SPHERE_POINTS = (() => {
+  const pts = [];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < 100; i++) {
+    const y = 1 - (i / 99) * 2;
+    const r = Math.sqrt(1 - y * y);
+    const theta = golden * i;
+    pts.push({ x: Math.cos(theta) * r, y, z: Math.sin(theta) * r });
+  }
+  return pts;
+})();
+
+const HEALTH_FACTS = [
+  { stat: "100%",   text: "of human blood samples tested contain microplastics — Leslie et al. 2022" },
+  { stat: "58%",    text: "of arterial plaques studied contained polypropylene plastic — NEJM 2024" },
+  { stat: "11B",    text: "microplastic particles released per cup from nylon tea bags" },
+  { stat: "2025",   text: "FDA banned Red 3 and began phasing out all petroleum-based synthetic dyes" },
+  { stat: "700K",   text: "microfibers shed per wash from a single synthetic fleece jacket" },
+  { stat: "8M",     text: "tonnes of plastic enter the world's oceans every year" },
+  { stat: "PFAS",   text: "found in non-stick cookware are linked to thyroid disruption and reduced fertility" },
+  { stat: "1,000+", text: "chemicals in everyday home products are known or suspected endocrine disruptors" },
+  { stat: "10x",    text: "higher microplastic concentrations found in infants compared to adults" },
+  { stat: "500yr",  text: "the time it takes a standard plastic bag to break down in landfill" },
+];
+
+const GlobeLoading = () => {
+  const containerRef = useRef(null);
+  const angleRef     = useRef(0);
+  const frameRef     = useRef(null);
+  const [factIdx,    setFactIdx]    = useState(0);
+  const [factVisible, setFactVisible] = useState(true);
+
+  // rAF rotation — direct DOM manipulation so 100 particles don't trigger re-renders
+  useEffect(() => {
+    const animate = () => {
+      angleRef.current += 0.007;
+      if (containerRef.current) {
+        const els = containerRef.current.querySelectorAll("[data-pt]");
+        const cos = Math.cos(angleRef.current);
+        const sin = Math.sin(angleRef.current);
+        els.forEach((el, i) => {
+          const p = SPHERE_POINTS[i];
+          const rx = p.x * cos - p.z * sin;
+          const rz = p.x * sin + p.z * cos;
+          const persp = 2.4 / (2.4 + rz);
+          const sx = 110 + rx * 88 * persp;
+          const sy = 110 - p.y * 88 * persp;
+          const sz = (1.5 + persp * 3.5).toFixed(1);
+          const op = Math.max(0.08, Math.min(0.9, 0.12 + (rz + 1) * 0.38)).toFixed(2);
+          el.style.transform = `translate(${(sx - 3).toFixed(1)}px,${(sy - 3).toFixed(1)}px)`;
+          el.style.opacity   = op;
+          el.style.width     = sz + "px";
+          el.style.height    = sz + "px";
+        });
+      }
+      frameRef.current = requestAnimationFrame(animate);
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  // Fact cycles every 4 seconds with fade transition
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFactVisible(false);
+      setTimeout(() => {
+        setFactIdx(f => (f + 1) % HEALTH_FACTS.length);
+        setFactVisible(true);
+      }, 450);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fact = HEALTH_FACTS[factIdx];
+
+  return (
+    <div style={{display:"flex", flexDirection:"column", alignItems:"center", padding:"8px 0 4px"}}>
+      {/* Globe */}
+      <div ref={containerRef} style={{position:"relative", width:220, height:220, marginBottom:20}}>
+        {SPHERE_POINTS.map((_, i) => (
+          <div key={i} data-pt={i} style={{
+            position:"absolute", top:0, left:0,
+            width:4, height:4, borderRadius:"50%",
+            background:"#4ade80", pointerEvents:"none",
+          }}/>
+        ))}
+        <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} width={220} height={220}>
+          <circle cx={110} cy={110} r={88} fill="none" stroke="#4ade80" strokeWidth={0.6} opacity={0.15}/>
+          <ellipse cx={110} cy={110} rx={88} ry={30} fill="none" stroke="#4ade80" strokeWidth={0.4} opacity={0.1}/>
+          <ellipse cx={110} cy={110} rx={30} ry={88} fill="none" stroke="#4ade80" strokeWidth={0.4} opacity={0.1}/>
+        </svg>
+      </div>
+
+      {/* Health fact — fades and cycles every 4s */}
+      <div style={{
+        transition:"opacity 0.45s ease, transform 0.45s ease",
+        opacity: factVisible ? 1 : 0,
+        transform: factVisible ? "translateY(0)" : "translateY(10px)",
+        textAlign:"center", maxWidth:340, padding:"0 16px",
+      }}>
+        <div style={{
+          fontFamily:"'Outfit',sans-serif", fontWeight:800,
+          fontSize:36, color:"#4ade80", lineHeight:1, marginBottom:8,
+        }}>{fact.stat}</div>
+        <div style={{fontSize:13, color:"rgba(255,255,255,0.6)", lineHeight:1.6}}>{fact.text}</div>
+      </div>
+    </div>
+  );
+};
+
 const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
@@ -2073,96 +2185,114 @@ function App() {
                 {isMobile ? "Scan any product to understand its risks for you, your home and your planet." : "Scan any product to understand its risks for you, your home and your planet. Instantly."}
               </p>
 
-              <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
-                <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IcoSearch size={20}/></div>
-                <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
-                  placeholder="Search any product…"
-                  style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
+              {/* Search bar — fades out when scanning starts */}
+              <div style={{
+                transition:"opacity 0.4s ease, transform 0.4s ease",
+                opacity: loading ? 0 : 1,
+                transform: loading ? "scale(0.96) translateY(-8px)" : "scale(1) translateY(0)",
+                pointerEvents: loading ? "none" : "auto",
+              }}>
+                <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
+                  <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IcoSearch size={20}/></div>
+                  <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
+                    placeholder="Search any product…"
+                    style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
 
-                {/* Camera button — mobile only */}
+                  {/* Camera button — mobile only */}
+                  {isMobile && (
+                    <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
+                      <input type="file" accept="image/*" style={{display:"none"}}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          e.target.value = "";
+                          setResult(null); setError(null); setPage("home");
+                          setLoading(true); setQuery("Reading label…");
+                          try {
+                            const base64 = await new Promise((res, rej) => {
+                              const img = new Image();
+                              const url = URL.createObjectURL(file);
+                              img.onload = () => {
+                                const canvas = document.createElement("canvas");
+                                const MAX = 1200;
+                                const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                                canvas.width  = Math.round(img.width  * ratio);
+                                canvas.height = Math.round(img.height * ratio);
+                                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                                URL.revokeObjectURL(url);
+                                res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+                              };
+                              img.onerror = rej;
+                              img.src = url;
+                            });
+                            const idResp = await fetch(`${API_BASE}/analyze`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
+                            });
+                            if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests — please wait a moment and try again."); return; }
+                            if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
+                            const data = await idResp.json();
+                            if (!data.product_name) throw new Error("Nothing detected");
+                            setQuery(data.product_name);
+                            setResult(data);
+                            saveToHistory(data);
+                            setLoading(false);
+                          } catch(err) {
+                            console.error("Image scan error:", err);
+                            setLoading(false); setQuery("");
+                            setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
+                          }
+                        }}
+                      />
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </label>
+                  )}
+
+                  {/* Scan button */}
+                  <button onClick={()=>analyze()} disabled={!query.trim()||loading}
+                    style={{width:isMobile?64:88, minWidth:isMobile?64:88, height:52, flexShrink:0, border:"none",
+                      borderRadius:"0 14px 14px 0",
+                      background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999",
+                      fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      transition:"background 0.15s", whiteSpace:"nowrap"}}>
+                    Scan
+                  </button>
+                </div>
+
                 {isMobile && (
-                  <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
-                    <input type="file" accept="image/*" style={{display:"none"}}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        e.target.value = "";
-                        setResult(null); setError(null); setPage("home");
-                        setLoading(true); setQuery("Reading label…");
-                        try {
-                          const base64 = await new Promise((res, rej) => {
-                            const img = new Image();
-                            const url = URL.createObjectURL(file);
-                            img.onload = () => {
-                              const canvas = document.createElement("canvas");
-                              const MAX = 1200;
-                              const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                              canvas.width  = Math.round(img.width  * ratio);
-                              canvas.height = Math.round(img.height * ratio);
-                              canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-                              URL.revokeObjectURL(url);
-                              res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
-                            };
-                            img.onerror = rej;
-                            img.src = url;
-                          });
-                          const idResp = await fetch(`${API_BASE}/analyze`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
-                          });
-                          if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests — please wait a moment and try again."); return; }
-                          if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
-                          const data = await idResp.json();
-                          if (!data.product_name) throw new Error("Nothing detected");
-                          setQuery(data.product_name);
-                          setResult(data);
-                          saveToHistory(data);
-                          setLoading(false);
-                        } catch(err) {
-                          console.error("Image scan error:", err);
-                          setLoading(false); setQuery("");
-                          setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
-                        }
-                      }}
-                    />
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                  </label>
+                  <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
+                    <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>Tap to photo a product label, tag, or packaging</span>
+                  </div>
                 )}
 
-                {/* Scan button */}
-                <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                  style={{width:isMobile?64:88, minWidth:isMobile?64:88, height:52, flexShrink:0, border:"none",
-                    borderRadius:"0 14px 14px 0",
-                    background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999",
-                    fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    transition:"background 0.15s", whiteSpace:"nowrap"}}>
-                  {loading?"…":"Scan"}
-                </button>
+                {/* Social proof */}
+                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:20}}>
+                  <div style={{display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,0.5)"}}>
+                    <div style={{width:8, height:8, borderRadius:"50%", background:"#4ade80"}}/>
+                    Free · No sign-up
+                  </div>
+                  <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
+                  <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
+                </div>
               </div>
 
-              {isMobile && !loading && (
-                <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
-                  <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>Tap to photo a product label, tag, or packaging</span>
-                </div>
-              )}
-
-              {/* Social proof — honest */}
-              <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:20}}>
-                <div style={{display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,0.5)"}}>
-                  <div style={{width:8, height:8, borderRadius:"50%", background:"#4ade80"}}/>
-                  Free · No sign-up
-                </div>
-                <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
-                <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
+              {/* Globe — fades in when scanning */}
+              <div style={{
+                transition:"opacity 0.5s ease, transform 0.5s ease",
+                opacity: loading ? 1 : 0,
+                transform: loading ? "translateY(0)" : "translateY(16px)",
+                pointerEvents:"none",
+                position: loading ? "relative" : "absolute",
+                width:"100%",
+              }}>
+                {loading && <GlobeLoading/>}
               </div>
 
-              
-              {loading && <div style={{marginTop:8}}><LoadingState/></div>}
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
             </div>
           </section>
@@ -2259,7 +2389,7 @@ function App() {
                     },
                     {
                       label: "Your Home",
-                      color: "#2563eb",
+                      color: "#16a34a",
                       stats: [
                         {number:"PVA",   label:"film in dishwasher and laundry pods enters waterways as microplastic after dissolving", sub:"peer-reviewed lifecycle analysis"},
                         {number:"1,000+",label:"chemicals in everyday home products are known or suspected endocrine disruptors", sub:"Environmental Working Group"},
@@ -2268,7 +2398,7 @@ function App() {
                     },
                     {
                       label: "The Planet",
-                      color: "#d97706",
+                      color: "#16a34a",
                       stats: [
                         {number:"8M",    label:"tonnes of plastic enter the world's oceans every single year", sub:"UNEP estimate"},
                         {number:"700K",  label:"microfibers released per wash from a single synthetic fleece jacket", sub:"Environment International"},
