@@ -298,15 +298,23 @@ SCORING RULES BY DIMENSION:
 MATERIALS (what the product is physically made of):
 - PP/PVC in food contact: 8-9. PTFE/PFAS coatings: 8-9. Nylon/PET tea bags: 7-8.
 - Natural materials (wood, glass, stainless, ceramic, organic cotton, stone): 1-2.
-- Harmful chemicals (phthalates, BPA, synthetic dyes, PFAS, preservatives): add to concerns.
 - Coatings and treatments count even if the base material is safe.
 - PACKAGING-ONLY: if plastic is only in discarded packaging, materials score stays 1-3.
+- PVA (polyvinyl alcohol) pod film in dishwasher/laundry pods: score 6-7 — PVA dissolves but enters waterways as microplastic pollution. Cascade, Tide, Finish pods all use PVA film.
+- Synthetic fragrances in cleaning products: score +1 — endocrine disrupting compounds, poorly regulated.
+- Optical brighteners in laundry/dishwasher products: score +1 — persistent in environment, potential skin sensitizer.
+- Phosphates and surfactants in cleaning products: add to concerns.
+- SYNTHETIC TEXTILES: polyester, nylon, spandex/elastane, acrylic shed microfibers with every wash and wear. Daily skin contact with synthetic fabric = score 5-7. A product described as "spandex" or "elastane" that is majority synthetic = score 6-7.
+- Natural fiber clothing with minor synthetic content (e.g. 5% elastane waistband): score 3-4.
+- Genuinely plastic-free cleaning products (Blueland, Branch Basics, castile soap): materials score 1-2.
 
 USAGE AND EXPOSURE (how using this product affects health):
 - Leave-on skin contact (moisturizer, deodorant): higher penalty than rinse-off.
 - Direct ingestion (food containers, tea bags, gum): highest penalty.
 - Inhalation (sprays, candles, synthetic textiles): significant penalty.
-- Frequency multiplier: daily +2, weekly +0.5, occasional 0.
+- DISHWASHER PRODUCTS: not zero exposure — chemical residue remains on dishes and enters food. Score usage 4-6 for conventional pods with synthetic chemicals. Genuinely clean formulas (Blueland, Seventh Generation fragrance-free): score 2-3.
+- LAUNDRY PRODUCTS: microfibers released into water supply, fragrance residue on clothing = daily skin contact. Score 4-6 for conventional detergents.
+- Frequency multiplier: daily +2, weekly +1, occasional 0.
 - Child/baby product: apply +1 vulnerable population flag.
 - VEHICLES: score 3-5 — interior plastic is not food contact. No daily-use penalty.
 - EVs score 1-2 points lower than gas equivalents (Rivian/Tesla/Lucid: 2-3, older EVs: 3-4).
@@ -318,12 +326,14 @@ PACKAGING (what contains and ships the product):
 - Single-use plastic primary packaging: score 7-9.
 - Secondary/shipping packaging: only add if excessive.
 - End of life: recyclable=lower, landfill/toxic=higher.
+- NOTE: Concentrated/pod format reduces packaging waste but does NOT excuse poor materials (PVA, synthetic chemicals).
 
 SUSTAINABILITY (product lifecycle and planet impact):
 - Multi-use durable products replacing single-use: score 1-3.
 - Single-use by design (paper towels, disposable cups, plastic wrap): score 7-9.
 - Circular design (refillable, repairable, compostable): score 1-3.
-- Estimated uses to offset vs alternative (break-even).
+- Cleaning products that release synthetic chemicals or PVA into waterways: sustainability score 5-7 regardless of concentrated format.
+- Blueland-style products (no PVA, no synthetic fragrance, genuinely clean): sustainability score 1-3.
 - Ethical sourcing certifications (organic, fair trade, B-Corp): lower score.
 
 MANUFACTURING (production process — score conservatively, flag as estimated):
@@ -331,6 +341,14 @@ MANUFACTURING (production process — score conservatively, flag as estimated):
 - Known good: certified organic, B-Corp, closed-loop, renewably powered: 1-3.
 - Unknown: score 4-5 and flag confidence as low.
 - Weight is low — do not let manufacturing dominate the final score.
+
+CALIBRATION EXAMPLES to ensure differentiation:
+- Cascade dishwasher pods: materials=7 (PVA film+synthetic fragrance+optical brighteners), usage=5 (residue on dishes), packaging=3 (recyclable tub), sustainability=6 (PVA in waterways) → final ~6
+- Blueland dishwasher tablets: materials=1 (no PVA, no synthetic fragrance), usage=2, packaging=2, sustainability=1 → final ~1-2
+- Tide Original pods: materials=7, usage=5 (microfibers+fragrance residue on clothes daily), packaging=3, sustainability=6 → final ~6
+- Lululemon leggings (nylon/spandex): materials=7 (synthetic microfiber shedding), usage=6 (daily skin contact), packaging=2, sustainability=5 → final ~6
+- 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
+- Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 
 FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
 materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
@@ -408,12 +426,19 @@ ${scores}
 category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.frequency} type:${p.usage_exposure?.type}
 
 AUDIT RULES:
-MATERIALS: Only score plastic/chemical risk from materials user is exposed to during use. Discarded packaging (film pouch, wrapper, cap) must not drive materials above 3 for otherwise plastic-free products.
-USAGE: Daily plastic ingestion = usage 8-9. Leave-on skin contact daily = 7-8. Rinse-off = 1-2 lower. Vehicles = 3-5 max (not food contact). EVs score 1-2 lower than gas equivalents.
-PACKAGING: Refillable/concentrated systems = 1-3. Single-use plastic primary packaging = 7-9.
-SUSTAINABILITY: Multi-use replacing single-use = 1-3. Single-use disposables = 7-9.
-MANUFACTURING: Cap influence at 5%. Unknown = neutral 4-5. Only score high if documented harmful.
+MATERIALS: Only score plastic/chemical risk from materials user is exposed to during use. Discarded packaging must not drive materials above 3 for otherwise plastic-free products. BUT: PVA pod film (Cascade, Tide, Finish) = materials 6-7 because PVA enters waterways. Synthetic fragrances and optical brighteners in cleaning products = materials 6-7. Synthetic textiles (polyester, nylon, spandex) with daily skin contact = materials 5-7.
+USAGE: Daily plastic ingestion = usage 8-9. Leave-on skin contact daily = 7-8. Rinse-off = lower BUT dishwasher/laundry products are NOT zero — residue remains on dishes and clothing. Conventional dishwasher pods = usage 4-6. Genuinely clean formulas = usage 2-3. Vehicles = 3-5 max. EVs score 1-2 lower than gas.
+PACKAGING: Refillable/concentrated = 1-3. Single-use plastic = 7-9. Concentrated pod format does NOT excuse bad materials.
+SUSTAINABILITY: Products releasing PVA or synthetic chemicals to waterways = sustainability 5-7 even if concentrated. Genuinely clean (no PVA, no synthetic fragrance) = sustainability 1-3.
+MANUFACTURING: Cap at 5%. Unknown = neutral 4-5.
 CHEWING GUM: polyvinyl acetate = direct plastic ingestion. Materials 7-8, usage 8-9.
+
+CALIBRATION — use these as anchors:
+- Cascade pods: final score ~6 (PVA film + synthetic chemicals + residue on dishes)
+- Blueland tablets: final score ~1-2 (genuinely plastic-free, no PVA, no synthetic fragrance)
+- Lululemon leggings: final score ~6 (synthetic microfibers daily skin contact)
+- Organic cotton tee: final score ~1-2
+- PTFE non-stick pan: final score ~7-8
 
 FINAL SCORE — compute exactly:
 final_score = round(materials x 0.40 + usage x 0.25 + packaging x 0.15 + sustainability x 0.15 + manufacturing x 0.05)
