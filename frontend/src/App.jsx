@@ -2114,6 +2114,9 @@ function App() {
     }
   }, [result]);
 
+  // Scroll to top on every page change and every result load
+  useEffect(() => { window.scrollTo(0, 0); }, [page, result]);
+
   const saveToHistory = (item) => {
     setHistory(prev=>{
       const filtered = prev.filter(h=>h.product_name!==item.product_name);
