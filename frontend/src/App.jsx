@@ -36,19 +36,38 @@ const STAGES = [
   "Finding safer alternatives...",
 ];
 
-const GlobeLoading = () => {
+const GlobeLoading = ({isMobile}) => {
   const containerRef = useRef(null);
   const angleRef     = useRef(0);
   const frameRef     = useRef(null);
   const glowRef      = useRef(Array.from({length:200}, () => 0));
   const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
-  const factIdxRef   = useRef(0);
-  const [flyingFact, setFlyingFact] = useState(null); // one at a time
-  const [stage,      setStage]      = useState(0);
+  const [activeFacts, setActiveFacts] = useState([]);
+  const [stage, setStage] = useState(0);
 
-  // rAF — rotation + per-particle glow, no re-renders
+  // Layout — computed once
+  const mob = isMobile || (typeof window !== 'undefined' && window.innerWidth < 640);
+  const W   = mob ? Math.min(typeof window !== 'undefined' ? window.innerWidth - 24 : 340, 360) : 600;
+  const R   = mob ? 82  : 115;
+  const CX  = W / 2;
+  const CY  = mob ? 188 : 250;
+  const H   = CY + R + 120;
+
+  // Slots: globe surface point (gx,gy) → line endpoint (lx,ly) → card (cx,cy,cw,ch)
+  const SLOTS = mob ? [
+    { gx:CX,       gy:CY-R,       lx:CX,       ly:74,       cx:CX-88,    cy:8,        cw:176, ch:66 },
+    { gx:CX+R*.72, gy:CY-R*.52,   lx:W-116,    ly:CY-98,    cx:W-118,    cy:CY-116,   cw:118, ch:66 },
+    { gx:CX-R*.72, gy:CY-R*.52,   lx:118,      ly:CY-98,    cx:0,        cy:CY-116,   cw:118, ch:66 },
+  ] : [
+    { gx:CX,        gy:CY-R,       lx:CX,        ly:78,       cx:CX-88,    cy:10,       cw:176, ch:68 },
+    { gx:CX+R*.866, gy:CY-R*.5,    lx:CX+R+15,   ly:CY-96,    cx:CX+R+15,  cy:CY-128,   cw:158, ch:68 },
+    { gx:CX+R*.866, gy:CY+R*.5,    lx:CX+R+15,   ly:CY+42,    cx:CX+R+15,  cy:CY+8,     cw:158, ch:68 },
+    { gx:CX-R*.866, gy:CY+R*.5,    lx:CX-R-15,   ly:CY+42,    cx:0,        cy:CY+8,     cw:158, ch:68 },
+    { gx:CX-R*.866, gy:CY-R*.5,    lx:CX-R-15,   ly:CY-96,    cx:0,        cy:CY-128,   cw:158, ch:68 },
+  ];
+
+  // rAF: rotation + per-particle glow pulses
   useEffect(() => {
-    const CX = 155, CY = 155, R = 128;
     const animate = () => {
       angleRef.current += 0.006;
       if (containerRef.current) {
@@ -65,7 +84,6 @@ const GlobeLoading = () => {
           const sz = Math.max(1.5, 1.5 + persp * 4.5).toFixed(1);
           const baseOp = Math.max(0.05, Math.min(0.88, 0.08 + (rz + 1) * 0.40));
 
-          // Random glow pulse per particle
           if (glowTimer.current[i] <= 0) {
             glowTimer.current[i] = 50 + Math.floor(Math.random() * 220);
             if (Math.random() < 0.28) glowRef.current[i] = 1.0;
@@ -75,7 +93,7 @@ const GlobeLoading = () => {
           const g = glowRef.current[i];
           if (g > 0) glowRef.current[i] = Math.max(0, g - 0.032);
 
-          el.style.transform = `translate(${(sx-3).toFixed(1)}px,${(sy-3).toFixed(1)}px)`;
+          el.style.transform = `translate(${(sx-2).toFixed(1)}px,${(sy-2).toFixed(1)}px)`;
           el.style.opacity   = Math.min(1, baseOp + g * 0.82).toFixed(2);
           el.style.width     = sz + "px";
           el.style.height    = sz + "px";
@@ -87,7 +105,7 @@ const GlobeLoading = () => {
     };
     frameRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frameRef.current);
-  }, []);
+  }, [CX, CY, R]);
 
   // Stage progression
   useEffect(() => {
@@ -99,91 +117,125 @@ const GlobeLoading = () => {
     return () => t.forEach(clearTimeout);
   }, []);
 
-  // One flying fact at a time
+  // Facts branch out one at a time, all stay for entire scan
   useEffect(() => {
+    const maxSlots = SLOTS.length;
+    let count = 0;
     const launch = () => {
-      const fact = HEALTH_FACTS[factIdxRef.current];
-      factIdxRef.current = (factIdxRef.current + 1) % HEALTH_FACTS.length;
-      setFlyingFact({ id: Date.now(), fact });
-      setTimeout(() => setFlyingFact(null), 3800);
+      if (count >= maxSlots) return;
+      const slot = SLOTS[count];
+      const fact = HEALTH_FACTS[count % HEALTH_FACTS.length];
+      setActiveFacts(prev => [...prev, { id: Date.now() + count, slot, fact }]);
+      count++;
     };
-    const t0 = setTimeout(launch, 800);
-    const iv = setInterval(launch, 4000);
+    const t0 = setTimeout(launch, 900);
+    const iv = setInterval(() => { if (count < maxSlots) launch(); }, 4000);
     return () => { clearTimeout(t0); clearInterval(iv); };
   }, []);
 
   return (
     <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
       <style>{`
-        @keyframes factRise {
-          0%   { opacity:0; transform:translateX(-50%) translateY(20px) scale(0.5); }
-          14%  { opacity:1; transform:translateX(-50%) translateY(0px)  scale(1);   }
-          68%  { opacity:1; transform:translateX(-50%) translateY(-90px) scale(1);  }
-          88%  { opacity:0.4; transform:translateX(-50%) translateY(-118px) scale(0.96); }
-          100% { opacity:0; transform:translateX(-50%) translateY(-136px) scale(0.92); }
+        @keyframes factBranch {
+          0%   { opacity:0; transform:scale(0.35); }
+          55%  { opacity:1; transform:scale(1.05); }
+          100% { opacity:1; transform:scale(1); }
+        }
+        @keyframes lineGrow {
+          from { stroke-dashoffset: var(--ll); }
+          to   { stroke-dashoffset: 0; }
+        }
+        @keyframes nodePop {
+          0%   { r:0; opacity:0; }
+          70%  { r:6; opacity:1; }
+          100% { r:4.5; opacity:1; }
         }
         @keyframes globeRing {
           0%,100% { opacity:0.07; } 50% { opacity:0.18; }
         }
       `}</style>
 
-      <div ref={containerRef} style={{position:"relative", width:310, height:310, marginBottom:28}}>
-        {SPHERE_POINTS.map((_, i) => (
-          <div key={i} data-pt={i} style={{
-            position:"absolute", top:0, left:0, width:4, height:4,
-            borderRadius:"50%", background:"#4ade80", pointerEvents:"none",
-          }}/>
-        ))}
+      <div style={{position:"relative", width:W, height:H}}>
 
-        {/* Single subtle ring — no ellipses that cause double-globe */}
-        <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} width={310} height={310}>
-          <circle cx={155} cy={155} r={128} fill="none" stroke="#4ade80" strokeWidth={0.6}
-            style={{animation:"globeRing 3.5s ease-in-out infinite"}}/>
-        </svg>
-
-        {/* One fact card at a time, rises from equator */}
-        {flyingFact && (
-          <div key={flyingFact.id} style={{
-            position:"absolute", left:"50%", top:80,
-            width:210, pointerEvents:"none", zIndex:20,
-            animation:"factRise 3.8s cubic-bezier(0.25,0.46,0.45,0.94) forwards",
-          }}>
-            <div style={{
-              background:"rgba(5,46,22,0.96)",
-              border:"1.5px solid rgba(74,222,128,0.6)",
-              borderRadius:14, padding:"12px 16px", textAlign:"center",
-              boxShadow:"0 4px 28px rgba(74,222,128,0.2)",
-            }}>
-              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,fontSize:26,color:"#4ade80",lineHeight:1,marginBottom:6}}>
-                {flyingFact.fact.stat}
-              </div>
-              <div style={{fontSize:11, color:"rgba(255,255,255,0.65)", lineHeight:1.5}}>
-                {flyingFact.fact.text}
-              </div>
-            </div>
-            <div style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",margin:"2px auto 0",boxShadow:"0 0 8px #4ade80"}}/>
-          </div>
-        )}
-      </div>
-
-      {/* Stage indicator */}
-      <div style={{textAlign:"center"}}>
-        <div style={{display:"flex", justifyContent:"center", gap:8, marginBottom:10}}>
-          {STAGES.map((_, i) => (
-            <div key={i} style={{
-              width: i === stage ? 22 : 7, height:7, borderRadius:99,
-              background: i <= stage ? "#4ade80" : "rgba(74,222,128,0.15)",
-              transition:"all 0.5s ease",
+        {/* Particle layer — covers full container so transforms stay in sync */}
+        <div ref={containerRef} style={{position:"absolute",top:0,left:0,width:W,height:H,pointerEvents:"none"}}>
+          {SPHERE_POINTS.map((_, i) => (
+            <div key={i} data-pt={i} style={{
+              position:"absolute", top:0, left:0, width:4, height:4,
+              borderRadius:"50%", background:"#4ade80",
             }}/>
           ))}
         </div>
-        <div style={{fontSize:13, color:"rgba(255,255,255,0.5)", letterSpacing:"0.03em"}}>
-          {STAGES[stage]}
+
+        {/* SVG: globe ring + connecting lines + attachment dots */}
+        <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none",zIndex:6}} width={W} height={H}>
+          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#4ade80" strokeWidth={0.6}
+            style={{animation:"globeRing 3.5s ease-in-out infinite"}}/>
+
+          {activeFacts.map(af => {
+            const s = af.slot;
+            const len = Math.hypot(s.lx - s.gx, s.ly - s.gy).toFixed(1);
+            return (
+              <g key={af.id}>
+                <line
+                  x1={s.gx} y1={s.gy} x2={s.lx} y2={s.ly}
+                  stroke="rgba(74,222,128,0.45)" strokeWidth={1.5}
+                  strokeDasharray={len}
+                  style={{"--ll": len, animation:"lineGrow 0.65s ease-out 0.08s forwards", strokeDashoffset: len}}
+                />
+                <circle cx={s.gx} cy={s.gy} r={0} fill="#4ade80"
+                  style={{animation:"nodePop 0.45s ease-out 0.05s forwards"}}/>
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Fact cards — stay in place for entire scan */}
+        {activeFacts.map(af => (
+          <div key={`c-${af.id}`} style={{
+            position:"absolute",
+            left: af.slot.cx, top: af.slot.cy,
+            width: af.slot.cw,
+            animation:"factBranch 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.12s both",
+            zIndex:10, pointerEvents:"none",
+          }}>
+            <div style={{
+              background:"rgba(5,46,22,0.96)",
+              border:"1.5px solid rgba(74,222,128,0.55)",
+              borderRadius:12, padding:"10px 14px",
+              boxShadow:"0 4px 24px rgba(74,222,128,0.18)",
+            }}>
+              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,
+                fontSize:mob?18:20,color:"#4ade80",lineHeight:1,marginBottom:5}}>
+                {af.fact.stat}
+              </div>
+              <div style={{fontSize:mob?10:11,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>
+                {af.fact.text}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Stage indicator */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,textAlign:"center"}}>
+          <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
+            {STAGES.map((_, i) => (
+              <div key={i} style={{
+                width: i === stage ? 20 : 7, height:7, borderRadius:99,
+                background: i <= stage ? "#4ade80" : "rgba(74,222,128,0.15)",
+                transition:"all 0.5s ease",
+              }}/>
+            ))}
+          </div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em"}}>
+            {STAGES[stage]}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 
 
@@ -2368,7 +2420,7 @@ function App() {
               animation:"globeOverlayIn 0.4s ease forwards",
             }}>
               <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
-              <GlobeLoading/>
+              <GlobeLoading isMobile={isMobile}/>
             </div>
           )}
 
@@ -2652,21 +2704,6 @@ function App() {
                 {/* Peer comparison */}
                 {result.peer_comparison && (
                   <div style={{fontSize:12, color:muted, marginBottom:16, fontStyle:"italic"}}>{result.peer_comparison}</div>
-                )}
-
-                {/* Identified plastics */}
-                {result.identified_plastics?.length > 0 && (
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Plastics detected</div>
-                    <div style={{display:"flex", flexWrap:"wrap", gap:6, justifyContent:"center"}}>
-                      {result.identified_plastics.map((p,i)=>(
-                        <span key={i} className="pop-in" style={{animationDelay:`${0.6 + i*0.1}s`, opacity:0, fontSize:12, fontWeight:700, padding:"4px 12px", borderRadius:20,
-                          background:isDark?"#2a1a1a":"#fef2f2", color:"#dc2626", border:"1.5px solid #fecaca"}}>
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
                 )}
 
                 {/* Exposure badges */}
