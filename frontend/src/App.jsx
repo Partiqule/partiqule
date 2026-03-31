@@ -492,7 +492,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8}}>
-          <span style={{display:"flex", alignItems:"center", opacity: isHigh ? 1 : 0.6}}>{icon}</span>
+          <span style={{display:"flex", alignItems:"center", opacity: isHigh ? 1 : 0.85}}>{icon}</span>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{label}</span>
           <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
           {isHigh && <span style={{fontSize:11, color:"#dc2626", fontWeight:600, background:"#fef2f2", padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>}
@@ -527,7 +527,7 @@ const ManufacturingBadge = ({mfg, isDark, muted}) => {
   return (
     <div style={{marginBottom:10}}>
       <button onClick={()=>setOpen(o=>!o)} style={{display:"flex", alignItems:"center", gap:8, background:isDark?"#1e2433":"#f9fafb", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderRadius:10, padding:"10px 16px", cursor:"pointer", width:"100%"}}>
-        <span style={{display:"flex", alignItems:"center", opacity:0.6}}><IcoVerified size={20}/></span>
+        <span style={{display:"flex", alignItems:"center", opacity:0.85}}><IcoVerified size={20}/></span>
         <span style={{fontSize:12, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Manufacturing</span>
         <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
         <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>— estimated</span>
