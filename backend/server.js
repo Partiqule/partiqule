@@ -145,11 +145,8 @@ function fixJson(raw) {
   s = s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
   // 2. Trailing commas before } or ]
   s = s.replace(/,(\s*[}\]])/g, '$1');
-  // 3. Walk char by char to fix unescaped apostrophes inside JSON string values
-  //    In JSON, apostrophes inside strings don't need escaping — but they break
-  //    parsers when the AI wraps them in ways that confuse the string boundary.
-  //    Strategy: rebuild the string, and when inside a JSON string value,
-  //    replace bare ' with the unicode escape \u0027
+  // 3. Walk char by char to fix unescaped problem chars inside JSON string values
+  //    Handles: apostrophes, literal newlines, literal tabs, literal carriage returns
   let result = '';
   let inString = false;
   let escaped = false;
@@ -158,9 +155,11 @@ function fixJson(raw) {
     if (escaped) { result += c; escaped = false; continue; }
     if (c === '\\') { result += c; escaped = true; continue; }
     if (c === '"') { inString = !inString; result += c; continue; }
-    if (inString && c === "'") {
-      result += '\\u0027'; // valid JSON unicode escape for apostrophe
-      continue;
+    if (inString) {
+      if (c === "'")  { result += '\\u0027'; continue; } // apostrophe
+      if (c === '\n') { result += '\\n';     continue; } // literal newline
+      if (c === '\r') { result += '\\r';     continue; } // carriage return
+      if (c === '\t') { result += '\\t';     continue; } // literal tab
     }
     result += c;
   }
@@ -200,7 +199,8 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
     if (!match) throw new Error("No JSON in response");
     try { return JSON.parse(fixJson(match[0])); }
     catch(e) {
-      console.error("JSON parse failed, raw:", match[0].slice(0, 200));
+      console.error("JSON parse failed at attempt", attempt, "raw snippet:", match[0].slice(0, 300));
+      if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
       throw new Error(`JSON parse error: ${e.message}`);
     }
   }
