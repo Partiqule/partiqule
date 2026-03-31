@@ -790,7 +790,7 @@ const ShareBadge = ({result}) => {
       <div style={{fontSize:11, color:"#aaa", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em"}}>Share result</div>
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:"#fff", borderRadius:9, padding:"10px 14px", border:"1px solid #eee"}}>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
-          <div style={{width:34, height:34, borderRadius:8, background:scoreBg(result.score), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, color}}>{result.score}</div>
+          <div style={{width:34, height:34, borderRadius:8, background:scoreBg(result.overall_score||result.score), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, color}}>{result.overall_score||result.score}</div>
           <div>
             <div style={{fontSize:12, fontWeight:600, color:"#111"}}>{displayName}</div>
             <div style={{fontSize:11, color}}>{label} Danger</div>
@@ -2293,7 +2293,7 @@ function App() {
 
                 {/* Hero label */}
                 <div style={{marginBottom:16}}>
-                  <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.score)} Overall</div>
+                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} Overall</div>
                   <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
                 </div>
 
@@ -2396,11 +2396,11 @@ function App() {
                     {/* 5. Manufacturing — smaller estimated badge */}
                     <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
                   </>);
-                })() : (<>
-                  {/* Fallback for cached results using old schema */}
-                  <PlasticScoreDropdown result={result} isDark={isDark} muted={muted}/>
-                  {result.health_score && <HealthScoreDropdown result={result} isDark={isDark} muted={muted}/>}
-                </>)}
+                })() : (
+                  <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
+                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}>🔄 <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging, Sustainability and Manufacturing scores.</div>
+                  </div>
+                )}
 
                 {/* Peer comparison */}
                 {result.peer_comparison && (
