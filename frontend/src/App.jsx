@@ -2291,15 +2291,10 @@ function App() {
                 <RiskBar score={result.overall_score||result.score}/>
 
                 {/* Hero label */}
-                {result.overall_score ? (
-                  <div style={{marginBottom:16}}>
-                    <div style={{display:"inline-block",background:scoreBg(result.overall_score),color:scoreColor(result.overall_score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 4px"}}>
-                      {scoreLabel(result.overall_score)} Overall
-                    </div>
-                    <div style={{fontSize:11,color:muted,marginTop:4}}>70% plastic danger · 30% health concern</div>
-                  </div>
-                    <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.score)} Overall</div>
-                    <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
+                <div style={{marginBottom:16}}>
+                  <div style={{display:"inline-block",background:scoreBg(result.score),color:scoreColor(result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.score)} Overall</div>
+                  <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
+                </div>
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
                 {result.dimensions ? (() => {
