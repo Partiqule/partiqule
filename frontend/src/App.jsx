@@ -1218,19 +1218,19 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>About Partiqule</div>
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 24px", letterSpacing:"-1px", lineHeight:1.15}}>
-          Make the invisible visible.
+          Know what's in your products.
         </h1>
         <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          The average person consumes around 5 grams of microplastics every week — the weight of a credit card. These particles have been found in human blood, lungs, breast milk, and placentas. Yet most consumer products come with no warning, no labeling, and no guidance on safer alternatives.
+          The products you use every day — the food you eat, the clothes you wear, the cookware you cook with, the cleaning products in your home — have a measurable impact on your health, your family's health, and the health of the planet. Most of that impact is invisible. There's no label, no warning, no easy way to know what to trust.
         </p>
         <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:700, lineHeight:1.5, marginBottom:16}}>
           Partiqule exists to change that.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We believe people deserve clear, accessible information about what they're buying and bringing into their homes. Because when you understand what's in your products — including hidden plastic exposure — you can make better decisions for yourself and your family.
+          We score every product across five dimensions — materials, exposure, packaging, sustainability, and manufacturing — to give you a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
-          Our job is simple: make the invisible visible, so you can choose with confidence.
+          Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
         </p>
         <button onClick={()=>onScan()}
           style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
@@ -1242,13 +1242,13 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Plastic is everywhere — in the packaging around your food, the coating on your pan, the fabric of your clothes, and increasingly, in your body. For most people, this exposure is invisible. There's no label, no warning, no easy way to know which products carry the most risk or what to use instead.
+          The things that affect your health most aren't always the things on the front of the label. Microplastics in food-contact packaging. Synthetic dyes linked to carcinogenicity. PFAS in non-stick coatings. PVA film dissolving into waterways. Synthetic textiles shedding microfibers onto your skin every day. The research is there — but it's scattered, technical, and inaccessible to most people.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Partiqule is built to close that gap. We combine peer-reviewed science with AI-powered analysis to give every person access to the kind of information that used to require a toxicologist.
+          Partiqule is built to close that gap. We combine peer-reviewed science with AI-powered analysis to give every person access to the kind of information that used to require a toxicologist. Scan anything — a cleaning product, a piece of clothing, a food item, a baby product — and get a complete health picture in seconds.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Every score we produce is grounded in published research — from the New England Journal of Medicine to Nature Medicine to The Lancet. We flag what matters, explain why it matters, and show you what to do about it.
+          Every score we produce is grounded in published research — from the New England Journal of Medicine to Nature Medicine to The Lancet to the FDA. We flag what matters, explain why it matters, and show you what to do about it.
         </p>
       </div>
 
@@ -1257,9 +1257,10 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown: materials, packaging, usage, and health concerns. Judge for yourself rather than just trusting a number."},
+            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions — materials, usage and exposure, packaging, sustainability, and manufacturing — because your health, your home, and the planet are all affected differently by the same product."},
+            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all five dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
-            {title:"Always free", body:"Knowledge about what you're putting in your body shouldn't cost money. Partiqule is free and requires no account."},
+            {title:"Always free", body:"Knowledge about what you're putting in your body and home shouldn't cost money. Partiqule is free and requires no account."},
             {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
           ].map((v,i)=>(
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
@@ -1335,10 +1336,13 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan is a vote for a world where products are made to be safer. When enough people start checking before they buy, manufacturers notice. We've already seen this happen with microbeads — public pressure and consumer awareness led to bans across dozens of countries.
+          Every scan is a small act of informed decision-making. When enough people start checking before they buy, manufacturers notice. We've already seen this happen — public pressure and consumer awareness led to bans on microbeads across dozens of countries, forced reformulations of PFAS-coated cookware, and drove major brands to rethink their packaging. That change started with information.
+        </p>
+        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
+          We're not anti-product. We're pro-information. The goal is a world where every product that touches your food, your skin, your children, or your home carries the same transparency as a nutrition label — covering not just ingredients, but materials, exposure risk, sustainability impact, and what to choose instead.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          We're not anti-plastic. We're pro-information. The goal is a world where every product that touches your food, your skin, or your family carries the same transparency as a nutrition label.
+          Your health. Your family's health. The planet's health. That's the full picture Partiqule is built to give you.
         </p>
       </div>
 
@@ -1352,7 +1356,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan}) => 
           Each Partiqule scan runs two AI passes to generate your score. Based on current lifecycle research, a single AI query uses roughly 5–10ml of water when you account for data centre cooling and electricity generation. Two passes means a scan uses approximately <strong style={{color:text}}>15–20ml of water</strong> — about the same as brushing your teeth.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We're not pretending AI is free. It isn't. But we think the trade-off is worth being transparent about. If a scan helps you replace a non-stick pan you cook on every day, or switch away from tea bags releasing 11 billion plastic particles per cup, the environmental payback is significant and ongoing. One scan. Years of impact.
+          We're not pretending AI is free. It isn't. But we think the trade-off is worth being transparent about. If a scan helps you replace a non-stick pan you cook on every day, or switch away from a detergent releasing synthetic chemicals into your home and waterways, the health payback is significant and ongoing. One scan. Years of impact.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           We also use Claude Haiku, Anthropic's most efficient model, specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy and cache results so the same product is never scored twice unnecessarily.
