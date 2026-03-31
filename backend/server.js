@@ -34,7 +34,12 @@ const scoreCache    = new Map();
 // ── HELPERS ───────────────────────────────────────────────────
 
 function cacheKey(q) {
-  return q.toLowerCase().trim().replace(/\s+/g, " ");
+  return q.toLowerCase().trim()
+    .replace(/\b(fresh lemon|lemon fresh|original scent|unscented|fragrance free|travel size|value pack|multi pack|family size|xl|large|small|mini|plus|pro|max|ultra|new formula|refill|refills|starter kit)\b/gi, "")
+    .replace(/[-]/g, " ")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function cleanProductName(name) {
@@ -391,6 +396,12 @@ async function pass2(productName, pass1Result) {
     `Audit the score for "${productName}": product_score:${pass1Result.product_score} packaging_score:${pass1Result.packaging_score} frequency:${pass1Result.exposure_frequency} type:${pass1Result.exposure_type} confidence:${pass1Result.confidence} category:${pass1Result.category} identified_plastics:${plastics}
 
 CRITICAL RULE: Exposure penalties ONLY apply if the product itself contains plastic the user is actually exposed to. Natural materials (wood, glass, stainless steel, cotton, ceramic) score low regardless of frequency. A wooden spoon used daily is still low risk.
+
+PACKAGING-ONLY PLASTIC RULE: If a product is genuinely plastic-free but has minor incidental packaging plastic (a small film pouch, a sealed wrapper, a cap), do NOT let packaging drag the score above 3. The user is not exposed to the packaging plastic during normal product use. Examples:
+- Blueland tablets in a film pouch: score 1-2 (the cleaner itself is plastic-free, the pouch is discarded)
+- Bar soap in a plastic wrapper: score 1-2 (the soap is plastic-free)
+- Loose leaf tea in a plastic-lined bag: score 2-3 (tea itself is fine, bag is discarded)
+- Compare to: plastic water bottle (user drinks FROM the plastic) = score 7-9
 
 VEHICLE SCORING RULES — apply these for any car, truck, SUV, or automobile:
 - Vehicles contain plastic but exposure pathway is LOW — you are not ingesting or inhaling plastic from a car interior under normal use
