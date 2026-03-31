@@ -482,11 +482,6 @@ app.post("/analyze", async (req, res) => {
       let p2 = null;
       try { p2 = await pass2(productName, p1); } catch(e) { console.warn("Pass2 failed:", e.message); }
 
-      const plasticScore = p1.product_score ?? 5;
-      const healthScore  = p1.health_score  ?? 3;
-      const overallScore = Math.round((plasticScore * 0.7) + (healthScore * 0.3));
-      const finalScore   = p2?.final_score ?? Math.round((plasticScore * 0.7 + (p1.packaging_score ?? 3) * 0.3));
-
       const category = p1.category || "other";
       let finalAlternatives = findAlternatives(productName, category);
       if (!finalAlternatives.length && p1.ai_alternatives?.length) {
