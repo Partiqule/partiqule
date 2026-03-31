@@ -219,45 +219,36 @@ async function callClaudeVision(imageBase64, mediaType) {
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1800,
-      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then analyze it for microplastics and health risk. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions. Write dont instead of don't, Press n Seal instead of Press'n Seal.
+      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 SCORING RULES:
-- PP/PVC in food-contact products: score 8-9 (NEJM 2024)
-- PTFE/PFAS non-stick: score 8-9
-- Natural materials (wood, glass, stainless, ceramic, organic cotton): score 1-2
+- PP/PVC in food-contact products: materials score 8-9 (NEJM 2024)
+- PTFE/PFAS non-stick: materials score 8-9
+- Natural materials (wood, glass, stainless, ceramic, organic cotton): materials score 1-2
+- ORGANIC KIDS CLOTHING BRANDS (Little Rad Things, Pact Kids, Hanna Andersson, Burt\'s Bees Baby): materials 1-2, final score 1-3
 - Single-use disposables: sustainability score 8-9
-- Chemical treatments (bleaching, dyes, PFAS): chemical score 6-8`,
+- Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7`,
       messages: [{
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-          { type: "text", text: `Look at this photo of a product label, tag, or packaging. Read the brand name, product name, and any visible text to identify exactly what product this is. Then score it for microplastic and health risk. Return ONLY this JSON:
+          { type: "text", text: `Look at this photo. Read the brand name, product name, and visible text to identify the product. Score it across 5 dimensions. Return ONLY this JSON:
 {
-  "product_name": "brand + product name as shown on label e.g. Tide Original Liquid Detergent",
+  "product_name": "brand + product name as shown on label",
   "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
   "identified_plastics": ["plastic type 1"],
-  "product_score": 5,
-  "packaging_score": 4,
-  "exposure_frequency": "daily|weekly|occasional|rare",
-  "exposure_type": "ingestion|skin_contact|inhalation|mixed",
-  "health_score": 4,
-  "health_concerns": ["concern 1"],
-  "health_note": "one sentence summary",
-  "health_breakdown": {
-    "chemical": { "score": 3, "label": "chemical concerns" },
-    "sustainability": { "score": 5, "label": "sustainability impact" },
-    "manufacturing": { "score": 4, "label": "manufacturing concerns" }
-  },
-  "product_breakdown": {
-    "materials": { "score": 5, "label": "material analysis" },
-    "packaging": { "score": 4, "label": "packaging assessment" },
-    "usage": { "score": 6, "label": "usage exposure" },
-    "manufacturing": { "score": 4, "label": "manufacturing risks" }
-  },
+  "harmful_chemicals": [],
+  "natural_materials": ["organic cotton"],
+  "materials": { "score": 5, "label": "material analysis", "concerns": ["concern"] },
+  "usage_exposure": { "score": 5, "label": "usage risk", "frequency": "daily|weekly|occasional|rare", "type": "ingestion|skin_contact|inhalation|mixed", "intensity": "leave-on|rinse-off|single-contact", "vulnerable": false, "concerns": [] },
+  "packaging": { "score": 4, "label": "packaging assessment", "primary": "cardboard|glass|plastic|mixed", "refillable": false, "end_of_life": "recyclable|compostable|landfill|unknown", "concerns": [] },
+  "sustainability": { "score": 4, "label": "sustainability story", "reusable": false, "replaces_single_use": false, "replaces_count": null, "circularity": "unknown", "concerns": [] },
+  "manufacturing": { "score": 5, "label": "manufacturing estimated", "tier": "good|neutral|bad", "confidence": "low", "concerns": [] },
+  "summary": "max 30 words",
   "raw_concerns": ["concern 1"],
   "confidence": "high|medium|low",
   "confidence_reason": "why",
-  "scan_next": ["related product 1", "related product 2"],
+  "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }` }
         ]
@@ -475,6 +466,9 @@ async function safePass2(productName, pass1Result) {
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
 app.post("/analyze", async (req, res) => {
+  // Prevent service workers and browsers from caching API responses
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.set("Pragma", "no-cache");
   let { query, image, mediaType } = req.body;
 
   // If image provided, use vision to identify + analyze in one pass
@@ -502,34 +496,79 @@ app.post("/analyze", async (req, res) => {
         }));
       }
 
+      // Compute weighted score from 5 dimensions
+      const mScore  = p2?.materials_score      ?? p1.materials?.score      ?? p1.product_score  ?? 5;
+      const uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+      const pkScore = p2?.packaging_score      ?? p1.packaging?.score      ?? p1.packaging_score ?? 5;
+      const sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+      const mfScore = p2?.manufacturing_score  ?? p1.manufacturing?.score   ?? 5;
+      const finalScore = Math.min(10, Math.max(1,
+        Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
+      ));
+
       const result = {
         product_name: productName, category,
-        score: finalScore, overall_score: overallScore,
-        health_score: p1.health_score || null,
-        health_concerns: p1.health_concerns || [],
-        health_note: p1.health_note || null,
-        health_breakdown: p1.health_breakdown || null,
-        identified_plastics: p1.identified_plastics || [],
+        score: finalScore,
+        summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
-        score_reasoning: p2?.score_reasoning || null,
-        summary: p2?.summary || null,
-        exposure_frequency: p1.exposure_frequency || "daily",
-        exposure_type: p1.exposure_type || "mixed",
-        breakdown: p1.product_breakdown || null,
-        scan_next: p1.scan_next || [],
-        break_even: p2?.break_even || null,
-        peer_comparison: null,
-        confidence: p2?.confidence || p1.confidence || "medium",
-        confidence_note: p2?.confidence_note || null,
-        cached: false,
-        scannedAt: new Date().toISOString(),
+        identified_plastics: p1.identified_plastics || [],
+        harmful_chemicals:   p1.harmful_chemicals   || [],
+        natural_materials:   p1.natural_materials   || [],
+        exposure_frequency:  p1.usage_exposure?.frequency || p1.exposure_frequency || "unknown",
+        exposure_type:       p1.usage_exposure?.type      || p1.exposure_type      || "unknown",
+        confidence:          p2?.confidence    || p1.confidence    || "medium",
+        confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
+        score_reasoning:     p2?.score_reasoning || "",
+        scan_next:           p1.scan_next  || [],
+        break_even:          p2?.break_even || null,
+        peer_comparison:     null,
+        cached:              false,
+        scannedAt:           new Date().toISOString(),
+        dimensions: {
+          materials: {
+            score: mScore, label: p1.materials?.label || "", concerns: p1.materials?.concerns || [],
+          },
+          usage_exposure: {
+            score: uScore, label: p1.usage_exposure?.label || "",
+            frequency: p1.usage_exposure?.frequency || "unknown",
+            type: p1.usage_exposure?.type || "unknown",
+            intensity: p1.usage_exposure?.intensity || "unknown",
+            vulnerable: p1.usage_exposure?.vulnerable || false,
+            concerns: p1.usage_exposure?.concerns || [],
+          },
+          packaging: {
+            score: pkScore, label: p1.packaging?.label || "",
+            primary: p1.packaging?.primary || "unknown",
+            refillable: p1.packaging?.refillable || false,
+            end_of_life: p1.packaging?.end_of_life || "unknown",
+            concerns: p1.packaging?.concerns || [],
+          },
+          sustainability: {
+            score: sScore, label: p1.sustainability?.label || "",
+            reusable: p1.sustainability?.reusable || false,
+            replaces_single_use: p1.sustainability?.replaces_single_use || false,
+            replaces_count: p1.sustainability?.replaces_count || null,
+            circularity: p1.sustainability?.circularity || "unknown",
+            concerns: p1.sustainability?.concerns || [],
+          },
+          manufacturing: {
+            score: mfScore,
+            label: p1.manufacturing?.label || "Estimated — limited supply chain data",
+            tier: p1.manufacturing?.tier || "neutral",
+            confidence: "low",
+            concerns: p1.manufacturing?.concerns || [],
+          },
+        },
         alternatives: finalAlternatives.map(p => ({
           id: p.id, name: p.name, brand: p.brand || "",
           score: p.score ?? 3, material: p.material || "",
           description: p.description || "", price: p.price || "",
           affiliateUrl: p.affiliateUrl, category: p.category || category
         })),
-        ai_alternatives: p1.ai_alternatives || [],
+        ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+          name: a.name || "", reason: a.reason || "",
+          material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
+        })),
       };
 
       return res.json(result);
