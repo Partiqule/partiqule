@@ -63,6 +63,7 @@ const GlobeLoading = ({isMobile}) => {
   const glowRef      = useRef(Array.from({length:200}, () => 0));
   const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
   const shuffledFacts = useRef([...HEALTH_FACTS].sort(() => Math.random() - 0.5));
+  const [activeFacts, setActiveFacts] = useState([]);
   const [stage, setStage] = useState(0);
 
   // Layout — computed once
