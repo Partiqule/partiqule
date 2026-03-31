@@ -484,9 +484,10 @@ const EducationSection = ({isDark, isMobile=false}) => {
 // ── DIMENSION DROPDOWN — reusable for all 4 main dimensions ──
 const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
   const [open, setOpen] = useState(false);
-  const color       = scoreColor(score);
-  const bg          = isDark ? "#1e2433" : scoreBg(score);
-  const borderColor = score<=3?"#bbf7d0":score<=6?"#fde68a":score<=8?"#fed7aa":"#fecaca";
+  const isHigh      = score > 6;
+  const color       = isHigh ? "#dc2626" : (isDark ? "#94a3b8" : "#555");
+  const bg          = isHigh ? (isDark ? "#2a1a1a" : "#fef2f2") : (isDark ? "#1e2433" : "#f9fafb");
+  const borderColor = isHigh ? "#fecaca" : (isDark ? "#2a3347" : "#e5e7eb");
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
@@ -494,7 +495,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
           <span style={{fontSize:16}}>{icon}</span>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{label}</span>
           <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
-          <span style={{fontSize:11, color, fontWeight:600, background:`${color}18`, padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>
+          {isHigh && <span style={{fontSize:11, color:"#dc2626", fontWeight:600, background:"#fef2f2", padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>}
         </div>
         <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
       </button>
