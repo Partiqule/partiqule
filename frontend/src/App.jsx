@@ -790,24 +790,58 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const cat         = result.category || "other";
   const catConfig   = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
 
+  // ── What is actually being exposed to ──
+  const exposureItems = (() => {
+    const items = [];
+    if (cat === "food_beverage") {
+      // Named additives from food_analysis (high + medium severity)
+      const concerns = result.food_analysis?.concerns || [];
+      concerns
+        .filter(c => c.severity === "high" || c.severity === "medium")
+        .forEach(c => items.push({ name: c.ingredient, severity: c.severity, type: c.type }));
+      // Plus any plastics (food packaging contact)
+      (result.identified_plastics || []).forEach(p =>
+        items.push({ name: p, severity: "medium", type: "plastic" })
+      );
+    } else {
+      // Non-food: plastics first, then harmful chemicals
+      (result.identified_plastics || []).forEach(p =>
+        items.push({ name: p, severity: "high", type: "plastic" })
+      );
+      (result.harmful_chemicals || []).forEach(c =>
+        items.push({ name: c, severity: "medium", type: "chemical" })
+      );
+    }
+    return items.slice(0, 6); // cap at 6 chips
+  })();
+
+  const exposureNames = exposureItems.length > 0
+    ? exposureItems.slice(0,3).map(e=>e.name).join(", ")
+    : catConfig.chemical(result);
+
   const yearlyEvents     = freqData.perYear * household;
   const altYearlyEvents  = Math.round(yearlyEvents * (altScore / score));
   const reduction        = yearlyEvents - altYearlyEvents;
   const reductionPct     = Math.round((reduction / yearlyEvents) * 100);
 
+  // Kids: children are estimated 2-3x more sensitive to chemical exposure (Grandjean & Landrigan, 2014)
+  const kidsMultiplier   = 2.5;
+  const kidsExposure     = Math.round(yearlyEvents * kidsMultiplier);
+
   // Cost tab
-  const annualSpend = spend * 12;
-  // Parse alt price from break_even or alternatives
-  const altPriceStr = result.alternatives?.[0]?.price || result.break_even?.note || "";
+  const annualSpend   = spend * 12;
+  const altPriceStr   = result.alternatives?.[0]?.price || result.break_even?.note || "";
   const altPriceMatch = altPriceStr.match(/\$(\d+)/);
-  const altMonthly  = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : Math.round(spend * 1.2);
-  const altAnnual   = altMonthly * 12;
-  const costDiff    = altAnnual - annualSpend;
+  const altMonthly    = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : Math.round(spend * 1.2);
+  const altAnnual     = altMonthly * 12;
+  const costDiff      = altAnnual - annualSpend;
+  // Health cost estimate per Trasande et al. (2018): EDC-related health burden ~$494/person/yr in the US
+  const healthCostSaved = hasKids ? Math.round(494 * (reductionPct / 100)) : 0;
 
   const surface  = isDark ? "#1e2433" : "#fff";
   const border   = isDark ? "#2a3347" : "#e5e7eb";
-  const tabBg    = isDark ? "#131929" : "#f9fafb";
-  const activeBg = isDark ? "#1e2a1e" : "#f0fdf4";
+
+  const SEV_COLOR = { high:"#dc2626", medium:"#d97706", low:"#6b7280", plastic:"#7c3aed", chemical:"#d97706" };
 
   const tabs = [
     { id:"exposure", label:"My Exposure" },
@@ -823,7 +857,6 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
         <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:10, display:"flex", alignItems:"center", gap:6}}>
           <IcoScore size={14}/> Usage Calculator
         </div>
-        {/* Tabs */}
         <div style={{display:"flex", gap:4, marginBottom:-1}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
@@ -837,11 +870,10 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
         </div>
       </div>
 
-      {/* Tab content */}
       <div style={{padding:"16px 18px"}}>
 
         {/* Shared inputs */}
-        <div style={{display:"flex", flexWrap:"wrap", gap:10, marginBottom:16}}>
+        <div style={{display:"flex", flexWrap:"wrap", gap:10, marginBottom:14}}>
           <div style={{flex:1, minWidth:140}}>
             <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
               {cat === "food_beverage" ? "How often do you eat this?" : "How often do you use this?"}
@@ -863,22 +895,43 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               <button onClick={()=>setHousehold(h=>Math.min(8,h+1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
             </div>
           </div>
-          <div style={{display:"flex", alignItems:"flex-end", gap:6, paddingBottom:2}}>
+          <div style={{display:"flex", alignItems:"flex-end", paddingBottom:2}}>
             <button onClick={()=>setHasKids(k=>!k)} style={{
               display:"flex", alignItems:"center", gap:5, padding:"6px 10px",
-              borderRadius:8, border:`1px solid ${hasKids?"#16a34a":border}`,
-              background: hasKids ? (isDark?"#1a2a1a":"#f0fdf4") : surface,
-              color: hasKids ? "#16a34a" : muted, cursor:"pointer", fontSize:12, fontWeight:600,
+              borderRadius:8, border:`1px solid ${hasKids?"#d97706":border}`,
+              background: hasKids ? (isDark?"#2a1a00":"#fffbeb") : surface,
+              color: hasKids ? "#d97706" : muted, cursor:"pointer", fontSize:12, fontWeight:600,
             }}>
-              <IcoProfile size={13}/> Kids
+              <IcoProfile size={13}/> Kids in household
             </button>
           </div>
         </div>
 
+        {/* What's being exposed to — chips */}
+        {exposureItems.length > 0 && (
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
+              {cat === "food_beverage" ? "Additives and plastics in this product" : "Chemicals and plastics in this product"}
+            </div>
+            <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
+              {exposureItems.map((item, i) => {
+                const col = SEV_COLOR[item.severity] || SEV_COLOR[item.type] || "#6b7280";
+                return (
+                  <span key={i} style={{
+                    fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:16,
+                    background: isDark ? "#1e1a2e" : "#fef2f2",
+                    color: col, border:`1px solid ${col}44`,
+                  }}>{item.name}</span>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── TAB: MY EXPOSURE ── */}
         {tab === "exposure" && (
           <div>
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10}}>
               {[
                 { label:"Current product", events:yearlyEvents, score, color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2" },
                 { label:altName,           events:altYearlyEvents, score:altScore, color:scoreColor(altScore), bg:isDark?"#1a2a1a":"#f0fdf4" },
@@ -888,9 +941,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                   <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:26, color:item.color, lineHeight:1, marginBottom:4}}>
                     {item.events.toLocaleString()}
                   </div>
-                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555", lineHeight:1.4}}>
-                    {catConfig.unit} per year
-                  </div>
+                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555", lineHeight:1.4}}>{catConfig.unit} per year</div>
                   <div style={{marginTop:8, height:4, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
                     <div style={{height:"100%", width:`${Math.min(100,(item.score/10)*100)}%`, background:item.color, borderRadius:99}}/>
                   </div>
@@ -899,14 +950,25 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               ))}
             </div>
 
-            {/* Reduction callout */}
+            {/* Kids exposure row */}
+            {hasKids && (
+              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"10px 14px", border:"1px solid #fde68a", marginBottom:10}}>
+                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:5}}>
+                  <IcoProfile size={13}/> Children in your household
+                </div>
+                <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>
+                  Estimated effective exposure for children is <strong style={{color:"#d97706"}}>{kidsExposure.toLocaleString()} equivalent events/year</strong> — children are 2-3x more sensitive to chemical exposure due to developing immune and hormonal systems (Grandjean and Landrigan, 2014).
+                  {exposureNames && <span> This applies specifically to <strong>{exposureNames}</strong>.</span>}
+                </div>
+              </div>
+            )}
+
             <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
               <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                Switching eliminates {reductionPct}% of your {catConfig.chemical(result)} exposure
+                Switching eliminates {reductionPct}% of your {exposureNames} exposure
               </div>
               <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
                 {catConfig.analogy(reduction)} removed from your household per year.
-                {hasKids && <span style={{color:"#d97706", fontWeight:600}}> Particularly significant for children — developing systems are more vulnerable to chemical exposure.</span>}
               </div>
             </div>
           </div>
@@ -917,18 +979,20 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
           <div>
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[1,5,10].map(years => {
-                const current = yearlyEvents * years;
-                const alt     = altYearlyEvents * years;
-                const maxVal  = current;
+                const current     = yearlyEvents * years;
+                const alt         = altYearlyEvents * years;
+                const kidsTotal   = hasKids ? kidsExposure * years : null;
+                const maxVal      = hasKids ? Math.max(current, kidsTotal) : current;
                 return (
                   <div key={years} style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${border}`}}>
                     <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
                       {years} year{years>1?"s":""}
                     </div>
-                    <div style={{display:"flex", flexDirection:"column", gap:5}}>
+                    <div style={{display:"flex", flexDirection:"column", gap:6}}>
                       {[
-                        {label:"Current", value:current, color:scoreColor(score)},
-                        {label:altName,   value:alt,     color:"#16a34a"},
+                        {label:"Current product", value:current, color:scoreColor(score)},
+                        ...(hasKids ? [{label:"Children's effective exposure", value:kidsTotal, color:"#d97706"}] : []),
+                        {label:altName, value:alt, color:"#16a34a"},
                       ].map(bar => (
                         <div key={bar.label}>
                           <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
@@ -942,12 +1006,18 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                       ))}
                     </div>
                     <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginTop:6}}>
-                      {((current-alt)/current*100).toFixed(0)}% fewer exposures by switching
+                      {((current-alt)/current*100).toFixed(0)}% fewer {exposureNames} exposures by switching
+                      {hasKids && <span style={{color:"#d97706"}}> — children's effective exposure drops by the same proportion</span>}
                     </div>
                   </div>
                 );
               })}
             </div>
+            {hasKids && (
+              <div style={{fontSize:11, color:muted, marginTop:10, lineHeight:1.5, fontStyle:"italic"}}>
+                Children's effective exposure estimated at 2.5x adult exposure — developing immune and hormonal systems are significantly more sensitive to {exposureNames} (Grandjean and Landrigan, The Lancet Neurology 2014).
+              </div>
+            )}
           </div>
         )}
 
@@ -967,7 +1037,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               </div>
             </div>
 
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10}}>
               {[
                 {label:"Current product", annual:annualSpend, risk:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
                 {label:altName, annual:altAnnual, risk:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
@@ -983,39 +1053,50 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               ))}
             </div>
 
+            {/* Kids health cost card */}
+            {hasKids && healthCostSaved > 0 && (
+              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"10px 14px", border:"1px solid #fde68a", marginBottom:10}}>
+                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:5}}>
+                  <IcoProfile size={13}/> Estimated health cost avoided for children
+                </div>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:"#d97706", marginBottom:3}}>
+                  ~${healthCostSaved}/year
+                </div>
+                <div style={{fontSize:11, color:muted, lineHeight:1.5}}>
+                  Based on Trasande et al. (2018) — EDC-related health costs estimated at ~$494/person/year in the US. Switching eliminates {reductionPct}% of {exposureNames} exposure for children in your household.
+                </div>
+              </div>
+            )}
+
             <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
               {costDiff <= 5 ? (
                 <>
-                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                    Switching costs about the same
-                  </div>
+                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>Switching costs about the same</div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    The safer alternative is within ${Math.abs(costDiff)} per year — essentially the same spend for a {reductionPct}% reduction in {catConfig.chemical(result)} exposure.
+                    Within ${Math.abs(costDiff)}/year — essentially the same spend to eliminate {reductionPct}% of your <strong>{exposureNames}</strong> exposure.
                   </div>
                 </>
               ) : costDiff < 0 ? (
                 <>
-                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                    Switching saves you ${Math.abs(costDiff)}/year
-                  </div>
+                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>Switching saves you ${Math.abs(costDiff)}/year</div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    The safer alternative is cheaper and eliminates {reductionPct}% of your {catConfig.chemical(result)} exposure.
+                    The safer alternative is cheaper and eliminates {reductionPct}% of your <strong>{exposureNames}</strong> exposure.
                   </div>
                 </>
               ) : (
                 <>
                   <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                    ${costDiff}/year more for {reductionPct}% less exposure
+                    ${costDiff}/year more for {reductionPct}% less {exposureNames} exposure
                   </div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    That works out to ${(costDiff/12).toFixed(2)}/month — roughly the cost of a coffee — to eliminate {catConfig.analogy(reduction)} per year.
-                    {hasKids && <span style={{color:"#d97706", fontWeight:600}}> For households with children the health value typically outweighs the cost difference significantly.</span>}
+                    ${(costDiff/12).toFixed(2)}/month to eliminate {catConfig.analogy(reduction)} per year
+                    {hasKids ? " — and significantly reduce chemical load for the children in your household." : "."}
                   </div>
                 </>
               )}
               {result.break_even?.uses && (
                 <div style={{fontSize:11, color:muted, marginTop:8, opacity:0.7}}>
-                  Break-even on production cost: ~{result.break_even.uses} uses. {result.break_even.source}
+                  Sustainability break-even: ~{result.break_even.uses} uses. {result.break_even.source}
                 </div>
               )}
             </div>
