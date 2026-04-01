@@ -3541,6 +3541,436 @@ const products = [
     price:"$6-10",
     tags:["pencil","wood pencil","FSC certified","office","school","stationery","plastic free","kids","writing","sustainable"]
   },
+  // ── SUNGLASSES & EYEWEAR ──────────────────────────────────────
+  {
+    id:"ew-001", name:"Warby Parker Acetate Frames", brand:"Warby Parker",
+    plasticScore:3, category:"other",
+    material:"Cellulose acetate — plant-derived, biodegradable vs petroleum plastic frames",
+    description:"Acetate frames made from cellulose — a plant-derived, biodegradable material vs petroleum-based plastic. Lower chemical burden than standard polycarbonate.",
+    affiliateUrl:`https://www.amazon.com/s?k=acetate+sunglasses+plant+based&tag=${AMAZON_TAG}`,
+    price:"$95-145",
+    tags:["sunglasses","eyewear","glasses","acetate frames","plant based","biodegradable frames","eyeglasses","frames"]
+  },
+  {
+    id:"ew-002", name:"Sunski Polarized Sunglasses", brand:"Sunski",
+    plasticScore:3, category:"other",
+    material:"Recycled plastic frames — lower virgin plastic footprint, polarized lenses",
+    description:"Sunglasses made from recycled plastic with polarized lenses. Lower virgin plastic footprint than conventional frames.",
+    affiliateUrl:`https://www.amazon.com/s?k=Sunski+polarized+sunglasses&tag=${AMAZON_TAG}`,
+    price:"$58-78",
+    tags:["sunglasses","polarized sunglasses","recycled plastic","eyewear","outdoor","UV protection","recycled frames"]
+  },
+  {
+    id:"ew-003", name:"Proof Eyewear Wood Sunglasses", brand:"Proof Eyewear",
+    plasticScore:1, category:"other",
+    material:"Reclaimed wood and recycled aluminum — zero petroleum plastic",
+    description:"Frames made from reclaimed wood and recycled aluminum. Zero petroleum plastic — fully natural or recycled materials.",
+    affiliateUrl:`https://www.amazon.com/s?k=wood+sunglasses+natural+frames&tag=${AMAZON_TAG}`,
+    price:"$89-129",
+    tags:["sunglasses","wood sunglasses","wooden frames","eyewear","recycled","natural","plastic free sunglasses","UV protection"]
+  },
+  {
+    id:"ew-004", name:"Pela Case Eco-Friendly Phone Case", brand:"Pela",
+    plasticScore:2, category:"other",
+    material:"Flaxstic — compostable bioplastic from flax shive, no petroleum plastic",
+    description:"Compostable phone case made from flax shive bioplastic. Breaks down in home compost — no petroleum plastic.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pela+compostable+phone+case&tag=${AMAZON_TAG}`,
+    price:"$49-59",
+    tags:["phone case","compostable case","eco phone case","flax","bioplastic","plastic free","sustainable phone case","tech"]
+  },
+  {
+    id:"ew-005", name:"Gunnar Blue Light Glasses", brand:"Gunnar",
+    plasticScore:3, category:"other",
+    material:"Standard plastic frames — amber-tinted lenses block blue light, no chemical coating concerns",
+    description:"Blue light blocking glasses for screen use. Amber lenses reduce digital eye strain. Standard plastic but long-lasting build quality.",
+    affiliateUrl:`https://www.amazon.com/s?k=Gunnar+blue+light+glasses&tag=${AMAZON_TAG}`,
+    price:"$49-99",
+    tags:["blue light glasses","computer glasses","screen glasses","eyewear","eye strain","digital eye strain","office","desk"]
+  },
+
+  // ── MEDICATIONS & FIRST AID ───────────────────────────────────
+  {
+    id:"fa-001", name:"Boiron Arnica Gel", brand:"Boiron",
+    plasticScore:2, category:"personal_care",
+    material:"Homeopathic arnica — no synthetic chemicals, no parabens or petroleum ingredients",
+    description:"Topical arnica gel for bruises and muscle soreness. No synthetic chemicals, petroleum ingredients or parabens.",
+    affiliateUrl:`https://www.amazon.com/s?k=Boiron+Arnicare+arnica+gel&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["arnica gel","pain relief","muscle pain","bruise","first aid","natural pain relief","topical","personal care","homeopathic"]
+  },
+  {
+    id:"fa-002", name:"Welly Bravery Bandages", brand:"Welly",
+    plasticScore:3, category:"personal_care",
+    material:"Flexible fabric bandage — lower synthetic load than standard plastic adhesive strips",
+    description:"Fabric bandages with cleaner adhesive than standard petroleum-backed strips. Flexible, breathable, no latex.",
+    affiliateUrl:`https://www.amazon.com/s?k=Welly+fabric+bandages&tag=${AMAZON_TAG}`,
+    price:"$7-10",
+    tags:["bandages","band-aid","first aid","fabric bandage","latex free","personal care","wound care","kids","adhesive bandage"]
+  },
+  {
+    id:"fa-003", name:"Burt's Bees Res-Q Ointment", brand:"Burts Bees",
+    plasticScore:2, category:"personal_care",
+    material:"Beeswax, plant oils — no petroleum jelly, no synthetic preservatives",
+    description:"Multi-purpose skin ointment with beeswax and plant oils. No petroleum jelly, no synthetic preservatives or fragrances.",
+    affiliateUrl:`https://www.amazon.com/s?k=Burts+Bees+res-q+ointment&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["ointment","skin ointment","first aid","beeswax","natural","no petroleum","personal care","multipurpose","wound care","chapped skin"]
+  },
+  {
+    id:"fa-004", name:"Zarbees Naturals Cough Syrup", brand:"Zarbees",
+    plasticScore:2, category:"food_beverage",
+    material:"Dark honey base, no dyes, no alcohol, no artificial sweeteners",
+    description:"Honey-based cough syrup with no artificial dyes, alcohol or synthetic sweeteners. Safe for kids over 1 year.",
+    affiliateUrl:`https://www.amazon.com/s?k=Zarbees+naturals+cough+syrup&tag=${AMAZON_TAG}`,
+    price:"$9-13",
+    tags:["cough syrup","kids medicine","natural cough remedy","honey","no dyes","no artificial sweeteners","first aid","food beverage","baby","kids"]
+  },
+  {
+    id:"fa-005", name:"Badger Sleep Balm", brand:"Badger",
+    plasticScore:1, category:"personal_care",
+    material:"Certified organic beeswax, plant oils and essential oils — no synthetic ingredients",
+    description:"USDA certified organic sleep balm with lavender and chamomile. No synthetic fragrance, no petroleum ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Badger+sleep+balm&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["sleep balm","sleep aid","lavender","chamomile","organic","natural sleep","personal care","beeswax","no synthetic","relaxation"]
+  },
+  {
+    id:"fa-006", name:"Dr. Bronners Organic Hand Sanitizer", brand:"Dr. Bronners",
+    plasticScore:2, category:"personal_care",
+    material:"Ethanol from organic sugar cane, organic aloe — no synthetic thickeners or fragrance",
+    description:"USDA organic hand sanitizer with no synthetic thickeners, fragrance or drying petroleum ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Dr+Bronners+organic+hand+sanitizer&tag=${AMAZON_TAG}`,
+    price:"$5-9",
+    tags:["hand sanitizer","sanitizer","personal care","organic","no synthetic fragrance","ethanol","aloe","natural","antibacterial"]
+  },
+  {
+    id:"fa-007", name:"Tiger Balm Natural Pain Relief", brand:"Tiger Balm",
+    plasticScore:2, category:"personal_care",
+    material:"Camphor, menthol, clove oil — plant-derived actives, no synthetic pain relief chemicals",
+    description:"Traditional herbal pain relief balm with plant-derived actives. No synthetic analgesics, no petroleum ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Tiger+Balm+pain+relief&tag=${AMAZON_TAG}`,
+    price:"$8-14",
+    tags:["pain relief","muscle pain","herbal balm","topical pain relief","natural","camphor","menthol","first aid","personal care","arthritis"]
+  },
+
+  // ── ART & CRAFT SUPPLIES ──────────────────────────────────────
+  {
+    id:"ar-001", name:"Faber-Castell Polychromos Colored Pencils", brand:"Faber-Castell",
+    plasticScore:1, category:"other",
+    material:"Cedar wood barrel, oil-based pigment — no ABS plastic casing",
+    description:"Cedar wood colored pencils with lightfast oil-based pigment. No plastic barrel — fully wood construction.",
+    affiliateUrl:`https://www.amazon.com/s?k=Faber-Castell+Polychromos+colored+pencils&tag=${AMAZON_TAG}`,
+    price:"$20-85",
+    tags:["colored pencils","pencils","art supplies","drawing","kids","school","wood pencil","plastic free","craft","stationery"]
+  },
+  {
+    id:"ar-002", name:"Stockmar Beeswax Crayons", brand:"Stockmar",
+    plasticScore:1, category:"other",
+    material:"Beeswax and plant-based pigments — no paraffin, no petroleum wax, no synthetic dyes",
+    description:"Beeswax crayons with plant-based pigments. No paraffin, no petroleum wax, no synthetic dyes. Safe for young children.",
+    affiliateUrl:`https://www.amazon.com/s?k=Stockmar+beeswax+crayons&tag=${AMAZON_TAG}`,
+    price:"$18-35",
+    tags:["crayons","beeswax crayons","kids art","art supplies","non toxic crayons","plant pigment","no paraffin","natural crayons","toddler","craft"]
+  },
+  {
+    id:"ar-003", name:"Melissa and Doug Tempera Paint", brand:"Melissa and Doug",
+    plasticScore:2, category:"other",
+    material:"Water-based tempera — no solvent-based chemicals, washable formula",
+    description:"Water-based washable tempera paint. No solvent-based chemicals or harsh synthetic dyes. Safe for kids.",
+    affiliateUrl:`https://www.amazon.com/s?k=Melissa+Doug+tempera+paint+washable&tag=${AMAZON_TAG}`,
+    price:"$10-18",
+    tags:["paint","kids paint","tempera paint","art supplies","washable paint","water based","non toxic paint","kids","craft","school"]
+  },
+  {
+    id:"ar-004", name:"Elmer's Washable School Glue", brand:"Elmers",
+    plasticScore:2, category:"other",
+    material:"PVA water-based adhesive — no solvent, no toxic compounds, washable",
+    description:"Water-based PVA school glue with no solvents or toxic compounds. Fully washable, safe for all ages.",
+    affiliateUrl:`https://www.amazon.com/s?k=Elmers+washable+school+glue&tag=${AMAZON_TAG}`,
+    price:"$4-8",
+    tags:["glue","school glue","craft glue","art supplies","washable glue","PVA glue","kids","school","non toxic glue","craft"]
+  },
+  {
+    id:"ar-005", name:"Arteza Watercolor Paints", brand:"Arteza",
+    plasticScore:2, category:"other",
+    material:"Water-based watercolor — no solvent-based chemicals or heavy metal pigments",
+    description:"Water-based watercolor set with no heavy metal pigments or solvents. Non-toxic ASTM D-4236 certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Arteza+watercolor+paint+set&tag=${AMAZON_TAG}`,
+    price:"$12-22",
+    tags:["watercolor","watercolor paint","art supplies","painting","water based","non toxic paint","ASTM certified","kids","school","artist"]
+  },
+  {
+    id:"ar-006", name:"ALEX Toys Finger Paint Set", brand:"ALEX Toys",
+    plasticScore:2, category:"other",
+    material:"Water-based finger paint — washable, no solvent-based chemicals",
+    description:"Washable water-based finger paint. No solvent-based chemicals, no harsh synthetic dyes. Washes off skin and clothing.",
+    affiliateUrl:`https://www.amazon.com/s?k=ALEX+Toys+finger+paint+set&tag=${AMAZON_TAG}`,
+    price:"$8-14",
+    tags:["finger paint","kids paint","art supplies","washable paint","water based","toddler","baby","craft","non toxic","sensory"]
+  },
+
+  // ── TECH ACCESSORIES ──────────────────────────────────────────
+  {
+    id:"tc-001", name:"Anker USB-C Braided Cable", brand:"Anker",
+    plasticScore:3, category:"other",
+    material:"Nylon braided exterior — more durable than PVC cables, reduces replacement waste",
+    description:"Nylon-braided USB-C cable — significantly more durable than PVC-coated cables, reducing how often you replace it.",
+    affiliateUrl:`https://www.amazon.com/s?k=Anker+USB-C+braided+cable&tag=${AMAZON_TAG}`,
+    price:"$9-14",
+    tags:["USB cable","USB-C","phone cable","charging cable","braided cable","nylon","durable cable","tech","charger","long lasting"]
+  },
+  {
+    id:"tc-002", name:"Native Union Belt Cable", brand:"Native Union",
+    plasticScore:3, category:"other",
+    material:"Braided nylon exterior, reinforced stress points — built to last vs disposable PVC cables",
+    description:"Ultra-durable braided cable with reinforced stress points. Designed to replace cheap PVC cables that fray and end up in landfill.",
+    affiliateUrl:`https://www.amazon.com/s?k=Native+Union+belt+cable&tag=${AMAZON_TAG}`,
+    price:"$25-35",
+    tags:["USB cable","USB-C","lightning cable","charging cable","braided cable","durable","tech","long lasting","phone cable"]
+  },
+  {
+    id:"tc-003", name:"Mophie MagSafe Charger", brand:"Mophie",
+    plasticScore:3, category:"other",
+    material:"Standard plastic housing — reduced cable waste through wireless charging",
+    description:"Wireless MagSafe charger that eliminates cable wear and replacement waste. Fewer cables in landfill over time.",
+    affiliateUrl:`https://www.amazon.com/s?k=Mophie+MagSafe+wireless+charger&tag=${AMAZON_TAG}`,
+    price:"$29-39",
+    tags:["wireless charger","MagSafe","phone charger","charging","tech","iPhone","cable free","wireless charging"]
+  },
+  {
+    id:"tc-004", name:"Casetify Impact Phone Case", brand:"Casetify",
+    plasticScore:3, category:"other",
+    material:"EcoShock material — 65% recycled and plant-based materials",
+    description:"Phone case made from 65% recycled and plant-based materials. Drops the petroleum plastic footprint vs standard TPU cases.",
+    affiliateUrl:`https://www.amazon.com/s?k=Casetify+recycled+phone+case&tag=${AMAZON_TAG}`,
+    price:"$55-70",
+    tags:["phone case","iPhone case","recycled phone case","sustainable case","tech","plant based","recycled materials","drop protection"]
+  },
+  {
+    id:"tc-005", name:"Nimble Sustainable Power Bank", brand:"Nimble",
+    plasticScore:3, category:"other",
+    material:"Recycled aluminum and plastic housing — certified B Corp, takeback recycling program",
+    description:"Power bank made with recycled materials. Certified B Corp with a free mail-back recycling program for end of life.",
+    affiliateUrl:`https://www.amazon.com/s?k=Nimble+sustainable+power+bank&tag=${AMAZON_TAG}`,
+    price:"$35-55",
+    tags:["power bank","portable charger","battery pack","tech","recycled","B Corp","sustainable charger","USB-C","phone charger"]
+  },
+
+  // ── TRAVEL ────────────────────────────────────────────────────
+  {
+    id:"tr-001", name:"Cadence Capsule Travel Containers", brand:"Cadence",
+    plasticScore:2, category:"other",
+    material:"Recycled aluminum capsules — no single-use plastic travel bottles",
+    description:"Refillable recycled aluminum travel capsules — eliminate single-use plastic travel bottles entirely. Leak-proof, TSA-compliant.",
+    affiliateUrl:`https://www.amazon.com/s?k=Cadence+travel+capsule+container&tag=${AMAZON_TAG}`,
+    price:"$9-12",
+    tags:["travel containers","travel bottles","TSA containers","toiletry bottles","travel","refillable","aluminum","plastic free travel","carry on"]
+  },
+  {
+    id:"tr-002", name:"Matador FlatPak Toiletry Case", brand:"Matador",
+    plasticScore:3, category:"other",
+    material:"Recycled TPU — lower footprint than virgin plastic, waterproof",
+    description:"Ultralight waterproof toiletry case made from recycled TPU. Collapses flat when empty to reduce bulk.",
+    affiliateUrl:`https://www.amazon.com/s?k=Matador+FlatPak+toiletry+case&tag=${AMAZON_TAG}`,
+    price:"$25-35",
+    tags:["toiletry bag","travel bag","dopp kit","waterproof bag","travel","recycled","carry on","TSA","toiletry case"]
+  },
+  {
+    id:"tr-003", name:"Away Carry-On Suitcase", brand:"Away",
+    plasticScore:3, category:"other",
+    material:"Polycarbonate shell — BPA-free, lightweight, designed for longevity over replacement",
+    description:"BPA-free polycarbonate hardshell suitcase built to last 10+ years. Lifetime warranty reduces landfill contribution vs cheap luggage.",
+    affiliateUrl:`https://www.amazon.com/s?k=Away+carry+on+suitcase&tag=${AMAZON_TAG}`,
+    price:"$275-325",
+    tags:["suitcase","carry on","luggage","travel","hardshell","polycarbonate","BPA free","durable luggage","lifetime warranty"]
+  },
+  {
+    id:"tr-004", name:"Patagonia Black Hole Duffel", brand:"Patagonia",
+    plasticScore:3, category:"other",
+    material:"100% recycled polyester — no virgin synthetic fibers",
+    description:"100% recycled polyester duffel bag. Bluesign-approved fabric — no virgin synthetic fibers, Fair Trade certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Patagonia+Black+Hole+duffel+bag&tag=${AMAZON_TAG}`,
+    price:"$99-149",
+    tags:["duffel bag","travel bag","gym bag","recycled polyester","travel","Patagonia","fair trade","bluesign","weekend bag"]
+  },
+  {
+    id:"tr-005", name:"Sea to Summit Lightweight Dry Bag", brand:"Sea to Summit",
+    plasticScore:3, category:"other",
+    material:"Ultra-Sil nylon — extremely lightweight, replaces multiple plastic bags",
+    description:"Ultralight dry bag that replaces zip-lock bags and single-use plastic bags when traveling. Waterproof, reusable indefinitely.",
+    affiliateUrl:`https://www.amazon.com/s?k=Sea+to+Summit+dry+bag&tag=${AMAZON_TAG}`,
+    price:"$15-35",
+    tags:["dry bag","waterproof bag","travel","outdoor","reusable","nylon","packing","zip lock alternative","beach bag","camping"]
+  },
+
+  // ── FEMININE HYGIENE (EXPANDED) ───────────────────────────────
+  {
+    id:"fh-001", name:"August Organic Cotton Pads", brand:"August",
+    plasticScore:2, category:"personal_care",
+    material:"100% organic cotton — no synthetic fibers, chlorine bleaching or plastic mesh",
+    description:"GOTS-certified organic cotton pads with no plastic mesh top layer, no chlorine bleaching or synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=August+organic+cotton+pads&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["pads","period pads","organic pads","organic cotton","feminine care","period","no plastic","chlorine free","natural pads"]
+  },
+  {
+    id:"fh-002", name:"Rael Organic Cotton Tampons", brand:"Rael",
+    plasticScore:2, category:"personal_care",
+    material:"100% organic cotton — no synthetic fibers, rayon, chlorine bleaching or fragrance",
+    description:"GOTS-certified organic cotton tampons. No rayon, no synthetic fragrance, no chlorine bleaching. BPA-free applicator option.",
+    affiliateUrl:`https://www.amazon.com/s?k=Rael+organic+cotton+tampons&tag=${AMAZON_TAG}`,
+    price:"$9-13",
+    tags:["tampons","organic tampons","organic cotton","feminine care","period","no rayon","chlorine free","natural tampons","BPA free applicator"]
+  },
+  {
+    id:"fh-003", name:"Cora Organic Tampons", brand:"Cora",
+    plasticScore:2, category:"personal_care",
+    material:"100% organic cotton — no synthetic fibers, chlorine bleaching or fragrance",
+    description:"100% organic cotton tampons with no synthetic fibers, chlorine bleaching or fragrance. Compact BPA-free applicator.",
+    affiliateUrl:`https://www.amazon.com/s?k=Cora+organic+cotton+tampons&tag=${AMAZON_TAG}`,
+    price:"$9-13",
+    tags:["tampons","organic tampons","organic cotton","feminine care","period","chlorine free","BPA free","natural tampons","compact"]
+  },
+  {
+    id:"fh-004", name:"Saalt Menstrual Disc", brand:"Saalt",
+    plasticScore:1, category:"personal_care",
+    material:"Medical-grade silicone — no BPA, latex or toxins, reusable for years",
+    description:"Medical-grade silicone menstrual disc — holds more than a tampon, reusable for years. No BPA, phthalates or latex.",
+    affiliateUrl:`https://www.amazon.com/s?k=Saalt+menstrual+disc&tag=${AMAZON_TAG}`,
+    price:"$29-39",
+    tags:["menstrual disc","period disc","feminine care","menstrual cup","reusable","silicone","BPA free","plastic free period","zero waste"]
+  },
+  {
+    id:"fh-005", name:"Knix Period Underwear", brand:"Knix",
+    plasticScore:3, category:"clothing",
+    material:"Recycled nylon and spandex blend — replaces disposable pads entirely",
+    description:"Period underwear that replaces single-use pads. Absorbent leak-proof layer eliminates disposable period product waste.",
+    affiliateUrl:`https://www.amazon.com/s?k=Knix+period+underwear&tag=${AMAZON_TAG}`,
+    price:"$28-38",
+    tags:["period underwear","reusable period","feminine care","period","reusable","underwear","leak proof","zero waste period","sustainable period"]
+  },
+  {
+    id:"fh-006", name:"Thinx Period Underwear", brand:"Thinx",
+    plasticScore:3, category:"clothing",
+    material:"Recycled polyester and nylon — replaces disposable single-use pads",
+    description:"Period underwear that absorbs up to 5 tampons worth. Replaces disposable pads — reduces single-use period product waste.",
+    affiliateUrl:`https://www.amazon.com/s?k=Thinx+period+underwear&tag=${AMAZON_TAG}`,
+    price:"$32-45",
+    tags:["period underwear","reusable period","feminine care","period","underwear","leak proof","zero waste period","sustainable period","absorbent"]
+  },
+
+  // ── GARDEN & OUTDOOR ──────────────────────────────────────────
+  {
+    id:"ga-001", name:"Dr. Earth Organic Fertilizer", brand:"Dr. Earth",
+    plasticScore:1, category:"other",
+    material:"100% organic matter — no synthetic nitrogen, no sewage sludge, no GMOs",
+    description:"USDA certified organic fertilizer with no synthetic nitrogen, sewage sludge or GMOs. Safe around kids and pets.",
+    affiliateUrl:`https://www.amazon.com/s?k=Dr+Earth+organic+fertilizer&tag=${AMAZON_TAG}`,
+    price:"$14-24",
+    tags:["fertilizer","organic fertilizer","garden","plant food","soil","organic","non toxic","kids safe","pet safe","gardening"]
+  },
+  {
+    id:"ga-002", name:"Fox Farm Ocean Forest Potting Soil", brand:"Fox Farm",
+    plasticScore:1, category:"other",
+    material:"Aged forest products, earthworm castings, bat guano — no synthetic fertilizers",
+    description:"Organic potting mix with aged forest products and earthworm castings. No synthetic fertilizers or harmful pesticides.",
+    affiliateUrl:`https://www.amazon.com/s?k=Fox+Farm+Ocean+Forest+potting+soil&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["potting soil","garden soil","potting mix","gardening","organic soil","indoor plants","outdoor","plant","natural","worm castings"]
+  },
+  {
+    id:"ga-003", name:"Safer Brand Insect Killing Soap", brand:"Safer Brand",
+    plasticScore:2, category:"other",
+    material:"Potassium salts of fatty acids — no synthetic pesticides, OMRI certified organic",
+    description:"OMRI certified organic insect control using potassium salts — no synthetic pesticides, safe for edible plants.",
+    affiliateUrl:`https://www.amazon.com/s?k=Safer+Brand+insect+killing+soap&tag=${AMAZON_TAG}`,
+    price:"$8-14",
+    tags:["insecticide","garden spray","organic pesticide","OMRI","gardening","bug spray","plant care","non toxic","aphids","indoor plants"]
+  },
+  {
+    id:"ga-004", name:"Biodegradable Plant Pots", brand:"Jiffy",
+    plasticScore:1, category:"other",
+    material:"Peat and wood fiber — fully compostable, no plastic",
+    description:"Peat and wood fiber seed starting pots — plant directly in ground, pot composts with the soil. No plastic waste.",
+    affiliateUrl:`https://www.amazon.com/s?k=biodegradable+seedling+pots+compostable&tag=${AMAZON_TAG}`,
+    price:"$8-14",
+    tags:["plant pots","seedling pots","seed starting","compostable pots","biodegradable","gardening","plastic free","peat pots","propagation"]
+  },
+  {
+    id:"ga-005", name:"LifeStraw Personal Water Filter", brand:"LifeStraw",
+    plasticScore:3, category:"other",
+    material:"ABS plastic housing — filters 4,000 liters, replaces thousands of plastic bottles",
+    description:"Filters 4,000 liters per filter — replacing thousands of single-use plastic water bottles over its lifetime.",
+    affiliateUrl:`https://www.amazon.com/s?k=LifeStraw+personal+water+filter&tag=${AMAZON_TAG}`,
+    price:"$19-25",
+    tags:["water filter","portable filter","outdoor","camping","hiking","travel","water bottle alternative","plastic bottle alternative","survival"]
+  },
+  {
+    id:"ga-006", name:"Fiskars Steel Garden Trowel", brand:"Fiskars",
+    plasticScore:1, category:"other",
+    material:"Stainless steel blade, aluminum handle — no plastic, built to last decades",
+    description:"All-metal garden trowel with stainless steel blade and aluminum handle. No plastic — built to last a lifetime.",
+    affiliateUrl:`https://www.amazon.com/s?k=Fiskars+stainless+steel+garden+trowel&tag=${AMAZON_TAG}`,
+    price:"$14-20",
+    tags:["garden trowel","trowel","garden tool","stainless steel","gardening","metal","durable","plastic free garden","outdoor","planting"]
+  },
+  {
+    id:"ga-007", name:"Espoma Organic Plant Tone", brand:"Espoma",
+    plasticScore:1, category:"other",
+    material:"All-natural ingredients — feather meal, bone meal, composted poultry. No synthetic chemicals.",
+    description:"All-natural slow-release plant fertilizer. No synthetic chemicals, safe for edible plants. OMRI listed for organic gardening.",
+    affiliateUrl:`https://www.amazon.com/s?k=Espoma+Plant-tone+organic+fertilizer&tag=${AMAZON_TAG}`,
+    price:"$14-20",
+    tags:["fertilizer","plant food","organic fertilizer","OMRI","garden","gardening","slow release","all natural","edible plants","vegetables"]
+  },
+
+  // ── BEDDING (EXPANDED) ────────────────────────────────────────
+  {
+    id:"bd-001", name:"Avocado Green Pillow", brand:"Avocado Green",
+    plasticScore:1, category:"other",
+    material:"GOTS-certified organic latex and wool — no polyurethane foam, no synthetic fill",
+    description:"GOTS and MADE SAFE certified organic latex and wool pillow. No polyurethane foam, no synthetic fill or chemical treatments.",
+    affiliateUrl:`https://www.amazon.com/s?k=Avocado+Green+organic+pillow&tag=${AMAZON_TAG}`,
+    price:"$89-119",
+    tags:["pillow","organic pillow","latex pillow","wool pillow","GOTS","non toxic pillow","bedroom","sleep","organic","MADE SAFE"]
+  },
+  {
+    id:"bd-002", name:"Saatva Latex Pillow", brand:"Saatva",
+    plasticScore:2, category:"other",
+    material:"Organic latex core, organic cotton cover — no synthetic foam or polyester fill",
+    description:"Organic latex pillow with organic cotton cover. No synthetic foam, no polyester fill, no chemical fire retardants.",
+    affiliateUrl:`https://www.amazon.com/s?k=natural+latex+pillow+organic+cotton&tag=${AMAZON_TAG}`,
+    price:"$95-135",
+    tags:["pillow","latex pillow","organic pillow","organic cotton","bedroom","sleep","non toxic","no synthetic foam","natural latex"]
+  },
+  {
+    id:"bd-003", name:"Buffy Breeze Comforter", brand:"Buffy",
+    plasticScore:3, category:"other",
+    material:"Eucalyptus lyocell shell, recycled polyester fill — lower impact than virgin synthetic",
+    description:"Eucalyptus lyocell shell with recycled bottle fill. Lower impact than virgin polyester comforters. Climate-neutral certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Buffy+breeze+comforter+eucalyptus&tag=${AMAZON_TAG}`,
+    price:"$149-199",
+    tags:["comforter","duvet","eucalyptus","lyocell","recycled fill","bedroom","sleep","cooling comforter","climate neutral","non toxic"]
+  },
+  {
+    id:"bd-004", name:"Authenticity 50 Organic Cotton Mattress Topper", brand:"Authenticity 50",
+    plasticScore:2, category:"other",
+    material:"GOTS-certified organic cotton fill and cover — no synthetic foam or polyester",
+    description:"GOTS-certified organic cotton mattress topper with no synthetic foam, polyester or flame retardant chemicals.",
+    affiliateUrl:`https://www.amazon.com/s?k=organic+cotton+mattress+topper+GOTS&tag=${AMAZON_TAG}`,
+    price:"$89-149",
+    tags:["mattress topper","organic mattress topper","GOTS","organic cotton","bedroom","sleep","non toxic","no synthetic foam","flame retardant free"]
+  },
+  {
+    id:"bd-005", name:"Weighted Idea Organic Cotton Weighted Blanket", brand:"Weighted Idea",
+    plasticScore:2, category:"other",
+    material:"Organic cotton shell, glass bead filling — no plastic pellets, no synthetic shell",
+    description:"Organic cotton weighted blanket filled with glass beads instead of plastic pellets. No synthetic shell, no chemical finishes.",
+    affiliateUrl:`https://www.amazon.com/s?k=organic+cotton+weighted+blanket+glass+beads&tag=${AMAZON_TAG}`,
+    price:"$45-75",
+    tags:["weighted blanket","organic weighted blanket","glass beads","organic cotton","bedroom","sleep","anxiety","no plastic pellets","non toxic"]
+  },
+
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
