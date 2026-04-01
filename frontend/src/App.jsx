@@ -2766,6 +2766,21 @@ function App() {
 
                     {/* 5. Manufacturing — smaller estimated badge */}
                     <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
+
+                    {/* Mobile only — scroll to alternatives CTA */}
+                    {isMobile && (
+                      <button
+                        onClick={()=>document.getElementById("safer-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
+                        style={{
+                          width:"100%", marginTop:6, padding:"12px 16px",
+                          background:"#052e16", color:"#4ade80",
+                          border:"none", borderRadius:12, cursor:"pointer",
+                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14,
+                          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                        }}>
+                        <IcoProducts size={16}/> See safer alternatives ↓
+                      </button>
+                    )}
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>

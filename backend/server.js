@@ -391,16 +391,16 @@ MANUFACTURING (production process — score conservatively, flag as estimated):
 - Unknown: score 4-5 and flag confidence as low.
 - Weight is low — do not let manufacturing dominate the final score.
 
-- ARTIFICIAL DYES in food (Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2): score materials 6-8. FDA banned Red 3 (2025) and is phasing out all petroleum-based dyes due to carcinogenicity and hyperactivity links. M&Ms, Skittles, Gummy Bears, Doritos, Froot Loops all contain multiple banned/flagged dyes — materials score 6-7.
-- ULTRA-PROCESSED FOODS with dyes + preservatives + artificial flavors: materials 6-8, usage 5-7 (daily consumption). Candy, chips, sodas, instant noodles = score 5-8 depending on chemical load.
+- ARTIFICIAL DYES in food (Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2): score materials 7-8. FDA banned Red 3 (2025) and is phasing out all petroleum-based dyes due to carcinogenicity and hyperactivity links. M&Ms, Skittles, Gummy Bears, Doritos, Froot Loops all contain multiple banned/flagged dyes — materials score MUST be 7-8, never lower.
+- ULTRA-PROCESSED FOODS with dyes + preservatives + artificial flavors: materials 7-9, usage 6-8 (daily consumption). Candy, chips, sodas, instant noodles = score 6-8. Do NOT score ultra-processed candy below 6 under any circumstances.
 - Whole natural foods (fresh fruit, vegetables, unprocessed meat, plain water): materials 1, usage 1.
 
 CALIBRATION EXAMPLES to ensure differentiation:
 - Cascade dishwasher pods: materials=7 (PVA film+synthetic fragrance+optical brighteners), usage=5 (residue on dishes), packaging=3 (recyclable tub), sustainability=6 (PVA in waterways) → final ~6
 - Blueland dishwasher tablets: materials=1 (no PVA, no synthetic fragrance), usage=2, packaging=2, sustainability=1 → final ~1-2
 - Tide Original pods: materials=7, usage=5 (microfibers+fragrance residue on clothes daily), packaging=3, sustainability=6 → final ~6
-- M&Ms: materials=7 (Red 40, Yellow 5, Yellow 6, Blue 1 — petroleum dyes being phased out by FDA, linked to hyperactivity and carcinogenicity), usage=6 (daily candy consumption), packaging=4 → final ~6
-- Skittles: materials=7 (same artificial dyes + titanium dioxide), usage=6, packaging=4 → final ~6
+- M&Ms: materials=8 (Red 40, Yellow 5, Yellow 6, Blue 1 — multiple FDA-flagged petroleum dyes, hyperactivity and carcinogenicity links), usage=7 (daily candy ingestion, multiple synthetic chemicals), packaging=4 → final ~7
+- Skittles: materials=8 (same artificial dyes + titanium dioxide — IARC Group 2B, EU food ban), usage=7, packaging=4 → final ~7
 - Plain dark chocolate (no artificial dyes): materials=2, usage=2 → final ~2
 - Lululemon leggings (nylon/spandex): materials=7 (synthetic microfiber shedding), usage=6 (daily skin contact), packaging=2, sustainability=5 → final ~6
 - 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
@@ -459,7 +459,7 @@ LOW severity: Artificial flavors (undisclosed composition), Modified starch (hig
 
 POSITIVE ATTRIBUTES — flag when present: USDA Organic, Non-GMO Verified, No artificial colors, No artificial preservatives, No artificial sweeteners, Whole food ingredients only, Fair Trade certified, Minimal ingredients (5 or fewer)
 
-FOOD SCORE IMPACT: Ultra-processed + multiple HIGH severity additives = materials 7-8, usage 6-7. Ultra-processed + MEDIUM additives = materials 5-7. Processed, no synthetic additives = materials 3-4. Whole/minimally processed = materials 1-2. Daily consumption of ultra-processed adds +1 usage. Child food with synthetic dyes = vulnerable flag + +1 materials.
+FOOD SCORE IMPACT: Ultra-processed + multiple HIGH severity additives (3+) = materials 8-9, usage 7-8 — final score MUST be 7+. Ultra-processed + 1-2 HIGH severity additives = materials 7-8, usage 6-7 — final score 6-7. Ultra-processed + MEDIUM additives only = materials 5-7, usage 5-6 — final score 5-6. Processed food, no synthetic additives = materials 3-4, usage 3-4. Whole/minimally processed = materials 1-2, usage 1-2. Daily consumption of ultra-processed food adds +1 to usage score. Child food with synthetic dyes = vulnerable flag + materials minimum 8.
 
 Return ONLY this JSON:
 {
@@ -584,11 +584,18 @@ CALIBRATION — use these as anchors:
 - Febreze spray: final score ~6-7 (phthalates aerosolized in enclosed space)
 - Soy candle (phthalate-free): final score ~2-3
 - Yankee Candle (paraffin + synthetic fragrance): final score ~6
+- M&Ms: final score ~7 — ultra-processed + 4 FDA-flagged petroleum dyes (Red 40, Yellow 5, Yellow 6, Blue 1) — NEVER score below 6
+- Skittles: final score ~7 — same dyes + titanium dioxide (IARC Group 2B) — NEVER score below 6
+- Froot Loops / dyed breakfast cereal: final score ~7 — multiple petroleum dyes + HFCS + daily child ingestion
+- Plain dark chocolate (no dyes, no additives): final score ~2
+- Doritos / flavored chips: final score ~6-7 — artificial flavors, MSG, synthetic dyes in some varieties
+- Whole fresh fruit or vegetables: final score ~1
+- Organic whole food snack (no synthetic additives): final score ~1-2
 - Crayola paraffin crayons: final score ~3-4
 - Stockmar beeswax crayons: final score ~1-2
 - Standard PVC yoga mat: final score ~6
 - Natural rubber yoga mat: final score ~2
-- Conventional tampons/pads (Always/Tampax): final score ~6 (synthetic blend + chlorine bleaching + direct mucous membrane contact)
+- Conventional tampons/pads (Always/Tampax): final score ~6
 - Organic cotton tampons/pads: final score ~2
 - Menstrual cup: final score ~1
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
@@ -597,6 +604,12 @@ CALIBRATION — use these as anchors:
 - Organic fertilizer (Dr. Earth/Espoma): final score ~1-2
 - Standard Advil/Tylenol: final score ~3 (score the product, not just packaging — occasional ingestion, some synthetic excipients)
 - Zarbees natural cough syrup: final score ~2
+
+FOOD HARD FLOORS — these must never be violated:
+- Ultra-processed food with 3+ HIGH severity additives (multiple FDA-flagged dyes, BHA, nitrates): final score MINIMUM 7
+- Ultra-processed food with 1-2 HIGH severity additives: final score MINIMUM 6
+- Any food containing titanium dioxide: materials minimum 7 (EU food ban, IARC Group 2B)
+- Any candy or snack with artificial petroleum-based dyes: materials minimum 7
 
 Break-even (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, pan→ceramic:150, container→glass:25, pads→menstrual cup:90, tampons→organic cotton:1, razor→safety:10, zipbag→silicone:15, bag→tote:130, shampoo→bar:6, clothing→natural:30, dryer sheets→wool balls:40, sunscreen→mineral:1, crayon→beeswax:1, yoga mat→natural rubber:200. Vehicles/electronics/appliances/natural materials=null.
 
