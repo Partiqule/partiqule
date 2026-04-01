@@ -720,6 +720,312 @@ const EducationSection = ({isDark, isMobile=false}) => {
 };
 
 // ── PLASTIC SCORE DROPDOWN ────────────────────────────────────
+// ── EXPOSURE CALCULATOR — replaces break-even card ───────────
+const FREQ_OPTIONS = [
+  { value:"daily",     label:"Every day",        perYear: 365 },
+  { value:"twice",     label:"2-3x per week",    perYear: 130 },
+  { value:"weekly",    label:"Once a week",       perYear: 52  },
+  { value:"monthly",   label:"A few times/month", perYear: 18  },
+  { value:"rarely",    label:"Rarely",            perYear: 6   },
+];
+
+const CATEGORY_EXPOSURE = {
+  food_beverage: {
+    unit: "servings",
+    chemical: (result) => {
+      const fa = result.food_analysis;
+      if (!fa) return "synthetic additives";
+      const highs = (fa.concerns||[]).filter(c=>c.severity==="high");
+      return highs.length > 0 ? highs.map(c=>c.ingredient).slice(0,2).join(" and ") : "synthetic additives";
+    },
+    analogy: (events) => {
+      if (events >= 500) return `${events.toLocaleString()} servings of synthetic chemicals ingested`;
+      return `${events} servings containing synthetic food additives`;
+    },
+  },
+  personal_care: {
+    unit: "applications",
+    chemical: () => "synthetic chemicals",
+    analogy: (events) => `${events.toLocaleString()} skin contact events with synthetic ingredients`,
+  },
+  kitchen: {
+    unit: "uses",
+    chemical: () => "chemical exposure",
+    analogy: (events) => `${events.toLocaleString()} uses with direct chemical contact`,
+  },
+  clothing: {
+    unit: "wears",
+    chemical: () => "microfibers shed",
+    analogy: (events) => `${events.toLocaleString()} wear events shedding synthetic microfibers onto skin`,
+  },
+  baby: {
+    unit: "uses",
+    chemical: () => "chemical exposures",
+    analogy: (events) => `${events.toLocaleString()} exposures for your child`,
+  },
+  other: {
+    unit: "uses",
+    chemical: () => "exposures",
+    analogy: (events) => `${events.toLocaleString()} contact events`,
+  },
+};
+
+const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
+  const [tab,       setTab]       = useState("exposure");
+  const [freq,      setFreq]      = useState(() => {
+    const f = result.dimensions?.usage_exposure?.frequency || result.exposure_frequency;
+    if (f === "daily") return "daily";
+    if (f === "weekly") return "weekly";
+    if (f === "occasional") return "monthly";
+    return "daily";
+  });
+  const [household, setHousehold] = useState(2);
+  const [hasKids,   setHasKids]   = useState(false);
+  const [spend,     setSpend]     = useState(10);
+
+  const score       = result.overall_score || result.score;
+  const altScore    = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
+  const altName     = result.break_even?.alternative_name || "safer alternative";
+  const freqData    = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
+  const cat         = result.category || "other";
+  const catConfig   = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
+
+  const yearlyEvents     = freqData.perYear * household;
+  const altYearlyEvents  = Math.round(yearlyEvents * (altScore / score));
+  const reduction        = yearlyEvents - altYearlyEvents;
+  const reductionPct     = Math.round((reduction / yearlyEvents) * 100);
+
+  // Cost tab
+  const annualSpend = spend * 12;
+  // Parse alt price from break_even or alternatives
+  const altPriceStr = result.alternatives?.[0]?.price || result.break_even?.note || "";
+  const altPriceMatch = altPriceStr.match(/\$(\d+)/);
+  const altMonthly  = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : Math.round(spend * 1.2);
+  const altAnnual   = altMonthly * 12;
+  const costDiff    = altAnnual - annualSpend;
+
+  const surface  = isDark ? "#1e2433" : "#fff";
+  const border   = isDark ? "#2a3347" : "#e5e7eb";
+  const tabBg    = isDark ? "#131929" : "#f9fafb";
+  const activeBg = isDark ? "#1e2a1e" : "#f0fdf4";
+
+  const tabs = [
+    { id:"exposure", label:"My Exposure" },
+    { id:"overtime", label:"Over Time"   },
+    { id:"switch",   label:"Switch & Save"},
+  ];
+
+  return (
+    <div className="fade-up" style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden", marginTop:16, textAlign:"left"}}>
+
+      {/* Header */}
+      <div style={{padding:"14px 18px 0", borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+        <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:10, display:"flex", alignItems:"center", gap:6}}>
+          <IcoScore size={14}/> Usage Calculator
+        </div>
+        {/* Tabs */}
+        <div style={{display:"flex", gap:4, marginBottom:-1}}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{
+              padding:"7px 14px", fontSize:12, fontWeight:700,
+              border:"none", borderRadius:"8px 8px 0 0", cursor:"pointer",
+              background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
+              color: tab===t.id ? "#16a34a" : muted,
+              borderBottom: tab===t.id ? `2px solid #16a34a` : "none",
+            }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div style={{padding:"16px 18px"}}>
+
+        {/* Shared inputs */}
+        <div style={{display:"flex", flexWrap:"wrap", gap:10, marginBottom:16}}>
+          <div style={{flex:1, minWidth:140}}>
+            <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
+              {cat === "food_beverage" ? "How often do you eat this?" : "How often do you use this?"}
+            </div>
+            <select value={freq} onChange={e=>setFreq(e.target.value)} style={{
+              width:"100%", padding:"7px 10px", borderRadius:8, fontSize:13,
+              border:`1px solid ${border}`, background:surface, color:text, cursor:"pointer",
+            }}>
+              {FREQ_OPTIONS.map(f=>(
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{width:90}}>
+            <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>Household size</div>
+            <div style={{display:"flex", alignItems:"center", gap:6}}>
+              <button onClick={()=>setHousehold(h=>Math.max(1,h-1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
+              <span style={{fontWeight:700,fontSize:15,color:text,minWidth:16,textAlign:"center"}}>{household}</span>
+              <button onClick={()=>setHousehold(h=>Math.min(8,h+1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+            </div>
+          </div>
+          <div style={{display:"flex", alignItems:"flex-end", gap:6, paddingBottom:2}}>
+            <button onClick={()=>setHasKids(k=>!k)} style={{
+              display:"flex", alignItems:"center", gap:5, padding:"6px 10px",
+              borderRadius:8, border:`1px solid ${hasKids?"#16a34a":border}`,
+              background: hasKids ? (isDark?"#1a2a1a":"#f0fdf4") : surface,
+              color: hasKids ? "#16a34a" : muted, cursor:"pointer", fontSize:12, fontWeight:600,
+            }}>
+              <IcoProfile size={13}/> Kids
+            </button>
+          </div>
+        </div>
+
+        {/* ── TAB: MY EXPOSURE ── */}
+        {tab === "exposure" && (
+          <div>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
+              {[
+                { label:"Current product", events:yearlyEvents, score, color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2" },
+                { label:altName,           events:altYearlyEvents, score:altScore, color:scoreColor(altScore), bg:isDark?"#1a2a1a":"#f0fdf4" },
+              ].map((item,i) => (
+                <div key={i} style={{background:item.bg, borderRadius:12, padding:"12px 14px", border:`1px solid ${item.color}33`}}>
+                  <div style={{fontSize:10, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6}}>{item.label}</div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:26, color:item.color, lineHeight:1, marginBottom:4}}>
+                    {item.events.toLocaleString()}
+                  </div>
+                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555", lineHeight:1.4}}>
+                    {catConfig.unit} per year
+                  </div>
+                  <div style={{marginTop:8, height:4, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                    <div style={{height:"100%", width:`${Math.min(100,(item.score/10)*100)}%`, background:item.color, borderRadius:99}}/>
+                  </div>
+                  <div style={{fontSize:10, color:item.color, marginTop:3, fontWeight:600}}>{scoreLabel(item.score)} risk</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Reduction callout */}
+            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+              <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
+                Switching eliminates {reductionPct}% of your {catConfig.chemical(result)} exposure
+              </div>
+              <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+                {catConfig.analogy(reduction)} removed from your household per year.
+                {hasKids && <span style={{color:"#d97706", fontWeight:600}}> Particularly significant for children — developing systems are more vulnerable to chemical exposure.</span>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: OVER TIME ── */}
+        {tab === "overtime" && (
+          <div>
+            <div style={{display:"flex", flexDirection:"column", gap:8}}>
+              {[1,5,10].map(years => {
+                const current = yearlyEvents * years;
+                const alt     = altYearlyEvents * years;
+                const maxVal  = current;
+                return (
+                  <div key={years} style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${border}`}}>
+                    <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
+                      {years} year{years>1?"s":""}
+                    </div>
+                    <div style={{display:"flex", flexDirection:"column", gap:5}}>
+                      {[
+                        {label:"Current", value:current, color:scoreColor(score)},
+                        {label:altName,   value:alt,     color:"#16a34a"},
+                      ].map(bar => (
+                        <div key={bar.label}>
+                          <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
+                            <span style={{fontSize:11, color:bar.color, fontWeight:600}}>{bar.label}</span>
+                            <span style={{fontSize:11, color:bar.color, fontWeight:700}}>{bar.value.toLocaleString()} {catConfig.unit}</span>
+                          </div>
+                          <div style={{height:8, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                            <div style={{height:"100%", width:`${Math.min(100,(bar.value/maxVal)*100)}%`, background:bar.color, borderRadius:99, transition:"width 0.6s ease"}}/>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginTop:6}}>
+                      {((current-alt)/current*100).toFixed(0)}% fewer exposures by switching
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB: SWITCH & SAVE ── */}
+        {tab === "switch" && (
+          <div>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
+                What do you spend on this per month? ($)
+              </div>
+              <div style={{display:"flex", alignItems:"center", gap:8}}>
+                <input type="number" min={1} max={500} value={spend}
+                  onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
+                  style={{width:80, padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
+                    border:`1px solid ${border}`, background:surface, color:text}}/>
+                <span style={{fontSize:12, color:muted}}>per month = ${annualSpend}/yr</span>
+              </div>
+            </div>
+
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
+              {[
+                {label:"Current product", annual:annualSpend, risk:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
+                {label:altName, annual:altAnnual, risk:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
+              ].map((item,i) => (
+                <div key={i} style={{background:item.bg, borderRadius:12, padding:"12px 14px", border:`1px solid ${item.color}33`}}>
+                  <div style={{fontSize:10, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6}}>{item.label}</div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:26, color:item.color, lineHeight:1, marginBottom:2}}>
+                    ${item.annual.toLocaleString()}
+                  </div>
+                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555"}}>per year</div>
+                  <div style={{fontSize:11, color:item.color, fontWeight:600, marginTop:6}}>{item.risk} risk</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+              {costDiff <= 5 ? (
+                <>
+                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
+                    Switching costs about the same
+                  </div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+                    The safer alternative is within ${Math.abs(costDiff)} per year — essentially the same spend for a {reductionPct}% reduction in {catConfig.chemical(result)} exposure.
+                  </div>
+                </>
+              ) : costDiff < 0 ? (
+                <>
+                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
+                    Switching saves you ${Math.abs(costDiff)}/year
+                  </div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+                    The safer alternative is cheaper and eliminates {reductionPct}% of your {catConfig.chemical(result)} exposure.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
+                    ${costDiff}/year more for {reductionPct}% less exposure
+                  </div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+                    That works out to ${(costDiff/12).toFixed(2)}/month — roughly the cost of a coffee — to eliminate {catConfig.analogy(reduction)} per year.
+                    {hasKids && <span style={{color:"#d97706", fontWeight:600}}> For households with children the health value typically outweighs the cost difference significantly.</span>}
+                  </div>
+                </>
+              )}
+              {result.break_even?.uses && (
+                <div style={{fontSize:11, color:muted, marginTop:8, opacity:0.7}}>
+                  Break-even on production cost: ~{result.break_even.uses} uses. {result.break_even.source}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── FOOD ANALYSIS DROPDOWN — food_beverage only ──────────────
 const NOVA_LABELS = {
   whole_food:          { label:"Whole Food",           color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0" },
@@ -2953,16 +3259,15 @@ function App() {
 
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
-                {/* Break-even stat */}
-                {result.break_even && (
-                  <div style={{marginTop:16, background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"14px 18px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, textAlign:"left"}}>
-                    <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}><IcoSaved size={14}/> Sustainability Break-Even</div>
-                    <div style={{fontSize:14, color:isDark?"#86efac":"#15803d", fontWeight:600, marginBottom:4}}>
-                      ~{result.break_even.uses} uses to offset with {result.break_even.alternative_name}
-                    </div>
-                    <div style={{fontSize:12, color:isDark?"#4ade80":"#166534", opacity:0.8, lineHeight:1.5}}>{result.break_even.note}</div>
-                    <div style={{fontSize:10, color:isDark?"#166534":"#86efac", marginTop:6, opacity:0.6}}>{result.break_even.source}</div>
-                  </div>
+                {/* Exposure Calculator — replaces break-even card */}
+                {(result.break_even || result.alternatives?.length > 0) && (
+                  <ExposureCalculator
+                    result={result}
+                    isDark={isDark}
+                    text={text}
+                    muted={muted}
+                    isMobile={isMobile}
+                  />
                 )}
 
                 <SplitView result={result} isDark={isDark} onScan={(name)=>{setResult(null); setQuery(name); analyze(name);}}/>
