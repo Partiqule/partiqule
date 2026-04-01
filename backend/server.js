@@ -283,7 +283,7 @@ async function callClaudeVision(imageBase64, mediaType, retries=3) {
         },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1800,
+      max_tokens: 2400,
       system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 SCORING RULES:
@@ -292,12 +292,28 @@ SCORING RULES:
 - Natural materials (wood, glass, stainless, ceramic, organic cotton): materials score 1-2
 - ORGANIC KIDS CLOTHING BRANDS (Little Rad Things, Pact Kids, Hanna Andersson, Burt\'s Bees Baby): materials 1-2, final score 1-3
 - Single-use disposables: sustainability score 8-9
-- Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7`,
+- Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7
+- Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 7-8, usage 6-7, final 6-7
+- Chemical sunscreen (oxybenzone, octinoxate): materials 6-7, usage 6-7
+- Synthetic fragrance in personal care: materials 5-6
+
+PRODUCT ANALYSIS RULES — populate product_analysis for ALL categories:
+COMPOSITION TIERS: tier1=clean/natural/organic, tier2=conventional/standard, tier3=synthetic-heavy/petroleum-based, tier4=high-concern/banned-or-flagged-substances
+FOOD tier labels: whole_food|minimally_processed|processed|ultra_processed
+PERSONAL CARE tier labels: clean_formula|conventional|synthetic_heavy|high_concern
+CLOTHING tier labels: natural_fiber|conventional|synthetic|chemical_treated
+KITCHEN tier labels: plant_based|conventional|synthetic_heavy|industrial_chemical
+BABY tier labels: clean_safe|conventional|concern_flagged|high_risk_infants
+FOOD HIGH concerns: Red 40, Red 3 (banned 2025), Yellow 5/6, Blue 1/2, Titanium dioxide, BHA/BHT, Sodium nitrate, Trans fats, HFCS
+PERSONAL CARE HIGH concerns: Oxybenzone, Parabens, Formaldehyde releasers, Triclosan, Phthalates, PFAS in cosmetics, Coal tar dyes
+CLOTHING HIGH concerns: PFAS/DWR coating, Formaldehyde finish, Flame retardants, Carcinogenic azo dyes
+KITCHEN HIGH concerns: PTFE/PFAS coating, BPA/BPS, Quaternary ammonium compounds, Chlorine bleach, Synthetic fragrance VOCs, PVC, 1,4-dioxane
+BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products`,
       messages: [{
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-          { type: "text", text: `Look at this photo. Read the brand name, product name, and visible text to identify the product. Score it across 5 dimensions. Return ONLY this JSON:
+          { type: "text", text: `Look at this photo. Read the brand name, product name, and visible text to identify the product. Score it across 5 dimensions AND populate product_analysis. Return ONLY this JSON:
 {
   "product_name": "brand + product name as shown on label",
   "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
@@ -309,6 +325,17 @@ SCORING RULES:
   "packaging": { "score": 4, "label": "packaging assessment", "primary": "cardboard|glass|plastic|mixed", "refillable": false, "end_of_life": "recyclable|compostable|landfill|unknown", "concerns": [] },
   "sustainability": { "score": 4, "label": "sustainability story", "reusable": false, "replaces_single_use": false, "replaces_count": null, "circularity": "unknown", "concerns": [] },
   "manufacturing": { "score": 5, "label": "manufacturing estimated", "tier": "good|neutral|bad", "confidence": "low", "concerns": [] },
+  "product_analysis": {
+    "composition_tier": 2,
+    "tier_label": "conventional",
+    "tier_description": "max 8 words",
+    "concerns": [
+      {"substance": "substance name", "type": "dye|preservative|sweetener|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|additive", "severity": "high|medium|low", "reason": "max 12 words"}
+    ],
+    "positives": [{"attribute": "positive attribute", "reason": "max 8 words"}],
+    "confidence": "high|medium|low",
+    "confidence_note": "max 10 words"
+  },
   "summary": "max 30 words",
   "raw_concerns": ["concern 1"],
   "confidence": "high|medium|low",
@@ -750,7 +777,6 @@ app.post("/analyze", async (req, res) => {
         scan_next:           p1.scan_next  || [],
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
-        peer_comparison:     null,
         cached:              false,
         scannedAt:           new Date().toISOString(),
         dimensions: {
