@@ -256,10 +256,14 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
       const data = await res.json();
       const text = data.content.map(b => b.text || "").join("").trim();
       const raw  = extractJson(text);
-      if (!raw) throw new Error("No JSON in response");
+      if (!raw) {
+        console.error("No JSON in response at attempt", attempt, "text snippet:", text.slice(0, 200));
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1500)); continue; }
+        throw new Error("No JSON in response");
+      }
       try { return JSON.parse(fixJson(raw)); }
       catch(e) {
-        console.error("JSON parse failed at attempt", attempt, "raw snippet:", match[0].slice(0, 300));
+        console.error("JSON parse failed at attempt", attempt, "raw snippet:", raw.slice(0, 300));
         if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
         throw new Error(`JSON parse error: ${e.message}`);
       }
@@ -675,7 +679,7 @@ If category is "other" or unknown, apply the most relevant concern types based o
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
-    2400
+    3000
   );
 }
 
@@ -1062,6 +1066,8 @@ app.post("/analyze", async (req, res) => {
       ? "Too many requests. Please wait a moment and try again."
       : err.message?.includes("timed out")
       ? "That scan took too long. Please try again."
+      : err.message?.includes("No JSON") || err.message?.includes("JSON parse")
+      ? "We had trouble analysing that product. Please try again or rephrase the product name."
       : err.message;
     res.status(500).json({ error: msg });
   }
