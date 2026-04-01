@@ -834,12 +834,9 @@ const ShareBadge = ({result}) => {
       ctx.scale(dpr, dpr);
 
       const os = result.overall_score || result.score;
-      const ps = result.score;
-      const hs = result.health_score;
+      const dims = result.dimensions;
 
       const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
-      const plasticColor = ps<=3?"#16a34a":ps<=6?"#ca8a04":ps<=8?"#ea580c":"#dc2626";
-      const healthColor  = hs ? (hs<=3?"#16a34a":hs<=6?"#ca8a04":hs<=8?"#ea580c":"#dc2626") : "#aaa";
       const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
 
       const drawContent = (logoImg) => {
@@ -854,10 +851,8 @@ const ShareBadge = ({result}) => {
     ctx.fillStyle = "#052e16";
     ctx.fillRect(0, 0, W, 6);
 
-    // ── Logo + tagline top left ──
-    // Draw logo from image if available, else fallback to drawn circle
+    // ── Logo + tagline ──
     if (logoImg) {
-      // Clip to circle for the icon (it has dark bg — clip to just the tree area)
       ctx.save();
       ctx.beginPath();
       ctx.arc(46, 40, 16, 0, Math.PI * 2);
@@ -891,21 +886,21 @@ const ShareBadge = ({result}) => {
     ctx.font = "bold 26px system-ui";
     ctx.fillText("/ 10", 32 + (os >= 10 ? 128 : 80), 220);
 
-    // Overall label
-    const overallLabel = os<=3?"Minimal":os<=6?"Moderate":os<=8?"High":"Very High";
+    // Overall label pill
+    const overallLabel = os<=3?"Minimal Risk":os<=6?"Moderate Risk":os<=8?"High Risk":"Very High Risk";
     const oBgColor = os<=3?"#dcfce7":os<=6?"#fef9c3":os<=8?"#ffedd5":"#fee2e2";
     ctx.fillStyle = oBgColor;
     ctx.beginPath();
-    ctx.roundRect(32, 234, 200, 30, 15);
+    ctx.roundRect(32, 234, 210, 30, 15);
     ctx.fill();
     ctx.fillStyle = overallColor;
     ctx.font = "bold 13px system-ui";
-    ctx.fillText(`${overallLabel} Overall`, 48, 254);
+    ctx.fillText(overallLabel, 48, 254);
 
-    // Overall sub-label
+    // Sub-label
     ctx.fillStyle = "#aaa";
     ctx.font = "11px system-ui";
-    ctx.fillText("70% plastic · 30% health", 32, 282);
+    ctx.fillText("Materials · Exposure · Packaging · Sustainability", 32, 282);
 
     // ── DIVIDER ──
     ctx.strokeStyle = "#e5e7eb";
@@ -915,53 +910,50 @@ const ShareBadge = ({result}) => {
     ctx.lineTo(W/2 - 10, 300);
     ctx.stroke();
 
-    // ── RIGHT: Plastic score box ──
+    // ── RIGHT: 5 dimension mini bars ──
     const RX = W/2 + 10;
-    const plasticBg = ps<=3?"#f0fdf4":ps<=6?"#fefce8":ps<=8?"#fff7ed":"#fef2f2";
-    ctx.fillStyle = plasticBg;
-    ctx.beginPath();
-    ctx.roundRect(RX, 108, W-RX-20, 82, 12);
-    ctx.fill();
-    ctx.strokeStyle = plasticColor + "55";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    const dimList = dims ? [
+      {label:"Materials",    score: dims.materials?.score,        weight:"40%"},
+      {label:"Exposure",     score: dims.usage_exposure?.score,   weight:"25%"},
+      {label:"Packaging",    score: dims.packaging?.score,        weight:"15%"},
+      {label:"Sustainability",score:dims.sustainability?.score,   weight:"15%"},
+      {label:"Manufacturing",score: dims.manufacturing?.score,    weight:"5%"},
+    ] : [];
 
-    ctx.fillStyle = "#888";
-    ctx.font = "11px system-ui";
-    ctx.fillText("Plastic Danger", RX+14, 126);
-
-    ctx.fillStyle = plasticColor;
-    ctx.font = "bold 32px system-ui";
-    ctx.fillText(`${ps}/10`, RX+14, 162);
-
-    const plasticLabel = ps<=3?"Minimal":ps<=6?"Moderate":ps<=8?"High":"Very High";
-    ctx.fillStyle = plasticColor;
-    ctx.font = "12px system-ui";
-    ctx.fillText(plasticLabel, RX+14, 180);
-
-    // ── RIGHT: Health score box ──
-    if (hs) {
-      const healthBg = hs<=3?"#f0fdf4":hs<=6?"#fefce8":hs<=8?"#fff7ed":"#fef2f2";
-      ctx.fillStyle = healthBg;
-      ctx.beginPath();
-      ctx.roundRect(RX, 202, W-RX-20, 82, 12);
-      ctx.fill();
-      ctx.strokeStyle = healthColor + "55";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
+    if (dimList.length) {
+      dimList.forEach((d, i) => {
+        const y = 118 + i * 38;
+        const sc = d.score || 0;
+        const barColor = sc<=3?"#16a34a":sc<=6?"#ca8a04":sc<=8?"#ea580c":"#dc2626";
+        // Label
+        ctx.fillStyle = "#666";
+        ctx.font = "10px system-ui";
+        ctx.fillText(d.label, RX+4, y);
+        ctx.fillStyle = "#bbb";
+        ctx.fillText(d.weight, W-48, y);
+        // Track
+        ctx.fillStyle = "#e5e7eb";
+        ctx.beginPath();
+        ctx.roundRect(RX+4, y+6, W-RX-28, 12, 6);
+        ctx.fill();
+        // Fill
+        ctx.fillStyle = barColor;
+        ctx.beginPath();
+        ctx.roundRect(RX+4, y+6, Math.max(12, ((W-RX-28) * sc/10)), 12, 6);
+        ctx.fill();
+        // Score text
+        ctx.fillStyle = barColor;
+        ctx.font = "bold 10px system-ui";
+        ctx.fillText(sc, W-22, y+16);
+      });
+    } else {
+      // Fallback if no dimensions — just show score
       ctx.fillStyle = "#888";
-      ctx.font = "11px system-ui";
-      ctx.fillText("❤️  Health Concern", RX+14, 220);
-
-      ctx.fillStyle = healthColor;
-      ctx.font = "bold 32px system-ui";
-      ctx.fillText(`${hs}/10`, RX+14, 256);
-
-      const healthLabel = hs<=3?"Low":hs<=6?"Moderate":hs<=8?"High":"Very High";
-      ctx.fillStyle = healthColor;
-      ctx.font = "12px system-ui";
-      ctx.fillText(healthLabel, RX+14, 274);
+      ctx.font = "13px system-ui";
+      ctx.fillText("Overall Health Score", RX+14, 145);
+      ctx.fillStyle = overallColor;
+      ctx.font = "bold 48px system-ui";
+      ctx.fillText(`${os}/10`, RX+14, 210);
     }
 
     // ── Summary ──
@@ -991,12 +983,11 @@ const ShareBadge = ({result}) => {
         resolve(canvas);
       }; // end drawContent
 
-      // Load the logo then draw
       const logoImg = new Image();
       logoImg.onload = () => drawContent(logoImg);
       logoImg.onerror = () => drawContent(null);
       logoImg.src = "/partiqule-icon.svg";
-    }); // end Promise
+    });
   };
 
   const share = async () => {
@@ -1009,8 +1000,8 @@ const ShareBadge = ({result}) => {
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
-              title: `${safeName}: Overall Score ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Overall score ${result.overall_score||result.score}/10. Plastic danger: ${result.score}/10${result.health_score ? ` · Health concern: ${result.health_score}/10` : ""}. Scan anything at partiqule.com`,
+              title: `${safeName}: Health Score ${result.overall_score||result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule. Health score: ${result.overall_score||result.score}/10. Scored across materials, exposure, packaging, sustainability and manufacturing. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -1761,7 +1752,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           heading: null,
           body: null,
           list: [
-            "The alternative must score materially lower on plastic danger than the scanned product",
+            "The alternative must score materially lower overall than the scanned product — across materials, exposure and sustainability combined",
             "Alternatives are filtered using material-based heuristics we defined — stainless steel, organic cotton, glass, bamboo, and natural rubber all receive low scores",
             "Affiliate links are clearly disclosed with '#ad · affiliate links' labeling on every results page",
             "Affiliate relationships have zero influence on scoring — the danger score is calculated independently before any alternative is suggested",
@@ -1778,7 +1769,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           heading: null,
           body: null,
           list: [
-            "Scoring parameters are reviewed when new peer-reviewed research is published on microplastics, chemical exposure, or sustainability",
+            "Scoring parameters are reviewed when new peer-reviewed research is published on microplastics, chemical exposure, endocrine disruption, or sustainability",
             "The AI model version is reviewed periodically to ensure accuracy has not regressed",
             "An annual transparency note is published on the About page disclosing AI usage, estimated energy and water footprint, and any methodology changes",
             "User feedback is monitored — products that generate unusual concern or contradiction are flagged for manual review",
@@ -1805,7 +1796,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         {[
           {number:"20+", label:"Years combined expertise"},
           {number:"2",   label:"AI passes per scan"},
-          {number:"210+",label:"Products in database"},
+          {number:"358+",label:"Products in database"},
           {number:"100%",label:"Affiliate-independent scoring"},
         ].map((s,i) => (
           <div key={i} style={{background:surface, borderRadius:14, padding:"20px 16px", border:`1.5px solid ${border}`, textAlign:"center"}}>
@@ -1870,11 +1861,10 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Example 1 — Non-stick frying pan</div>
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[
-                {step:"Web search", detail:"AI searches for real material specs and confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle"},
-                {step:"Pass 1: Plastic analysis", detail:"PTFE identified as primary concern. Materials: 8, Packaging: 4, Usage: 9 (daily ingestion pathway), Manufacturing: 6. Plastic danger score: 8."},
-                {step:"Pass 1: Health analysis", detail:"Chemical: 8 (PFAS endocrine disruptors). Sustainability: 3 (durable, long-life). Manufacturing: 7 (PTFE coating process). Health concern score: 6."},
-                {step:"Pass 2: Audit", detail:"Daily use + ingestion penalty confirmed. Final score: (8 × 0.70) + (6 × 0.30) = 5.6 + 1.8 = 7.4. Rounded to 7. Confidence: high."},
-                {step:"Human review", detail:"Paul cross-references against EWG PFAS database. Score confirmed. Cast iron and stainless steel shown as alternatives with break-even at ~200 uses."},
+                {step:"Web search", detail:"AI searches for real material specs and confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle."},
+                {step:"Pass 1: Analysis", detail:"Materials: 9 (PTFE/PFAS — FDA-flagged endocrine disruptors). Usage: 9 (daily ingestion pathway, heated surface accelerates breakdown). Packaging: 3. Sustainability: 4 (durable but PTFE unrecyclable). Manufacturing: 6 (PTFE process emissions)."},
+                {step:"Pass 2: Audit", detail:"Daily heat + ingestion penalty confirmed. Weighted score: (9×0.40)+(9×0.25)+(3×0.15)+(4×0.15)+(6×0.05) = 3.6+2.25+0.45+0.6+0.3 = 7.2. Final score: 7. Confidence: high."},
+                {step:"Human review", detail:"Paul cross-references EWG PFAS database. Score confirmed. Caraway and GreenPan ceramic alternatives shown with break-even at 200 uses."},
               ].map((row, i) => (
                 <div key={i} style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"180px 1fr", gap:12, padding:"12px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
                   <div style={{fontSize:13, fontWeight:700, color:"#16a34a"}}>{row.step}</div>
@@ -1888,15 +1878,14 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           <div>
             <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Example 2 — Brawny paper towels</div>
             <p style={{fontSize:14, color:muted, lineHeight:1.7, marginBottom:12}}>
-              A product that scores low on plastic danger but high on sustainability — illustrating why the health score matters as much as the plastic score.
+              A product that scores low on materials but high on sustainability — showing why all five dimensions matter, not just what the product is made of.
             </p>
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[
-                {step:"Web search", detail:"AI confirms paper product with PE/PP plastic film outer packaging, cardboard tube core, bleached virgin wood pulp construction"},
-                {step:"Pass 1: Plastic analysis", detail:"Plastics limited to outer packaging (PE film, PP tube core). No direct user contact. Materials: 2, Packaging: 4, Usage: 2 (paper not ingested), Manufacturing: 3. Plastic danger score: 2."},
-                {step:"Pass 1: Health analysis", detail:"Chemical: 3 (chlorine bleaching agents, optical brighteners, wet-strength resins). Sustainability: 8 (single-use by design, plastic packaging, high disposal frequency). Manufacturing: 5 (chlorine/peroxide bleaching). Health concern score: 5."},
-                {step:"Pass 2: Audit", detail:"Low plastic danger confirmed. Sustainability penalty upheld — single-use disposable by design is a material health concern. Final: (2 × 0.70) + (5 × 0.30) = 1.4 + 1.5 = 2.9. Overall score: 3."},
-                {step:"Human review", detail:"Sara reviews — sustainability score of 8 is appropriate. Reusable Swedish dishcloths, bamboo paper towels, and microfibre cloths shown as alternatives."},
+                {step:"Web search", detail:"AI confirms paper product with PE/PP plastic outer packaging, cardboard tube core, bleached virgin wood pulp."},
+                {step:"Pass 1: Analysis", detail:"Materials: 2 (paper, no direct plastic exposure — packaging discarded before use). Usage: 2 (not ingested or absorbed). Packaging: 5 (PE film wrap, cardboard tube). Sustainability: 8 (single-use by design, high disposal frequency, virgin wood pulp). Manufacturing: 4 (chlorine bleaching process)."},
+                {step:"Pass 2: Audit", detail:"Low materials risk confirmed. Sustainability penalty upheld — single-use disposable by design. Weighted score: (2×0.40)+(2×0.25)+(5×0.15)+(8×0.15)+(4×0.05) = 0.8+0.5+0.75+1.2+0.2 = 3.45. Final score: 3."},
+                {step:"Human review", detail:"Sara reviews — sustainability score of 8 appropriate. Swedish dishcloths, bamboo paper towels and microfibre cloths shown as alternatives."},
               ].map((row, i) => (
                 <div key={i} style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"180px 1fr", gap:12, padding:"12px 16px", background:surface, borderRadius:10, border:`1px solid ${border}`}}>
                   <div style={{fontSize:13, fontWeight:700, color:"#16a34a"}}>{row.step}</div>
