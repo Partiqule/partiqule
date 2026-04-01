@@ -2744,6 +2744,9 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                 {citation:"Mnif et al. (2011)", title:"Effect of endocrine disruptor pesticides: a review", journal:"International Journal of Environmental Research and Public Health — pesticides linked to endocrine disruption, reproductive harm"},
               ]
             },
+            {
+              category: "Ultra-processed foods",
+              color: "#0891b2",
               refs: [
                 {citation:"Monteiro et al. (2025)", title:"Ultra-processed foods and human health: the main thesis and the evidence", journal:"The Lancet — comprehensive evidence review linking UPFs to chronic disease"},
                 {citation:"Srour et al. (2024)", title:"Ultra-processed food consumption and risk of all-cause and cause-specific mortality", journal:"BMJ — prospective cohort study, 30% higher mortality risk"},
