@@ -838,7 +838,6 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   // Health cost estimate (Trasande et al. 2018) — spend input used only for this
   const annualSpend  = spend * 12;
   const healthSaved  = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
-  const healthSaved   = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
   const surface = isDark ? "#1e2433" : "#fff";
   const border  = isDark ? "#2a3347" : "#e5e7eb";
