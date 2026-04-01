@@ -172,7 +172,7 @@ const products = [
     description: "Replaces 1,750 single-use cotton pads, washable",
     affiliateUrl: `https://www.amazon.com/s?k=LastObject+LastObject+Reusable+Cotton+Rounds&tag=partiqule-20`,
     price: "$18",
-    tags: ["cotton rounds", "reusable", "skincare", "zero waste", "makeup remover", "face", "toner", "pads"]
+    tags: ["cotton rounds", "reusable", "skincare", "zero waste", "makeup remover", "face", "toner", "pads", "wipes", "face wipes", "cleansing wipes", "reusable wipes"]
   },
 
   // ── KITCHEN & HOUSEHOLD ──────────────────────────────────
@@ -1968,7 +1968,7 @@ const products = [
     description: "Microfiber baby washcloths shed synthetic particles on baby's sensitive skin",
     affiliateUrl: `https://www.amazon.com/s?k=Burts+Bees+Baby+Organic+Cotton+Baby+Washcloths&tag=partiqule-20`,
     price: "$14–20",
-    tags: ["baby washcloth", "washcloth", "organic cotton", "baby", "infant", "bath", "face cloth"]
+    tags: ["baby washcloth", "washcloth", "organic cotton", "baby", "infant", "bath", "face cloth", "wipes", "baby wipes", "reusable wipes", "cloth wipes", "wet wipes alternative"]
   },
 
   // ── KITCHEN EXTRAS ────────────────────────────────────────────
@@ -2598,6 +2598,666 @@ const products = [
     price: "$50–120",
     tags: ["play kitchen", "toy kitchen", "toy", "kids", "wooden toy", "plastic-free", "children", "pretend play"]
   }
+,
+  // ── SALT & STONE ────────────────────────────────────────────
+  {
+    id:"ss-001", name:"Salt & Stone Natural Deodorant", brand:"Salt & Stone",
+    score:2, category:"personal_care",
+    material:"Ocean-recycled plastic stick, plant-based formula",
+    description:"Aluminum-free 48hr protection with seaweed, niacinamide and prebiotics. Plastic-negative brand — ocean plastic container.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+natural+deodorant&tag=${AMAZON_TAG}`,
+    price:"$16-18",
+    tags:["deodorant","natural deodorant","aluminum free deodorant","clean deodorant","salt and stone","personal care","salt stone"]
+  },
+  {
+    id:"ss-002", name:"Salt & Stone Body Wash", brand:"Salt & Stone",
+    score:2, category:"personal_care",
+    material:"Recycled plastic bottle, botanical formula",
+    description:"Sulfate, paraben and dye-free body wash with seaweed extracts and spirulina. No synthetic chemicals.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+wash&tag=${AMAZON_TAG}`,
+    price:"$26-36",
+    tags:["body wash","natural body wash","clean body wash","sulfate free","paraben free","salt and stone","shower gel","personal care"]
+  },
+  {
+    id:"ss-003", name:"Salt & Stone Body Cream", brand:"Salt & Stone",
+    score:3, category:"personal_care",
+    material:"Recycled plastic jar, plant-oil formula",
+    description:"Rich moisturizer with seaweed, spirulina, squalane and argan oil. No parabens, phthalates or synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+cream&tag=${AMAZON_TAG}`,
+    price:"$38-42",
+    tags:["body cream","body moisturizer","natural moisturizer","squalane","argan oil","salt and stone","personal care"]
+  },
+  {
+    id:"ss-004", name:"Salt & Stone Body Lotion", brand:"Salt & Stone",
+    score:3, category:"personal_care",
+    material:"Recycled plastic bottle, botanical lotion",
+    description:"Lightweight daily lotion with niacinamide, jojoba, shea and kelp. No sulfates, parabens or synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+lotion&tag=${AMAZON_TAG}`,
+    price:"$28-32",
+    tags:["body lotion","natural lotion","niacinamide lotion","clean lotion","salt and stone","moisturizer","personal care"]
+  },
+  {
+    id:"ss-005", name:"Salt & Stone Body Mist", brand:"Salt & Stone",
+    score:2, category:"personal_care",
+    material:"Recycled plastic spray bottle, water-based",
+    description:"Lightweight botanical fragrance mist — no synthetic fragrance, no alcohol. Natural scent layers with deodorant.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+mist&tag=${AMAZON_TAG}`,
+    price:"$24-28",
+    tags:["body mist","natural fragrance mist","body spray","salt and stone","personal care"]
+  },
+  {
+    id:"ss-006", name:"Salt & Stone Body Oil", brand:"Salt & Stone",
+    score:2, category:"personal_care",
+    material:"Glass or recycled plastic bottle, plant oils",
+    description:"Lightweight botanical body oil with seaweed, jojoba and marula. No synthetic chemicals or mineral oils.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+oil&tag=${AMAZON_TAG}`,
+    price:"$40-44",
+    tags:["body oil","natural body oil","jojoba oil","marula oil","dry oil","salt and stone","personal care"]
+  },
+  {
+    id:"ss-007", name:"Salt & Stone Hand Cream", brand:"Salt & Stone",
+    score:3, category:"personal_care",
+    material:"Recycled plastic tube, plant-based formula",
+    description:"Rich hand cream with shea butter, niacinamide and seaweed extracts. No parabens or synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+hand+cream&tag=${AMAZON_TAG}`,
+    price:"$18-22",
+    tags:["hand cream","hand lotion","natural hand cream","shea butter","salt and stone","personal care"]
+  },
+  {
+    id:"ss-008", name:"Salt & Stone Facial Cleanser", brand:"Salt & Stone",
+    score:2, category:"personal_care",
+    material:"Recycled plastic bottle, gel formula",
+    description:"Gentle sulfate-free daily cleanser with seaweed extracts and botanical actives. No synthetic ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+facial+cleanser&tag=${AMAZON_TAG}`,
+    price:"$28-34",
+    tags:["face wash","facial cleanser","natural face wash","sulfate free cleanser","clean skincare","salt and stone","personal care"]
+  },
+  {
+    id:"ss-009", name:"Salt & Stone Candle", brand:"Salt & Stone",
+    score:2, category:"other",
+    material:"Glass vessel, natural wax blend",
+    description:"Clean-burning natural wax candle in glass — no synthetic fragrance, no paraffin, no toxic dyes.",
+    affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+candle&tag=${AMAZON_TAG}`,
+    price:"$38-44",
+    tags:["candle","natural candle","clean candle","non toxic candle","glass candle","salt and stone"]
+  },
+
+  // ── PURE OVER ───────────────────────────────────────────────
+  {
+    id:"po-001", name:"Pure Over Signature Brew Kit", brand:"Pure Over",
+    score:1, category:"kitchen",
+    material:"Borosilicate glass and ceramic — zero plastic",
+    description:"All-glass pour-over with built-in glass filter. No paper filters, no plastic, no metal. Free from PFAS, BPA and phthalates. Replaces 750M daily disposable filters.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+signature+brew+kit&tag=${AMAZON_TAG}`,
+    price:"$65-85",
+    tags:["pour over","coffee maker","glass coffee maker","plastic free coffee","pour over coffee","reusable coffee filter","coffee brewer","kitchen"]
+  },
+  {
+    id:"po-002", name:"Pure Over French Press", brand:"Pure Over",
+    score:1, category:"kitchen",
+    material:"Double-wall borosilicate glass, food-grade stainless steel, ceramic base",
+    description:"Plastic-free French press — borosilicate glass and stainless steel only. No plastic at any point in the brew process.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+french+press&tag=${AMAZON_TAG}`,
+    price:"$75-95",
+    tags:["french press","glass french press","plastic free french press","stainless french press","coffee press","kitchen"]
+  },
+  {
+    id:"po-003", name:"Pure Over Latte Cups", brand:"Pure Over",
+    score:1, category:"kitchen",
+    material:"Borosilicate glass",
+    description:"Handmade glass milk drink cups — zero plastic, zero leaching, dishwasher safe. Made in USA by glass artists.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+latte+cups&tag=${AMAZON_TAG}`,
+    price:"$45-55",
+    tags:["latte cup","glass cup","milk drink cup","glass mug","coffee cup","kitchen"]
+  },
+  {
+    id:"po-004", name:"Pure Over Espresso Cup Set", brand:"Pure Over",
+    score:1, category:"kitchen",
+    material:"Borosilicate glass",
+    description:"Handblown glass espresso cups — pure borosilicate, no coatings, no plastic. Made in USA.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+espresso+cups&tag=${AMAZON_TAG}`,
+    price:"$38-48",
+    tags:["espresso cup","glass espresso cup","espresso set","coffee cup","glass cup","kitchen"]
+  },
+  {
+    id:"po-005", name:"Pure Over Signature Mug", brand:"Pure Over",
+    score:1, category:"kitchen",
+    material:"Borosilicate glass",
+    description:"Handmade glass mug — non-toxic, zero plastic, pure borosilicate. No coatings or synthetic materials touching your drink.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+signature+mug&tag=${AMAZON_TAG}`,
+    price:"$32-42",
+    tags:["glass mug","coffee mug","plastic free mug","borosilicate mug","reusable mug","kitchen"]
+  },
+  // ── PERSONAL CARE — BODY & SKIN ──────────────────────────────
+  {
+    id:"pc-100", name:"Nécessaire Body Wash", brand:"Nécessaire",
+    plasticScore:2, category:"personal_care",
+    material:"Clean formula — no parabens, sulfates, synthetic fragrance",
+    description:"EWG-verified, peptide-infused body wash in recyclable packaging. Fragrance-free option available.",
+    affiliateUrl:`https://www.amazon.com/s?k=Necessaire+body+wash&tag=${AMAZON_TAG}`,
+    price:"$25-30",
+    tags:["body wash","shower gel","clean beauty","fragrance free","personal care","sulfate free","paraben free"]
+  },
+  {
+    id:"pc-101", name:"Nécessaire Body Serum", brand:"Nécessaire",
+    plasticScore:2, category:"personal_care",
+    material:"Clean formula — no parabens, synthetic fragrance, EWG-verified",
+    description:"Lightweight body serum with niacinamide and peptides. Fragrance-free, EWG-verified clean.",
+    affiliateUrl:`https://www.amazon.com/s?k=Necessaire+body+serum&tag=${AMAZON_TAG}`,
+    price:"$45-55",
+    tags:["body serum","skin care","clean beauty","niacinamide","personal care","fragrance free"]
+  },
+  {
+    id:"pc-102", name:"Pipette Baby Lotion", brand:"Pipette",
+    plasticScore:2, category:"personal_care",
+    material:"EWG-verified, plant-derived squalane, no parabens or synthetic fragrance",
+    description:"Pediatrician-tested, EWG-verified baby lotion. Plant-based squalane, no hormone-disrupting chemicals.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pipette+baby+lotion&tag=${AMAZON_TAG}`,
+    price:"$12-16",
+    tags:["baby lotion","baby skin care","lotion","personal care","baby","infant","clean beauty","squalane"]
+  },
+  {
+    id:"pc-103", name:"Pipette Baby Shampoo", brand:"Pipette",
+    plasticScore:2, category:"personal_care",
+    material:"Sulfate-free, EWG-verified, plant-derived, no synthetic fragrance",
+    description:"Tear-free, sulfate-free baby shampoo. EWG-verified, no parabens or phthalates.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pipette+baby+shampoo&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["baby shampoo","shampoo","baby","infant","personal care","sulfate free","clean beauty","tear free"]
+  },
+  {
+    id:"pc-104", name:"Dr. Bronners Pure Castile Liquid Soap", brand:"Dr. Bronners",
+    plasticScore:2, category:"personal_care",
+    material:"Certified organic oils, no synthetic preservatives or foaming agents",
+    description:"USDA organic, fair trade castile soap. Multi-use, highly concentrated, plastic bottle is recyclable HDPE.",
+    affiliateUrl:`https://www.amazon.com/s?k=Dr+Bronners+castile+liquid+soap&tag=${AMAZON_TAG}`,
+    price:"$10-18",
+    tags:["castile soap","liquid soap","body wash","hand soap","personal care","organic","multi use","concentrated"]
+  },
+  {
+    id:"pc-105", name:"Ursa Major Face Wipes", brand:"Ursa Major",
+    plasticScore:2, category:"personal_care",
+    material:"Biodegradable cloth, no synthetic fragrance, no parabens",
+    description:"Compostable face wipes with clean botanical ingredients. No alcohol, synthetic fragrance, or parabens.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ursa+Major+face+wipes&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["face wipes","facial wipes","cleansing wipes","personal care","clean beauty","biodegradable","compostable"]
+  },
+  {
+    id:"pc-106", name:"Ursa Major Face Moisturizer", brand:"Ursa Major",
+    plasticScore:2, category:"personal_care",
+    material:"Botanical actives, no synthetic fragrance, parabens, or silicones",
+    description:"Daily face moisturizer with aloe, niacinamide and plant actives. Clean, no hormone disruptors.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ursa+Major+face+moisturizer&tag=${AMAZON_TAG}`,
+    price:"$38-48",
+    tags:["face moisturizer","moisturizer","facial cream","skin care","personal care","clean beauty","niacinamide"]
+  },
+  {
+    id:"pc-107", name:"Kosas Tinted Face Oil", brand:"Kosas",
+    plasticScore:2, category:"personal_care",
+    material:"Plant oils, no parabens, phthalates, synthetic fragrance or talc",
+    description:"Clean tinted face oil with SPF. No hormone-disrupting chemicals, buildable coverage.",
+    affiliateUrl:`https://www.amazon.com/s?k=Kosas+tinted+face+oil&tag=${AMAZON_TAG}`,
+    price:"$42-52",
+    tags:["face oil","tinted moisturizer","foundation","makeup","personal care","clean beauty","spf"]
+  },
+  {
+    id:"pc-108", name:"Kosas Deodorant", brand:"Kosas",
+    plasticScore:2, category:"personal_care",
+    material:"AHA-based, no aluminum, no synthetic fragrance, no baking soda",
+    description:"Clean deodorant with lactic and glycolic acid. No aluminum, no synthetic fragrance, clinically effective.",
+    affiliateUrl:`https://www.amazon.com/s?k=Kosas+deodorant&tag=${AMAZON_TAG}`,
+    price:"$15-18",
+    tags:["deodorant","natural deodorant","aluminum free","personal care","clean beauty","underarm"]
+  },
+  {
+    id:"pc-109", name:"Honest Company Hand Soap", brand:"Honest Company",
+    plasticScore:2, category:"personal_care",
+    material:"Plant-derived, no synthetic fragrance, EWG-verified",
+    description:"EWG-verified foaming hand soap. Plant-based, no parabens, SLS, or synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=Honest+Company+hand+soap&tag=${AMAZON_TAG}`,
+    price:"$6-9",
+    tags:["hand soap","foaming hand soap","personal care","clean beauty","plant based","EWG verified"]
+  },
+  {
+    id:"pc-110", name:"Honest Company Body Lotion", brand:"Honest Company",
+    plasticScore:2, category:"personal_care",
+    material:"Plant-derived, no parabens, synthetic fragrance or phthalates",
+    description:"EWG-verified body lotion, safe for babies and adults. Clean, gentle formula with plant actives.",
+    affiliateUrl:`https://www.amazon.com/s?k=Honest+Company+body+lotion&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["body lotion","lotion","personal care","baby","clean beauty","plant based","moisturizer"]
+  },
+  {
+    id:"pc-111", name:"Native Deodorant", brand:"Native",
+    plasticScore:3, category:"personal_care",
+    material:"Baking soda base, no aluminum, no parabens",
+    description:"Aluminum-free deodorant available in plastic-free cardboard packaging. Effective natural formula.",
+    affiliateUrl:`https://www.amazon.com/s?k=Native+deodorant+plastic+free&tag=${AMAZON_TAG}`,
+    price:"$12-15",
+    tags:["deodorant","natural deodorant","aluminum free","personal care","plastic free","underarm","baking soda"]
+  },
+  {
+    id:"pc-112", name:"Schmidts Natural Deodorant", brand:"Schmidts",
+    plasticScore:3, category:"personal_care",
+    material:"Plant and mineral-based, no aluminum, available fragrance-free",
+    description:"Natural deodorant with magnesium and plant actives. Aluminum-free, available in fragrance-free option.",
+    affiliateUrl:`https://www.amazon.com/s?k=Schmidts+natural+deodorant&tag=${AMAZON_TAG}`,
+    price:"$9-13",
+    tags:["deodorant","natural deodorant","aluminum free","personal care","magnesium","fragrance free","underarm"]
+  },
+  // ── HAIR CARE ────────────────────────────────────────────────
+  {
+    id:"hc-001", name:"Briogeo Scalp Revival Shampoo", brand:"Briogeo",
+    plasticScore:2, category:"personal_care",
+    material:"No sulfates, silicones, synthetic fragrance, parabens or phthalates",
+    description:"1% salicylic acid scalp shampoo. Free of sulfates, silicones, parabens, phthalates, DEA and synthetic fragrance.",
+    affiliateUrl:`https://www.amazon.com/s?k=Briogeo+scalp+revival+shampoo&tag=${AMAZON_TAG}`,
+    price:"$28-38",
+    tags:["shampoo","scalp shampoo","hair care","personal care","sulfate free","silicone free","clean beauty"]
+  },
+  {
+    id:"hc-002", name:"Briogeo Curl Conditioner", brand:"Briogeo",
+    plasticScore:2, category:"personal_care",
+    material:"No sulfates, silicones, parabens, phthalates or synthetic fragrance",
+    description:"Curl-defining conditioner without silicones or synthetic fragrance. Clean formula, safe for color-treated hair.",
+    affiliateUrl:`https://www.amazon.com/s?k=Briogeo+curl+conditioner&tag=${AMAZON_TAG}`,
+    price:"$28-38",
+    tags:["conditioner","curl conditioner","hair care","personal care","silicone free","clean beauty","curly hair"]
+  },
+  {
+    id:"hc-003", name:"Avalon Organics Biotin Shampoo", brand:"Avalon Organics",
+    plasticScore:2, category:"personal_care",
+    material:"NSF-certified organic, no sulfates, synthetic fragrance or parabens",
+    description:"NSF-certified organic shampoo with biotin and saw palmetto. No sulfates, synthetic fragrance, or parabens.",
+    affiliateUrl:`https://www.amazon.com/s?k=Avalon+Organics+biotin+shampoo&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["shampoo","organic shampoo","biotin shampoo","hair care","personal care","sulfate free","thickening"]
+  },
+  {
+    id:"hc-004", name:"Ethique Shampoo Bar", brand:"Ethique",
+    plasticScore:1, category:"personal_care",
+    material:"Solid shampoo bar — zero plastic packaging, plant-derived surfactants",
+    description:"Solid shampoo bar eliminates plastic bottle entirely. 80+ washes per bar, compostable packaging.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ethique+shampoo+bar&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["shampoo","shampoo bar","solid shampoo","hair care","personal care","plastic free","zero waste","compostable"]
+  },
+  {
+    id:"hc-005", name:"Ethique Conditioner Bar", brand:"Ethique",
+    plasticScore:1, category:"personal_care",
+    material:"Solid conditioner bar — zero plastic, plant-derived ingredients",
+    description:"Solid conditioner bar in compostable packaging. No plastic bottle, no silicones, highly concentrated.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ethique+conditioner+bar&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["conditioner","conditioner bar","solid conditioner","hair care","personal care","plastic free","zero waste"]
+  },
+  // ── SUNSCREEN & SPF ──────────────────────────────────────────
+  {
+    id:"sp-001", name:"Badger Kids Sunscreen SPF 40", brand:"Badger",
+    plasticScore:2, category:"personal_care",
+    material:"Zinc oxide mineral base, organic ingredients, no oxybenzone or octinoxate",
+    description:"Certified organic mineral sunscreen for kids. Zinc oxide only — no hormone-disrupting chemical UV filters.",
+    affiliateUrl:`https://www.amazon.com/s?k=Badger+kids+sunscreen+SPF+40&tag=${AMAZON_TAG}`,
+    price:"$16-20",
+    tags:["sunscreen","kids sunscreen","mineral sunscreen","SPF","personal care","baby","zinc oxide","reef safe","oxybenzone free"]
+  },
+  {
+    id:"sp-002", name:"Badger Sport Sunscreen SPF 40", brand:"Badger",
+    plasticScore:2, category:"personal_care",
+    material:"Zinc oxide mineral base, certified organic, no chemical UV filters",
+    description:"Water-resistant mineral sport sunscreen. No oxybenzone, octinoxate, or hormone-disrupting UV filters.",
+    affiliateUrl:`https://www.amazon.com/s?k=Badger+sport+sunscreen&tag=${AMAZON_TAG}`,
+    price:"$16-22",
+    tags:["sunscreen","sport sunscreen","mineral sunscreen","SPF","personal care","zinc oxide","reef safe","water resistant"]
+  },
+  {
+    id:"sp-003", name:"Raw Elements Sunscreen SPF 30", brand:"Raw Elements",
+    plasticScore:2, category:"personal_care",
+    material:"Non-nano zinc oxide, certified natural, no synthetic chemicals",
+    description:"100% natural mineral sunscreen in recyclable tin. Non-nano zinc oxide, reef-safe, no synthetic ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Raw+Elements+sunscreen+SPF+30&tag=${AMAZON_TAG}`,
+    price:"$18-24",
+    tags:["sunscreen","mineral sunscreen","SPF","personal care","zinc oxide","reef safe","tin","natural"]
+  },
+  // ── CLEANING PRODUCTS ────────────────────────────────────────
+  {
+    id:"cl-100", name:"Branch Basics Concentrate", brand:"Branch Basics",
+    plasticScore:2, category:"personal_care",
+    material:"Plant and mineral-derived, no synthetic fragrance, dyes, or preservatives",
+    description:"One concentrate replaces every cleaner in your home. No synthetic fragrance, dyes, enzymes, or preservatives.",
+    affiliateUrl:`https://www.amazon.com/s?k=Branch+Basics+concentrate&tag=${AMAZON_TAG}`,
+    price:"$49-69",
+    tags:["cleaner","all purpose cleaner","household cleaner","cleaning","concentrate","non toxic","fragrance free","plant based"]
+  },
+  {
+    id:"cl-101", name:"Blueland Multi-Surface Cleaner Tablets", brand:"Blueland",
+    plasticScore:1, category:"personal_care",
+    material:"Tablet form — no plastic bottle, no synthetic fragrance, EPA Safer Choice",
+    description:"Dissolve in water, zero plastic packaging. EPA Safer Choice certified, no synthetic fragrance or harsh chemicals.",
+    affiliateUrl:`https://www.amazon.com/s?k=Blueland+multi+surface+cleaner&tag=${AMAZON_TAG}`,
+    price:"$12-16",
+    tags:["cleaner","multi surface cleaner","all purpose cleaner","cleaning tablet","household cleaner","plastic free","zero waste"]
+  },
+  {
+    id:"cl-102", name:"Blueland Toilet Bowl Cleaner", brand:"Blueland",
+    plasticScore:1, category:"personal_care",
+    material:"Tablet form — zero plastic, EPA Safer Choice, no synthetic fragrance",
+    description:"Drop-in toilet bowl cleaner tablets. No plastic bottle, no synthetic fragrance, EPA Safer Choice certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Blueland+toilet+bowl+cleaner&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["toilet cleaner","toilet bowl cleaner","bathroom cleaner","cleaning tablet","cleaning","plastic free","zero waste"]
+  },
+  {
+    id:"cl-103", name:"Seventh Generation Dish Soap", brand:"Seventh Generation",
+    plasticScore:3, category:"personal_care",
+    material:"Plant-derived surfactants, no synthetic fragrance, USDA biobased certified",
+    description:"Plant-based dish soap, no synthetic fragrance, dyes or triclosan. USDA Certified Biobased.",
+    affiliateUrl:`https://www.amazon.com/s?k=Seventh+Generation+dish+soap&tag=${AMAZON_TAG}`,
+    price:"$5-8",
+    tags:["dish soap","washing up liquid","cleaning","plant based","fragrance free","USDA biobased"]
+  },
+  {
+    id:"cl-104", name:"Meliora Laundry Powder", brand:"Meliora",
+    plasticScore:2, category:"personal_care",
+    material:"Washing soda, salt, soap — no synthetic fragrance or enzymes",
+    description:"Certified B Corp laundry powder in cardboard box. No plastic, no synthetic fragrance, just four clean ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Meliora+laundry+powder&tag=${AMAZON_TAG}`,
+    price:"$16-22",
+    tags:["laundry powder","laundry detergent","washing powder","cleaning","plastic free","fragrance free","B corp","cardboard"]
+  },
+  {
+    id:"cl-105", name:"Force of Nature Cleaner", brand:"Force of Nature",
+    plasticScore:1, category:"personal_care",
+    material:"Electrolyzed salt water — no synthetic chemicals, fragrance or preservatives",
+    description:"EPA-registered disinfectant made from salt, water and vinegar. No synthetic chemicals — safe around kids and pets.",
+    affiliateUrl:`https://www.amazon.com/s?k=Force+of+Nature+cleaner&tag=${AMAZON_TAG}`,
+    price:"$25-35",
+    tags:["cleaner","disinfectant","all purpose cleaner","household cleaner","non toxic","fragrance free","EPA registered"]
+  },
+  // ── FOOD & BEVERAGE ──────────────────────────────────────────
+  {
+    id:"fb-100", name:"Numi Organic Tea", brand:"Numi",
+    plasticScore:1, category:"food_beverage",
+    material:"Plastic-free tea bags — no nylon, no polypropylene sealant",
+    description:"Certified organic, plastic-free tea bags sealed without polypropylene. No microplastics from the bag.",
+    affiliateUrl:`https://www.amazon.com/s?k=Numi+organic+tea&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["tea","herbal tea","green tea","black tea","organic tea","plastic free tea bag","food beverage"]
+  },
+  {
+    id:"fb-101", name:"Pukka Herbs Organic Tea", brand:"Pukka",
+    plasticScore:1, category:"food_beverage",
+    material:"Plastic-free envelope and bag — no nylon mesh, no synthetic sealant",
+    description:"Certified organic tea with plastic-free bags and envelopes. No synthetic sealants — safe at full temperature.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pukka+organic+tea&tag=${AMAZON_TAG}`,
+    price:"$7-11",
+    tags:["tea","herbal tea","organic tea","plastic free tea bag","food beverage","green tea","chamomile"]
+  },
+  {
+    id:"fb-102", name:"Banza Chickpea Pasta", brand:"Banza",
+    plasticScore:2, category:"food_beverage",
+    material:"Chickpea flour, no artificial additives or synthetic dyes",
+    description:"Chickpea pasta — higher protein, higher fiber, lower glycemic than conventional wheat pasta. No synthetic dyes.",
+    affiliateUrl:`https://www.amazon.com/s?k=Banza+chickpea+pasta&tag=${AMAZON_TAG}`,
+    price:"$3-5",
+    tags:["pasta","chickpea pasta","gluten free pasta","food beverage","protein","whole food","clean ingredients"]
+  },
+  {
+    id:"fb-103", name:"Siete Almond Flour Tortillas", brand:"Siete",
+    plasticScore:2, category:"food_beverage",
+    material:"Almond flour, cassava, no artificial preservatives or synthetic dyes",
+    description:"Grain-free tortillas with clean ingredients. No artificial preservatives, colors or flavors. Minimal processing.",
+    affiliateUrl:`https://www.amazon.com/s?k=Siete+almond+flour+tortillas&tag=${AMAZON_TAG}`,
+    price:"$6-8",
+    tags:["tortillas","grain free","almond flour","food beverage","clean ingredients","gluten free","minimal processing"]
+  },
+  {
+    id:"fb-104", name:"Hu Chocolate Bar", brand:"Hu",
+    plasticScore:2, category:"food_beverage",
+    material:"Simple ingredients — no refined sugar, soy lecithin, palm oil or synthetic additives",
+    description:"Paleo-friendly chocolate with minimal clean ingredients. No refined sugar, emulsifiers, dairy or synthetic additives.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hu+chocolate+bar&tag=${AMAZON_TAG}`,
+    price:"$4-6",
+    tags:["chocolate","dark chocolate","snack","food beverage","clean ingredients","paleo","no additives","soy free"]
+  },
+  {
+    id:"fb-105", name:"Once Upon a Farm Baby Food Pouch", brand:"Once Upon a Farm",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic whole ingredients, cold-pressed, no added sugar or synthetic additives",
+    description:"Cold-pressed organic baby food. No added sugar, synthetic additives or preservatives. USDA organic.",
+    affiliateUrl:`https://www.amazon.com/s?k=Once+Upon+a+Farm+baby+food&tag=${AMAZON_TAG}`,
+    price:"$2-4",
+    tags:["baby food","baby puree","organic baby food","food beverage","baby","infant","no added sugar","organic"]
+  },
+  {
+    id:"fb-106", name:"Simple Mills Almond Flour Crackers", brand:"Simple Mills",
+    plasticScore:2, category:"food_beverage",
+    material:"Almond flour base, no synthetic dyes, artificial flavors or preservatives",
+    description:"Grain-free crackers from almond flour. No artificial flavors, colors or preservatives. Clean, minimal ingredients.",
+    affiliateUrl:`https://www.amazon.com/s?k=Simple+Mills+almond+flour+crackers&tag=${AMAZON_TAG}`,
+    price:"$5-7",
+    tags:["crackers","grain free crackers","almond flour","snack","food beverage","clean ingredients","gluten free"]
+  },
+  {
+    id:"fb-107", name:"RXBAR Protein Bar", brand:"RXBAR",
+    plasticScore:2, category:"food_beverage",
+    material:"Whole food ingredients — egg whites, nuts, dates. No synthetic additives.",
+    description:"Protein bar made from whole food ingredients. No synthetic additives, preservatives or artificial flavors.",
+    affiliateUrl:`https://www.amazon.com/s?k=RXBAR+protein+bar&tag=${AMAZON_TAG}`,
+    price:"$2-3",
+    tags:["protein bar","snack bar","food beverage","whole food","clean ingredients","no additives","egg white","dates"]
+  },
+  {
+    id:"fb-108", name:"Oatly Oat Milk", brand:"Oatly",
+    plasticScore:3, category:"food_beverage",
+    material:"Oat-based, minimal additives — rapeseed oil, salt. Carton packaging.",
+    description:"Widely available oat milk in carton packaging. Minimal additives compared to most plant milks. No dairy hormones.",
+    affiliateUrl:`https://www.amazon.com/s?k=Oatly+oat+milk&tag=${AMAZON_TAG}`,
+    price:"$5-7",
+    tags:["oat milk","plant milk","dairy free","milk alternative","food beverage","vegan","barista"]
+  },
+  // ── KITCHEN ──────────────────────────────────────────────────
+  {
+    id:"kt-100", name:"Vitamix Blender", brand:"Vitamix",
+    plasticScore:3, category:"kitchen",
+    material:"BPA-free Tritan container — not food-contact PP or PVC",
+    description:"High-performance blender with BPA-free Tritan container. Built to last decades — lowest lifecycle impact of any blender.",
+    affiliateUrl:`https://www.amazon.com/s?k=Vitamix+blender&tag=${AMAZON_TAG}`,
+    price:"$350-500",
+    tags:["blender","kitchen appliance","kitchen","smoothie","BPA free","tritan","high performance"]
+  },
+  {
+    id:"kt-101", name:"Beeswax Wraps by Bees Wrap", brand:"Bees Wrap",
+    plasticScore:1, category:"kitchen",
+    material:"Organic cotton, beeswax, jojoba oil, tree resin — zero plastic",
+    description:"Reusable beeswax food wrap — replaces plastic wrap entirely. Compostable, washable, lasts 1 year+.",
+    affiliateUrl:`https://www.amazon.com/s?k=Bees+Wrap+beeswax+wrap&tag=${AMAZON_TAG}`,
+    price:"$18-22",
+    tags:["beeswax wrap","food wrap","plastic wrap alternative","kitchen","reusable","compostable","zero waste","cling wrap"]
+  },
+  {
+    id:"kt-102", name:"Stasher Reusable Silicone Bag", brand:"Stasher",
+    plasticScore:2, category:"kitchen",
+    material:"100% platinum silicone — no BPA, BPS, latex or fillers",
+    description:"Reusable silicone food bag — dishwasher safe, freezer safe, oven safe. Replaces hundreds of zip-lock bags per year.",
+    affiliateUrl:`https://www.amazon.com/s?k=Stasher+reusable+silicone+bag&tag=${AMAZON_TAG}`,
+    price:"$12-18",
+    tags:["silicone bag","reusable bag","food storage bag","ziplock alternative","kitchen","BPA free","freezer bag","sandwich bag"]
+  },
+  {
+    id:"kt-103", name:"Caraway Ceramic Cookware Set", brand:"Caraway",
+    plasticScore:2, category:"kitchen",
+    material:"Ceramic non-stick — no PTFE, PFAS, PFOA or heavy metals",
+    description:"Ceramic-coated cookware with no PTFE, PFAS, PFOA, lead or cadmium. Safe at high temperatures, naturally non-stick.",
+    affiliateUrl:`https://www.amazon.com/s?k=Caraway+ceramic+cookware&tag=${AMAZON_TAG}`,
+    price:"$395-545",
+    tags:["cookware","ceramic cookware","non stick pan","frying pan","pan","PFAS free","PTFE free","PFOA free","toxic free cookware"]
+  },
+  {
+    id:"kt-104", name:"Our Place Always Pan", brand:"Our Place",
+    plasticScore:2, category:"kitchen",
+    material:"Ceramic non-stick — no PTFE, PFAS, PFOA, lead or cadmium",
+    description:"Multi-use ceramic pan — braises, sears, steams, strains. No PTFE or PFAS coatings, free of heavy metals.",
+    affiliateUrl:`https://www.amazon.com/s?k=Our+Place+Always+Pan&tag=${AMAZON_TAG}`,
+    price:"$150-165",
+    tags:["pan","frying pan","ceramic pan","non stick pan","cookware","PFAS free","PTFE free","PFOA free","kitchen"]
+  },
+  {
+    id:"kt-105", name:"GreenPan Ceramic Non-Stick Pan", brand:"GreenPan",
+    plasticScore:2, category:"kitchen",
+    material:"Thermolon ceramic coating — no PTFE, PFAS, PFOA or lead",
+    description:"Thermolon ceramic non-stick — no PTFE, PFAS, PFOA or cadmium. Will not release toxic fumes if overheated.",
+    affiliateUrl:`https://www.amazon.com/s?k=GreenPan+ceramic+non+stick+pan&tag=${AMAZON_TAG}`,
+    price:"$40-80",
+    tags:["pan","frying pan","ceramic pan","non stick pan","cookware","PFAS free","PTFE free","PFOA free","kitchen","saute pan"]
+  },
+  {
+    id:"kt-106", name:"Wusthof Classic Chefs Knife", brand:"Wusthof",
+    plasticScore:1, category:"kitchen",
+    material:"High-carbon stainless steel blade — no food contact plastic",
+    description:"German high-carbon stainless steel chefs knife. Lasts decades — no food contact plastic at all.",
+    affiliateUrl:`https://www.amazon.com/s?k=Wusthof+Classic+chef+knife&tag=${AMAZON_TAG}`,
+    price:"$150-200",
+    tags:["knife","chefs knife","kitchen knife","stainless steel","kitchen","cooking","durable","lifetime"]
+  },
+  {
+    id:"kt-107", name:"Anchor Hocking Glass Food Storage Set", brand:"Anchor Hocking",
+    plasticScore:1, category:"kitchen",
+    material:"Borosilicate glass with BPA-free lids — zero food contact plastic",
+    description:"Glass food storage containers — no leaching even when heated, frozen or used with acidic food. Oven and dishwasher safe.",
+    affiliateUrl:`https://www.amazon.com/s?k=Anchor+Hocking+glass+food+storage&tag=${AMAZON_TAG}`,
+    price:"$25-45",
+    tags:["food storage","glass container","food container","tupperware alternative","kitchen","glass","BPA free","meal prep"]
+  },
+  {
+    id:"kt-108", name:"Pyrex Glass Food Storage Set", brand:"Pyrex",
+    plasticScore:1, category:"kitchen",
+    material:"Borosilicate glass — zero leaching, BPA-free lids",
+    description:"Classic borosilicate glass storage with BPA-free lids. Safe for oven, microwave, freezer — zero plastic food contact.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pyrex+glass+food+storage+set&tag=${AMAZON_TAG}`,
+    price:"$20-40",
+    tags:["food storage","glass container","food container","tupperware alternative","kitchen","glass","BPA free","microwave safe"]
+  },
+  {
+    id:"kt-109", name:"Klean Kanteen Insulated Water Bottle", brand:"Klean Kanteen",
+    plasticScore:1, category:"kitchen",
+    material:"18/8 food-grade stainless steel — zero plastic interior contact",
+    description:"18/8 stainless steel water bottle — no plastic liner, no BPA, keeps drinks cold 24hr or hot 12hr.",
+    affiliateUrl:`https://www.amazon.com/s?k=Klean+Kanteen+insulated+water+bottle&tag=${AMAZON_TAG}`,
+    price:"$30-45",
+    tags:["water bottle","stainless steel bottle","insulated bottle","reusable bottle","BPA free","plastic free","kitchen","hydration"]
+  },
+  {
+    id:"kt-110", name:"Hydro Flask Water Bottle", brand:"Hydro Flask",
+    plasticScore:1, category:"kitchen",
+    material:"18/8 pro-grade stainless steel — no plastic food contact surface",
+    description:"18/8 stainless steel with double-wall insulation. No plastic liner touching your water.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hydro+Flask+water+bottle&tag=${AMAZON_TAG}`,
+    price:"$35-50",
+    tags:["water bottle","stainless steel bottle","insulated bottle","reusable bottle","BPA free","plastic free","kitchen","hydration"]
+  },
+  {
+    id:"kt-111", name:"Fellow Stagg EKG Kettle", brand:"Fellow",
+    plasticScore:2, category:"kitchen",
+    material:"Stainless steel water path — no plastic in contact with water",
+    description:"Precision pour-over kettle with stainless steel water path. No plastic contacts hot water. Variable temp control.",
+    affiliateUrl:`https://www.amazon.com/s?k=Fellow+Stagg+EKG+kettle&tag=${AMAZON_TAG}`,
+    price:"$165-195",
+    tags:["kettle","electric kettle","pour over kettle","coffee kettle","kitchen","stainless steel","precision","BPA free"]
+  },
+  // ── BABY & KIDS ──────────────────────────────────────────────
+  {
+    id:"bk-001", name:"Hanna Andersson Organic Cotton Pajamas", brand:"Hanna Andersson",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — no synthetic fibers or chemical treatments",
+    description:"GOTS-certified organic cotton pajamas for kids. No synthetic fibers, snug-fitting so no flame retardant chemicals needed.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hanna+Andersson+organic+cotton+pajamas&tag=${AMAZON_TAG}`,
+    price:"$36-46",
+    tags:["pajamas","kids pajamas","organic cotton","baby","kids","clothing","organic","GOTS","sleepwear","toddler"]
+  },
+  {
+    id:"bk-002", name:"Burts Bees Baby Organic Cotton Bodysuit", brand:"Burts Bees Baby",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — no synthetic dyes or flame retardants",
+    description:"GOTS-certified organic cotton onesie with no synthetic dyes or chemical finishes. Safe for newborn skin.",
+    affiliateUrl:`https://www.amazon.com/s?k=Burts+Bees+Baby+organic+bodysuit&tag=${AMAZON_TAG}`,
+    price:"$12-18",
+    tags:["bodysuit","onesie","baby","infant","newborn","organic cotton","clothing","GOTS","organic"]
+  },
+  {
+    id:"bk-003", name:"Pact Kids Organic Cotton T-Shirt", brand:"Pact",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — Fair Trade certified",
+    description:"GOTS-certified organic cotton kids tee. Fair Trade certified, no synthetic dyes, no pesticide residue.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pact+kids+organic+cotton+tshirt&tag=${AMAZON_TAG}`,
+    price:"$18-24",
+    tags:["tshirt","t-shirt","kids","children","organic cotton","clothing","GOTS","Fair Trade","top","shirt"]
+  },
+  {
+    id:"bk-004", name:"Naturepedic Organic Crib Mattress", brand:"Naturepedic",
+    plasticScore:2, category:"baby",
+    material:"GOTS-certified organic cotton, no polyurethane foam, no flame retardant chemicals",
+    description:"GOTS and MADE SAFE certified crib mattress. No polyurethane foam, no flame retardant chemicals, no synthetic waterproofing.",
+    affiliateUrl:`https://www.amazon.com/s?k=Naturepedic+organic+crib+mattress&tag=${AMAZON_TAG}`,
+    price:"$299-399",
+    tags:["crib mattress","baby mattress","organic mattress","baby","infant","organic cotton","GOTS","flame retardant free","non toxic"]
+  },
+  {
+    id:"bk-005", name:"Pura Stainless Baby Bottle", brand:"Pura",
+    plasticScore:1, category:"baby",
+    material:"18/8 food-grade stainless steel — no plastic food contact, no BPA or phthalates",
+    description:"Stainless steel baby bottle — no plastic contacts milk or formula even when heated. Medical-grade silicone nipple.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pura+stainless+steel+baby+bottle&tag=${AMAZON_TAG}`,
+    price:"$22-30",
+    tags:["baby bottle","stainless steel bottle","bottle","baby","infant","BPA free","plastic free","feeding"]
+  },
+  {
+    id:"bk-006", name:"WeeSprout Glass Baby Food Containers", brand:"WeeSprout",
+    plasticScore:1, category:"baby",
+    material:"Borosilicate glass — zero leaching, safe for heating and freezing",
+    description:"Glass baby food storage — no plastic leaching into purees even when heated. Freezer, oven and dishwasher safe.",
+    affiliateUrl:`https://www.amazon.com/s?k=WeeSprout+glass+baby+food+containers&tag=${AMAZON_TAG}`,
+    price:"$20-28",
+    tags:["baby food container","baby food storage","glass container","baby","glass","BPA free","food storage","weaning"]
+  },
+  {
+    id:"bk-007", name:"Melissa and Doug Wooden Toys", brand:"Melissa and Doug",
+    plasticScore:2, category:"baby",
+    material:"Solid wood and water-based paint — no ABS plastic",
+    description:"Solid wood toys with water-based paint. No ABS plastic, no phthalates. Built to last years.",
+    affiliateUrl:`https://www.amazon.com/s?k=Melissa+and+Doug+wooden+toys&tag=${AMAZON_TAG}`,
+    price:"$15-40",
+    tags:["wooden toys","kids toys","toys","baby","toddler","natural toys","non toxic toys","wood","plastic free toys"]
+  },
+  // ── WELLNESS & SUPPLEMENTS ───────────────────────────────────
+  {
+    id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
+    plasticScore:2, category:"food_beverage",
+    material:"USDA organic, non-GMO, no artificial sweeteners or synthetic additives",
+    description:"USDA certified organic plant protein. No artificial sweeteners, synthetic flavors or fillers. Third-party tested.",
+    affiliateUrl:`https://www.amazon.com/s?k=Garden+of+Life+organic+protein+powder&tag=${AMAZON_TAG}`,
+    price:"$35-45",
+    tags:["protein powder","plant protein","organic protein","food beverage","supplement","vegan protein","clean ingredients"]
+  },
+  {
+    id:"wl-002", name:"Ritual Multivitamin", brand:"Ritual",
+    plasticScore:2, category:"personal_care",
+    material:"Traceable, clean ingredients — no synthetic dyes, shady fillers or undisclosed additives",
+    description:"Multivitamin with fully traceable, non-GMO ingredients. No synthetic dyes, unnecessary fillers or undisclosed additives.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ritual+multivitamin&tag=${AMAZON_TAG}`,
+    price:"$30-40",
+    tags:["multivitamin","vitamin","supplement","personal care","clean ingredients","traceable","women","men","prenatal"]
+  },
+  {
+    id:"wl-003", name:"Thorne Basic Nutrients Multivitamin", brand:"Thorne",
+    plasticScore:2, category:"personal_care",
+    material:"No artificial colors, flavors or preservatives — NSF certified for sport",
+    description:"NSF-certified multivitamin with no unnecessary additives, artificial colors or synthetic preservatives. Third-party tested.",
+    affiliateUrl:`https://www.amazon.com/s?k=Thorne+Basic+Nutrients+multivitamin&tag=${AMAZON_TAG}`,
+    price:"$40-55",
+    tags:["multivitamin","vitamin","supplement","personal care","NSF certified","clean ingredients","no additives"]
+  },
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
