@@ -3402,36 +3402,39 @@ function App() {
                     {/* 1. Materials */}
                     <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
                       {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
-                      {result.identified_plastics?.length > 0 && (
-                        <div style={{marginTop:8,marginBottom:4}}>
-                          <div style={{fontSize:11,color:"#dc2626",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Plastics identified</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                            {result.identified_plastics.map((p,i)=>(
-                              <span key={i} style={{fontSize:12,fontWeight:700,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a1a":"#fef2f2",color:"#dc2626",border:"1px solid #fecaca"}}>{p}</span>
-                            ))}
+                      {/* Only show chips when no Product Insights — otherwise redundant */}
+                      {!result.food_analysis && (<>
+                        {result.identified_plastics?.length > 0 && (
+                          <div style={{marginTop:8,marginBottom:4}}>
+                            <div style={{fontSize:11,color:"#dc2626",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Plastics identified</div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                              {result.identified_plastics.map((p,i)=>(
+                                <span key={i} style={{fontSize:12,fontWeight:700,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a1a":"#fef2f2",color:"#dc2626",border:"1px solid #fecaca"}}>{p}</span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {result.harmful_chemicals?.length > 0 && (
-                        <div style={{marginTop:8}}>
-                          <div style={{fontSize:11,color:"#d97706",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Harmful chemicals</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                            {result.harmful_chemicals.map((c,i)=>(
-                              <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a00":"#fffbeb",color:"#d97706",border:"1px solid #fde68a"}}>{c}</span>
-                            ))}
+                        )}
+                        {result.harmful_chemicals?.length > 0 && (
+                          <div style={{marginTop:8}}>
+                            <div style={{fontSize:11,color:"#d97706",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Harmful chemicals</div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                              {result.harmful_chemicals.map((c,i)=>(
+                                <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a00":"#fffbeb",color:"#d97706",border:"1px solid #fde68a"}}>{c}</span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {result.natural_materials?.length > 0 && (
-                        <div style={{marginTop:8}}>
-                          <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Natural materials</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                            {result.natural_materials.map((m,i)=>(
-                              <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#1a2a1a":"#f0fdf4",color:"#16a34a",border:"1px solid #bbf7d0"}}>{m}</span>
-                            ))}
+                        )}
+                        {result.natural_materials?.length > 0 && (
+                          <div style={{marginTop:8}}>
+                            <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Natural materials</div>
+                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                              {result.natural_materials.map((m,i)=>(
+                                <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#1a2a1a":"#f0fdf4",color:"#16a34a",border:"1px solid #bbf7d0"}}>{m}</span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </>)}
                     </DimensionDropdown>
 
                     {/* 2. Usage & Exposure */}
@@ -3520,28 +3523,6 @@ function App() {
                   <div style={{fontSize:12, color:muted, marginBottom:16, fontStyle:"italic"}}>{result.peer_comparison}</div>
                 )}
 
-                {/* Exposure badges */}
-                {(result.exposure_frequency || result.exposure_type) && (
-                  <div style={{display:"flex", gap:6, justifyContent:"center", marginBottom:14, flexWrap:"wrap"}}>
-                    {result.exposure_frequency && result.exposure_frequency !== "unknown" && (
-                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#eff6ff", color:"#1d4ed8", display:"flex", alignItems:"center", gap:4}}>
-                        <IcoScore size={12}/>
-                        {result.exposure_frequency === "daily" ? "Daily use" :
-                         result.exposure_frequency === "weekly" ? "Weekly use" :
-                         result.exposure_frequency === "occasional" ? "Occasional" : "Rare use"}
-                      </div>
-                    )}
-                    {result.exposure_type && result.exposure_type !== "unknown" && (
-                      <div style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20, background:"#fdf4ff", color:"#7e22ce", display:"flex", alignItems:"center", gap:4}}>
-                        <IcoSafety size={12}/>
-                        {result.exposure_type === "ingestion" ? "Ingestion risk" :
-                         result.exposure_type === "skin_contact" ? "Skin contact" :
-                         result.exposure_type === "inhalation" ? "Inhalation risk" : "Mixed exposure"}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
                 {/* Exposure Calculator — replaces break-even card */}
@@ -3558,18 +3539,6 @@ function App() {
                 <SplitView result={result} isDark={isDark} onScan={(name)=>{setResult(null); setQuery(name); analyze(name);}}/>
                 <ShareBadge result={result}/>
               </div>
-
-              {result.concerns?.length>0&&(
-                <div className="fade-up" style={{background:isDark?"#1e2433":"#fffbeb", borderRadius:16, padding:"28px 32px", border:`1.5px solid ${isDark?"#2a3347":"#fde68a"}`, borderLeft:"4px solid #d97706"}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:17,color:text,margin:"0 0 18px",display:"flex",alignItems:"center",gap:8}}><IcoInfo size={20}/> Key Concerns</h3>
-                  {result.concerns.map((c,i)=>(
-                    <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:14,fontSize:14,color:isDark?"#94a3b8":"#444",lineHeight:1.6}}>
-                      <div style={{width:22,height:22,borderRadius:"50%",background:"#fef2f2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}><IconWarning size={12} color="#dc2626"/></div>
-                      {c}
-                    </div>
-                  ))}
-                </div>
-              )}
 
               {/* SOURCE CITATIONS */}
               <SourceCitations category={result.category} isDark={isDark}/>
