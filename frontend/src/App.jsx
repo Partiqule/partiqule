@@ -1685,41 +1685,61 @@ const ShareBadge = ({result}) => {
 // ── PRODUCT CARD ─────────────────────────────────────────────
 const ProductCard = ({product, isDark}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
+  const hasLink = !!product.affiliateUrl;
+
+  const cardStyle = {
+    textDecoration:"none", display:"block",
+    background:isDark?"#1e2433":"#fff",
+    borderRadius:12, padding:"18px 22px",
+    border:`1.5px solid ${isDark?"#2a3347":"#e8e8e8"}`,
+    transition:"border-color 0.2s, box-shadow 0.2s",
+    cursor: hasLink ? "pointer" : "default",
+    WebkitTapHighlightColor:"transparent",
+  };
+
+  const inner = (
+    <div style={{display:"flex", gap:14, alignItems:"flex-start"}}>
+      {/* Product image */}
+      <div style={{width:56, height:56, borderRadius:10, background:"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden"}}>
+        {product.imageUrl
+          ? <img src={product.imageUrl} alt={product.name} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
+          : <IconTag size={24} color="#16a34a"/>
+        }
+      </div>
+      <div style={{flex:1, minWidth:0}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:3}}>
+          <div>
+            <div style={{fontSize:11, color:"#888", textTransform:"uppercase", letterSpacing:"0.05em"}}>{product.brand}</div>
+            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f1f5f9":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
+          </div>
+          <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
+            <div style={{background:scoreBg(product.score), color:scoreColor(product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{product.score}/10</div>
+            <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
+          </div>
+        </div>
+        <div style={{fontSize:13, color:isDark?"#94a3b8":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10}}>
+          <div style={{display:"flex", alignItems:"center", gap:6}}>
+            <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{product.price}</span>
+            {product.source === "amazon" && <span style={{fontSize:10, color:"#f59e0b", fontWeight:600, background:"#fffbeb", padding:"2px 6px", borderRadius:10}}>Amazon</span>}
+          </div>
+          {hasLink && <span style={{display:"flex", alignItems:"center", gap:4, fontSize:13, color:"#16a34a", fontWeight:600}}>Shop now <IconArrow size={13} color="#16a34a"/></span>}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!hasLink) {
+    return <div style={cardStyle}>{inner}</div>;
+  }
+
   return (
     <a href={product.affiliateUrl} target="_blank" rel="noopener noreferrer"
       onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
-      style={{textDecoration:"none", display:"block", background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"18px 22px", border:`1.5px solid ${isDark?"#2a3347":"#e8e8e8"}`, transition:"all 0.2s"}}
-      onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)"; e.currentTarget.style.transform="translateY(-1px)";}}
-      onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#e8e8e8"; e.currentTarget.style.boxShadow="none"; e.currentTarget.style.transform="none";}}>
-      <div style={{display:"flex", gap:14, alignItems:"flex-start"}}>
-        {/* Product image — real from Amazon or icon fallback */}
-        <div style={{width:56, height:56, borderRadius:10, background:"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden"}}>
-          {product.imageUrl
-            ? <img src={product.imageUrl} alt={product.name} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
-            : <IconTag size={24} color="#16a34a"/>
-          }
-        </div>
-        <div style={{flex:1, minWidth:0}}>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:3}}>
-            <div>
-              <div style={{fontSize:11, color:"#888", textTransform:"uppercase", letterSpacing:"0.05em"}}>{product.brand}</div>
-              <div style={{fontSize:15, fontWeight:700, color:isDark?"#f1f5f9":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
-            </div>
-            <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
-              <div style={{background:scoreBg(product.score), color:scoreColor(product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{product.score}/10</div>
-              <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
-            </div>
-          </div>
-          <div style={{fontSize:13, color:isDark?"#94a3b8":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
-          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10}}>
-            <div style={{display:"flex", alignItems:"center", gap:6}}>
-              <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{product.price}</span>
-              {product.source === "amazon" && <span style={{fontSize:10, color:"#f59e0b", fontWeight:600, background:"#fffbeb", padding:"2px 6px", borderRadius:10}}>Amazon</span>}
-            </div>
-            <span style={{display:"flex", alignItems:"center", gap:4, fontSize:13, color:"#16a34a", fontWeight:600}}>Shop now <IconArrow size={13} color="#16a34a"/></span>
-          </div>
-        </div>
-      </div>
+      style={cardStyle}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
+      {inner}
     </a>
   );
 };
@@ -1844,8 +1864,8 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
           return (
             <button key={item.label} onClick={()=>onSelect(item.label)}
               style={{background:surface, border:`1.5px solid ${border}`, borderRadius:12, padding:"16px", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 4px 16px rgba(22,163,74,0.1)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#eee"; e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none";}}>
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 16px rgba(22,163,74,0.1)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#eee"; e.currentTarget.style.boxShadow="none";}}>
               {item.score>=7&&<div style={{display:"flex", alignItems:"center", gap:2, fontSize:11, color:"#ef4444", fontWeight:600, marginBottom:6}}><IconFire size={12} color="#ef4444"/>Trending</div>}
               <div style={{fontSize:14, fontWeight:600, color:text, lineHeight:1.3, marginBottom:6}}>{item.label}</div>
               <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, display:"inline-block"}}>{cat.label}</div>
@@ -2108,8 +2128,8 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                   <a key={i} href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
                     style={{textDecoration:"none", display:"block", background:surface, borderRadius:14,
                       border:`1.5px solid ${border}`, overflow:"hidden", transition:"all 0.15s"}}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateY(-2px)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor=border;}}>
                     {/* Score badge */}
                     <div style={{padding:"12px 14px 0"}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8}}>
@@ -3385,8 +3405,8 @@ function App() {
                     {history.slice(0,8).map((item,i)=>(
                       <button key={i} onClick={()=>setResult(item)}
                         style={{flexShrink:0, width:isMobile?140:160, background:surface, borderRadius:12, padding:"14px", border:`1.5px solid ${border}`, cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateY(-2px)";}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
+                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
+                        onMouseLeave={e=>{e.currentTarget.style.borderColor=border;}}>
                         {/* Score circle */}
                         <div style={{width:40, height:40, borderRadius:"50%", background:scoreBg(item.score), display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10}}>
                           <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:16, color:scoreColor(item.score)}}>{item.score}</span>
