@@ -674,6 +674,132 @@ const EducationSection = ({isDark, isMobile=false}) => {
 };
 
 // ── PLASTIC SCORE DROPDOWN ────────────────────────────────────
+// ── FOOD ANALYSIS DROPDOWN — food_beverage only ──────────────
+const NOVA_LABELS = {
+  whole_food:          { label:"Whole Food",           color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0" },
+  minimally_processed: { label:"Minimally Processed",  color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc" },
+  processed:           { label:"Processed",             color:"#d97706", bg:"#fffbeb", border:"#fde68a" },
+  ultra_processed:     { label:"Ultra-Processed",       color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
+};
+const SEVERITY_CONFIG = {
+  high:   { color:"#dc2626", bg:"#fef2f2", border:"#fecaca",  icon:"⚠" },
+  medium: { color:"#d97706", bg:"#fffbeb", border:"#fde68a",  icon:"◆" },
+  low:    { color:"#6b7280", bg:"#f9fafb", border:"#e5e7eb",  icon:"•" },
+};
+const TYPE_LABELS = {
+  artificial_dye:       "Artificial Dye",
+  synthetic_preservative:"Preservative",
+  sweetener:            "Sweetener",
+  additive:             "Additive",
+  processing:           "Processing",
+};
+
+const FoodAnalysisDropdown = ({food, isDark}) => {
+  const [open, setOpen] = useState(false);
+  if (!food) return null;
+
+  const nova   = NOVA_LABELS[food.processing_level] || NOVA_LABELS.processed;
+  const highs  = (food.concerns || []).filter(c => c.severity === "high");
+  const meds   = (food.concerns || []).filter(c => c.severity === "medium");
+  const lows   = (food.concerns || []).filter(c => c.severity === "low");
+  const hasAny = food.concerns?.length > 0 || food.positives?.length > 0;
+
+  const headerBg     = isDark ? "#1e2433" : "#f9fafb";
+  const headerBorder = highs.length > 0 ? "#fecaca" : isDark ? "#2a3347" : "#e5e7eb";
+  const headerColor  = highs.length > 0 ? "#dc2626" : isDark ? "#94a3b8" : "#555";
+
+  return (
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:isDark?"#1e2433":"#f9fafb", textAlign:"left"}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
+        <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
+          <span style={{display:"flex", alignItems:"center", opacity:0.9}}><IcoIngredients size={20}/></span>
+          <span style={{fontSize:12, color:headerColor, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Ingredients & Nutrition</span>
+          {/* Processing level pill */}
+          <span style={{fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:nova.bg, color:nova.color, border:`1px solid ${nova.border}`}}>
+            {nova.label}
+          </span>
+          {highs.length > 0 && (
+            <span style={{fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:"#fef2f2", color:"#dc2626", border:"1px solid #fecaca"}}>
+              {highs.length} high concern{highs.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <span style={{fontSize:12, color:headerColor, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)", flexShrink:0}}>▾</span>
+      </button>
+
+      {open && (
+        <div style={{padding:"0 16px 14px", borderTop:`1px solid ${headerBorder}`}}>
+
+          {/* Processing level detail */}
+          <div style={{marginTop:12, marginBottom:14, padding:"10px 14px", borderRadius:10, background:nova.bg, border:`1px solid ${nova.border}`}}>
+            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:4}}>
+              <span style={{fontSize:13, fontWeight:700, color:nova.color}}>NOVA {food.nova_score} — {nova.label}</span>
+            </div>
+            {food.processing_label && (
+              <div style={{fontSize:12, color:nova.color, opacity:0.85}}>{food.processing_label}</div>
+            )}
+          </div>
+
+          {/* Concerns by severity */}
+          {[{items:highs, label:"High Concern"}, {items:meds, label:"Medium Concern"}, {items:lows, label:"Low Concern"}].map(({items, label}) =>
+            items.length > 0 && (
+              <div key={label} style={{marginBottom:12}}>
+                <div style={{fontSize:10, fontWeight:700, color:SEVERITY_CONFIG[items[0].severity].color, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>{label}</div>
+                <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                  {items.map((c, i) => {
+                    const cfg = SEVERITY_CONFIG[c.severity];
+                    return (
+                      <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a1a2e":cfg.bg, border:`1px solid ${cfg.border}`}}>
+                        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:3, flexWrap:"wrap"}}>
+                          <span style={{fontSize:12, fontWeight:700, color:cfg.color}}>{c.ingredient}</span>
+                          {c.type && TYPE_LABELS[c.type] && (
+                            <span style={{fontSize:10, fontWeight:600, color:cfg.color, opacity:0.75, background:"rgba(0,0,0,0.05)", padding:"1px 6px", borderRadius:8}}>{TYPE_LABELS[c.type]}</span>
+                          )}
+                        </div>
+                        <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c.reason}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Positives */}
+          {food.positives?.length > 0 && (
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>Positive Attributes</div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {food.positives.map((p, i) => (
+                  <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a2a1a":"#f0fdf4", border:"1px solid #bbf7d0", display:"flex", alignItems:"flex-start", gap:8}}>
+                    <span style={{color:"#16a34a", fontWeight:700, fontSize:14, flexShrink:0}}>✓</span>
+                    <div>
+                      <div style={{fontSize:12, fontWeight:700, color:"#16a34a", marginBottom:2}}>{p.attribute}</div>
+                      {p.reason && <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{p.reason}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No concerns */}
+          {!hasAny && (
+            <div style={{fontSize:13, color:isDark?"#94a3b8":"#555", marginTop:10, fontStyle:"italic"}}>No specific ingredient concerns identified.</div>
+          )}
+
+          {/* Confidence note */}
+          {food.confidence_note && food.confidence !== "high" && (
+            <div style={{fontSize:11, color:isDark?"#64748b":"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
+              <IcoInfo size={12}/> {food.confidence_note}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── DIMENSION DROPDOWN — reusable for all 4 main dimensions ──
 const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
   const [open, setOpen] = useState(false);
@@ -2296,7 +2422,7 @@ function App() {
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
                             });
-                            if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests — please wait a moment and try again."); return; }
+                            if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
                             if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
                             const data = await idResp.json();
                             if (!data.product_name) throw new Error("Nothing detected");
@@ -2542,6 +2668,10 @@ function App() {
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   return (<>
+                    {/* Food analysis — food_beverage only, sits above all other dropdowns */}
+                    {result.category === "food_beverage" && result.food_analysis && (
+                      <FoodAnalysisDropdown food={result.food_analysis} isDark={isDark}/>
+                    )}
                     {/* 1. Materials */}
                     <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
                       {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
@@ -2843,8 +2973,11 @@ function App() {
           </a>
         </div>
         <div style={{color:"#444", borderTop:"1px solid #222", paddingTop:16, marginTop:8}}>
-          <div style={{marginBottom:8}}>
-            © 2026 Partiqule · <span style={{color:"#555"}}>Affiliate disclosure: we may earn commissions on recommended products.</span>
+          <div style={{marginBottom:6}}>
+            © 2026 Partiqule
+          </div>
+          <div style={{marginBottom:8, fontSize:12, color:"#555", lineHeight:1.6}}>
+            As an Amazon Associate I earn from qualifying purchases. Affiliate links are always clearly labeled and never influence our scores.
           </div>
           <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#555", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
             onMouseEnter={e=>e.target.style.color="#4ade80"}

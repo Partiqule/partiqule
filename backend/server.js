@@ -424,6 +424,23 @@ CALIBRATION EXAMPLES to ensure differentiation:
 FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
 materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
 
+FOOD ANALYSIS — populate food_analysis ONLY when category is food_beverage. Set to null for all other categories.
+
+NOVA PROCESSING LEVELS:
+- whole_food (1): unprocessed — fresh fruit, vegetables, plain meat, eggs, plain milk, plain nuts. Materials 1-2.
+- minimally_processed (2): plain yogurt, canned tomatoes, frozen veg, rolled oats, natural cheese. Materials 2-3.
+- processed (3): added salt/sugar/oil. Canned fish, cured meats, simple bread, beer/wine. Materials 3-5.
+- ultra_processed (4): industrial formulations — packaged snacks, soft drinks, instant noodles, dyed cereals, candy, chips, processed meat. Materials 5-8.
+
+INGREDIENTS OF CONCERN — flag when confirmed or likely present:
+HIGH severity: Red 40 (FDA phasing out, hyperactivity/carcinogenicity), Red 3 (FDA banned 2025), Yellow 5 (hyperactivity/ADHD), Yellow 6 (hyperactivity), Blue 1 (FDA phasing out), Blue 2 (possible neurotoxin), Titanium dioxide (IARC Group 2B, EU food ban), BHA/BHT (BHA = IARC Group 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 for processed meat), Trans fats/partially hydrogenated oils (cardiovascular), HFCS (metabolic disease, obesity)
+MEDIUM severity: Aspartame (IARC Group 2B 2023), Sucralose (gut microbiome disruption), Acesulfame-K (animal carcinogen studies), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk with Vitamin C), TBHQ (possible immunotoxin), Caramel color class IV (4-MEI carcinogen), Natural flavors (hundreds of undisclosed chemicals), Carmine E120 (allergic reactions)
+LOW severity: Artificial flavors (undisclosed composition), Modified starch (highly processed), Soy lecithin (processed emulsifier), Maltodextrin (high glycemic)
+
+POSITIVE ATTRIBUTES — flag when present: USDA Organic, Non-GMO Verified, No artificial colors, No artificial preservatives, No artificial sweeteners, Whole food ingredients only, Fair Trade certified, Minimal ingredients (5 or fewer)
+
+FOOD SCORE IMPACT: Ultra-processed + multiple HIGH severity additives = materials 7-8, usage 6-7. Ultra-processed + MEDIUM additives = materials 5-7. Processed, no synthetic additives = materials 3-4. Whole/minimally processed = materials 1-2. Daily consumption of ultra-processed adds +1 usage. Child food with synthetic dyes = vulnerable flag + +1 materials.
+
 Return ONLY this JSON:
 {
   "product_name": "clean accurate product name",
@@ -433,29 +450,29 @@ Return ONLY this JSON:
   "natural_materials": ["organic cotton", "glass"],
   "materials": {
     "score": 7,
-    "label": "specific material analysis e.g. PP food-contact plastic, PTFE coating",
-    "concerns": ["PP in direct food contact — cardiovascular risk (NEJM 2024)", "PTFE coating degrades above 260C"]
+    "label": "specific material analysis",
+    "concerns": ["PP in direct food contact", "PTFE coating degrades above 260C"]
   },
   "usage_exposure": {
     "score": 8,
-    "label": "daily ingestion risk — leave-on skin contact",
+    "label": "daily ingestion risk",
     "frequency": "daily|weekly|occasional|rare",
     "type": "ingestion|skin_contact|inhalation|mixed",
     "intensity": "leave-on|rinse-off|single-contact",
     "vulnerable": false,
-    "concerns": ["Direct plastic ingestion at every use", "Leave-on increases dermal absorption"]
+    "concerns": ["Direct plastic ingestion at every use"]
   },
   "packaging": {
     "score": 3,
-    "label": "refillable system — minimal plastic packaging",
+    "label": "packaging assessment",
     "primary": "cardboard|glass|plastic|mixed",
     "refillable": false,
     "end_of_life": "recyclable|compostable|landfill|unknown",
-    "concerns": ["Outer cardboard recyclable, inner film liner is not"]
+    "concerns": []
   },
   "sustainability": {
     "score": 2,
-    "label": "strong circular design — replaces 50+ single-use items",
+    "label": "sustainability story",
     "reusable": true,
     "replaces_single_use": true,
     "replaces_count": 50,
@@ -467,8 +484,9 @@ Return ONLY this JSON:
     "label": "estimated — limited supply chain data",
     "tier": "good|neutral|bad",
     "confidence": "low",
-    "concerns": ["Supply chain data not publicly available"]
+    "concerns": []
   },
+  "food_analysis": null,
   "summary": "max 30 words covering the main risk or safety story",
   "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
@@ -479,7 +497,24 @@ Return ONLY this JSON:
     {"name": "second alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
     {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
-}`,
+}
+
+NOTE: If category is food_beverage, replace "food_analysis": null with a populated object:
+  "food_analysis": {
+    "processing_level": "whole_food|minimally_processed|processed|ultra_processed",
+    "processing_label": "max 8 words describing the processing",
+    "nova_score": 4,
+    "concerns": [
+      {"ingredient": "Red 40", "type": "artificial_dye", "severity": "high", "reason": "FDA phasing out, linked to hyperactivity"},
+      {"ingredient": "BHA", "type": "synthetic_preservative", "severity": "high", "reason": "IARC Group 2B possible carcinogen"}
+    ],
+    "positives": [
+      {"attribute": "USDA Organic", "reason": "No synthetic pesticides or additives"}
+    ],
+    "confidence": "high|medium|low",
+    "confidence_note": "max 10 words"
+  }
+`,
     1800
   );
 }
@@ -613,6 +648,7 @@ app.post("/analyze", async (req, res) => {
         score_reasoning:     p2?.score_reasoning || "",
         scan_next:           p1.scan_next  || [],
         break_even:          p2?.break_even || null,
+        food_analysis:       p1.food_analysis   || null,
         peer_comparison:     null,
         cached:              false,
         scannedAt:           new Date().toISOString(),
@@ -805,6 +841,7 @@ app.post("/analyze", async (req, res) => {
       peer_comparison:     peerComparison,
       scan_next:           p1.scan_next  || [],
       break_even:          p2?.break_even || null,
+      food_analysis:       p1.food_analysis   || null,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,
