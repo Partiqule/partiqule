@@ -771,100 +771,100 @@ const CATEGORY_EXPOSURE = {
 };
 
 const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
-  const [tab,       setTab]       = useState("exposure");
-  const [freq,      setFreq]      = useState(() => {
+  const [tab,       setTab]     = useState("exposure");
+  const [freq,      setFreq]    = useState(() => {
     const f = result.dimensions?.usage_exposure?.frequency || result.exposure_frequency;
     if (f === "daily") return "daily";
     if (f === "weekly") return "weekly";
     if (f === "occasional") return "monthly";
     return "daily";
   });
-  const [household, setHousehold] = useState(2);
-  const [hasKids,   setHasKids]   = useState(false);
-  const [spend,     setSpend]     = useState(10);
+  const [adults,   setAdults]   = useState(2);
+  const [kids,     setKids]     = useState(0);
+  const [spend,    setSpend]    = useState(10);
 
-  const score       = result.overall_score || result.score;
-  const altScore    = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
-  const altName     = result.break_even?.alternative_name || "safer alternative";
-  const freqData    = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
-  const cat         = result.category || "other";
-  const catConfig   = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
+  const score    = result.overall_score || result.score;
+  const altScore = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
+  const altName  = result.break_even?.alternative_name || "safer alternative";
+  const freqData = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
+  const cat      = result.category || "other";
+  const catConfig = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
+  const hasKids  = kids > 0;
 
-  // ── What is actually being exposed to ──
+  // Named exposures
   const exposureItems = (() => {
     const items = [];
     if (cat === "food_beverage") {
-      // Named additives from food_analysis (high + medium severity)
-      const concerns = result.food_analysis?.concerns || [];
-      concerns
+      (result.food_analysis?.concerns || [])
         .filter(c => c.severity === "high" || c.severity === "medium")
-        .forEach(c => items.push({ name: c.ingredient, severity: c.severity, type: c.type }));
-      // Plus any plastics (food packaging contact)
-      (result.identified_plastics || []).forEach(p =>
-        items.push({ name: p, severity: "medium", type: "plastic" })
-      );
+        .forEach(c => items.push({ name: c.ingredient, severity: c.severity }));
+      (result.identified_plastics || []).forEach(p => items.push({ name: p, severity: "medium" }));
     } else {
-      // Non-food: plastics first, then harmful chemicals
-      (result.identified_plastics || []).forEach(p =>
-        items.push({ name: p, severity: "high", type: "plastic" })
-      );
-      (result.harmful_chemicals || []).forEach(c =>
-        items.push({ name: c, severity: "medium", type: "chemical" })
-      );
+      (result.identified_plastics || []).forEach(p => items.push({ name: p, severity: "high" }));
+      (result.harmful_chemicals || []).forEach(c => items.push({ name: c, severity: "medium" }));
     }
-    return items.slice(0, 6); // cap at 6 chips
+    return items.slice(0, 6);
   })();
-
+  const SEV_COLOR = { high:"#dc2626", medium:"#d97706", low:"#6b7280" };
   const exposureNames = exposureItems.length > 0
     ? exposureItems.slice(0,3).map(e=>e.name).join(", ")
     : catConfig.chemical(result);
 
-  const yearlyEvents     = freqData.perYear * household;
-  const altYearlyEvents  = Math.round(yearlyEvents * (altScore / score));
-  const reduction        = yearlyEvents - altYearlyEvents;
-  const reductionPct     = Math.round((reduction / yearlyEvents) * 100);
+  // Calculations
+  const perYear      = freqData.perYear;
+  const adultTotal   = perYear * adults;
+  const kidsTotal    = perYear * kids * 2.5; // children 2.5x more sensitive
+  const totalCurrent = adultTotal + kidsTotal;
+  const altTotal     = Math.round(totalCurrent * (altScore / score));
+  const reduction    = Math.round(totalCurrent - altTotal);
+  const reductionPct = Math.round((reduction / totalCurrent) * 100);
 
-  // Kids: children are estimated 2-3x more sensitive to chemical exposure (Grandjean & Landrigan, 2014)
-  const kidsMultiplier   = 2.5;
-  const kidsExposure     = Math.round(yearlyEvents * kidsMultiplier);
-
-  // Cost tab
+  // Cost
   const annualSpend   = spend * 12;
-  const altPriceStr   = result.alternatives?.[0]?.price || result.break_even?.note || "";
+  const altPriceStr   = result.alternatives?.[0]?.price || "";
   const altPriceMatch = altPriceStr.match(/\$(\d+)/);
   const altMonthly    = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : Math.round(spend * 1.2);
   const altAnnual     = altMonthly * 12;
   const costDiff      = altAnnual - annualSpend;
-  // Health cost estimate per Trasande et al. (2018): EDC-related health burden ~$494/person/yr in the US
-  const healthCostSaved = hasKids ? Math.round(494 * (reductionPct / 100)) : 0;
+  const healthSaved   = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
-  const surface  = isDark ? "#1e2433" : "#fff";
-  const border   = isDark ? "#2a3347" : "#e5e7eb";
+  const surface = isDark ? "#1e2433" : "#fff";
+  const border  = isDark ? "#2a3347" : "#e5e7eb";
 
-  const SEV_COLOR = { high:"#dc2626", medium:"#d97706", low:"#6b7280", plastic:"#7c3aed", chemical:"#d97706" };
+  // Stepper component
+  const Stepper = ({label, value, setValue, min=0, max=10}) => (
+    <div>
+      <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>{label}</div>
+      <div style={{display:"flex", alignItems:"center", gap:6}}>
+        <button onClick={()=>setValue(v=>Math.max(min,v-1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>−</button>
+        <span style={{fontWeight:700,fontSize:15,color:text,minWidth:18,textAlign:"center"}}>{value}</span>
+        <button onClick={()=>setValue(v=>Math.min(max,v+1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
+      </div>
+    </div>
+  );
 
   const tabs = [
-    { id:"exposure", label:"My Exposure" },
-    { id:"overtime", label:"Over Time"   },
-    { id:"switch",   label:"Switch & Save"},
+    {id:"exposure", label:"My Exposure"},
+    {id:"overtime", label:"Over Time"},
+    {id:"switch",   label:"Switch & Save"},
   ];
 
   return (
     <div className="fade-up" style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden", marginTop:16, textAlign:"left"}}>
 
-      {/* Header */}
+      {/* Header + tabs */}
       <div style={{padding:"14px 18px 0", borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
         <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:10, display:"flex", alignItems:"center", gap:6}}>
           <IcoScore size={14}/> Usage Calculator
         </div>
-        <div style={{display:"flex", gap:4, marginBottom:-1}}>
+        <div style={{display:"flex", gap:2}}>
           {tabs.map(t => (
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
-              padding:"7px 14px", fontSize:12, fontWeight:700,
+              flex:1, padding:"7px 6px", fontSize:isMobile?11:12, fontWeight:700,
               border:"none", borderRadius:"8px 8px 0 0", cursor:"pointer",
               background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
               color: tab===t.id ? "#16a34a" : muted,
-              borderBottom: tab===t.id ? `2px solid #16a34a` : "none",
+              borderBottom: tab===t.id ? "2px solid #16a34a" : "none",
             }}>{t.label}</button>
           ))}
         </div>
@@ -872,9 +872,9 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
 
       <div style={{padding:"16px 18px"}}>
 
-        {/* Shared inputs */}
-        <div style={{display:"flex", flexWrap:"wrap", gap:10, marginBottom:14}}>
-          <div style={{flex:1, minWidth:140}}>
+        {/* Inputs row */}
+        <div style={{display:"grid", gridTemplateColumns:hasKids?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr", gap:12, marginBottom:14, alignItems:"end"}}>
+          <div style={{gridColumn:"1 / -1"}}>
             <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
               {cat === "food_beverage" ? "How often do you eat this?" : "How often do you use this?"}
             </div>
@@ -882,146 +882,185 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               width:"100%", padding:"7px 10px", borderRadius:8, fontSize:13,
               border:`1px solid ${border}`, background:surface, color:text, cursor:"pointer",
             }}>
-              {FREQ_OPTIONS.map(f=>(
-                <option key={f.value} value={f.value}>{f.label}</option>
-              ))}
+              {FREQ_OPTIONS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
-          <div style={{width:90}}>
-            <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>Household size</div>
-            <div style={{display:"flex", alignItems:"center", gap:6}}>
-              <button onClick={()=>setHousehold(h=>Math.max(1,h-1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>-</button>
-              <span style={{fontWeight:700,fontSize:15,color:text,minWidth:16,textAlign:"center"}}>{household}</span>
-              <button onClick={()=>setHousehold(h=>Math.min(8,h+1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-            </div>
-          </div>
-          <div style={{display:"flex", alignItems:"flex-end", paddingBottom:2}}>
-            <button onClick={()=>setHasKids(k=>!k)} style={{
-              display:"flex", alignItems:"center", gap:5, padding:"6px 10px",
-              borderRadius:8, border:`1px solid ${hasKids?"#d97706":border}`,
-              background: hasKids ? (isDark?"#2a1a00":"#fffbeb") : surface,
-              color: hasKids ? "#d97706" : muted, cursor:"pointer", fontSize:12, fontWeight:600,
-            }}>
-              <IcoProfile size={13}/> Kids in household
-            </button>
-          </div>
+          <Stepper label="Adults" value={adults} setValue={setAdults} min={1} max={8}/>
+          <Stepper label="Children" value={kids} setValue={setKids} min={0} max={8}/>
         </div>
 
-        {/* What's being exposed to — chips */}
+        {/* What's in this product — chips */}
         {exposureItems.length > 0 && (
           <div style={{marginBottom:14}}>
             <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
-              {cat === "food_beverage" ? "Additives and plastics in this product" : "Chemicals and plastics in this product"}
+              What you're being exposed to
             </div>
             <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
-              {exposureItems.map((item, i) => {
-                const col = SEV_COLOR[item.severity] || SEV_COLOR[item.type] || "#6b7280";
-                return (
-                  <span key={i} style={{
-                    fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:16,
-                    background: isDark ? "#1e1a2e" : "#fef2f2",
-                    color: col, border:`1px solid ${col}44`,
-                  }}>{item.name}</span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── TAB: MY EXPOSURE ── */}
-        {tab === "exposure" && (
-          <div>
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10}}>
-              {[
-                { label:"Current product", events:yearlyEvents, score, color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2" },
-                { label:altName,           events:altYearlyEvents, score:altScore, color:scoreColor(altScore), bg:isDark?"#1a2a1a":"#f0fdf4" },
-              ].map((item,i) => (
-                <div key={i} style={{background:item.bg, borderRadius:12, padding:"12px 14px", border:`1px solid ${item.color}33`}}>
-                  <div style={{fontSize:10, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6}}>{item.label}</div>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:26, color:item.color, lineHeight:1, marginBottom:4}}>
-                    {item.events.toLocaleString()}
-                  </div>
-                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555", lineHeight:1.4}}>{catConfig.unit} per year</div>
-                  <div style={{marginTop:8, height:4, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
-                    <div style={{height:"100%", width:`${Math.min(100,(item.score/10)*100)}%`, background:item.color, borderRadius:99}}/>
-                  </div>
-                  <div style={{fontSize:10, color:item.color, marginTop:3, fontWeight:600}}>{scoreLabel(item.score)} risk</div>
-                </div>
+              {exposureItems.map((item,i) => (
+                <span key={i} style={{
+                  fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:16,
+                  background:isDark?"#1e1a2e":"#fef2f2",
+                  color:SEV_COLOR[item.severity]||"#6b7280",
+                  border:`1px solid ${SEV_COLOR[item.severity]||"#6b7280"}44`,
+                }}>{item.name}</span>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Kids exposure row */}
-            {hasKids && (
-              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"10px 14px", border:"1px solid #fde68a", marginBottom:10}}>
-                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:5}}>
-                  <IcoProfile size={13}/> Children in your household
-                </div>
-                <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>
-                  Estimated effective exposure for children is <strong style={{color:"#d97706"}}>{kidsExposure.toLocaleString()} equivalent events/year</strong> — children are 2-3x more sensitive to chemical exposure due to developing immune and hormonal systems (Grandjean and Landrigan, 2014).
-                  {exposureNames && <span> This applies specifically to <strong>{exposureNames}</strong>.</span>}
-                </div>
+        {/* ── MY EXPOSURE ── */}
+        {tab === "exposure" && (
+          <div>
+            {/* Big impact statement */}
+            <div style={{background:isDark?"#2a1a1a":"#fef2f2", borderRadius:12, padding:"16px 18px", border:`2px solid ${scoreColor(score)}33`, marginBottom:12}}>
+              <div style={{fontSize:11, color:scoreColor(score), fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
+                Your household right now
               </div>
-            )}
+              <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
+                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:scoreColor(score), lineHeight:1}}>
+                  {totalCurrent.toLocaleString()}
+                </span>
+                <span style={{fontSize:14, color:isDark?"#94a3b8":"#555", fontWeight:500}}>
+                  {catConfig.unit} per year containing {exposureNames}
+                </span>
+              </div>
+              {hasKids && (
+                <div style={{fontSize:12, color:"#d97706", fontWeight:600, display:"flex", alignItems:"center", gap:5, marginBottom:4}}>
+                  <IcoProfile size={13}/>
+                  Includes {kids} child{kids>1?"ren":""} — counted at 2.5x adult sensitivity
+                </div>
+              )}
+              <div style={{display:"flex", alignItems:"center", gap:8, marginTop:4}}>
+                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                  <div style={{height:"100%", width:`${Math.min(100,(score/10)*100)}%`, background:scoreColor(score), borderRadius:99}}/>
+                </div>
+                <span style={{fontSize:11, color:scoreColor(score), fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(score)} risk</span>
+              </div>
+            </div>
 
-            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
-              <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                Switching eliminates {reductionPct}% of your {exposureNames} exposure
+            {/* Arrow + alternative */}
+            <div style={{textAlign:"center", fontSize:20, color:"#16a34a", margin:"4px 0"}}>↓</div>
+
+            <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:"2px solid #16a34a33", marginBottom:12}}>
+              <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
+                If you switch to {altName}
               </div>
-              <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                {catConfig.analogy(reduction)} removed from your household per year.
+              <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
+                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:"#16a34a", lineHeight:1}}>
+                  {altTotal.toLocaleString()}
+                </span>
+                <span style={{fontSize:14, color:isDark?"#94a3b8":"#555", fontWeight:500}}>
+                  {catConfig.unit} per year
+                </span>
+              </div>
+              <div style={{display:"flex", alignItems:"center", gap:8}}>
+                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                  <div style={{height:"100%", width:`${Math.min(100,(altScore/10)*100)}%`, background:"#16a34a", borderRadius:99}}/>
+                </div>
+                <span style={{fontSize:11, color:"#16a34a", fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(altScore)} risk</span>
+              </div>
+            </div>
+
+            {/* The big why */}
+            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:"#16a34a", marginBottom:4}}>
+                {reductionPct}% fewer exposures
+              </div>
+              <div style={{fontSize:13, color:isDark?"#94a3b8":"#444", lineHeight:1.6}}>
+                That's <strong style={{color:text}}>{reduction.toLocaleString()} fewer {catConfig.unit}</strong> containing {exposureNames} for your household every year.
+                {hasKids && (
+                  <span style={{color:"#d97706"}}> For your {kids} child{kids>1?"ren":""}, whose developing systems are 2-3x more sensitive to these chemicals, this matters most.</span>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── TAB: OVER TIME ── */}
+        {/* ── OVER TIME ── */}
         {tab === "overtime" && (
           <div>
-            <div style={{display:"flex", flexDirection:"column", gap:8}}>
-              {[1,5,10].map(years => {
-                const current     = yearlyEvents * years;
-                const alt         = altYearlyEvents * years;
-                const kidsTotal   = hasKids ? kidsExposure * years : null;
-                const maxVal      = hasKids ? Math.max(current, kidsTotal) : current;
-                return (
-                  <div key={years} style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${border}`}}>
-                    <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
-                      {years} year{years>1?"s":""}
+            {/* Single cumulative view — cleaner than 3 separate cards */}
+            <div style={{fontSize:12, color:muted, lineHeight:1.6, marginBottom:14}}>
+              Cumulative {catConfig.unit} containing <strong style={{color:text}}>{exposureNames}</strong> for your household if you keep using this product vs switching now.
+            </div>
+
+            {[
+              {years:1,  label:"1 year"},
+              {years:5,  label:"5 years"},
+              {years:10, label:"10 years"},
+            ].map(({years, label}) => {
+              const curr   = totalCurrent * years;
+              const alt    = altTotal * years;
+              const saved  = curr - alt;
+              const pct    = Math.round((saved/curr)*100);
+              return (
+                <div key={years} style={{marginBottom:12}}>
+                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}>
+                    <span style={{fontSize:12, fontWeight:700, color:text}}>{label}</span>
+                    <span style={{fontSize:11, color:"#16a34a", fontWeight:700, background:isDark?"#1a2a1a":"#f0fdf4", padding:"2px 8px", borderRadius:20}}>
+                      {pct}% less by switching
+                    </span>
+                  </div>
+
+                  {/* Current */}
+                  <div style={{marginBottom:5}}>
+                    <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
+                      <span style={{fontSize:11, color:scoreColor(score), fontWeight:600}}>Current product</span>
+                      <span style={{fontSize:12, color:scoreColor(score), fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{curr.toLocaleString()}</span>
                     </div>
-                    <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                      {[
-                        {label:"Current product", value:current, color:scoreColor(score)},
-                        ...(hasKids ? [{label:"Children's effective exposure", value:kidsTotal, color:"#d97706"}] : []),
-                        {label:altName, value:alt, color:"#16a34a"},
-                      ].map(bar => (
-                        <div key={bar.label}>
-                          <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
-                            <span style={{fontSize:11, color:bar.color, fontWeight:600}}>{bar.label}</span>
-                            <span style={{fontSize:11, color:bar.color, fontWeight:700}}>{bar.value.toLocaleString()} {catConfig.unit}</span>
-                          </div>
-                          <div style={{height:8, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
-                            <div style={{height:"100%", width:`${Math.min(100,(bar.value/maxVal)*100)}%`, background:bar.color, borderRadius:99, transition:"width 0.6s ease"}}/>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginTop:6}}>
-                      {((current-alt)/current*100).toFixed(0)}% fewer {exposureNames} exposures by switching
-                      {hasKids && <span style={{color:"#d97706"}}> — children's effective exposure drops by the same proportion</span>}
+                    <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                      <div style={{height:"100%", width:"100%", background:scoreColor(score), borderRadius:99}}/>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Kids bar if applicable */}
+                  {hasKids && (() => {
+                    const kidsOnly = perYear * kids * 2.5 * years;
+                    const pctBar   = Math.min(100, Math.round((kidsOnly/curr)*100));
+                    return (
+                      <div style={{marginBottom:5}}>
+                        <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
+                          <span style={{fontSize:11, color:"#d97706", fontWeight:600}}>
+                            {kids} child{kids>1?"ren":""} (2.5x sensitivity)
+                          </span>
+                          <span style={{fontSize:12, color:"#d97706", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{kidsOnly.toLocaleString()}</span>
+                        </div>
+                        <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                          <div style={{height:"100%", width:`${pctBar}%`, background:"#d97706", borderRadius:99}}/>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Alternative */}
+                  <div>
+                    <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
+                      <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>{altName}</span>
+                      <span style={{fontSize:12, color:"#16a34a", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{alt.toLocaleString()}</span>
+                    </div>
+                    <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                      <div style={{height:"100%", width:`${Math.round((alt/curr)*100)}%`, background:"#16a34a", borderRadius:99}}/>
+                    </div>
+                  </div>
+
+                  {/* Plain-English saved */}
+                  <div style={{fontSize:12, color:muted, marginTop:6}}>
+                    Switching eliminates <strong style={{color:text}}>{saved.toLocaleString()} {catConfig.unit}</strong> containing {exposureNames} over {label}.
+                  </div>
+                  {years < 10 && <div style={{borderTop:`1px solid ${border}`, marginTop:12}}/>}
+                </div>
+              );
+            })}
+
             {hasKids && (
-              <div style={{fontSize:11, color:muted, marginTop:10, lineHeight:1.5, fontStyle:"italic"}}>
-                Children's effective exposure estimated at 2.5x adult exposure — developing immune and hormonal systems are significantly more sensitive to {exposureNames} (Grandjean and Landrigan, The Lancet Neurology 2014).
+              <div style={{fontSize:11, color:"#d97706", marginTop:6, lineHeight:1.5, padding:"8px 12px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
+                Children's exposure is shown at 2.5x adult sensitivity — developing immune and hormonal systems are significantly more sensitive to {exposureNames} (Grandjean and Landrigan, The Lancet Neurology 2014).
               </div>
             )}
           </div>
         )}
 
-        {/* ── TAB: SWITCH & SAVE ── */}
+        {/* ── SWITCH & SAVE ── */}
         {tab === "switch" && (
           <div>
             <div style={{marginBottom:14}}>
@@ -1033,64 +1072,66 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                   onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
                   style={{width:80, padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
                     border:`1px solid ${border}`, background:surface, color:text}}/>
-                <span style={{fontSize:12, color:muted}}>per month = ${annualSpend}/yr</span>
+                <span style={{fontSize:12, color:muted}}>per month = <strong>${annualSpend}/yr</strong></span>
               </div>
             </div>
 
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10}}>
+            {/* Cost comparison */}
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12}}>
               {[
-                {label:"Current product", annual:annualSpend, risk:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
-                {label:altName, annual:altAnnual, risk:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
+                {label:"Current product", annual:annualSpend, riskLabel:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
+                {label:altName, annual:altAnnual, riskLabel:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
               ].map((item,i) => (
                 <div key={i} style={{background:item.bg, borderRadius:12, padding:"12px 14px", border:`1px solid ${item.color}33`}}>
                   <div style={{fontSize:10, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6}}>{item.label}</div>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:26, color:item.color, lineHeight:1, marginBottom:2}}>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:item.color, lineHeight:1, marginBottom:2}}>
                     ${item.annual.toLocaleString()}
                   </div>
                   <div style={{fontSize:11, color:isDark?"#94a3b8":"#555"}}>per year</div>
-                  <div style={{fontSize:11, color:item.color, fontWeight:600, marginTop:6}}>{item.risk} risk</div>
+                  <div style={{fontSize:11, color:item.color, fontWeight:600, marginTop:6}}>{item.riskLabel} risk</div>
                 </div>
               ))}
             </div>
 
             {/* Kids health cost card */}
-            {hasKids && healthCostSaved > 0 && (
-              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"10px 14px", border:"1px solid #fde68a", marginBottom:10}}>
-                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:3, display:"flex", alignItems:"center", gap:5}}>
-                  <IcoProfile size={13}/> Estimated health cost avoided for children
+            {hasKids && healthSaved > 0 && (
+              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"12px 14px", border:"1px solid #fde68a", marginBottom:10}}>
+                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:4, display:"flex", alignItems:"center", gap:5}}>
+                  <IcoProfile size={13}/> Estimated health cost avoided for {kids} child{kids>1?"ren":""}
                 </div>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:"#d97706", marginBottom:3}}>
-                  ~${healthCostSaved}/year
+                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:24, color:"#d97706", marginBottom:4}}>
+                  ~${healthSaved}/year
                 </div>
                 <div style={{fontSize:11, color:muted, lineHeight:1.5}}>
-                  Based on Trasande et al. (2018) — EDC-related health costs estimated at ~$494/person/year in the US. Switching eliminates {reductionPct}% of {exposureNames} exposure for children in your household.
+                  Based on Trasande et al. (2018) — EDC-related health costs estimated at ~$494/child/year. Switching eliminates {reductionPct}% of {exposureNames} exposure for children in your household.
                 </div>
               </div>
             )}
 
-            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
-              {costDiff <= 5 ? (
+            {/* The bottom line */}
+            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+              {costDiff <= 5 && costDiff >= -5 ? (
                 <>
-                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>Switching costs about the same</div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Same cost. {reductionPct}% less exposure.</div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    Within ${Math.abs(costDiff)}/year — essentially the same spend to eliminate {reductionPct}% of your <strong>{exposureNames}</strong> exposure.
+                    Within ${Math.abs(costDiff)}/year of the same price to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household annually.
                   </div>
                 </>
               ) : costDiff < 0 ? (
                 <>
-                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>Switching saves you ${Math.abs(costDiff)}/year</div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Cheaper and safer.</div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    The safer alternative is cheaper and eliminates {reductionPct}% of your <strong>{exposureNames}</strong> exposure.
+                    The safer option saves <strong style={{color:"#16a34a"}}>${Math.abs(costDiff)}/year</strong> and eliminates {reductionPct}% of your {exposureNames} exposure.
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                    ${costDiff}/year more for {reductionPct}% less {exposureNames} exposure
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>
+                    ${(costDiff/12).toFixed(2)}/month more. {reductionPct}% less {exposureNames}.
                   </div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    ${(costDiff/12).toFixed(2)}/month to eliminate {catConfig.analogy(reduction)} per year
-                    {hasKids ? " — and significantly reduce chemical load for the children in your household." : "."}
+                    ${costDiff}/year extra to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household.
+                    {hasKids && <span style={{color:"#d97706"}}> For families with children, this is one of the highest-value switches you can make.</span>}
                   </div>
                 </>
               )}
