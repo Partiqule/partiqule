@@ -783,6 +783,12 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const [kids,     setKids]     = useState(0);
   const [spend,    setSpend]    = useState(10);
 
+  // Alt spend — initialized from DB price, user-editable
+  const _altPriceStr    = (result.alternatives?.find(a => a.category === result.category) || result.alternatives?.[0])?.price || "";
+  const _altPriceMatch  = _altPriceStr.match(/\$(\d+)/);
+  const _altDefaultSpend = _altPriceMatch ? Math.max(1, Math.ceil(parseInt(_altPriceMatch[1]) / 3)) : 10;
+  const [altSpend, setAltSpend] = useState(_altDefaultSpend);
+
   const score    = result.overall_score || result.score;
   const altScore = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
   const freqData = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
@@ -835,12 +841,9 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const reduction    = Math.round(totalCurrent - altTotal);
   const reductionPct = Math.round((reduction / totalCurrent) * 100);
 
-  // Cost — alt scales proportionally with user's spend
+  // Cost — both sides user-controlled
   const annualSpend    = spend * 12;
-  const altPriceMatch  = altPriceStr.match(/\$(\d+)/);
-  const altBaseMonthly = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : null;
-  const altCostRatio   = altBaseMonthly ? altBaseMonthly / 10 : 1.2;
-  const altAnnual      = Math.round(annualSpend * altCostRatio);
+  const altAnnual      = altSpend * 12;
   const costDiff       = altAnnual - annualSpend;
   const healthSaved   = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
@@ -1079,18 +1082,31 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
         {/* ── SWITCH & SAVE ── */}
         {tab === "switch" && (
           <div>
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
-                {cat === "food_beverage"
-                  ? "What do you spend on this type of product per month? ($)"
-                  : "What do you spend on this per month? ($)"}
+            {/* Two spend inputs side by side */}
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
+              <div>
+                <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
+                  Your monthly spend ($)
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:6}}>
+                  <input type="number" min={1} max={500} value={spend}
+                    onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
+                    style={{width:"100%", padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
+                      border:`1px solid ${border}`, background:surface, color:text}}/>
+                </div>
+                <div style={{fontSize:10, color:muted, marginTop:3}}>${annualSpend}/yr</div>
               </div>
-              <div style={{display:"flex", alignItems:"center", gap:8}}>
-                <input type="number" min={1} max={500} value={spend}
-                  onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
-                  style={{width:80, padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
-                    border:`1px solid ${border}`, background:surface, color:text}}/>
-                <span style={{fontSize:12, color:muted}}>per month = <strong>${annualSpend}/yr</strong></span>
+              <div>
+                <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:5}}>
+                  {altName} est. ($)
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:6}}>
+                  <input type="number" min={1} max={500} value={altSpend}
+                    onChange={e=>setAltSpend(Math.max(1,parseInt(e.target.value)||1))}
+                    style={{width:"100%", padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
+                      border:`1px solid #16a34a55`, background:isDark?"#1a2a1a":"#f0fdf4", color:"#16a34a"}}/>
+                </div>
+                <div style={{fontSize:10, color:"#16a34a", marginTop:3}}>${altAnnual}/yr · adjust to your usage</div>
               </div>
             </div>
 
@@ -1110,16 +1126,6 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                 </div>
               ))}
             </div>
-
-            {/* Cost context note */}
-            {(useAiAlt || cat === "food_beverage") && (
-              <div style={{fontSize:11, color:muted, marginBottom:12, padding:"7px 10px", background:isDark?"#1e2433":"#f9fafb", borderRadius:8, border:`1px solid ${border}`, lineHeight:1.5}}>
-                {useAiAlt
-                  ? `Cost estimate for ${altName} is based on your current spend — no price data available for this AI-suggested alternative. Adjust the spend input to reflect what you'd actually pay.`
-                  : "Cost comparison assumes equivalent monthly consumption. The recommended alternative may be a different pack size — adjust your spend estimate to match your actual usage."
-                }
-              </div>
-            )}
 
             {/* Kids health cost card */}
             {hasKids && healthSaved > 0 && (
