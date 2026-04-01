@@ -785,11 +785,16 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
 
   const score    = result.overall_score || result.score;
   const altScore = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
-  const altName  = result.break_even?.alternative_name || "safer alternative";
   const freqData = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
   const cat      = result.category || "other";
   const catConfig = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
   const hasKids  = kids > 0;
+
+  // Alt name and price must come from the SAME source — prefer DB alt with a price,
+  // fall back to AI break_even name with no price
+  const dbAlt        = result.alternatives?.find(a => a.price && /\$\d+/.test(a.price));
+  const altName      = dbAlt?.name || result.break_even?.alternative_name || "safer alternative";
+  const altPriceStr  = dbAlt?.price || "";
 
   // Named exposures
   const exposureItems = (() => {
@@ -820,16 +825,12 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const reductionPct = Math.round((reduction / totalCurrent) * 100);
 
   // Cost — alt scales proportionally with user's spend
-  // Derive a cost ratio from DB price vs a $10 baseline, then apply to actual spend
-  const annualSpend   = spend * 12;
-  const altPriceStr   = result.alternatives?.[0]?.price || "";
-  const altPriceMatch = altPriceStr.match(/\$(\d+)/);
+  const annualSpend    = spend * 12;
+  const altPriceMatch  = altPriceStr.match(/\$(\d+)/);
   const altBaseMonthly = altPriceMatch ? Math.ceil(parseInt(altPriceMatch[1]) / 3) : null;
-  // If we have a DB price, derive ratio and scale with user's spend
-  // Otherwise estimate alt at 120% of user's spend (slightly more expensive default)
-  const altCostRatio  = altBaseMonthly ? altBaseMonthly / 10 : 1.2;
-  const altAnnual     = Math.round(annualSpend * altCostRatio);
-  const costDiff      = altAnnual - annualSpend;
+  const altCostRatio   = altBaseMonthly ? altBaseMonthly / 10 : 1.2;
+  const altAnnual      = Math.round(annualSpend * altCostRatio);
+  const costDiff       = altAnnual - annualSpend;
   const healthSaved   = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
   const surface = isDark ? "#1e2433" : "#fff";
@@ -1069,7 +1070,9 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
           <div>
             <div style={{marginBottom:14}}>
               <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
-                What do you spend on this per month? ($)
+                {cat === "food_beverage"
+                  ? "What do you spend on this type of product per month? ($)"
+                  : "What do you spend on this per month? ($)"}
               </div>
               <div style={{display:"flex", alignItems:"center", gap:8}}>
                 <input type="number" min={1} max={500} value={spend}
@@ -1081,7 +1084,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
             </div>
 
             {/* Cost comparison */}
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:12}}>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:8}}>
               {[
                 {label:"Current product", annual:annualSpend, riskLabel:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
                 {label:altName, annual:altAnnual, riskLabel:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
@@ -1096,6 +1099,13 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                 </div>
               ))}
             </div>
+
+            {/* Food cost disclaimer */}
+            {cat === "food_beverage" && (
+              <div style={{fontSize:11, color:muted, marginBottom:12, padding:"7px 10px", background:isDark?"#1e2433":"#f9fafb", borderRadius:8, border:`1px solid ${border}`, lineHeight:1.5}}>
+                Cost comparison assumes equivalent monthly consumption. The recommended alternative may be a different format or pack size — adjust your spend estimate to match your actual usage.
+              </div>
+            )}
 
             {/* Kids health cost card */}
             {hasKids && healthSaved > 0 && (
@@ -1114,11 +1124,18 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
 
             {/* The bottom line */}
             <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
-              {costDiff <= 5 && costDiff >= -5 ? (
+              {costDiff === 0 ? (
                 <>
                   <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Same cost. {reductionPct}% less exposure.</div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    Within ${Math.abs(costDiff)}/year of the same price to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household annually.
+                    No price difference — switching eliminates <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household at exactly the same spend.
+                  </div>
+                </>
+              ) : costDiff > -6 && costDiff < 6 ? (
+                <>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Essentially the same price. {reductionPct}% less exposure.</div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+                    A negligible difference in cost to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household annually.
                   </div>
                 </>
               ) : costDiff < 0 ? (
