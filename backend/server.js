@@ -146,7 +146,6 @@ function fixJson(raw) {
   // 2. Trailing commas before } or ]
   s = s.replace(/,(\s*[}\]])/g, '$1');
   // 3. Walk char by char to fix unescaped problem chars inside JSON string values
-  //    Handles: apostrophes, literal newlines, literal tabs, literal carriage returns
   let result = '';
   let inString = false;
   let escaped = false;
@@ -156,14 +155,35 @@ function fixJson(raw) {
     if (c === '\\') { result += c; escaped = true; continue; }
     if (c === '"') { inString = !inString; result += c; continue; }
     if (inString) {
-      if (c === "'")  { result += '\\u0027'; continue; } // apostrophe
-      if (c === '\n') { result += '\\n';     continue; } // literal newline
-      if (c === '\r') { result += '\\r';     continue; } // carriage return
-      if (c === '\t') { result += '\\t';     continue; } // literal tab
+      if (c === "'")  { result += '\\u0027'; continue; }
+      if (c === '\n') { result += '\\n';     continue; }
+      if (c === '\r') { result += '\\r';     continue; }
+      if (c === '\t') { result += '\\t';     continue; }
     }
     result += c;
   }
   return result;
+}
+
+// Extract the outermost complete JSON object from a string
+// Handles cases where the AI adds text before or after the JSON
+function extractJson(text) {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (escaped) { escaped = false; continue; }
+    if (c === '\\' && inString) { escaped = true; continue; }
+    if (c === '"') { inString = !inString; continue; }
+    if (!inString) {
+      if (c === '{') depth++;
+      if (c === '}') { depth--; if (depth === 0) return text.slice(start, i + 1); }
+    }
+  }
+  return null;
 }
 
 async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
@@ -197,9 +217,9 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
       if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
       const data = await res.json();
       const text = data.content.map(b => b.text || "").join("").trim();
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("No JSON in response");
-      try { return JSON.parse(fixJson(match[0])); }
+      const raw  = extractJson(text);
+      if (!raw) throw new Error("No JSON in response");
+      try { return JSON.parse(fixJson(raw)); }
       catch(e) {
         console.error("JSON parse failed at attempt", attempt, "raw snippet:", match[0].slice(0, 300));
         if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
@@ -280,9 +300,9 @@ SCORING RULES:
       if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
       const data = await res.json();
       const text = data.content.map(b => b.text || "").join("").trim();
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("No JSON in vision response");
-      try { return JSON.parse(fixJson(match[0])); }
+      const raw  = extractJson(text);
+      if (!raw) throw new Error("No JSON in vision response");
+      try { return JSON.parse(fixJson(raw)); }
       catch(e) {
         if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
         throw new Error(`Vision JSON parse error: ${e.message}`);
@@ -486,7 +506,19 @@ Return ONLY this JSON:
     "confidence": "low",
     "concerns": []
   },
-  "food_analysis": null,
+  "food_analysis": {
+    "processing_level": "whole_food|minimally_processed|processed|ultra_processed — use null if not food_beverage",
+    "processing_label": "max 8 words — null if not food",
+    "nova_score": 1,
+    "concerns": [
+      {"ingredient": "ingredient name", "type": "artificial_dye|synthetic_preservative|sweetener|additive|processing", "severity": "high|medium|low", "reason": "max 12 words"}
+    ],
+    "positives": [
+      {"attribute": "USDA Organic", "reason": "max 8 words"}
+    ],
+    "confidence": "high|medium|low",
+    "confidence_note": "max 10 words"
+  },
   "summary": "max 30 words covering the main risk or safety story",
   "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
@@ -499,23 +531,11 @@ Return ONLY this JSON:
   ]
 }
 
-NOTE: If category is food_beverage, replace "food_analysis": null with a populated object:
-  "food_analysis": {
-    "processing_level": "whole_food|minimally_processed|processed|ultra_processed",
-    "processing_label": "max 8 words describing the processing",
-    "nova_score": 4,
-    "concerns": [
-      {"ingredient": "Red 40", "type": "artificial_dye", "severity": "high", "reason": "FDA phasing out, linked to hyperactivity"},
-      {"ingredient": "BHA", "type": "synthetic_preservative", "severity": "high", "reason": "IARC Group 2B possible carcinogen"}
-    ],
-    "positives": [
-      {"attribute": "USDA Organic", "reason": "No synthetic pesticides or additives"}
-    ],
-    "confidence": "high|medium|low",
-    "confidence_note": "max 10 words"
-  }
+CRITICAL: For non-food products set food_analysis processing_level and processing_label to null and concerns/positives to empty arrays [].
+For food_beverage products populate food_analysis fully.
+Respond with ONLY the JSON object above — no text before or after it.
 `,
-    1800
+    2400
   );
 }
 
