@@ -3505,12 +3505,14 @@ function App() {
         </>
       ) : (
         /* RESULTS */
-        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"16px 16px 60px":`40px 40px 80px`}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"8px 0 60px":`40px 40px 80px`}}>
+          <div style={{padding: isMobile ? "0 12px" : 0}}>
           <button onClick={reset} style={{background:isDark?"#1e2433":"#f0fdf4", border:`1.5px solid ${isDark?"#2a3347":"#bbf7d0"}`, color:"#16a34a", cursor:"pointer", fontSize:14, fontWeight:600, marginBottom:24, padding:"8px 18px", borderRadius:20, display:"flex", alignItems:"center", gap:6, transition:"all 0.15s"}}
             onMouseEnter={e=>{e.currentTarget.style.background="#052e16"; e.currentTarget.style.color="#4ade80";}}
             onMouseLeave={e=>{e.currentTarget.style.background=isDark?"#1e2433":"#f0fdf4"; e.currentTarget.style.color="#16a34a";}}>
             ← Search again
           </button>
+          </div>
 
           {/* Demo banner */}
           {result.isDemo && (
@@ -3527,11 +3529,11 @@ function App() {
               </button>
             </div>
           )}
-          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?16:28, alignItems:"start"}}>
+          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0}}>
 
             {/* LEFT */}
-            <div style={{display:"flex", flexDirection:"column", gap:20}}>
-              <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:20, padding:isMobile?"24px 20px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
+            <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
+              <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
@@ -3591,6 +3593,7 @@ function App() {
                 })()}
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
+                <div style={isMobile ? {margin:"0 -14px"} : {}}>
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   return (<>
@@ -3723,6 +3726,8 @@ function App() {
                     <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging, Sustainability and Manufacturing scores.</div>
                   </div>
                 )}
+
+                </div>{/* end dropdowns negative-margin wrapper */}
 
                 {/* Peer comparison */}
                 {result.peer_comparison && (
