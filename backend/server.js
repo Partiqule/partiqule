@@ -316,7 +316,8 @@ FOOD HIGH concerns: Red 40, Red 3 (banned 2025), Yellow 5/6, Blue 1/2, Titanium 
 PERSONAL CARE HIGH concerns: Oxybenzone, Parabens, Formaldehyde releasers, Triclosan, Phthalates, PFAS in cosmetics, Coal tar dyes
 CLOTHING HIGH concerns: PFAS/DWR coating, Formaldehyde finish, Flame retardants, Carcinogenic azo dyes
 KITCHEN HIGH concerns: PTFE/PFAS coating, BPA/BPS, Quaternary ammonium compounds, Chlorine bleach, Synthetic fragrance VOCs, PVC, 1,4-dioxane
-BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products`,
+BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products
+NUTRITION: For food_beverage only — read any visible nutrition label in the photo or use known product data. Populate nutrition with per-serving calories, protein_g, carbs_g, sugar_g, fat_g, fiber_g, sodium_mg, serving_size. Set any unknown fields to null. Set nutrition to null for non-food products.`,
       messages: [{
         role: "user",
         content: [
@@ -351,7 +352,8 @@ BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Pht
   "confidence_reason": "why",
   "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
-}` }
+}
+NOTE: For food_beverage, replace nutrition null with: {"serving_size":"e.g. 1 pack (42g)","calories":240,"protein_g":3,"carbs_g":34,"sugar_g":28,"fat_g":10,"fiber_g":1,"sodium_mg":30} — read from label in photo if visible, otherwise use known product data.` }
         ]
       }]
     })
