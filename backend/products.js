@@ -2602,7 +2602,7 @@ const products = [
   // ── SALT & STONE ────────────────────────────────────────────
   {
     id:"ss-001", name:"Salt & Stone Natural Deodorant", brand:"Salt & Stone",
-    score:2, category:"personal_care",
+    plasticScore:2, category:"personal_care",
     material:"Ocean-recycled plastic stick, plant-based formula",
     description:"Aluminum-free 48hr protection with seaweed, niacinamide and prebiotics. Plastic-negative brand — ocean plastic container.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+natural+deodorant&tag=${AMAZON_TAG}`,
@@ -2611,7 +2611,7 @@ const products = [
   },
   {
     id:"ss-002", name:"Salt & Stone Body Wash", brand:"Salt & Stone",
-    score:2, category:"personal_care",
+    plasticScore:2, category:"personal_care",
     material:"Recycled plastic bottle, botanical formula",
     description:"Sulfate, paraben and dye-free body wash with seaweed extracts and spirulina. No synthetic chemicals.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+wash&tag=${AMAZON_TAG}`,
@@ -2620,7 +2620,7 @@ const products = [
   },
   {
     id:"ss-003", name:"Salt & Stone Body Cream", brand:"Salt & Stone",
-    score:3, category:"personal_care",
+    plasticScore:3, category:"personal_care",
     material:"Recycled plastic jar, plant-oil formula",
     description:"Rich moisturizer with seaweed, spirulina, squalane and argan oil. No parabens, phthalates or synthetic fragrance.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+cream&tag=${AMAZON_TAG}`,
@@ -2629,7 +2629,7 @@ const products = [
   },
   {
     id:"ss-004", name:"Salt & Stone Body Lotion", brand:"Salt & Stone",
-    score:3, category:"personal_care",
+    plasticScore:3, category:"personal_care",
     material:"Recycled plastic bottle, botanical lotion",
     description:"Lightweight daily lotion with niacinamide, jojoba, shea and kelp. No sulfates, parabens or synthetic fragrance.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+lotion&tag=${AMAZON_TAG}`,
@@ -2638,7 +2638,7 @@ const products = [
   },
   {
     id:"ss-005", name:"Salt & Stone Body Mist", brand:"Salt & Stone",
-    score:2, category:"personal_care",
+    plasticScore:2, category:"personal_care",
     material:"Recycled plastic spray bottle, water-based",
     description:"Lightweight botanical fragrance mist — no synthetic fragrance, no alcohol. Natural scent layers with deodorant.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+mist&tag=${AMAZON_TAG}`,
@@ -2647,7 +2647,7 @@ const products = [
   },
   {
     id:"ss-006", name:"Salt & Stone Body Oil", brand:"Salt & Stone",
-    score:2, category:"personal_care",
+    plasticScore:2, category:"personal_care",
     material:"Glass or recycled plastic bottle, plant oils",
     description:"Lightweight botanical body oil with seaweed, jojoba and marula. No synthetic chemicals or mineral oils.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+body+oil&tag=${AMAZON_TAG}`,
@@ -2656,7 +2656,7 @@ const products = [
   },
   {
     id:"ss-007", name:"Salt & Stone Hand Cream", brand:"Salt & Stone",
-    score:3, category:"personal_care",
+    plasticScore:3, category:"personal_care",
     material:"Recycled plastic tube, plant-based formula",
     description:"Rich hand cream with shea butter, niacinamide and seaweed extracts. No parabens or synthetic fragrance.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+hand+cream&tag=${AMAZON_TAG}`,
@@ -2665,7 +2665,7 @@ const products = [
   },
   {
     id:"ss-008", name:"Salt & Stone Facial Cleanser", brand:"Salt & Stone",
-    score:2, category:"personal_care",
+    plasticScore:2, category:"personal_care",
     material:"Recycled plastic bottle, gel formula",
     description:"Gentle sulfate-free daily cleanser with seaweed extracts and botanical actives. No synthetic ingredients.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+facial+cleanser&tag=${AMAZON_TAG}`,
@@ -2674,7 +2674,7 @@ const products = [
   },
   {
     id:"ss-009", name:"Salt & Stone Candle", brand:"Salt & Stone",
-    score:2, category:"other",
+    plasticScore:2, category:"other",
     material:"Glass vessel, natural wax blend",
     description:"Clean-burning natural wax candle in glass — no synthetic fragrance, no paraffin, no toxic dyes.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+candle&tag=${AMAZON_TAG}`,
@@ -2685,7 +2685,7 @@ const products = [
   // ── PURE OVER ───────────────────────────────────────────────
   {
     id:"po-001", name:"Pure Over Signature Brew Kit", brand:"Pure Over",
-    score:1, category:"kitchen",
+    plasticScore:1, category:"kitchen",
     material:"Borosilicate glass and ceramic — zero plastic",
     description:"All-glass pour-over with built-in glass filter. No paper filters, no plastic, no metal. Free from PFAS, BPA and phthalates. Replaces 750M daily disposable filters.",
     affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+signature+brew+kit&tag=${AMAZON_TAG}`,
@@ -2694,7 +2694,7 @@ const products = [
   },
   {
     id:"po-002", name:"Pure Over French Press", brand:"Pure Over",
-    score:1, category:"kitchen",
+    plasticScore:1, category:"kitchen",
     material:"Double-wall borosilicate glass, food-grade stainless steel, ceramic base",
     description:"Plastic-free French press — borosilicate glass and stainless steel only. No plastic at any point in the brew process.",
     affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+french+press&tag=${AMAZON_TAG}`,
@@ -2703,7 +2703,7 @@ const products = [
   },
   {
     id:"po-003", name:"Pure Over Latte Cups", brand:"Pure Over",
-    score:1, category:"kitchen",
+    plasticScore:1, category:"kitchen",
     material:"Borosilicate glass",
     description:"Handmade glass milk drink cups — zero plastic, zero leaching, dishwasher safe. Made in USA by glass artists.",
     affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+latte+cups&tag=${AMAZON_TAG}`,
@@ -2712,7 +2712,7 @@ const products = [
   },
   {
     id:"po-004", name:"Pure Over Espresso Cup Set", brand:"Pure Over",
-    score:1, category:"kitchen",
+    plasticScore:1, category:"kitchen",
     material:"Borosilicate glass",
     description:"Handblown glass espresso cups — pure borosilicate, no coatings, no plastic. Made in USA.",
     affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+espresso+cups&tag=${AMAZON_TAG}`,
@@ -2721,7 +2721,7 @@ const products = [
   },
   {
     id:"po-005", name:"Pure Over Signature Mug", brand:"Pure Over",
-    score:1, category:"kitchen",
+    plasticScore:1, category:"kitchen",
     material:"Borosilicate glass",
     description:"Handmade glass mug — non-toxic, zero plastic, pure borosilicate. No coatings or synthetic materials touching your drink.",
     affiliateUrl:`https://www.amazon.com/s?k=Pure+Over+signature+mug&tag=${AMAZON_TAG}`,
