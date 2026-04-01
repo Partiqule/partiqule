@@ -48,11 +48,41 @@ function cleanProductName(name) {
 
 function detectCategory(q) {
   const s = q.toLowerCase();
-  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap/.test(s)) return "clothing";
-  if (/bottle|wrap|bag|container|tupperware|plastic bag|food storage|water bottle|cup|straw|ziploc|ziplock|sandwich bag|freezer bag|glad|saran|cling|food wrap|k-cup|keurig|tea bag|styrofoam|disposable/.test(s)) return "food_beverage";
-  if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne/.test(s)) return "personal_care";
-  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic|kitchen|cooking|tide pod/.test(s)) return "kitchen";
-  if (/baby|infant|toddler|kid|child|diaper|bib|onesie|pajama|formula|newborn|nursery/.test(s)) return "baby";
+
+  // Clothing and textiles
+  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap|dress|skirt|shorts|tights|blazer|coat|glove|hat|scarf|beanie|swimsuit|bikini/.test(s)) return "clothing";
+
+  // Food and beverages — actual food items first (before packaging)
+  if (
+    // Fruits and vegetables (fresh, canned, dried, frozen)
+    /apple|banana|orange|grape|berry|berries|strawberr|blueberr|raspberr|blackberr|cherry|cherries|mango|peach|pear|plum|prune|apricot|melon|watermelon|pineapple|kiwi|avocado|lemon|lime|tomato|potato|carrot|broccoli|spinach|kale|lettuce|onion|garlic|pepper|cucumber|zucchini|mushroom|corn|pea|bean|lentil|chickpea|edamame|beet|sweet potato|butternut|squash/.test(s) ||
+    // Proteins
+    /chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop/.test(s) ||
+    // Dairy and alternatives
+    /milk|cheese|yogurt|yoghurt|butter|cream|ghee|kefir|cottage|ricotta|mozzarella|cheddar|parmesan|brie|almond milk|oat milk|soy milk|coconut milk/.test(s) ||
+    // Grains, bread, pasta
+    /bread|bagel|muffin|croissant|tortilla|wrap|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal/.test(s) ||
+    // Snacks and candy
+    /chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|muffin|bar|snack|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|lollipops/.test(s) ||
+    // Drinks
+    /juice|soda|cola|pepsi|coke|sprite|water|sparkling|tea|coffee|espresso|latte|smoothie|shake|milk|kombucha|energy drink|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout/.test(s) ||
+    // Condiments, sauces, spreads
+    /ketchup|mustard|mayo|mayonnaise|sauce|salsa|dressing|vinegar|oil|olive oil|honey|jam|jelly|peanut butter|almond butter|nutella|syrup|hot sauce|sriracha|soy sauce|teriyaki|bbq|hummus|tahini|guacamole|pesto|marinara|gravy/.test(s) ||
+    // Packaged and processed food
+    /soup|broth|stock|stew|chili|curry|ramen|instant|frozen meal|tv dinner|canned|can of|tin of|jar of|box of|bag of|pack of|packet of|organic food|protein powder|protein bar|energy bar|nutrition bar|meal prep|baby food|infant food/.test(s) ||
+    // Food containers that imply food content
+    /bottle|wrap|bag|container|tupperware|plastic bag|food storage|water bottle|cup|straw|ziploc|ziplock|sandwich bag|freezer bag|glad|saran|cling|food wrap|k-cup|keurig|tea bag|styrofoam|disposable/.test(s)
+  ) return "food_beverage";
+
+  // Personal care
+  if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf/.test(s)) return "personal_care";
+
+  // Kitchen and cleaning
+  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic|kitchen|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt/.test(s)) return "kitchen";
+
+  // Baby
+  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|formula|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet/.test(s)) return "baby";
+
   return null;
 }
 
@@ -318,9 +348,12 @@ SCORING RULES:
   }
 }
 
-async function pass1(productName, materialContext = null) {
+async function pass1(productName, materialContext = null, categoryHint = null) {
   const contextSection = materialContext
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
+    : "";
+  const categorySection = categoryHint
+    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${categoryHint === "food_beverage" ? " Populate the food_analysis field fully." : ""}\n`
     : "";
 
   return callClaude(
@@ -339,7 +372,7 @@ TEXTILES: Browne et al. (2011): synthetic textiles identified as major ocean mic
 PACKAGING-ONLY PLASTIC: If a product is genuinely plastic-free but has incidental packaging (film pouch, wrapper, cap) that is discarded during use, the packaging score should be 2-4. Do NOT let discarded packaging dominate the materials score. Example: Blueland tablet in film pouch = materials score 1, packaging score 3.`,
 
     `Analyze "${productName}" across 5 dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing.
-${contextSection}
+${contextSection}${categorySection}
 If this is a barcode, identify the most likely consumer product and analyze that.
 If real product data is provided above, use it as ground truth. Do not assume plastic if confirmed natural.
 
@@ -776,7 +809,7 @@ app.post("/analyze", async (req, res) => {
 
     // ── Pass 1 then Pass 2 sequentially (not parallel — pass2 needs pass1 output) ──
     console.log(`Analyzing: ${productName}`);
-    const p1 = await pass1(productName, materialContext);
+    const p1 = await pass1(productName, materialContext, category);
     const p2 = await safePass2(productName, p1);
 
     // Merge pass1 + pass2 results
