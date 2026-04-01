@@ -1734,8 +1734,17 @@ const ProductCard = ({product, isDark}) => {
   }
 
   return (
-    <a href={product.affiliateUrl} target="_blank" rel="noopener noreferrer"
-      onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
+    <a href={product.affiliateUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e)=>{
+        track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category});
+        // iOS Safari blocks target="_blank" as a popup — navigate same tab on touch devices
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          e.preventDefault();
+          window.location.href = product.affiliateUrl;
+        }
+      }}
       style={cardStyle}
       onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
       onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
@@ -2126,6 +2135,12 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
               <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)", gap:12}}>
                 {filteredAlts.slice(0,9).map((alt, i) => (
                   <a key={i} href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={(e)=>{
+                      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                        e.preventDefault();
+                        window.location.href = alt.affiliateUrl;
+                      }
+                    }}
                     style={{textDecoration:"none", display:"block", background:surface, borderRadius:14,
                       border:`1.5px solid ${border}`, overflow:"hidden", transition:"all 0.15s"}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
