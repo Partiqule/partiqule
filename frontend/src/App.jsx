@@ -579,14 +579,15 @@ const EducationSection = ({isDark, isMobile=false}) => {
       stats: [
         {number:"100%", label:"of human blood samples tested in 2022 contained microplastics", color:"#16a34a", bg:"#f0fdf4"},
         {number:"58%",  label:"of carotid artery plaques studied in 2024 contained polypropylene (PP)", color:"#059669", bg:"#ecfdf5"},
-        {number:"11B",  label:"microplastic particles released per cup from nylon tea bags", color:"#047857", bg:"#d1fae5"},
-        {number:"2024", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic dyes", color:"#052e16", bg:"#bbf7d0"},
+        {number:"2025", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic food dyes", color:"#047857", bg:"#d1fae5"},
+        {number:"UPF",  label:"ultra-processed foods now linked to cardiovascular disease, cognitive decline and stroke — The Lancet 2025", color:"#052e16", bg:"#bbf7d0"},
       ],
       faqs: [
         {q:"What are microplastics and why do they matter?", a:"Microplastics are plastic particles under 5mm, many invisible to the naked eye. A 2024 New England Journal of Medicine study found polypropylene (PP) in 58% of carotid artery plaques. Patients with detectable microplastics had significantly higher rates of heart attack, stroke, and death over the following years."},
         {q:"What are PFAS and where are they found?", a:"PFAS (per- and polyfluoroalkyl substances) are synthetic chemicals used in non-stick coatings, water-resistant clothing, food packaging, and some cleaning products. They are known endocrine disruptors linked to thyroid disruption, reduced fertility, elevated cholesterol, and several cancers. The FDA has flagged them as a priority health concern."},
-        {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods."},
-        {q:"How does Partiqule score personal health risk?", a:"The Materials score (40% weight) covers what the product is made of and its chemical risk. The Usage and Exposure score (25% weight) covers how using the product affects your body, accounting for frequency, contact type (ingestion, skin contact, inhalation), and whether the product is used by children."},
+        {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods. Partiqule flags each dye individually with its severity level and the research behind it."},
+        {q:"What are ultra-processed foods and why do they score higher?", a:"Ultra-processed foods (NOVA Group 4) are industrial formulations containing ingredients not found in home kitchens — synthetic dyes, preservatives like BHA and BHT, emulsifiers, and artificial flavors. A 2025 Lancet review linked regular ultra-processed food consumption to cardiovascular disease, cognitive decline, and stroke. Partiqule scores these products higher on Materials and Usage because the chemical load is meaningfully higher than minimally processed or whole foods."},
+        {q:"How does Partiqule score personal health risk?", a:"The Materials score (40% weight) covers what the product is made of and its chemical risk — including food additives and processing level for food items. The Usage and Exposure score (25% weight) covers how using the product affects your body, accounting for frequency, contact type (ingestion, skin contact, inhalation), and whether the product is used by children. For food products, a dedicated Ingredients and Nutrition breakdown shows each additive individually with its severity and the research behind it."},
       ],
     },
     {
@@ -1722,7 +1723,8 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "Specific plastic polymers flagged as high-risk (PET, PVC, PP, PS, PTFE, PFAS, nylon, polyester) based on published leaching and exposure studies",
             "Exposure pathway rules — products with direct ingestion, leave-on skin contact, or inhalation risk score higher than single-contact or rinse-off products",
             "A natural materials credit — products confirmed to be wood, glass, stainless steel, ceramic, or organic cotton receive low materials scores regardless of use frequency",
-            "Chemical concern categories: artificial petroleum dyes (Red 40, Yellow 5/6), PFAS, ultra-processing additives, endocrine disruptors, and known carcinogens",
+            "Chemical concern categories: artificial petroleum dyes (Red 40, Yellow 5/6, Blue 1, Red 3 — FDA banned 2025), PFAS, synthetic preservatives (BHA, BHT, sodium nitrate), sweeteners (aspartame, HFCS), ultra-processing additives, endocrine disruptors, and known carcinogens",
+            "NOVA food processing classification — whole foods score low, ultra-processed foods with synthetic additives score high. Food products get a dedicated Ingredients and Nutrition breakdown showing each additive individually with severity and research",
             "PVA pod film (Cascade, Tide, Finish) scored as microplastic pollution — it dissolves but enters waterways",
             "Sustainability scoring: refillable and circular products score low; single-use disposables score high regardless of concentration or convenience",
             "Manufacturing scored conservatively at 5% weight — only flagged when supply chain practices are publicly documented as harmful",
@@ -1741,7 +1743,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       content: [
         {
           heading: "Your health — Materials & Usage",
-          body: "The two highest-weighted dimensions (40% + 25% = 65%) focus on direct personal health impact. Materials scores what the product is physically made of and whether it contains harmful plastics or chemicals. Usage & Exposure scores how using the product actually affects your body — accounting for frequency, contact type (ingestion, skin, inhalation), intensity (leave-on vs. rinse-off), and whether the product is used by children."
+          body: "The two highest-weighted dimensions (40% + 25% = 65%) focus on direct personal health impact. Materials scores what the product is physically made of and whether it contains harmful plastics, chemicals, or food additives. Usage and Exposure scores how using the product affects your body — accounting for frequency, contact type (ingestion, skin, inhalation), intensity (leave-on vs. rinse-off), and whether the product is used by children. For food and drink, a dedicated Ingredients and Nutrition panel breaks down the processing level (NOVA 1-4) and flags each ingredient of concern individually with its severity and the research behind it."
         },
         {
           heading: "Your family & home — Packaging",
@@ -1768,7 +1770,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "Pass 1: Research and analysis",
-          body: "The AI searches the web for real material data on the specific product, then scores it across all five dimensions using the parameters we defined. It identifies plastic polymers, harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway — and suggests plastic-free alternatives."
+          body: "The AI searches the web for real material data on the specific product, then scores it across all five dimensions using the parameters we defined. It identifies plastic polymers, harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway — and suggests safer alternatives. For food products, Pass 1 also produces a full ingredient analysis: NOVA processing level, each additive flagged by severity (high, medium, or low concern), and any positive attributes like organic certification or clean ingredients."
         },
         {
           heading: "Pass 2: Independent audit",
@@ -1786,7 +1788,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           body: null,
           list: [
             "Spot testing: We regularly scan products we own or have researched independently and verify the AI's material identification against manufacturer specs, safety data sheets, or published studies",
-            "Calibration checks: We test known products against defined score anchors — Blueland tablets should score 1-2, Cascade pods ~6, non-stick pans ~7-8. Systematic drift triggers a prompt update and cache clear",
+            "Calibration checks: We test known products against defined score anchors — Blueland tablets should score 1-2, Cascade pods ~6, non-stick pans ~7-8, M&Ms ~7 (multiple FDA-flagged dyes), organic dark chocolate ~2. Systematic drift triggers a prompt update and cache clear",
             "Category audits: We periodically review all cached results in a product category to check for scoring inconsistencies or outliers",
             "Dimension review: We verify all five dimensions are scoring logically — particularly that sustainability rewards genuinely circular products and penalises single-use, and that packaging-only plastic does not inflate the materials score",
             "Cache invalidation: When we update scoring parameters or identify a systematic error, we clear the result cache so all products are rescored under the new rules",
