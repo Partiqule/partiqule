@@ -65,7 +65,7 @@ function detectCategory(q) {
     // Snacks and candy
     /chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|muffin|bar|snack|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|lollipops/.test(s) ||
     // Drinks
-    /juice|soda|cola|pepsi|coke|sprite|water|sparkling|tea|coffee|espresso|latte|smoothie|shake|milk|kombucha|energy drink|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout/.test(s) ||
+    /juice|soda|cola|pepsi|coke|sprite|water|sparkling|tea|coffee|espresso|latte|smoothie|shake|milk|kombucha|energy drink|red bull|redbull|monster energy|rockstar energy|bang energy|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout/.test(s) ||
     // Condiments, sauces, spreads
     /ketchup|mustard|mayo|mayonnaise|sauce|salsa|dressing|vinegar|oil|olive oil|honey|jam|jelly|peanut butter|almond butter|nutella|syrup|hot sauce|sriracha|soy sauce|teriyaki|bbq|hummus|tahini|guacamole|pesto|marinara|gravy/.test(s) ||
     // Packaged and processed food

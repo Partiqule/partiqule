@@ -783,12 +783,6 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const [kids,     setKids]     = useState(0);
   const [spend,    setSpend]    = useState(10);
 
-  // Alt spend — initialized from DB price, user-editable
-  const _altPriceStr    = (result.alternatives?.find(a => a.category === result.category) || result.alternatives?.[0])?.price || "";
-  const _altPriceMatch  = _altPriceStr.match(/\$(\d+)/);
-  const _altDefaultSpend = _altPriceMatch ? Math.max(1, Math.ceil(parseInt(_altPriceMatch[1]) / 3)) : 10;
-  const [altSpend, setAltSpend] = useState(_altDefaultSpend);
-
   const score    = result.overall_score || result.score;
   const altScore = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
   const freqData = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
@@ -841,10 +835,9 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const reduction    = Math.round(totalCurrent - altTotal);
   const reductionPct = Math.round((reduction / totalCurrent) * 100);
 
-  // Cost — both sides user-controlled
-  const annualSpend    = spend * 12;
-  const altAnnual      = altSpend * 12;
-  const costDiff       = altAnnual - annualSpend;
+  // Health cost estimate (Trasande et al. 2018) — spend input used only for this
+  const annualSpend  = spend * 12;
+  const healthSaved  = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
   const healthSaved   = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
   const surface = isDark ? "#1e2433" : "#fff";
@@ -1082,49 +1075,18 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
         {/* ── SWITCH & SAVE ── */}
         {tab === "switch" && (
           <div>
-            {/* Two spend inputs side by side */}
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14}}>
-              <div>
-                <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
-                  Your monthly spend ($)
-                </div>
-                <div style={{display:"flex", alignItems:"center", gap:6}}>
-                  <input type="number" min={1} max={500} value={spend}
-                    onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
-                    style={{width:"100%", padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
-                      border:`1px solid ${border}`, background:surface, color:text}}/>
-                </div>
-                <div style={{fontSize:10, color:muted, marginTop:3}}>${annualSpend}/yr</div>
+            {/* Spend input — used only for Trasande health cost estimate */}
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
+                What do you spend on this per month? ($)
               </div>
-              <div>
-                <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:5}}>
-                  {altName} est. ($)
-                </div>
-                <div style={{display:"flex", alignItems:"center", gap:6}}>
-                  <input type="number" min={1} max={500} value={altSpend}
-                    onChange={e=>setAltSpend(Math.max(1,parseInt(e.target.value)||1))}
-                    style={{width:"100%", padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
-                      border:`1px solid #16a34a55`, background:isDark?"#1a2a1a":"#f0fdf4", color:"#16a34a"}}/>
-                </div>
-                <div style={{fontSize:10, color:"#16a34a", marginTop:3}}>${altAnnual}/yr · adjust to your usage</div>
+              <div style={{display:"flex", alignItems:"center", gap:8}}>
+                <input type="number" min={1} max={500} value={spend}
+                  onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
+                  style={{width:80, padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
+                    border:`1px solid ${border}`, background:surface, color:text}}/>
+                <span style={{fontSize:12, color:muted}}>per month = <strong>${annualSpend}/yr</strong></span>
               </div>
-            </div>
-
-            {/* Cost comparison */}
-            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:8}}>
-              {[
-                {label:"Current product", annual:annualSpend, riskLabel:scoreLabel(score), color:scoreColor(score), bg:isDark?"#2a1a1a":"#fef2f2"},
-                {label:altName, annual:altAnnual, riskLabel:scoreLabel(altScore), color:"#16a34a", bg:isDark?"#1a2a1a":"#f0fdf4"},
-              ].map((item,i) => (
-                <div key={i} style={{background:item.bg, borderRadius:12, padding:"12px 14px", border:`1px solid ${item.color}33`}}>
-                  <div style={{fontSize:10, color:item.color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6}}>{item.label}</div>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:item.color, lineHeight:1, marginBottom:2}}>
-                    ${item.annual.toLocaleString()}
-                  </div>
-                  <div style={{fontSize:11, color:isDark?"#94a3b8":"#555"}}>per year</div>
-                  <div style={{fontSize:11, color:item.color, fontWeight:600, marginTop:6}}>{item.riskLabel} risk</div>
-                </div>
-              ))}
             </div>
 
             {/* Kids health cost card */}
@@ -1144,38 +1106,13 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
 
             {/* The bottom line */}
             <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
-              {costDiff === 0 ? (
-                <>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Same cost. {reductionPct}% less exposure.</div>
-                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    No price difference — switching eliminates <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household at exactly the same spend.
-                  </div>
-                </>
-              ) : costDiff > -6 && costDiff < 6 ? (
-                <>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Essentially the same price. {reductionPct}% less exposure.</div>
-                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    A negligible difference in cost to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household annually.
-                  </div>
-                </>
-              ) : costDiff < 0 ? (
-                <>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>Cheaper and safer.</div>
-                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    The safer option saves <strong style={{color:"#16a34a"}}>${Math.abs(costDiff)}/year</strong> and eliminates {reductionPct}% of your {exposureNames} exposure.
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:18, color:"#16a34a", marginBottom:4}}>
-                    ${(costDiff/12).toFixed(2)}/month more. {reductionPct}% less {exposureNames}.
-                  </div>
-                  <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                    ${costDiff}/year extra to eliminate <strong>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household.
-                    {hasKids && <span style={{color:"#d97706"}}> For families with children, this is one of the highest-value switches you can make.</span>}
-                  </div>
-                </>
-              )}
+              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:20, color:"#16a34a", marginBottom:6}}>
+                {reductionPct}% less {exposureNames} exposure
+              </div>
+              <div style={{fontSize:12, color:muted, lineHeight:1.6}}>
+                Switching to <strong style={{color:text}}>{altName}</strong> eliminates <strong style={{color:text}}>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household per year.
+                {hasKids && <span style={{color:"#d97706"}}> For the {kids} child{kids>1?"ren":""} in your household, whose developing systems are more sensitive to these chemicals, this is one of the most impactful switches you can make.</span>}
+              </div>
               {result.break_even?.uses && (
                 <div style={{fontSize:11, color:muted, marginTop:8, opacity:0.7}}>
                   Sustainability break-even: ~{result.break_even.uses} uses. {result.break_even.source}
