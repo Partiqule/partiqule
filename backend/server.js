@@ -353,7 +353,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
     : "";
   const categorySection = categoryHint
-    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${categoryHint === "food_beverage" ? " Populate the food_analysis field fully." : ""}\n`
+    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${" Populate the product_analysis field fully using the category-specific concern types."}\n`
     : "";
 
   return callClaude(
@@ -482,22 +482,50 @@ CALIBRATION EXAMPLES to ensure differentiation:
 FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
 materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
 
-FOOD ANALYSIS — populate food_analysis ONLY when category is food_beverage. Set to null for all other categories.
+PRODUCT ANALYSIS — populate product_analysis for ALL categories. Tailor concerns and tier to the category.
 
-NOVA PROCESSING LEVELS:
-- whole_food (1): unprocessed — fresh fruit, vegetables, plain meat, eggs, plain milk, plain nuts. Materials 1-2.
-- minimally_processed (2): plain yogurt, canned tomatoes, frozen veg, rolled oats, natural cheese. Materials 2-3.
-- processed (3): added salt/sugar/oil. Canned fish, cured meats, simple bread, beer/wine. Materials 3-5.
-- ultra_processed (4): industrial formulations — packaged snacks, soft drinks, instant noodles, dyed cereals, candy, chips, processed meat. Materials 5-8.
+COMPOSITION TIERS (apply to all categories):
+Tier 1 (clean/natural): organic certified, plant-based, no synthetic chemicals, genuinely clean
+Tier 2 (conventional): standard commercial, some synthetics, generally low concern
+Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
+Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
-INGREDIENTS OF CONCERN — flag when confirmed or likely present:
-HIGH severity: Red 40 (FDA phasing out, hyperactivity/carcinogenicity), Red 3 (FDA banned 2025), Yellow 5 (hyperactivity/ADHD), Yellow 6 (hyperactivity), Blue 1 (FDA phasing out), Blue 2 (possible neurotoxin), Titanium dioxide (IARC Group 2B, EU food ban), BHA/BHT (BHA = IARC Group 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 for processed meat), Trans fats/partially hydrogenated oils (cardiovascular), HFCS (metabolic disease, obesity)
-MEDIUM severity: Aspartame (IARC Group 2B 2023), Sucralose (gut microbiome disruption), Acesulfame-K (animal carcinogen studies), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk with Vitamin C), TBHQ (possible immunotoxin), Caramel color class IV (4-MEI carcinogen), Natural flavors (hundreds of undisclosed chemicals), Carmine E120 (allergic reactions)
-LOW severity: Artificial flavors (undisclosed composition), Modified starch (highly processed), Soy lecithin (processed emulsifier), Maltodextrin (high glycemic)
+CATEGORY-SPECIFIC TIER LABELS:
+food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
+personal_care: tier1=clean_formula, tier2=conventional, tier3=synthetic_heavy, tier4=high_concern
+clothing: tier1=natural_fiber, tier2=conventional, tier3=synthetic, tier4=chemical_treated
+kitchen: tier1=plant_based, tier2=conventional, tier3=synthetic_heavy, tier4=industrial_chemical
+baby: tier1=clean_safe, tier2=conventional, tier3=concern_flagged, tier4=high_risk_infants
 
-POSITIVE ATTRIBUTES — flag when present: USDA Organic, Non-GMO Verified, No artificial colors, No artificial preservatives, No artificial sweeteners, Whole food ingredients only, Fair Trade certified, Minimal ingredients (5 or fewer)
+FOOD (food_beverage) CONCERNS:
+HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hyperactivity/ADHD), Blue 1/2 (neurotoxin), Titanium dioxide (IARC 2B, EU banned), BHA/BHT (IARC 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 processed meat), Trans fats (cardiovascular), HFCS (metabolic disease)
+MEDIUM: Aspartame (IARC 2B 2023), Sucralose (gut microbiome), Acesulfame-K (animal carcinogen), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk), TBHQ (immunotoxin), Caramel color IV (4-MEI carcinogen), Natural flavors (undisclosed chemicals), Carmine E120 (allergic reactions)
+LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
+FOOD TIER SCORE IMPACT: Ultra-processed + 3+ HIGH = materials 8-9, final 7+. Ultra-processed + 1-2 HIGH = materials 7-8, final 6-7. Ultra-processed + MEDIUM = materials 5-7, final 5-6. Processed, no synthetics = 3-4. Whole/minimal = 1-2. Child food with dyes = vulnerable flag + materials min 8.
 
-FOOD SCORE IMPACT: Ultra-processed + multiple HIGH severity additives (3+) = materials 8-9, usage 7-8 — final score MUST be 7+. Ultra-processed + 1-2 HIGH severity additives = materials 7-8, usage 6-7 — final score 6-7. Ultra-processed + MEDIUM additives only = materials 5-7, usage 5-6 — final score 5-6. Processed food, no synthetic additives = materials 3-4, usage 3-4. Whole/minimally processed = materials 1-2, usage 1-2. Daily consumption of ultra-processed food adds +1 to usage score. Child food with synthetic dyes = vulnerable flag + materials minimum 8.
+PERSONAL CARE CONCERNS:
+HIGH: Oxybenzone/octinoxate (FDA flagged, bloodstream penetration, Matta JAMA 2019), Parabens/methylparaben/propylparaben/butylparaben (endocrine disruption, Darbre 2004), Formaldehyde releasers/DMDM hydantoin/quaternium-15/imidazolidinyl urea (IARC Group 1 carcinogen), Triclosan (endocrine disruptor, FDA banned in some products), Coal tar dyes/p-phenylenediamine (IARC carcinogen), Phthalates/DBP/DEHP (endocrine disruption, reproductive harm), PFAS in cosmetics (CDC flagged, bioaccumulative), Lead acetate (neurotoxin)
+MEDIUM: SLS/SLES (skin irritant, possible nitrosamine), Synthetic fragrance/parfum (phthalates hiding behind single word), PEG compounds (1,4-dioxane contamination risk), Methylisothiazolinone/MIT (contact allergen, neurotoxin), Retinyl palmitate (tumor promoter on sun-exposed skin), BHT in cosmetics (possible endocrine disruptor), Benzophenone (possible carcinogen), Phenoxyethanol (CNS depression at high doses)
+LOW: Alcohol denat (skin barrier disruption), Silicones/dimethicone (environmental persistence), Synthetic dyes in cosmetics (contact sensitizer), Carbomer
+PERSONAL CARE POSITIVES: EWG Verified, COSMOS/ECOCERT Certified Organic, Fragrance-free, Paraben-free certified, Sulfate-free, Leaping Bunny cruelty-free, B-Corp certified, No synthetic preservatives
+
+CLOTHING CONCERNS:
+HIGH: PFAS/DWR waterproofing coating (bioaccumulative, endocrine disruption, cancer risk — PFAS found in outdoor gear), Formaldehyde finish/wrinkle-free/easy-care treatment (IARC Group 1 carcinogen, skin sensitizer), Carcinogenic azo dyes (split to release carcinogenic aromatic amines, IARC flagged), Flame retardants/PBDE/TRIS (endocrine disruption, developmental toxicity, Stapleton 2011), Antimicrobial treatment/silver nanoparticles (aquatic toxin, environmental persistence)
+MEDIUM: Polyester microfibers (700K+ fibers per wash, Browne 2011, ocean pollution), Nylon (petroleum-derived, sheds during wear AND wash), Acrylic (most carbon-intensive synthetic, highest microplastic shed rate), Spandex/elastane (petroleum-derived, chemical processing), Disperse dyes (skin sensitizer, possible carcinogen), Optical brighteners (endocrine disruption, water pollution)
+LOW: Recycled polyester (lower carbon but still sheds microplastics), Blended natural/synthetic fabrics
+CLOTHING POSITIVES: GOTS certified organic cotton/wool/linen, OEKO-TEX Standard 100 (no harmful chemicals tested), Bluesign certified manufacturing, Fair Trade certified, 100% natural fiber (cotton/wool/linen/hemp/silk), Recycled content certified (GRS)
+
+KITCHEN/CLEANING CONCERNS:
+HIGH: PTFE/PFAS non-stick coating (endocrine disruption, cancer risk above 260C, EWG canaries in kitchen study), BPA/BPS/BPF in plastic containers (estrogen mimicry, endocrine disruption), Quaternary ammonium compounds/quats (EPA flagged reproductive harm, asthma induction), Chlorine bleach/sodium hypochlorite (respiratory irritant, toxic byproducts), Synthetic fragrance in cleaners (VOCs, phthalates, formaldehyde, Steinemann 2017), PVC/vinyl chloride in containers (phthalate plasticizers, toxic manufacturing), 1,4-dioxane in cleaners (IARC Group 2B, ethoxylation byproduct)
+MEDIUM: Optical brighteners in laundry (water pollution, endocrine disruption), Synthetic surfactants/petroleum-derived (aquatic toxicity), PVA film in pods (enters waterways as microplastic, Cascade/Tide), Phosphates (eutrophication, algal blooms), Paraffin wax (petroleum byproduct, VOCs when burned), Artificial fragrance in candles (phthalates during burning)
+LOW: Synthetic dyes in cleaning products (water pollution), Preservatives/methylisothiazolinone (aquatic toxicity)
+KITCHEN POSITIVES: EPA Safer Choice certified, EWG Verified, No synthetic fragrance, Biodegradable certified formula, Concentrated/refillable system, B-Corp certified, PTFE/PFAS-free certified, Food-grade safe materials (glass/stainless/ceramic)
+
+BABY CONCERNS (all thresholds 1 tier higher due to developing systems):
+Apply all personal_care concerns with elevated severity. ADDITIONAL baby-specific:
+HIGH: Any synthetic fragrance in products used on babies (developing endocrine systems), Talc without asbestos testing (possible asbestos contamination), Phenoxyethanol in products for babies under 3 (CNS depression, FDA warned), Any parabens in baby products, Phthalates in baby toys/products (endocrine disruption, Swan 2021)
+MEDIUM: Formaldehyde releasers in baby wash/shampoo, SLS/SLES in baby bath products, Mineral oil in baby products (possible petroleum contamination), Synthetic dyes in any product
+BABY POSITIVES: MADE SAFE certified, EWG Verified for baby, Pediatrician tested and approved, Fragrance-free, Hypoallergenic tested, GOTS organic cotton, No parabens/phthalates/sulfates
 
 Return ONLY this JSON:
 {
@@ -544,15 +572,15 @@ Return ONLY this JSON:
     "confidence": "low",
     "concerns": []
   },
-  "food_analysis": {
-    "processing_level": "whole_food|minimally_processed|processed|ultra_processed — use null if not food_beverage",
-    "processing_label": "max 8 words — null if not food",
-    "nova_score": 1,
+  "product_analysis": {
+    "composition_tier": 2,
+    "tier_label": "conventional|clean_formula|synthetic_heavy|high_concern|natural_fiber|synthetic|chemical_treated|plant_based|industrial_chemical|clean_safe|concern_flagged|high_risk_infants|whole_food|minimally_processed|processed|ultra_processed",
+    "tier_description": "max 8 words describing this product composition",
     "concerns": [
-      {"ingredient": "ingredient name", "type": "artificial_dye|synthetic_preservative|sweetener|additive|processing", "severity": "high|medium|low", "reason": "max 12 words"}
+      {"substance": "substance name", "type": "dye|preservative|sweetener|additive|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|processing", "severity": "high|medium|low", "reason": "max 12 words citing research"}
     ],
     "positives": [
-      {"attribute": "USDA Organic", "reason": "max 8 words"}
+      {"attribute": "EWG Verified", "reason": "max 8 words"}
     ],
     "confidence": "high|medium|low",
     "confidence_note": "max 10 words"
@@ -569,8 +597,10 @@ Return ONLY this JSON:
   ]
 }
 
-CRITICAL: For non-food products set food_analysis processing_level and processing_label to null and concerns/positives to empty arrays [].
-For food_beverage products populate food_analysis fully.
+CRITICAL: Populate product_analysis for ALL categories — food_beverage, personal_care, clothing, kitchen, baby, and other.
+Use the category-specific tier labels and concern lists defined above.
+If category is "other" or unknown, apply the most relevant concern types based on what the product is.
+Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
     2400
@@ -719,7 +749,7 @@ app.post("/analyze", async (req, res) => {
         score_reasoning:     p2?.score_reasoning || "",
         scan_next:           p1.scan_next  || [],
         break_even:          p2?.break_even || null,
-        food_analysis:       p1.food_analysis   || null,
+        food_analysis:       p1.product_analysis || p1.food_analysis || null,
         peer_comparison:     null,
         cached:              false,
         scannedAt:           new Date().toISOString(),
@@ -912,7 +942,7 @@ app.post("/analyze", async (req, res) => {
       peer_comparison:     peerComparison,
       scan_next:           p1.scan_next  || [],
       break_even:          p2?.break_even || null,
-      food_analysis:       p1.food_analysis   || null,
+      food_analysis:       p1.product_analysis || p1.food_analysis || null,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,

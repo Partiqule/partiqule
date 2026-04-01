@@ -807,18 +807,25 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   // Price: only available from DB alts (AI alts have no price data)
   const altPriceStr = splitAlt?.price || "";
 
-  // Named exposures
+  // Named exposures — read from product_analysis (all categories) or food_analysis (legacy)
   const exposureItems = (() => {
+    const analysis = result.food_analysis; // field name kept for compat
     const items = [];
-    if (cat === "food_beverage") {
-      (result.food_analysis?.concerns || [])
+    if (analysis?.concerns?.length) {
+      // New product_analysis schema uses "substance", old food_analysis uses "ingredient"
+      analysis.concerns
         .filter(c => c.severity === "high" || c.severity === "medium")
-        .forEach(c => items.push({ name: c.ingredient, severity: c.severity }));
-      (result.identified_plastics || []).forEach(p => items.push({ name: p, severity: "medium" }));
-    } else {
-      (result.identified_plastics || []).forEach(p => items.push({ name: p, severity: "high" }));
-      (result.harmful_chemicals || []).forEach(c => items.push({ name: c, severity: "medium" }));
+        .forEach(c => items.push({ name: c.substance || c.ingredient, severity: c.severity }));
     }
+    // Always append identified plastics and harmful chemicals
+    (result.identified_plastics || []).forEach(p => {
+      if (!items.find(i => i.name === p))
+        items.push({ name: p, severity: "high" });
+    });
+    (result.harmful_chemicals || []).forEach(c => {
+      if (!items.find(i => i.name === c))
+        items.push({ name: c, severity: "medium" });
+    });
     return items.slice(0, 6);
   })();
   const SEV_COLOR = { high:"#dc2626", medium:"#d97706", low:"#6b7280" };
@@ -1142,49 +1149,88 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   );
 };
 
-// ── FOOD ANALYSIS DROPDOWN — food_beverage only ──────────────
-const NOVA_LABELS = {
-  whole_food:          { label:"Whole Food",           color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0" },
-  minimally_processed: { label:"Minimally Processed",  color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc" },
-  processed:           { label:"Processed",             color:"#d97706", bg:"#fffbeb", border:"#fde68a" },
-  ultra_processed:     { label:"Ultra-Processed",       color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
+// ── PRODUCT INSIGHTS DROPDOWN — all categories ───────────────
+const TIER_CONFIG = {
+  // Food
+  whole_food:          { label:"Whole Food",            color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Unprocessed or minimally processed" },
+  minimally_processed: { label:"Minimally Processed",   color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc", tier:2, headline:"Single-ingredient processing" },
+  processed:           { label:"Processed",              color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Added salt, sugar, oil or preservatives" },
+  ultra_processed:     { label:"Ultra-Processed",        color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"Industrial formula with synthetic additives" },
+  // Personal care
+  clean_formula:       { label:"Clean Formula",          color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Plant-based, no flagged synthetics" },
+  conventional:        { label:"Conventional",           color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc", tier:2, headline:"Standard commercial formula" },
+  synthetic_heavy:     { label:"Synthetic-Heavy",        color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Multiple petroleum-based chemicals" },
+  high_concern:        { label:"High Concern",           color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"Contains banned or flagged substances" },
+  // Clothing
+  natural_fiber:       { label:"Natural Fiber",          color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Certified organic or pure natural fiber" },
+  synthetic:           { label:"Synthetic",              color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Petroleum-derived, microfiber shedding" },
+  chemical_treated:    { label:"Chemical-Treated",       color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"PFAS coating, formaldehyde finish or flame retardants" },
+  // Kitchen
+  plant_based:         { label:"Plant-Based",            color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Genuinely clean, no synthetic chemicals" },
+  industrial_chemical: { label:"Industrial Chemical",    color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"Contains PTFE, quats or EPA-flagged ingredients" },
+  // Baby
+  clean_safe:          { label:"Clean and Safe",         color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Formulated specifically for infant safety" },
+  concern_flagged:     { label:"Concern Flagged",        color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Ingredients requiring caution for infants" },
+  high_risk_infants:   { label:"High Risk for Infants",  color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"Contains substances harmful to developing systems" },
 };
+const TIER_FALLBACK = { label:"Conventional", color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc", tier:2, headline:"Standard commercial product" };
+
 const SEVERITY_CONFIG = {
-  high:   { color:"#dc2626", bg:"#fef2f2", border:"#fecaca",  icon:"⚠" },
-  medium: { color:"#d97706", bg:"#fffbeb", border:"#fde68a",  icon:"◆" },
-  low:    { color:"#6b7280", bg:"#f9fafb", border:"#e5e7eb",  icon:"•" },
+  high:   { color:"#dc2626", bg:"#fef2f2", border:"#fecaca" },
+  medium: { color:"#d97706", bg:"#fffbeb", border:"#fde68a" },
+  low:    { color:"#6b7280", bg:"#f9fafb", border:"#e5e7eb" },
 };
+
 const TYPE_LABELS = {
-  artificial_dye:       "Artificial Dye",
-  synthetic_preservative:"Preservative",
-  sweetener:            "Sweetener",
-  additive:             "Additive",
-  processing:           "Processing",
+  dye:"Dye", preservative:"Preservative", sweetener:"Sweetener", additive:"Additive",
+  uv_filter:"UV Filter", fragrance:"Fragrance", surfactant:"Surfactant",
+  coating:"Coating", fiber:"Fiber", chemical:"Chemical", plasticizer:"Plasticizer",
+  flame_retardant:"Flame Retardant", processing:"Processing",
+  // legacy food types
+  artificial_dye:"Artificial Dye", synthetic_preservative:"Preservative",
 };
 
-const FoodAnalysisDropdown = ({food, isDark}) => {
+const CATEGORY_DROPDOWN_LABEL = {
+  food_beverage: "Ingredients and Nutrition",
+  personal_care:  "Formula Breakdown",
+  clothing:       "Fiber and Chemical Analysis",
+  kitchen:        "Formula and Materials Analysis",
+  baby:           "Safety Breakdown",
+  other:          "Substance Analysis",
+};
+
+const ProductInsightsDropdown = ({analysis, category, isDark}) => {
   const [open, setOpen] = useState(false);
-  if (!food) return null;
+  if (!analysis) return null;
 
-  const nova   = NOVA_LABELS[food.processing_level] || NOVA_LABELS.processed;
-  const highs  = (food.concerns || []).filter(c => c.severity === "high");
-  const meds   = (food.concerns || []).filter(c => c.severity === "medium");
-  const lows   = (food.concerns || []).filter(c => c.severity === "low");
-  const hasAny = food.concerns?.length > 0 || food.positives?.length > 0;
+  // Support both old food_analysis shape and new product_analysis shape
+  const tierKey  = analysis.tier_label || analysis.processing_level || "conventional";
+  const tierCfg  = TIER_CONFIG[tierKey] || TIER_FALLBACK;
+  const tierNum  = analysis.composition_tier || analysis.nova_score || tierCfg.tier;
 
-  const headerBg     = isDark ? "#1e2433" : "#f9fafb";
+  // Normalize concern field name (ingredient vs substance)
+  const concerns = (analysis.concerns || []).map(c => ({
+    ...c,
+    name: c.substance || c.ingredient || "Unknown",
+  }));
+
+  const highs  = concerns.filter(c => c.severity === "high");
+  const meds   = concerns.filter(c => c.severity === "medium");
+  const lows   = concerns.filter(c => c.severity === "low");
+  const hasAny = concerns.length > 0 || analysis.positives?.length > 0;
+
   const headerBorder = highs.length > 0 ? "#fecaca" : isDark ? "#2a3347" : "#e5e7eb";
   const headerColor  = highs.length > 0 ? "#dc2626" : isDark ? "#94a3b8" : "#555";
+  const dropdownLabel = CATEGORY_DROPDOWN_LABEL[category] || CATEGORY_DROPDOWN_LABEL.other;
 
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:isDark?"#1e2433":"#f9fafb", textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
           <span style={{display:"flex", alignItems:"center", opacity:0.9}}><IcoIngredients size={20}/></span>
-          <span style={{fontSize:12, color:headerColor, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Ingredients & Nutrition</span>
-          {/* Processing level pill */}
-          <span style={{fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:nova.bg, color:nova.color, border:`1px solid ${nova.border}`}}>
-            {nova.label}
+          <span style={{fontSize:12, color:headerColor, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{dropdownLabel}</span>
+          <span style={{fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:tierCfg.bg, color:tierCfg.color, border:`1px solid ${tierCfg.border}`}}>
+            Tier {tierNum} — {tierCfg.label}
           </span>
           {highs.length > 0 && (
             <span style={{fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:"#fef2f2", color:"#dc2626", border:"1px solid #fecaca"}}>
@@ -1198,14 +1244,14 @@ const FoodAnalysisDropdown = ({food, isDark}) => {
       {open && (
         <div style={{padding:"0 16px 14px", borderTop:`1px solid ${headerBorder}`}}>
 
-          {/* Processing level detail */}
-          <div style={{marginTop:12, marginBottom:14, padding:"10px 14px", borderRadius:10, background:nova.bg, border:`1px solid ${nova.border}`}}>
-            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:4}}>
-              <span style={{fontSize:13, fontWeight:700, color:nova.color}}>NOVA {food.nova_score} — {nova.label}</span>
+          {/* Tier detail card */}
+          <div style={{marginTop:12, marginBottom:14, padding:"10px 14px", borderRadius:10, background:tierCfg.bg, border:`1px solid ${tierCfg.border}`}}>
+            <div style={{fontSize:13, fontWeight:700, color:tierCfg.color, marginBottom:3}}>
+              Tier {tierNum} — {tierCfg.label}
             </div>
-            {food.processing_label && (
-              <div style={{fontSize:12, color:nova.color, opacity:0.85}}>{food.processing_label}</div>
-            )}
+            <div style={{fontSize:12, color:tierCfg.color, opacity:0.85}}>
+              {analysis.tier_description || tierCfg.headline}
+            </div>
           </div>
 
           {/* Concerns by severity */}
@@ -1219,7 +1265,7 @@ const FoodAnalysisDropdown = ({food, isDark}) => {
                     return (
                       <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a1a2e":cfg.bg, border:`1px solid ${cfg.border}`}}>
                         <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:3, flexWrap:"wrap"}}>
-                          <span style={{fontSize:12, fontWeight:700, color:cfg.color}}>{c.ingredient}</span>
+                          <span style={{fontSize:12, fontWeight:700, color:cfg.color}}>{c.name}</span>
                           {c.type && TYPE_LABELS[c.type] && (
                             <span style={{fontSize:10, fontWeight:600, color:cfg.color, opacity:0.75, background:"rgba(0,0,0,0.05)", padding:"1px 6px", borderRadius:8}}>{TYPE_LABELS[c.type]}</span>
                           )}
@@ -1234,11 +1280,11 @@ const FoodAnalysisDropdown = ({food, isDark}) => {
           )}
 
           {/* Positives */}
-          {food.positives?.length > 0 && (
+          {analysis.positives?.length > 0 && (
             <div style={{marginBottom:10}}>
               <div style={{fontSize:10, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>Positive Attributes</div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                {food.positives.map((p, i) => (
+                {analysis.positives.map((p, i) => (
                   <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a2a1a":"#f0fdf4", border:"1px solid #bbf7d0", display:"flex", alignItems:"flex-start", gap:8}}>
                     <span style={{color:"#16a34a", fontWeight:700, fontSize:14, flexShrink:0}}>✓</span>
                     <div>
@@ -1251,15 +1297,13 @@ const FoodAnalysisDropdown = ({food, isDark}) => {
             </div>
           )}
 
-          {/* No concerns */}
           {!hasAny && (
-            <div style={{fontSize:13, color:isDark?"#94a3b8":"#555", marginTop:10, fontStyle:"italic"}}>No specific ingredient concerns identified.</div>
+            <div style={{fontSize:13, color:isDark?"#94a3b8":"#555", marginTop:10, fontStyle:"italic"}}>No specific substance concerns identified.</div>
           )}
 
-          {/* Confidence note */}
-          {food.confidence_note && food.confidence !== "high" && (
+          {analysis.confidence_note && analysis.confidence !== "high" && (
             <div style={{fontSize:11, color:isDark?"#64748b":"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
-              <IcoInfo size={12}/> {food.confidence_note}
+              <IcoInfo size={12}/> {analysis.confidence_note}
             </div>
           )}
         </div>
@@ -1267,6 +1311,11 @@ const FoodAnalysisDropdown = ({food, isDark}) => {
     </div>
   );
 };
+
+// Backward-compat alias
+const FoodAnalysisDropdown = ({food, isDark}) => (
+  <ProductInsightsDropdown analysis={food} category="food_beverage" isDark={isDark}/>
+);
 
 // ── DIMENSION DROPDOWN — reusable for all 4 main dimensions ──
 const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
@@ -3341,9 +3390,13 @@ function App() {
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   return (<>
-                    {/* Food analysis — food_beverage only, sits above all other dropdowns */}
-                    {result.category === "food_beverage" && result.food_analysis && (
-                      <FoodAnalysisDropdown food={result.food_analysis} isDark={isDark}/>
+                    {/* Product Insights — all categories */}
+                    {result.food_analysis && (
+                      <ProductInsightsDropdown
+                        analysis={result.food_analysis}
+                        category={result.category}
+                        isDark={isDark}
+                      />
                     )}
                     {/* 1. Materials */}
                     <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
