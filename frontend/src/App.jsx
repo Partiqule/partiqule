@@ -17,36 +17,66 @@ const SPHERE_POINTS = (() => {
 })();
 
 const HEALTH_FACTS = [
-  { stat: "100%",   text: "of human blood samples tested contain microplastics" },
-  { stat: "58%",    text: "of arterial plaques studied contained polypropylene — NEJM 2024" },
-  { stat: "11B",    text: "microplastic particles per cup from nylon tea bags" },
-  { stat: "2025",   text: "FDA banned Red 3 and began phasing out petroleum-based dyes" },
-  { stat: "700K",   text: "microfibers shed per wash from a single synthetic fleece jacket" },
-  { stat: "8M",     text: "tonnes of plastic enter the world\'s oceans every year" },
-  { stat: "PFAS",   text: "in non-stick cookware linked to thyroid disruption and infertility" },
-  { stat: "1,000+", text: "everyday chemicals are known or suspected endocrine disruptors" },
-  { stat: "10x",    text: "higher microplastic levels found in infants compared to adults" },
-  { stat: "PVA",    text: "pod film dissolves but enters waterways as microplastic pollution" },
-  { stat: "97%",    text: "of Americans tested have PFAS forever chemicals in their blood" },
-  { stat: "260C",   text: "the temperature at which PTFE non-stick coatings begin to break down — medium-high heat" },
-  { stat: "2024",   text: "Nature Medicine confirmed microplastics accumulating in human brain tissue" },
-  { stat: "3,000",  text: "undisclosed chemicals can hide under the single word fragrance on a product label" },
-  { stat: "1M",     text: "plastic bottles are purchased around the world every single minute" },
-  { stat: "500yr",  text: "the time it takes a standard plastic bag to break down in landfill" },
-  { stat: "1B",     text: "plastic toothbrushes are discarded globally every year" },
-  { stat: "BPA",    text: "replacements BPS and BPF used in BPA-free plastics show similar hormonal disruption in studies" },
-  { stat: "74K",    text: "microplastic particles the average person consumes or inhales every year" },
-  { stat: "2021",   text: "microplastics were confirmed in human placentas for the first time" },
-  { stat: "Glass",  text: "containers have zero leaching risk even when heated, frozen, or used with acidic foods" },
-  { stat: "4.4lb",  text: "of trash generated per person per day in the US — most of it packaging" },
-  { stat: "80%",    text: "of ocean plastic pollution originates from land-based sources" },
-  { stat: "Breast", text: "milk was found to contain microplastics in studies across multiple countries" },
-  { stat: "40%",    text: "of plastic produced is single-use — designed to be discarded within minutes" },
-  { stat: "UPF",    text: "ultra-processed foods linked to cardiovascular disease and cognitive decline — The Lancet 2025" },
-  { stat: "50",     text: "uses to offset a stainless steel bottle vs single-use plastic — then every use is net positive" },
-  { stat: "Nylon",  text: "and polyester shed microfibers during wear — not just during washing" },
-  { stat: "6.3B",   text: "tonnes of plastic waste generated since the 1950s — only 9% was ever recycled" },
-  { stat: "Heated", text: "polypropylene baby bottles release millions of microplastic particles per litre — Nature Food 2020" },
+  { stat: "100%",   text: "of human blood samples tested contain microplastics",
+    url: "https://www.sciencedirect.com/science/article/pii/S0160412022001258" },
+  { stat: "58%",    text: "of arterial plaques studied contained polypropylene — NEJM 2024",
+    url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2309822" },
+  { stat: "11B",    text: "microplastic particles per cup from nylon tea bags",
+    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b02540" },
+  { stat: "2025",   text: "FDA banned Red 3 and began phasing out petroleum-based dyes",
+    url: "https://www.fda.gov/food/food-additives-petitions/color-additive-petitions" },
+  { stat: "700K",   text: "microfibers shed per wash from a single synthetic fleece jacket",
+    url: "https://www.sciencedirect.com/science/article/pii/S0160412019300503" },
+  { stat: "8M",     text: "tonnes of plastic enter the world\'s oceans every year",
+    url: "https://www.science.org/doi/10.1126/science.1260352" },
+  { stat: "PFAS",   text: "in non-stick cookware linked to thyroid disruption and infertility",
+    url: "https://ehp.niehs.nih.gov/doi/10.1289/ehp.0800084" },
+  { stat: "1,000+", text: "everyday chemicals are known or suspected endocrine disruptors",
+    url: "https://www.endocrine.org/advocacy/position-statements/endocrine-disrupting-chemicals" },
+  { stat: "10x",    text: "higher microplastic levels found in infants compared to adults",
+    url: "https://pubs.acs.org/doi/10.1021/acs.estlett.0c00193" },
+  { stat: "PVA",    text: "pod film dissolves but enters waterways as microplastic pollution",
+    url: "https://pubs.acs.org/doi/10.1021/acs.est.1c01498" },
+  { stat: "97%",    text: "of Americans tested have PFAS forever chemicals in their blood",
+    url: "https://www.cdc.gov/biomonitoring/PFAS_BiomonitoringSummary.html" },
+  { stat: "260C",   text: "the temperature at which PTFE non-stick coatings begin to break down",
+    url: "https://www.ewg.org/research/canaries-kitchen" },
+  { stat: "2024",   text: "Nature Medicine confirmed microplastics accumulating in human brain tissue",
+    url: "https://www.nature.com/articles/s41591-024-03453-1" },
+  { stat: "3,000",  text: "undisclosed chemicals can hide under the single word fragrance on a label",
+    url: "https://link.springer.com/article/10.1007/s11869-016-0442-z" },
+  { stat: "1M",     text: "plastic bottles are purchased around the world every single minute",
+    url: "https://www.theguardian.com/environment/2017/jun/28/a-million-a-minute-worlds-plastic-bottle-binge-as-dangerous-as-climate-change" },
+  { stat: "500yr",  text: "the time it takes a standard plastic bag to break down in landfill",
+    url: "https://www.scienceadvances.org/content/3/7/e1700782" },
+  { stat: "1B",     text: "plastic toothbrushes are discarded globally every year",
+    url: "https://www.ewg.org/research/over-1-billion-plastic-toothbrushes-trashed-annually" },
+  { stat: "BPA",    text: "replacements BPS and BPF show similar hormonal disruption to BPA",
+    url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4114051/" },
+  { stat: "74K",    text: "microplastic particles the average person consumes or inhales every year",
+    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b01517" },
+  { stat: "2021",   text: "microplastics were confirmed in human placentas for the first time",
+    url: "https://www.sciencedirect.com/science/article/pii/S0160412020322297" },
+  { stat: "Glass",  text: "containers have zero leaching risk even when heated, frozen, or acidic",
+    url: "https://www.sciencedirect.com/science/article/pii/S0048969719355457" },
+  { stat: "4.4lb",  text: "of trash generated per person per day in the US — most of it packaging",
+    url: "https://www.epa.gov/facts-and-figures-about-materials-waste-and-recycling" },
+  { stat: "80%",    text: "of ocean plastic pollution originates from land-based sources",
+    url: "https://www.science.org/doi/10.1126/science.1260352" },
+  { stat: "Breast", text: "milk was found to contain microplastics in studies across multiple countries",
+    url: "https://www.sciencedirect.com/science/article/pii/S0160412022000460" },
+  { stat: "40%",    text: "of plastic produced is single-use — designed to be discarded within minutes",
+    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
+  { stat: "UPF",    text: "ultra-processed foods linked to cardiovascular disease and cognitive decline",
+    url: "https://www.thelancet.com/journals/lanhl/article/PIIS2666-7568(24)00007-2/fulltext" },
+  { stat: "50",     text: "uses to offset a stainless steel bottle vs single-use plastic",
+    url: "https://www.ellenmacarthurfoundation.org/the-new-plastics-economy-rethinking-the-future-of-plastics" },
+  { stat: "Nylon",  text: "and polyester shed microfibers during wear — not just during washing",
+    url: "https://www.sciencedirect.com/science/article/pii/S0160412018316350" },
+  { stat: "6.3B",   text: "tonnes of plastic waste generated since the 1950s — only 9% ever recycled",
+    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
+  { stat: "Heated", text: "polypropylene baby bottles release millions of microplastic particles per litre",
+    url: "https://www.nature.com/articles/s43016-020-00171-y" },
 ];
 
 const STAGES = [
@@ -211,21 +241,31 @@ const GlobeLoading = ({isMobile}) => {
           })}
         </svg>
 
-        {/* Fact cards — stay in place for entire scan */}
+        {/* Fact cards — stay in place for entire scan, tap to open source */}
         {activeFacts.map(af => (
-          <div key={`c-${af.id}`} style={{
-            position:"absolute",
-            left: af.slot.cx, top: af.slot.cy,
-            width: af.slot.cw,
-            animation:"factBranch 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.12s both",
-            zIndex:10, pointerEvents:"none",
-          }}>
+          <a key={`c-${af.id}`}
+            href={af.fact.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            style={{
+              position:"absolute",
+              left: af.slot.cx, top: af.slot.cy,
+              width: af.slot.cw,
+              animation:"factBranch 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.12s both",
+              zIndex:10,
+              textDecoration:"none",
+              cursor: af.fact.url ? "pointer" : "default",
+            }}>
             <div style={{
               background:"rgba(5,46,22,0.96)",
               border:"1.5px solid rgba(74,222,128,0.55)",
               borderRadius:12, padding:"10px 14px",
               boxShadow:"0 4px 24px rgba(74,222,128,0.18)",
-            }}>
+              transition:"border-color 0.15s, box-shadow 0.15s",
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.9)"; e.currentTarget.style.boxShadow="0 4px 32px rgba(74,222,128,0.35)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.55)"; e.currentTarget.style.boxShadow="0 4px 24px rgba(74,222,128,0.18)";}}>
               <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,
                 fontSize:mob?18:20,color:"#4ade80",lineHeight:1,marginBottom:5}}>
                 {af.fact.stat}
@@ -233,8 +273,13 @@ const GlobeLoading = ({isMobile}) => {
               <div style={{fontSize:mob?10:11,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>
                 {af.fact.text}
               </div>
+              {af.fact.url && (
+                <div style={{fontSize:9,color:"rgba(74,222,128,0.5)",marginTop:5,letterSpacing:"0.04em"}}>
+                  TAP TO READ STUDY ↗
+                </div>
+              )}
             </div>
-          </div>
+          </a>
         ))}
 
         {/* Stage indicator */}
