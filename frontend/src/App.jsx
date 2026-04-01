@@ -3546,7 +3546,9 @@ function App() {
                         <span style={{fontSize:13, color:text, fontWeight:600}}>{topAlt.name}</span>
                         <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"#f0fdf4", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
                       </div>
-                      <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>See below ↓</span>
+                      <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>
+                        {isMobile ? "See below ↓" : "See right →"}
+                      </span>
                     </button>
                   );
                 })()}
