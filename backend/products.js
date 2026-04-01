@@ -3258,6 +3258,289 @@ const products = [
     price:"$40-55",
     tags:["multivitamin","vitamin","supplement","personal care","NSF certified","clean ingredients","no additives"]
   },
+  // ── HOME FRAGRANCE & AIR CARE ────────────────────────────────
+  {
+    id:"hf-001", name:"Pura Smart Fragrance Diffuser", brand:"Pura",
+    plasticScore:2, category:"other",
+    material:"Fragrance oils — no phthalates, no formaldehyde, no carcinogens",
+    description:"Smart home diffuser with phthalate-free fragrance oils. No aerosol propellants, no synthetic carcinogens.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pura+smart+fragrance+diffuser&tag=${AMAZON_TAG}`,
+    price:"$44-54",
+    tags:["air freshener","diffuser","home fragrance","smart diffuser","phthalate free","non toxic fragrance","home","room spray"]
+  },
+  {
+    id:"hf-002", name:"Grow Fragrance Room Spray", brand:"Grow Fragrance",
+    plasticScore:2, category:"other",
+    material:"100% plant-based fragrance, no synthetic chemicals or phthalates",
+    description:"100% plant-based room spray with no phthalates, parabens or synthetic fragrance chemicals. Biodegradable formula.",
+    affiliateUrl:`https://www.amazon.com/s?k=Grow+Fragrance+room+spray&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["room spray","air freshener","home fragrance","plant based","phthalate free","non toxic fragrance","home","spray"]
+  },
+  {
+    id:"hf-003", name:"Fontana Candle Company Soy Candle", brand:"Fontana Candle",
+    plasticScore:1, category:"other",
+    material:"100% soy wax, cotton wick, no paraffin or synthetic fragrance",
+    description:"Pure soy wax candle with cotton wick and clean fragrance. No paraffin (petroleum byproduct), no synthetic dyes.",
+    affiliateUrl:`https://www.amazon.com/s?k=soy+candle+cotton+wick+clean+fragrance&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["candle","soy candle","clean candle","non toxic candle","cotton wick","paraffin free","home fragrance","home"]
+  },
+  {
+    id:"hf-004", name:"Vitruvi Stone Diffuser", brand:"Vitruvi",
+    plasticScore:1, category:"other",
+    material:"Ceramic diffuser body — no plastic housing touching water or oil",
+    description:"Ceramic ultrasonic diffuser for essential oils. No plastic in the water or oil path. Clean air delivery.",
+    affiliateUrl:`https://www.amazon.com/s?k=Vitruvi+stone+diffuser&tag=${AMAZON_TAG}`,
+    price:"$119-135",
+    tags:["diffuser","essential oil diffuser","ceramic diffuser","home fragrance","air freshener","non toxic","home","ultrasonic"]
+  },
+  {
+    id:"hf-005", name:"P.F. Candle Co. Soy Candle", brand:"P.F. Candle Co.",
+    plasticScore:1, category:"other",
+    material:"100% domestically grown soy wax, cotton-core wick, phthalate-free fragrance",
+    description:"Soy wax candle with cotton wick and phthalate-free fragrance. No paraffin, no lead wick, no synthetic dyes.",
+    affiliateUrl:`https://www.amazon.com/s?k=PF+Candle+Co+soy+candle&tag=${AMAZON_TAG}`,
+    price:"$20-26",
+    tags:["candle","soy candle","clean candle","non toxic candle","phthalate free","cotton wick","home fragrance","home"]
+  },
+
+  // ── LAUNDRY ───────────────────────────────────────────────────
+  {
+    id:"la-001", name:"Wool Dryer Balls by Smart Sheep", brand:"Smart Sheep",
+    plasticScore:1, category:"personal_care",
+    material:"100% New Zealand wool — no synthetic materials",
+    description:"Pure wool dryer balls replace dryer sheets entirely. No synthetic fragrance, no fabric softener chemicals, reusable for 1,000+ loads.",
+    affiliateUrl:`https://www.amazon.com/s?k=Smart+Sheep+wool+dryer+balls&tag=${AMAZON_TAG}`,
+    price:"$16-22",
+    tags:["dryer balls","wool dryer balls","dryer sheets alternative","fabric softener alternative","laundry","natural","wool","reusable"]
+  },
+  {
+    id:"la-002", name:"Tru Earth Laundry Strips", brand:"Tru Earth",
+    plasticScore:1, category:"personal_care",
+    material:"Concentrated strip — no plastic jug, no PVA film, no synthetic fragrance",
+    description:"Laundry strips with zero plastic packaging. No PVA film, no 1,4-dioxane, no synthetic fragrance. Cardboard envelope only.",
+    affiliateUrl:`https://www.amazon.com/s?k=Tru+Earth+laundry+strips&tag=${AMAZON_TAG}`,
+    price:"$14-20",
+    tags:["laundry strips","laundry detergent","washing","plastic free","zero waste","fragrance free","cardboard","concentrated"]
+  },
+  {
+    id:"la-003", name:"ECOS Laundry Detergent", brand:"ECOS",
+    plasticScore:3, category:"personal_care",
+    material:"Plant-derived, EPA Safer Choice, no optical brighteners or synthetic fragrance",
+    description:"EPA Safer Choice certified liquid detergent. Plant-derived, no optical brighteners, synthetic fragrance or 1,4-dioxane.",
+    affiliateUrl:`https://www.amazon.com/s?k=ECOS+laundry+detergent&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["laundry detergent","liquid detergent","washing","plant based","EPA safer choice","fragrance free","optical brightener free"]
+  },
+  {
+    id:"la-004", name:"Grab Green Natural Fabric Softener", brand:"Grab Green",
+    plasticScore:3, category:"personal_care",
+    material:"Plant and mineral-derived, no synthetic fragrance, no quaternary compounds",
+    description:"Plant-derived fabric softener without synthetic fragrance, parabens or quaternary compounds. Safer Choice certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Grab+Green+natural+fabric+softener&tag=${AMAZON_TAG}`,
+    price:"$12-16",
+    tags:["fabric softener","laundry","natural fabric softener","plant based","fragrance free","non toxic","dryer sheet alternative"]
+  },
+  {
+    id:"la-005", name:"Guppyfriend Washing Bag", brand:"Guppyfriend",
+    plasticScore:2, category:"clothing",
+    material:"Microplastic-catching filter bag — captures synthetic fibers before they reach waterways",
+    description:"Washing bag that captures microfibers from synthetic clothing before they enter waterways. Reduces microplastic ocean pollution per wash.",
+    affiliateUrl:`https://www.amazon.com/s?k=Guppyfriend+washing+bag&tag=${AMAZON_TAG}`,
+    price:"$34-40",
+    tags:["washing bag","guppyfriend","microfiber","microplastic filter","laundry","synthetic clothing","microfiber bag","ocean plastic"]
+  },
+
+  // ── KIDS SNACKS & FOOD ────────────────────────────────────────
+  {
+    id:"ks-001", name:"Annie's Organic Fruit Snacks", brand:"Annie's",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic fruit juice, no synthetic dyes or artificial flavors",
+    description:"USDA organic fruit snacks with no synthetic dyes, artificial flavors or HFCS. Made with real fruit juice.",
+    affiliateUrl:`https://www.amazon.com/s?k=Annies+organic+fruit+snacks&tag=${AMAZON_TAG}`,
+    price:"$5-8",
+    tags:["fruit snacks","kids snacks","organic snacks","food beverage","no synthetic dyes","kids","snack","organic"]
+  },
+  {
+    id:"ks-002", name:"Plum Organics Baby Pouch", brand:"Plum Organics",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic whole ingredients, no added sugar or synthetic additives",
+    description:"USDA organic baby food pouch. No added sugar, synthetic additives or preservatives. Non-GMO verified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Plum+Organics+baby+pouch&tag=${AMAZON_TAG}`,
+    price:"$1-3",
+    tags:["baby food","baby pouch","organic baby food","food beverage","baby","infant","no added sugar","organic","puree"]
+  },
+  {
+    id:"ks-003", name:"Happy Baby Organic Puffs", brand:"Happy Baby",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic whole grain, no synthetic dyes, artificial flavors or HFCS",
+    description:"USDA organic baby puffs. No synthetic dyes, artificial flavors or high-fructose corn syrup. Non-GMO verified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Happy+Baby+organic+puffs&tag=${AMAZON_TAG}`,
+    price:"$4-6",
+    tags:["baby puffs","baby snacks","organic baby food","food beverage","baby","toddler","organic","finger food","no synthetic dyes"]
+  },
+  {
+    id:"ks-004", name:"Larabars", brand:"Larabar",
+    plasticScore:2, category:"food_beverage",
+    material:"Whole food ingredients — dates, nuts, fruit. Nothing else.",
+    description:"Minimal ingredient bars — most contain only 2 to 5 whole food ingredients. No synthetic additives, preservatives or artificial flavors.",
+    affiliateUrl:`https://www.amazon.com/s?k=Larabar+fruit+nut+bar&tag=${AMAZON_TAG}`,
+    price:"$1-2",
+    tags:["snack bar","fruit bar","nut bar","food beverage","whole food","clean ingredients","no additives","dates","kids","snack"]
+  },
+  {
+    id:"ks-005", name:"Organic Valley Whole Milk", brand:"Organic Valley",
+    plasticScore:2, category:"food_beverage",
+    material:"Certified organic milk — no synthetic hormones, no synthetic pesticides",
+    description:"USDA certified organic whole milk. No synthetic growth hormones (rBST), no synthetic pesticides. Pasture-raised.",
+    affiliateUrl:`https://www.amazon.com/s?k=Organic+Valley+whole+milk&tag=${AMAZON_TAG}`,
+    price:"$6-8",
+    tags:["milk","organic milk","whole milk","food beverage","hormone free","rBST free","organic","kids","dairy"]
+  },
+  {
+    id:"ks-006", name:"Stonyfield Organic Whole Milk Yogurt", brand:"Stonyfield",
+    plasticScore:2, category:"food_beverage",
+    material:"Certified organic milk, live cultures — no synthetic hormones or artificial additives",
+    description:"USDA organic whole milk yogurt. No synthetic hormones, artificial flavors, sweeteners or thickeners.",
+    affiliateUrl:`https://www.amazon.com/s?k=Stonyfield+organic+whole+milk+yogurt&tag=${AMAZON_TAG}`,
+    price:"$5-7",
+    tags:["yogurt","organic yogurt","whole milk yogurt","food beverage","hormone free","organic","kids","probiotic","dairy"]
+  },
+
+  // ── MEN'S GROOMING ────────────────────────────────────────────
+  {
+    id:"mg-001", name:"Every Man Jack Face Wash", brand:"Every Man Jack",
+    plasticScore:2, category:"personal_care",
+    material:"Plant-derived, no parabens, dyes, phthalates or synthetic fragrance",
+    description:"EWG-verified mens face wash. Plant-derived, no parabens, synthetic fragrance or phthalates.",
+    affiliateUrl:`https://www.amazon.com/s?k=Every+Man+Jack+face+wash&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["face wash","mens face wash","facial cleanser","personal care","mens grooming","clean beauty","EWG verified","plant based"]
+  },
+  {
+    id:"mg-002", name:"Bevel Safety Razor", brand:"Bevel",
+    plasticScore:1, category:"personal_care",
+    material:"Stainless steel — zero plastic in shaving path, replaceable blades",
+    description:"Full stainless steel safety razor — no plastic cartridge, no synthetic coating on razor head. Single replaceable blade.",
+    affiliateUrl:`https://www.amazon.com/s?k=Bevel+safety+razor&tag=${AMAZON_TAG}`,
+    price:"$32-50",
+    tags:["razor","safety razor","mens razor","shaving","stainless steel","plastic free razor","mens grooming","reusable razor"]
+  },
+  {
+    id:"mg-003", name:"Bulldog Natural Face Moisturizer", brand:"Bulldog",
+    plasticScore:2, category:"personal_care",
+    material:"Plant-derived, no parabens, synthetic fragrance, SLS or artificial colors",
+    description:"Mens daily face moisturizer with no parabens, SLS, synthetic fragrance or artificial colors. Cruelty-free.",
+    affiliateUrl:`https://www.amazon.com/s?k=Bulldog+natural+face+moisturizer&tag=${AMAZON_TAG}`,
+    price:"$9-13",
+    tags:["face moisturizer","mens moisturizer","mens skin care","personal care","mens grooming","clean beauty","natural","paraben free"]
+  },
+  {
+    id:"mg-004", name:"SheaMoisture Men Shea Butter Shave Cream", brand:"SheaMoisture",
+    plasticScore:2, category:"personal_care",
+    material:"Shea butter, essential oils — no parabens, phthalates or synthetic fragrance",
+    description:"Shea butter shave cream with no parabens, phthalates or synthetic fragrance. Fair Trade certified shea.",
+    affiliateUrl:`https://www.amazon.com/s?k=SheaMoisture+men+shave+cream&tag=${AMAZON_TAG}`,
+    price:"$10-14",
+    tags:["shave cream","shaving cream","mens grooming","personal care","shea butter","paraben free","phthalate free","natural shave"]
+  },
+  {
+    id:"mg-005", name:"Baxter of California Clay Pomade", brand:"Baxter of California",
+    plasticScore:3, category:"personal_care",
+    material:"Clay base, no parabens — some synthetic fragrance components",
+    description:"Clay hair pomade with no parabens. Natural clay base provides matte hold. Lower synthetic load than most styling products.",
+    affiliateUrl:`https://www.amazon.com/s?k=Baxter+of+California+clay+pomade&tag=${AMAZON_TAG}`,
+    price:"$18-24",
+    tags:["hair pomade","clay pomade","mens hair","hair styling","mens grooming","personal care","clay","matte hold"]
+  },
+
+  // ── PET FOOD ──────────────────────────────────────────────────
+  {
+    id:"pt-001", name:"The Honest Kitchen Dehydrated Dog Food", brand:"The Honest Kitchen",
+    plasticScore:2, category:"food_beverage",
+    material:"Human-grade whole ingredients — no by-products, fillers or synthetic preservatives",
+    description:"Human-grade dehydrated dog food with whole ingredients. No by-products, fillers, preservatives or artificial anything.",
+    affiliateUrl:`https://www.amazon.com/s?k=Honest+Kitchen+dehydrated+dog+food&tag=${AMAZON_TAG}`,
+    price:"$35-55",
+    tags:["dog food","pet food","dehydrated dog food","whole ingredient","natural dog food","no preservatives","human grade","pet"]
+  },
+  {
+    id:"pt-002", name:"Open Farm Dog Food", brand:"Open Farm",
+    plasticScore:2, category:"food_beverage",
+    material:"Humanely raised meat, no synthetic preservatives, artificial flavors or by-products",
+    description:"Traceable, humanely raised dog food with no by-products, synthetic preservatives or artificial flavors. Certified Humane.",
+    affiliateUrl:`https://www.amazon.com/s?k=Open+Farm+dog+food&tag=${AMAZON_TAG}`,
+    price:"$20-35",
+    tags:["dog food","pet food","natural dog food","no preservatives","humanely raised","pet","grain free","no by-products"]
+  },
+  {
+    id:"pt-003", name:"Castor and Pollux Organix Cat Food", brand:"Castor and Pollux",
+    plasticScore:2, category:"food_beverage",
+    material:"USDA organic, no synthetic preservatives, artificial flavors or fillers",
+    description:"USDA certified organic cat food. No synthetic preservatives, artificial flavors, colors or fillers.",
+    affiliateUrl:`https://www.amazon.com/s?k=Castor+Pollux+Organix+cat+food&tag=${AMAZON_TAG}`,
+    price:"$15-25",
+    tags:["cat food","pet food","organic cat food","natural cat food","no preservatives","pet","organic","grain free"]
+  },
+
+  // ── FITNESS & PERSONAL CARE ───────────────────────────────────
+  {
+    id:"ft-001", name:"Manduka PRO Yoga Mat", brand:"Manduka",
+    plasticScore:3, category:"other",
+    material:"PVC-free polyurethane — no toxic plasticizers, closed-cell surface",
+    description:"Made without toxic plasticizers or heavy metals. Closed-cell surface prevents bacteria absorption. Lasts 10+ years.",
+    affiliateUrl:`https://www.amazon.com/s?k=Manduka+PRO+yoga+mat&tag=${AMAZON_TAG}`,
+    price:"$120-140",
+    tags:["yoga mat","exercise mat","fitness","workout","PVC free","non toxic mat","durable","long lasting"]
+  },
+  {
+    id:"ft-002", name:"Liforme Natural Rubber Yoga Mat", brand:"Liforme",
+    plasticScore:2, category:"other",
+    material:"Natural rubber base, polyurethane top layer — no PVC, no toxic plasticizers",
+    description:"Natural rubber yoga mat — no PVC, no toxic plasticizers, biodegradable base. AlignForMe system for posture alignment.",
+    affiliateUrl:`https://www.amazon.com/s?k=Liforme+yoga+mat&tag=${AMAZON_TAG}`,
+    price:"$150-180",
+    tags:["yoga mat","natural rubber mat","fitness","workout","PVC free","natural rubber","non toxic","biodegradable"]
+  },
+  {
+    id:"ft-003", name:"Nalgene Sustain Water Bottle", brand:"Nalgene",
+    plasticScore:2, category:"kitchen",
+    material:"50% recycled Tritan plastic — BPA and BPS free, no phthalates",
+    description:"Made from 50% recycled Tritan — BPA-free, BPS-free, no phthalates. Lighter footprint than virgin plastic.",
+    affiliateUrl:`https://www.amazon.com/s?k=Nalgene+Sustain+water+bottle&tag=${AMAZON_TAG}`,
+    price:"$14-18",
+    tags:["water bottle","reusable bottle","BPA free","tritan","recycled plastic","fitness","hydration","kitchen","hiking","outdoor"]
+  },
+
+  // ── OFFICE & SCHOOL ───────────────────────────────────────────
+  {
+    id:"of-001", name:"Leuchtturm1917 Hardcover Notebook", brand:"Leuchtturm1917",
+    plasticScore:1, category:"other",
+    material:"Paper and cardboard — no plastic coating, no synthetic binding",
+    description:"FSC-certified paper hardcover notebook. No plastic coating, no synthetic binding. Acid-free pages.",
+    affiliateUrl:`https://www.amazon.com/s?k=Leuchtturm1917+hardcover+notebook&tag=${AMAZON_TAG}`,
+    price:"$22-28",
+    tags:["notebook","journal","hardcover notebook","paper","FSC certified","plastic free","office","school","writing","stationery"]
+  },
+  {
+    id:"of-002", name:"Pilot B2P Recycled Plastic Pens", brand:"Pilot",
+    plasticScore:3, category:"other",
+    material:"89% recycled plastic bottles — lower virgin plastic footprint",
+    description:"Ballpoint pen made from 89% recycled plastic bottles. Lower virgin plastic footprint than standard pens.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pilot+B2P+recycled+plastic+pen&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["pen","ballpoint pen","recycled pen","office","school","stationery","recycled plastic","writing"]
+  },
+  {
+    id:"of-003", name:"Staedtler Noris Pencils", brand:"Staedtler",
+    plasticScore:1, category:"other",
+    material:"FSC-certified wood, water-based lacquer — zero plastic",
+    description:"FSC-certified wood pencils with water-based lacquer. Zero plastic — fully compostable at end of life.",
+    affiliateUrl:`https://www.amazon.com/s?k=Staedtler+Noris+pencils&tag=${AMAZON_TAG}`,
+    price:"$6-10",
+    tags:["pencil","wood pencil","FSC certified","office","school","stationery","plastic free","kids","writing","sustainable"]
+  },
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
