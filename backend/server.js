@@ -341,6 +341,7 @@ BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Pht
       {"substance": "substance name", "type": "dye|preservative|sweetener|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|additive", "severity": "high|medium|low", "reason": "max 12 words"}
     ],
     "positives": [{"attribute": "positive attribute", "reason": "max 8 words"}],
+    "nutrition": null,
     "confidence": "high|medium|low",
     "confidence_note": "max 10 words"
   },
@@ -525,6 +526,10 @@ Tier 2 (conventional): standard commercial, some synthetics, generally low conce
 Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
+NUTRITION — for food_beverage only, populate the nutrition field with per-serving data. Set to null for all other categories. Keep it factual and brief — this is context only, not the focus.
+Format: {"serving_size":"1 pack (42g)", "calories":240, "protein_g":3, "carbs_g":34, "sugar_g":28, "fat_g":10, "fiber_g":0, "sodium_mg":30}
+Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
+
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
 personal_care: tier1=clean_formula, tier2=conventional, tier3=synthetic_heavy, tier4=high_concern
@@ -625,8 +630,9 @@ Return ONLY this JSON:
   },
   "product_analysis": {
     "composition_tier": 2,
-    "tier_label": "conventional|clean_formula|synthetic_heavy|high_concern|natural_fiber|synthetic|chemical_treated|plant_based|industrial_chemical|clean_safe|concern_flagged|high_risk_infants|whole_food|minimally_processed|processed|ultra_processed",
+    "tier_label": "conventional|clean_formula|synthetic_heavy|high_concern|natural_fiber|synthetic|chemical_treated|plant_based|industrial_chemical|clean_safe|concern_flagged|high_risk_infants|whole_food|minimally_processed|processed|ultra_processed|whole_food_derived|synthetic_formula|natural_materials|synthetic_foam",
     "tier_description": "max 8 words describing this product composition",
+    "nutrition": null,
     "concerns": [
       {"substance": "substance name", "type": "dye|preservative|sweetener|additive|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|processing", "severity": "high|medium|low", "reason": "max 12 words citing research"}
     ],

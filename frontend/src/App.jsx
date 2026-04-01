@@ -1268,6 +1268,36 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
             </div>
           </div>
 
+          {/* Nutrition — food only, compact single row */}
+          {analysis.nutrition && (() => {
+            const n = analysis.nutrition;
+            const items = [
+              n.calories   != null && { label:"cal",      val:n.calories,    unit:"" },
+              n.protein_g  != null && { label:"protein",  val:n.protein_g,   unit:"g" },
+              n.carbs_g    != null && { label:"carbs",    val:n.carbs_g,     unit:"g" },
+              n.sugar_g    != null && { label:"sugar",    val:n.sugar_g,     unit:"g" },
+              n.fat_g      != null && { label:"fat",      val:n.fat_g,       unit:"g" },
+              n.fiber_g    != null && n.fiber_g > 0 && { label:"fiber", val:n.fiber_g, unit:"g" },
+              n.sodium_mg  != null && { label:"sodium",   val:n.sodium_mg,   unit:"mg" },
+            ].filter(Boolean);
+            if (!items.length) return null;
+            return (
+              <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
+                  Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
+                </div>
+                <div style={{display:"flex", flexWrap:"wrap", gap:"4px 16px"}}>
+                  {items.map((item,i) => (
+                    <span key={i} style={{fontSize:12, color:text}}>
+                      <strong style={{fontFamily:"'Outfit',sans-serif"}}>{item.val}{item.unit}</strong>
+                      <span style={{color:muted, marginLeft:2}}>{item.label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Concerns by severity */}
           {[{items:highs, label:"High Concern"}, {items:meds, label:"Medium Concern"}, {items:lows, label:"Low Concern"}].map(({items, label}) =>
             items.length > 0 && (
@@ -2947,6 +2977,7 @@ function App() {
         composition_tier: 4,
         tier_label: "ultra_processed",
         tier_description: "Industrial candy with multiple synthetic additives",
+        nutrition: { serving_size:"1 pack (42g)", calories:240, protein_g:3, carbs_g:34, sugar_g:28, fat_g:10, fiber_g:1, sodium_mg:30 },
         concerns: [
           { substance: "Red 40 (Allura Red)", type: "dye", severity: "high", reason: "FDA phasing out — hyperactivity and carcinogenicity in studies" },
           { substance: "Yellow 5 (Tartrazine)", type: "dye", severity: "high", reason: "Linked to hyperactivity and ADHD in children (McCann, Lancet 2007)" },
