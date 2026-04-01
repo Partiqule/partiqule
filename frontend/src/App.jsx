@@ -854,6 +854,8 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
     </div>
   );
 
+  const [open,     setOpen]     = useState(false);
+
   const tabs = [
     {id:"exposure", label:"My Exposure"},
     {id:"overtime", label:"Over Time"},
@@ -863,22 +865,36 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   return (
     <div className="fade-up" style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden", marginTop:16, textAlign:"left"}}>
 
-      {/* Header + tabs */}
-      <div style={{padding:"14px 18px 0", borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
-        <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:10, display:"flex", alignItems:"center", gap:6}}>
-          <IcoScore size={14}/> Usage Calculator
+      {/* Collapsed toggle header */}
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", padding:"12px 18px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+        <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
+          <div style={{display:"flex", alignItems:"center", gap:6}}>
+            <IcoScore size={14} color="#16a34a"/>
+            <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>Usage Calculator</span>
+          </div>
+          {!open && (
+            <span style={{fontSize:11, color:muted, fontWeight:500}}>
+              {freqData.label.toLowerCase()} · {adults} adult{adults!==1?"s":""}{kids>0?` · ${kids} child${kids!==1?"ren":""}`:""}
+              {exposureItems.length > 0 && <span style={{color:SEV_COLOR["high"], fontWeight:600}}> · {exposureItems.length} substance{exposureItems.length!==1?"s":""} flagged</span>}
+            </span>
+          )}
         </div>
-        <div style={{display:"flex", gap:2}}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{
-              flex:1, padding:"7px 6px", fontSize:isMobile?11:12, fontWeight:700,
-              border:"none", borderRadius:"8px 8px 0 0", cursor:"pointer",
-              background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
-              color: tab===t.id ? "#16a34a" : muted,
-              borderBottom: tab===t.id ? "2px solid #16a34a" : "none",
-            }}>{t.label}</button>
-          ))}
-        </div>
+        <span style={{fontSize:12, color:"#16a34a", transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)", flexShrink:0}}>▾</span>
+      </button>
+
+      {/* Expanded content */}
+      {open && (<>
+      {/* Tabs */}
+      <div style={{padding:"0 18px", borderTop:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", gap:2}}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            flex:1, padding:"7px 6px", fontSize:isMobile?11:12, fontWeight:700,
+            border:"none", background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
+            color: tab===t.id ? "#16a34a" : muted,
+            borderBottom: tab===t.id ? "2px solid #16a34a" : "none",
+            cursor:"pointer",
+          }}>{t.label}</button>
+        ))}
       </div>
 
       <div style={{padding:"16px 18px"}}>
@@ -1121,6 +1137,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
           </div>
         )}
       </div>
+      </>)}
     </div>
   );
 };
