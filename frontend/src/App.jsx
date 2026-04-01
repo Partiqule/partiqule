@@ -2979,7 +2979,7 @@ function App() {
         composition_tier: 4,
         tier_label: "ultra_processed",
         tier_description: "Industrial candy with multiple synthetic additives",
-        nutrition: { serving_size:"1 pack (42g)", calories:240, protein_g:3, carbs_g:34, sugar_g:28, fat_g:10, fiber_g:1, sodium_mg:30 },
+        nutrition: { serving_size:"about 7 pieces (37g)", calories:180, protein_g:2, carbs_g:25, sugar_g:22, fat_g:7, fiber_g:1, sodium_mg:20 },
         concerns: [
           { substance: "Red 40 (Allura Red)", type: "dye", severity: "high", reason: "FDA phasing out — hyperactivity and carcinogenicity in studies" },
           { substance: "Yellow 5 (Tartrazine)", type: "dye", severity: "high", reason: "Linked to hyperactivity and ADHD in children (McCann, Lancet 2007)" },

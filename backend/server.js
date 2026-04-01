@@ -317,7 +317,7 @@ PERSONAL CARE HIGH concerns: Oxybenzone, Parabens, Formaldehyde releasers, Tricl
 CLOTHING HIGH concerns: PFAS/DWR coating, Formaldehyde finish, Flame retardants, Carcinogenic azo dyes
 KITCHEN HIGH concerns: PTFE/PFAS coating, BPA/BPS, Quaternary ammonium compounds, Chlorine bleach, Synthetic fragrance VOCs, PVC, 1,4-dioxane
 BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products
-NUTRITION: For food_beverage only — read any visible nutrition label in the photo or use known product data. Populate nutrition with per-serving calories, protein_g, carbs_g, sugar_g, fat_g, fiber_g, sodium_mg, serving_size. Set any unknown fields to null. Set nutrition to null for non-food products.`,
+NUTRITION: For food_beverage only — read the nutrition facts label in the photo if visible, or use known product data. Return per-serving values EXACTLY as listed on the label — use the manufacturer's defined serving size, NOT the whole package total. Populate nutrition with serving_size, calories, protein_g, carbs_g, sugar_g, fat_g, fiber_g, sodium_mg. Set any unknown fields to null. Set nutrition to null for non-food products.`,
       messages: [{
         role: "user",
         content: [
@@ -353,7 +353,7 @@ NUTRITION: For food_beverage only — read any visible nutrition label in the ph
   "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }
-NOTE: For food_beverage, replace nutrition null with: {"serving_size":"e.g. 1 pack (42g)","calories":240,"protein_g":3,"carbs_g":34,"sugar_g":28,"fat_g":10,"fiber_g":1,"sodium_mg":30} — read from label in photo if visible, otherwise use known product data.` }
+NOTE: For food_beverage, replace nutrition null with PER-SERVING values as listed on the label (not whole package): {"serving_size":"about 7 pieces (37g)","calories":180,"protein_g":2,"carbs_g":25,"sugar_g":22,"fat_g":7,"fiber_g":1,"sodium_mg":20}` }
         ]
       }]
     })
@@ -528,8 +528,8 @@ Tier 2 (conventional): standard commercial, some synthetics, generally low conce
 Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
-NUTRITION — for food_beverage only, populate the nutrition field with per-serving data. Set to null for all other categories. Keep it factual and brief — this is context only, not the focus.
-Format: {"serving_size":"1 pack (42g)", "calories":240, "protein_g":3, "carbs_g":34, "sugar_g":28, "fat_g":10, "fiber_g":0, "sodium_mg":30}
+NUTRITION — for food_beverage only, populate the nutrition field with per-serving data EXACTLY as listed on the product's nutrition facts label. Use the serving size the manufacturer defines — do NOT calculate totals for the whole package. For example: if a bag of M&Ms lists "Serving size: about 7 pieces (37g), 180 calories" — return 180 calories and "about 7 pieces (37g)" as the serving size, not the whole bag. Set to null for all other categories. Keep it factual and brief — this is context only, not the focus.
+Format: {"serving_size":"about 7 pieces (37g)", "calories":180, "protein_g":2, "carbs_g":25, "sugar_g":22, "fat_g":7, "fiber_g":1, "sodium_mg":20}
 Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
 
 CATEGORY-SPECIFIC TIER LABELS:
