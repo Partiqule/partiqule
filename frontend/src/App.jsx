@@ -1271,26 +1271,28 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           {/* Nutrition — food only, compact single row */}
           {analysis.nutrition && (() => {
             const n = analysis.nutrition;
+            const nutColor  = isDark ? "#f1f5f9" : "#111";
+            const nutMuted  = isDark ? "#64748b"  : "#888";
             const items = [
-              n.calories   != null && { label:"cal",      val:n.calories,    unit:"" },
-              n.protein_g  != null && { label:"protein",  val:n.protein_g,   unit:"g" },
-              n.carbs_g    != null && { label:"carbs",    val:n.carbs_g,     unit:"g" },
-              n.sugar_g    != null && { label:"sugar",    val:n.sugar_g,     unit:"g" },
-              n.fat_g      != null && { label:"fat",      val:n.fat_g,       unit:"g" },
-              n.fiber_g    != null && n.fiber_g > 0 && { label:"fiber", val:n.fiber_g, unit:"g" },
-              n.sodium_mg  != null && { label:"sodium",   val:n.sodium_mg,   unit:"mg" },
+              n.calories   != null && { label:"cal",     val:n.calories,  unit:"" },
+              n.protein_g  != null && { label:"protein", val:n.protein_g, unit:"g" },
+              n.carbs_g    != null && { label:"carbs",   val:n.carbs_g,   unit:"g" },
+              n.sugar_g    != null && { label:"sugar",   val:n.sugar_g,   unit:"g" },
+              n.fat_g      != null && { label:"fat",     val:n.fat_g,     unit:"g" },
+              n.fiber_g    != null && n.fiber_g > 0 && { label:"fiber",  val:n.fiber_g, unit:"g" },
+              n.sodium_mg  != null && { label:"sodium",  val:n.sodium_mg, unit:"mg" },
             ].filter(Boolean);
             if (!items.length) return null;
             return (
               <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
-                <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
+                <div style={{fontSize:10, color:nutMuted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
                   Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
                 </div>
                 <div style={{display:"flex", flexWrap:"wrap", gap:"4px 16px"}}>
                   {items.map((item,i) => (
-                    <span key={i} style={{fontSize:12, color:text}}>
+                    <span key={i} style={{fontSize:12, color:nutColor}}>
                       <strong style={{fontFamily:"'Outfit',sans-serif"}}>{item.val}{item.unit}</strong>
-                      <span style={{color:muted, marginLeft:2}}>{item.label}</span>
+                      <span style={{color:nutMuted, marginLeft:2}}>{item.label}</span>
                     </span>
                   ))}
                 </div>
