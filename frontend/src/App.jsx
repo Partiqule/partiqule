@@ -1735,16 +1735,8 @@ const ProductCard = ({product, isDark}) => {
 
   return (
     <a href={product.affiliateUrl}
-      target="_blank"
       rel="noopener noreferrer"
-      onClick={(e)=>{
-        track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category});
-        // iOS Safari blocks target="_blank" as a popup — navigate same tab on touch devices
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          e.preventDefault();
-          window.location.href = product.affiliateUrl;
-        }
-      }}
+      onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
       style={cardStyle}
       onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
       onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
@@ -2134,13 +2126,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 
               <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)", gap:12}}>
                 {filteredAlts.slice(0,9).map((alt, i) => (
-                  <a key={i} href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
-                    onClick={(e)=>{
-                      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                        e.preventDefault();
-                        window.location.href = alt.affiliateUrl;
-                      }
-                    }}
+                  <a key={i} href={alt.affiliateUrl} rel="noopener noreferrer"
                     style={{textDecoration:"none", display:"block", background:surface, borderRadius:14,
                       border:`1.5px solid ${border}`, overflow:"hidden", transition:"all 0.15s"}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
@@ -3076,7 +3062,7 @@ function App() {
 
   return (
     <div style={{minHeight:"100vh", background:bg, fontFamily:"system-ui,-apple-system,sans-serif", transition:"background 0.3s"}}>
-      <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0;transform:translateY(40px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}.score-reveal{animation:slideInUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
+      <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0}to{opacity:1}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0}to{opacity:1}}.score-reveal{animation:slideInUp 0.5s ease forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
 
       {/* HEADER */}
       <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s"}}>
