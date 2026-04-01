@@ -484,6 +484,11 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 - Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
+- Conventional spinach (Dirty Dozen #1): materials=5 (pesticide load including PFAS pesticides, EWG 2026), usage=4 → final ~4 — note: still a healthy food, flag concern but don't over-score
+- Organic spinach (USDA Organic): materials=1, usage=1 → final ~1
+- Conventional strawberries (Dirty Dozen): materials=4, usage=3 → final ~3
+- Organic strawberries: materials=1, usage=1 → final ~1
+- Avocado / pineapple / onion (Clean Fifteen): materials=1, usage=1 → final ~1
 - Neutrogena sunscreen (oxybenzone/octinoxate): materials=7 (oxybenzone detected in bloodstream after single use, FDA flagged), usage=7 (daily full-body skin absorption) → final ~7
 - Badger zinc oxide mineral sunscreen: materials=2 (non-nano zinc oxide, organic base), usage=2, packaging=3 → final ~2
 - Crayola crayons (paraffin wax): materials=4 (petroleum paraffin wax, synthetic dyes), usage=3 (occasional skin contact, not ingested) → final ~3-4
@@ -546,6 +551,14 @@ HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hypera
 MEDIUM: Aspartame (IARC 2B 2023), Sucralose (gut microbiome), Acesulfame-K (animal carcinogen), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk), TBHQ (immunotoxin), Caramel color IV (4-MEI carcinogen), Natural flavors (undisclosed chemicals), Carmine E120 (allergic reactions)
 LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
 FOOD TIER SCORE IMPACT: Ultra-processed + 3+ HIGH = materials 8-9, final 7+. Ultra-processed + 1-2 HIGH = materials 7-8, final 6-7. Ultra-processed + MEDIUM = materials 5-7, final 5-6. Processed, no synthetics = 3-4. Whole/minimal = 1-2. Child food with dyes = vulnerable flag + materials min 8.
+
+PESTICIDE CONCERNS — EWG 2026 Dirty Dozen (flag when product IS or CONTAINS conventional versions of these):
+HIGH severity pesticide concern (type="pesticide"): Conventional spinach (most pesticide residues by weight — EWG 2026, PFAS pesticides detected), Conventional strawberries, Conventional kale/collard/mustard greens (cancer-causing pesticides in 50%+ samples), Conventional grapes, Conventional nectarines, Conventional peaches, Conventional cherries, Conventional apples, Conventional blackberries (new 2026 — 4+ pesticides per sample), Conventional blueberries, Conventional pears, Conventional potatoes (90% had chlorpropham — banned in EU), Conventional green beans (highest toxicity flagged by EWG), Conventional bell/hot peppers (highest toxicity flagged by EWG)
+Reason to use: "EWG 2026 Dirty Dozen — PFAS pesticides on [X]% of samples, [N] pesticides detected per sample"
+MEDIUM severity: Conventional produce outside Dirty Dozen — moderate pesticide load but not flagged high
+LOW/POSITIVE — Clean Fifteen (flag as positive "Clean Fifteen produce — low pesticide residue"): Pineapple, sweet corn, avocados, papaya, onions, frozen sweet peas, asparagus, cabbage, cauliflower, watermelon, mangoes, bananas, carrots, mushrooms, kiwi
+ORGANIC PRODUCE RULE: If product is confirmed USDA Organic — do NOT flag pesticide concerns. Add "USDA Organic — no synthetic pesticides" as a positive attribute instead.
+IMPORTANT: Always note that all produce (organic or conventional) is healthy. These concerns are about reducing exposure, not avoiding fruits and vegetables entirely.
 
 PERSONAL CARE CONCERNS:
 HIGH: Oxybenzone/octinoxate (FDA flagged, bloodstream penetration, Matta JAMA 2019), Parabens/methylparaben/propylparaben/butylparaben (endocrine disruption, Darbre 2004), Formaldehyde releasers/DMDM hydantoin/quaternium-15/imidazolidinyl urea (IARC Group 1 carcinogen), Triclosan (endocrine disruptor, FDA banned in some products), Coal tar dyes/p-phenylenediamine (IARC carcinogen), Phthalates/DBP/DEHP (endocrine disruption, reproductive harm), PFAS in cosmetics (CDC flagged, bioaccumulative), Lead acetate (neurotoxin)
@@ -636,7 +649,7 @@ Return ONLY this JSON:
     "tier_description": "max 8 words describing this product composition",
     "nutrition": null,
     "concerns": [
-      {"substance": "substance name", "type": "dye|preservative|sweetener|additive|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|processing", "severity": "high|medium|low", "reason": "max 12 words citing research"}
+      {"substance": "substance name", "type": "dye|preservative|sweetener|additive|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|processing|pesticide", "severity": "high|medium|low", "reason": "max 12 words citing research"}
     ],
     "positives": [
       {"attribute": "EWG Verified", "reason": "max 8 words"}

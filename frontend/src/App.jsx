@@ -77,6 +77,10 @@ const HEALTH_FACTS = [
     url: "https://advances.sciencemag.org/content/3/7/e1700782" },
   { stat: "Heated", text: "polypropylene baby bottles release millions of microplastic particles per litre",
     url: "https://www.nature.com/articles/s43016-020-00171-y" },
+  { stat: "63%",   text: "of EWG Dirty Dozen produce samples contain PFAS forever chemical pesticides — 2026 report",
+    url: "https://www.ewg.org/foodnews/dirty-dozen.php" },
+  { stat: "96%",   text: "of Dirty Dozen produce tested positive for pesticide residues even after washing",
+    url: "https://www.ewg.org/news-insights/news-release/2026/03/ewgs-2026-shoppers-guide-pesticides-producetm-finds-widespread" },
 ];
 
 const STAGES = [
@@ -638,6 +642,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"What are PFAS and where are they found?", a:"PFAS (per- and polyfluoroalkyl substances) are synthetic chemicals used in non-stick coatings, water-resistant clothing, food packaging, and some cleaning products. They are known endocrine disruptors linked to thyroid disruption, reduced fertility, elevated cholesterol, and several cancers. The FDA has flagged them as a priority health concern."},
         {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods. Partiqule flags each dye individually with its severity level and the research behind it."},
         {q:"What are ultra-processed foods and why do they score higher?", a:"Ultra-processed foods (NOVA Group 4) are industrial formulations containing ingredients not found in home kitchens — synthetic dyes, preservatives like BHA and BHT, emulsifiers, and artificial flavors. A 2025 Lancet review linked regular ultra-processed food consumption to cardiovascular disease, cognitive decline, and stroke. Partiqule scores these products higher on Materials and Usage because the chemical load is meaningfully higher than minimally processed or whole foods."},
+        {q:"What are pesticide residues and should I be concerned?", a:"The EWG's 2026 Dirty Dozen report — analysing 54,344 USDA produce samples — found pesticide residues on 96% of the 12 most contaminated fruits and vegetables, including PFAS forever chemicals on 63% of samples. Spinach ranked highest for pesticide residues by weight. Partiqule flags conventional Dirty Dozen produce with a pesticide concern and credits organic produce as a positive. Importantly, all produce is healthy — the goal is to reduce exposure where practical, not avoid fruits and vegetables."},
         {q:"How does Partiqule score personal health risk?", a:"The Materials score (40% weight) covers what the product is made of and its chemical risk — including specific named substances for every category. The Usage and Exposure score (25% weight) covers how using the product affects your body. Every scan produces a dedicated Product Insights breakdown: a Tier 1-4 composition classification plus named substances flagged by severity (high, medium, or low concern) with the research behind each one. This works for food, personal care, clothing, cleaning products, and baby items."},
       ],
     },
@@ -1194,10 +1199,10 @@ const SEVERITY_CONFIG = {
 };
 
 const TYPE_LABELS = {
-  dye:"Dye", preservative:"Preservative", sweetener:"Sweetener", additive:"Additive",
+  dye:"Artificial Dye", preservative:"Preservative", sweetener:"Sweetener", additive:"Additive",
   uv_filter:"UV Filter", fragrance:"Fragrance", surfactant:"Surfactant",
   coating:"Coating", fiber:"Fiber", chemical:"Chemical", plasticizer:"Plasticizer",
-  flame_retardant:"Flame Retardant", processing:"Processing",
+  flame_retardant:"Flame Retardant", processing:"Processing", pesticide:"Pesticide",
   // legacy food types
   artificial_dye:"Artificial Dye", synthetic_preservative:"Preservative",
 };
@@ -2709,8 +2714,16 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               ]
             },
             {
-              category: "Ultra-processed foods",
-              color: "#0891b2",
+              category: "Pesticides in produce — EWG 2026",
+              color: "#16a34a",
+              refs: [
+                {citation:"EWG Shopper's Guide to Pesticides in Produce (2026)", title:"2026 Dirty Dozen and Clean Fifteen — PFAS pesticides found on 63% of Dirty Dozen samples", journal:"Environmental Working Group — analysis of 54,344 USDA samples across 47 fruits and vegetables"},
+                {citation:"USDA Pesticide Data Program (2025)", title:"Pesticide residue testing of domestic and imported produce", journal:"USDA — basis for EWG annual rankings; produce washed and peeled before testing"},
+                {citation:"Subramaniam et al. (2025)", title:"Updated methodology for EWG Shopper's Guide pesticide rankings including toxicity weighting", journal:"EWG — peer-reviewed methodology published 2025, applied to 2026 report"},
+                {citation:"American Academy of Pediatrics (2012)", title:"Pesticide exposure in children", journal:"Pediatrics — children especially susceptible to pesticide exposure, even in utero"},
+                {citation:"Mnif et al. (2011)", title:"Effect of endocrine disruptor pesticides: a review", journal:"International Journal of Environmental Research and Public Health — pesticides linked to endocrine disruption, reproductive harm"},
+              ]
+            },
               refs: [
                 {citation:"Monteiro et al. (2025)", title:"Ultra-processed foods and human health: the main thesis and the evidence", journal:"The Lancet — comprehensive evidence review linking UPFs to chronic disease"},
                 {citation:"Srour et al. (2024)", title:"Ultra-processed food consumption and risk of all-cause and cause-specific mortality", journal:"BMJ — prospective cohort study, 30% higher mortality risk"},
