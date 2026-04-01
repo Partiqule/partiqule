@@ -790,11 +790,22 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
   const catConfig = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
   const hasKids  = kids > 0;
 
-  // Alt name and price must come from the SAME source — prefer DB alt with a price,
-  // fall back to AI break_even name with no price
-  const dbAlt        = result.alternatives?.find(a => a.price && /\$\d+/.test(a.price));
-  const altName      = dbAlt?.name || result.break_even?.alternative_name || "safer alternative";
-  const altPriceStr  = dbAlt?.price || "";
+  // Mirror SplitView's alt selection exactly:
+  // same-category DB alt → AI alt → any DB alt
+  // Price only comes from DB alts (AI alts have no price)
+  const sameCat   = result.alternatives?.find(a => a.category === result.category);
+  const anyStatic = result.alternatives?.[0];
+  const aiAlt     = result.ai_alternatives?.[0];
+  const splitAlt  = sameCat || (aiAlt ? null : anyStatic); // mirrors SplitView's `best`
+  const useAiAlt  = !sameCat && !!aiAlt;                   // mirrors SplitView's `useAi`
+
+  // Name: same product as SplitView shows
+  const altName = useAiAlt
+    ? (aiAlt?.name || "safer alternative")
+    : (splitAlt?.name || result.break_even?.alternative_name || "safer alternative");
+
+  // Price: only available from DB alts (AI alts have no price data)
+  const altPriceStr = splitAlt?.price || "";
 
   // Named exposures
   const exposureItems = (() => {
@@ -1100,10 +1111,13 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
               ))}
             </div>
 
-            {/* Food cost disclaimer */}
-            {cat === "food_beverage" && (
+            {/* Cost context note */}
+            {(useAiAlt || cat === "food_beverage") && (
               <div style={{fontSize:11, color:muted, marginBottom:12, padding:"7px 10px", background:isDark?"#1e2433":"#f9fafb", borderRadius:8, border:`1px solid ${border}`, lineHeight:1.5}}>
-                Cost comparison assumes equivalent monthly consumption. The recommended alternative may be a different format or pack size — adjust your spend estimate to match your actual usage.
+                {useAiAlt
+                  ? `Cost estimate for ${altName} is based on your current spend — no price data available for this AI-suggested alternative. Adjust the spend input to reflect what you'd actually pay.`
+                  : "Cost comparison assumes equivalent monthly consumption. The recommended alternative may be a different pack size — adjust your spend estimate to match your actual usage."
+                }
               </div>
             )}
 
