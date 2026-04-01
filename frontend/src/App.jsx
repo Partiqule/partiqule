@@ -106,13 +106,16 @@ const GlobeLoading = ({isMobile}) => {
   const R   = mob ? 82  : 115;
   const CX  = W / 2;
   const CY  = mob ? 188 : 250;
-  const H   = CY + R + 120;
+  const H   = CY + R + (mob ? 100 : 120);
 
   // Slots: globe surface point (gx,gy) → line endpoint (lx,ly) → card (cx,cy,cw,ch)
   const SLOTS = mob ? [
-    { gx:CX,       gy:CY-R,       lx:CX,       ly:74,       cx:CX-88,    cy:8,        cw:176, ch:66 },
-    { gx:CX+R*.72, gy:CY-R*.52,   lx:W-116,    ly:CY-98,    cx:W-118,    cy:CY-116,   cw:118, ch:66 },
-    { gx:CX-R*.72, gy:CY-R*.52,   lx:118,      ly:CY-98,    cx:0,        cy:CY-116,   cw:118, ch:66 },
+    // Top — full-width card above globe
+    { gx:CX,         gy:CY-R,       lx:CX,       ly:68,       cx:8,        cy:8,        cw:W-16,        ch:58 },
+    // Bottom left
+    { gx:CX-R*.72,   gy:CY+R*.52,   lx:20,       ly:CY+R+18,  cx:8,        cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
+    // Bottom right
+    { gx:CX+R*.72,   gy:CY+R*.52,   lx:W-20,     ly:CY+R+18,  cx:(W+4)/2,  cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
   ] : [
     { gx:CX,        gy:CY-R,       lx:CX,        ly:78,       cx:CX-88,    cy:10,       cw:176, ch:68 },
     { gx:CX+R*.866, gy:CY-R*.5,    lx:CX+R+15,   ly:CY-96,    cx:CX+R+15,  cy:CY-128,   cw:158, ch:68 },
