@@ -804,7 +804,9 @@ app.post("/analyze", async (req, res) => {
       if (!finalAlternatives.length && p1.ai_alternatives?.length) {
         finalAlternatives = p1.ai_alternatives.map(a => ({
           id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 2,
-          material: a.material || "", description: a.reason || "", price: "", affiliateUrl: null, category
+          material: a.material || "", description: a.reason || "", price: "",
+          affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
+          category
         }));
       }
 
