@@ -519,77 +519,6 @@ const BundleCard = ({category, isDark}) => {
 };
 
 // ── SOURCE CITATIONS ──────────────────────────────────────────
-// ── SCORE BREAKDOWN (collapsible) ────────────────────────────
-const ScoreBreakdown = ({result, isDark, surface, border, text, muted}) => {
-  const [open, setOpen] = useState(false);
-  const labels = {materials:"Materials", packaging:"Packaging", usage:"Usage & Exposure", manufacturing:"Manufacturing"};
-  const icons  = {materials:"M", packaging:"P", usage:"U", manufacturing:"F"};
-  const bd = result.breakdown;
-  if (!bd) return null;
-
-  return (
-    <div className="fade-up" style={{background:surface, borderRadius:16, border:`1.5px solid ${border}`, overflow:"hidden"}}>
-      {/* Always-visible header with sub-score pills */}
-      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", background:"none", border:"none", cursor:"pointer", padding:"18px 24px", textAlign:"left"}}>
-        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:open?0:12}}>
-          <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, margin:0, display:"flex", alignItems:"center", gap:8}}><IcoCategory size={20}/> Why this score?</h3>
-          <span style={{fontSize:12, color:muted, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
-        </div>
-
-        {/* Sub-score rows — stacked vertically */}
-        {!open && (
-          <div style={{display:"flex", flexDirection:"column", gap:8}}>
-            {Object.entries(bd).map(([key, val]) => (
-              <div key={key} style={{display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-                <div style={{display:"flex", alignItems:"center", gap:6}}>
-                  <span style={{fontSize:13}}>{icons[key]}</span>
-                  <span style={{fontSize:13, color:muted}}>{labels[key]}</span>
-                </div>
-                <div style={{display:"flex", alignItems:"center", gap:8}}>
-                  <div style={{width:60, height:5, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
-                    <div style={{height:"100%", width:`${(val.score/10)*100}%`, background:scoreColor(val.score), borderRadius:99}}/>
-                  </div>
-                  <span style={{fontSize:13, fontWeight:700, color:scoreColor(val.score), minWidth:18, textAlign:"right"}}>{val.score}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </button>
-
-      {/* Expanded detail */}
-      {open && (
-        <div style={{padding:"0 24px 20px", borderTop:`1px solid ${border}`}}>
-          {result.score_reasoning && (
-            <p style={{fontSize:12, color:muted, margin:"14px 0 16px", lineHeight:1.5, fontStyle:"italic"}}>{result.score_reasoning}</p>
-          )}
-          {Object.entries(bd).map(([key, val]) => (
-            <div key={key} style={{marginBottom:16}}>
-              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
-                <div style={{display:"flex", alignItems:"center", gap:7, fontSize:13, fontWeight:600, color:text}}>
-                  <span style={{fontSize:15}}>{icons[key]}</span>{labels[key]}
-                </div>
-                <div style={{display:"flex", alignItems:"center", gap:8}}>
-                  <div style={{width:80, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
-                    <div style={{height:"100%", width:`${(val.score/10)*100}%`, background:scoreColor(val.score), borderRadius:99, transition:"width 1s ease"}}/>
-                  </div>
-                  <span style={{fontSize:13, fontWeight:700, color:scoreColor(val.score), minWidth:20}}>{val.score}</span>
-                </div>
-              </div>
-              <div style={{fontSize:12, color:muted, lineHeight:1.5, paddingLeft:22}}>{val.label}</div>
-            </div>
-          ))}
-          {result.confidence_note && result.confidence !== "high" && (
-            <div style={{fontSize:11, color:muted, background:isDark?"#1a2030":"#f8fafc", padding:"8px 12px", borderRadius:8, marginTop:4}}>
-              <IcoInfo size={14}/> {result.confidence_note}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const SourceCitations = ({category, isDark}) => {
   const [open, setOpen] = useState(false);
   const sources = SOURCES[category] || SOURCES.other;
@@ -1311,7 +1240,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
           {/* Stats cards */}
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:40}}>
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
-              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Danger Score</div>
+              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Health Score</div>
               <div style={{display:"flex", alignItems:"flex-end", gap:8, marginBottom:10}}>
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:48, color:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", lineHeight:1}}>{avg}</span>
                 <span style={{fontSize:14, color:muted, marginBottom:8}}>/10</span>
@@ -2583,7 +2512,7 @@ function App() {
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
-                    {result.overall_score ? <><IcoRating size={14}/> Overall Score</> : <><IcoScore size={14}/> Danger Score</>} <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
+                    <><IcoRating size={14}/> Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
                   </div>
                   {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
                   {result.confidence && (

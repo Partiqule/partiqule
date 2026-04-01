@@ -387,6 +387,39 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Little Rad Things organic kids tee: materials=1 (confirmed organic cotton), usage=2, packaging=3, sustainability=2 → final ~2
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
+- Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
+- Neutrogena sunscreen (oxybenzone/octinoxate): materials=7 (oxybenzone detected in bloodstream after single use, FDA flagged), usage=7 (daily full-body skin absorption) → final ~7
+- Badger zinc oxide mineral sunscreen: materials=2 (non-nano zinc oxide, organic base), usage=2, packaging=3 → final ~2
+- Crayola crayons (paraffin wax): materials=4 (petroleum paraffin wax, synthetic dyes), usage=3 (occasional skin contact, not ingested) → final ~3-4
+- Stockmar beeswax crayons: materials=1 (beeswax, plant pigments — no paraffin), usage=1 → final ~1-2
+- Standard acrylic craft paint: materials=5 (acrylic polymer — plastic-based binder, synthetic pigments), usage=3 (occasional skin contact) → final ~4
+- Water-based washable tempera/watercolor (kids): materials=3 (water-based, no solvents), usage=2 → final ~2-3
+- Petroleum jelly (Vaseline): materials=5 (petroleum byproduct, possible polycyclic aromatic hydrocarbon contamination), usage=5 (leave-on skin) → final ~5
+- Burt's Bees lip balm / beeswax ointment: materials=1 (beeswax, plant oils), usage=2 (leave-on) → final ~1-2
+- Conventional laundry dryer sheets (Bounce/Downy): materials=6 (synthetic fragrance chemicals, benzyl acetate, chloroform compounds), usage=5 (residue on clothing daily skin contact) → final ~5-6
+- Wool dryer balls: materials=1 (pure wool), usage=1, sustainability=1 (reusable 1,000+ loads) → final ~1
+- Tru Earth/Grove laundry strips: materials=2 (no PVA, no synthetic fragrance), usage=2, packaging=1 (cardboard) → final ~1-2
+- Febreze air freshener spray: materials=7 (synthetic fragrance — phthalates, VOCs, propellant), usage=6 (aerosolized inhalation in enclosed spaces) → final ~6-7
+- Soy wax candle (cotton wick, phthalate-free fragrance): materials=2, usage=3 (some VOCs from burning) → final ~2-3
+- Yankee Candle (paraffin, synthetic fragrance): materials=6 (paraffin = petroleum byproduct, synthetic fragrance phthalates), usage=6 (inhalation during burning) → final ~6
+- Purina/Royal Canin dry dog food: materials=5 (synthetic preservatives BHA/BHT, artificial dyes, by-products), usage=4 (daily ingestion) → final ~4-5
+- Honest Kitchen/Open Farm dog food (whole ingredients): materials=2 (human-grade, no synthetic preservatives), usage=2 → final ~2
+- Standard ABS plastic phone case: materials=5 (ABS plastic with possible flame retardants), usage=2 (skin contact but not prolonged) → final ~3-4
+- Compostable/plant-based phone case (Pela): materials=2 (bioplastic, compostable), usage=1, sustainability=1 → final ~1-2
+- Acetate eyeglass frames (cellulose): materials=2 (plant-derived, biodegradable), usage=2 (daily skin contact) → final ~2-3
+- Standard polycarbonate/plastic frames: materials=4 (petroleum plastic, possible flame retardants in hinges), usage=3 → final ~3-4
+- Always/Tampax conventional pads/tampons: materials=6 (rayon/synthetic blend, chlorine bleaching, possible dioxin residue, plastic overwrap), usage=6 (direct mucous membrane contact) → final ~6
+- Organic cotton tampons/pads (Rael, Cora, August): materials=2 (GOTS organic cotton, no chlorine bleaching), usage=2 → final ~2
+- Menstrual cup (medical silicone): materials=1, usage=2, sustainability=1 (replaces thousands of disposables) → final ~1
+- Miracle-Gro synthetic fertilizer: materials=6 (synthetic nitrogen, urea, synthetic iron chelates — runoff risk), sustainability=7 (synthetic chemical runoff, no soil biology) → final ~5-6
+- Dr. Earth/Espoma organic fertilizer: materials=1 (bone meal, feather meal, natural minerals), sustainability=2 → final ~1-2
+- Standard paraffin wax (Roundup/Scotts lawn chemicals): materials=7 (glyphosate — IARC classified probable carcinogen), usage=6 (skin/inhalation exposure), sustainability=8 (soil and waterway damage) → final ~7
+- PVC yoga mat: materials=7 (vinyl chloride, phthalate plasticizers, toxic manufacturing), usage=5 (skin contact during exercise) → final ~6
+- Natural rubber yoga mat (Liforme/Manduka natural rubber): materials=2, usage=2 → final ~2
+- Standard Advil/Tylenol/NyQuil: materials=3 (active pharmaceutical ingredients, inactive excipients including synthetic dyes, PEG, parabens in some), usage=3 (occasional ingestion) → final ~3 — note: score the product itself not just the packaging
+- Zarbees/natural honey-based cough syrup: materials=2 (honey, natural flavors, no synthetic dyes or preservatives), usage=2 → final ~2
+- Standard bandages (Band-Aid): materials=4 (synthetic polymer adhesive, possible latex, petroleum-backed strip), usage=3 → final ~3
+- Fabric/natural adhesive bandages (Welly): materials=3, usage=2 → final ~2
 
 FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
 materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
@@ -471,6 +504,16 @@ PACKAGING: Refillable/concentrated = 1-3. Single-use plastic = 7-9. Concentrated
 SUSTAINABILITY: Products releasing PVA or synthetic chemicals to waterways = sustainability 5-7 even if concentrated. Genuinely clean (no PVA, no synthetic fragrance) = sustainability 1-3.
 MANUFACTURING: Cap at 5%. Unknown = neutral 4-5.
 CHEWING GUM: polyvinyl acetate = direct plastic ingestion. Materials 7-8, usage 8-9.
+SUNSCREEN: Chemical UV filters (oxybenzone, octinoxate, avobenzone) = materials 6-7, usage 6-7 (full-body daily skin absorption, FDA flagged for bloodstream penetration). Mineral-only (zinc oxide, titanium dioxide) = materials 2-3, usage 2-3.
+HOME FRAGRANCE/CANDLES: Paraffin wax + synthetic fragrance (Yankee, Bath & Body Works) = materials 6, usage 5-6 (VOC inhalation in enclosed space). Soy or beeswax + phthalate-free fragrance = materials 2, usage 3. Aerosol sprays (Febreze, Glade) = materials 6-7 (phthalates, propellant), usage 6 (aerosolized inhalation).
+LAUNDRY: Conventional dryer sheets (Bounce, Downy) = materials 6 (benzyl acetate, synthetic VOCs), usage 5 (daily skin contact residue on clothes). Wool dryer balls = materials 1, usage 1.
+ART SUPPLIES: Paraffin wax crayons = materials 4 (petroleum wax, synthetic dyes). Beeswax crayons = materials 1. Solvent-based paints/markers = materials 6-7 (VOCs). Water-based washable paints/markers = materials 2-3.
+MEDICATIONS/FIRST AID: Score the product itself, not just packaging. Active pharmaceutical ingredients in OTC medications carry minimal risk at occasional use — do not over-score. Standard OTC pain relief (Advil, Tylenol) = final 3 (occasional ingestion, some synthetic inactive ingredients). Natural alternatives (arnica, honey-based) = final 2. Petroleum jelly = materials 5 (petroleum derivative, possible PAH contamination), usage 5 (leave-on skin).
+FEMININE HYGIENE: Conventional synthetic pads/tampons (Always, Tampax) = materials 6 (rayon, chlorine bleaching, possible dioxin residue), usage 6 (direct mucous membrane contact). Organic cotton versions = materials 2, usage 2. Menstrual cups (medical silicone) = materials 1, sustainability 1.
+PET FOOD: Kibble with synthetic preservatives (BHA/BHT) and artificial dyes = materials 5-6, usage 4-5 (daily ingestion). Whole ingredient/organic pet food = materials 2, usage 2.
+GARDEN CHEMICALS: Synthetic pesticides (glyphosate/Roundup) = materials 7-8, sustainability 8. Organic OMRI-listed products = materials 1-2, sustainability 2.
+EYEWEAR: Acetate frames (cellulose) = materials 2 (plant-derived). Polycarbonate/standard plastic = materials 4. Usage stays low (2-3) for all — skin contact but minimal absorption. Final scores for eyewear typically 2-4.
+TECH/ACCESSORIES: Score durability as sustainability signal. Cheap disposable cables = sustainability 7. Braided long-life cables = sustainability 3. Phone cases: ABS plastic = materials 5, compostable bioplastic = materials 2.
 
 CALIBRATION — use these as anchors:
 - Cascade pods: final score ~6 (PVA film + synthetic chemicals + residue on dishes)
@@ -478,11 +521,29 @@ CALIBRATION — use these as anchors:
 - Lululemon leggings: final score ~6 (synthetic microfibers daily skin contact)
 - Organic cotton tee: final score ~1-2
 - PTFE non-stick pan: final score ~7-8
+- Ceramic pan (Caraway/GreenPan): final score ~2
+- Neutrogena chemical sunscreen: final score ~7 (oxybenzone bloodstream absorption)
+- Badger mineral sunscreen: final score ~2 (zinc oxide only)
+- Conventional dryer sheets (Bounce): final score ~5-6 (synthetic VOCs daily skin contact)
+- Wool dryer balls: final score ~1 (pure wool, 1000+ uses)
+- Febreze spray: final score ~6-7 (phthalates aerosolized in enclosed space)
+- Soy candle (phthalate-free): final score ~2-3
+- Yankee Candle (paraffin + synthetic fragrance): final score ~6
+- Crayola paraffin crayons: final score ~3-4
+- Stockmar beeswax crayons: final score ~1-2
+- Standard PVC yoga mat: final score ~6
+- Natural rubber yoga mat: final score ~2
+- Conventional tampons/pads (Always/Tampax): final score ~6 (synthetic blend + chlorine bleaching + direct mucous membrane contact)
+- Organic cotton tampons/pads: final score ~2
+- Menstrual cup: final score ~1
+- Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
+- Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
+- Synthetic fertilizer (Miracle-Gro): final score ~5-6
+- Organic fertilizer (Dr. Earth/Espoma): final score ~1-2
+- Standard Advil/Tylenol: final score ~3 (score the product, not just packaging — occasional ingestion, some synthetic excipients)
+- Zarbees natural cough syrup: final score ~2
 
-FINAL SCORE — compute exactly:
-final_score = round(materials x 0.40 + usage x 0.25 + packaging x 0.15 + sustainability x 0.15 + manufacturing x 0.05)
-
-Break-even (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, container→glass:25, pads→menstrual cup:90, razor→safety:10, zipbag→silicone:15, bag→tote:130, shampoo→bar:6, clothing→natural:30. Vehicles/electronics/appliances/natural materials=null.
+Break-even (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, pan→ceramic:150, container→glass:25, pads→menstrual cup:90, tampons→organic cotton:1, razor→safety:10, zipbag→silicone:15, bag→tote:130, shampoo→bar:6, clothing→natural:30, dryer sheets→wool balls:40, sunscreen→mineral:1, crayon→beeswax:1, yoga mat→natural rubber:200. Vehicles/electronics/appliances/natural materials=null.
 
 Return ONLY valid JSON:
 {"final_score":6,"materials_score":7,"usage_score":8,"packaging_score":3,"sustainability_score":2,"manufacturing_score":5,"score_reasoning":"max 15 words citing specific research","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
