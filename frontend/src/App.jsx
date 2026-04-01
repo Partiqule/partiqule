@@ -284,6 +284,12 @@ const GlobeLoading = ({isMobile}) => {
 
         {/* Stage indicator */}
         <div style={{position:"absolute",bottom:0,left:0,right:0,textAlign:"center"}}>
+          {/* Progress bar */}
+          <div style={{width:"60%", maxWidth:280, height:3, borderRadius:99, background:"rgba(74,222,128,0.15)", margin:"0 auto 12px", overflow:"hidden"}}>
+            <div style={{height:"100%", borderRadius:99, background:"#4ade80", transition:"width 1.2s ease",
+              width: stage === 0 ? "15%" : stage === 1 ? "40%" : stage === 2 ? "72%" : "95%"
+            }}/>
+          </div>
           <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
             {STAGES.map((_, i) => (
               <div key={i} style={{
@@ -1172,6 +1178,12 @@ const TIER_CONFIG = {
   clean_safe:          { label:"Clean and Safe",         color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Formulated specifically for infant safety" },
   concern_flagged:     { label:"Concern Flagged",        color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Ingredients requiring caution for infants" },
   high_risk_infants:   { label:"High Risk for Infants",  color:"#dc2626", bg:"#fef2f2", border:"#fecaca", tier:4, headline:"Contains substances harmful to developing systems" },
+  // Supplement
+  whole_food_derived:  { label:"Whole Food Derived",     color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Food-sourced, third-party tested, no synthetics" },
+  synthetic_formula:   { label:"Synthetic Formula",      color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Petroleum-derived vitamins, synthetic fillers" },
+  // Home furnishing
+  natural_materials:   { label:"Natural Materials",      color:"#16a34a", bg:"#f0fdf4", border:"#bbf7d0", tier:1, headline:"Organic cotton, wool, or natural latex — no synthetics" },
+  synthetic_foam:      { label:"Synthetic Foam",         color:"#d97706", bg:"#fffbeb", border:"#fde68a", tier:3, headline:"Polyurethane foam with VOC off-gassing" },
 };
 const TIER_FALLBACK = { label:"Conventional", color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc", tier:2, headline:"Standard commercial product" };
 
@@ -1191,12 +1203,14 @@ const TYPE_LABELS = {
 };
 
 const CATEGORY_DROPDOWN_LABEL = {
-  food_beverage: "Ingredients and Nutrition",
-  personal_care:  "Formula Breakdown",
-  clothing:       "Fiber and Chemical Analysis",
-  kitchen:        "Formula and Materials Analysis",
-  baby:           "Safety Breakdown",
-  other:          "Substance Analysis",
+  food_beverage:   "Ingredients and Nutrition",
+  personal_care:   "Formula Breakdown",
+  clothing:        "Fiber and Chemical Analysis",
+  kitchen:         "Formula and Materials Analysis",
+  baby:            "Safety Breakdown",
+  supplement:      "Supplement Analysis",
+  home_furnishing: "Materials and Off-Gas Analysis",
+  other:           "Substance Analysis",
 };
 
 const ProductInsightsDropdown = ({analysis, category, isDark}) => {
@@ -2834,6 +2848,9 @@ function App() {
   const [page,        setPage]       = useState("home");
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
+  const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
+  const [emailInput,  setEmailInput] = useState("");
+  const [emailDone,   setEmailDone]  = useState(false);
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
@@ -2905,6 +2922,63 @@ function App() {
       track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
     } catch(e){setError(e.message); track("Scan Error", { error: e.message });}
     setLoading(false);
+  };
+
+  const runDemo = () => {
+    const demo = {
+      product_name: "M&Ms Milk Chocolate Candies",
+      category: "food_beverage",
+      score: 7,
+      overall_score: 7,
+      summary: "Ultra-processed candy with four FDA-flagged petroleum dyes, daily ingestion pathway, and single-use plastic packaging.",
+      confidence: "high",
+      confidence_note: "Ingredient list confirmed — well-documented formula",
+      cached: true,
+      isDemo: true,
+      identified_plastics: ["Polyethylene (bag packaging)", "Carnauba wax coating"],
+      harmful_chemicals: ["Red 40", "Yellow 5", "Yellow 6", "Blue 1", "Titanium dioxide"],
+      natural_materials: [],
+      concerns: ["Four FDA-flagged petroleum dyes linked to hyperactivity and carcinogenicity", "Titanium dioxide banned in EU food — IARC Group 2B", "Ultra-processed formula with daily ingestion pathway"],
+      exposure_frequency: "daily",
+      exposure_type: "ingestion",
+      scan_next: ["Skittles", "Reese's Pieces", "Sour Patch Kids", "Organic dark chocolate"],
+      break_even: { uses: null, alternative_name: "Hu Chocolate Bar", note: "Switch to dye-free organic chocolate", source: "Food dye harm reduction" },
+      food_analysis: {
+        composition_tier: 4,
+        tier_label: "ultra_processed",
+        tier_description: "Industrial candy with multiple synthetic additives",
+        concerns: [
+          { substance: "Red 40 (Allura Red)", type: "dye", severity: "high", reason: "FDA phasing out — hyperactivity and carcinogenicity in studies" },
+          { substance: "Yellow 5 (Tartrazine)", type: "dye", severity: "high", reason: "Linked to hyperactivity and ADHD in children (McCann, Lancet 2007)" },
+          { substance: "Yellow 6 (Sunset Yellow)", type: "dye", severity: "high", reason: "Hyperactivity link, possible carcinogen under review" },
+          { substance: "Blue 1 (Brilliant Blue)", type: "dye", severity: "high", reason: "FDA phasing out all petroleum-based food dyes (2025)" },
+          { substance: "Titanium dioxide", type: "additive", severity: "high", reason: "IARC Group 2B — banned in EU food since 2022" },
+          { substance: "Artificial flavors", type: "additive", severity: "low", reason: "Undisclosed petroleum-derived compounds" },
+          { substance: "Sugar", type: "additive", severity: "low", reason: "High glycemic index, 31g per serving" },
+        ],
+        positives: [],
+        confidence: "high",
+        confidence_note: "Ingredient list verified from product label",
+      },
+      dimensions: {
+        materials:    { score:8, label:"Four FDA-flagged petroleum dyes + titanium dioxide — all high concern", concerns:["Red 40, Yellow 5, Yellow 6, Blue 1 — FDA phasing out entire class","Titanium dioxide banned in EU food (IARC Group 2B)"] },
+        usage_exposure:{ score:7, label:"Daily candy ingestion — direct chemical consumption", frequency:"daily", type:"ingestion", intensity:"single-contact", vulnerable:false, concerns:["Daily direct ingestion of multiple synthetic chemicals","Children particularly sensitive — developing immune and hormonal systems"] },
+        packaging:    { score:5, label:"Single-use plastic bag — not recyclable", primary:"plastic", refillable:false, end_of_life:"landfill", concerns:["Multi-layer plastic film bag — not accepted by curbside recycling"] },
+        sustainability:{ score:6, label:"Single-use by design — packaging discarded at every purchase", reusable:false, replaces_single_use:false, replaces_count:null, circularity:"landfill", concerns:["Single-use plastic packaging","Mars Inc. sustainability commitments unverified at product level"] },
+        manufacturing: { score:5, label:"Large-scale industrial confectionery manufacturing", tier:"neutral", confidence:"low", concerns:["Supply chain data not independently verified"] },
+      },
+      alternatives: [
+        { id:"hu-bar", name:"Hu Chocolate Bar", brand:"Hu", score:2, material:"Organic cacao, no refined sugar, no soy lecithin", description:"No refined sugar, no dairy, no emulsifiers, no artificial flavors. USDA Organic.", price:"$3-4", affiliateUrl:"https://www.amazon.com/s?k=hu+chocolate+bar&tag=partiqule-20", category:"food_beverage" },
+        { id:"unreal-choc", name:"Unreal Dark Chocolate Gems", brand:"Unreal", score:2, material:"No artificial dyes — colored with plant-based ingredients", description:"M&M-style chocolate candies with no artificial colors, flavors or preservatives.", price:"$5-7", affiliateUrl:"https://www.amazon.com/s?k=unreal+dark+chocolate+gems&tag=partiqule-20", category:"food_beverage" },
+        { id:"yum-earth", name:"YumEarth Organic Gummy Bears", brand:"YumEarth", score:2, material:"Organic fruit juice colors, no petroleum dyes", description:"USDA Organic, no artificial dyes, allergen-free. Colored with organic fruit and vegetable juice.", price:"$6-8", affiliateUrl:"https://www.amazon.com/s?k=yumearth+organic+candy&tag=partiqule-20", category:"food_beverage" },
+      ],
+      ai_alternatives: [],
+      peer_comparison: "M&Ms scores higher than 85% of scanned food and beverage products.",
+      scannedAt: new Date().toISOString(),
+    };
+    setResult(demo);
+    setQuery("M&Ms Milk Chocolate Candies");
+    window.scrollTo(0,0);
   };
 
   const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false);};
@@ -3186,13 +3260,23 @@ function App() {
                 )}
 
                 {/* Social proof */}
-                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:20}}>
+                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:16}}>
                   <div style={{display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,0.5)"}}>
                     <div style={{width:8, height:8, borderRadius:"50%", background:"#4ade80"}}/>
                     Free · No sign-up
                   </div>
                   <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
                   <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
+                </div>
+
+                {/* Demo scan link */}
+                <div style={{textAlign:"center"}}>
+                  <button onClick={runDemo} style={{background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.45)", fontSize:13, display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:20, transition:"all 0.2s"}}
+                    onMouseEnter={e=>{e.currentTarget.style.color="#86efac"; e.currentTarget.style.background="rgba(74,222,128,0.08)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.color="rgba(255,255,255,0.45)"; e.currentTarget.style.background="none";}}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    See a live example scan
+                  </button>
                 </div>
               </div>{/* end hero content fade wrapper */}
 
@@ -3352,7 +3436,27 @@ function App() {
       ) : (
         /* RESULTS */
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"16px 16px 60px":`40px 40px 80px`}}>
-          <button onClick={reset} style={{background:"none",border:"none",color:muted,cursor:"pointer",fontSize:14,marginBottom:24,padding:0,display:"flex",alignItems:"center",gap:6}}>← Search again</button>
+          <button onClick={reset} style={{background:isDark?"#1e2433":"#f0fdf4", border:`1.5px solid ${isDark?"#2a3347":"#bbf7d0"}`, color:"#16a34a", cursor:"pointer", fontSize:14, fontWeight:600, marginBottom:24, padding:"8px 18px", borderRadius:20, display:"flex", alignItems:"center", gap:6, transition:"all 0.15s"}}
+            onMouseEnter={e=>{e.currentTarget.style.background="#052e16"; e.currentTarget.style.color="#4ade80";}}
+            onMouseLeave={e=>{e.currentTarget.style.background=isDark?"#1e2433":"#f0fdf4"; e.currentTarget.style.color="#16a34a";}}>
+            ← Search again
+          </button>
+
+          {/* Demo banner */}
+          {result.isDemo && (
+            <div style={{marginBottom:20, padding:"12px 20px", background:isDark?"#1a1a2e":"#eff6ff", borderRadius:12, border:"1.5px solid #93c5fd", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap"}}>
+              <div style={{display:"flex", alignItems:"center", gap:10}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <div>
+                  <div style={{fontSize:13, fontWeight:700, color:"#2563eb"}}>This is a demo scan</div>
+                  <div style={{fontSize:12, color:isDark?"#94a3b8":"#555"}}>M&Ms is a real example. Scan any product to get your own result.</div>
+                </div>
+              </div>
+              <button onClick={reset} style={{padding:"7px 16px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontWeight:600, fontSize:13, cursor:"pointer", whiteSpace:"nowrap"}}>
+                Scan a product →
+              </button>
+            </div>
+          )}
           <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?16:28, alignItems:"start"}}>
 
             {/* LEFT */}
@@ -3371,6 +3475,12 @@ function App() {
                       {result.confidence==="high"?"High confidence":result.confidence==="medium"?"Medium confidence":"Low confidence"}
                     </div>
                   )}
+                  {/* Social proof — scanned by others */}
+                  {result.cached && (
+                    <div style={{fontSize:10, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${border}`}}>
+                      Scanned by others ✓
+                    </div>
+                  )}
                 </div>
 
                 <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?22:28,fontWeight:700,color:text,margin:"0 0 24px",letterSpacing:"-0.5px",wordBreak:"break-word"}}>{result.product_name?.length > 60 ? result.product_name.slice(0,57)+"…" : result.product_name}</h2>
@@ -3383,9 +3493,30 @@ function App() {
 
                 {/* Hero label */}
                 <div style={{marginBottom:16}}>
-                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} Overall</div>
+                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} — {result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : "Overall"}</div>
                   <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
                 </div>
+
+                {/* Alt teaser — above dropdowns */}
+                {(() => {
+                  const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
+                  if (!topAlt || (result.overall_score||result.score) <= 3) return null;
+                  const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
+                  return (
+                    <button
+                      onClick={()=>document.getElementById("safer-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
+                      style={{width:"100%", marginBottom:14, padding:"10px 16px", borderRadius:12,
+                        background:isDark?"#1a2a1a":"#f0fdf4", border:"1.5px solid #16a34a55",
+                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left"}}>
+                      <div style={{display:"flex", alignItems:"center", gap:8}}>
+                        <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Better option</span>
+                        <span style={{fontSize:13, color:text, fontWeight:600}}>{topAlt.name}</span>
+                        <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"#f0fdf4", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
+                      </div>
+                      <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>See below ↓</span>
+                    </button>
+                  );
+                })()}
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
                 {result.dimensions ? (() => {
@@ -3393,11 +3524,14 @@ function App() {
                   return (<>
                     {/* Product Insights — all categories */}
                     {result.food_analysis && (
-                      <ProductInsightsDropdown
-                        analysis={result.food_analysis}
-                        category={result.category}
-                        isDark={isDark}
-                      />
+                      <div style={{position:"relative"}}>
+                        <div style={{position:"absolute", top:-6, right:8, zIndex:2, fontSize:9, fontWeight:800, color:"#fff", background:"#16a34a", padding:"2px 7px", borderRadius:10, letterSpacing:"0.05em", textTransform:"uppercase"}}>New</div>
+                        <ProductInsightsDropdown
+                          analysis={result.food_analysis}
+                          category={result.category}
+                          isDark={isDark}
+                        />
+                      </div>
                     )}
                     {/* 1. Materials */}
                     <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
@@ -3540,18 +3674,72 @@ function App() {
                 <ShareBadge result={result}/>
               </div>
 
+              {/* EMAIL CAPTURE — appears after 3rd scan, dismissible */}
+              {history.length >= 3 && !emailDismissed && (
+                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+                  <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
+                    style={{float:"right", background:"none", border:"none", color:muted, cursor:"pointer", fontSize:16, lineHeight:1, padding:0}}>×</button>
+                  <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:4}}>
+                    Never lose your scan history
+                  </div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.5, marginBottom:12}}>
+                    Save your results and get notified when a product you have scanned is recalled or reformulated.
+                  </div>
+                  {emailDone ? (
+                    <div style={{fontSize:13, color:"#16a34a", fontWeight:600}}>✓ You are on the list. We will be in touch.</div>
+                  ) : (
+                    <div style={{display:"flex", gap:8}}>
+                      <input
+                        type="email" placeholder="your@email.com" value={emailInput}
+                        onChange={e=>setEmailInput(e.target.value)}
+                        onKeyDown={async e=>{
+                          if (e.key !== "Enter" || !emailInput.includes("@")) return;
+                          try {
+                            await fetch(`${API_BASE}/subscribe`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:emailInput}) });
+                            setEmailDone(true);
+                            try{localStorage.setItem("ps_email_captured","1")}catch{}
+                          } catch {}
+                        }}
+                        style={{flex:1, padding:"8px 12px", borderRadius:8, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13, outline:"none"}}/>
+                      <button
+                        onClick={async()=>{
+                          if (!emailInput.includes("@")) return;
+                          try {
+                            await fetch(`${API_BASE}/subscribe`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:emailInput}) });
+                            setEmailDone(true);
+                            try{localStorage.setItem("ps_email_captured","1")}catch{}
+                          } catch {}
+                        }}
+                        style={{padding:"8px 16px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:600, fontSize:13, cursor:"pointer"}}>
+                        Save
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* SOURCE CITATIONS */}
               <SourceCitations category={result.category} isDark={isDark}/>
 
               {/* SCIENCE LINK */}
               <div style={{background:isDark?"#1e1f3a":"#eef2ff", borderRadius:12, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
                 <div>
-                  <div style={{fontSize:13, fontWeight:600, color:isDark?"#a5b4fc":"#4f46e5", marginBottom:2}}>Want to understand why this matters?</div>
-                  <div style={{fontSize:12, color:muted}}>Read the science behind microplastics and human health</div>
+                  <div style={{fontSize:13, fontWeight:600, color:isDark?"#a5b4fc":"#4f46e5", marginBottom:2}}>
+                    {result.isDemo ? "This is a real result for M&Ms — scan your own products" : "Want to understand why this matters?"}
+                  </div>
+                  <div style={{fontSize:12, color:muted}}>
+                    {result.isDemo ? "Free, no sign-up, results in 15 seconds." : "Read the science behind microplastics and human health"}
+                  </div>
                 </div>
-                <button onClick={()=>{setPage("science"); setResult(null);}} style={{padding:"8px 16px", borderRadius:8, border:"none", background:isDark?"#3730a3":"#4f46e5", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0}}>
-                  The Science →
-                </button>
+                {result.isDemo ? (
+                  <button onClick={reset} style={{padding:"8px 16px", borderRadius:8, border:"none", background:"#4f46e5", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0}}>
+                    Scan now →
+                  </button>
+                ) : (
+                  <button onClick={()=>{setPage("science"); setResult(null);}} style={{padding:"8px 16px", borderRadius:8, border:"none", background:isDark?"#3730a3":"#4f46e5", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0}}>
+                    The Science →
+                  </button>
+                )}
               </div>
             </div>
 
@@ -3621,18 +3809,26 @@ function App() {
               {/* BUNDLE */}
               <BundleCard category={result.category} isDark={isDark}/>
 
-              {/* SCAN NEXT */}
+              {/* COMPLETE YOUR ROUTINE */}
               {result.scan_next?.length > 0 && (
-                <div style={{background:surface, borderRadius:16, padding:"20px 24px", border:`1.5px solid ${border}`}}>
-                  <h3 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, margin:"0 0 14px"}}><IcoScan size={16}/> Scan these next</h3>
+                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Complete your routine</div>
+                  <div style={{fontSize:13, color:muted, marginBottom:14, lineHeight:1.5}}>
+                    People who scanned this also checked these — scan them to build your household exposure picture.
+                  </div>
                   <div style={{display:"flex", flexDirection:"column", gap:8}}>
                     {result.scan_next.map((item,i)=>(
                       <button key={i} onClick={()=>{setResult(null); setQuery(item); analyze(item);}}
-                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:isDark?"#252d40":"#f9fafb", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.background=isDark?"#1e2a3a":"#f0fdf4";}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.background=isDark?"#252d40":"#f9fafb";}}>
-                        <span style={{fontSize:13, fontWeight:500, color:text}}>{item}</span>
-                        <span style={{fontSize:12, color:"#16a34a", fontWeight:600}}>Scan →</span>
+                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
+                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.background=isDark?"#1e2a1e":"#f0fdf4";}}
+                        onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#bbf7d0"; e.currentTarget.style.background=isDark?"#1e2433":"#fff";}}>
+                        <div style={{display:"flex", alignItems:"center", gap:10}}>
+                          <div style={{width:32, height:32, borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                            <IcoScan size={16}/>
+                          </div>
+                          <span style={{fontSize:13, fontWeight:500, color:text}}>{item}</span>
+                        </div>
+                        <span style={{fontSize:12, color:"#16a34a", fontWeight:700}}>Scan →</span>
                       </button>
                     ))}
                   </div>

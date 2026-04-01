@@ -83,6 +83,12 @@ function detectCategory(q) {
   // Baby
   if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|formula|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet/.test(s)) return "baby";
 
+  // Supplements and vitamins
+  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|tablet|gummy vitamin/.test(s)) return "supplement";
+
+  // Mattresses, bedding, furniture
+  if (/mattress|mattresse|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|foam|memory foam|latex mattress|box spring|futon|carpet|rug|curtain|drape|upholster/.test(s)) return "home_furnishing";
+
   return null;
 }
 
@@ -109,12 +115,14 @@ function extractProductFromUrl(input) {
 // ── PEER COMPARISON DATA ──────────────────────────────────────
 // Average scores by category — used for peer comparison stat
 const CATEGORY_AVERAGES = {
-  clothing:      { avg: 5.5, label: "clothing items"      },
-  food_beverage: { avg: 5.8, label: "food & drink items"  },
-  personal_care: { avg: 5.5, label: "personal care items" },
-  kitchen:       { avg: 5.0, label: "kitchen items"       },
-  baby:          { avg: 4.8, label: "baby products"       },
-  other:         { avg: 5.5, label: "consumer products"   },
+  clothing:       { avg: 5.5, label: "clothing items"         },
+  food_beverage:  { avg: 5.8, label: "food and drink items"   },
+  personal_care:  { avg: 5.5, label: "personal care items"    },
+  kitchen:        { avg: 5.0, label: "kitchen items"          },
+  baby:           { avg: 4.8, label: "baby products"          },
+  supplement:     { avg: 4.0, label: "supplements"            },
+  home_furnishing:{ avg: 5.2, label: "home furnishing items"  },
+  other:          { avg: 5.5, label: "consumer products"      },
 };
 
 // ── WEB SEARCH FOR PRODUCT DETAILS ───────────────────────────
@@ -316,7 +324,7 @@ BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Pht
           { type: "text", text: `Look at this photo. Read the brand name, product name, and visible text to identify the product. Score it across 5 dimensions AND populate product_analysis. Return ONLY this JSON:
 {
   "product_name": "brand + product name as shown on label",
-  "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
+  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|other",
   "identified_plastics": ["plastic type 1"],
   "harmful_chemicals": [],
   "natural_materials": ["organic cotton"],
@@ -523,6 +531,8 @@ personal_care: tier1=clean_formula, tier2=conventional, tier3=synthetic_heavy, t
 clothing: tier1=natural_fiber, tier2=conventional, tier3=synthetic, tier4=chemical_treated
 kitchen: tier1=plant_based, tier2=conventional, tier3=synthetic_heavy, tier4=industrial_chemical
 baby: tier1=clean_safe, tier2=conventional, tier3=concern_flagged, tier4=high_risk_infants
+supplement: tier1=whole_food_derived, tier2=conventional, tier3=synthetic_formula, tier4=high_concern
+home_furnishing: tier1=natural_materials, tier2=conventional, tier3=synthetic_foam, tier4=chemical_treated
 
 FOOD (food_beverage) CONCERNS:
 HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hyperactivity/ADHD), Blue 1/2 (neurotoxin), Titanium dioxide (IARC 2B, EU banned), BHA/BHT (IARC 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 processed meat), Trans fats (cardiovascular), HFCS (metabolic disease)
@@ -554,10 +564,24 @@ HIGH: Any synthetic fragrance in products used on babies (developing endocrine s
 MEDIUM: Formaldehyde releasers in baby wash/shampoo, SLS/SLES in baby bath products, Mineral oil in baby products (possible petroleum contamination), Synthetic dyes in any product
 BABY POSITIVES: MADE SAFE certified, EWG Verified for baby, Pediatrician tested and approved, Fragrance-free, Hypoallergenic tested, GOTS organic cotton, No parabens/phthalates/sulfates
 
+SUPPLEMENT CONCERNS (vitamins, protein powders, probiotics, sleep aids, pre-workout):
+HIGH: Artificial colors/dyes in capsules or gummies (Red 40, Yellow 5 — FDA phasing out), Heavy metal contamination in protein powders (lead, arsenic, cadmium — Consumer Reports 2018 found in many brands), DMAA/stimulants in pre-workout (FDA warnings, cardiovascular risk), Ephedra/ephedrine (FDA banned, cardiovascular events), Synthetic testosterone precursors/prohormones (FDA flagged), Titanium dioxide in coatings (IARC Group 2B), Proprietary blends masking underdosed or contaminated ingredients
+MEDIUM: Magnesium stearate in capsules (high doses may impair absorption), Artificial sweeteners in flavored powders (sucralose, acesulfame-K), Silicon dioxide/silica flow agents, Hydrogenated oils in softgels (trans fat residue), Synthetic vitamin forms (dl-alpha tocopherol vs d-alpha, cyanocobalamin vs methylcobalamin)
+LOW: Gelatin capsules (animal-derived, not suitable for vegans), Maltodextrin as filler, Natural flavors
+SUPPLEMENT SCORE GUIDANCE: Whole-food derived supplements (food-based vitamin C, fermented vitamins) = materials 1-2. Standard synthetic vitamins = materials 2-3. Proprietary blend pre-workouts with stimulants = materials 5-7. Any supplement with FDA warnings = materials 7-8.
+SUPPLEMENT POSITIVES: NSF Certified for Sport, Informed Sport certified, USP Verified, Third-party tested, NSF International certified, Non-GMO Project Verified, USDA Organic certified ingredients, Certified vegan, No artificial colors or sweeteners, No proprietary blends
+
+HOME FURNISHING CONCERNS (mattresses, sofas, bedding, carpets, curtains, foam furniture):
+HIGH: Flame retardants/PBDEs/chlorinated Tris/TDCPP in foam (IARC carcinogen, endocrine disruption — Stapleton 2011, California TB117 phased out), PFAS in stain-resistant treatments (Scotchgard, Teflon-coated fabrics — bioaccumulative, EPA flagged), Formaldehyde off-gassing from pressed wood, MDF, particleboard furniture (IARC Group 1 carcinogen — OSHA PEL exceeded in new furniture), Vinyl/PVC coatings or covers (phthalate plasticizers, off-gassing VOCs), Antimicrobial treatments with silver nanoparticles or triclosan (environmental persistence)
+MEDIUM: Polyurethane foam off-gassing VOCs (new mattress/sofa smell — toluene, benzene derivatives), Memory foam petroleum-based content (off-gassing isocyanates), Synthetic latex (petroleum-derived, lower durability than natural), Polypropylene or nylon carpet (microfiber shedding, VOC emissions from backing), Stain treatments (oil-based or synthetic polymer), Conventional cotton batting (pesticide residue without organic certification)
+LOW: Polyester fiberfill in pillows (microfiber shedding, low direct exposure), Recycled synthetic fill (lower carbon but still synthetic)
+HOME FURNISHING SCORE GUIDANCE: Natural latex + organic cotton/wool + no flame retardant treatment = materials 1-2. Standard innerspring mattress, no known FR treatment = materials 3-4. Memory foam, standard poly foam = materials 5-6. Known flame retardants + PFAS stain treatment + VOC off-gassing = materials 7-8. Usage score lower than materials — exposure is inhalation and prolonged skin contact during sleep, daily usage penalty applies.
+HOME FURNISHING POSITIVES: GOTS certified organic cotton/wool, GOLS certified organic latex, OEKO-TEX Standard 100, Greenguard Gold certified (low VOC emissions), CertiPUR-US foam (no harmful flame retardants), Made Safe certified, No added flame retardants, PFAS-free certified
+
 Return ONLY this JSON:
 {
   "product_name": "clean accurate product name",
-  "category": "clothing|food_beverage|personal_care|kitchen|baby|other",
+  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|other",
   "identified_plastics": ["specific plastic type 1"],
   "harmful_chemicals": ["phthalates", "BPA", "Red 40"],
   "natural_materials": ["organic cotton", "glass"],
@@ -699,6 +723,18 @@ CALIBRATION — use these as anchors:
 - Organic fertilizer (Dr. Earth/Espoma): final score ~1-2
 - Standard Advil/Tylenol: final score ~3 (score the product, not just packaging — occasional ingestion, some synthetic excipients)
 - Zarbees natural cough syrup: final score ~2
+- Standard synthetic multivitamin (Centrum, One-A-Day): final score ~3 (synthetic vitamins, titanium dioxide coating, fillers)
+- Garden of Life/MegaFood whole-food vitamin: final score ~1-2 (food-derived, certified organic, third-party tested)
+- Standard whey protein powder with artificial flavors/sucralose: final score ~4-5 (artificial sweeteners, flavors, possible heavy metals)
+- Orgain/Sunwarrior organic plant protein: final score ~2 (organic, no artificial sweeteners, third-party tested)
+- Pre-workout with proprietary blend + DMAA/stimulants: final score ~7-8 (FDA warnings, undisclosed ingredients, cardiovascular risk)
+- Standard memory foam mattress (off-gassing): final score ~6 (polyurethane off-gassing, unknown flame retardant status, daily 8hr exposure)
+- Avocado organic latex mattress (GOLS + GOTS certified): final score ~1-2 (natural latex, organic wool/cotton, no synthetic flame retardants)
+- Standard polyurethane foam sofa (unknown FR treatment): final score ~5-6 (possible flame retardants, VOC off-gassing)
+- Conventional pillow (polyester fill): final score ~4 (synthetic polyester, daily 8hr face/skin contact)
+- Organic latex pillow (GOLS certified): final score ~1-2 (natural rubber, no synthetics)
+- Conventional nylon/polypropylene carpet: final score ~5-6 (VOC emissions from backing, microfiber shedding, likely stain treatment)
+- Wool or organic cotton area rug (GOTS certified): final score ~2
 
 FOOD HARD FLOORS — these must never be violated:
 - Ultra-processed food with 3+ HIGH severity additives (multiple FDA-flagged dyes, BHA, nitrates): final score MINIMUM 7
@@ -1006,6 +1042,20 @@ app.post("/analyze", async (req, res) => {
       : err.message;
     res.status(500).json({ error: msg });
   }
+});
+
+// ── EMAIL CAPTURE ─────────────────────────────────────────────
+// Simple in-memory store — replace with DB when accounts are built
+const emailList = new Set();
+app.post("/subscribe", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  const { email } = req.body;
+  if (!email || !email.includes("@")) return res.status(400).json({ error: "Invalid email" });
+  const already = emailList.has(email.toLowerCase().trim());
+  emailList.add(email.toLowerCase().trim());
+  console.log(`Email captured: ${email} (total: ${emailList.size})`);
+  // TODO: when accounts are built, persist to DB and send welcome email via Resend
+  res.json({ ok: true, already });
 });
 
 app.get("/cache-stats", (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
