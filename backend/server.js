@@ -774,6 +774,8 @@ app.post("/analyze", async (req, res) => {
     console.error("Error:", err.message);
     const msg = err.message?.includes("529") || err.message?.includes("overload")
       ? "Partiqule is in high demand right now. Please try again in a few seconds."
+      : err.message?.includes("429") || err.message?.includes("rate")
+      ? "Too many requests. Please wait a moment and try again."
       : err.message?.includes("timed out")
       ? "That scan took too long. Please try again."
       : err.message;
