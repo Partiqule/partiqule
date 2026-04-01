@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
+
+// ── SUPABASE ──────────────────────────────────────────────────
+const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
+const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── GLOBE LOADING ─────────────────────────────────────────────
 // 200 points evenly distributed on a sphere (Fibonacci lattice)
@@ -2867,6 +2873,111 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 };
 
 // ── PRIVACY PAGE ──────────────────────────────────────────────
+// ── AUTH MODAL ────────────────────────────────────────────────
+const AuthModal = ({isDark, onClose, onAuth}) => {
+  const [mode,     setMode]     = useState("signin"); // signin | signup | reset
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState(null);
+  const [success,  setSuccess]  = useState(null);
+
+  const surface = isDark ? "#1e2433" : "#fff";
+  const border  = isDark ? "#2a3347" : "#e5e7eb";
+  const text    = isDark ? "#f1f5f9" : "#111";
+  const muted   = isDark ? "#94a3b8" : "#666";
+
+  const submit = async () => {
+    if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
+      setError(mode === "reset" ? "Enter a valid email." : "Enter a valid email and a password of at least 6 characters.");
+      return;
+    }
+    setLoading(true); setError(null); setSuccess(null);
+    try {
+      if (mode === "signup") {
+        const { error: e } = await supabase.auth.signUp({ email, password });
+        if (e) throw e;
+        setSuccess("Check your email to confirm your account, then sign in.");
+        setMode("signin");
+      } else if (mode === "signin") {
+        const { data, error: e } = await supabase.auth.signInWithPassword({ email, password });
+        if (e) throw e;
+        onAuth(data.user);
+        onClose();
+      } else if (mode === "reset") {
+        const { error: e } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: "https://partiqule.com/reset-password",
+        });
+        if (e) throw e;
+        setSuccess("Password reset email sent. Check your inbox.");
+      }
+    } catch(e) {
+      setError(e.message || "Something went wrong. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}
+      onClick={onClose}>
+      <div style={{background:surface, borderRadius:20, padding:"32px 28px", width:"100%", maxWidth:400, border:`1.5px solid ${border}`, position:"relative"}}
+        onClick={e=>e.stopPropagation()}>
+
+        {/* Close */}
+        <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:20, color:muted, lineHeight:1}}>×</button>
+
+        {/* Logo */}
+        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:24}}>
+          <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center"}}>
+            <span style={{color:"#4ade80", fontWeight:800, fontSize:16}}>P</span>
+          </div>
+          <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text}}>Partiqule</span>
+        </div>
+
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:22, color:text, margin:"0 0 6px"}}>
+          {mode === "signup" ? "Create account" : mode === "reset" ? "Reset password" : "Welcome back"}
+        </h2>
+        <p style={{fontSize:14, color:muted, margin:"0 0 24px", lineHeight:1.5}}>
+          {mode === "signup" ? "Save your scan history and never lose it." : mode === "reset" ? "We will send you a reset link." : "Sign in to access your scan history."}
+        </p>
+
+        {error   && <div style={{background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#dc2626", marginBottom:16}}>{error}</div>}
+        {success && <div style={{background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#16a34a", marginBottom:16}}>{success}</div>}
+
+        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+          <input type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&submit()}
+            style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+          {mode !== "reset" && (
+            <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&submit()}
+              style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+          )}
+          <button onClick={submit} disabled={loading}
+            style={{padding:"12px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:loading?"default":"pointer", opacity:loading?0.7:1}}>
+            {loading ? "Please wait..." : mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
+          </button>
+        </div>
+
+        <div style={{marginTop:20, textAlign:"center", fontSize:13, color:muted}}>
+          {mode === "signin" && <>
+            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signup"); setError(null); setSuccess(null);}}>Create an account</span>
+            <span style={{margin:"0 10px", opacity:0.4}}>·</span>
+            <span style={{cursor:"pointer", color:muted}} onClick={()=>{setMode("reset"); setError(null); setSuccess(null);}}>Forgot password?</span>
+          </>}
+          {mode === "signup" && <>
+            Already have an account?{" "}
+            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Sign in</span>
+          </>}
+          {mode === "reset" && <>
+            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   const sections = [
     { title:"1. Who we are", body:"Partiqule is a free product health scanner operated by Partiqule Inc. We help people understand what is in the products they use every day. You can reach us at paul@partiqule.com." },
@@ -2952,9 +3063,54 @@ function App() {
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [emailInput,  setEmailInput] = useState("");
   const [emailDone,   setEmailDone]  = useState(false);
+  const [user,        setUser]       = useState(null);
+  const [showAuth,    setShowAuth]   = useState(false);
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
+
+  // ── Auth listener ────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) { setUser(session.user); loadCloudHistory(session.user.id); }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user || null;
+      setUser(u);
+      if (u) loadCloudHistory(u.id);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadCloudHistory = async (userId) => {
+    const { data, error } = await supabase
+      .from("scans")
+      .select("result_json, scanned_at")
+      .eq("user_id", userId)
+      .order("scanned_at", { ascending: false })
+      .limit(50);
+    if (!error && data?.length) {
+      const items = data.map(r => ({...r.result_json, scannedAt: r.scanned_at}));
+      setHistory(items);
+      try { localStorage.setItem("ps_history", JSON.stringify(items)); } catch {}
+    }
+  };
+
+  const saveToCloud = async (item, userId) => {
+    await supabase.from("scans").upsert({
+      user_id:      userId,
+      product_name: item.product_name,
+      category:     item.category || "other",
+      score:        item.score || 0,
+      result_json:  item,
+      scanned_at:   new Date().toISOString(),
+    }, { onConflict: "user_id,product_name" });
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   // Read slug from URL on first load
@@ -3011,6 +3167,7 @@ function App() {
       try{localStorage.setItem("ps_history",JSON.stringify(updated));}catch{}
       return updated;
     });
+    if (user) saveToCloud(item, user.id);
   };
 
   const analyze = async (q=query) => {
@@ -3136,7 +3293,6 @@ function App() {
           ) : (
             /* Desktop nav */
             <nav style={{display:"flex", gap:24, alignItems:"center"}}>
-
               <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("methodology"); setResult(null);}} style={{fontSize:14, color:page==="methodology"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="methodology"?600:400}}>How it Works</span>
@@ -3144,6 +3300,16 @@ function App() {
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
                 {isDark?<IconSun size={17} color="#f59e0b"/>:<IconMoon size={17} color="#6b7280"/>}
               </button>
+              {user ? (
+                <div style={{display:"flex", alignItems:"center", gap:10}}>
+                  <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
+                    <span style={{color:"#4ade80", fontWeight:700, fontSize:13}}>{user.email[0].toUpperCase()}</span>
+                  </div>
+                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>Sign out</button>
+                </div>
+              ) : (
+                <button onClick={()=>setShowAuth(true)} style={{padding:"8px 18px", borderRadius:8, border:"none", background:"#052e16", color:"#4ade80", fontWeight:600, fontSize:14, cursor:"pointer"}}>Sign in</button>
+              )}
               <button onClick={reset} style={{padding:"8px 18px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontWeight:600, fontSize:14, cursor:"pointer"}}>New Search</button>
             </nav>
           )}
@@ -3163,12 +3329,24 @@ function App() {
                 {item.label}
               </button>
             ))}
+            {user ? (
+              <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                <span style={{fontSize:13, color:muted}}>{user.email}</span>
+                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>Sign out</button>
+              </div>
+            ) : (
+              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:8, border:`1.5px solid #16a34a`, background:"none", color:"#16a34a", fontSize:15, fontWeight:600, cursor:"pointer", textAlign:"left", marginTop:4}}>
+                Sign in / Create account
+              </button>
+            )}
             <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontSize:15, fontWeight:600, cursor:"pointer", marginTop:4}}>
               New Search
             </button>
           </div>
         )}
       </header>
+
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>setUser(u)}/>}
 
       {page === "admin" ? (
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
@@ -3787,8 +3965,8 @@ function App() {
                 <ShareBadge result={result}/>
               </div>
 
-              {/* EMAIL CAPTURE — appears after 3rd scan, dismissible */}
-              {history.length >= 3 && !emailDismissed && (
+              {/* ACCOUNT / EMAIL CAPTURE — after 3rd scan */}
+              {history.length >= 3 && !user && !emailDismissed && (
                 <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
                   <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
                     style={{float:"right", background:"none", border:"none", color:muted, cursor:"pointer", fontSize:16, lineHeight:1, padding:0}}>×</button>
@@ -3796,38 +3974,26 @@ function App() {
                     Never lose your scan history
                   </div>
                   <div style={{fontSize:12, color:muted, lineHeight:1.5, marginBottom:12}}>
-                    Save your results and get notified when a product you have scanned is recalled or reformulated.
+                    Create a free account to save your scans across devices and get notified when a product you have scanned is recalled or reformulated.
                   </div>
-                  {emailDone ? (
-                    <div style={{fontSize:13, color:"#16a34a", fontWeight:600}}>✓ You are on the list. We will be in touch.</div>
-                  ) : (
-                    <div style={{display:"flex", gap:8}}>
-                      <input
-                        type="email" placeholder="your@email.com" value={emailInput}
-                        onChange={e=>setEmailInput(e.target.value)}
-                        onKeyDown={async e=>{
-                          if (e.key !== "Enter" || !emailInput.includes("@")) return;
-                          try {
-                            await fetch(`${API_BASE}/subscribe`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:emailInput}) });
-                            setEmailDone(true);
-                            try{localStorage.setItem("ps_email_captured","1")}catch{}
-                          } catch {}
-                        }}
-                        style={{flex:1, padding:"8px 12px", borderRadius:8, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13, outline:"none"}}/>
-                      <button
-                        onClick={async()=>{
-                          if (!emailInput.includes("@")) return;
-                          try {
-                            await fetch(`${API_BASE}/subscribe`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:emailInput}) });
-                            setEmailDone(true);
-                            try{localStorage.setItem("ps_email_captured","1")}catch{}
-                          } catch {}
-                        }}
-                        style={{padding:"8px 16px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:600, fontSize:13, cursor:"pointer"}}>
-                        Save
-                      </button>
-                    </div>
-                  )}
+                  <div style={{display:"flex", gap:8}}>
+                    <button onClick={()=>setShowAuth(true)}
+                      style={{flex:1, padding:"9px 16px", borderRadius:8, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:13, cursor:"pointer"}}>
+                      Create free account
+                    </button>
+                    <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
+                      style={{padding:"9px 14px", borderRadius:8, background:"none", color:muted, border:`1px solid ${isDark?"#2a3347":"#d1d5db"}`, fontSize:13, cursor:"pointer"}}>
+                      Not now
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Signed in — sync confirmation */}
+              {user && history.length > 0 && (
+                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"12px 16px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", gap:10}}>
+                  <IcoVerified size={16}/>
+                  <span style={{fontSize:13, color:"#16a34a", fontWeight:600}}>Scans synced to your account</span>
                 </div>
               )}
 
