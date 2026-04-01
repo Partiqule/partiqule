@@ -166,56 +166,71 @@ function fixJson(raw) {
   return result;
 }
 
-async function callClaude(system, userPrompt, maxTokens=800, retries=2) {
+async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
-    const res = await fetch(ANTHROPIC_API, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: maxTokens,
-        system,
-        messages: [{ role: "user", content: userPrompt }]
-      })
-    });
-    clearTimeout(timeout);
-    if (res.status === 429 && attempt < retries) {
-      const wait = (attempt + 1) * 2000;
-      console.log(`Rate limited, retrying in ${wait}ms (attempt ${attempt+1})`);
-      await new Promise(r => setTimeout(r, wait));
-      continue;
-    }
-    if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    const text = data.content.map(b => b.text || "").join("").trim();
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON in response");
-    try { return JSON.parse(fixJson(match[0])); }
-    catch(e) {
-      console.error("JSON parse failed at attempt", attempt, "raw snippet:", match[0].slice(0, 300));
-      if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
-      throw new Error(`JSON parse error: ${e.message}`);
+    try {
+      const res = await fetch(ANTHROPIC_API, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: maxTokens,
+          system,
+          messages: [{ role: "user", content: userPrompt }]
+        })
+      });
+      clearTimeout(timeout);
+      // Retry on 429 (rate limit) and 529 (overloaded) with backoff
+      if ((res.status === 429 || res.status === 529) && attempt < retries) {
+        const wait = (attempt + 1) * 3000;
+        console.log(`Anthropic ${res.status}, retrying in ${wait}ms (attempt ${attempt+1}/${retries})`);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.content.map(b => b.text || "").join("").trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON in response");
+      try { return JSON.parse(fixJson(match[0])); }
+      catch(e) {
+        console.error("JSON parse failed at attempt", attempt, "raw snippet:", match[0].slice(0, 300));
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        throw new Error(`JSON parse error: ${e.message}`);
+      }
+    } catch(err) {
+      clearTimeout(timeout);
+      if (err.name === "AbortError") {
+        if (attempt < retries) { console.log(`Timeout, retrying (attempt ${attempt+1})`); continue; }
+        throw new Error("Request timed out after 25s");
+      }
+      throw err;
     }
   }
 }
 
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
 // Vision pass — identifies product from image AND scores it in one call
-async function callClaudeVision(imageBase64, mediaType) {
-  const res = await fetch(ANTHROPIC_API, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "anthropic-version": "2023-06-01",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-    },
+async function callClaudeVision(imageBase64, mediaType, retries=3) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(ANTHROPIC_API, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+        },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1800,
@@ -255,13 +270,32 @@ SCORING RULES:
       }]
     })
   });
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  const text = data.content.map(b => b.text || "").join("").trim();
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON in vision response");
-  try { return JSON.parse(fixJson(match[0])); }
-  catch(e) { throw new Error(`Vision JSON parse error: ${e.message}`); }
+      clearTimeout(timeout);
+      if ((res.status === 429 || res.status === 529) && attempt < retries) {
+        const wait = (attempt + 1) * 3000;
+        console.log(`Vision ${res.status}, retrying in ${wait}ms (attempt ${attempt+1}/${retries})`);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.content.map(b => b.text || "").join("").trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON in vision response");
+      try { return JSON.parse(fixJson(match[0])); }
+      catch(e) {
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        throw new Error(`Vision JSON parse error: ${e.message}`);
+      }
+    } catch(err) {
+      clearTimeout(timeout);
+      if (err.name === "AbortError") {
+        if (attempt < retries) { console.log(`Vision timeout, retrying (attempt ${attempt+1})`); continue; }
+        throw new Error("Vision request timed out");
+      }
+      throw err;
+    }
+  }
 }
 
 async function pass1(productName, materialContext = null) {
@@ -296,6 +330,7 @@ MATERIALS (what the product is physically made of):
 - PACKAGING-ONLY: if plastic is only in discarded packaging, materials score stays 1-3.
 - PVA (polyvinyl alcohol) pod film in dishwasher/laundry pods: score 6-7 — PVA dissolves but enters waterways as microplastic pollution. Cascade, Tide, Finish pods all use PVA film.
 - Synthetic fragrances in cleaning products: score +1 — endocrine disrupting compounds, poorly regulated.
+- NATURAL FRAGRANCE vs SYNTHETIC: Salt & Stone, Tatcha, Herbivore, and documented clean beauty brands explicitly avoid synthetic fragrance. When these brands list "Fragrance (Parfum)" alongside individually disclosed natural components (limonene, linalool, eugenol, geraniol, citral) this is transparent natural fragrance disclosure — NOT synthetic. Do NOT apply synthetic fragrance penalty. Salt & Stone body care = materials 1-3, final 2-3.
 - Optical brighteners in laundry/dishwasher products: score +1 — persistent in environment, potential skin sensitizer.
 - Phosphates and surfactants in cleaning products: add to concerns.
 - SYNTHETIC TEXTILES: polyester, nylon, spandex/elastane, acrylic shed microfibers with every wash and wear. Daily skin contact with synthetic fabric = score 5-7. A product described as "spandex" or "elastane" that is majority synthetic = score 6-7.
@@ -430,6 +465,7 @@ category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.freque
 
 AUDIT RULES:
 MATERIALS: Only score plastic/chemical risk from materials user is exposed to during use. Discarded packaging must not drive materials above 3 for otherwise plastic-free products. BUT: PVA pod film (Cascade, Tide, Finish) = materials 6-7 because PVA enters waterways. Synthetic fragrances and optical brighteners in cleaning products = materials 6-7. Synthetic textiles (polyester, nylon, spandex) with daily skin contact = materials 5-7. ORGANIC CLOTHING: confirmed organic cotton, linen, wool, hemp, bamboo = materials 1-2 regardless of daily use. Known organic kids brands (Little Rad Things, Pact Kids, Hanna Andersson, Burt's Bees Baby) = final score 1-3.
+NATURAL FRAGRANCE RULE: Salt & Stone, Tatcha, Herbivore, Byredo, and similar clean beauty brands explicitly avoid synthetic fragrance. When these brands list "Fragrance (Parfum)" alongside individually disclosed natural components (limonene, linalool, eugenol, geraniol, citral, benzyl benzoate) this is transparent natural fragrance — NOT synthetic fragrance. Do NOT apply synthetic fragrance penalty. Materials score for Salt & Stone products must be 1-3. Final score for Salt & Stone body care must be 2-3, never 4+.
 USAGE: Daily plastic ingestion = usage 8-9. Leave-on skin contact daily = 7-8. Rinse-off = lower BUT dishwasher/laundry products are NOT zero — residue remains on dishes and clothing. Conventional dishwasher pods = usage 4-6. Genuinely clean formulas = usage 2-3. Vehicles = 3-5 max. EVs score 1-2 lower than gas.
 PACKAGING: Refillable/concentrated = 1-3. Single-use plastic = 7-9. Concentrated pod format does NOT excuse bad materials.
 SUSTAINABILITY: Products releasing PVA or synthetic chemicals to waterways = sustainability 5-7 even if concentrated. Genuinely clean (no PVA, no synthetic fragrance) = sustainability 1-3.
@@ -736,7 +772,12 @@ app.post("/analyze", async (req, res) => {
 
   } catch (err) {
     console.error("Error:", err.message);
-    res.status(500).json({ error: err.message });
+    const msg = err.message?.includes("529") || err.message?.includes("overload")
+      ? "Partiqule is in high demand right now. Please try again in a few seconds."
+      : err.message?.includes("timed out")
+      ? "That scan took too long. Please try again."
+      : err.message;
+    res.status(500).json({ error: msg });
   }
 });
 
