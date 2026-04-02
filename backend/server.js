@@ -115,6 +115,73 @@ function extractProductFromUrl(input) {
   return "Scanned product";
 }
 
+// ── SUBSTANCE REGISTRY ────────────────────────────────────────
+// Ingredient-triggered score floors — only activate when AI confirms
+// the substance in concerns. Overrides formula output for materials score.
+// Philosophy: confirmed bad ingredient = guaranteed minimum, regardless of
+// how the AI weighted other dimensions. Mirrors Yuka's hazard-floor logic.
+
+const SUBSTANCE_FLOORS = [
+  // ── PFAS / PTFE ──────────────────────────────────────────
+  { match: /\bPTFE\b|polytetrafluoroethylene|teflon/i,            mFloor: 8, uFloor: 7, reason: "PTFE/PFAS — carcinogen class, banned cookware coating" },
+  { match: /\bPFAS\b|perfluoro|PFOA|PFOS|GenX|PFBS/i,            mFloor: 8, uFloor: 7, reason: "PFAS — forever chemicals, EPA health advisory" },
+  // ── PETROLEUM DYES ───────────────────────────────────────
+  { match: /Red\s*40|Red\s*3|FD&C Red/i,                         mFloor: 7, uFloor: 6, reason: "Red 40/Red 3 — FDA-flagged petroleum dye, carcinogenicity" },
+  { match: /Yellow\s*5|Yellow\s*6|FD&C Yellow/i,                 mFloor: 7, uFloor: 6, reason: "Yellow 5/6 — petroleum dye, hyperactivity links" },
+  { match: /Blue\s*1|Blue\s*2|FD&C Blue/i,                       mFloor: 6, uFloor: 5, reason: "Blue 1/2 — petroleum dye, FDA review" },
+  { match: /titanium dioxide|TiO2/i,                             mFloor: 6, uFloor: 5, reason: "Titanium dioxide — IARC Group 2B carcinogen (EU food ban)" },
+  // ── PRESERVATIVES ────────────────────────────────────────
+  { match: /\bTBHQ\b|tert-butylhydroquinone/i,                   mFloor: 6, uFloor: 5, reason: "TBHQ — FDA-reviewed immunotoxin in frying oils" },
+  { match: /\bBHA\b|butylated hydroxyanisole/i,                  mFloor: 5, uFloor: 4, reason: "BHA — IARC Group 2B, possible carcinogen" },
+  { match: /\bBHT\b|butylated hydroxytoluene/i,                  mFloor: 5, uFloor: 4, reason: "BHT — animal carcinogen studies, endocrine disruption" },
+  { match: /sodium nitrite|sodium nitrate/i,                     mFloor: 6, uFloor: 5, reason: "Nitrites — WHO Group 2A carcinogen in processed meat" },
+  // ── CHEMICAL UV FILTERS ──────────────────────────────────
+  { match: /oxybenzone|benzophenone-3/i,                         mFloor: 7, uFloor: 7, reason: "Oxybenzone — detected in bloodstream after single use (FDA)" },
+  { match: /octinoxate|octyl methoxycinnamate/i,                 mFloor: 6, uFloor: 6, reason: "Octinoxate — FDA flagged for further safety review" },
+  { match: /avobenzone|homosalate|octisalate/i,                  mFloor: 5, uFloor: 5, reason: "Chemical UV filter — FDA systemic absorption concerns" },
+  // ── PLASTICS IN FOOD CONTACT ─────────────────────────────
+  { match: /\bPVA\b|polyvinyl alcohol.*pod|pod.*polyvinyl alcohol/i, mFloor: 6, uFloor: 5, reason: "PVA pod film — dissolves but enters waterways as microplastic" },
+  { match: /bisphenol|BPA|BPS|BPF/i,                            mFloor: 6, uFloor: 6, reason: "Bisphenol — endocrine disruptor, hormone mimicry" },
+  { match: /phthalate|DEHP|DBP|BBP/i,                           mFloor: 7, uFloor: 6, reason: "Phthalates — endocrine disruptors, reproductive toxins" },
+  // ── TEXTILE CHEMICALS ────────────────────────────────────
+  { match: /formaldehyde|formaldehyde resin|DMDHEU/i,            mFloor: 6, uFloor: 5, reason: "Formaldehyde — IARC Group 1 carcinogen in fabric finishes" },
+  { match: /azo dye|azo-dye|carcinogenic amine/i,               mFloor: 6, uFloor: 5, reason: "Azo dyes — can release carcinogenic aromatic amines" },
+  { match: /dimethylpolysiloxane|antifoam.*silicone|silicone.*antifoam/i, mFloor: 5, uFloor: 4, reason: "Dimethylpolysiloxane — silicone antifoaming agent in frying oils" },
+  // ── SWEETENERS ───────────────────────────────────────────
+  { match: /aspartame/i,                                         mFloor: 5, uFloor: 4, reason: "Aspartame — IARC Group 2B (2023), gut microbiome disruption" },
+  { match: /high.fructose corn syrup|HFCS/i,                    mFloor: 5, uFloor: 5, reason: "HFCS — metabolic risk, liver impact at high intake" },
+  // ── FLAME RETARDANTS ─────────────────────────────────────
+  { match: /PBDE|polybrominated|brominated flame/i,              mFloor: 8, uFloor: 7, reason: "PBDE flame retardants — banned, persistent neurotoxin" },
+  { match: /organophosphate flame|TCEP|TDCPP/i,                 mFloor: 7, uFloor: 6, reason: "Organophosphate flame retardant — carcinogen, endocrine disruptor" },
+  // ── FRAGRANCE ────────────────────────────────────────────
+  { match: /synthetic fragrance|fragrance.*parfum|artificial fragrance/i, mFloor: 5, uFloor: 4, reason: "Synthetic fragrance — undisclosed phthalates and VOCs" },
+];
+
+// Apply substance floors based on what AI actually found in concerns
+function applySubstanceFloors(mScore, uScore, p1, p2) {
+  // Collect all text the AI generated about this product
+  const concernsText = JSON.stringify([
+    ...(p1.product_analysis?.concerns || []),
+    ...(p1.materials?.concerns || []),
+    ...(p2?.refined_concerns || []),
+    ...(p1.raw_concerns || []),
+  ]).toLowerCase();
+  const summaryText  = (p1.summary || p2?.summary || "").toLowerCase();
+  const allText      = concernsText + " " + summaryText;
+
+  let triggered = [];
+  for (const rule of SUBSTANCE_FLOORS) {
+    if (rule.match.test(allText)) {
+      if (mScore < rule.mFloor || uScore < rule.uFloor) {
+        mScore = Math.max(mScore, rule.mFloor);
+        uScore = Math.max(uScore, rule.uFloor);
+        triggered.push(rule.reason);
+      }
+    }
+  }
+  return { mScore, uScore, triggered };
+}
+
 // ── PEER COMPARISON DATA ──────────────────────────────────────
 // Average scores by category — used for peer comparison stat
 const CATEGORY_AVERAGES = {
@@ -903,6 +970,14 @@ app.post("/analyze", async (req, res) => {
       let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
       let mfScore = p2?.manufacturing_score  ?? p1.manufacturing?.score   ?? 5;
 
+      // ── Substance-triggered floors ──
+      const imgSubstance = applySubstanceFloors(mScore, uScore, p1, p2);
+      mScore = imgSubstance.mScore;
+      uScore = imgSubstance.uScore;
+      if (imgSubstance.triggered.length > 0) {
+        console.log(`Image path substance floors: ${imgSubstance.triggered.join(", ")}`);
+      }
+
       if (category === "restaurant") {
         const rname = (p1.product_name || productName).toLowerCase();
         const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(rname);
@@ -1045,6 +1120,14 @@ app.post("/analyze", async (req, res) => {
     let pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
     let sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
     let mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
+
+    // ── Substance-triggered floors — only activate when AI confirms bad ingredient ──
+    const substanceResult = applySubstanceFloors(mScore, uScore, p1, p2);
+    mScore = substanceResult.mScore;
+    uScore = substanceResult.uScore;
+    if (substanceResult.triggered.length > 0) {
+      console.log(`Substance floors triggered: ${substanceResult.triggered.join(", ")}`);
+    }
 
     // ── Restaurant dimension floors — soft safety nets only, let AI lead ──
     if (finalCategory === "restaurant") {
