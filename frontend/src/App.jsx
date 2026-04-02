@@ -1237,11 +1237,10 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
   const tierCfg  = TIER_CONFIG[tierKey] || TIER_FALLBACK;
   const tierNum  = analysis.composition_tier || analysis.nova_score || tierCfg.tier;
 
-  // Normalize concern field name (ingredient vs substance)
-  const concerns = (analysis.concerns || []).map(c => ({
-    ...c,
-    name: c.substance || c.ingredient || "Unknown",
-  }));
+  // Normalize concern field name (ingredient vs substance) — filter out any with no name
+  const concerns = (analysis.concerns || [])
+    .map(c => ({ ...c, name: c.substance || c.ingredient || "" }))
+    .filter(c => c.name && c.name.trim().length > 0);
 
   const highs  = concerns.filter(c => c.severity === "high");
   const meds   = concerns.filter(c => c.severity === "medium");
@@ -3820,8 +3819,10 @@ function App() {
                 {/* Alt teaser — above dropdowns */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-                  if (!topAlt || (result.overall_score||result.score) <= 3) return null;
+                  const currentScore = result.overall_score || result.score;
+                  if (!topAlt || currentScore <= 3) return null;
                   const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
+                  if (altS >= currentScore) return null; // don't show if not actually better
                   return (
                     <button
                       onClick={()=>document.getElementById("safer-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}

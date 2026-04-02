@@ -361,7 +361,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
   "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }
-NOTE: For food_beverage or restaurant, replace nutrition null with values ONLY if you are highly confident in their accuracy — either you can read them directly from the label in the image, or they are from the chain's official published data you are certain of. Set nutrition_verified: true only in that case. If uncertain about any value, set that field to null. Never estimate or interpolate — null is always better than a wrong number.` }
+NOTE: For food_beverage or restaurant, populate nutrition with values you know or can reasonably confirm. For restaurant items from major chains, populate what you know and set nutrition_verified: false. Only set nutrition_verified: true if you are certain of exact values. Set individual fields to null if uncertain — partial data is useful. Only set the entire nutrition object to null if you have no useful data at all.` }
         ]
       }]
     })
@@ -573,12 +573,12 @@ Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfib
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
 NUTRITION — for food_beverage AND restaurant categories only. Rules:
-1. PACKAGED FOOD: Only populate if you can read the values directly from the label in the image, or if you know the exact published nutrition facts with very high confidence. Use the per-serving values as defined by the manufacturer.
-2. RESTAURANT ITEMS: Only populate if you know the chain's official published values for this exact menu item with very high confidence. Do not estimate based on ingredients.
-3. If you are not certain about a specific field, set it to null — never estimate, interpolate, or calculate. A null is always better than a wrong number.
-4. Set nutrition_verified: true only when you are highly confident all populated values are accurate. Set false if any values are uncertain or estimated.
-5. Set nutrition to null entirely for non-food categories.
-Format: {"serving_size":"8-piece nuggets", "calories":260, "protein_g":28, "carbs_g":11, "sugar_g":1, "fat_g":13, "fiber_g":0, "sodium_mg":1010}
+1. PACKAGED FOOD: Populate if you can read values from the label image, OR if you know the published nutrition facts with high confidence. Use per-serving values as defined by the manufacturer.
+2. RESTAURANT ITEMS: Populate using the chain's official published values. For major chains (McDonald's, Chick-fil-A, Chipotle, Taco Bell, Fuzzy's, etc.) you likely know the approximate values — populate what you know with reasonable confidence and set nutrition_verified: false. Only set nutrition_verified: true if you are certain of the exact values.
+3. Set individual fields to null if uncertain about that specific value — partial nutrition data is useful. Populate calories and sodium at minimum if you know them.
+4. Only set the entire nutrition object to null if you have no useful data at all.
+5. Never fabricate precise numbers — if you know calories are approximately 280, return 280. If you're guessing between 200-350, return null for that field.
+Format: {"serving_size":"1 taco", "calories":280, "protein_g":17, "carbs_g":14, "sugar_g":1, "fat_g":16, "fiber_g":null, "sodium_mg":430}
 
 RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives provide two types of suggestions:
 TYPE 1 — "Order smarter": 1-2 cleaner options from the SAME restaurant (e.g. Chick-fil-A nuggets → Chick-fil-A grilled chicken sandwich, side salad). Use the format "Chick-fil-A Grilled Chicken Sandwich" as the name so users know it's the same place. Reason should explain why it's cleaner (grilled vs fried, no additives, lower sodium).
