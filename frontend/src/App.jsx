@@ -4000,24 +4000,34 @@ function App() {
 
             {/* Globe-inspired header */}
             <div style={{background:"#052e16", padding:isMobile?"28px 20px 32px":"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
+              <style>{`
+                @keyframes orbitSpin1{from{transform:rotate(-25deg)}to{transform:rotate(335deg)}}
+                @keyframes orbitSpin2{from{transform:rotate(50deg)}to{transform:rotate(410deg)}}
+                @keyframes corePulse{0%,100%{r:18}50%{r:20}}
+                @keyframes altFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+                @keyframes particleFade{0%,100%{opacity:0.2}50%{opacity:0.6}}
+                .alt-globe{animation:altFloat 3s ease-in-out infinite}
+                .orbit1{transform-origin:60px 60px;animation:orbitSpin1 4s linear infinite}
+                .orbit2{transform-origin:60px 60px;animation:orbitSpin2 6s linear infinite reverse}
+              `}</style>
               {/* Particle dots */}
               {[
-                {s:8,x:"8%",y:"25%",a:0.2},{s:5,x:"88%",y:"18%",a:0.15},
-                {s:10,x:"15%",y:"70%",a:0.12},{s:6,x:"92%",y:"65%",a:0.18},
-                {s:4,x:"45%",y:"8%",a:0.2},{s:7,x:"72%",y:"80%",a:0.12},
-                {s:5,x:"30%",y:"85%",a:0.15},{s:8,x:"80%",y:"40%",a:0.1},
+                {s:8,x:"8%",y:"25%",a:0.2,d:"0s"},{s:5,x:"88%",y:"18%",a:0.15,d:"0.5s"},
+                {s:10,x:"15%",y:"70%",a:0.12,d:"1s"},{s:6,x:"92%",y:"65%",a:0.18,d:"1.5s"},
+                {s:4,x:"45%",y:"8%",a:0.2,d:"0.8s"},{s:7,x:"72%",y:"80%",a:0.12,d:"0.3s"},
+                {s:5,x:"30%",y:"85%",a:0.15,d:"1.2s"},{s:8,x:"80%",y:"40%",a:0.1,d:"0.6s"},
               ].map((p,i)=>(
-                <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:"50%", background:"white", opacity:p.a, pointerEvents:"none"}}/>
+                <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:"50%", background:"white", opacity:p.a, pointerEvents:"none", animation:`particleFade 3s ease-in-out ${p.d} infinite`}}/>
               ))}
 
               <button onClick={()=>setShowAlts(false)} style={{position:"absolute", top:16, left:16, background:"rgba(255,255,255,0.1)", border:"none", color:"#86efac", cursor:"pointer", fontSize:14, fontWeight:600, padding:"8px 14px", borderRadius:20, display:"flex", alignItems:"center", gap:6}}>
                 ← Back
               </button>
 
-              {/* Orbital rings */}
-              <svg width="120" height="120" viewBox="0 0 120 120" style={{margin:"0 auto 16px", display:"block"}}>
-                <ellipse cx="60" cy="60" rx="50" ry="15" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.5" transform="rotate(-25 60 60)"/>
-                <ellipse cx="60" cy="60" rx="44" ry="12" fill="none" stroke="#86efac" strokeWidth="1" opacity="0.3" transform="rotate(50 60 60)"/>
+              {/* Animated orbital rings */}
+              <svg width="120" height="120" viewBox="0 0 120 120" style={{margin:"0 auto 16px", display:"block"}} className="alt-globe">
+                <ellipse cx="60" cy="60" rx="50" ry="15" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.55" className="orbit1"/>
+                <ellipse cx="60" cy="60" rx="44" ry="12" fill="none" stroke="#86efac" strokeWidth="1" opacity="0.35" className="orbit2"/>
                 <circle cx="60" cy="60" r="22" fill="#16a34a"/>
                 <circle cx="60" cy="60" r="18" fill="#4ade80"/>
                 <circle cx="53" cy="53" r="7" fill="#bbf7d0" opacity="0.6"/>
