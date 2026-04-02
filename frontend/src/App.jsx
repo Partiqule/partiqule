@@ -3723,11 +3723,6 @@ function App() {
         <>
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"8px 0 60px":`40px 40px 80px`}}>
           <div style={{padding: isMobile ? "0 12px" : 0}}>
-          <button onClick={reset} style={{background:isDark?"#1e2433":"#f0fdf4", border:`1.5px solid ${isDark?"#2a3347":"#bbf7d0"}`, color:"#16a34a", cursor:"pointer", fontSize:14, fontWeight:600, marginBottom:24, padding:"8px 18px", borderRadius:20, display:"flex", alignItems:"center", gap:6, transition:"all 0.15s"}}
-            onMouseEnter={e=>{e.currentTarget.style.background="#052e16"; e.currentTarget.style.color="#4ade80";}}
-            onMouseLeave={e=>{e.currentTarget.style.background=isDark?"#1e2433":"#f0fdf4"; e.currentTarget.style.color="#16a34a";}}>
-            ← Search again
-          </button>
           </div>
 
           {/* Demo banner */}
