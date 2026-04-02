@@ -125,7 +125,153 @@ const products = [
     tags: ["water bottle", "glass", "reusable", "drink", "bottle", "tea", "coffee", "beverage"]
   },
 
-  // ── PERSONAL CARE & COSMETICS ────────────────────────────
+  // ── DRINKS & BEVERAGES ───────────────────────────────────
+  {
+    id: "dr-001",
+    name: "Olipop Vintage Cola",
+    brand: "Olipop",
+    category: "food_beverage",
+    plasticScore: 2,
+    material: "Plant fiber, prebiotics, natural flavors",
+    description: "Tastes like cola, 2-5g sugar, 9g fiber, no artificial dyes",
+    affiliateUrl: `https://www.amazon.com/s?k=Olipop+vintage+cola&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["soda", "cola", "pepsi", "coke", "diet coke", "diet pepsi", "coca cola", "soft drink", "fizzy drink", "sparkling", "carbonated", "pop"]
+  },
+  {
+    id: "dr-002",
+    name: "Olipop Classic Root Beer",
+    brand: "Olipop",
+    category: "food_beverage",
+    plasticScore: 2,
+    material: "Plant fiber, prebiotics, natural flavors",
+    description: "35 calories, 9g prebiotic fiber, no artificial sweeteners",
+    affiliateUrl: `https://www.amazon.com/s?k=Olipop+root+beer&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["root beer", "soda", "soft drink", "sparkling", "carbonated", "sugar free", "diet soda"]
+  },
+  {
+    id: "dr-003",
+    name: "Poppi Prebiotic Soda",
+    brand: "Poppi",
+    category: "food_beverage",
+    plasticScore: 2,
+    material: "Apple cider vinegar, natural fruit juice, prebiotics",
+    description: "5g sugar, gut-friendly, no artificial dyes or sweeteners",
+    affiliateUrl: `https://www.amazon.com/s?k=Poppi+prebiotic+soda&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["soda", "cola", "sparkling", "carbonated", "soft drink", "pepsi", "coke", "sprite", "lemon lime", "cherry", "grape", "orange soda"]
+  },
+  {
+    id: "dr-004",
+    name: "Spindrift Sparkling Water",
+    brand: "Spindrift",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "Real squeezed fruit, sparkling water — nothing else",
+    description: "Only sparkling water with real fruit juice, no natural flavors",
+    affiliateUrl: `https://www.amazon.com/s?k=Spindrift+sparkling+water&tag=${AMAZON_TAG}`,
+    price: "$1–2",
+    tags: ["sparkling water", "soda water", "fizzy water", "flavored water", "LaCroix", "Bubly", "Perrier", "San Pellegrino", "topo chico", "carbonated water", "seltzer"]
+  },
+  {
+    id: "dr-005",
+    name: "Waterloo Sparkling Water",
+    brand: "Waterloo",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "Purified water, natural flavors — no sweeteners, no sodium",
+    description: "Non-GMO, no PFAS, BPA-free cans, strong carbonation",
+    affiliateUrl: `https://www.amazon.com/s?k=Waterloo+sparkling+water&tag=${AMAZON_TAG}`,
+    price: "$1–2",
+    tags: ["sparkling water", "LaCroix", "Bubly", "seltzer", "carbonated water", "fizzy water", "flavored water", "soda water"]
+  },
+  {
+    id: "dr-006",
+    name: "Celsius Energy Drink",
+    brand: "Celsius",
+    category: "food_beverage",
+    plasticScore: 2,
+    material: "Green tea extract, guarana, ginger, vitamin C — no artificial colors",
+    description: "No artificial dyes, no aspartame, no high fructose corn syrup",
+    affiliateUrl: `https://www.amazon.com/s?k=Celsius+energy+drink&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["energy drink", "red bull", "monster", "bang", "rockstar", "caffeine", "pre workout", "performance drink", "sports drink"]
+  },
+  {
+    id: "dr-007",
+    name: "Guayaki Yerba Mate",
+    brand: "Guayaki",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "Organic yerba mate leaf, organic flavors — no synthetic additives",
+    description: "USDA Organic, fair trade, sustained energy without jitters",
+    affiliateUrl: `https://www.amazon.com/s?k=Guayaki+yerba+mate&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["energy drink", "red bull", "monster", "caffeine", "tea", "green tea", "matcha", "coffee alternative", "boost", "energy", "sparkling"]
+  },
+  {
+    id: "dr-008",
+    name: "GT's Synergy Kombucha",
+    brand: "GT's",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "Organic raw kombucha, live cultures, fruit juice",
+    description: "Raw, unpasteurized, USDA Organic, naturally carbonated",
+    affiliateUrl: `https://www.amazon.com/s?k=GTs+synergy+kombucha&tag=${AMAZON_TAG}`,
+    price: "$3–4",
+    tags: ["kombucha", "soda", "sparkling", "probiotic drink", "fermented", "gut health", "juice", "fizzy"]
+  },
+  {
+    id: "dr-009",
+    name: "Harmless Harvest Coconut Water",
+    brand: "Harmless Harvest",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "100% raw organic coconut water — single ingredient",
+    description: "No added sugar, no preservatives, fair trade, organic",
+    affiliateUrl: `https://www.amazon.com/s?k=Harmless+Harvest+coconut+water&tag=${AMAZON_TAG}`,
+    price: "$3–4",
+    tags: ["coconut water", "juice", "sports drink", "gatorade", "powerade", "electrolytes", "vitamin water", "hydration"]
+  },
+  {
+    id: "dr-010",
+    name: "Liquid Death Mountain Water",
+    brand: "Liquid Death",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "Pure mountain water in infinitely recyclable aluminum",
+    description: "Aluminum cans vs plastic bottles — dramatically lower microplastic risk",
+    affiliateUrl: `https://www.amazon.com/s?k=Liquid+Death+mountain+water&tag=${AMAZON_TAG}`,
+    price: "$1–2",
+    tags: ["water", "bottled water", "dasani", "aquafina", "smart water", "evian", "fiji", "plastic bottle", "poland spring"]
+  },
+  {
+    id: "dr-011",
+    name: "Honest Tea Organic Green Tea",
+    brand: "Honest Tea",
+    category: "food_beverage",
+    plasticScore: 2,
+    material: "Organic brewed tea, organic cane sugar — no artificial flavors",
+    description: "USDA Organic, Fair Trade, low sugar, no artificial dyes",
+    affiliateUrl: `https://www.amazon.com/s?k=Honest+Tea+organic+green+tea&tag=${AMAZON_TAG}`,
+    price: "$2–3",
+    tags: ["iced tea", "tea", "green tea", "sweet tea", "arizona tea", "snapple", "lipton", "bottled tea", "juice"]
+  },
+  {
+    id: "dr-012",
+    name: "Martinelli's Apple Juice",
+    brand: "Martinelli's",
+    category: "food_beverage",
+    plasticScore: 1,
+    material: "100% US grown apple juice, no additives, glass bottle",
+    description: "No added sugar, no preservatives, no artificial colors, glass packaging",
+    affiliateUrl: `https://www.amazon.com/s?k=Martinellis+apple+juice&tag=${AMAZON_TAG}`,
+    price: "$3–5",
+    tags: ["juice", "apple juice", "orange juice", "fruit juice", "kids drink", "tropicana", "minute maid", "simply orange", "juicebox"]
+  },
+
+
   {
     id: "pc-001",
     name: "Ethique Shampoo Bar",
