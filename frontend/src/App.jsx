@@ -1286,6 +1286,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           {/* Nutrition — food only, compact single row */}
           {analysis.nutrition && (() => {
             const n = analysis.nutrition;
+            const verified = analysis.nutrition_verified !== false;
             const nutColor  = isDark ? "#f1f5f9" : "#111";
             const nutMuted  = isDark ? "#64748b"  : "#888";
             const items = [
@@ -1300,8 +1301,15 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
             if (!items.length) return null;
             return (
               <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
-                <div style={{fontSize:10, color:nutMuted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
-                  Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
+                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
+                  <div style={{fontSize:10, color:nutMuted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>
+                    Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
+                  </div>
+                  {!verified && (
+                    <div style={{fontSize:10, color:"#f59e0b", fontWeight:600, display:"flex", alignItems:"center", gap:3}}>
+                      ⚠ Estimated
+                    </div>
+                  )}
                 </div>
                 <div style={{display:"flex", flexWrap:"wrap", gap:"4px 16px"}}>
                   {items.map((item,i) => (
@@ -1311,6 +1319,9 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
                     </span>
                   ))}
                 </div>
+                {!verified && (
+                  <div style={{fontSize:10, color:nutMuted, marginTop:6, fontStyle:"italic"}}>Values may be approximate — verify on the label or restaurant website</div>
+                )}
               </div>
             );
           })()}

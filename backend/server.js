@@ -350,6 +350,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
     ],
     "positives": [{"attribute": "positive attribute", "reason": "max 8 words"}],
     "nutrition": null,
+    "nutrition_verified": false,
     "confidence": "high|medium|low",
     "confidence_note": "max 10 words"
   },
@@ -360,7 +361,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
   "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }
-NOTE: For food_beverage, replace nutrition null with PER-SERVING values as listed on the label (not whole package): {"serving_size":"about 7 pieces (37g)","calories":180,"protein_g":2,"carbs_g":25,"sugar_g":22,"fat_g":7,"fiber_g":1,"sodium_mg":20}` }
+NOTE: For food_beverage or restaurant, replace nutrition null with values ONLY if you are highly confident in their accuracy — either you can read them directly from the label in the image, or they are from the chain's official published data you are certain of. Set nutrition_verified: true only in that case. If uncertain about any value, set that field to null. Never estimate or interpolate — null is always better than a wrong number.` }
         ]
       }]
     })
@@ -546,9 +547,13 @@ Tier 2 (conventional): standard commercial, some synthetics, generally low conce
 Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
-NUTRITION — for food_beverage AND restaurant categories, populate the nutrition field with per-serving or per-item data. For packaged food use the nutrition facts label serving size exactly. For restaurant items use the chain's OFFICIAL published nutrition data only — do not estimate or calculate. If you are not certain of the exact published values for that specific menu item, set individual fields to null rather than guessing. It is better to return null than an incorrect number.
+NUTRITION — for food_beverage AND restaurant categories only. Rules:
+1. PACKAGED FOOD: Only populate if you can read the values directly from the label in the image, or if you know the exact published nutrition facts with very high confidence. Use the per-serving values as defined by the manufacturer.
+2. RESTAURANT ITEMS: Only populate if you know the chain's official published values for this exact menu item with very high confidence. Do not estimate based on ingredients.
+3. If you are not certain about a specific field, set it to null — never estimate, interpolate, or calculate. A null is always better than a wrong number.
+4. Set nutrition_verified: true only when you are highly confident all populated values are accurate. Set false if any values are uncertain or estimated.
+5. Set nutrition to null entirely for non-food categories.
 Format: {"serving_size":"8-piece nuggets", "calories":260, "protein_g":28, "carbs_g":11, "sugar_g":1, "fat_g":13, "fiber_g":0, "sodium_mg":1010}
-Use null for any field you cannot confirm with high confidence. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
 
 RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives provide two types of suggestions:
 TYPE 1 — "Order smarter": 1-2 cleaner options from the SAME restaurant (e.g. Chick-fil-A nuggets → Chick-fil-A grilled chicken sandwich, side salad). Use the format "Chick-fil-A Grilled Chicken Sandwich" as the name so users know it's the same place. Reason should explain why it's cleaner (grilled vs fried, no additives, lower sodium).
@@ -674,8 +679,8 @@ Return ONLY this JSON:
     "tier_label": "conventional|clean_formula|synthetic_heavy|high_concern|natural_fiber|synthetic|chemical_treated|plant_based|industrial_chemical|clean_safe|concern_flagged|high_risk_infants|whole_food|minimally_processed|processed|ultra_processed|whole_food_derived|synthetic_formula|natural_materials|synthetic_foam",
     "tier_description": "max 8 words describing this product composition",
     "nutrition": null,
+    "nutrition_verified": false,
     "concerns": [
-      {"substance": "substance name", "type": "dye|preservative|sweetener|additive|uv_filter|fragrance|surfactant|coating|fiber|chemical|plasticizer|flame_retardant|processing|pesticide", "severity": "high|medium|low", "reason": "max 12 words citing research"}
     ],
     "positives": [
       {"attribute": "EWG Verified", "reason": "max 8 words"}
