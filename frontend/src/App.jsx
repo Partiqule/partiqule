@@ -3067,6 +3067,8 @@ function App() {
   const [showAuth,    setShowAuth]   = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [modalQuery,  setModalQuery] = useState("");
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
@@ -3244,7 +3246,51 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setModalQuery("");};
+
+  // Shared image scan handler — used by hero and scan modal
+  const handleImageScan = async (file, onDone) => {
+    if (!file) return;
+    setShowScanModal(false);
+    setResult(null); setError(null); setPage("home");
+    setLoading(true); setQuery("Reading label…");
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX = 1200;
+          const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+          canvas.width  = Math.round(img.width  * ratio);
+          canvas.height = Math.round(img.height * ratio);
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+        };
+        img.onerror = rej;
+        img.src = url;
+      });
+      const idResp = await fetch(`${API_BASE}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
+      });
+      if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
+      if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
+      const data = await idResp.json();
+      if (!data.product_name) throw new Error("Nothing detected");
+      setQuery(data.product_name);
+      setResult(data);
+      saveToHistory(data);
+      setLoading(false);
+      if (onDone) onDone();
+    } catch(err) {
+      console.error("Image scan error:", err);
+      setLoading(false); setQuery("");
+      setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
+    }
+  };
 
   const bg      = isDark?"#131929":"#fafafa";
   const surface = isDark?"#1e2433":"#fff";
@@ -3349,6 +3395,78 @@ function App() {
       </header>
 
       {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>setUser(u)}/>}
+
+      {/* SCAN MODAL */}
+      {showScanModal && (
+        <div style={{position:"fixed", inset:0, zIndex:9995, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"flex-end", justifyContent:"center", padding:"0 0 0"}}
+          onClick={()=>setShowScanModal(false)}>
+          <div style={{background:isDark?"#1e2433":"#fff", borderRadius:"20px 20px 0 0", padding:"28px 20px 48px", width:"100%", maxWidth:480}}
+            onClick={e=>e.stopPropagation()}>
+
+            {/* Handle bar */}
+            <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 24px"}}/>
+
+            <div style={{fontSize:16, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:16, textAlign:"center"}}>
+              Scan a product
+            </div>
+
+            {/* Search input */}
+            <div style={{display:"flex", background:isDark?"#131929":"#f9fafb", borderRadius:14, border:`1.5px solid ${border}`, height:52, marginBottom:16, overflow:"hidden"}}>
+              <div style={{display:"flex", alignItems:"center", paddingLeft:14, flexShrink:0}}>
+                <IcoSearch size={18}/>
+              </div>
+              <input
+                autoFocus
+                value={modalQuery}
+                onChange={e=>setModalQuery(e.target.value)}
+                onKeyDown={e=>{
+                  if (e.key === "Enter" && modalQuery.trim()) {
+                    setShowScanModal(false);
+                    setQuery(modalQuery);
+                    analyze(modalQuery);
+                  }
+                }}
+                placeholder="Search any product…"
+                style={{flex:1, padding:"0 10px", border:"none", outline:"none", fontSize:15, background:"transparent", color:text}}
+              />
+              <button
+                onClick={()=>{
+                  if (modalQuery.trim()) {
+                    setShowScanModal(false);
+                    setQuery(modalQuery);
+                    analyze(modalQuery);
+                  }
+                }}
+                disabled={!modalQuery.trim()}
+                style={{width:64, flexShrink:0, border:"none", background:modalQuery.trim()?"#052e16":"transparent", color:modalQuery.trim()?"#4ade80":muted, fontWeight:700, fontSize:14, cursor:modalQuery.trim()?"pointer":"default"}}>
+                Scan
+              </button>
+            </div>
+
+            {/* Camera option */}
+            <label style={{display:"flex", alignItems:"center", gap:14, padding:"16px", borderRadius:14, border:`1.5px solid ${border}`, background:isDark?"#131929":"#f9fafb", cursor:"pointer"}}>
+              <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                onChange={async(e)=>{
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  e.target.value = "";
+                  await handleImageScan(file);
+                }}/>
+              <div style={{width:44, height:44, borderRadius:12, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{fontSize:14, fontWeight:600, color:text}}>Photo scan</div>
+                <div style={{fontSize:12, color:muted}}>Tap to photograph a label, tag, or packaging</div>
+              </div>
+              <div style={{marginLeft:"auto", color:muted, fontSize:18}}>›</div>
+            </label>
+          </div>
+        </div>
+      )}
 
       {page === "admin" ? (
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
@@ -3477,49 +3595,12 @@ function App() {
                   {isMobile && (
                     <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
                       <input type="file" accept="image/*" style={{display:"none"}}
-                        onChange={async (e) => {
+                        onChange={async(e)=>{
                           const file = e.target.files?.[0];
                           if (!file) return;
                           e.target.value = "";
-                          setResult(null); setError(null); setPage("home");
-                          setLoading(true); setQuery("Reading label…");
-                          try {
-                            const base64 = await new Promise((res, rej) => {
-                              const img = new Image();
-                              const url = URL.createObjectURL(file);
-                              img.onload = () => {
-                                const canvas = document.createElement("canvas");
-                                const MAX = 1200;
-                                const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                                canvas.width  = Math.round(img.width  * ratio);
-                                canvas.height = Math.round(img.height * ratio);
-                                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-                                URL.revokeObjectURL(url);
-                                res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
-                              };
-                              img.onerror = rej;
-                              img.src = url;
-                            });
-                            const idResp = await fetch(`${API_BASE}/analyze`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
-                            });
-                            if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
-                            if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
-                            const data = await idResp.json();
-                            if (!data.product_name) throw new Error("Nothing detected");
-                            setQuery(data.product_name);
-                            setResult(data);
-                            saveToHistory(data);
-                            setLoading(false);
-                          } catch(err) {
-                            console.error("Image scan error:", err);
-                            setLoading(false); setQuery("");
-                            setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
-                          }
-                        }}
-                      />
+                          await handleImageScan(file);
+                        }}/>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="4"/>
@@ -4159,7 +4240,7 @@ function App() {
           {fabOpen && (
             <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, padding:"0 20px", width:"100%", maxWidth:360}}>
               {[
-                { icon:<IcoScan size={28}/>,    label:"New scan",    action:()=>{reset(); setFabOpen(false);} },
+                { icon:<IcoScan size={28}/>,    label:"New scan",    action:()=>{setModalQuery(""); setShowScanModal(true); setFabOpen(false);} },
                 { icon:<IcoSaved size={28}/>,   label:"My scans",    action:()=>{setPage("history"); setResult(null); setFabOpen(false);} },
                 { icon:<IcoScore size={28}/>,   label:"How it works", action:()=>{setPage("methodology"); setResult(null); setFabOpen(false);} },
                 { icon:<IcoProfile size={28}/>, label: user ? "Account" : "Sign in",
@@ -4184,7 +4265,7 @@ function App() {
             </button>
 
             {/* New Scan bubble */}
-            <button onClick={reset}
+            <button onClick={()=>{setModalQuery(""); setShowScanModal(true); setFabOpen(false);}}
               style={{width:44, height:44, borderRadius:"50%", background:isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
               <IcoScan size={18}/>
             </button>
