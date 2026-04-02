@@ -4086,6 +4086,7 @@ function App() {
 
               {/* DB alternatives */}
               {(() => {
+                const isRestaurant = result.category === "restaurant";
                 const dbAlts = (result.alternatives || []).slice(0, 3);
                 const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
                 const aiAlts = (result.ai_alternatives || [])
@@ -4093,32 +4094,39 @@ function App() {
                   .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                   .slice(0, 3 - dbAlts.length);
                 const hasAffiliate = dbAlts.length > 0 && result.category !== "other" && result.category !== "restaurant";
-                const isRestaurant = result.category === "restaurant";
 
-                // For restaurants split into same-place vs better-alternative
-                const samePlace = isRestaurant ? aiAlts.filter((_, i) => i < 2) : [];
-                const betterAlt = isRestaurant ? aiAlts.filter((_, i) => i >= 2) : [];
+                // For restaurants use result.alternatives directly (AI suggestions land there)
+                // Split: first 2 = same place, last = better alternative
+                const restAlts = isRestaurant ? dbAlts : [];
+                const samePlace = isRestaurant ? restAlts.slice(0, 2) : [];
+                const betterAlt = isRestaurant ? restAlts.slice(2) : [];
 
-                if (!dbAlts.length && !aiAlts.length) return (
+                const noResults = isRestaurant ? restAlts.length === 0 : (!dbAlts.length && !aiAlts.length);
+                if (noResults) return (
                   <div style={{textAlign:"center", padding:"40px 20px", color:muted, fontSize:14}}>
                     No specific alternatives found. Try scanning a similar product for recommendations.
                   </div>
                 );
 
-                const AltCard = ({alt, i}) => (
-                  <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                      <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                const AltCard = ({alt, i}) => {
+                  const score = alt.estimated_score ?? alt.score ?? 3;
+                  const reason = alt.reason || alt.description || "";
+                  const material = alt.material || "";
+                  return (
+                    <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                      <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                        <div style={{background:scoreBg(score), color:scoreColor(score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{score}/10</div>
+                      </div>
+                      {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
+                      {reason && <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{reason}</div>}
+                      <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                        style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                        <IcoSearch size={14}/> Scan this →
+                      </button>
                     </div>
-                    <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
-                    <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                    <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                      style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                      <IcoSearch size={14}/> Scan this →
-                    </button>
-                  </div>
-                );
+                  );
+                };
 
                 return (
                   <div style={{display:"flex", flexDirection:"column", gap:10}}>
