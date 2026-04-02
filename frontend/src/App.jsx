@@ -4055,36 +4055,56 @@ function App() {
                   .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
                   .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                   .slice(0, 3 - dbAlts.length);
-                const hasAffiliate = dbAlts.length > 0 && result.category !== "other";
+                const hasAffiliate = dbAlts.length > 0 && result.category !== "other" && result.category !== "restaurant";
+                const isRestaurant = result.category === "restaurant";
+
+                // For restaurants split into same-place vs better-alternative
+                const samePlace = isRestaurant ? aiAlts.filter((_, i) => i < 2) : [];
+                const betterAlt = isRestaurant ? aiAlts.filter((_, i) => i >= 2) : [];
+
                 if (!dbAlts.length && !aiAlts.length) return (
                   <div style={{textAlign:"center", padding:"40px 20px", color:muted, fontSize:14}}>
                     No specific alternatives found. Try scanning a similar product for recommendations.
                   </div>
                 );
+
+                const AltCard = ({alt, i}) => (
+                  <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                      <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                    </div>
+                    <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
+                    <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                    <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                      style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                      <IcoSearch size={14}/> Scan this →
+                    </button>
+                  </div>
+                );
+
                 return (
                   <div style={{display:"flex", flexDirection:"column", gap:10}}>
-                    <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
-                    {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
-                    {aiAlts.length > 0 && (
-                      <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
-                        {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
-                        {aiAlts.map((alt, i) => (
-                          <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                              <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
-                            </div>
-                            <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
-                            <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                            <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                              style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                              <IcoSearch size={14}/> Scan this product →
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {hasAffiliate && <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5}}>Affiliate links — commission at no extra cost to you. Never influences our scores.</p>}
+                    {isRestaurant ? (<>
+                      {samePlace.length > 0 && (<>
+                        <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Order smarter — same place</div>
+                        {samePlace.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
+                      </>)}
+                      {betterAlt.length > 0 && (<>
+                        <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginTop:8, marginBottom:4}}>Better alternative</div>
+                        {betterAlt.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
+                      </>)}
+                    </>) : (<>
+                      <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
+                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                      {aiAlts.length > 0 && (
+                        <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
+                          {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
+                          {aiAlts.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
+                        </div>
+                      )}
+                      {hasAffiliate && <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5}}>Affiliate links — commission at no extra cost to you. Never influences our scores.</p>}
+                    </>)}
                   </div>
                 );
               })()}

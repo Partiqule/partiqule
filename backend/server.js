@@ -550,7 +550,10 @@ NUTRITION — for food_beverage only, populate the nutrition field with per-serv
 Format: {"serving_size":"about 7 pieces (37g)", "calories":180, "protein_g":2, "carbs_g":25, "sugar_g":22, "fat_g":7, "fiber_g":1, "sodium_mg":20}
 Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
 
-RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives suggest healthier homemade or restaurant versions of the same dish (e.g. Chick-fil-A nuggets → homemade buttermilk chicken, Raising Cane's → grilled chicken). Do NOT suggest grocery products as alternatives for restaurant items.
+RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives provide two types of suggestions:
+TYPE 1 — "Order smarter": 1-2 cleaner options from the SAME restaurant (e.g. Chick-fil-A nuggets → Chick-fil-A grilled chicken sandwich, side salad). Use the format "Chick-fil-A Grilled Chicken Sandwich" as the name so users know it's the same place. Reason should explain why it's cleaner (grilled vs fried, no additives, lower sodium).
+TYPE 2 — "Better alternative": 1 suggestion from a cleaner chain or homemade version for the same craving (e.g. Chick-fil-A nuggets → homemade buttermilk chicken, or Raising Cane's if they have a cleaner equivalent). Name it clearly so users know it's a different option.
+Do NOT suggest grocery products as alternatives for restaurant items.
 RESTAURANT SCORE GUIDANCE: Fast food fried items (nuggets, fries, fried chicken) = materials 6-7, usage 6 (refined oils, additives, high sodium). Chain restaurant tacos/burritos = materials 5-6. Salads from fast food chains = materials 4-5. Grilled items = materials 4-5. Always note the chain's specific additives if known (e.g. Chick-fil-A uses MSG, TBHQ in nuggets).
 
 CATEGORY-SPECIFIC TIER LABELS:
