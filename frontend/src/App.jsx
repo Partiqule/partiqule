@@ -3566,13 +3566,17 @@ function App() {
                 )}
 
                 {/* Social proof */}
-                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:16}}>
-                  <div style={{display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,0.5)"}}>
-                    <div style={{width:8, height:8, borderRadius:"50%", background:"#4ade80"}}/>
-                    Free to start · No sign-up
+                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:12, marginBottom:16, flexWrap:"wrap"}}>
+                  <div style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>
+                    <div style={{width:7, height:7, borderRadius:"50%", background:"#4ade80", flexShrink:0}}/>
+                    Free to start
                   </div>
-                  <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
-                  <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
+                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>No sign-up</div>
+                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>AI-powered</div>
+                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>Two-pass verified</div>
                 </div>
 
                 {/* Demo scan link */}
