@@ -49,6 +49,9 @@ function cleanProductName(name) {
 function detectCategory(q) {
   const s = q.toLowerCase();
 
+  // Restaurant / fast food items — detected before category so we can handle separately
+  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house/.test(s)) return "restaurant";
+
   // Clothing and textiles
   if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap|dress|skirt|shorts|tights|blazer|coat|glove|hat|scarf|beanie|swimsuit|bikini/.test(s)) return "clothing";
 
@@ -486,6 +489,12 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
 - Little Rad Things organic kids tee: materials=1 (confirmed organic cotton), usage=2, packaging=3, sustainability=2 → final ~2
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
+- Industry of All Nations (IOAN) clothing: materials=1 (undyed/unbleached organic cotton, alpaca wool, vegetable-tanned leather, natural rubber — 75-80% undyed styles, no petroleum synthetics), usage=1, sustainability=1 (handmade, traceable to source) → final ~1-2. One of the highest-rated clothing brands available.
+- Unbleached Apparel: materials=1 (100% undyed, unbleached, all-natural organic cotton, no dyes, no bleach, no plastics, made in USA), usage=1, sustainability=1 → final ~1. Score should be as low as possible for any clothing brand.
+- Brandy Melville clothing: materials=5 (conventional cotton/polyester blend, no organic or recycled content, no sustainability certifications, zero supply chain transparency, fast fashion model), usage=4, sustainability=6 (fast fashion churn, no take-back program, landfill-destined) → final ~5. Good On You rates "We Avoid."
+- Vans shoes (standard): materials=4 (mix of conventional cotton, leather, synthetic rubber, some recycled polyester — 50% cotton sustainably sourced as of 2023 but still uses virgin synthetics in most lines), usage=3, sustainability=4 (2030 sustainability commitments underway but not yet achieved) → final ~4
+- Vans Eco Theory / sustainable line: materials=2 (recycled rubber, organic cotton, water-based inks), usage=2, sustainability=2 → final ~2
+- San Franpsycho clothing: materials=4 (conventional cotton tees with screen printing — standard commercial cotton, ink composition not disclosed, hand screen-printed locally in SF), usage=3, sustainability=4 (local manufacturing positive, but conventional materials, no organic certifications) → final ~3-4. Community-based local brand, score moderate.
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 - Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
 - Conventional spinach (Dirty Dozen #1): materials=5 (pesticide load including PFAS pesticides, EWG 2026), usage=4 → final ~4 — note: still a healthy food, flag concern but don't over-score
@@ -540,6 +549,9 @@ Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PF
 NUTRITION — for food_beverage only, populate the nutrition field with per-serving data EXACTLY as listed on the product's nutrition facts label. Use the serving size the manufacturer defines — do NOT calculate totals for the whole package. For example: if a bag of M&Ms lists "Serving size: about 7 pieces (37g), 180 calories" — return 180 calories and "about 7 pieces (37g)" as the serving size, not the whole bag. Set to null for all other categories. Keep it factual and brief — this is context only, not the focus.
 Format: {"serving_size":"about 7 pieces (37g)", "calories":180, "protein_g":2, "carbs_g":25, "sugar_g":22, "fat_g":7, "fiber_g":1, "sodium_mg":20}
 Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
+
+RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives suggest healthier homemade or restaurant versions of the same dish (e.g. Chick-fil-A nuggets → homemade buttermilk chicken, Raising Cane's → grilled chicken). Do NOT suggest grocery products as alternatives for restaurant items.
+RESTAURANT SCORE GUIDANCE: Fast food fried items (nuggets, fries, fried chicken) = materials 6-7, usage 6 (refined oils, additives, high sodium). Chain restaurant tacos/burritos = materials 5-6. Salads from fast food chains = materials 4-5. Grilled items = materials 4-5. Always note the chain's specific additives if known (e.g. Chick-fil-A uses MSG, TBHQ in nuggets).
 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
@@ -605,7 +617,7 @@ HOME FURNISHING POSITIVES: GOTS certified organic cotton/wool, GOLS certified or
 Return ONLY this JSON:
 {
   "product_name": "clean accurate product name",
-  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|other",
+  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|restaurant|other",
   "identified_plastics": ["specific plastic type 1"],
   "harmful_chemicals": ["phthalates", "BPA", "Red 40"],
   "natural_materials": ["organic cotton", "glass"],
@@ -952,9 +964,18 @@ app.post("/analyze", async (req, res) => {
 
     const aiProductName = p1.product_name || productName;
 
-    // ── Alternatives: try Amazon PA API first, fall back to static DB ──
+    // ── Alternatives: skip DB for restaurant items, use AI suggestions only ──
     let finalAlternatives;
-    if (isPaApiConfigured()) {
+    const isRestaurant = category === "restaurant" || finalCategory === "restaurant";
+    if (isRestaurant) {
+      // For restaurant items, AI alternatives suggest healthier homemade or better-quality versions
+      finalAlternatives = (p1.ai_alternatives || []).map(a => ({
+        id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 3,
+        material: a.material || "", description: a.reason || "", price: "",
+        affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
+        category: "food_beverage"
+      }));
+    } else if (isPaApiConfigured()) {
       console.log("Using Amazon PA API for alternatives");
       const amazonResults = await getAmazonAlternatives(
         aiProductName, finalCategory, p1.identified_plastics || []

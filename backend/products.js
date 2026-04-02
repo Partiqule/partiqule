@@ -3542,7 +3542,7 @@ const products = [
     description:"USDA certified organic whole milk. No synthetic growth hormones (rBST), no synthetic pesticides. Pasture-raised.",
     affiliateUrl:`https://www.amazon.com/s?k=Organic+Valley+whole+milk&tag=${AMAZON_TAG}`,
     price:"$6-8",
-    tags:["milk","organic milk","whole milk","food beverage","hormone free","rBST free","organic","kids","dairy"]
+    tags:["milk","organic milk","whole milk","dairy milk","cow milk","hormone free","rBST free","organic dairy","kids drink","dairy"]
   },
   {
     id:"ks-006", name:"Stonyfield Organic Whole Milk Yogurt", brand:"Stonyfield",
@@ -3551,7 +3551,7 @@ const products = [
     description:"USDA organic whole milk yogurt. No synthetic hormones, artificial flavors, sweeteners or thickeners.",
     affiliateUrl:`https://www.amazon.com/s?k=Stonyfield+organic+whole+milk+yogurt&tag=${AMAZON_TAG}`,
     price:"$5-7",
-    tags:["yogurt","organic yogurt","whole milk yogurt","food beverage","hormone free","organic","kids","probiotic","dairy"]
+    tags:["yogurt","organic yogurt","whole milk yogurt","dairy yogurt","hormone free","organic dairy","probiotic","dairy"]
   },
 
   // ── MEN'S GROOMING ────────────────────────────────────────────

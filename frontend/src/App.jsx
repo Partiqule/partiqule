@@ -3066,6 +3066,7 @@ function App() {
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
+  const [fabOpen,     setFabOpen]    = useState(false);
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
@@ -3243,7 +3244,7 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false);};
 
   const bg      = isDark?"#131929":"#fafafa";
   const surface = isDark?"#1e2433":"#fff";
@@ -3278,11 +3279,6 @@ function App() {
           {isMobile ? (
             /* Mobile — icon row */
             <div style={{display:"flex", alignItems:"center", gap:8}}>
-              {result && (
-                <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"7px 14px", borderRadius:20, border:"none", background:"#16a34a", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:5}}>
-                  <IcoScan size={13}/> New scan
-                </button>
-              )}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
@@ -4128,6 +4124,46 @@ function App() {
             </div>
           </div>
         )}
+        </>
+      )}
+
+      {/* MOBILE FAB — shows when result is active */}
+      {isMobile && result && (
+        <>
+          {/* Backdrop */}
+          {fabOpen && (
+            <div onClick={()=>setFabOpen(false)} style={{position:"fixed", inset:0, zIndex:8998, background:"rgba(0,0,0,0.5)"}}/>
+          )}
+
+          {/* FAB menu options */}
+          {fabOpen && (
+            <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, padding:"0 20px", width:"100%", maxWidth:360}}>
+              {[
+                { icon:<IcoScan size={28}/>,    label:"New scan",    action:()=>{reset(); setFabOpen(false);} },
+                { icon:<IcoSaved size={28}/>,   label:"My scans",    action:()=>{setPage("history"); setResult(null); setFabOpen(false);} },
+                { icon:<IcoScore size={28}/>,   label:"How it works", action:()=>{setPage("methodology"); setResult(null); setFabOpen(false);} },
+                { icon:<IcoProfile size={28}/>, label: user ? "Account" : "Sign in",
+                  action:()=>{ user ? signOut() : setShowAuth(true); setFabOpen(false); } },
+              ].map((item, i) => (
+                <button key={i} onClick={item.action}
+                  style={{background:isDark?"#1e2433":"#fff", border:`1px solid ${border}`, borderRadius:16, padding:"20px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", boxShadow:"0 4px 24px rgba(0,0,0,0.15)"}}>
+                  <div style={{color:"#16a34a"}}>{item.icon}</div>
+                  <span style={{fontSize:14, fontWeight:600, color:text}}>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* FAB button */}
+          <button onClick={()=>setFabOpen(o=>!o)}
+            style={{position:"fixed", bottom:24, right:24, zIndex:9000, width:56, height:56, borderRadius:"50%", background:"#052e16", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", transition:"transform 0.2s"}}>
+            <div style={{transition:"transform 0.25s", transform:fabOpen?"rotate(45deg)":"rotate(0deg)"}}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="5" y1="12" x2="19" y2="12" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+          </button>
         </>
       )}
 
