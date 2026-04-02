@@ -479,6 +479,31 @@ MANUFACTURING (production process — score conservatively, flag as estimated):
 - ULTRA-PROCESSED FOODS with dyes + preservatives + artificial flavors: materials 7-9, usage 6-8 (daily consumption). Candy, chips, sodas, instant noodles = score 6-8. Do NOT score ultra-processed candy below 6 under any circumstances.
 - Whole natural foods (fresh fruit, vegetables, unprocessed meat, plain water): materials 1, usage 1.
 
+ANTI-GREENWASHING — CRITICAL RULES. Marketing language does NOT equal safety. Apply these regardless of how a product is branded or sold:
+
+CLOTHING AND TEXTILES — hidden toxins to always consider:
+- Conventional cotton (non-organic): treated with pesticides, often finished with formaldehyde (wrinkle resistance), optical brighteners, or azo dyes. Score materials 4-5 unless certified organic. Do NOT assume plain cotton = safe.
+- Azo dyes in fabric: used in virtually all conventionally dyed clothing including brands sold at Target, H&M, Zara, Gap, Old Navy. Azo dyes can release carcinogenic aromatic amines. Flag unless brand explicitly uses non-azo or GOTS-certified dyes. Score +1 on materials.
+- PFAS / DWR (Durable Water Repellent) coatings: present on outdoor gear, rain jackets, activewear, swim clothing unless explicitly PFAS-free. Score materials +2 for PFAS-treated items.
+- Formaldehyde finishes: wrinkle-resistant, anti-shrink, or easy-care finishes on cotton and linen often use formaldehyde-based resins. Flag for any clothing marketed as wrinkle-free, easy-care, or non-iron unless certified formaldehyde-free.
+- Flame retardants in children's sleepwear: required by law unless tight-fitting or labeled "not flame resistant." Older or unbranded kids sleepwear may contain PBDE or organophosphate flame retardants. Score +2 for baby/kids sleepwear without explicit FR-free certification.
+- Store brand clothing (Target's All in Motion, Universal Thread, Wild Fable, Old Navy, Gap): no ingredient transparency, conventional supply chains, likely uses azo dyes and formaldehyde finishes. Score materials 4-6 — do NOT assume clean because it is sold at a mainstream retailer.
+
+HOME AND PERSONAL CARE — hidden toxins:
+- "Natural" fragrance: unless individually disclosed natural components are listed (limonene, linalool etc.) or brand explicitly uses only essential oils, treat as synthetic fragrance and score +1.
+- "Free of" claims (paraben-free, sulfate-free): removing one chemical does NOT mean the formula is clean. It may still contain synthetic fragrance, polyethylene glycol, phenoxyethanol, or other flagged ingredients. Score based on full ingredient picture not absence of one item.
+- Candles: paraffin wax = petroleum byproduct, score materials 5-6. Soy candles with synthetic fragrance = score 4-5. Beeswax or coconut wax + essential oils = score 2-3.
+- Nonstick cookware marketed as "PFOA-free": may still contain other PFAS compounds (PFBS, GenX). Only score as safe if explicitly PFAS-free and ceramic or stainless. "PFOA-free" is not the same as "PFAS-free."
+- BPA-free plastic: may contain BPS or BPF which have similar endocrine-disrupting effects. Score BPA-free plastic at 5-6, not 2-3.
+- "Clean" or "non-toxic" candles, lotions, or cleaning products at Target, Walmart, or mass retail: apply skepticism. These terms are unregulated. Score based on ingredients, not claims.
+
+CONFIDENCE DISCIPLINE — apply to ALL products, not just food:
+- If you cannot verify the actual ingredient list, material composition, or chemical treatments for a product, set confidence to "medium" or "low" and say so.
+- Never assume a product is safe because of its marketing, price point, retailer, or aesthetic. Score what you know; flag what you don't.
+- For store brands (Target, Walmart, Costco, Amazon Basics, IKEA): assume conventional materials and supply chains unless explicitly certified. Low supply chain transparency = confidence low, score conservatively.
+- For any product where chemical treatments or processing aids could affect safety but aren't disclosed (clothing finishes, food processing chemicals, cosmetic preservatives): flag the uncertainty in the concerns list with severity "low" and note it as unverified.
+- The confidence field should reflect ingredient certainty, not just product identification certainty. Knowing what a product is called is different from knowing what's in it.
+
 CALIBRATION EXAMPLES to ensure differentiation:
 - Cascade dishwasher pods: materials=7 (PVA film+synthetic fragrance+optical brighteners), usage=5 (residue on dishes), packaging=3 (recyclable tub), sustainability=6 (PVA in waterways) → final ~6
 - Blueland dishwasher tablets: materials=1 (no PVA, no synthetic fragrance), usage=2, packaging=2, sustainability=1 → final ~1-2

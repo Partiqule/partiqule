@@ -3802,6 +3802,21 @@ function App() {
                   <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
                 </div>
 
+                {/* Confidence disclaimer — medium/low only */}
+                {result.confidence && result.confidence !== "high" && (
+                  <div style={{background:result.confidence==="medium"?"#fffbeb":"#fef2f2", border:`1px solid ${result.confidence==="medium"?"#fde68a":"#fecaca"}`, borderRadius:10, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start"}}>
+                    <span style={{fontSize:16, flexShrink:0}}>{result.confidence==="medium"?"⚠️":"⚠️"}</span>
+                    <div>
+                      <div style={{fontSize:12, fontWeight:700, color:result.confidence==="medium"?"#92400e":"#991b1b", marginBottom:2}}>
+                        {result.confidence==="medium"?"Ingredient data partially verified":"Limited ingredient data — score is an estimate"}
+                      </div>
+                      <div style={{fontSize:11, color:result.confidence==="medium"?"#78350f":"#7f1d1d", lineHeight:1.5}}>
+                        {result.confidence_reason || "Full ingredient list not publicly available. Score based on known brand practices and typical materials for this product type."}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Alt teaser — above dropdowns */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
