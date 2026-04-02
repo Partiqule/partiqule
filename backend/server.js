@@ -797,6 +797,9 @@ When uncertain about a product's ingredients, default DOWNWARD not upward. Unkno
 CALIBRATION — use these as anchors:
 - Poppi Prebiotic Soda (any flavor): final score ~3 — apple cider vinegar, fruit juice, stevia, no artificial dyes. NEVER score above 4.
 - Olipop (any flavor): final score ~2-3 — plant fiber, prebiotics, natural flavors, no HFCS. NEVER score above 4.
+- Chick-fil-A Crispy Chicken Sandwich: final score ~6 — TBHQ in frying oil (FDA-flagged preservative), MSG in breading, dimethylpolysiloxane (silicone-based antifoaming agent) in frying oil, enriched white flour bun, 1350mg sodium. Always flag TBHQ, MSG, and dimethylpolysiloxane as concerns. NEVER score below 5.
+- Chick-fil-A Grilled Chicken Sandwich: final score ~4-5 — cleaner marinade, no TBHQ or dimethylpolysiloxane, still high sodium and processed bun.
+- Chick-fil-A Nuggets (fried): final score ~6-7 — TBHQ, MSG, dimethylpolysiloxane, refined oil, processed breading. Always flag all three.
 - Cascade pods: final score ~6 (PVA film + synthetic chemicals + residue on dishes)
 - Blueland tablets: final score ~1-2 (genuinely plastic-free, no PVA, no synthetic fragrance)
 - Lululemon leggings: final score ~6 (synthetic microfibers daily skin contact)
@@ -901,11 +904,12 @@ app.post("/analyze", async (req, res) => {
 
       if (category === "restaurant") {
         const rname = (p1.product_name || productName).toLowerCase();
-        const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(rname);
-        mScore  = Math.max(mScore,  isFried ? 6 : 4);
-        uScore  = Math.max(uScore,  isFried ? 5 : 4);
+        const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(rname);
+        const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(rname);
+        mScore  = Math.max(mScore,  (isFried || isChickenSandwich) ? 4 : 3);
+        uScore  = Math.max(uScore,  (isFried || isChickenSandwich) ? 4 : 3);
         pkScore = Math.max(pkScore, 3);
-        sScore  = Math.max(sScore,  4);
+        sScore  = Math.max(sScore,  3);
       }
 
       let finalScore = Math.min(10, Math.max(1,
@@ -914,12 +918,14 @@ app.post("/analyze", async (req, res) => {
 
       if (category === "restaurant") {
         const name = (p1.product_name || productName).toLowerCase();
-        const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(name);
+        const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(name);
+        const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(name);
         const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
         const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
-        if (isFried)               finalScore = Math.max(finalScore, 6);
-        else if (isBurger||isTaco) finalScore = Math.max(finalScore, 4);
-        else                       finalScore = Math.max(finalScore, 4);
+        if (isFried || isChickenSandwich) finalScore = Math.max(finalScore, 5);
+        else if (isBurger)                finalScore = Math.max(finalScore, 4);
+        else if (isTaco)                  finalScore = Math.max(finalScore, 3);
+        else                              finalScore = Math.max(finalScore, 3);
       }
 
       const result = {
@@ -1039,29 +1045,32 @@ app.post("/analyze", async (req, res) => {
     let sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
     let mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
 
-    // ── Restaurant dimension floors — enforce before formula so the gauge reflects reality ──
+    // ── Restaurant dimension floors — soft safety nets only, let AI lead ──
     if (finalCategory === "restaurant") {
       const rname = (p1.product_name || productName).toLowerCase();
-      const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(rname);
-      mScore  = Math.max(mScore,  isFried ? 6 : 4);
-      uScore  = Math.max(uScore,  isFried ? 5 : 4);
+      const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken|fried chicken/.test(rname);
+      const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(rname);
+      mScore  = Math.max(mScore,  (isFried || isChickenSandwich) ? 4 : 3);
+      uScore  = Math.max(uScore,  (isFried || isChickenSandwich) ? 4 : 3);
       pkScore = Math.max(pkScore, 3);
-      sScore  = Math.max(sScore,  4);
+      sScore  = Math.max(sScore,  3);
     }
 
     let finalScore = Math.min(10, Math.max(1,
       Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
     ));
 
-    // ── Hard final score floors for restaurant ──
+    // ── Final score safety net — catches clear misses only ──
     if (finalCategory === "restaurant") {
       const name = (p1.product_name || productName).toLowerCase();
-      const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(name);
+      const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(name);
+      const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(name);
       const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
       const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
-      if (isFried)               finalScore = Math.max(finalScore, 6);
-      else if (isBurger||isTaco) finalScore = Math.max(finalScore, 4);
-      else                       finalScore = Math.max(finalScore, 4);
+      if (isFried || isChickenSandwich) finalScore = Math.max(finalScore, 5);
+      else if (isBurger)                finalScore = Math.max(finalScore, 4);
+      else if (isTaco)                  finalScore = Math.max(finalScore, 3);
+      else                              finalScore = Math.max(finalScore, 3);
     }
 
     // Peer comparison
