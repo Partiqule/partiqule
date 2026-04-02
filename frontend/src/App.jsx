@@ -3065,6 +3065,7 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
+  const [showAlts,    setShowAlts]   = useState(false);
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
@@ -3242,7 +3243,7 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false);};
 
   const bg      = isDark?"#131929":"#fafafa";
   const surface = isDark?"#1e2433":"#fff";
@@ -3920,20 +3921,18 @@ function App() {
                     {/* 5. Manufacturing — smaller estimated badge */}
                     <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
 
-                    {/* Mobile only — scroll to alternatives CTA */}
-                    {isMobile && (
-                      <button
-                        onClick={()=>document.getElementById("safer-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
-                        style={{
-                          width:"100%", marginTop:6, padding:"12px 16px",
-                          background:"#052e16", color:"#4ade80",
-                          border:"none", borderRadius:12, cursor:"pointer",
-                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14,
-                          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                        }}>
-                        <IcoProducts size={16}/> See safer alternatives ↓
-                      </button>
-                    )}
+                    {/* See Alternatives CTA — replaces mobile scroll button */}
+                    <button
+                      onClick={()=>setShowAlts(true)}
+                      style={{
+                        width:"100%", marginTop:8, padding:"14px 16px",
+                        background:"#052e16", color:"#4ade80",
+                        border:"none", borderRadius:12, cursor:"pointer",
+                        fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                      }}>
+                      See safer alternatives →
+                    </button>
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
@@ -3961,8 +3960,6 @@ function App() {
                   />
                 )}
 
-                <SplitView result={result} isDark={isDark} onScan={(name)=>{setResult(null); setQuery(name); analyze(name);}}/>
-                <ShareBadge result={result}/>
               </div>
 
               {/* ACCOUNT / EMAIL CAPTURE — after 3rd scan */}
@@ -3997,110 +3994,108 @@ function App() {
                 </div>
               )}
 
-              {/* SOURCE CITATIONS */}
-              <SourceCitations category={result.category} isDark={isDark}/>
+            </div>
+          </div>
+        </div>
 
-              {/* SCIENCE LINK */}
-              <div style={{background:isDark?"#1e1f3a":"#eef2ff", borderRadius:12, padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-                <div>
-                  <div style={{fontSize:13, fontWeight:600, color:isDark?"#a5b4fc":"#4f46e5", marginBottom:2}}>
-                    {result.isDemo ? "This is a real result for M&Ms — scan your own products" : "Want to understand why this matters?"}
-                  </div>
-                  <div style={{fontSize:12, color:muted}}>
-                    {result.isDemo ? "Free, no sign-up, results in 15 seconds." : "Read the science behind microplastics and human health"}
-                  </div>
-                </div>
-                {result.isDemo ? (
-                  <button onClick={reset} style={{padding:"8px 16px", borderRadius:8, border:"none", background:"#4f46e5", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0}}>
-                    Scan now →
-                  </button>
-                ) : (
-                  <button onClick={()=>{setPage("science"); setResult(null);}} style={{padding:"8px 16px", borderRadius:8, border:"none", background:isDark?"#3730a3":"#4f46e5", color:"#fff", fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap", flexShrink:0}}>
-                    The Science →
-                  </button>
-                )}
+        {/* ── ALTERNATIVES PAGE OVERLAY ── */}
+        {showAlts && result && (
+          <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#131929":"#fafafa", overflowY:"auto"}}>
+
+            {/* Globe-inspired header */}
+            <div style={{background:"#052e16", padding:isMobile?"28px 20px 32px":"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
+              {/* Particle dots */}
+              {[
+                {s:8,x:"8%",y:"25%",a:0.2},{s:5,x:"88%",y:"18%",a:0.15},
+                {s:10,x:"15%",y:"70%",a:0.12},{s:6,x:"92%",y:"65%",a:0.18},
+                {s:4,x:"45%",y:"8%",a:0.2},{s:7,x:"72%",y:"80%",a:0.12},
+                {s:5,x:"30%",y:"85%",a:0.15},{s:8,x:"80%",y:"40%",a:0.1},
+              ].map((p,i)=>(
+                <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:"50%", background:"white", opacity:p.a, pointerEvents:"none"}}/>
+              ))}
+
+              <button onClick={()=>setShowAlts(false)} style={{position:"absolute", top:16, left:16, background:"rgba(255,255,255,0.1)", border:"none", color:"#86efac", cursor:"pointer", fontSize:14, fontWeight:600, padding:"8px 14px", borderRadius:20, display:"flex", alignItems:"center", gap:6}}>
+                ← Back
+              </button>
+
+              {/* Orbital rings */}
+              <svg width="120" height="120" viewBox="0 0 120 120" style={{margin:"0 auto 16px", display:"block"}}>
+                <ellipse cx="60" cy="60" rx="50" ry="15" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.5" transform="rotate(-25 60 60)"/>
+                <ellipse cx="60" cy="60" rx="44" ry="12" fill="none" stroke="#86efac" strokeWidth="1" opacity="0.3" transform="rotate(50 60 60)"/>
+                <circle cx="60" cy="60" r="22" fill="#16a34a"/>
+                <circle cx="60" cy="60" r="18" fill="#4ade80"/>
+                <circle cx="53" cy="53" r="7" fill="#bbf7d0" opacity="0.6"/>
+              </svg>
+
+              <div style={{fontSize:11, color:"#86efac", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Safer alternatives for</div>
+              <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:26, color:"#fff", margin:"0 0 6px", lineHeight:1.2}}>
+                {result.product_name?.length > 50 ? result.product_name.slice(0,47)+"…" : result.product_name}
+              </h2>
+              <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", borderRadius:20, padding:"4px 14px"}}>
+                <span style={{fontSize:13, color:"#4ade80", fontWeight:700}}>{result.overall_score||result.score}/10</span>
+                <span style={{fontSize:12, color:"rgba(255,255,255,0.6)"}}>→ switch to score 1-3</span>
               </div>
             </div>
 
-            {/* RIGHT */}
-            <div style={{display:"flex", flexDirection:"column", gap:20}}>
-              <div className="fade-up">
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14, flexWrap:"wrap", gap:8}}>
-                  <h3 id="safer-alternatives" style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:20,color:text,margin:0,display:"flex",alignItems:"center",gap:8}}><IcoProducts size={22}/> Safer Alternatives</h3>
-                  {result.alternatives?.length > 0 && result.category !== "other" && (
-                    <div style={{fontSize:11, color:muted, background:isDark?"#1e2433":"#f9fafb", padding:"4px 10px", borderRadius:20, border:`1px solid ${border}`}}>
-                      #ad · affiliate links
-                    </div>
-                  )}
-                </div>
+            {/* Content */}
+            <div style={{maxWidth:640, margin:"0 auto", padding:isMobile?"20px 12px 60px":"32px 24px 80px", display:"flex", flexDirection:"column", gap:20}}>
 
-                {/* UNIFIED ALTERNATIVES — max 3, DB first, AI fills gaps, no duplicates */}
-                {(() => {
-                  const cat = result.category;
-
-                  // DB alternatives — backend already handles relevance and category logic
-                  const dbAlts = (result.alternatives || []).slice(0, 3);
-
-                  // AI alternatives — deduplicate against DB, fill to 3
-                  const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
-                  const aiAlts = (result.ai_alternatives || [])
-                    .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
-                    .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
-                    .slice(0, 3 - dbAlts.length);
-
-
-                  const hasAffiliate = dbAlts.length > 0 && cat !== "other";
-
-                  if (!dbAlts.length && !aiAlts.length) return null;
-
-                  return (
-                    <div>
-                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
-                      {aiAlts.length > 0 && (
-                        <div style={{display:"flex", flexDirection:"column", gap:8, marginTop: dbAlts.length > 0 ? 10 : 0}}>
-                          {dbAlts.length > 0 && (
-                            <div style={{fontSize:12, color:muted, textAlign:"center", marginBottom:4}}>More suggestions from our AI</div>
-                          )}
-                          {aiAlts.map((alt, i) => (
-                            <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                              <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                                <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
-                              </div>
-                              <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:8, lineHeight:1.5}}>{alt.material}</div>
-                              <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                              <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                                style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                                <IcoSearch size={14}/> Scan this product →
-                              </button>
+              {/* DB alternatives */}
+              {(() => {
+                const dbAlts = (result.alternatives || []).slice(0, 3);
+                const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
+                const aiAlts = (result.ai_alternatives || [])
+                  .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
+                  .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
+                  .slice(0, 3 - dbAlts.length);
+                const hasAffiliate = dbAlts.length > 0 && result.category !== "other";
+                if (!dbAlts.length && !aiAlts.length) return (
+                  <div style={{textAlign:"center", padding:"40px 20px", color:muted, fontSize:14}}>
+                    No specific alternatives found. Try scanning a similar product for recommendations.
+                  </div>
+                );
+                return (
+                  <div style={{display:"flex", flexDirection:"column", gap:10}}>
+                    <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
+                    {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                    {aiAlts.length > 0 && (
+                      <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
+                        {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
+                        {aiAlts.map((alt, i) => (
+                          <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                            <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                              <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      {hasAffiliate && (
-                        <p style={{fontSize:12,color:muted,textAlign:"center",marginTop:12,lineHeight:1.5}}>We may earn a commission if you buy through affiliate links — at no extra cost to you. This funds free access to Partiqule.</p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
+                            <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
+                            <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                            <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                              style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                              <IcoSearch size={14}/> Scan this product →
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {hasAffiliate && <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5}}>Affiliate links — commission at no extra cost to you. Never influences our scores.</p>}
+                  </div>
+                );
+              })()}
 
-              {/* BUNDLE */}
+              {/* Bundle */}
               <BundleCard category={result.category} isDark={isDark}/>
 
-              {/* COMPLETE YOUR ROUTINE */}
-              {result.scan_next?.length > 0 && (
+              {/* Complete your routine — clothing and personal care only */}
+              {["clothing","personal_care","baby"].includes(result.category) && result.scan_next?.length > 0 && (
                 <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
                   <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Complete your routine</div>
                   <div style={{fontSize:13, color:muted, marginBottom:14, lineHeight:1.5}}>
-                    People who scanned this also checked these — scan them to build your household exposure picture.
+                    People who scanned this also checked these — scan them to build your full exposure picture.
                   </div>
                   <div style={{display:"flex", flexDirection:"column", gap:8}}>
                     {result.scan_next.map((item,i)=>(
-                      <button key={i} onClick={()=>{setResult(null); setQuery(item); analyze(item);}}
-                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.background=isDark?"#1e2a1e":"#f0fdf4";}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#bbf7d0"; e.currentTarget.style.background=isDark?"#1e2433":"#fff";}}>
+                      <button key={i} onClick={()=>{setShowAlts(false); setResult(null); setQuery(item); analyze(item);}}
+                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", cursor:"pointer", textAlign:"left"}}>
                         <div style={{display:"flex", alignItems:"center", gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                             <IcoScan size={16}/>
@@ -4113,9 +4108,15 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* Scan again CTA */}
+              <button onClick={()=>{setShowAlts(false); reset();}}
+                style={{width:"100%", padding:"14px", borderRadius:12, background:"#16a34a", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:"pointer"}}>
+                Scan another product
+              </button>
             </div>
           </div>
-        </div>
+        )}
       )}
 
       {/* FOOTER */}
