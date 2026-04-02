@@ -399,7 +399,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
     : "";
   const categorySection = categoryHint
-    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${" Populate the product_analysis field fully using the category-specific concern types."}${categoryHint === "restaurant" ? " This is a restaurant menu item — populate nutrition using the chain's published nutrition data for this specific item." : ""}\n`
+    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category. Populate the product_analysis field fully using the category-specific concern types.${categoryHint === "restaurant" ? " This is a restaurant menu item — you MUST populate the product_analysis field including nutrition using the chain's official published nutrition data. Set nutrition_verified: true only if you are confident in the exact values, false if estimating." : ""}\n`
     : "";
 
   return callClaude(
@@ -725,8 +725,9 @@ Return ONLY this JSON:
   ]
 }
 
-CRITICAL: Populate product_analysis for ALL categories — food_beverage, personal_care, clothing, kitchen, baby, and other.
+CRITICAL: Populate product_analysis for ALL categories — food_beverage, personal_care, clothing, kitchen, baby, supplement, home_furnishing, restaurant, and other.
 Use the category-specific tier labels and concern lists defined above.
+For restaurant category: populate composition_tier based on processing level, populate nutrition using the chain's official published values only (null if uncertain), set nutrition_verified: true only if confident in the values.
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 Respond with ONLY the JSON object above — no text before or after it.
