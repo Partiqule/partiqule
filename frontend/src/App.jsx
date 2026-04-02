@@ -3278,6 +3278,11 @@ function App() {
           {isMobile ? (
             /* Mobile — icon row */
             <div style={{display:"flex", alignItems:"center", gap:8}}>
+              {result && (
+                <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"7px 14px", borderRadius:20, border:"none", background:"#16a34a", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:5}}>
+                  <IcoScan size={13}/> New scan
+                </button>
+              )}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
