@@ -867,14 +867,34 @@ app.post("/analyze", async (req, res) => {
       }
 
       // Compute weighted score from 5 dimensions
-      const mScore  = p2?.materials_score      ?? p1.materials?.score      ?? p1.product_score  ?? 5;
-      const uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
-      const pkScore = p2?.packaging_score      ?? p1.packaging?.score      ?? p1.packaging_score ?? 5;
-      const sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
-      const mfScore = p2?.manufacturing_score  ?? p1.manufacturing?.score   ?? 5;
-      const finalScore = Math.min(10, Math.max(1,
+      let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? p1.product_score  ?? 5;
+      let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+      let pkScore = p2?.packaging_score      ?? p1.packaging?.score      ?? p1.packaging_score ?? 5;
+      let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+      let mfScore = p2?.manufacturing_score  ?? p1.manufacturing?.score   ?? 5;
+
+      if (category === "restaurant") {
+        const rname = (p1.product_name || productName).toLowerCase();
+        const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(rname);
+        mScore  = Math.max(mScore,  isFried ? 6 : 4);
+        uScore  = Math.max(uScore,  isFried ? 5 : 4);
+        pkScore = Math.max(pkScore, 3);
+        sScore  = Math.max(sScore,  4);
+      }
+
+      let finalScore = Math.min(10, Math.max(1,
         Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
       ));
+
+      if (category === "restaurant") {
+        const name = (p1.product_name || productName).toLowerCase();
+        const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(name);
+        const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
+        const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
+        if (isFried)               finalScore = Math.max(finalScore, 6);
+        else if (isBurger||isTaco) finalScore = Math.max(finalScore, 4);
+        else                       finalScore = Math.max(finalScore, 4);
+      }
 
       const result = {
         product_name: productName, category,
@@ -987,14 +1007,36 @@ app.post("/analyze", async (req, res) => {
     const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
     const catAvg        = CATEGORY_AVERAGES[finalCategory] || CATEGORY_AVERAGES.other;
     // ── Compute weighted final score server-side as source of truth ──
-    const mScore  = p2?.materials_score     ?? p1.materials?.score     ?? 5;
-    const uScore  = p2?.usage_score         ?? p1.usage_exposure?.score ?? 5;
-    const pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
-    const sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
-    const mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
-    const finalScore = Math.min(10, Math.max(1,
+    let mScore  = p2?.materials_score     ?? p1.materials?.score     ?? 5;
+    let uScore  = p2?.usage_score         ?? p1.usage_exposure?.score ?? 5;
+    let pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
+    let sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
+    let mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
+
+    // ── Restaurant dimension floors — enforce before formula so the gauge reflects reality ──
+    if (finalCategory === "restaurant") {
+      const rname = (p1.product_name || productName).toLowerCase();
+      const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(rname);
+      mScore  = Math.max(mScore,  isFried ? 6 : 4);
+      uScore  = Math.max(uScore,  isFried ? 5 : 4);
+      pkScore = Math.max(pkScore, 3);
+      sScore  = Math.max(sScore,  4);
+    }
+
+    let finalScore = Math.min(10, Math.max(1,
       Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
     ));
+
+    // ── Hard final score floors for restaurant ──
+    if (finalCategory === "restaurant") {
+      const name = (p1.product_name || productName).toLowerCase();
+      const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken/.test(name);
+      const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
+      const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
+      if (isFried)               finalScore = Math.max(finalScore, 6);
+      else if (isBurger||isTaco) finalScore = Math.max(finalScore, 4);
+      else                       finalScore = Math.max(finalScore, 4);
+    }
 
     // Peer comparison
     const peerPct = Math.round(((finalScore - 1) / 9) * 100);
