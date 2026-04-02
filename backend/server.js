@@ -472,8 +472,17 @@ SUSTAINABILITY (product lifecycle and planet impact):
 MANUFACTURING (production process — score conservatively, flag as estimated):
 - Known bad: fast fashion, PVC/chemical manufacturing, unregulated supply chains: 6-8.
 - Known good: certified organic, B-Corp, closed-loop, renewably powered: 1-3.
-- Unknown: score 4-5 and flag confidence as low.
+- Unknown: score 3 and flag confidence as low. Do NOT default to 5 — unknown manufacturing is not inherently bad.
 - Weight is low — do not let manufacturing dominate the final score.
+
+SCORE DISTRIBUTION RULES — the full 1-10 scale must be used deliberately:
+- 1-2: Genuinely clean. Organic certified, natural materials, no synthetic chemicals, transparent supply chain. Reserved for products that are genuinely the safest option in their category.
+- 3-4: Mild concern. Mostly clean but with some conventional materials, unknown treatments, or minor packaging issues. This is where most "pretty good" mainstream products land.
+- 5-6: Moderate concern. Conventional synthetic materials, some flagged ingredients, or meaningful exposure risk. Do NOT use 6 as a default for any product you're uncertain about.
+- 7-8: High concern. Multiple flagged chemicals, known harmful substances, high daily exposure, or FDA/EWG flagged ingredients.
+- 9-10: Severe. PFAS coatings, banned substances, direct ingestion of multiple carcinogens.
+
+AVOID SCORE CLUSTERING AT 6. If you find yourself scoring many different products at 6, that is a signal you are not differentiating enough. A conventional cotton t-shirt (3-4) should score very differently from Tide pods (6) which should score very differently from a PTFE pan (7-8). When uncertain, default DOWN not up — err toward lower scores for products with no confirmed harmful ingredients.
 
 - ARTIFICIAL DYES in food (Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2): score materials 7-8. FDA banned Red 3 (2025) and is phasing out all petroleum-based dyes due to carcinogenicity and hyperactivity links. M&Ms, Skittles, Gummy Bears, Doritos, Froot Loops all contain multiple banned/flagged dyes — materials score MUST be 7-8, never lower.
 - ULTRA-PROCESSED FOODS with dyes + preservatives + artificial flavors: materials 7-9, usage 6-8 (daily consumption). Candy, chips, sodas, instant noodles = score 6-8. Do NOT score ultra-processed candy below 6 under any circumstances.
@@ -515,6 +524,13 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
 - Little Rad Things organic kids tee: materials=1 (confirmed organic cotton), usage=2, packaging=3, sustainability=2 → final ~2
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
+- Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
+- Cliff Bar (oats, dates, nuts, some natural flavors): materials=3 (minimally processed, no artificial dyes), usage=3 → final ~3
+- Regular ibuprofen/Advil tablet (not packaging): materials=3, usage=3 (occasional ingestion) → final ~3
+- Standard paper coffee cup with plastic lid: materials=5 (PE lining leaches at heat), usage=5 (hot liquid ingestion) → final ~5
+- Conventional shampoo (SLS, synthetic fragrance, parabens): materials=5, usage=4 (rinse-off, daily) → final ~4-5
+- Gatorade (artificial dyes, sucrose, citric acid): materials=5 (artificial dyes, high sugar), usage=5 → final ~5
+- Regular lip balm with petrolatum (ChapStick): materials=4 (petrolatum, BHT), usage=4 (leave-on lip contact) → final ~4
 - Industry of All Nations (IOAN) clothing: materials=1 (undyed/unbleached organic cotton, alpaca wool, vegetable-tanned leather, natural rubber — 75-80% undyed styles, no petroleum synthetics), usage=1, sustainability=1 (handmade, traceable to source) → final ~1-2. One of the highest-rated clothing brands available.
 - Unbleached Apparel: materials=1 (100% undyed, unbleached, all-natural organic cotton, no dyes, no bleach, no plastics, made in USA), usage=1, sustainability=1 → final ~1. Score should be as low as possible for any clothing brand.
 - Brandy Melville clothing: materials=5 (conventional cotton/polyester blend, no organic or recycled content, no sustainability certifications, zero supply chain transparency, fast fashion model), usage=4, sustainability=6 (fast fashion churn, no take-back program, landfill-destined) → final ~5. Good On You rates "We Avoid."
