@@ -786,7 +786,17 @@ GARDEN CHEMICALS: Synthetic pesticides (glyphosate/Roundup) = materials 7-8, sus
 EYEWEAR: Acetate frames (cellulose) = materials 2 (plant-derived). Polycarbonate/standard plastic = materials 4. Usage stays low (2-3) for all — skin contact but minimal absorption. Final scores for eyewear typically 2-4.
 TECH/ACCESSORIES: Score durability as sustainability signal. Cheap disposable cables = sustainability 7. Braided long-life cables = sustainability 3. Phone cases: ABS plastic = materials 5, compostable bioplastic = materials 2.
 
+SCORE DISTRIBUTION — use the full 1-10 scale deliberately. Do NOT cluster at 6:
+- 1-2: Genuinely clean (organic certified, natural materials, no synthetic chemicals)
+- 3-4: Mild concern (mostly clean, some conventional materials or minor issues)
+- 5-6: Moderate concern (synthetic ingredients, flagged chemicals, meaningful exposure)
+- 7-8: High concern (multiple flagged substances, FDA/EWG flagged, high daily exposure)
+- 9-10: Severe (PFAS, banned substances, direct carcinogen ingestion)
+When uncertain about a product's ingredients, default DOWNWARD not upward. Unknown ≠ dangerous.
+
 CALIBRATION — use these as anchors:
+- Poppi Prebiotic Soda (any flavor): final score ~3 — apple cider vinegar, fruit juice, stevia, no artificial dyes. NEVER score above 4.
+- Olipop (any flavor): final score ~2-3 — plant fiber, prebiotics, natural flavors, no HFCS. NEVER score above 4.
 - Cascade pods: final score ~6 (PVA film + synthetic chemicals + residue on dishes)
 - Blueland tablets: final score ~1-2 (genuinely plastic-free, no PVA, no synthetic fragrance)
 - Lululemon leggings: final score ~6 (synthetic microfibers daily skin contact)
@@ -807,6 +817,9 @@ CALIBRATION — use these as anchors:
 - Doritos / flavored chips: final score ~6-7 — artificial flavors, MSG, synthetic dyes in some varieties
 - Whole fresh fruit or vegetables: final score ~1
 - Organic whole food snack (no synthetic additives): final score ~1-2
+- Gatorade (artificial dyes, sucrose): final score ~5
+- Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
+- Cliff Bar / minimally processed energy bar: final score ~3
 - Crayola paraffin crayons: final score ~3-4
 - Stockmar beeswax crayons: final score ~1-2
 - Standard PVC yoga mat: final score ~6
@@ -816,18 +829,11 @@ CALIBRATION — use these as anchors:
 - Menstrual cup: final score ~1
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
 - Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
-- Synthetic fertilizer (Miracle-Gro): final score ~5-6
-- Organic fertilizer (Dr. Earth/Espoma): final score ~1-2
-- Standard Advil/Tylenol: final score ~3 (score the product, not just packaging — occasional ingestion, some synthetic excipients)
-- Zarbees natural cough syrup: final score ~2
-- Standard synthetic multivitamin (Centrum, One-A-Day): final score ~3 (synthetic vitamins, titanium dioxide coating, fillers)
-- Garden of Life/MegaFood whole-food vitamin: final score ~1-2 (food-derived, certified organic, third-party tested)
-- Standard whey protein powder with artificial flavors/sucralose: final score ~4-5 (artificial sweeteners, flavors, possible heavy metals)
-- Orgain/Sunwarrior organic plant protein: final score ~2 (organic, no artificial sweeteners, third-party tested)
-- Pre-workout with proprietary blend + DMAA/stimulants: final score ~7-8 (FDA warnings, undisclosed ingredients, cardiovascular risk)
-- Standard memory foam mattress (off-gassing): final score ~6 (polyurethane off-gassing, unknown flame retardant status, daily 8hr exposure)
-- Avocado organic latex mattress (GOLS + GOTS certified): final score ~1-2 (natural latex, organic wool/cotton, no synthetic flame retardants)
-- Standard polyurethane foam sofa (unknown FR treatment): final score ~5-6 (possible flame retardants, VOC off-gassing)
+- Standard Advil/Tylenol: final score ~3
+- Standard synthetic multivitamin (Centrum, One-A-Day): final score ~3
+- Garden of Life/MegaFood whole-food vitamin: final score ~1-2
+- Standard memory foam mattress (off-gassing): final score ~6
+- Avocado organic latex mattress: final score ~1-2
 - Conventional pillow (polyester fill): final score ~4 (synthetic polyester, daily 8hr face/skin contact)
 - Organic latex pillow (GOLS certified): final score ~1-2 (natural rubber, no synthetics)
 - Conventional nylon/polypropylene carpet: final score ~5-6 (VOC emissions from backing, microfiber shedding, likely stain treatment)
