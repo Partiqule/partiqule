@@ -524,6 +524,9 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 - Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
 - Conventional spinach (Dirty Dozen #1): materials=5 (pesticide load including PFAS pesticides, EWG 2026), usage=4 → final ~4 — note: still a healthy food, flag concern but don't over-score
+- Poppi Prebiotic Soda: materials=3 (apple cider vinegar, fruit juice, stevia — no artificial dyes, no HFCS), usage=3 (daily ingestion, low sugar, prebiotic benefit), packaging=4 (aluminum can) → final ~3. Do NOT score above 4.
+- Olipop: materials=2 (plant fiber, prebiotics, natural flavors — no artificial dyes, no HFCS), usage=2, packaging=4 → final ~2-3. Do NOT score above 4.
+- Poppi or Olipop should NEVER score 6 — they are specifically formulated to avoid the worst ingredients in conventional soda.
 - Organic spinach (USDA Organic): materials=1, usage=1 → final ~1
 - Conventional strawberries (Dirty Dozen): materials=4, usage=3 → final ~3
 - Organic strawberries: materials=1, usage=1 → final ~1

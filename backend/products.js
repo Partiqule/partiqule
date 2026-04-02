@@ -136,7 +136,7 @@ const products = [
     description: "Tastes like cola, 2-5g sugar, 9g fiber, no artificial dyes",
     affiliateUrl: `https://www.amazon.com/s?k=Olipop+vintage+cola&tag=${AMAZON_TAG}`,
     price: "$2–3",
-    tags: ["soda", "cola", "pepsi", "coke", "diet coke", "diet pepsi", "coca cola", "soft drink", "fizzy drink", "sparkling", "carbonated", "pop"]
+    tags: ["cola", "pepsi", "coke", "diet coke", "diet pepsi", "coca cola", "rc cola", "pepsi max", "coke zero", "mountain dew", "sugary soda", "conventional soda"]
   },
   {
     id: "dr-002",
@@ -148,19 +148,19 @@ const products = [
     description: "35 calories, 9g prebiotic fiber, no artificial sweeteners",
     affiliateUrl: `https://www.amazon.com/s?k=Olipop+root+beer&tag=${AMAZON_TAG}`,
     price: "$2–3",
-    tags: ["root beer", "soda", "soft drink", "sparkling", "carbonated", "sugar free", "diet soda"]
+    tags: ["root beer", "a&w", "barqs", "mug root beer", "diet root beer", "sarsaparilla"]
   },
   {
     id: "dr-003",
     name: "Poppi Prebiotic Soda",
     brand: "Poppi",
     category: "food_beverage",
-    plasticScore: 2,
+    plasticScore: 3,
     material: "Apple cider vinegar, natural fruit juice, prebiotics",
     description: "5g sugar, gut-friendly, no artificial dyes or sweeteners",
     affiliateUrl: `https://www.amazon.com/s?k=Poppi+prebiotic+soda&tag=${AMAZON_TAG}`,
     price: "$2–3",
-    tags: ["soda", "cola", "sparkling", "carbonated", "soft drink", "pepsi", "coke", "sprite", "lemon lime", "cherry", "grape", "orange soda"]
+    tags: ["soda", "cola", "pepsi", "coke", "coca cola", "diet coke", "mountain dew", "sprite", "dr pepper", "rc cola", "carbonated drink", "soft drink", "fizzy drink", "sugary soda"]
   },
   {
     id: "dr-004",
@@ -4136,13 +4136,21 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       .filter(w => w.length > 2 && !STOPWORDS.has(w))
   )];
 
-  // Hard block: other category (vehicles, electronics, etc) gets no DB alternatives
-  if (category === "other") return [];
+  // Hard block: other and restaurant categories get no DB alternatives
+  if (category === "other" || category === "restaurant") return [];
+
+  // Extract brand from query to avoid recommending same brand as alternative
+  const queryLower = query.toLowerCase();
 
   // Relevance scoring — category match + tag overlap must reach threshold
-  //    Every product in DB gets a relevance score against the query
   const scored = products
     .filter(p => p.plasticScore <= 4)
+    .filter(p => {
+      // Never recommend same product or same brand as the scanned item
+      if (p.name.toLowerCase() === queryLower) return false;
+      if (p.brand && queryLower.includes(p.brand.toLowerCase())) return false;
+      return true;
+    })
     .map(p => {
       let score = 0;
       // Category match bonus
