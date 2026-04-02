@@ -4174,16 +4174,32 @@ function App() {
             </div>
           )}
 
-          {/* FAB button */}
-          <button onClick={()=>setFabOpen(o=>!o)}
-            style={{position:"fixed", bottom:24, right:24, zIndex:9000, width:56, height:56, borderRadius:"50%", background:"#052e16", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", transition:"transform 0.2s"}}>
-            <div style={{transition:"transform 0.25s", transform:fabOpen?"rotate(45deg)":"rotate(0deg)"}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <line x1="12" y1="5" x2="12" y2="19" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="5" y1="12" x2="19" y2="12" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-          </button>
+          {/* Floating button row */}
+          <div style={{position:"fixed", bottom:24, right:24, zIndex:9000, display:"flex", alignItems:"center", gap:10}}>
+            {/* My Scans bubble */}
+            <button onClick={()=>{setPage("history"); setResult(null); setFabOpen(false);}}
+              style={{width:44, height:44, borderRadius:"50%", background:isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", position:"relative"}}>
+              <IcoSaved size={18}/>
+              {history.length > 0 && <span style={{position:"absolute", top:0, right:0, width:10, height:10, borderRadius:"50%", background:"#16a34a", border:"2px solid #fff"}}/>}
+            </button>
+
+            {/* New Scan bubble */}
+            <button onClick={reset}
+              style={{width:44, height:44, borderRadius:"50%", background:isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
+              <IcoScan size={18}/>
+            </button>
+
+            {/* Main FAB */}
+            <button onClick={()=>setFabOpen(o=>!o)}
+              style={{width:56, height:56, borderRadius:"50%", background:"#052e16", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", transition:"transform 0.2s"}}>
+              <div style={{transition:"transform 0.25s", transform:fabOpen?"rotate(45deg)":"rotate(0deg)"}}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <line x1="12" y1="5" x2="12" y2="19" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="5" y1="12" x2="19" y2="12" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </button>
+          </div>
         </>
       )}
 
