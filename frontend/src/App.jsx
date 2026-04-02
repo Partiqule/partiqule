@@ -2268,7 +2268,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
         </p>
         <button onClick={()=>onScan()}
           style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
-          Try a free scan →
+          Try your first scan →
         </button>
       </div>
 
@@ -2294,7 +2294,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
             {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions: materials, usage and exposure, packaging, sustainability, and manufacturing. Your health, your home, and the planet are all affected differently by the same product."},
             {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all five dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
-            {title:"Always free", body:"Knowledge about what you're putting in your body and home shouldn't cost money. Partiqule is free and requires no account."},
+            {title:"Free to start", body:"Your first scans are on us. No account needed to get started — create a free account to save your history."},
             {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
           ].map((v,i)=>(
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
@@ -2991,7 +2991,7 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
 
 const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   const sections = [
-    { title:"1. Who we are", body:"Partiqule is a free product health scanner operated by Partiqule Inc. We help people understand what is in the products they use every day. You can reach us at paul@partiqule.com." },
+    { title:"1. Who we are", body:"Partiqule is a product health scanner operated by Partiqule Inc. We help people understand what is in the products they use every day. You can reach us at paul@partiqule.com." },
     { title:"2. What information we collect", body:"Partiqule collects the minimum information needed to provide the service.\n\nScan data: When you scan a product, we send the product name or image to our AI analysis service (Anthropic). We do not store a record of scans associated with you unless you create an account.\n\nEmail address: If you choose to save your scan history, we collect your email address. We use this only to associate your scan history with your account and to notify you of important product recalls or reformulations. We do not send marketing emails without your explicit consent.\n\nUsage data: We collect anonymous analytics (page views, scan counts, affiliate clicks) using Plausible Analytics, which is privacy-preserving and does not use cookies or track individuals.\n\nDevice data: We do not collect device identifiers, location data, or any data beyond what is described above." },
     { title:"3. How we use your information", body:"We use your information only to:\n\n• Provide and improve the Partiqule service\n• Associate your scan history with your account (if you create one)\n• Notify you of product recalls or significant reformulations for products you have scanned\n• Understand aggregate usage patterns to improve the product\n\nWe do not sell your data. We do not share your data with advertisers. We do not use your data for profiling or targeted advertising." },
     { title:"4. Affiliate links", body:"Partiqule earns a commission when you purchase products through affiliate links. These are clearly marked with an #ad disclosure. Affiliate relationships have no influence on our scoring or recommendations — scores are generated independently by our AI analysis system." },
@@ -3569,7 +3569,7 @@ function App() {
                 <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:16, marginBottom:16}}>
                   <div style={{display:"flex", alignItems:"center", gap:6, fontSize:13, color:"rgba(255,255,255,0.5)"}}>
                     <div style={{width:8, height:8, borderRadius:"50%", background:"#4ade80"}}/>
-                    Free · No sign-up
+                    Free to start · No sign-up
                   </div>
                   <div style={{width:1, height:12, background:"rgba(255,255,255,0.2)"}}/>
                   <div style={{fontSize:13, color:"rgba(255,255,255,0.5)"}}>AI-powered · Two-pass verified</div>
@@ -3614,7 +3614,7 @@ function App() {
                   {icon:"score",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
                   {icon:"safety",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
                   {icon:"verified", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
-                  {icon:"scan",     title:"Always free",          body:"No account, no paywall, no ads. Just answers about what is in your products"},
+                  {icon:"scan",     title:"Free to start",          body:"No account needed to get started. Create a free account to save your scan history across devices"},
                 ].map((item,i) => (
                   <div key={i} style={{
                     background:isDark?"#1e2433":"#fff",
