@@ -50,7 +50,7 @@ function detectCategory(q) {
   const s = q.toLowerCase();
 
   // Restaurant / fast food items — detected before category so we can handle separately
-  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house/.test(s)) return "restaurant";
+  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|fuzz.?s taco|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|dine brands/.test(s)) return "restaurant";
 
   // Clothing and textiles
   if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap|dress|skirt|shorts|tights|blazer|coat|glove|hat|scarf|beanie|swimsuit|bikini/.test(s)) return "clothing";
@@ -546,15 +546,22 @@ Tier 2 (conventional): standard commercial, some synthetics, generally low conce
 Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
-NUTRITION — for food_beverage AND restaurant categories, populate the nutrition field with per-serving or per-item data. For packaged food use the nutrition facts label serving size exactly. For restaurant items use the chain's published nutrition data for that specific menu item (e.g. Chick-fil-A nuggets 8-count = 260 calories, 28g protein). Do NOT calculate whole package totals. Set to null for all other categories. Keep it factual and brief.
+NUTRITION — for food_beverage AND restaurant categories, populate the nutrition field with per-serving or per-item data. For packaged food use the nutrition facts label serving size exactly. For restaurant items use the chain's OFFICIAL published nutrition data only — do not estimate or calculate. If you are not certain of the exact published values for that specific menu item, set individual fields to null rather than guessing. It is better to return null than an incorrect number.
 Format: {"serving_size":"8-piece nuggets", "calories":260, "protein_g":28, "carbs_g":11, "sugar_g":1, "fat_g":13, "fiber_g":0, "sodium_mg":1010}
-Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
+Use null for any field you cannot confirm with high confidence. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
 
 RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives provide two types of suggestions:
 TYPE 1 — "Order smarter": 1-2 cleaner options from the SAME restaurant (e.g. Chick-fil-A nuggets → Chick-fil-A grilled chicken sandwich, side salad). Use the format "Chick-fil-A Grilled Chicken Sandwich" as the name so users know it's the same place. Reason should explain why it's cleaner (grilled vs fried, no additives, lower sodium).
 TYPE 2 — "Better alternative": 1 suggestion from a cleaner chain or homemade version for the same craving (e.g. Chick-fil-A nuggets → homemade buttermilk chicken, or Raising Cane's if they have a cleaner equivalent). Name it clearly so users know it's a different option.
 Do NOT suggest grocery products as alternatives for restaurant items.
-RESTAURANT SCORE GUIDANCE: Fast food fried items (nuggets, fries, fried chicken) = materials 6-7, usage 6 (refined oils, additives, high sodium). Chain restaurant tacos/burritos = materials 5-6. Salads from fast food chains = materials 4-5. Grilled items = materials 4-5. Always note the chain's specific additives if known (e.g. Chick-fil-A uses MSG, TBHQ in nuggets).
+RESTAURANT SCORE GUIDANCE — these are HARD FLOORS, do not score below them:
+- Fast food fried items (nuggets, fried chicken, french fries, onion rings): final score MUST be 6-7. Materials 7 (refined oils, TBHQ, MSG, additives), usage 6.
+- Fast food burgers/sandwiches (conventional): final score MUST be 5-6. Materials 6, usage 5.
+- Fast casual tacos/burritos (Fuzzy's, Chipotle, Taco Bell): final score MUST be 4-6. Materials 5-6, usage 5. Even "fresh" fast casual uses processed sauces, high sodium, refined flour tortillas.
+- Fast food salads: final score MUST be 4-5.
+- Grilled items at fast food chains: final score MUST be 4-5 (still processed marinade, high sodium).
+- Sit-down chain restaurants (Applebee's, Chili's, Olive Garden): final score MUST be 4-6.
+A fast food or fast casual item should NEVER score below 4. If your calculation gives a lower score, raise it to the minimum floor.
 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
