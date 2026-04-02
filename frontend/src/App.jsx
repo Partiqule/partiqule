@@ -1705,7 +1705,9 @@ const ShareBadge = ({result}) => {
 // ── PRODUCT CARD ─────────────────────────────────────────────
 const ProductCard = ({product, isDark}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
-  const hasLink = !!product.affiliateUrl;
+  const amazonFallback = `https://www.amazon.com/s?k=${encodeURIComponent((product.brand ? product.brand + " " : "") + product.name)}&tag=partiqule-20`;
+  const linkUrl = product.affiliateUrl || amazonFallback;
+  const hasLink = true; // always have Amazon fallback
 
   const cardStyle = {
     textDecoration:"none", display:"block",
@@ -1754,7 +1756,7 @@ const ProductCard = ({product, isDark}) => {
   }
 
   return (
-    <a href={product.affiliateUrl}
+    <a href={linkUrl}
       rel="noopener noreferrer"
       onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
       style={cardStyle}
@@ -3829,7 +3831,7 @@ function App() {
                   if (altS >= currentScore) return null; // don't show if not actually better
                   return (
                     <button
-                      onClick={()=>document.getElementById("safer-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
+                      onClick={()=>setShowAlts(true)}
                       style={{width:"100%", marginBottom:14, padding:"10px 16px", borderRadius:12,
                         background:isDark?"#1a2a1a":"#f0fdf4", border:"1.5px solid #16a34a55",
                         cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left"}}>
@@ -3839,7 +3841,7 @@ function App() {
                         <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"#f0fdf4", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
                       </div>
                       <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>
-                        {isMobile ? "See below ↓" : "See right →"}
+                        See alternatives →
                       </span>
                     </button>
                   );
@@ -4112,10 +4114,13 @@ function App() {
                   </div>
                 );
 
+                const amazonUrl = (name) => `https://www.amazon.com/s?k=${encodeURIComponent(name)}&tag=partiqule-20`;
+
                 const AltCard = ({alt, i}) => {
                   const score = alt.estimated_score ?? alt.score ?? 3;
                   const reason = alt.reason || alt.description || "";
                   const material = alt.material || "";
+                  const buyUrl = alt.affiliateUrl || amazonUrl(alt.name);
                   return (
                     <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
@@ -4124,10 +4129,16 @@ function App() {
                       </div>
                       {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
                       {reason && <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{reason}</div>}
-                      <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                        style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                        <IcoSearch size={14}/> Scan this →
-                      </button>
+                      <div style={{display:"flex", gap:12, alignItems:"center", flexWrap:"wrap"}}>
+                        <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                          style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                          <IcoSearch size={14}/> Scan this →
+                        </button>
+                        <a href={buyUrl} target="_blank" rel="noopener noreferrer"
+                          style={{display:"flex", alignItems:"center", gap:4, fontSize:12, color:isDark?"#94a3b8":"#6b7280", fontWeight:600, textDecoration:"none"}}>
+                          🛒 Find on Amazon
+                        </a>
+                      </div>
                     </div>
                   );
                 };
