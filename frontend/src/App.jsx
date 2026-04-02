@@ -4186,7 +4186,7 @@ function App() {
           {/* Floating button row */}
           <div style={{position:"fixed", bottom:24, right:24, zIndex:9000, display:"flex", alignItems:"center", gap:10}}>
             {/* My Scans bubble */}
-            <button onClick={()=>{setPage("history"); setResult(null); setFabOpen(false);}}
+            <button onClick={()=>{setPage("history"); setResult(null); setFabOpen(false); setShowScanModal(false);}}
               style={{width:44, height:44, borderRadius:"50%", background:isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", position:"relative"}}>
               <IcoSaved size={18}/>
               {history.length > 0 && <span style={{position:"absolute", top:0, right:0, width:10, height:10, borderRadius:"50%", background:"#16a34a", border:"2px solid #fff"}}/>}
@@ -4201,7 +4201,6 @@ function App() {
                   <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:8}}>Type a product name</div>
                   <div style={{display:"flex", gap:6}}>
                     <input
-                      autoFocus
                       value={modalQuery}
                       onChange={e=>setModalQuery(e.target.value)}
                       onKeyDown={e=>{
@@ -4251,7 +4250,7 @@ function App() {
             </div>
 
             {/* Main FAB */}
-            <button onClick={()=>setFabOpen(o=>!o)}
+            <button onClick={()=>{setFabOpen(o=>!o); setShowScanModal(false);}}
               style={{width:56, height:56, borderRadius:"50%", background:"#052e16", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", transition:"transform 0.2s"}}>
               <div style={{transition:"transform 0.25s", transform:fabOpen?"rotate(45deg)":"rotate(0deg)"}}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
