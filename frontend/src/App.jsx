@@ -1224,6 +1224,7 @@ const CATEGORY_DROPDOWN_LABEL = {
   baby:            "Safety Breakdown",
   supplement:      "Supplement Analysis",
   home_furnishing: "Materials and Off-Gas Analysis",
+  restaurant:      "Ingredients and Nutrition",
   other:           "Substance Analysis",
 };
 
@@ -3786,7 +3787,7 @@ function App() {
 
                 {/* Hero label */}
                 <div style={{marginBottom:16}}>
-                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} — {result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : "Overall"}</div>
+                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} — {result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : result.category === "restaurant" ? "for restaurant food" : "Overall"}</div>
                   <div style={{fontSize:11,color:muted,marginTop:4}}>Materials 40% · Exposure 25% · Packaging 15% · Sustainability 15% · Manufacturing 5%</div>
                 </div>
 

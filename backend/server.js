@@ -398,7 +398,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
     : "";
   const categorySection = categoryHint
-    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${" Populate the product_analysis field fully using the category-specific concern types."}\n`
+    ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category.${" Populate the product_analysis field fully using the category-specific concern types."}${categoryHint === "restaurant" ? " This is a restaurant menu item — populate nutrition using the chain's published nutrition data for this specific item." : ""}\n`
     : "";
 
   return callClaude(
@@ -546,8 +546,8 @@ Tier 2 (conventional): standard commercial, some synthetics, generally low conce
 Tier 3 (synthetic-heavy): multiple petroleum-based chemicals, synthetic microfibers, synthetic fragrance
 Tier 4 (high concern): contains banned/flagged substances, known carcinogens, PFAS, endocrine disruptors
 
-NUTRITION — for food_beverage only, populate the nutrition field with per-serving data EXACTLY as listed on the product's nutrition facts label. Use the serving size the manufacturer defines — do NOT calculate totals for the whole package. For example: if a bag of M&Ms lists "Serving size: about 7 pieces (37g), 180 calories" — return 180 calories and "about 7 pieces (37g)" as the serving size, not the whole bag. Set to null for all other categories. Keep it factual and brief — this is context only, not the focus.
-Format: {"serving_size":"about 7 pieces (37g)", "calories":180, "protein_g":2, "carbs_g":25, "sugar_g":22, "fat_g":7, "fiber_g":1, "sodium_mg":20}
+NUTRITION — for food_beverage AND restaurant categories, populate the nutrition field with per-serving or per-item data. For packaged food use the nutrition facts label serving size exactly. For restaurant items use the chain's published nutrition data for that specific menu item (e.g. Chick-fil-A nuggets 8-count = 260 calories, 28g protein). Do NOT calculate whole package totals. Set to null for all other categories. Keep it factual and brief.
+Format: {"serving_size":"8-piece nuggets", "calories":260, "protein_g":28, "carbs_g":11, "sugar_g":1, "fat_g":13, "fiber_g":0, "sodium_mg":1010}
 Use null for any field you cannot confirm. If the product has no conventional nutrition (e.g. water, plain tea) set nutrition to null entirely.
 
 RESTAURANT ITEMS — when category is "restaurant", score the dish based on its known ingredients, processing level, and additives used by that chain. Use food_beverage concern types. For ai_alternatives provide two types of suggestions:
