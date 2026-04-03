@@ -2916,6 +2916,171 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         </div>
       </div>
 
+      {/* ── SCORING SYSTEM ─────────────────────────────────────── */}
+      <div style={{marginBottom:40}}>
+        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
+          <span style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", background:"#f0fdf4", padding:"3px 10px", borderRadius:20}}>How We Score</span>
+        </div>
+        <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?20:26, fontWeight:700, color:text, margin:"0 0 8px", letterSpacing:"-0.3px"}}>The scoring system, in full</h2>
+        <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:"0 0 28px"}}>Every score is the output of a deterministic formula applied server-side. The AI provides dimension scores — we apply the weights. Here is the complete logic.</p>
+
+        {/* Category formula table */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Category Formulas — applied server-side, AI cannot override</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>Manufacturing removed — too inconsistent to measure fairly. All weights sum to 100%.</div>
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%", borderCollapse:"collapse", fontSize:isMobile?11:13}}>
+              <thead>
+                <tr style={{background:isDark?"#1a2030":"#f1f5f9"}}>
+                  {["Category","Ingredients / Materials","Exposure","Packaging","Sustainability","Why"].map((h,i)=>(
+                    <th key={i} style={{padding:"10px 14px", textAlign:"left", fontWeight:700, color:text, fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em", whiteSpace:"nowrap", borderBottom:`1px solid ${border}`}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {cat:"Food",         m:"90%", u:"0%",  pk:"10%", s:"0%",  why:"Ingredients are the entire story. Organic food in plastic still scores 2 — packaging is flagged separately."},
+                  {cat:"Beverage",     m:"75%", u:"0%",  pk:"25%", s:"0%",  why:"The container leaches into every sip. Plastic bottle is part of the consumption story."},
+                  {cat:"Restaurant",   m:"85%", u:"0%",  pk:"10%", s:"5%",  why:"Same logic as food, small sustainability weight for restaurant practices."},
+                  {cat:"Supplement",   m:"65%", u:"25%", pk:"10%", s:"0%",  why:"Concentrated daily ingestion — what's in it matters most, plus how it interacts with your body."},
+                  {cat:"Beauty",       m:"45%", u:"45%", pk:"5%",  s:"5%",  why:"Leave-on daily skin contact. Materials and exposure are equally important."},
+                  {cat:"Toys",         m:"50%", u:"40%", pk:"5%",  s:"5%",  why:"Children put toys in their mouths. Ingestion risk is real."},
+                  {cat:"Clothing",     m:"35%", u:"30%", pk:"0%",  s:"35%", why:"Microfiber shedding into waterways gives sustainability real weight. Packaging irrelevant."},
+                  {cat:"Accessories",  m:"40%", u:"25%", pk:"0%",  s:"35%", why:"Jewelry touches skin all day. Environmental footprint of fast fashion accessories matters."},
+                  {cat:"Home",         m:"30%", u:"45%", pk:"10%", s:"15%", why:"Inhalation and residue contact from cleaners, candles, and rugs is the primary story."},
+                  {cat:"Baby",         m:"55%", u:"40%", pk:"5%",  s:"0%",  why:"Developing systems and higher skin absorption. Sustainability is secondary to safety."},
+                ].map((row, i) => (
+                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background: i%2===0 ? "transparent" : isDark?"#1a2030":"#fafafa"}}>
+                    <td style={{padding:"10px 14px", fontWeight:700, color:text, whiteSpace:"nowrap"}}>{row.cat}</td>
+                    <td style={{padding:"10px 14px", color:"#16a34a", fontWeight:700}}>{row.m}</td>
+                    <td style={{padding:"10px 14px", color:muted}}>{row.u}</td>
+                    <td style={{padding:"10px 14px", color:muted}}>{row.pk}</td>
+                    <td style={{padding:"10px 14px", color:muted}}>{row.s}</td>
+                    <td style={{padding:"10px 14px", color:muted, fontSize:11, lineHeight:1.5, maxWidth:220}}>{row.why}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* IARC substance floors */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>IARC Carcinogen Floors — materials score cannot go below these</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>Applied after the formula. Only fires on confirmed substances — speculative language never triggers a floor.</div>
+          </div>
+          <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:12}}>
+            {[
+              {
+                tier:"IARC Group 1 — Known carcinogen",
+                floor:"Materials minimum 8",
+                color:"#dc2626",
+                bg:"#fef2f2",
+                border_:"#fecaca",
+                examples:"Sodium nitrite / nitrate in processed meat (hot dogs, bacon, deli meat). Alcohol in beverages. Benzene. Vinyl chloride. Ethylene oxide.",
+                note:"The science says: this causes cancer in humans."
+              },
+              {
+                tier:"IARC Group 2A — Probable carcinogen",
+                floor:"Materials minimum 7",
+                color:"#d97706",
+                bg:"#fffbeb",
+                border_:"#fde68a",
+                examples:"Glyphosate confirmed in conventional oats (Cheerios, Quaker, Nature Valley — EWG tested above child safety threshold). Acrylamide in fried / baked starchy foods. Red meat processed with heat.",
+                note:"The science says: probably causes cancer. Sufficient human evidence."
+              },
+              {
+                tier:"IARC Group 2B — Possible carcinogen",
+                floor:"Materials minimum 6",
+                color:"#ca8a04",
+                bg:"#fefce8",
+                border_:"#fef08a",
+                examples:"BHA, TBHQ, titanium dioxide (EU food ban), caramel color IV (4-MEI), potassium bromate, aspartame, BPA, BPS.",
+                note:"The science says: possibly causes cancer. Limited human evidence."
+              },
+              {
+                tier:"Speculative only — hedged language",
+                floor:"No floor applied",
+                color:"#16a34a",
+                bg:"#f0fdf4",
+                border_:"#bbf7d0",
+                examples:"\"May contain,\" \"possible trace,\" \"could include\" — these phrases are stripped before floors are checked.",
+                note:"Speculation does not warrant a materials floor regardless of how dangerous the substance is."
+              },
+            ].map((item, i) => (
+              <div key={i} style={{background:item.bg, border:`1.5px solid ${item.border_}`, borderRadius:12, padding:"14px 16px"}}>
+                <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, flexWrap:"wrap", marginBottom:6}}>
+                  <div style={{fontSize:13, fontWeight:700, color:item.color}}>{item.tier}</div>
+                  <div style={{fontSize:12, fontWeight:700, color:item.color, background:"white", padding:"2px 10px", borderRadius:10, border:`1px solid ${item.border_}`, whiteSpace:"nowrap"}}>{item.floor}</div>
+                </div>
+                <div style={{fontSize:12, color:isDark?"#94a3b8":"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
+                <div style={{fontSize:11, color:item.color, fontStyle:"italic"}}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Child vulnerability system */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>👶 Child Vulnerability System</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>Children have thinner skin, developing organ systems, and lower body weight — meaning a higher effective dose per kilogram. Every score can be viewed through a child safety lens.</div>
+          </div>
+          <div style={{padding:"16px 20px"}}>
+            <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:12, marginBottom:16}}>
+              {[
+                {sub:"Petroleum dyes (Red 40, Yellow 5/6, Blue 1)", bump:"+2", why:"Linked to ADHD and hyperactivity in children — McCann et al., The Lancet 2007"},
+                {sub:"PFAS / forever chemicals", bump:"+2", why:"Disrupts immune and hormonal development — CDC child health priority"},
+                {sub:"Phthalates (DEHP, DBP)", bump:"+2", why:"Disrupts reproductive development — most critical in early childhood (Swan 2021)"},
+                {sub:"Flame retardants (PBDE, TCEP)", bump:"+2", why:"Neurotoxicity disproportionately affects developing brains (Stapleton 2011)"},
+                {sub:"Glyphosate residue", bump:"+1", why:"EWG child threshold is lower than adult — body weight dose adjustment"},
+                {sub:"Synthetic fragrance", bump:"+1", why:"Developing endocrine systems more sensitive to fragrance phthalates"},
+                {sub:"Parabens", bump:"+1", why:"Hormone mimicry — developing endocrine systems more vulnerable"},
+                {sub:"BPA / BPS / BPF", bump:"+2", why:"Endocrine disruption most harmful during developmental windows"},
+              ].map((item, i) => (
+                <div key={i} style={{background:isDark?"#1a2433":"#f8fafc", borderRadius:10, padding:"10px 14px", border:`1px solid ${border}`}}>
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4}}>
+                    <div style={{fontSize:12, fontWeight:700, color:text}}>{item.sub}</div>
+                    <div style={{fontSize:12, fontWeight:800, color:"#dc2626", background:"#fef2f2", padding:"1px 8px", borderRadius:8, flexShrink:0, marginLeft:8}}>{item.bump}</div>
+                  </div>
+                  <div style={{fontSize:11, color:muted, lineHeight:1.5}}>{item.why}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:12, color:muted, background:isDark?"#1a2433":"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`}}>
+              <strong style={{color:"#16a34a"}}>How to use it:</strong> Tap the 👶 toggle on any result to see the child-adjusted score. Child products (Honey Nut Cheerios, Pampers, baby lotions) are auto-detected and show a prompt automatically.
+            </div>
+          </div>
+        </div>
+
+        {/* Consistency checks */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Hallucination Guards — 4 rules that run after every score</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>The AI scores dimensions. These rules catch cases where those scores contradict the AI's own reasoning.</div>
+          </div>
+          <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:10}}>
+            {[
+              {rule:"Label contradiction ceiling", detail:"If the AI's own label says \"inert,\" \"zero leaching,\" or \"minimal exposure\" but scored that dimension 6+, the score is capped at 4. The AI cannot contradict itself."},
+              {rule:"Dimension spread sanity check", detail:"If Materials scores 1-2 but the formula would produce a final score of 7+, the output is flagged and recomputed. A clean-ingredient product cannot score dangerous."},
+              {rule:"Confidence-linked ceiling", detail:"Low confidence means the AI doesn't know enough to flag confirmed harmful substances. A low-confidence result cannot score above 6 — directional estimates only."},
+              {rule:"Inert material ceiling", detail:"Glass, borosilicate, ceramic, and stainless steel cannot score above 3 on Materials. Hot water through glass has zero leaching risk. This is non-negotiable."},
+            ].map((item, i) => (
+              <div key={i} style={{display:"flex", gap:14, padding:"12px 14px", background:isDark?"#1a2433":"#f8fafc", borderRadius:10, border:`1px solid ${border}`}}>
+                <div style={{width:24, height:24, borderRadius:"50%", background:"#052e16", color:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, flexShrink:0}}>{i+1}</div>
+                <div>
+                  <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:3}}>{item.rule}</div>
+                  <div style={{fontSize:12, color:muted, lineHeight:1.6}}>{item.detail}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Footer note */}
       <div style={{background:isDark?"#1e2433":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
         <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:8}}>Questions about our methodology?</div>
@@ -3127,6 +3292,17 @@ function App() {
   const [fabOpen,     setFabOpen]    = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
+  // ── Accessibility: font scale ────────────────────────────────
+  const [fontScale,   setFontScale]  = useState(()=>{try{return parseFloat(localStorage.getItem("ps_font_scale")||"1");}catch{return 1;}});
+  const cycleFontScale = () => {
+    const next = fontScale >= 1.4 ? 1 : parseFloat((fontScale + 0.2).toFixed(1));
+    setFontScale(next);
+    try { localStorage.setItem("ps_font_scale", next); } catch {}
+  };
+  // Apply font scale to root
+  useEffect(() => {
+    document.documentElement.style.fontSize = fontScale === 1 ? "" : `${fontScale * 100}%`;
+  }, [fontScale]);
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
@@ -3387,6 +3563,9 @@ function App() {
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
               </span>
+              <button onClick={cycleFontScale} title={`Text size: ${fontScale === 1 ? "Normal" : fontScale === 1.2 ? "Large" : "Extra large"}`} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background: fontScale > 1 ? "#f0fdf4" : "none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
+                <span style={{fontSize:14, fontWeight:700, color: fontScale > 1 ? "#16a34a" : muted}}>A{fontScale > 1 ? "+" : ""}</span>
+              </button>
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
                 {isDark?<IconSun size={16} color="#f59e0b"/>:<IconMoon size={16} color="#6b7280"/>}
               </button>
@@ -3405,6 +3584,9 @@ function App() {
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={14}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
               <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
                 {isDark?<IconSun size={17} color="#f59e0b"/>:<IconMoon size={17} color="#6b7280"/>}
+              </button>
+              <button onClick={cycleFontScale} title={`Text size: ${fontScale === 1 ? "Normal" : fontScale === 1.2 ? "Large" : "Extra large"}`} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background: fontScale > 1 ? "#f0fdf4" : "none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
+                <span style={{fontSize:14, fontWeight:700, color: fontScale > 1 ? "#16a34a" : muted}}>A{fontScale > 1 ? "+" : ""}</span>
               </button>
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
