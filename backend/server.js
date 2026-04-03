@@ -1413,10 +1413,15 @@ app.post("/analyze", async (req, res) => {
     if (/\bolipop\b/i.test(pName)) finalScore = Math.min(finalScore, 4);
 
     // Peer comparison
-    const peerPct = Math.round(((finalScore - 1) / 9) * 100);
-    const peerComparison = finalScore > catAvg.avg
-      ? `Scores higher than ${peerPct}% of ${catAvg.label}`
-      : `Scores lower than ${100 - peerPct}% of ${catAvg.label}`;
+    const peerComparison = finalScore <= 2
+      ? "Safe — good for you, your family and the planet"
+      : finalScore <= 4
+      ? "Good — use with awareness"
+      : finalScore <= 6
+      ? "Caution — reduce use or find an alternative"
+      : finalScore <= 8
+      ? "Change — real concerns, time to swap"
+      : "Avoid — known harmful substances";
 
     const aiProductName = p1.product_name || productName;
 

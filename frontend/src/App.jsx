@@ -452,12 +452,20 @@ const ScoreArc = ({score}) => {
 // ── RISK BAR ─────────────────────────────────────────────────
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
-  const pctHigher = Math.round(pct);
+  const meaning = score <= 2
+    ? "Safe — good for you, your family and the planet"
+    : score <= 4
+    ? "Good — use with awareness"
+    : score <= 6
+    ? "Caution — reduce use or find an alternative"
+    : score <= 8
+    ? "Change — real concerns, time to swap"
+    : "Avoid — known harmful substances";
   return (
     <div style={{marginTop:20}}>
       <div style={{display:"flex", justifyContent:"space-between", fontSize:11, color:"#aaa", marginBottom:7}}>
         <span>Safer ←</span>
-        <span style={{fontWeight:600, color:scoreColor(score), fontSize:12}}>{pctHigher>50?`More dangerous than ${pctHigher}% of products`:`Safer than ${100-pctHigher}% of products`}</span>
+        <span style={{fontWeight:700, color:scoreColor(score), fontSize:12, textAlign:"center", flex:1, padding:"0 8px"}}>{meaning}</span>
         <span>→ Riskier</span>
       </div>
       <div style={{position:"relative", height:12, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
@@ -3853,16 +3861,67 @@ function App() {
 
                 <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?22:28,fontWeight:700,color:text,margin:"0 0 24px",letterSpacing:"-0.5px",wordBreak:"break-word"}}>{result.product_name?.length > 60 ? result.product_name.slice(0,57)+"…" : result.product_name}</h2>
 
-                {/* Hero score — overall if available, else plastic */}
+                {/* Hero score */}
                 <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
                   <ScoreArc score={result.overall_score||result.score}/>
                 </div>
                 <RiskBar score={result.overall_score||result.score}/>
 
+                {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
+                {(() => {
+                  const flagged = [];
+                  const seen = new Set();
+                  const add = (name, severity) => {
+                    const key = (name||"").toLowerCase().trim();
+                    if (!key || key === "unknown" || key.length < 2 || seen.has(key)) return;
+                    seen.add(key);
+                    flagged.push({name, severity});
+                  };
+                  (result.food_analysis?.concerns || []).forEach(c => {
+                    if (c?.substance && c.substance !== "Unknown") add(c.substance, c.severity || "medium");
+                  });
+                  (result.harmful_chemicals || []).forEach(c => add(c, "high"));
+                  const allConcerns = [
+                    ...(result.dimensions?.materials?.concerns || []),
+                    ...(result.concerns || []),
+                  ];
+                  allConcerns.forEach(c => {
+                    if (typeof c === "string") {
+                      const match = c.match(/^([A-Z][A-Za-z0-9\s\-\/]{1,30}?)(?:\s*[—:–]|\s+is\s|\s+\()/);
+                      if (match) add(match[1].trim(), "medium");
+                    } else if (c?.substance) {
+                      add(c.substance, c.severity || "medium");
+                    }
+                  });
+                  if (flagged.length === 0) return null;
+                  const sStyle = (sev) => ({
+                    high:   {bg:"#fef2f2", color:"#dc2626", border:"1.5px solid #fecaca"},
+                    medium: {bg:"#fffbeb", color:"#d97706", border:"1.5px solid #fde68a"},
+                    low:    {bg:"#f0fdf4", color:"#16a34a", border:"1.5px solid #bbf7d0"},
+                  })[sev] || {bg:"#fffbeb", color:"#d97706", border:"1.5px solid #fde68a"};
+                  return (
+                    <div style={{marginTop:16, marginBottom:4, textAlign:"left"}}>
+                      <div style={{fontSize:10, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>
+                        ⚠ Flagged substances
+                      </div>
+                      <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                        {flagged.slice(0, 8).map((f, i) => {
+                          const st = sStyle(f.severity);
+                          return (
+                            <span key={i} style={{fontSize:12, fontWeight:700, padding:"4px 11px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap"}}>
+                              {f.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Hero label */}
                 <div style={{marginBottom:16}}>
                   <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} — {result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : result.category === "restaurant" ? "for restaurant food" : "Overall"}</div>
-                  <div style={{fontSize:11,color:muted,marginTop:4}}>
+                  <div style={{fontSize:11,color:muted,marginTop:2}}>
                     {["food_beverage","restaurant","supplement"].includes(result.category)
                       ? "Ingredients 50% · Packaging 20% · Exposure 20% · Sustainability 5% · Manufacturing 5%"
                       : "Materials 35% · Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%"
@@ -3870,22 +3929,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Confidence disclaimer — medium/low only */}
-                {result.confidence && result.confidence !== "high" && (
-                  <div style={{background:result.confidence==="medium"?"#fffbeb":"#fef2f2", border:`1px solid ${result.confidence==="medium"?"#fde68a":"#fecaca"}`, borderRadius:10, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start"}}>
-                    <span style={{fontSize:16, flexShrink:0}}>{result.confidence==="medium"?"⚠️":"⚠️"}</span>
-                    <div>
-                      <div style={{fontSize:12, fontWeight:700, color:result.confidence==="medium"?"#92400e":"#991b1b", marginBottom:2}}>
-                        {result.confidence==="medium"?"Ingredient data partially verified":"Limited ingredient data — score is an estimate"}
-                      </div>
-                      <div style={{fontSize:11, color:result.confidence==="medium"?"#78350f":"#7f1d1d", lineHeight:1.5}}>
-                        {result.confidence_reason || "Full ingredient list not publicly available. Score based on known brand practices and typical materials for this product type."}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Alt teaser — above dropdowns */}
+                {/* Alt teaser — below hero label */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
                   const currentScore = result.overall_score || result.score;
@@ -3909,6 +3953,21 @@ function App() {
                     </button>
                   );
                 })()}
+
+                {/* Confidence disclaimer — medium/low only */}
+                {result.confidence && result.confidence !== "high" && (
+                  <div style={{background:result.confidence==="medium"?"#fffbeb":"#fef2f2", border:`1px solid ${result.confidence==="medium"?"#fde68a":"#fecaca"}`, borderRadius:10, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start"}}>
+                    <span style={{fontSize:16, flexShrink:0}}>⚠️</span>
+                    <div>
+                      <div style={{fontSize:12, fontWeight:700, color:result.confidence==="medium"?"#92400e":"#991b1b", marginBottom:2}}>
+                        {result.confidence==="medium"?"Ingredient data partially verified":"Limited ingredient data — score is an estimate"}
+                      </div>
+                      <div style={{fontSize:11, color:result.confidence==="medium"?"#78350f":"#7f1d1d", lineHeight:1.5}}>
+                        {result.confidence_reason || "Full ingredient list not publicly available. Score based on known brand practices and typical materials for this product type."}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
                 <div style={isMobile ? {margin:"0 -14px"} : {}}>
@@ -4023,20 +4082,18 @@ function App() {
                     {/* 5. Manufacturing — smaller estimated badge */}
                     <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
 
-                    {/* ── MOBILE: overlay button ── */}
-                    {isMobile && (
-                      <button
-                        onClick={()=>setShowAlts(true)}
-                        style={{
-                          width:"100%", marginTop:8, padding:"14px 16px",
-                          background:"#052e16", color:"#4ade80",
-                          border:"none", borderRadius:12, cursor:"pointer",
-                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
-                          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                        }}>
-                        See safer alternatives →
-                      </button>
-                    )}
+                    {/* See Alternatives CTA — replaces mobile scroll button */}
+                    <button
+                      onClick={()=>setShowAlts(true)}
+                      style={{
+                        width:"100%", marginTop:8, padding:"14px 16px",
+                        background:"#052e16", color:"#4ade80",
+                        border:"none", borderRadius:12, cursor:"pointer",
+                        fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                      }}>
+                      See safer alternatives →
+                    </button>
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
@@ -4047,10 +4104,6 @@ function App() {
                 </div>{/* end dropdowns negative-margin wrapper */}
 
                 {/* Peer comparison */}
-                {result.peer_comparison && (
-                  <div style={{fontSize:12, color:muted, marginBottom:16, fontStyle:"italic"}}>{result.peer_comparison}</div>
-                )}
-
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
                 {/* Exposure Calculator — replaces break-even card */}
@@ -4098,56 +4151,11 @@ function App() {
                 </div>
               )}
 
-            </div>{/* end LEFT column */}
-
-            {/* RIGHT — desktop alternatives panel, sticky */}
-            {!isMobile && (() => {
-              const dbAlts = (result.alternatives || []).slice(0, 3);
-              const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
-              const aiAlts = (result.ai_alternatives || [])
-                .filter((a,i,arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
-                .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
-                .slice(0, 3 - dbAlts.length);
-              return (
-                <div style={{position:"sticky", top:24, display:"flex", flexDirection:"column", gap:12}}>
-                  <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4}}>
-                    Safer alternatives
-                  </div>
-
-                  {dbAlts.length === 0 && aiAlts.length === 0 && (
-                    <div style={{background:isDark?"#1e2433":"#f9fafb", borderRadius:12, padding:"20px", border:`1px dashed ${border}`, textAlign:"center"}}>
-                      <div style={{fontSize:13, color:muted, lineHeight:1.6}}>No specific alternatives found for this product yet.</div>
-                    </div>
-                  )}
-
-                  {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
-
-                  {aiAlts.map((alt,i) => (
-                    <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                      <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                        <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
-                      </div>
-                      <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
-                      <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
-                      <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                        style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                        Scan this product →
-                      </button>
-                    </div>
-                  ))}
-
-                  {dbAlts.length > 0 && (
-                    <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5}}>
-                      Affiliate links — commission at no extra cost to you. Never influences scores.
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
-
-          </div>{/* end grid */}
+            </div>
+          </div>
         </div>
+
+        {/* ── ALTERNATIVES PAGE OVERLAY ── */}
         {showAlts && result && (
           <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#131929":"#fafafa", overflowY:"auto"}}>
 
