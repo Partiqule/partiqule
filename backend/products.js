@@ -3203,6 +3203,51 @@ const products = [
     price:"$5-7",
     tags:["oat milk","plant milk","dairy free","milk alternative","food beverage","vegan","barista"]
   },
+  {
+    id:"fb-109", name:"One Degree Organic Sprouted Oat O's", brand:"One Degree",
+    plasticScore:2, category:"food_beverage",
+    material:"USDA Organic sprouted oats — no glyphosate, no artificial dyes, no synthetic preservatives. Gluten-free certified.",
+    description:"The cleanest swap for Honey Nut Cheerios. Certified organic so no glyphosate residue. Sprouted oats improve digestibility. No petroleum dyes, no BHA, no added sugar.",
+    affiliateUrl:`https://www.amazon.com/s?k=One+Degree+Organic+sprouted+oat+os&tag=${AMAZON_TAG}`,
+    price:"$6-9",
+    tags:["cereal","breakfast cereal","oat cereal","organic cereal","cheerios alternative","oat o's","glyphosate free","no artificial dyes","kids cereal","organic","USDA organic","sprouted"]
+  },
+  {
+    id:"fb-110", name:"Nature's Path Organic Corn Flakes", brand:"Nature's Path",
+    plasticScore:2, category:"food_beverage",
+    material:"USDA Organic corn — no synthetic pesticides, no artificial colors, no preservatives.",
+    description:"USDA Organic cereal from one of the most trusted organic cereal brands. No glyphosate, no artificial dyes, non-GMO verified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Natures+Path+organic+corn+flakes&tag=${AMAZON_TAG}`,
+    price:"$5-8",
+    tags:["cereal","breakfast cereal","organic cereal","corn flakes","no artificial dyes","glyphosate free","non-gmo","kids cereal","organic"]
+  },
+  {
+    id:"fb-111", name:"Bob's Red Mill Organic Rolled Oats", brand:"Bob's Red Mill",
+    plasticScore:2, category:"food_beverage",
+    material:"USDA Organic whole grain oats — no glyphosate, no synthetic pesticides, minimal processing.",
+    description:"The gold standard for oatmeal. USDA Organic so no glyphosate pre-harvest desiccant. Non-GMO. Whole grain with nothing added.",
+    affiliateUrl:`https://www.amazon.com/s?k=Bobs+Red+Mill+organic+rolled+oats&tag=${AMAZON_TAG}`,
+    price:"$6-10",
+    tags:["oatmeal","oats","rolled oats","organic oats","breakfast","cereal","organic cereal","glyphosate free","whole grain","non-gmo","USDA organic","quaker alternative","cheerios alternative"]
+  },
+  {
+    id:"fb-112", name:"Nature's Path Organic Honey'd Corn Puffs", brand:"Nature's Path",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic corn, organic honey — no petroleum dyes, no artificial preservatives, non-GMO.",
+    description:"Organic puffed corn with real honey — a genuinely clean swap for honey-flavored cereals. No Red 40, no Yellow 5, no synthetic anything.",
+    affiliateUrl:`https://www.amazon.com/s?k=Natures+Path+organic+honey+corn+puffs&tag=${AMAZON_TAG}`,
+    price:"$5-8",
+    tags:["cereal","breakfast cereal","honey cereal","organic cereal","kids cereal","no artificial dyes","puffed corn","corn puffs","organic","honey nut cheerios alternative","honey flavor"]
+  },
+  {
+    id:"fb-113", name:"Purely Elizabeth Ancient Grain Granola", brand:"Purely Elizabeth",
+    plasticScore:2, category:"food_beverage",
+    material:"Organic oats, coconut oil, coconut sugar — no glyphosate, no refined sugar, no synthetic additives.",
+    description:"Clean granola made with organic ancient grains. No glyphosate, no petroleum dyes, no synthetic preservatives. B-Corp certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Purely+Elizabeth+granola&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["granola","granola bar","breakfast","cereal","organic granola","organic cereal","no artificial dyes","nature valley alternative","glyphosate free","B-corp","ancient grain"]
+  },
   // ── KITCHEN ──────────────────────────────────────────────────
   {
     id:"kt-100", name:"Vitamix Blender", brand:"Vitamix",
@@ -3880,12 +3925,12 @@ const products = [
   },
   {
     id:"fa-004", name:"Zarbees Naturals Cough Syrup", brand:"Zarbees",
-    plasticScore:2, category:"food_beverage",
+    plasticScore:2, category:"other",
     material:"Dark honey base, no dyes, no alcohol, no artificial sweeteners",
     description:"Honey-based cough syrup with no artificial dyes, alcohol or synthetic sweeteners. Safe for kids over 1 year.",
     affiliateUrl:`https://www.amazon.com/s?k=Zarbees+naturals+cough+syrup&tag=${AMAZON_TAG}`,
     price:"$9-13",
-    tags:["cough syrup","kids medicine","natural cough remedy","honey","no dyes","no artificial sweeteners","first aid","food beverage","baby","kids"]
+    tags:["cough syrup","kids medicine","natural cough remedy","no dyes","no artificial sweeteners","first aid","baby","kids"]
   },
   {
     id:"fa-005", name:"Badger Sleep Balm", brand:"Badger",
@@ -4287,6 +4332,9 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   // Extract brand from query to avoid recommending same brand as alternative
   const queryLower = query.toLowerCase();
 
+  // Minimum threshold — food needs higher bar since category is broad
+  const minScore = ["food", "food_beverage", "beverage"].includes(category) ? 18 : 13;
+
   // Relevance scoring — category match + tag overlap must reach threshold
   const scored = products
     .filter(p => p.plasticScore <= 4)
@@ -4298,12 +4346,18 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     })
     .map(p => {
       let score = 0;
+      let meaningfulTagMatches = 0;
       // Category match bonus
       if (category && p.category === category) score += 8;
       // Tag matches
       allWords.forEach(word => {
+        // Skip ultra-generic words that match everything in food category
+        if (["food","organic","natural","beverage","drink"].includes(word)) return;
         p.tags.forEach(tag => {
-          if (tag.includes(word) || word.includes(tag)) score += 5;
+          if (tag.includes(word) || word.includes(tag)) {
+            score += 5;
+            meaningfulTagMatches++;
+          }
         });
         if (p.name.toLowerCase().includes(word)) score += 4;
         if (p.brand.toLowerCase().includes(word)) score += 2;
@@ -4311,12 +4365,16 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       });
       // Full phrase matches
       queries.forEach(q => {
-        p.tags.forEach(tag => { if (q.includes(tag)) score += 7; });
+        p.tags.forEach(tag => { if (q.includes(tag)) { score += 7; meaningfulTagMatches++; } });
         if (p.name.toLowerCase().includes(q.slice(0, 20))) score += 6;
       });
+      // For food category: require at least one meaningful tag match beyond category
+      if (["food", "food_beverage", "beverage"].includes(category) && meaningfulTagMatches === 0) {
+        score = 0; // exclude — only category matched, no actual product relevance
+      }
       return { ...p, relevanceScore: score };
     })
-    .filter(p => p.relevanceScore >= 13)
+    .filter(p => p.relevanceScore >= minScore)
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
     .slice(0, limit);
 

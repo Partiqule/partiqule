@@ -1335,7 +1335,51 @@ Respond with ONLY the JSON object above — no text before or after it.
   );
 }
 
-// ── AI ALTERNATIVES CATEGORY VALIDATOR ───────────────────────
+// ── DB ALTERNATIVES CATEGORY VALIDATOR ───────────────────────
+// Static DB alternatives can match on tags across categories.
+// This filters results to ensure the suggestion is the same TYPE
+// of product as what was scanned.
+const MEDICINE_TAGS = /cough|syrup|medicine|medication|remedy|first aid|supplement|vitamin|capsule|tablet|pill|lozenge|nasal|antacid|pain relief/i;
+const CLEANING_TAGS = /cleaner|detergent|disinfect|sanitiz|laundry|bleach|spray cleaner|floor cleaner/i;
+const PERSONAL_CARE_TAGS = /shampoo|conditioner|lotion|cream|moisturizer|serum|deodorant|toothpaste|makeup|sunscreen/i;
+
+function filterDbAlternatives(alternatives, category, productName) {
+  if (!alternatives?.length) return alternatives || [];
+  const isFoodCat = FOOD_CATEGORIES_SET.has(category);
+
+  return alternatives.filter(alt => {
+    const name   = (alt.name   || "").toLowerCase();
+    const tags   = (alt.tags   || []).join(" ").toLowerCase();
+    const desc   = (alt.description || "").toLowerCase();
+    const combined = `${name} ${tags} ${desc}`;
+
+    // Food scans: block medicine, personal care, cleaning products
+    if (isFoodCat) {
+      if (MEDICINE_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" for food product "${productName}"`);
+        return false;
+      }
+      if (PERSONAL_CARE_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" (personal care) for food product "${productName}"`);
+        return false;
+      }
+      if (CLEANING_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" (cleaning) for food product "${productName}"`);
+        return false;
+      }
+    }
+
+    // Non-food scans: block food items appearing as alternatives
+    if (!isFoodCat && FOOD_CATEGORIES_SET.has(alt.category)) {
+      console.log(`DB filter: blocked food alt "${alt.name}" for non-food product "${productName}"`);
+      return false;
+    }
+
+    return true;
+  });
+}
+
+
 // The AI sometimes ignores the same-use rule and suggests completely
 // wrong products. This filter catches cross-category hallucinations
 // before they reach the client.
@@ -1520,7 +1564,7 @@ app.post("/analyze", async (req, res) => {
       try { p2 = await pass2(productName, p1); } catch(e) { console.warn("Pass2 failed:", e.message); }
 
       const category = p1.category || "other";
-      let finalAlternatives = findAlternatives(productName, category);
+      let finalAlternatives = filterDbAlternatives(findAlternatives(productName, category), category, productName);
       if (!finalAlternatives.length && p1.ai_alternatives?.length) {
         finalAlternatives = p1.ai_alternatives.map(a => ({
           id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 2,
@@ -1768,12 +1812,16 @@ app.post("/analyze", async (req, res) => {
         console.log(`PA API returned ${amazonResults.length} alternatives`);
       } else {
         console.log("PA API returned no results — falling back to static DB");
-        finalAlternatives = findAlternatives(aiProductName, finalCategory, 3, productName)
-          .map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+        finalAlternatives = filterDbAlternatives(
+          findAlternatives(aiProductName, finalCategory, 3, productName),
+          finalCategory, productName
+        ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
       }
     } else {
-      finalAlternatives = findAlternatives(aiProductName, finalCategory, 3, productName)
-        .map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+      finalAlternatives = filterDbAlternatives(
+        findAlternatives(aiProductName, finalCategory, 3, productName),
+        finalCategory, productName
+      ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
     }
 
     const result = {
