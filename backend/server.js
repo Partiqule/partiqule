@@ -237,7 +237,7 @@ const SUBSTANCE_FLOORS = [
   // ══════════════════════════════════════════════════════════
   // SYNTHETIC FRAGRANCE & VOCs
   // ══════════════════════════════════════════════════════════
-  { match: /synthetic fragrance|artificial fragrance|fragrance.*petroleum/i, mFloor:5, uFloor:4, reason:"Synthetic fragrance — undisclosed phthalates/VOCs (Steinemann 2017)" },
+  { match: /synthetic fragrance|artificial fragrance|fragrance.*petroleum|parfum.*synthetic|undisclosed.*fragrance/i, mFloor:5, uFloor:4, reason:"Synthetic fragrance — undisclosed phthalates/VOCs (Steinemann 2017)" },
   { match: /\btoluene\b/i,                                             mFloor:6, uFloor:5, reason:"Toluene — neurotoxin, reproductive harm, IARC 3" },
   { match: /\bbenzene\b/i,                                             mFloor:8, uFloor:7, reason:"Benzene — IARC Group 1 carcinogen, leukemia" },
   { match: /\bxylene\b/i,                                              mFloor:6, uFloor:5, reason:"Xylene — neurotoxin, VOC, reproductive concern" },
@@ -1205,6 +1205,11 @@ app.post("/analyze", async (req, res) => {
         else                              finalScore = Math.max(finalScore, 3);
       }
 
+      // ── Hard caps for known clean products ──
+      const imgPName = (p1.product_name || productName).toLowerCase();
+      if (/\bpoppi\b/i.test(imgPName))  finalScore = Math.min(finalScore, 4);
+      if (/\bolipop\b/i.test(imgPName)) finalScore = Math.min(finalScore, 4);
+
       const result = {
         product_name: productName, category,
         score: finalScore,
@@ -1355,6 +1360,11 @@ app.post("/analyze", async (req, res) => {
       else if (isTaco)                  finalScore = Math.max(finalScore, 3);
       else                              finalScore = Math.max(finalScore, 3);
     }
+
+    // ── Hard caps for known clean products — AI cannot exceed these ──
+    const pName = (p1.product_name || productName).toLowerCase();
+    if (/\bpoppi\b/i.test(pName))  finalScore = Math.min(finalScore, 4);
+    if (/\bolipop\b/i.test(pName)) finalScore = Math.min(finalScore, 4);
 
     // Peer comparison
     const peerPct = Math.round(((finalScore - 1) / 9) * 100);
