@@ -118,56 +118,216 @@ function extractProductFromUrl(input) {
 // ── SUBSTANCE REGISTRY ────────────────────────────────────────
 // Ingredient-triggered score floors — only activate when AI confirms
 // the substance in concerns. Overrides formula output for materials score.
-// Philosophy: confirmed bad ingredient = guaranteed minimum, regardless of
-// how the AI weighted other dimensions. Mirrors Yuka's hazard-floor logic.
+// Sources: EU REACH SVHC (253 entries as of Feb 2026), IARC Monographs,
+// EWG Skin Deep, FDA, EPA Safer Choice, NTP, WHO
 
 const SUBSTANCE_FLOORS = [
-  // ── PFAS / PTFE ──────────────────────────────────────────
-  { match: /\bPTFE\b|polytetrafluoroethylene|teflon/i,            mFloor: 8, uFloor: 7, reason: "PTFE/PFAS — carcinogen class, banned cookware coating" },
-  { match: /\bPFAS\b|perfluoro|PFOA|PFOS|GenX|PFBS/i,            mFloor: 8, uFloor: 7, reason: "PFAS — forever chemicals, EPA health advisory" },
-  // ── PETROLEUM DYES ───────────────────────────────────────
-  { match: /Red\s*40|Red\s*3|FD&C Red/i,                         mFloor: 7, uFloor: 6, reason: "Red 40/Red 3 — FDA-flagged petroleum dye, carcinogenicity" },
-  { match: /Yellow\s*5|Yellow\s*6|FD&C Yellow/i,                 mFloor: 7, uFloor: 6, reason: "Yellow 5/6 — petroleum dye, hyperactivity links" },
-  { match: /Blue\s*1|Blue\s*2|FD&C Blue/i,                       mFloor: 6, uFloor: 5, reason: "Blue 1/2 — petroleum dye, FDA review" },
-  { match: /titanium dioxide|TiO2/i,                             mFloor: 6, uFloor: 5, reason: "Titanium dioxide — IARC Group 2B carcinogen (EU food ban)" },
-  // ── PRESERVATIVES ────────────────────────────────────────
-  { match: /\bTBHQ\b|tert-butylhydroquinone/i,                   mFloor: 6, uFloor: 5, reason: "TBHQ — FDA-reviewed immunotoxin in frying oils" },
-  { match: /\bBHA\b|butylated hydroxyanisole/i,                  mFloor: 5, uFloor: 4, reason: "BHA — IARC Group 2B, possible carcinogen" },
-  { match: /\bBHT\b|butylated hydroxytoluene/i,                  mFloor: 5, uFloor: 4, reason: "BHT — animal carcinogen studies, endocrine disruption" },
-  { match: /sodium nitrite|sodium nitrate/i,                     mFloor: 6, uFloor: 5, reason: "Nitrites — WHO Group 2A carcinogen in processed meat" },
-  // ── CHEMICAL UV FILTERS ──────────────────────────────────
-  { match: /oxybenzone|benzophenone-3/i,                         mFloor: 7, uFloor: 7, reason: "Oxybenzone — detected in bloodstream after single use (FDA)" },
-  { match: /octinoxate|octyl methoxycinnamate/i,                 mFloor: 6, uFloor: 6, reason: "Octinoxate — FDA flagged for further safety review" },
-  { match: /avobenzone|homosalate|octisalate/i,                  mFloor: 5, uFloor: 5, reason: "Chemical UV filter — FDA systemic absorption concerns" },
-  // ── PLASTICS IN FOOD CONTACT ─────────────────────────────
-  { match: /\bPVA\b|polyvinyl alcohol.*pod|pod.*polyvinyl alcohol/i, mFloor: 6, uFloor: 5, reason: "PVA pod film — dissolves but enters waterways as microplastic" },
-  { match: /bisphenol|BPA|BPS|BPF/i,                            mFloor: 6, uFloor: 6, reason: "Bisphenol — endocrine disruptor, hormone mimicry" },
-  { match: /phthalate|DEHP|DBP|BBP/i,                           mFloor: 7, uFloor: 6, reason: "Phthalates — endocrine disruptors, reproductive toxins" },
-  // ── TEXTILE CHEMICALS ────────────────────────────────────
-  { match: /formaldehyde|formaldehyde resin|DMDHEU/i,            mFloor: 6, uFloor: 5, reason: "Formaldehyde — IARC Group 1 carcinogen in fabric finishes" },
-  { match: /azo dye|azo-dye|carcinogenic amine/i,               mFloor: 6, uFloor: 5, reason: "Azo dyes — can release carcinogenic aromatic amines" },
-  { match: /dimethylpolysiloxane|antifoam.*silicone|silicone.*antifoam/i, mFloor: 5, uFloor: 4, reason: "Dimethylpolysiloxane — silicone antifoaming agent in frying oils" },
-  // ── SWEETENERS ───────────────────────────────────────────
-  { match: /aspartame/i,                                         mFloor: 5, uFloor: 4, reason: "Aspartame — IARC Group 2B (2023), gut microbiome disruption" },
-  { match: /high.fructose corn syrup|HFCS/i,                    mFloor: 5, uFloor: 5, reason: "HFCS — metabolic risk, liver impact at high intake" },
-  // ── FLAME RETARDANTS ─────────────────────────────────────
-  { match: /PBDE|polybrominated|brominated flame/i,              mFloor: 8, uFloor: 7, reason: "PBDE flame retardants — banned, persistent neurotoxin" },
-  { match: /organophosphate flame|TCEP|TDCPP/i,                 mFloor: 7, uFloor: 6, reason: "Organophosphate flame retardant — carcinogen, endocrine disruptor" },
-  // ── FRAGRANCE ────────────────────────────────────────────
-  { match: /synthetic fragrance|fragrance.*parfum|artificial fragrance/i, mFloor: 5, uFloor: 4, reason: "Synthetic fragrance — undisclosed phthalates and VOCs" },
+
+  // ══════════════════════════════════════════════════════════
+  // PFAS / FOREVER CHEMICALS — EU SVHC, EPA Health Advisory
+  // ══════════════════════════════════════════════════════════
+  { match: /\bPTFE\b|polytetrafluoroethylene|\bteflon\b/i,          mFloor:8, uFloor:7, reason:"PTFE — IARC 2A, PFAS class, banned cookware coating" },
+  { match: /\bPFAS\b|perfluoro(?!rm)|perfluoroalkyl|polyfluoroalkyl/i, mFloor:8, uFloor:7, reason:"PFAS forever chemicals — EPA health advisory, carcinogenic" },
+  { match: /\bPFOA\b|perfluorooctanoic/i,                            mFloor:9, uFloor:8, reason:"PFOA — IARC Group 1 carcinogen, banned globally" },
+  { match: /\bPFOS\b|perfluorooctane.?sulfon/i,                      mFloor:9, uFloor:8, reason:"PFOS — IARC Group 1, persistent, bioaccumulative" },
+  { match: /\bGenX\b|hexafluoropropylene oxide/i,                    mFloor:8, uFloor:7, reason:"GenX — PFAS replacement, same toxicity concerns" },
+  { match: /\bPFBS\b|perfluorobutane.?sulfon/i,                      mFloor:7, uFloor:6, reason:"PFBS — PFAS class, kidney toxicity" },
+  { match: /polytetrafluoro|fluoropolymer/i,                         mFloor:7, uFloor:6, reason:"Fluoropolymer — PFAS class compound" },
+
+  // ══════════════════════════════════════════════════════════
+  // PETROLEUM DYES — FDA flagged, IARC classified
+  // ══════════════════════════════════════════════════════════
+  { match: /Red\s*40|Red\s*3|FD&?C\s*Red|Allura Red|Erythrosine/i,  mFloor:7, uFloor:6, reason:"Red 40/Red 3 — FDA banned Red 3 2025, petroleum dye, carcinogenicity" },
+  { match: /Yellow\s*5|Yellow\s*6|FD&?C\s*Yellow|Tartrazine|Sunset Yellow/i, mFloor:7, uFloor:6, reason:"Yellow 5/6 — petroleum dye, hyperactivity (McCann Lancet 2007)" },
+  { match: /Blue\s*1|Blue\s*2|FD&?C\s*Blue|Brilliant Blue|Indigo Carmine/i, mFloor:6, uFloor:5, reason:"Blue 1/2 — petroleum dye, FDA review pending" },
+  { match: /Green\s*3|FD&?C\s*Green/i,                               mFloor:6, uFloor:5, reason:"Green 3 — petroleum-derived synthetic dye" },
+  { match: /titanium dioxide|TiO2|\bE171\b/i,                        mFloor:6, uFloor:5, reason:"Titanium dioxide — IARC Group 2B, EU food ban (E171)" },
+  { match: /caramel colou?r.*IV|4-MEI|4-methylimidazole/i,           mFloor:6, uFloor:5, reason:"Caramel Color IV — 4-MEI byproduct, IARC 2B carcinogen" },
+
+  // ══════════════════════════════════════════════════════════
+  // PRESERVATIVES — NTP, IARC, EWG flagged
+  // ══════════════════════════════════════════════════════════
+  { match: /\bTBHQ\b|tert.?butylhydroquinone/i,                      mFloor:6, uFloor:5, reason:"TBHQ — FDA-reviewed immunotoxin, animal carcinogen (NTP)" },
+  { match: /\bBHA\b|butylated hydroxyanisole/i,                       mFloor:6, uFloor:5, reason:"BHA — IARC Group 2B, reasonably anticipated carcinogen (NTP)" },
+  { match: /\bBHT\b|butylated hydroxytoluene/i,                       mFloor:5, uFloor:4, reason:"BHT — animal carcinogen studies, endocrine disruption" },
+  { match: /sodium nitrite|sodium nitrate|nitrite.*preserv/i,         mFloor:7, uFloor:6, reason:"Nitrites — WHO/IARC Group 1 carcinogen in processed meat" },
+  { match: /potassium bromate/i,                                      mFloor:7, uFloor:6, reason:"Potassium bromate — IARC Group 2B, banned EU/UK, used in bread" },
+  { match: /propyl gallate/i,                                         mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP concern" },
+  { match: /\bEDTA\b|ethylenediaminetetraacetic/i,                    mFloor:4, uFloor:3, reason:"EDTA — environmental persistence, chelating agent" },
+
+  // ══════════════════════════════════════════════════════════
+  // FORMALDEHYDE & RELEASERS — IARC Group 1
+  // ══════════════════════════════════════════════════════════
+  { match: /\bformaldehyde\b|methylene glycol|formalin/i,             mFloor:7, uFloor:6, reason:"Formaldehyde — IARC Group 1 carcinogen" },
+  { match: /DMDM hydantoin|DMDMhydantoin/i,                           mFloor:6, uFloor:5, reason:"DMDM Hydantoin — formaldehyde releaser (EWG flagged)" },
+  { match: /quaternium.?15/i,                                         mFloor:6, uFloor:5, reason:"Quaternium-15 — formaldehyde releaser, contact allergen" },
+  { match: /imidazolidinyl urea|diazolidinyl urea/i,                  mFloor:6, uFloor:5, reason:"Urea preservative — formaldehyde releaser" },
+  { match: /2.?bromo.?2.?nitropropane|bronopol/i,                     mFloor:6, uFloor:5, reason:"Bronopol — formaldehyde releaser, nitrosamine precursor" },
+  { match: /methenamine|hexamethylenetetramine/i,                     mFloor:5, uFloor:4, reason:"Methenamine — releases formaldehyde in acidic conditions" },
+
+  // ══════════════════════════════════════════════════════════
+  // PARABENS — EU banned long-chain, EWG flagged
+  // ══════════════════════════════════════════════════════════
+  { match: /isobutylparaben|isopropylparaben/i,                       mFloor:6, uFloor:5, reason:"Long-chain parabens — EU banned, endocrine disruptors" },
+  { match: /butylparaben|propylparaben/i,                             mFloor:5, uFloor:4, reason:"Long-chain parabens — endocrine disruptors, hormone mimicry" },
+  { match: /methylparaben|ethylparaben/i,                             mFloor:4, uFloor:3, reason:"Short-chain parabens — estrogen mimicry, low-level concern" },
+  { match: /\bparaben\b/i,                                            mFloor:4, uFloor:3, reason:"Parabens — endocrine disruption class concern" },
+
+  // ══════════════════════════════════════════════════════════
+  // PHTHALATES — IARC 2B, endocrine disruptors
+  // ══════════════════════════════════════════════════════════
+  { match: /\bDEHP\b|di.?2.?ethylhexyl phthalate|dioctyl phthalate/i, mFloor:7, uFloor:6, reason:"DEHP — IARC 2B, reproductive toxin, EU SVHC" },
+  { match: /\bDBP\b|dibutyl phthalate/i,                              mFloor:7, uFloor:6, reason:"DBP — EU banned cosmetics, reproductive toxin" },
+  { match: /\bBBP\b|benzyl butyl phthalate/i,                         mFloor:7, uFloor:6, reason:"BBP — EU SVHC, endocrine disruptor" },
+  { match: /\bDEP\b|diethyl phthalate/i,                              mFloor:6, uFloor:5, reason:"DEP — common in fragrance, endocrine disruption" },
+  { match: /\bDIBP\b|diisobutyl phthalate/i,                          mFloor:7, uFloor:6, reason:"DIBP — EU SVHC, reproductive toxin" },
+  { match: /\bphthalate\b|phthalic acid ester/i,                      mFloor:6, uFloor:5, reason:"Phthalate — endocrine disruptor class" },
+
+  // ══════════════════════════════════════════════════════════
+  // BISPHENOLS — endocrine disruptors
+  // ══════════════════════════════════════════════════════════
+  { match: /\bBPA\b|bisphenol.?A\b/i,                                 mFloor:7, uFloor:6, reason:"BPA — endocrine disruptor, EU SVHC, banned baby products" },
+  { match: /\bBPS\b|bisphenol.?S\b/i,                                 mFloor:6, uFloor:5, reason:"BPS — BPA replacement, same endocrine disruption" },
+  { match: /\bBPF\b|bisphenol.?F\b/i,                                 mFloor:6, uFloor:5, reason:"BPF — BPA replacement, hormone disruption" },
+  { match: /\bBPAF\b|bisphenol.?AF\b/i,                               mFloor:7, uFloor:6, reason:"BPAF — EU SVHC Feb 2026, reproductive toxin" },
+  { match: /\bbisphenol\b/i,                                           mFloor:6, uFloor:5, reason:"Bisphenol compound — endocrine disruption class" },
+
+  // ══════════════════════════════════════════════════════════
+  // CHEMICAL UV FILTERS — FDA systemic absorption
+  // ══════════════════════════════════════════════════════════
+  { match: /oxybenzone|benzophenone.?3/i,                             mFloor:7, uFloor:7, reason:"Oxybenzone — bloodstream after single use (Matta JAMA 2019)" },
+  { match: /octinoxate|octyl methoxycinnamate/i,                      mFloor:6, uFloor:6, reason:"Octinoxate — FDA systemic absorption, coral reef harm" },
+  { match: /avobenzone/i,                                              mFloor:5, uFloor:5, reason:"Avobenzone — FDA systemic absorption concerns" },
+  { match: /homosalate/i,                                              mFloor:5, uFloor:5, reason:"Homosalate — FDA systemic absorption, endocrine disruption" },
+  { match: /octisalate|octyl salicylate/i,                             mFloor:5, uFloor:4, reason:"Octisalate — FDA systemic absorption review" },
+  { match: /ensulizole|phenylbenzimidazole/i,                          mFloor:5, uFloor:4, reason:"Ensulizole — FDA systemic absorption concern" },
+
+  // ══════════════════════════════════════════════════════════
+  // HEAVY METALS — IARC Group 1, neurotoxins
+  // ══════════════════════════════════════════════════════════
+  { match: /\bmercury\b|thimerosal|thiomersal/i,                       mFloor:9, uFloor:8, reason:"Mercury — IARC Group 1, neurotoxin, banned most cosmetics" },
+  { match: /\blead\b|lead acetate|lead compound/i,                     mFloor:8, uFloor:7, reason:"Lead — IARC Group 1, neurotoxin, no safe exposure level" },
+  { match: /\bcadmium\b|cadmium compound/i,                            mFloor:8, uFloor:7, reason:"Cadmium — IARC Group 1 carcinogen, kidney toxin" },
+  { match: /\barsenic\b|arsenic compound/i,                            mFloor:9, uFloor:8, reason:"Arsenic — IARC Group 1, carcinogenic, groundwater contamination" },
+  { match: /\bchromium.?VI\b|hexavalent chromium/i,                    mFloor:8, uFloor:7, reason:"Hexavalent chromium — IARC Group 1 carcinogen" },
+  { match: /\bnickel\b(?!.*free)/i,                                    mFloor:6, uFloor:5, reason:"Nickel — IARC Group 1 (inhalation), skin sensitizer" },
+  { match: /\bcobalt\b|cobalt compound/i,                              mFloor:6, uFloor:5, reason:"Cobalt — IARC 2A, lung carcinogen in hard metals" },
+
+  // ══════════════════════════════════════════════════════════
+  // PLASTIC CHEMICALS IN FOOD CONTACT
+  // ══════════════════════════════════════════════════════════
+  { match: /\bPVA\b|polyvinyl alcohol.*pod|pod.*polyvinyl|PVA.*film/i, mFloor:6, uFloor:5, reason:"PVA pod film — dissolves into waterways as microplastic" },
+  { match: /\bPVC\b|polyvinyl chloride/i,                              mFloor:7, uFloor:6, reason:"PVC — contains plasticizers and stabilizers, leaches at heat" },
+  { match: /polystyrene|styrofoam|\bPS\b.*food/i,                      mFloor:6, uFloor:6, reason:"Polystyrene — styrene leaching (IARC 2B), especially hot food contact" },
+  { match: /polycarbonate.*food|polycarbonate.*container/i,            mFloor:6, uFloor:5, reason:"Polycarbonate — BPA source, heat increases leaching" },
+  { match: /1,?4.?dioxane/i,                                           mFloor:7, uFloor:6, reason:"1,4-Dioxane — contaminant in cosmetics, IARC 2B carcinogen" },
+  { match: /styrene|polystyrene/i,                                     mFloor:6, uFloor:5, reason:"Styrene — IARC 2B, neurotoxin, leaches from polystyrene" },
+
+  // ══════════════════════════════════════════════════════════
+  // FLAME RETARDANTS — neurotoxins, persistent
+  // ══════════════════════════════════════════════════════════
+  { match: /\bPBDE\b|polybrominated diphenyl ether/i,                  mFloor:9, uFloor:8, reason:"PBDE — banned, persistent neurotoxin, thyroid disruption" },
+  { match: /\bTCEP\b|tris.?2.?chloroethyl.?phosphate/i,               mFloor:8, uFloor:7, reason:"TCEP — IARC 2B carcinogen, endocrine disruptor" },
+  { match: /\bTDCPP\b|tris.?1,3.?dichloro.?2.?propyl/i,               mFloor:8, uFloor:7, reason:"TDCPP — IARC 2A carcinogen, California Prop 65" },
+  { match: /\bTCPP\b|tris.?chloropropyl.?phosphate/i,                  mFloor:7, uFloor:6, reason:"TCPP — reproductive toxin, EU SVHC" },
+  { match: /triphenyl phosphate|\bTPhP\b/i,                            mFloor:7, uFloor:6, reason:"TPhP — EU SVHC Nov 2024, endocrine disruptor" },
+  { match: /organophosphate flame|phosphate.*flame retardant/i,        mFloor:7, uFloor:6, reason:"Organophosphate flame retardant — neurotoxin class" },
+  { match: /flame retardant(?!.*free)/i,                               mFloor:6, uFloor:5, reason:"Flame retardant — undisclosed type, likely halogenated" },
+
+  // ══════════════════════════════════════════════════════════
+  // SYNTHETIC FRAGRANCE & VOCs
+  // ══════════════════════════════════════════════════════════
+  { match: /synthetic fragrance|artificial fragrance|fragrance.*petroleum/i, mFloor:5, uFloor:4, reason:"Synthetic fragrance — undisclosed phthalates/VOCs (Steinemann 2017)" },
+  { match: /\btoluene\b/i,                                             mFloor:6, uFloor:5, reason:"Toluene — neurotoxin, reproductive harm, IARC 3" },
+  { match: /\bbenzene\b/i,                                             mFloor:8, uFloor:7, reason:"Benzene — IARC Group 1 carcinogen, leukemia" },
+  { match: /\bxylene\b/i,                                              mFloor:6, uFloor:5, reason:"Xylene — neurotoxin, VOC, reproductive concern" },
+  { match: /dibutyl phthalate.*nail|DBP.*nail/i,                       mFloor:7, uFloor:6, reason:"DBP in nail products — reproductive toxin, EU banned" },
+  { match: /\bMEK\b|methyl ethyl ketone/i,                             mFloor:5, uFloor:4, reason:"MEK — neurotoxin, eye/respiratory irritant" },
+
+  // ══════════════════════════════════════════════════════════
+  // TEXTILE CHEMICALS — EU REACH restricted
+  // ══════════════════════════════════════════════════════════
+  { match: /azo dye|azo.?dye|aromatic amine.*dye/i,                   mFloor:6, uFloor:5, reason:"Azo dyes — release carcinogenic aromatic amines (EU REACH)" },
+  { match: /PFAS.*DWR|DWR.*PFAS|durable water repellent.*fluoro/i,    mFloor:8, uFloor:6, reason:"PFAS DWR coating — forever chemicals on fabric" },
+  { match: /dimethylpolysiloxane|antifoam.*silicone|silicone.*antifoam/i, mFloor:5, uFloor:4, reason:"Dimethylpolysiloxane — silicone antifoaming in frying oils" },
+  { match: /nonylphenol|nonylphenol ethoxylate|\bNPE\b/i,              mFloor:7, uFloor:6, reason:"Nonylphenol — EU SVHC, endocrine disruptor, textile processing" },
+  { match: /pentachlorophenol|\bPCP\b.*wood|wood.*\bPCP\b/i,           mFloor:8, uFloor:7, reason:"Pentachlorophenol — IARC Group 1, banned textile preservative" },
+  { match: /short.?chain chlorinated paraffin|SCCP/i,                  mFloor:7, uFloor:6, reason:"SCCP — EU SVHC, persistent toxic, used in textiles" },
+  { match: /dimethyl fumarate|\bDMFu?\b/i,                              mFloor:7, uFloor:6, reason:"Dimethyl fumarate — EU banned in consumer products, severe skin burn" },
+
+  // ══════════════════════════════════════════════════════════
+  // SWEETENERS & FOOD ADDITIVES
+  // ══════════════════════════════════════════════════════════
+  { match: /\baspartame\b/i,                                            mFloor:5, uFloor:4, reason:"Aspartame — IARC Group 2B (2023), WHO ADI concerns" },
+  { match: /high.fructose corn syrup|\bHFCS\b/i,                       mFloor:5, uFloor:5, reason:"HFCS — metabolic disease, liver impact, obesity driver" },
+  { match: /saccharin/i,                                                mFloor:4, uFloor:3, reason:"Saccharin — historically IARC 2B (downgraded), gut microbiome" },
+  { match: /acesulfame.?k|acesulfame potassium/i,                      mFloor:4, uFloor:3, reason:"Acesulfame-K — animal carcinogen studies, gut disruption" },
+  { match: /\bcarrageenan\b/i,                                          mFloor:5, uFloor:4, reason:"Carrageenan — intestinal inflammation, WHO concern (food grade)" },
+  { match: /propyl gallate/i,                                           mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP listed" },
+  { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate/i,     mFloor:6, uFloor:5, reason:"Sodium benzoate + vitamin C = benzene formation (IARC Group 1)" },
+  { match: /\bmonosodium glutamate\b|\bMSG\b/i,                         mFloor:3, uFloor:3, reason:"MSG — excitotoxin concerns, FDA GRAS but contested" },
+  { match: /potassium bromate/i,                                        mFloor:7, uFloor:6, reason:"Potassium bromate — IARC 2B, banned EU/Canada, used in flour" },
+  { match: /brominated vegetable oil|\bBVO\b/i,                         mFloor:6, uFloor:5, reason:"BVO — FDA proposed ban 2023, iodine displacement, organ buildup" },
+
+  // ══════════════════════════════════════════════════════════
+  // ANTIMICROBIALS — endocrine disruption, resistance
+  // ══════════════════════════════════════════════════════════
+  { match: /\btriclosan\b/i,                                            mFloor:6, uFloor:5, reason:"Triclosan — FDA banned soaps 2017, thyroid disruption, antibiotic resistance" },
+  { match: /\btriclocarban\b/i,                                         mFloor:6, uFloor:5, reason:"Triclocarban — FDA banned, endocrine disruptor, aquatic toxin" },
+  { match: /benzalkonium chloride|\bBAC\b.*antimicro/i,                 mFloor:5, uFloor:4, reason:"Benzalkonium chloride — antimicrobial resistance, irritant" },
+
+  // ══════════════════════════════════════════════════════════
+  // PESTICIDES — EWG Dirty Dozen, PFAS pesticides
+  // ══════════════════════════════════════════════════════════
+  { match: /\bglyphosate\b/i,                                           mFloor:6, uFloor:5, reason:"Glyphosate — IARC Group 2A probable carcinogen (2015)" },
+  { match: /\bchlorpyrifos\b/i,                                         mFloor:7, uFloor:6, reason:"Chlorpyrifos — EPA banned 2021, children's neurotoxin" },
+  { match: /\batrazine\b/i,                                             mFloor:7, uFloor:6, reason:"Atrazine — endocrine disruptor, banned EU, water contaminant" },
+  { match: /\bneonicotinoid\b|imidacloprid|clothianidin|thiamethoxam/i, mFloor:6, uFloor:5, reason:"Neonicotinoid pesticide — bee colony collapse, systemic in crops" },
+  { match: /PFAS.*pesticide|pesticide.*PFAS|fluoro.*pesticide/i,       mFloor:7, uFloor:6, reason:"PFAS-based pesticide — EWG 2026, 63% Dirty Dozen residues" },
+
+  // ══════════════════════════════════════════════════════════
+  // SOLVENTS & PROCESSING CHEMICALS
+  // ══════════════════════════════════════════════════════════
+  { match: /\bn-hexane\b/i,                                             mFloor:6, uFloor:5, reason:"n-Hexane — EU SVHC Feb 2026, neurotoxin (peripheral neuropathy)" },
+  { match: /methylene chloride|dichloromethane|\bDCM\b/i,              mFloor:8, uFloor:7, reason:"Methylene chloride — IARC Group 1, carcinogen, EPA restricted" },
+  { match: /carbon tetrachloride/i,                                     mFloor:7, uFloor:6, reason:"Carbon tetrachloride — IARC Group 2B, liver carcinogen" },
+  { match: /\bperchloroethylene\b|tetrachloroethylene|\bPCE\b/i,       mFloor:7, uFloor:6, reason:"Perchloroethylene — IARC Group 1, dry cleaning solvent" },
+  { match: /vinyl chloride/i,                                           mFloor:9, uFloor:8, reason:"Vinyl chloride — IARC Group 1, liver cancer (PVC precursor)" },
+  { match: /ethylene oxide/i,                                           mFloor:9, uFloor:8, reason:"Ethylene oxide — IARC Group 1, breast cancer, used in sterilization" },
+
+  // ══════════════════════════════════════════════════════════
+  // HAIR DYE CHEMICALS
+  // ══════════════════════════════════════════════════════════
+  { match: /p-phenylenediamine|PPD|paraphenylenediamine/i,              mFloor:6, uFloor:6, reason:"PPD — IARC 3 carcinogen, common hair dye allergen/sensitizer" },
+  { match: /resorcinol.*hair|hair.*resorcinol/i,                        mFloor:6, uFloor:5, reason:"Resorcinol in hair dye — thyroid disruption, skin sensitizer" },
+  { match: /lead acetate.*hair|hair.*lead acetate/i,                   mFloor:8, uFloor:7, reason:"Lead acetate in hair dye — IARC Group 1 lead compound" },
+  { match: /aminophenol|2.?aminophenol|4.?aminophenol/i,               mFloor:6, uFloor:5, reason:"Aminophenol — IARC Group 2B, hair dye chemical" },
+
+  // ══════════════════════════════════════════════════════════
+  // MICROPLASTICS
+  // ══════════════════════════════════════════════════════════
+  { match: /microplastic|microbead|polyethylene.*bead|polypropylene.*bead/i, mFloor:6, uFloor:6, reason:"Microplastics/microbeads — direct ingestion/absorption, bioaccumulation" },
+  { match: /microfiber.*shed|shed.*microfiber/i,                       mFloor:6, uFloor:5, reason:"Microfiber shedding — ocean contamination, food chain entry" },
+
+  // ══════════════════════════════════════════════════════════
+  // POLYCHLORINATED COMPOUNDS
+  // ══════════════════════════════════════════════════════════
+  { match: /\bPCB\b|polychlorinated biphenyl/i,                        mFloor:9, uFloor:8, reason:"PCBs — IARC Group 1, banned, persistent organic pollutant" },
+  { match: /\bPCDD\b|\bdioxin\b/i,                                     mFloor:9, uFloor:8, reason:"Dioxins — IARC Group 1, most toxic known compounds" },
+  { match: /chlorinated paraffin/i,                                    mFloor:7, uFloor:6, reason:"Chlorinated paraffins — EU SVHC, PBT substance" },
+
 ];
 
 // Apply substance floors based on what AI actually found in concerns
 function applySubstanceFloors(mScore, uScore, p1, p2) {
-  // Collect all text the AI generated about this product
   const concernsText = JSON.stringify([
     ...(p1.product_analysis?.concerns || []),
     ...(p1.materials?.concerns || []),
     ...(p2?.refined_concerns || []),
     ...(p1.raw_concerns || []),
   ]).toLowerCase();
-  const summaryText  = (p1.summary || p2?.summary || "").toLowerCase();
-  const allText      = concernsText + " " + summaryText;
+  const summaryText = (p1.summary || p2?.summary || "").toLowerCase();
+  const allText     = concernsText + " " + summaryText;
 
   let triggered = [];
   for (const rule of SUBSTANCE_FLOORS) {
@@ -182,7 +342,30 @@ function applySubstanceFloors(mScore, uScore, p1, p2) {
   return { mScore, uScore, triggered };
 }
 
-// ── PEER COMPARISON DATA ──────────────────────────────────────
+// ── DUAL SCORING FORMULA ─────────────────────────────────────
+// Food/beverage: ingestion-first — ingredients dominate, packaging
+// penalizes for food contact, nutrition positives lower score.
+// Non-food: contact/environment-first — exposure and sustainability
+// carry more weight, packaging less critical.
+
+const FOOD_CATEGORIES    = new Set(["food_beverage", "restaurant", "supplement"]);
+const NONFOOD_CATEGORIES = new Set(["clothing", "personal_care", "kitchen", "baby", "home_furnishing", "other"]);
+
+function computeScore(mScore, uScore, pkScore, sScore, mfScore, category) {
+  if (FOOD_CATEGORIES.has(category)) {
+    // Food formula — ingredients 50%, packaging 20%, usage 20%, sustainability 5%, mfg 5%
+    return Math.min(10, Math.max(1,
+      Math.round(mScore*0.50 + pkScore*0.20 + uScore*0.20 + sScore*0.05 + mfScore*0.05)
+    ));
+  } else {
+    // Non-food formula — materials 35%, usage 30%, sustainability 20%, packaging 10%, mfg 5%
+    return Math.min(10, Math.max(1,
+      Math.round(mScore*0.35 + uScore*0.30 + sScore*0.20 + pkScore*0.10 + mfScore*0.05)
+    ));
+  }
+}
+
+
 // Average scores by category — used for peer comparison stat
 const CATEGORY_AVERAGES = {
   clothing:       { avg: 5.5, label: "clothing items"         },
@@ -520,21 +703,41 @@ USAGE AND EXPOSURE (how using this product affects health):
 - EVs score 1-2 points lower than gas equivalents (Rivian/Tesla/Lucid: 2-3, older EVs: 3-4).
 - CHEWING GUM: polyvinyl acetate and polyethylene = direct plastic ingestion. Score 7-8.
 
-PACKAGING (what contains and ships the product):
-- Primary packaging that touches product: glass/steel/cardboard=1-2, plastic=6-8.
-- Refillable or concentrated systems (tablets, bars, refill pouches): score 1-3.
-- Single-use plastic primary packaging: score 7-9.
-- Secondary/shipping packaging: only add if excessive.
-- End of life: recyclable=lower, landfill/toxic=higher.
-- NOTE: Concentrated/pod format reduces packaging waste but does NOT excuse poor materials (PVA, synthetic chemicals).
+DUAL SCORING FORMULA — the server applies different weights by category:
+FOOD/BEVERAGE/RESTAURANT/SUPPLEMENT: Materials/Ingredients 50% · Packaging 20% · Usage 20% · Sustainability 5% · Manufacturing 5%
+ALL OTHER CATEGORIES: Materials 35% · Usage/Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%
+Score each dimension accurately — the formula is applied server-side. Do not try to game the weights.
 
-SUSTAINABILITY (product lifecycle and planet impact):
+PACKAGING (what contains and ships the product):
+FOOD CONTACT PACKAGING — penalize heavily, chemicals leach into food:
+- Plastic directly touching food (plastic wrap, plastic bottles, canned food with BPA liner, plastic-lined cups): packaging score 7-9.
+- Aluminum cans (BPA-free lined): packaging score 4-5.
+- Glass, stainless, cardboard touching food: packaging score 1-2.
+- Hot liquid in plastic (coffee cups, plastic takeout containers): packaging score 7-8 — heat accelerates leaching.
+OUTER PACKAGING — does not touch food, penalize less:
+- Recycled cardboard, paper, compostable outer packaging: score 1-2 even for food products.
+- Virgin plastic outer packaging (cereal bags, chip bags): score 5-6.
+- Single-use plastic outer bag with no food contact: score 4-5.
+- Refillable or concentrated formats: score 1-3.
+FOOD NUTRITION POSITIVE SIGNAL — for food_beverage and restaurant:
+- High fiber (5g+/serving), high protein, whole food ingredients, USDA Organic, non-GMO verified: these actively lower the materials score by 1-2 points. A nutrient-dense whole food with minor packaging concerns should still score 1-3.
+- Ultra-processed with zero nutritional benefit: materials score floors at 6+.
+- Organic apple in plastic bag: materials=1 (whole food, organic), packaging=6 (plastic food contact) → final ~3 under food formula. Always note the packaging concern explicitly.
+
+SUSTAINABILITY (product lifecycle, planet impact, and ethical sourcing):
 - Multi-use durable products replacing single-use: score 1-3.
 - Single-use by design (paper towels, disposable cups, plastic wrap): score 7-9.
 - Circular design (refillable, repairable, compostable): score 1-3.
 - Cleaning products that release synthetic chemicals or PVA into waterways: sustainability score 5-7 regardless of concentrated format.
 - Blueland-style products (no PVA, no synthetic fragrance, genuinely clean): sustainability score 1-3.
-- Ethical sourcing certifications (organic, fair trade, B-Corp): lower score.
+- ETHICAL SOURCING — these certifications meaningfully lower sustainability score by 1-2 points:
+  Fair Trade certified: workers paid living wage, safe conditions → score 1-2 lower.
+  B-Corp certified: legal accountability to people and planet → score 1-2 lower.
+  GOTS certified (clothing): organic fiber + ethical labor throughout supply chain → score 1-2 lower.
+  Rainforest Alliance, 1% for Planet, Carbon Neutral certified → score 1 lower.
+- No certifications + opaque supply chain + fast fashion model: sustainability score 6-8.
+- USDA Organic food: sustainability score 1-3 (no synthetic pesticides, soil health).
+- Conventional farming (Dirty Dozen): sustainability score 5-6 (pesticide runoff, soil impact).
 
 MANUFACTURING (production process — score conservatively, flag as estimated):
 - Known bad: fast fashion, PVC/chemical manufacturing, unregulated supply chains: 6-8.
@@ -988,9 +1191,7 @@ app.post("/analyze", async (req, res) => {
         sScore  = Math.max(sScore,  3);
       }
 
-      let finalScore = Math.min(10, Math.max(1,
-        Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
-      ));
+      let finalScore = computeScore(mScore, uScore, pkScore, sScore, mfScore, category);
 
       if (category === "restaurant") {
         const name = (p1.product_name || productName).toLowerCase();
@@ -1140,9 +1341,7 @@ app.post("/analyze", async (req, res) => {
       sScore  = Math.max(sScore,  3);
     }
 
-    let finalScore = Math.min(10, Math.max(1,
-      Math.round(mScore*0.40 + uScore*0.25 + pkScore*0.15 + sScore*0.15 + mfScore*0.05)
-    ));
+    let finalScore = computeScore(mScore, uScore, pkScore, sScore, mfScore, finalCategory);
 
     // ── Final score safety net — catches clear misses only ──
     if (finalCategory === "restaurant") {
