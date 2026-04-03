@@ -333,6 +333,15 @@ const HEDGED_PHRASES = [
   "possible trace", "trace amount", "not confirmed", "unclear whether",
 ];
 
+// Phrases that NEGATE a substance — "no glyphosate" should not trigger glyphosate floor
+const NEGATION_PHRASES = [
+  "no glyphosate", "glyphosate free", "glyphosate-free",
+  "no synthetic pesticide", "usda organic", "certified organic",
+  "no artificial", "free of", "does not contain", "free from",
+  "no added", "without ", "not present", "non-gmo", "no pfas",
+  "pfas-free", "bpa-free", "no bpa", "no bht", "no bha", "no tbhq",
+];
+
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
@@ -350,8 +359,9 @@ function applySubstanceFloors(mScore, uScore, p1, p2) {
     .filter(Boolean);
 
   for (const sentence of allSentences) {
-    const isHedged = HEDGED_PHRASES.some(hedge => sentence.includes(hedge));
-    if (!isHedged) confirmedSentences.push(sentence);
+    const isHedged   = HEDGED_PHRASES.some(hedge => sentence.includes(hedge));
+    const isNegated  = NEGATION_PHRASES.some(neg => sentence.includes(neg));
+    if (!isHedged && !isNegated) confirmedSentences.push(sentence);
   }
   const confirmedText = confirmedSentences.join(" ");
 
@@ -997,8 +1007,12 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Original Cheerios (conventional oats): materials=7, usage=5 → final ~6-7. Same confirmed glyphosate, IARC 2A.
 - Quaker Old Fashioned Oats (conventional, minimal additives): materials=6 (IARC 2A glyphosate confirmed, but simpler product), usage=4 → final ~5-6
 - Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate), usage=1 → final ~1-2
+- Oats Overnight (organic oat blend, protein, natural flavors — USDA Organic certified): materials=2 (organic oats have zero glyphosate residue — do NOT apply glyphosate floor to certified organic products), usage=2 → final ~2. NEVER score above 4. Organic certification is a positive signal, not a neutral one.
+- 365 Whole Foods Market protein bites / chewy bites (dates, almonds, cashews, coffee extract, natural flavors, sea salt — no artificial dyes, no synthetic preservatives, no HFCS): materials=2, usage=2 → final ~2-3. Whole Foods 365 house brand explicitly avoids artificial additives. NEVER score above 4. Do NOT apply glyphosate floor — no oats in this product.
 - Nature Valley Oats and Honey Granola Bar (conventional oats): materials=7 (IARC 2A glyphosate + added sugar), usage=5 → final ~6-7. NEVER score below 6.
 - KIND Oat bar (conventional oats): materials=6 (IARC 2A glyphosate residue likely), usage=4 → final ~5-6
+
+ORGANIC OAT PROTECTION RULE: If a product is confirmed USDA Organic certified, the glyphosate floor does NOT apply. USDA Organic prohibits synthetic pesticides including glyphosate. Organic oats = materials 1-2 on ingredients. Conventional oats (no organic certification) = flag glyphosate as HIGH concern. Organic certification is ALWAYS a positive signal — never penalise an organic product with a pesticide floor.
 - Bacon / conventional deli meat / hot dogs (sodium nitrite): materials=8 (IARC Group 1 nitrites — known carcinogen), usage=7 → final ~7-8. NEVER score below 7.
 - Organic uncured turkey / chicken (no nitrites added): materials=3, usage=3 → final ~3
 - M&Ms Milk Chocolate: materials=8 (Red 40 + Yellow 5 + Yellow 6 + Blue 1 — four FDA-flagged petroleum dyes; IARC carcinogenicity; ultra-processed), usage=7 → final ~7-8. NEVER score below 7.
@@ -1203,6 +1217,13 @@ Apply all personal_care concerns with elevated severity. ADDITIONAL baby-specifi
 HIGH: Any synthetic fragrance in products used on babies (developing endocrine systems), Talc without asbestos testing (possible asbestos contamination), Phenoxyethanol in products for babies under 3 (CNS depression, FDA warned), Any parabens in baby products, Phthalates in baby toys/products (endocrine disruption, Swan 2021)
 MEDIUM: Formaldehyde releasers in baby wash/shampoo, SLS/SLES in baby bath products, Mineral oil in baby products (possible petroleum contamination), Synthetic dyes in any product
 BABY POSITIVES: MADE SAFE certified, EWG Verified for baby, Pediatrician tested and approved, Fragrance-free, Hypoallergenic tested, GOTS organic cotton, No parabens/phthalates/sulfates
+
+DIAPER CALIBRATION — score between these anchors:
+- Pampers / Huggies / Luvs (conventional): materials=7 — PP inner liner, elemental chlorine bleaching, synthetic fragrance in some. Score 7, NEVER below 6.
+- Honest Company diapers: materials=5 — DIFFERENT from Pampers. The "plant-based" claim refers to the outer backsheet (PLA blend) and ECF wood pulp, NOT the skin-contact layer. Inner liner is still PE+PP (conventional petroleum plastics). Leg/waist: polymer spandex. ECF pulp is cleaner than conventional chlorine bleaching but not TCF. No synthetic fragrance (positive). Score 5 — between conventional (7) and bamboo (3). Flag PE/PP inner liner and spandex as concerns; note PLA outer layer as partial positive.
+- Andy Pandy / Dyper / Healthynest (organic bamboo): materials=3 — bamboo-derived top sheet, TCF or ECF pulp, no synthetic fragrance. Score 3.
+- GroVia / Esembly (organic cotton cloth): materials=1 — reusable, organic cotton, no SAP polymers. Score 1-2.
+DO NOT score Honest Company the same as Pampers. DO NOT score Honest Company the same as organic bamboo diapers. It sits at 5 — a meaningful middle ground.
 
 SUPPLEMENT CONCERNS (vitamins, protein powders, probiotics, sleep aids, pre-workout):
 HIGH: Artificial colors/dyes in capsules or gummies (Red 40, Yellow 5 — FDA phasing out), Heavy metal contamination in protein powders (lead, arsenic, cadmium — Consumer Reports 2018 found in many brands), DMAA/stimulants in pre-workout (FDA warnings, cardiovascular risk), Ephedra/ephedrine (FDA banned, cardiovascular events), Synthetic testosterone precursors/prohormones (FDA flagged), Titanium dioxide in coatings (IARC Group 2B), Proprietary blends masking underdosed or contaminated ingredients
@@ -1492,9 +1513,11 @@ CALIBRATION — use these as anchors:
 - Gatorade (artificial dyes, sucrose): final score ~5-6
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
 - Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
-- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~6-7 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 5. Flag "glyphosate residue (conventional oats — EWG confirmed, IARC Group 2A)" as HIGH concern.
+- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~6-7 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 6.
 - Quaker oats / Quaker granola bars (conventional): final score ~5-6 — glyphosate residue confirmed, but simpler ingredients
 - Bob's Red Mill Organic Oats: final score ~1-2 — USDA organic, no glyphosate
+- Oats Overnight (USDA Organic certified oat blend, protein, natural flavors): final score ~2 — organic certification means no glyphosate. Do NOT apply glyphosate floor. NEVER score above 4.
+- 365 Whole Foods Market chewy protein bites / protein bites (dates, almonds, cashews, coffee extract, sea salt — no oats, no artificial dyes, no synthetic preservatives): final score ~2-3. NEVER score above 4. No glyphosate concerns — no oats in this product.
 - M&Ms: final score ~7-8 — NEVER score below 7. Four petroleum dyes all FDA-flagged/phasing out. Ultra-processed. Flag all four dyes by name.
 - Skittles: final score ~7-8 — NEVER score below 7. Same dyes plus titanium dioxide (IARC 2B, EU banned in food).
 - Froot Loops / dyed kids cereal (multiple petroleum dyes + HFCS + daily child consumption): final score ~7-8 — NEVER score below 7. Child vulnerability flag.
@@ -1506,9 +1529,11 @@ CALIBRATION — use these as anchors:
 - Organic cotton tampons/pads: final score ~2
 - Menstrual cup: final score ~1
 - Conventional disposable diaper (Pampers, Huggies, Luvs): final score ~7 — polypropylene liner (direct skin contact), chlorine-bleached pulp (dioxin byproducts), superabsorbent sodium polyacrylate polymer, synthetic fragrance in some. Baby vulnerable population flag applies. NEVER score below 6.
+- Honest Company diapers: final score ~5 — NOT the same as conventional Pampers, but also NOT as clean as bamboo alternatives. Accurate breakdown: inner skin-contact layer is still polyethylene + polypropylene (conventional petroleum plastics — same as Pampers), leg/waist system is polymer spandex. The "plant-based" marketing refers to the outer backsheet (PLA + PE) and ECF wood pulp core — these are improvements but not the parts touching baby skin. ECF (elemental chlorine free) is better than conventional bleaching but not as clean as TCF (totally chlorine free). No synthetic fragrance. Score between conventional (7) and bamboo (3). Always flag: inner liner PE/PP, spandex waist system. Note the outer PLA layer as a partial positive.
 - Organic bamboo diaper (Andy Pandy, Dyper, Healthynest): final score ~3 — no chlorine bleaching, no synthetic fragrance, bamboo-derived materials. Much safer for daily baby skin contact.
 - Cloth diaper (organic cotton, GroVia, Esembly): final score ~1-2 — reusable, no bleaching, no SAP polymers, organic cotton touching skin.
-- Conventional training pants (Pampers Easy Ups, Huggies Pull-Ups): final score ~7 — same materials as conventional diapers, daily direct genital contact with developing baby skin. Always flag polypropylene liner, chlorine bleaching, and superabsorbent polymer.
+- Conventional training pants (Pampers Easy Ups, Huggies Pull-Ups): final score ~7 — same materials as conventional diapers. NEVER score below 6.
+- Honest Company training pants: final score ~5 — same nuance as Honest diapers above.
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
 - Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
 - Standard Advil/Tylenol: final score ~3

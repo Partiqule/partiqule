@@ -3539,6 +3539,15 @@ const products = [
     tags:["training pants","potty training pants","pull up","pull-up","training underwear","toddler underwear","organic cotton","diaper","baby","toddler","reusable training pants","cloth training pants"]
   },
   {
+    id:"bk-021", name:"Honest Company Diapers", brand:"Honest Company",
+    plasticScore:5, category:"baby",
+    material:"Inner liner PE+PP (petroleum, direct skin contact). Outer backsheet PLA+PE (partial plant-based). ECF wood pulp. No synthetic fragrance. Polymer spandex waist/leg.",
+    description:"Mid-tier diaper — better than Pampers/Huggies, not as clean as bamboo. The plant-based claim refers to the outer backsheet, not the skin-contact layer which is still PE/PP. No synthetic fragrance is a genuine positive. ECF pulp is cleaner than conventional bleaching.",
+    affiliateUrl:`https://www.amazon.com/s?k=Honest+Company+diapers&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["diaper","diapers","baby diaper","honest diaper","plant based diaper","eco diaper","fragrance free diaper","newborn","infant","toddler","nappy","training pants","pull up"]
+  },
+  {
     id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
     plasticScore:2, category:"food_beverage",
     material:"USDA organic, non-GMO, no artificial sweeteners or synthetic additives",
