@@ -698,7 +698,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"What is sustainability scoring and why does it matter?", a:"Single-use disposables (paper towels, plastic bags, disposable cups, wipes) generate ongoing waste regardless of what they are made of. Partiqule's Sustainability score (15% weight) rewards multi-use, refillable, repairable, and compostable products, and penalises products designed to be thrown away after a single use."},
         {q:"Why does synthetic clothing contribute to ocean plastic?", a:"Polyester, nylon, acrylic, and spandex shed microscopic synthetic fibers every time they are washed. These microfibers pass through wastewater treatment and enter rivers and oceans. A single wash of a fleece jacket can release over 700,000 fibers. Natural fibers (cotton, wool, linen, hemp) do not shed synthetic microplastics."},
         {q:"What is a break-even calculation?", a:"When Partiqule suggests a safer alternative, it estimates how many uses it takes for the alternative to offset the environmental cost of its own production. A stainless steel water bottle, for example, breaks even against single-use plastic bottles at around 50 uses. After that, every use is net positive."},
-        {q:"How does Partiqule score planet impact?", a:"Sustainability (15% weight) covers product longevity, replaceability of single-use items, and end-of-life circularity. Manufacturing (5% weight) covers production processes, flagged as estimated when supply chain data is not publicly available. Together they capture the downstream impact of buying a product."},
+        {q:"How does Partiqule score planet impact?", a:"Sustainability (15% weight) covers product longevity, replaceability of single-use items, and end-of-life circularity. Together they capture the downstream impact of buying a product."},
       ],
     },
   ];
@@ -1434,33 +1434,6 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 };
 
 // ── MANUFACTURING BADGE — smaller, always shows estimated ──
-const ManufacturingBadge = ({mfg, isDark, muted}) => {
-  const [open, setOpen] = useState(false);
-  if (!mfg) return null;
-  const score = mfg.score || 5;
-  const color = scoreColor(score);
-  return (
-    <div style={{marginBottom:10}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{display:"flex", alignItems:"center", gap:8, background:isDark?"#1e2433":"#f9fafb", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderRadius:10, padding:"10px 16px", cursor:"pointer", width:"100%"}}>
-        <span style={{display:"flex", alignItems:"center", opacity:0.85}}><IcoVerified size={20}/></span>
-        <span style={{fontSize:12, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Manufacturing</span>
-        <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
-        <span style={{fontSize:10, color:muted, fontStyle:"italic"}}>— estimated</span>
-        <span style={{fontSize:12, color:muted, marginLeft:"auto", transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
-      </button>
-      {open && (
-        <div style={{padding:"10px 16px 14px", background:isDark?"#1a2030":"#f9fafb", borderRadius:"0 0 10px 10px", border:`1px dashed ${isDark?"#2a3347":"#d1d5db"}`, borderTop:"none", textAlign:"left"}}>
-          <p style={{fontSize:12, color:muted, lineHeight:1.6, margin:"0 0 8px", fontStyle:"italic"}}>{mfg.label}</p>
-          {mfg.concerns?.map((c,i)=>(
-            <div key={i} style={{fontSize:12, color:muted, lineHeight:1.5, marginBottom:4}}>• {c}</div>
-          ))}
-          <div style={{fontSize:10, color:muted, marginTop:8, opacity:0.6, display:"flex", alignItems:"center", gap:4}}><IcoInfo size={12}/> Manufacturing data is estimated where public supply chain information is unavailable.</div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ── LEGACY SHIMS — kept so other code that references these doesn't break ──
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
@@ -1568,7 +1541,7 @@ const ShareBadge = ({result}) => {
       {label:"Exposure",     score: dims.usage_exposure?.score,   weight:"25%"},
       {label:"Packaging",    score: dims.packaging?.score,        weight:"15%"},
       {label:"Sustainability",score:dims.sustainability?.score,   weight:"15%"},
-      {label:"Manufacturing",score: dims.manufacturing?.score,    weight:"5%"},
+      
     ] : [];
 
     if (dimList.length) {
@@ -1652,7 +1625,7 @@ const ShareBadge = ({result}) => {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
               title: `${safeName}: Health Score ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Health score: ${result.overall_score||result.score}/10. Scored across materials, exposure, packaging, sustainability and manufacturing. Scan anything at partiqule.com`,
+              text: `I scanned ${safeName} on Partiqule. Health score: ${result.overall_score||result.score}/10. Scored across materials, exposure, packaging and sustainability. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -2271,7 +2244,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           Partiqule exists to change that.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We score every product across five dimensions: materials, exposure, packaging, sustainability, and manufacturing. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
+          We score every product across five dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
           Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
@@ -2301,7 +2274,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions: materials, usage and exposure, packaging, sustainability, and manufacturing. Your health, your home, and the planet are all affected differently by the same product."},
+            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions: materials, exposure, packaging and sustainability. Your health, your home, and the planet are all affected differently by the same product."},
             {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all five dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
             {title:"Free to start", body:"Your first scans are on us. No account needed to get started — create a free account to save your history."},
@@ -2367,7 +2340,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
             So we started asking questions. What products are actually safe? How do you weigh the different kinds of risk? Are there realistic alternatives for everyday life? Where do you even start? There was no simple, trustworthy tool that looked at the full picture.
           </p>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:0}}>
-            So we built one. Partiqule was designed to look at every product the way we wished something had looked at them for us: across materials, exposure, packaging, sustainability, and manufacturing. The full picture, not just one piece of it. We are just two parents trying to do better for our family, and hoping to make it easier for yours.
+            So we built one. Partiqule was designed to look at every product the way we wished something had looked at them for us: across materials, exposure, packaging and sustainability. The full picture, not just one piece of it. We are just two parents trying to do better for our family, and hoping to make it easier for yours.
           </p>
         </div>
 
@@ -2446,14 +2419,19 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "What we measure",
-          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to five scored dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing."
+          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to five scored dimensions: Materials, Exposure, Packaging and Sustainability."
         },
         {
           heading: "Dual scoring formula — food vs non-food",
           body: "Food and non-food products use different dimension weights because the risks are fundamentally different. What goes in your body matters more than what touches your skin.",
           list: [
-            "Food, Beverage and Restaurant: Ingredients 50% · Packaging 20% · Usage 20% · Sustainability 5% · Manufacturing 5% — ingredients dominate because that is what you consume. Food contact packaging scores heavily because it leaches into what you eat.",
-            "Clothing, Personal Care, Kitchen and Home: Materials 35% · Usage and Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5% — daily skin contact and inhalation carry the most weight. Sustainability scores higher because environmental persistence matters more for products that do not enter your body.",
+            "Food, Beverage and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately, not used to tank a clean food.",
+            "Beverage: Ingredients 75% · Packaging 25% — the container leaches directly into every sip. A plastic water bottle consumed daily is different from a plastic cereal box.",
+            "Beauty and Personal Care: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5% — leave-on daily skin contact makes exposure equally important as what's in the product.",
+            "Clothing and Shoes: Materials 35% · Exposure 30% · Sustainability 35% — microfiber shedding into waterways gives sustainability real weight. Packaging is irrelevant for clothing.",
+            "Home (cleaning, candles, furniture): Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15% — inhalation and residue contact is the primary story.",
+            "Baby Products: Materials 55% · Exposure 40% · Packaging 5% — developing systems and higher skin absorption demand the most protective formula.",
+            "Manufacturing removed — scored too inconsistently to be meaningful. Supply chain opacity affects every brand differently and creates false precision.",
           ]
         },
         {
@@ -2711,7 +2689,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[
                 {step:"Web search", detail:"AI searches for real material specs and confirms PTFE (Teflon) coating on cooking surface, aluminium body, plastic handle."},
-                {step:"Pass 1: Analysis", detail:"Materials: 9 (PTFE/PFAS — FDA-flagged endocrine disruptors). Usage: 9 (daily ingestion pathway, heated surface accelerates breakdown). Packaging: 3. Sustainability: 4 (durable but PTFE unrecyclable). Manufacturing: 6 (PTFE process emissions)."},
+                {step:"Pass 1: Analysis", detail:"Materials: 9 (PTFE/PFAS — FDA-flagged endocrine disruptors). Usage: 9 (daily ingestion pathway, heated surface accelerates breakdown). Packaging: 3. Sustainability: 4 (durable but PTFE unrecyclable). "},
                 {step:"Pass 2: Audit", detail:"Daily heat + ingestion penalty confirmed. Weighted score: (9×0.40)+(9×0.25)+(3×0.15)+(4×0.15)+(6×0.05) = 3.6+2.25+0.45+0.6+0.3 = 7.2. Final score: 7. Confidence: high."},
                 {step:"Human review", detail:"Paul cross-references EWG PFAS database. Score confirmed. Caraway and GreenPan ceramic alternatives shown with break-even at 200 uses."},
               ].map((row, i) => (
@@ -2732,7 +2710,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[
                 {step:"Web search", detail:"AI confirms paper product with PE/PP plastic outer packaging, cardboard tube core, bleached virgin wood pulp."},
-                {step:"Pass 1: Analysis", detail:"Materials: 2 (paper, no direct plastic exposure — packaging discarded before use). Usage: 2 (not ingested or absorbed). Packaging: 5 (PE film wrap, cardboard tube). Sustainability: 8 (single-use by design, high disposal frequency, virgin wood pulp). Manufacturing: 4 (chlorine bleaching process)."},
+                {step:"Pass 1: Analysis", detail:"Materials: 2 (paper, no direct plastic exposure — packaging discarded before use). Usage: 2 (not ingested or absorbed). Packaging: 5 (PE film wrap, cardboard tube). Sustainability: 8 (single-use by design, high disposal frequency, virgin wood pulp). "},
                 {step:"Pass 2: Audit", detail:"Low materials risk confirmed. Sustainability penalty upheld — single-use disposable by design. Weighted score: (2×0.40)+(2×0.25)+(5×0.15)+(8×0.15)+(4×0.05) = 0.8+0.5+0.75+1.2+0.2 = 3.45. Final score: 3."},
                 {step:"Human review", detail:"Sara reviews — sustainability score of 8 appropriate. Swedish dishcloths, bamboo paper towels and microfibre cloths shown as alternatives."},
               ].map((row, i) => (
@@ -4028,16 +4006,25 @@ function App() {
                 {/* Hero label */}
                 {(() => {
                   const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
-                  const catLabel = result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : result.category === "restaurant" ? "for restaurant food" : "Overall";
+                  const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
                   return (
                     <div style={{marginBottom:16}}>
                       <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
                         {scoreLabel(displayScore)} — {childMode && result.child_score ? "for children" : catLabel}
                       </div>
                       <div style={{fontSize:11,color:muted,marginTop:2}}>
-                        {["food_beverage","restaurant","supplement"].includes(result.category)
-                          ? "Ingredients 50% · Packaging 20% · Exposure 20% · Sustainability 5% · Manufacturing 5%"
-                          : "Materials 35% · Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%"
+                        {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
+                        : result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
+                        : result.category === "beverage"      ? "Ingredients 75% · Packaging 25%"
+                        : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
+                        : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
+                        : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
+                        : result.category === "toy"           ? "Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%"
+                        : result.category === "clothing"      ? "Materials 35% · Exposure 30% · Sustainability 35%"
+                        : result.category === "accessory"     ? "Materials 40% · Exposure 25% · Sustainability 35%"
+                        : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
+                        : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
+                        : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%"
                         }
                       </div>
                     </div>
@@ -4194,8 +4181,7 @@ function App() {
                       </div>
                     </DimensionDropdown>
 
-                    {/* 5. Manufacturing — smaller estimated badge */}
-                    <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
+                    {/* Sustainability and Packaging dropdowns render above */}
 
                     {/* See Alternatives CTA — replaces mobile scroll button */}
                     <button
@@ -4212,7 +4198,7 @@ function App() {
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
-                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging, Sustainability and Manufacturing scores.</div>
+                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging and Sustainability scores.</div>
                   </div>
                 )}
 
@@ -4405,7 +4391,7 @@ function App() {
               <BundleCard category={result.category} isDark={isDark}/>
 
               {/* Complete your routine — clothing and personal care only */}
-              {["clothing","personal_care","baby"].includes(result.category) && result.scan_next?.length > 0 && (
+              {["clothing","personal_care","baby","toy","accessory"].includes(result.category) && result.scan_next?.length > 0 && (
                 <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
                   <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Complete your routine</div>
                   <div style={{fontSize:13, color:muted, marginBottom:14, lineHeight:1.5}}>
