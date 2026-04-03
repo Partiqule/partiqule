@@ -3026,7 +3026,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         {/* Child vulnerability system */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
           <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
-            <div style={{fontSize:13, fontWeight:700, color:text}}>👶 Child Vulnerability System</div>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Child Vulnerability System</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>Children have thinner skin, developing organ systems, and lower body weight — meaning a higher effective dose per kilogram. Every score can be viewed through a child safety lens.</div>
           </div>
           <div style={{padding:"16px 20px"}}>
@@ -3051,7 +3051,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               ))}
             </div>
             <div style={{fontSize:12, color:muted, background:isDark?"#1a2433":"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`}}>
-              <strong style={{color:"#16a34a"}}>How to use it:</strong> Tap the 👶 toggle on any result to see the child-adjusted score. Child products (Honey Nut Cheerios, Pampers, baby lotions) are auto-detected and show a prompt automatically.
+              <strong style={{color:"#16a34a"}}>How to use it:</strong> Tap the child safety toggle on any result to see the child-adjusted score. Child products (Honey Nut Cheerios, Pampers, baby lotions) are auto-detected and show a prompt automatically.
             </div>
           </div>
         </div>
@@ -3767,7 +3767,7 @@ function App() {
               </div>
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
                 <div>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>👶 Always show child safety score</div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Always show child safety score</div>
                   <div style={{fontSize:13, color:muted}}>Auto-enable child mode on every scan result</div>
                 </div>
                 <button onClick={()=>{
@@ -4188,7 +4188,6 @@ function App() {
                           border: childMode ? "none" : `1px solid ${isDark?"#2a3347":"#e2e8f0"}`,
                           cursor:"pointer", transition:"all 0.2s",
                         }}>
-                        <span style={{fontSize:15}}>👶</span>
                         <span style={{fontSize:12, fontWeight:700,
                           color: childMode ? "#4ade80" : muted,
                           letterSpacing:"0.03em",
@@ -4216,8 +4215,8 @@ function App() {
                           border:"1.5px solid #16a34a44", borderRadius:12,
                           padding:"12px 16px", textAlign:"left",
                         }}>
-                          <div style={{fontSize:12, fontWeight:700, color:"#15803d", marginBottom:6, display:"flex", alignItems:"center", gap:6}}>
-                            <span>👶</span> Child safety score: {result.child_score}/10 vs {result.overall_score || result.score}/10 for adults
+                          <div style={{fontSize:12, fontWeight:700, color:"#15803d", marginBottom:6}}>
+                            Child safety score: {result.child_score}/10 vs {result.overall_score || result.score}/10 for adults
                           </div>
                           {(result.child_bumps || []).slice(0,2).map((b,i) => (
                             <div key={i} style={{fontSize:11, color:isDark?"#86efac":"#166534", lineHeight:1.5, marginBottom:i < (result.child_bumps||[]).length-1 ? 4 : 0}}>
@@ -4238,7 +4237,6 @@ function App() {
                               border:"1px dashed #16a34a88",
                               cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                             }}>
-                            <span style={{fontSize:13}}>👶</span>
                             <span style={{fontSize:12, color:"#16a34a", fontWeight:600}}>
                               This looks like a child's product — see child safety score
                             </span>

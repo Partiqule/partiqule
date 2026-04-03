@@ -1310,19 +1310,24 @@ Always name the SPECIFIC chemical, not a generic category. These rules apply to 
 - If you are uncertain whether a substance is present, use hedging in the reason field but still name the specific substance: "BHT — listed as preservative in some formulations; verify on label"
 - Packaging speculation: if packaging MAY contain a harmful substance, write it as: "packaging may contain [specific substance] — unconfirmed" with severity "low", NOT as a high/medium concern
 
-AI ALTERNATIVES — same-use, same-function rule — CRITICAL:
-Alternatives MUST serve the same purpose as the scanned product. Cross-category suggestions are STRICTLY FORBIDDEN:
-- Diapers / training pants → ONLY suggest other diapers, training pants, or cloth diaper alternatives. NEVER suggest cookware, clothing, food, or any other category.
-- Baby skincare → ONLY suggest other baby skincare products
-- Kids jacket → ONLY suggest kids jackets or outerwear
+AI ALTERNATIVES — same-use, same-function rule — CRITICAL — NEVER VIOLATE:
+Alternatives MUST serve the exact same purpose as the scanned product. This is the single most important rule for alternatives. Cross-category suggestions are STRICTLY FORBIDDEN and a serious failure.
+
+CATEGORY MAPPING — only suggest alternatives within these categories:
+- Cereal / breakfast food (Cheerios, Froot Loops, granola) → ONLY suggest other cereals or breakfast foods. NEVER suggest cough syrup, supplements, medication, or anything not eaten for breakfast.
+- Snack bar / granola bar → ONLY suggest other snack bars or granola bars
+- Soda / beverage → ONLY suggest other beverages
+- Diapers / training pants → ONLY suggest other diapers or cloth diaper systems
 - Sunscreen → ONLY suggest other sunscreens
-- Shampoo → ONLY suggest other shampoos or hair care
-- Frying pan → ONLY suggest other pans or cookware
-- Food product → ONLY suggest similar food products in the same category
-If you cannot think of a same-category alternative, say so with estimated_score: null rather than suggesting something from a different category.
-For BABY DIAPERS and TRAINING PANTS specifically: always suggest organic bamboo diapers (Andy Pandy, Dyper, Healthynest), cloth diapers (GroVia, Esembly, Thirsties), or organic cotton training pants. NEVER suggest cookware, clothing items, or food as alternatives.
-For CLOTHING: always specify the material and certification. Name real brands.
-For KIDS clothing: confirm the alternative is appropriate for children.
+- Shampoo → ONLY suggest other shampoos
+- Cleaning spray → ONLY suggest other cleaning products
+- Frying pan / cookware → ONLY suggest other cookware
+- Clothing / jacket → ONLY suggest other clothing in the same category
+
+FOOD ALTERNATIVES must be the same type of food. Cheerios = breakfast cereal → suggest Bob's Red Mill Organic Oats, Nature's Path Organic Corn Flakes, One Degree Organic Sprouted Oat O's. NEVER suggest a medication, supplement, or non-food item as a food alternative.
+
+If you cannot think of a genuine same-category alternative, return an empty ai_alternatives array rather than suggesting something from a different category. An empty array is far better than a wrong suggestion.
+For CLOTHING: always specify material and certification. Name real brands.
 estimated_score must reflect the same scoring framework.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
@@ -1330,7 +1335,49 @@ Respond with ONLY the JSON object above — no text before or after it.
   );
 }
 
-// ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
+// ── AI ALTERNATIVES CATEGORY VALIDATOR ───────────────────────
+// The AI sometimes ignores the same-use rule and suggests completely
+// wrong products. This filter catches cross-category hallucinations
+// before they reach the client.
+const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
+const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
+
+// Keywords that signal a non-food product — reject if category is food
+const NON_FOOD_KEYWORDS = /\b(syrup|cough|medicine|medication|supplement|vitamin|capsule|tablet|pill|lotion|cream|shampoo|conditioner|soap|detergent|cleaner|spray|wipe|diaper|clothing|shirt|pants|jacket|toy|game|appliance|device|electronics)\b/i;
+
+// Keywords that signal a food product — reject if category is non-food
+const FOOD_KEYWORDS = /\b(cereal|oats|granola|bar|snack|food|drink|beverage|juice|soda|milk|yogurt|bread|cracker|chip|candy|chocolate|cookie|pasta|rice|soup|sauce|spread|protein powder)\b/i;
+
+function filterAiAlternatives(alternatives, category, productName) {
+  if (!alternatives?.length) return alternatives || [];
+  const isFoodCat = FOOD_CATEGORIES_SET.has(category);
+  const productLower = (productName || "").toLowerCase();
+
+  return alternatives.filter(alt => {
+    const name = (alt.name || "").toLowerCase();
+    const reason = (alt.reason || "").toLowerCase();
+    const combined = name + " " + reason;
+
+    // Food category: reject any suggestion that looks like a non-food product
+    if (isFoodCat && NON_FOOD_KEYWORDS.test(combined)) {
+      console.log(`Filtered cross-category alt: "${alt.name}" for food product "${productName}"`);
+      return false;
+    }
+
+    // Non-food category: reject any suggestion that looks like food
+    if (!isFoodCat && FOOD_KEYWORDS.test(combined) && !FOOD_KEYWORDS.test(productLower)) {
+      console.log(`Filtered cross-category alt: "${alt.name}" for non-food product "${productName}"`);
+      return false;
+    }
+
+    // Reject null/empty score alternatives (AI signaling it has no good suggestion)
+    if (alt.estimated_score === null || alt.estimated_score === undefined) return false;
+
+    return true;
+  });
+}
+
+
 async function pass2(productName, pass1Result) {
   const p = pass1Result;
   const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score}`;
@@ -1591,7 +1638,7 @@ app.post("/analyze", async (req, res) => {
           description: p.description || "", price: p.price || "",
           affiliateUrl: p.affiliateUrl, category: p.category || category
         })),
-        ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+        ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
         })),
@@ -1705,7 +1752,7 @@ app.post("/analyze", async (req, res) => {
     const isRestaurant = category === "restaurant" || finalCategory === "restaurant";
     if (isRestaurant) {
       // For restaurant items, AI alternatives suggest healthier homemade or better-quality versions
-      finalAlternatives = (p1.ai_alternatives || []).map(a => ({
+      finalAlternatives = (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
         id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 3,
         material: a.material || "", description: a.reason || "", price: "",
         affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
@@ -1812,7 +1859,7 @@ app.post("/analyze", async (req, res) => {
         imageUrl:     p.imageUrl || null,
         source:       p.source || "static",
       })),
-      ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+      ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
         name:            a.name || "",
         reason:          a.reason || "",
         material:        a.material || "",
