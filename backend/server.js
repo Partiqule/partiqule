@@ -1020,6 +1020,18 @@ Use the category-specific tier labels and concern lists defined above.
 For restaurant category: populate composition_tier based on processing level, populate nutrition using the chain's official published values only (null if uncertain), set nutrition_verified: true only if confident in the values.
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
+
+AI ALTERNATIVES — same-use, same-function rule:
+Alternatives MUST serve the same purpose and function as the scanned product. Never suggest a different product type.
+- Kids jacket → suggest kids jacket alternatives (organic cotton, PFAS-free, recycled)
+- Kids pajamas → suggest kids pajama alternatives
+- Leggings → suggest leggings alternatives (not a t-shirt)
+- Sunscreen → suggest sunscreen alternatives (not a hat)
+- Shampoo → suggest shampoo alternatives (not conditioner)
+- Frying pan → suggest frying pan alternatives (not a baking sheet)
+For CLOTHING: always specify the material (organic cotton, recycled polyester PFAS-free, wool, linen) and whether it is GOTS, OEKO-TEX, or bluesign certified. Name real brands when you know them — Patagonia, Hanna Andersson, Pact, Frugi, Toad&Co, prAna, Cotopaxi.
+For KIDS clothing specifically: confirm the alternative is appropriate for children (no adult sizing, safe dyes, no flame retardants unless labeled FR-free snug fit).
+estimated_score must reflect the same scoring framework — organic cotton kids jacket = 2, PFAS-free recycled fleece = 3, conventional synthetic = 5-6.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
     3000

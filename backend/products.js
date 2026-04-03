@@ -3376,6 +3376,78 @@ const products = [
     price:"$15-40",
     tags:["wooden toys","kids toys","toys","baby","toddler","natural toys","non toxic toys","wood","plastic free toys"]
   },
+  {
+    id:"bk-008", name:"Patagonia Kids Fleece Jacket", brand:"Patagonia",
+    plasticScore:3, category:"clothing",
+    material:"100% recycled polyester fleece — bluesign certified, no PFAS DWR treatment",
+    description:"Recycled fleece kids jacket with no PFAS waterproofing. Bluesign certified fabric, Fair Trade sewn, built to be handed down.",
+    affiliateUrl:`https://www.amazon.com/s?k=Patagonia+kids+fleece+jacket&tag=${AMAZON_TAG}`,
+    price:"$69-89",
+    tags:["jacket","fleece jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","recycled fleece","PFAS free","no PFAS","kids coat","coat"]
+  },
+  {
+    id:"bk-009", name:"Patagonia Kids Rain Jacket", brand:"Patagonia",
+    plasticScore:3, category:"clothing",
+    material:"Recycled nylon shell — PFAS-free DWR treatment, bluesign certified",
+    description:"Kids rain jacket with PFAS-free waterproofing. Patagonia transitioned to non-fluorinated DWR — no forever chemicals in the coating.",
+    affiliateUrl:`https://www.amazon.com/s?k=Patagonia+kids+rain+jacket&tag=${AMAZON_TAG}`,
+    price:"$99-129",
+    tags:["rain jacket","waterproof jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","PFAS free","no PFAS DWR","kids coat","coat","waterproof","shell"]
+  },
+  {
+    id:"bk-010", name:"Hanna Andersson Organic Cotton Hoodie", brand:"Hanna Andersson",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — no synthetic fibers, no chemical treatments",
+    description:"GOTS organic cotton hoodie for kids. No synthetic microfibers, no PFAS, no azo dyes. Snug and warm without synthetic fleece.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hanna+Andersson+organic+hoodie+kids&tag=${AMAZON_TAG}`,
+    price:"$38-52",
+    tags:["hoodie","sweatshirt","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","coat","kids sweater","sweater","warm layer","layer"]
+  },
+  {
+    id:"bk-011", name:"Frugi Organic Kids Waterproof Jacket", brand:"Frugi",
+    plasticScore:3, category:"clothing",
+    material:"GOTS-certified organic cotton outer with PFAS-free waterproof membrane",
+    description:"GOTS organic cotton kids waterproof with bluesign-certified PFAS-free membrane. Designed to be passed down, not thrown away.",
+    affiliateUrl:`https://www.amazon.com/s?k=Frugi+kids+waterproof+jacket+organic&tag=${AMAZON_TAG}`,
+    price:"$79-110",
+    tags:["rain jacket","waterproof jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","PFAS free","coat","waterproof"]
+  },
+  {
+    id:"bk-012", name:"Pact Kids Organic Cotton Sweatshirt", brand:"Pact",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — Fair Trade certified, no synthetic dyes",
+    description:"Fair Trade, GOTS organic cotton kids sweatshirt. No synthetic fibers, no petroleum dyes, no formaldehyde finishes.",
+    affiliateUrl:`https://www.amazon.com/s?k=Pact+kids+organic+sweatshirt&tag=${AMAZON_TAG}`,
+    price:"$28-36",
+    tags:["sweatshirt","hoodie","kids jacket","outerwear","children","toddler","organic cotton","GOTS","Fair Trade","warm layer","layer","top","kids sweater"]
+  },
+  {
+    id:"bk-013", name:"Art and Eden Organic Kids Jacket", brand:"Art and Eden",
+    plasticScore:2, category:"clothing",
+    material:"GOTS-certified organic cotton — OEKO-TEX certified, no synthetic dyes",
+    description:"GOTS and OEKO-TEX certified kids outerwear. Verified free of harmful chemicals throughout the supply chain.",
+    affiliateUrl:`https://www.amazon.com/s?k=Art+and+Eden+organic+kids+jacket&tag=${AMAZON_TAG}`,
+    price:"$42-62",
+    tags:["jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","OEKO-TEX","coat","layer"]
+  },
+  {
+    id:"bk-014", name:"Mini Rodini Organic Kids Sweatshirt", brand:"Mini Rodini",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — OEKO-TEX 100 certified",
+    description:"Swedish kids brand with GOTS and OEKO-TEX certification. No harmful dyes, no synthetic fibers, verified clean throughout production.",
+    affiliateUrl:`https://www.amazon.com/s?k=Mini+Rodini+kids+organic+sweatshirt&tag=${AMAZON_TAG}`,
+    price:"$55-80",
+    tags:["sweatshirt","hoodie","kids outerwear","outerwear","kids jacket","children","toddler","organic cotton","GOTS","OEKO-TEX","layer","kids sweater","warm"]
+  },
+  {
+    id:"bk-015", name:"Turtledove London Organic Kids Hoodie", brand:"Turtledove London",
+    plasticScore:2, category:"clothing",
+    material:"100% GOTS-certified organic cotton — no azo dyes, no formaldehyde finishes",
+    description:"GOTS certified organic cotton kids hoodie. Undyed or low-impact dyes only, verified formaldehyde-free.",
+    affiliateUrl:`https://www.amazon.com/s?k=Turtledove+London+organic+kids+hoodie&tag=${AMAZON_TAG}`,
+    price:"$45-65",
+    tags:["hoodie","kids jacket","kids outerwear","outerwear","children","toddler","organic cotton","GOTS","no azo dyes","layer","warm","kids sweater"]
+  },
   // ── WELLNESS & SUPPLEMENTS ───────────────────────────────────
   {
     id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
@@ -4131,10 +4203,39 @@ const STOPWORDS = new Set([
 
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   const queries = [query, fallbackQuery].filter(Boolean).map(q => q.toLowerCase().trim());
-  const allWords = [...new Set(
-    queries.flatMap(q => q.split(/\s+/))
-      .filter(w => w.length > 2 && !STOPWORDS.has(w))
+
+  // ── Synonym expansion — broaden search for common product types ──
+  const synonymMap = {
+    "jacket":    ["jacket","outerwear","coat","shell","layer"],
+    "coat":      ["coat","jacket","outerwear","layer"],
+    "outerwear": ["outerwear","jacket","coat","layer"],
+    "fleece":    ["fleece","jacket","outerwear","layer","sweatshirt"],
+    "hoodie":    ["hoodie","sweatshirt","layer","jacket","outerwear"],
+    "sweatshirt":["sweatshirt","hoodie","layer","outerwear"],
+    "legging":   ["legging","leggings","pants","bottoms","tights"],
+    "leggings":  ["leggings","legging","pants","bottoms","tights"],
+    "pant":      ["pants","leggings","bottoms","trouser"],
+    "pajama":    ["pajamas","pjs","sleepwear","nightwear"],
+    "pjs":       ["pajamas","pjs","sleepwear","nightwear"],
+    "sunscreen": ["sunscreen","spf","sun protection","mineral sunscreen"],
+    "shampoo":   ["shampoo","hair wash","hair care"],
+    "moisturizer":["moisturizer","lotion","cream","face cream"],
+    "pan":       ["pan","skillet","frying pan","cookware"],
+    "pot":       ["pot","cookware","saucepan"],
+    "bottle":    ["bottle","water bottle","drink bottle"],
+    "diaper":    ["diaper","nappy","diaper alternative"],
+    "formula":   ["baby formula","infant formula","formula"],
+  };
+
+  const expandedWords = [...new Set(
+    queries.flatMap(q => {
+      const base = q.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
+      const synonyms = base.flatMap(w => synonymMap[w] || [w]);
+      return [...base, ...synonyms];
+    })
   )];
+
+  const allWords = expandedWords;
 
   // Hard block: other and restaurant categories get no DB alternatives
   if (category === "other" || category === "restaurant") return [];
