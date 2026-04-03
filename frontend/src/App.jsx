@@ -1881,6 +1881,282 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
   );
 };
 
+// ── ADMIN PAGE ────────────────────────────────────────────────
+const AdminPage = ({isDark, surface, border, text, muted, history: historyProp = []}) => {
+  const [cacheStatus, setCacheStatus]   = useState(null);
+  const [clearing, setClearing]         = useState(false);
+  const [testQuery, setTestQuery]       = useState("");
+  const [testResult, setTestResult]     = useState(null);
+  const [testLoading, setTestLoading]   = useState(false);
+  const [history, setHistory]           = useState(historyProp);
+  const [recentScans, setRecentScans]   = useState([]);
+
+  useEffect(() => {
+    if (!historyProp.length) {
+      try {
+        const h = JSON.parse(localStorage.getItem("ps_history") || "[]");
+        setHistory(h);
+      } catch {}
+    }
+    fetchCacheStatus();
+    fetchRecentScans();
+  }, []);
+
+  const fetchCacheStatus = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/cache-status`);
+      if (r.ok) setCacheStatus(await r.json());
+    } catch { setCacheStatus({error:"unreachable"}) }
+  };
+
+  const fetchRecentScans = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/recent-scans?limit=20`);
+      if (r.ok) setRecentScans(await r.json());
+    } catch {}
+  };
+
+  const clearCache = async () => {
+    setClearing(true);
+    try {
+      await fetch(`${API_BASE}/cache-clear`);
+      await fetchCacheStatus();
+    } finally { setClearing(false); }
+  };
+
+  const runTestScan = async () => {
+    if (!testQuery.trim()) return;
+    setTestLoading(true); setTestResult(null);
+    try {
+      const r = await fetch(`${API_BASE}/analyze`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({query: testQuery})
+      });
+      setTestResult(await r.json());
+    } catch (e) { setTestResult({error: e.message}); }
+    finally { setTestLoading(false); }
+  };
+
+  // Score distribution from local history
+  const buckets = [
+    {label:"1-2", min:1, max:2, color:"#16a34a"},
+    {label:"3-4", min:3, max:4, color:"#65a30d"},
+    {label:"5-6", min:5, max:6, color:"#d97706"},
+    {label:"7-8", min:7, max:8, color:"#dc2626"},
+    {label:"9-10",min:9, max:10, color:"#7f1d1d"},
+  ].map(b => ({
+    ...b,
+    count: history.filter(h => {
+      const s = h.score || h.overall_score || 0;
+      return s >= b.min && s <= b.max;
+    }).length,
+    pct: history.length ? Math.round(history.filter(h => {
+      const s = h.score || h.overall_score || 0;
+      return s >= b.min && s <= b.max;
+    }).length / history.length * 100) : 0,
+  }));
+
+  const avgScore = history.length
+    ? (history.reduce((a,h) => a + (h.score || h.overall_score || 0), 0) / history.length).toFixed(1)
+    : "—";
+
+  const catCounts = {};
+  history.forEach(h => {
+    const c = h.category || "other";
+    catCounts[c] = (catCounts[c] || 0) + 1;
+  });
+  const topCats = Object.entries(catCounts).sort((a,b) => b[1]-a[1]).slice(0,6);
+
+  const card = {background:surface, borderRadius:14, border:`1px solid ${border}`, padding:"20px 24px", marginBottom:16};
+  const sectionHead = {fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:muted, marginBottom:14};
+
+  return (
+    <div style={{maxWidth:1000, margin:"0 auto", padding:"32px 24px 80px"}}>
+      <div style={{marginBottom:28}}>
+        <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Internal</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 4px"}}>Admin Dashboard</h1>
+        <div style={{fontSize:13, color:muted}}>Partiqule · Scoring system health · Score distribution · Cache status</div>
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:20}}>
+        {[
+          {label:"Local scans", value: history.length, color:"#16a34a"},
+          {label:"Avg score", value: avgScore, color: parseFloat(avgScore) > 5 ? "#dc2626" : "#16a34a"},
+          {label:"Cache entries", value: cacheStatus?.size ?? "—", color:"#d97706"},
+        ].map((s,i) => (
+          <div key={i} style={{background:surface, borderRadius:12, border:`1px solid ${border}`, padding:"16px 20px"}}>
+            <div style={{fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:muted, marginBottom:6}}>{s.label}</div>
+            <div style={{fontSize:28, fontWeight:800, color:s.color, fontFamily:"'Outfit',sans-serif"}}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Score distribution */}
+      <div style={card}>
+        <div style={sectionHead}>Score Distribution — local scan history</div>
+        {history.length === 0 ? (
+          <div style={{fontSize:13, color:muted}}>No local scan history yet. Run some scans to see distribution.</div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {buckets.map((b,i) => (
+              <div key={i} style={{display:"flex", alignItems:"center", gap:12}}>
+                <div style={{fontSize:13, fontWeight:700, color:b.color, width:36, flexShrink:0}}>{b.label}</div>
+                <div style={{flex:1, height:28, background:isDark?"#1e2433":"#f1f5f9", borderRadius:6, overflow:"hidden"}}>
+                  <div style={{
+                    width: b.pct + "%", height:"100%", background:b.color,
+                    borderRadius:6, minWidth: b.count > 0 ? 4 : 0,
+                    transition:"width 0.6s ease", opacity:0.85,
+                    display:"flex", alignItems:"center", paddingLeft:8,
+                  }}>
+                    {b.pct > 8 && <span style={{fontSize:11, fontWeight:700, color:"#fff"}}>{b.pct}%</span>}
+                  </div>
+                </div>
+                <div style={{fontSize:12, color:muted, width:60, textAlign:"right", flexShrink:0}}>
+                  {b.count} scan{b.count !== 1 ? "s" : ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div style={{marginTop:16, paddingTop:16, borderTop:`1px solid ${border}`, fontSize:12, color:muted}}>
+            <strong style={{color:text}}>Calibration health:</strong>{" "}
+            {buckets[0].pct + buckets[1].pct >= 40
+              ? "✓ Good spread — clean products scoring in safe tiers"
+              : buckets[3].pct + buckets[4].pct >= 40
+              ? "⚠ High scores dominating — check for ceiling miscalibration"
+              : "Distribution looks reasonable"
+            }
+          </div>
+        )}
+      </div>
+
+      {/* Category breakdown */}
+      {topCats.length > 0 && (
+        <div style={card}>
+          <div style={sectionHead}>Top scanned categories</div>
+          <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+            {topCats.map(([cat, count]) => (
+              <div key={cat} style={{background:isDark?"#1e2433":"#f1f5f9", borderRadius:8, padding:"6px 14px", fontSize:13}}>
+                <span style={{color:text, fontWeight:600}}>{cat}</span>
+                <span style={{color:muted, marginLeft:6}}>{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cache controls */}
+      <div style={card}>
+        <div style={sectionHead}>Cache</div>
+        <div style={{display:"flex", alignItems:"center", gap:16, flexWrap:"wrap"}}>
+          <div style={{flex:1}}>
+            {cacheStatus?.error ? (
+              <div style={{fontSize:13, color:"#dc2626"}}>Backend unreachable — {cacheStatus.error}</div>
+            ) : cacheStatus ? (
+              <div style={{fontSize:13, color:muted}}>
+                {cacheStatus.size ?? 0} cached queries · backend up ·{" "}
+                <span style={{color:"#16a34a"}}>Railway connected</span>
+              </div>
+            ) : (
+              <div style={{fontSize:13, color:muted}}>Fetching cache status…</div>
+            )}
+          </div>
+          <div style={{display:"flex", gap:8}}>
+            <button onClick={fetchCacheStatus} style={{padding:"8px 16px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>
+              Refresh
+            </button>
+            <button onClick={clearCache} disabled={clearing} style={{padding:"8px 16px", borderRadius:8, border:"none", background:"#dc2626", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", opacity: clearing ? 0.6 : 1}}>
+              {clearing ? "Clearing…" : "Clear cache"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Test scan */}
+      <div style={card}>
+        <div style={sectionHead}>Test scan — live scoring</div>
+        <div style={{display:"flex", gap:8, marginBottom:testResult ? 16 : 0}}>
+          <input
+            value={testQuery} onChange={e => setTestQuery(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && runTestScan()}
+            placeholder="e.g. Honey Nut Cheerios, Pampers Swaddlers, Tide pods..."
+            style={{flex:1, padding:"10px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none"}}
+          />
+          <button onClick={runTestScan} disabled={testLoading} style={{padding:"10px 24px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", opacity: testLoading ? 0.6 : 1}}>
+            {testLoading ? "Scanning…" : "Scan"}
+          </button>
+        </div>
+
+        {testResult && (
+          <div style={{background:isDark?"#0f1923":"#f8fafb", borderRadius:12, padding:"16px 20px", border:`1px solid ${border}`}}>
+            {testResult.error ? (
+              <div style={{color:"#dc2626", fontSize:13}}>{testResult.error}</div>
+            ) : (
+              <>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12, flexWrap:"wrap", gap:8}}>
+                  <div>
+                    <div style={{fontSize:15, fontWeight:700, color:text}}>{testResult.product_name}</div>
+                    <div style={{fontSize:12, color:muted, marginTop:2}}>category: {testResult.category} · confidence: {testResult.confidence}</div>
+                  </div>
+                  <div style={{
+                    fontSize:26, fontWeight:800, color: testResult.overall_score <= 3 ? "#16a34a" : testResult.overall_score <= 5 ? "#d97706" : "#dc2626",
+                    fontFamily:"'Outfit',sans-serif"
+                  }}>
+                    {testResult.overall_score || testResult.score}/10
+                  </div>
+                </div>
+                {testResult.summary && <div style={{fontSize:12, color:muted, lineHeight:1.6, marginBottom:10}}>{testResult.summary}</div>}
+                {testResult.concerns?.slice(0,3).map((c,i) => (
+                  <div key={i} style={{fontSize:12, color: c.level === "high" ? "#dc2626" : c.level === "medium" ? "#d97706" : "#16a34a", marginBottom:3}}>
+                    {c.level === "high" ? "▲" : c.level === "medium" ? "◆" : "●"} {c.concern}
+                  </div>
+                ))}
+                {testResult.dimension_scores && (
+                  <div style={{marginTop:12, display:"flex", gap:8, flexWrap:"wrap"}}>
+                    {Object.entries(testResult.dimension_scores).map(([k,v]) => (
+                      <div key={k} style={{background:isDark?"#1e2433":"#fff", borderRadius:8, padding:"4px 10px", fontSize:11, border:`1px solid ${border}`}}>
+                        <span style={{color:muted}}>{k}: </span><span style={{fontWeight:700, color:text}}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Recent local scans */}
+      {history.length > 0 && (
+        <div style={card}>
+          <div style={sectionHead}>Recent scans (local history — {history.length} total)</div>
+          <div style={{display:"flex", flexDirection:"column", gap:6}}>
+            {history.slice(0,12).map((h,i) => {
+              const score = h.score || h.overall_score || 0;
+              const scoreColor = score <= 3 ? "#16a34a" : score <= 5 ? "#d97706" : "#dc2626";
+              return (
+                <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:isDark?"#1e2433":"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
+                  <div style={{flex:1}}>
+                    <span style={{fontSize:13, fontWeight:600, color:text}}>{h.product_name}</span>
+                    <span style={{fontSize:11, color:muted, marginLeft:8}}>{h.category}</span>
+                  </div>
+                  <div style={{fontSize:15, fontWeight:800, color:scoreColor, marginLeft:12, flexShrink:0}}>{score}/10</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{textAlign:"center", fontSize:11, color:muted, marginTop:8}}>
+        Admin key required · Partiqule internal · Not indexed
+      </div>
+    </div>
+  );
+};
+
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
   const [priceFilter, setPriceFilter] = useState("all");
@@ -3737,7 +4013,7 @@ function App() {
       {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>setUser(u)}/>}
 
       {page === "admin" ? (
-        <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted}/>
+        <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted} history={history}/>
       ) : page === "privacy" ? (
         <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "terms" ? (

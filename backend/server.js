@@ -2210,8 +2210,21 @@ app.post("/subscribe", async (req, res) => {
   res.json({ ok: true, already });
 });
 
-app.get("/cache-stats", (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
-app.get("/cache-clear", (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+app.get("/cache-stats",  (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
+app.get("/cache-status", (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
+app.get("/cache-clear",  (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+
+// Recent scans — returns last N cached product names and scores for admin dashboard
+app.get("/recent-scans", (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  const entries = [...scoreCache.entries()].slice(-limit).reverse().map(([key, val]) => ({
+    product_name: val.product_name || key,
+    score: val.overall_score || val.score || null,
+    category: val.category || null,
+  }));
+  res.json(entries);
+});
+
 app.get("/health",      (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured — using static database",
