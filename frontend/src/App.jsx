@@ -4579,6 +4579,60 @@ function App() {
               )}
 
             </div>
+
+            {/* RIGHT — desktop alternatives sticky panel */}
+            {!isMobile && (
+              <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
+                <div style={{background:isDark?"#1e2433":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden"}}>
+                  <div style={{background:"#052e16", padding:"20px 24px"}}>
+                    <div style={{fontSize:11, fontWeight:700, color:"#4ade80", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
+                    <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'Outfit',sans-serif"}}>
+                      {(result.alternatives?.length||0) + (result.ai_alternatives?.length||0) > 0
+                        ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
+                        : "Exploring alternatives"}
+                    </div>
+                  </div>
+                  <div style={{padding:"16px", display:"flex", flexDirection:"column", gap:10, maxHeight:600, overflowY:"auto"}}>
+                    {(result.alternatives || []).map((alt, i) => (
+                      <div key={i} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
+                        <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
+                          <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
+                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"#f0fdf4", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.score}/10</div>
+                        </div>
+                        {alt.material && <div style={{fontSize:12, color:muted, marginBottom:6, lineHeight:1.4}}>{alt.material}</div>}
+                        {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
+                        {alt.affiliateUrl && (
+                          <a href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
+                            style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
+                            Shop →
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < (result.overall_score || result.score)).map((alt, i) => (
+                      <div key={`ai-${i}`} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
+                        <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
+                          <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
+                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"#f0fdf4", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.estimated_score}/10</div>
+                        </div>
+                        {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
+                        <a href={`https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`} target="_blank" rel="noopener noreferrer"
+                          style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
+                          Shop →
+                        </a>
+                      </div>
+                    ))}
+                    {(!result.alternatives?.length && !result.ai_alternatives?.length) && (
+                      <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
+                        <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>No swap needed</div>
+                        <div style={{fontSize:12}}>This product scores well — we don't have a specific alternative to recommend.</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 
