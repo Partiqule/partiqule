@@ -2419,7 +2419,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "What we measure",
-          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to five scored dimensions: Materials, Exposure, Packaging and Sustainability."
+          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to four scored dimensions: Materials, Exposure, Packaging and Sustainability."
         },
         {
           heading: "Dual scoring formula — food vs non-food",
@@ -2428,10 +2428,29 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "Food, Beverage and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately, not used to tank a clean food.",
             "Beverage: Ingredients 75% · Packaging 25% — the container leaches directly into every sip. A plastic water bottle consumed daily is different from a plastic cereal box.",
             "Beauty and Personal Care: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5% — leave-on daily skin contact makes exposure equally important as what's in the product.",
-            "Clothing and Shoes: Materials 35% · Exposure 30% · Sustainability 35% — microfiber shedding into waterways gives sustainability real weight. Packaging is irrelevant for clothing.",
+            "Clothing and Shoes: Materials 35% · Exposure 30% · Sustainability 35% — microfiber shedding into waterways gives sustainability real weight.",
             "Home (cleaning, candles, furniture): Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15% — inhalation and residue contact is the primary story.",
             "Baby Products: Materials 55% · Exposure 40% · Packaging 5% — developing systems and higher skin absorption demand the most protective formula.",
-            "Manufacturing removed — scored too inconsistently to be meaningful. Supply chain opacity affects every brand differently and creates false precision.",
+          ]
+        },
+        {
+          heading: "NOVA processing level modifier — food only",
+          body: "Before substance scoring, food products are assessed on the NOVA processing scale. Ultra-processed formulations (NOVA 4) start with a structural materials penalty regardless of individual ingredient claims — because industrial formulations with 20+ additives present cumulative chemical load beyond any single ingredient:",
+          list: [
+            "NOVA 1 — Unprocessed or minimally processed (fresh fruit, vegetables, plain oats, eggs): no penalty",
+            "NOVA 2 — Processed culinary ingredients (oils, vinegar, flour, salt): no penalty on their own",
+            "NOVA 3 — Processed foods (canned beans, cheese, fermented foods, bread with simple ingredients): materials baseline 2-4",
+            "NOVA 4 — Ultra-processed formulations with industrial additives (most breakfast cereals, packaged snacks, plant-based meat, most fast food): materials baseline 5+",
+          ]
+        },
+        {
+          heading: "Added sugar penalty — food only",
+          body: "WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and flavored beverages are consumed daily, so cumulative sugar exposure is scored independently of substance concerns:",
+          list: [
+            "0–5g added sugar per serving: no penalty",
+            "6–10g added sugar per serving: materials +1",
+            ">10g added sugar per serving: materials +2",
+            ">20g added sugar per serving: materials +3 — exceeds half the WHO daily limit in one serving",
           ]
         },
         {
@@ -2447,14 +2466,13 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "Positive signals that actively lower a score",
-          body: "The following certifications and attributes directly lower dimension scores — they are not just noted as positives, they change the number:",
+          body: "The following certifications are enforced as server-side score ceilings — they cannot be overridden by the AI:",
           list: [
-            "USDA Organic certified food or textiles",
+            "USDA Organic certified food + no confirmed dangerous substances: final score cannot exceed 3",
+            "Non-GMO Project Verified + no synthetic dyes + no synthetic preservatives: final score cannot exceed 4",
             "Fair Trade certified — workers paid living wage, safe conditions",
             "B-Corp certified — legal accountability to people and planet",
             "GOTS certified textiles — organic fiber verified through the full supply chain",
-            "High nutritional density — fiber 5g+, protein, whole ingredients",
-            "Refillable, circular, or compostable design",
             "EWG Verified, NSF certified, or Rainforest Alliance",
           ]
         },
@@ -2552,15 +2570,31 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           body: "We run an automated test suite against the live API after every significant change to scoring parameters. The suite scans 20+ known products and verifies scores fall within expected ranges, correct substances are flagged, and self-recommendation bugs are absent."
         },
         {
-          heading: "Calibration anchors we verify",
+          heading: "Food model calibration anchors",
           body: null,
           list: [
-            "M&Ms must score 6-9 and flag Red 40. Blueland tablets must score 1-3.",
-            "Neutrogena sunscreen must score 6-9 and flag oxybenzone.",
-            "Teflon non-stick pan must score 6-9 and flag PTFE.",
+            "Organic spinach / fresh produce: must score 1-2",
+            "Larabar / RX Bar (whole food, minimal ingredients): must score 1-3",
+            "Kashi Organic cereal (USDA certified): must score 1-3 — organic ceiling enforced server-side",
+            "Kashi conventional GO cereal (Non-GMO, no dyes): must score 3-4 — Non-GMO clean ceiling enforced server-side",
+            "365 WFM protein bites (dates, nuts, no dyes): must score 2-4",
+            "Oats Overnight organic (certified organic): must score 2-4",
+            "Cliff Bar (conventional oats, whole food base): must score 3-5",
+            "Quaker oats conventional: must score 5-6 — primary oat with confirmed glyphosate",
+            "Honey Nut Cheerios: must score 6-8 — primary oat with confirmed glyphosate above EWG child threshold + 12g sugar",
+            "M&Ms / Skittles: must score 6-9 and flag petroleum dyes",
+            "Hot dogs / processed meat: must score 6-9 and flag nitrites",
+            "All alcoholic beverages: must score 6-9 and flag IARC Group 1 ethanol",
+          ]
+        },
+        {
+          heading: "Non-food calibration anchors",
+          body: null,
+          list: [
+            "Blueland tablets must score 1-3. Neutrogena sunscreen must score 6-9 and flag oxybenzone.",
+            "Teflon non-stick pan must score 6-9 and flag PTFE. Patagonia organic cotton tee must score 1-3.",
             "Poppi Prebiotic Soda must score 1-4 and must never recommend itself as an alternative.",
-            "Chick-fil-A Crispy Chicken Sandwich must score 5-8 and flag TBHQ.",
-            "Patagonia organic cotton tee must score 1-3.",
+            "Pampers diapers must score 6-8. Hello Bello must score 3-5. Andy Pandy bamboo must score 2-4.",
           ]
         },
         {
@@ -2966,58 +3000,134 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           </div>
         </div>
 
-        {/* IARC substance floors */}
+        {/* NOVA processing modifier */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
           <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
-            <div style={{fontSize:13, fontWeight:700, color:text}}>IARC Carcinogen Floors — materials score cannot go below these</div>
-            <div style={{fontSize:12, color:muted, marginTop:2}}>Applied after the formula. Only fires on confirmed substances — speculative language never triggers a floor.</div>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>NOVA Processing Level — applied before substance scoring</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>The biggest predictor of food risk after specific substances. Ultra-processed formulations (NOVA 4) start with a structural materials penalty regardless of individual ingredient claims.</div>
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%", borderCollapse:"collapse", fontSize:isMobile?11:13}}>
+              <thead>
+                <tr style={{background:isDark?"#1a2030":"#f1f5f9"}}>
+                  {["Level","Description","Examples","Materials baseline"].map((h,i)=>(
+                    <th key={i} style={{padding:"10px 14px", textAlign:"left", fontWeight:700, color:text, fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em", borderBottom:`1px solid ${border}`}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {level:"NOVA 1", desc:"Unprocessed or minimally processed", ex:"Fresh fruit, vegetables, plain oats, eggs, plain yogurt, meat", base:"1-2 — no penalty"},
+                  {level:"NOVA 2", desc:"Processed culinary ingredients", ex:"Oils, vinegars, flours, salt, sugar on their own", base:"1-2 — no penalty"},
+                  {level:"NOVA 3", desc:"Processed foods", ex:"Canned beans, cheese, cured meats, bread with simple ingredients, fermented foods", base:"2-4 — moderate"},
+                  {level:"NOVA 4", desc:"Ultra-processed formulations — industrial ingredients not found in home kitchens", ex:"Breakfast cereals with synthetic dyes, packaged cookies, plant-based meat, most fast food, flavored chips", base:"5+ — structural penalty"},
+                ].map((row,i)=>(
+                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background:i%2===0?"transparent":isDark?"#1a2030":"#fafafa"}}>
+                    <td style={{padding:"10px 14px", fontWeight:700, color:i===3?"#dc2626":text}}>{row.level}</td>
+                    <td style={{padding:"10px 14px", color:muted, fontSize:12}}>{row.desc}</td>
+                    <td style={{padding:"10px 14px", color:muted, fontSize:11}}>{row.ex}</td>
+                    <td style={{padding:"10px 14px", fontWeight:700, color:i===3?"#dc2626":"#16a34a", fontSize:12}}>{row.base}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Sugar penalty */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Added Sugar Penalty — scored independently of other concerns</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and beverages are consumed daily — cumulative exposure matters.</div>
+          </div>
+          <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:8}}>
+            {[
+              {range:"0–5g added sugar per serving", penalty:"No penalty", color:"#16a34a"},
+              {range:"6–10g added sugar per serving", penalty:"Materials +1", color:"#d97706"},
+              {range:">10g added sugar per serving", penalty:"Materials +2", color:"#ea580c"},
+              {range:">20g added sugar per serving", penalty:"Materials +3 — exceeds half the WHO daily limit in one serving", color:"#dc2626"},
+            ].map((row,i)=>(
+              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
+                <div style={{fontSize:13, color:text}}>{row.range}</div>
+                <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, marginLeft:12}}>{row.penalty}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* IARC substance floors - updated */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>IARC Substance Floors — context-sensitive, not a blanket rule</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>IARC classifies the strength of evidence, not the dose. A trace of glyphosate in a multi-grain product is not the same as glyphosate as the primary ingredient in a children's cereal.</div>
           </div>
           <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:12}}>
             {[
               {
-                tier:"IARC Group 1 — Known carcinogen",
-                floor:"Materials minimum 8",
-                color:"#dc2626",
-                bg:"#fef2f2",
-                border_:"#fecaca",
-                examples:"Sodium nitrite / nitrate in processed meat (hot dogs, bacon, deli meat). Alcohol in beverages. Benzene. Vinyl chloride. Ethylene oxide.",
-                note:"The science says: this causes cancer in humans."
+                tier:"IARC Group 1 — Known carcinogen as primary ingredient",
+                floor:"Materials 7-8 minimum",
+                color:"#dc2626", bg:"#fef2f2", border_:"#fecaca",
+                examples:"Nitrites in hot dogs/bacon/deli meat. Ethanol in all alcoholic beverages.",
+                note:"The science says: causes cancer in humans. No safe level per WHO."
               },
               {
-                tier:"IARC Group 2A — Probable carcinogen",
-                floor:"Materials minimum 7",
-                color:"#d97706",
-                bg:"#fffbeb",
-                border_:"#fde68a",
-                examples:"Glyphosate confirmed in conventional oats (Cheerios, Quaker, Nature Valley — EWG tested above child safety threshold). Acrylamide in fried / baked starchy foods. Red meat processed with heat.",
-                note:"The science says: probably causes cancer. Sufficient human evidence."
+                tier:"IARC Group 2A — Probable carcinogen as PRIMARY ingredient with confirmed residues",
+                floor:"Materials 6-7",
+                color:"#d97706", bg:"#fffbeb", border_:"#fde68a",
+                examples:"Glyphosate in Cheerios/Quaker oats (EWG confirmed above child threshold — oats are the primary ingredient).",
+                note:"Context: oats as primary ingredient in a children's daily cereal is different from oats as one of 7 grains."
               },
               {
-                tier:"IARC Group 2B — Possible carcinogen",
-                floor:"Materials minimum 6",
-                color:"#ca8a04",
-                bg:"#fefce8",
-                border_:"#fef08a",
-                examples:"BHA, TBHQ, titanium dioxide (EU food ban), caramel color IV (4-MEI), potassium bromate, aspartame, BPA, BPS.",
-                note:"The science says: possibly causes cancer. Limited human evidence."
+                tier:"IARC Group 2A — Probable carcinogen as MINOR ingredient in otherwise clean product",
+                floor:"Materials +1 only, flagged as MEDIUM",
+                color:"#ca8a04", bg:"#fefce8", border_:"#fef08a",
+                examples:"Glyphosate in Kashi (oats are 1 of 7+ whole grains, Non-GMO verified, high fiber, no dyes).",
+                note:"Dose and dilution matter. The IARC classification applies to the substance, not the product."
               },
               {
-                tier:"Speculative only — hedged language",
+                tier:"IARC Group 2B — Possible carcinogen confirmed in product",
+                floor:"Materials +1-2, flagged as concern",
+                color:"#059669", bg:"#f0fdf4", border_:"#bbf7d0",
+                examples:"BHA, TBHQ, titanium dioxide (EU food ban), caramel color IV, potassium bromate, aspartame.",
+                note:"Possible evidence — worth flagging but not the same severity as confirmed carcinogens."
+              },
+              {
+                tier:"Speculative — hedged language only",
                 floor:"No floor applied",
-                color:"#16a34a",
-                bg:"#f0fdf4",
-                border_:"#bbf7d0",
-                examples:"\"May contain,\" \"possible trace,\" \"could include\" — these phrases are stripped before floors are checked.",
-                note:"Speculation does not warrant a materials floor regardless of how dangerous the substance is."
+                color:"#6b7280", bg:isDark?"#1e2433":"#f8fafc", border_:border,
+                examples:"\"May contain,\" \"possible trace,\" \"could include\" — stripped before floors are checked.",
+                note:"Speculation does not warrant a penalty regardless of how dangerous the theoretical substance is."
               },
             ].map((item, i) => (
               <div key={i} style={{background:item.bg, border:`1.5px solid ${item.border_}`, borderRadius:12, padding:"14px 16px"}}>
                 <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, flexWrap:"wrap", marginBottom:6}}>
-                  <div style={{fontSize:13, fontWeight:700, color:item.color}}>{item.tier}</div>
-                  <div style={{fontSize:12, fontWeight:700, color:item.color, background:"white", padding:"2px 10px", borderRadius:10, border:`1px solid ${item.border_}`, whiteSpace:"nowrap"}}>{item.floor}</div>
+                  <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.tier}</div>
+                  <div style={{fontSize:12, fontWeight:700, color:item.color, background:"white", padding:"2px 10px", borderRadius:10, border:`1px solid ${item.border_}`, whiteSpace:"nowrap", flexShrink:0}}>{item.floor}</div>
                 </div>
                 <div style={{fontSize:12, color:isDark?"#94a3b8":"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
                 <div style={{fontSize:11, color:item.color, fontStyle:"italic"}}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Positive ceilings */}
+        <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Positive Ceilings — clean products are protected from over-scoring</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>We have 113 substance floors that push risky products up. These ceilings prevent genuinely clean products from being over-penalised by a paranoid AI. Applied server-side — the AI cannot override them.</div>
+          </div>
+          <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:10}}>
+            {[
+              {label:"USDA Organic certified + no confirmed dangerous substances", cap:"Final score cannot exceed 3", color:"#16a34a", note:"Organic certification prohibits synthetic pesticides, GMOs, and most synthetic additives. If no dangerous substance floors fired, the product is genuinely clean."},
+              {label:"Non-GMO Project Verified + no synthetic dyes + no synthetic preservatives", cap:"Final score cannot exceed 4", color:"#059669", note:"Conventionally farmed but free of the worst additives. Kashi GO, clean conventional snacks, and similar products land here."},
+            ].map((item,i)=>(
+              <div key={i} style={{padding:"12px 16px", background:isDark?"#1a2433":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`}}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6, flexWrap:"wrap"}}>
+                  <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.label}</div>
+                  <div style={{fontSize:12, fontWeight:700, color:"#fff", background:item.color, padding:"3px 12px", borderRadius:10, flexShrink:0}}>{item.cap}</div>
+                </div>
+                <div style={{fontSize:12, color:muted, lineHeight:1.5}}>{item.note}</div>
               </div>
             ))}
           </div>

@@ -286,7 +286,11 @@ const SUBSTANCE_FLOORS = [
   // PESTICIDES — EWG Dirty Dozen, PFAS pesticides
   // IARC 2A = mFloor 7 (probable carcinogen, confirmed at measurable levels)
   // ══════════════════════════════════════════════════════════
-  { match: /\bglyphosate\b/i,                                           mFloor:7, uFloor:6, reason:"Glyphosate — IARC Group 2A probable carcinogen, confirmed above EWG child threshold in conventional oats" },
+  // Glyphosate: IARC Group 2A. Floor is 5 (not 7) because context matters.
+  // Cheerios (primary oat, confirmed EWG residue, high sugar) → AI scores materials 7 via calibration.
+  // Kashi (oats are 1 of 7+ grains, Non-GMO, high fiber) → AI scores materials 3 via calibration.
+  // The floor catches cases where AI misses glyphosate entirely. Calibration sets the right level.
+  { match: /\bglyphosate\b/i,                                           mFloor:5, uFloor:4, reason:"Glyphosate — IARC Group 2A probable carcinogen" },
   { match: /\bchlorpyrifos\b/i,                                         mFloor:7, uFloor:6, reason:"Chlorpyrifos — EPA banned 2021, children's neurotoxin" },
   { match: /\batrazine\b/i,                                             mFloor:7, uFloor:6, reason:"Atrazine — endocrine disruptor, banned EU, water contaminant" },
   { match: /\bneonicotinoid\b|imidacloprid|clothianidin|thiamethoxam/i, mFloor:6, uFloor:5, reason:"Neonicotinoid pesticide — bee colony collapse, systemic in crops" },
@@ -341,6 +345,10 @@ const NEGATION_PHRASES = [
   "no added", "without ", "not present", "non-gmo", "no pfas",
   "pfas-free", "bpa-free", "no bpa", "no bht", "no bha", "no tbhq",
 ];
+
+// Food category sets — used by substance floors, positive ceilings, and alternative filters
+const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
+const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
 
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
@@ -505,10 +513,53 @@ function applyConsistencyChecks(mScore, uScore, pkScore, sScore, finalScore, p1,
   return { mScore, uScore, pkScore, sScore, finalScore: checked, consistencyFlags: flags };
 }
 
+// ── POSITIVE CEILING SYSTEM ───────────────────────────────────
+// Floors push dangerous products UP. Ceilings pull clean products DOWN.
+// Prevents the AI over-penalising genuinely clean food products.
+// Only applies to food/beverage categories.
+function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered) {
+  if (!FOOD_CATEGORIES_SET.has(category)) return { finalScore, ceilingFlags: [] };
+
+  const flags = [];
+  const allText = JSON.stringify([
+    p1.product_analysis || {},
+    p1.materials || {},
+    p2 || {},
+    p1.summary || "",
+    p1.raw_concerns || [],
+  ]).toLowerCase();
+
+  // Has any dangerous substance floor fired?
+  const dangerousSubstanceFired = substanceTriggered.some(t =>
+    /red 40|yellow 5|yellow 6|blue 1|bha|tbhq|nitrite|nitrate|petroleum dye|pfas|pfoa|pfos|glyphosate|acrylamide/i.test(t)
+  );
+
+  // CEILING 1: USDA Organic + no confirmed dangerous substances → cap at 3
+  // Rationale: Organic certification prohibits synthetic pesticides, GMOs, most synthetics.
+  // If no dangerous substance floors fired, the product is genuinely clean.
+  const isConfirmedOrganic = /usda organic|certified organic by|organic certified/.test(allText);
+  if (isConfirmedOrganic && !dangerousSubstanceFired && finalScore > 3) {
+    console.log(`Organic ceiling: capping food score from ${finalScore} to 3`);
+    finalScore = Math.min(finalScore, 3);
+    flags.push("usda_organic_ceiling");
+  }
+
+  // CEILING 2: Non-GMO + whole food + no dyes + no synthetic preservatives → cap at 4
+  // Rationale: These products are conventionally farmed but free of the worst additives.
+  // Kashi GO, Kind bars, clean conventional snacks land here.
+  const isNonGMO = /non.?gmo project verified|non.?gmo certified|non.?gmo verified/.test(allText);
+  const hasNoDyes = !/red\s*40|yellow\s*5|yellow\s*6|blue\s*1|blue\s*2|titanium dioxide.*food|petroleum dye|artificial.*color.*dye/.test(allText);
+  const hasNoSyntheticPreservatives = !/\bbha\b|\bbht\b|\btbhq\b|sodium benzoate.*vitamin|sodium nitrite|potassium bromate/.test(allText);
+  if (isNonGMO && hasNoDyes && hasNoSyntheticPreservatives && !dangerousSubstanceFired && finalScore > 4) {
+    console.log(`NonGMO clean ceiling: capping food score from ${finalScore} to 4`);
+    finalScore = Math.min(finalScore, 4);
+    flags.push("nongmo_clean_ceiling");
+  }
+
+  return { finalScore, ceilingFlags: flags };
+}
 
 
-
-// ── CHILD VULNERABILITY SYSTEM ───────────────────────────────
 // Children have thinner skin, developing organ systems, lower body weight
 // (higher dose per kg), and consume/wear products daily for years.
 // Two layers: automatic detection for obvious child products,
@@ -933,9 +984,88 @@ OUTER PACKAGING — does not touch food, penalize less:
 - Single-use plastic outer bag with no food contact: score 4-5.
 - Refillable or concentrated formats: score 1-3.
 FOOD NUTRITION POSITIVE SIGNAL — for food_beverage and restaurant:
-- High fiber (5g+/serving), high protein, whole food ingredients, USDA Organic, non-GMO verified: these actively lower the materials score by 1-2 points. A nutrient-dense whole food with minor packaging concerns should still score 1-3.
-- Ultra-processed with zero nutritional benefit: materials score floors at 6+.
-- Organic apple in plastic bag: materials=1 (whole food, organic), packaging=6 (plastic food contact) → final ~3 under food formula. Always note the packaging concern explicitly.
+USDA Organic + no confirmed dangerous substances: materials 1-2, final 1-3. This ceiling is enforced server-side.
+Non-GMO Project Verified + no synthetic dyes + no synthetic preservatives: materials 2-4, final max 4. Enforced server-side.
+High fiber (8g+/serving) from whole food sources: lower materials by 1 point.
+High protein (10g+/serving) from whole food sources: lower materials by 0.5 points (round down).
+Organic apple in plastic bag: materials=1 (whole food, organic), packaging=6 → final ~2. Always note packaging concern.
+
+NOVA PROCESSING MODIFIER — apply before scoring, not after:
+NOVA 1 — Unprocessed or minimally processed: fruits, vegetables, plain meat, eggs, plain oats, plain yogurt. No structural penalty.
+NOVA 2 — Processed culinary ingredients: oils, vinegars, flours, sugar alone. No penalty on their own.
+NOVA 3 — Processed foods: canned beans, cheese, cured meats without additives, fermented foods, bread with simple ingredients. Materials baseline 2-4.
+NOVA 4 — Ultra-processed formulations: industrial ingredients not found in home kitchens (emulsifiers, flavor enhancers, hydrolyzed protein, modified starch, synthetic vitamins added back, HFCS, 5+ additives). Materials baseline 5+ regardless of individual ingredient cleanliness. The formulation itself is the concern.
+NOVA 4 examples: breakfast cereals with 10+ ingredients and synthetic dyes, packaged cookies, flavored chips, plant-based meat (Beyond Meat, Impossible Burger), most fast food, flavored protein bars with 20+ ingredients.
+
+SUGAR PENALTY — added sugar matters independently of other concerns:
+- 0-5g added sugar per serving: no penalty
+- 6-10g added sugar per serving: materials +1 (moderate concern, daily consumption adds up)
+- >10g added sugar per serving: materials +2 (high concern — WHO recommends <25g/day total)
+- >20g added sugar per serving: materials +3 (exceeds half the daily limit in one serving)
+Apply sugar penalty on top of NOVA and substance assessments. A NOVA 3 product with 15g sugar = materials 2-3 base + 2 sugar = materials 4-5.
+
+FOOD TIER SCORE IMPACT — synthesizing NOVA, sugar, and substance concerns:
+Score 1-2 (Safe): NOVA 1-2, organic certified, no confirmed IARC substances, <5g added sugar. Organic produce, organic plain oats, plain organic yogurt, wild salmon.
+Score 3 (Good): NOVA 2-3, mostly clean, conventional farming but Non-GMO or low pesticide load, <6g added sugar, no synthetic dyes/preservatives. Kashi Organic, Poppi soda, Larabar, plain Greek yogurt (conventional), canned organic beans.
+Score 4 (Good): NOVA 3, conventional ingredients, some processing but whole food base, no confirmed IARC 2A as primary ingredient. Kashi conventional (non-organic), Cliff Bar, Kind bar, 365 WFM snacks, conventional eggs, plain whole milk.
+Score 5 (Caution): NOVA 3-4 boundary, OR confirmed IARC 2A substance as minor ingredient, OR NOVA 3 with >10g sugar. Quaker oats (conventional primary oats + confirmed glyphosate), Honest Kids juice pouches (high sugar + processing), plain hot dogs (nitrites confirmed).
+Score 6 (Caution): NOVA 4 product with significant concerns OR confirmed IARC 2A substance as primary ingredient + other concerns. Honey Nut Cheerios (primary oat with confirmed glyphosate + 12g sugar + NOVA 4), conventional flavored chips (MSG, artificial flavors, NOVA 4).
+Score 7 (Change): NOVA 4 + confirmed IARC Group 1 substance OR multiple IARC 2A concerns OR confirmed petroleum dyes. Hot dogs/processed meat with sodium nitrite (IARC Group 1). Candy/cereal with multiple petroleum dyes.
+Score 8-9 (Avoid): Multiple IARC Group 1 substances + ultra-processed OR PFAS food contamination confirmed. Chewing tobacco in food, heavily contaminated products.
+Score 10: Reserved for confirmed contamination above regulatory safety limits.
+
+IARC CARCINOGEN RULE — REVISED (replaces old "all IARC 2A = materials minimum 7"):
+The IARC classification tells you the STRENGTH OF EVIDENCE, not the dose or exposure level. Apply contextually:
+- IARC Group 1 as primary ingredient at high concentration (nitrites in hot dogs, alcohol in beverages): materials 7-8 minimum
+- IARC Group 2A as PRIMARY ingredient with EWG-confirmed residues above child threshold (conventional oats in Cheerios): materials 6-7
+- IARC Group 2A as MINOR ingredient in multi-grain or whole food product (oats as one of 7 grains in Kashi): materials +1 only, flag as MEDIUM concern
+- IARC Group 2B confirmed in product (BHA, titanium dioxide, aspartame): materials +1-2, flag as concern
+- SPECULATIVE or trace amounts with hedged language: no floor, flag at LOW severity only
+DO NOT apply "minimum 7" to any product simply because it contains an IARC 2A substance. Dose and context determine severity.
+
+MISSING CATEGORY CALIBRATION:
+
+PLANT-BASED MEAT (Beyond Meat, Impossible Burger, etc.):
+Despite "plant-based" marketing these are NOVA 4 ultra-processed formulations. Ingredients: methylcellulose, pea protein isolate, modified starch, yeast extract, 20+ additives. Very high sodium (>400mg/serving). No confirmed IARC substances but high processing load.
+- Beyond Meat / Impossible Burger: materials=5 (NOVA 4, ultra-high sodium, processed plant protein isolates), usage=4 → final ~5. "Plant-based" does not mean clean.
+- Whole food plant proteins (edamame, tofu, tempeh, lentils): materials=1-2 → final 1-2.
+
+FERMENTED FOODS:
+- Plain organic yogurt / kefir / cottage cheese: materials=1 → final 1-2. Live cultures, minimal processing, NOVA 1.
+- Flavored/sweetened yogurt (Dannon Fruit on the Bottom, etc.): materials=3-4 (added sugar, natural flavors, carrageenan in some) → final 3-4.
+- Raw kombucha (plain, no added sugar): materials=2 → final 2-3.
+- Flavored kombucha with added sugar (GT's flavored): materials=3-4.
+- Kimchi / sauerkraut (traditional fermented): materials=1 → final 1-2.
+
+CONDIMENTS AND SAUCES:
+- Organic hot sauce (just peppers, vinegar, salt): materials=1 → final 1-2.
+- Conventional ketchup (Heinz) with HFCS: materials=4 (HFCS, natural flavors) → final ~4.
+- Organic ketchup (no HFCS): materials=2 → final ~2.
+- Ranch dressing (conventional — Hidden Valley): materials=5 (soybean oil, modified starch, artificial flavors, calcium disodium EDTA) → final ~5.
+- Rao's Marinara (clean ingredients): materials=2 → final ~2.
+- Conventional BBQ sauce with HFCS: materials=4-5 → final ~4-5.
+
+FROZEN MEALS:
+- Amy's Organic frozen meals (USDA Organic, simple ingredients): materials=2-3 → final 2-3.
+- Lean Cuisine / Healthy Choice (ultra-processed): materials=5-6 (NOVA 4, high sodium, modified starch, natural flavors, preservatives) → final 5-6.
+- Trader Joe's whole-food frozen meals (simple ingredient list): materials=3-4.
+
+BABY FOOD POUCHES:
+- Organic baby food pouch (Happy Baby, Earth's Best Organic): materials=2 (USDA Organic, simple ingredients, some processing for shelf stability) → final 2-3.
+- Conventional baby food pouch (Gerber conventional): materials=4 (conventional produce, some additives) → final 3-4.
+- Organic baby puffs/snacks: materials=2-3 → final 2-3.
+
+FUNCTIONAL BEVERAGES AND ELECTROLYTES:
+- LMNT / Liquid IV (clean electrolytes, no dyes): materials=2-3 → final 2-3.
+- Gatorade / Powerade (conventional with dyes): materials=5-6 (artificial dyes, sucrose/HFCS) → final 5-6.
+- Athletic Greens / AG1 (complex formulation): materials=3-4 (generally clean but ultra-processed powder).
+
+ALCOHOL:
+Ethanol is IARC Group 1 carcinogen — no safe level per WHO. This applies regardless of wine/beer/spirits perception.
+- Any alcoholic beverage: materials=7 (IARC Group 1 ethanol — known carcinogen) minimum. Score reflects health risk of the product, not a judgment on responsible adult consumption.
+- Wine / beer: materials=7, usage=6 → final ~7.
+- Spirits (higher ethanol concentration): materials=8, usage=7 → final ~7-8.
+Always flag: "Ethanol — IARC Group 1 known carcinogen (WHO 2018 — no safe level for cancer risk)."
 
 SUSTAINABILITY (product lifecycle, planet impact, and ethical sourcing):
 - Multi-use durable products replacing single-use: score 1-3.
@@ -1003,6 +1133,8 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
 - Cliff Bar (oats, dates, nuts, some natural flavors): materials=4 (conventional oats likely have glyphosate residue, no organic certification), usage=3 → final ~3-4
+- Kashi Organic cereal lines (USDA Organic — Cinnamon Harvest, Organic Promise, etc.): materials=1, usage=1 → final ~1-2. USDA Organic prohibits glyphosate. No artificial dyes. Whole grain. Flag organic as strong positive.
+- Kashi conventional cereal (GO Original, GO Crunch, Seven Whole Grain — Non-GMO Project Verified, not organic): materials=3 (seven+ whole grains, Non-GMO verified, no artificial dyes, no synthetic preservatives, high fiber — oats are one of many grains, not primary ingredient, glyphosate MEDIUM concern not HIGH), usage=3 → final ~3. NEVER score Kashi conventional above 4. Kashi is NOT the same as Cheerios — oats are a minor grain in a multi-grain blend.
 - Honey Nut Cheerios (conventional oats): materials=7 (IARC 2A glyphosate confirmed above EWG child threshold — same carcinogen class as processed meat nitrites; 12g added sugar; daily child consumption), usage=5 → final ~6-7. NEVER score below 6.
 - Original Cheerios (conventional oats): materials=7, usage=5 → final ~6-7. Same confirmed glyphosate, IARC 2A.
 - Quaker Old Fashioned Oats (conventional, minimal additives): materials=6 (IARC 2A glyphosate confirmed, but simpler product), usage=4 → final ~5-6
@@ -1153,38 +1285,32 @@ FOOD (food_beverage) CONCERNS:
 HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hyperactivity/ADHD), Blue 1/2 (neurotoxin), Titanium dioxide (IARC 2B, EU banned), BHA/BHT (IARC 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 processed meat), Trans fats (cardiovascular), HFCS (metabolic disease), Glyphosate residue in conventional oats/grain products (IARC Group 2A — EWG confirmed above safety threshold in Cheerios, Quaker, Nature Valley)
 MEDIUM: Aspartame (IARC 2B 2023), Sucralose (gut microbiome), Acesulfame-K (animal carcinogen), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk), TBHQ (immunotoxin), Caramel color IV (4-MEI carcinogen), Natural flavors (undisclosed chemicals), Carmine E120 (allergic reactions)
 LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
-FOOD TIER SCORE IMPACT:
-- Ultra-processed + 3+ HIGH concerns (multiple dyes, nitrates, BHA): materials 8-9, final 7-8
-- Ultra-processed + 1-2 HIGH concerns (petroleum dyes OR confirmed glyphosate OR BHA/BHT): materials 7-8, final 6-7
-- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 7, final 6-7. Glyphosate is IARC 2A — treat same severity as BHA/BHT.
-- Conventional produce with pesticide load (Dirty Dozen): materials 5-6, final 4-5
-- Processed with MEDIUM concerns only: materials 4-5, final 4-5
-- Processed, minimal synthetics (Cliff Bar, Kind bar without glyphosate confirmation): materials 3-4, final 3-4
-- Whole food / minimally processed / organic certified: materials 1-2, final 1-3
-- Child food with ANY dyes: vulnerable flag + materials minimum 8, final minimum 7
-
-IARC CARCINOGEN MATERIALS FLOOR — applies to ALL food products, no exceptions:
-- IARC Group 1 (known carcinogen) confirmed in product at measurable levels: materials MINIMUM 8
-  Examples: sodium nitrite/nitrate in processed meat, alcohol in beverages, aflatoxins in contaminated peanuts
-- IARC Group 2A (probable carcinogen) confirmed in product at measurable levels: materials MINIMUM 7
-  Examples: glyphosate in conventional oats (EWG confirmed above threshold), acrylamide in fried starchy foods, red meat (processed), processed meat
-- IARC Group 2B (possible carcinogen) confirmed in product: materials MINIMUM 6
-  Examples: BHA, TBHQ, titanium dioxide (E171), caramel color IV, potassium bromate, aspartame
-- SPECULATIVE ONLY (hedged language — "may contain", "possible trace"): NO floor applies
-FOREVER CHEMICAL RULE: Any food product with confirmed IARC Group 1 or 2A substance at measurable levels is NEVER safe to call "Safe" (score 1-2). Minimum final score 5 for Group 2A, minimum 6 for Group 1.
-
 CONVENTIONAL OATS AND GRAIN PRODUCTS — GLYPHOSATE RULE:
-Glyphosate is used as a pre-harvest desiccant on conventional oats, wheat, and other grains — sprayed directly on crops right before harvest to accelerate drying. This results in confirmed glyphosate residue in the final food product. EWG testing confirmed glyphosate above their safety threshold in:
-- Honey Nut Cheerios, original Cheerios, and other General Mills oat cereals
-- Quaker oatmeal and Quaker granola bars
-- Nature Valley granola bars and oat products
-- Most conventional (non-organic) oat-based breakfast cereals, granola bars, and oatmeal
+Glyphosate is used as a pre-harvest desiccant on conventional oats and grains. EWG testing confirmed glyphosate above child safety threshold in Cheerios, Quaker, and Nature Valley. However, NOT all oat-containing products warrant the same concern level.
 
-For ANY conventional oat-based food product (cereal, granola, oatmeal, granola bar) that is NOT certified USDA Organic:
-- Flag "glyphosate residue (conventional oats)" as a HIGH concern
-- This raises materials score to minimum 4-5
-- Honey Nut Cheerios: materials=5 (conventional oats with confirmed glyphosate above EWG threshold, added sugar 12g/serving), usage=4 → final ~4-5. NOT a 2. The absence of artificial dyes does not make a product with confirmed glyphosate residue safe.
-- Organic oat products: flag as positive — USDA Organic prohibits glyphosate use
+TWO TIERS — assess which applies:
+
+TIER 1 — HIGH CONCERN (materials 6-7): Oats are the PRIMARY or dominant ingredient AND the product has few other redeeming qualities.
+- Honey Nut Cheerios, Original Cheerios, Quaker oatmeal, Nature Valley bars: oats = primary ingredient, confirmed EWG residues, high sugar, minimal other nutrition → materials 6-7
+- ANY product where conventional oats are listed first or second in ingredients with added sugar and no strong positives
+
+TIER 2 — MODERATE CONCERN (materials 3-4): Oats are ONE of many whole grains, and product has strong positive signals (Non-GMO Project Verified, high fiber 8g+, no artificial dyes, no synthetic preservatives, whole grain dominant).
+- Kashi cereals (conventional, non-organic lines): 7-8 whole grains, Non-GMO Project Verified, no artificial dyes, no synthetic preservatives, high fiber/protein → materials 3-4. Oats are one of 7-8 grains, glyphosate exposure is diluted across many grain types. Flag glyphosate as MEDIUM concern (not high), note Non-GMO as positive. NEVER score Kashi conventional as 7 — that is wrong.
+- Cliff Bar with conventional oats: oats present but whole food base, high fiber, no dyes → materials 4
+
+TIER 1 vs TIER 2 distinguishing factors:
+- Is oats the #1 or #2 ingredient? → Tier 1
+- Is the product Non-GMO Project Verified? → Tier 2 signal
+- Does the product have fiber >8g per serving? → Tier 2 signal  
+- Are there no artificial dyes or synthetic preservatives? → Tier 2 signal
+- Does the product have high added sugar (>8g)? → Tier 1 signal
+
+KASHI CALIBRATION:
+- Kashi Organic lines (Cinnamon Harvest, Organic Promise — USDA Organic): materials=1-2, final ~1-2. No glyphosate. Flag organic certification as strong positive.
+- Kashi conventional lines (GO Original, GO Crunch, Seven Whole Grain — Non-GMO but not organic): materials=3 (seven whole grains, Non-GMO verified, no artificial dyes, no synthetic preservatives, high fiber — oats are one of 7-8 grains, not primary), usage=3 → final ~3. NEVER score above 4.
+- Kashi GO with fair trade chocolate or added sugar: materials=4, final ~4. The sugar addition raises it slightly.
+
+ORGANIC OAT PROTECTION RULE: USDA Organic = no glyphosate. Do NOT flag glyphosate for organic products.
 
 PESTICIDE CONCERNS — EWG 2026 Dirty Dozen (flag when product IS or CONTAINS conventional versions of these):
 HIGH severity pesticide concern (type="pesticide"): Conventional spinach (most pesticide residues by weight — EWG 2026, PFAS pesticides detected), Conventional strawberries, Conventional kale/collard/mustard greens (cancer-causing pesticides in 50%+ samples), Conventional grapes, Conventional nectarines, Conventional peaches, Conventional cherries, Conventional apples, Conventional blackberries (new 2026 — 4+ pesticides per sample), Conventional blueberries, Conventional pears, Conventional potatoes (90% had chlorpropham — banned in EU), Conventional green beans (highest toxicity flagged by EWG), Conventional bell/hot peppers (highest toxicity flagged by EWG)
@@ -1407,8 +1533,6 @@ function filterDbAlternatives(alternatives, category, productName) {
 // The AI sometimes ignores the same-use rule and suggests completely
 // wrong products. This filter catches cross-category hallucinations
 // before they reach the client.
-const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
-const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
 
 // Keywords that signal a non-food product — reject if category is food
 const NON_FOOD_KEYWORDS = /\b(syrup|cough|medicine|medication|supplement|vitamin|capsule|tablet|pill|lotion|cream|shampoo|conditioner|soap|detergent|cleaner|spray|wipe|diaper|clothing|shirt|pants|jacket|toy|game|appliance|device|electronics)\b/i;
@@ -1516,8 +1640,10 @@ CALIBRATION — use these as anchors:
 - Gatorade (artificial dyes, sucrose): final score ~5-6
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
 - Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
-- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~6-7 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 6.
-- Quaker oats / Quaker granola bars (conventional): final score ~5-6 — glyphosate residue confirmed, but simpler ingredients
+- Kashi Organic (USDA Organic certified lines — Cinnamon Harvest, Organic Promise): final score ~1-2 — no glyphosate, whole grain, no dyes.
+- Kashi conventional (GO Original, GO Crunch, Seven Whole Grain — Non-GMO Project Verified, NOT organic): final score ~3 — seven whole grains, Non-GMO, no artificial dyes, no synthetic preservatives, high fiber. Oats are ONE of 7-8 grains, not primary ingredient. Flag glyphosate as MEDIUM (not high) because diluted across many grains. NEVER score above 4.
+- Honey Nut Cheerios / original Cheerios (conventional oats — PRIMARY ingredient): final score ~6-7 — EWG confirmed glyphosate above child threshold. NEVER score below 6.
+- Quaker oats / Quaker granola bars (conventional, oats primary): final score ~5-6, but simpler ingredients
 - Bob's Red Mill Organic Oats: final score ~1-2 — USDA organic, no glyphosate
 - Oats Overnight (USDA Organic certified oat blend, protein, natural flavors): final score ~2 — organic certification means no glyphosate. Do NOT apply glyphosate floor. NEVER score above 4.
 - 365 Whole Foods Market chewy protein bites / protein bites (dates, almonds, cashews, coffee extract, sea salt — no oats, no artificial dyes, no synthetic preservatives): final score ~2-3. NEVER score above 4. No glyphosate concerns — no oats in this product.
@@ -1635,6 +1761,9 @@ app.post("/analyze", async (req, res) => {
       ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
         mScore, uScore, pkScore, sScore, finalScore, p1, p2, category, productName
       ));
+
+      // ── Positive ceilings — pull genuinely clean food products down ──
+      ({finalScore} = applyPositiveCeilings(finalScore, category, p1, p2, imgSubstance.triggered));
 
       if (category === "restaurant") {
         const name = (p1.product_name || productName).toLowerCase();
@@ -1795,6 +1924,9 @@ app.post("/analyze", async (req, res) => {
     ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
       mScore, uScore, pkScore, sScore, finalScore, p1, p2, finalCategory, productName
     ));
+
+    // ── Positive ceilings — pull genuinely clean food products down ──
+    ({finalScore} = applyPositiveCeilings(finalScore, finalCategory, p1, p2, substanceResult.triggered));
 
     // ── Final score safety net — catches clear misses only ──
     if (finalCategory === "restaurant") {
