@@ -49,50 +49,49 @@ function cleanProductName(name) {
 function detectCategory(q) {
   const s = q.toLowerCase();
 
-  // ── ELECTRONICS — must come BEFORE food to prevent "Apple" matching apple fruit ──
+  // ── ELECTRONICS — before food to prevent "Apple" matching apple fruit ──
   if (/macbook|iphone|ipad|imac|apple watch|airpods|apple tv|apple mac|\bapple\s+(pro|air|mini|studio|ultra|m[0-9]|laptop|computer|phone|tablet|watch|earbuds|headphones)\b|samsung galaxy|samsung phone|samsung tablet|samsung tv|pixel phone|google pixel|android phone|windows laptop|dell laptop|hp laptop|lenovo thinkpad|surface pro|microsoft surface|chromebook|gaming laptop|nvidia|amd ryzen|intel core|\blaptop\b|\bsmartphone\b|\btablet\b(?!.*food)|\bdesktop computer\b|television|\b(4k|oled|qled)\s+tv\b|smart tv|monitor|keyboard|mouse\b(?!.*trap)|headphones|earbuds|airpods|bluetooth speaker|smart speaker|alexa|google home|ring doorbell|nest thermostat|robot vacuum|roomba|printer|camera(?!.*food)|drone|gaming console|playstation|xbox|nintendo switch|smart home|wifi router|hard drive|ssd|graphics card|cpu|motherboard|charger(?!.*food)|power bank|battery pack|electric vehicle|tesla|rivian|ev car/.test(s)) return "other";
 
-  // Restaurant / fast food items — detected before food category
-  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|fuzz.?s taco|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|dine brands/.test(s)) return "restaurant";
+  // ── RESTAURANT ──
+  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin/.test(s)) return "restaurant";
 
-  // Clothing and textiles
-  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap|dress|skirt|shorts|tights|blazer|coat|glove|hat|scarf|beanie|swimsuit|bikini/.test(s)) return "clothing";
+  // ── TOYS ──
+  if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayons|markers|play set|playset/.test(s)) return "toy";
 
-  // Food and beverages — fruit regex uses word boundary to prevent Apple brand match
-  if (
-    // Fruits and vegetables — \bapple\b only, not "Apple MacBook"
-    /\bapple\s*(juice|sauce|cider|fruit|slices|pie|crisp|turnover)?\b(?!\s*(watch|pro|air|mini|mac|iphone|ipad|tv|music|card|store|arcade|one|silicon|chip|m[0-9]))/i.test(s) ||
-    /\b(banana|orange|grape|berry|berries|strawberr|blueberr|raspberr|blackberr|cherry|cherries|mango|peach|pear|plum|prune|apricot|melon|watermelon|pineapple|kiwi|avocado|lemon|lime|tomato|potato|carrot|broccoli|spinach|kale|lettuce|onion|garlic|pepper|cucumber|zucchini|mushroom|corn|pea|bean|lentil|chickpea|edamame|beet|sweet potato|butternut|squash)\b/.test(s) ||
-    // Proteins
-    /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop)\b/.test(s) ||
-    // Dairy and alternatives
-    /\b(milk|cheese|yogurt|yoghurt|butter|cream|ghee|kefir|cottage|ricotta|mozzarella|cheddar|parmesan|brie|almond milk|oat milk|soy milk|coconut milk)\b/.test(s) ||
-    // Grains, bread, pasta
-    /\b(bread|bagel|muffin|croissant|tortilla|wrap|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
-    // Snacks and candy — "bar" now requires food context
-    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop)\b/.test(s) ||
-    // Drinks
-    /\b(juice|soda|cola|pepsi|coke|sprite|sparkling water|tea|coffee\s*(beans|grounds|pods|drink|latte|espresso)|smoothie|shake|kombucha|energy drink|red bull|redbull|monster energy|rockstar energy|bang energy|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout)\b/.test(s) ||
-    // Condiments, sauces, spreads
-    /\b(ketchup|mustard|mayo|mayonnaise|salsa|dressing|vinegar|olive oil|honey|jam|jelly|peanut butter|almond butter|nutella|syrup|hot sauce|sriracha|soy sauce|teriyaki|bbq sauce|hummus|tahini|guacamole|pesto|marinara|gravy)\b/.test(s) ||
-    // Packaged and processed food — more specific
-    /\b(soup|broth|stock|stew|chili|curry|ramen|instant noodle|frozen meal|tv dinner|canned food|protein powder|whey protein|meal prep|baby food|infant formula|food)\b/.test(s)
-  ) return "food_beverage";
+  // ── ACCESSORIES — jewelry, bags, watches ──
+  if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|ring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
 
-  // Personal care
+  // ── BABY — before clothing to catch training pants ──
+  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet|training pants|pull.?up.*diaper|potty training/.test(s)) return "baby";
+
+  // ── CLOTHING ──
+  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|dress|skirt|shorts|tights|blazer|coat|swimsuit|bikini|shoe|sneaker|boot|sandal|heel|loafer|oxford|slipper|flip flop/.test(s)) return "clothing";
+
+  // ── SUPPLEMENT ──
+  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|gummy vitamin/.test(s)) return "supplement";
+
+  // ── BEAUTY / PERSONAL CARE ──
   if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf/.test(s)) return "personal_care";
 
-  // Kitchen and cleaning
-  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic.*pan|kitchen|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt/.test(s)) return "kitchen";
+  // ── HOME (cleaning, kitchen, furnishing, candles) ──
+  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic.*pan|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt|mattress|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|foam|memory foam|latex mattress|carpet|rug|curtain|drape|upholster/.test(s)) return "home";
 
-  // Baby
-  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet/.test(s)) return "baby";
+  // ── BEVERAGE — drinkable consumption ──
+  if (
+    /\b(juice|soda|cola|pepsi|coke|sprite|sparkling water|tea|coffee\s*(beans|grounds|pods|drink|latte|espresso)|smoothie|shake|kombucha|energy drink|red bull|redbull|monster energy|rockstar|bang energy|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout|water|milk|almond milk|oat milk|soy milk|coconut milk|kefir|drinking)\b/.test(s) ||
+    /\b(poppi|olipop|liquid death|spindrift|celsius|guayaki|yerba mate|bai|hint water|lacroix|bubly|topo chico|vitaminwater|body armor|prime drink|fairlife|chobani drink)\b/i.test(s)
+  ) return "beverage";
 
-  // Supplements and vitamins
-  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|tablet|gummy vitamin/.test(s)) return "supplement";
-
-  // Mattresses, bedding, furniture
-  if (/mattress|mattresse|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|foam|memory foam|latex mattress|box spring|futon|carpet|rug|curtain|drape|upholster/.test(s)) return "home_furnishing";
+  // ── FOOD — edible consumption ──
+  if (
+    /\bapple\s*(juice|sauce|cider|fruit|slices|pie|crisp|turnover)?\b(?!\s*(watch|pro|air|mini|mac|iphone|ipad|tv|music|card|store|arcade|one|silicon|chip|m[0-9]))/i.test(s) ||
+    /\b(banana|orange|grape|berry|berries|strawberr|blueberr|raspberr|blackberr|cherry|cherries|mango|peach|pear|plum|prune|apricot|melon|watermelon|pineapple|kiwi|avocado|lemon|lime|tomato|potato|carrot|broccoli|spinach|kale|lettuce|onion|garlic|pepper|cucumber|zucchini|mushroom|corn|pea|bean|lentil|chickpea|edamame|beet|sweet potato|butternut|squash)\b/.test(s) ||
+    /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop)\b/.test(s) ||
+    /\b(cheese|yogurt|yoghurt|butter|cream|ghee|cottage|ricotta|mozzarella|cheddar|parmesan|brie)\b/.test(s) ||
+    /\b(bread|bagel|muffin|croissant|tortilla|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
+    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|cheerio|cereal|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauce|salsa|dressing|vinegar|olive oil|syrup|hot sauce|sriracha|hummus|guacamole|pesto|marinara)\b/.test(s) ||
+    /\b(soup|broth|stock|stew|chili|curry|ramen|frozen meal|canned food|baby food|infant formula|snack|food|meal|lunch|dinner|breakfast)\b/.test(s)
+  ) return "food";
 
   return null;
 }
@@ -369,22 +368,129 @@ function applySubstanceFloors(mScore, uScore, p1, p2) {
 // Non-food: contact/environment-first — exposure and sustainability
 // carry more weight, packaging less critical.
 
-const FOOD_CATEGORIES    = new Set(["food_beverage", "restaurant", "supplement"]);
-const NONFOOD_CATEGORIES = new Set(["clothing", "personal_care", "kitchen", "baby", "home_furnishing", "other"]);
+const FOOD_CATEGORIES    = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
+const NONFOOD_CATEGORIES = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
 
-function computeScore(mScore, uScore, pkScore, sScore, mfScore, category) {
-  if (FOOD_CATEGORIES.has(category)) {
-    // Food formula — ingredients 50%, packaging 20%, usage 20%, sustainability 5%, mfg 5%
-    return Math.min(10, Math.max(1,
-      Math.round(mScore*0.50 + pkScore*0.20 + uScore*0.20 + sScore*0.05 + mfScore*0.05)
-    ));
-  } else {
-    // Non-food formula — materials 35%, usage 30%, sustainability 20%, packaging 10%, mfg 5%
-    return Math.min(10, Math.max(1,
-      Math.round(mScore*0.35 + uScore*0.30 + sScore*0.20 + pkScore*0.10 + mfScore*0.05)
-    ));
-  }
+// ── 10-CATEGORY SCORING FORMULAS ─────────────────────────────
+// Manufacturing removed — too hard to measure consistently and creates false precision.
+// Each formula reflects the primary risk pathway for that category.
+// Weights are applied server-side as source of truth — AI cannot override.
+const CATEGORY_FORMULAS = {
+  // FOOD: Ingredients are the story — 90% what you eat, 10% what it comes in
+  // Organic spinach in a plastic bag should still score 2. Flag packaging separately.
+  food:          { m:0.90, u:0.00, pk:0.10, s:0.00 },
+  food_beverage: { m:0.90, u:0.00, pk:0.10, s:0.00 }, // legacy alias
+
+  // BEVERAGE: Direct blood-stream consumption — container leaches into every sip
+  // Plastic water bottle matters more than plastic cereal box
+  beverage:      { m:0.75, u:0.00, pk:0.25, s:0.00 },
+
+  // RESTAURANT: Same logic as food, slight sustainability weight for practices
+  restaurant:    { m:0.85, u:0.00, pk:0.10, s:0.05 },
+
+  // SUPPLEMENT: Concentrated daily ingestion — ingredients + some packaging leaching
+  supplement:    { m:0.65, u:0.25, pk:0.10, s:0.00 },
+
+  // BEAUTY: Leave-on daily skin contact — exposure pathway equals materials
+  personal_care: { m:0.45, u:0.45, pk:0.05, s:0.05 },
+
+  // TOYS: Children put toys in mouths — materials and ingestion risk dominate
+  toy:           { m:0.50, u:0.40, pk:0.05, s:0.05 },
+
+  // CLOTHING/SHOES: Microfiber shedding into waterways — sustainability earns real weight
+  clothing:      { m:0.35, u:0.30, pk:0.00, s:0.35 },
+
+  // ACCESSORIES: Jewelry/bags — environmental footprint matches materials concern
+  accessory:     { m:0.40, u:0.25, pk:0.00, s:0.35 },
+
+  // HOME: Inhalation and residue from cleaners/candles/rugs is the primary story
+  home:          { m:0.30, u:0.45, pk:0.10, s:0.15 },
+  kitchen:       { m:0.30, u:0.45, pk:0.10, s:0.15 }, // kitchen maps to home
+  home_furnishing:{ m:0.30, u:0.45, pk:0.10, s:0.15 }, // legacy alias
+
+  // BABY: Most protective formula — what touches developing systems is everything
+  baby:          { m:0.55, u:0.40, pk:0.05, s:0.00 },
+
+  // FALLBACK
+  other:         { m:0.45, u:0.30, pk:0.10, s:0.15 },
+};
+
+function computeScore(mScore, uScore, pkScore, sScore, category) {
+  const f = CATEGORY_FORMULAS[category] || CATEGORY_FORMULAS.other;
+  return Math.min(10, Math.max(1,
+    Math.round(mScore*f.m + uScore*f.u + pkScore*f.pk + sScore*f.s)
+  ));
 }
+
+// Helper: is this a food-type category
+function isFoodCategory(category) {
+  return FOOD_CATEGORIES.has(category);
+}
+
+// ── POST-FORMULA CONSISTENCY CHECKER ─────────────────────────
+// Catches hallucinations where AI scores contradict their own labels/reasoning.
+// Four rules applied after formula, before caching.
+function applyConsistencyChecks(mScore, uScore, pkScore, sScore, finalScore, p1, p2, category, productName) {
+  let checked = finalScore;
+  const flags = [];
+
+  // 1. LABEL/SCORE CONTRADICTION
+  // If AI's own label says "low / minimal / inert / clean" but scored dimension 6+
+  const materialsLabel = (p1.materials?.label || "").toLowerCase();
+  const usageLabel     = (p1.usage_exposure?.label || "").toLowerCase();
+  const summary        = (p1.summary || p2?.summary || "").toLowerCase();
+  const lowMaterialsLabel = /natural material|inert|zero.*chemical|no.*harmful|clean.*formula|organic.*only|plant.based only|no.*synthetic/.test(materialsLabel + " " + summary);
+  const lowUsageLabel     = /low exposure|minimal exposure|no.*ingestion|no.*contact risk|no.*leach/.test(usageLabel + " " + summary);
+  if (lowMaterialsLabel && mScore > 4) {
+    console.log(`Consistency: materials label says clean but mScore=${mScore} — capping at 4`);
+    mScore = Math.min(mScore, 4);
+    flags.push("materials_label_contradiction");
+  }
+  if (lowUsageLabel && uScore > 4) {
+    console.log(`Consistency: usage label says low but uScore=${uScore} — capping at 4`);
+    uScore = Math.min(uScore, 4);
+    flags.push("usage_label_contradiction");
+  }
+
+  // 2. DIMENSION SPREAD SANITY CHECK
+  // If materials is genuinely clean (1-2) the final score can't be high
+  // unless exposure/packaging has a specific documented reason
+  if (mScore <= 2 && checked >= 7) {
+    console.log(`Consistency: mScore=${mScore} but final=${checked} — investigating`);
+    // Recompute with corrected dimensions
+    checked = computeScore(mScore, uScore, pkScore, sScore, category);
+    flags.push("dimension_spread_anomaly");
+  }
+
+  // 3. CONFIDENCE-LINKED CEILING
+  // Low confidence = directional estimate only — never implies confirmed harmful substances
+  const confidence = p2?.confidence || p1.confidence || "medium";
+  if (confidence === "low" && checked > 6) {
+    console.log(`Consistency: low confidence but score=${checked} — capping at 6`);
+    checked = Math.min(checked, 6);
+    flags.push("low_confidence_ceiling");
+  }
+
+  // 4. INERT MATERIAL CEILING (glass, ceramic, stainless)
+  const allText = JSON.stringify([p1.natural_materials||[], p1.materials||{}, p2||{}]).toLowerCase();
+  const isInert = /borosilicate|inert glass|inert ceramic|stainless steel|cast iron/.test(allText + " " + summary);
+  if (isInert && mScore > 3) {
+    mScore = Math.min(mScore, 3);
+    checked = computeScore(mScore, uScore, pkScore, sScore, category);
+    flags.push("inert_material_ceiling");
+  }
+  const noLeach = /no leach|zero leach|inert.*no.*risk/.test(allText + " " + summary);
+  if (isInert && noLeach && uScore > 3) {
+    uScore = Math.min(uScore, 3);
+    checked = computeScore(mScore, uScore, pkScore, sScore, category);
+    flags.push("inert_usage_ceiling");
+  }
+
+  return { mScore, uScore, pkScore, sScore, finalScore: checked, consistencyFlags: flags };
+}
+
+
+
 
 // ── CHILD VULNERABILITY SYSTEM ───────────────────────────────
 // Children have thinner skin, developing organ systems, lower body weight
@@ -664,7 +770,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
           { type: "text", text: `Look at this photo. Read the brand name, product name, and visible text to identify the product. Score it across 5 dimensions AND populate product_analysis. Return ONLY this JSON:
 {
   "product_name": "brand + product name as shown on label",
-  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|other",
+  "category": "food|beverage|clothing|personal_care|home|baby|supplement|toy|accessory|restaurant|other",
   "identified_plastics": ["plastic type 1"],
   "harmful_chemicals": [],
   "natural_materials": ["organic cotton"],
@@ -786,10 +892,18 @@ USAGE AND EXPOSURE (how using this product affects health):
 - EVs score 1-2 points lower than gas equivalents (Rivian/Tesla/Lucid: 2-3, older EVs: 3-4).
 - CHEWING GUM: polyvinyl acetate and polyethylene = direct plastic ingestion. Score 7-8.
 
-DUAL SCORING FORMULA — the server applies different weights by category:
-FOOD/BEVERAGE/RESTAURANT/SUPPLEMENT: Materials/Ingredients 50% · Packaging 20% · Usage 20% · Sustainability 5% · Manufacturing 5%
-ALL OTHER CATEGORIES: Materials 35% · Usage/Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%
-Score each dimension accurately — the formula is applied server-side. Do not try to game the weights.
+DUAL SCORING FORMULA — the server applies these category-specific weights. Score each dimension accurately — the formula is applied server-side, you cannot game it.
+FOOD: Ingredients 90% · Packaging 10% — ingredients are the entire story. Organic food in plastic still scores 2 on materials; flag packaging separately.
+BEVERAGE: Ingredients 75% · Packaging 25% — the container leaches into every sip. Plastic bottle scores differently than glass.
+RESTAURANT: Ingredients 85% · Packaging 10% · Sustainability 5%
+SUPPLEMENT: Ingredients 65% · Exposure 25% · Packaging 10%
+BEAUTY/PERSONAL CARE: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%
+TOYS: Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%
+CLOTHING/SHOES: Materials 35% · Exposure 30% · Sustainability 35% · Packaging 0%
+ACCESSORIES: Materials 40% · Exposure 25% · Sustainability 35% · Packaging 0%
+HOME: Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%
+BABY: Materials 55% · Exposure 40% · Packaging 5% · Sustainability 0%
+MANUFACTURING IS NOT SCORED — removed from all formulas. Do not score or return a manufacturing dimension. Supply chain data is too inconsistent to score fairly across products.
 
 PACKAGING (what contains and ships the product):
 FOOD CONTACT PACKAGING — penalize heavily, chemicals leach into food:
@@ -821,12 +935,6 @@ SUSTAINABILITY (product lifecycle, planet impact, and ethical sourcing):
 - No certifications + opaque supply chain + fast fashion model: sustainability score 6-8.
 - USDA Organic food: sustainability score 1-3 (no synthetic pesticides, soil health).
 - Conventional farming (Dirty Dozen): sustainability score 5-6 (pesticide runoff, soil impact).
-
-MANUFACTURING (production process — score conservatively, flag as estimated):
-- Known bad: fast fashion, PVC/chemical manufacturing, unregulated supply chains: 6-8.
-- Known good: certified organic, B-Corp, closed-loop, renewably powered: 1-3.
-- Unknown: score 3 and flag confidence as low. Do NOT default to 5 — unknown manufacturing is not inherently bad.
-- Weight is low — do not let manufacturing dominate the final score.
 
 SCORE DISTRIBUTION RULES — the full 1-10 scale must be used deliberately:
 - 1-2: Genuinely clean. Organic certified, natural materials, no synthetic chemicals, transparent supply chain. Reserved for products that are genuinely the safest option in their category.
@@ -977,8 +1085,9 @@ BAG AND COATING MATERIAL RULES:
 - Standard bandages (Band-Aid): materials=4 (synthetic polymer adhesive, possible latex, petroleum-backed strip), usage=3 → final ~3
 - Fabric/natural adhesive bandages (Welly): materials=3, usage=2 → final ~2
 
-FINAL SCORE CALCULATION (compute server-side, but provide sub-scores accurately):
-materials_score x 0.40 + usage_score x 0.25 + packaging_score x 0.15 + sustainability_score x 0.15 + manufacturing_score x 0.05
+FINAL SCORE CALCULATION (server applies category-specific formula, provide sub-scores accurately):
+Provide accurate scores for: materials_score, usage_score, packaging_score, sustainability_score
+Do NOT score or return manufacturing_score — it has been removed from the formula.
 
 PRODUCT ANALYSIS — populate product_analysis for ALL categories. Tailor concerns and tier to the category.
 
@@ -1095,7 +1204,7 @@ HOME FURNISHING POSITIVES: GOTS certified organic cotton/wool, GOLS certified or
 Return ONLY this JSON:
 {
   "product_name": "clean accurate product name",
-  "category": "clothing|food_beverage|personal_care|kitchen|baby|supplement|home_furnishing|restaurant|other",
+  "category": "food|beverage|clothing|personal_care|home|baby|supplement|toy|accessory|restaurant|other",
   "identified_plastics": ["specific plastic type 1"],
   "harmful_chemicals": ["phthalates", "BPA", "Red 40"],
   "natural_materials": ["organic cotton", "glass"],
@@ -1207,12 +1316,12 @@ Respond with ONLY the JSON object above — no text before or after it.
 // ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
 async function pass2(productName, pass1Result) {
   const p = pass1Result;
-  const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score} manufacturing:${p.manufacturing?.score}`;
+  const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score}`;
   const plastics = (p.identified_plastics || []).join(", ") || "none";
 
   return callClaude(
-    `You are a scientific auditor reviewing a 5-dimension product risk score. Respond with valid JSON only — no markdown, no backticks, no trailing commas. Keep all string values under 20 words.`,
-    `Audit the 5-dimension scores for "${productName}":
+    `You are a scientific auditor reviewing a 4-dimension product risk score. Respond with valid JSON only — no markdown, no backticks, no trailing commas. Keep all string values under 20 words.`,
+    `Audit the 4-dimension scores for "${productName}":
 ${scores}
 category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.frequency} type:${p.usage_exposure?.type}
 
@@ -1222,7 +1331,7 @@ NATURAL FRAGRANCE RULE: Salt & Stone, Tatcha, Herbivore, Byredo, and similar cle
 USAGE: Daily plastic ingestion = usage 8-9. Leave-on skin contact daily = 7-8. Rinse-off = lower BUT dishwasher/laundry products are NOT zero — residue remains on dishes and clothing. Conventional dishwasher pods = usage 4-6. Genuinely clean formulas = usage 2-3. Vehicles = 3-5 max. EVs score 1-2 lower than gas.
 PACKAGING: Refillable/concentrated = 1-3. Single-use plastic = 7-9. Concentrated pod format does NOT excuse bad materials.
 SUSTAINABILITY: Products releasing PVA or synthetic chemicals to waterways = sustainability 5-7 even if concentrated. Genuinely clean (no PVA, no synthetic fragrance) = sustainability 1-3.
-MANUFACTURING: Cap at 5%. Unknown = neutral 4-5.
+MANUFACTURING: Not scored — do not return or adjust manufacturing scores.
 CHEWING GUM: polyvinyl acetate = direct plastic ingestion. Materials 7-8, usage 8-9.
 SUNSCREEN: Chemical UV filters (oxybenzone, octinoxate, avobenzone) = materials 6-7, usage 6-7 (full-body daily skin absorption, FDA flagged for bloodstream penetration). Mineral-only (zinc oxide, titanium dioxide) = materials 2-3, usage 2-3.
 HOME FRAGRANCE/CANDLES: Paraffin wax + synthetic fragrance (Yankee, Bath & Body Works) = materials 6, usage 5-6 (VOC inhalation in enclosed space). Soy or beeswax + phthalate-free fragrance = materials 2, usage 3. Aerosol sprays (Febreze, Glade) = materials 6-7 (phthalates, propellant), usage 6 (aerosolized inhalation).
@@ -1313,7 +1422,7 @@ FOOD HARD FLOORS — these must never be violated:
 Break-even (null if no clear swap): bottle→stainless:50, cup→reusable:40, wrap→beeswax:8, toothbrush→bamboo:1, pan→cast iron:200, pan→ceramic:150, container→glass:25, pads→menstrual cup:90, tampons→organic cotton:1, razor→safety:10, zipbag→silicone:15, bag→tote:130, shampoo→bar:6, clothing→natural:30, dryer sheets→wool balls:40, sunscreen→mineral:1, crayon→beeswax:1, yoga mat→natural rubber:200. Vehicles/electronics/appliances/natural materials=null.
 
 Return ONLY valid JSON:
-{"final_score":6,"materials_score":7,"usage_score":8,"packaging_score":3,"sustainability_score":2,"manufacturing_score":5,"score_reasoning":"max 15 words citing specific research","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
+{"final_score":6,"materials_score":7,"usage_score":8,"packaging_score":3,"sustainability_score":2,"score_reasoning":"max 15 words citing specific research","refined_concerns":["max 12 words","max 12 words","max 12 words"],"summary":"max 30 words","confidence":"high","confidence_note":"max 10 words","break_even":{"uses":50,"alternative_name":"max 5 words","note":"max 15 words","source":"Lifecycle analysis estimate"}}`,
     800
   );
 }
@@ -1357,12 +1466,11 @@ app.post("/analyze", async (req, res) => {
         }));
       }
 
-      // Compute weighted score from 5 dimensions
+      // Compute weighted score from 4 dimensions (manufacturing removed)
       let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? p1.product_score  ?? 5;
       let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
       let pkScore = p2?.packaging_score      ?? p1.packaging?.score      ?? p1.packaging_score ?? 5;
       let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
-      let mfScore = p2?.manufacturing_score  ?? p1.manufacturing?.score   ?? 5;
 
       // ── Substance-triggered floors ──
       const imgSubstance = applySubstanceFloors(mScore, uScore, p1, p2);
@@ -1371,23 +1479,6 @@ app.post("/analyze", async (req, res) => {
       if (imgSubstance.triggered.length > 0) {
         console.log(`Image path substance floors: ${imgSubstance.triggered.join(", ")}`);
       }
-
-      // ── Inert material ceiling ──
-      const imgAllText = JSON.stringify([p1.natural_materials||[], p1.materials||{}, p2||{}]).toLowerCase();
-      const imgSummary = (p1.summary||"").toLowerCase();
-      const imgIsInert = /borosilicate|inert glass|inert ceramic|stainless steel|cast iron|glass.*ceramic|ceramic.*glass/.test(imgAllText + " " + imgSummary);
-      if (imgIsInert && mScore > 3) {
-        mScore = Math.min(mScore, 3);
-      }
-      const imgNoLeach = /no leach|zero leach|inert.*no.*risk|glass.*safe|ceramic.*safe/.test(imgAllText + " " + imgSummary);
-      if (imgIsInert && imgNoLeach && uScore > 3) {
-        uScore = Math.min(uScore, 3);
-      }
-
-      // ── Usage/label contradiction ceiling ──
-      const imgUsageLabel = (p1.usage_exposure?.label || "").toLowerCase();
-      const imgLowExposure = /low exposure|minimal exposure|low.*contact risk|no direct.*contact|no.*ingestion risk/.test(imgSummary + " " + imgUsageLabel);
-      if (imgLowExposure && uScore > 4) uScore = Math.min(uScore, 4);
 
       if (category === "restaurant") {
         const rname = (p1.product_name || productName).toLowerCase();
@@ -1399,7 +1490,12 @@ app.post("/analyze", async (req, res) => {
         sScore  = Math.max(sScore,  3);
       }
 
-      let finalScore = computeScore(mScore, uScore, pkScore, sScore, mfScore, category);
+      let finalScore = computeScore(mScore, uScore, pkScore, sScore, category);
+
+      // ── Consistency checks — catch hallucinations before result ──
+      ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
+        mScore, uScore, pkScore, sScore, finalScore, p1, p2, category, productName
+      ));
 
       if (category === "restaurant") {
         const name = (p1.product_name || productName).toLowerCase();
@@ -1471,13 +1567,6 @@ app.post("/analyze", async (req, res) => {
             circularity: p1.sustainability?.circularity || "unknown",
             concerns: p1.sustainability?.concerns || [],
           },
-          manufacturing: {
-            score: mfScore,
-            label: p1.manufacturing?.label || "Estimated — limited supply chain data",
-            tier: p1.manufacturing?.tier || "neutral",
-            confidence: "low",
-            concerns: p1.manufacturing?.concerns || [],
-          },
         },
         alternatives: finalAlternatives.map(p => ({
           id: p.id, name: p.name, brand: p.brand || "",
@@ -1541,7 +1630,6 @@ app.post("/analyze", async (req, res) => {
     let uScore  = p2?.usage_score         ?? p1.usage_exposure?.score ?? 5;
     let pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
     let sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
-    let mfScore = p2?.manufacturing_score ?? p1.manufacturing?.score ?? 5;
 
     // ── Substance-triggered floors — only activate when AI confirms bad ingredient ──
     const substanceResult = applySubstanceFloors(mScore, uScore, p1, p2);
@@ -1551,29 +1639,7 @@ app.post("/analyze", async (req, res) => {
       console.log(`Substance floors triggered: ${substanceResult.triggered.join(", ")}`);
     }
 
-    // ── Inert material ceiling — glass/ceramic/stainless cannot score high on materials ──
-    const allText = JSON.stringify([p1.natural_materials||[], p1.materials||{}, p2||{}]).toLowerCase();
-    const hasSummary = (p1.summary||"").toLowerCase();
-    const isInert = /borosilicate|inert glass|inert ceramic|stainless steel|cast iron|glass.*ceramic|ceramic.*glass/.test(allText + " " + hasSummary);
-    if (isInert && mScore > 3) {
-      console.log(`Inert material ceiling applied — capping mScore from ${mScore} to 3`);
-      mScore = Math.min(mScore, 3);
-    }
-    // Usage ceiling for inert materials — hot water through glass has zero leaching risk
-    const noLeach = /no leach|zero leach|inert.*no.*risk|glass.*safe|ceramic.*safe/.test(allText + " " + hasSummary);
-    if (isInert && noLeach && uScore > 3) {
-      uScore = Math.min(uScore, 3);
-    }
-
-    // ── Usage/label contradiction ceiling ──
-    // If AI explicitly labels exposure as low but scored usage high, cap it
-    const usageLabel = (p1.usage_exposure?.label || "").toLowerCase();
-    const lowExposureLabel = /low exposure|minimal exposure|low.*contact risk|no direct.*contact|no.*ingestion risk/.test(hasSummary + " " + usageLabel);
-    if (lowExposureLabel && uScore > 4) {
-      uScore = Math.min(uScore, 4);
-    }
-
-    // ── Restaurant dimension floors — soft safety nets only, let AI lead ──
+    // ── Restaurant dimension floors ──
     if (finalCategory === "restaurant") {
       const rname = (p1.product_name || productName).toLowerCase();
       const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken|fried chicken/.test(rname);
@@ -1584,7 +1650,12 @@ app.post("/analyze", async (req, res) => {
       sScore  = Math.max(sScore,  3);
     }
 
-    let finalScore = computeScore(mScore, uScore, pkScore, sScore, mfScore, finalCategory);
+    let finalScore = computeScore(mScore, uScore, pkScore, sScore, finalCategory);
+
+    // ── Consistency checks — catch hallucinations before result ──
+    ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
+      mScore, uScore, pkScore, sScore, finalScore, p1, p2, finalCategory, productName
+    ));
 
     // ── Final score safety net — catches clear misses only ──
     if (finalCategory === "restaurant") {
@@ -1696,13 +1767,6 @@ app.post("/analyze", async (req, res) => {
           replaces_count:   p1.sustainability?.replaces_count   || null,
           circularity:      p1.sustainability?.circularity      || "unknown",
           concerns:         p1.sustainability?.concerns         || [],
-        },
-        manufacturing: {
-          score:      mfScore,
-          label:      p1.manufacturing?.label      || "Estimated — limited supply chain data",
-          tier:       p1.manufacturing?.tier       || "neutral",
-          confidence: p1.manufacturing?.confidence || "low",
-          concerns:   p1.manufacturing?.concerns   || [],
         },
       },
       // ── legacy fields kept for backward compat with other parts of UI ──
