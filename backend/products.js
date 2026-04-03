@@ -3548,6 +3548,24 @@ const products = [
     tags:["diaper","diapers","baby diaper","honest diaper","plant based diaper","eco diaper","fragrance free diaper","newborn","infant","toddler","nappy","training pants","pull up"]
   },
   {
+    id:"bk-022", name:"Hello Bello Diapers", brand:"Hello Bello",
+    plasticScore:4, category:"baby",
+    material:"Corn-derived PLA fiber inner liner (plant-based at skin-contact layer). Sustainably harvested fluff pulp. 100% chlorine-free. No fragrance, no phthalates, no parabens, no latex. Made in USA.",
+    description:"Genuinely better than Honest/Millie Moon because the plant-based PLA liner is on the inside — the layer actually touching baby skin. 100% chlorine-free (TCF). No fragrance. Sold at Walmart. A meaningful step up from conventional diapers.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hello+Bello+diapers&tag=${AMAZON_TAG}`,
+    price:"$14-22",
+    tags:["diaper","diapers","baby diaper","hello bello diaper","plant based diaper","eco diaper","chlorine free diaper","fragrance free","newborn","infant","toddler","nappy","training pants"]
+  },
+  {
+    id:"bk-023", name:"Millie Moon Luxury Diapers", brand:"Millie Moon",
+    plasticScore:5, category:"baby",
+    material:"Polypropylene non-woven fabrics, polyethylene film, ECF wood pulp, SAP. OEKO-TEX Standard 100 certified. Dermatest approved. No fragrance.",
+    description:"Conventional petroleum plastics throughout — same tier as Honest Company. The OEKO-TEX and Dermatest certifications are genuine positives for third-party testing. No fragrance. Available at Target. Not as clean as Hello Bello (no plant-based skin-contact layer).",
+    affiliateUrl:`https://www.target.com/s?searchTerm=millie+moon+diapers`,
+    price:"$18-28",
+    tags:["diaper","diapers","baby diaper","millie moon diaper","luxury diaper","fragrance free","oeko-tex","dermatest","newborn","infant","toddler","nappy","target diaper","training pants"]
+  },
+  {
     id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
     plasticScore:2, category:"food_beverage",
     material:"USDA organic, non-GMO, no artificial sweeteners or synthetic additives",

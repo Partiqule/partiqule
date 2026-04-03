@@ -1218,12 +1218,15 @@ HIGH: Any synthetic fragrance in products used on babies (developing endocrine s
 MEDIUM: Formaldehyde releasers in baby wash/shampoo, SLS/SLES in baby bath products, Mineral oil in baby products (possible petroleum contamination), Synthetic dyes in any product
 BABY POSITIVES: MADE SAFE certified, EWG Verified for baby, Pediatrician tested and approved, Fragrance-free, Hypoallergenic tested, GOTS organic cotton, No parabens/phthalates/sulfates
 
-DIAPER CALIBRATION — score between these anchors:
-- Pampers / Huggies / Luvs (conventional): materials=7 — PP inner liner, elemental chlorine bleaching, synthetic fragrance in some. Score 7, NEVER below 6.
-- Honest Company diapers: materials=5 — DIFFERENT from Pampers. The "plant-based" claim refers to the outer backsheet (PLA blend) and ECF wood pulp, NOT the skin-contact layer. Inner liner is still PE+PP (conventional petroleum plastics). Leg/waist: polymer spandex. ECF pulp is cleaner than conventional chlorine bleaching but not TCF. No synthetic fragrance (positive). Score 5 — between conventional (7) and bamboo (3). Flag PE/PP inner liner and spandex as concerns; note PLA outer layer as partial positive.
+DIAPER CALIBRATION — score between these anchors, from worst to best:
+- Pampers / Huggies / Luvs (conventional): materials=7 — PP inner liner direct skin contact, ECF bleaching (trace dioxin risk), synthetic fragrance in some. NEVER score below 6.
+- Kirkland Signature (Costco): materials=6 — polypropylene/polyester topsheet, PP/PE backsheet, ECF wood pulp, SAP. No fragrance, no phthalates. 23% plant-based materials but all conventional petroleum plastics in skin-contact layer. Low-level PFAS (10-26 ppm organic fluorine) detected in independent lab testing (Mamavation 2023). Changed manufacturers in 2024. Score 6 — no fragrance is positive, but conventional PP/PE throughout and PFAS detection prevent lower score.
+- Honest Company diapers: materials=5 — inner skin-contact layer is PE+PP (conventional petroleum plastics, same as Pampers). "Plant-based" claim refers only to outer backsheet (PLA+PE blend). ECF wood pulp (not TCF). No fragrance (positive). Polymer spandex waist/leg. Score 5.
+- Millie Moon diapers: materials=5 — PP non-woven fabrics, PE film, ECF pulp, SAP. Conventional petroleum plastics throughout. OEKO-TEX Standard 100 and Dermatest certified (good third-party testing). No fragrance. Score 5 — same tier as Honest, slightly better certifications.
+- Hello Bello diapers: materials=4 — MEANINGFULLY DIFFERENT from Honest/Millie Moon: inner core liner is corn-derived PLA fiber (plant-based at the skin-contact layer, not just the outer layer). 100% chlorine-free processing (TCF or equivalent — better than ECF). No fragrance, no phthalates, no parabens, no latex. Made in USA. Score 4. NEVER score above 5. DO NOT score same as Pampers or Kirkland. The corn-derived inner liner touching baby skin is a real improvement.
 - Andy Pandy / Dyper / Healthynest (organic bamboo): materials=3 — bamboo-derived top sheet, TCF or ECF pulp, no synthetic fragrance. Score 3.
-- GroVia / Esembly (organic cotton cloth): materials=1 — reusable, organic cotton, no SAP polymers. Score 1-2.
-DO NOT score Honest Company the same as Pampers. DO NOT score Honest Company the same as organic bamboo diapers. It sits at 5 — a meaningful middle ground.
+- GroVia / Esembly (organic cotton cloth): materials=1-2 — reusable, organic cotton, no SAP polymers. Score 1-2.
+KEY RULE: Always distinguish which layer is plant-based. Outer backsheet = cosmetic improvement. Inner skin-contact liner = meaningful improvement for baby health. Hello Bello's plant-based claim is on the skin-contact side. Honest/Millie Moon's is not.
 
 SUPPLEMENT CONCERNS (vitamins, protein powders, probiotics, sleep aids, pre-workout):
 HIGH: Artificial colors/dyes in capsules or gummies (Red 40, Yellow 5 — FDA phasing out), Heavy metal contamination in protein powders (lead, arsenic, cadmium — Consumer Reports 2018 found in many brands), DMAA/stimulants in pre-workout (FDA warnings, cardiovascular risk), Ephedra/ephedrine (FDA banned, cardiovascular events), Synthetic testosterone precursors/prohormones (FDA flagged), Titanium dioxide in coatings (IARC Group 2B), Proprietary blends masking underdosed or contaminated ingredients
@@ -1528,12 +1531,15 @@ CALIBRATION — use these as anchors:
 - Conventional tampons/pads (Always/Tampax): final score ~6
 - Organic cotton tampons/pads: final score ~2
 - Menstrual cup: final score ~1
-- Conventional disposable diaper (Pampers, Huggies, Luvs): final score ~7 — polypropylene liner (direct skin contact), chlorine-bleached pulp (dioxin byproducts), superabsorbent sodium polyacrylate polymer, synthetic fragrance in some. Baby vulnerable population flag applies. NEVER score below 6.
-- Honest Company diapers: final score ~5 — NOT the same as conventional Pampers, but also NOT as clean as bamboo alternatives. Accurate breakdown: inner skin-contact layer is still polyethylene + polypropylene (conventional petroleum plastics — same as Pampers), leg/waist system is polymer spandex. The "plant-based" marketing refers to the outer backsheet (PLA + PE) and ECF wood pulp core — these are improvements but not the parts touching baby skin. ECF (elemental chlorine free) is better than conventional bleaching but not as clean as TCF (totally chlorine free). No synthetic fragrance. Score between conventional (7) and bamboo (3). Always flag: inner liner PE/PP, spandex waist system. Note the outer PLA layer as a partial positive.
-- Organic bamboo diaper (Andy Pandy, Dyper, Healthynest): final score ~3 — no chlorine bleaching, no synthetic fragrance, bamboo-derived materials. Much safer for daily baby skin contact.
-- Cloth diaper (organic cotton, GroVia, Esembly): final score ~1-2 — reusable, no bleaching, no SAP polymers, organic cotton touching skin.
-- Conventional training pants (Pampers Easy Ups, Huggies Pull-Ups): final score ~7 — same materials as conventional diapers. NEVER score below 6.
-- Honest Company training pants: final score ~5 — same nuance as Honest diapers above.
+- Conventional disposable diaper (Pampers, Huggies, Luvs): final score ~7 — PP inner liner, ECF bleaching, synthetic fragrance in some. Baby vulnerable population flag. NEVER score below 6.
+- Kirkland Signature (Costco) diapers: final score ~6 — conventional PP/PE throughout, ECF bleaching, low-level PFAS detected in independent lab testing (Mamavation 2023, 10-26 ppm organic fluorine). No fragrance, no phthalates. 23% plant-based but conventional plastics in all skin-contact layers. Changed manufacturers 2024.
+- Honest Company diapers: final score ~5 — inner skin-contact layer PE+PP (same as Pampers). "Plant-based" refers to outer backsheet only. ECF pulp (not TCF). No fragrance. Score 5, not 7.
+- Millie Moon diapers: final score ~5 — PP/PE throughout, ECF pulp, SAP. OEKO-TEX Standard 100 certified and Dermatest approved. No fragrance. Same tier as Honest.
+- Hello Bello diapers: final score ~4 — corn-derived PLA fiber inner liner (plant-based at the skin-contact layer — genuinely better than Honest/Millie Moon where plant-based is outer layer only). 100% chlorine-free. No fragrance, no phthalates, no parabens. NEVER score above 5. NEVER score same as Pampers/Kirkland.
+- Organic bamboo diaper (Andy Pandy, Dyper, Healthynest): final score ~3 — bamboo-derived, chlorine-free, no synthetic fragrance.
+- Cloth diaper (organic cotton, GroVia, Esembly): final score ~1-2 — reusable, organic cotton, no SAP.
+- Conventional training pants (Pampers Easy Ups, Huggies Pull-Ups): final score ~7. NEVER score below 6.
+- Honest Company training pants: final score ~5. Hello Bello training pants: final score ~4.
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
 - Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
 - Standard Advil/Tylenol: final score ~3
