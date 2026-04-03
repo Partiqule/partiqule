@@ -3287,7 +3287,7 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
-  const [childMode,   setChildMode]  = useState(false);
+  const [childMode,   setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -3563,12 +3563,6 @@ function App() {
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
               </span>
-              <button onClick={cycleFontScale} title={`Text size: ${fontScale === 1 ? "Normal" : fontScale === 1.2 ? "Large" : "Extra large"}`} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background: fontScale > 1 ? "#f0fdf4" : "none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-                <span style={{fontSize:14, fontWeight:700, color: fontScale > 1 ? "#16a34a" : muted}}>A{fontScale > 1 ? "+" : ""}</span>
-              </button>
-              <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-                {isDark?<IconSun size={16} color="#f59e0b"/>:<IconMoon size={16} color="#6b7280"/>}
-              </button>
               <button onClick={()=>setMenuOpen(o=>!o)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer"}}>
                 <div style={{width:16, height:2, background:text, borderRadius:2}}/>
                 <div style={{width:16, height:2, background:text, borderRadius:2}}/>
@@ -3582,12 +3576,7 @@ function App() {
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("methodology"); setResult(null);}} style={{fontSize:14, color:page==="methodology"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="methodology"?600:400}}>How it Works</span>
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={14}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
-              <button onClick={()=>setIsDark(d=>!d)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-                {isDark?<IconSun size={17} color="#f59e0b"/>:<IconMoon size={17} color="#6b7280"/>}
-              </button>
-              <button onClick={cycleFontScale} title={`Text size: ${fontScale === 1 ? "Normal" : fontScale === 1.2 ? "Large" : "Extra large"}`} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background: fontScale > 1 ? "#f0fdf4" : "none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}}>
-                <span style={{fontSize:14, fontWeight:700, color: fontScale > 1 ? "#16a34a" : muted}}>A{fontScale > 1 ? "+" : ""}</span>
-              </button>
+              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:14, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>⚙ Settings</span>
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
                   <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
@@ -3611,6 +3600,7 @@ function App() {
               {label:"The Science",        pg:"science"},
               {label:"How it Works",       pg:"methodology"},
               {label:"My Scans",           pg:"history"},
+              {label:"⚙ Settings",         pg:"settings"},
             ].map(item=>(
               <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
                 style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
@@ -3669,6 +3659,162 @@ function App() {
             <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
           <EducationSection isDark={isDark} isMobile={isMobile}/>
+        </div>
+      ) : page === "settings" ? (
+        <div style={{maxWidth:600, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
+          <div style={{marginBottom:32}}>
+            <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:28, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>Settings</h1>
+            <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
+          </div>
+
+          <div style={{display:"flex", flexDirection:"column", gap:16}}>
+
+            {/* Appearance */}
+            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Appearance</div>
+              </div>
+
+              {/* Dark mode */}
+              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:`1px solid ${border}`}}>
+                <div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Dark mode</div>
+                  <div style={{fontSize:13, color:muted}}>{isDark ? "Dark theme active" : "Light theme active"}</div>
+                </div>
+                <button onClick={()=>setIsDark(d=>!d)} style={{
+                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
+                  background: isDark ? "#16a34a" : "#d1d5db",
+                  position:"relative", transition:"background 0.2s", flexShrink:0,
+                }}>
+                  <div style={{
+                    position:"absolute", top:3, left: isDark ? 24 : 3,
+                    width:24, height:24, borderRadius:"50%", background:"white",
+                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
+                  }}/>
+                </button>
+              </div>
+
+              {/* Text size */}
+              <div style={{padding:"16px 20px"}}>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Text size</div>
+                  <div style={{fontSize:13, color:muted}}>Adjust for readability — applies across the whole app</div>
+                </div>
+                <div style={{display:"flex", gap:10}}>
+                  {[
+                    {label:"A", scale:1,   name:"Normal"},
+                    {label:"A", scale:1.2, name:"Large"},
+                    {label:"A", scale:1.4, name:"Extra large"},
+                  ].map(opt => (
+                    <button key={opt.scale} onClick={()=>{
+                      setFontScale(opt.scale);
+                      try { localStorage.setItem("ps_font_scale", opt.scale); } catch {}
+                    }} style={{
+                      flex:1, padding:"12px 8px", borderRadius:12, cursor:"pointer",
+                      border: fontScale === opt.scale ? "2px solid #16a34a" : `1.5px solid ${border}`,
+                      background: fontScale === opt.scale ? "#f0fdf4" : isDark ? "#1e2433" : "#f9fafb",
+                      display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+                      transition:"all 0.15s",
+                    }}>
+                      <span style={{
+                        fontSize: opt.scale === 1 ? 18 : opt.scale === 1.2 ? 22 : 26,
+                        fontWeight:700,
+                        color: fontScale === opt.scale ? "#16a34a" : text,
+                        fontFamily:"'Outfit',sans-serif",
+                        lineHeight:1,
+                      }}>{opt.label}</span>
+                      <span style={{fontSize:11, color: fontScale === opt.scale ? "#16a34a" : muted, fontWeight: fontScale === opt.scale ? 700 : 400}}>{opt.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Account */}
+            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Account</div>
+              </div>
+              {user ? (
+                <div style={{padding:"16px 20px"}}>
+                  <div style={{display:"flex", alignItems:"center", gap:14, marginBottom:16}}>
+                    <div style={{width:44, height:44, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                      <span style={{color:"#4ade80", fontWeight:700, fontSize:18}}>{user.email[0].toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <div style={{fontSize:15, fontWeight:600, color:text}}>{user.email}</div>
+                      <div style={{fontSize:13, color:"#16a34a", fontWeight:600}}>Signed in</div>
+                    </div>
+                  </div>
+                  <button onClick={signOut} style={{width:"100%", padding:"12px", borderRadius:10, border:`1.5px solid ${border}`, background:"none", color:muted, fontSize:14, fontWeight:600, cursor:"pointer"}}>
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div style={{padding:"16px 20px"}}>
+                  <p style={{fontSize:14, color:muted, margin:"0 0 14px", lineHeight:1.6}}>Sign in to save your scan history across devices and unlock cloud sync.</p>
+                  <button onClick={()=>setShowAuth(true)} style={{width:"100%", padding:"12px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer"}}>
+                    Sign in / Create account
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Child safety default */}
+            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Scoring</div>
+              </div>
+              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>👶 Always show child safety score</div>
+                  <div style={{fontSize:13, color:muted}}>Auto-enable child mode on every scan result</div>
+                </div>
+                <button onClick={()=>{
+                  const next = !childMode;
+                  setChildMode(next);
+                  try { localStorage.setItem("ps_child_mode_default", next); } catch {}
+                }} style={{
+                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
+                  background: childMode ? "#16a34a" : "#d1d5db",
+                  position:"relative", transition:"background 0.2s", flexShrink:0,
+                }}>
+                  <div style={{
+                    position:"absolute", top:3, left: childMode ? 24 : 3,
+                    width:24, height:24, borderRadius:"50%", background:"white",
+                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
+                  }}/>
+                </button>
+              </div>
+            </div>
+
+            {/* About */}
+            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>About</div>
+              </div>
+              {[
+                {label:"The Science",   action:()=>{setPage("science"); }},
+                {label:"How it Works",  action:()=>{setPage("methodology"); }},
+                {label:"About us",      action:()=>{setPage("about"); }},
+                {label:"Privacy Policy",action:()=>{setPage("privacy"); }},
+              ].map((item, i, arr) => (
+                <button key={item.label} onClick={item.action} style={{
+                  width:"100%", padding:"14px 20px", border:"none",
+                  borderBottom: i < arr.length-1 ? `1px solid ${border}` : "none",
+                  background:"none", color:text, fontSize:15, cursor:"pointer",
+                  textAlign:"left", display:"flex", alignItems:"center", justifyContent:"space-between",
+                }}>
+                  {item.label}
+                  <span style={{color:muted, fontSize:18}}>›</span>
+                </button>
+              ))}
+            </div>
+
+            <div style={{textAlign:"center", fontSize:12, color:muted, paddingTop:4}}>
+              Partiqule · Version 1.0 · <a href="mailto:paul@partiqule.com" style={{color:"#16a34a", textDecoration:"none"}}>Contact us</a>
+            </div>
+          </div>
         </div>
       ) : !result ? (
         <>
