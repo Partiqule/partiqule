@@ -147,14 +147,19 @@ const SUBSTANCE_FLOORS = [
 
   // ══════════════════════════════════════════════════════════
   // PRESERVATIVES — NTP, IARC, EWG flagged
+  // IARC Group 1 (nitrites in meat) = mFloor 8
+  // IARC Group 2A = mFloor 7
+  // IARC Group 2B = mFloor 6
   // ══════════════════════════════════════════════════════════
   { match: /\bTBHQ\b|tert.?butylhydroquinone/i,                      mFloor:6, uFloor:5, reason:"TBHQ — FDA-reviewed immunotoxin, animal carcinogen (NTP)" },
   { match: /\bBHA\b|butylated hydroxyanisole/i,                       mFloor:6, uFloor:5, reason:"BHA — IARC Group 2B, reasonably anticipated carcinogen (NTP)" },
   { match: /\bBHT\b|butylated hydroxytoluene/i,                       mFloor:5, uFloor:4, reason:"BHT — animal carcinogen studies, endocrine disruption" },
-  { match: /sodium nitrite|sodium nitrate|nitrite.*preserv/i,         mFloor:7, uFloor:6, reason:"Nitrites — WHO/IARC Group 1 carcinogen in processed meat" },
+  { match: /sodium nitrite|sodium nitrate|nitrite.*preserv/i,         mFloor:8, uFloor:7, reason:"Nitrites — IARC Group 1 carcinogen in processed meat (WHO 2015)" },
   { match: /potassium bromate/i,                                      mFloor:7, uFloor:6, reason:"Potassium bromate — IARC Group 2B, banned EU/UK, used in bread" },
   { match: /propyl gallate/i,                                         mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP concern" },
   { match: /\bEDTA\b|ethylenediaminetetraacetic/i,                    mFloor:4, uFloor:3, reason:"EDTA — environmental persistence, chelating agent" },
+  // Acrylamide — IARC 2A, forms in high-heat starchy foods
+  { match: /\bacrylamide\b/i,                                         mFloor:7, uFloor:6, reason:"Acrylamide — IARC Group 2A, forms in fried/baked starchy foods at high heat" },
 
   // ══════════════════════════════════════════════════════════
   // FORMALDEHYDE & RELEASERS — IARC Group 1
@@ -279,8 +284,9 @@ const SUBSTANCE_FLOORS = [
 
   // ══════════════════════════════════════════════════════════
   // PESTICIDES — EWG Dirty Dozen, PFAS pesticides
+  // IARC 2A = mFloor 7 (probable carcinogen, confirmed at measurable levels)
   // ══════════════════════════════════════════════════════════
-  { match: /\bglyphosate\b/i,                                           mFloor:6, uFloor:5, reason:"Glyphosate — IARC Group 2A probable carcinogen (2015)" },
+  { match: /\bglyphosate\b/i,                                           mFloor:7, uFloor:6, reason:"Glyphosate — IARC Group 2A probable carcinogen, confirmed above EWG child threshold in conventional oats" },
   { match: /\bchlorpyrifos\b/i,                                         mFloor:7, uFloor:6, reason:"Chlorpyrifos — EPA banned 2021, children's neurotoxin" },
   { match: /\batrazine\b/i,                                             mFloor:7, uFloor:6, reason:"Atrazine — endocrine disruptor, banned EU, water contaminant" },
   { match: /\bneonicotinoid\b|imidacloprid|clothianidin|thiamethoxam/i, mFloor:6, uFloor:5, reason:"Neonicotinoid pesticide — bee colony collapse, systemic in crops" },
@@ -327,6 +333,15 @@ const HEDGED_PHRASES = [
   "possible trace", "trace amount", "not confirmed", "unclear whether",
 ];
 
+// Phrases that NEGATE a substance — "no glyphosate" should not trigger glyphosate floor
+const NEGATION_PHRASES = [
+  "no glyphosate", "glyphosate free", "glyphosate-free",
+  "no synthetic pesticide", "usda organic", "certified organic",
+  "no artificial", "free of", "does not contain", "free from",
+  "no added", "without ", "not present", "non-gmo", "no pfas",
+  "pfas-free", "bpa-free", "no bpa", "no bht", "no bha", "no tbhq",
+];
+
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
@@ -344,8 +359,9 @@ function applySubstanceFloors(mScore, uScore, p1, p2) {
     .filter(Boolean);
 
   for (const sentence of allSentences) {
-    const isHedged = HEDGED_PHRASES.some(hedge => sentence.includes(hedge));
-    if (!isHedged) confirmedSentences.push(sentence);
+    const isHedged   = HEDGED_PHRASES.some(hedge => sentence.includes(hedge));
+    const isNegated  = NEGATION_PHRASES.some(neg => sentence.includes(neg));
+    if (!isHedged && !isNegated) confirmedSentences.push(sentence);
   }
   const confirmedText = confirmedSentences.join(" ");
 
@@ -987,12 +1003,18 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
 - Cliff Bar (oats, dates, nuts, some natural flavors): materials=4 (conventional oats likely have glyphosate residue, no organic certification), usage=3 → final ~3-4
-- Honey Nut Cheerios (conventional oats): materials=6 (confirmed glyphosate residue above EWG child safety threshold — IARC Group 2A; 12g added sugar; eaten daily by children), usage=5 → final ~5-6. NEVER score below 5. Glyphosate at confirmed levels is not a "mild" concern.
-- Original Cheerios (conventional oats): materials=6, usage=5 → final ~5-6. Same glyphosate concern.
-- Quaker Old Fashioned Oats (conventional, no additives): materials=5 (glyphosate residue confirmed by EWG, minimal processing otherwise), usage=4 → final ~4-5
-- Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate, minimal processing), usage=1 → final ~1-2
-- Nature Valley Oats and Honey Granola Bar (conventional oats): materials=6 (glyphosate residue, added sugar, natural flavors), usage=5 → final ~5-6
-- KIND Oat bar (conventional oats): materials=5 (glyphosate residue, mostly whole food otherwise), usage=4 → final ~4-5
+- Honey Nut Cheerios (conventional oats): materials=7 (IARC 2A glyphosate confirmed above EWG child threshold — same carcinogen class as processed meat nitrites; 12g added sugar; daily child consumption), usage=5 → final ~6-7. NEVER score below 6.
+- Original Cheerios (conventional oats): materials=7, usage=5 → final ~6-7. Same confirmed glyphosate, IARC 2A.
+- Quaker Old Fashioned Oats (conventional, minimal additives): materials=6 (IARC 2A glyphosate confirmed, but simpler product), usage=4 → final ~5-6
+- Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate), usage=1 → final ~1-2
+- Oats Overnight (organic oat blend, protein, natural flavors — USDA Organic certified): materials=2 (organic oats have zero glyphosate residue — do NOT apply glyphosate floor to certified organic products), usage=2 → final ~2. NEVER score above 4. Organic certification is a positive signal, not a neutral one.
+- 365 Whole Foods Market protein bites / chewy bites (dates, almonds, cashews, coffee extract, natural flavors, sea salt — no artificial dyes, no synthetic preservatives, no HFCS): materials=2, usage=2 → final ~2-3. Whole Foods 365 house brand explicitly avoids artificial additives. NEVER score above 4. Do NOT apply glyphosate floor — no oats in this product.
+- Nature Valley Oats and Honey Granola Bar (conventional oats): materials=7 (IARC 2A glyphosate + added sugar), usage=5 → final ~6-7. NEVER score below 6.
+- KIND Oat bar (conventional oats): materials=6 (IARC 2A glyphosate residue likely), usage=4 → final ~5-6
+
+ORGANIC OAT PROTECTION RULE: If a product is confirmed USDA Organic certified, the glyphosate floor does NOT apply. USDA Organic prohibits synthetic pesticides including glyphosate. Organic oats = materials 1-2 on ingredients. Conventional oats (no organic certification) = flag glyphosate as HIGH concern. Organic certification is ALWAYS a positive signal — never penalise an organic product with a pesticide floor.
+- Bacon / conventional deli meat / hot dogs (sodium nitrite): materials=8 (IARC Group 1 nitrites — known carcinogen), usage=7 → final ~7-8. NEVER score below 7.
+- Organic uncured turkey / chicken (no nitrites added): materials=3, usage=3 → final ~3
 - M&Ms Milk Chocolate: materials=8 (Red 40 + Yellow 5 + Yellow 6 + Blue 1 — four FDA-flagged petroleum dyes; IARC carcinogenicity; ultra-processed), usage=7 → final ~7-8. NEVER score below 7.
 - Skittles: materials=8 (same petroleum dyes + titanium dioxide IARC 2B, EU banned), usage=7 → final ~7-8. NEVER score below 7.
 - Froot Loops / dyed breakfast cereal: materials=8 (multiple petroleum dyes + HFCS + daily child ingestion), usage=7 → final ~7-8. Child vulnerability flag. NEVER score below 7.
@@ -1134,13 +1156,22 @@ LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
 FOOD TIER SCORE IMPACT:
 - Ultra-processed + 3+ HIGH concerns (multiple dyes, nitrates, BHA): materials 8-9, final 7-8
 - Ultra-processed + 1-2 HIGH concerns (petroleum dyes OR confirmed glyphosate OR BHA/BHT): materials 7-8, final 6-7
-- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 5-6, final 5-6. Glyphosate is IARC 2A — treat same severity as BHA/BHT, not as a mild concern.
-- Conventional produce with pesticide load (Dirty Dozen): materials 4-5, final 4-5
+- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 7, final 6-7. Glyphosate is IARC 2A — treat same severity as BHA/BHT.
+- Conventional produce with pesticide load (Dirty Dozen): materials 5-6, final 4-5
 - Processed with MEDIUM concerns only: materials 4-5, final 4-5
 - Processed, minimal synthetics (Cliff Bar, Kind bar without glyphosate confirmation): materials 3-4, final 3-4
 - Whole food / minimally processed / organic certified: materials 1-2, final 1-3
 - Child food with ANY dyes: vulnerable flag + materials minimum 8, final minimum 7
-FOREVER CHEMICAL RULE: Any food product with confirmed PFAS, glyphosate above safety threshold, or IARC Group 1/2A carcinogen in the ingredients is NEVER safe to call "Safe" (score 1-2). Minimum final score 4 for any confirmed carcinogen-class substance at measurable levels.
+
+IARC CARCINOGEN MATERIALS FLOOR — applies to ALL food products, no exceptions:
+- IARC Group 1 (known carcinogen) confirmed in product at measurable levels: materials MINIMUM 8
+  Examples: sodium nitrite/nitrate in processed meat, alcohol in beverages, aflatoxins in contaminated peanuts
+- IARC Group 2A (probable carcinogen) confirmed in product at measurable levels: materials MINIMUM 7
+  Examples: glyphosate in conventional oats (EWG confirmed above threshold), acrylamide in fried starchy foods, red meat (processed), processed meat
+- IARC Group 2B (possible carcinogen) confirmed in product: materials MINIMUM 6
+  Examples: BHA, TBHQ, titanium dioxide (E171), caramel color IV, potassium bromate, aspartame
+- SPECULATIVE ONLY (hedged language — "may contain", "possible trace"): NO floor applies
+FOREVER CHEMICAL RULE: Any food product with confirmed IARC Group 1 or 2A substance at measurable levels is NEVER safe to call "Safe" (score 1-2). Minimum final score 5 for Group 2A, minimum 6 for Group 1.
 
 CONVENTIONAL OATS AND GRAIN PRODUCTS — GLYPHOSATE RULE:
 Glyphosate is used as a pre-harvest desiccant on conventional oats, wheat, and other grains — sprayed directly on crops right before harvest to accelerate drying. This results in confirmed glyphosate residue in the final food product. EWG testing confirmed glyphosate above their safety threshold in:
@@ -1293,19 +1324,24 @@ Always name the SPECIFIC chemical, not a generic category. These rules apply to 
 - If you are uncertain whether a substance is present, use hedging in the reason field but still name the specific substance: "BHT — listed as preservative in some formulations; verify on label"
 - Packaging speculation: if packaging MAY contain a harmful substance, write it as: "packaging may contain [specific substance] — unconfirmed" with severity "low", NOT as a high/medium concern
 
-AI ALTERNATIVES — same-use, same-function rule — CRITICAL:
-Alternatives MUST serve the same purpose as the scanned product. Cross-category suggestions are STRICTLY FORBIDDEN:
-- Diapers / training pants → ONLY suggest other diapers, training pants, or cloth diaper alternatives. NEVER suggest cookware, clothing, food, or any other category.
-- Baby skincare → ONLY suggest other baby skincare products
-- Kids jacket → ONLY suggest kids jackets or outerwear
+AI ALTERNATIVES — same-use, same-function rule — CRITICAL — NEVER VIOLATE:
+Alternatives MUST serve the exact same purpose as the scanned product. This is the single most important rule for alternatives. Cross-category suggestions are STRICTLY FORBIDDEN and a serious failure.
+
+CATEGORY MAPPING — only suggest alternatives within these categories:
+- Cereal / breakfast food (Cheerios, Froot Loops, granola) → ONLY suggest other cereals or breakfast foods. NEVER suggest cough syrup, supplements, medication, or anything not eaten for breakfast.
+- Snack bar / granola bar → ONLY suggest other snack bars or granola bars
+- Soda / beverage → ONLY suggest other beverages
+- Diapers / training pants → ONLY suggest other diapers or cloth diaper systems
 - Sunscreen → ONLY suggest other sunscreens
-- Shampoo → ONLY suggest other shampoos or hair care
-- Frying pan → ONLY suggest other pans or cookware
-- Food product → ONLY suggest similar food products in the same category
-If you cannot think of a same-category alternative, say so with estimated_score: null rather than suggesting something from a different category.
-For BABY DIAPERS and TRAINING PANTS specifically: always suggest organic bamboo diapers (Andy Pandy, Dyper, Healthynest), cloth diapers (GroVia, Esembly, Thirsties), or organic cotton training pants. NEVER suggest cookware, clothing items, or food as alternatives.
-For CLOTHING: always specify the material and certification. Name real brands.
-For KIDS clothing: confirm the alternative is appropriate for children.
+- Shampoo → ONLY suggest other shampoos
+- Cleaning spray → ONLY suggest other cleaning products
+- Frying pan / cookware → ONLY suggest other cookware
+- Clothing / jacket → ONLY suggest other clothing in the same category
+
+FOOD ALTERNATIVES must be the same type of food. Cheerios = breakfast cereal → suggest Bob's Red Mill Organic Oats, Nature's Path Organic Corn Flakes, One Degree Organic Sprouted Oat O's. NEVER suggest a medication, supplement, or non-food item as a food alternative.
+
+If you cannot think of a genuine same-category alternative, return an empty ai_alternatives array rather than suggesting something from a different category. An empty array is far better than a wrong suggestion.
+For CLOTHING: always specify material and certification. Name real brands.
 estimated_score must reflect the same scoring framework.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
@@ -1313,7 +1349,93 @@ Respond with ONLY the JSON object above — no text before or after it.
   );
 }
 
-// ── PASS 2: VERIFY & WEIGHT ───────────────────────────────────
+// ── DB ALTERNATIVES CATEGORY VALIDATOR ───────────────────────
+// Static DB alternatives can match on tags across categories.
+// This filters results to ensure the suggestion is the same TYPE
+// of product as what was scanned.
+const MEDICINE_TAGS = /cough|syrup|medicine|medication|remedy|first aid|supplement|vitamin|capsule|tablet|pill|lozenge|nasal|antacid|pain relief/i;
+const CLEANING_TAGS = /cleaner|detergent|disinfect|sanitiz|laundry|bleach|spray cleaner|floor cleaner/i;
+const PERSONAL_CARE_TAGS = /shampoo|conditioner|lotion|cream|moisturizer|serum|deodorant|toothpaste|makeup|sunscreen/i;
+
+function filterDbAlternatives(alternatives, category, productName) {
+  if (!alternatives?.length) return alternatives || [];
+  const isFoodCat = FOOD_CATEGORIES_SET.has(category);
+
+  return alternatives.filter(alt => {
+    const name   = (alt.name   || "").toLowerCase();
+    const tags   = (alt.tags   || []).join(" ").toLowerCase();
+    const desc   = (alt.description || "").toLowerCase();
+    const combined = `${name} ${tags} ${desc}`;
+
+    // Food scans: block medicine, personal care, cleaning products
+    if (isFoodCat) {
+      if (MEDICINE_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" for food product "${productName}"`);
+        return false;
+      }
+      if (PERSONAL_CARE_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" (personal care) for food product "${productName}"`);
+        return false;
+      }
+      if (CLEANING_TAGS.test(combined)) {
+        console.log(`DB filter: blocked "${alt.name}" (cleaning) for food product "${productName}"`);
+        return false;
+      }
+    }
+
+    // Non-food scans: block food items appearing as alternatives
+    if (!isFoodCat && FOOD_CATEGORIES_SET.has(alt.category)) {
+      console.log(`DB filter: blocked food alt "${alt.name}" for non-food product "${productName}"`);
+      return false;
+    }
+
+    return true;
+  });
+}
+
+
+// The AI sometimes ignores the same-use rule and suggests completely
+// wrong products. This filter catches cross-category hallucinations
+// before they reach the client.
+const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
+const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
+
+// Keywords that signal a non-food product — reject if category is food
+const NON_FOOD_KEYWORDS = /\b(syrup|cough|medicine|medication|supplement|vitamin|capsule|tablet|pill|lotion|cream|shampoo|conditioner|soap|detergent|cleaner|spray|wipe|diaper|clothing|shirt|pants|jacket|toy|game|appliance|device|electronics)\b/i;
+
+// Keywords that signal a food product — reject if category is non-food
+const FOOD_KEYWORDS = /\b(cereal|oats|granola|bar|snack|food|drink|beverage|juice|soda|milk|yogurt|bread|cracker|chip|candy|chocolate|cookie|pasta|rice|soup|sauce|spread|protein powder)\b/i;
+
+function filterAiAlternatives(alternatives, category, productName) {
+  if (!alternatives?.length) return alternatives || [];
+  const isFoodCat = FOOD_CATEGORIES_SET.has(category);
+  const productLower = (productName || "").toLowerCase();
+
+  return alternatives.filter(alt => {
+    const name = (alt.name || "").toLowerCase();
+    const reason = (alt.reason || "").toLowerCase();
+    const combined = name + " " + reason;
+
+    // Food category: reject any suggestion that looks like a non-food product
+    if (isFoodCat && NON_FOOD_KEYWORDS.test(combined)) {
+      console.log(`Filtered cross-category alt: "${alt.name}" for food product "${productName}"`);
+      return false;
+    }
+
+    // Non-food category: reject any suggestion that looks like food
+    if (!isFoodCat && FOOD_KEYWORDS.test(combined) && !FOOD_KEYWORDS.test(productLower)) {
+      console.log(`Filtered cross-category alt: "${alt.name}" for non-food product "${productName}"`);
+      return false;
+    }
+
+    // Reject null/empty score alternatives (AI signaling it has no good suggestion)
+    if (alt.estimated_score === null || alt.estimated_score === undefined) return false;
+
+    return true;
+  });
+}
+
+
 async function pass2(productName, pass1Result) {
   const p = pass1Result;
   const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score}`;
@@ -1384,9 +1506,11 @@ CALIBRATION — use these as anchors:
 - Gatorade (artificial dyes, sucrose): final score ~5-6
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
 - Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
-- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~5-6 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 5. Flag "glyphosate residue (conventional oats — EWG confirmed, IARC Group 2A)" as HIGH concern.
-- Quaker oats / Quaker granola bars (conventional): final score ~4-5 — glyphosate residue confirmed, but simpler ingredients
+- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~6-7 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 6.
+- Quaker oats / Quaker granola bars (conventional): final score ~5-6 — glyphosate residue confirmed, but simpler ingredients
 - Bob's Red Mill Organic Oats: final score ~1-2 — USDA organic, no glyphosate
+- Oats Overnight (USDA Organic certified oat blend, protein, natural flavors): final score ~2 — organic certification means no glyphosate. Do NOT apply glyphosate floor. NEVER score above 4.
+- 365 Whole Foods Market chewy protein bites / protein bites (dates, almonds, cashews, coffee extract, sea salt — no oats, no artificial dyes, no synthetic preservatives): final score ~2-3. NEVER score above 4. No glyphosate concerns — no oats in this product.
 - M&Ms: final score ~7-8 — NEVER score below 7. Four petroleum dyes all FDA-flagged/phasing out. Ultra-processed. Flag all four dyes by name.
 - Skittles: final score ~7-8 — NEVER score below 7. Same dyes plus titanium dioxide (IARC 2B, EU banned in food).
 - Froot Loops / dyed kids cereal (multiple petroleum dyes + HFCS + daily child consumption): final score ~7-8 — NEVER score below 7. Child vulnerability flag.
@@ -1456,7 +1580,7 @@ app.post("/analyze", async (req, res) => {
       try { p2 = await pass2(productName, p1); } catch(e) { console.warn("Pass2 failed:", e.message); }
 
       const category = p1.category || "other";
-      let finalAlternatives = findAlternatives(productName, category);
+      let finalAlternatives = filterDbAlternatives(findAlternatives(productName, category), category, productName);
       if (!finalAlternatives.length && p1.ai_alternatives?.length) {
         finalAlternatives = p1.ai_alternatives.map(a => ({
           id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 2,
@@ -1574,7 +1698,7 @@ app.post("/analyze", async (req, res) => {
           description: p.description || "", price: p.price || "",
           affiliateUrl: p.affiliateUrl, category: p.category || category
         })),
-        ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+        ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
         })),
@@ -1688,7 +1812,7 @@ app.post("/analyze", async (req, res) => {
     const isRestaurant = category === "restaurant" || finalCategory === "restaurant";
     if (isRestaurant) {
       // For restaurant items, AI alternatives suggest healthier homemade or better-quality versions
-      finalAlternatives = (p1.ai_alternatives || []).map(a => ({
+      finalAlternatives = (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
         id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 3,
         material: a.material || "", description: a.reason || "", price: "",
         affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
@@ -1704,12 +1828,16 @@ app.post("/analyze", async (req, res) => {
         console.log(`PA API returned ${amazonResults.length} alternatives`);
       } else {
         console.log("PA API returned no results — falling back to static DB");
-        finalAlternatives = findAlternatives(aiProductName, finalCategory, 3, productName)
-          .map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+        finalAlternatives = filterDbAlternatives(
+          findAlternatives(aiProductName, finalCategory, 3, productName),
+          finalCategory, productName
+        ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
       }
     } else {
-      finalAlternatives = findAlternatives(aiProductName, finalCategory, 3, productName)
-        .map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+      finalAlternatives = filterDbAlternatives(
+        findAlternatives(aiProductName, finalCategory, 3, productName),
+        finalCategory, productName
+      ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
     }
 
     const result = {
@@ -1795,7 +1923,7 @@ app.post("/analyze", async (req, res) => {
         imageUrl:     p.imageUrl || null,
         source:       p.source || "static",
       })),
-      ai_alternatives: (p1.ai_alternatives || []).map(a => ({
+      ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
         name:            a.name || "",
         reason:          a.reason || "",
         material:        a.material || "",
