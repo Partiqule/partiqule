@@ -2438,87 +2438,148 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "What we measure",
-          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to five scored dimensions: Materials, Usage & Exposure, Packaging, Sustainability, and Manufacturing."
+          body: "Every product is evaluated across three spheres of impact — your personal health, the health of your family and home, and the health of the planet. These map to five scored dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing."
         },
         {
-          heading: "Parameters we defined",
+          heading: "Dual scoring formula — food vs non-food",
+          body: "Food and non-food products use different dimension weights because the risks are fundamentally different. What goes in your body matters more than what touches your skin.",
+          list: [
+            "Food, Beverage and Restaurant: Ingredients 50% · Packaging 20% · Usage 20% · Sustainability 5% · Manufacturing 5% — ingredients dominate because that is what you consume. Food contact packaging scores heavily because it leaches into what you eat.",
+            "Clothing, Personal Care, Kitchen and Home: Materials 35% · Usage and Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5% — daily skin contact and inhalation carry the most weight. Sustainability scores higher because environmental persistence matters more for products that do not enter your body.",
+          ]
+        },
+        {
+          heading: "What the score means",
           body: null,
           list: [
-            "A weighted scoring system: Materials 40%, Usage & Exposure 25%, Packaging 15%, Sustainability 15%, Manufacturing 5%",
-            "Specific plastic polymers flagged as high-risk (PET, PVC, PP, PS, PTFE, PFAS, nylon, polyester) based on published leaching and exposure studies",
-            "Exposure pathway rules — products with direct ingestion, leave-on skin contact, or inhalation risk score higher than single-contact or rinse-off products",
-            "A natural materials credit — products confirmed to be wood, glass, stainless steel, ceramic, or organic cotton receive low materials scores regardless of use frequency",
-            "Chemical concern categories: artificial petroleum dyes (Red 40, Yellow 5/6, Blue 1, Red 3 — FDA banned 2025), PFAS, synthetic preservatives (BHA, BHT, sodium nitrate), sweeteners (aspartame, HFCS), ultra-processing additives, endocrine disruptors, and known carcinogens",
-            "A universal Tier 1-4 composition classification for every scan — Tier 1 (clean/natural) through Tier 4 (high concern/banned substances). Labels adapt by category: food uses Whole Food to Ultra-Processed (NOVA), personal care uses Clean Formula to High Concern, clothing uses Natural Fiber to Chemical-Treated, kitchen uses Plant-Based to Industrial Chemical, baby uses Clean and Safe to High Risk for Infants",
-            "Named substance breakdown for all categories — food additives, personal care chemicals (oxybenzone, parabens, formaldehyde releasers), clothing treatments (PFAS/DWR coating, formaldehyde finish, flame retardants), and cleaning chemicals (quats, chlorine, synthetic fragrance VOCs) — each flagged high/medium/low with the research citation behind it",
-            "PVA pod film (Cascade, Tide, Finish) scored as microplastic pollution — it dissolves but enters waterways",
-            "Sustainability scoring: refillable and circular products score low; single-use disposables score high regardless of concentration or convenience",
-            "Manufacturing scored conservatively at 5% weight — only flagged when supply chain practices are publicly documented as harmful",
+            "1-2 Safe — Use freely. Good for you, your family, and the planet.",
+            "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Use regularly with awareness.",
+            "5-6 Caution — Something is not right. Worth reducing use or finding an alternative.",
+            "7-8 Change — Real concerns. Do not use daily. We will show you a better option.",
+            "9-10 Avoid — Known harmful substances. Significant and documented health risk.",
+          ]
+        },
+        {
+          heading: "Positive signals that actively lower a score",
+          body: "The following certifications and attributes directly lower dimension scores — they are not just noted as positives, they change the number:",
+          list: [
+            "USDA Organic certified food or textiles",
+            "Fair Trade certified — workers paid living wage, safe conditions",
+            "B-Corp certified — legal accountability to people and planet",
+            "GOTS certified textiles — organic fiber verified through the full supply chain",
+            "High nutritional density — fiber 5g+, protein, whole ingredients",
+            "Refillable, circular, or compostable design",
+            "EWG Verified, NSF certified, or Rainforest Alliance",
           ]
         },
         {
           heading: null,
-          body: "These parameters are hardcoded into the AI prompts and cannot be overridden by the AI's own judgment. The AI applies them. It does not define them."
+          body: "These parameters are hardcoded into the AI prompts and server-side formula. The AI applies them. It does not define them."
         }
       ]
     },
     {
       number: "02",
-      title: "The five-dimension model",
-      color: "#7c3aed",
+      title: "113-substance registry",
+      color: "#dc2626",
       content: [
         {
-          heading: "Your health — Materials and Usage",
-          body: "The two highest-weighted dimensions (40% + 25% = 65%) focus on direct personal health impact. Materials scores what the product is physically made of and whether it contains harmful plastics, chemicals, or additives. Usage and Exposure scores how using the product affects your body — accounting for frequency, contact type (ingestion, skin, inhalation), intensity (leave-on vs. rinse-off), and whether the product is used by children. Every scan produces a Product Insights breakdown: a Tier 1-4 composition classification and a named substance analysis with severity ratings — covering food additives, personal care chemicals, clothing fiber treatments, cleaning formulas, and baby product safety."
+          heading: "Ingredient-triggered score floors",
+          body: "When the AI identifies a specific harmful substance in its analysis, a minimum materials score is enforced in code — not by the AI. This means the AI cannot underestimate the risk of a confirmed harmful ingredient regardless of how it weights other factors. Floors only activate when the substance is actually confirmed. A clean product like Poppi soda will never trigger a floor because it contains none of these substances."
         },
         {
-          heading: "Your family & home — Packaging",
-          body: "Packaging (15%) covers what enters your home. Primary packaging that touches the product, whether it is refillable or single-use, and its end-of-life fate (recyclable, compostable, or landfill). Refillable and concentrated formats like tablets or bars are rewarded. Single-use plastic primary packaging is penalised. Incidental packaging that is discarded before use (a film pouch on a tablet) does not penalise the product score — only what stays in your home matters."
+          heading: "Sources",
+          body: "The registry was built from seven authoritative sources:",
+          list: [
+            "EU REACH Candidate List — 253 Substances of Very High Concern as of February 2026",
+            "IARC Monographs Volumes 1-141 — carcinogens classified Group 1 (known), 2A (probable), and 2B (possible)",
+            "EWG Skin Deep database — cosmetic ingredient hazard ratings",
+            "FDA banned and restricted substances lists",
+            "EPA Safer Choice and Toxic Substances lists",
+            "NTP 15th Report on Carcinogens",
+            "WHO chemical safety guidelines",
+          ]
         },
         {
-          heading: "Health of the planet — Sustainability & Manufacturing",
-          body: "Sustainability (15%) measures the product's lifecycle impact. Multi-use and circular products (refillable, repairable, compostable) score low. Single-use disposables score high. Products that release chemicals or microplastics into water systems are penalised even if they are concentrated or convenient. Manufacturing (5%) covers production — scored conservatively and flagged as estimated when supply chain data is unavailable."
-        },
-        {
-          heading: "Final Score (1–10)",
-          body: "The five dimension scores are combined using the defined weights. The result is a single number from 1 (minimal concern) to 10 (very high concern). A product can score low on materials but still carry a meaningful overall score if its sustainability or exposure story is poor — and vice versa."
+          heading: "20 substance categories — 113 total substances",
+          body: null,
+          list: [
+            "PFAS and forever chemicals (7) — PFOA, PFOS floor at M≥9 (IARC Group 1)",
+            "Petroleum dyes (6) — Red 40, Yellow 5/6, titanium dioxide (EU food ban, IARC 2B)",
+            "Preservatives (7) — TBHQ, BHA, BHT, potassium bromate, sodium nitrite",
+            "Formaldehyde and releasers (6) — DMDM hydantoin, quaternium-15, bronopol",
+            "Parabens (4) — long-chain isobutyl/isopropyl EU banned, floor M≥6",
+            "Phthalates (5) — DEHP, DBP, BBP all EU SVHC, floor M≥7",
+            "Bisphenols (5) — BPA, BPS, BPF, BPAF (EU SVHC February 2026)",
+            "Chemical UV filters (6) — oxybenzone floor M≥7 (detected in bloodstream after single use)",
+            "Heavy metals (7) — mercury, lead, arsenic, cadmium floor M≥8-9",
+            "Plastic food contact chemicals (6) — PVC, polystyrene, PVA film, 1,4-dioxane",
+            "Flame retardants (7) — PBDE banned, TCEP/TDCPP IARC 2B, TPhP EU SVHC 2024",
+            "Synthetic fragrance and VOCs (6) — toluene, benzene, undisclosed phthalates",
+            "Textile chemicals (7) — azo dyes, nonylphenol, PFAS DWR coatings",
+            "Sweeteners and additives (8) — aspartame IARC 2B, BVO FDA proposed ban",
+            "Antimicrobials (3) — triclosan and triclocarban FDA banned in soaps 2017",
+            "Pesticides (5) — glyphosate IARC 2A, chlorpyrifos EPA banned 2021, PFAS pesticides",
+            "Solvents (6) — n-hexane EU SVHC 2026, methylene chloride IARC Group 1",
+            "Hair dye chemicals (4) — PPD, aminophenol, lead acetate, resorcinol",
+            "Microplastics (2) — microbeads, microfiber shedding",
+            "Polychlorinated compounds (3) — PCBs and dioxins floor M≥9 (IARC Group 1)",
+          ]
         }
       ]
     },
     {
       number: "03",
-      title: "AI analysis: two-pass system",
+      title: "AI analysis — two-pass system",
       color: "#2563eb",
       content: [
         {
           heading: "Why two passes?",
-          body: "Each product scan runs two independent AI passes using Anthropic's Claude. The two-pass structure was designed specifically to reduce hallucination and catch cases where the first pass may have over- or under-scored a product."
+          body: "Each product scan runs two independent AI passes using Anthropic's Claude. The two-pass structure was designed to reduce hallucination and catch cases where the first pass may have over- or under-scored a product."
         },
         {
-          heading: "Pass 1: Research and analysis",
-          body: "The AI searches the web for real material data on the specific product, then scores it across all five dimensions using the parameters we defined. It identifies plastic polymers, harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway — and suggests safer alternatives. For every scan it produces a Product Insights analysis: a Tier 1-4 composition classification and a named substance breakdown tailored to the category. Food scans flag specific additives (Red 40, BHA, aspartame). Personal care flags oxybenzone, parabens, and formaldehyde releasers. Clothing flags PFAS waterproofing, formaldehyde finishes, and microfiber-shedding synthetics. Kitchen and cleaning products flag quats, chlorine, PVA film, and synthetic fragrance VOCs. Baby products apply elevated sensitivity thresholds throughout."
+          heading: "Pass 1 — Research and analysis",
+          body: "The AI searches the web for real material data on the specific product, then scores it across all five dimensions using the parameters we defined. It identifies harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway. For every scan it produces a Tier 1-4 composition classification and a named substance breakdown tailored to the category."
         },
         {
-          heading: "Pass 2: Independent audit",
-          body: "A second independent AI instance reviews Pass 1's output as a skeptical auditor. It applies calibration anchors (known products with known correct scores), checks that genuinely safe products are not penalised unfairly, computes the final weighted score, and flags low-confidence results."
+          heading: "Pass 2 — Independent audit",
+          body: "A second independent AI instance reviews Pass 1 output as a skeptical auditor. It applies calibration anchors, checks that genuinely safe products are not penalised unfairly, and flags low-confidence results. The substance registry floors are then applied in server-side code after both passes complete — the AI cannot override them."
+        },
+        {
+          heading: "Confidence levels",
+          body: null,
+          list: [
+            "High — full ingredient list verified, known brand formulation, or label read directly from photo",
+            "Medium — brand known but full ingredient list not public. Score based on known brand practices",
+            "Low — unknown brand or no public data. Score is a conservative directional estimate",
+          ]
         }
       ]
     },
     {
       number: "04",
-      title: "Human quality review",
+      title: "Human quality review and test suite",
       color: "#d97706",
       content: [
         {
-          heading: "What we check before results go live",
+          heading: "Automated test suite",
+          body: "We run an automated test suite against the live API after every significant change to scoring parameters. The suite scans 20+ known products and verifies scores fall within expected ranges, correct substances are flagged, and self-recommendation bugs are absent."
+        },
+        {
+          heading: "Calibration anchors we verify",
           body: null,
           list: [
-            "Spot testing: We regularly scan products we own or have researched independently and verify the AI's material identification against manufacturer specs, safety data sheets, or published studies",
-            "Calibration checks: We test known products against defined score anchors — Blueland tablets should score 1-2, Cascade pods ~6, non-stick pans ~7-8, M&Ms ~7 (multiple FDA-flagged dyes), organic dark chocolate ~2. Systematic drift triggers a prompt update and cache clear",
-            "Category audits: We periodically review all cached results in a product category to check for scoring inconsistencies or outliers",
-            "Dimension review: We verify all five dimensions are scoring logically — particularly that sustainability rewards genuinely circular products and penalises single-use, and that packaging-only plastic does not inflate the materials score",
-            "Cache invalidation: When we update scoring parameters or identify a systematic error, we clear the result cache so all products are rescored under the new rules",
+            "M&Ms must score 6-9 and flag Red 40. Blueland tablets must score 1-3.",
+            "Neutrogena sunscreen must score 6-9 and flag oxybenzone.",
+            "Teflon non-stick pan must score 6-9 and flag PTFE.",
+            "Poppi Prebiotic Soda must score 1-4 and must never recommend itself as an alternative.",
+            "Chick-fil-A Crispy Chicken Sandwich must score 5-8 and flag TBHQ.",
+            "Patagonia organic cotton tee must score 1-3.",
           ]
+        },
+        {
+          heading: "Cache invalidation",
+          body: "When scoring parameters are updated or a systematic error is identified, the result cache is cleared so all products are rescored under the current methodology. Every score reflects the current rules."
         }
       ]
     },
@@ -2529,16 +2590,12 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       content: [
         {
           heading: "How alternatives are selected",
-          body: "Products recommended as safer alternatives on Partiqule meet the following criteria, verified by us:"
-        },
-        {
-          heading: null,
-          body: null,
+          body: "Products recommended as safer alternatives on Partiqule meet the following criteria:",
           list: [
-            "The alternative must score materially lower overall than the scanned product — across materials, exposure and sustainability combined",
-            "Alternatives are filtered using material-based heuristics we defined — stainless steel, organic cotton, glass, bamboo, and natural rubber all receive low scores",
-            "Affiliate links are clearly disclosed with '#ad · affiliate links' labeling on every results page",
-            "Affiliate relationships have zero influence on scoring — the danger score is calculated independently before any alternative is suggested",
+            "The alternative must score materially lower than the scanned product across materials, exposure, and sustainability combined",
+            "A product is never recommended as an alternative to itself or its own brand family",
+            "Affiliate links are clearly disclosed with #ad labeling on every results page",
+            "Affiliate relationships have zero influence on scoring — the score is calculated before any alternative is suggested. No brand can pay to change a score.",
           ]
         }
       ]
@@ -2552,14 +2609,15 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           heading: null,
           body: null,
           list: [
-            "Scoring parameters are reviewed when new peer-reviewed research is published on microplastics, chemical exposure, endocrine disruption, or sustainability",
+            "Scoring parameters are reviewed when new peer-reviewed research is published on chemical exposure, endocrine disruption, or sustainability",
+            "The substance registry is updated when EU REACH, IARC, EWG, FDA, or EPA publish new flagged substances — currently tracks the 253-entry REACH SVHC list updated February 2026",
             "The AI model version is reviewed periodically to ensure accuracy has not regressed",
-            "An annual transparency note is published on the About page disclosing AI usage, estimated energy and water footprint, and any methodology changes",
+            "An annual transparency note is published disclosing AI usage and any methodology changes",
             "User feedback is monitored — products that generate unusual concern or contradiction are flagged for manual review",
           ]
         }
       ]
-    }
+    },
   ];
 
   return (
@@ -2569,17 +2627,17 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
-          Every score on Partiqule reflects the impact of a product on three things: your personal health, the health of your family and home, and the health of the planet. This page explains exactly how we measure that — combining expert-defined parameters, AI analysis, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
+          Every score on Partiqule reflects the impact of a product on three things: your personal health, the health of your family and home, and the health of the planet. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
-        <div style={{fontSize:13, color:muted, opacity:0.6, fontStyle:"italic"}}>Methodology last reviewed: March 2026</div>
+        <div style={{fontSize:13, color:muted, opacity:0.6, fontStyle:"italic"}}>Methodology last reviewed: April 2026</div>
       </div>
 
       {/* Key stats bar */}
       <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:12, marginBottom:40}}>
         {[
           {number:"20+", label:"Years combined expertise"},
+          {number:"113", label:"Flagged substances in registry"},
           {number:"2",   label:"AI passes per scan"},
-          {number:"358+",label:"Products in database"},
           {number:"100%",label:"Affiliate-independent scoring"},
         ].map((s,i) => (
           <div key={i} style={{background:surface, borderRadius:14, padding:"20px 16px", border:`1.5px solid ${border}`, textAlign:"center"}}>
