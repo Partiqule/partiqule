@@ -281,6 +281,8 @@ const SUBSTANCE_FLOORS = [
   { match: /\btriclosan\b/i,                                            mFloor:6, uFloor:5, reason:"Triclosan — FDA banned soaps 2017, thyroid disruption, antibiotic resistance" },
   { match: /\btriclocarban\b/i,                                         mFloor:6, uFloor:5, reason:"Triclocarban — FDA banned, endocrine disruptor, aquatic toxin" },
   { match: /benzalkonium chloride|\bBAC\b.*antimicro/i,                 mFloor:5, uFloor:4, reason:"Benzalkonium chloride — antimicrobial resistance, irritant" },
+  { match: /quaternary ammonium|alkyl dimethyl benzyl|didecyl dimethyl|dialkyl dimethyl ammonium|\bQUAT\b/i,
+                                                                         mFloor:5, uFloor:5, reason:"Quaternary ammonium compounds (QACs) — EPA flagged reproductive harm and asthma induction in cleaning products" },
 
   // ══════════════════════════════════════════════════════════
   // PESTICIDES — EWG Dirty Dozen, PFAS pesticides
@@ -538,7 +540,9 @@ function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered)
   // CRITICAL GUARD: This ceiling only applies to minimally/moderately processed products.
   // Organic Oreos, organic chips, organic candy = still junk food. NOVA 4 organic products
   // should NOT be capped at 3. The ceiling protects genuinely clean organic whole foods.
-  const isConfirmedOrganic = /usda organic|certified organic by|organic certified/.test(allText);
+  // PRECISION: Only fires on confirmed USDA Organic certification — NOT "made with organic"
+  // or "contains organic ingredients" which are legally weaker claims.
+  const isConfirmedOrganic = /\busda organic\b|certified organic by|organic certified by|100% organic/.test(allText);
   const isUltraProcessed = /ultra.?processed|nova 4|industrial formul|oreo|cookie|chip|candy|pop.tart|fruit snack|gummy|frosted|sugary cereal|sweetened cereal/.test(allText);
   const isAlcohol = /\b(wine|beer|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout|cider|spirits|alcoholic|ethanol.*beverage|alcohol.*content)\b/.test(allText);
   if (isConfirmedOrganic && !dangerousSubstanceFired && !isUltraProcessed && !isAlcohol && finalScore > 3) {
@@ -817,7 +821,16 @@ SCORING RULES:
 - Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7
 - Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 7-8, usage 6-7, final 6-7
 - Chemical sunscreen (oxybenzone, octinoxate): materials 6-7, usage 6-7
+- "Reef safe" / "reef friendly" sunscreen claims are UNREGULATED MARKETING — always check actual UV filter ingredients. If oxybenzone or octinoxate is visible, apply the 6-7 floor regardless of reef-safe label.
 - Synthetic fragrance in personal care: materials 5-6
+- Dyed gummy vitamins or chewable supplements (Red 40, Yellow 5/6): materials minimum 6-7, usage minimum 6. NEVER score a dyed gummy supplement below 5.
+- Conventional dryer sheets (Bounce, Downy): materials 6, usage 6 (synthetic fragrance VOCs + quaternary ammonium residue = daily skin contact). NEVER score below 5.
+
+VARIANT HANDLING (image path): When you see a brand name without a clear variant on the label, score the most common/standard version and note in product_name and summary which variant you scored. Never average across variants. If the image shows a specific variant (e.g. "G Zero", "Pampers Pure"), score that exact variant.
+
+ORGANIC LABEL PRECISION (image path): USDA Organic = strong positive, score 1-3. "Made with Organic" = moderate positive, score 2-4. "Contains Organic X" = minor positive, score as conventional. These are legally distinct claims. Never treat partial-organic claims as full USDA Organic certification.
+
+FORMULATION CURRENCY (image path): Score based on ingredients visible in the image or your best current knowledge. If a product is known to have reformulated (e.g. removed BHT, changed preservatives), score the current formulation. If uncertain whether historical ingredient is still present, flag as "unverified in current formulation" at severity "low" — do NOT assert historical ingredients as confirmed current facts.
 
 PRODUCT ANALYSIS RULES — populate product_analysis for ALL categories:
 COMPOSITION TIERS: tier1=clean/natural/organic, tier2=conventional/standard, tier3=synthetic-heavy/petroleum-based, tier4=high-concern/banned-or-flagged-substances
@@ -1110,6 +1123,23 @@ AVOID SCORE CLUSTERING AT 6. If you find yourself scoring many different product
 - Whole natural foods (fresh fruit, vegetables, unprocessed meat, plain water): materials 1, usage 1.
 
 ANTI-GREENWASHING — CRITICAL RULES. Marketing language does NOT equal safety. Apply these regardless of how a product is branded or sold:
+
+VARIANT HANDLING — products with multiple meaningfully different versions:
+When a user scans a brand name without specifying variant, score the most common/standard version and explicitly note the variant issue in your summary. Never average across variants. Examples:
+- "Gatorade" → score Original (has artificial dyes: materials=5-6). Note: G Zero, G2, Gatorade Fit have different ingredient profiles and scores.
+- "Pampers" → score standard Swaddlers (materials=7). Note: Pampers Pure is meaningfully cleaner (materials=5).
+- "Tide" → score Original (materials=7). Note: Tide Free & Gentle is significantly cleaner (materials=3-4).
+- "Altoids" → score Original (materials=3). Note: Sugar Free uses artificial sweeteners (materials=4).
+When in doubt about which variant, name the variant you're scoring in product_name (e.g. "Gatorade Original" not just "Gatorade") and note in summary that other variants differ.
+
+ORGANIC LABEL PRECISION — three different claims, three different scores:
+- "USDA Organic" (certified): Prohibits synthetic pesticides, GMOs, synthetic additives. Strong positive signal. Score 1-3 for clean products.
+- "Made with Organic [ingredient]" (partial organic): 70-94% organic ingredients. Remaining ingredients may be conventional. Moderate positive signal. Score 2-4. NOT the same as USDA Organic certified.
+- "Contains Organic Ingredients" / "With Organic [X]": less than 70% organic. Minor positive. Score same as conventional product with a slight positive note.
+Never treat "Made with Organic" as equivalent to USDA Organic certification. The organic ceiling server rule only fires on confirmed USDA Organic certification — not "made with organic."
+
+INGREDIENT FORMULATION CURRENCY — treat known product facts with caution:
+Product formulations change without announcement. If you know a product historically contained a specific ingredient but cannot confirm it from the current query context, do NOT assert it as confirmed. Altoids historically contained BHT but the current formulation does not. Score what the actual current ingredients suggest, not what you recall from training data. When uncertain whether an ingredient is current: flag as "unverified in current formulation" with severity "low" and note it. Never score a substance floor based on recalled historical ingredients that may have been removed.
 
 CLOTHING AND TEXTILES — hidden toxins to always consider:
 - Conventional cotton (non-organic): treated with pesticides, often finished with formaldehyde (wrinkle resistance), optical brighteners, or azo dyes. Score materials 4-5 unless certified organic. Do NOT assume plain cotton = safe.
@@ -1409,7 +1439,22 @@ HIGH: Artificial colors/dyes in capsules or gummies (Red 40, Yellow 5 — FDA ph
 MEDIUM: Magnesium stearate in capsules (high doses may impair absorption), Artificial sweeteners in flavored powders (sucralose, acesulfame-K), Silicon dioxide/silica flow agents, Hydrogenated oils in softgels (trans fat residue), Synthetic vitamin forms (dl-alpha tocopherol vs d-alpha, cyanocobalamin vs methylcobalamin)
 LOW: Gelatin capsules (animal-derived, not suitable for vegans), Maltodextrin as filler, Natural flavors
 SUPPLEMENT SCORE GUIDANCE: Whole-food derived supplements (food-based vitamin C, fermented vitamins) = materials 1-2. Standard synthetic vitamins = materials 2-3. Proprietary blend pre-workouts with stimulants = materials 5-7. Any supplement with FDA warnings = materials 7-8.
+GUMMY VITAMIN DYE RULE: Any gummy vitamin or chewable supplement containing petroleum dyes (Red 40, Yellow 5, Yellow 6, Blue 1) scores materials MINIMUM 6 and usage MINIMUM 6. Children's gummy vitamins (Flintstones, L'il Critters) with dyes = materials 7 + child vulnerability flag. "Kid-friendly" coloring does not reduce this concern — it increases it. The supplement formula (65% materials) still produces a final score of ~6+ from materials=7. NEVER score a dyed gummy vitamin below 5.
 SUPPLEMENT POSITIVES: NSF Certified for Sport, Informed Sport certified, USP Verified, Third-party tested, NSF International certified, Non-GMO Project Verified, USDA Organic certified ingredients, Certified vegan, No artificial colors or sweeteners, No proprietary blends
+
+HOME LAUNDRY AND CLEANING — SPECIFIC CALIBRATION:
+Conventional laundry pods (Tide, Cascade, Gain pods):
+- materials=6 (PVA film dissolves into waterways as microplastic, synthetic fragrance = phthalates, 1,4-dioxane contamination risk from ethoxylated surfactants), usage=5, sustainability=7 → final ~6
+- Flag: PVA pod film, synthetic fragrance, 1,4-dioxane risk
+Conventional dryer sheets (Bounce, Downy dryer sheets):
+- materials=6 (benzyl acetate, chloroform compounds, synthetic fragrance with phthalates, quaternary ammonium residue on clothes), usage=6 (residue stays on clothing = daily skin contact during wear + inhalation during drying) → final ~6
+- Flag: synthetic fragrance VOCs, quaternary ammonium residue, daily skin contact
+Liquid fabric softener (Downy liquid, Snuggle):
+- materials=6 (synthetic fragrance, quaternary ammonium compounds EPA flagged for reproductive harm, dihydrogenated tallow dimethyl ammonium chloride) → final ~6
+Clean laundry alternatives (Molly's Suds, Branch Basics, Seventh Generation Free & Clear):
+- materials=2-3 (no synthetic fragrance, no optical brighteners, plant-derived surfactants) → final ~2-3
+Wool dryer balls: materials=1, usage=1, final ~1
+NEVER score conventional dryer sheets below 5. The synthetic fragrance + QAC residue on clothing is daily skin exposure.
 
 HOME FURNISHING CONCERNS (mattresses, sofas, bedding, carpets, curtains, foam furniture):
 HIGH: Flame retardants/PBDEs/chlorinated Tris/TDCPP in foam (IARC carcinogen, endocrine disruption — Stapleton 2011, California TB117 phased out), PFAS in stain-resistant treatments (Scotchgard, Teflon-coated fabrics — bioaccumulative, EPA flagged), Formaldehyde off-gassing from pressed wood, MDF, particleboard furniture (IARC Group 1 carcinogen — OSHA PEL exceeded in new furniture), Vinyl/PVC coatings or covers (phthalate plasticizers, off-gassing VOCs), Antimicrobial treatments with silver nanoparticles or triclosan (environmental persistence)
@@ -1640,6 +1685,7 @@ SUSTAINABILITY: Products releasing PVA or synthetic chemicals to waterways = sus
 MANUFACTURING: Not scored — do not return or adjust manufacturing scores.
 CHEWING GUM: polyvinyl acetate = direct plastic ingestion. Materials 7-8, usage 8-9.
 SUNSCREEN: Chemical UV filters (oxybenzone, octinoxate, avobenzone) = materials 6-7, usage 6-7 (full-body daily skin absorption, FDA flagged for bloodstream penetration). Mineral-only (zinc oxide, titanium dioxide) = materials 2-3, usage 2-3.
+REEF-SAFE WARNING: "Reef safe," "ocean friendly," and "reef friendly" are unregulated marketing claims — do NOT take them at face value. Always check actual UV filter ingredients. If oxybenzone or octinoxate is present in the ingredient list, the product is NOT reef-safe and the materials floor of 7 applies regardless of the label claim. Only score a sunscreen as clean if confirmed mineral-only (zinc oxide ± titanium dioxide) ingredients are visible.
 HOME FRAGRANCE/CANDLES: Paraffin wax + synthetic fragrance (Yankee, Bath & Body Works) = materials 6, usage 5-6 (VOC inhalation in enclosed space). Soy or beeswax + phthalate-free fragrance = materials 2, usage 3. Aerosol sprays (Febreze, Glade) = materials 6-7 (phthalates, propellant), usage 6 (aerosolized inhalation).
 LAUNDRY: Conventional dryer sheets (Bounce, Downy) = materials 6 (benzyl acetate, synthetic VOCs), usage 5 (daily skin contact residue on clothes). Wool dryer balls = materials 1, usage 1.
 ART SUPPLIES: Paraffin wax crayons = materials 4 (petroleum wax, synthetic dyes). Beeswax crayons = materials 1. Solvent-based paints/markers = materials 6-7 (VOCs). Water-based washable paints/markers = materials 2-3.
