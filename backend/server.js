@@ -535,22 +535,24 @@ function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered)
   );
 
   // CEILING 1: USDA Organic + no confirmed dangerous substances → cap at 3
-  // Rationale: Organic certification prohibits synthetic pesticides, GMOs, most synthetics.
-  // If no dangerous substance floors fired, the product is genuinely clean.
+  // CRITICAL GUARD: This ceiling only applies to minimally/moderately processed products.
+  // Organic Oreos, organic chips, organic candy = still junk food. NOVA 4 organic products
+  // should NOT be capped at 3. The ceiling protects genuinely clean organic whole foods.
   const isConfirmedOrganic = /usda organic|certified organic by|organic certified/.test(allText);
-  if (isConfirmedOrganic && !dangerousSubstanceFired && finalScore > 3) {
+  const isUltraProcessed = /ultra.?processed|nova 4|industrial formul|oreo|cookie|chip|candy|pop.tart|fruit snack|gummy|frosted|sugary cereal|sweetened cereal/.test(allText);
+  const isAlcohol = /\b(wine|beer|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout|cider|spirits|alcoholic|ethanol.*beverage|alcohol.*content)\b/.test(allText);
+  if (isConfirmedOrganic && !dangerousSubstanceFired && !isUltraProcessed && !isAlcohol && finalScore > 3) {
     console.log(`Organic ceiling: capping food score from ${finalScore} to 3`);
     finalScore = Math.min(finalScore, 3);
     flags.push("usda_organic_ceiling");
   }
 
   // CEILING 2: Non-GMO + whole food + no dyes + no synthetic preservatives → cap at 4
-  // Rationale: These products are conventionally farmed but free of the worst additives.
-  // Kashi GO, Kind bars, clean conventional snacks land here.
+  // Same NOVA guard applies — non-GMO junk food is still junk food.
   const isNonGMO = /non.?gmo project verified|non.?gmo certified|non.?gmo verified/.test(allText);
   const hasNoDyes = !/red\s*40|yellow\s*5|yellow\s*6|blue\s*1|blue\s*2|titanium dioxide.*food|petroleum dye|artificial.*color.*dye/.test(allText);
   const hasNoSyntheticPreservatives = !/\bbha\b|\bbht\b|\btbhq\b|sodium benzoate.*vitamin|sodium nitrite|potassium bromate/.test(allText);
-  if (isNonGMO && hasNoDyes && hasNoSyntheticPreservatives && !dangerousSubstanceFired && finalScore > 4) {
+  if (isNonGMO && hasNoDyes && hasNoSyntheticPreservatives && !dangerousSubstanceFired && !isUltraProcessed && !isAlcohol && finalScore > 4) {
     console.log(`NonGMO clean ceiling: capping food score from ${finalScore} to 4`);
     finalScore = Math.min(finalScore, 4);
     flags.push("nongmo_clean_ceiling");
@@ -807,7 +809,7 @@ async function callClaudeVision(imageBase64, mediaType, retries=3) {
       system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 SCORING RULES:
-- PP/PVC in food-contact products: materials score 8-9 (NEJM 2024)
+- PP/PVC in food-contact products (cookware, food storage containers, food packaging, baby bottles, food wraps, reusable water bottles used for hot liquids): materials score 8-9 (NEJM 2024). EXPLICIT EXCEPTIONS — the food-contact rule does NOT apply to: diapers, clothing, baby toys, plastic toys, teething toys, personal care products, or any product where plastic is skin/mouth contact but not used to store/heat food. Score those using their own category calibration. A PP baby teether = materials 5-6 (mouthing concern but not food-contact heating). A polypropylene storage container for hot food = materials 8-9.
 - PTFE/PFAS non-stick: materials score 8-9
 - Natural materials (wood, glass, stainless, ceramic, organic cotton): materials score 1-2
 - ORGANIC KIDS CLOTHING BRANDS (Little Rad Things, Pact Kids, Hanna Andersson, Burt\'s Bees Baby): materials 1-2, final score 1-3
@@ -912,7 +914,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
     `You are a senior research scientist specializing in polymer chemistry, toxicology, consumer product safety, and environmental impact. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 KEY RESEARCH FINDINGS:
-MICROPLASTICS: Marfella et al. (2024) NEJM: PP found in 58% of carotid plaques — PP/PVC in food-contact products score 8-9. Yan et al. (2024) Nature Medicine: microplastics accumulate in human brain — daily ingestion/inhalation +2 penalty. Landrigan et al. (2025) Lancet Planetary Health: cardiovascular, metabolic and cancer risk confirmed. Amato-Lourenco et al. (2021) THORAX: microplastics found in all regions of human lung tissue. Hernandez (2019): nylon/PET tea bags release billions of particles per cup. Li (2020): heated PP baby bottles release millions of particles per litre.
+MICROPLASTICS: Marfella et al. (2024) NEJM: PP found in 58% of carotid plaques — PP/PVC in food-contact products score 8-9 (cookware, food containers, baby bottles). IMPORTANT: this rule applies to FOOD contact only — NOT to diapers, clothing, or personal care products which are skin contact. Diapers score via their own calibration scale. Yan et al. (2024) Nature Medicine: microplastics accumulate in human brain — daily ingestion/inhalation +2 penalty. Landrigan et al. (2025) Lancet Planetary Health: cardiovascular, metabolic and cancer risk confirmed. Amato-Lourenco et al. (2021) THORAX: microplastics found in all regions of human lung tissue. Hernandez (2019): nylon/PET tea bags release billions of particles per cup. Li (2020): heated PP baby bottles release millions of particles per litre.
 PFAS: FDA (2024): PTFE/PFAS non-stick = primary dietary exposure — score 8-9, known endocrine disruptors. Sunderland et al. (2019): PFAS linked to thyroid disruption, reduced fertility, elevated cholesterol. Steenland et al. (2018): PFOA linked to kidney and testicular cancer. EWG (2023): PFAS detected in water serving 200M+ Americans.
 ENDOCRINE DISRUPTORS: Braun et al. (2021) Endocrine Society: BPA, phthalates, PFAS all confirmed EDCs. Swan et al. (2021): phthalate and BPA exposure linked to reduced fertility. Trasande et al. (2018): EDC exposure costs USD 163 billion annually in health burden. Rochester (2013): BPA endocrine disruption confirmed at low doses.
 FOOD: Monteiro et al. (2025) Lancet: ultra-processed foods linked to cardiovascular risk and cognitive decline — score 6-8. Srour et al. (2024) BMJ: 30% higher all-cause mortality with high UPF intake. Lane et al. (2024) Neurology: UPF linked to cognitive decline and stroke. Whole natural foods score 1-3.
@@ -931,7 +933,7 @@ If real product data is provided above, use it as ground truth. Do not assume pl
 SCORING RULES BY DIMENSION:
 
 MATERIALS (what the product is physically made of):
-- PP/PVC in food contact: 8-9. PTFE/PFAS coatings: 8-9. Nylon/PET tea bags: 7-8.
+- PP/PVC in food contact: 8-9 (food storage, cookware, food packaging, baby bottles — NOT diapers or clothing). PTFE/PFAS coatings: 8-9. Nylon/PET tea bags: 7-8.
 - Natural materials (wood, glass, stainless, ceramic, organic cotton, stone): 1-2.
 - ORGANIC AND NATURAL FIBER CLOTHING: confirmed GOTS-certified organic cotton, organic linen, organic wool, bamboo, hemp = materials 1-2. Do not hedge upward due to brand uncertainty.
 - KNOWN ORGANIC KIDS CLOTHING BRANDS — these are documented to use organic cotton and must score 1-2 on materials, 2-3 on sustainability: Little Rad Things, Pact Kids, Hanna Andersson, Burt's Bees Baby, Mini Mioche, Primary, Colored Organics, Art and Eden, Patagonia Kids.
@@ -1060,6 +1062,18 @@ FUNCTIONAL BEVERAGES AND ELECTROLYTES:
 - Gatorade / Powerade (conventional with dyes): materials=5-6 (artificial dyes, sucrose/HFCS) → final 5-6.
 - Athletic Greens / AG1 (complex formulation): materials=3-4 (generally clean but ultra-processed powder).
 
+DEODORANT CALIBRATION (personal_care category):
+- Conventional deodorant/antiperspirant (Secret, Dove, Old Spice): materials=5 — aluminum compounds (antiperspirant), synthetic fragrance (phthalates), parabens in some, propylene glycol. Usage=6 (daily underarm application, lymph node proximity). Final ~5-6.
+- Clinical-strength antiperspirant: materials=6 — higher aluminum concentration (20%+ aluminum chloride), synthetic fragrance. Final ~6.
+- Natural deodorant without aluminum (Native, Schmidt's, Humble): materials=3 — no aluminum, natural fragrance or fragrance-free, baking soda or mineral-based. Usage=4. Final ~3.
+- Native sensitive (no baking soda, minimal ingredients): materials=2 → final ~2-3.
+
+PROTEIN POWDER CALIBRATION:
+- Clean third-party tested whey/plant protein (Momentous, Garden of Life, Thorne): materials=2 (NSF Certified for Sport or Informed Sport tested, no artificial dyes, no artificial sweeteners). Final ~2-3.
+- Conventional whey protein (Optimum Nutrition Gold Standard, Myprotein): materials=3-4 — sucralose in most flavors, artificial flavors, titanium dioxide in some. Consumer Reports 2018 found lead, arsenic, cadmium above threshold in several brands tested. Flag: third-party heavy metal testing not confirmed. Final ~3-4.
+- Mass gainer / proprietary blend with stimulants: materials=5-6 — DMAA risk in some, proprietary blends, high artificial sweetener load. Flag heavy metals concern for any powder without third-party certification.
+Rule: ANY protein powder without NSF Certified for Sport, Informed Sport, or USP Verified certification should carry a MEDIUM heavy metals concern regardless of other ingredients.
+
 ALCOHOL:
 Ethanol is IARC Group 1 carcinogen — no safe level per WHO. This applies regardless of wine/beer/spirits perception.
 - Any alcoholic beverage: materials=7 (IARC Group 1 ethanol — known carcinogen) minimum. Score reflects health risk of the product, not a judgment on responsible adult consumption.
@@ -1161,7 +1175,18 @@ PACKAGING SPECULATION RULE: If the concern about a harmful substance in packagin
 - Conventional shampoo (SLS, synthetic fragrance, parabens): materials=5, usage=4 (rinse-off, daily) → final ~4-5
 - Gatorade (artificial dyes, sucrose, citric acid): materials=5 (artificial dyes, high sugar), usage=5 → final ~5
 - Regular lip balm with petrolatum (ChapStick): materials=4 (petrolatum, BHT), usage=4 (leave-on lip contact) → final ~4
-- Altoids Peppermint Mints: materials=5 (BHT preservative, artificial flavors, gelatin from conventional sources, sugar), usage=4 (daily oral ingestion) → final ~4-5. BHT is an FDA-reviewed antioxidant preservative with some animal carcinogenicity studies. Do NOT score below 4.
+- Altoids Peppermint Mints (current formulation): materials=3 (essentially pure sugar delivery vehicle — sugar is primary ingredient; NOVA 3 processed confectionery; gelatin from conventional animal sources; no BHT or artificial dyes in current formulation but also zero nutritional value). usage=4 (daily oral ingestion, tooth decay risk, high sugar relative to serving calories) → final ~3-4. DO NOT score below 3. "Simple ingredients" does not mean healthy when the product is essentially 100% sugar.
+- Altoids Sugar Free Mints: materials=4 (artificial sweetener sorbitol/isomalt at high concentration, artificial flavors) → final ~4.
+
+CONFECTIONERY MINIMUM RULE — candy, mints, gum, and sugar-based sweets:
+Candy and confectionery are sugar-delivery vehicles with no nutritional benefit. Even when made with "simple" or "natural" ingredients, they warrant a minimum score of 3 because:
+1. Primary ingredient is refined sugar (WHO flags added sugar as significant health concern)
+2. NOVA 3-4 by definition (industrial confectionery processing)
+3. Zero nutritional density — empty calories
+4. Daily consumption (common with mints, gum) amplifies impact
+NEVER score any candy, mint, gum, or sugar-based confectionery below 3, regardless of ingredient simplicity.
+Examples: Altoids = 3-4, Tic Tacs = 3, regular gum = 3, Werther's Original = 3-4, hard candy = 3-4, lollipops = 4, gummies = 4-5 (gelatin + high sugar).
+Clean dark chocolate (70%+ cacao, no dyes, minimal additives) is the exception — genuine nutritional value from flavanoids: final score 2-3 not 2.
 - Industry of All Nations (IOAN) clothing: materials=1 (undyed/unbleached organic cotton, alpaca wool, vegetable-tanned leather, natural rubber — 75-80% undyed styles, no petroleum synthetics), usage=1, sustainability=1 (handmade, traceable to source) → final ~1-2. One of the highest-rated clothing brands available.
 - Unbleached Apparel: materials=1 (100% undyed, unbleached, all-natural organic cotton, no dyes, no bleach, no plastics, made in USA), usage=1, sustainability=1 → final ~1. Score should be as low as possible for any clothing brand.
 - Brandy Melville clothing: materials=5 (conventional cotton/polyester blend, no organic or recycled content, no sustainability certifications, zero supply chain transparency, fast fashion model), usage=4, sustainability=6 (fast fashion churn, no take-back program, landfill-destined) → final ~5. Good On You rates "We Avoid."
@@ -1310,7 +1335,32 @@ KASHI CALIBRATION:
 - Kashi conventional lines (GO Original, GO Crunch, Seven Whole Grain — Non-GMO but not organic): materials=3 (seven whole grains, Non-GMO verified, no artificial dyes, no synthetic preservatives, high fiber — oats are one of 7-8 grains, not primary), usage=3 → final ~3. NEVER score above 4.
 - Kashi GO with fair trade chocolate or added sugar: materials=4, final ~4. The sugar addition raises it slightly.
 
-ORGANIC OAT PROTECTION RULE: USDA Organic = no glyphosate. Do NOT flag glyphosate for organic products.
+NATURAL SUGAR PRODUCTS — "natural" does not mean low-risk for sugar-dominant products:
+- Raw honey (100% honey, no additives): materials=3 — natural but essentially pure fructose/glucose, no fiber, no protein, rapid blood sugar spike. NEVER score below 3. Flag: high natural sugar, no nutritional complexity.
+- Maple syrup (pure): materials=3 — similar to honey, marginally better micronutrient profile. Score 3.
+- Agave syrup: materials=4 — 90% fructose, higher than honey, worse metabolic profile despite "natural" marketing. Score 4.
+- 100% fruit juice (no added sugar): materials=3 — removes fiber from fruit, concentrates natural sugar, glycemic load similar to soda. Score 3-4. "No added sugar" does not make juice a whole food.
+- Dried fruit (raisins, dried mango, dates as ingredient): materials=2-3 when a minor ingredient, 3-4 when primary ingredient at high quantity — concentrated sugar, sticky, tooth decay risk.
+DO NOT score any pure sugar product (honey, syrup, molasses, agave) below 3.
+
+BABY FORMULA CALIBRATION:
+- Holle / Kendamil Organic / HiPP Organic (European organic formulas): materials=2 — USDA/EU Organic certified, DHA from algae oil (not hexane-extracted), no corn syrup, simple ingredient list. Score 2-3.
+- Similac / Enfamil (conventional, standard formula): materials=4 — synthetic DHA/ARA from hexane-extracted microalgae/fungal oil in some versions, corn maltodextrin as primary carb, synthetic vitamins, palm olein oil (reduces calcium absorption). Score 4.
+- Similac Organic / Earth's Best Organic formula: materials=3 — organic certified but still highly processed, synthetic vitamins added back. Score 3.
+Baby formula is always a BABY category product — apply child vulnerability flag. Parents choosing formula have no alternative — scoring reflects relative risk within the category, not a judgment on formula feeding.
+
+ALCOHOL AND LOW-ALCOHOL EDGE CASES:
+- All intentionally alcoholic beverages (wine, beer, spirits, hard cider, hard seltzer): ethanol is IARC Group 1. NEVER score below 6 regardless of organic certification or natural ingredients. Organic wine = materials 7 (still IARC Group 1 ethanol).
+- Kombucha with trace fermentation alcohol (<3% ABV): NOT the same as alcoholic beverages. Score based on ingredients only — plain raw kombucha = 2-3. The trace ethanol from natural fermentation does not trigger the IARC Group 1 alcohol floor.
+- Non-alcoholic beer/wine (0.0% or <0.5% ABV — Heineken 0.0, Athletic Brewing): score based on actual ingredients, not the word "beer." Athletic Brewing = 2-3 (clean craft ingredients, no alcohol). Heineken 0.0 = 3-4 (conventional ingredients, some additives).
+- Vanilla extract (35% alcohol by volume — used as flavor): not an alcoholic beverage, used in trace amounts as flavoring. Do NOT apply alcohol floor to vanilla extract as a product ingredient.
+
+PRODUCT VARIANT HANDLING:
+When a product has multiple variants with meaningfully different ingredients, always ask or note which variant matters most. If unclear, score the most common/standard variant and note the concern:
+- "Gatorade" → score original (has artificial dyes: 5-6) and note that G Zero (artificial sweeteners, no dyes) scores differently at 4.
+- "Pampers" → score standard Swaddlers (7) and note Pampers Pure is cleaner (5).
+- "Altoids" → original (3-4), Sugar Free (4), Smalls (3-4).
+Never average across variants — score the version most likely to be the one the user has.
 
 PESTICIDE CONCERNS — EWG 2026 Dirty Dozen (flag when product IS or CONTAINS conventional versions of these):
 HIGH severity pesticide concern (type="pesticide"): Conventional spinach (most pesticide residues by weight — EWG 2026, PFAS pesticides detected), Conventional strawberries, Conventional kale/collard/mustard greens (cancer-causing pesticides in 50%+ samples), Conventional grapes, Conventional nectarines, Conventional peaches, Conventional cherries, Conventional apples, Conventional blackberries (new 2026 — 4+ pesticides per sample), Conventional blueberries, Conventional pears, Conventional potatoes (90% had chlorpropham — banned in EU), Conventional green beans (highest toxicity flagged by EWG), Conventional bell/hot peppers (highest toxicity flagged by EWG)
@@ -1633,7 +1683,9 @@ CALIBRATION — use these as anchors:
 - M&Ms: final score ~7 — ultra-processed + 4 FDA-flagged petroleum dyes (Red 40, Yellow 5, Yellow 6, Blue 1) — NEVER score below 6
 - Skittles: final score ~7 — same dyes + titanium dioxide (IARC Group 2B) — NEVER score below 6
 - Froot Loops / dyed breakfast cereal: final score ~7 — multiple petroleum dyes + HFCS + daily child ingestion
-- Plain dark chocolate (no dyes, no additives): final score ~2
+- Plain dark chocolate (70%+ cacao, no dyes, no artificial additives — Hu, Lindt 70%+): final score ~2-3 — genuine nutritional value from flavanoids lowers the score. NOT the same as milk chocolate or candy bars.
+- Milk chocolate bar / candy bar (Hershey's, Snickers, Kit Kat): final score ~4-5 — high sugar, dairy solids, emulsifiers, some with artificial flavors. Not a 2.
+- Altoids Peppermint Mints (current formulation — no BHT, no artificial dyes): final score ~3-4. Sugar + gum arabic + peppermint oil + gelatin = simple ingredients but 100% sugar delivery, zero nutritional value, NOVA 3. NEVER score below 3.
 - Doritos / flavored chips: final score ~6-7 — artificial flavors, MSG, synthetic dyes in some varieties
 - Whole fresh fruit or vegetables: final score ~1
 - Organic whole food snack (no synthetic additives): final score ~1-2
