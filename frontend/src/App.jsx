@@ -324,7 +324,7 @@ const GlobeLoading = ({isMobile}) => {
 
 
 
-const scoreLabel   = (s) => s<=2?"Minimal":s<=4?"Low":s<=6?"Moderate":s<=8?"High":"Very High";
+const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Change":"Avoid";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
@@ -3880,13 +3880,16 @@ function App() {
                     "carrier","solvents","solvent","natural ingredients","whole ingredients",
                     "organic ingredients","clean ingredients","certified ingredients",
                     "natural coffee","coffee flavor","coffee taste","almond flavor",
+                    "menthol concentration","menthol","peppermint oil","wintergreen oil",
+                    "polymeric coating","interior coating","tin coating","metal coating",
+                    "food grade coating","lacquer","enamel coating",
                   ]);
                   const isGeneric = (name) => {
                     const n = name.toLowerCase().trim();
                     if (GENERIC_TERMS.has(n)) return true;
-                    // Also filter things that are clearly descriptions not chemical names
-                    if (n.length > 40) return true; // too long to be a chemical name
-                    if (/\b(for|with|in|of|from|using|added|used|based)\b/.test(n)) return true;
+                    // Filter descriptions not chemical names
+                    if (n.length > 40) return true;
+                    if (/\b(for|with|in|of|from|using|added|used|based|concentration|coating|level)\b/.test(n)) return true;
                     return false;
                   };
 

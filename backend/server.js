@@ -630,7 +630,8 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
   "scan_next": ["related product 1"],
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }
-NOTE: For food_beverage or restaurant, populate nutrition with values you know or can reasonably confirm. For restaurant items from major chains, populate what you know and set nutrition_verified: false. Only set nutrition_verified: true if you are certain of exact values. Set individual fields to null if uncertain — partial data is useful. Only set the entire nutrition object to null if you have no useful data at all.` }
+NOTE: For food_beverage or restaurant, populate nutrition with values you know or can reasonably confirm. For restaurant items from major chains, populate what you know and set nutrition_verified: false. Only set nutrition_verified: true if you are certain of exact values. Set individual fields to null if uncertain — partial data is useful. Only set the entire nutrition object to null if you have no useful data at all.
+SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.` }
         ]
       }]
     })
@@ -1051,6 +1052,21 @@ For restaurant category: populate composition_tier based on processing level, po
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 
+SUBSTANCE NAMING RULES — critical for accurate scoring:
+Always name the SPECIFIC chemical, not a generic category. These rules apply to every concern you generate:
+- NEVER write "contains preservatives" → ALWAYS write the specific preservative: "BHT (butylated hydroxytoluene)", "BHA", "TBHQ", "sodium benzoate", "potassium sorbate"
+- NEVER write "artificial colors" → ALWAYS write the specific dye: "Red 40 (Allura Red)", "Yellow 5 (Tartrazine)", "Blue 1"
+- NEVER write "synthetic fragrance" alone → write "synthetic fragrance (may contain undisclosed phthalates and VOCs)"
+- NEVER write "phthalates" alone → write "DEHP", "DBP", or "diethyl phthalate" if you know which type
+- NEVER write "heavy metals" → write "lead", "cadmium", or "arsenic" if known
+- NEVER write "flame retardants" → write "PBDE", "TCEP", "TDCPP", or "TPhP" if known
+- NEVER write "PFAS" alone without specifying → "PFAS (PFOA class)", "PTFE coating", "perfluoroalkyl DWR"
+- NEVER write "binding agents", "emulsifiers", "natural flavors", "processing aids" as concerns — these are ingredients, not harmful substances
+- NEVER write concerns about "concentration levels" or "coating types" without naming the specific chemical
+- If you know a product contains a specific harmful substance (e.g. Altoids contains BHT, Chick-fil-A uses TBHQ), NAME IT explicitly in the concerns
+- If you are uncertain whether a substance is present, use hedging in the reason field but still name the specific substance: "BHT — listed as preservative in some formulations; verify on label"
+- Packaging speculation: if packaging MAY contain a harmful substance, write it as: "packaging may contain [specific substance] — unconfirmed" with severity "low", NOT as a high/medium concern
+
 AI ALTERNATIVES — same-use, same-function rule:
 Alternatives MUST serve the same purpose and function as the scanned product. Never suggest a different product type.
 - Kids jacket → suggest kids jacket alternatives (organic cotton, PFAS-free, recycled)
@@ -1262,11 +1278,6 @@ app.post("/analyze", async (req, res) => {
         else                              finalScore = Math.max(finalScore, 3);
       }
 
-      // ── Hard caps for known clean products ──
-      const imgPName = (p1.product_name || productName).toLowerCase();
-      if (/\bpoppi\b/i.test(imgPName))  finalScore = Math.min(finalScore, 4);
-      if (/\bolipop\b/i.test(imgPName)) finalScore = Math.min(finalScore, 4);
-
       const result = {
         product_name: productName, category,
         score: finalScore,
@@ -1431,11 +1442,6 @@ app.post("/analyze", async (req, res) => {
       else if (isTaco)                  finalScore = Math.max(finalScore, 3);
       else                              finalScore = Math.max(finalScore, 3);
     }
-
-    // ── Hard caps for known clean products — AI cannot exceed these ──
-    const pName = (p1.product_name || productName).toLowerCase();
-    if (/\bpoppi\b/i.test(pName))  finalScore = Math.min(finalScore, 4);
-    if (/\bolipop\b/i.test(pName)) finalScore = Math.min(finalScore, 4);
 
     // Peer comparison
     const peerComparison = finalScore <= 2
