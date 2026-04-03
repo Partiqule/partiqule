@@ -3869,11 +3869,33 @@ function App() {
 
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
                 {(() => {
+                  // Generic food/processing terms that are NOT harmful substances
+                  const GENERIC_TERMS = new Set([
+                    "binding agents","emulsifiers","natural flavoring","natural flavors",
+                    "natural flavor","artificial flavor","artificial flavoring","flavorings",
+                    "processing aids","processing aid","stabilizers","stabilizer",
+                    "thickeners","thickener","food additives","additives","preservatives",
+                    "colorings","coloring","colors","colour","colouring","antioxidants",
+                    "antioxidant","humectants","humectant","fillers","filler","carriers",
+                    "carrier","solvents","solvent","natural ingredients","whole ingredients",
+                    "organic ingredients","clean ingredients","certified ingredients",
+                    "natural coffee","coffee flavor","coffee taste","almond flavor",
+                  ]);
+                  const isGeneric = (name) => {
+                    const n = name.toLowerCase().trim();
+                    if (GENERIC_TERMS.has(n)) return true;
+                    // Also filter things that are clearly descriptions not chemical names
+                    if (n.length > 40) return true; // too long to be a chemical name
+                    if (/\b(for|with|in|of|from|using|added|used|based)\b/.test(n)) return true;
+                    return false;
+                  };
+
                   const flagged = [];
                   const seen = new Set();
                   const add = (name, severity) => {
                     const key = (name||"").toLowerCase().trim();
                     if (!key || key === "unknown" || key.length < 2 || seen.has(key)) return;
+                    if (isGeneric(name)) return;
                     seen.add(key);
                     flagged.push({name, severity});
                   };

@@ -319,19 +319,38 @@ const SUBSTANCE_FLOORS = [
 ];
 
 // Apply substance floors based on what AI actually found in concerns
+// Phrases that indicate speculation — floors should NOT fire on these
+const HEDGED_PHRASES = [
+  "may contain", "might contain", "could contain", "possibly contain",
+  "potential", "speculative", "if present", "suspected", "unconfirmed",
+  "possible trace", "trace amount", "not confirmed", "unclear whether",
+];
+
 function applySubstanceFloors(mScore, uScore, p1, p2) {
-  const concernsText = JSON.stringify([
+  const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
     ...(p1.materials?.concerns || []),
     ...(p2?.refined_concerns || []),
     ...(p1.raw_concerns || []),
-  ]).toLowerCase();
+  ];
   const summaryText = (p1.summary || p2?.summary || "").toLowerCase();
-  const allText     = concernsText + " " + summaryText;
+
+  // Build confirmed-only text — strip sentences containing hedged language
+  const confirmedSentences = [];
+  const allSentences = (JSON.stringify(concernsArr) + " " + summaryText)
+    .split(/[.!?;]/)
+    .map(s => s.toLowerCase().trim())
+    .filter(Boolean);
+
+  for (const sentence of allSentences) {
+    const isHedged = HEDGED_PHRASES.some(hedge => sentence.includes(hedge));
+    if (!isHedged) confirmedSentences.push(sentence);
+  }
+  const confirmedText = confirmedSentences.join(" ");
 
   let triggered = [];
   for (const rule of SUBSTANCE_FLOORS) {
-    if (rule.match.test(allText)) {
+    if (rule.match.test(confirmedText)) {
       if (mScore < rule.mFloor || uScore < rule.uFloor) {
         mScore = Math.max(mScore, rule.mFloor);
         uScore = Math.max(uScore, rule.uFloor);
@@ -796,6 +815,12 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
 - Cliff Bar (oats, dates, nuts, some natural flavors): materials=3 (minimally processed, no artificial dyes), usage=3 → final ~3
+- 365 Whole Foods Market snack bars / protein bites (dates, nuts, coffee extract, natural flavors, sea salt — no artificial dyes, no synthetic preservatives): materials=3, usage=3 → final ~3. Whole Foods 365 house brand avoids artificial additives. Do NOT score above 4 based on speculative packaging concerns.
+- RX Bar (dates, egg whites, nuts, natural flavor): materials=2 (minimal whole ingredients), usage=2 → final ~2-3
+- Larabar (dates, nuts, natural flavor): materials=2 (2-4 whole food ingredients, no additives), usage=2 → final ~2
+- KIND bar (nuts, honey, some natural flavors): materials=3 (mostly whole food, glucose syrup), usage=3 → final ~3
+- Standard protein bar with sucralose/artificial flavors (Quest, Atkins): materials=4-5, usage=4 → final ~4-5
+PACKAGING SPECULATION RULE: If the concern about a harmful substance in packaging uses hedging language ("may contain," "might contain," "possible," "could"), do NOT score materials above 5 based on that speculation alone. Only confirmed harmful packaging materials justify a high materials score.
 - Regular ibuprofen/Advil tablet (not packaging): materials=3, usage=3 (occasional ingestion) → final ~3
 - Standard paper coffee cup with plastic lid: materials=5 (PE lining leaches at heat), usage=5 (hot liquid ingestion) → final ~5
 - Conventional shampoo (SLS, synthetic fragrance, parabens): materials=5, usage=4 (rinse-off, daily) → final ~4-5
