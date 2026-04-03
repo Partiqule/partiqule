@@ -3448,7 +3448,51 @@ const products = [
     price:"$45-65",
     tags:["hoodie","kids jacket","kids outerwear","outerwear","children","toddler","organic cotton","GOTS","no azo dyes","layer","warm","kids sweater"]
   },
-  // ── WELLNESS & SUPPLEMENTS ───────────────────────────────────
+  {
+    id:"bk-016", name:"Andy Pandy Organic Bamboo Diapers", brand:"Andy Pandy",
+    plasticScore:2, category:"baby",
+    material:"Organic bamboo — no chlorine bleaching, no phthalates, no latex, fragrance-free",
+    description:"Organic bamboo diapers with no chlorine bleaching, no fragrance, no phthalates. Hypoallergenic and biodegradable. Safer for direct baby skin contact.",
+    affiliateUrl:`https://www.amazon.com/s?k=Andy+Pandy+organic+bamboo+diapers&tag=${AMAZON_TAG}`,
+    price:"$18-26",
+    tags:["diaper","diapers","baby diaper","organic diaper","bamboo diaper","chlorine free diaper","newborn","infant","toddler","training pants","pull up","pull-up","nappy","eco diaper"]
+  },
+  {
+    id:"bk-017", name:"Dyper Bamboo Diapers", brand:"Dyper",
+    plasticScore:2, category:"baby",
+    material:"Viscose from bamboo — no chlorine bleaching, no fragrance, no lotion, no latex",
+    description:"Bamboo-based diapers with no chlorine bleaching, no synthetic fragrance, no lotions. Compostable via their take-back program. Much lower chemical load than conventional diapers.",
+    affiliateUrl:`https://www.amazon.com/s?k=Dyper+bamboo+diapers&tag=${AMAZON_TAG}`,
+    price:"$20-30",
+    tags:["diaper","diapers","baby diaper","bamboo diaper","chlorine free","organic diaper","newborn","infant","eco diaper","compostable diaper","nappy","training pants"]
+  },
+  {
+    id:"bk-018", name:"Healthynest Organic Cotton Diapers", brand:"Healthynest",
+    plasticScore:2, category:"baby",
+    material:"Organic cotton top sheet — no chlorine bleaching, no fragrance, no phthalates, MADE SAFE certified",
+    description:"MADE SAFE certified diapers with organic cotton touching baby skin. No chlorine bleaching, no synthetic fragrance, no phthalates. Vetted ingredient list.",
+    affiliateUrl:`https://www.amazon.com/s?k=Healthynest+organic+cotton+diapers&tag=${AMAZON_TAG}`,
+    price:"$22-32",
+    tags:["diaper","diapers","baby diaper","organic cotton diaper","chlorine free","made safe","organic diaper","newborn","infant","nappy","training pants","pull up"]
+  },
+  {
+    id:"bk-019", name:"GroVia Hybrid Cloth Diaper", brand:"GroVia",
+    plasticScore:1, category:"baby",
+    material:"Organic cotton insert — reusable shell, no synthetic chemicals, no bleaching",
+    description:"Hybrid cloth diaper system with organic cotton inserts. Reusable shell, washable, no bleaching chemicals, no synthetic fragrances. Best long-term option for baby skin safety.",
+    affiliateUrl:`https://www.amazon.com/s?k=GroVia+hybrid+cloth+diaper&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["cloth diaper","reusable diaper","diaper","baby diaper","organic cotton","training pants","pull up","nappy","eco diaper","diaper alternative","natural diaper"]
+  },
+  {
+    id:"bk-020", name:"Esembly Organic Cotton Training Pants", brand:"Esembly",
+    plasticScore:1, category:"baby",
+    material:"GOTS-certified organic cotton — no synthetic materials touching skin, reusable",
+    description:"Organic cotton reusable training pants. No polypropylene, no chlorine bleaching, no superabsorbent polymers. The cleanest option for potty training skin contact.",
+    affiliateUrl:`https://www.amazon.com/s?k=Esembly+organic+training+pants&tag=${AMAZON_TAG}`,
+    price:"$20-30",
+    tags:["training pants","potty training pants","pull up","pull-up","training underwear","toddler underwear","organic cotton","diaper","baby","toddler","reusable training pants","cloth training pants"]
+  },
   {
     id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
     plasticScore:2, category:"food_beverage",

@@ -3144,6 +3144,7 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
+  const [childMode,   setChildMode]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
@@ -3325,7 +3326,7 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setModalQuery("");};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setModalQuery(""); setChildMode(false);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -3861,11 +3862,86 @@ function App() {
 
                 <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?22:28,fontWeight:700,color:text,margin:"0 0 24px",letterSpacing:"-0.5px",wordBreak:"break-word"}}>{result.product_name?.length > 60 ? result.product_name.slice(0,57)+"…" : result.product_name}</h2>
 
-                {/* Hero score */}
-                <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                  <ScoreArc score={result.overall_score||result.score}/>
-                </div>
-                <RiskBar score={result.overall_score||result.score}/>
+                {/* Hero score — swaps to child score when childMode active */}
+                {(() => {
+                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+                  return (<>
+                    <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
+                      <ScoreArc score={displayScore}/>
+                    </div>
+                    <RiskBar score={displayScore}/>
+
+                    {/* Child mode toggle */}
+                    <div style={{marginTop:14, marginBottom:4}}>
+                      <button
+                        onClick={() => setChildMode(m => !m)}
+                        style={{
+                          display:"flex", alignItems:"center", gap:8, margin:"0 auto",
+                          padding:"7px 16px", borderRadius:20,
+                          background: childMode ? "#052e16" : isDark ? "#1e2433" : "#f1f5f9",
+                          border: childMode ? "none" : `1px solid ${isDark?"#2a3347":"#e2e8f0"}`,
+                          cursor:"pointer", transition:"all 0.2s",
+                        }}>
+                        <span style={{fontSize:15}}>👶</span>
+                        <span style={{fontSize:12, fontWeight:700,
+                          color: childMode ? "#4ade80" : muted,
+                          letterSpacing:"0.03em",
+                        }}>
+                          {childMode ? "Viewing child safety score" : "Score for a child?"}
+                        </span>
+                        {/* Toggle pill */}
+                        <div style={{
+                          width:32, height:18, borderRadius:9,
+                          background: childMode ? "#16a34a" : isDark ? "#374151" : "#d1d5db",
+                          position:"relative", transition:"background 0.2s", flexShrink:0,
+                        }}>
+                          <div style={{
+                            position:"absolute", top:3, left: childMode ? 15 : 3,
+                            width:12, height:12, borderRadius:"50%", background:"white",
+                            transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.3)",
+                          }}/>
+                        </div>
+                      </button>
+
+                      {/* Child score explanation card */}
+                      {childMode && result.child_score && result.child_score !== (result.overall_score || result.score) && (
+                        <div style={{
+                          marginTop:12, background:isDark?"#1a2a1a":"#f0fdf4",
+                          border:"1.5px solid #16a34a44", borderRadius:12,
+                          padding:"12px 16px", textAlign:"left",
+                        }}>
+                          <div style={{fontSize:12, fontWeight:700, color:"#15803d", marginBottom:6, display:"flex", alignItems:"center", gap:6}}>
+                            <span>👶</span> Child safety score: {result.child_score}/10 vs {result.overall_score || result.score}/10 for adults
+                          </div>
+                          {(result.child_bumps || []).slice(0,2).map((b,i) => (
+                            <div key={i} style={{fontSize:11, color:isDark?"#86efac":"#166534", lineHeight:1.5, marginBottom:i < (result.child_bumps||[]).length-1 ? 4 : 0}}>
+                              · {b}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Auto-detected child product notice */}
+                      {result.is_child_product && !childMode && (
+                        <div style={{marginTop:10}}>
+                          <button
+                            onClick={() => setChildMode(true)}
+                            style={{
+                              width:"100%", padding:"8px 14px", borderRadius:10,
+                              background:isDark?"#1a2a1a":"#f0fdf4",
+                              border:"1px dashed #16a34a88",
+                              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+                            }}>
+                            <span style={{fontSize:13}}>👶</span>
+                            <span style={{fontSize:12, color:"#16a34a", fontWeight:600}}>
+                              This looks like a child's product — see child safety score
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>);
+                })()}
 
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
                 {(() => {
@@ -3892,6 +3968,10 @@ function App() {
                     if (/\b(for|with|in|of|from|using|added|used|based|concentration|coating|level)\b/.test(n)) return true;
                     return false;
                   };
+                  // Clean parenthetical hedges from substance names before displaying
+                  const cleanName = (name) => name
+                    .replace(/\s*\((presumed|potential|possible|suspected|unconfirmed|estimated|likely|may be present|trace)\)/gi, "")
+                    .trim();
 
                   const flagged = [];
                   const seen = new Set();
@@ -3932,9 +4012,11 @@ function App() {
                       <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
                         {flagged.slice(0, 8).map((f, i) => {
                           const st = sStyle(f.severity);
+                          const displayName = cleanName(f.name);
+                          if (!displayName || isGeneric(displayName)) return null;
                           return (
                             <span key={i} style={{fontSize:12, fontWeight:700, padding:"4px 11px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap"}}>
-                              {f.name}
+                              {displayName}
                             </span>
                           );
                         })}
@@ -3944,20 +4026,28 @@ function App() {
                 })()}
 
                 {/* Hero label */}
-                <div style={{marginBottom:16}}>
-                  <div style={{display:"inline-block",background:scoreBg(result.overall_score||result.score),color:scoreColor(result.overall_score||result.score),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>{scoreLabel(result.overall_score||result.score)} — {result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : result.category === "restaurant" ? "for restaurant food" : "Overall"}</div>
-                  <div style={{fontSize:11,color:muted,marginTop:2}}>
-                    {["food_beverage","restaurant","supplement"].includes(result.category)
-                      ? "Ingredients 50% · Packaging 20% · Exposure 20% · Sustainability 5% · Manufacturing 5%"
-                      : "Materials 35% · Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%"
-                    }
-                  </div>
-                </div>
+                {(() => {
+                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+                  const catLabel = result.category === "food_beverage" ? "for packaged food" : result.category === "personal_care" ? "for personal care" : result.category === "clothing" ? "for apparel" : result.category === "kitchen" ? "for kitchen products" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "home_furnishing" ? "for home furnishings" : result.category === "restaurant" ? "for restaurant food" : "Overall";
+                  return (
+                    <div style={{marginBottom:16}}>
+                      <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
+                        {scoreLabel(displayScore)} — {childMode && result.child_score ? "for children" : catLabel}
+                      </div>
+                      <div style={{fontSize:11,color:muted,marginTop:2}}>
+                        {["food_beverage","restaurant","supplement"].includes(result.category)
+                          ? "Ingredients 50% · Packaging 20% · Exposure 20% · Sustainability 5% · Manufacturing 5%"
+                          : "Materials 35% · Exposure 30% · Sustainability 20% · Packaging 10% · Manufacturing 5%"
+                        }
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Alt teaser — below hero label */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-                  const currentScore = result.overall_score || result.score;
+                  const currentScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
                   if (!topAlt || currentScore <= 3) return null;
                   const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
                   if (altS >= currentScore) return null;

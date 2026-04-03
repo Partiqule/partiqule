@@ -49,42 +49,44 @@ function cleanProductName(name) {
 function detectCategory(q) {
   const s = q.toLowerCase();
 
-  // Restaurant / fast food items — detected before category so we can handle separately
+  // ── ELECTRONICS — must come BEFORE food to prevent "Apple" matching apple fruit ──
+  if (/macbook|iphone|ipad|imac|apple watch|airpods|apple tv|apple mac|\bapple\s+(pro|air|mini|studio|ultra|m[0-9]|laptop|computer|phone|tablet|watch|earbuds|headphones)\b|samsung galaxy|samsung phone|samsung tablet|samsung tv|pixel phone|google pixel|android phone|windows laptop|dell laptop|hp laptop|lenovo thinkpad|surface pro|microsoft surface|chromebook|gaming laptop|nvidia|amd ryzen|intel core|\blaptop\b|\bsmartphone\b|\btablet\b(?!.*food)|\bdesktop computer\b|television|\b(4k|oled|qled)\s+tv\b|smart tv|monitor|keyboard|mouse\b(?!.*trap)|headphones|earbuds|airpods|bluetooth speaker|smart speaker|alexa|google home|ring doorbell|nest thermostat|robot vacuum|roomba|printer|camera(?!.*food)|drone|gaming console|playstation|xbox|nintendo switch|smart home|wifi router|hard drive|ssd|graphics card|cpu|motherboard|charger(?!.*food)|power bank|battery pack|electric vehicle|tesla|rivian|ev car/.test(s)) return "other";
+
+  // Restaurant / fast food items — detected before food category
   if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|fuzz.?s taco|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|dine brands/.test(s)) return "restaurant";
 
   // Clothing and textiles
   if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|sport band|watch band|wristband|strap|dress|skirt|shorts|tights|blazer|coat|glove|hat|scarf|beanie|swimsuit|bikini/.test(s)) return "clothing";
 
-  // Food and beverages — actual food items first (before packaging)
+  // Food and beverages — fruit regex uses word boundary to prevent Apple brand match
   if (
-    // Fruits and vegetables (fresh, canned, dried, frozen)
-    /apple|banana|orange|grape|berry|berries|strawberr|blueberr|raspberr|blackberr|cherry|cherries|mango|peach|pear|plum|prune|apricot|melon|watermelon|pineapple|kiwi|avocado|lemon|lime|tomato|potato|carrot|broccoli|spinach|kale|lettuce|onion|garlic|pepper|cucumber|zucchini|mushroom|corn|pea|bean|lentil|chickpea|edamame|beet|sweet potato|butternut|squash/.test(s) ||
+    // Fruits and vegetables — \bapple\b only, not "Apple MacBook"
+    /\bapple\s*(juice|sauce|cider|fruit|slices|pie|crisp|turnover)?\b(?!\s*(watch|pro|air|mini|mac|iphone|ipad|tv|music|card|store|arcade|one|silicon|chip|m[0-9]))/i.test(s) ||
+    /\b(banana|orange|grape|berry|berries|strawberr|blueberr|raspberr|blackberr|cherry|cherries|mango|peach|pear|plum|prune|apricot|melon|watermelon|pineapple|kiwi|avocado|lemon|lime|tomato|potato|carrot|broccoli|spinach|kale|lettuce|onion|garlic|pepper|cucumber|zucchini|mushroom|corn|pea|bean|lentil|chickpea|edamame|beet|sweet potato|butternut|squash)\b/.test(s) ||
     // Proteins
-    /chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop/.test(s) ||
+    /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop)\b/.test(s) ||
     // Dairy and alternatives
-    /milk|cheese|yogurt|yoghurt|butter|cream|ghee|kefir|cottage|ricotta|mozzarella|cheddar|parmesan|brie|almond milk|oat milk|soy milk|coconut milk/.test(s) ||
+    /\b(milk|cheese|yogurt|yoghurt|butter|cream|ghee|kefir|cottage|ricotta|mozzarella|cheddar|parmesan|brie|almond milk|oat milk|soy milk|coconut milk)\b/.test(s) ||
     // Grains, bread, pasta
-    /bread|bagel|muffin|croissant|tortilla|wrap|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal/.test(s) ||
-    // Snacks and candy
-    /chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|muffin|bar|snack|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|lollipops/.test(s) ||
+    /\b(bread|bagel|muffin|croissant|tortilla|wrap|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
+    // Snacks and candy — "bar" now requires food context
+    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop)\b/.test(s) ||
     // Drinks
-    /juice|soda|cola|pepsi|coke|sprite|water|sparkling|tea|coffee|espresso|latte|smoothie|shake|milk|kombucha|energy drink|red bull|redbull|monster energy|rockstar energy|bang energy|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout/.test(s) ||
+    /\b(juice|soda|cola|pepsi|coke|sprite|sparkling water|tea|coffee\s*(beans|grounds|pods|drink|latte|espresso)|smoothie|shake|kombucha|energy drink|red bull|redbull|monster energy|rockstar energy|bang energy|sports drink|gatorade|powerade|lemonade|beer|wine|cider|whiskey|vodka|rum|gin|tequila|champagne|ale|lager|stout)\b/.test(s) ||
     // Condiments, sauces, spreads
-    /ketchup|mustard|mayo|mayonnaise|sauce|salsa|dressing|vinegar|oil|olive oil|honey|jam|jelly|peanut butter|almond butter|nutella|syrup|hot sauce|sriracha|soy sauce|teriyaki|bbq|hummus|tahini|guacamole|pesto|marinara|gravy/.test(s) ||
-    // Packaged and processed food
-    /soup|broth|stock|stew|chili|curry|ramen|instant|frozen meal|tv dinner|canned|can of|tin of|jar of|box of|bag of|pack of|packet of|organic food|protein powder|protein bar|energy bar|nutrition bar|meal prep|baby food|infant food/.test(s) ||
-    // Food containers that imply food content
-    /bottle|wrap|bag|container|tupperware|plastic bag|food storage|water bottle|cup|straw|ziploc|ziplock|sandwich bag|freezer bag|glad|saran|cling|food wrap|k-cup|keurig|tea bag|styrofoam|disposable/.test(s)
+    /\b(ketchup|mustard|mayo|mayonnaise|salsa|dressing|vinegar|olive oil|honey|jam|jelly|peanut butter|almond butter|nutella|syrup|hot sauce|sriracha|soy sauce|teriyaki|bbq sauce|hummus|tahini|guacamole|pesto|marinara|gravy)\b/.test(s) ||
+    // Packaged and processed food — more specific
+    /\b(soup|broth|stock|stew|chili|curry|ramen|instant noodle|frozen meal|tv dinner|canned food|protein powder|whey protein|meal prep|baby food|infant formula|food)\b/.test(s)
   ) return "food_beverage";
 
   // Personal care
   if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf/.test(s)) return "personal_care";
 
   // Kitchen and cleaning
-  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic|kitchen|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt/.test(s)) return "kitchen";
+  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic.*pan|kitchen|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt/.test(s)) return "kitchen";
 
   // Baby
-  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|formula|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet/.test(s)) return "baby";
+  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet/.test(s)) return "baby";
 
   // Supplements and vitamins
   if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|tablet|gummy vitamin/.test(s)) return "supplement";
@@ -382,6 +384,67 @@ function computeScore(mScore, uScore, pkScore, sScore, mfScore, category) {
       Math.round(mScore*0.35 + uScore*0.30 + sScore*0.20 + pkScore*0.10 + mfScore*0.05)
     ));
   }
+}
+
+// ── CHILD VULNERABILITY SYSTEM ───────────────────────────────
+// Children have thinner skin, developing organ systems, lower body weight
+// (higher dose per kg), and consume/wear products daily for years.
+// Two layers: automatic detection for obvious child products,
+// and a client-side toggle for any product.
+
+const CHILD_PRODUCT_PATTERNS = /\b(kids?|children'?s?|child|baby|babies|toddler|infant|newborn|nursery|junior|jr\b|boys?|girls?|youth|pediatric|little ones?)\b/i;
+
+const CHILD_FOOD_BRANDS = /froot loops|fruit loops|lucky charms|cocoa puffs|count chocula|trix cereal|apple jacks|honey smacks|captain crunch|cap'n crunch|cheerios|honey nut cheerios|cinnamon toast crunch.*kids|kix cereal|cocoa krispies|rice krispies treats|gushers|fruit by the foot|lunchables|go-gurt|squeeze applesauce|pediasure|gerber|beech.?nut|happy baby|earth's best/i;
+
+// Substances with specific child developmental concerns — higher weight than adult scoring
+const CHILD_CONCERN_SUBSTANCES = [
+  { match: /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|titanium dioxide|petroleum dye|artificial.*color|artificial.*dye/i, bump: 2, reason: "Petroleum dyes linked to childhood ADHD and hyperactivity (McCann et al., Lancet 2007) — children are uniquely vulnerable" },
+  { match: /glyphosate/i,                          bump: 1, reason: "EWG child-specific glyphosate threshold is lower than adult — body weight adjustment means children receive higher effective dose" },
+  { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i,        bump: 2, reason: "PFAS disrupts immune and hormone development in children — CDC flagged as priority child health concern" },
+  { match: /phthalate|DEHP|DBP/i,                  bump: 2, reason: "Phthalates disrupt reproductive development — most critical during early childhood (Swan 2021)" },
+  { match: /flame retardant|PBDE|TCEP|TDCPP/i,     bump: 2, reason: "Flame retardant neurotoxicity disproportionately affects developing brains (Stapleton 2011)" },
+  { match: /synthetic fragrance|artificial fragrance/i, bump: 1, reason: "Children's developing endocrine systems are more sensitive to fragrance chemicals and phthalates" },
+  { match: /formaldehyde|DMDM hydantoin/i,          bump: 1, reason: "Formaldehyde exposure more concerning for developing respiratory systems" },
+  { match: /parabens?|methylparaben|propylparaben/i, bump: 1, reason: "Parabens disrupt hormones — developing endocrine systems more vulnerable" },
+  { match: /bisphenol|BPA|BPS/i,                   bump: 2, reason: "BPA/BPS endocrine disruption most harmful during developmental windows in childhood" },
+  { match: /chlorine.*bleach|chlorine.*pulp|dioxin/i, bump: 1, reason: "Chlorine bleaching byproducts (dioxins) have child-specific developmental endpoints" },
+  { match: /polypropylene.*liner|polyester.*skin|synthetic.*liner/i, bump: 1, reason: "Synthetic materials in direct contact with sensitive baby skin — higher absorption rate" },
+];
+
+function computeChildScore(baseScore, concernsText, category, productName, isChildProduct) {
+  if (!isChildProduct) return { childScore: null, childBumps: [] };
+
+  let bump = 0;
+  const bumps = [];
+
+  // Always add +1 for child product — developing systems baseline
+  bump += 1;
+  bumps.push("Children's developing organ systems require more protective thresholds than adult scoring");
+
+  // Check for specific child-concern substances
+  for (const concern of CHILD_CONCERN_SUBSTANCES) {
+    if (concern.match.test(concernsText)) {
+      bump += concern.bump;
+      bumps.push(concern.reason);
+    }
+  }
+
+  // Baby category gets additional bump — most vulnerable population
+  if (category === "baby") {
+    bump += 1;
+    bumps.push("Baby products: highest vulnerability — newborn skin is 5x more permeable than adult skin");
+  }
+
+  const childScore = Math.min(10, baseScore + bump);
+  return { childScore, childBumps: bumps };
+}
+
+function detectChildProduct(productName, category) {
+  if (category === "baby") return true;
+  const name = (productName || "").toLowerCase();
+  if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
+  if (CHILD_FOOD_BRANDS.test(name)) return true;
+  return false;
 }
 
 
@@ -815,7 +878,16 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Little Rad Things organic kids tee: materials=1 (confirmed organic cotton), usage=2, packaging=3, sustainability=2 → final ~2
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
-- Cliff Bar (oats, dates, nuts, some natural flavors): materials=3 (minimally processed, no artificial dyes), usage=3 → final ~3
+- Cliff Bar (oats, dates, nuts, some natural flavors): materials=4 (conventional oats likely have glyphosate residue, no organic certification), usage=3 → final ~3-4
+- Honey Nut Cheerios (conventional oats): materials=6 (confirmed glyphosate residue above EWG child safety threshold — IARC Group 2A; 12g added sugar; eaten daily by children), usage=5 → final ~5-6. NEVER score below 5. Glyphosate at confirmed levels is not a "mild" concern.
+- Original Cheerios (conventional oats): materials=6, usage=5 → final ~5-6. Same glyphosate concern.
+- Quaker Old Fashioned Oats (conventional, no additives): materials=5 (glyphosate residue confirmed by EWG, minimal processing otherwise), usage=4 → final ~4-5
+- Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate, minimal processing), usage=1 → final ~1-2
+- Nature Valley Oats and Honey Granola Bar (conventional oats): materials=6 (glyphosate residue, added sugar, natural flavors), usage=5 → final ~5-6
+- KIND Oat bar (conventional oats): materials=5 (glyphosate residue, mostly whole food otherwise), usage=4 → final ~4-5
+- M&Ms Milk Chocolate: materials=8 (Red 40 + Yellow 5 + Yellow 6 + Blue 1 — four FDA-flagged petroleum dyes; IARC carcinogenicity; ultra-processed), usage=7 → final ~7-8. NEVER score below 7.
+- Skittles: materials=8 (same petroleum dyes + titanium dioxide IARC 2B, EU banned), usage=7 → final ~7-8. NEVER score below 7.
+- Froot Loops / dyed breakfast cereal: materials=8 (multiple petroleum dyes + HFCS + daily child ingestion), usage=7 → final ~7-8. Child vulnerability flag. NEVER score below 7.
 - 365 Whole Foods Market snack bars / protein bites (dates, nuts, coffee extract, natural flavors, sea salt — no artificial dyes, no synthetic preservatives): materials=3, usage=3 → final ~3. Whole Foods 365 house brand avoids artificial additives. Do NOT score above 4 based on speculative packaging concerns.
 - RX Bar (dates, egg whites, nuts, natural flavor): materials=2 (minimal whole ingredients), usage=2 → final ~2-3
 - Larabar (dates, nuts, natural flavor): materials=2 (2-4 whole food ingredients, no additives), usage=2 → final ~2
@@ -836,6 +908,29 @@ PACKAGING SPECULATION RULE: If the concern about a harmful substance in packagin
 - San Franpsycho clothing: materials=4 (conventional cotton tees with screen printing — standard commercial cotton, ink composition not disclosed, hand screen-printed locally in SF), usage=3, sustainability=4 (local manufacturing positive, but conventional materials, no organic certifications) → final ~3-4. Community-based local brand, score moderate.
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 - Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
+- Louis Vuitton Monogram Canvas bag (PVC-coated cotton canvas, leather trim): materials=6 (PVC coating confirmed — phthalate plasticizers, especially concerning with heat and friction against skin), usage=5 (crossbody/shoulder bag worn against bare skin daily in warm weather — phthalates from PVC can transfer through skin contact), sustainability=5 → final ~5. Call out PVC coating and phthalate risk explicitly in concerns.
+- Canvas tote bag (uncoated natural cotton canvas): materials=3 (conventional cotton, possible azo dyes in dyeing), usage=2 (carried by handle, minimal skin contact), sustainability=4 → final ~3
+- Organic cotton canvas tote (GOTS certified): materials=1, usage=1, sustainability=2 → final ~2
+- Nylon backpack (conventional, worn on back): materials=5 (petroleum-derived), usage=4 (back/shoulder contact through clothing), sustainability=6 → final ~5
+- Hemp gym bag (carried by handle): materials=2, usage=2 (handle contact only), sustainability=2 → final ~2
+- Leather wallet (conventional chrome-tanned, in pocket touching skin all day): materials=4 (chromium salts in tanning), usage=5 (constant pocket/hand contact, heat from body), sustainability=5 → final ~4-5
+- Leather handbag (vegetable-tanned): materials=2, usage=3, sustainability=3 → final ~2-3
+
+BAG AND COATING USAGE RULES — score usage based on ACTUAL contact pattern:
+- Crossbody/shoulder bag worn against bare skin daily in summer: usage 5-6 (sustained skin contact, heat accelerates chemical transfer from coatings)
+- Backpack worn on back over clothing: usage 3-4 (skin contact mediated by clothing)
+- Handbag carried by handle: usage 2-3 (hand contact only, intermittent)
+- Wallet in pants pocket all day: usage 5 (constant body heat, prolonged contact)
+- Luggage/suitcase handled occasionally: usage 1-2 (minimal contact)
+- Gym bag carried by handle to gym: usage 2 (brief handle contact only)
+
+BAG AND COATING MATERIAL RULES:
+- PVC-coated canvas (Louis Vuitton Monogram, many designer bags): materials 6-7 — PVC coating confirmed to contain phthalate plasticizers, especially DEHP. Flagged as high concern in EU REACH. Always name "PVC coating" and "phthalate plasticizers (DEHP class)" in concerns.
+- Uncoated cotton/canvas: materials 3-4 (conventional dyes) or 1-2 (organic/undyed)
+- Full-grain leather (vegetable-tanned): materials 2
+- Full-grain leather (chrome-tanned): materials 4 (Cr(III) tanning, flag potential Cr(VI) contamination)
+- Nylon/polyester exterior: materials 5 (microfiber shedding, petroleum-derived)
+- "PFAS-treated" or "water-resistant" without explicit PFAS-free certification: materials +2 (flag PFAS DWR)
 - Glass pour-over coffee maker (borosilicate glass, ceramic, stainless): materials=1 (inert, no leaching at any temperature), usage=2 (daily use but zero chemical exposure — hot water through glass is safe), packaging=2, sustainability=2 → final ~2. Glass and ceramic coffee equipment should ALWAYS score 1-2 on materials. NEVER score glass or ceramic above 3 on materials.
 - Stainless steel water bottle or coffee thermos: materials=1 (food-grade 18/8 stainless, inert), usage=1, packaging=2, sustainability=1 → final ~1-2
 - French press (borosilicate glass + stainless): materials=1, usage=2, sustainability=2 → final ~1-2
@@ -924,10 +1019,32 @@ supplement: tier1=whole_food_derived, tier2=conventional, tier3=synthetic_formul
 home_furnishing: tier1=natural_materials, tier2=conventional, tier3=synthetic_foam, tier4=chemical_treated
 
 FOOD (food_beverage) CONCERNS:
-HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hyperactivity/ADHD), Blue 1/2 (neurotoxin), Titanium dioxide (IARC 2B, EU banned), BHA/BHT (IARC 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 processed meat), Trans fats (cardiovascular), HFCS (metabolic disease)
+HIGH: Red 40/Red 3 (FDA banned/phasing out, carcinogenicity), Yellow 5/6 (hyperactivity/ADHD), Blue 1/2 (neurotoxin), Titanium dioxide (IARC 2B, EU banned), BHA/BHT (IARC 2B carcinogen), Sodium nitrate/nitrite (IARC Group 1 processed meat), Trans fats (cardiovascular), HFCS (metabolic disease), Glyphosate residue in conventional oats/grain products (IARC Group 2A — EWG confirmed above safety threshold in Cheerios, Quaker, Nature Valley)
 MEDIUM: Aspartame (IARC 2B 2023), Sucralose (gut microbiome), Acesulfame-K (animal carcinogen), Carrageenan (intestinal inflammation), Sodium benzoate (benzene risk), TBHQ (immunotoxin), Caramel color IV (4-MEI carcinogen), Natural flavors (undisclosed chemicals), Carmine E120 (allergic reactions)
 LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
-FOOD TIER SCORE IMPACT: Ultra-processed + 3+ HIGH = materials 8-9, final 7+. Ultra-processed + 1-2 HIGH = materials 7-8, final 6-7. Ultra-processed + MEDIUM = materials 5-7, final 5-6. Processed, no synthetics = 3-4. Whole/minimal = 1-2. Child food with dyes = vulnerable flag + materials min 8.
+FOOD TIER SCORE IMPACT:
+- Ultra-processed + 3+ HIGH concerns (multiple dyes, nitrates, BHA): materials 8-9, final 7-8
+- Ultra-processed + 1-2 HIGH concerns (petroleum dyes OR confirmed glyphosate OR BHA/BHT): materials 7-8, final 6-7
+- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 5-6, final 5-6. Glyphosate is IARC 2A — treat same severity as BHA/BHT, not as a mild concern.
+- Conventional produce with pesticide load (Dirty Dozen): materials 4-5, final 4-5
+- Processed with MEDIUM concerns only: materials 4-5, final 4-5
+- Processed, minimal synthetics (Cliff Bar, Kind bar without glyphosate confirmation): materials 3-4, final 3-4
+- Whole food / minimally processed / organic certified: materials 1-2, final 1-3
+- Child food with ANY dyes: vulnerable flag + materials minimum 8, final minimum 7
+FOREVER CHEMICAL RULE: Any food product with confirmed PFAS, glyphosate above safety threshold, or IARC Group 1/2A carcinogen in the ingredients is NEVER safe to call "Safe" (score 1-2). Minimum final score 4 for any confirmed carcinogen-class substance at measurable levels.
+
+CONVENTIONAL OATS AND GRAIN PRODUCTS — GLYPHOSATE RULE:
+Glyphosate is used as a pre-harvest desiccant on conventional oats, wheat, and other grains — sprayed directly on crops right before harvest to accelerate drying. This results in confirmed glyphosate residue in the final food product. EWG testing confirmed glyphosate above their safety threshold in:
+- Honey Nut Cheerios, original Cheerios, and other General Mills oat cereals
+- Quaker oatmeal and Quaker granola bars
+- Nature Valley granola bars and oat products
+- Most conventional (non-organic) oat-based breakfast cereals, granola bars, and oatmeal
+
+For ANY conventional oat-based food product (cereal, granola, oatmeal, granola bar) that is NOT certified USDA Organic:
+- Flag "glyphosate residue (conventional oats)" as a HIGH concern
+- This raises materials score to minimum 4-5
+- Honey Nut Cheerios: materials=5 (conventional oats with confirmed glyphosate above EWG threshold, added sugar 12g/serving), usage=4 → final ~4-5. NOT a 2. The absence of artificial dyes does not make a product with confirmed glyphosate residue safe.
+- Organic oat products: flag as positive — USDA Organic prohibits glyphosate use
 
 PESTICIDE CONCERNS — EWG 2026 Dirty Dozen (flag when product IS or CONTAINS conventional versions of these):
 HIGH severity pesticide concern (type="pesticide"): Conventional spinach (most pesticide residues by weight — EWG 2026, PFAS pesticides detected), Conventional strawberries, Conventional kale/collard/mustard greens (cancer-causing pesticides in 50%+ samples), Conventional grapes, Conventional nectarines, Conventional peaches, Conventional cherries, Conventional apples, Conventional blackberries (new 2026 — 4+ pesticides per sample), Conventional blueberries, Conventional pears, Conventional potatoes (90% had chlorpropham — banned in EU), Conventional green beans (highest toxicity flagged by EWG), Conventional bell/hot peppers (highest toxicity flagged by EWG)
@@ -1067,17 +1184,20 @@ Always name the SPECIFIC chemical, not a generic category. These rules apply to 
 - If you are uncertain whether a substance is present, use hedging in the reason field but still name the specific substance: "BHT — listed as preservative in some formulations; verify on label"
 - Packaging speculation: if packaging MAY contain a harmful substance, write it as: "packaging may contain [specific substance] — unconfirmed" with severity "low", NOT as a high/medium concern
 
-AI ALTERNATIVES — same-use, same-function rule:
-Alternatives MUST serve the same purpose and function as the scanned product. Never suggest a different product type.
-- Kids jacket → suggest kids jacket alternatives (organic cotton, PFAS-free, recycled)
-- Kids pajamas → suggest kids pajama alternatives
-- Leggings → suggest leggings alternatives (not a t-shirt)
-- Sunscreen → suggest sunscreen alternatives (not a hat)
-- Shampoo → suggest shampoo alternatives (not conditioner)
-- Frying pan → suggest frying pan alternatives (not a baking sheet)
-For CLOTHING: always specify the material (organic cotton, recycled polyester PFAS-free, wool, linen) and whether it is GOTS, OEKO-TEX, or bluesign certified. Name real brands when you know them — Patagonia, Hanna Andersson, Pact, Frugi, Toad&Co, prAna, Cotopaxi.
-For KIDS clothing specifically: confirm the alternative is appropriate for children (no adult sizing, safe dyes, no flame retardants unless labeled FR-free snug fit).
-estimated_score must reflect the same scoring framework — organic cotton kids jacket = 2, PFAS-free recycled fleece = 3, conventional synthetic = 5-6.
+AI ALTERNATIVES — same-use, same-function rule — CRITICAL:
+Alternatives MUST serve the same purpose as the scanned product. Cross-category suggestions are STRICTLY FORBIDDEN:
+- Diapers / training pants → ONLY suggest other diapers, training pants, or cloth diaper alternatives. NEVER suggest cookware, clothing, food, or any other category.
+- Baby skincare → ONLY suggest other baby skincare products
+- Kids jacket → ONLY suggest kids jackets or outerwear
+- Sunscreen → ONLY suggest other sunscreens
+- Shampoo → ONLY suggest other shampoos or hair care
+- Frying pan → ONLY suggest other pans or cookware
+- Food product → ONLY suggest similar food products in the same category
+If you cannot think of a same-category alternative, say so with estimated_score: null rather than suggesting something from a different category.
+For BABY DIAPERS and TRAINING PANTS specifically: always suggest organic bamboo diapers (Andy Pandy, Dyper, Healthynest), cloth diapers (GroVia, Esembly, Thirsties), or organic cotton training pants. NEVER suggest cookware, clothing items, or food as alternatives.
+For CLOTHING: always specify the material and certification. Name real brands.
+For KIDS clothing: confirm the alternative is appropriate for children.
+estimated_score must reflect the same scoring framework.
 Respond with ONLY the JSON object above — no text before or after it.
 `,
     3000
@@ -1152,9 +1272,15 @@ CALIBRATION — use these as anchors:
 - Doritos / flavored chips: final score ~6-7 — artificial flavors, MSG, synthetic dyes in some varieties
 - Whole fresh fruit or vegetables: final score ~1
 - Organic whole food snack (no synthetic additives): final score ~1-2
-- Gatorade (artificial dyes, sucrose): final score ~5
+- Gatorade (artificial dyes, sucrose): final score ~5-6
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
-- Cliff Bar / minimally processed energy bar: final score ~3
+- Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
+- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~5-6 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 5. Flag "glyphosate residue (conventional oats — EWG confirmed, IARC Group 2A)" as HIGH concern.
+- Quaker oats / Quaker granola bars (conventional): final score ~4-5 — glyphosate residue confirmed, but simpler ingredients
+- Bob's Red Mill Organic Oats: final score ~1-2 — USDA organic, no glyphosate
+- M&Ms: final score ~7-8 — NEVER score below 7. Four petroleum dyes all FDA-flagged/phasing out. Ultra-processed. Flag all four dyes by name.
+- Skittles: final score ~7-8 — NEVER score below 7. Same dyes plus titanium dioxide (IARC 2B, EU banned in food).
+- Froot Loops / dyed kids cereal (multiple petroleum dyes + HFCS + daily child consumption): final score ~7-8 — NEVER score below 7. Child vulnerability flag.
 - Crayola paraffin crayons: final score ~3-4
 - Stockmar beeswax crayons: final score ~1-2
 - Standard PVC yoga mat: final score ~6
@@ -1162,6 +1288,10 @@ CALIBRATION — use these as anchors:
 - Conventional tampons/pads (Always/Tampax): final score ~6
 - Organic cotton tampons/pads: final score ~2
 - Menstrual cup: final score ~1
+- Conventional disposable diaper (Pampers, Huggies, Luvs): final score ~7 — polypropylene liner (direct skin contact), chlorine-bleached pulp (dioxin byproducts), superabsorbent sodium polyacrylate polymer, synthetic fragrance in some. Baby vulnerable population flag applies. NEVER score below 6.
+- Organic bamboo diaper (Andy Pandy, Dyper, Healthynest): final score ~3 — no chlorine bleaching, no synthetic fragrance, bamboo-derived materials. Much safer for daily baby skin contact.
+- Cloth diaper (organic cotton, GroVia, Esembly): final score ~1-2 — reusable, no bleaching, no SAP polymers, organic cotton touching skin.
+- Conventional training pants (Pampers Easy Ups, Huggies Pull-Ups): final score ~7 — same materials as conventional diapers, daily direct genital contact with developing baby skin. Always flag polypropylene liner, chlorine bleaching, and superabsorbent polymer.
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
 - Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
 - Standard Advil/Tylenol: final score ~3
@@ -1254,6 +1384,11 @@ app.post("/analyze", async (req, res) => {
         uScore = Math.min(uScore, 3);
       }
 
+      // ── Usage/label contradiction ceiling ──
+      const imgUsageLabel = (p1.usage_exposure?.label || "").toLowerCase();
+      const imgLowExposure = /low exposure|minimal exposure|low.*contact risk|no direct.*contact|no.*ingestion risk/.test(imgSummary + " " + imgUsageLabel);
+      if (imgLowExposure && uScore > 4) uScore = Math.min(uScore, 4);
+
       if (category === "restaurant") {
         const rname = (p1.product_name || productName).toLowerCase();
         const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(rname);
@@ -1281,8 +1416,21 @@ app.post("/analyze", async (req, res) => {
       const result = {
         product_name: productName, category,
         score: finalScore,
+        overall_score: finalScore,
         summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
+        // ── Child vulnerability ──
+        ...(() => {
+          const isChild = detectChildProduct(productName, category);
+          const imgConcernsText = JSON.stringify([
+            ...(p1.product_analysis?.concerns || []),
+            ...(p1.materials?.concerns || []),
+            ...(p2?.refined_concerns || []),
+            ...(p1.raw_concerns || []),
+          ]).toLowerCase();
+          const { childScore, childBumps } = computeChildScore(finalScore, imgConcernsText, category, productName, isChild);
+          return { is_child_product: isChild, child_score: childScore, child_bumps: childBumps };
+        })(),
         identified_plastics: p1.identified_plastics || [],
         harmful_chemicals:   p1.harmful_chemicals   || [],
         natural_materials:   p1.natural_materials   || [],
@@ -1417,6 +1565,14 @@ app.post("/analyze", async (req, res) => {
       uScore = Math.min(uScore, 3);
     }
 
+    // ── Usage/label contradiction ceiling ──
+    // If AI explicitly labels exposure as low but scored usage high, cap it
+    const usageLabel = (p1.usage_exposure?.label || "").toLowerCase();
+    const lowExposureLabel = /low exposure|minimal exposure|low.*contact risk|no direct.*contact|no.*ingestion risk/.test(hasSummary + " " + usageLabel);
+    if (lowExposureLabel && uScore > 4) {
+      uScore = Math.min(uScore, 4);
+    }
+
     // ── Restaurant dimension floors — soft safety nets only, let AI lead ──
     if (finalCategory === "restaurant") {
       const rname = (p1.product_name || productName).toLowerCase();
@@ -1488,9 +1644,26 @@ app.post("/analyze", async (req, res) => {
     const result = {
       product_name:     cleanProductName(p1.product_name || productName),
       score:            finalScore,
+      overall_score:    finalScore,
       summary:          p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
       concerns:         p2?.refined_concerns || p1.raw_concerns || [],
       category:         finalCategory,
+      // ── Child vulnerability ──
+      ...(() => {
+        const isChild = detectChildProduct(p1.product_name || productName, finalCategory);
+        const concernsText = JSON.stringify([
+          ...(p1.product_analysis?.concerns || []),
+          ...(p1.materials?.concerns || []),
+          ...(p2?.refined_concerns || []),
+          ...(p1.raw_concerns || []),
+        ]).toLowerCase();
+        const { childScore, childBumps } = computeChildScore(finalScore, concernsText, finalCategory, p1.product_name || productName, isChild);
+        return {
+          is_child_product: isChild,
+          child_score:      childScore,
+          child_bumps:      childBumps,
+        };
+      })(),
       // ── 5 dimensions ──
       dimensions: {
         materials: {
