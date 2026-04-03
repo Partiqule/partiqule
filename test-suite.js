@@ -143,6 +143,18 @@ const TESTS = [
     minScore: 1, maxScore: 3,
     note: "No PTFE/PFAS — should score 1-3"
   },
+  {
+    product: "Pure Over glass pour-over coffee maker",
+    minScore: 1, maxScore: 3,
+    category: "kitchen",
+    note: "Borosilicate glass + ceramic — inert at all temps, must never score 5+"
+  },
+  {
+    product: "glass French press coffee maker",
+    minScore: 1, maxScore: 3,
+    category: "kitchen",
+    note: "Glass and stainless — inert materials, must score 1-3"
+  },
 ];
 
 // ── TEST RUNNER ───────────────────────────────────────────────

@@ -713,7 +713,7 @@ FOOD CONTACT PACKAGING — penalize heavily, chemicals leach into food:
 - Plastic directly touching food (plastic wrap, plastic bottles, canned food with BPA liner, plastic-lined cups): packaging score 7-9.
 - Aluminum cans (BPA-free lined): packaging score 4-5.
 - Glass, stainless, cardboard touching food: packaging score 1-2.
-- Hot liquid in plastic (coffee cups, plastic takeout containers): packaging score 7-8 — heat accelerates leaching.
+- Hot liquid in plastic (plastic coffee cups, plastic takeout containers, plastic water bottles with hot liquid): packaging score 7-8 — heat accelerates leaching. This rule ONLY applies to plastic. Glass, stainless, and ceramic with hot liquids score 1-2 — they are inert at all temperatures.
 OUTER PACKAGING — does not touch food, penalize less:
 - Recycled cardboard, paper, compostable outer packaging: score 1-2 even for food products.
 - Virgin plastic outer packaging (cereal bags, chip bags): score 5-6.
@@ -810,6 +810,11 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - San Franpsycho clothing: materials=4 (conventional cotton tees with screen printing — standard commercial cotton, ink composition not disclosed, hand screen-printed locally in SF), usage=3, sustainability=4 (local manufacturing positive, but conventional materials, no organic certifications) → final ~3-4. Community-based local brand, score moderate.
 - Non-stick frying pan (PTFE): materials=9, usage=7, packaging=2, sustainability=3 → final ~7
 - Caraway/GreenPan ceramic pan (no PTFE/PFAS): materials=2, usage=2, packaging=2, sustainability=3 → final ~2
+- Glass pour-over coffee maker (borosilicate glass, ceramic, stainless): materials=1 (inert, no leaching at any temperature), usage=2 (daily use but zero chemical exposure — hot water through glass is safe), packaging=2, sustainability=2 → final ~2. Glass and ceramic coffee equipment should ALWAYS score 1-2 on materials. NEVER score glass or ceramic above 3 on materials.
+- Stainless steel water bottle or coffee thermos: materials=1 (food-grade 18/8 stainless, inert), usage=1, packaging=2, sustainability=1 → final ~1-2
+- French press (borosilicate glass + stainless): materials=1, usage=2, sustainability=2 → final ~1-2
+- AeroPress (BPA-free copolyester or polypropylene): materials=4 (plastic in contact with hot water), usage=4 (daily hot liquid contact), packaging=2 → final ~3-4
+- Standard drip coffee maker (plastic water reservoir + heating element): materials=5 (plastic parts contact hot water daily), usage=5 (daily ingestion risk from plastic leaching) → final ~5
 - Conventional spinach (Dirty Dozen #1): materials=5 (pesticide load including PFAS pesticides, EWG 2026), usage=4 → final ~4 — note: still a healthy food, flag concern but don't over-score
 - Poppi Prebiotic Soda: materials=3 (apple cider vinegar, fruit juice, stevia — no artificial dyes, no HFCS), usage=3 (daily ingestion, low sugar, prebiotic benefit), packaging=4 (aluminum can) → final ~3. Do NOT score above 4.
 - Olipop: materials=2 (plant fiber, prebiotics, natural flavors — no artificial dyes, no HFCS), usage=2, packaging=4 → final ~2-3. Do NOT score above 4.
@@ -1089,6 +1094,9 @@ CALIBRATION — use these as anchors:
 - Organic cotton tee: final score ~1-2
 - PTFE non-stick pan: final score ~7-8
 - Ceramic pan (Caraway/GreenPan): final score ~2
+- Glass pour-over / French press / glass coffee maker (borosilicate glass, ceramic, stainless parts): final score ~2 — glass and ceramic are inert at all temperatures. NEVER score glass or ceramic kitchen products above 3 on materials. Hot water through glass has zero leaching risk.
+- Stainless steel water bottle or coffee thermos: final score ~1-2
+- Standard plastic drip coffee maker (plastic reservoir contacts hot water): final score ~5 (daily plastic + hot water contact)
 - Neutrogena chemical sunscreen: final score ~7 (oxybenzone bloodstream absorption)
 - Badger mineral sunscreen: final score ~2 (zinc oxide only)
 - Conventional dryer sheets (Bounce): final score ~5-6 (synthetic VOCs daily skin contact)
@@ -1191,6 +1199,18 @@ app.post("/analyze", async (req, res) => {
       uScore = imgSubstance.uScore;
       if (imgSubstance.triggered.length > 0) {
         console.log(`Image path substance floors: ${imgSubstance.triggered.join(", ")}`);
+      }
+
+      // ── Inert material ceiling ──
+      const imgAllText = JSON.stringify([p1.natural_materials||[], p1.materials||{}, p2||{}]).toLowerCase();
+      const imgSummary = (p1.summary||"").toLowerCase();
+      const imgIsInert = /borosilicate|inert glass|inert ceramic|stainless steel|cast iron|glass.*ceramic|ceramic.*glass/.test(imgAllText + " " + imgSummary);
+      if (imgIsInert && mScore > 3) {
+        mScore = Math.min(mScore, 3);
+      }
+      const imgNoLeach = /no leach|zero leach|inert.*no.*risk|glass.*safe|ceramic.*safe/.test(imgAllText + " " + imgSummary);
+      if (imgIsInert && imgNoLeach && uScore > 3) {
+        uScore = Math.min(uScore, 3);
       }
 
       if (category === "restaurant") {
@@ -1345,6 +1365,20 @@ app.post("/analyze", async (req, res) => {
     uScore = substanceResult.uScore;
     if (substanceResult.triggered.length > 0) {
       console.log(`Substance floors triggered: ${substanceResult.triggered.join(", ")}`);
+    }
+
+    // ── Inert material ceiling — glass/ceramic/stainless cannot score high on materials ──
+    const allText = JSON.stringify([p1.natural_materials||[], p1.materials||{}, p2||{}]).toLowerCase();
+    const hasSummary = (p1.summary||"").toLowerCase();
+    const isInert = /borosilicate|inert glass|inert ceramic|stainless steel|cast iron|glass.*ceramic|ceramic.*glass/.test(allText + " " + hasSummary);
+    if (isInert && mScore > 3) {
+      console.log(`Inert material ceiling applied — capping mScore from ${mScore} to 3`);
+      mScore = Math.min(mScore, 3);
+    }
+    // Usage ceiling for inert materials — hot water through glass has zero leaching risk
+    const noLeach = /no leach|zero leach|inert.*no.*risk|glass.*safe|ceramic.*safe/.test(allText + " " + hasSummary);
+    if (isInert && noLeach && uScore > 3) {
+      uScore = Math.min(uScore, 3);
     }
 
     // ── Restaurant dimension floors — soft safety nets only, let AI lead ──
