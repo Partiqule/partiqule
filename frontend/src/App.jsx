@@ -3891,10 +3891,10 @@ function App() {
                   const currentScore = result.overall_score || result.score;
                   if (!topAlt || currentScore <= 3) return null;
                   const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
-                  if (altS >= currentScore) return null; // don't show if not actually better
+                  if (altS >= currentScore) return null;
                   return (
                     <button
-                      onClick={()=>setShowAlts(true)}
+                      onClick={()=> isMobile ? setShowAlts(true) : document.getElementById("desktop-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
                       style={{width:"100%", marginBottom:14, padding:"10px 16px", borderRadius:12,
                         background:isDark?"#1a2a1a":"#f0fdf4", border:"1.5px solid #16a34a55",
                         cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left"}}>
@@ -3904,7 +3904,7 @@ function App() {
                         <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"#f0fdf4", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
                       </div>
                       <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>
-                        See alternatives →
+                        {isMobile ? "See alternatives →" : "See below ↓"}
                       </span>
                     </button>
                   );
@@ -3918,7 +3918,6 @@ function App() {
                     {/* Product Insights — all categories */}
                     {result.food_analysis && (
                       <div style={{position:"relative"}}>
-                        <div style={{position:"absolute", top:-6, right:8, zIndex:2, fontSize:9, fontWeight:800, color:"#fff", background:"#16a34a", padding:"2px 7px", borderRadius:10, letterSpacing:"0.05em", textTransform:"uppercase"}}>New</div>
                         <ProductInsightsDropdown
                           analysis={result.food_analysis}
                           category={result.category}
@@ -4024,18 +4023,60 @@ function App() {
                     {/* 5. Manufacturing — smaller estimated badge */}
                     <ManufacturingBadge mfg={d.manufacturing} isDark={isDark} muted={muted}/>
 
-                    {/* See Alternatives CTA — replaces mobile scroll button */}
-                    <button
-                      onClick={()=>setShowAlts(true)}
-                      style={{
-                        width:"100%", marginTop:8, padding:"14px 16px",
-                        background:"#052e16", color:"#4ade80",
-                        border:"none", borderRadius:12, cursor:"pointer",
-                        fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                      }}>
-                      See safer alternatives →
-                    </button>
+                    {/* ── DESKTOP: show all alternatives inline ── */}
+                    {!isMobile && (() => {
+                      const dbAlts = (result.alternatives || []).slice(0, 3);
+                      const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
+                      const aiAlts = (result.ai_alternatives || [])
+                        .filter((a,i,arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
+                        .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
+                        .slice(0, 3 - dbAlts.length);
+                      if (!dbAlts.length && !aiAlts.length) return null;
+                      return (
+                        <div id="desktop-alternatives" style={{marginTop:20}}>
+                          <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12}}>
+                            Safer alternatives
+                          </div>
+                          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+                            {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                            {aiAlts.map((alt,i) => (
+                              <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
+                                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
+                                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                                  <div style={{background:scoreBg(alt.estimated_score), color:scoreColor(alt.estimated_score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{alt.estimated_score}/10</div>
+                                </div>
+                                <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{alt.material}</div>
+                                <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{alt.reason}</div>
+                                <button onClick={()=>{setResult(null); setQuery(alt.name); analyze(alt.name);}}
+                                  style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
+                                  Scan this product →
+                                </button>
+                              </div>
+                            ))}
+                            {dbAlts.length > 0 && (
+                              <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5, marginTop:4}}>
+                                Affiliate links — commission at no extra cost to you. Never influences our scores.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* ── MOBILE: overlay button ── */}
+                    {isMobile && (
+                      <button
+                        onClick={()=>setShowAlts(true)}
+                        style={{
+                          width:"100%", marginTop:8, padding:"14px 16px",
+                          background:"#052e16", color:"#4ade80",
+                          border:"none", borderRadius:12, cursor:"pointer",
+                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+                          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                        }}>
+                        See safer alternatives →
+                      </button>
+                    )}
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
