@@ -147,14 +147,19 @@ const SUBSTANCE_FLOORS = [
 
   // ══════════════════════════════════════════════════════════
   // PRESERVATIVES — NTP, IARC, EWG flagged
+  // IARC Group 1 (nitrites in meat) = mFloor 8
+  // IARC Group 2A = mFloor 7
+  // IARC Group 2B = mFloor 6
   // ══════════════════════════════════════════════════════════
   { match: /\bTBHQ\b|tert.?butylhydroquinone/i,                      mFloor:6, uFloor:5, reason:"TBHQ — FDA-reviewed immunotoxin, animal carcinogen (NTP)" },
   { match: /\bBHA\b|butylated hydroxyanisole/i,                       mFloor:6, uFloor:5, reason:"BHA — IARC Group 2B, reasonably anticipated carcinogen (NTP)" },
   { match: /\bBHT\b|butylated hydroxytoluene/i,                       mFloor:5, uFloor:4, reason:"BHT — animal carcinogen studies, endocrine disruption" },
-  { match: /sodium nitrite|sodium nitrate|nitrite.*preserv/i,         mFloor:7, uFloor:6, reason:"Nitrites — WHO/IARC Group 1 carcinogen in processed meat" },
+  { match: /sodium nitrite|sodium nitrate|nitrite.*preserv/i,         mFloor:8, uFloor:7, reason:"Nitrites — IARC Group 1 carcinogen in processed meat (WHO 2015)" },
   { match: /potassium bromate/i,                                      mFloor:7, uFloor:6, reason:"Potassium bromate — IARC Group 2B, banned EU/UK, used in bread" },
   { match: /propyl gallate/i,                                         mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP concern" },
   { match: /\bEDTA\b|ethylenediaminetetraacetic/i,                    mFloor:4, uFloor:3, reason:"EDTA — environmental persistence, chelating agent" },
+  // Acrylamide — IARC 2A, forms in high-heat starchy foods
+  { match: /\bacrylamide\b/i,                                         mFloor:7, uFloor:6, reason:"Acrylamide — IARC Group 2A, forms in fried/baked starchy foods at high heat" },
 
   // ══════════════════════════════════════════════════════════
   // FORMALDEHYDE & RELEASERS — IARC Group 1
@@ -279,8 +284,9 @@ const SUBSTANCE_FLOORS = [
 
   // ══════════════════════════════════════════════════════════
   // PESTICIDES — EWG Dirty Dozen, PFAS pesticides
+  // IARC 2A = mFloor 7 (probable carcinogen, confirmed at measurable levels)
   // ══════════════════════════════════════════════════════════
-  { match: /\bglyphosate\b/i,                                           mFloor:6, uFloor:5, reason:"Glyphosate — IARC Group 2A probable carcinogen (2015)" },
+  { match: /\bglyphosate\b/i,                                           mFloor:7, uFloor:6, reason:"Glyphosate — IARC Group 2A probable carcinogen, confirmed above EWG child threshold in conventional oats" },
   { match: /\bchlorpyrifos\b/i,                                         mFloor:7, uFloor:6, reason:"Chlorpyrifos — EPA banned 2021, children's neurotoxin" },
   { match: /\batrazine\b/i,                                             mFloor:7, uFloor:6, reason:"Atrazine — endocrine disruptor, banned EU, water contaminant" },
   { match: /\bneonicotinoid\b|imidacloprid|clothianidin|thiamethoxam/i, mFloor:6, uFloor:5, reason:"Neonicotinoid pesticide — bee colony collapse, systemic in crops" },
@@ -987,12 +993,14 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
 - Conventional whole milk (no hormones listed, standard dairy): materials=3, usage=3 → final ~3
 - Cliff Bar (oats, dates, nuts, some natural flavors): materials=4 (conventional oats likely have glyphosate residue, no organic certification), usage=3 → final ~3-4
-- Honey Nut Cheerios (conventional oats): materials=6 (confirmed glyphosate residue above EWG child safety threshold — IARC Group 2A; 12g added sugar; eaten daily by children), usage=5 → final ~5-6. NEVER score below 5. Glyphosate at confirmed levels is not a "mild" concern.
-- Original Cheerios (conventional oats): materials=6, usage=5 → final ~5-6. Same glyphosate concern.
-- Quaker Old Fashioned Oats (conventional, no additives): materials=5 (glyphosate residue confirmed by EWG, minimal processing otherwise), usage=4 → final ~4-5
-- Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate, minimal processing), usage=1 → final ~1-2
-- Nature Valley Oats and Honey Granola Bar (conventional oats): materials=6 (glyphosate residue, added sugar, natural flavors), usage=5 → final ~5-6
-- KIND Oat bar (conventional oats): materials=5 (glyphosate residue, mostly whole food otherwise), usage=4 → final ~4-5
+- Honey Nut Cheerios (conventional oats): materials=7 (IARC 2A glyphosate confirmed above EWG child threshold — same carcinogen class as processed meat nitrites; 12g added sugar; daily child consumption), usage=5 → final ~6-7. NEVER score below 6.
+- Original Cheerios (conventional oats): materials=7, usage=5 → final ~6-7. Same confirmed glyphosate, IARC 2A.
+- Quaker Old Fashioned Oats (conventional, minimal additives): materials=6 (IARC 2A glyphosate confirmed, but simpler product), usage=4 → final ~5-6
+- Bob's Red Mill Organic Rolled Oats: materials=1 (USDA organic — no glyphosate), usage=1 → final ~1-2
+- Nature Valley Oats and Honey Granola Bar (conventional oats): materials=7 (IARC 2A glyphosate + added sugar), usage=5 → final ~6-7. NEVER score below 6.
+- KIND Oat bar (conventional oats): materials=6 (IARC 2A glyphosate residue likely), usage=4 → final ~5-6
+- Bacon / conventional deli meat / hot dogs (sodium nitrite): materials=8 (IARC Group 1 nitrites — known carcinogen), usage=7 → final ~7-8. NEVER score below 7.
+- Organic uncured turkey / chicken (no nitrites added): materials=3, usage=3 → final ~3
 - M&Ms Milk Chocolate: materials=8 (Red 40 + Yellow 5 + Yellow 6 + Blue 1 — four FDA-flagged petroleum dyes; IARC carcinogenicity; ultra-processed), usage=7 → final ~7-8. NEVER score below 7.
 - Skittles: materials=8 (same petroleum dyes + titanium dioxide IARC 2B, EU banned), usage=7 → final ~7-8. NEVER score below 7.
 - Froot Loops / dyed breakfast cereal: materials=8 (multiple petroleum dyes + HFCS + daily child ingestion), usage=7 → final ~7-8. Child vulnerability flag. NEVER score below 7.
@@ -1134,13 +1142,22 @@ LOW: Artificial flavors, Modified starch, Soy lecithin, Maltodextrin
 FOOD TIER SCORE IMPACT:
 - Ultra-processed + 3+ HIGH concerns (multiple dyes, nitrates, BHA): materials 8-9, final 7-8
 - Ultra-processed + 1-2 HIGH concerns (petroleum dyes OR confirmed glyphosate OR BHA/BHT): materials 7-8, final 6-7
-- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 5-6, final 5-6. Glyphosate is IARC 2A — treat same severity as BHA/BHT, not as a mild concern.
-- Conventional produce with pesticide load (Dirty Dozen): materials 4-5, final 4-5
+- Conventional grain product with confirmed glyphosate residue (Cheerios, Quaker oats, Nature Valley): materials 7, final 6-7. Glyphosate is IARC 2A — treat same severity as BHA/BHT.
+- Conventional produce with pesticide load (Dirty Dozen): materials 5-6, final 4-5
 - Processed with MEDIUM concerns only: materials 4-5, final 4-5
 - Processed, minimal synthetics (Cliff Bar, Kind bar without glyphosate confirmation): materials 3-4, final 3-4
 - Whole food / minimally processed / organic certified: materials 1-2, final 1-3
 - Child food with ANY dyes: vulnerable flag + materials minimum 8, final minimum 7
-FOREVER CHEMICAL RULE: Any food product with confirmed PFAS, glyphosate above safety threshold, or IARC Group 1/2A carcinogen in the ingredients is NEVER safe to call "Safe" (score 1-2). Minimum final score 4 for any confirmed carcinogen-class substance at measurable levels.
+
+IARC CARCINOGEN MATERIALS FLOOR — applies to ALL food products, no exceptions:
+- IARC Group 1 (known carcinogen) confirmed in product at measurable levels: materials MINIMUM 8
+  Examples: sodium nitrite/nitrate in processed meat, alcohol in beverages, aflatoxins in contaminated peanuts
+- IARC Group 2A (probable carcinogen) confirmed in product at measurable levels: materials MINIMUM 7
+  Examples: glyphosate in conventional oats (EWG confirmed above threshold), acrylamide in fried starchy foods, red meat (processed), processed meat
+- IARC Group 2B (possible carcinogen) confirmed in product: materials MINIMUM 6
+  Examples: BHA, TBHQ, titanium dioxide (E171), caramel color IV, potassium bromate, aspartame
+- SPECULATIVE ONLY (hedged language — "may contain", "possible trace"): NO floor applies
+FOREVER CHEMICAL RULE: Any food product with confirmed IARC Group 1 or 2A substance at measurable levels is NEVER safe to call "Safe" (score 1-2). Minimum final score 5 for Group 2A, minimum 6 for Group 1.
 
 CONVENTIONAL OATS AND GRAIN PRODUCTS — GLYPHOSATE RULE:
 Glyphosate is used as a pre-harvest desiccant on conventional oats, wheat, and other grains — sprayed directly on crops right before harvest to accelerate drying. This results in confirmed glyphosate residue in the final food product. EWG testing confirmed glyphosate above their safety threshold in:
@@ -1384,8 +1401,8 @@ CALIBRATION — use these as anchors:
 - Gatorade (artificial dyes, sucrose): final score ~5-6
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
 - Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
-- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~5-6 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 5. Flag "glyphosate residue (conventional oats — EWG confirmed, IARC Group 2A)" as HIGH concern.
-- Quaker oats / Quaker granola bars (conventional): final score ~4-5 — glyphosate residue confirmed, but simpler ingredients
+- Honey Nut Cheerios / original Cheerios (conventional oats): final score ~6-7 — EWG confirmed glyphosate above child safety threshold, IARC Group 2A. NEVER score below 5. Flag "glyphosate residue (conventional oats — EWG confirmed, IARC Group 2A)" as HIGH concern.
+- Quaker oats / Quaker granola bars (conventional): final score ~5-6 — glyphosate residue confirmed, but simpler ingredients
 - Bob's Red Mill Organic Oats: final score ~1-2 — USDA organic, no glyphosate
 - M&Ms: final score ~7-8 — NEVER score below 7. Four petroleum dyes all FDA-flagged/phasing out. Ultra-processed. Flag all four dyes by name.
 - Skittles: final score ~7-8 — NEVER score below 7. Same dyes plus titanium dioxide (IARC 2B, EU banned in food).
