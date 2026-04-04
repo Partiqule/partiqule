@@ -1286,7 +1286,87 @@ HAIR STYLING CALIBRATION:
 
 EWG CLEAN BEAUTY RULE: EWG Verified certification = materials cannot exceed 2. EWG Skin Deep score 1-3 with no high-concern ingredients = materials 2 maximum. B-Corp certified personal care brand with clean formulation = materials 2-3. These are hard ceilings — an EWG Verified product cannot score materials 5 just because it contains dimethicone (which EWG rates low concern). Do NOT override EWG Verified with speculative concerns.
 
-PROTEIN POWDER CALIBRATION:
+PRE-WORKOUT AND SPORTS SUPPLEMENT CALIBRATION:
+HIGH CONCERN (score 5-7):
+- C4 Original pre-workout (sucralose, acesulfame-K, artificial dyes — Red 40 in some flavors, niacin megadose 30mg): materials=6 (sucralose + acesulfame-K + possible dye floors) → final ~6. NEVER score below 5.
+- Ghost pre-workout (sucralose, natural + artificial flavors, artificial colors in some flavors): materials=6 → final ~5-6.
+- Bucked Up pre-workout (sucralose, deer antler velvet — questionable efficacy, artificial flavors): materials=5 → final ~5.
+- Celsius energy drink used as pre-workout (sucralose, 200mg caffeine — sucralose floor fires): materials=5 → final ~5.
+CLEAN PRE-WORKOUTS (score 2-4):
+- Transparent Labs BULK (no artificial dyes, no sucralose, stevia, clinically dosed): materials=3 → final ~3.
+- Pre-Lab Pro (no artificial sweeteners, no dyes, whole-food B vitamins): materials=3 → final ~3.
+- Legion Pulse (stevia, natural flavors, no artificial dyes, third-party tested): materials=3 → final ~3.
+PRE-WORKOUT RULE: Any pre-workout with sucralose = minimum 5. Artificial dyes in a daily supplement = 6-7 (dye floor fires). "Natural flavors" without disclosed components = LOW concern flag.
+
+COLLAGEN SUPPLEMENT CALIBRATION:
+CLEAN (score 1-3):
+- Vital Proteins Collagen Peptides (plain — just collagen peptides, no artificial additives, minimal ingredients): materials=2 → final ~2. Benchmark clean collagen.
+- Sports Research Collagen Peptides (grass-fed bovine, no artificial additives, third-party tested): materials=2 → final ~2.
+- Great Lakes Wellness Collagen (clean, bovine, minimal additives): materials=2 → final ~2.
+CONVENTIONAL (score 3-5):
+- Neocell Super Collagen (some flavored varieties have artificial colors and flavors — check specific SKU): materials=4 → final ~4. Plain variant is cleaner.
+- Garden of Life Grass Fed Collagen (clean, USDA Organic certified): materials=2 → final ~2.
+COLLAGEN RULE: Plain unflavored collagen with no additives = 2. Flavored collagen with sucralose = minimum 4 (sucralose floor). Collagen with petroleum dyes = 6 minimum.
+
+GUMMY VITAMIN SUPPLEMENT CALIBRATION:
+With petroleum dyes (Red 40, Yellow 5/6, Blue 1) — dye floor fires → score 6-7:
+- Vitafusion gummy vitamins (Red 40 + Yellow 5 confirmed in most flavors — daily supplement ingestion of petroleum dyes): materials=7 → final ~6-7. NEVER score below 6. Flag: Red 40 is FDA-phasing-out class.
+- Olly gummies (synthetic colorants in most): materials=6 → final ~5-6.
+- Gummy Bear brand vitamins (HFCS + dyes): materials=7 → final ~6-7.
+Without petroleum dyes (natural colors) → score 2-4:
+- SmartyPants gummies (no petroleum dyes, uses turmeric, spirulina, annatto): materials=3 → final ~3.
+- Nordic Naturals gummies (no artificial dyes, clean): materials=2 → final ~2-3.
+- Ritual vitamins (no synthetic dyes, delayed-release capsule not gummy): materials=2 → final ~2.
+GUMMY VITAMIN RULE: Always ask — does it contain Red 40, Yellow 5, Yellow 6, or Blue 1? If yes, dye floor (mFloor:7) fires and final score is 6+ minimum. "Natural" gummy vitamins with non-disclosed colors should be scored as if dyes are present until confirmed otherwise.
+
+VITAMIN SUPPLEMENT CALIBRATION ADDITION:
+- Centrum Silver (Blue 1 petroleum dye, titanium dioxide IARC 2B, talc, synthetic vitamins, 30+ inactive ingredients): materials=7 (Blue 1 dye floor fires), usage=6 (daily ingestion) → final ~6-7. NEVER score below 6.
+- One-A-Day Men's/Women's (some dyes, synthetic vitamins, conventional binders — check current formula): materials=5 → final ~5.
+- Nature Made (USP Verified, no petroleum dyes, clean binders): materials=3 → final ~3.
+- Kirkland (Costco) vitamins (USP Verified, generally clean, no petroleum dyes): materials=3 → final ~3.
+- Garden of Life RAW Vitamin Code (whole food derived, USDA Organic, no synthetic dyes): materials=2 → final ~2.
+
+CLOTHING CERTIFICATION HIERARCHY — structural rule:
+GOTS Certified (Global Organic Textile Standard — organic fiber + non-toxic processing, no azo dyes, no heavy metals, no formaldehyde):
+→ materials ceiling 2, sustainability 2-3. Final score 1-3.
+OEKO-TEX Standard 100 (tests for harmful chemicals — formaldehyde, azo dyes, heavy metals, pH — but does NOT require organic fiber or prohibit pesticides in farming):
+→ materials ceiling 3, sustainability 3-4. Final score 2-4.
+Bluesign certified (safer chemistry in manufacturing, reduces water and energy — not organic fiber):
+→ materials ceiling 3. Final score 2-4.
+BCI (Better Cotton Initiative — minimal standard, just "more sustainable" conventional cotton):
+→ materials ceiling 4. Still conventional cotton, still likely pesticide exposure in farming.
+No certification + conventional fiber + unknown dyes:
+→ materials 4-6 depending on fiber. Fast fashion = sustainability 7-8.
+CERTIFICATION RULE: GOTS is the gold standard — it is the only certification that covers the full supply chain from fiber to final product. OEKO-TEX tests the finished fabric but not the farming. An OEKO-TEX garment from 100% conventional cotton still has pesticide exposure in the farming stage — just cleaner processing.
+
+CLOTHING BRAND CALIBRATION ADDITIONS:
+- Uniqlo basic cotton t-shirt / oxford (OEKO-TEX Standard 100 on most basics, conventional cotton, no GOTS — cleaner processing, conventional farming): materials=3, usage=3, sustainability=4 → final ~3. OEKO-TEX certification is meaningful but not the same as GOTS.
+- Under Armour performance base layer (polyester/elastane — some lines have HeatGear with antimicrobial silver nanoparticles: nanosilver is EPA-flagged, potential endocrine concern): materials=6 if nanosilver confirmed, materials=5 if conventional synthetic only, usage=5 → final ~5-6.
+- Gap conventional clothing (conventional cotton, likely azo dyes, no organic certification, BCI member): materials=5, sustainability=6 → final ~5.
+- Carter's baby clothing (conventional cotton, OEKO-TEX 100 on some lines, no GOTS — check specific product): materials=3 (with OEKO-TEX), materials=4 (without), usage=3 → final ~3-4. Most Carter's has OEKO-TEX 100.
+- Old Navy kids clothing (conventional fiber, no organic certification, fast fashion model, some OEKO-TEX): materials=4, sustainability=6 → final ~5.
+- American Eagle / Abercrombie (conventional cotton/polyester, some sustainable lines — check): materials=5, sustainability=6 → final ~5.
+
+DISH SOAP CALIBRATION:
+CLEAN (score 1-3):
+- Branch Basics dish soap (plant-based surfactants, no synthetic fragrance, no dyes, zero petrochemicals): materials=1, usage=1 → final ~1-2. Benchmark clean.
+- Seventh Generation dish liquid (plant-based, no synthetic fragrance, EPA Safer Choice): materials=2, usage=2 → final ~2.
+- Dawn Free & Gentle (no dye, no fragrance — genuinely cleaner Dawn variant): materials=3, usage=3 → final ~3.
+- Dr. Bronner's castile soap (used as dish soap — organic, no synthetic fragrance): materials=1, usage=1 → final ~1.
+CONVENTIONAL (score 4-5):
+- Dawn Original (synthetic fragrance, petroleum-derived surfactants, colorants): materials=5, usage=4 → final ~4-5.
+- Dawn Platinum (stronger surfactant concentration, synthetic fragrance): materials=5, usage=5 → final ~5.
+- Palmolive (synthetic fragrance, dyes, petroleum surfactants): materials=5, usage=4 → final ~4-5.
+- Joy (synthetic fragrance, petroleum surfactants): materials=5, usage=4 → final ~4-5.
+- Ajax (synthetic fragrance, dyes): materials=5, usage=4 → final ~4-5.
+DISH SOAP RULE: Fragrance-free + plant-based surfactants = 1-3. Synthetic fragrance + petroleum surfactants = 4-5. "Ultra concentrated" claims do not affect score — ingredients do.
+
+BABY WIPE CALIBRATION ADDITIONS:
+- Kirkland (Costco) baby wipes (no fragrance, some formulas have phenoxyethanol — check current formula): materials=3-4 → final ~3-4. Verify phenoxyethanol status.
+- Parasol baby wipes (no fragrance, no phenoxyethanol, clean): materials=2 → final ~2.
+- Bamboo Earth wipes (plant-based, no fragrance, no phenoxyethanol): materials=2 → final ~2.
+- Huggies Refreshing wipes (WITH synthetic fragrance — different from Huggies Natural Care Unscented): materials=5 → final ~5. NEVER score fragrant baby wipes below 4.
+- Up & Up (Target brand) baby wipes (no fragrance, phenoxyethanol present): materials=4 → final ~4.
 - Clean third-party tested whey/plant protein (Momentous, Garden of Life, Thorne): materials=2 (NSF Certified for Sport or Informed Sport tested, no artificial dyes, no artificial sweeteners). Final ~2-3.
 - Conventional whey protein (Optimum Nutrition Gold Standard, Myprotein): materials=3-4 — sucralose in most flavors, artificial flavors, titanium dioxide in some. Consumer Reports 2018 found lead, arsenic, cadmium above threshold in several brands tested. Flag: third-party heavy metal testing not confirmed. Final ~3-4.
 - Mass gainer / proprietary blend with stimulants: materials=5-6 — DMAA risk in some, proprietary blends, high artificial sweetener load. Flag heavy metals concern for any powder without third-party certification.
@@ -1377,6 +1457,25 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Skittles: materials=8 (same artificial dyes + titanium dioxide — IARC Group 2B, EU food ban), usage=7, packaging=4 → final ~7
 - Plain dark chocolate (no artificial dyes): materials=2, usage=2 → final ~2
 - Lululemon leggings (nylon/spandex): materials=7 (synthetic microfiber shedding), usage=6 (daily skin contact), packaging=2, sustainability=5 → final ~6
+CLOTHING BRAND CALIBRATION:
+FAST FASHION / SYNTHETIC (score 5-7):
+- Shein (100% polyester common, unknown chemical dyes, zero supply chain transparency, extreme fast fashion, some items found with PFAS above EU limits): materials=7, usage=6, sustainability=8 → final ~7. NEVER score below 6.
+- Zara conventional (polyester-heavy, fast fashion): materials=6, usage=5, sustainability=7 → final ~6-7. Zara Join Life organic cotton lines = 3-4.
+- H&M Conscious polyester (still synthetic microfibers — Conscious label on synthetic = greenwashing): materials=6, usage=6, sustainability=6 → final ~6.
+- H&M with GOTS organic cotton (verified): materials=2, usage=2, sustainability=4 → final ~3.
+- Gap conventional cotton tee (pesticide-intensive conventional cotton, unknown dyes): materials=4, usage=4, sustainability=6 → final ~5.
+- Nike Dri-FIT / Adidas conventional (100% polyester, daily athletic skin contact): materials=5, usage=5, sustainability=6 → final ~5-6.
+- Lululemon Align leggings (87% nylon / 13% Lycra elastane, daily intimate skin contact): materials=6, usage=6, sustainability=5 → final ~6. NEVER score below 5.
+BETTER PERFORMANCE / TRANSITIONAL (score 3-5):
+- Patagonia fleece (recycled polyester — still sheds microfibers but Bluesign certified, B-Corp, repair program): materials=5, usage=5, sustainability=3 → final ~4.
+- Vuori / Girlfriend Collective (recycled synthetics, OEKO-TEX 100 — still sheds): materials=4, usage=4, sustainability=3 → final ~4.
+CLEAN / SUSTAINABLE (score 1-3):
+- Patagonia organic cotton (GOTS certified, Fair Trade Certified sewn, B-Corp): materials=2, usage=2, sustainability=2 → final ~2.
+- Everlane 100% organic cotton (GOTS, low-impact dyes, supply chain transparency): materials=2, usage=2, sustainability=3 → final ~2.
+- Pact organic tee (GOTS, Fair Trade sewn, B-Corp): materials=2, usage=2, sustainability=2 → final ~2.
+- Allbirds Merino wool (ZQ Merino certified, carbon footprint disclosed): materials=2, usage=2, sustainability=2 → final ~2.
+- Eileen Fisher TENCEL / organic linen (GOTS, Bluesign, take-back program): materials=2, usage=2, sustainability=2 → final ~2.
+CLOTHING RULE: GOTS organic natural fiber + no synthetic dyes = 2. Conventional cotton = 4. Recycled synthetic = 4. Virgin synthetic daily wear = 5-7. Fast fashion synthetic with unknown chemicals = 6-7.
 - 100% organic cotton t-shirt: materials=1, usage=1, packaging=2, sustainability=2 → final ~1-2
 - Little Rad Things organic kids tee: materials=1 (confirmed organic cotton), usage=2, packaging=3, sustainability=2 → final ~2
 - Generic unbranded cotton tee (unconfirmed): materials=3, confidence=low → final ~3
@@ -1503,6 +1602,59 @@ BAG AND COATING MATERIAL RULES:
 - Wool dryer balls: materials=1 (pure wool), usage=1, sustainability=1 (reusable 1,000+ loads) → final ~1
 - Tru Earth/Grove laundry strips: materials=2 (no PVA, no synthetic fragrance), usage=2, packaging=1 (cardboard) → final ~1-2
 - Febreze air freshener spray: materials=7 (synthetic fragrance — phthalates, VOCs, propellant), usage=6 (aerosolized inhalation in enclosed spaces) → final ~6-7
+- Glade aerosol spray (same mechanism as Febreze — synthetic fragrance, propellant): materials=7 → final ~6-7.
+- Glade PlugIns (continuous synthetic fragrance emission from heated unit): materials=7, usage=7 (continuous 24hr inhalation in room) → final ~7. NEVER score below 6.
+- Pura smart diffuser (uses cartridges — cartridges with essential oils = 2, cartridges with "fragrance" = 6): materials=2-6 depending on cartridge → final ~2-6. Flag: always check cartridge ingredients not just the device.
+- Vitruvi stone diffuser (device + essential oils only): materials=2, usage=2 → final ~2.
+- Air Wick plug-in (synthetic fragrance, continuous emission, similar to Glade): materials=7 → final ~6-7.
+
+DISH SOAP AND CLEANING PRODUCT CALIBRATION:
+CLEAN (score 1-3):
+- Seventh Generation dish soap (plant-derived surfactants, no synthetic fragrance, no dyes, USDA Certified Biobased): materials=2, usage=2 → final ~2. Benchmark clean dish soap.
+- Branch Basics dish soap (plant-derived, no synthetic fragrance, no dyes, no preservatives): materials=1, usage=1 → final ~1-2.
+- Dr. Bronner's dish soap (saponified organic oils, no synthetic fragrance): materials=1, usage=1 → final ~1.
+- Blueland dish soap tablet (no PVA, no synthetic fragrance, minimal ingredients): materials=2, usage=2 → final ~2.
+CONVENTIONAL (score 4-5):
+- Mrs. Meyer's dish soap / cleaning products (plant-derived surfactants — BUT synthetic fragrance in all scented varieties — "plant-inspired" marketing obscures this): materials=4, usage=4 → final ~4. MRS. MEYER'S GREENWASHING NOTE: Mrs. Meyer's contains synthetic fragrance in all scented products. "Plant-inspired" does not mean synthetic fragrance-free. NEVER score Mrs. Meyer's scented products below 4.
+- Method dish soap (synthetic fragrance, SLS): materials=4, usage=4 → final ~4.
+- Dawn Original (SLS, methylisothiazolinone preservative, synthetic fragrance): materials=5, usage=4 → final ~4-5.
+- Dawn Ultra (same formula, higher surfactant concentration): materials=5, usage=4 → final ~4-5.
+- Palmolive (synthetic fragrance, SLS, colorants): materials=5, usage=4 → final ~5.
+DISINFECTANTS AND BLEACH:
+- Lysol Disinfectant Spray (quaternary ammonium compounds — EPA-registered pesticide, aerosolized, synthetic fragrance; linked to asthma induction and reproductive harm at occupational exposure): materials=7, usage=7 → final ~7. NEVER score below 6. Flag: quaternary ammonium compounds are EPA-registered pesticides and should be treated accordingly.
+- Clorox Disinfecting Spray (quaternary ammonium, synthetic fragrance): materials=7, usage=7 → final ~7. Same concern as Lysol.
+- Clorox bleach (sodium hypochlorite — corrosive, toxic vapors, reacts with organic matter to form chloroform and chloramines, respiratory irritant): materials=7, usage=7 → final ~6-7. Never store near ammonia-based cleaners.
+- Windex glass cleaner (2-butoxyethanol — EPA hazardous air pollutant, isopropanolamine, synthetic fragrance): materials=6, usage=5 → final ~5-6.
+- Mr. Clean All-Purpose (synthetic fragrance, C9-11 alcohols, colorants): materials=5, usage=5 → final ~5.
+- Simple Green (2-butoxyethanol in original, synthetic fragrance — better than Lysol but still concerning): materials=5, usage=5 → final ~5.
+
+FOOD STORAGE CALIBRATION:
+- Pyrex glass containers (borosilicate glass, inert at any temperature): materials=1, usage=1 → final ~1. Benchmark clean food storage.
+- Stasher reusable silicone bags (food-grade silicone, BPA-free, not for high heat): materials=2, usage=2 → final ~2.
+- OXO stainless steel containers (18/8 stainless, no coating, no BPA): materials=1, usage=1 → final ~1.
+- Weck glass jars (glass + stainless lid, no plastic in food contact): materials=1, usage=1 → final ~1.
+- Rubbermaid BPA-free plastic containers (PP, not for hot food or microwave): materials=3, usage=3 (do not use for hot food — only cold storage) → final ~3.
+- Ziploc bags LDPE (single-use, LDPE plastic — lower concern than PVC/PET but still single-use plastic): materials=4, usage=4, packaging=8 → final ~5. Never for hot food or microwave.
+- Glad Press'n Seal / Saran wrap (cling wrap — PVDC or LDPE, plasticizers possible): materials=5, usage=5 (direct food contact wrap) → final ~5.
+- Older Tupperware (pre-2010 may contain BPA): materials=7 (BPA floor fires if suspected) → final ~7. Modern BPA-free Tupperware = materials 4.
+- Reynolds Aluminum foil (food-grade aluminum, some leaching into acidic foods): materials=3, usage=3 → final ~3.
+
+KITCHEN APPLIANCE CALIBRATION:
+- All-Clad stainless steel cookware (18/10 stainless, no coating, oven safe): materials=1, usage=1 → final ~1. Benchmark clean cookware.
+- Lodge cast iron (no coating, iron seasoning only, lifetime durability): materials=1, usage=1 → final ~1.
+- Le Creuset enameled cast iron (enamel ceramic coating — no PTFE, no PFAS): materials=1, usage=1 → final ~1.
+- Caraway ceramic cookware (sol-gel ceramic coating — no PTFE, no PFAS confirmed): materials=2, usage=2 → final ~2.
+- GreenPan ceramic cookware (similar to Caraway — no PTFE): materials=2, usage=2 → final ~2.
+- Teflon / T-fal / Calphalon / Cuisinart PTFE non-stick (PTFE coating — even "PFOA-free" may contain other PFAS; releases particles when scratched or overheated above 260°C): materials=8, usage=8 → final ~7-8. "PFOA-free" is NOT the same as PFAS-free. NEVER score PTFE non-stick below 7.
+- Instant Pot (stainless steel inner pot — the food contact surface is safe; outer PP housing is not food contact): materials=2, usage=2 → final ~2-3. The stainless inner pot is what matters.
+- Keurig K-Cup machine (PP plastic pod + hot water forced through PP at 92°C — Li 2020: heated PP releases microplastics): materials=7 (heated PP food contact, single-use PP pods), usage=7 → final ~7. NEVER score below 6.
+- Breville / Fellow kettle (stainless steel interior, no PP in water path): materials=1, usage=1 → final ~1-2.
+- Vitamix blender (Tritan copolyester — BPA-free, BPS-free, high-speed blending): materials=3, usage=3 → final ~3.
+- Ninja air fryer with ceramic basket (no PTFE, ceramic-coated): materials=3, usage=3 → final ~3.
+- Cosori / standard air fryer with PTFE basket (PTFE coating — PTFE floor fires): materials=8, usage=8 → final ~7-8. Check the specific model — some have ceramic, most have PTFE.
+- Pyrex glass bakeware (borosilicate glass, oven safe, inert): materials=1, usage=1 → final ~1.
+- Nordic Ware aluminum bakeware (uncoated aluminum, no PTFE): materials=3, usage=3 → final ~3.
+NON-STICK RULE: PTFE = minimum score 7 regardless of "PFOA-free" claims. Ceramic = 2-3. Stainless/cast iron/glass = 1.
 - Soy wax candle (cotton wick, phthalate-free fragrance): materials=2, usage=3 (some VOCs from burning) → final ~2-3
 - Yankee Candle (paraffin, synthetic fragrance): materials=6 (paraffin = petroleum byproduct, synthetic fragrance phthalates), usage=6 (inhalation during burning) → final ~6
 - Purina/Royal Canin dry dog food: materials=5 (synthetic preservatives BHA/BHT, artificial dyes, by-products), usage=4 (daily ingestion) → final ~4-5
@@ -1753,6 +1905,33 @@ PASTA AND RICE CALIBRATION:
 - Uncle Ben's / Ben's Original instant white rice (enriched, parboiled, some have added flavors): materials=3 → final ~3.
 - Minute Rice white (instant, enriched): materials=3 → final ~3.
 PASTA / RICE RULE: Organic + single grain = 1. Whole grain + no additives = 2. Enriched white = 3. Enriched + added flavors/oils = 4.
+
+BABY PERSONAL CARE CALIBRATION — all baby products get child vulnerability flag. Child vulnerability = +1 to any concern severity:
+CLEAN BABY BRANDS (EWG Verified or equivalent — score 1-2):
+- WaterWipes (99.9% purified water + 0.1% grapefruit seed extract): materials=1, usage=1 → final ~1. Cleanest mainstream baby wipe. Benchmark for baby wipes.
+- Mustela Hydra Bébé Body Lotion (EWG Verified, plant-based, no parabens, no synthetic fragrance, no phenoxyethanol): materials=2, usage=2 → final ~2.
+- California Baby (EWG top-rated, no synthetic fragrance, no parabens, no phenoxyethanol): materials=2, usage=2 → final ~2.
+- Burt's Bees Baby Shampoo (no synthetic fragrance, no parabens, no phthalates, no phenoxyethanol): materials=2, usage=2 → final ~2.
+- Burt's Bees Baby diaper cream (zinc oxide, clean inactive ingredients, no BHT, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- Earth Mama Organics (USDA Organic certified, no synthetic fragrance, no phenoxyethanol): materials=2, usage=2 → final ~2.
+BABY WIPES — PHENOXYETHANOL WARNING:
+Phenoxyethanol is FDA-warned for CNS depression in infants under 3. Many "natural" or "sensitive" baby wipes contain phenoxyethanol as a preservative. It is NOT safe for babies under 3 regardless of "natural" marketing.
+- WaterWipes: materials=1 → final ~1. Gold standard.
+- Huggies Natural Care wipes (no fragrance — but contains phenoxyethanol): materials=4 (phenoxyethanol flag for infant use) → final ~4.
+- Pampers Sensitive wipes (synthetic fragrance, propylene glycol, phenoxyethanol): materials=5 → final ~5.
+- Pampers Pure wipes (no fragrance, cleaner — but check for phenoxyethanol in current formula): materials=3 → final ~3.
+- Honest Company wipes (no fragrance, phenoxyethanol-free in current formula): materials=2 → final ~2.
+CONVENTIONAL BABY BRANDS:
+- Johnson's Baby Shampoo (US current formula: synthetic fragrance, some formulas still have parabens): materials=5, usage=5 → final ~5. "Baby" branding does NOT make it safe. Do NOT score below 4 for any conventional J&J baby product with synthetic fragrance.
+- Johnson's Baby Lotion (parabens, mineral oil from petroleum, synthetic fragrance — daily full-body application on infant skin): materials=5, usage=6 → final ~5-6. NEVER score below 5.
+- Aveeno Baby Daily Moisture (synthetic fragrance, dimethicone — moderate concern for infant): materials=4, usage=4 → final ~4.
+- Aquaphor Baby Healing Ointment (petrolatum + mineral oil — petroleum derivatives, no active harmful ingredients but not clean): materials=4, usage=4 → final ~4.
+DIAPER CREAM:
+- Burt's Bees Baby Diaper Cream (zinc oxide, clean): materials=2, usage=2 → final ~2.
+- Earth Mama Organic diaper balm (organic, clean): materials=2, usage=2 → final ~2.
+- Desitin Maximum Strength (zinc oxide — good active, BUT also BHT, parabens, synthetic fragrance as inactives): materials=5, usage=5 → final ~5. Zinc oxide good; everything else concerning.
+- Butt Paste (zinc oxide, petrolatum, BHA — BHA floor fires): materials=6, usage=6 → final ~6.
+BABY CARE RULE: EWG Verified baby product = materials max 2. Any synthetic fragrance in baby product = minimum materials 5. Any phenoxyethanol in wipes/lotion for infants under 3 = flag HIGH concern.
 
 BABY SNACK CALIBRATION (child vulnerability flag applies to ALL):
 - Happy Baby Organics puffs (USDA Organic, whole grain oats, fruit — simple): materials=2 → final ~2. Flag child vulnerability.
@@ -2307,7 +2486,12 @@ CALIBRATION — use these as anchors:
 - Purina/Royal Canin dry kibble: final score ~4-5 (synthetic preservatives BHA/BHT)
 - Honest Kitchen/Open Farm whole ingredient dog food: final score ~2
 - Standard Advil/Tylenol: final score ~3
-- Standard synthetic multivitamin (Centrum, One-A-Day): final score ~3
+- Standard synthetic multivitamin with petroleum dyes (Centrum Silver — contains FD&C Blue 1, titanium dioxide IARC 2B, talc): final score ~6-7. Blue 1 is a petroleum-based dye FDA is actively phasing out — same class as food dyes. NEVER score Centrum at 3. The dye floor fires.
+- One-A-Day Men's/Women's (synthetic vitamins, some dyes, conventional binders): final score ~5.
+- Nature Made (USP Verified, minimal additives, no petroleum dyes): final score ~3.
+- Vitafusion gummy vitamins (Red 40 + Yellow 5 in most flavors — petroleum dyes taken daily): final score ~6-7. Red 40 floor fires. NEVER score below 6 if dyes confirmed.
+- Olly adult gummies (synthetic colorants in most, sugar): final score ~5-6.
+- SmartyPants gummies (no petroleum dyes, uses natural colors — turmeric, spirulina): final score ~3.
 - Garden of Life/MegaFood whole-food vitamin: final score ~1-2
 - Standard memory foam mattress (off-gassing): final score ~6
 - Avocado organic latex mattress: final score ~1-2
