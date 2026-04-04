@@ -441,6 +441,69 @@ const ENTRIES = [
   ["listerine cool mint",           { floor:5, ceiling:7, substances:["Blue 1","alcohol"], reason:"Blue 1 petroleum dye floor fires + 21.6% alcohol + saccharin", confidence:"high", category:"personal_care" }],
   ["listerine kids",                { floor:6, ceiling:8, substances:["Red 40","Blue 1"], reason:"Two petroleum dyes + saccharin in daily children's mouth rinse — child vulnerability flag", confidence:"high", category:"personal_care" }],
   ["therabreath",                    { floor:2, ceiling:4, substances:[], reason:"No alcohol, no dyes, no saccharin — significantly cleaner than conventional mouthwash", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // COFFEE PODS
+  // ══════════════════════════════════════════════════════════════
+  ["keurig k-cup",                  { floor:6, ceiling:8, substances:["polypropylene","microplastics"], reason:"Hot water forced through PP plastic at 92°C — Li 2020 confirmed microplastic release. Applies to ALL K-Cup brands.", confidence:"high", category:"food_beverage" }],
+  ["starbucks k-cup",              { floor:6, ceiling:8, substances:["polypropylene"], reason:"Polypropylene pod — heated PP microplastic release", confidence:"high", category:"food_beverage" }],
+  ["green mountain k-cup",         { floor:6, ceiling:8, substances:["polypropylene"], reason:"PP pod — heated plastic microplastic release", confidence:"high", category:"food_beverage" }],
+  ["dunkin k-cup",                  { floor:6, ceiling:8, substances:["polypropylene"], reason:"PP pod — heated plastic concern", confidence:"high", category:"food_beverage" }],
+  ["nespresso",                     { floor:1, ceiling:3, substances:[], reason:"Aluminum capsule — no plastic in water path, inert at brewing temperatures", confidence:"high", category:"food_beverage" }],
+  ["lipton pyramid tea bag",        { floor:6, ceiling:8, substances:["nylon","microplastics"], reason:"Nylon mesh confirmed — 11.6 billion microplastic particles per cup at steeping temperature (Hernandez 2019)", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // INSECT REPELLENT
+  // ══════════════════════════════════════════════════════════════
+  ["off! deep woods",               { floor:6, ceiling:8, substances:["DEET"], reason:"98% DEET — neurotoxin class, skin absorption, not recommended for children under 3", confidence:"high", category:"other" }],
+  ["off family care",               { floor:4, ceiling:6, substances:["DEET"], reason:"15% DEET — lower concentration but still neurotoxic class", confidence:"high", category:"other" }],
+  ["sawyer picaridin",              { floor:2, ceiling:4, substances:[], reason:"Picaridin — CDC approved, lower toxicity than DEET, does not dissolve plastics", confidence:"high", category:"other" }],
+  ["thermacell",                    { floor:5, ceiling:7, substances:["allethrin"], reason:"Allethrin pyrethroid volatilized into breathing zone — EPA-registered pesticide continuously inhaled", confidence:"high", category:"other" }],
+  ["repel lemon eucalyptus",        { floor:1, ceiling:3, substances:[], reason:"PMD/oil of lemon eucalyptus — plant-based, CDC approved", confidence:"high", category:"other" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // JERKY AND MEAT SNACKS
+  // ══════════════════════════════════════════════════════════════
+  ["jack link's",                   { floor:6, ceiling:8, substances:["sodium nitrite","HFCS"], reason:"Sodium nitrite IARC Group 1 + HFCS — nitrite floor fires (mFloor:8)", confidence:"high", category:"food_beverage" }],
+  ["jack links",                    { floor:6, ceiling:8, substances:["sodium nitrite","HFCS"], reason:"Sodium nitrite + HFCS — nitrite floor fires", confidence:"high", category:"food_beverage" }],
+  ["slim jim",                       { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite + mechanically separated chicken + corn syrup — nitrite floor fires", confidence:"high", category:"food_beverage" }],
+  ["epic bar",                       { floor:1, ceiling:3, substances:[], reason:"Whole prey ingredients, no nitrites, no celery powder, no artificial additives", confidence:"high", category:"food_beverage" }],
+  ["chomps",                         { floor:1, ceiling:3, substances:[], reason:"No sodium nitrite, no celery powder, no artificial dyes — benchmark clean meat snack", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // KETO AND SPECIALTY FOODS
+  // ══════════════════════════════════════════════════════════════
+  ["lily's chocolate",              { floor:2, ceiling:4, substances:[], reason:"Stevia + erythritol — no sucralose, no petroleum dyes, clean keto chocolate", confidence:"high", category:"food_beverage" }],
+  ["choczero",                       { floor:2, ceiling:4, substances:[], reason:"Monk fruit + erythritol — no sucralose, clean sweeteners", confidence:"high", category:"food_beverage" }],
+  ["rebel keto ice cream",          { floor:4, ceiling:6, substances:["sucralose"], reason:"Sucralose floor fires — not cleaner than real ice cream", confidence:"high", category:"food_beverage" }],
+  ["maurten",                    { floor:1, ceiling:3, substances:[], reason:"Maltodextrin + water + electrolytes — no artificial additives whatsoever", confidence:"high", category:"food_beverage" }],
+  ["honey stinger",                  { floor:1, ceiling:3, substances:[], reason:"Organic honey base — clean sports fuel", confidence:"high", category:"food_beverage" }],
+  ["tailwind endurance",            { floor:1, ceiling:3, substances:[], reason:"Sucrose + glucose + electrolytes — no artificial dyes or flavors", confidence:"high", category:"food_beverage" }],
+  ["stouffer's mac",                { floor:5, ceiling:7, substances:["sodium phosphate","processed cheese"], reason:"Processed cheese sauce + sodium phosphate + sodium citrate + NOVA 4", confidence:"high", category:"food_beverage" }],
+  ["marie callender",               { floor:5, ceiling:7, substances:["enriched flour","high sodium"], reason:"Enriched flour + high sodium 1000mg+ + NOVA 4 frozen meal", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // MLM NUTRITION
+  // ══════════════════════════════════════════════════════════════
+  ["herbalife",                      { floor:5, ceiling:7, substances:["sucralose","artificial dyes"], reason:"Artificial dyes + sucralose + proprietary blends without full disclosure — no NSF/Informed Sport certification", confidence:"high", category:"supplement" }],
+  ["isagenix",                       { floor:5, ceiling:7, substances:["sucralose"], reason:"Sucralose + proprietary blends + no third-party testing certification", confidence:"high", category:"supplement" }],
+  ["shakeology",                     { floor:4, ceiling:6, substances:["sucralose"], reason:"Proprietary blends, some sucralose, no NSF certification", confidence:"medium", category:"supplement" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // CLEAN SKINCARE
+  // ══════════════════════════════════════════════════════════════
+  ["the ordinary retinol",          { floor:1, ceiling:3, substances:[], reason:"Retinol + squalane — no synthetic fragrance, no parabens, minimal formula", confidence:"high", category:"personal_care" }],
+  ["paula's choice bha",            { floor:1, ceiling:3, substances:[], reason:"Salicylic acid, fragrance-free, no dyes — EWG top-rated", confidence:"high", category:"personal_care" }],
+  ["drunk elephant",                { floor:1, ceiling:3, substances:[], reason:"No synthetic fragrance, no essential oils, no silicones, no parabens — clean skincare benchmark", confidence:"high", category:"personal_care" }],
+  ["elta md uv",                    { floor:1, ceiling:3, substances:[], reason:"Zinc oxide mineral UV filter + niacinamide — EWG Verified, no synthetic fragrance", confidence:"high", category:"personal_care" }],
+  ["tatcha",                         { floor:1, ceiling:3, substances:[], reason:"No synthetic fragrance, Japanese botanical ingredients, no parabens", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // SELF-TANNER
+  // ══════════════════════════════════════════════════════════════
+  ["coola self tanner",             { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no synthetic fragrance — cleanest self-tanner", confidence:"high", category:"personal_care" }],
+  ["loving tan",                    { floor:2, ceiling:4, substances:[], reason:"DHA — fragrance-free options, cleaner formula", confidence:"high", category:"personal_care" }],
+  ["banana boat self tan",          { floor:4, ceiling:6, substances:["synthetic fragrance","parabens"], reason:"DHA + synthetic fragrance + parabens + propylene glycol", confidence:"high", category:"personal_care" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────

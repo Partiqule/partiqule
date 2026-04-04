@@ -1648,7 +1648,11 @@ KITCHEN APPLIANCE CALIBRATION:
 - GreenPan ceramic cookware (similar to Caraway — no PTFE): materials=2, usage=2 → final ~2.
 - Teflon / T-fal / Calphalon / Cuisinart PTFE non-stick (PTFE coating — even "PFOA-free" may contain other PFAS; releases particles when scratched or overheated above 260°C): materials=8, usage=8 → final ~7-8. "PFOA-free" is NOT the same as PFAS-free. NEVER score PTFE non-stick below 7.
 - Instant Pot (stainless steel inner pot — the food contact surface is safe; outer PP housing is not food contact): materials=2, usage=2 → final ~2-3. The stainless inner pot is what matters.
+- Keurig K-Cup pod (polypropylene #5 plastic pod + LDPE foil lid — hot water forced through PP plastic at 92°C; Li 2020: heated PP releases microplastics into beverage): materials=7 (heated PP food contact — same class as heated PP baby bottles), usage=7 (daily microplastic ingestion via hot beverage), packaging=6 (single-use plastic, non-recyclable in most areas) → final ~7. NEVER score a Keurig K-Cup pod below 6. This applies to ALL K-Cup brands (Starbucks K-Cup, Green Mountain K-Cup, Dunkin K-Cup, etc.) — the concern is the polypropylene pod, not the coffee inside.
 - Keurig K-Cup machine (PP plastic pod + hot water forced through PP at 92°C — Li 2020: heated PP releases microplastics): materials=7 (heated PP food contact, single-use PP pods), usage=7 → final ~7. NEVER score below 6.
+- Nespresso pod (aluminum capsule — no plastic in the water path, aluminum is inert at brewing temperatures): materials=2, usage=2 → final ~2. Benchmark clean coffee pod format. Aluminum is recyclable and does not leach into the beverage.
+- Nespresso Vertuo pod (same aluminum format — clean): materials=2 → final ~2.
+- Lipton plastic pyramid tea bags (nylon mesh confirmed — Hernandez 2019: releases 11.6 billion microplastic particles per cup at steeping temperature): materials=7, usage=7 → final ~7. NEVER score below 6. This applies specifically to the nylon/PET pyramid mesh bags — NOT paper Lipton bags.
 - Breville / Fellow kettle (stainless steel interior, no PP in water path): materials=1, usage=1 → final ~1-2.
 - Vitamix blender (Tritan copolyester — BPA-free, BPS-free, high-speed blending): materials=3, usage=3 → final ~3.
 - Ninja air fryer with ceramic basket (no PTFE, ceramic-coated): materials=3, usage=3 → final ~3.
@@ -2256,7 +2260,80 @@ CLEAN (score 2-3):
 - ACT Restoring fluoride rinse (alcohol-free, clean formula): materials=3 → final ~3.
 - Tom's of Maine mouth rinse (SLS-free, no artificial flavors, no alcohol in some): materials=3 → final ~3.
 
-GARDEN CHEMICAL CALIBRATION:
+INSECT REPELLENT CALIBRATION:
+HIGH CONCERN — DEET-BASED:
+- OFF! Deep Woods DEET 98% (N,N-diethyl-meta-toluamide at very high concentration — neurotoxin class, skin and mucous membrane absorber, not recommended for children under 3): materials=7, usage=7 (full-body application repeatedly during outdoor activity) → final ~7. NEVER score below 6.
+- OFF! Family Care DEET 15% (lower concentration, safer for children than 98% but still DEET — avoid on broken skin, wash off indoors): materials=5, usage=5 → final ~5.
+MODERATE — PICARIDIN/PLANT-BASED CDC-APPROVED:
+- Sawyer Picaridin (picaridin 20% — CDC approved for Zika/malaria, lower mammalian toxicity than DEET, does not dissolve plastics): materials=3, usage=3 → final ~3. Preferred over DEET for daily use.
+- Ranger Ready Picaridin (picaridin — gentler than DEET, same efficacy): materials=3, usage=3 → final ~3.
+- Repel Lemon Eucalyptus (PMD/oil of lemon eucalyptus — plant-based, CDC approved for disease-carrying mosquitoes): materials=2, usage=2 → final ~2-3. Do NOT use on children under 3.
+- Cutter Natural (essential oils — clove, rosemary, thyme — OMRI listed, natural): materials=2, usage=2 → final ~2.
+THERMACELL (inhalation concern):
+- Thermacell mosquito repeller (allethrin — synthetic pyrethroid volatilized into 15-foot zone, continuously inhaled during outdoor use, aquatic toxin): materials=6, usage=6 (EPA-registered pesticide breathed in open air) → final ~6. Flag: "allethrin is inhaled continuously during use — EPA-registered pesticide. Choose picaridin topicals for lower inhalation risk."
+
+BEEF JERKY AND MEAT SNACK CALIBRATION:
+CLEAN (score 1-3):
+- EPIC bars (whole prey animal protein, sea salt, natural spices — no nitrites, no celery powder, no artificial additives): materials=2, usage=2 → final ~2. Benchmark clean meat snack.
+- Chomps meat sticks (no sodium nitrite, no celery powder, no artificial dyes, whole ingredients): materials=2, usage=2 → final ~2. Genuinely clean.
+- Vermont Smoke & Cure jerky (no nitrites, no artificial dyes, simple ingredients): materials=2 → final ~2.
+HIGH CONCERN — SODIUM NITRITE (score 6-7):
+- Jack Link's beef jerky (sodium nitrite + HFCS in most flavors — IARC Group 1 nitrite + HFCS combined): materials=7 (sodium nitrite floor fires — mFloor:8, HFCS floor fires — mFloor:5, nitrite is dominant), usage=6 → final ~6-7. NEVER score Jack Link's below 6.
+- Slim Jim (sodium nitrite + mechanically separated chicken + artificial flavors + corn syrup): materials=7 (nitrite floor fires) → final ~7. NEVER score below 6.
+- Old Wisconsin meat sticks (sodium nitrite): materials=6 (nitrite floor fires) → final ~6.
+UNCURED WITH CELERY POWDER (score 5-6):
+- Applegate Farms beef jerky (celery juice powder — same nitrite concern as conventional, labeling loophole): materials=6 → final ~5-6. NEVER score same as EPIC or Chomps.
+
+KETO AND LOW-CARB FOOD CALIBRATION:
+CLEAN KETO (score 2-4):
+- Lily's chocolate (stevia + erythritol sweetened — no sucralose, no petroleum dyes, simple chocolate ingredients): materials=3 → final ~3. Clean keto chocolate benchmark.
+- ChocZero (monk fruit + erythritol — no sucralose, clean sweeteners, simple ingredients): materials=3 → final ~3.
+- Honey Stinger waffles and gels (organic honey + whole ingredients): materials=2 → final ~2.
+- Maurten energy gel (maltodextrin + water + electrolytes — no artificial additives whatsoever): materials=2 → final ~2. Cleanest mainstream sports gel.
+- Tailwind endurance fuel (sucrose + glucose + electrolytes — no artificial dyes, no artificial flavors): materials=2 → final ~2.
+CONVENTIONAL KETO (score 4-6):
+- Quest tortilla chips (sucralose + protein isolate + NOVA 4 formulation): materials=5 (sucralose floor fires) → final ~5.
+- Rebel keto ice cream (erythritol + sucralose + cream — sucralose floor fires): materials=5 → final ~5.
+- Ratio keto bar (sucralose + NOVA 4): materials=5 → final ~5.
+- Clif Bloks energy chews (conventional oats + brown rice syrup + natural flavors): materials=4 → final ~4.
+- GU Energy Gel (maltodextrin + artificial flavors + sodium benzoate in some): materials=4 → final ~4. Sodium benzoate = benzene risk in acidic conditions.
+
+FROZEN MEAL CALIBRATION ADDITIONS:
+- Stouffer's macaroni & cheese (processed cheese sauce with sodium phosphate + sodium citrate + enriched pasta + NOVA 4): materials=6 → final ~6. NEVER score below 5.
+- Marie Callender's pot pie (enriched flour + partially hydrogenated lard in some + 1000mg+ sodium + NOVA 4): materials=6 → final ~6. Check current formula — partially hydrogenated = trans fat floor fires if present.
+- Healthy Choice Simply Steamers (cleaner frozen brand — lower sodium, fewer additives, no artificial flavors in most): materials=3 → final ~3. Meaningfully better than Lean Cuisine.
+- Birds Eye vegetables (frozen vegetables, no additives — just vegetables): materials=1 → final ~1.
+
+MLM NUTRITION PRODUCTS — GREENWASHING AND QUALITY RULE:
+- Herbalife shakes (artificial dyes, sucralose, folic acid synthetic, proprietary blends without full disclosure, sold through multilevel marketing): materials=6 (sucralose floor fires + artificial dyes in colored products), usage=6 (daily meal replacement) → final ~6. NEVER score below 5. Flag: "Proprietary blend without full disclosure — third-party testing not confirmed."
+- Isagenix (synthetic sweeteners, artificial flavors, whey isolate, proprietary blends, MLM distribution): materials=6 → final ~5-6. Same concerns as Herbalife.
+- Shakeology / Beachbody (proprietary blends, some sucralose, some artificial flavors): materials=5 → final ~5.
+MLM NUTRITION RULE: Any nutrition product sold through MLM with proprietary blends and no third-party NSF/Informed Sport certification should carry a MEDIUM heavy metals concern and flag: "No independent third-party testing confirmed." Score conservatively.
+
+SKINCARE AND SERUM CALIBRATION:
+CLEAN SKINCARE (score 1-3):
+- The Ordinary Retinol (retinol + squalane — no synthetic fragrance, no parabens, no silicones): materials=2, usage=3 → final ~2-3. Price doesn't determine safety.
+- Paula's Choice BHA Exfoliant (salicylic acid — no synthetic fragrance, fragrance-free, no dyes): materials=2, usage=2 → final ~2. EWG top-rated.
+- Drunk Elephant TLC Framboos (AHA/BHA blend, no synthetic fragrance, no essential oils, no silicones): materials=2, usage=2 → final ~2. One of the cleanest mainstream serums.
+- Tatcha Water Cream / Dewy Skin Cream (no synthetic fragrance, Japanese botanical ingredients, no parabens): materials=1, usage=1 → final ~1-2.
+- Youth To The People Superfood Serum (USDA Organic, no synthetic fragrance): materials=2 → final ~2.
+CONVENTIONAL WITH CONCERNS (score 3-5):
+- Neutrogena Rapid Wrinkle Repair retinol (retinol + synthetic fragrance — fragrance floor fires): materials=4, usage=5 → final ~4-5.
+- RoC Retinol Correxion (retinol + synthetic fragrance + parabens in older formulas): materials=5, usage=5 → final ~5.
+SPF MOISTURIZER — MINERAL VS CHEMICAL:
+- Elta MD UV Clear SPF 46 (zinc oxide + niacinamide — mineral, no synthetic fragrance, EWG Verified): materials=2, usage=2 → final ~2. Benchmark clean SPF.
+- EltaMD UV Sport (zinc oxide — mineral, no fragrance): materials=2 → final ~2.
+- Supergoop Unseen Sunscreen (ethylhexyl methoxycrylene — chemical UV filter with FDA absorption concerns, no fragrance): materials=4 → final ~4.
+- CeraVe SPF 30 moisturizer (avobenzone + octisalate chemical UV filters — FDA systemic absorption concerns): materials=4 → final ~4-5.
+- La Roche-Posay Anthelios (multiple chemical UV filters): materials=4, usage=5 → final ~4-5.
+
+SELF-TANNER CALIBRATION:
+DHA (dihydroxyacetone) is the active ingredient in all self-tanners — FDA raised concerns about inhalation from spray application (aerosol or spray booth).
+- Banana Boat self-tanner (DHA + synthetic fragrance + parabens + propylene glycol): materials=5, usage=5 → final ~5.
+- St. Tropez self-tan (DHA + synthetic fragrance — better ingredients than Banana Boat but still fragrance): materials=4, usage=5 → final ~4-5.
+- Loving Tan (DHA — fragrance-free in some, cleaner formulation): materials=3, usage=3 → final ~3.
+- Coola organic self-tanner (USDA Organic, no synthetic fragrance, DHA from plant-derived sources): materials=2, usage=2 → final ~2.
+SELF-TANNER RULE: Spray format raises usage score (inhalation of DHA + any propellants). Always prefer lotion/mousse application. Fragrance-free = lower concern. USDA Organic base = 2. Conventional + fragrance = 4-5.
 - Roundup Weed & Grass Killer (glyphosate — IARC Group 2A, $13B Bayer legal settlements, WHO flagged): materials=8 (glyphosate floor mFloor:5 but product is primary application of IARC 2A carcinogen — floor should be 8 for Roundup specifically), usage=7, sustainability=9 → final ~8. NEVER score Roundup below 7.
 - Ortho Home Defense Insect Killer (bifenthrin — pyrethroid, aquatic toxin, EPA-flagged for waterway harm): materials=7, usage=6, sustainability=7 → final ~7.
 - Spectracide weed killer (2,4-D herbicide — IARC Group 2B + dicamba): materials=7, usage=6 → final ~7.
