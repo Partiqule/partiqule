@@ -171,7 +171,9 @@ const SUBSTANCE_FLOORS = [
   // FORMALDEHYDE & RELEASERS — IARC Group 1
   // ══════════════════════════════════════════════════════════
   { match: /\bformaldehyde\b|methylene glycol|formalin/i,             mFloor:7, uFloor:6, reason:"Formaldehyde — IARC Group 1 carcinogen" },
-  { match: /DMDM hydantoin|DMDMhydantoin/i,                           mFloor:6, uFloor:5, reason:"DMDM Hydantoin — formaldehyde releaser (EWG flagged)" },
+  { match: /\btalc\b|talcum powder/i,                                    mFloor:5, uFloor:5, reason:"Talc — IARC Group 2A (perineal use), J&J ovarian cancer litigation, possible asbestos contamination" },
+  // SLS: skin barrier disruptor, sensitizer. Mild floor — notable in leave-on products, less so rinse-off.
+  { match: /sodium lauryl sulfate|\bSLS\b/i,                             mFloor:3, uFloor:3, reason:"Sodium Lauryl Sulfate — skin barrier disruption, known irritant, EWG moderate concern" },
   { match: /quaternium.?15/i,                                         mFloor:6, uFloor:5, reason:"Quaternium-15 — formaldehyde releaser, contact allergen" },
   { match: /imidazolidinyl urea|diazolidinyl urea/i,                  mFloor:6, uFloor:5, reason:"Urea preservative — formaldehyde releaser" },
   { match: /2.?bromo.?2.?nitropropane|bronopol/i,                     mFloor:6, uFloor:5, reason:"Bronopol — formaldehyde releaser, nitrosamine precursor" },
@@ -1179,10 +1181,110 @@ RESTAURANT CHAIN CALIBRATION — additional chains:
 SODIUM RULE FOR RESTAURANT ITEMS: When sodium exceeds 2,000mg per serving, flag as HIGH concern and add +1 to materials. Items exceeding 3,000mg sodium (Cheesecake Factory pasta, Applebee's riblets) = materials minimum 7.
 
 DEODORANT CALIBRATION (personal_care category):
-- Conventional deodorant/antiperspirant (Secret, Dove, Old Spice): materials=5 — aluminum compounds (antiperspirant), synthetic fragrance (phthalates), parabens in some, propylene glycol. Usage=6 (daily underarm application, lymph node proximity). Final ~5-6.
-- Clinical-strength antiperspirant: materials=6 — higher aluminum concentration (20%+ aluminum chloride), synthetic fragrance. Final ~6.
-- Natural deodorant without aluminum (Native, Schmidt's, Humble): materials=3 — no aluminum, natural fragrance or fragrance-free, baking soda or mineral-based. Usage=4. Final ~3.
-- Native sensitive (no baking soda, minimal ingredients): materials=2 → final ~2-3.
+- Native deodorant (aluminum-free, coconut oil, shea butter, baking soda, no synthetic fragrance): materials=2, usage=2 → final ~2. Benchmark clean deodorant.
+- Schmidt's Naturals (plant-based, baking soda, no aluminum, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- Crystal deodorant mineral salt (potassium alum — a mineral salt, NOT the same as aluminum chlorohydrate — does not absorb into skin the same way): materials=3, usage=3 → final ~3. Note: potassium alum is still an aluminum compound but different mechanism from antiperspirant.
+- Conventional deodorant/antiperspirant (Secret, Dove, Old Spice): materials=5 — aluminum zirconium or aluminum chlorohydrate, synthetic fragrance (phthalates), parabens in some. Usage=6 (daily underarm application near lymph nodes). Final ~5-6.
+- Degree / Sure / Right Guard antiperspirant: materials=5, usage=6 → final ~5-6.
+- Clinical-strength antiperspirant (Certain Dri, Secret Clinical): materials=6 — 20%+ aluminum chloride, synthetic fragrance. Usage=7. Final ~6-7.
+
+TOOTHPASTE CALIBRATION (personal_care category — direct oral mucosa contact, some ingested):
+CLEAN (score 1-2):
+- Bite Toothpaste Bits (tablet format, no SLS, fluoride or fluoride-free options, no artificial flavors or sweeteners, minimal ingredients): materials=1, usage=1 → final ~1. Cleanest mainstream toothpaste option.
+- Hello toothpaste (SLS-free, fluoride, no artificial sweeteners, no titanium dioxide): materials=2, usage=2 → final ~2.
+- Himalaya Botanique (fluoride-free, plant-based, no SLS, no parabens): materials=2, usage=2 → final ~2.
+- David's Natural Toothpaste (SLS-free, fluoride, clean ingredients): materials=2, usage=2 → final ~2.
+MODERATE (score 3-4):
+- Sensodyne Pronamel (SLS-free formula, potassium nitrate, no artificial dyes — cleaner than Colgate): materials=3, usage=3 → final ~3.
+- Tom's of Maine (STILL CONTAINS SLS in most lines despite "natural" marketing — SLS, propylene glycol in some. Owned by Colgate. Not as clean as marketed): materials=4, usage=3 → final ~3-4. NEVER score Tom's below 3. Do NOT treat as equivalent to Bite or Hello.
+- Arm & Hammer (baking soda base, SLS, some artificial flavors): materials=4, usage=3 → final ~3-4.
+CONVENTIONAL (score 4-5):
+- Colgate Total (SLS, saccharin, titanium dioxide IARC 2B, artificial flavor, sodium fluoride): materials=5, usage=4 → final ~4-5.
+- Crest Whitening (SLS, titanium dioxide, artificial flavor, saccharin): materials=5, usage=4 → final ~4-5.
+- Crest Pro-Health (cetylpyridinium chloride — biocide, SLS, synthetic flavors): materials=5, usage=4 → final ~4-5.
+- Colgate Optic White (hydrogen peroxide + SLS + artificial flavor + titanium dioxide): materials=5, usage=4 → final ~4-5.
+TOM'S OF MAINE ANTI-GREENWASHING: Tom's uses SLS in most products, is owned by Colgate-Palmolive, and has faced greenwashing scrutiny. Do NOT score Tom's the same as genuinely clean brands like Bite or Hello.
+
+SHAMPOO AND CONDITIONER CALIBRATION:
+CLEAN (score 2-3):
+- Olaplex No.4 Bond Maintenance Shampoo (no SLS, no DMDM hydantoin, no parabens, no synthetic fragrance): materials=2, usage=2 → final ~2. Benchmark clean shampoo.
+- Briogeo Scalp Revival Shampoo (EWG Verified, no SLS, no DMDM): materials=2, usage=2 → final ~2.
+- Pura d'Or (USDA Organic certified, no SLS, no parabens): materials=2, usage=2 → final ~2.
+- Living Proof (no SLS, no parabens, EWG Skin Deep clean score): materials=2, usage=2 → final ~2-3.
+- Free & Clear shampoo (dermatologist recommended for sensitive skin, no fragrance, no parabens): materials=2, usage=2 → final ~2.
+CONVENTIONAL (score 4-5):
+- Dove shampoo / conditioner (SLS, synthetic fragrance, dimethicone — some varieties have parabens): materials=4, usage=4 → final ~4.
+- Head & Shoulders (SLS, zinc pyrithione, synthetic fragrance, parabens in some): materials=5, usage=5 → final ~5.
+- Herbal Essences conventional (SLS, synthetic fragrance, parabens): materials=5, usage=5 → final ~5.
+- OGX (markets as SLS-free but DMDM hydantoin in some lines — check specific variant): materials=4-5 depending on line → final ~4-5.
+HIGH CONCERN (score 5-6 — DMDM fires):
+- Pantene Pro-V (DMDM hydantoin formaldehyde releaser, SLS, synthetic fragrance — DMDM floor mFloor:6 fires): materials=6, usage=5 → final ~5-6. NEVER score Pantene below 5.
+- TRESemmé (DMDM hydantoin in most formulas, SLS, synthetic fragrance — DMDM floor fires): materials=6, usage=5 → final ~5-6. NEVER score TRESemmé below 5.
+- Garnier Fructis (DMDM hydantoin, SLS, synthetic fragrance): materials=6, usage=5 → final ~5-6.
+SHAMPOO RULE: No SLS + no DMDM + no parabens + no synthetic fragrance = 2. One concern = 3-4. DMDM present = 5-6 minimum (floor fires).
+
+MOISTURIZER AND LOTION CALIBRATION:
+CLEAN (score 2-3):
+- Vanicream Moisturizing Cream (no dyes, no fragrance, no lanolin, no parabens, no formaldehyde releasers — dermatologist recommended for sensitive skin): materials=2, usage=2 → final ~2. Benchmark clean moisturizer.
+- Tatcha Water Cream (no synthetic fragrance, no parabens, clean Japanese botanical ingredients): materials=2, usage=2 → final ~2.
+- Beautycounter Countertime Cream (clean, B-Corp certified, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- First Aid Beauty Ultra Repair Cream (minimal additives, colloidal oatmeal, no parabens): materials=3, usage=3 → final ~3.
+CONVENTIONAL (score 4-5):
+- CeraVe Moisturizing Cream (current formula: no parabens, no synthetic fragrance — actually relatively clean; older formulas had parabens): materials=3, usage=3 → final ~3. Note: verify current formula — CeraVe reformulates frequently.
+- Aveeno Daily Moisturizing Lotion (synthetic fragrance, dimethicone, benzalkonium chloride in some): materials=4, usage=4 → final ~4.
+- Eucerin (some formulas have parabens, minimal fragrance): materials=4, usage=4 → final ~4.
+- Cetaphil Daily Lotion (parabens, propylene glycol, synthetic fragrance in some): materials=5, usage=5 → final ~5.
+- Lubriderm (synthetic fragrance, parabens in some): materials=4, usage=4 → final ~4.
+RULE: "Dermatologist recommended" is a marketing claim, not a safety certification. Always check actual ingredients — parabens, synthetic fragrance, and propylene glycol appear in many dermatologist-recommended brands.
+
+MAKEUP AND COSMETICS CALIBRATION:
+CLEAN MAKEUP BRANDS (score 1-3):
+- ILIA Beauty (organic ingredients, no synthetic fragrance, mineral SPF — EWG top-rated): materials=1-2, usage=2 → final ~2. One of the cleanest mainstream makeup brands.
+- Jones Road Beauty (Bobbi Brown's clean line — no fragrance, minimal ingredients, clean pigments): materials=1, usage=1 → final ~1-2.
+- RMS Beauty (organic, raw ingredients, no synthetic fragrance, no parabens): materials=2, usage=2 → final ~2.
+- Rare Beauty by Selena Gomez (no parabens, no synthetic fragrance, Leaping Bunny — committed to clean formulation): materials=2, usage=2 → final ~2.
+- Glossier (mostly clean, minimal synthetic additives, no synthetic fragrance in most products): materials=2, usage=2 → final ~2.
+- Kosas (EWG Verified, no synthetic fragrance, no parabens): materials=2, usage=2 → final ~2.
+CONVENTIONAL MAKEUP (score 4-5):
+- Maybelline Fit Me Foundation (synthetic fragrance, dimethicone, talc in some, conventional pigments): materials=4, usage=5 → final ~4-5.
+- L'Oreal True Match (synthetic fragrance, titanium dioxide IARC 2B, talc): materials=5, usage=5 → final ~5.
+- CoverGirl Clean Pressed Powder (talc as primary ingredient — talc floor mFloor:5 fires, synthetic fragrance): materials=5, usage=5 → final ~5.
+- e.l.f. (budget brand, improving — some EWG Verified lines, mostly no synthetic fragrance): materials=3, usage=3 → final ~3. Better than most budget brands.
+MASCARA — FORMALDEHYDE RELEASERS IN SOME FORMULAS:
+- Maybelline Great Lash (quaternium-15 formaldehyde releaser in original formula — quaternium-15 floor mFloor:6 fires): materials=6, usage=6 → final ~6. NEVER score below 5.
+- ILIA Limitless mascara (clean formula, no quaternium-15, no parabens): materials=2, usage=2 → final ~2.
+- Tarte Lights Camera Lashes (no formaldehyde releasers, cleaner formula): materials=3, usage=3 → final ~3.
+LIP PRODUCTS:
+- Burt's Bees Lip Balm (beeswax, vitamin E, no synthetic fragrance, no parabens): materials=1, usage=1 → final ~1-2. Benchmark clean lip care.
+- Bite Beauty lipstick (food-grade ingredients, no synthetic fragrance, no parabens): materials=2, usage=2 → final ~2.
+- RMS Beauty lipstick (organic pigments, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- ChapStick Classic (BHT preservative, synthetic fragrance, saccharin): materials=4, usage=3 → final ~3-4. BHT floor fires.
+- EOS lip balm (synthetic fragrance, dimethicone, some parabens): materials=4, usage=3 → final ~3-4.
+- Vaseline Lip Therapy (petroleum jelly — petrolatum — mineral oil, synthetic fragrance): materials=4, usage=3 → final ~3-4.
+- Conventional lipstick (Maybelline, NYX, Revlon): materials=5, usage=6 (direct oral mucosa contact, daily application) → final ~5-6. Flag: heavy metal contamination risk in conventional color cosmetics.
+
+BODY WASH AND SOAP CALIBRATION:
+CLEAN (score 1-2):
+- Dr. Bronner's liquid castile soap (saponified organic oils, essential oils only, certified Fair Trade): materials=1, usage=1 → final ~1. Benchmark clean body wash.
+- Dr. Bronner's bar soap (same formula, bar format): materials=1, usage=1 → final ~1.
+- Native body wash (SLS-free, no parabens, no synthetic fragrance, clean ingredients): materials=2, usage=2 → final ~2.
+- Dove Sensitive Skin bar (fragrance-free — check label for fragrance-free specifically): materials=2, usage=2 → final ~2.
+CONVENTIONAL (score 3-5):
+- Dove Beauty Bar original (synthetic fragrance, dimethicone, some parabens in older formula): materials=4, usage=4 → final ~4.
+- Method body wash (synthetic fragrance, SLS): materials=4, usage=4 → final ~4.
+- Olay body wash (synthetic fragrance, SLS, parabens in some): materials=5, usage=5 → final ~5.
+HIGH CONCERN (score 5-6):
+- Dial Complete antibacterial (benzalkonium chloride — EPA-registered pesticide, synthetic fragrance, SLS): materials=6, usage=6 → final ~6. "Antibacterial" soaps disrupt skin microbiome and select for resistant bacteria. FDA banned triclosan — benzalkonium chloride is still used but contested.
+- Irish Spring (synthetic fragrance, SLS, parabens): materials=5, usage=5 → final ~5.
+
+HAIR STYLING CALIBRATION:
+- OUAI hair oil / hair serum (squalane, clean ingredient base, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- Living Proof styling products (EWG Skin Deep clean, no synthetic fragrance): materials=2, usage=2 → final ~2.
+- Moroccanoil treatment (argan oil base — but "Fragrance/Parfum" is in the ingredient list without individual component disclosure, treating as synthetic fragrance): materials=3, usage=3 → final ~3. Not as clean as pure argan oil.
+- Conventional hairspray (Aquanet, Pantene, TRESemmé — synthetic fragrance, PVP/PVPA polymers, aerosolized inhalation): materials=5, usage=5 (inhaled aerosol + skin contact) → final ~5. Flag: inhalation pathway makes usage score higher than rinse-off products.
+- Got2B Glued (PVP/VA copolymer, synthetic fragrance, high alcohol): materials=5, usage=5 → final ~5.
+
+EWG CLEAN BEAUTY RULE: EWG Verified certification = materials cannot exceed 2. EWG Skin Deep score 1-3 with no high-concern ingredients = materials 2 maximum. B-Corp certified personal care brand with clean formulation = materials 2-3. These are hard ceilings — an EWG Verified product cannot score materials 5 just because it contains dimethicone (which EWG rates low concern). Do NOT override EWG Verified with speculative concerns.
 
 PROTEIN POWDER CALIBRATION:
 - Clean third-party tested whey/plant protein (Momentous, Garden of Life, Thorne): materials=2 (NSF Certified for Sport or Informed Sport tested, no artificial dyes, no artificial sweeteners). Final ~2-3.
