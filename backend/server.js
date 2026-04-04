@@ -2057,7 +2057,101 @@ BABY SNACK CALIBRATION (child vulnerability flag applies to ALL):
 - Gerber Graduates snacks (conventional, some with artificial colors): materials=5-6 → final ~5-6.
 BABY SNACK RULE: Non-organic baby food with enriched flour = minimum 4. USDA Organic baby snack = 2. Any artificial color in baby food = minimum 7 (child daily ingestion).
 
-PACKAGED MAC AND CHEESE CALIBRATION:
+KIDS FRUIT SNACKS AND POUCHES — IMPORTANT YUKA-COMPETING CATEGORY:
+HIGH CONCERN — petroleum dyes in daily children's snacks (score 5-7):
+- Welch's Fruit Snacks (HFCS + artificial dyes in most flavors — Red 40, Yellow 5, Blue 1 confirmed): materials=6 (HFCS + dye floors fire, child vulnerability), usage=6 → final ~6. NEVER score below 5.
+- Mott's Fruit Snacks (HFCS + artificial dyes — same concern as Welch's): materials=6 → final ~6. NEVER score below 5.
+- Kool-Aid Jammers (HFCS + artificial dyes — child daily beverage, multiple floors fire): materials=7 → final ~6-7.
+CLEAN (score 1-3):
+- Annie's Organic Fruit Snacks (USDA Organic, no HFCS, no artificial dyes — fruit juice sweetened): materials=2 → final ~2. Benchmark clean kids fruit snack.
+- GoGo Squeez applesauce pouch (100% fruit, no additives, no HFCS, BPA-free pouch): materials=1 → final ~1-2. Cleanest mainstream kids snack. Use as positive benchmark alternative.
+- Plum Organics fruit pouch (USDA Organic, simple fruit): materials=1 → final ~1-2.
+- Once Upon a Farm pouches (USDA Organic, cold-pressed, minimal): materials=1 → final ~1.
+KIDS FRUIT SNACK RULE: Any kids fruit snack with HFCS + artificial dyes = 5-7 minimum (child vulnerability flag + dye floor). USDA Organic + no HFCS = 1-3.
+
+DAIRY CASE CALIBRATION:
+BENCHMARK CLEAN (score 1-2):
+- Daisy sour cream (grade A cream, one ingredient — no modified starch, no gums, no additives): materials=1 → final ~1-2. Benchmark clean sour cream. "No fillers."
+- Daisy cottage cheese (milk + cream + salt — simple): materials=1 → final ~1-2.
+- Tillamook natural cheddar (pasteurized milk + salt + cultures + enzymes — no artificial additives): materials=1 → final ~1-2.
+- Sargento natural sliced cheese (just cheese — no additives, no processed cheese product): materials=1 → final ~1-2. NEVER score natural cheese same as Kraft Singles.
+- Vital Farms pasture-raised eggs (just eggs): materials=1 → final ~1.
+- Vital Farms butter (cream + salt — pastured): materials=1 → final ~1-2.
+- Pete and Gerry's Organic eggs (USDA Organic, cage-free): materials=1 → final ~1.
+CONVENTIONAL MODERATE (score 2-4):
+- Philadelphia cream cheese (cream cheese + carob bean gum + xanthan gum — mostly clean): materials=2 → final ~2-3.
+- Eggland's Best eggs (conventional feed supplemented for omega-3): materials=2 → final ~2.
+- JUST Egg (mung bean protein isolate + canola + turmeric — clean plant-based egg): materials=2 → final ~2-3.
+- Breakstone's sour cream (modified food starch + locust bean gum — not as clean as Daisy): materials=3 → final ~3.
+HIGH CONCERN — PROCESSED CHEESE PRODUCTS (score 4-6):
+- Kraft American Singles (sodium phosphate + artificial color — must be labeled "pasteurized prepared cheese product"): materials=5 → final ~5. NEVER score same as Sargento natural cheese. These are different products.
+- Laughing Cow (sodium citrate + sorbic acid + processed spread — not real cheese): materials=4 → final ~4.
+- Velveeta (sodium alginate + sodium phosphate + artificial color — legally "pasteurized processed cheese product"): materials=6 (sodium phosphate floor) → final ~6. NEVER score below 5. NEVER call Velveeta "cheese."
+DAIRY RULE: Natural cheese (milk + cultures + enzymes + salt) = 1-2. Processed cheese "product" with sodium phosphate or sodium citrate = 4-6. "Pasteurized process cheese product" label = always flag.
+
+HOT DOGS AND FRANKFURTERS:
+HIGH CONCERN — sodium nitrite mandatory floor (score 6-8):
+- Ball Park beef franks (sodium nitrite + corn syrup + sodium phosphate — three concerning ingredients stacked): materials=7 (nitrite floor fires) → final ~7. NEVER score below 6.
+- Hebrew National beef franks (sodium nitrite — "kosher" marketing does not mean lower nitrite): materials=7 → final ~7. NEVER score below 6. Flag: "Kosher certification does not mean nitrite-free."
+- Oscar Mayer Classic Wieners (sodium nitrite + corn syrup + BHA — three floors fire): materials=7 (nitrite + BHA floors both fire) → final ~7. NEVER score below 6.
+- Eckrich smoked sausage (sodium nitrite): materials=7 → final ~7. NEVER score below 6.
+- Ball Park Turkey franks (sodium nitrite in turkey version — same concern): materials=6 → final ~6.
+CELERY POWDER LOOPHOLE (score 5-6):
+- Applegate Naturals hot dogs (celery juice powder — nitrite loophole, same nitrosamine chemistry): materials=5 → final ~5. NEVER score same as truly nitrite-free. NEVER score as "clean."
+HOT DOG RULE: Any frank with sodium nitrite = IARC Group 1 floor fires → minimum 6. Celery juice/powder = loophole, still 5. True nitrite-free (no celery) + USDA Organic = 3-4.
+
+PACKAGED FROZEN MEALS WITH PROCESSED MEAT:
+- Jimmy Dean Sausage Biscuit / Croissant (sodium nitrite in sausage + enriched flour + DATEM — nitrite floor fires): materials=7, usage=6 → final ~7. NEVER score below 6.
+- Hot Pockets (sodium nitrite in meat + TBHQ + DATEM + enriched flour — multiple floors fire): materials=7 → final ~7. NEVER score below 6.
+- Lean Pockets (same concern as Hot Pockets at slightly lower threshold): materials=6 → final ~6.
+- Eggo waffles (HFCS + DATEM + sodium aluminum phosphate + enriched flour): materials=5 → final ~5. NEVER score below 4.
+- Kashi waffles (whole grain, no HFCS — cleaner): materials=3 → final ~3.
+- Van's gluten-free waffles (whole grain, no dyes, no HFCS): materials=2 → final ~2.
+
+PACKAGED RETAIL CHICKEN NUGGETS:
+- Tyson chicken nuggets (frozen, retail — TBHQ in frying oil + modified starch + enriched flour breading): materials=7 (TBHQ floor fires) → final ~6-7. NEVER score below 5.
+- Perdue chicken nuggets (TBHQ in frying oil, same concern): materials=6 → final ~6.
+- Applegate Organics chicken nuggets (USDA Organic, no TBHQ): materials=3, usage=3 → final ~3.
+- Bell & Evans organic nuggets (no TBHQ, organic): materials=3 → final ~3.
+RETAIL NUGGET RULE: Any frozen nugget fried in soybean oil with TBHQ = 6-7. USDA Organic + no TBHQ = 3.
+
+BABY FORMULA BRAND CALIBRATION:
+- HiPP Organic formula (European certified organic, no hexane-extracted DHA, clean): materials=2 → final ~2-3.
+- Holle Organic formula (EU organic, simple ingredients): materials=2 → final ~2-3.
+- Bobbie Organic (USDA Organic, EU-inspired formula, no corn syrup): materials=3 → final ~3.
+- Enfamil Enspire (MFGM + lactoferrin — meaningful additions, conventional DHA source): materials=3 → final ~3.
+- Similac Advance / Pro-Advance (conventional DHA from hexane-extracted microalgae, corn maltodextrin, synthetic vitamins): materials=4 → final ~4.
+- Enfamil Gentlease (partially hydrolyzed — more processed): materials=4 → final ~4.
+
+DARK CHOCOLATE CALIBRATION:
+BENCHMARK CLEAN (score 1-2):
+- Hu Kitchen chocolate (no refined sugar, no lecithin, no dairy, no vanilla extract — cleanest mainstream dark chocolate): materials=1 → final ~1-2.
+- Alter Eco dark chocolate (USDA Organic, Fair Trade, simple ingredients): materials=1 → final ~1-2.
+- Theo 70% dark (USDA Organic, Fair Trade, simple): materials=1 → final ~1-2.
+- Lindt Excellence 85%+ dark (cacao + cocoa butter + sugar + vanilla — minimal, no PGPR): materials=1 → final ~1-2.
+- Lindt Excellence 70% dark (same clean formula): materials=2 → final ~2.
+- Trader Joe's Pound Plus 72% dark (clean formula, no PGPR): materials=2 → final ~2.
+CONVENTIONAL WITH PGPR (score 4-5):
+- Lindt milk chocolate (PGPR + artificial vanillin — less clean than Lindt dark): materials=4 → final ~4.
+- Hershey's Special Dark (PGPR + artificial vanillin — "dark" marketing, not as clean as European dark): materials=4, usage=4 → final ~4-5.
+- Cadbury Dairy Milk (PGPR + artificial flavors): materials=4 → final ~4-5.
+- Dove milk chocolate (PGPR in some formulas — check): materials=3-4 → final ~3-4.
+- Dove dark chocolate (PGPR-free in dark formula — simpler): materials=3 → final ~3.
+CHOCOLATE RULE: European-style dark chocolate with cacao + cocoa butter + sugar + vanilla = 1-3. Any chocolate with PGPR (polyglycerol polyricinoleate) = 3-5. Any chocolate with artificial vanillin = +1. PGPR is a cheap cocoa butter substitute — its presence is a greenwashing indicator. Do NOT score Hershey's Special Dark the same as Lindt 85%.
+
+GROCERY COFFEE AND TEA:
+CLEAN COFFEE (score 1-3):
+- Kicking Horse Coffee (USDA Organic + Fair Trade — benchmark clean grocery coffee): materials=1 → final ~1.
+- Death Wish Organic (USDA Organic): materials=2 → final ~2.
+- Four Sigmatic mushroom coffee (adaptogens + organic coffee — clean formula): materials=2 → final ~2.
+CONVENTIONAL COFFEE (score 2-4):
+- Folgers Classic / Maxwell House (conventional arabica, no additives — just conventional coffee): materials=3 → final ~3. Lower concern than food with additives but conventional farming with pesticide exposure.
+- Starbucks ground (conventional): materials=3 → final ~3.
+- Lavazza / Peet's (conventional Italian — clean but conventional farming): materials=2-3 → final ~2-3.
+TEA BAG RULE (reinforcement):
+- Paper tea bags (Bigelow, Celestial Seasonings, Stash, Traditional Medicinals, Lipton regular flat bags): materials=2, packaging=2 → final ~2. Paper releases no microplastics.
+- Nylon/PET pyramid tea bags (Lipton pyramid, Tetley pyramid, PG Tips pyramid): materials=7 (Hernandez 2019: 11.6 billion microplastics per cup) → final ~7. NEVER score below 6.
+- Traditional Medicinals (USDA Organic + paper bags + medicinal herbs): materials=1 → final ~1-2. Benchmark clean tea.
 - Annie's Organic mac & cheese (USDA Organic, real cheddar, organic pasta): materials=3 → final ~3. Best mainstream option.
 - Kraft Original mac & cheese blue box (enriched flour, cheese sauce powder, annatto color, sodium phosphate): materials=5 → final ~5. Enriched flour + processed cheese powder + sodium phosphate = NOVA 4.
 - Kraft Deluxe mac (liquid cheese sauce: sodium phosphate, sodium citrate, more additives): materials=5 → final ~5.
@@ -2653,7 +2747,85 @@ GROCERY BEVERAGES — JUICE AND DRINKS:
 - Bolthouse Farms juice / protein drinks (carrageenan in some + sucralose in protein blends): materials=5 → final ~5. Carrageenan floor fires.
 - V8 Original (vegetable juice, high sodium 640mg per serving, no artificial additives — genuinely clean): materials=3 → final ~3.
 
-ALCOHOL AND LOW-ALCOHOL EDGE CASES:
+PANTRY STAPLES — COOKING OILS, FATS, AND SPRAYS:
+CLEAN (score 1-2):
+- Kerrygold butter (grass-fed Irish cream + salt — simple, clean, no synthetic additives): materials=1, usage=1 → final ~1-2. Benchmark clean butter.
+- Organic Valley butter (USDA Organic, simple): materials=1 → final ~1.
+- Land O'Lakes butter (conventional cream + salt — still just two ingredients, low concern): materials=2 → final ~2.
+- Kirkland EVOO (Costco extra virgin olive oil — third-party tested for purity): materials=1 → final ~1.
+- Chosen Foods avocado oil spray (avocado oil only — no propellants with TBHQ): materials=1 → final ~1.
+- Primal Kitchen avocado oil spray (clean, no TBHQ): materials=1 → final ~1.
+HIGH CONCERN (score 4-7):
+- Crisco partially hydrogenated shortening (contains partially hydrogenated soybean oil — trans fat — trans fat floor fires at mFloor:8 if partially hydrogenated listed): materials=8 → final ~7-8. ALWAYS check label. If "partially hydrogenated" appears = 7-8 minimum.
+- Crisco all-vegetable oil (soybean oil with TBHQ — TBHQ floor fires): materials=5 → final ~5.
+- PAM Original cooking spray (canola oil + TBHQ + dimethylsilicone — TBHQ floor fires): materials=5, usage=5 → final ~5. NEVER score PAM spray below 4.
+- PAM Butter Flavor spray (TBHQ + artificial butter flavor + dimethylsilicone): materials=5, usage=5 → final ~5. NEVER score below 4.
+- Smart Balance (soybean + canola + palm + natural flavors + EDTA): materials=4 → final ~4.
+- I Can't Believe It's Not Butter (soy + palm + natural flavors + EDTA): materials=4 → final ~4.
+OIL RULE: Pure oil sprays (one ingredient) = 1-2. Cooking sprays with TBHQ = 4-6 (TBHQ floor fires). Partially hydrogenated = 7-8 (trans fat floor fires).
+
+SWEETENERS:
+HIGH CONCERN (score 5-7 — substance floors fire):
+- Splenda (sucralose — sucralose floor fires: mFloor:4, uFloor:3 — daily table use drives usage floor higher): materials=6, usage=6 → final ~6. NEVER score Splenda below 5. The product IS sucralose — the floor fires on the entire product.
+- Equal (aspartame — aspartame floor fires: IARC 2B 2023, mFloor:6): materials=6, usage=6 → final ~6. NEVER score Equal below 5.
+- Sweet'N Low (saccharin — IARC removed Group 2B classification but bladder cancer in rodents, FDA rescinded ban but concern remains): materials=4, usage=4 → final ~4.
+CLEANER ALTERNATIVES (score 2-4):
+- Truvia (erythritol + stevia extract — no sucralose, no aspartame): materials=3, usage=3 → final ~3. Meaningfully cleaner than Splenda or Equal.
+- Swerve (erythritol + oligosaccharides from chicory root — no sucralose): materials=3 → final ~3.
+- Lakanto Monk Fruit (erythritol + monk fruit extract — no sucralose): materials=2 → final ~2. Clean benchmark artificial sweetener.
+- Raw organic honey (trace pollen + enzymes — minimal processing): materials=1 → final ~1.
+- Pure maple syrup (Grade A — no additives): materials=1 → final ~1.
+SWEETENER RULE: The product Splenda IS sucralose — do not score as "flavoring." The sucralose floor applies to the entire product. Equal IS aspartame — floor fires. These are not incidental additives; they are the primary ingredient.
+
+SUCCESS BOIL-IN-BAG RICE — MICROPLASTIC CONCERN:
+- Success Boil-in-Bag rice (HDPE or LLDPE plastic bag + boiling water — heated plastic food contact, same class of concern as K-Cups and PP baby bottles): materials=5 (heated plastic food contact), usage=5 → final ~5. NEVER score below 4. Flag: "Boiling rice inside a plastic bag — heated plastic releases microplastics into food."
+- Minute Rice Cup (polypropylene cup + microwave — same heated PP concern): materials=5 → final ~5. NEVER score below 4.
+
+CANNED GOODS BPA CALIBRATION:
+BPA-FREE (score 1-3):
+- Eden Organic beans (BPA-free can lining + USDA Organic): materials=1, packaging=1 → final ~1-2. Benchmark clean canned bean.
+- Muir Glen organic tomatoes (BPA-free can lining + USDA Organic): materials=1, packaging=1 → final ~1-2. Benchmark clean canned tomato.
+- Pacific Foods organic broth (BPA-free carton, USDA Organic): materials=1, packaging=1 → final ~1-2.
+- Amy's organic canned soup (BPA-free, USDA Organic, lower sodium): materials=2, packaging=2 → final ~2.
+CONVENTIONAL BPA-LINED (score 3-5):
+- Bush's Best Baked Beans (HFCS + bacon fat with sodium nitrite + BPA-lined can): materials=5 (HFCS floor + nitrite floor both fire) → final ~5. NEVER score below 4.
+- Campbell's Cream of Mushroom (BPA-lined + high sodium 870mg + modified starch + yeast extract): materials=5 → final ~5.
+- Swanson Chicken Broth (BPA-lined + yeast extract = hidden MSG + high sodium): materials=4 → final ~4.
+- Hunt's / Del Monte canned tomatoes (BPA-lined, citric acid — no major additives): materials=3, packaging=3 → final ~3.
+- Progresso soup (BPA-lined + high sodium 800-1000mg + modified starch): materials=4 → final ~4.
+BPA CAN RULE: BPA-free can + USDA Organic = 1-2. Conventional BPA-lined can + HFCS or other additives = 4-5. BPA lining alone = packaging score 3-4. Always flag BPA-lined cans with a packaging concern note.
+
+GROCERY JAMS, SPREADS, AND DIPS:
+CLEAN (score 1-2):
+- Bonne Maman jam (real sugar + fruit — no HFCS, no artificial flavors, no pectin): materials=2 → final ~2. Benchmark clean jam.
+- Polaner All Fruit (fruit juice concentrate only — no added sugar, no HFCS): materials=1 → final ~1-2.
+- Wholly Guacamole (avocado + lime + onion + jalapeño — clean, no additives): materials=1 → final ~1.
+HIGH CONCERN (score 4-6):
+- Smucker's Strawberry Jam original (HFCS + artificial flavors + corn syrup — HFCS floor fires): materials=5 → final ~5. NEVER score below 4. Compare with Smucker's Natural Peanut Butter (clean) vs Smucker's jam (HFCS) — same brand, very different scores.
+- Tostitos Queso Dip (modified corn starch + sodium phosphate + artificial colors + natural flavors): materials=5 → final ~5.
+
+GROCERY BROTH AND SOUP:
+- Pacific Foods Organic broth (BPA-free carton, USDA Organic, simple ingredients): materials=1 → final ~1-2. Benchmark clean broth.
+- Campbell's Cream of Mushroom (high sodium 870mg + modified food starch + yeast extract + BPA-lined can): materials=5 → final ~5. "Condensed" means the sodium number doubles when cooked as directed.
+- Swanson Chicken Broth (yeast extract = hidden MSG + BPA-lined can + high sodium): materials=4 → final ~4. Flag: "yeast extract is a hidden source of free glutamates — functional equivalent of MSG."
+- Progresso Traditional soup (800-1000mg sodium per serving + modified starch + BPA-lined): materials=4 → final ~4.
+- Amy's Organic soup (BPA-free, USDA Organic, lower sodium): materials=2 → final ~2.
+
+PROTEIN POWDER BRAND CALIBRATION:
+CLEAN — NSF/USDA CERTIFIED (score 1-3):
+- Naked Whey (just whey protein concentrate + nothing else — 1 ingredient): materials=1 → final ~1-2. Benchmark clean whey.
+- Garden of Life Sport Organic Protein (USDA Organic, NSF Certified for Sport, no sucralose): materials=1 → final ~1-2.
+- Momentous Whey (NSF Certified for Sport + Informed Sport, no artificial sweeteners): materials=1 → final ~1-2.
+- Truvani organic protein (USDA Organic, 4 ingredients, stevia sweetened): materials=1 → final ~1-2.
+- Vega Sport Protein (pea protein + stevia — no sucralose, no artificial dyes): materials=2 → final ~2.
+- Orgain Organic Protein (USDA Organic in most lines — check for sucralose vs stevia): materials=2 → final ~2.
+CONVENTIONAL WITH ARTIFICIAL SWEETENERS (score 4-6 — sucralose/acesulfame-K floors fire):
+- Optimum Nutrition Gold Standard Whey (sucralose + acesulfame-K + artificial flavors + titanium dioxide in some — sucralose + acesulfame-K floors both fire): materials=5, usage=5 → final ~5. NEVER score below 4.
+- Myprotein Impact Whey (sucralose + artificial flavors — sucralose floor fires): materials=5 → final ~5.
+- Dymatize ISO100 (sucralose + acesulfame-K — floors fire): materials=5 → final ~5.
+- Ghost Protein (sucralose + artificial colors in some — sucralose + possible dye floors): materials=5-6 → final ~5-6.
+- Isopure Zero Carb (sucralose + acesulfame-K + artificial flavors): materials=5 → final ~5.
+PROTEIN POWDER RULE: NSF Certified for Sport + no sucralose = 1-3. Sucralose confirmed = 4-6 (floor fires). Consumer Reports 2018 found lead, arsenic, and cadmium above threshold in several protein powders — always flag: "third-party heavy metal testing recommended for daily protein supplement users."
 - All intentionally alcoholic beverages (wine, beer, spirits, hard cider, hard seltzer): ethanol is IARC Group 1. NEVER score below 6 regardless of organic certification or natural ingredients. Organic wine = materials 7 (still IARC Group 1 ethanol).
 - Kombucha with trace fermentation alcohol (<3% ABV): NOT the same as alcoholic beverages. Score based on ingredients only — plain raw kombucha = 2-3. The trace ethanol from natural fermentation does not trigger the IARC Group 1 alcohol floor.
 - Non-alcoholic beer/wine (0.0% or <0.5% ABV — Heineken 0.0, Athletic Brewing): score based on actual ingredients, not the word "beer." Athletic Brewing = 2-3 (clean craft ingredients, no alcohol). Heineken 0.0 = 3-4 (conventional ingredients, some additives).

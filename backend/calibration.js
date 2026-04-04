@@ -217,6 +217,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // FOOD — BREAKFAST
   // ══════════════════════════════════════════════════════════════
+  ["eggo",                         { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + enriched flour — floors fire", confidence:"high", category:"food_beverage" }],
   ["eggo waffles",                 { floor:4, ceiling:6, substances:["HFCS","calcium propionate"], reason:"HFCS + artificial flavors + calcium propionate + enriched flour + NOVA 4", confidence:"high", category:"food_beverage" }],
   ["log cabin syrup",              { floor:4, ceiling:6, substances:["HFCS","caramel color"], reason:"HFCS + caramel color + artificial maple flavor — not real maple", confidence:"high", category:"food_beverage" }],
   ["aunt jemima",                  { floor:4, ceiling:6, substances:["HFCS","caramel color"], reason:"HFCS + artificial maple flavor — now Pearl Milling Company", confidence:"high", category:"food_beverage" }],
@@ -740,6 +741,191 @@ const ENTRIES = [
   ["oscar mayer deli fresh",        { floor:4, ceiling:6, substances:["sodium nitrite"], reason:"Sodium nitrite — IARC Group 1 floor fires", confidence:"high", category:"food_beverage" }],
   ["hillshire farm turkey",         { floor:4, ceiling:6, substances:["sodium nitrite"], reason:"Sodium nitrite — floor fires", confidence:"high", category:"food_beverage" }],
   ["applegate naturals turkey",     { floor:4, ceiling:6, substances:["celery juice"], reason:"Celery juice powder — same nitrite exposure as conventional, just labeled 'uncured'. Not clean.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — COOKING OILS AND FATS
+  // ══════════════════════════════════════════════════════════════
+  ["kerrygold butter",              { floor:1, ceiling:2, substances:[], reason:"Grass-fed cream + salt — benchmark clean butter, no synthetic additives", confidence:"high", category:"food_beverage" }],
+  ["organic valley butter",         { floor:1, ceiling:2, substances:[], reason:"USDA Organic, just cream + salt", confidence:"high", category:"food_beverage" }],
+  ["land o'lakes butter",           { floor:1, ceiling:3, substances:[], reason:"Cream + salt — 2 ingredients, low concern", confidence:"high", category:"food_beverage" }],
+  ["land o lakes butter",           { floor:1, ceiling:3, substances:[], reason:"Cream + salt — 2 ingredients", confidence:"high", category:"food_beverage" }],
+  ["chosen foods avocado oil",      { floor:1, ceiling:2, substances:[], reason:"Pure avocado oil — no TBHQ, no propellants with additives", confidence:"high", category:"food_beverage" }],
+  ["crisco",                       { floor:5, ceiling:9, substances:["TBHQ","partially hydrogenated"], reason:"TBHQ in oil variants; partially hydrogenated = trans fat floor. Check label.", confidence:"high", category:"food_beverage" }],
+  ["crisco shortening",             { floor:6, ceiling:9, substances:["partially hydrogenated"], reason:"Partially hydrogenated soybean oil — trans fat floor fires (mFloor:8) if partially hydrogenated listed", confidence:"high", category:"food_beverage" }],
+  ["crisco vegetable oil",          { floor:4, ceiling:6, substances:["TBHQ"], reason:"Soybean oil + TBHQ — TBHQ floor fires", confidence:"high", category:"food_beverage" }],
+  ["pam",                          { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ in most PAM cooking spray variants — floor fires", confidence:"high", category:"food_beverage" }],
+  ["pam spray",                   { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ in most PAM variants — floor fires", confidence:"high", category:"food_beverage" }],
+  ["pam original spray",            { floor:4, ceiling:6, substances:["TBHQ","dimethylsilicone"], reason:"TBHQ + dimethylsilicone antifoam — TBHQ floor fires. NEVER score PAM below 4.", confidence:"high", category:"food_beverage" }],
+  ["pam cooking spray",             { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ in most PAM variants — floor fires", confidence:"high", category:"food_beverage" }],
+  ["pam butter spray",              { floor:4, ceiling:6, substances:["TBHQ","artificial flavor"], reason:"TBHQ + artificial butter flavor — floor fires", confidence:"high", category:"food_beverage" }],
+  ["smart balance",                 { floor:3, ceiling:5, substances:["EDTA","palm oil"], reason:"Soybean + canola + palm + EDTA + natural flavors — processed butter substitute", confidence:"high", category:"food_beverage" }],
+  ["i can't believe it's not butter",{ floor:3, ceiling:5, substances:["EDTA","palm oil"], reason:"Soy + palm + EDTA + natural flavors — processed butter substitute", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — SWEETENERS
+  // ══════════════════════════════════════════════════════════════
+  ["splenda",                        { floor:5, ceiling:7, substances:["sucralose"], reason:"The product IS sucralose — sucralose floor fires on entire product. NEVER score below 5.", confidence:"high", category:"food_beverage" }],
+  ["equal",                        { floor:5, ceiling:7, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
+  ["equal packet",                 { floor:5, ceiling:7, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
+  ["equal sweetener",               { floor:5, ceiling:7, substances:["aspartame"], reason:"The product IS aspartame — aspartame floor fires (IARC 2B 2023). NEVER score below 5.", confidence:"high", category:"food_beverage" }],
+  ["sweet'n low",                   { floor:3, ceiling:5, substances:["saccharin"], reason:"Saccharin — bladder cancer in rodents, IARC removed Group 2B but concern remains", confidence:"high", category:"food_beverage" }],
+  ["sweet n low",                   { floor:3, ceiling:5, substances:["saccharin"], reason:"Saccharin — concern remains despite IARC reclassification", confidence:"high", category:"food_beverage" }],
+  ["truvia",                        { floor:2, ceiling:4, substances:[], reason:"Erythritol + stevia extract — no sucralose, no aspartame. Cleaner than Splenda/Equal.", confidence:"high", category:"food_beverage" }],
+  ["swerve sweetener",              { floor:2, ceiling:4, substances:[], reason:"Erythritol + oligosaccharides — no sucralose, no aspartame", confidence:"high", category:"food_beverage" }],
+  ["lakanto monk fruit",            { floor:1, ceiling:3, substances:[], reason:"Erythritol + monk fruit extract — no sucralose, cleanest mainstream sweetener", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — RICE AND MICROPLASTIC CONCERN
+  // ══════════════════════════════════════════════════════════════
+  ["success boil",                 { floor:4, ceiling:6, substances:["heated plastic"], reason:"Plastic bag + boiling water — heated plastic food contact", confidence:"high", category:"food_beverage" }],
+  ["success boil-in-bag rice",      { floor:4, ceiling:6, substances:["heated plastic"], reason:"HDPE/LLDPE bag + boiling water — heated plastic food contact, same concern class as K-Cup pods", confidence:"high", category:"food_beverage" }],
+  ["success boil in bag",           { floor:4, ceiling:6, substances:["heated plastic"], reason:"Heated plastic bag — microplastic release concern", confidence:"high", category:"food_beverage" }],
+  ["minute rice",                  { floor:4, ceiling:6, substances:["polypropylene"], reason:"PP microwaveable cup — heated PP food contact", confidence:"high", category:"food_beverage" }],
+  ["minute rice cup",               { floor:4, ceiling:6, substances:["polypropylene"], reason:"PP microwaveable cup — heated PP food contact concern", confidence:"high", category:"food_beverage" }],
+  ["lundberg organic brown rice",   { floor:1, ceiling:2, substances:[], reason:"USDA Organic, just rice — benchmark clean rice", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — CANNED GOODS
+  // ══════════════════════════════════════════════════════════════
+  ["eden organic",                 { floor:1, ceiling:2, substances:[], reason:"BPA-free can + USDA Organic — benchmark clean canned food", confidence:"high", category:"food_beverage" }],
+  ["eden organic beans",            { floor:1, ceiling:2, substances:[], reason:"BPA-free can lining + USDA Organic — benchmark clean canned bean", confidence:"high", category:"food_beverage" }],
+  ["muir glen organic",             { floor:1, ceiling:2, substances:[], reason:"BPA-free can + USDA Organic — benchmark clean canned tomato", confidence:"high", category:"food_beverage" }],
+  ["bush's best",                { floor:4, ceiling:6, substances:["HFCS","sodium nitrite"], reason:"HFCS + sodium nitrite from bacon — both floors fire", confidence:"high", category:"food_beverage" }],
+  ["bush's baked beans",            { floor:4, ceiling:6, substances:["HFCS","sodium nitrite"], reason:"HFCS + sodium nitrite from bacon — both floors fire", confidence:"high", category:"food_beverage" }],
+  ["campbell's cream of mushroom",  { floor:4, ceiling:6, substances:["yeast extract","modified starch"], reason:"870mg sodium + yeast extract (hidden MSG) + modified starch + BPA-lined can", confidence:"high", category:"food_beverage" }],
+  ["swanson chicken broth",         { floor:3, ceiling:5, substances:["yeast extract"], reason:"Yeast extract = hidden free glutamates (functional MSG equivalent) + BPA-lined can", confidence:"high", category:"food_beverage" }],
+  ["amy's organic",              { floor:1, ceiling:3, substances:[], reason:"USDA Organic, BPA-free — clean across Amy's product line", confidence:"high", category:"food_beverage" }],
+  ["amy's organic soup",            { floor:1, ceiling:3, substances:[], reason:"BPA-free can + USDA Organic + lower sodium", confidence:"high", category:"food_beverage" }],
+  ["progresso soup",                { floor:3, ceiling:5, substances:["high sodium","modified starch"], reason:"800-1000mg sodium per serving + modified starch + BPA-lined can", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — JAMS AND SPREADS
+  // ══════════════════════════════════════════════════════════════
+  ["bonne maman",                  { floor:1, ceiling:3, substances:[], reason:"Real sugar + fruit — no HFCS, benchmark clean jam", confidence:"high", category:"food_beverage" }],
+  ["bonne maman jam",               { floor:1, ceiling:3, substances:[], reason:"Real sugar + fruit — no HFCS, no artificial flavors. Benchmark clean jam.", confidence:"high", category:"food_beverage" }],
+  ["polaner all fruit",             { floor:1, ceiling:2, substances:[], reason:"Fruit juice concentrate only — no added sugar, no HFCS", confidence:"high", category:"food_beverage" }],
+  ["wholly guacamole",              { floor:1, ceiling:2, substances:[], reason:"Avocado + lime + onion + jalapeño — clean, no additives", confidence:"high", category:"food_beverage" }],
+  ["smucker's strawberry jam",      { floor:4, ceiling:6, substances:["HFCS","artificial flavors"], reason:"HFCS + artificial flavors — floor fires. Different product from Smucker's Natural PB.", confidence:"high", category:"food_beverage" }],
+  ["smucker's jam",                 { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS in standard jam line — floor fires", confidence:"high", category:"food_beverage" }],
+  ["tostitos queso dip",            { floor:4, ceiling:6, substances:["sodium phosphate","artificial colors"], reason:"Modified starch + sodium phosphate + artificial colors", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PROTEIN POWDERS
+  // ══════════════════════════════════════════════════════════════
+  ["naked whey",                    { floor:1, ceiling:2, substances:[], reason:"Just whey protein concentrate — 1 ingredient. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
+  ["naked mass",                    { floor:1, ceiling:3, substances:[], reason:"Whey + casein + maltodextrin — clean gainer, no artificial sweeteners", confidence:"high", category:"supplement" }],
+  ["garden of life sport",          { floor:1, ceiling:3, substances:[], reason:"USDA Organic + NSF Certified for Sport — benchmark clean protein", confidence:"high", category:"supplement" }],
+  ["momentous protein",             { floor:1, ceiling:3, substances:[], reason:"NSF Certified for Sport + Informed Sport — no artificial sweeteners or dyes", confidence:"high", category:"supplement" }],
+  ["truvani protein",               { floor:1, ceiling:3, substances:[], reason:"USDA Organic, 4 ingredients, stevia sweetened — no sucralose", confidence:"high", category:"supplement" }],
+  ["vega sport protein",            { floor:2, ceiling:4, substances:[], reason:"Pea protein + stevia — no sucralose, no artificial dyes", confidence:"high", category:"supplement" }],
+  ["orgain organic protein",        { floor:2, ceiling:4, substances:[], reason:"USDA Organic in most lines — check for stevia vs sucralose in specific SKU", confidence:"medium", category:"supplement" }],
+  ["optimum nutrition gold standard",{ floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K + artificial flavors — both floors fire", confidence:"high", category:"supplement" }],
+  ["myprotein impact whey",         { floor:4, ceiling:6, substances:["sucralose"], reason:"Sucralose floor fires + artificial flavors", confidence:"high", category:"supplement" }],
+  ["dymatize iso100",               { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — both floors fire", confidence:"high", category:"supplement" }],
+  ["isopure zero carb",             { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K floors fire", confidence:"high", category:"supplement" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PANTRY — PASTA AND BREAD
+  // ══════════════════════════════════════════════════════════════
+  ["nature's own",                  { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + calcium propionate — floor fires", confidence:"high", category:"food_beverage" }],
+  ["sara lee white bread",          { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + calcium propionate — floor fires", confidence:"high", category:"food_beverage" }],
+  ["dave's killer bread organic",   { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole grains, no HFCS", confidence:"high", category:"food_beverage" }],
+  ["dave's killer bread",           { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — cleaner than Wonder Bread", confidence:"high", category:"food_beverage" }],
+  ["banza",                        { floor:1, ceiling:3, substances:[], reason:"Chickpea flour + tapioca — clean alternative pasta", confidence:"high", category:"food_beverage" }],
+  ["banza pasta",                   { floor:1, ceiling:3, substances:[], reason:"Chickpea flour + tapioca + pea protein — clean alternative pasta", confidence:"high", category:"food_beverage" }],
+  ["jovial",                       { floor:1, ceiling:2, substances:[], reason:"USDA Organic — benchmark clean pasta brand", confidence:"high", category:"food_beverage" }],
+  ["jovial pasta",                  { floor:1, ceiling:2, substances:[], reason:"USDA Organic brown rice flour only — benchmark clean pasta", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // KIDS FRUIT SNACKS
+  // ══════════════════════════════════════════════════════════════
+  ["welch's fruit snacks",          { floor:5, ceiling:7, substances:["HFCS","Red 40","artificial dyes"], reason:"HFCS + petroleum dyes in daily children's snack — multiple floors fire, child vulnerability", confidence:"high", category:"food_beverage" }],
+  ["welchs fruit snacks",           { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes — child daily snack, floors fire", confidence:"high", category:"food_beverage" }],
+  ["mott's",                       { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes in daily children's snack — floor fires", confidence:"high", category:"food_beverage" }],
+  ["mott's fruit snacks",           { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes in daily children's snack — child vulnerability", confidence:"high", category:"food_beverage" }],
+  ["annie's organic fruit snacks",  { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no HFCS, no artificial dyes — benchmark clean kids fruit snack", confidence:"high", category:"food_beverage" }],
+  ["gogo squeez",                   { floor:1, ceiling:2, substances:[], reason:"100% fruit, no additives, BPA-free pouch — cleanest mainstream kids snack", confidence:"high", category:"food_beverage" }],
+  ["once upon a farm",              { floor:1, ceiling:2, substances:[], reason:"USDA Organic, cold-pressed, minimal ingredients", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // DAIRY CASE
+  // ══════════════════════════════════════════════════════════════
+  ["daisy sour cream",              { floor:1, ceiling:2, substances:[], reason:"Grade A cream, one ingredient — no fillers, no modified starch. Benchmark clean sour cream.", confidence:"high", category:"food_beverage" }],
+  ["daisy cottage cheese",          { floor:1, ceiling:2, substances:[], reason:"Milk + cream + salt — simple, no additives", confidence:"high", category:"food_beverage" }],
+  ["tillamook",                     { floor:1, ceiling:3, substances:[], reason:"Natural cheese — milk + salt + cultures + enzymes, no artificial additives", confidence:"high", category:"food_beverage" }],
+  ["sargento",                      { floor:1, ceiling:3, substances:[], reason:"Natural cheese — just cheese, no additives. NEVER score same as Kraft Singles.", confidence:"high", category:"food_beverage" }],
+  ["vital farms",                  { floor:1, ceiling:2, substances:[], reason:"Pastured eggs or butter — clean, simple ingredients", confidence:"high", category:"food_beverage" }],
+  ["vital farms eggs",              { floor:1, ceiling:2, substances:[], reason:"Pastured eggs — just eggs", confidence:"high", category:"food_beverage" }],
+  ["vital farms butter",            { floor:1, ceiling:2, substances:[], reason:"Pastured cream + salt — clean butter", confidence:"high", category:"food_beverage" }],
+  ["pete and gerry's organic",      { floor:1, ceiling:2, substances:[], reason:"USDA Organic cage-free eggs — clean", confidence:"high", category:"food_beverage" }],
+  ["laughing cow",                  { floor:3, ceiling:5, substances:["sodium citrate","sorbic acid"], reason:"Processed cheese spread — sodium citrate + sorbic acid + not real cheese", confidence:"high", category:"food_beverage" }],
+  ["velveeta",                      { floor:5, ceiling:7, substances:["sodium phosphate","sodium alginate"], reason:"Pasteurized prepared cheese product — sodium phosphate + alginate + artificial color. Not cheese.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // HOT DOGS AND FRANKFURTERS
+  // ══════════════════════════════════════════════════════════════
+  ["ball park franks",              { floor:6, ceiling:8, substances:["sodium nitrite","corn syrup"], reason:"Sodium nitrite (IARC Group 1) + corn syrup + sodium phosphate — NEVER score below 6", confidence:"high", category:"food_beverage" }],
+  ["ball park beef franks",         { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite floor fires — IARC Group 1", confidence:"high", category:"food_beverage" }],
+  ["hebrew national",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite — kosher label does not mean nitrite-free. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["oscar mayer wieners",           { floor:6, ceiling:8, substances:["sodium nitrite","BHA","corn syrup"], reason:"Sodium nitrite + BHA + corn syrup — three floors fire simultaneously", confidence:"high", category:"food_beverage" }],
+  ["oscar mayer classic",           { floor:6, ceiling:8, substances:["sodium nitrite","BHA"], reason:"Sodium nitrite + BHA — both floors fire", confidence:"high", category:"food_beverage" }],
+  ["eckrich",                      { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite — IARC Group 1 floor fires", confidence:"high", category:"food_beverage" }],
+  ["eckrich sausage",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite — floor fires. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["applegate hot dogs",            { floor:4, ceiling:6, substances:["celery juice"], reason:"Celery juice powder = nitrite loophole — same nitrosamine chemistry. NEVER score as clean.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FROZEN BREAKFAST WITH PROCESSED MEAT
+  // ══════════════════════════════════════════════════════════════
+  ["jimmy dean sausage",            { floor:6, ceiling:8, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite in sausage + enriched flour + DATEM — nitrite floor fires. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["hot pockets",                   { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ","DATEM"], reason:"Sodium nitrite + TBHQ + DATEM — multiple floors fire simultaneously. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["lean pockets",                  { floor:5, ceiling:7, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite in meat filling + DATEM — floor fires", confidence:"high", category:"food_beverage" }],
+  ["eggo waffles",                  { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + sodium aluminum phosphate + enriched flour — floors fire", confidence:"high", category:"food_beverage" }],
+  ["kashi",                        { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — cleaner option", confidence:"high", category:"food_beverage" }],
+  ["kashi waffles",                 { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — meaningfully cleaner than Eggo", confidence:"high", category:"food_beverage" }],
+  ["van's",                       { floor:1, ceiling:3, substances:[], reason:"Whole grain gluten-free, clean — benchmark clean waffle", confidence:"high", category:"food_beverage" }],
+  ["van's waffles",                 { floor:1, ceiling:3, substances:[], reason:"Whole grain gluten-free, no dyes, no HFCS — cleanest mainstream waffle", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // RETAIL CHICKEN NUGGETS
+  // ══════════════════════════════════════════════════════════════
+  ["tyson chicken nuggets",         { floor:5, ceiling:7, substances:["TBHQ","modified starch"], reason:"TBHQ in frying oil — floor fires. Retail version same concern as fast food.", confidence:"high", category:"food_beverage" }],
+  ["perdue chicken nuggets",        { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in frying oil — floor fires", confidence:"high", category:"food_beverage" }],
+  ["applegate organics chicken nuggets",{ floor:2, ceiling:4, substances:[], reason:"USDA Organic, no TBHQ — benchmark clean frozen nugget", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // BABY FORMULA
+  // ══════════════════════════════════════════════════════════════
+  ["hipp",                         { floor:1, ceiling:3, substances:[], reason:"European organic formula — benchmark clean baby formula", confidence:"high", category:"baby" }],
+  ["hipp organic formula",          { floor:1, ceiling:3, substances:[], reason:"European certified organic, no hexane-extracted DHA — cleanest mainstream formula", confidence:"high", category:"baby" }],
+  ["holle organic formula",         { floor:1, ceiling:3, substances:[], reason:"EU organic, simple clean formula", confidence:"high", category:"baby" }],
+  ["bobbie organic",                { floor:2, ceiling:4, substances:[], reason:"USDA Organic, EU-inspired, no corn syrup", confidence:"high", category:"baby" }],
+  ["enfamil enspire",               { floor:2, ceiling:4, substances:[], reason:"MFGM + lactoferrin additions — cleaner than standard Enfamil", confidence:"high", category:"baby" }],
+  ["similac advance",               { floor:3, ceiling:5, substances:["hexane"], reason:"Conventional DHA from hexane-extracted microalgae + corn maltodextrin", confidence:"high", category:"baby" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // DARK CHOCOLATE
+  // ══════════════════════════════════════════════════════════════
+  ["hu kitchen",                   { floor:1, ceiling:2, substances:[], reason:"No refined sugar, no lecithin — cleanest mainstream dark chocolate", confidence:"high", category:"food_beverage" }],
+  ["hu kitchen chocolate",          { floor:1, ceiling:2, substances:[], reason:"No refined sugar, no lecithin, no dairy, no vanilla extract — cleanest mainstream dark chocolate", confidence:"high", category:"food_beverage" }],
+  ["alter eco",                    { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade + simple — clean chocolate", confidence:"high", category:"food_beverage" }],
+  ["alter eco chocolate",           { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade + simple ingredients", confidence:"high", category:"food_beverage" }],
+  ["theo dark chocolate",           { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade — clean", confidence:"high", category:"food_beverage" }],
+  ["lindt 85",                      { floor:1, ceiling:2, substances:[], reason:"Cacao + cocoa butter + sugar + vanilla — minimal, no PGPR", confidence:"high", category:"food_beverage" }],
+  ["lindt excellence 70",           { floor:1, ceiling:3, substances:[], reason:"Clean dark chocolate formula — no PGPR", confidence:"high", category:"food_beverage" }],
+  ["lindt milk chocolate",          { floor:3, ceiling:5, substances:["PGPR","vanillin"], reason:"PGPR + artificial vanillin — less clean than Lindt dark", confidence:"high", category:"food_beverage" }],
+  ["hershey's special dark",        { floor:4, ceiling:6, substances:["PGPR","vanillin"], reason:"PGPR + artificial vanillin — not as clean as European dark despite 'dark' label", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // COFFEE AND TEA
+  // ══════════════════════════════════════════════════════════════
+  ["kicking horse",                { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade coffee — benchmark clean", confidence:"high", category:"food_beverage" }],
+  ["kicking horse coffee",          { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade — benchmark clean grocery coffee", confidence:"high", category:"food_beverage" }],
+  ["traditional medicinals",        { floor:1, ceiling:2, substances:[], reason:"USDA Organic + paper bags + medicinal herbs — benchmark clean tea", confidence:"high", category:"food_beverage" }],
+  ["bigelow",                      { floor:1, ceiling:3, substances:[], reason:"Paper tea bags — no nylon microplastic concern", confidence:"high", category:"food_beverage" }],
+  ["bigelow tea",                   { floor:1, ceiling:3, substances:[], reason:"Paper bags — no nylon microplastic concern", confidence:"high", category:"food_beverage" }],
+  ["celestial seasonings",          { floor:1, ceiling:3, substances:[], reason:"Paper bags, no string/tag — clean. Staple-free.", confidence:"high", category:"food_beverage" }],
+  ["four sigmatic",                 { floor:1, ceiling:3, substances:[], reason:"Organic adaptogens + organic coffee — clean formula", confidence:"high", category:"food_beverage" }],
+
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
