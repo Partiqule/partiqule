@@ -1954,7 +1954,7 @@ app.post("/analyze", async (req, res) => {
         confidence:          p2?.confidence    || p1.confidence    || "medium",
         confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
         score_reasoning:     p2?.score_reasoning || "",
-        scan_next:           p1.scan_next  || [],
+        scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
         cached:              false,
@@ -2230,7 +2230,7 @@ app.post("/analyze", async (req, res) => {
       confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
       score_reasoning:     p2?.score_reasoning || "",
       peer_comparison:     peerComparison,
-      scan_next:           p1.scan_next  || [],
+      scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
       break_even:          p2?.break_even || null,
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
       cached:              false,
@@ -2311,3 +2311,33 @@ app.get("/health",      (req, res) => res.json({
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Partiqule API running on port ${PORT}`));
+
+// ── SCAN_NEXT FALLBACK ────────────────────────────────────────
+// When the AI returns no scan_next suggestions, generate smart defaults
+// from the alternatives DB — same category, different products.
+function buildScanNextFallback(productName, category, alternatives) {
+  // If alternatives exist, suggest scanning them
+  const altSuggestions = (alternatives || [])
+    .filter(a => a.name && a.name !== productName)
+    .slice(0, 2)
+    .map(a => a.name);
+
+  // Category-specific comparison products users commonly scan next
+  const CATEGORY_DEFAULTS = {
+    food_beverage: ["Organic version", "store brand version"],
+    food:          ["Organic version", "store brand version"],
+    beverage:      ["Sparkling water (glass bottle)", "Athletic Brewing NA beer"],
+    supplement:    ["Ritual Multivitamin", "Momentous Protein"],
+    baby:          ["Andy Pandy Bamboo Diapers", "GroVia cloth diapers"],
+    clothing:      ["Organic cotton alternative", "Patagonia fleece"],
+    personal_care: ["EWG Verified alternative", "mineral sunscreen"],
+    home:          ["Blueland cleaning tablets", "Branch Basics concentrate"],
+    toy:           ["PlanToys wooden alternative", "HABA wooden toy"],
+    kitchen:       ["Caraway ceramic cookware", "cast iron skillet"],
+    other:         [],
+  };
+
+  if (altSuggestions.length >= 2) return altSuggestions;
+  const defaults = CATEGORY_DEFAULTS[category] || [];
+  return [...new Set([...altSuggestions, ...defaults])].slice(0, 3);
+}

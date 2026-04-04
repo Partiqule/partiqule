@@ -280,7 +280,7 @@ const products = [
     plasticScore: 1,
     material: "Solid bar, zero plastic packaging",
     description: "Plastic-free, concentrated, lasts 80+ washes",
-    affiliateUrl: `https://www.ethique.com/collections/shampoo-bars`,
+    affiliateUrl:`https://www.amazon.com/s?k=Ethique+shampoo+bar&tag=${AMAZON_TAG}`,
     price: "$15–18",
     tags: ["shampoo", "conditioner", "bar", "plastic-free", "hair", "body wash", "soap", "cleanser"]
   },
@@ -784,7 +784,7 @@ const products = [
     plasticScore: 1,
     material: "Dissolvable tablet, paper packaging",
     description: "One tablet + water = full bottle of cleaner. Zero plastic packaging.",
-    affiliateUrl: `https://www.blueland.com/collections/cleaning-tablets`,
+    affiliateUrl:`https://www.amazon.com/s?k=Blueland+cleaning+tablets&tag=${AMAZON_TAG}`,
     price: "$14–22",
     tags: ["cleaner", "cleaning", "kitchen", "bathroom", "plastic-free", "blueland", "refill", "spray"]
   },
@@ -1080,7 +1080,7 @@ const products = [
     plasticScore: 2,
     material: "Flaxstic — flax shive and biopolymer",
     description: "100% compostable, breaks down in 3-5 years vs 1000 years for plastic",
-    affiliateUrl: `https://pelacase.com/collections/phone-cases`,
+    affiliateUrl:`https://www.amazon.com/s?k=Pela+case+compostable+phone+case&tag=${AMAZON_TAG}`,
     price: "$40–55",
     tags: ["phone case", "iphone case", "compostable", "plastic-free", "eco phone case", "biodegradable case"]
   },
@@ -1692,7 +1692,7 @@ const products = [
     plasticScore: 1,
     material: "Glass bottle concentrate, no plastic packaging",
     description: "Add water to concentrates — eliminates 90% of plastic from cleaning products",
-    affiliateUrl: `https://www.grove.co/catalog/product/clean-concentrate`,
+    affiliateUrl:`https://www.amazon.com/s?k=Grove+Collaborative+concentrate+cleaner&tag=${AMAZON_TAG}`,
     price: "$8–14",
     tags: ["cleaning concentrate", "cleaner", "glass", "plastic-free", "kitchen", "bathroom", "eco cleaner"]
   },
@@ -3561,7 +3561,7 @@ const products = [
     plasticScore:5, category:"baby",
     material:"Polypropylene non-woven fabrics, polyethylene film, ECF wood pulp, SAP. OEKO-TEX Standard 100 certified. Dermatest approved. No fragrance.",
     description:"Conventional petroleum plastics throughout — same tier as Honest Company. The OEKO-TEX and Dermatest certifications are genuine positives for third-party testing. No fragrance. Available at Target. Not as clean as Hello Bello (no plant-based skin-contact layer).",
-    affiliateUrl:`https://www.target.com/s?searchTerm=millie+moon+diapers`,
+    affiliateUrl:`https://www.amazon.com/s?k=Millie+Moon+diapers&tag=${AMAZON_TAG}`,
     price:"$18-28",
     tags:["diaper","diapers","baby diaper","millie moon diaper","luxury diaper","fragrance free","oeko-tex","dermatest","newborn","infant","toddler","nappy","target diaper","training pants"]
   },

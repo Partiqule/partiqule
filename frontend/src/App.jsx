@@ -1636,6 +1636,7 @@ const ShareBadge = ({result}) => {
 
   const share = async () => {
     setSharing(true);
+    track("Share", { product: safeName, score: result.overall_score||result.score, category: result.category });
     try {
       const canvas = await buildCanvas();
       canvas.toBlob(async (blob) => {
@@ -1787,7 +1788,7 @@ const LOADING_FACTS = [
   "Non-stick pan coatings can begin releasing PTFE particles at everyday cooking temperatures.",
   "Microplastics have been detected in the air we breathe indoors and outdoors.",
   "A 2024 study in the New England Journal of Medicine found microplastics in arterial plaques — linked to higher risk of heart attack and stroke.",
-  "Lipton tea bags release approximately 11 billion microplastic particles per single cup of tea.",
+  "Plastic pyramid tea bags (like Lipton Silken) release ~11 billion microplastic particles per cup. Paper tea bags are safer — choose loose-leaf or paper bags over plastic mesh.",
   "Synthetic gum base in mainstream chewing gum is made from polyvinyl acetate — a plastic you literally chew and swallow.",
   "Microplastics were found in 100% of human blood samples tested in a 2022 Environment International study.",
   "The FDA has begun phasing out all petroleum-based synthetic food dyes, including Red 40 and Yellow 5.",
@@ -3802,7 +3803,11 @@ function App() {
   }, [result]);
 
   // Scroll to top on every page change and every result load
-  useEffect(() => { window.scrollTo(0, 0); }, [page, result]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // Track page views for all non-home pages
+    if (page !== "home") track("Page View", { page });
+  }, [page, result]);
 
   const saveToHistory = (item) => {
     setHistory(prev=>{
@@ -3819,12 +3824,21 @@ function App() {
     setLoading(true); setError(null); setResult(null);
     track("Scan", { product: q.trim() });
     try {
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()})});
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45000); // 45s — two AI passes + alts
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
+      clearTimeout(timeout);
       if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
       const data = await res.json();
       setResult(data); saveToHistory(data);
       track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
-    } catch(e){setError(e.message); track("Scan Error", { error: e.message });}
+    } catch(e){
+      const msg = e.name === "AbortError"
+        ? "Scan timed out — our servers are warming up. Please try again in a moment."
+        : e.message;
+      setError(msg);
+      track("Scan Error", { error: msg });
+    }
     setLoading(false);
   };
 
@@ -4586,7 +4600,7 @@ function App() {
                     {/* Child mode toggle */}
                     <div style={{marginTop:14, marginBottom:4}}>
                       <button
-                        onClick={() => setChildMode(m => !m)}
+                        onClick={() => { const next = !childMode; setChildMode(next); track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
                         style={{
                           display:"flex", alignItems:"center", gap:8, margin:"0 auto",
                           padding:"7px 16px", borderRadius:20,
@@ -4939,8 +4953,8 @@ function App() {
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
-                {/* Exposure Calculator — replaces break-even card */}
-                {(result.break_even || result.alternatives?.length > 0) && (
+                {/* Exposure Calculator — only show for products that need a swap */}
+                {(result.overall_score || result.score) > 3 && (result.break_even || result.alternatives?.length > 0) && (
                   <ExposureCalculator
                     result={result}
                     isDark={isDark}
@@ -5009,6 +5023,7 @@ function App() {
                         {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
                         {alt.affiliateUrl && (
                           <a href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
+                            onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel", category:result.category})}
                             style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
                             Shop →
                           </a>
@@ -5023,6 +5038,7 @@ function App() {
                         </div>
                         {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
                         <a href={`https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`} target="_blank" rel="noopener noreferrer"
+                          onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel_ai", category:result.category})}
                           style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
                           Shop →
                         </a>
@@ -5176,16 +5192,20 @@ function App() {
               {/* Bundle */}
               <BundleCard category={result.category} isDark={isDark}/>
 
-              {/* Complete your routine — clothing and personal care only */}
-              {["clothing","personal_care","baby","toy","accessory"].includes(result.category) && result.scan_next?.length > 0 && (
+              {/* Scan next — works for all categories when suggestions exist */}
+              {result.scan_next?.length > 0 && (
                 <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
-                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Complete your routine</div>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
+                    {["food","food_beverage","beverage","restaurant","supplement"].includes(result.category) ? "Compare these next" : "Complete your routine"}
+                  </div>
                   <div style={{fontSize:13, color:muted, marginBottom:14, lineHeight:1.5}}>
-                    People who scanned this also checked these — scan them to build your full exposure picture.
+                    {["food","food_beverage","beverage","restaurant","supplement"].includes(result.category)
+                      ? "See how these compare — scan to build your full picture."
+                      : "People who scanned this also checked these — scan them to build your full exposure picture."}
                   </div>
                   <div style={{display:"flex", flexDirection:"column", gap:8}}>
                     {result.scan_next.map((item,i)=>(
-                      <button key={i} onClick={()=>{setShowAlts(false); setResult(null); setQuery(item); analyze(item);}}
+                      <button key={i} onClick={()=>{setShowAlts(false); setResult(null); setQuery(item); analyze(item); track("Scan Next Click", {item, from: result.product_name, category: result.category});}}
                         style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", cursor:"pointer", textAlign:"left"}}>
                         <div style={{display:"flex", alignItems:"center", gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
