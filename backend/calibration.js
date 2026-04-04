@@ -999,6 +999,63 @@ const ENTRIES = [
   ["wonderful pistachios",          { floor:1, ceiling:2, substances:[], reason:"Just pistachios + salt — benchmark clean nut snack", confidence:"high", category:"food_beverage" }],
   ["kind trail mix",                { floor:1, ceiling:3, substances:[], reason:"Nuts + fruit + dark chocolate — no HFCS, no petroleum dyes", confidence:"high", category:"food_beverage" }],
 
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 21 — TARGET & WALMART STORE BRANDS
+  // ══════════════════════════════════════════════════════════════
+
+  // ── WALMART: GREAT VALUE ──────────────────────────────────────
+  ["great value white bread",       { floor:4, ceiling:6, substances:["HFCS","soybean oil","azodicarbonamide"], reason:"HFCS + azodicarbonamide (flour bleaching agent, banned EU) + soybean oil — standard industrial white bread", confidence:"high", category:"food_beverage" }],
+  ["great value cookies",           { floor:5, ceiling:7, substances:["HFCS","Red 40","Blue 1","Yellow 5","partially hydrogenated"], reason:"HFCS + multiple petroleum dyes + trans fat risk in store-brand cookies", confidence:"high", category:"food_beverage" }],
+  ["great value fruit punch",       { floor:5, ceiling:7, substances:["HFCS","Red 40","Blue 1"], reason:"HFCS-first beverage + petroleum dyes — standard Walmart drink mix concern", confidence:"high", category:"beverage" }],
+  ["great value juice drink",       { floor:5, ceiling:7, substances:["HFCS","Red 40","Yellow 5"], reason:"HFCS + petroleum dyes — not real juice, sugared dye drink", confidence:"high", category:"beverage" }],
+  ["great value",                   { floor:3, ceiling:6, substances:[], reason:"Walmart store brand — varies widely. Clean staples (flour, sugar, salt) score low; processed items with HFCS/dyes score higher. Contextual floor.", confidence:"medium", category:"food_beverage" }],
+
+  // ── WALMART: SPRING VALLEY SUPPLEMENTS ───────────────────────
+  ["spring valley vitamin d3",      { floor:1, ceiling:3, substances:[], reason:"Single-ingredient D3 softgel — no dyes, no fillers of concern. Benchmark clean supplement.", confidence:"high", category:"supplement" }],
+  ["spring valley elderberry gummies", { floor:5, ceiling:7, substances:["Red 40","HFCS"], reason:"Red 40 petroleum dye + HFCS in daily elderberry gummies — same concern as Flintstones gummies", confidence:"high", category:"supplement" }],
+  ["spring valley multivitamin",    { floor:5, ceiling:7, substances:["Red 40","Yellow 5","Blue 2","titanium dioxide"], reason:"Multiple petroleum dyes + TiO2 (IARC 2B) — standard concern for conventional multivitamins with dyes", confidence:"high", category:"supplement" }],
+  ["spring valley",                 { floor:2, ceiling:6, substances:[], reason:"Walmart supplement brand — clean single-ingredient items (D3, fish oil, magnesium) score 1-3; gummies and coated tablets with dyes score 5-7", confidence:"medium", category:"supplement" }],
+
+  // ── WALMART: PARENT'S CHOICE (BABY FORMULA) ──────────────────
+  ["parent's choice baby formula",  { floor:4, ceiling:6, substances:["corn syrup","hexane-extracted DHA"], reason:"Conventional corn syrup as carbohydrate source + hexane-extracted DHA/ARA — cheaper extraction method vs enzymatic. Not organic.", confidence:"high", category:"baby" }],
+  ["parent's choice formula",       { floor:4, ceiling:6, substances:["corn syrup","hexane-extracted DHA"], reason:"Corn syrup solids + hexane-processed DHA — not organic. Better than nothing but not clean-label baby formula.", confidence:"high", category:"baby" }],
+  ["parent's choice",               { floor:3, ceiling:6, substances:[], reason:"Walmart baby store brand — formula items score 4-6 (corn syrup, hexane DHA); diapers and wipes score 3-5", confidence:"medium", category:"baby" }],
+
+  // ── WALMART: EQUATE (PHARMACY/PERSONAL CARE) ─────────────────
+  ["equate sunscreen chemical",     { floor:6, ceiling:8, substances:["oxybenzone","octinoxate"], reason:"Chemical sunscreen with oxybenzone (endocrine disruptor, coral reef ban) + octinoxate — avoid for children, reef ecosystems", confidence:"high", category:"personal_care" }],
+  ["equate mineral sunscreen",      { floor:1, ceiling:3, substances:[], reason:"Zinc oxide mineral sunscreen — no chemical UV filters, no oxybenzone. Clean alternative.", confidence:"high", category:"personal_care" }],
+  ["equate sunscreen spf",          { floor:5, ceiling:8, substances:["oxybenzone","avobenzone","homosalate"], reason:"Standard Equate sunscreen likely chemical UV filters — oxybenzone floor may fire. Check ingredients.", confidence:"medium", category:"personal_care" }],
+  ["equate baby acetaminophen",     { floor:6, ceiling:7, substances:["Red 40","HFCS"], reason:"Red 40 petroleum dye + HFCS in infant/toddler liquid medicine — same concern as Up & Up and Children's Tylenol liquid", confidence:"high", category:"personal_care" }],
+  ["equate children's acetaminophen", { floor:6, ceiling:7, substances:["Red 40","HFCS"], reason:"Petroleum dye in children's daily OTC medicine — FDA phasing out Red 40. Child vulnerability applies.", confidence:"high", category:"personal_care" }],
+  ["equate",                        { floor:2, ceiling:7, substances:[], reason:"Walmart pharmacy brand — tablets/capsules score 2-3; liquid children's medicines with dyes score 6-7; chemical sunscreens score 6-8; mineral versions score 1-3", confidence:"medium", category:"personal_care" }],
+
+  // ── WALMART: UP & UP (TARGET PHARMACY — same issue) ──────────
+  ["up & up baby acetaminophen",    { floor:6, ceiling:7, substances:["Red 40","HFCS"], reason:"Red 40 petroleum dye + HFCS in infant drops — FDA phasing out petroleum dyes, child daily use amplifies concern", confidence:"high", category:"personal_care" }],
+  ["up & up children's acetaminophen", { floor:6, ceiling:7, substances:["Red 40","HFCS"], reason:"Petroleum dye in liquid children's medicine — same concern as Children's Tylenol liquid. Tablets are clean alternative.", confidence:"high", category:"personal_care" }],
+  ["up & up",                       { floor:2, ceiling:7, substances:[], reason:"Target pharmacy brand — tablets clean (2-3); liquid children's medicines with dyes (6-7); chemical sunscreens (6-8)", confidence:"medium", category:"personal_care" }],
+
+  // ── WALMART: PET FOOD ─────────────────────────────────────────
+  ["ol' roy",                       { floor:5, ceiling:7, substances:["Red 40","BHA","corn syrup"], reason:"Red 40 petroleum dye + BHA preservative (IARC 2B) + corn syrup in Walmart dog food — lowest tier pet food concerns", confidence:"high", category:"food_beverage" }],
+  ["ol roy",                        { floor:5, ceiling:7, substances:["Red 40","BHA","corn syrup"], reason:"Red 40 + BHA + corn syrup — Walmart store brand dog food. Same concerns regardless of spelling.", confidence:"high", category:"food_beverage" }],
+  ["pure balance dog food",         { floor:2, ceiling:4, substances:[], reason:"Walmart premium pet line — real meat first ingredient, no artificial colors or flavors, no corn syrup. Significantly cleaner than Ol' Roy.", confidence:"high", category:"food_beverage" }],
+  ["pure balance cat food",         { floor:2, ceiling:4, substances:[], reason:"Walmart premium pet line — cleaner ingredient panel than Ol' Roy. No petroleum dyes.", confidence:"high", category:"food_beverage" }],
+
+  // ── TARGET: CLOTHING ──────────────────────────────────────────
+  ["all in motion",                 { floor:4, ceiling:6, substances:["polyester","synthetic fiber"], reason:"Target activewear — 100% polyester construction. Microplastic shedding per wash. No certification (not OEKO-TEX, not GOTS).", confidence:"high", category:"clothing" }],
+  ["cat & jack oeko-tex",           { floor:2, ceiling:4, substances:[], reason:"Target kids clothing with OEKO-TEX 100 certification — tested for harmful substances. Not GOTS but meaningfully better than uncertified polyester.", confidence:"high", category:"clothing" }],
+  ["cat & jack",                    { floor:3, ceiling:5, substances:["polyester","synthetic dyes"], reason:"Target kids clothing brand — OEKO-TEX 100 on many items (3-4), but some 100% polyester items without certification score higher (5).", confidence:"medium", category:"clothing" }],
+
+  // ── TARGET: CLEANING / HOME ───────────────────────────────────
+  ["everspring",                    { floor:1, ceiling:3, substances:[], reason:"Target clean house brand — plant-based ingredients, no harsh chemicals, fragrance disclosed. Benchmark clean store-brand cleaning line.", confidence:"high", category:"home" }],
+
+  // ── TARGET: FOOD / DESSERT ────────────────────────────────────
+  ["favorite day cookies",          { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated"], reason:"Target dessert brand — HFCS + partially hydrogenated oil trans fat risk. Standard concern for conventional store-brand cookies.", confidence:"high", category:"food_beverage" }],
+  ["favorite day",                  { floor:4, ceiling:6, substances:["HFCS","artificial flavors"], reason:"Target dessert store brand — processed sweets line. HFCS common across line. Higher-concern items (cookies, candy) at 5-7.", confidence:"medium", category:"food_beverage" }],
+
+  // ── TARGET: GOOD & GATHER (DELI / MEAT) ──────────────────────
+  ["good & gather sliced turkey",   { floor:5, ceiling:7, substances:["sodium nitrite"], reason:"Good & Gather deli turkey — sodium nitrite preservative (IARC Group 1 carcinogen). Standard deli meat concern even in Target's house brand.", confidence:"high", category:"food_beverage" }],
+  ["good & gather deli",            { floor:5, ceiling:7, substances:["sodium nitrite"], reason:"Good & Gather deli meat line — sodium nitrite in cured items. IARC Group 1. Organic line may differ.", confidence:"high", category:"food_beverage" }],
+
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
