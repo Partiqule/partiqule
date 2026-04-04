@@ -1119,7 +1119,12 @@ BABY FOOD POUCHES:
 - Organic baby puffs/snacks: materials=2-3 → final 2-3.
 
 FUNCTIONAL BEVERAGES AND ELECTROLYTES:
-- LMNT / Liquid IV (clean electrolytes, no dyes): materials=2-3 → final 2-3.
+- LMNT electrolyte (sodium 1000mg + potassium 200mg + magnesium 60mg + natural flavors — nothing else): materials=2 → final ~2. Cleanest mainstream electrolyte. No sweeteners, no additives.
+- Nuun Sport tablet (stevia, sorbitol, caffeine in some, B vitamins): materials=3 → final ~3.
+- Liquid IV (sucralose, natural flavors, B-vitamin megadose stack, citric acid): materials=4 (sucralose floor fires) → final ~4. NOT clean. "Clean" marketing does not override sucralose.
+- Pedialyte original (sucralose, acesulfame potassium — two artificial sweeteners, artificial colors in some flavors): materials=5 (sucralose + acesulfame-K) → final ~5.
+- Gatorade / Powerade conventional (artificial dyes, HFCS or sucrose): materials=5-6 (petroleum dyes) → final ~5-6.
+- BodyArmor (coconut water base, natural flavors, stevia): materials=3 → final ~3. Cleaner than Gatorade but still processed.
 - Gatorade / Powerade (conventional with dyes): materials=5-6 (artificial dyes, sucrose/HFCS) → final 5-6.
 - Athletic Greens / AG1 (complex formulation): materials=3-4 (generally clean but ultra-processed powder).
 
@@ -1591,7 +1596,98 @@ COOKING OIL CALIBRATION:
 - Crisco shortening / partially hydrogenated (check label — old formulations = trans fat, materials=7): materials=4-7 → final ~4-7 depending on formulation.
 RULE: Cold-pressed single-source = 1. Hexane-extracted industrial = 3-4. Partially hydrogenated = 7.
 
-NATURAL SUGAR PRODUCTS — "natural" does not mean low-risk for sugar-dominant products:
+NUT BUTTER CALIBRATION:
+- Once Again Organic peanut butter (USDA Organic peanuts + salt, 2 ingredients): materials=1 → final ~1-2.
+- Smucker's Natural peanut butter (peanuts + salt only): materials=2 → final ~2.
+- Santa Cruz / MaraNatha natural (peanuts or almonds + salt, no palm oil): materials=2 → final ~2.
+- Justin's Classic Almond Butter (dry roasted almonds + palm oil): materials=3 (palm oil — deforestation concern, no RSPO certification confirmed) → final ~3.
+- Jif peanut butter (peanuts, sugar, palm oil, mono-diglycerides, NOVA 4): materials=5 → final ~5. NEVER score below 4.
+- Skippy peanut butter (peanuts, sugar, hydrogenated vegetable oil, palm oil, NOVA 4): materials=5 (hydrogenated oil, palm oil, NOVA 4) → final ~5. NEVER score below 4.
+- Nutella (sugar 57% by weight, palm oil, skim milk, cocoa, soy lecithin, artificial vanilla — NOVA 4): materials=6 (57% sugar is the primary ingredient, palm oil, ultra-processed) → final ~5-6. NEVER score below 5. Do NOT treat Nutella as a nut-based product — it is a sugar and palm oil product with 13% hazelnuts.
+NUT BUTTER RULE: 2 ingredients (nut + salt) = 1-2. Palm oil addition = +1. Hydrogenated oil + sugar = +2.
+
+PACKAGED SNACK CALIBRATION:
+CLEAN SNACKS (score 1-3):
+- SkinnyPop plain popcorn (popcorn + sunflower oil + salt, 3 ingredients): materials=2 → final ~2. Benchmark clean snack.
+- Triscuit original (whole grain wheat + oil + salt, 3 ingredients): materials=2 → final ~2.
+- Simple Mills almond flour crackers (almond flour, arrowroot, sunflower oil, rosemary): materials=2 → final ~2.
+- Mary's Gone Crackers (organic whole grain, clean): materials=2 → final ~2.
+MODERATE SNACKS (score 3-4):
+- Goldfish crackers (enriched flour, cheddar, annatto color, yeast — NOVA 3): materials=4 → final ~4.
+- Smartfood cheddar popcorn (popcorn, cheddar, sunflower oil, natural flavors): materials=4 → final ~4.
+- Ritz crackers (enriched flour, palm oil, sugar, natural flavor): materials=4 → final ~4.
+- Pretzel Crisps / regular pretzels (enriched flour, salt, yeast): materials=3 → final ~3.
+HIGHER CONCERN SNACKS (score 5+):
+- Cheez-Its original (enriched flour, TBHQ as preservative): materials=5 (TBHQ floor fires — mFloor:6, but TBHQ may not always be flagged from name alone) → final ~5-6. Always flag TBHQ.
+- Wheat Thins original (enriched flour, HFCS, BHT): materials=5 (BHT + HFCS) → final ~5.
+- Cheese Puffs / Cheetos (enriched flour, artificial dyes in some, MSG): materials=6 → final ~6 if dyes confirmed.
+- Pop-Tarts (HFCS, artificial dyes, TBHQ): materials=7 (TBHQ floor + dyes) → final ~6-7. NEVER score below 6.
+SNACK RULE: 3 clean ingredients = 2. Enriched flour + palm oil = 4. TBHQ or BHT = floor fires (5-6 minimum). Artificial dyes = 6-7.
+
+BREAKFAST FOOD CALIBRATION:
+WAFFLES AND PANCAKES:
+- Eggo frozen waffles (enriched flour, HFCS, artificial flavors, calcium propionate): materials=5 → final ~5. NEVER score below 4.
+- Van's Organic frozen waffles (USDA Organic, whole grain): materials=2 → final ~2.
+- Kodiak Cakes protein pancake mix (whole grain wheat, whey protein, no artificial additives): materials=3 → final ~3.
+- Bisquick original (enriched flour, partially hydrogenated shortening in old formula, leavening): materials=4 → final ~4.
+- Birch Benders organic pancake mix (USDA Organic, whole grain): materials=2 → final ~2.
+SYRUPS:
+- Vermont / pure maple syrup (100% maple syrup, single ingredient): materials=3 → final ~3. Natural, but essentially pure sugar — floor at 3.
+- Log Cabin syrup (HFCS, caramel color, artificial maple flavor, sodium benzoate): materials=5 (HFCS + artificial flavors + preservative) → final ~5.
+- Aunt Jemima / Pearl Milling syrup (HFCS, caramel color, artificial maple flavor): materials=5 → final ~5.
+- Mrs. Butterworth's (HFCS, caramel color, natural flavor): materials=5 → final ~5.
+SYRUP RULE: 100% pure maple = 3. HFCS + artificial maple flavor = 5. NEVER score fake maple syrup below 4.
+
+PASTA AND RICE CALIBRATION:
+- Jovial USDA Organic brown rice pasta (organic brown rice flour only): materials=1 → final ~1-2.
+- Tinkyada brown rice pasta (organic): materials=1 → final ~1-2.
+- Barilla whole wheat pasta (whole grain semolina, no additives): materials=2 → final ~2.
+- Banza chickpea pasta (chickpea flour, tapioca, pea protein): materials=2 → final ~2. Clean alternative.
+- Barilla white pasta (enriched semolina, niacin, ferrous sulfate, folic acid — synthetic vitamins added back): materials=3 → final ~3. Enriched = processing signal.
+- Lundberg Organic brown rice (USDA Organic, just rice): materials=1 → final ~1.
+- Lundberg conventional brown rice (no additives, just rice): materials=2 → final ~2.
+- Uncle Ben's / Ben's Original instant white rice (enriched, parboiled, some have added flavors): materials=3 → final ~3.
+- Minute Rice white (instant, enriched): materials=3 → final ~3.
+PASTA / RICE RULE: Organic + single grain = 1. Whole grain + no additives = 2. Enriched white = 3. Enriched + added flavors/oils = 4.
+
+BABY SNACK CALIBRATION (child vulnerability flag applies to ALL):
+- Happy Baby Organics puffs (USDA Organic, whole grain oats, fruit — simple): materials=2 → final ~2. Flag child vulnerability.
+- Plum Organics puffs (USDA Organic, clean ingredients): materials=2 → final ~2. Flag child vulnerability.
+- Earth's Best Organic puffs (USDA Organic): materials=2 → final ~2.
+- Gerber Puffs (enriched flour, rice flour, sugar, ascorbic acid — NOT organic, conventional): materials=5 (enriched flour primary, added sugar, daily child ingestion of conventional grain products) → final ~5. NEVER score below 4 for non-organic baby snacks. Flag child vulnerability.
+- Gerber Graduates snacks (conventional, some with artificial colors): materials=5-6 → final ~5-6.
+BABY SNACK RULE: Non-organic baby food with enriched flour = minimum 4. USDA Organic baby snack = 2. Any artificial color in baby food = minimum 7 (child daily ingestion).
+
+PACKAGED MAC AND CHEESE CALIBRATION:
+- Annie's Organic mac & cheese (USDA Organic, real cheddar, organic pasta): materials=3 → final ~3. Best mainstream option.
+- Kraft Original mac & cheese blue box (enriched flour, cheese sauce powder, annatto color, sodium phosphate): materials=5 → final ~5. Enriched flour + processed cheese powder + sodium phosphate = NOVA 4.
+- Kraft Deluxe mac (liquid cheese sauce: sodium phosphate, sodium citrate, more additives): materials=5 → final ~5.
+- Velveeta Shells & Cheese (pasteurized process cheese product — not real cheese: sodium phosphate, sodium citrate, sodium alginate, artificial color): materials=6 → final ~6. NEVER score below 5.
+- Daiya mac & cheese vegan (Daiya "cheese" — coconut oil, starch, NOVA 4): materials=6 → final ~5-6. "Vegan" label does not improve score.
+
+CANNED SOUP CALIBRATION:
+- Amy's Organic soups (USDA Organic, real vegetables, simple ingredients): materials=2 → final ~2-3. Benchmark clean canned soup.
+- Pacific Foods Organic broth (USDA Organic, simple): materials=2 → final ~2.
+- Imagine Organic soups (USDA Organic): materials=2 → final ~2.
+- Progresso traditional soups (conventional, MSG in some varieties, high sodium 800-1000mg): materials=4 → final ~4-5.
+- Campbell's Chunky (conventional, 890-1000mg sodium, modified food starch, natural flavors, yeast extract = hidden MSG): materials=5 → final ~5.
+- Campbell's Condensed (very high sodium when undiluted: 890mg per half-cup, modified starch, natural flavors): materials=5 → final ~5.
+- Maruchan / Top Ramen instant noodles (TBHQ, tertiary butylhydroquinone, high sodium 1800mg per package, MSG, artificial flavors): materials=7 (TBHQ floor fires, extreme sodium) → final ~6-7. NEVER score below 6.
+SOUP SODIUM NOTE: Flag any soup with >800mg sodium per serving as HIGH concern using sodium rule.
+
+SALAD DRESSING CALIBRATION:
+CLEAN (score 1-3):
+- Primal Kitchen avocado oil dressings (avocado oil, apple cider vinegar, clean herbs — no soybean oil, no artificial additives): materials=2 → final ~2. Benchmark clean dressing.
+- Tessemae's (USDA Organic in some, clean oils, no additives): materials=2 → final ~2.
+- Annie's Organic dressings (organic, simple): materials=2 → final ~2.
+- Newman's Own (simple, no artificial additives, charitable mission): materials=3 → final ~3.
+- Bragg organic apple cider vinegar dressing: materials=2 → final ~2.
+CONVENTIONAL (score 4-5):
+- Ken's Steakhouse (soybean oil, calcium disodium EDTA, artificial flavors): materials=5 → final ~5.
+- Hidden Valley Ranch original (soybean oil, modified starch, artificial flavors, calcium disodium EDTA): materials=5 → final ~5.
+- Wish-Bone (soybean oil, EDTA, artificial colors in some): materials=5 → final ~5.
+- Kraft dressings (soybean oil, HFCS in some, EDTA): materials=5 → final ~5.
+DRESSING RULE: Avocado oil or olive oil base + no EDTA + no soybean oil = 1-3. Soybean oil base + EDTA = 4-5.
 - Raw honey (100% honey, no additives): materials=3 — natural but essentially pure fructose/glucose, no fiber, no protein, rapid blood sugar spike. NEVER score below 3. Flag: high natural sugar, no nutritional complexity.
 - Maple syrup (pure): materials=3 — similar to honey, marginally better micronutrient profile. Score 3.
 - Agave syrup: materials=4 — 90% fructose, higher than honey, worse metabolic profile despite "natural" marketing. Score 4.
