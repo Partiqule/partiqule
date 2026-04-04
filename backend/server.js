@@ -1585,14 +1585,20 @@ BAG AND COATING MATERIAL RULES:
 - French press (borosilicate glass + stainless): materials=1, usage=2, sustainability=2 → final ~1-2
 - AeroPress (BPA-free copolyester or polypropylene): materials=4 (plastic in contact with hot water), usage=4 (daily hot liquid contact), packaging=2 → final ~3-4
 - Standard drip coffee maker (plastic water reservoir + heating element): materials=5 (plastic parts contact hot water daily), usage=5 (daily ingestion risk from plastic leaching) → final ~5
-- Conventional spinach (Dirty Dozen #1): materials=5 (pesticide load including PFAS pesticides, EWG 2026), usage=4 → final ~4 — note: still a healthy food, flag concern but don't over-score
+- Conventional spinach (EWG Dirty Dozen — permethrin, imidacloprid, PFAS pesticides confirmed EWG 2026): materials=6, usage=5 → final ~6. NEVER score below 5. Still nutritious — always note buy organic for spinach.
+- Conventional strawberries (EWG Dirty Dozen #1 by pesticide count — 22+ residues avg, PFAS on 63% of samples EWG 2026): materials=7, usage=6 → final ~6-7. NEVER score below 6. Always flag: highest pesticide residue count of any produce.
+- Organic strawberries (USDA Organic — no synthetic pesticides): materials=1, usage=1 → final ~1.
+- Conventional blueberries (EWG Dirty Dozen 2024 addition — 17 different pesticides detected per sample): materials=6, usage=5 → final ~6. NEVER score below 5. Flag: newly added to Dirty Dozen 2024.
+- Organic blueberries: materials=1, usage=1 → final ~1.
+- Conventional apples (Dirty Dozen — 90%+ samples have residues, diphenylamine common): materials=6, usage=5 → final ~6. NEVER score below 5.
+- Conventional grapes / peaches / nectarines / cherries / bell peppers / kale / green beans / potatoes (Dirty Dozen): materials=6, usage=5 → final ~6. NEVER score below 5 for any Dirty Dozen produce.
+- Organic spinach (USDA Organic): materials=1, usage=1 → final ~1.
 - Poppi Prebiotic Soda: materials=3 (apple cider vinegar, fruit juice, stevia — no artificial dyes, no HFCS), usage=3 (daily ingestion, low sugar, prebiotic benefit), packaging=4 (aluminum can) → final ~3. Do NOT score above 4.
 - Olipop: materials=2 (plant fiber, prebiotics, natural flavors — no artificial dyes, no HFCS), usage=2, packaging=4 → final ~2-3. Do NOT score above 4.
 - Poppi or Olipop should NEVER score 6 — they are specifically formulated to avoid the worst ingredients in conventional soda.
-- Organic spinach (USDA Organic): materials=1, usage=1 → final ~1
-- Conventional strawberries (Dirty Dozen): materials=4, usage=3 → final ~3
-- Organic strawberries: materials=1, usage=1 → final ~1
-- Avocado / pineapple / onion (Clean Fifteen): materials=1, usage=1 → final ~1
+- Avocado / pineapple / onion / asparagus / mango / kiwi / cabbage / mushrooms (Clean Fifteen): materials=1, usage=1 → final ~1-2.
+DIRTY DOZEN RULE: Any conventional produce on the EWG Dirty Dozen = materials 6 minimum, final 5-7. Always note the produce is still healthy — recommend organic, never imply avoiding the vegetable.
+CLEAN FIFTEEN RULE: Conventional avocado, onion, pineapple, asparagus, mango, kiwi, cabbage, mushroom = materials 1-2 even conventional. Thick skins prevent pesticide penetration.
 - Neutrogena sunscreen (oxybenzone/octinoxate): materials=7 (oxybenzone detected in bloodstream after single use, FDA flagged), usage=7 (daily full-body skin absorption) → final ~7
 - Badger zinc oxide mineral sunscreen: materials=2 (non-nano zinc oxide, organic base), usage=2, packaging=3 → final ~2
 - Crayola crayons (paraffin wax): materials=4 (petroleum paraffin wax, synthetic dyes), usage=3 (occasional skin contact, not ingested) → final ~3-4
@@ -2591,7 +2597,97 @@ CASUAL DINING:
 Baby formula is always a BABY category product — apply child vulnerability flag. Parents choosing formula have no alternative — scoring reflects relative risk within the category, not a judgment on formula feeding.
 
 GROCERY STORE PRODUCT CALIBRATION — HIGH-VOLUME SCANNER TARGETS:
-This section covers packaged foods that Yuka users commonly scan. Partiqule's differentiator: name the specific chemical concern, not just the nutritional concern. A product scores high here because of petroleum dyes, BHA/BHT, TBHQ, glyphosate residue, or sodium nitrite — not just sugar or calories.
+This section covers packaged foods that Yuka users commonly scan. Partiqule's differentiator: name the specific chemical concern, not just the nutritional concern.
+
+PRODUCE — DIRTY DOZEN VS CLEAN FIFTEEN (high-volume Yuka scan):
+Scanning conventional produce at the grocery store is one of the most common Yuka use cases. Always distinguish organic from conventional for Dirty Dozen items.
+DIRTY DOZEN — conventional versions score 5-7:
+- Conventional strawberries: final score ~6-7 (EWG #1 — 22+ pesticide residues, PFAS confirmed). NEVER score below 6.
+- Conventional spinach: final score ~6.
+- Conventional blueberries: final score ~6 (added to Dirty Dozen 2024 — 17 pesticides per sample).
+- Conventional apples / grapes / peaches / nectarines / cherries: final score ~6.
+- Conventional bell peppers / kale / collard greens: final score ~6.
+- Conventional green beans / potatoes: final score ~6 (chlorpropham in 90%+ potatoes — banned in EU).
+ORGANIC = 1-2 regardless of Dirty Dozen status.
+CLEAN FIFTEEN — conventional versions score 1-2:
+- Avocado, onion, pineapple, asparagus, mango, kiwi, cabbage, mushroom, sweet peas, papaya: final score ~1-2 even conventional.
+
+BBQ SAUCES AND MARINADES:
+HIGH CONCERN — HFCS-first (score 5-6):
+- Sweet Baby Ray's Original BBQ sauce (HFCS is FIRST ingredient + caramel color IV — 4-MEI IARC 2B + natural flavors): materials=6 → final ~6. NEVER score below 5. The most purchased BBQ sauce in the US.
+- Heinz Classic BBQ sauce (HFCS + caramel color): materials=5 → final ~5.
+- Kraft Original BBQ sauce (HFCS + caramel color): materials=5 → final ~5.
+CLEAN (score 1-3):
+- Stubb's Original BBQ sauce (brown sugar, tomatoes, no HFCS, simple clean ingredients): materials=2 → final ~2. Clean benchmark BBQ sauce.
+- Primal Kitchen BBQ sauce (apple cider vinegar, no HFCS, no cane sugar, avocado oil base): materials=2 → final ~2.
+- Kinder's BBQ sauce (no HFCS, simple ingredients): materials=2 → final ~2.
+BBQ RULE: HFCS as first or second ingredient = 5+ minimum. Caramel color IV (4-MEI) = flag IARC 2B concern. Brown sugar or cane sugar instead of HFCS = meaningful improvement.
+
+ASIAN CONDIMENTS AND SAUCES:
+CLEAN (score 1-3):
+- Kikkoman soy sauce (brewed: water + wheat + soybeans + salt — 4 clean ingredients): materials=2 → final ~2. Benchmark clean soy sauce. Brewed = fermented, not chemically hydrolyzed.
+- Coconut Aminos (coconut blossom nectar + sea salt — soy-free, clean): materials=1 → final ~1. Cleanest soy alternative.
+- Bragg Liquid Aminos (non-GMO soy + purified water): materials=2 → final ~2.
+- Sriracha Huy Fong (chili + sugar + distilled vinegar + garlic + salt — 5 clean ingredients): materials=2 → final ~2. Despite sugar content, used in small amounts. NEVER score above 4. Flag natural: simple, real ingredients.
+- Lea & Perrins Worcestershire (tamarind + anchovies + spices + vinegar — clean fermented condiment): materials=2 → final ~2.
+HIGH CONCERN (score 4-6):
+- La Choy soy sauce (hydrolyzed soy protein — chemically produced NOT brewed, functional equivalent of MSG, different from Kikkoman): materials=5 → final ~5. Flag: not fermented soy sauce — chemically hydrolyzed.
+- Lee Kum Kee oyster sauce (caramel color IV + MSG + modified starch): materials=5 → final ~5.
+- Panda Express orange sauce (HFCS + caramel color + modified starch): materials=6 → final ~6.
+ASIAN SAUCE RULE: Brewed/fermented soy sauce = clean. Hydrolyzed soy protein = not the same as soy sauce — flag. Caramel color IV in any sauce = IARC 2B flag.
+
+LUNCHABLES AND PACKAGED KIDS LUNCHES — critical Yuka-competing category:
+- Lunchables Turkey & American (sodium nitrite in turkey + sodium phosphate in cheese + enriched flour crackers): materials=7 (nitrite floor fires), usage=7 (child daily lunch, child vulnerability) → final ~7. NEVER score below 6. Always flag: "sodium nitrite in deli turkey — IARC Group 1."
+- Lunchables Pizza (sodium nitrite in pepperoni + processed cheese + enriched flour crust): materials=7 (nitrite floor fires) → final ~7. NEVER score below 6.
+- Lunchables Nachos (enriched flour tortilla chips + processed cheese sauce + no processed meat): materials=6 → final ~6. No nitrite from meat but processed cheese sauce + enriched flour.
+- Lunchables with Smoothie (sodium nitrite in deli meat + HFCS in smoothie + artificial dyes — three separate floors fire simultaneously): materials=8 (nitrite + HFCS + dye floors) → final ~8. This is one of the worst children's packaged foods on any grocery shelf.
+- Oscar Mayer P3 snack pack (sodium nitrite in meat + processed cheese + nuts — nitrite floor fires): materials=6 → final ~6.
+LUNCHABLES RULE: ANY Lunchables product containing deli meat = sodium nitrite floor fires → minimum 6. The "kids friendly" packaging does not lower the concern — it raises it.
+
+WATER AND SPARKLING WATER CALIBRATION:
+BENCHMARK CLEAN (score 1-2):
+- Liquid Death mountain water (aluminum can — no BPA, no plastic, mountain water): materials=1, packaging=1 → final ~1-2. Cleanest mainstream bottled water format (aluminum).
+- Spindrift sparkling water (real squeezed fruit + sparkling water — no flavors, no sugar): materials=1 → final ~1-2.
+- LaCroix sparkling water (naturally essenced flavor — no sugar, no artificial sweeteners): materials=1 → final ~1-2.
+- Bubly sparkling water (natural flavors — no sugar, no artificial sweeteners): materials=1 → final ~1-2.
+- Perrier (natural spring water + CO2 — glass bottle option is benchmark): materials=1 → final ~1.
+- Hint Water (natural fruit flavors only — no sugar, no dyes): materials=1 → final ~1-2.
+- Poland Spring / Fiji / Smartwater / Dasani / Essentia (conventional BPA-free PET bottle — water is clean but plastic packaging is single-use concern): materials=2, packaging=3 → final ~2. Clean water, moderate packaging concern.
+- Vitaminwater (HFCS or sucrose in original + artificial flavors + synthetic vitamins at pharmaceutical doses): materials=5 → final ~5. NEVER score Vitaminwater same as plain water.
+WATER RULE: The water itself is clean in all mainstream brands. What varies is packaging (aluminum > glass > BPA-free PET) and added ingredients (HFCS or artificial sweeteners immediately push score to 4+).
+
+SALAD DRESSING BRAND CALIBRATION:
+CLEAN (score 1-3):
+- Primal Kitchen Caesar / Ranch / Greek (avocado oil base, no EDTA, no canola, no soybean oil, no artificial flavors): materials=1 → final ~1-2. Benchmark clean dressing.
+- Annie's Organic Ranch (USDA Organic, no EDTA, no artificial flavors): materials=2 → final ~2.
+- Bolthouse Farms Yogurt Ranch / Avocado Cilantro (yogurt or avocado base — no EDTA, cleaner oil profile): materials=2 → final ~2.
+- Litehouse blue cheese / ranch (clean: buttermilk + blue cheese + no EDTA): materials=2 → final ~2.
+HIGH CONCERN (score 4-6):
+- Ken's Steakhouse Ranch / Caesar (soybean oil + EDTA + natural flavors + high sodium): materials=5 → final ~5.
+- Wish-Bone Italian / Ranch (soybean oil + EDTA + artificial flavors): materials=5 → final ~5.
+- Newman's Own Caesar (EDTA + soybean oil, but natural flavors): materials=4 → final ~4. Better than Ken's but EDTA still present.
+DRESSING RULE: EDTA (disodium EDTA) in dressings is an industrial chelating agent used as a preservative — flag as a synthetic additive. Avocado oil or olive oil base = clean. Soybean oil base = moderate concern.
+
+STORE BRAND CALIBRATION (Trader Joe's, Kirkland, 365, Good & Gather):
+TRADER JOE'S:
+- TJ's organic tomato sauce / marinara (USDA Organic, simple): materials=1 → final ~1.
+- TJ's Everything But the Bagel seasoning (sesame + sea salt + garlic + onion — clean): materials=1 → final ~1.
+- TJ's Joe-Joe's cookies (no HFCS, no artificial colors — cleaner Oreo alternative): materials=3 → final ~3.
+- TJ's frozen organic vegetables (USDA Organic, no additives): materials=1 → final ~1.
+- TJ's Mandarin Orange Chicken (TBHQ in frying oil — see frozen calibration): final score ~6.
+KIRKLAND (COSTCO):
+- Kirkland organic quinoa / organic chicken / organic produce: materials=1 → final ~1-2.
+- Kirkland mixed nuts (nuts + salt — no additives): materials=1 → final ~1.
+- Kirkland Signature Trail Mix (contains M&Ms — Red 40 + Yellow 5 + Blue 1 + HFCS): materials=6 (petroleum dye floor fires) → final ~6. The M&Ms in Kirkland Trail Mix make it very different from Kirkland plain nuts.
+- Kirkland EVOO (third-party tested for purity): materials=1 → final ~1.
+365 WHOLE FOODS MARKET:
+- 365 Whole Foods organic marinara / tomato sauce (USDA Organic, simple): materials=1 → final ~1.
+- 365 organic almond / peanut butter (dry roasted nuts only): materials=1 → final ~1.
+- 365 plant-based products (check specific SKU — generally clean by Whole Foods standards): materials=2 → final ~2-3.
+GOOD & GATHER (TARGET):
+- Good & Gather organic salsa (USDA Organic, simple): materials=1 → final ~1.
+- Good & Gather sparkling water (natural flavors only): materials=1 → final ~1.
+STORE BRAND RULE: Within the same store brand, USDA Organic lines = 1-2. Conventional packaged items without certification = score same as equivalent name-brand. Never give a store brand a lower score just because it's a store brand — evaluate ingredients.
 
 BREAKFAST CEREALS:
 HIGH CONCERN — PETROLEUM DYES (score 7-8):

@@ -926,6 +926,79 @@ const ENTRIES = [
   ["celestial seasonings",          { floor:1, ceiling:3, substances:[], reason:"Paper bags, no string/tag — clean. Staple-free.", confidence:"high", category:"food_beverage" }],
   ["four sigmatic",                 { floor:1, ceiling:3, substances:[], reason:"Organic adaptogens + organic coffee — clean formula", confidence:"high", category:"food_beverage" }],
 
+
+  // ══════════════════════════════════════════════════════════════
+  // PRODUCE — DIRTY DOZEN AND CLEAN FIFTEEN
+  // ══════════════════════════════════════════════════════════════
+  ["conventional strawberries",     { floor:6, ceiling:8, substances:["pesticides","PFAS"], reason:"EWG Dirty Dozen #1 — 22+ pesticide residues avg, PFAS on 63% of samples EWG 2026. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["conventional spinach",          { floor:5, ceiling:7, substances:["pesticides","PFAS"], reason:"EWG Dirty Dozen — permethrin, imidacloprid, PFAS pesticides confirmed", confidence:"high", category:"food_beverage" }],
+  ["conventional blueberries",      { floor:5, ceiling:7, substances:["pesticides"], reason:"Added to EWG Dirty Dozen 2024 — 17 different pesticides detected per sample", confidence:"high", category:"food_beverage" }],
+  ["conventional apples",           { floor:5, ceiling:7, substances:["pesticides"], reason:"EWG Dirty Dozen — 90%+ of samples have detectable residues, diphenylamine", confidence:"high", category:"food_beverage" }],
+  ["conventional grapes",           { floor:5, ceiling:7, substances:["pesticides"], reason:"EWG Dirty Dozen — multiple fungicides, 96% have residues", confidence:"high", category:"food_beverage" }],
+  ["conventional peaches",          { floor:5, ceiling:7, substances:["pesticides"], reason:"EWG Dirty Dozen — 99% of samples have pesticide residues", confidence:"high", category:"food_beverage" }],
+  ["conventional bell peppers",     { floor:5, ceiling:7, substances:["pesticides"], reason:"EWG Dirty Dozen — highest toxicity per EWG flagging", confidence:"high", category:"food_beverage" }],
+  ["conventional kale",             { floor:5, ceiling:7, substances:["pesticides"], reason:"EWG Dirty Dozen — DCPA and other flagged pesticides", confidence:"high", category:"food_beverage" }],
+  ["conventional potatoes",         { floor:5, ceiling:7, substances:["chlorpropham"], reason:"EWG Dirty Dozen — 90%+ have chlorpropham (sprout inhibitor banned in EU)", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // BBQ SAUCES AND ASIAN CONDIMENTS
+  // ══════════════════════════════════════════════════════════════
+  ["sweet baby ray's",              { floor:5, ceiling:7, substances:["HFCS","caramel color IV"], reason:"HFCS is the FIRST ingredient + caramel color IV (4-MEI IARC 2B). Most purchased BBQ sauce in US.", confidence:"high", category:"food_beverage" }],
+  ["sweet baby rays",               { floor:5, ceiling:7, substances:["HFCS","caramel color"], reason:"HFCS first ingredient + caramel color IV — floor fires", confidence:"high", category:"food_beverage" }],
+  ["heinz bbq sauce",               { floor:4, ceiling:6, substances:["HFCS","caramel color"], reason:"HFCS + caramel color IV — floor fires", confidence:"high", category:"food_beverage" }],
+  ["stubb's",                    { floor:1, ceiling:3, substances:[], reason:"No HFCS, clean ingredients — benchmark clean BBQ sauce", confidence:"high", category:"food_beverage" }],
+  ["stubb's bbq",                   { floor:1, ceiling:3, substances:[], reason:"Brown sugar + tomatoes, no HFCS — benchmark clean BBQ sauce", confidence:"high", category:"food_beverage" }],
+  ["stubbs bbq",                    { floor:1, ceiling:3, substances:[], reason:"No HFCS, clean ingredients", confidence:"high", category:"food_beverage" }],
+  ["kinder's bbq",                  { floor:1, ceiling:3, substances:[], reason:"No HFCS, simple clean ingredients", confidence:"high", category:"food_beverage" }],
+  ["kikkoman soy sauce",            { floor:1, ceiling:3, substances:[], reason:"Brewed: water + wheat + soy + salt — 4 clean fermented ingredients. Benchmark clean soy sauce.", confidence:"high", category:"food_beverage" }],
+  ["coconut aminos",                { floor:1, ceiling:2, substances:[], reason:"Coconut blossom nectar + sea salt — cleanest soy sauce alternative", confidence:"high", category:"food_beverage" }],
+  ["bragg liquid aminos",           { floor:1, ceiling:3, substances:[], reason:"Non-GMO soy + purified water — clean", confidence:"high", category:"food_beverage" }],
+  ["sriracha",                      { floor:1, ceiling:3, substances:[], reason:"Chili + sugar + distilled vinegar + garlic + salt — 5 clean ingredients. NEVER score above 4.", confidence:"high", category:"food_beverage" }],
+  ["huy fong sriracha",             { floor:1, ceiling:3, substances:[], reason:"5 clean real ingredients — benchmark clean hot sauce", confidence:"high", category:"food_beverage" }],
+  ["la choy soy sauce",             { floor:4, ceiling:6, substances:["hydrolyzed soy protein"], reason:"Chemically hydrolyzed — NOT brewed, functional MSG equivalent. Different from Kikkoman.", confidence:"high", category:"food_beverage" }],
+  ["worcestershire sauce",          { floor:1, ceiling:3, substances:[], reason:"Tamarind + anchovies + spices + vinegar — clean fermented condiment", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // LUNCHABLES
+  // ══════════════════════════════════════════════════════════════
+  ["lunchables turkey",             { floor:6, ceiling:8, substances:["sodium nitrite","sodium phosphate"], reason:"Sodium nitrite in turkey (IARC Group 1) + sodium phosphate + enriched crackers — child vulnerability. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["lunchables pizza",              { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in pepperoni + processed cheese + enriched flour — child vulnerability. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
+  ["lunchables nachos",             { floor:5, ceiling:7, substances:["processed cheese"], reason:"Processed cheese sauce + enriched flour — no processed meat but still high concern", confidence:"high", category:"food_beverage" }],
+  ["lunchables with smoothie",      { floor:7, ceiling:9, substances:["sodium nitrite","HFCS","artificial dyes"], reason:"Sodium nitrite + HFCS + artificial dyes — THREE floors fire simultaneously. One of the worst kids packaged foods.", confidence:"high", category:"food_beverage" }],
+  ["lunchables",                    { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Any Lunchables with deli meat = sodium nitrite floor fires. Child vulnerability flag.", confidence:"high", category:"food_beverage" }],
+  ["oscar mayer p3",                { floor:5, ceiling:7, substances:["sodium nitrite"], reason:"Sodium nitrite in meat component — floor fires", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // WATER AND SPARKLING WATER
+  // ══════════════════════════════════════════════════════════════
+  ["liquid death",                  { floor:1, ceiling:2, substances:[], reason:"Aluminum can, no BPA, mountain water — cleanest mainstream bottled water format", confidence:"high", category:"beverage" }],
+  ["spindrift",                   { floor:1, ceiling:2, substances:[], reason:"Real squeezed fruit + sparkling water — no added flavoring", confidence:"high", category:"beverage" }],
+  ["spindrift sparkling",           { floor:1, ceiling:2, substances:[], reason:"Real squeezed fruit + sparkling water — no flavoring, no sugar added", confidence:"high", category:"beverage" }],
+  ["lacroix",                       { floor:1, ceiling:2, substances:[], reason:"Naturally essenced flavor — no sugar, no artificial sweeteners", confidence:"high", category:"beverage" }],
+  ["bubly",                        { floor:1, ceiling:2, substances:[], reason:"Natural flavors only — no sugar, no artificial sweeteners", confidence:"high", category:"beverage" }],
+  ["bubly sparkling",               { floor:1, ceiling:2, substances:[], reason:"Natural flavors only — no sugar, no artificial sweeteners", confidence:"high", category:"beverage" }],
+  ["hint water",                    { floor:1, ceiling:2, substances:[], reason:"Natural fruit flavors only — no sugar, no dyes", confidence:"high", category:"beverage" }],
+  ["vitaminwater",                  { floor:4, ceiling:6, substances:["sucrose","crystalline fructose"], reason:"HFCS or sucrose + synthetic vitamins at pharmaceutical doses — not the same as plain water", confidence:"high", category:"beverage" }],
+  ["vitamin water",                 { floor:4, ceiling:6, substances:["sucrose"], reason:"Sugar + synthetic vitamins — not clean water", confidence:"high", category:"beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // SALAD DRESSINGS
+  // ══════════════════════════════════════════════════════════════
+  ["primal kitchen dressing",       { floor:1, ceiling:2, substances:[], reason:"Avocado oil base, no EDTA, no canola, no soybean oil — benchmark clean dressing", confidence:"high", category:"food_beverage" }],
+  ["primal kitchen caesar",         { floor:1, ceiling:2, substances:[], reason:"Avocado oil, no EDTA — clean", confidence:"high", category:"food_beverage" }],
+  ["annie's organic ranch",         { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no EDTA, no artificial flavors", confidence:"high", category:"food_beverage" }],
+  ["bolthouse farms",               { floor:2, ceiling:4, substances:[], reason:"Yogurt or avocado base, no EDTA — cleaner oil profile than conventional dressings", confidence:"high", category:"food_beverage" }],
+  ["ken's steakhouse",              { floor:4, ceiling:6, substances:["EDTA","soybean oil"], reason:"Soybean oil + EDTA + high sodium — conventional dressing concern", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // STORE BRANDS
+  // ══════════════════════════════════════════════════════════════
+  ["365 whole foods",               { floor:1, ceiling:3, substances:[], reason:"Whole Foods house brand — explicitly avoids artificial additives, many USDA Organic", confidence:"high", category:"food_beverage" }],
+  ["kirkland signature trail mix",  { floor:5, ceiling:7, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Contains M&Ms — petroleum dyes + HFCS in candy. Very different from Kirkland plain nuts.", confidence:"high", category:"food_beverage" }],
+  ["good & gather organic",         { floor:1, ceiling:2, substances:[], reason:"Target USDA Organic store brand — clean", confidence:"high", category:"food_beverage" }],
+  ["wonderful pistachios",          { floor:1, ceiling:2, substances:[], reason:"Just pistachios + salt — benchmark clean nut snack", confidence:"high", category:"food_beverage" }],
+  ["kind trail mix",                { floor:1, ceiling:3, substances:[], reason:"Nuts + fruit + dark chocolate — no HFCS, no petroleum dyes", confidence:"high", category:"food_beverage" }],
+
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
