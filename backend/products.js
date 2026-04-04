@@ -2820,7 +2820,7 @@ const products = [
   },
   {
     id:"ss-009", name:"Salt & Stone Candle", brand:"Salt & Stone",
-    plasticScore:2, category:"other",
+    plasticScore:2, category:"home",
     material:"Glass vessel, natural wax blend",
     description:"Clean-burning natural wax candle in glass — no synthetic fragrance, no paraffin, no toxic dyes.",
     affiliateUrl:`https://www.amazon.com/s?k=Salt+Stone+candle&tag=${AMAZON_TAG}`,
@@ -3040,7 +3040,7 @@ const products = [
   },
   // ── SUNSCREEN & SPF ──────────────────────────────────────────
   {
-    id:"sp-001", name:"Badger Kids Sunscreen SPF 40", brand:"Badger",
+    id:"pc-401", name:"Badger Kids Sunscreen SPF 40", brand:"Badger",
     plasticScore:2, category:"personal_care",
     material:"Zinc oxide mineral base, organic ingredients, no oxybenzone or octinoxate",
     description:"Certified organic mineral sunscreen for kids. Zinc oxide only — no hormone-disrupting chemical UV filters.",
@@ -3049,7 +3049,7 @@ const products = [
     tags:["sunscreen","kids sunscreen","mineral sunscreen","SPF","personal care","baby","zinc oxide","reef safe","oxybenzone free"]
   },
   {
-    id:"sp-002", name:"Badger Sport Sunscreen SPF 40", brand:"Badger",
+    id:"pc-402", name:"Badger Sport Sunscreen SPF 40", brand:"Badger",
     plasticScore:2, category:"personal_care",
     material:"Zinc oxide mineral base, certified organic, no chemical UV filters",
     description:"Water-resistant mineral sport sunscreen. No oxybenzone, octinoxate, or hormone-disrupting UV filters.",
@@ -3058,7 +3058,7 @@ const products = [
     tags:["sunscreen","sport sunscreen","mineral sunscreen","SPF","personal care","zinc oxide","reef safe","water resistant"]
   },
   {
-    id:"sp-003", name:"Raw Elements Sunscreen SPF 30", brand:"Raw Elements",
+    id:"pc-403", name:"Raw Elements Sunscreen SPF 30", brand:"Raw Elements",
     plasticScore:2, category:"personal_care",
     material:"Non-nano zinc oxide, certified natural, no synthetic chemicals",
     description:"100% natural mineral sunscreen in recyclable tin. Non-nano zinc oxide, reef-safe, no synthetic ingredients.",
@@ -3359,7 +3359,7 @@ const products = [
   },
   // ── BABY & KIDS ──────────────────────────────────────────────
   {
-    id:"bk-001", name:"Hanna Andersson Organic Cotton Pajamas", brand:"Hanna Andersson",
+    id:"cl-301", name:"Hanna Andersson Organic Cotton Pajamas", brand:"Hanna Andersson",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — no synthetic fibers or chemical treatments",
     description:"GOTS-certified organic cotton pajamas for kids. No synthetic fibers, snug-fitting so no flame retardant chemicals needed.",
@@ -3368,7 +3368,7 @@ const products = [
     tags:["pajamas","kids pajamas","organic cotton","baby","kids","clothing","organic","GOTS","sleepwear","toddler"]
   },
   {
-    id:"bk-002", name:"Burts Bees Baby Organic Cotton Bodysuit", brand:"Burts Bees Baby",
+    id:"cl-302", name:"Burts Bees Baby Organic Cotton Bodysuit", brand:"Burts Bees Baby",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — no synthetic dyes or flame retardants",
     description:"GOTS-certified organic cotton onesie with no synthetic dyes or chemical finishes. Safe for newborn skin.",
@@ -3377,7 +3377,7 @@ const products = [
     tags:["bodysuit","onesie","baby","infant","newborn","organic cotton","clothing","GOTS","organic"]
   },
   {
-    id:"bk-003", name:"Pact Kids Organic Cotton T-Shirt", brand:"Pact",
+    id:"cl-303", name:"Pact Kids Organic Cotton T-Shirt", brand:"Pact",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — Fair Trade certified",
     description:"GOTS-certified organic cotton kids tee. Fair Trade certified, no synthetic dyes, no pesticide residue.",
@@ -3386,7 +3386,7 @@ const products = [
     tags:["tshirt","t-shirt","kids","children","organic cotton","clothing","GOTS","Fair Trade","top","shirt"]
   },
   {
-    id:"bk-004", name:"Naturepedic Organic Crib Mattress", brand:"Naturepedic",
+    id:"bk-024", name:"Naturepedic Organic Crib Mattress", brand:"Naturepedic",
     plasticScore:2, category:"baby",
     material:"GOTS-certified organic cotton, no polyurethane foam, no flame retardant chemicals",
     description:"GOTS and MADE SAFE certified crib mattress. No polyurethane foam, no flame retardant chemicals, no synthetic waterproofing.",
@@ -3395,7 +3395,7 @@ const products = [
     tags:["crib mattress","baby mattress","organic mattress","baby","infant","organic cotton","GOTS","flame retardant free","non toxic"]
   },
   {
-    id:"bk-005", name:"Pura Stainless Baby Bottle", brand:"Pura",
+    id:"bk-025", name:"Pura Stainless Baby Bottle", brand:"Pura",
     plasticScore:1, category:"baby",
     material:"18/8 food-grade stainless steel — no plastic food contact, no BPA or phthalates",
     description:"Stainless steel baby bottle — no plastic contacts milk or formula even when heated. Medical-grade silicone nipple.",
@@ -3404,7 +3404,7 @@ const products = [
     tags:["baby bottle","stainless steel bottle","bottle","baby","infant","BPA free","plastic free","feeding"]
   },
   {
-    id:"bk-006", name:"WeeSprout Glass Baby Food Containers", brand:"WeeSprout",
+    id:"bk-026", name:"WeeSprout Glass Baby Food Containers", brand:"WeeSprout",
     plasticScore:1, category:"baby",
     material:"Borosilicate glass — zero leaching, safe for heating and freezing",
     description:"Glass baby food storage — no plastic leaching into purees even when heated. Freezer, oven and dishwasher safe.",
@@ -3413,7 +3413,7 @@ const products = [
     tags:["baby food container","baby food storage","glass container","baby","glass","BPA free","food storage","weaning"]
   },
   {
-    id:"bk-007", name:"Melissa and Doug Wooden Toys", brand:"Melissa and Doug",
+    id:"bk-027", name:"Melissa and Doug Wooden Toys", brand:"Melissa and Doug",
     plasticScore:2, category:"baby",
     material:"Solid wood and water-based paint — no ABS plastic",
     description:"Solid wood toys with water-based paint. No ABS plastic, no phthalates. Built to last years.",
@@ -3422,7 +3422,7 @@ const products = [
     tags:["wooden toys","kids toys","toys","baby","toddler","natural toys","non toxic toys","wood","plastic free toys"]
   },
   {
-    id:"bk-008", name:"Patagonia Kids Fleece Jacket", brand:"Patagonia",
+    id:"cl-304", name:"Patagonia Kids Fleece Jacket", brand:"Patagonia",
     plasticScore:3, category:"clothing",
     material:"100% recycled polyester fleece — bluesign certified, no PFAS DWR treatment",
     description:"Recycled fleece kids jacket with no PFAS waterproofing. Bluesign certified fabric, Fair Trade sewn, built to be handed down.",
@@ -3431,7 +3431,7 @@ const products = [
     tags:["jacket","fleece jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","recycled fleece","PFAS free","no PFAS","kids coat","coat"]
   },
   {
-    id:"bk-009", name:"Patagonia Kids Rain Jacket", brand:"Patagonia",
+    id:"cl-305", name:"Patagonia Kids Rain Jacket", brand:"Patagonia",
     plasticScore:3, category:"clothing",
     material:"Recycled nylon shell — PFAS-free DWR treatment, bluesign certified",
     description:"Kids rain jacket with PFAS-free waterproofing. Patagonia transitioned to non-fluorinated DWR — no forever chemicals in the coating.",
@@ -3440,7 +3440,7 @@ const products = [
     tags:["rain jacket","waterproof jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","PFAS free","no PFAS DWR","kids coat","coat","waterproof","shell"]
   },
   {
-    id:"bk-010", name:"Hanna Andersson Organic Cotton Hoodie", brand:"Hanna Andersson",
+    id:"cl-306", name:"Hanna Andersson Organic Cotton Hoodie", brand:"Hanna Andersson",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — no synthetic fibers, no chemical treatments",
     description:"GOTS organic cotton hoodie for kids. No synthetic microfibers, no PFAS, no azo dyes. Snug and warm without synthetic fleece.",
@@ -3449,7 +3449,7 @@ const products = [
     tags:["hoodie","sweatshirt","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","coat","kids sweater","sweater","warm layer","layer"]
   },
   {
-    id:"bk-011", name:"Frugi Organic Kids Waterproof Jacket", brand:"Frugi",
+    id:"cl-307", name:"Frugi Organic Kids Waterproof Jacket", brand:"Frugi",
     plasticScore:3, category:"clothing",
     material:"GOTS-certified organic cotton outer with PFAS-free waterproof membrane",
     description:"GOTS organic cotton kids waterproof with bluesign-certified PFAS-free membrane. Designed to be passed down, not thrown away.",
@@ -3458,7 +3458,7 @@ const products = [
     tags:["rain jacket","waterproof jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","PFAS free","coat","waterproof"]
   },
   {
-    id:"bk-012", name:"Pact Kids Organic Cotton Sweatshirt", brand:"Pact",
+    id:"cl-308", name:"Pact Kids Organic Cotton Sweatshirt", brand:"Pact",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — Fair Trade certified, no synthetic dyes",
     description:"Fair Trade, GOTS organic cotton kids sweatshirt. No synthetic fibers, no petroleum dyes, no formaldehyde finishes.",
@@ -3467,7 +3467,7 @@ const products = [
     tags:["sweatshirt","hoodie","kids jacket","outerwear","children","toddler","organic cotton","GOTS","Fair Trade","warm layer","layer","top","kids sweater"]
   },
   {
-    id:"bk-013", name:"Art and Eden Organic Kids Jacket", brand:"Art and Eden",
+    id:"cl-309", name:"Art and Eden Organic Kids Jacket", brand:"Art and Eden",
     plasticScore:2, category:"clothing",
     material:"GOTS-certified organic cotton — OEKO-TEX certified, no synthetic dyes",
     description:"GOTS and OEKO-TEX certified kids outerwear. Verified free of harmful chemicals throughout the supply chain.",
@@ -3476,7 +3476,7 @@ const products = [
     tags:["jacket","kids jacket","kids outerwear","outerwear","children jacket","toddler jacket","organic cotton","GOTS","OEKO-TEX","coat","layer"]
   },
   {
-    id:"bk-014", name:"Mini Rodini Organic Kids Sweatshirt", brand:"Mini Rodini",
+    id:"cl-310", name:"Mini Rodini Organic Kids Sweatshirt", brand:"Mini Rodini",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — OEKO-TEX 100 certified",
     description:"Swedish kids brand with GOTS and OEKO-TEX certification. No harmful dyes, no synthetic fibers, verified clean throughout production.",
@@ -3485,7 +3485,7 @@ const products = [
     tags:["sweatshirt","hoodie","kids outerwear","outerwear","kids jacket","children","toddler","organic cotton","GOTS","OEKO-TEX","layer","kids sweater","warm"]
   },
   {
-    id:"bk-015", name:"Turtledove London Organic Kids Hoodie", brand:"Turtledove London",
+    id:"cl-311", name:"Turtledove London Organic Kids Hoodie", brand:"Turtledove London",
     plasticScore:2, category:"clothing",
     material:"100% GOTS-certified organic cotton — no azo dyes, no formaldehyde finishes",
     description:"GOTS certified organic cotton kids hoodie. Undyed or low-impact dyes only, verified formaldehyde-free.",
@@ -3567,7 +3567,7 @@ const products = [
   },
   {
     id:"wl-001", name:"Garden of Life Organic Protein Powder", brand:"Garden of Life",
-    plasticScore:2, category:"food_beverage",
+    plasticScore:2, category:"supplement",
     material:"USDA organic, non-GMO, no artificial sweeteners or synthetic additives",
     description:"USDA certified organic plant protein. No artificial sweeteners, synthetic flavors or fillers. Third-party tested.",
     affiliateUrl:`https://www.amazon.com/s?k=Garden+of+Life+organic+protein+powder&tag=${AMAZON_TAG}`,
@@ -3791,7 +3791,7 @@ const products = [
 
   // ── PET FOOD ──────────────────────────────────────────────────
   {
-    id:"pt-001", name:"The Honest Kitchen Dehydrated Dog Food", brand:"The Honest Kitchen",
+    id:"pt-101", name:"The Honest Kitchen Dehydrated Dog Food", brand:"The Honest Kitchen",
     plasticScore:2, category:"food_beverage",
     material:"Human-grade whole ingredients — no by-products, fillers or synthetic preservatives",
     description:"Human-grade dehydrated dog food with whole ingredients. No by-products, fillers, preservatives or artificial anything.",
@@ -3800,7 +3800,7 @@ const products = [
     tags:["dog food","pet food","dehydrated dog food","whole ingredient","natural dog food","no preservatives","human grade","pet"]
   },
   {
-    id:"pt-002", name:"Open Farm Dog Food", brand:"Open Farm",
+    id:"pt-102", name:"Open Farm Dog Food", brand:"Open Farm",
     plasticScore:2, category:"food_beverage",
     material:"Humanely raised meat, no synthetic preservatives, artificial flavors or by-products",
     description:"Traceable, humanely raised dog food with no by-products, synthetic preservatives or artificial flavors. Certified Humane.",
@@ -3809,7 +3809,7 @@ const products = [
     tags:["dog food","pet food","natural dog food","no preservatives","humanely raised","pet","grain free","no by-products"]
   },
   {
-    id:"pt-003", name:"Castor and Pollux Organix Cat Food", brand:"Castor and Pollux",
+    id:"pt-103", name:"Castor and Pollux Organix Cat Food", brand:"Castor and Pollux",
     plasticScore:2, category:"food_beverage",
     material:"USDA organic, no synthetic preservatives, artificial flavors or fillers",
     description:"USDA certified organic cat food. No synthetic preservatives, artificial flavors, colors or fillers.",
@@ -3849,7 +3849,7 @@ const products = [
 
   // ── OFFICE & SCHOOL ───────────────────────────────────────────
   {
-    id:"of-001", name:"Leuchtturm1917 Hardcover Notebook", brand:"Leuchtturm1917",
+    id:"of-101", name:"Leuchtturm1917 Hardcover Notebook", brand:"Leuchtturm1917",
     plasticScore:1, category:"other",
     material:"Paper and cardboard — no plastic coating, no synthetic binding",
     description:"FSC-certified paper hardcover notebook. No plastic coating, no synthetic binding. Acid-free pages.",
@@ -3858,7 +3858,7 @@ const products = [
     tags:["notebook","journal","hardcover notebook","paper","FSC certified","plastic free","office","school","writing","stationery"]
   },
   {
-    id:"of-002", name:"Pilot B2P Recycled Plastic Pens", brand:"Pilot",
+    id:"of-102", name:"Pilot B2P Recycled Plastic Pens", brand:"Pilot",
     plasticScore:3, category:"other",
     material:"89% recycled plastic bottles — lower virgin plastic footprint",
     description:"Ballpoint pen made from 89% recycled plastic bottles. Lower virgin plastic footprint than standard pens.",
@@ -3867,7 +3867,7 @@ const products = [
     tags:["pen","ballpoint pen","recycled pen","office","school","stationery","recycled plastic","writing"]
   },
   {
-    id:"of-003", name:"Staedtler Noris Pencils", brand:"Staedtler",
+    id:"of-103", name:"Staedtler Noris Pencils", brand:"Staedtler",
     plasticScore:1, category:"other",
     material:"FSC-certified wood, water-based lacquer — zero plastic",
     description:"FSC-certified wood pencils with water-based lacquer. Zero plastic — fully compostable at end of life.",
@@ -3886,7 +3886,7 @@ const products = [
     tags:["sunglasses","eyewear","glasses","acetate frames","plant based","biodegradable frames","eyeglasses","frames"]
   },
   {
-    id:"ew-002", name:"Sunski Polarized Sunglasses", brand:"Sunski",
+    id:"ew-201", name:"Sunski Polarized Sunglasses", brand:"Sunski",
     plasticScore:3, category:"other",
     material:"Recycled plastic frames — lower virgin plastic footprint, polarized lenses",
     description:"Sunglasses made from recycled plastic with polarized lenses. Lower virgin plastic footprint than conventional frames.",
@@ -3896,7 +3896,7 @@ const products = [
   },
   {
     id:"ew-003", name:"Proof Eyewear Wood Sunglasses", brand:"Proof Eyewear",
-    plasticScore:1, category:"other",
+    plasticScore:1, category:"accessory",
     material:"Reclaimed wood and recycled aluminum — zero petroleum plastic",
     description:"Frames made from reclaimed wood and recycled aluminum. Zero petroleum plastic — fully natural or recycled materials.",
     affiliateUrl:`https://www.amazon.com/s?k=wood+sunglasses+natural+frames&tag=${AMAZON_TAG}`,
@@ -3999,7 +3999,7 @@ const products = [
   },
   {
     id:"ar-002", name:"Stockmar Beeswax Crayons", brand:"Stockmar",
-    plasticScore:1, category:"other",
+    plasticScore:1, category:"toy",
     material:"Beeswax and plant-based pigments — no paraffin, no petroleum wax, no synthetic dyes",
     description:"Beeswax crayons with plant-based pigments. No paraffin, no petroleum wax, no synthetic dyes. Safe for young children.",
     affiliateUrl:`https://www.amazon.com/s?k=Stockmar+beeswax+crayons&tag=${AMAZON_TAG}`,
@@ -4055,7 +4055,7 @@ const products = [
   },
   {
     id:"tc-002", name:"Native Union Belt Cable", brand:"Native Union",
-    plasticScore:3, category:"other",
+    plasticScore:3, category:"accessory",
     material:"Braided nylon exterior, reinforced stress points — built to last vs disposable PVC cables",
     description:"Ultra-durable braided cable with reinforced stress points. Designed to replace cheap PVC cables that fray and end up in landfill.",
     affiliateUrl:`https://www.amazon.com/s?k=Native+Union+belt+cable&tag=${AMAZON_TAG}`,
@@ -4092,7 +4092,7 @@ const products = [
 
   // ── TRAVEL ────────────────────────────────────────────────────
   {
-    id:"tr-001", name:"Cadence Capsule Travel Containers", brand:"Cadence",
+    id:"tr-101", name:"Cadence Capsule Travel Containers", brand:"Cadence",
     plasticScore:2, category:"other",
     material:"Recycled aluminum capsules — no single-use plastic travel bottles",
     description:"Refillable recycled aluminum travel capsules — eliminate single-use plastic travel bottles entirely. Leak-proof, TSA-compliant.",
@@ -4101,7 +4101,7 @@ const products = [
     tags:["travel containers","travel bottles","TSA containers","toiletry bottles","travel","refillable","aluminum","plastic free travel","carry on"]
   },
   {
-    id:"tr-002", name:"Matador FlatPak Toiletry Case", brand:"Matador",
+    id:"tr-102", name:"Matador FlatPak Toiletry Case", brand:"Matador",
     plasticScore:3, category:"other",
     material:"Recycled TPU — lower footprint than virgin plastic, waterproof",
     description:"Ultralight waterproof toiletry case made from recycled TPU. Collapses flat when empty to reduce bulk.",
@@ -4110,7 +4110,7 @@ const products = [
     tags:["toiletry bag","travel bag","dopp kit","waterproof bag","travel","recycled","carry on","TSA","toiletry case"]
   },
   {
-    id:"tr-003", name:"Away Carry-On Suitcase", brand:"Away",
+    id:"tr-103", name:"Away Carry-On Suitcase", brand:"Away",
     plasticScore:3, category:"other",
     material:"Polycarbonate shell — BPA-free, lightweight, designed for longevity over replacement",
     description:"BPA-free polycarbonate hardshell suitcase built to last 10+ years. Lifetime warranty reduces landfill contribution vs cheap luggage.",
@@ -4119,7 +4119,7 @@ const products = [
     tags:["suitcase","carry on","luggage","travel","hardshell","polycarbonate","BPA free","durable luggage","lifetime warranty"]
   },
   {
-    id:"tr-004", name:"Patagonia Black Hole Duffel", brand:"Patagonia",
+    id:"tr-104", name:"Patagonia Black Hole Duffel", brand:"Patagonia",
     plasticScore:3, category:"other",
     material:"100% recycled polyester — no virgin synthetic fibers",
     description:"100% recycled polyester duffel bag. Bluesign-approved fabric — no virgin synthetic fibers, Fair Trade certified.",
@@ -4128,7 +4128,7 @@ const products = [
     tags:["duffel bag","travel bag","gym bag","recycled polyester","travel","Patagonia","fair trade","bluesign","weekend bag"]
   },
   {
-    id:"tr-005", name:"Sea to Summit Lightweight Dry Bag", brand:"Sea to Summit",
+    id:"tr-105", name:"Sea to Summit Lightweight Dry Bag", brand:"Sea to Summit",
     plasticScore:3, category:"other",
     material:"Ultra-Sil nylon — extremely lightweight, replaces multiple plastic bags",
     description:"Ultralight dry bag that replaces zip-lock bags and single-use plastic bags when traveling. Waterproof, reusable indefinitely.",
@@ -4303,6 +4303,250 @@ const products = [
     affiliateUrl:`https://www.amazon.com/s?k=organic+cotton+weighted+blanket+glass+beads&tag=${AMAZON_TAG}`,
     price:"$45-75",
     tags:["weighted blanket","organic weighted blanket","glass beads","organic cotton","bedroom","sleep","anxiety","no plastic pellets","non toxic"]
+  },
+
+  // ── SUPPLEMENTS ───────────────────────────────────────────────
+  {
+    id:"su-001", name:"Ritual Essential Multivitamin", brand:"Ritual",
+    plasticScore:2, category:"supplement",
+    material:"Vegan capsule, chelated minerals, no synthetic dyes, no artificial sweeteners. Delayed-release capsule design.",
+    description:"Third-party tested multivitamin with no synthetic dyes, no artificial sweeteners, full ingredient traceability. Non-GMO, vegan. One of the cleanest mainstream multivitamins.",
+    affiliateUrl:`https://www.amazon.com/s?k=Ritual+multivitamin&tag=${AMAZON_TAG}`,
+    price:"$33-40",
+    tags:["multivitamin","vitamin","supplement","women's multivitamin","men's multivitamin","no artificial dyes","vegan","non-gmo","third party tested","clean supplement"]
+  },
+  {
+    id:"su-002", name:"Nordic Naturals Ultimate Omega", brand:"Nordic Naturals",
+    plasticScore:2, category:"supplement",
+    material:"Fish oil in soft gel. Friend of the Sea certified. No artificial colors or flavors. Third-party tested for heavy metals and PCBs.",
+    description:"The gold standard for fish oil. Third-party tested for heavy metals, PCBs, and dioxins. Friend of the Sea certified. No artificial colors. NSF certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Nordic+Naturals+Ultimate+Omega&tag=${AMAZON_TAG}`,
+    price:"$35-55",
+    tags:["fish oil","omega 3","omega-3","supplement","dha","epa","third party tested","no heavy metals","friend of the sea","nsf certified","clean supplement"]
+  },
+  {
+    id:"su-003", name:"Momentous Whey Protein", brand:"Momentous",
+    plasticScore:2, category:"supplement",
+    material:"NSF Certified for Sport and Informed Sport certified. No artificial dyes, no proprietary blends. Third-party tested for heavy metals.",
+    description:"The benchmark for clean protein powder. NSF Certified for Sport + Informed Sport — two independent certifications. No artificial dyes, no artificial sweeteners, heavy metals tested.",
+    affiliateUrl:`https://www.amazon.com/s?k=Momentous+whey+protein&tag=${AMAZON_TAG}`,
+    price:"$55-75",
+    tags:["protein powder","whey protein","supplement","nsf certified","informed sport","no artificial dyes","no artificial sweeteners","third party tested","clean protein","no heavy metals"]
+  },
+  {
+    id:"su-004", name:"Seed DS-01 Daily Synbiotic", brand:"Seed",
+    plasticScore:2, category:"supplement",
+    material:"Nested capsule (outer algae-based, inner vegan). No fillers, no binders, no synthetic dyes. 53 clinically studied strains.",
+    description:"Science-backed probiotic with no synthetic additives. Algae-based outer capsule protects strains from stomach acid. Third-party tested. Refillable glass jar.",
+    affiliateUrl:`https://www.amazon.com/s?k=Seed+DS-01+synbiotic+probiotic&tag=${AMAZON_TAG}`,
+    price:"$49-60",
+    tags:["probiotic","supplement","synbiotic","no synthetic dyes","vegan","third party tested","gut health","clean supplement","refillable","glass jar"]
+  },
+  {
+    id:"su-005", name:"Garden of Life Dr. Formulated Probiotics", brand:"Garden of Life",
+    plasticScore:2, category:"supplement",
+    material:"USDA Organic, Non-GMO Project Verified, no synthetic dyes, no binders, no fillers. Vegetable capsule.",
+    description:"USDA Organic certified probiotic. No synthetic dyes, no artificial sweeteners, no binders. Non-GMO Verified. Clean shelf-stable formula.",
+    affiliateUrl:`https://www.amazon.com/s?k=Garden+of+Life+probiotics&tag=${AMAZON_TAG}`,
+    price:"$28-45",
+    tags:["probiotic","supplement","organic supplement","usda organic","non-gmo","no artificial dyes","vegetable capsule","gut health","clean supplement"]
+  },
+  {
+    id:"su-006", name:"Thorne Vitamin D/K2 Liquid", brand:"Thorne",
+    plasticScore:2, category:"supplement",
+    material:"NSF Certified for Sport. No artificial dyes, no synthetic fillers, no preservatives. Manufactured in certified facilities.",
+    description:"One of the most trusted supplement brands. NSF Certified for Sport. No artificial colors or flavors, no preservatives. Bioavailable liquid form.",
+    affiliateUrl:`https://www.amazon.com/s?k=Thorne+Vitamin+D+K2+liquid&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["vitamin d","vitamin k2","supplement","nsf certified","no artificial dyes","no preservatives","third party tested","clean supplement","thorne","bioavailable"]
+  },
+  {
+    id:"su-007", name:"Flintstones Gummies Kids Vitamins", brand:"Flintstones",
+    plasticScore:6, category:"supplement",
+    material:"Red 40, Yellow 6, Blue 1 petroleum dyes. Gelatin, sugar. Artificial flavors.",
+    description:"Children's gummy vitamins with multiple petroleum-based dyes — Red 40, Yellow 6, and Blue 1, all FDA-flagged or under review. Daily child consumption of synthetic dyes is a real concern.",
+    affiliateUrl:`https://www.amazon.com/s?k=Flintstones+gummy+vitamins&tag=${AMAZON_TAG}`,
+    price:"$12-18",
+    tags:["gummy vitamin","kids vitamin","children's vitamin","multivitamin","supplement","gummy","flintstones"]
+  },
+
+  // ── TOYS ─────────────────────────────────────────────────────
+  {
+    id:"ty-101", name:"PlanToys Wooden Building Blocks", brand:"PlanToys",
+    plasticScore:1, category:"toy",
+    material:"Rubberwood (formaldehyde-free), water-based non-toxic dyes, organic pigments. No PVC, no BPA, no phthalates. Chemical-free kiln drying.",
+    description:"The cleanest wooden toy brand. Uses rubberwood from rubber trees past latex production — no virgin deforestation. Water-based non-toxic dyes. No plastics whatsoever.",
+    affiliateUrl:`https://www.amazon.com/s?k=PlanToys+wooden+blocks&tag=${AMAZON_TAG}`,
+    price:"$20-45",
+    tags:["wooden toy","building blocks","toy","baby toy","toddler toy","no plastic","non toxic toy","sustainable toy","natural toy","wooden blocks","plantoys"]
+  },
+  {
+    id:"ty-102", name:"Melissa & Doug Wooden Puzzle", brand:"Melissa & Doug",
+    plasticScore:2, category:"toy",
+    material:"Solid wood, non-toxic paint, smooth sanded edges. No BPA, no phthalates. ASTM and EN71 safety certified.",
+    description:"The most accessible clean wooden toy brand. Solid wood with non-toxic paint, ASTM certified. Major step up from plastic toys on materials safety.",
+    affiliateUrl:`https://www.amazon.com/s?k=Melissa+Doug+wooden+puzzle&tag=${AMAZON_TAG}`,
+    price:"$12-30",
+    tags:["wooden toy","puzzle","toy","kids toy","toddler toy","non toxic toy","melissa and doug","wooden puzzle","educational toy","no plastic"]
+  },
+  {
+    id:"ty-103", name:"HABA Wooden Stacking Toy", brand:"HABA",
+    plasticScore:1, category:"toy",
+    material:"European beech wood, water-based non-toxic lacquers. OEKO-TEX certified materials. No formaldehyde, no phthalates, no ABS plastic.",
+    description:"German-made wooden toys with OEKO-TEX certified materials. Beech wood with water-based lacquers. The European standard for clean children's toys.",
+    affiliateUrl:`https://www.amazon.com/s?k=HABA+wooden+stacking+toy&tag=${AMAZON_TAG}`,
+    price:"$18-50",
+    tags:["wooden toy","stacking toy","toy","baby toy","toddler toy","oeko-tex","non toxic","german toy","haba","no plastic","beech wood"]
+  },
+  {
+    id:"ty-104", name:"Grimm's Rainbow Wooden Toy", brand:"Grimm's",
+    plasticScore:1, category:"toy",
+    material:"Linden wood, water-based paints, linseed oil finish. No synthetic coatings. ASTM and EN71 certified. Zero plastic components.",
+    description:"Cult favourite open-ended wooden toy. Linden wood with water-based paint. Zero plastic anywhere in the product. Lasts decades and can be composted.",
+    affiliateUrl:`https://www.amazon.com/s?k=Grimms+rainbow+wooden+toy&tag=${AMAZON_TAG}`,
+    price:"$45-80",
+    tags:["wooden toy","rainbow toy","toy","baby toy","toddler toy","open ended toy","grimms","non toxic toy","no plastic","linden wood","waldorf toy"]
+  },
+  {
+    id:"ty-105", name:"Beeswax Modeling Clay", brand:"Stockmar",
+    plasticScore:1, category:"toy",
+    material:"100% pure beeswax, natural mineral pigments. No synthetic chemicals, no petroleum derivatives, no phthalates. Food-grade safe.",
+    description:"Natural alternative to Play-Doh and synthetic modeling clay. Pure beeswax with mineral pigments — completely safe even if mouthed. No synthetic dyes, no preservatives.",
+    affiliateUrl:`https://www.amazon.com/s?k=Stockmar+beeswax+modeling+clay&tag=${AMAZON_TAG}`,
+    price:"$15-30",
+    tags:["modeling clay","play clay","toy","art supply","non toxic","beeswax","natural clay","kids art","no synthetic dyes","safe for kids","play-doh alternative"]
+  },
+
+  // ── HOME ─────────────────────────────────────────────────────
+  {
+    id:"hm-001", name:"Branch Basics Concentrate", brand:"Branch Basics",
+    plasticScore:1, category:"home",
+    material:"Plant-derived surfactants, no synthetic fragrance, no dyes, no preservatives. Concentrated — dilute for different uses. Refillable system.",
+    description:"The cleanest multi-purpose cleaning concentrate. No synthetic fragrance, no optical brighteners, no dyes, no preservatives. One bottle replaces all cleaners.",
+    affiliateUrl:`https://www.amazon.com/s?k=Branch+Basics+concentrate+cleaner&tag=${AMAZON_TAG}`,
+    price:"$49-69",
+    tags:["cleaner","cleaning","multi purpose cleaner","non toxic cleaner","no synthetic fragrance","no dyes","concentrate","refillable","plant based cleaner","laundry","dish soap","all purpose"]
+  },
+  {
+    id:"hm-002", name:"Blueland Multi-Surface Cleaner Tablets", brand:"Blueland",
+    plasticScore:1, category:"home",
+    material:"Plant-derived ingredients, zero synthetic fragrance, zero PVA, no dyes. Tablet dissolves in water. Refillable glass/aluminum bottles.",
+    description:"Tablet-based cleaning that eliminates single-use plastic. No PVA (unlike Tide/Cascade pods which shed microplastics), no synthetic fragrance. Certified B-Corp.",
+    affiliateUrl:`https://www.amazon.com/s?k=Blueland+cleaner+tablets&tag=${AMAZON_TAG}`,
+    price:"$14-22",
+    tags:["cleaner","cleaning tablet","multi surface cleaner","non toxic cleaner","no pva","no synthetic fragrance","b-corp","zero plastic","refillable","eco cleaner","tide alternative","cascade alternative","laundry","dish"]
+  },
+  {
+    id:"hm-003", name:"Seventh Generation Free & Clear Laundry", brand:"Seventh Generation",
+    plasticScore:3, category:"home",
+    material:"Plant-derived surfactants, no synthetic dyes, no synthetic fragrance, no optical brighteners. Fragrance-free and dye-free.",
+    description:"The most accessible clean laundry detergent. No synthetic fragrance, no dyes, no optical brighteners. EPA Safer Choice certified. Widely available.",
+    affiliateUrl:`https://www.amazon.com/s?k=Seventh+Generation+free+clear+laundry&tag=${AMAZON_TAG}`,
+    price:"$14-20",
+    tags:["laundry detergent","laundry","cleaner","no synthetic fragrance","no dyes","no optical brighteners","epa safer choice","free and clear","fragrance free","dye free","tide alternative","gain alternative"]
+  },
+  {
+    id:"hm-004", name:"Beeswax Candle (Handcrafted)", brand:"Big Dipper Wax Works",
+    plasticScore:1, category:"home",
+    material:"100% pure filtered beeswax, cotton wick. No paraffin (petroleum), no synthetic fragrance, no dye.",
+    description:"Pure beeswax burns cleaner than any paraffin or soy candle. Naturally sweet honey scent from the beeswax itself. No synthetic fragrance VOCs, no petroleum.",
+    affiliateUrl:`https://www.amazon.com/s?k=100+percent+beeswax+candle&tag=${AMAZON_TAG}`,
+    price:"$15-35",
+    tags:["candle","beeswax candle","home","non toxic candle","no synthetic fragrance","no paraffin","clean candle","natural candle","cotton wick","yankee alternative","bath body works alternative"]
+  },
+  {
+    id:"hm-005", name:"P.F. Candle Co. Soy Candle", brand:"P.F. Candle Co.",
+    plasticScore:2, category:"home",
+    material:"100% domestically grown soy wax, phthalate-free fragrance oils, cotton wick. No paraffin, no lead.",
+    description:"Clean soy candle with phthalate-free fragrance. Significant step up from Yankee Candle (paraffin + synthetic fragrance). Not as clean as beeswax but much better than conventional.",
+    affiliateUrl:`https://www.amazon.com/s?k=PF+Candle+Co+soy+candle&tag=${AMAZON_TAG}`,
+    price:"$18-24",
+    tags:["candle","soy candle","home","phthalate free","no paraffin","clean candle","cotton wick","yankee alternative","soy wax"]
+  },
+  {
+    id:"hm-006", name:"Molly's Suds Laundry Powder", brand:"Molly's Suds",
+    plasticScore:2, category:"home",
+    material:"Sodium carbonate, sodium bicarbonate, sea salt, peppermint essential oil. Zero synthetic dyes, zero synthetic fragrance, zero optical brighteners.",
+    description:"Five-ingredient laundry powder. Everything you need, nothing you don't. No synthetic fragrance, no dyes, no optical brighteners. Certified safe for HE machines.",
+    affiliateUrl:`https://www.amazon.com/s?k=Mollys+Suds+laundry+powder&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["laundry powder","laundry detergent","laundry","no synthetic fragrance","no dyes","5 ingredients","clean laundry","he safe","tide alternative","non toxic laundry"]
+  },
+
+  // ── BEVERAGES ────────────────────────────────────────────────
+  {
+    id:"bv-001", name:"Athletic Brewing Run Wild IPA", brand:"Athletic Brewing",
+    plasticScore:2, category:"beverage",
+    material:"Non-alcoholic — real craft beer brewing process, zero ethanol. Aluminum can (recyclable). Clean grain-based ingredients.",
+    description:"The cleanest beer alternative. Genuine craft brewing with no alcohol. No ethanol (IARC Group 1 avoided entirely). Aluminum can is fully recyclable. B-Corp certified.",
+    affiliateUrl:`https://www.amazon.com/s?k=Athletic+Brewing+Run+Wild+IPA&tag=${AMAZON_TAG}`,
+    price:"$12-18",
+    tags:["non alcoholic beer","na beer","beer alternative","beverage","no alcohol","athletic brewing","craft beer","aluminum can","b-corp","beer","ipa"]
+  },
+  {
+    id:"bv-002", name:"San Pellegrino Sparkling Water", brand:"San Pellegrino",
+    plasticScore:2, category:"beverage",
+    material:"Natural mineral water in glass bottle. No additives, no synthetic flavors, no sweeteners.",
+    description:"Premium sparkling mineral water in glass — zero plastic leaching. Natural mineralization from Italian springs. No additives, no sweeteners.",
+    affiliateUrl:`https://www.amazon.com/s?k=San+Pellegrino+sparkling+water+glass&tag=${AMAZON_TAG}`,
+    price:"$18-28",
+    tags:["sparkling water","mineral water","water","beverage","glass bottle","no plastic","natural water","pellegrino","soda alternative","no sweeteners","no additives"]
+  },
+  {
+    id:"bv-003", name:"Nixie Organic Sparkling Water", brand:"Nixie",
+    plasticScore:2, category:"beverage",
+    material:"USDA Organic certified, no artificial sweeteners, no synthetic flavors, no dyes. Aluminum can.",
+    description:"USDA Organic sparkling water — the cleanest flavored sparkling water option. No synthetic flavors, no artificial sweeteners, no dyes. Aluminum can is fully recyclable.",
+    affiliateUrl:`https://www.amazon.com/s?k=Nixie+organic+sparkling+water&tag=${AMAZON_TAG}`,
+    price:"$20-30",
+    tags:["sparkling water","flavored sparkling water","water","beverage","usda organic","organic sparkling water","no artificial sweeteners","no synthetic flavors","aluminum can","la croix alternative","bubly alternative"]
+  },
+  {
+    id:"bv-004", name:"Harmless Harvest Organic Coconut Water", brand:"Harmless Harvest",
+    plasticScore:2, category:"beverage",
+    material:"USDA Organic certified, fair trade. No additives, no sweeteners. Pink-tinted naturally from antioxidant reaction with light.",
+    description:"Purest coconut water available. USDA Organic, fair trade, no additives. Single ingredient: organic coconut water. The pink color is a natural antioxidant reaction, not a dye.",
+    affiliateUrl:`https://www.amazon.com/s?k=Harmless+Harvest+organic+coconut+water&tag=${AMAZON_TAG}`,
+    price:"$4-7",
+    tags:["coconut water","beverage","usda organic","fair trade","no additives","no sweeteners","natural beverage","harmless harvest","single ingredient","healthy beverage"]
+  },
+
+  // ── ACCESSORIES ───────────────────────────────────────────────
+  {
+    id:"ac-101", name:"Hydro Flask Standard Mouth", brand:"Hydro Flask",
+    plasticScore:2, category:"accessory",
+    material:"18/8 pro-grade stainless steel, no BPA, no BPS, no phthalates. Double-wall vacuum insulation. Powder coat exterior.",
+    description:"The most popular clean water bottle. 18/8 stainless steel throughout — no plastic in the water path. BPA, BPS, and phthalate free. Lifetime warranty.",
+    affiliateUrl:`https://www.amazon.com/s?k=Hydro+Flask+stainless+water+bottle&tag=${AMAZON_TAG}`,
+    price:"$35-55",
+    tags:["water bottle","stainless steel bottle","accessory","no bpa","no plastic","insulated bottle","hydro flask","reusable bottle","stanley alternative","yeti alternative","tumbler"]
+  },
+  {
+    id:"ac-102", name:"Corkcicle Commuter Cup", brand:"Corkcicle",
+    plasticScore:2, category:"accessory",
+    material:"18/8 stainless steel, no BPA, triple-insulation. Flat bottom for cupholder compatibility.",
+    description:"Clean stainless steel travel cup. 18/8 stainless throughout the water path, BPA-free lid. No plastic contact with hot or cold beverage.",
+    affiliateUrl:`https://www.amazon.com/s?k=Corkcicle+commuter+cup+stainless&tag=${AMAZON_TAG}`,
+    price:"$35-50",
+    tags:["water bottle","tumbler","travel cup","stainless steel","accessory","no bpa","insulated","corkcicle","stanley alternative","coffee cup","commuter"]
+  },
+  {
+    id:"ac-103", name:"Bellroy Note Sleeve Wallet", brand:"Bellroy",
+    plasticScore:3, category:"accessory",
+    material:"Traceable leather or recycled woven material. ZDHC certified dye process. B-Corp certified. Slim design reduces bulk.",
+    description:"The benchmark for ethical accessories. Traceable leather supply chain, ZDHC certified dyes, B-Corp certified. Built to last 10+ years — lowest lifecycle impact.",
+    affiliateUrl:`https://www.amazon.com/s?k=Bellroy+Note+Sleeve+wallet&tag=${AMAZON_TAG}`,
+    price:"$60-90",
+    tags:["wallet","slim wallet","accessory","leather wallet","b-corp","traceable leather","ethical fashion","sustainable accessory","bellroy","long lasting"]
+  },
+  {
+    id:"ac-004", name:"S'well Original Stainless Bottle", brand:"S'well",
+    plasticScore:2, category:"accessory",
+    material:"18/8 stainless steel, no BPA, no BPS, no lead. Triple-layered insulation. No plastic in water contact path.",
+    description:"Clean stainless steel bottle with certified non-toxic materials. 18/8 stainless throughout, BPA/BPS/lead-free. NSF certified for material safety.",
+    affiliateUrl:`https://www.amazon.com/s?k=Swell+stainless+water+bottle&tag=${AMAZON_TAG}`,
+    price:"$30-50",
+    tags:["water bottle","stainless bottle","accessory","no bpa","no bps","nsf certified","insulated","swell","reusable bottle","travel bottle","tumbler","stanley alternative"]
   },
 
 ];

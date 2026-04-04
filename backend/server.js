@@ -1648,6 +1648,19 @@ function filterDbAlternatives(alternatives, category, productName) {
       return false;
     }
 
+    // Category fidelity: for specific non-food categories, only allow same category OR "other"
+    // Prevents cross-category bleeding when a category has sparse DB coverage
+    const STRICT_CATEGORIES = new Set(["home","toy","accessory","supplement","beverage","personal_care","clothing","baby","kitchen"]);
+    if (STRICT_CATEGORIES.has(category) && alt.category !== category && alt.category !== "other") {
+      // Allow kitchen ↔ home since they share formula weights
+      const kitchenHomeSwap = (category === "home" && alt.category === "kitchen") ||
+                               (category === "kitchen" && alt.category === "home");
+      if (!kitchenHomeSwap) {
+        console.log(`DB filter: blocked "${alt.name}" [${alt.category}] for "${category}" product "${productName}"`);
+        return false;
+      }
+    }
+
     return true;
   });
 }
