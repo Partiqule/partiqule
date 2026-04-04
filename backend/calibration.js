@@ -598,6 +598,54 @@ const ENTRIES = [
   ["dunkin bacon egg",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon — floor fires", confidence:"high", category:"restaurant" }],
   ["dunkin' bacon egg",            { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon + enriched croissant — floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
   ["mcdonald's hotcakes",          { floor:5, ceiling:7, substances:["HFCS","artificial maple"], reason:"HFCS + artificial maple flavor + enriched flour + sodium aluminum phosphate", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PERSONAL HYGIENE
+  // ══════════════════════════════════════════════════════════════
+  ["summer's eve",                  { floor:5, ceiling:7, substances:["synthetic fragrance","parabens"], reason:"Synthetic fragrance + parabens applied to mucosal tissue daily — higher absorption than intact skin", confidence:"high", category:"personal_care" }],
+  ["summers eve",                   { floor:5, ceiling:7, substances:["synthetic fragrance","parabens"], reason:"Synthetic fragrance + parabens on mucosal tissue", confidence:"high", category:"personal_care" }],
+  ["vagisil",                       { floor:6, ceiling:8, substances:["benzocaine","synthetic fragrance","parabens"], reason:"Benzocaine — FDA warned against for genital use (methemoglobinemia risk) + fragrance + parabens", confidence:"high", category:"personal_care" }],
+  ["honey pot feminine",            { floor:1, ceiling:3, substances:[], reason:"Natural botanical ingredients, no synthetic fragrance, no parabens — clean benchmark", confidence:"high", category:"personal_care" }],
+  ["nair hair removal",             { floor:4, ceiling:6, substances:["calcium thioglycolate","synthetic fragrance"], reason:"Strong alkaline depilatory + synthetic fragrance left on skin 3-10 minutes", confidence:"high", category:"personal_care" }],
+  ["veet hair removal",             { floor:4, ceiling:6, substances:["calcium thioglycolate","synthetic fragrance"], reason:"Calcium thioglycolate + synthetic fragrance — same mechanism as Nair", confidence:"high", category:"personal_care" }],
+  ["visine eye drops",              { floor:4, ceiling:6, substances:["tetrahydrozoline","benzalkonium chloride"], reason:"Tetrahydrozoline — rebound redness dependency. BAK preservative — cilia toxin, eye sensitizer.", confidence:"high", category:"personal_care" }],
+  ["rohto eye drops",               { floor:4, ceiling:6, substances:["tetrahydrozoline","menthol"], reason:"Tetrahydrozoline + menthol — harsh formula, dependency risk", confidence:"high", category:"personal_care" }],
+  ["refresh tears",                  { floor:1, ceiling:3, substances:[], reason:"Single lubricant ingredient, no BAK in single-dose — benchmark clean eye drop", confidence:"high", category:"personal_care" }],
+  ["gold bond medicated powder",    { floor:5, ceiling:7, substances:["talc"], reason:"Talc primary ingredient — talc mFloor:5 floor fires (IARC Group 2A perineal use)", confidence:"high", category:"personal_care" }],
+  ["gold bond",                    { floor:5, ceiling:7, substances:["talc"], reason:"Gold Bond uses talc as primary ingredient in most powder products — talc floor fires", confidence:"high", category:"personal_care" }],
+  ["gold bond foot powder",         { floor:5, ceiling:7, substances:["talc"], reason:"Talc floor fires — IARC Group 2A", confidence:"high", category:"personal_care" }],
+  ["dr. scholl's foot powder",      { floor:5, ceiling:7, substances:["talc"], reason:"Talc floor fires", confidence:"high", category:"personal_care" }],
+  ["ambi fade cream",               { floor:7, ceiling:9, substances:["hydroquinone"], reason:"Hydroquinone floor fires (mFloor:7) — FDA proposed ban, EU banned, DNA damage studies", confidence:"high", category:"personal_care" }],
+  ["porcelana",                     { floor:7, ceiling:9, substances:["hydroquinone"], reason:"Hydroquinone 2% — same concern as Ambi, floor fires", confidence:"high", category:"personal_care" }],
+  ["proactiv",                      { floor:4, ceiling:6, substances:["synthetic fragrance","parabens"], reason:"Benzoyl peroxide + synthetic fragrance + parabens + EDTA", confidence:"high", category:"personal_care" }],
+  ["differin gel",                  { floor:1, ceiling:3, substances:[], reason:"Adapalene FDA-approved retinoid, no synthetic fragrance, minimal formula", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // REMAINING FAST FOOD CHAINS
+  // ══════════════════════════════════════════════════════════════
+  ["five guys burger",              { floor:4, ceiling:6, substances:["DATEM"], reason:"Fresh never-frozen beef, peanut oil (no TBHQ confirmed), enriched flour bun. Cleaner than McDonald's but not clean.", confidence:"high", category:"restaurant" }],
+  ["five guys fries",              { floor:3, ceiling:5, substances:[], reason:"Peanut oil, potato, salt — no TBHQ, simpler than McDonald's fries", confidence:"high", category:"restaurant" }],
+  ["shake shack shackburger",       { floor:4, ceiling:6, substances:[], reason:"Hormone-free beef, potato bun (simpler than enriched flour), no TBHQ confirmed", confidence:"high", category:"restaurant" }],
+  ["shake shack burger",           { floor:4, ceiling:6, substances:[], reason:"Hormone-free beef, cleaner ingredients than McDonald's tier", confidence:"high", category:"restaurant" }],
+  ["shake shack fries",            { floor:3, ceiling:5, substances:[], reason:"No TBHQ, crinkle cut, simpler than McDonald's fries", confidence:"high", category:"restaurant" }],
+  ["sonic footlong coney",          { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in hot dog — IARC Group 1 floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["sonic cherry limeade",          { floor:5, ceiling:7, substances:["HFCS","Red 40"], reason:"HFCS floor + Red 40 petroleum dye floor — both fire", confidence:"high", category:"restaurant" }],
+  ["dairy queen blizzard",          { floor:5, ceiling:7, substances:["HFCS","corn syrup"], reason:"HFCS + corn syrup + artificial flavors in most flavors", confidence:"high", category:"restaurant" }],
+  ["dq chicken strip",             { floor:6, ceiling:8, substances:["TBHQ","MSG"], reason:"TBHQ + MSG + enriched flour — floors fire. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["jack in the box tacos",         { floor:6, ceiling:8, substances:["TBHQ"], reason:"Mechanically separated chicken + TBHQ in oil — TBHQ floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["whataburger",                   { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in frying oil + enriched flour bun + high sodium", confidence:"high", category:"restaurant" }],
+  ["wingstop",                      { floor:6, ceiling:8, substances:["TBHQ","MSG"], reason:"TBHQ in soybean frying oil + MSG seasoning — TBHQ floor fires", confidence:"high", category:"restaurant" }],
+  ["wingstop wings",               { floor:6, ceiling:8, substances:["TBHQ","MSG"], reason:"TBHQ in soybean frying oil + MSG seasoning + high sodium. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["buffalo wild wings",            { floor:6, ceiling:8, substances:["TBHQ","MSG","HFCS"], reason:"TBHQ + MSG + HFCS in most sauces. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // CASUAL DINING CHAINS
+  // ══════════════════════════════════════════════════════════════
+  ["applebee's riblets",            { floor:7, ceiling:9, substances:["sodium nitrite","HFCS","extreme sodium"], reason:"Sodium nitrite in ribs + HFCS sauce + 3000mg sodium — both nitrite and extreme sodium floors fire", confidence:"high", category:"restaurant" }],
+  ["chili's awesome blossom",       { floor:7, ceiling:9, substances:["TBHQ","extreme sodium"], reason:"TBHQ + 2700mg sodium — extreme sodium floor fires", confidence:"high", category:"restaurant" }],
+  ["cheesecake factory pasta",      { floor:7, ceiling:9, substances:["extreme sodium"], reason:"3000mg+ sodium standard — extreme sodium floor fires. One of the highest sodium items in chain restaurants.", confidence:"high", category:"restaurant" }],
+  ["denny's grand slam",           { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon/sausage — floor fires", confidence:"high", category:"restaurant" }],
+  ["ihop buttermilk pancakes",      { floor:5, ceiling:7, substances:["HFCS","enriched flour"], reason:"HFCS in syrup + enriched flour pancakes + high sodium breakfast", confidence:"high", category:"restaurant" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────

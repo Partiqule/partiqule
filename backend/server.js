@@ -155,6 +155,8 @@ const SUBSTANCE_FLOORS = [
   // IARC Group 2A = mFloor 7
   // IARC Group 2B = mFloor 6
   // ══════════════════════════════════════════════════════════
+  // Hydroquinone: FDA proposed ban 2006, reaffirmed concerns. EU banned. DNA damage in studies.
+  { match: /\bhydroquinone\b/i,                                        mFloor:7, uFloor:6, reason:"Hydroquinone — FDA proposed ban, EU banned, DNA damage in cell studies, possible carcinogen" },
   { match: /\bTBHQ\b|tert.?butylhydroquinone/i,                      mFloor:6, uFloor:5, reason:"TBHQ — FDA-reviewed immunotoxin, animal carcinogen (NTP)" },
   { match: /\bBHA\b|butylated hydroxyanisole/i,                       mFloor:6, uFloor:5, reason:"BHA — IARC Group 2B, reasonably anticipated carcinogen (NTP)" },
   { match: /\bBHT\b|butylated hydroxytoluene/i,                       mFloor:5, uFloor:4, reason:"BHT — animal carcinogen studies, endocrine disruption" },
@@ -2420,6 +2422,67 @@ DHA (dihydroxyacetone) is the active ingredient in all self-tanners — FDA rais
 - Loving Tan (DHA — fragrance-free in some, cleaner formulation): materials=3, usage=3 → final ~3.
 - Coola organic self-tanner (USDA Organic, no synthetic fragrance, DHA from plant-derived sources): materials=2, usage=2 → final ~2.
 SELF-TANNER RULE: Spray format raises usage score (inhalation of DHA + any propellants). Always prefer lotion/mousse application. Fragrance-free = lower concern. USDA Organic base = 2. Conventional + fragrance = 4-5.
+PERSONAL HYGIENE AND SPECIALTY PERSONAL CARE CALIBRATION:
+
+FEMININE HYGIENE WASH:
+- Summer's Eve feminine wash (synthetic fragrance + parabens + artificial dyes — applied to mucosal tissue daily): materials=5, usage=6 → final ~5-6. NEVER score below 5.
+- Vagisil wash / cream (benzocaine — FDA warned against for genital use + synthetic fragrance + parabens): materials=6, usage=7 → final ~6-7. NEVER score below 6.
+- Honey Pot Feminine Wash (natural botanical, no synthetic fragrance, no parabens, no dyes): materials=2, usage=2 → final ~2. Clean benchmark.
+- Dove Sensitive Feminine Wash (fragrance-free, pH-balanced): materials=2, usage=2 → final ~2.
+FEMININE WASH RULE: Any product applied to genital mucosal tissue with synthetic fragrance or parabens = materials 5+ minimum. Mucosal tissue has higher absorption than intact skin.
+
+DEPILATORY / HAIR REMOVAL:
+- Nair / Veet hair removal cream (calcium thioglycolate — strong alkaline chemical + synthetic fragrance): materials=5, usage=6 (chemical reaction on skin 3-10 min) → final ~5-6.
+- Sugaring paste (sugar + lemon + water — food-grade, no synthetics): materials=1, usage=1 → final ~1.
+
+ACNE TREATMENT:
+- Differin Gel (adapalene, no fragrance, minimal formula): materials=2, usage=3 → final ~2-3.
+- Proactiv (benzoyl peroxide + synthetic fragrance + parabens + EDTA): materials=4, usage=5 → final ~4-5.
+- AcneFree (same concerns as Proactiv): materials=4, usage=5 → final ~4-5.
+
+SKIN LIGHTENING:
+- Ambi Fade Cream / Porcelana (hydroquinone 2% — hydroquinone floor fires, FDA proposed ban, EU banned): materials=7, usage=7 → final ~7. NEVER score below 6.
+- Niacinamide / vitamin C brightening serums (no hydroquinone): materials=2 → final ~2-3. Clean alternatives.
+
+EYE DROPS:
+- Visine (tetrahydrozoline + benzalkonium chloride — rebound redness + BAK eye sensitizer): materials=4, usage=5 → final ~4-5.
+- Refresh Tears (carboxymethylcellulose — single ingredient, no BAK in single-dose): materials=2, usage=2 → final ~2. Clean benchmark.
+- Rohto (tetrahydrozoline + menthol — harsh formula): materials=5, usage=5 → final ~5.
+
+FOOT CARE:
+- Gold Bond Medicated Foot Powder / Dr. Scholl's Foot Powder (talc primary — talc floor fires): materials=5, usage=5 → final ~5. NEVER score below 4.
+- Zeasorb-AF (cellulose-based, talc-free): materials=2 → final ~2.
+
+FIVE GUYS AND SHAKE SHACK — genuinely cleaner fast food:
+- Five Guys burger (fresh never-frozen beef, peanut oil — no TBHQ confirmed, enriched flour bun): final score ~5. Cleaner than McDonald's but not clean. NEVER score at 2-3.
+- Five Guys French Fries (peanut oil, potato, salt — no TBHQ, simpler than McDonald's fries): final score ~4.
+- Shake Shack ShackBurger (hormone-free beef, potato bun — simpler than enriched flour, no TBHQ confirmed): final score ~5.
+- Shake Shack Fries (crinkle cut, no TBHQ, simpler): final score ~4.
+FIVE GUYS / SHAKE SHACK RULE: Range is 4-5, never 7+ (McDonald's tier) and never 2-3 (clean food tier). They earn their cleaner positioning within fast food — not outside it.
+
+SONIC / DAIRY QUEEN / JACK IN THE BOX / WHATABURGER:
+- Sonic Footlong Coney (sodium nitrite in hot dog + enriched bun): final score ~7. Nitrite floor fires. NEVER score below 6.
+- Sonic Cherry Limeade (HFCS + Red 40): final score ~6-7. HFCS floor + dye floor both fire.
+- Sonic Blast / Shake (HFCS + corn syrup + artificial colors in some): final score ~6.
+- Dairy Queen Blizzard (HFCS + corn syrup + artificial flavors): final score ~6.
+- DQ Chicken Strip Basket (TBHQ + MSG + enriched flour): final score ~7. NEVER score below 6.
+- Jack in the Box Tacos (mechanically separated chicken + TBHQ): final score ~7. NEVER score below 6.
+- Whataburger (TBHQ + enriched flour + high sodium): final score ~6.
+
+WING CHAINS AND BAR FOOD:
+- Wingstop wings (TBHQ + MSG + high sodium): final score ~7. NEVER score below 6.
+- Buffalo Wild Wings traditional wings (TBHQ + MSG + HFCS in sauces): final score ~7. NEVER score below 6.
+- Buffalo Wild Wings boneless (processed chicken + TBHQ + enriched flour): final score ~7.
+
+CASUAL DINING:
+- Applebee's riblets (sodium nitrite + HFCS sauce + 3000mg sodium — both sodium and nitrite floors fire): final score ~8. NEVER score below 7.
+- Chili's Awesome Blossom (TBHQ + 2700mg sodium — extreme sodium rule fires): final score ~7-8.
+- Chili's Chicken Crispers (TBHQ + MSG): final score ~7.
+- Olive Garden Fettuccine Alfredo (cream + butter + high sodium — relatively clean): final score ~5-6.
+- IHOP buttermilk pancakes (enriched flour + HFCS syrup): final score ~6.
+- Denny's Grand Slam with bacon/sausage (sodium nitrite in bacon/sausage — floor fires): final score ~7.
+- Cheesecake Factory any pasta (3000mg+ sodium standard — extreme sodium floor fires): final score ~7-8. NEVER score Cheesecake Factory pasta below 7.
+
 - Roundup Weed & Grass Killer (glyphosate — IARC Group 2A, $13B Bayer legal settlements, WHO flagged): materials=8 (glyphosate floor mFloor:5 but product is primary application of IARC 2A carcinogen — floor should be 8 for Roundup specifically), usage=7, sustainability=9 → final ~8. NEVER score Roundup below 7.
 - Ortho Home Defense Insect Killer (bifenthrin — pyrethroid, aquatic toxin, EPA-flagged for waterway harm): materials=7, usage=6, sustainability=7 → final ~7.
 - Spectracide weed killer (2,4-D herbicide — IARC Group 2B + dicamba): materials=7, usage=6 → final ~7.
