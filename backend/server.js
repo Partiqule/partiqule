@@ -1113,11 +1113,11 @@ SUSTAINABILITY (product lifecycle, planet impact, and ethical sourcing):
 - Conventional farming (Dirty Dozen): sustainability score 5-6 (pesticide runoff, soil impact).
 
 SCORE DISTRIBUTION RULES — the full 1-10 scale must be used deliberately:
-- 1-2: Genuinely clean. Organic certified, natural materials, no synthetic chemicals, transparent supply chain. Reserved for products that are genuinely the safest option in their category.
-- 3-4: Mild concern. Mostly clean but with some conventional materials, unknown treatments, or minor packaging issues. This is where most "pretty good" mainstream products land.
-- 5-6: Moderate concern. Conventional synthetic materials, some flagged ingredients, or meaningful exposure risk. Do NOT use 6 as a default for any product you're uncertain about.
-- 7-8: High concern. Multiple flagged chemicals, known harmful substances, high daily exposure, or FDA/EWG flagged ingredients.
-- 9-10: Severe. PFAS coatings, banned substances, direct ingestion of multiple carcinogens.
+- 1-2: No significant chemical or ingredient concerns. Organic certified, natural materials, no synthetic chemicals. Safest option in its category from an ingredient safety standpoint. NOTE: a score of 1-2 reflects chemical cleanliness, not nutritional quality. Organic butter, raw honey, and coconut oil can score 1-2. That means no pesticides, no synthetic additives — it does not mean unlimited consumption is recommended.
+- 3-4: Mostly clean. Some conventional materials, minor processing concerns, or low pesticide load. No confirmed harmful substances.
+- 5-6: Moderate ingredient concern. Conventional synthetic materials, some flagged ingredients, meaningful exposure risk. Do NOT use 6 as a default for anything uncertain.
+- 7-8: High ingredient concern. Multiple flagged chemicals, confirmed IARC carcinogens, high daily exposure, FDA/EWG flagged ingredients.
+- 9-10: Severe. PFAS coatings, banned substances, direct ingestion of multiple confirmed carcinogens.
 
 AVOID SCORE CLUSTERING AT 6. If you find yourself scoring many different products at 6, that is a signal you are not differentiating enough. A conventional cotton t-shirt (3-4) should score very differently from Tide pods (6) which should score very differently from a PTFE pan (7-8). When uncertain, default DOWN not up — err toward lower scores for products with no confirmed harmful ingredients.
 
@@ -2119,11 +2119,11 @@ app.post("/analyze", async (req, res) => {
 
     // Peer comparison
     const peerComparison = finalScore <= 2
-      ? "Safe — good for you, your family and the planet"
+      ? "Safe — no significant chemical or ingredient concerns"
       : finalScore <= 4
-      ? "Good — use with awareness"
+      ? "Good — mostly clean, use with awareness"
       : finalScore <= 6
-      ? "Caution — reduce use or find an alternative"
+      ? "Caution — real concerns, reduce use or find an alternative"
       : finalScore <= 8
       ? "Switch — real concerns, time to swap"
       : "Avoid — known harmful substances";

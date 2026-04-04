@@ -453,11 +453,11 @@ const ScoreArc = ({score}) => {
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
   const meaning = score <= 2
-    ? "Safe — good for you, your family and the planet"
+    ? "Safe — no significant chemical or ingredient concerns"
     : score <= 4
-    ? "Good — use with awareness"
+    ? "Good — mostly clean, use with awareness"
     : score <= 6
-    ? "Caution — reduce use or find an alternative"
+    ? "Caution — real concerns, reduce use or find an alternative"
     : score <= 8
     ? "Switch — real concerns, time to swap"
     : "Avoid — known harmful substances";
@@ -660,7 +660,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods. Partiqule flags each dye individually with its severity level and the research behind it."},
         {q:"What are ultra-processed foods and why do they score higher?", a:"Ultra-processed foods (NOVA Group 4) are industrial formulations containing ingredients not found in home kitchens — synthetic dyes, preservatives like BHA and BHT, emulsifiers, and artificial flavors. A 2025 Lancet review linked regular ultra-processed food consumption to cardiovascular disease, cognitive decline, and stroke. Partiqule scores these products higher on Materials and Usage because the chemical load is meaningfully higher than minimally processed or whole foods."},
         {q:"What are pesticide residues and should I be concerned?", a:"The EWG's 2026 Dirty Dozen report — analysing 54,344 USDA produce samples — found pesticide residues on 96% of the 12 most contaminated fruits and vegetables, including PFAS forever chemicals on 63% of samples. Spinach ranked highest for pesticide residues by weight. Partiqule flags conventional Dirty Dozen produce with a pesticide concern and credits organic produce as a positive. Importantly, all produce is healthy — the goal is to reduce exposure where practical, not avoid fruits and vegetables."},
-        {q:"How does Partiqule score personal health risk?", a:"The Materials score (40% weight) covers what the product is made of and its chemical risk — including specific named substances for every category. The Usage and Exposure score (25% weight) covers how using the product affects your body. Every scan produces a dedicated Product Insights breakdown: a Tier 1-4 composition classification plus named substances flagged by severity (high, medium, or low concern) with the research behind each one. This works for food, personal care, clothing, cleaning products, and baby items."},
+        {q:"How does Partiqule score chemical safety?", a:"The Materials score covers what the product is made of — synthetic pesticides, petroleum dyes, IARC carcinogens, BHA/BHT, PFAS, and similar substances. The Usage and Exposure score covers how using the product creates contact with those materials — whether you ingest it, absorb it through skin, or breathe it in. This is a chemical safety score, not a nutritional or dietary score. Organic butter scores 1-2 because it has no synthetic pesticides or additives — that reflects ingredient safety, not a recommendation on how much to consume."},
       ],
     },
     {
@@ -1594,7 +1594,7 @@ const ShareBadge = ({result}) => {
       // Fallback if no dimensions — just show score
       ctx.fillStyle = "#888";
       ctx.font = "13px system-ui";
-      ctx.fillText("Overall Health Score", RX+14, 145);
+      ctx.fillText("Ingredient Safety Score", RX+14, 145);
       ctx.fillStyle = overallColor;
       ctx.font = "bold 48px system-ui";
       ctx.fillText(`${os}/10`, RX+14, 210);
@@ -1645,8 +1645,8 @@ const ShareBadge = ({result}) => {
           if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
-              title: `${safeName}: Health Score ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Health score: ${result.overall_score||result.score}/10. Scored across materials, exposure, packaging and sustainability. Scan anything at partiqule.com`,
+              title: `${safeName}: Ingredient Safety ${result.overall_score||result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule. Ingredient safety score: ${result.overall_score||result.score}/10 — measures chemical risk, not nutrition. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -2255,7 +2255,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
           {/* Stats cards */}
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:40}}>
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
-              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Average Health Score</div>
+              <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Avg Safety Score</div>
               <div style={{display:"flex", alignItems:"flex-end", gap:8, marginBottom:10}}>
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:48, color:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", lineHeight:1}}>{avg}</span>
                 <span style={{fontSize:14, color:muted, marginBottom:8}}>/10</span>
@@ -2541,7 +2541,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           Partiqule exists to change that.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We score every product across four dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
+          We score every product across four dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its chemical and environmental impact on you, your home, and the planet. Free, instant, and grounded in published science.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
           Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
@@ -2752,13 +2752,13 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "What the score means",
-          body: null,
+          body: "This is an ingredient safety score — it measures chemical risk, not nutritional quality. Organic butter scores 1-2. That means no pesticides, no synthetic additives. It does not mean unlimited consumption is recommended.",
           list: [
-            "1-2 Safe — Use freely. Good for you, your family, and the planet.",
-            "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Use regularly with awareness.",
-            "5-6 Caution — Something is not right. Worth reducing use or finding an alternative.",
-            "7-8 Switch — Real concerns. Do not use daily. We will show you a better option.",
-            "9-10 Avoid — Known harmful substances. Significant and documented health risk.",
+            "1-2 Safe — No significant chemical or ingredient concerns. Cleanest in its category from a safety standpoint.",
+            "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Fine for regular use.",
+            "5-6 Caution — Real concerns worth knowing. Consider reducing use or finding a cleaner alternative.",
+            "7-8 Switch — Significant concerns. We will show you a better option.",
+            "9-10 Avoid — Known harmful substances. Significant and documented safety risk.",
           ]
         },
         {
@@ -2944,7 +2944,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
-          Every score on Partiqule reflects the impact of a product on three things: your personal health, the health of your family and home, and the health of the planet. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
+          Every score on Partiqule reflects the chemical and environmental impact of a product — what it's made of, how it exposes you, what happens to it after use. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
         <div style={{fontSize:13, color:muted, opacity:0.6, fontStyle:"italic"}}>Methodology last reviewed: April 2026</div>
       </div>
@@ -4568,7 +4568,7 @@ function App() {
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
-                    <><IcoRating size={14}/> Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
+                    <><IcoRating size={14}/> Ingredient Safety Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
                   </div>
                   {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
                   {result.confidence && (
@@ -4952,6 +4952,33 @@ function App() {
 
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
+
+                {/* Fix 2: Nutrition disclaimer — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
+                {(() => {
+                  const score = result.overall_score || result.score;
+                  const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
+                  if (!isFood || score > 4) return null;
+
+                  // Products where the "clean but dense" note is genuinely useful
+                  const allText = JSON.stringify([result.concerns, result.summary, result.product_name]).toLowerCase();
+                  const hasDenseIngredients = /\b(fat|saturated|calori|sugar|carb|sodium|cholesterol|butter|oil|cream|honey|syrup|maple|coconut oil|ghee|lard|avocado oil)\b/.test(allText);
+                  if (!hasDenseIngredients) return null;
+
+                  return (
+                    <div style={{
+                      marginTop:12, padding:"10px 16px", borderRadius:10,
+                      background:isDark?"#1a2030":"#f8fafc",
+                      border:`1px solid ${isDark?"#2a3347":"#e2e8f0"}`,
+                      display:"flex", alignItems:"flex-start", gap:10,
+                    }}>
+                      <span style={{fontSize:16, flexShrink:0, marginTop:1}}>ℹ</span>
+                      <span style={{fontSize:12, color:muted, lineHeight:1.6}}>
+                        <strong style={{color:text}}>Score measures ingredient safety, not nutrition.</strong>{" "}
+                        This score reflects chemical risk — synthetic pesticides, additives, and processing — not fat, sugar, or calorie content. A low score means clean ingredients, not a green light to eat freely.
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* Exposure Calculator — only show for products that need a swap */}
                 {(result.overall_score || result.score) > 3 && (result.break_even || result.alternatives?.length > 0) && (
