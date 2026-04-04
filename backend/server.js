@@ -1067,6 +1067,8 @@ SUGAR PENALTY — added sugar matters independently of other concerns:
 - >20g added sugar per serving: materials +3 (exceeds half the daily limit in one serving)
 Apply sugar penalty on top of NOVA and substance assessments. A NOVA 3 product with 15g sugar = materials 2-3 base + 2 sugar = materials 4-5.
 
+TOTAL SUGAR RULE FOR BEVERAGES (natural OR added): A beverage with >30g total sugar per serving — even 100% natural fruit sugar — must not score below 3. A beverage with >50g total sugar per serving must not score below 4. Naked Juice, Odwalla, Bolthouse Farms smoothies, and large fruit juices frequently contain 50-70g total sugar — more than a can of Coke. "No added sugar" and "100% juice" are not clean signals when the sugar load is this high. Flag "extreme natural sugar content — [Xg per serving, equivalent to [N] teaspoons of sugar]" as a MEDIUM concern and raise materials floor accordingly.
+
 FOOD TIER SCORE IMPACT — synthesizing NOVA, sugar, and substance concerns:
 Score 1-2 (Safe): NOVA 1-2, organic certified, no confirmed IARC substances, <5g added sugar. Organic produce, organic plain oats, plain organic yogurt, wild salmon.
 Score 3 (Good): NOVA 2-3, mostly clean, conventional farming but Non-GMO or low pesticide load, <6g added sugar, no synthetic dyes/preservatives. Kashi Organic, Poppi soda, Larabar, plain Greek yogurt (conventional), canned organic beans.
@@ -1695,7 +1697,87 @@ DRESSING RULE: Avocado oil or olive oil base + no EDTA + no soybean oil = 1-3. S
 - Dried fruit (raisins, dried mango, dates as ingredient): materials=2-3 when a minor ingredient, 3-4 when primary ingredient at high quantity — concentrated sugar, sticky, tooth decay risk.
 DO NOT score any pure sugar product (honey, syrup, molasses, agave) below 3.
 
-BABY FORMULA CALIBRATION:
+HIGH-SUGAR JUICE AND SMOOTHIE CALIBRATION:
+100% JUICE (no HFCS, but high natural sugar — floor at 3):
+- Welch's 100% Grape Juice (36g natural sugar, 100% juice, no HFCS): materials=3 → final ~3. "100% juice" does not mean clean — it means concentrated natural sugar with no fiber.
+- Ocean Spray 100% Cranberry (very tart, usually diluted — 30g sugar): materials=3 → final ~3.
+- Tropicana 100% OJ (pasteurized, 22g sugar, some varieties have additives): materials=3 → final ~3.
+
+JUICE COCKTAILS / SUGAR WATER (HFCS + minimal juice — floor at 5):
+- Ocean Spray Cranberry Cocktail (28% juice + HFCS + water, 25g added sugar): materials=5 (HFCS floor fires) → final ~5. NOT the same as 100% cranberry juice.
+- V8 Splash Tropical Blend (HFCS + 5% vegetable juice + natural flavors): materials=5 → final ~5.
+- Welch's Grape Drink / cocktail (HFCS, <100% juice): materials=5 → final ~5.
+
+KIDS DRINKS WITH HFCS + DYES (floor at 6-7 — child daily ingestion concern):
+- Hi-C Fruit Punch (HFCS + Red 40 + Blue 1 — two petroleum dyes, child daily drink): materials=7 → final ~7. NEVER score below 6. Child vulnerability flag.
+- Hawaiian Punch Fruit Juicy Red (HFCS + Red 40): materials=7 → final ~6-7. NEVER score below 6. Child vulnerability flag.
+- Kool-Aid Jammers (HFCS + multiple petroleum dyes in most flavors): materials=7 → final ~6-7. NEVER score below 6. Child vulnerability flag.
+- Capri Sun Original (HFCS in original flavors, check variant — some newer versions are HFCS-free): materials=5 (HFCS floor) → final ~5. Newer "25% less sugar" versions without HFCS = 3.
+- Tampico citrus punch (HFCS + artificial dyes + 2% juice): materials=7 (HFCS + dyes) → final ~6-7.
+HIGH-SUGAR SMOOTHIE DRINKS (natural sugar floor):
+- Naked Juice (53g+ natural sugar per bottle, pasteurized, no added sugar): materials=4 (total sugar >50g floor applies) → final ~4. NOT scored as clean as whole fruit.
+- Odwalla (pasteurized, similar sugar load to Naked): materials=4 → final ~4.
+- Bolthouse Farms Green Goodness (>50g sugar, pasteurized): materials=4 → final ~4.
+
+SWEETENED TEA AND LEMONADE CALIBRATION:
+CLEAN (unsweetened, score 1-2):
+- Pure Leaf Unsweetened Tea (just tea + water, no sweetener): materials=1 → final ~1.
+- Honest Tea Unsweetened (organic, just tea): materials=1 → final ~1.
+ORGANIC / LIGHT SWEETENED (score 2-3):
+- Honest Tea (organic, 10g sugar, USDA Organic, fair trade): materials=2 → final ~2-3.
+- GT's plain kombucha (lightly sweet from fermentation): materials=2 → final ~2.
+HFCS SWEETENED (floor at 5):
+- Snapple Peach Tea / Lemon Tea (HFCS, 37g sugar): materials=5 (HFCS floor) → final ~5. NEVER score below 4.
+- Arizona Green Tea / Sweet Tea (HFCS, 23-34g sugar): materials=5 → final ~5.
+- Lipton Brisk Iced Tea (HFCS): materials=5 → final ~5.
+- Gold Peak Sweet Tea (HFCS): materials=5 → final ~5.
+- Minute Maid Lemonade (HFCS, 28g sugar): materials=5 → final ~5.
+- SunnyD (HFCS + artificial dyes + 2% juice): materials=6 (HFCS + dyes) → final ~6.
+RESTAURANT SWEET TEA (score 4-5):
+- McDonald's / Chick-fil-A / Raising Cane's sweet tea (sugar + water + tea, ~40-70g sugar in large): materials=4 → final ~4. Not HFCS but extreme sugar load at chain scale.
+
+CANDY CALIBRATION — HFCS + PGPR CHOCOLATE BARS:
+HFCS + NO PETROLEUM DYES (score 5-6):
+- Reese's Peanut Butter Cup (HFCS, PGPR emulsifier replacing cocoa butter, artificial flavors, palm kernel oil): materials=5 → final ~5-6. NEVER score below 5.
+- Snickers (HFCS, corn syrup, PGPR, artificial flavors): materials=5 → final ~5-6.
+- Twix (HFCS, PGPR, enriched flour, artificial flavors): materials=5 → final ~5-6.
+- Kit Kat US (HFCS in US formulation, PGPR, enriched flour, artificial flavors): materials=5 → final ~5-6.
+- Baby Ruth / Butterfinger (HFCS, PGPR, corn syrup): materials=5 → final ~5-6.
+- Milky Way (HFCS, corn syrup, hydrogenated palm oil, artificial flavors): materials=6 → final ~6.
+- Swedish Fish (HFCS, artificial red dye, carnauba wax): materials=6 (HFCS + artificial dye) → final ~6.
+NOTE ON PGPR: Polyglycerol polyricinoleate (PGPR) is a cheap emulsifier used to replace cocoa butter in budget chocolate. FDA GRAS but signals NOVA 4 ultra-processed formulation and lower cocoa content. Flag as LOW concern.
+HFCS + PETROLEUM DYES (score 6-7 — dye floors fire):
+- Sour Patch Kids (HFCS + Red 40 + Yellow 5 + Blue 1): materials=7 → final ~7. NEVER score below 6.
+- Starburst (HFCS + Red 40 + Yellow 5 + Yellow 6 + hydrogenated palm kernel oil): materials=7 → final ~7. NEVER score below 6.
+- Jolly Ranchers (HFCS + artificial dyes): materials=7 → final ~6-7. NEVER score below 6.
+- Airheads (HFCS + artificial dyes + titanium dioxide IARC 2B): materials=7 (HFCS + dyes + TiO2) → final ~7.
+- Nerds (HFCS + carmine + Red 40 + Blue 1): materials=7 → final ~7. NEVER score below 6.
+- Peach Rings / generic gummy candy (HFCS + Red 40 + Yellow 5): materials=7 → final ~6-7.
+- Trolli sour worms (HFCS + multiple dyes): materials=7 → final ~6-7.
+
+SNACK CAKE AND PACKAGED PASTRY CALIBRATION:
+- Hostess Twinkies (HFCS, sorbic acid, polysorbate 60, 27 ingredients — NOVA 4 industrial formulation): materials=6 → final ~6. NEVER score below 5.
+- Hostess Ding Dongs / Ho Hos (HFCS + hydrogenated oil + artificial flavors): materials=6 → final ~6. NEVER score below 5.
+- Little Debbie Swiss Rolls (HFCS + corn syrup + modified starch + 20+ additives): materials=6 → final ~6.
+- Little Debbie Nutty Bars (HFCS + corn syrup + partially hydrogenated oil in older formulas): materials=6 → final ~6.
+- Pop-Tarts (HFCS + TBHQ + artificial dyes — TBHQ floor fires): materials=7 → final ~6-7. NEVER score below 6.
+- Cosmic Brownies / Little Debbie brownies with colored candy (HFCS + dyes): materials=7 (dyes) → final ~6-7.
+
+CHOCOLATE BAR HIERARCHY — quality matters:
+PREMIUM MILK CHOCOLATE (no HFCS, cocoa butter — score 3-4):
+- Lindt Milk Chocolate (cocoa butter, whole milk powder, vanilla — no HFCS, no PGPR): materials=3 → final ~3-4.
+- Ghirardelli Milk Chocolate (cocoa butter, no HFCS): materials=3 → final ~3-4.
+BUDGET MILK CHOCOLATE (HFCS + PGPR — score 5-6):
+- Hershey's Milk Chocolate bar (HFCS, PGPR, artificial flavor — different from premium milk chocolate): materials=5 (HFCS + PGPR + ultra-processed) → final ~5. NEVER score same as Lindt milk.
+- Hershey's Kisses (same formulation): materials=5 → final ~5.
+CLEAN DARK CHOCOLATE (score 2-3):
+- Hu Chocolate / Lindt 70%+ / Green & Black's 70%+ (cocoa butter, no HFCS, no PGPR, no artificial flavors): materials=2 → final ~2-3.
+RULE: Cocoa butter = premium signal. PGPR replacing cocoa butter = NOVA 4 flag. HFCS in chocolate = always 5+.
+
+YOPLAIT AND HIGH-HFCS YOGURT:
+- Yoplait Original (US formulation uses HFCS in most flavors — check label): materials=5 (HFCS floor) → final ~5. This is NOT the same as Stonyfield or Chobani plain. NEVER score below 4.
+- Yoplait Whips (HFCS, modified starch, gelatin, artificial flavor): materials=5 → final ~5.
+- Dannon Fruit on the Bottom (added sugar, natural flavors, modified starch — no HFCS in current formula): materials=4 → final ~4.
 - Holle / Kendamil Organic / HiPP Organic (European organic formulas): materials=2 — USDA/EU Organic certified, DHA from algae oil (not hexane-extracted), no corn syrup, simple ingredient list. Score 2-3.
 - Similac / Enfamil (conventional, standard formula): materials=4 — synthetic DHA/ARA from hexane-extracted microalgae/fungal oil in some versions, corn maltodextrin as primary carb, synthetic vitamins, palm olein oil (reduces calcium absorption). Score 4.
 - Similac Organic / Earth's Best Organic formula: materials=3 — organic certified but still highly processed, synthetic vitamins added back. Score 3.
