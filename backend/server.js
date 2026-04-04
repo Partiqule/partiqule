@@ -16,9 +16,11 @@ app.use(cors({
       "http://localhost:3000",
       "http://localhost:5173",
     ];
-    if (allowed.includes(origin) || origin.endsWith(".vercel.app")) {
-      return callback(null, true);
-    }
+    // Only allow specific Vercel preview deployments from the partiqule project
+    // (not any arbitrary .vercel.app subdomain)
+    const isPartiquleVercel = allowed.includes(origin) ||
+      /^https:\/\/partiqule(-[a-z0-9]+)*\.vercel\.app$/.test(origin);
+    if (isPartiquleVercel) return callback(null, true);
     callback(new Error(`CORS blocked: ${origin}`));
   },
   methods: ["GET","POST","OPTIONS"],
@@ -26,7 +28,7 @@ app.use(cors({
   credentials: true,
 }));
 app.options("*", cors()); // handle preflight for all routes
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "2mb" })); // images resized to max 1200px ≈ 150-400KB — 2MB is ample
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const scoreCache    = new Map();
@@ -644,16 +646,47 @@ const CATEGORY_AVERAGES = {
 // Determines if a product needs a web search for accurate material data
 function needsSearch(productName) {
   const name = productName.toLowerCase();
+
   // Skip search for generic/obvious products — we already know what they're made of
   const obvious = [
     "styrofoam","plastic bag","cling wrap","plastic wrap","disposable cup",
     "plastic bottle","plastic straw","zip lock","ziplock","fleece jacket",
     "polyester","nylon","teflon","non-stick","keurig","lipton tea bag",
     "cotton","linen","wool","glass","stainless steel","cast iron","ceramic",
-    "wooden spoon","bamboo","wood"
+    "wooden spoon","bamboo","wood",
   ];
   if (obvious.some(o => name.includes(o))) return false;
-  // Search for anything branded, specific, or ambiguous
+
+  // Skip for well-known brands where AI already has reliable material knowledge
+  // and the product has stable known composition (saves ~500ms + API cost per scan)
+  const knownBrands = [
+    "pampers","huggies","tide","dawn","cascade","glad","ziploc","bounty",
+    "charmin","kleenex","scott","puffs","dove","neutrogena","cetaphil",
+    "olay","garnier","loreal","pantene","head and shoulders","old spice",
+    "gillette","colgate","crest","oral-b","band-aid","neosporin","tylenol",
+    "advil","aleve","nyquil","mucinex","pepto","tums","preparation h",
+    "claritin","zyrtec","benadryl","robitussin","listerine","scope",
+    "m&m","skittles","oreo","doritos","lay's","lays","pringles","cheetos",
+    "fritos","ruffles","tostitos","wheat thins","ritz","triscuit",
+    "cheerios","froot loops","lucky charms","captain crunch","frosted flakes",
+    "honey bunches","wheaties","total cereal","special k","mini-wheats",
+    "quaker oats","nature valley","clif bar","kind bar","rxbar","larabar",
+    "red bull","monster energy","gatorade","powerade","sprite","mountain dew",
+    "dr pepper","snapple","lipton","arizona tea","vitaminwater",
+    "starbucks bottled","naked juice","odwalla","tropicana","minute maid",
+    "lululemon","nike","adidas","under armour","gap","old navy","zara","h&m",
+    "patagonia","north face","columbia","timberland","ugg","crocs","vans",
+    "converse","new balance","asics","skechers","birkenstock",
+    "ikea","crate and barrel","pottery barn","west elm","target","walmart",
+    "amazon basics","kirkland","costco",
+  ];
+  if (knownBrands.some(b => name.includes(b))) return false;
+
+  // Skip if the query is very short (1-2 words, likely generic)
+  const wordCount = name.trim().split(/\s+/).length;
+  if (wordCount === 1 && name.length < 8) return false;
+
+  // Search for specific branded products, food items, personal care, and ambiguous queries
   return true;
 }
 
@@ -668,6 +701,7 @@ async function searchProductDetails(productName) {
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 800,
+      temperature: 0,
       tools: [{
         type: "web_search_20250305",
         name: "web_search",

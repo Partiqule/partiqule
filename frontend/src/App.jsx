@@ -3742,14 +3742,32 @@ function App() {
   };
 
   const saveToCloud = async (item, userId) => {
-    await supabase.from("scans").upsert({
-      user_id:      userId,
-      product_name: item.product_name,
-      category:     item.category || "other",
-      score:        item.score || 0,
-      result_json:  item,
-      scanned_at:   new Date().toISOString(),
-    }, { onConflict: "user_id,product_name" });
+    try {
+      const { error } = await supabase.from("scans").upsert({
+        user_id:      userId,
+        product_name: item.product_name,
+        category:     item.category || "other",
+        score:        item.score || 0,
+        // Store lightweight version — skip large AI arrays to keep row size manageable
+        result_json:  {
+          product_name: item.product_name,
+          category:     item.category,
+          score:        item.score,
+          overall_score:item.overall_score,
+          summary:      item.summary,
+          confidence:   item.confidence,
+          concerns:     item.concerns,
+          dimensions:   item.dimensions,
+          food_analysis:item.food_analysis,
+          cached:       item.cached,
+        },
+        scanned_at:   new Date().toISOString(),
+      }, { onConflict: "user_id,product_name" });
+      if (error) console.warn("Cloud sync failed:", error.message);
+    } catch(e) {
+      console.warn("Cloud sync error:", e.message);
+      // Non-critical — local history still saved
+    }
   };
 
   const signOut = async () => {
@@ -3763,9 +3781,10 @@ function App() {
     const path   = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
 
-    // Admin page — secret key check
+    // Admin page — key check (move PARTIQULE_ADMIN_KEY to env var for production hardening)
     if (path === "/admin") {
-      if (params.get("key") === "RowenaRavenclaw2024!") {
+      const adminKey = process?.env?.PARTIQULE_ADMIN_KEY || "RowenaRavenclaw2024!";
+      if (params.get("key") === adminKey) {
         setPage("admin");
       } else {
         setPage("404");
@@ -3775,14 +3794,22 @@ function App() {
 
     const scanMatch = path.match(/^\/scan\/(.+)$/);
     if (scanMatch) {
-      const name = scanMatch[1].replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+      const slug = scanMatch[1];
+      const name = slug.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+      // Check if cached history has an exact slug match to avoid collision
+      // e.g. "honey-nut-cheerios" should not load "Honey Nut Cheerios Value Pack"
+      try {
+        const hist = JSON.parse(localStorage.getItem("ps_history") || "[]");
+        const match = hist.find(h => toSlug(h.product_name) === slug);
+        if (match) { setResult(match); setQuery(match.product_name); return; }
+      } catch {}
+      // No cache match — run a fresh scan
       setTimeout(()=>analyze(name), 100);
       return;
     }
     if (path === "/privacy") { setPage("privacy"); return; }
     if (path === "/about") { setPage("about"); return; }
     if (path === "/methodology") { setPage("methodology"); return; }
-    if (path === "/privacy") { setPage("privacy"); return; }
     if (path === "/terms") { setPage("terms"); return; }
 
     const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology"];
@@ -3812,8 +3839,17 @@ function App() {
   const saveToHistory = (item) => {
     setHistory(prev=>{
       const filtered = prev.filter(h=>h.product_name!==item.product_name);
-      const updated  = [{...item, scannedAt: new Date().toISOString()}, ...filtered];
-      try{localStorage.setItem("ps_history",JSON.stringify(updated));}catch{}
+      const updated  = [{...item, scannedAt: new Date().toISOString()}, ...filtered].slice(0, 100); // cap at 100 — prevents localStorage quota overflow
+      try {
+        localStorage.setItem("ps_history", JSON.stringify(updated));
+      } catch(e) {
+        // localStorage quota exceeded — trim further and retry
+        try {
+          const trimmed = updated.slice(0, 50);
+          localStorage.setItem("ps_history", JSON.stringify(trimmed));
+          return trimmed;
+        } catch { /* silent — cloud sync still works if signed in */ }
+      }
       return updated;
     });
     if (user) saveToCloud(item, user.id);
@@ -3925,11 +3961,15 @@ function App() {
         img.onerror = rej;
         img.src = url;
       });
+      const imgController = new AbortController();
+      const imgTimeout = setTimeout(() => imgController.abort(), 45000);
       const idResp = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" })
+        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" }),
+        signal: imgController.signal,
       });
+      clearTimeout(imgTimeout);
       if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
       if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
       const data = await idResp.json();
@@ -3942,7 +3982,9 @@ function App() {
     } catch(err) {
       console.error("Image scan error:", err);
       setLoading(false); setQuery("");
-      setError("Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
+      setError(err.name === "AbortError"
+        ? "Scan timed out — our servers are warming up. Please try again in a moment."
+        : "Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
     }
   };
 
