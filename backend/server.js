@@ -271,6 +271,7 @@ const SUBSTANCE_FLOORS = [
   // SWEETENERS & FOOD ADDITIVES
   // ══════════════════════════════════════════════════════════
   { match: /\baspartame\b/i,                                            mFloor:5, uFloor:4, reason:"Aspartame — IARC Group 2B (2023), WHO ADI concerns" },
+  { match: /\bsucralose\b/i,                                            mFloor:4, uFloor:3, reason:"Sucralose — chlorinated compound; 2023 study found genotoxicity markers; gut microbiome disruption" },
   { match: /high.fructose corn syrup|\bHFCS\b/i,                       mFloor:5, uFloor:5, reason:"HFCS — metabolic disease, liver impact, obesity driver" },
   { match: /saccharin/i,                                                mFloor:4, uFloor:3, reason:"Saccharin — historically IARC 2B (downgraded), gut microbiome" },
   { match: /acesulfame.?k|acesulfame potassium/i,                      mFloor:4, uFloor:3, reason:"Acesulfame-K — animal carcinogen studies, gut disruption" },
@@ -1487,6 +1488,108 @@ KASHI CALIBRATION:
 - Kashi Organic lines (Cinnamon Harvest, Organic Promise — USDA Organic): materials=1-2, final ~1-2. No glyphosate. Flag organic certification as strong positive.
 - Kashi conventional lines (GO Original, GO Crunch, Seven Whole Grain — Non-GMO but not organic): materials=3 (seven whole grains, Non-GMO verified, no artificial dyes, no synthetic preservatives, high fiber — oats are one of 7-8 grains, not primary), usage=3 → final ~3. NEVER score above 4.
 - Kashi GO with fair trade chocolate or added sugar: materials=4, final ~4. The sugar addition raises it slightly.
+
+UNCURED MEAT CELERY POWDER — critical anti-greenwashing rule:
+Products labeled "uncured," "no nitrites added," or "no artificial nitrates" that contain celery juice powder, celery powder, or celery extract are NOT nitrite-free. Celery is naturally high in nitrates which convert to nitrites in the body — same IARC Group 1 concern. This is an FDA labeling loophole, not a safety difference.
+- Applegate Farms uncured bacon / turkey (celery juice powder): flag "celery-derived nitrites — same mechanism as sodium nitrite" as MEDIUM concern. materials=6 → final ~5-6.
+- Oscar Mayer / conventional bacon (sodium nitrite): materials=8 (IARC Group 1) → final ~7-8.
+- EPIC bars / truly nitrite-free jerky (no celery powder): materials=2-3 → final ~2-3.
+- Boar's Head low-sodium deli turkey (no celery powder, minimal nitrite): materials=3-4 → final ~3-4.
+NEVER score "uncured" meats with celery powder the same as truly clean alternatives. NEVER score below 5.
+
+PLANT MILK CALIBRATION — minimal ingredients = cleanest:
+Two-ingredient test: base nut/grain + water = 1-2. Each industrial additive (seed oil, phosphate salt, gum, carrageenan, pea protein isolate) adds 0.5-1 to materials.
+- Elmhurst Unsweetened Oat/Almond/Cashew (nut/grain + water only, 2 ingredients): materials=1 → final ~1-2.
+- Three Trees Unsweetened Almond (almonds + water only): materials=1 → final ~1-2.
+- Malk Organics (organic + minimal ingredients): materials=1 → final ~1-2.
+- Forager Project Organic Cashewmilk (USDA Organic, cleaner): materials=2 → final ~2-3.
+- Oatly Original / Oatly Full Fat (rapeseed/canola oil + dipotassium phosphate + fortified vitamins, 7+ additives): materials=4 → final ~4.
+- Oatly Barista (similar to Original, higher fat): materials=4 → final ~4.
+- Silk Almond (carrageenan in some versions, sunflower oil, fortified): materials=4 → final ~4.
+- Califia Farms Oat (dipotassium phosphate, sunflower oil, additives): materials=4 → final ~4.
+- Planet Oat Unsweetened (sunflower oil, pea protein, additives): materials=4 → final ~4.
+DO NOT score Oatly the same as Elmhurst. The additive profile is fundamentally different.
+
+PROTEIN BAR CALIBRATION:
+WHOLE FOOD BARS (NOVA 1-2, no synthetic sweeteners — score 2-3):
+- Larabar (dates + nuts, 2-6 ingredients): materials=2 → final ~2. Cleanest bar benchmark.
+- RXBAR (egg whites, dates, nuts, cocoa): materials=2 → final ~2.
+- Perfect Bar (peanut butter, honey, nonfat milk, refrigerated): materials=3 → final ~3.
+- GoMacro MacroBar (USDA Organic, whole food): materials=2 → final ~2.
+PROCESSED BARS (NOVA 4, synthetic sweeteners — score 4-5):
+- Quest Bar (sucralose, protein isolate, palm kernel oil, 15+ ingredients): materials=5 (sucralose floor) → final ~5. NOT clean.
+- ONE Bar (sucralose, erythritol, protein isolate): materials=5 → final ~5.
+- Built Bar (sucralose, erythritol, carrageenan): materials=5 (sucralose + carrageenan floors) → final ~5.
+- Kind bar (nuts, honey, no sucralose): materials=3 → final ~3. Cleaner than Quest/ONE.
+NEVER score Quest/ONE/Built the same as Larabar. Sucralose + NOVA 4 = minimum 5.
+
+SEAFOOD CALIBRATION:
+- Wild-caught Alaskan salmon (fresh/frozen, minimal additives): materials=1 → final ~1-2. Best seafood option.
+- Wild Planet sardines in olive oil (glass jar, low mercury, high omega-3): materials=2 → final ~2.
+- Wild Planet canned tuna / chunk light tuna (BPA-free can, low mercury): materials=3 → final ~3.
+- StarKist conventional canned tuna (possible BPA can lining, chunk light — lower mercury): materials=4 → final ~4.
+- Canned albacore / white tuna (3x higher mercury than chunk light, BPA can): materials=5 → final ~5. Flag: "albacore has ~3x higher mercury — FDA advises limiting to 1 serving/week."
+- Farmed shrimp (sodium tripolyphosphate treatment, antibiotic concern in some imports): materials=4 → final ~4.
+- Swordfish / king mackerel / tilefish / shark (FDA high-mercury warning): materials=6 → final ~5-6. Always flag high mercury.
+MERCURY RULE: For any high-mercury fish, flag "high mercury — FDA advises pregnant women and children to avoid, limit to 1 serving/week for others" as HIGH concern.
+
+BREAD AND GRAIN CALIBRATION:
+- Ezekiel 4:9 Sprouted Grain (sprouted grains + water + salt + yeast, NOVA 1): materials=1 → final ~1-2. Benchmark clean bread.
+- Traditional sourdough (flour, water, salt, starter — 4 ingredients): materials=2 → final ~2.
+- Dave's Killer Bread Organic (USDA Organic, whole grains): materials=2 → final ~2.
+- Dave's Killer Bread conventional: materials=3 → final ~3.
+- Pepperidge Farm whole wheat (added sugars, dough conditioners): materials=4 → final ~4.
+- Wonder Bread / standard white sandwich bread (HFCS, DATEM, SSL, calcium propionate, enriched flour, 15+ ingredients): materials=5 → final ~5. NEVER score below 4.
+- Thomas English Muffins (HFCS, calcium propionate): materials=4 → final ~4.
+
+DAIRY CALIBRATION:
+- Organic Valley / Stonyfield whole milk (USDA Organic): materials=1 → final ~1-2.
+- Conventional whole milk (pasteurized, no additives): materials=2 → final ~2.
+- A2 Milk (A2 protein, same processing): materials=2 → final ~2.
+- Fairlife ultra-filtered milk (ultra-pasteurized, 9 added vitamins, Coca-Cola subsidiary): materials=3 (NOVA 3 — ultra-processed milk) → final ~3.
+- American cheese / Kraft Singles (sodium phosphate, sodium citrate, artificial color — processed cheese product not real cheese): materials=5 → final ~5.
+- Organic cream cheese (organic, minimal additives): materials=2 → final ~2.
+- Philadelphia cream cheese (locust bean gum, carrageenan in some varieties): materials=4 → final ~4.
+
+FROZEN DESSERT CALIBRATION:
+CLEAN (score 2-3):
+- Alden Organic Ice Cream (USDA Organic, cream/milk/eggs/sugar/flavor — 5 ingredients): materials=2 → final ~2-3.
+- Häagen-Dazs (cream, milk, sugar, eggs, flavor — no carrageenan, no artificial additives): materials=2 → final ~2-3.
+"BETTER FOR YOU" ENGINEERED (score 4-5):
+- Halo Top (sucralose, erythritol, chicory root, milk protein concentrate — NOVA 4): materials=5 (sucralose floor) → final ~5. NOT cleaner than Häagen-Dazs — different concerns.
+- Arctic Zero (sucralose, whey protein concentrate, chicory root): materials=5 → final ~5.
+- Ben & Jerry's conventional (carrageenan in vanilla varieties, high sugar): materials=4 → final ~4.
+- Ben & Jerry's Non-Dairy (sunflower oil, starch, guar gum — NOVA 4): materials=5 → final ~5.
+DO NOT score Halo Top as safer than Häagen-Dazs. Sucralose + erythritol + NOVA 4 formulation is a different risk profile, not a better one.
+
+PLANT-BASED CHEESE CALIBRATION:
+- Daiya (coconut oil, tapioca starch, pea protein, natural flavor — NOVA 4): materials=5 → final ~5. "Vegan" ≠ clean.
+- Violife (coconut oil, starch, B12 — NOVA 4): materials=5 → final ~5.
+- Miyoko's Cashew Cheese (organic cashews, water, cultures, salt — fermented): materials=2 → final ~2-3. The clean option.
+NEVER score Daiya/Violife below 4.
+
+FERMENTED FOOD CALIBRATION:
+LIVE CULTURE (positive signal — probiotics, simple ingredients):
+- Plain organic yogurt (USDA Organic, just milk + cultures): materials=1 → final ~1-2.
+- Fage / Chobani plain Greek yogurt (just milk + cultures): materials=2 → final ~2.
+- Plain organic kefir (live cultures): materials=1 → final ~1-2.
+- GT's Synergy raw kombucha plain (live cultures, <3% natural alcohol): materials=2 → final ~2.
+- Raw sauerkraut / kimchi (traditional: cabbage + salt + spices only): materials=1 → final ~1-2.
+- Store-brand sauerkraut with vinegar (NOT fermented, NOT live cultures): materials=3 → final ~3.
+FLAVORED/SWEETENED:
+- Chobani Flip / Activia (added sugar, flavors, inclusions): materials=4 → final ~4.
+- Flavored fruit yogurt (Dannon, Yoplait): materials=4 → final ~4.
+
+COOKING OIL CALIBRATION:
+- Extra virgin olive oil (cold-pressed, glass bottle): materials=1 → final ~1.
+- Avocado oil (cold-pressed): materials=1 → final ~1.
+- Organic butter (USDA Organic): materials=1 → final ~1. Note: score is ingredient safety not dietary advice.
+- Conventional butter (just cream + salt): materials=2 → final ~2.
+- Canola oil (highly refined, hexane extraction, high omega-6): materials=3 → final ~3.
+- Vegetable oil / soybean oil (hexane-extracted, industrial refining, "100% natural" is misleading): materials=4 → final ~4.
+- Seed oil blends (canola + soybean + sunflower): materials=4 → final ~4.
+- Crisco shortening / partially hydrogenated (check label — old formulations = trans fat, materials=7): materials=4-7 → final ~4-7 depending on formulation.
+RULE: Cold-pressed single-source = 1. Hexane-extracted industrial = 3-4. Partially hydrogenated = 7.
 
 NATURAL SUGAR PRODUCTS — "natural" does not mean low-risk for sugar-dominant products:
 - Raw honey (100% honey, no additives): materials=3 — natural but essentially pure fructose/glucose, no fiber, no protein, rapid blood sugar spike. NEVER score below 3. Flag: high natural sugar, no nutritional complexity.
