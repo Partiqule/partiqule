@@ -1740,6 +1740,92 @@ A fast food or fast casual item should NEVER score below 4. If your calculation 
 
 SODIUM RULE: For any restaurant item where sodium exceeds 2,000mg per serving, flag "extreme sodium content" as a HIGH concern and add +1 to materials score. Items exceeding 3,000mg sodium (Cheesecake Factory pasta, Applebee's riblets, large fast food combos) = materials minimum 7. The FDA daily sodium limit is 2,300mg — a single item exceeding it is a meaningful health concern regardless of other ingredients.
 
+FAST FOOD ITEM-LEVEL CALIBRATION:
+The following are HARD score anchors for specific fast food items — do not deviate from these ranges.
+
+McDONALD'S:
+- Big Mac: final score ~6 — TBHQ in frying oil, HFCS in bun, 1010mg sodium, enriched flour. Always flag TBHQ.
+- Quarter Pounder with Cheese: final score ~6 — TBHQ + sodium phosphate in cheese + 1110mg sodium.
+- Chicken McNuggets (any size): final score ~7 — TBHQ + dimethylpolysiloxane + sodium aluminum phosphate + DATEM. Always name all four.
+- McChicken Sandwich: final score ~7 — TBHQ + MSG + dimethylpolysiloxane. Always name all three.
+- McDonald's French Fries: final score ~6 — TBHQ in frying oil + natural beef flavor + dextrose.
+- Sausage McMuffin / Sausage McGriddle: final score ~7 — sodium nitrite in sausage. Nitrite floor fires. NEVER score below 6.
+- Egg McMuffin (no sausage): final score ~5 — Canadian bacon (lower nitrite) + processed egg + enriched muffin. Meaningfully cleaner than sausage versions.
+- McDonald's Hotcakes: final score ~6 — HFCS + artificial maple flavor + enriched flour.
+- McFlurry: final score ~6 — HFCS + corn syrup + artificial flavors. M&M McFlurry = 7 (petroleum dyes confirmed).
+- Apple Pie: final score ~7 — HFCS + TBHQ + BHA. BHA floor fires.
+- McDonald's Oatmeal (plain or light): final score ~4 — genuine oats, moderate concern. Cleanest McDonald's option.
+- Side Salad (no dressing): final score ~2.
+
+BURGER KING:
+- Whopper: final score ~6 — DATEM + TBHQ + 980mg sodium.
+- Impossible Whopper: final score ~6 — Impossible patty (NOVA 4) + TBHQ in oil. "Plant-based" ≠ safer.
+- BK Chicken Fries / Onion Rings: final score ~7 — TBHQ + MSG + enriched flour.
+- BK Croissanwich (sausage/bacon): final score ~7 — sodium nitrite. NEVER score below 6.
+
+WENDY'S:
+- Dave's Single/Double: final score ~6 — TBHQ + sodium phosphate + high sodium.
+- Baconator / Son of Baconator: final score ~7 — sodium nitrite in bacon + TBHQ + 1350-2150mg sodium. Multiple floors fire. NEVER score below 6.
+- Frosty: final score ~5 — HFCS + carrageenan (carrageenan floor fires) + artificial flavor.
+- Apple Pecan Salad (grilled): final score ~4 — cleanest Wendy's option.
+
+KFC:
+- Original Recipe / Extra Crispy chicken (fried): final score ~7 — MSG + TBHQ + DATEM + dimethylpolysiloxane. Always name all four. NEVER score below 6.
+- KFC Famous Bowl: final score ~7 — powdered mashed potato + MSG gravy + TBHQ + seven processed components. Flag all concerns.
+- KFC Grilled Chicken: final score ~5 — no TBHQ from fryer, lower additive load. Cleaner option.
+- Side Corn on the Cob: final score ~2.
+
+POPEYES:
+- Original / Spicy Chicken (fried): final score ~7 — MSG + TBHQ + DATEM + sodium aluminum phosphate + 1443mg sodium. NEVER score below 6.
+- Popeyes Chicken Sandwich: final score ~7 — MSG + TBHQ + enriched flour brioche + extreme sodium. NEVER score below 6.
+- Blackened Chicken Tenders: final score ~5 — not fried, lower additive load.
+- Red Beans and Rice (with andouille sausage): final score ~5 — sodium nitrite in andouille fires.
+
+RAISING CANE'S:
+- Chicken Fingers combo: final score ~5-6 — simpler ingredient list than KFC/Popeyes but still fried. No TBHQ confirmed. High sodium from Cane's Sauce.
+
+PIZZA CHAINS:
+- Domino's pepperoni pizza: final score ~7 — DATEM + sodium nitrite in pepperoni (IARC Group 1) + enriched flour. NEVER score below 6.
+- Domino's cheese pizza (no pepperoni): final score ~6 — DATEM + enriched flour, no nitrite.
+- Pizza Hut Original Pan pepperoni: final score ~7 — TBHQ in pan oil + sodium nitrite in pepperoni. NEVER score below 6.
+- Little Caesars pepperoni: final score ~7 — TBHQ + sodium nitrite. NEVER score below 6.
+- Blaze Pizza / Mod Pizza (fresh, no processed meat): final score ~4 — made fresh, real dough, ingredient transparency.
+- Any chain pizza WITH pepperoni/salami/cured meat: final score MINIMUM 6 (nitrite floor fires).
+
+SUBWAY AND SANDWICH CHAINS:
+- Subway Italian BMT (pepperoni + salami + ham): final score ~7 — sodium nitrite in ALL THREE meats. Highest nitrite exposure per serving in mainstream fast food. NEVER score below 6.
+- Subway Meatball Marinara: final score ~7 — mechanically separated chicken in meatballs + HFCS in sauce.
+- Subway Turkey Breast: final score ~5-6 — sodium nitrite in turkey deli meat.
+- Subway Veggie Delite: final score ~3-4 — produce + bread, no processed meat. Cleanest Subway option.
+- Jersey Mike's Italian: final score ~7 — three cured meats (same as Italian BMT). NEVER score below 6.
+- Jersey Mike's Turkey: final score ~5 — single deli meat lower exposure.
+
+TACO BELL:
+- Crunchy Taco (seasoned beef): final score ~5 — less than 40% beef, oat product + maltodextrin + citric acid fillers.
+- Chalupa / Crunch Wrap Supreme: final score ~6 — TBHQ from frying + processed beef blend.
+- Bean Burrito: final score ~4 — refried beans, no processed meat. Cleanest Taco Bell option.
+- Power Menu Bowl (grilled chicken): final score ~4 — grilled protein + rice + beans.
+- Breakfast Crunchwrap (sausage/bacon): final score ~7 — sodium nitrite. NEVER score below 6.
+
+CHIPOTLE:
+- Carnitas: cleanest protein — simple pork + salt + herbs → protein final ~3.
+- Chicken / Steak / Barbacoa: final protein score ~3-4.
+- Sofritas: final protein score ~5 — processed tofu blend, NOVA 3-4. NOT the cleanest plant option.
+- Full burrito (any protein + tortilla + all toppings): final score ~5.
+- Bowl (no tortilla, same fillings): final score ~4.
+- Black beans / white rice: final score ~2.
+- Pinto beans: final score ~3 (trace bacon — sodium nitrite present in small amount).
+
+IN-N-OUT:
+- Standard burger (Double-Double / cheeseburger): final score ~5 — DATEM in bun + TBHQ in frying oil + sodium phosphate in cheese. "Fresh never frozen" ≠ no additives.
+- Animal Style: final score ~6 — adds HFCS in thousand island + extra cheese layer.
+- Protein Style (lettuce wrap, no bun): final score ~3-4 — removes enriched flour bun. Meaningfully cleaner.
+- French Fries: final score ~5 — sunflower oil (no confirmed TBHQ), simple potato + salt. Cleaner than McDonald's fries.
+IN-N-OUT NOTE: Genuinely cleaner than McDonald's at the ingredient level but NOT a health food. User expectations often score it at 2-3 — correct score is 5-6.
+
+BREAKFAST RULE (applies to ALL chains):
+Any fast food breakfast item containing sausage or bacon = sodium nitrite floor fires → final score MINIMUM 6. NEVER score a fast food breakfast sausage or bacon item below 6. Eggs only + bread = 4-5. Oatmeal or avocado toast = 3.
+
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
 personal_care: tier1=clean_formula, tier2=conventional, tier3=synthetic_heavy, tier4=high_concern

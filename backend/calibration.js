@@ -504,6 +504,100 @@ const ENTRIES = [
   ["coola self tanner",             { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no synthetic fragrance — cleanest self-tanner", confidence:"high", category:"personal_care" }],
   ["loving tan",                    { floor:2, ceiling:4, substances:[], reason:"DHA — fragrance-free options, cleaner formula", confidence:"high", category:"personal_care" }],
   ["banana boat self tan",          { floor:4, ceiling:6, substances:["synthetic fragrance","parabens"], reason:"DHA + synthetic fragrance + parabens + propylene glycol", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — McDONALD'S
+  // ══════════════════════════════════════════════════════════════
+  ["big mac",                        { floor:5, ceiling:7, substances:["TBHQ","HFCS"], reason:"TBHQ in frying oil + HFCS in bun + 1010mg sodium + enriched flour", confidence:"high", category:"restaurant" }],
+  ["chicken mcnuggets",              { floor:6, ceiling:8, substances:["TBHQ","dimethylpolysiloxane","MSG"], reason:"TBHQ + dimethylpolysiloxane antifoam + sodium aluminum phosphate + DATEM — always name all four", confidence:"high", category:"restaurant" }],
+  ["mcchicken",                      { floor:6, ceiling:8, substances:["TBHQ","MSG","dimethylpolysiloxane"], reason:"TBHQ + MSG + dimethylpolysiloxane — always name all three", confidence:"high", category:"restaurant" }],
+  ["sausage mcmuffin",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in sausage — IARC Group 1 floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["sausage biscuit mcdonald",       { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in sausage — floor fires", confidence:"high", category:"restaurant" }],
+  ["egg mcmuffin",                   { floor:4, ceiling:6, substances:["sodium nitrite"], reason:"Canadian bacon (lower nitrite) + processed egg — cleaner than sausage versions", confidence:"high", category:"restaurant" }],
+  ["mcdonald's french fries",        { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in frying oil + natural beef flavor (unlabeled wheat/milk) + dextrose coating", confidence:"high", category:"restaurant" }],
+  ["mcflurry",                       { floor:5, ceiling:7, substances:["HFCS","corn syrup"], reason:"HFCS + corn syrup + artificial flavors. M&M version = 7 (petroleum dyes).", confidence:"high", category:"restaurant" }],
+  ["mcdonald's apple pie",           { floor:6, ceiling:8, substances:["TBHQ","BHA","HFCS"], reason:"TBHQ + BHA in oil + HFCS — BHA floor fires (mFloor:6)", confidence:"high", category:"restaurant" }],
+  ["mcdonald's oatmeal",             { floor:3, ceiling:5, substances:[], reason:"Genuine oats + brown sugar + cream — cleanest McDonald's option", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — BURGER KING
+  // ══════════════════════════════════════════════════════════════
+  ["whopper",                        { floor:5, ceiling:7, substances:["TBHQ","DATEM"], reason:"TBHQ + DATEM in bun + 980mg sodium", confidence:"high", category:"restaurant" }],
+  ["impossible whopper",             { floor:5, ceiling:7, substances:["TBHQ"], reason:"Impossible patty (NOVA 4) + TBHQ in frying oil. Plant-based does not mean safer.", confidence:"high", category:"restaurant" }],
+  ["bk chicken fries",              { floor:6, ceiling:8, substances:["TBHQ","MSG"], reason:"TBHQ + MSG + enriched flour breading", confidence:"high", category:"restaurant" }],
+  ["bk croissanwich",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in sausage/bacon — floor fires", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — WENDY'S
+  // ══════════════════════════════════════════════════════════════
+  ["baconator",                      { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ"], reason:"Sodium nitrite in bacon (IARC Group 1) + TBHQ in oil + 1350-2150mg sodium — multiple floors fire", confidence:"high", category:"restaurant" }],
+  ["son of baconator",              { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ"], reason:"Sodium nitrite + TBHQ — multiple floors fire", confidence:"high", category:"restaurant" }],
+  ["wendy's frosty",               { floor:4, ceiling:6, substances:["HFCS","carrageenan"], reason:"HFCS + carrageenan floor fires + artificial flavor", confidence:"high", category:"restaurant" }],
+  ["dave's single",                 { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in oil + sodium phosphate in cheese + high sodium", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — KFC AND POPEYES
+  // ══════════════════════════════════════════════════════════════
+  ["kfc original recipe",           { floor:6, ceiling:8, substances:["MSG","TBHQ","DATEM","dimethylpolysiloxane"], reason:"MSG + TBHQ + DATEM + dimethylpolysiloxane — always name all four. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["kfc extra crispy",              { floor:6, ceiling:8, substances:["MSG","TBHQ","DATEM"], reason:"Same as Original Recipe with additional breading additives", confidence:"high", category:"restaurant" }],
+  ["kfc famous bowl",               { floor:6, ceiling:8, substances:["MSG","TBHQ"], reason:"Powdered mashed potato + MSG gravy + TBHQ + seven processed components combined", confidence:"high", category:"restaurant" }],
+  ["kfc grilled chicken",           { floor:4, ceiling:6, substances:[], reason:"No TBHQ from fryer, lower additive load — cleaner KFC option", confidence:"high", category:"restaurant" }],
+  ["popeyes chicken sandwich",      { floor:6, ceiling:8, substances:["MSG","TBHQ"], reason:"MSG + TBHQ + enriched flour brioche + 1443mg sodium. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["popeyes original chicken",      { floor:6, ceiling:8, substances:["MSG","TBHQ","DATEM"], reason:"MSG + TBHQ + DATEM + sodium aluminum phosphate. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["popeyes spicy chicken",         { floor:6, ceiling:8, substances:["MSG","TBHQ"], reason:"Same as Original — MSG + TBHQ", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — PIZZA CHAINS
+  // ══════════════════════════════════════════════════════════════
+  ["domino's pepperoni pizza",      { floor:6, ceiling:8, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite in pepperoni (IARC Group 1) + DATEM in dough. Nitrite floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["dominos pepperoni",             { floor:6, ceiling:8, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite + DATEM — floor fires", confidence:"high", category:"restaurant" }],
+  ["pizza hut pepperoni",           { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ"], reason:"TBHQ in pan oil + sodium nitrite in pepperoni — two floors fire simultaneously", confidence:"high", category:"restaurant" }],
+  ["little caesars pepperoni",      { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ"], reason:"TBHQ + sodium nitrite — both floors fire", confidence:"high", category:"restaurant" }],
+  ["blaze pizza",                   { floor:3, ceiling:5, substances:[], reason:"Made fresh daily, real dough, ingredient transparency, no processed meats unless chosen", confidence:"high", category:"restaurant" }],
+  ["mod pizza",                     { floor:3, ceiling:5, substances:[], reason:"Fresh made, ingredient transparency — cleaner chain pizza", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — SUBWAY AND SANDWICH
+  // ══════════════════════════════════════════════════════════════
+  ["subway italian bmt",            { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in ALL THREE meats (pepperoni + salami + ham) — highest nitrite exposure per serving in mainstream fast food", confidence:"high", category:"restaurant" }],
+  ["subway meatball marinara",       { floor:6, ceiling:8, substances:["sodium nitrite","HFCS"], reason:"Mechanically separated chicken meatballs + HFCS in sauce — floor fires", confidence:"high", category:"restaurant" }],
+  ["subway veggie delite",          { floor:2, ceiling:4, substances:[], reason:"Fresh produce + bread — no processed meat — cleanest Subway option", confidence:"high", category:"restaurant" }],
+  ["jersey mike's italian",         { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Three cured meats — pepperoni + salami + prosciutto — sodium nitrite in all three", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — TACO BELL
+  // ══════════════════════════════════════════════════════════════
+  ["taco bell chalupa",             { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ from fried shell + processed beef blend", confidence:"high", category:"restaurant" }],
+  ["taco bell crunchwrap",          { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ + processed beef + enriched flour", confidence:"high", category:"restaurant" }],
+  ["taco bell bean burrito",        { floor:3, ceiling:5, substances:[], reason:"Refried beans + cheese — no processed meat — cleanest Taco Bell option", confidence:"high", category:"restaurant" }],
+  ["taco bell power bowl",          { floor:3, ceiling:5, substances:[], reason:"Grilled chicken + rice + beans — cleanest Taco Bell protein build", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — CHIPOTLE
+  // ══════════════════════════════════════════════════════════════
+  ["chipotle carnitas",             { floor:2, ceiling:4, substances:[], reason:"Pork shoulder + salt + juniper berries + bay leaf + thyme — genuinely clean, simplest protein at Chipotle", confidence:"high", category:"restaurant" }],
+  ["chipotle sofritas",             { floor:4, ceiling:6, substances:[], reason:"Processed tofu blend (NOVA 3-4) — not the cleanest option despite being plant-based", confidence:"high", category:"restaurant" }],
+  ["chipotle burrito",              { floor:4, ceiling:6, substances:[], reason:"Any protein + rice + beans + tortilla + toppings — high sodium from stacking multiple components", confidence:"high", category:"restaurant" }],
+  ["chipotle bowl",                 { floor:3, ceiling:5, substances:[], reason:"No refined flour tortilla — meaningfully cleaner than burrito format", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — IN-N-OUT
+  // ══════════════════════════════════════════════════════════════
+  ["in-n-out double double",         { floor:4, ceiling:6, substances:["TBHQ","DATEM"], reason:"DATEM + TBHQ + sodium phosphate in cheese", confidence:"high", category:"restaurant" }],
+  ["in-n-out double-double",        { floor:4, ceiling:6, substances:["TBHQ","DATEM"], reason:"DATEM in bun + TBHQ in frying oil + sodium phosphate in cheese. Fresh ≠ no additives. NOT a 2-3.", confidence:"high", category:"restaurant" }],
+  ["in-n-out burger",              { floor:4, ceiling:6, substances:["TBHQ","DATEM"], reason:"DATEM + TBHQ + processed cheese. Fresh marketing ≠ clean score.", confidence:"high", category:"restaurant" }],
+  ["in-n-out animal style",        { floor:5, ceiling:7, substances:["TBHQ","HFCS"], reason:"Animal style adds HFCS in thousand island dressing + extra processed cheese", confidence:"high", category:"restaurant" }],
+  ["in-n-out protein style",       { floor:3, ceiling:5, substances:[], reason:"Lettuce wrap removes enriched flour bun — meaningfully cleaner", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD — BREAKFAST ITEMS
+  // ══════════════════════════════════════════════════════════════
+  ["chick-fil-a chicken biscuit",   { floor:6, ceiling:8, substances:["TBHQ","MSG"], reason:"TBHQ + MSG in breading + enriched flour biscuit + high sodium. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["starbucks egg bites",           { floor:3, ceiling:5, substances:[], reason:"Simple eggs + cheese — genuinely cleaner than fried fast food breakfast", confidence:"high", category:"restaurant" }],
+  ["panera avocado toast",          { floor:2, ceiling:4, substances:[], reason:"Sourdough + avocado + seasoning — cleanest chain breakfast option", confidence:"high", category:"restaurant" }],
+  ["dunkin bacon egg",               { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon — floor fires", confidence:"high", category:"restaurant" }],
+  ["dunkin' bacon egg",            { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon + enriched croissant — floor fires. NEVER score below 6.", confidence:"high", category:"restaurant" }],
+  ["mcdonald's hotcakes",          { floor:5, ceiling:7, substances:["HFCS","artificial maple"], reason:"HFCS + artificial maple flavor + enriched flour + sodium aluminum phosphate", confidence:"high", category:"restaurant" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
