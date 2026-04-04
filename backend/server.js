@@ -33,8 +33,9 @@ const scoreCache    = new Map();
 
 // ── HELPERS ───────────────────────────────────────────────────
 
-function cacheKey(q) {
-  return q.toLowerCase().trim().replace(/\s+/g, " ");
+function cacheKey(q, category) {
+  const norm = q.toLowerCase().trim().replace(/\s+/g, " ");
+  return category ? `${category}:${norm}` : norm;
 }
 
 function cleanProductName(name) {
@@ -754,6 +755,7 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: maxTokens,
+          temperature: 0,   // deterministic — same product always same score
           system,
           messages: [{ role: "user", content: userPrompt }]
         })
@@ -810,6 +812,7 @@ async function callClaudeVision(imageBase64, mediaType, retries=3) {
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2400,
+      temperature: 0,
       system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 SCORING RULES:
@@ -1188,7 +1191,32 @@ CALIBRATION EXAMPLES to ensure differentiation:
 - Nature Valley Oats and Honey Granola Bar (conventional oats): materials=7 (IARC 2A glyphosate + added sugar), usage=5 → final ~6-7. NEVER score below 6.
 - KIND Oat bar (conventional oats): materials=6 (IARC 2A glyphosate residue likely), usage=4 → final ~5-6
 
-ORGANIC OAT PROTECTION RULE: If a product is confirmed USDA Organic certified, the glyphosate floor does NOT apply. USDA Organic prohibits synthetic pesticides including glyphosate. Organic oats = materials 1-2 on ingredients. Conventional oats (no organic certification) = flag glyphosate as HIGH concern. Organic certification is ALWAYS a positive signal — never penalise an organic product with a pesticide floor.
+CHEWING GUM CALIBRATION — direct plastic ingestion category:
+Conventional gum base is polyvinyl acetate — a synthetic plastic polymer. You literally chew plastic and swallow trace amounts with every piece.
+- Conventional gum (Trident, Extra, Orbit, Doublemint, Juicy Fruit): materials=7 (polyvinyl acetate plastic base, artificial sweeteners aspartame/acesulfame-K, artificial flavors, BHT preservative), usage=7 (direct plastic ingestion, daily use) → final ~7. NEVER score below 6.
+- Simply Gum / Chicle-based natural gum: materials=2 (chicle natural tree resin, no synthetic plastic base, no artificial sweeteners, organic ingredients) → final ~2-3.
+- Spry / Xylitol gum (synthetic base but no aspartame): materials=5 (still polyvinyl acetate base but cleaner additives) → final ~5.
+
+WATER FILTER CALIBRATION:
+- Brita pitcher (BPA-free plastic housing, activated carbon filter): materials=3 (BPA-free plastic, carbon filter removes chlorine/some contaminants), usage=4 (daily water contact with plastic housing — concern level moderate), packaging=3 → final ~3. Note: Brita does NOT remove PFAS, heavy metals, or microplastics.
+- PUR pitcher (similar to Brita): materials=3, final ~3. Removes more contaminants than Brita but same plastic housing concern.
+- ZeroWater (5-stage ion exchange, removes more contaminants): materials=3, usage=3 → final ~3. Better filtration but still plastic housing.
+- Berkey gravity filter (stainless steel housing, carbon + ceramic filters): materials=1 (stainless steel, no plastic water contact), usage=1 (removes PFAS, heavy metals, bacteria, microplastics), packaging=2 → final ~1-2. Consistently the cleanest mainstream filter option.
+- Countertop RO systems (APEC, iSpring): materials=2 (removes PFAS, metals, microplastics but uses some plastic tubing), final ~2-3.
+- No filter / tap water: score 2-4 depending on municipality — flag the lack of filtration as a concern but not worse than bottled water in single-use plastic.
+- Bottled water in single-use PET plastic: materials=5-6 (PET leaches antimony and phthalates, microplastics from cap degradation), packaging=9 (single-use plastic bottle) → final ~5-6.
+
+MAKEUP AND COSMETICS CALIBRATION:
+Heavy metals in pigments are a systematic concern for color cosmetics — Consumer Reports and FDA have found lead above safety limits in lipsticks, and titanium dioxide is IARC Group 2B.
+- Conventional lipstick (Maybelline, CoverGirl, L'Oreal standard): materials=6 (lead found in many shades by Consumer Reports 2012 — FDA max 10ppm, some exceeded; petroleum waxes, synthetic dye FD&C pigments), usage=7 (direct mucous membrane contact, some ingested daily) → final ~6-7.
+- Clean lipstick (ILIA, RMS Beauty, Kosas): materials=3 (no lead-containing pigments, plant wax base, no synthetic dyes) → final ~3.
+- Foundation (conventional — Maybelline, Revlon, L'Oreal): materials=5 (titanium dioxide IARC 2B in most, talc in some, synthetic fragrance, parabens in older formulas) → final ~5. Daily full-face application = significant usage score.
+- Clean foundation (Ilia, Jones Road, RMS): materials=2-3 (mineral pigments, no synthetic fragrance, no parabens) → final ~2-3.
+- Mascara (conventional — Great Lash, etc.): materials=4 (carbon black IARC 2B in some, synthetic preservatives) → final ~4.
+- Eyeshadow palette (conventional): materials=5 (multiple synthetic dyes, talc, possible heavy metal pigment contamination in reds/oranges) → final ~5.
+Rule: For any color cosmetic, flag "potential heavy metal pigment contamination (lead, cadmium) — Consumer Reports 2012 found above FDA thresholds in conventional lipsticks" as a LOW concern unless the brand explicitly uses EWG-verified or COSMOS-certified pigments.
+
+RESTAURANT CONFIDENCE RULE: Restaurant items ALWAYS have confidence "medium" at most — never "high." Chain restaurants do not disclose full ingredient lists and recipes vary by location. The AI is estimating based on typical chain practices, not confirmed ingredient data.
 - Bacon / conventional deli meat / hot dogs (sodium nitrite): materials=8 (IARC Group 1 nitrites — known carcinogen), usage=7 → final ~7-8. NEVER score below 7.
 - Organic uncured turkey / chicken (no nitrites added): materials=3, usage=3 → final ~3
 - M&Ms Milk Chocolate: materials=8 (Red 40 + Yellow 5 + Yellow 6 + Blue 1 — four FDA-flagged petroleum dyes; IARC carcinogenicity; ultra-processed), usage=7 → final ~7-8. NEVER score below 7.
@@ -1863,6 +1891,18 @@ app.post("/analyze", async (req, res) => {
       // ── Positive ceilings — pull genuinely clean food products down ──
       ({finalScore} = applyPositiveCeilings(finalScore, category, p1, p2, imgSubstance.triggered));
 
+      // ── Restaurant confidence enforcement (image path) ──
+      if (category === "restaurant" && p1.confidence === "high") {
+        p1.confidence = "medium";
+      }
+
+      // ── pass2 drift guard (image path) ──
+      const imgPass1RawScore = computeScore(imgSubstance.mScore, imgSubstance.uScore, pkScore, sScore, category);
+      if (imgSubstance.triggered.length > 0 && finalScore < imgPass1RawScore - 1) {
+        console.log(`Image path drift guard: ${imgPass1RawScore} → ${finalScore} with floors active — holding at ${imgPass1RawScore - 1}`);
+        finalScore = imgPass1RawScore - 1;
+      }
+
       if (category === "restaurant") {
         const name = (p1.product_name || productName).toLowerCase();
         const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(name);
@@ -1957,7 +1997,11 @@ app.post("/analyze", async (req, res) => {
 
   const extracted    = extractProductFromUrl(query.trim());
   const productName  = extracted || query.trim();
-  const key          = cacheKey(productName);
+
+  // Detect category FIRST so it's included in the cache key
+  // Prevents "Apple" (fruit) vs "Apple" (iPhone) collision
+  const category = detectCategory(productName);
+  const key      = cacheKey(productName, category);
 
   if (scoreCache.has(key)) {
     console.log(`Cache hit: ${key}`);
@@ -1965,7 +2009,6 @@ app.post("/analyze", async (req, res) => {
   }
 
   try {
-    const category = detectCategory(productName);
 
     // ── Search for real product material data if needed ──
     let materialContext = null;
@@ -2026,6 +2069,28 @@ app.post("/analyze", async (req, res) => {
     // ── Positive ceilings — pull genuinely clean food products down ──
     ({finalScore} = applyPositiveCeilings(finalScore, finalCategory, p1, p2, substanceResult.triggered));
 
+    // ── Fix 5: Restaurant confidence enforcement ──
+    // Restaurants don't disclose ingredients. We're guessing based on chain reputation.
+    // Confidence can never be high for a restaurant item — medium at best.
+    if (finalCategory === "restaurant") {
+      if (p1.confidence === "high") {
+        p1.confidence = "medium"; // downgrade — we can't truly know what's in the kitchen
+      }
+    }
+
+    // ── Fix 6: pass2 drift guard ──
+    // The auditor should refine scores, not erase substance floors.
+    // Cap how far pass2 can move a score DOWN from a floored value.
+    const pass1RawScore = computeScore(
+      substanceResult.mScore ?? mScore,
+      substanceResult.uScore ?? uScore,
+      pkScore, sScore, finalCategory
+    );
+    if (substanceResult.triggered.length > 0 && finalScore < pass1RawScore - 1) {
+      console.log(`Pass2 drift guard: score drifted from ${pass1RawScore} to ${finalScore} with substance floors active — holding at ${pass1RawScore - 1}`);
+      finalScore = pass1RawScore - 1; // allow max 1-point reduction from auditor when floors fired
+    }
+
     // ── Final score safety net — catches clear misses only ──
     if (finalCategory === "restaurant") {
       const name = (p1.product_name || productName).toLowerCase();
@@ -2047,7 +2112,7 @@ app.post("/analyze", async (req, res) => {
       : finalScore <= 6
       ? "Caution — reduce use or find an alternative"
       : finalScore <= 8
-      ? "Change — real concerns, time to swap"
+      ? "Switch — real concerns, time to swap"
       : "Avoid — known harmful substances";
 
     const aiProductName = p1.product_name || productName;

@@ -324,7 +324,7 @@ const GlobeLoading = ({isMobile}) => {
 
 
 
-const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Change":"Avoid";
+const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
@@ -459,7 +459,7 @@ const RiskBar = ({score}) => {
     : score <= 6
     ? "Caution — reduce use or find an alternative"
     : score <= 8
-    ? "Change — real concerns, time to swap"
+    ? "Switch — real concerns, time to swap"
     : "Avoid — known harmful substances";
   return (
     <div style={{marginTop:20}}>
@@ -1534,15 +1534,35 @@ const ShareBadge = ({result}) => {
     ctx.lineTo(W/2 - 10, 300);
     ctx.stroke();
 
-    // ── RIGHT: 5 dimension mini bars ──
+    // ── RIGHT: 4 dimension mini bars ──
     const RX = W/2 + 10;
+
+    // Dynamic weights per category — match server CATEGORY_FORMULAS exactly
+    const CAT_WEIGHTS = {
+      food:          {m:0.90, u:0.00, pk:0.10, s:0.00},
+      food_beverage: {m:0.90, u:0.00, pk:0.10, s:0.00},
+      beverage:      {m:0.75, u:0.00, pk:0.25, s:0.00},
+      restaurant:    {m:0.85, u:0.00, pk:0.10, s:0.05},
+      supplement:    {m:0.65, u:0.25, pk:0.10, s:0.00},
+      personal_care: {m:0.45, u:0.45, pk:0.05, s:0.05},
+      toy:           {m:0.50, u:0.40, pk:0.05, s:0.05},
+      clothing:      {m:0.35, u:0.30, pk:0.00, s:0.35},
+      accessory:     {m:0.40, u:0.25, pk:0.00, s:0.35},
+      home:          {m:0.30, u:0.45, pk:0.10, s:0.15},
+      kitchen:       {m:0.30, u:0.45, pk:0.10, s:0.15},
+      baby:          {m:0.55, u:0.40, pk:0.05, s:0.00},
+      other:         {m:0.45, u:0.30, pk:0.10, s:0.15},
+    };
+    const cat = result.category || "other";
+    const wt  = CAT_WEIGHTS[cat] || CAT_WEIGHTS.other;
+    const pct = (v) => v === 0 ? "0%" : `${Math.round(v*100)}%`;
+
     const dimList = dims ? [
-      {label:"Materials",    score: dims.materials?.score,        weight:"40%"},
-      {label:"Exposure",     score: dims.usage_exposure?.score,   weight:"25%"},
-      {label:"Packaging",    score: dims.packaging?.score,        weight:"15%"},
-      {label:"Sustainability",score:dims.sustainability?.score,   weight:"15%"},
-      
-    ] : [];
+      {label:"Materials",    score: dims.materials?.score,        weight: pct(wt.m)},
+      {label:"Exposure",     score: dims.usage_exposure?.score,   weight: pct(wt.u)},
+      {label:"Packaging",    score: dims.packaging?.score,        weight: pct(wt.pk)},
+      {label:"Sustainability",score:dims.sustainability?.score,   weight: pct(wt.s)},
+    ].filter(d => d.weight !== "0%") : []; // hide dimensions that don't contribute for this category
 
     if (dimList.length) {
       dimList.forEach((d, i) => {
@@ -2520,7 +2540,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           Partiqule exists to change that.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We score every product across five dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
+          We score every product across four dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its impact on your personal health, your home, and the planet. Free, instant, and grounded in published science.
         </p>
         <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
           Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
@@ -2550,8 +2570,8 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
-            {title:"The full picture", body:"Microplastics are one part of the story. We score five dimensions: materials, exposure, packaging and sustainability. Your health, your home, and the planet are all affected differently by the same product."},
-            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all five dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
+            {title:"The full picture", body:"Microplastics are one part of the story. We score four dimensions: materials, exposure, packaging and sustainability. Your health, your home, and the planet are all affected differently by the same product."},
+            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all four dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
             {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
             {title:"Free to start", body:"Your first scans are on us. No account needed to get started — create a free account to save your history."},
             {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
@@ -2736,7 +2756,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             "1-2 Safe — Use freely. Good for you, your family, and the planet.",
             "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Use regularly with awareness.",
             "5-6 Caution — Something is not right. Worth reducing use or finding an alternative.",
-            "7-8 Change — Real concerns. Do not use daily. We will show you a better option.",
+            "7-8 Switch — Real concerns. Do not use daily. We will show you a better option.",
             "9-10 Avoid — Known harmful substances. Significant and documented health risk.",
           ]
         },
@@ -2819,7 +2839,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         },
         {
           heading: "Pass 1 — Research and analysis",
-          body: "The AI searches the web for real material data on the specific product, then scores it across all five dimensions using the parameters we defined. It identifies harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway. For every scan it produces a Tier 1-4 composition classification and a named substance breakdown tailored to the category."
+          body: "The AI searches the web for real material data on the specific product, then scores it across all four dimensions using the parameters we defined. It identifies harmful chemicals, natural materials, packaging type, sustainability story, and exposure pathway. For every scan it produces a Tier 1-4 composition classification and a named substance breakdown tailored to the category."
         },
         {
           heading: "Pass 2 — Independent audit",
@@ -3015,7 +3035,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           <div>
             <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Example 2 — Brawny paper towels</div>
             <p style={{fontSize:14, color:muted, lineHeight:1.7, marginBottom:12}}>
-              A product that scores low on materials but high on sustainability — showing why all five dimensions matter, not just what the product is made of.
+              A product that scores low on materials but high on sustainability — showing why all four dimensions matter, not just what the product is made of.
             </p>
             <div style={{display:"flex", flexDirection:"column", gap:8}}>
               {[
@@ -3619,7 +3639,7 @@ const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
   const sections = [
     { title:"1. Overview", body:"Partiqule provides product health information and exposure scores to help you make more informed decisions. By using Partiqule, you agree to these Terms of Service." },
     { title:"2. Not medical advice", body:"Partiqule's scores, analyses, and recommendations are provided for informational and educational purposes only. They are based on available peer-reviewed research and AI analysis, and are not medical, health, or safety advice.\n\nYou should not rely on Partiqule as a substitute for professional medical, scientific, or nutritional guidance. Use of the platform is at your own risk." },
-    { title:"3. How our scoring works", body:"Our product scores are generated using a two-pass AI analysis system and research-based weighting factors covering material composition, usage exposure, packaging, sustainability, and manufacturing.\n\nWhile we aim for accuracy and transparency, we do not guarantee that any score, analysis, or recommendation is complete, accurate, or up to date. Product formulations change. New research emerges. Treat scores as a starting point for your own research." },
+    { title:"3. How our scoring works", body:"Our product scores are generated using a two-pass AI analysis system and research-based weighting factors covering material composition, usage exposure, packaging and sustainability.\n\nWhile we aim for accuracy and transparency, we do not guarantee that any score, analysis, or recommendation is complete, accurate, or up to date. Product formulations change. New research emerges. Treat scores as a starting point for your own research." },
     { title:"4. Affiliate disclosure", body:"Some links on Partiqule are affiliate links. We may earn a commission if you make a purchase through them, at no additional cost to you.\n\nAffiliate relationships do not influence our scoring or recommendations. No brand can pay to change a score." },
     { title:"5. No warranties", body:"Partiqule is provided as-is and as-available. We make no warranties, express or implied, including but not limited to accuracy or completeness of information, fitness for a particular purpose, or reliability of the service." },
     { title:"6. Limitation of liability", body:"To the fullest extent permitted by law, Partiqule and its creators shall not be liable for any indirect, incidental, or consequential damages resulting from your use of the service, decisions made based on Partiqule content, or third-party products or services." },
@@ -4966,8 +4986,8 @@ function App() {
 
             </div>
 
-            {/* RIGHT — desktop alternatives sticky panel */}
-            {!isMobile && (
+            {/* RIGHT — desktop alternatives sticky panel — only show if score > 3 */}
+            {!isMobile && (result.overall_score || result.score) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
                 <div style={{background:isDark?"#1e2433":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden"}}>
                   <div style={{background:"#052e16", padding:"20px 24px"}}>
