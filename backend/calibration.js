@@ -2883,7 +2883,7 @@ const ENTRIES = [
   // ── K-CUPS: CONCERN ──────────────────────────────────────────
   ["k-cup",                        { floor:5, ceiling:7, substances:["polypropylene","microplastics"], reason:"K-Cup pods — polypropylene #5 plastic heated with near-boiling water releases billions of microplastic particles per cup (2023 Spanish study). Applies to all K-cup format coffee pods.", confidence:"high", category:"food_beverage" }],
   ["folgers k-cup",                 { floor:5, ceiling:7, substances:["polypropylene","microplastics","conventional coffee"], reason:"Folgers K-Cup — polypropylene #5 plastic pod heated with near-boiling water releases billions of microplastic particles per cup (2023 study). Conventional coffee adds pesticide concern.", confidence:"high", category:"food_beverage" }],
-  ["death wish coffee k",           { floor:4, ceiling:6, substances:["polypropylene","microplastics"], reason:"Death Wish Coffee K-Cup — polypropylene pod microplastic concern. Coffee is USDA Organic (lower pesticide concern than Folgers K-Cups).", confidence:"high", category:"food_beverage" }],
+  ["death wish coffee k",           { floor:5, ceiling:7, substances:["polypropylene","microplastics"], reason:"Death Wish Coffee K-Cup — polypropylene pod microplastic concern. Coffee is USDA Organic (lower pesticide concern than Folgers K-Cups).", confidence:"high", category:"food_beverage" }],
   ["death wish",              { floor:4, ceiling:6, substances:["polypropylene","microplastics"], reason:"Death Wish K-Cup — polypropylene microplastic concern from pod + hot water. Coffee is USDA Organic which reduces pesticide concern versus Folgers.", confidence:"high", category:"food_beverage" }],
   ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum"], reason:"Nespresso Original — aluminum pod, no plastic contact with hot coffee. Aluminum trace concern is minimal. Significantly cleaner than polypropylene K-cups.", confidence:"high", category:"food_beverage" }],
 
@@ -2897,7 +2897,7 @@ const ENTRIES = [
 
   // ── GROUND COFFEE: CLEAN ─────────────────────────────────────
   ["death wish coffee",             { floor:1, ceiling:3, substances:[], reason:"Death Wish Coffee — USDA Organic + Fair Trade certified. High caffeine but clean sourcing. No pesticide concern.", confidence:"high", category:"food_beverage" }],
-  ["bulletproof coffee",            { floor:1, ceiling:3, substances:[], reason:"Bulletproof Coffee — claims lab-tested for mycotoxins, single-origin sourcing. Clean premium coffee.", confidence:"medium", category:"food_beverage" }],
+  ["bulletproof",            { floor:1, ceiling:3, substances:[], reason:"Bulletproof Coffee — claims lab-tested for mycotoxins, single-origin sourcing. Clean premium coffee.", confidence:"medium", category:"food_beverage" }],
   ["four sigmatic coffee",          { floor:1, ceiling:3, substances:[], reason:"Four Sigmatic — USDA Organic coffee + functional mushrooms, no artificial additives. Clean functional coffee.", confidence:"high", category:"food_beverage" }],
   ["lifeboost",              { floor:1, ceiling:2, substances:[], reason:"Lifeboost — USDA Organic, single origin, shade grown, low acid, third-party tested for mycotoxins and pesticides. Benchmark cleanest mainstream coffee.", confidence:"high", category:"food_beverage" }],
   ["allegro organic coffee",        { floor:1, ceiling:3, substances:[], reason:"Allegro Organic — USDA Organic certified, Whole Foods house brand. Clean certified organic coffee.", confidence:"high", category:"food_beverage" }],
@@ -2955,6 +2955,71 @@ const ENTRIES = [
   ["monin syrup",                   { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Monin — cane sugar (not HFCS) + natural flavor + potassium sorbate. Better than Torani but potassium sorbate preservative present.", confidence:"high", category:"food_beverage" }],
   ["jordan's skinny",           { floor:5, ceiling:7, substances:["sucralose","artificial flavor","acesulfame-K"], reason:"Jordan's Skinny Syrups — sucralose + acesulfame-K double sweetener stack + artificial flavor. Multiple sweetener floors fire. Widely used in 'healthier' coffee drinks.", confidence:"high", category:"food_beverage" }],
   ["starbucks syrup",               { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Starbucks Vanilla Syrup and similar — cane sugar + natural flavor + potassium sorbate. Same concern profile as Monin.", confidence:"medium", category:"food_beverage" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 39 — COFFEE, TEA AND CREAMERS
+  // KEY STORIES:
+  //   K-Cups: plastic pod + 92C water = microplastic migration
+  //   Coffee Mate: corn syrup + carrageenan + SSL + artificial
+  //   flavor — one of the worst morning routine products
+  //   Tea bags: epichlorohydrin sealing chemical + pyramid bags
+  //   may be nylon (microplastics in hot water)
+  // ══════════════════════════════════════════════════════════════
+
+  // ── GROUND COFFEE: CONVENTIONAL ──────────────────────────────
+  ["folgers coffee",                { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Folgers — conventional coffee, heavily processed blend from multiple regions, no pesticide testing transparency. Coffee is one of the most pesticide-sprayed crops worldwide.", confidence:"high", category:"food_beverage" }],
+  ["folgers",                       { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Folgers — conventional blend, no organic certification or pesticide testing claim.", confidence:"high", category:"food_beverage" }],
+  ["maxwell house",                 { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Maxwell House — conventional coffee blend, no organic certification. Same pesticide concern as Folgers.", confidence:"high", category:"food_beverage" }],
+  ["dunkin coffee",                 { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Dunkin ground coffee — conventional blend, no organic certification. Mid-tier coffee concern.", confidence:"medium", category:"food_beverage" }],
+  ["peet's coffee",                 { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Peet's — conventional coffee, some single origins with better sourcing but no blanket organic certification.", confidence:"medium", category:"food_beverage" }],
+  ["lavazza",                       { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Lavazza — Italian conventional coffee blend, no organic certification. Standard conventional concern.", confidence:"medium", category:"food_beverage" }],
+  ["cafe bustelo",                  { floor:3, ceiling:5, substances:["conventional coffee","fine grind"], reason:"Cafe Bustelo — conventional espresso blend, highly processed fine grind. No organic certification.", confidence:"medium", category:"food_beverage" }],
+  ["nescafe instant",               { floor:4, ceiling:5, substances:["conventional coffee","spray-dried","processing"], reason:"Nescafe — spray-dried instant coffee, heavily processed, conventional sourcing. More processing than ground coffee adds concern.", confidence:"high", category:"food_beverage" }],
+  ["starbucks via",                 { floor:3, ceiling:5, substances:["conventional coffee","instant processing"], reason:"Starbucks Via instant — better sourcing than Nescafe but still instant-processed conventional coffee.", confidence:"medium", category:"food_beverage" }],
+
+  // ── K-CUPS: PLASTIC POD CONCERN ───────────────────────────────
+  ["death wish",              { floor:5, ceiling:7, substances:["polypropylene pod","LDPE foil","microplastics"], reason:"Death Wish K-Cup — polypropylene plastic pod + LDPE foil lid + 92C water = documented microplastic migration into coffee. Plastic pod concern applies regardless of coffee quality inside.", confidence:"high", category:"food_beverage" }],
+  ["k-cup",                         { floor:5, ceiling:7, substances:["polypropylene","LDPE","microplastics","hot water contact"], reason:"K-Cup format — polypropylene pod + aluminum/LDPE foil lid with boiling water forced through. University of Victoria 2023 study found billions of nano/microplastics released per cup. The pod IS the concern regardless of coffee brand inside.", confidence:"high", category:"food_beverage" }],
+
+  // ── GROUND COFFEE: CLEAN TIER ────────────────────────────────
+  ["bulletproof coffee",            { floor:2, ceiling:3, substances:[], reason:"Bulletproof — mycotoxin-tested, single origin, mold-free claim with third-party lab verification. Cleaner than standard conventional coffee.", confidence:"high", category:"food_beverage" }],
+  ["kicking horse coffee",          { floor:1, ceiling:3, substances:[], reason:"Kicking Horse — USDA Organic certified, fair trade, B Corp. Benchmark clean mainstream coffee brand.", confidence:"high", category:"food_beverage" }],
+  ["mount hagen",                   { floor:1, ceiling:3, substances:[], reason:"Mount Hagen — USDA Organic certified instant coffee, fair trade. Benchmark cleanest instant coffee available.", confidence:"high", category:"food_beverage" }],
+
+  // ── COFFEE CREAMERS: HIGH CONCERN ────────────────────────────
+  ["coffee mate french vanilla",    { floor:5, ceiling:7, substances:["corn syrup","carrageenan","sodium stearoyl lactylate","artificial flavor"], reason:"Coffee Mate French Vanilla — corn syrup + carrageenan + sodium stearoyl lactylate (WF banned) + artificial flavor. Multiple floors fire. Heavily processed daily morning creamer.", confidence:"high", category:"food_beverage" }],
+  ["coffee mate",                   { floor:5, ceiling:7, substances:["corn syrup","carrageenan","sodium stearoyl lactylate","artificial flavor"], reason:"Coffee Mate — corn syrup + carrageenan + SSL (WF banned) + artificial flavor across most flavors. One of the most additive-loaded daily kitchen products.", confidence:"high", category:"food_beverage" }],
+  ["international delight",         { floor:6, ceiling:8, substances:["HFCS","carrageenan","artificial flavor","artificial color"], reason:"International Delight — HFCS + carrageenan + artificial flavor + artificial color. Multiple floors fire. HFCS + dye concern on a daily morning creamer.", confidence:"high", category:"food_beverage" }],
+
+  // ── COFFEE CREAMERS: CLEAN TIER ──────────────────────────────
+  ["califia farms creamer",         { floor:3, ceiling:5, substances:["sunflower oil","pea protein","oats"], reason:"Califia Farms — oat or almond base, no carrageenan in most formulas, but sunflower oil + pea protein. Cleaner than Coffee Mate, not clean-label.", confidence:"medium", category:"food_beverage" }],
+  ["nutpods creamer",               { floor:1, ceiling:3, substances:[], reason:"Nutpods — coconut cream + almonds, no artificial flavors or sweeteners, no carrageenan. Benchmark clean dairy-free creamer.", confidence:"high", category:"food_beverage" }],
+  ["nutpods",                       { floor:1, ceiling:3, substances:[], reason:"Nutpods — clean dairy-free creamer, no carrageenan or artificial additives. Benchmark.", confidence:"high", category:"food_beverage" }],
+  ["elmhurst creamer",              { floor:1, ceiling:3, substances:[], reason:"Elmhurst — minimal ingredients (oats or nuts + water), no gums, no carrageenan, no artificial additives. Benchmark cleanest oat creamer.", confidence:"high", category:"food_beverage" }],
+  ["elmhurst",                      { floor:1, ceiling:3, substances:[], reason:"Elmhurst — minimal ingredient dairy-free milks and creamers, no gums or additives. Benchmark clean.", confidence:"high", category:"food_beverage" }],
+  ["laird superfood creamer",       { floor:1, ceiling:3, substances:[], reason:"Laird Superfood — coconut milk powder + functional mushrooms or superfoods, no artificial additives. Clean performance creamer.", confidence:"high", category:"food_beverage" }],
+  ["laird superfood",               { floor:1, ceiling:3, substances:[], reason:"Laird Superfood — clean plant-based creamers and supplements. No artificial additives.", confidence:"high", category:"food_beverage" }],
+
+  // ── TEA: CONCERN ─────────────────────────────────────────────
+  ["tetley tea",                    { floor:3, ceiling:5, substances:["conventional tea","epichlorohydrin","bleached paper"], reason:"Tetley — conventional tea, standard bleached paper bags sealed with epichlorohydrin (industrial chemical used in resin manufacturing). Hot water contact with treated filter paper is a real concern.", confidence:"medium", category:"food_beverage" }],
+  ["republic of tea",               { floor:3, ceiling:5, substances:["nylon pyramid bags","microplastics"], reason:"Republic of Tea pyramid bags — silken pyramid bags are often nylon mesh. Hot water causes nylon to release microplastics and nanoplastics. Premium branding doesn't fix plastic bags.", confidence:"medium", category:"food_beverage" }],
+
+  // ── TEA: CLEAN TIER ──────────────────────────────────────────
+  ["celestial seasonings",          { floor:2, ceiling:4, substances:["conventional herbs"], reason:"Celestial Seasonings — no staples, no strings, no tags, no bleach, no epichlorohydrin. Cleaner bag format than most. Conventional herbs still have pesticide concern.", confidence:"high", category:"food_beverage" }],
+  ["yogi tea",                      { floor:2, ceiling:4, substances:["conventional herbs"], reason:"Yogi Tea — unbleached tea bags, no staples, some organic blends. Better bag format, some conventional herb sourcing.", confidence:"medium", category:"food_beverage" }],
+  ["numi organic tea",              { floor:1, ceiling:3, substances:[], reason:"Numi — USDA Organic certified, non-GMO, plant-based tea bags (no nylon), fair trade. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
+  ["numi",                          { floor:1, ceiling:3, substances:[], reason:"Numi Organic — USDA Organic, plant-based bags. Benchmark clean.", confidence:"high", category:"food_beverage" }],
+  ["traditional medicinals",        { floor:1, ceiling:3, substances:[], reason:"Traditional Medicinals — certified organic herbs, non-GMO, compostable tea bags, no pesticides. Benchmark cleanest herbal tea brand.", confidence:"high", category:"food_beverage" }],
+
+  // ── MATCHA ────────────────────────────────────────────────────
+  ["jade leaf",              { floor:1, ceiling:3, substances:[], reason:"Jade Leaf — USDA Organic matcha, ceremonial and culinary grades, no additives. Benchmark clean matcha brand.", confidence:"high", category:"food_beverage" }],
+  ["ippodo matcha",                 { floor:1, ceiling:3, substances:[], reason:"Ippodo — premium Japanese matcha, tested for pesticides, traditional cultivation. Benchmark clean premium matcha.", confidence:"high", category:"food_beverage" }],
+  ["golde matcha",                  { floor:2, ceiling:4, substances:[], reason:"Golde — matcha + coconut milk + functional ingredients, clean sourcing, no artificial additives. Clean wellness matcha blend.", confidence:"high", category:"food_beverage" }],
+
+  // ── NESPRESSO PODS ────────────────────────────────────────────
+  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod","coffee"], reason:"Nespresso Original — aluminum capsule, better than plastic K-Cups for migration concern, but aluminum production is resource-intensive. Coffee contact surface is aluminum not plastic.", confidence:"high", category:"food_beverage" }],
+  ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface.", confidence:"high", category:"food_beverage" }],
 
 ];
 
