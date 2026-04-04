@@ -3,6 +3,7 @@ const express = require("express");
 const cors    = require("cors");
 const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
+const { applyProductCalibration } = require("./calibration");
 
 const app = express();
 app.use(cors({
@@ -2793,7 +2794,7 @@ app.post("/analyze", async (req, res) => {
         })),
       };
 
-      return res.json(result);
+      return res.json(applyProductCalibration(result));
     } catch(err) {
       console.error("Vision analyze error:", err);
       return res.status(500).json({ error: err.message || "Image scan failed" });
@@ -3049,9 +3050,12 @@ app.post("/analyze", async (req, res) => {
       }))
     };
 
-    scoreCache.set(key, result);
-    console.log(`Cached: ${key} (score: ${result.score}, confidence: ${result.confidence})`);
-    res.json(result);
+    // ── Calibration registry — deterministic floor/ceiling enforcement ──
+    const calibrated = applyProductCalibration(result);
+
+    scoreCache.set(key, calibrated);
+    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence})`);
+    res.json(calibrated);
 
   } catch (err) {
     console.error("Error:", err.message);
