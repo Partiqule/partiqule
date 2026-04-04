@@ -2496,6 +2496,163 @@ CASUAL DINING:
 - Similac Organic / Earth's Best Organic formula: materials=3 — organic certified but still highly processed, synthetic vitamins added back. Score 3.
 Baby formula is always a BABY category product — apply child vulnerability flag. Parents choosing formula have no alternative — scoring reflects relative risk within the category, not a judgment on formula feeding.
 
+GROCERY STORE PRODUCT CALIBRATION — HIGH-VOLUME SCANNER TARGETS:
+This section covers packaged foods that Yuka users commonly scan. Partiqule's differentiator: name the specific chemical concern, not just the nutritional concern. A product scores high here because of petroleum dyes, BHA/BHT, TBHQ, glyphosate residue, or sodium nitrite — not just sugar or calories.
+
+BREAKFAST CEREALS:
+HIGH CONCERN — PETROLEUM DYES (score 7-8):
+- Lucky Charms (Red 40 + Yellow 5 + Yellow 6 + Blue 1 + Blue 2 — FIVE petroleum-based dyes FDA is actively phasing out, plus HFCS): materials=8, usage=7 → final ~7-8. NEVER score below 7. Always list all five dyes by name. This is the single highest-dye-count cereal in the mainstream market.
+- Froot Loops (Red 40 + Yellow 5 + Blue 1 + HFCS): materials=7 → final ~7. NEVER score below 6.
+- Cap'n Crunch (Yellow 5 + Yellow 6 + BHT): materials=7 (two dye floors + BHT floor) → final ~7. NEVER score below 6.
+- Trix (Red 40 + Yellow 6 + Blue 1 — petroleum dyes): materials=7 → final ~7.
+- Cocoa Puffs / Cookie Crisp / Count Chocula (caramel color + petroleum dyes in some): materials=6 → final ~6.
+MODERATE (score 4-6):
+- Kellogg's Frosted Flakes (BHT preservative — BHT floor fires, HFCS): materials=5 → final ~5. NEVER score below 4.
+- Post Honey Bunches of Oats (BHT preservative, no dyes): materials=4 → final ~4.
+- Kellogg's Special K (enriched flour, no BHT — relatively cleaner): materials=3 → final ~3.
+CLEAN CEREAL (score 1-3):
+- Nature's Path Organic granola (USDA Organic, no BHT, no petroleum dyes): materials=2 → final ~2. Benchmark clean granola.
+- Bob's Red Mill granola (clean whole grain, no synthetic preservatives): materials=2 → final ~2.
+- One Degree Organic (sprouted grain, USDA Organic, clean): materials=1 → final ~1-2.
+CEREAL RULE: Any cereal with petroleum dyes = 6-8 minimum (dye floor fires for each). BHT without dyes = 4-5. USDA Organic + no dyes = 1-3.
+
+BREAKFAST BARS AND NUTRITION BARS:
+HIGH CONCERN (score 5-7):
+- Nutri-Grain Bar (Red 40 + Blue 1 petroleum dyes + HFCS + enriched flour — dyes in the filling): materials=6 (two dye floors fire) → final ~6. NEVER score below 5.
+- Kellogg's Special K protein bar (sucralose + soy protein isolate + artificial flavors): materials=5 (sucralose floor fires) → final ~5.
+- Nature Valley Protein bar (sucralose + soy protein concentrate): materials=5 → final ~5.
+MODERATE (score 3-4):
+- Kashi Chewy Granola bar (Non-GMO Project Verified, whole grain — conventional oats still carry glyphosate concern): materials=4 → final ~4.
+CLEAN (score 1-3):
+- Kind Bar (nuts + honey, no sucralose, no dyes, no HFCS): materials=3 → final ~3. Check specific flavor — nut-only flavors cleaner than chocolate dipped.
+- Larabar (dates + nuts — 2-6 whole food ingredients only): materials=1 → final ~1-2.
+
+YOGURT:
+HIGH CONCERN (score 5-7):
+- Yoplait Light (sucralose + acesulfame-K + FD&C Red 40 — two artificial sweeteners + petroleum dye): materials=6 (sucralose floor + dye floor both fire) → final ~6. NEVER score below 5.
+- Yoplait Original (HFCS in some flavors + modified starch): materials=4 → final ~4.
+MODERATE (score 3-4):
+- Dannon Activia (added sugar + modified starch + natural flavors — conventional): materials=4 → final ~4.
+- Chobani flavored Greek (fruit on bottom varieties: natural flavors + evaporated cane juice): materials=3 → final ~3.
+CLEAN (score 1-2):
+- Stonyfield Organic plain (USDA Organic milk + live cultures — 2 ingredients): materials=1 → final ~1. Benchmark clean yogurt.
+- Siggi's plain (pasteurized skim milk + cultures — minimal formula, Icelandic skyr): materials=2 → final ~2.
+- Chobani plain non-fat (milk + cultures — 2 ingredients): materials=1 → final ~1.
+
+PACKAGED SNACKS:
+CLEAN (score 1-3):
+- Fritos original (whole corn + corn oil + salt — 3 ingredients): materials=2 → final ~2. One of the cleanest mainstream chips.
+- Lay's Classic (potato + sunflower/corn oil + salt — 3 ingredients): materials=3 → final ~3. No TBHQ, no dyes in original flavor.
+- SkinnyPop original (popcorn + sunflower oil + salt — 3 ingredients): materials=1 → final ~1-2.
+- Pirates Booty (whole corn + aged white cheddar — no TBHQ, no dyes): materials=2 → final ~2.
+- Annie's Organic Bunny Crackers (USDA Organic, no petroleum dyes, no TBHQ): materials=2 → final ~2.
+- Mary's Gone Crackers (organic seeds + rice — clean): materials=1 → final ~1-2.
+- Wasa Crispbread (whole grain rye + water — 2 ingredients): materials=1 → final ~1.
+MODERATE (score 3-5):
+- Pepperidge Farm Goldfish (enriched flour + cheddar + annatto — no TBHQ in current formula): materials=4 → final ~4.
+- Sun Chips original (whole corn + whole wheat — TBHQ removed in original, check specific flavor): materials=4 → final ~4.
+HIGH CONCERN (score 5-7):
+- Lay's BBQ (HFCS + Red 40 + artificial flavor — dye floor fires): materials=6 (Red 40 floor) → final ~6. Original Lay's = 3. BBQ = 6. Big quality difference within same brand.
+- Pringles original (TBHQ + enriched corn flour + modified starch — TBHQ floor fires): materials=5 → final ~5. NEVER score below 4.
+- Pringles flavored (TBHQ + artificial flavors + dyes in some): materials=6 → final ~5-6.
+- Cheez-Its (TBHQ in some — check current formula): materials=5 → final ~5.
+SNACK RULE: Within the same brand, flavor variants often score very differently. BBQ/flavored = check for petroleum dyes. Original/plain = check for TBHQ. Never assume flavored = same score as original.
+
+BEVERAGES — PLANT MILKS:
+CLEAN (score 1-2):
+- Malk Unsweetened Oat Milk (oats + water — minimal ingredients): materials=1 → final ~1-2. Benchmark clean oat milk.
+- Elmhurst Unsweetened (nuts/oats + water — 2 ingredients): materials=1 → final ~1-2.
+- Three Trees Organic nut milk (USDA Organic, 3 ingredients): materials=1 → final ~1-2.
+MODERATE (score 3-4):
+- Califia Farms Oat Barista (rapeseed oil + dipotassium phosphate + 7 additives): materials=4 → final ~4. NOT the same as 2-ingredient oat milk.
+- Oatly (rapeseed oil + dipotassium phosphate — "natural" marketing obscures 10+ ingredient formula): materials=4 → final ~4.
+- Silk Oat (sunflower oil + dipotassium phosphate + tricalcium phosphate + multiple additives): materials=4 → final ~4.
+- Ripple Pea Milk (pea protein + sunflower oil + algal oil — NOVA 3): materials=3 → final ~3.
+PLANT MILK RULE: 2-ingredient oat/nut milk (grain + water) = 1-2. Multi-additive fortified plant milk = 3-4. Oatly and Califia are significantly more processed than "milk" branding implies.
+
+BEVERAGES — KOMBUCHA AND PROBIOTIC DRINKS:
+- GT's Synergy raw kombucha (live cultures, raw, 4g sugar, USDA Organic): materials=2 → final ~2. Benchmark clean kombucha.
+- Health-Ade kombucha (raw, live cultures, clean): materials=2 → final ~2.
+- Kevita Sparkling Probiotic Drink (pasteurized — kills probiotics, stevia, citric acid, "probiotic" claim contested): materials=4 → final ~4. Flag: "Pasteurized — live culture benefit is contested."
+- Poppi prebiotic soda (apple cider vinegar + fruit juice + stevia — no dyes, clean): materials=2 → final ~2.
+- Olipop (plant fiber + botanicals + 2-5g sugar — no dyes, no HFCS): materials=2 → final ~2.
+
+BEVERAGES — SPORTS AND HYDRATION:
+- Gatorade Zero (sucralose + acesulfame-K + artificial dyes — two artificial sweeteners + petroleum dye): materials=6 (sucralose + dye floors both fire) → final ~6. NEVER score below 5. Flag: "Gatorade Zero is not a clean hydration product — it contains two artificial sweeteners and petroleum dyes."
+- Powerade Zero (sucralose + Blue 1 + acesulfame-K): materials=6 (sucralose + dye floor both fire) → final ~6. NEVER score below 5.
+- Prime Hydration (coconut water base but sucralose + acesulfame-K + BCAA — sucralose floor fires): materials=5 → final ~5.
+- Electrolit (electrolytes + sucrose + fructose — no sucralose, no artificial dyes): materials=3 → final ~3. Cleaner sports drink.
+- Nuun Sport tablets (stevia + sorbitol — no HFCS, no petroleum dyes): materials=3 → final ~3.
+SPORTS DRINK RULE: "Zero calorie" or "sugar-free" sports drinks almost always contain sucralose and/or acesulfame-K — both substance floors fire. They are not clean hydration. Clean electrolyte options use stevia, real sugar, or simple mineral salts only.
+
+FROZEN FOODS:
+CLEAN (score 1-3):
+- Birds Eye Steamfresh / Green Giant Valley Fresh (frozen vegetables, no additives): materials=1 → final ~1. Benchmark — frozen vegetables are just frozen vegetables.
+- Amy's Organic Burrito / frozen meals (USDA Organic, whole ingredients): materials=2 → final ~2-3.
+- Amy's Margherita Pizza (USDA Organic, simple dough, mozzarella, tomato): materials=2 → final ~2.
+- Dr. Praeger's Veggie Burgers (whole plant ingredients, no petroleum dyes, no TBHQ): materials=3 → final ~3.
+MODERATE (score 4-5):
+- Rao's frozen pizza (clean marinara, simple dough — but enriched flour): materials=4 → final ~4.
+- Gardein plant-based (NOVA 4, modified starch, methylcellulose — processed beyond clean): materials=5 → final ~5. "Plant-based" does not mean clean.
+HIGH CONCERN (score 6-7):
+- Trader Joe's Mandarin Orange Chicken (TBHQ in frying oil — TBHQ floor fires): materials=6 → final ~6. One of the most-purchased Trader Joe's frozen items. TBHQ is present.
+- Morning Star Farms veggie sausage (TBHQ + BHA + artificial dyes in some — multiple floors fire): materials=6 → final ~6.
+- Boca Burger (BHA + TBHQ + enriched flour + artificial flavors — BHA floor fires): materials=6 → final ~6.
+- El Monterey burritos (TBHQ + enriched flour + sodium phosphate): materials=6 → final ~6.
+- DiGiorno pepperoni pizza (sodium nitrite in pepperoni + TBHQ + enriched flour — nitrite floor fires): materials=7 → final ~7. NEVER score below 6.
+- Red Baron pepperoni pizza (sodium nitrite + enriched flour — nitrite floor fires): materials=7 → final ~7. NEVER score below 6.
+- Totino's Pizza Rolls (TBHQ + enriched flour + mechanically separated meat — TBHQ floor fires): materials=7 → final ~7.
+
+GROCERY CONDIMENTS:
+BENCHMARK CLEAN (score 1-2):
+- Frank's RedHot (distilled vinegar + aged cayenne peppers + salt — 3 clean ingredients): materials=1 → final ~1. Benchmark clean hot sauce.
+- Tabasco (distilled vinegar + red peppers + salt — 3 ingredients): materials=1 → final ~1.
+- Cholula (clean — peppers + spices + no HFCS, no artificial anything): materials=2 → final ~2.
+- Heinz Yellow Mustard (distilled vinegar + mustard seed + turmeric — clean): materials=1 → final ~1.
+- French's Yellow Mustard (same clean formula as Heinz): materials=1 → final ~1.
+- Rao's Marinara (olive oil + San Marzano tomatoes + simple herbs): materials=1 → final ~1.
+- Pace Salsa / Tostitos Salsa Con Queso salsa (tomatoes + jalapeños + onions + spices — clean): materials=2 → final ~2.
+MODERATE (score 3-4):
+- Hellmann's Real Mayo (soybean oil + eggs + vinegar + lemon juice — conventional oils but simple): materials=3 → final ~3.
+- Chobani plain as condiment: clean.
+HIGH CONCERN (score 4-6):
+- Prego Traditional marinara (HFCS + citric acid + natural flavors): materials=4 → final ~4.
+- Ragu Traditional (HFCS + soybean oil + caramel color): materials=5 → final ~5. NEVER score Ragu same as Rao's.
+- Wish-Bone Italian dressing (EDTA + soybean oil + artificial flavors): materials=5 → final ~5.
+CONDIMENT RULE: Hot sauces and mustards with 3 clean ingredients should always score 1-2. Never score Frank's RedHot or plain mustard above 3. Marinara with HFCS = minimum 4. Rao's should always score 1 — it is the benchmark.
+
+GROCERY COOKIES AND CRACKERS:
+CLEAN (score 1-3):
+- Simple Mills almond flour cookies (almond flour + coconut sugar + clean ingredients): materials=2 → final ~2.
+- Siete grain-free cookies (cassava + coconut sugar + clean): materials=2 → final ~2.
+- Mary's Gone Crackers (organic seeds + organic brown rice): materials=1 → final ~1-2.
+- Back to Nature crackers / cookies (no HFCS, no artificial colors): materials=3 → final ~3.
+- Newman-O's (no HFCS, no artificial colors — cleaner Oreo alternative): materials=3 → final ~3.
+HIGH CONCERN (score 5-7):
+- Chips Ahoy Original (HFCS + partially hydrogenated soybean oil — trans fat concern + enriched flour): materials=6 (HFCS floor + partially hydrogenated floor both fire) → final ~6. NEVER score below 5.
+- Chips Ahoy Chewy (HFCS + DATEM + enriched flour): materials=6 → final ~6.
+
+GROCERY DELI MEAT AND PROTEIN:
+CLEAN (score 1-3):
+- Safe Catch Elite Tuna (every can individually mercury tested — highest standard in tuna category, no BPA in can): materials=2 → final ~2. Benchmark clean canned tuna.
+- Wild Planet Skipjack Tuna (BPA-free can lining, skipjack = lowest mercury, olive oil packed): materials=3 → final ~3.
+- Diestel Farms turkey (genuinely no nitrites — no sodium nitrite, no celery juice powder): materials=2 → final ~2. Benchmark clean deli turkey.
+MODERATE (score 3-5):
+- Boar's Head turkey (lower sodium nitrite than budget brands, but still present): materials=4 → final ~4.
+- Starkist chunk light tuna (conventional can lining, conventional fishing): materials=4 → final ~4.
+- Sabra Classic Hummus (canola + soybean oil + potassium sorbate + sodium benzoate): materials=3 → final ~3.
+HIGH CONCERN (score 5-6):
+- Oscar Mayer Deli Fresh turkey (sodium nitrite — IARC Group 1 floor fires): materials=5 → final ~5.
+- Hillshire Farm turkey breast (sodium nitrite): materials=5 → final ~5.
+- Applegate Naturals turkey (celery juice powder — still contains nitrites from celery, just labeled "uncured"): materials=5 → final ~5. NEVER score same as Diestel. Celery powder is a nitrite loophole.
+DELI MEAT RULE: "Uncured" or "no added nitrites" means nothing if celery juice or celery powder is listed — celery is naturally high in nitrites and the reaction produces the same nitrite compound. Only truly nitrite-free products (Diestel, some Trader Joe's) score 1-3.
+
+GROCERY BEVERAGES — JUICE AND DRINKS:
+- Tropicana / Minute Maid orange juice (pasteurized, 100% juice — 26g natural sugar): materials=3 → final ~3. Natural sugar only, no artificial sweeteners. Different from drinks with HFCS.
+- Ocean Spray 100% cranberry juice (unsweetened, 100% juice, tart): materials=2 → final ~2. Not the same as "cocktail" blend.
+- Bolthouse Farms juice / protein drinks (carrageenan in some + sucralose in protein blends): materials=5 → final ~5. Carrageenan floor fires.
+- V8 Original (vegetable juice, high sodium 640mg per serving, no artificial additives — genuinely clean): materials=3 → final ~3.
+
 ALCOHOL AND LOW-ALCOHOL EDGE CASES:
 - All intentionally alcoholic beverages (wine, beer, spirits, hard cider, hard seltzer): ethanol is IARC Group 1. NEVER score below 6 regardless of organic certification or natural ingredients. Organic wine = materials 7 (still IARC Group 1 ethanol).
 - Kombucha with trace fermentation alcohol (<3% ABV): NOT the same as alcoholic beverages. Score based on ingredients only — plain raw kombucha = 2-3. The trace ethanol from natural fermentation does not trigger the IARC Group 1 alcohol floor.

@@ -646,6 +646,100 @@ const ENTRIES = [
   ["cheesecake factory pasta",      { floor:7, ceiling:9, substances:["extreme sodium"], reason:"3000mg+ sodium standard — extreme sodium floor fires. One of the highest sodium items in chain restaurants.", confidence:"high", category:"restaurant" }],
   ["denny's grand slam",           { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in bacon/sausage — floor fires", confidence:"high", category:"restaurant" }],
   ["ihop buttermilk pancakes",      { floor:5, ceiling:7, substances:["HFCS","enriched flour"], reason:"HFCS in syrup + enriched flour pancakes + high sodium breakfast", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — BREAKFAST CEREALS
+  // ══════════════════════════════════════════════════════════════
+  ["lucky charms",                  { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Yellow 6","Blue 1","Blue 2"], reason:"FIVE petroleum dyes FDA is phasing out — highest dye count of any mainstream cereal. Always list all five by name.", confidence:"high", category:"food_beverage" }],
+  ["froot loops",                   { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Three petroleum dyes + HFCS — dye floors fire", confidence:"high", category:"food_beverage" }],
+  ["trix cereal",                   { floor:6, ceiling:8, substances:["Red 40","Yellow 6","Blue 1"], reason:"Three petroleum dyes — floors fire", confidence:"high", category:"food_beverage" }],
+  ["cocoa puffs",                   { floor:5, ceiling:7, substances:["caramel color","HFCS"], reason:"HFCS + caramel color IV (4-MEI) + enriched corn flour", confidence:"high", category:"food_beverage" }],
+  ["frosted flakes",                { floor:4, ceiling:6, substances:["BHT","HFCS"], reason:"BHT floor fires + HFCS", confidence:"high", category:"food_beverage" }],
+  ["honey bunches of oats",         { floor:3, ceiling:5, substances:["BHT"], reason:"BHT preservative — floor fires. No petroleum dyes.", confidence:"high", category:"food_beverage" }],
+  ["nature's path organic granola",  { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no BHT, no petroleum dyes — benchmark clean granola", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — BREAKFAST BARS AND YOGURT
+  // ══════════════════════════════════════════════════════════════
+  ["nutri-grain",                  { floor:5, ceiling:7, substances:["Red 40","Blue 1","HFCS"], reason:"Petroleum dyes + HFCS in filling — two dye floors fire", confidence:"high", category:"food_beverage" }],
+  ["nutri-grain bar",               { floor:5, ceiling:7, substances:["Red 40","Blue 1","HFCS"], reason:"Red 40 + Blue 1 petroleum dyes in filling + HFCS — two dye floors fire", confidence:"high", category:"food_beverage" }],
+  ["nutrigrain bar",                { floor:5, ceiling:7, substances:["Red 40","Blue 1","HFCS"], reason:"Petroleum dyes + HFCS — floors fire", confidence:"high", category:"food_beverage" }],
+  ["yoplait light",                 { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium","Red 40"], reason:"Two artificial sweeteners + petroleum dye — sucralose + acesulfame-K + Red 40 floors all fire", confidence:"high", category:"food_beverage" }],
+  ["yoplait original",              { floor:3, ceiling:5, substances:["HFCS"], reason:"HFCS in most flavors + modified starch", confidence:"medium", category:"food_beverage" }],
+  ["stonyfield organic plain",      { floor:1, ceiling:2, substances:[], reason:"USDA Organic milk + live cultures — 2 ingredients. Benchmark clean yogurt.", confidence:"high", category:"food_beverage" }],
+  ["siggi's plain",                 { floor:1, ceiling:3, substances:[], reason:"Pasteurized skim milk + cultures — minimal formula, Icelandic skyr style", confidence:"high", category:"food_beverage" }],
+  ["dannon activia",                { floor:3, ceiling:5, substances:["modified starch"], reason:"Added sugar + modified starch + natural flavors — conventional flavored yogurt", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — PACKAGED SNACKS
+  // ══════════════════════════════════════════════════════════════
+  ["fritos original",               { floor:1, ceiling:3, substances:[], reason:"Whole corn + corn oil + salt — 3 clean ingredients. One of the cleanest mainstream chips.", confidence:"high", category:"food_beverage" }],
+  ["fritos corn chips",             { floor:1, ceiling:3, substances:[], reason:"3 clean ingredients", confidence:"high", category:"food_beverage" }],
+  ["pirates booty",                 { floor:1, ceiling:3, substances:[], reason:"Whole corn + aged white cheddar — no TBHQ, no petroleum dyes", confidence:"high", category:"food_beverage" }],
+  ["annie's organic bunny crackers", { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no petroleum dyes, no TBHQ", confidence:"high", category:"food_beverage" }],
+  ["mary's gone crackers",          { floor:1, ceiling:2, substances:[], reason:"Organic seeds + organic brown rice — benchmark clean cracker", confidence:"high", category:"food_beverage" }],
+  ["wasa crispbread",               { floor:1, ceiling:2, substances:[], reason:"Whole grain rye + water — 2 ingredients", confidence:"high", category:"food_beverage" }],
+  ["lay's bbq",                     { floor:5, ceiling:7, substances:["HFCS","Red 40","artificial flavor"], reason:"HFCS + Red 40 petroleum dye — floors fire. Original Lay's = 3. BBQ = 6. Big quality gap within same brand.", confidence:"high", category:"food_beverage" }],
+  ["lays bbq",                      { floor:5, ceiling:7, substances:["HFCS","Red 40"], reason:"HFCS + Red 40 dye floor fires", confidence:"high", category:"food_beverage" }],
+  ["pringles original",             { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ floor fires + enriched corn flour + modified starch", confidence:"high", category:"food_beverage" }],
+  ["chips ahoy",                    { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated"], reason:"HFCS + partially hydrogenated soybean oil (trans fat) + enriched flour — multiple floors fire", confidence:"high", category:"food_beverage" }],
+  ["simple mills",                  { floor:1, ceiling:3, substances:[], reason:"Almond flour + coconut sugar + clean ingredients — benchmark clean cookie", confidence:"high", category:"food_beverage" }],
+  ["siete grain-free",              { floor:1, ceiling:3, substances:[], reason:"Cassava + coconut + clean sweeteners — grain-free clean snack", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — BEVERAGES
+  // ══════════════════════════════════════════════════════════════
+  ["malk unsweetened",              { floor:1, ceiling:2, substances:[], reason:"Oats + water — minimal ingredients. Benchmark clean oat milk.", confidence:"high", category:"beverage" }],
+  ["elmhurst unsweetened",          { floor:1, ceiling:2, substances:[], reason:"Nuts/oats + water — 2 ingredients", confidence:"high", category:"beverage" }],
+  ["oatly oat milk",                { floor:3, ceiling:5, substances:["rapeseed oil","dipotassium phosphate"], reason:"Rapeseed oil + dipotassium phosphate + 10+ additives — significantly more processed than branding implies", confidence:"high", category:"beverage" }],
+  ["califia farms oat",             { floor:3, ceiling:5, substances:["rapeseed oil","dipotassium phosphate"], reason:"Rapeseed oil + dipotassium phosphate + multiple additives — not the same as 2-ingredient oat milk", confidence:"high", category:"beverage" }],
+  ["gt's synergy",                  { floor:1, ceiling:3, substances:[], reason:"Raw kombucha — live cultures, USDA Organic, 4g sugar. Benchmark clean kombucha.", confidence:"high", category:"beverage" }],
+  ["health-ade kombucha",           { floor:1, ceiling:3, substances:[], reason:"Raw, live cultures, clean ingredients", confidence:"high", category:"beverage" }],
+  ["kevita sparkling probiotic",    { floor:3, ceiling:5, substances:["stevia","citric acid"], reason:"Pasteurized — live culture benefit contested. Not equivalent to raw kombucha.", confidence:"high", category:"beverage" }],
+  ["gatorade zero",                 { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium","artificial dyes"], reason:"Two artificial sweeteners + petroleum dyes — sucralose + acesulfame-K + dye floors all fire. Not clean hydration.", confidence:"high", category:"beverage" }],
+  ["powerade zero",                 { floor:5, ceiling:7, substances:["sucralose","Blue 1"], reason:"Sucralose floor + Blue 1 dye floor — both fire. Not clean hydration.", confidence:"high", category:"beverage" }],
+  ["prime hydration",               { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — sucralose floor fires despite coconut water base", confidence:"high", category:"beverage" }],
+  ["electrolit",                    { floor:2, ceiling:4, substances:[], reason:"Electrolytes + sucrose + fructose — no sucralose, no artificial dyes. Cleaner sports drink.", confidence:"high", category:"beverage" }],
+  ["bolthouse farms",               { floor:4, ceiling:6, substances:["carrageenan","sucralose"], reason:"Carrageenan in some + sucralose in protein blends — carrageenan floor fires", confidence:"medium", category:"beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — FROZEN FOODS
+  // ══════════════════════════════════════════════════════════════
+  ["birds eye steamfresh",          { floor:1, ceiling:2, substances:[], reason:"Frozen vegetables — no additives. Benchmark clean frozen food.", confidence:"high", category:"food_beverage" }],
+  ["green giant steamers",          { floor:1, ceiling:2, substances:[], reason:"Just frozen vegetables — no additives", confidence:"high", category:"food_beverage" }],
+  ["amy's organic burrito",         { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole ingredients — benchmark clean frozen meal", confidence:"high", category:"food_beverage" }],
+  ["amy's frozen",                  { floor:1, ceiling:3, substances:[], reason:"USDA Organic line — genuinely clean frozen food", confidence:"high", category:"food_beverage" }],
+  ["dr. praeger's",                 { floor:2, ceiling:4, substances:[], reason:"Whole plant ingredients, no petroleum dyes, no TBHQ", confidence:"high", category:"food_beverage" }],
+  ["trader joe's mandarin orange chicken", { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in frying oil — TBHQ floor fires. Most popular TJ frozen item.", confidence:"high", category:"food_beverage" }],
+  ["morning star farms",            { floor:5, ceiling:7, substances:["TBHQ","BHA"], reason:"TBHQ + BHA in some products — BHA floor fires (mFloor:6). Plant-based ≠ clean.", confidence:"high", category:"food_beverage" }],
+  ["boca burger",                   { floor:5, ceiling:7, substances:["BHA","TBHQ"], reason:"BHA + TBHQ + enriched flour + artificial flavors — BHA floor fires", confidence:"high", category:"food_beverage" }],
+  ["digiorno pepperoni",            { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ"], reason:"Sodium nitrite in pepperoni (IARC Group 1) + TBHQ — both floors fire", confidence:"high", category:"food_beverage" }],
+  ["red baron pepperoni",           { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in pepperoni — floor fires", confidence:"high", category:"food_beverage" }],
+  ["totino's pizza rolls",          { floor:6, ceiling:8, substances:["TBHQ","mechanically separated meat"], reason:"TBHQ floor fires + mechanically separated chicken + enriched flour", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — CONDIMENTS
+  // ══════════════════════════════════════════════════════════════
+  ["frank's redhot",                { floor:1, ceiling:2, substances:[], reason:"Distilled vinegar + aged cayenne + salt — 3 clean ingredients. Benchmark clean hot sauce.", confidence:"high", category:"food_beverage" }],
+  ["franks redhot",                 { floor:1, ceiling:2, substances:[], reason:"3 clean ingredients — benchmark", confidence:"high", category:"food_beverage" }],
+  ["tabasco",                       { floor:1, ceiling:2, substances:[], reason:"Distilled vinegar + red peppers + salt — 3 ingredients", confidence:"high", category:"food_beverage" }],
+  ["cholula",                       { floor:1, ceiling:3, substances:[], reason:"Clean — peppers + spices, no HFCS, no artificial anything", confidence:"high", category:"food_beverage" }],
+  ["heinz yellow mustard",          { floor:1, ceiling:2, substances:[], reason:"Distilled vinegar + mustard seed + turmeric — clean", confidence:"high", category:"food_beverage" }],
+  ["french's yellow mustard",       { floor:1, ceiling:2, substances:[], reason:"Same clean formula as Heinz mustard", confidence:"high", category:"food_beverage" }],
+  ["rao's marinara",                { floor:1, ceiling:2, substances:[], reason:"Olive oil + San Marzano tomatoes + simple herbs. Benchmark clean pasta sauce.", confidence:"high", category:"food_beverage" }],
+  ["prego traditional",             { floor:3, ceiling:5, substances:["HFCS"], reason:"HFCS + citric acid + natural flavors — HFCS floor fires", confidence:"high", category:"food_beverage" }],
+  ["ragu traditional",              { floor:4, ceiling:6, substances:["HFCS","soybean oil"], reason:"HFCS + soybean oil + caramel color — floor fires. NEVER score same as Rao's.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GROCERY — DELI MEAT AND PROTEIN
+  // ══════════════════════════════════════════════════════════════
+  ["safe catch elite tuna",         { floor:1, ceiling:3, substances:[], reason:"Every can individually mercury tested — highest standard in canned tuna, BPA-free can", confidence:"high", category:"food_beverage" }],
+  ["wild planet tuna",              { floor:2, ceiling:4, substances:[], reason:"BPA-free can lining, skipjack (lowest mercury), olive oil packed", confidence:"high", category:"food_beverage" }],
+  ["diestel",                       { floor:1, ceiling:3, substances:[], reason:"Genuinely no nitrites — no sodium nitrite, no celery juice. Benchmark clean deli meat.", confidence:"high", category:"food_beverage" }],
+  ["diestel turkey",                { floor:1, ceiling:3, substances:[], reason:"Genuinely no nitrites — no sodium nitrite, no celery juice powder. Benchmark clean deli turkey.", confidence:"high", category:"food_beverage" }],
+  ["oscar mayer deli fresh",        { floor:4, ceiling:6, substances:["sodium nitrite"], reason:"Sodium nitrite — IARC Group 1 floor fires", confidence:"high", category:"food_beverage" }],
+  ["hillshire farm turkey",         { floor:4, ceiling:6, substances:["sodium nitrite"], reason:"Sodium nitrite — floor fires", confidence:"high", category:"food_beverage" }],
+  ["applegate naturals turkey",     { floor:4, ceiling:6, substances:["celery juice"], reason:"Celery juice powder — same nitrite exposure as conventional, just labeled 'uncured'. Not clean.", confidence:"high", category:"food_beverage" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
