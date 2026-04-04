@@ -4730,6 +4730,30 @@ function App() {
                   </>);
                 })()}
 
+                {/* ── RETAILER RESTRICTED BADGE ── */}
+                {result.retailer_restricted && (
+                  <div style={{
+                    marginTop: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: isDark ? '#1c1a0f' : '#fffbeb',
+                    border: '1.5px solid #fbbf24',
+                    borderRadius: 10,
+                    padding: '9px 14px',
+                  }}>
+                    <span style={{fontSize: 16, flexShrink: 0}}>🚫</span>
+                    <div>
+                      <div style={{fontSize: 12, fontWeight: 700, color: isDark ? '#fcd34d' : '#92400e', lineHeight: 1.3}}>
+                        Not accepted by leading clean grocery standards
+                      </div>
+                      <div style={{fontSize: 11, color: isDark ? '#fde68a' : '#b45309', marginTop: 2, lineHeight: 1.4}}>
+                        Contains one or more ingredients banned by major clean retailers
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
                 {(() => {
                   // Generic food/processing terms that are NOT harmful substances

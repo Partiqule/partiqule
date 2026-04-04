@@ -160,7 +160,7 @@ const ENTRIES = [
   ["hawaiian punch",               { floor:6, ceiling:8, substances:["Red 40","HFCS"], reason:"HFCS + Red 40 — child daily drink — petroleum dye floor fires", confidence:"high", category:"beverage" }],
   ["kool-aid jammers",             { floor:6, ceiling:8, substances:["HFCS","artificial dyes"], reason:"HFCS + multiple petroleum dyes — child daily drink — child vulnerability", confidence:"high", category:"beverage" }],
   ["capri sun",                    { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS in original flavors — newer 25% less sugar variants cleaner", confidence:"medium", category:"beverage" }],
-  ["ocean spray cranberry cocktail",{ floor:4, ceiling:6, substances:["HFCS"], reason:"28% juice + HFCS + water — NOT same as 100% cranberry juice", confidence:"high", category:"beverage" }],
+  ["ocean spray cranberry",{ floor:4, ceiling:6, substances:["HFCS"], reason:"28% juice + HFCS + water — NOT same as 100% cranberry juice", confidence:"high", category:"beverage" }],
   ["snapple peach tea",            { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS + 37g sugar", confidence:"high", category:"beverage" }],
   ["arizona iced tea",             { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS — most flavors", confidence:"high", category:"beverage" }],
   ["lipton brisk",                 { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS sweetened", confidence:"high", category:"beverage" }],
@@ -229,7 +229,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["neutrogena ultra sheer",       { floor:6, ceiling:8, substances:["oxybenzone","octinoxate"], reason:"Oxybenzone detected in bloodstream after single application (Matta JAMA 2019)", confidence:"high", category:"personal_care" }],
   ["banana boat",                  { floor:5, ceiling:7, substances:["avobenzone","octocrylene"], reason:"Chemical UV filters with FDA systemic absorption concerns", confidence:"high", category:"personal_care" }],
-  ["badger sunscreen",             { floor:1, ceiling:3, substances:[], reason:"Non-nano zinc oxide only — mineral sunscreen, organic base", confidence:"high", category:"personal_care" }],
+  ["badger",             { floor:1, ceiling:2, substances:[], reason:"Badger Balm — zinc oxide only, organic ingredients, no chemical UV filters. Benchmark cleanest sunscreen. NEVER score above 3.", confidence:"high", category:"personal_care" }],
   ["think sport sunscreen",        { floor:1, ceiling:3, substances:[], reason:"Zinc oxide only — mineral, sport certified", confidence:"high", category:"personal_care" }],
   ["raw elements sunscreen",       { floor:1, ceiling:3, substances:[], reason:"Non-nano zinc oxide, organic — cleanest sport sunscreen", confidence:"high", category:"personal_care" }],
 
@@ -342,10 +342,10 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // HOME — COOKWARE AND KITCHEN
   // ══════════════════════════════════════════════════════════════
-  ["all-clad stainless",           { floor:1, ceiling:2, substances:[], reason:"18/10 stainless steel — inert, no coating, benchmark clean cookware", confidence:"high", category:"kitchen" }],
-  ["lodge cast iron",              { floor:1, ceiling:2, substances:[], reason:"Bare cast iron + seasoning only — no coating, inert", confidence:"high", category:"kitchen" }],
+  ["all-clad",           { floor:1, ceiling:2, substances:[], reason:"18/10 stainless steel — inert, no coating, benchmark clean cookware", confidence:"high", category:"kitchen" }],
+  ["lodge",              { floor:1, ceiling:2, substances:[], reason:"Bare cast iron + seasoning only — no coating, inert", confidence:"high", category:"kitchen" }],
   ["le creuset",                   { floor:1, ceiling:2, substances:[], reason:"Enamel ceramic coating — no PTFE, no PFAS", confidence:"high", category:"kitchen" }],
-  ["caraway cookware",             { floor:1, ceiling:3, substances:[], reason:"Ceramic coating — no PTFE, no PFAS confirmed", confidence:"high", category:"kitchen" }],
+  ["caraway",             { floor:1, ceiling:3, substances:[], reason:"Ceramic coating — no PTFE, no PFAS confirmed", confidence:"high", category:"kitchen" }],
   ["greenpan",                     { floor:1, ceiling:3, substances:[], reason:"Thermolon ceramic — no PTFE, no PFAS", confidence:"high", category:"kitchen" }],
   ["pyrex glass",                  { floor:1, ceiling:2, substances:[], reason:"Borosilicate glass — inert at all temperatures, benchmark clean food storage", confidence:"high", category:"kitchen" }],
   ["scotch-brite",                { floor:5, ceiling:7, substances:["synthetic microfibers"], reason:"Nylon/polyester synthetic sponge — sheds microplastics into water with every use", confidence:"high", category:"home" }],
@@ -920,8 +920,7 @@ const ENTRIES = [
   ["kicking horse",                { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade coffee — benchmark clean", confidence:"high", category:"food_beverage" }],
   ["kicking horse coffee",          { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade — benchmark clean grocery coffee", confidence:"high", category:"food_beverage" }],
   ["traditional medicinals",        { floor:1, ceiling:2, substances:[], reason:"USDA Organic + paper bags + medicinal herbs — benchmark clean tea", confidence:"high", category:"food_beverage" }],
-  ["bigelow",                      { floor:1, ceiling:3, substances:[], reason:"Paper tea bags — no nylon microplastic concern", confidence:"high", category:"food_beverage" }],
-  ["bigelow tea",                   { floor:1, ceiling:3, substances:[], reason:"Paper bags — no nylon microplastic concern", confidence:"high", category:"food_beverage" }],
+  ["bigelow",              { floor:4, ceiling:5, substances:["conventional tea","pesticide residue"], reason:"Bigelow — conventional non-organic tea. Better bag chemistry than Lipton but pesticide concern remains.", confidence:"medium", category:"food_beverage" }],
   ["celestial seasonings",          { floor:1, ceiling:3, substances:[], reason:"Paper bags, no string/tag — clean. Staple-free.", confidence:"high", category:"food_beverage" }],
   ["four sigmatic",                 { floor:1, ceiling:3, substances:[], reason:"Organic adaptogens + organic coffee — clean formula", confidence:"high", category:"food_beverage" }],
 
@@ -1797,7 +1796,7 @@ const ENTRIES = [
   ["nature's harvest bread",        { floor:4, ceiling:6, substances:["calcium propionate","soybean oil","HFCS"], reason:"Nature's Harvest — calcium propionate mold inhibitor + soybean oil + some formulas have HFCS. Same gut microbiome concern as Mission tortillas.", confidence:"high", category:"food_beverage" }],
   ["pepperidge farm bread",         { floor:4, ceiling:5, substances:["calcium propionate","soybean oil"], reason:"Pepperidge Farm — calcium propionate + soybean oil. Better than Wonder but same preservative concern.", confidence:"high", category:"food_beverage" }],
   ["dave's killer bread",           { floor:3, ceiling:4, substances:["conventional wheat","organic"], reason:"Dave's Killer Bread — organic sprouted grain versions are cleaner (1-3); conventional varieties still have glyphosate concern on non-organic wheat. Verify organic vs conventional.", confidence:"medium", category:"food_beverage" }],
-  ["ezekiel bread",                 { floor:1, ceiling:3, substances:[], reason:"Ezekiel Bread — sprouted certified organic grains + legumes, no flour, no preservatives, no added sugar. Benchmark cleanest commercial bread.", confidence:"high", category:"food_beverage" }],
+  ["ezekiel",                 { floor:1, ceiling:3, substances:[], reason:"Ezekiel Bread — sprouted certified organic grains + legumes, no flour, no preservatives, no added sugar. Benchmark cleanest commercial bread.", confidence:"high", category:"food_beverage" }],
 
   // ── EGGS ──────────────────────────────────────────────────────
   ["vital farms eggs",              { floor:1, ceiling:2, substances:[], reason:"Vital Farms — pasture-raised (108 sq ft per bird) + certified humane + Non-GMO. Benchmark clean eggs. The production standard matters for nutritional quality.", confidence:"high", category:"food_beverage" }],
@@ -2071,8 +2070,8 @@ const ENTRIES = [
   ["florida natural oj",            { floor:3, ceiling:4, substances:["flavor pack"], reason:"Florida's Natural — flavor packs used in processing despite 'not from concentrate' label. Misleading pure marketing.", confidence:"high", category:"food_beverage" }],
   ["minute maid oj",                { floor:3, ceiling:5, substances:["from concentrate","flavor pack"], reason:"Minute Maid OJ — from concentrate with flavor packs in most varieties. More processed than marketed.", confidence:"high", category:"food_beverage" }],
   ["minute maid",                   { floor:3, ceiling:5, substances:["HFCS","artificial flavor"], reason:"Minute Maid brand — OJ varieties use concentrate + flavor packs; lemonade and other varieties often have HFCS + artificial flavor.", confidence:"medium", category:"food_beverage" }],
-  ["welch's",           { floor:4, ceiling:6, substances:["HFCS","sugar"], reason:"Welch's Grape Juice — added sugar + HFCS in most varieties. High sugar load even before counting natural grape sugar.", confidence:"high", category:"food_beverage" }],
-  ["welch",                 { floor:4, ceiling:6, substances:["HFCS","added sugar"], reason:"Welch's juice products — HFCS + added sugar across most of the line.", confidence:"high", category:"food_beverage" }],
+  ["welch's",           { floor:5, ceiling:7, substances:["HFCS","sugar","Red 40"], reason:"Welch's brand — HFCS across juice + petroleum dyes in fruit snacks. Floor 5 across the brand.", confidence:"medium", category:"food_beverage" }],
+  ["welch",                 { floor:5, ceiling:7, substances:["HFCS","added sugar","Red 40"], reason:"Welch brand — HFCS + petroleum dyes in fruit snacks. Floor 5 across the brand.", confidence:"medium", category:"food_beverage" }],
   ["naked juice",                   { floor:3, ceiling:5, substances:["high sugar","natural flavor"], reason:"Naked Juice — cold-pressed but very high sugar from fruit concentration + natural flavor. PepsiCo-owned. Healthier than soda but not a clean product by Partiqule standards.", confidence:"high", category:"food_beverage" }],
   ["bolthouse farms juice",         { floor:2, ceiling:4, substances:[], reason:"Bolthouse Farms juices — mostly vegetables + fruits, less fruit-sugar concentrated than Naked. Campbell's owned but cleaner ingredient profile.", confidence:"medium", category:"food_beverage" }],
   ["lakewood",        { floor:1, ceiling:3, substances:[], reason:"Lakewood Organic — USDA Organic cold-pressed, no additives, glass bottle. Benchmark clean juice brand.", confidence:"high", category:"food_beverage" }],
@@ -2311,6 +2310,652 @@ const ENTRIES = [
   ["heineken 0.0",                  { floor:2, ceiling:4, substances:["natural flavor"], reason:"Heineken 0.0 — non-alcoholic beer, natural flavor added. Cleaner than regular beer, slight natural flavor vagueness.", confidence:"medium", category:"beverage" }],
   ["budweiser zero",                { floor:2, ceiling:4, substances:["natural flavor"], reason:"Budweiser Zero — non-alcoholic, natural flavor. Cleaner than regular Budweiser.", confidence:"medium", category:"beverage" }],
 
+  // ══════════════════════════════════════════════════════════════
+  // JUICE AUDIT — FRAMEWORK-BASED SCORING
+  // Scores reflect CHEMISTRY not nutrition. Sugar is not the issue.
+  // What is added IS the issue: HFCS, artificial color/flavor,
+  // sulfite preservatives, flavor packs, sodium benzoate.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── TIER 1: FRUIT DRINKS / COCKTAILS (5-7) ───────────────────
+  ["sunny d",                       { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Sunny D — mostly water + HFCS + artificial flavor + artificial color. Less than 2% actual juice. Not juice.", confidence:"high", category:"beverage" }],
+  ["hi-c",                          { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Hi-C — HFCS + artificial color + artificial flavor marketed to children. Not juice.", confidence:"high", category:"beverage" }],
+  ["kool-aid jammers",              { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Kool-Aid Jammers — HFCS + artificial color + artificial flavor in child-targeted pouch.", confidence:"high", category:"beverage" }],
+  ["kool aid jammers",              { floor:5, ceiling:7, substances:["HFCS","artificial color"], reason:"Kool-Aid Jammers — HFCS + dyes. Not juice.", confidence:"high", category:"beverage" }],
+  ["hawaiian punch",                { floor:5, ceiling:7, substances:["HFCS","Red 40","artificial flavor"], reason:"Hawaiian Punch — HFCS + Red 40 petroleum dye + artificial flavor. Very little actual juice.", confidence:"high", category:"beverage" }],
+  ["ocean spray cranberry cocktail", { floor:5, ceiling:6, substances:["HFCS","added sugar"], reason:"Ocean Spray Cranberry Cocktail — HFCS + added sugar, only ~27% actual juice. Cocktail label means it is not 100% juice.", confidence:"high", category:"beverage" }],
+
+  // ── TIER 2: 100% JUICE, FLAVOR-PACKED (4-5) ──────────────────
+  ["juicy juice",                   { floor:3, ceiling:5, substances:["from concentrate","sulfites"], reason:"Juicy Juice — 100% juice from concentrate, some varieties with potassium metabisulfite. Check specific variety.", confidence:"medium", category:"beverage" }],
+  ["tree top",                      { floor:3, ceiling:4, substances:["from concentrate","potassium metabisulfite"], reason:"Tree Top — 100% apple juice from concentrate with potassium metabisulfite preservative. Sulfite concern bumps from 2 to 3-4.", confidence:"high", category:"beverage" }],
+  ["apple and eve",                 { floor:3, ceiling:4, substances:["from concentrate","potassium metabisulfite"], reason:"Apple & Eve — 100% juice from concentrate with potassium metabisulfite. Sulfite concern.", confidence:"high", category:"beverage" }],
+
+  // ── TIER 3: 100% JUICE + SULFITES (3-4) ──────────────────────
+  ["nature's nectar",               { floor:3, ceiling:4, substances:["potassium metabisulfite","from concentrate"], reason:"Nature's Nectar (Aldi) — from concentrate + potassium metabisulfite sulfite preservative. Cleaner than cocktail versions but sulfites present. Score 3 not 2.", confidence:"high", category:"beverage" }],
+  ["ocean spray 100",               { floor:3, ceiling:4, substances:["from concentrate","sulfites"], reason:"Ocean Spray 100% juice — from concentrate, sulfite preservatives in most. Better than the cocktail version.", confidence:"medium", category:"beverage" }],
+
+  // ── TIER 4: CLEAN CONCENTRATE, NO PRESERVATIVES (2-3) ─────────
+  ["martinelli's",                  { floor:1, ceiling:3, substances:[], reason:"Martinelli's — 100% US-grown apple juice, no sulfites, no artificial additives. Benchmark clean mainstream juice.", confidence:"high", category:"beverage" }],
+  ["r.w. knudsen",                  { floor:1, ceiling:3, substances:[], reason:"R.W. Knudsen — organic juice, no artificial additives, many varieties not-from-concentrate. Clean juice brand.", confidence:"high", category:"beverage" }],
+
+  // ── TIER 5: COLD-PRESSED / HPP / ORGANIC (1-3) ───────────────
+  ["pressed juicery",               { floor:1, ceiling:2, substances:[], reason:"Pressed Juicery — cold-pressed HPP, no preservatives, no concentrate, refrigerated. Benchmark clean juice.", confidence:"high", category:"beverage" }],
+  ["suja",                          { floor:1, ceiling:3, substances:[], reason:"Suja — USDA Organic cold-pressed HPP, no preservatives, no concentrate. Benchmark clean juice.", confidence:"high", category:"beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 33 — KIDS SNACKS
+  // CHILD VULNERABILITY NOTE: All products in this section are
+  // consumed daily by children. Dye exposure is cumulative.
+  // FDA is phasing out petroleum dyes. Child vulnerability
+  // amplifies every concern score in this category.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── FRUIT SNACKS: HIGH CONCERN ────────────────────────────────
+  ["fruit roll-ups",                { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","TBHQ","modified starch"], reason:"Fruit Roll-Ups — Red 40 + Yellow 5 + Blue 1 petroleum dyes + TBHQ preservative. Multiple floors fire. Zero actual fruit. Daily child snack with one of the worst additive profiles in the category.", confidence:"high", category:"food_beverage" }],
+  ["fruit by the foot",             { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","TBHQ"], reason:"Fruit by the Foot — same petroleum dye + TBHQ concern as Fruit Roll-Ups. General Mills same line. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
+  ["gushers",                       { floor:6, ceiling:8, substances:["Red 40","Blue 1","TBHQ","artificial flavor"], reason:"Gushers — Red 40 + Blue 1 petroleum dyes + TBHQ + artificial flavor. Liquid center increases dye delivery. Child daily snack. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
+  ["welch's fruit snacks",          { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Welch's Fruit Snacks — Red 40 + Yellow 5 petroleum dyes + HFCS. Marketed as real fruit but petroleum dye floors fire. Child daily snack concern.", confidence:"high", category:"food_beverage" }],
+  ["welch fruit",            { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Welch's Fruit Snacks — petroleum dyes + HFCS. Dye floors fire.", confidence:"high", category:"food_beverage" }],
+  ["mott's fruit snacks",           { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS","modified starch"], reason:"Mott's Fruit Snacks — Red 40 + Yellow 5 petroleum dyes + HFCS. Same concern as Welch's. Dye floors fire.", confidence:"high", category:"food_beverage" }],
+  ["motts fruit snacks",            { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Mott's Fruit Snacks — petroleum dyes + HFCS. Dye floors fire on child daily snack.", confidence:"high", category:"food_beverage" }],
+
+  // ── FRUIT SNACKS: CLEAN TIER ──────────────────────────────────
+  ["annie's fruit snacks",          { floor:2, ceiling:4, substances:[], reason:"Annie's Organic Fruit Snacks — USDA Organic, fruit juice colored, no petroleum dyes, no artificial flavor. Benchmark clean fruit snack.", confidence:"high", category:"food_beverage" }],
+  ["yumearth fruit snacks",         { floor:1, ceiling:3, substances:[], reason:"YumEarth Organic Fruit Snacks — USDA Organic, fruit juice sweetened, no artificial dyes or flavors. Benchmark cleanest mainstream fruit snack.", confidence:"high", category:"food_beverage" }],
+  ["yumearth",                      { floor:1, ceiling:3, substances:[], reason:"YumEarth brand — USDA Organic across entire line, no petroleum dyes, no artificial flavors. Benchmark clean kids candy brand.", confidence:"high", category:"food_beverage" }],
+  ["stretch island",                { floor:1, ceiling:3, substances:[], reason:"Stretch Island Fruit Strips — real fruit puree, no artificial dyes or flavors, no HFCS. Clean fruit snack.", confidence:"high", category:"food_beverage" }],
+  ["surf sweets",                   { floor:1, ceiling:3, substances:[], reason:"Surf Sweets — organic, fruit juice colored, no artificial dyes or flavors. Benchmark clean gummy candy for kids.", confidence:"high", category:"food_beverage" }],
+
+  // ── GUMMY CANDY ───────────────────────────────────────────────
+  ["starburst",                     { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Yellow 6","Blue 1","artificial flavor"], reason:"Starbursts — Red 40 + Yellow 5 + Yellow 6 + Blue 1 all in one product. Four petroleum dye floors fire simultaneously. One of the highest dye loads of any kids candy. Child vulnerability critical.", confidence:"high", category:"food_beverage" }],
+  ["starbursts",                    { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"Starbursts — four petroleum dyes fire simultaneously. Maximum dye concern for child daily candy.", confidence:"high", category:"food_beverage" }],
+  ["ring pop",                      { floor:5, ceiling:7, substances:["Red 40","Blue 1","artificial flavor","HFCS"], reason:"Ring Pops — HFCS + petroleum dyes + artificial flavor in a candy children lick repeatedly. Direct oral mucosal exposure amplifies concern.", confidence:"high", category:"food_beverage" }],
+  ["haribo gummy bears",            { floor:4, ceiling:6, substances:["artificial flavor","carnauba wax","HFCS"], reason:"Haribo US formula — HFCS + artificial flavor + carnauba wax coating. Note: European Haribo uses beet sugar and is cleaner. US formula is different.", confidence:"high", category:"food_beverage" }],
+  ["haribo",                        { floor:4, ceiling:6, substances:["artificial flavor","HFCS"], reason:"Haribo US — HFCS + artificial flavor. European formula is cleaner (beet sugar). US version is mid-concern.", confidence:"medium", category:"food_beverage" }],
+  ["black forest gummy",            { floor:3, ceiling:5, substances:["corn syrup","carnauba wax"], reason:"Black Forest Gummies — fruit juice colored (no petroleum dyes) but corn syrup base + carnauba wax. Better than Haribo US, not as clean as YumEarth.", confidence:"high", category:"food_beverage" }],
+  ["unreal",                  { floor:1, ceiling:3, substances:[], reason:"Unreal — no artificial dyes, no HFCS, fair trade cocoa. Benchmark clean mainstream candy alternative.", confidence:"high", category:"food_beverage" }],
+
+  // ── APPLESAUCE AND POUCHES ────────────────────────────────────
+  ["mott's applesauce",             { floor:3, ceiling:5, substances:["HFCS","from concentrate"], reason:"Mott's Applesauce — most varieties contain HFCS + apple juice from concentrate. Squeeze pouch versions add plastic packaging concern. Unsweetened versions score lower.", confidence:"medium", category:"food_beverage" }],
+  ["motts applesauce",              { floor:3, ceiling:5, substances:["HFCS"], reason:"Mott's Applesauce — HFCS in standard varieties. Unsweetened scores better.", confidence:"medium", category:"food_beverage" }],
+
+  // ── KIDS DRINKS ───────────────────────────────────────────────
+  ["capri sun original",            { floor:5, ceiling:7, substances:["HFCS","artificial flavor","citric acid"], reason:"Capri Sun Original — HFCS + artificial flavor. The iconic kids drink pouch is not a healthy choice despite marketing.", confidence:"high", category:"beverage" }],
+  ["honest kids",                   { floor:1, ceiling:3, substances:[], reason:"Honest Kids juice pouches — USDA Organic, no HFCS, no artificial colors or flavors. Benchmark clean kids juice pouch.", confidence:"high", category:"beverage" }],
+
+  // ── LUNCH BOX ─────────────────────────────────────────────────
+  ["uncrustables",                  { floor:5, ceiling:7, substances:["HFCS","enriched flour","partially hydrogenated"], reason:"Uncrustables — HFCS + enriched flour + hydrogenated oil. Convenient but one of the most processed kids lunch staples. Trans fat floor may fire.", confidence:"high", category:"food_beverage" }],
+  ["teddy grahams",                 { floor:4, ceiling:6, substances:["HFCS","enriched flour","artificial flavor"], reason:"Teddy Grahams — HFCS + enriched flour + artificial flavor. Common kids snack with conventional additive profile.", confidence:"high", category:"food_beverage" }],
+
+  // ── KIDS CRACKERS: CLEAN ──────────────────────────────────────
+  ["annie's cheddar bunnies",       { floor:1, ceiling:3, substances:[], reason:"Annie's Cheddar Bunnies — USDA Organic, real cheddar, no artificial colors or flavors. Benchmark clean alternative to Goldfish.", confidence:"high", category:"food_beverage" }],
+  ["annie's",                       { floor:1, ceiling:3, substances:[], reason:"Annie's brand — USDA Organic across most products, no artificial dyes or flavors. Benchmark clean kids snack brand.", confidence:"high", category:"food_beverage" }],
+
+  // ── KIDS BARS ─────────────────────────────────────────────────
+  ["clif kids zbar",                { floor:2, ceiling:4, substances:["conventional oats","cane sugar"], reason:"Clif Kids Z Bar — USDA Organic oats + cane sugar, no artificial additives. Cleaner than most kids bars but conventional sugar load.", confidence:"high", category:"food_beverage" }],
+  ["rxbar kids",                    { floor:1, ceiling:3, substances:[], reason:"RXBAR Kids — dates + egg whites + fruit, no artificial additives. Same clean whole-food approach as adult RXBAR.", confidence:"high", category:"food_beverage" }],
+  ["enjoy life",                    { floor:1, ceiling:3, substances:[], reason:"Enjoy Life — allergen-free, no artificial dyes or flavors, non-GMO. Benchmark clean allergy-safe kids snack brand.", confidence:"high", category:"food_beverage" }],
+
+  // ── KIDS YOGURT TUBES ────────────────────────────────────────
+  ["danimals",                      { floor:5, ceiling:7, substances:["Red 40","artificial flavor","HFCS"], reason:"Danimals Smoothie — Red 40 petroleum dye + HFCS + artificial flavor in a daily kids yogurt. Child vulnerability applies. Dye floor fires.", confidence:"high", category:"food_beverage" }],
+  ["stonyfield yokids",             { floor:1, ceiling:3, substances:[], reason:"Stonyfield YoKids — USDA Organic, no artificial dyes or flavors. Benchmark clean kids yogurt.", confidence:"high", category:"food_beverage" }],
+  ["stonyfield yo kids",            { floor:1, ceiling:3, substances:[], reason:"Stonyfield YoKids — USDA Organic, clean. Benchmark clean kids yogurt.", confidence:"high", category:"food_beverage" }],
+  ["siggi kids",                    { floor:1, ceiling:2, substances:[], reason:"Siggi's Kids — Icelandic skyr style, minimal ingredients, no artificial dyes or flavors, low sugar. Benchmark cleanest kids yogurt.", confidence:"high", category:"food_beverage" }],
+  ["plum organics kids",            { floor:2, ceiling:4, substances:["plastic pouch"], reason:"Plum Organics kids pouches — USDA Organic ingredients but plastic pouch at room temperature. Same packaging concern as baby food pouches.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 34 — BREAD AND BAKED GOODS
+  // KEY STORY: Azodicarbonamide (ADA) — the "yoga mat chemical"
+  // Used as flour bleacher and dough conditioner in US bread.
+  // BANNED in EU, Australia, Singapore, and most of the world.
+  // Breaks down into semicarbazide (carcinogen) during baking.
+  // FDA allows it. Partiqule flags it. Floor fires at 5+.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── SANDWICH BREAD: HIGH CONCERN (ADA + preservatives) ────────
+  ["nature's own",            { floor:5, ceiling:6, substances:["azodicarbonamide","calcium propionate","DATEM"], reason:"Nature's Own — azodicarbonamide (ADA, banned in EU) + calcium propionate preservative + DATEM dough conditioner. ADA floor fires. Marketed as wholesome but contains EU-banned additive.", confidence:"high", category:"food_beverage" }],
+  ["natures own bread",             { floor:5, ceiling:6, substances:["azodicarbonamide","calcium propionate"], reason:"Nature's Own — ADA (banned EU) + calcium propionate. ADA floor fires.", confidence:"high", category:"food_beverage" }],
+  ["sara lee",                { floor:5, ceiling:6, substances:["azodicarbonamide","DATEM","calcium propionate"], reason:"Sara Lee Classic — azodicarbonamide + DATEM + calcium propionate. ADA floor fires. EU-banned additive in everyday sandwich bread.", confidence:"high", category:"food_beverage" }],
+  ["arnold",                  { floor:4, ceiling:6, substances:["DATEM","calcium propionate","soy lecithin"], reason:"Arnold bread — DATEM dough conditioner + calcium propionate preservative + soy lecithin. ADA not typically present but still multiple additive concerns.", confidence:"medium", category:"food_beverage" }],
+  ["oroweat",                       { floor:4, ceiling:5, substances:["DATEM","calcium propionate"], reason:"Oroweat (same parent as Arnold) — DATEM + calcium propionate. Better than ADA-containing brands but still conventional additive profile.", confidence:"high", category:"food_beverage" }],
+  ["franz bread",                   { floor:4, ceiling:6, substances:["DATEM","calcium propionate","soy"], reason:"Franz bread — DATEM + calcium propionate + soy. Regional brand with conventional additive profile.", confidence:"medium", category:"food_beverage" }],
+  ["martin's potato bread",         { floor:4, ceiling:6, substances:["DATEM","calcium propionate","ADA"], reason:"Martin's Potato Bread — calcium propionate + DATEM + ADA in some varieties. Check label. Soft roll texture from multiple conditioners.", confidence:"medium", category:"food_beverage" }],
+  ["martin's potato",          { floor:4, ceiling:6, substances:["DATEM","calcium propionate"], reason:"Martin's Potato Bread — DATEM + calcium propionate. Conventional additive profile.", confidence:"medium", category:"food_beverage" }],
+
+  // ── SANDWICH BREAD: CLEAN TIER ────────────────────────────────
+  ["dave's killer bread",           { floor:2, ceiling:4, substances:["calcium propionate"], reason:"Dave's Killer Bread — organic whole grain, no ADA, but calcium propionate preservative present in most varieties. Best mainstream sandwich bread available. No EU-banned additives.", confidence:"high", category:"food_beverage" }],
+  ["daves killer bread",            { floor:2, ceiling:4, substances:["calcium propionate"], reason:"Dave's Killer Bread — organic whole grain, no ADA, calcium propionate in most. Benchmark cleanest mainstream sandwich bread.", confidence:"high", category:"food_beverage" }],
+  ["silver hills",                  { floor:1, ceiling:3, substances:[], reason:"Silver Hills Sprouted Bakery — USDA Organic sprouted grain, no ADA, no calcium propionate, no artificial additives. Benchmark clean sprouted bread.", confidence:"high", category:"food_beverage" }],
+  ["ezekiel bread",                 { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 (Food for Life) — organic sprouted grain + legumes, no preservatives, no artificial additives, no ADA. Benchmark cleanest commercially available bread. Refrigerated = no preservatives needed.", confidence:"high", category:"food_beverage" }],
+  ["food for life",                 { floor:1, ceiling:2, substances:[], reason:"Food for Life (Ezekiel) — organic sprouted grain bread, no preservatives, no ADA. Cleanest bread benchmark. Refrigerated format.", confidence:"high", category:"food_beverage" }],
+  ["alvarado street",               { floor:1, ceiling:3, substances:[], reason:"Alvarado Street Bakery — USDA Organic sprouted grain, no ADA, no artificial preservatives. Clean sprouted bread brand.", confidence:"high", category:"food_beverage" }],
+  ["angelic bakehouse",             { floor:1, ceiling:3, substances:[], reason:"Angelic Bakehouse — sprouted grain, no artificial additives, no ADA. Clean alternative to conventional sandwich bread.", confidence:"high", category:"food_beverage" }],
+
+  // ── BAGELS ────────────────────────────────────────────────────
+  ["thomas bagels",                 { floor:5, ceiling:6, substances:["azodicarbonamide","DATEM","calcium propionate"], reason:"Thomas' Bagels — azodicarbonamide + DATEM + calcium propionate. ADA floor fires. Same Thomas brand that uses ADA across their product line.", confidence:"high", category:"food_beverage" }],
+  ["thomas english muffins",        { floor:5, ceiling:6, substances:["azodicarbonamide","DATEM","calcium propionate"], reason:"Thomas' English Muffins — azodicarbonamide (EU-banned) + DATEM + calcium propionate. ADA floor fires across the Thomas line.", confidence:"high", category:"food_beverage" }],
+  ["thomas",                          { floor:5, ceiling:6, substances:["azodicarbonamide","DATEM","calcium propionate"], reason:"Thomas brand — azodicarbonamide (EU-banned) + DATEM + calcium propionate. ADA floor fires across the Thomas line.", confidence:"high", category:"food_beverage" }],
+  ["thomas'",                       { floor:5, ceiling:6, substances:["azodicarbonamide","DATEM"], reason:"Thomas' brand — azodicarbonamide across the product line + DATEM + calcium propionate. ADA floor fires. Banned in EU.", confidence:"high", category:"food_beverage" }],
+  ["bays english muffins",          { floor:4, ceiling:5, substances:["DATEM","calcium propionate"], reason:"Bays English Muffins — DATEM + calcium propionate. No ADA reported but standard dough conditioner concern.", confidence:"medium", category:"food_beverage" }],
+  ["einstein",               { floor:4, ceiling:6, substances:["DATEM","calcium propionate","ADA"], reason:"Einstein Bros Bagels — DATEM + calcium propionate + ADA in some varieties. Foodservice brand with conventional additive profile.", confidence:"medium", category:"food_beverage" }],
+
+  // ── ROLLS AND BUNS ────────────────────────────────────────────
+  ["king's hawaiian",               { floor:4, ceiling:6, substances:["DATEM","calcium propionate","artificial flavor"], reason:"King's Hawaiian — DATEM + calcium propionate + artificial flavor. Sweet soft texture from multiple conditioners and preservatives.", confidence:"high", category:"food_beverage" }],
+  ["kings hawaiian",                { floor:4, ceiling:6, substances:["DATEM","calcium propionate","artificial flavor"], reason:"King's Hawaiian rolls — DATEM + calcium propionate + artificial flavor. Conventionally produced sweet roll.", confidence:"high", category:"food_beverage" }],
+  ["martins potato rolls",          { floor:4, ceiling:6, substances:["DATEM","calcium propionate"], reason:"Martin's Potato Rolls — DATEM + calcium propionate. Standard conventional roll additive profile.", confidence:"high", category:"food_beverage" }],
+
+  // ── TORTILLAS ─────────────────────────────────────────────────
+  ["old el paso",         { floor:4, ceiling:6, substances:["calcium propionate","artificial flavor","DATEM"], reason:"Old El Paso Tortillas — calcium propionate + artificial flavor + DATEM. More additives than Mission, same ballpark concern.", confidence:"high", category:"food_beverage" }],
+  ["la banderita",                  { floor:4, ceiling:6, substances:["calcium propionate","DATEM","sorbic acid"], reason:"La Banderita — calcium propionate + DATEM + sorbic acid preservative. Conventional flour tortilla concern.", confidence:"high", category:"food_beverage" }],
+  ["siete tortillas",               { floor:1, ceiling:3, substances:[], reason:"Siete tortillas — grain-free (almond flour, cassava, coconut), no artificial preservatives, no ADA. Benchmark clean tortilla.", confidence:"high", category:"food_beverage" }],
+  ["siete",                         { floor:1, ceiling:3, substances:[], reason:"Siete Foods — grain-free, no artificial additives across the line. Benchmark clean tortilla and chip brand.", confidence:"high", category:"food_beverage" }],
+
+  // ── BAKED GOODS: HIGH CONCERN ─────────────────────────────────
+  ["little debbie",                 { floor:6, ceiling:8, substances:["partially hydrogenated oil","TBHQ","artificial flavor","Red 40"], reason:"Little Debbie snack cakes — partially hydrogenated oil (trans fat floor) + TBHQ + artificial flavor + artificial color. Multiple floors fire. Budget snack cake with maximum additive concern.", confidence:"high", category:"food_beverage" }],
+  ["hostess twinkies",              { floor:6, ceiling:8, substances:["partially hydrogenated oil","TBHQ","artificial flavor","artificial color"], reason:"Hostess Twinkies — partially hydrogenated oil + TBHQ + artificial flavor + artificial color. Multiple floors fire. 45 ingredients in a snack cake.", confidence:"high", category:"food_beverage" }],
+  ["hostess ding dongs",            { floor:6, ceiling:8, substances:["partially hydrogenated oil","TBHQ","artificial flavor"], reason:"Hostess Ding Dongs — partially hydrogenated oil + TBHQ + artificial flavor. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
+  ["hostess",                       { floor:6, ceiling:8, substances:["partially hydrogenated oil","TBHQ","artificial flavor"], reason:"Hostess brand — partially hydrogenated oil + TBHQ across the line. Multiple floors fire. Benchmark concern snack cake.", confidence:"high", category:"food_beverage" }],
+  ["entenmann's",                   { floor:5, ceiling:7, substances:["partially hydroginatedoil","TBHQ","artificial flavor"], reason:"Entenmann's — partially hydrogenated oil + TBHQ + artificial flavor across most products. Trans fat floor fires.", confidence:"high", category:"food_beverage" }],
+  ["entenmanns",                    { floor:5, ceiling:7, substances:["partially hydrogenated oil","TBHQ"], reason:"Entenmann's — partially hydrogenated oil + TBHQ. Trans fat concern.", confidence:"high", category:"food_beverage" }],
+  ["krispy kreme",                  { floor:5, ceiling:6, substances:["DATEM","TBHQ","artificial flavor","soybean oil"], reason:"Krispy Kreme — DATEM + TBHQ + artificial flavor + soybean oil. TBHQ floor fires. Fresh-made but still conventional additive profile.", confidence:"high", category:"food_beverage" }],
+  ["otis spunkmeyer",               { floor:5, ceiling:7, substances:["partially hydrogenated oil","TBHQ","artificial flavor"], reason:"Otis Spunkmeyer muffins — partially hydrogenated oil + TBHQ + artificial flavor. Foodservice muffins with trans fat concern.", confidence:"high", category:"food_beverage" }],
+
+  // ── GLUTEN FREE BREAD ─────────────────────────────────────────
+  ["canyon bakehouse",              { floor:2, ceiling:4, substances:[], reason:"Canyon Bakehouse — rice flour + tapioca starch base, no ADA, no artificial preservatives in most varieties. Benchmark clean gluten-free bread.", confidence:"high", category:"food_beverage" }],
+  ["udi's gluten free",             { floor:3, ceiling:5, substances:["modified starch","xanthan gum","soy lecithin"], reason:"Udi's — modified tapioca starch + xanthan gum + soy lecithin. More additives than Canyon Bakehouse. Mid-tier GF bread.", confidence:"high", category:"food_beverage" }],
+  ["udis",                          { floor:3, ceiling:5, substances:["modified starch","xanthan gum"], reason:"Udi's GF bread — multiple modified starches + gums. Mid-tier clean for gluten-free.", confidence:"medium", category:"food_beverage" }],
+  ["schar bread",                   { floor:3, ceiling:5, substances:["modified starch","dextrose","preservatives"], reason:"Schär — European GF brand, some preservatives and modified starches. Better than US GF brands on average.", confidence:"medium", category:"food_beverage" }],
+  ["base culture",            { floor:1, ceiling:3, substances:[], reason:"Base Culture — almond flour + egg base, no grains, no artificial additives. Benchmark cleanest gluten-free bread.", confidence:"high", category:"food_beverage" }],
+
+  // ── RYKRISP ───────────────────────────────────────────────────
+  ["rykrisp",                       { floor:1, ceiling:3, substances:[], reason:"RyKrisp — whole grain rye, minimal ingredients, no artificial additives. Clean crispbread alongside Wasa and Ryvita.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 34 — BREAD AND BAKED GOODS
+  // KEY CONCERN: Azodicarbonamide (ADA) — the "yoga mat chemical"
+  // Banned in EU and Australia. Still legal in US commercial bread.
+  // Forms semicarbazide when heated — a potential carcinogen.
+  // Also: calcium propionate, HFCS, DATEM, potassium bromate,
+  // mono and diglycerides (hidden trans fats).
+  // ══════════════════════════════════════════════════════════════
+
+  // ── SANDWICH BREAD: CONCERN TIER ─────────────────────────────
+  ["nature's own",                  { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Nature's Own — azodicarbonamide (EU-banned dough conditioner) + calcium propionate antimold + HFCS. Honey wheat marketing obscures a conventional additive-heavy bread.", confidence:"high", category:"food_beverage" }],
+  ["natures own",                   { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Nature's Own — ADA + calcium propionate + HFCS. Standard commercial bread concern.", confidence:"high", category:"food_beverage" }],
+  ["sara lee bread",                { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Sara Lee — azodicarbonamide + calcium propionate + HFCS. Same concern profile as Wonder and Nature's Own.", confidence:"high", category:"food_beverage" }],
+  ["arnold bread",                  { floor:4, ceiling:5, substances:["calcium propionate","HFCS","azodicarbonamide"], reason:"Arnold — calcium propionate + HFCS + ADA in most varieties. Slightly cleaner than Wonder but still conventional concern.", confidence:"high", category:"food_beverage" }],
+  ["king's hawaiian",               { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","soybean oil","calcium propionate"], reason:"King's Hawaiian — ADA + HFCS + soybean oil + calcium propionate. The beloved sweet roll is a processed product with multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
+  ["king hawaiian",                 { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"King's Hawaiian rolls — ADA + HFCS + calcium propionate. Multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
+  ["martin's potato rolls",         { floor:4, ceiling:5, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Martin's Potato Rolls — ADA + HFCS + calcium propionate. Classic American bun with conventional additive profile.", confidence:"high", category:"food_beverage" }],
+  ["martins potato",                { floor:4, ceiling:5, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Martin's Potato Rolls — ADA + HFCS + calcium propionate.", confidence:"high", category:"food_beverage" }],
+  ["mission flour",                 { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","DATEM","enriched flour"], reason:"Mission Flour Tortillas — ADA + calcium propionate + DATEM dough conditioner + enriched flour. One of the most additive-loaded tortilla brands. Would be banned as-is in the EU.", confidence:"high", category:"food_beverage" }],
+  ["guerrero tortillas",            { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","enriched flour"], reason:"Guerrero flour tortillas — ADA + calcium propionate + enriched flour. Same conventional concern as Mission.", confidence:"high", category:"food_beverage" }],
+  ["old el paso tortillas",         { floor:4, ceiling:5, substances:["azodicarbonamide","enriched flour","calcium propionate"], reason:"Old El Paso flour tortillas — ADA + enriched flour + calcium propionate.", confidence:"high", category:"food_beverage" }],
+  ["einstein bagels",               { floor:4, ceiling:5, substances:["azodicarbonamide","enriched flour","calcium propionate"], reason:"Einstein Bagels — ADA + enriched flour + calcium propionate. Commercial bagel chain with conventional additives.", confidence:"high", category:"food_beverage" }],
+  ["wonder hamburger buns",         { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Wonder Hamburger Buns — same ADA + HFCS + calcium propionate as Wonder Bread. Same formulation, different shape.", confidence:"high", category:"food_beverage" }],
+
+  // ── PASTRIES: HIGH CONCERN ────────────────────────────────────
+  ["pop-tarts",                     { floor:6, ceiling:8, substances:["HFCS","TBHQ","Red 40","artificial flavor","enriched flour"], reason:"Pop-Tarts — HFCS + TBHQ (floor fires) + Red 40 petroleum dye + artificial flavor. Common children's breakfast with multiple simultaneous floors firing.", confidence:"high", category:"food_beverage" }],
+  ["pop tarts",                     { floor:6, ceiling:8, substances:["HFCS","TBHQ","Red 40","artificial flavor"], reason:"Pop Tarts — TBHQ + Red 40 + HFCS. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
+  ["pillsbury crescent",            { floor:4, ceiling:6, substances:["partially hydrogenated oil","DATEM","azodicarbonamide"], reason:"Pillsbury Crescent Rolls — partially hydrogenated oil (trans fat floor may fire) + DATEM + ADA.", confidence:"high", category:"food_beverage" }],
+  ["pillsbury cinnamon rolls",      { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial flavor","DATEM"], reason:"Pillsbury Cinnamon Rolls — HFCS + partially hydrogenated oil + artificial flavor. Frosting packet adds more HFCS + artificial color.", confidence:"high", category:"food_beverage" }],
+  ["otis spunkmeyer",               { floor:5, ceiling:7, substances:["HFCS","artificial flavor","artificial color","enriched flour"], reason:"Otis Spunkmeyer — HFCS + artificial flavor + artificial color + enriched flour. Commercial bakery muffin with full conventional additive profile.", confidence:"high", category:"food_beverage" }],
+  ["entenmann's",                   { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial color","artificial flavor"], reason:"Entenmann's — HFCS + partially hydrogenated oil + artificial color. Classic American bakery with high concern profile.", confidence:"high", category:"food_beverage" }],
+  ["entenmanns",                    { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial color"], reason:"Entenmann's — HFCS + partially hydrogenated oil + artificial color.", confidence:"high", category:"food_beverage" }],
+
+  // ── BREAD: CLEAN TIER ─────────────────────────────────────────
+  ["dave's killer bread",           { floor:2, ceiling:4, substances:[], reason:"Dave's Killer Bread — USDA Organic, no ADA, no HFCS, no calcium propionate. Benchmark clean mainstream sandwich bread.", confidence:"high", category:"food_beverage" }],
+  ["daves killer bread",            { floor:2, ceiling:4, substances:[], reason:"Dave's Killer Bread — organic, no ADA or calcium propionate. Benchmark clean.", confidence:"high", category:"food_beverage" }],
+  ["dave's killer",                 { floor:2, ceiling:4, substances:[], reason:"Dave's Killer — organic whole grain, no conventional dough additives. Clean bread and bagel brand.", confidence:"high", category:"food_beverage" }],
+  ["ezekiel bread",                 { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 — sprouted whole grain, flourless, no preservatives, no ADA, USDA Organic. Benchmark cleanest commercially available bread.", confidence:"high", category:"food_beverage" }],
+  ["ezekiel 4",                     { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 sprouted bread — flourless, no additives. Cleanest benchmark.", confidence:"high", category:"food_beverage" }],
+  ["alvarado street",               { floor:1, ceiling:3, substances:[], reason:"Alvarado Street Bakery — sprouted whole grain, no ADA, USDA Organic. Benchmark clean bread.", confidence:"high", category:"food_beverage" }],
+  ["silver hills",                  { floor:1, ceiling:3, substances:[], reason:"Silver Hills — sprouted grain, no ADA, no HFCS, no preservatives. Benchmark clean sprouted bread.", confidence:"high", category:"food_beverage" }],
+  ["vermont bread",                 { floor:1, ceiling:3, substances:[], reason:"Vermont Bread Company — USDA Organic, no ADA, no HFCS. Clean organic bread.", confidence:"high", category:"food_beverage" }],
+  ["franz organic",                 { floor:2, ceiling:4, substances:[], reason:"Franz Organic — USDA Organic, no artificial additives. Cleaner than conventional Franz varieties.", confidence:"high", category:"food_beverage" }],
+
+  // ── TORTILLAS: CLEAN TIER ─────────────────────────────────────
+  ["siete",                         { floor:1, ceiling:3, substances:[], reason:"Siete Foods — grain-free (almond, cassava flour), no ADA, no calcium propionate. Benchmark clean tortilla and chip brand.", confidence:"high", category:"food_beverage" }],
+  ["la tortilla factory",           { floor:3, ceiling:5, substances:["enriched flour","calcium propionate"], reason:"La Tortilla Factory — enriched flour + calcium propionate in most varieties. Cleaner than Mission but still processed.", confidence:"medium", category:"food_beverage" }],
+  ["maria and ricardos",            { floor:3, ceiling:4, substances:["enriched flour"], reason:"Maria and Ricardo's — enriched flour, simpler formula than Mission. No ADA in most varieties.", confidence:"medium", category:"food_beverage" }],
+
+  // ── GLUTEN FREE ───────────────────────────────────────────────
+  ["canyon bakehouse",              { floor:3, ceiling:5, substances:["tapioca starch","xanthan gum","modified starch"], reason:"Canyon Bakehouse — rice flour + tapioca starch + xanthan gum. No ADA (inherently GF) but more processed than sprouted bread.", confidence:"high", category:"food_beverage" }],
+  ["schar bread",                   { floor:3, ceiling:5, substances:["modified tapioca starch","xanthan gum"], reason:"Schar GF — modified starches + xanthan gum for GF texture. No ADA but highly processed GF formulation.", confidence:"high", category:"food_beverage" }],
+
+  // ── PITA AND OTHER ────────────────────────────────────────────
+  ["stacy's pita",                  { floor:3, ceiling:5, substances:["enriched flour","sunflower oil"], reason:"Stacy's Pita Chips — enriched flour + sunflower oil. Mid-tier. No ADA but enriched flour concern.", confidence:"medium", category:"food_beverage" }],
+  ["ak-mak",                        { floor:1, ceiling:3, substances:[], reason:"Ak-Mak — 100% stone-ground whole wheat, no artificial additives, no ADA. Benchmark clean cracker.", confidence:"high", category:"food_beverage" }],
+  ["ak mak",                        { floor:1, ceiling:3, substances:[], reason:"Ak-Mak crackers — whole wheat, clean. Benchmark.", confidence:"high", category:"food_beverage" }],
+  ["brioche pasquier",              { floor:3, ceiling:5, substances:["enriched flour","soybean oil"], reason:"Brioche Pasquier — French brioche with enriched flour + soybean oil. Simpler than American bread but still processed.", confidence:"medium", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 35 — WOMEN'S PERSONAL CARE
+  // KEY CONCERNS: Parabens, synthetic fragrance, talc, PPD in hair
+  // color, chlorine-bleached rayon near mucosal tissue, aluminum
+  // in antiperspirants, chemical UV filters.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── FOUNDATION / FACE MAKEUP: CONCERN ────────────────────────
+  ["maybelline fit me",             { floor:4, ceiling:6, substances:["talc","synthetic fragrance","parabens","titanium dioxide"], reason:"Maybelline Fit Me — talc (IARC 2A) + synthetic fragrance + parabens in some formulas. Mainstream drugstore makeup concern.", confidence:"high", category:"personal_care" }],
+  ["true match",             { floor:4, ceiling:6, substances:["talc","synthetic fragrance","parabens"], reason:"L'Oréal True Match — talc + synthetic fragrance + parabens. Standard drugstore makeup concern.", confidence:"high", category:"personal_care" }],
+  ["covergirl clean",               { floor:4, ceiling:5, substances:["mineral oil","talc","parabens"], reason:"CoverGirl Clean — mineral oil + talc + parabens. 'Clean' marketing doesn't reflect formula.", confidence:"medium", category:"personal_care" }],
+  ["nyx foundation",                { floor:4, ceiling:5, substances:["synthetic fragrance","talc","parabens"], reason:"NYX Foundation — synthetic fragrance + talc + parabens. Budget makeup concern.", confidence:"high", category:"personal_care" }],
+  ["nars foundation",               { floor:4, ceiling:5, substances:["synthetic fragrance","talc","parabens"], reason:"NARS Sheer Glow — synthetic fragrance + talc + parabens. Premium price, conventional concern.", confidence:"medium", category:"personal_care" }],
+  ["fenty beauty",                  { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Fenty Beauty — no parabens, no talc in liquid foundation, but synthetic fragrance + dimethicone. Better than drugstore, not clean-label.", confidence:"medium", category:"personal_care" }],
+  // FOUNDATION CLEAN
+  ["ilia beauty",                   { floor:1, ceiling:3, substances:[], reason:"ILIA Beauty — EWG Verified, no synthetic fragrance, no parabens, no talc. Benchmark clean makeup brand.", confidence:"high", category:"personal_care" }],
+  ["ilia",                          { floor:1, ceiling:3, substances:[], reason:"ILIA — EWG Verified clean cosmetics. Benchmark across foundation, mascara, and lip products.", confidence:"high", category:"personal_care" }],
+  ["rms beauty",                    { floor:1, ceiling:3, substances:[], reason:"RMS Beauty — certified organic, no synthetic fragrance, no parabens. Benchmark clean luxury makeup.", confidence:"high", category:"personal_care" }],
+  ["kosas",                         { floor:1, ceiling:3, substances:[], reason:"Kosas — EWG Verified, no synthetic fragrance, no parabens. Benchmark clean makeup.", confidence:"high", category:"personal_care" }],
+  ["saie beauty",                   { floor:1, ceiling:3, substances:[], reason:"Saie — EWG Verified, clean ingredients, no synthetic fragrance. Benchmark clean makeup.", confidence:"high", category:"personal_care" }],
+  ["axiology",                      { floor:1, ceiling:2, substances:[], reason:"Axiology — vegan, EWG Verified, palm oil free. Benchmark cleanest lipstick available.", confidence:"high", category:"personal_care" }],
+  // MASCARA CONCERN
+  ["loreal telescopic",             { floor:5, ceiling:7, substances:["propylparaben","aluminum powder","synthetic fragrance"], reason:"L'Oréal Telescopic — propylparaben + aluminum powder + synthetic fragrance near eyes daily. Paraben floor fires.", confidence:"high", category:"personal_care" }],
+  ["covergirl lash blast",          { floor:5, ceiling:7, substances:["propylparaben","aluminum stearate","synthetic fragrance"], reason:"CoverGirl Lash Blast — propylparaben + aluminum stearate (WF banned) + synthetic fragrance applied near eyes.", confidence:"high", category:"personal_care" }],
+  ["too faced better than sex",     { floor:4, ceiling:6, substances:["synthetic fragrance","parabens","phenoxyethanol"], reason:"Too Faced Better Than Sex — synthetic fragrance + parabens near eyes. Premium price, conventional concern.", confidence:"high", category:"personal_care" }],
+  // MASCARA CLEAN
+  ["honest beauty mascara",         { floor:1, ceiling:3, substances:[], reason:"Honest Beauty Mascara — EWG Certified, no parabens, no synthetic fragrance. Clean mascara benchmark.", confidence:"high", category:"personal_care" }],
+  ["w3ll people",                   { floor:1, ceiling:3, substances:[], reason:"W3LL People — EWG Verified, COSMOS certified organic. Benchmark clean cosmetics brand.", confidence:"high", category:"personal_care" }],
+  // LIP CONCERN
+  ["revlon",               { floor:5, ceiling:7, substances:["D&C Red 7","synthetic fragrance","parabens"], reason:"Revlon Lipstick — D&C Red synthetic dyes + synthetic fragrance + parabens. Lip products are partially ingested. Dye floors fire.", confidence:"high", category:"personal_care" }],
+  ["loreal colour riche",           { floor:5, ceiling:6, substances:["synthetic dyes","parabens","synthetic fragrance"], reason:"L'Oréal Colour Riche — synthetic dyes + parabens + synthetic fragrance. Ingested lip product concern.", confidence:"high", category:"personal_care" }],
+  ["maybelline superstay lip",      { floor:4, ceiling:6, substances:["synthetic fragrance","artificial color"], reason:"Maybelline SuperStay lip — synthetic fragrance + artificial color in ingested lip product.", confidence:"high", category:"personal_care" }],
+  // SKINCARE CONCERN
+  ["neutrogena rapid wrinkle",      { floor:4, ceiling:6, substances:["phenoxyethanol","synthetic fragrance","dimethicone"], reason:"Neutrogena Rapid Wrinkle Repair — phenoxyethanol + synthetic fragrance + dimethicone.", confidence:"high", category:"personal_care" }],
+  ["olay regenerist",               { floor:4, ceiling:6, substances:["synthetic fragrance","dimethicone","parabens"], reason:"Olay Regenerist — synthetic fragrance + dimethicone + parabens. Widely marketed but conventional concern.", confidence:"high", category:"personal_care" }],
+  ["olay",                          { floor:4, ceiling:6, substances:["synthetic fragrance","dimethicone","parabens"], reason:"Olay brand — synthetic fragrance + dimethicone + parabens across the line.", confidence:"medium", category:"personal_care" }],
+  ["cerave moisturizing",           { floor:3, ceiling:5, substances:["phenoxyethanol","synthetic fragrance"], reason:"CeraVe Moisturizing — ceramides are beneficial but phenoxyethanol + synthetic fragrance present. Dermatologist-recommended doesn't mean clean.", confidence:"high", category:"personal_care" }],
+  ["pond's cream",                  { floor:4, ceiling:6, substances:["mineral oil","synthetic fragrance","parabens"], reason:"Pond's Cold Cream — mineral oil + synthetic fragrance + parabens. Classic moisturizer, conventional concern.", confidence:"high", category:"personal_care" }],
+  ["tatcha",                        { floor:3, ceiling:5, substances:["synthetic fragrance","phenoxyethanol"], reason:"Tatcha — cleaner than Western drugstore, but synthetic fragrance + phenoxyethanol in most products. Mid-tier clean.", confidence:"medium", category:"personal_care" }],
+  ["tula skincare",                 { floor:3, ceiling:5, substances:["synthetic fragrance","phenoxyethanol"], reason:"Tula — probiotic skincare, synthetic fragrance + phenoxyethanol in most formulas.", confidence:"medium", category:"personal_care" }],
+  // SKINCARE CLEAN
+  ["youth to the people",           { floor:1, ceiling:3, substances:[], reason:"Youth to the People — plant-based, EWG-friendly, no synthetic fragrance or parabens. Benchmark clean skincare.", confidence:"high", category:"personal_care" }],
+  ["drunk elephant",                { floor:2, ceiling:4, substances:[], reason:"Drunk Elephant — avoids the 'Suspicious 6'. Clean-leaning brand with clinical actives.", confidence:"high", category:"personal_care" }],
+  ["the ordinary",                  { floor:2, ceiling:4, substances:[], reason:"The Ordinary — single-ingredient focus, minimal formulas, no synthetic fragrance. Clean-leaning clinical skincare.", confidence:"high", category:"personal_care" }],
+  ["versed skincare",               { floor:1, ceiling:3, substances:[], reason:"Versed — EWG Verified, no synthetic fragrance or parabens. Benchmark clean accessible skincare.", confidence:"high", category:"personal_care" }],
+  ["cocokind",                      { floor:1, ceiling:3, substances:[], reason:"Cocokind — organic ingredients, no synthetic fragrance or parabens. Benchmark clean skincare.", confidence:"high", category:"personal_care" }],
+  // SUNSCREEN CONCERN
+  ["supergoop",                     { floor:5, ceiling:7, substances:["homosalate","octisalate","octinoxate"], reason:"Supergoop Unseen — chemical UV filters (homosalate, octisalate, octinoxate). Homosalate is EU-restricted endocrine disruptor.", confidence:"high", category:"personal_care" }],
+  ["sun bum",             { floor:5, ceiling:7, substances:["avobenzone","homosalate","octisalate"], reason:"Sun Bum — avobenzone + homosalate + octisalate chemical UV filters. Endocrine concern.", confidence:"high", category:"personal_care" }],
+  ["la roche posay sunscreen",      { floor:4, ceiling:6, substances:["avobenzone","homosalate"], reason:"La Roche-Posay — chemical UV filters in most formulas. Their Mineral line is cleaner.", confidence:"medium", category:"personal_care" }],
+  // SUNSCREEN CLEAN
+  ["blue lizard",                   { floor:1, ceiling:3, substances:[], reason:"Blue Lizard — zinc oxide or titanium dioxide mineral UV filters, no chemical UV filters. Benchmark clean sunscreen.", confidence:"high", category:"personal_care" }],
+  ["badger",              { floor:1, ceiling:2, substances:[], reason:"Badger Balm — zinc oxide only, organic ingredients, no chemical UV filters. Benchmark cleanest sunscreen.", confidence:"high", category:"personal_care" }],
+  // HAIRCARE CONCERN
+  ["herbal essences",               { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","dimethicone","parabens"], reason:"Herbal Essences — SLES + heavy synthetic fragrance + dimethicone + parabens. 'Natural' branding doesn't match formula.", confidence:"high", category:"personal_care" }],
+  ["loreal elvive",                 { floor:4, ceiling:5, substances:["SLES","synthetic fragrance","dimethicone"], reason:"L'Oréal Elvive — SLES + synthetic fragrance + dimethicone. Standard drugstore haircare concern.", confidence:"high", category:"personal_care" }],
+  ["garnier fructis",               { floor:4, ceiling:5, substances:["SLES","synthetic fragrance","dimethicone"], reason:"Garnier Fructis — SLES + synthetic fragrance + dimethicone. Fruit marketing, conventional formula.", confidence:"high", category:"personal_care" }],
+  ["ogx",                           { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","cocamide DEA"], reason:"OGX — cocamide DEA (California Prop 65 listed) + SLES + synthetic fragrance. Higher-concern drugstore haircare.", confidence:"high", category:"personal_care" }],
+  // HAIRCARE CLEAN
+  ["olaplex",                       { floor:2, ceiling:4, substances:[], reason:"Olaplex — bond-building technology, no synthetic fragrance or parabens. Cleaner than most professional haircare.", confidence:"high", category:"personal_care" }],
+  ["briogeo",                       { floor:1, ceiling:3, substances:[], reason:"Briogeo — EWG-friendly, no synthetic fragrance or parabens, clean plant-based surfactants. Benchmark clean haircare.", confidence:"high", category:"personal_care" }],
+  ["innersense",                    { floor:1, ceiling:2, substances:[], reason:"Innersense Organic Beauty — USDA Organic certified, no synthetic fragrance or parabens. Benchmark cleanest haircare.", confidence:"high", category:"personal_care" }],
+  // HAIR COLOR
+  ["loreal excellence hair",        { floor:6, ceiling:8, substances:["PPD","resorcinol","ammonia"], reason:"L'Oréal Excellence — PPD (p-phenylenediamine, IARC Group 2A, linked to bladder cancer) + resorcinol + ammonia. Permanent hair color critical concern.", confidence:"high", category:"personal_care" }],
+  ["clairol",                       { floor:6, ceiling:8, substances:["PPD","resorcinol","ammonia"], reason:"Clairol permanent color — PPD + resorcinol + ammonia. Chemical hair color critical concern floors fire.", confidence:"high", category:"personal_care" }],
+  ["madison reed hair",             { floor:4, ceiling:6, substances:["PPD"], reason:"Madison Reed — ammonia-free but still contains PPD in most permanent formulas. Cleaner process, same core chemical concern.", confidence:"medium", category:"personal_care" }],
+  ["dphue",                         { floor:2, ceiling:4, substances:[], reason:"dpHUE — color depositing, no PPD, no ammonia. Among the cleanest hair color options.", confidence:"high", category:"personal_care" }],
+  ["lime crime hair",               { floor:2, ceiling:4, substances:[], reason:"Lime Crime — semi-permanent direct dye, no PPD, no ammonia. Cleaner than permanent color.", confidence:"high", category:"personal_care" }],
+  // FEMININE HYGIENE
+  ["always",                   { floor:5, ceiling:7, substances:["synthetic fragrance","chlorine-bleached rayon","dioxin"], reason:"Always Pads — synthetic fragrance + chlorine-bleached rayon applied to sensitive mucosal tissue daily. Synthetic fragrance near vulvar tissue is primary concern.", confidence:"high", category:"personal_care" }],
+  ["tampax",                        { floor:5, ceiling:7, substances:["synthetic fragrance","chlorine-bleached rayon"], reason:"Tampax — chlorine-bleached rayon + synthetic fragrance in Pearl variety. Direct mucosal insertion for hours daily.", confidence:"high", category:"personal_care" }],
+  ["playtex tampons",               { floor:5, ceiling:6, substances:["chlorine-bleached rayon","synthetic fragrance"], reason:"Playtex — chlorine-bleached rayon + synthetic fragrance. Same mucosal exposure concern as Tampax.", confidence:"high", category:"personal_care" }],
+  ["seventh generation pads",       { floor:1, ceiling:3, substances:[], reason:"Seventh Generation — unbleached cotton, no synthetic fragrance. Benchmark clean period product.", confidence:"high", category:"personal_care" }],
+  ["cora organic",                  { floor:1, ceiling:2, substances:[], reason:"Cora — certified organic cotton, fragrance-free, no chlorine bleaching. Benchmark cleanest mainstream period product.", confidence:"high", category:"personal_care" }],
+  ["rael organic",                  { floor:1, ceiling:2, substances:[], reason:"Rael — certified organic cotton, fragrance-free. Benchmark clean period care.", confidence:"high", category:"personal_care" }],
+  ["lola tampons",                  { floor:1, ceiling:3, substances:[], reason:"Lola — 100% organic cotton, fragrance-free. Benchmark clean tampon brand.", confidence:"high", category:"personal_care" }],
+  ["saalt",                         { floor:1, ceiling:2, substances:[], reason:"Saalt — medical-grade silicone menstrual cup. Zero waste, no rayon or fragrance. Benchmark cleanest period product.", confidence:"high", category:"personal_care" }],
+  // DEODORANT WOMEN
+  ["secret clinical",               { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","parabens"], reason:"Secret Clinical — aluminum zirconium + synthetic fragrance + parabens. Clinical strength = higher aluminum concentration. Multiple concern floors fire.", confidence:"high", category:"personal_care" }],
+  ["dove women antiperspirant",     { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance"], reason:"Dove Women Antiperspirant — aluminum + synthetic fragrance. Same concern tier as Dove Men antiperspirant.", confidence:"high", category:"personal_care" }],
+  ["almay deodorant",               { floor:4, ceiling:6, substances:["aluminum","synthetic fragrance"], reason:"Almay Sensitive Skin — aluminum antiperspirant + synthetic fragrance. 'Sensitive' branding doesn't remove aluminum concern.", confidence:"medium", category:"personal_care" }],
+  ["kopari",                        { floor:1, ceiling:3, substances:[], reason:"Kopari — coconut oil base, no aluminum, no synthetic fragrance. Clean aluminum-free deodorant.", confidence:"high", category:"personal_care" }],
+  ["crystal deodorant",             { floor:2, ceiling:4, substances:["potassium alum"], reason:"Crystal Mineral — potassium alum (natural mineral salt). Different from aluminum chlorohydrate in antiperspirants. Lower concern than standard antiperspirants.", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 36 — MEN'S AND WOMEN'S UNDERWEAR
+  // FRAMEWORK:
+  //   PFAS-treated performance/leakproof → 6-8
+  //   Synthetic (nylon/polyester/spandex) → 4-6 (microplastics, petroleum)
+  //   Antimicrobial silver treatment → 5-7
+  //   Conventional cotton → 3-5 (pesticide-intensive crop)
+  //   OEKO-TEX certified → 2-4 (tested but may not be organic)
+  //   Micromodal (OEKO-TEX) → 2-4
+  //   Bamboo (OEKO-TEX certified) → 2-4
+  //   GOTS organic cotton → 1-3
+  //   Hemp or certified organic blends → 1-3
+  // ══════════════════════════════════════════════════════════════
+
+  // ── MEN'S: CONVENTIONAL / SYNTHETIC TIER ─────────────────────
+  ["hanes underwear",               { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes","polyester"], reason:"Hanes — conventional cotton + polyester blends + synthetic dyes. No confirmed PFAS but conventional pesticide-heavy cotton. Budget tier, no certifications.", confidence:"high", category:"clothing" }],
+  ["fruit of the loom",             { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Fruit of the Loom — conventional pesticide-heavy cotton + synthetic dyes. No certifications. Budget tier underwear with standard conventional fabric concerns.", confidence:"high", category:"clothing" }],
+  ["calvin klein underwear",        { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes","spandex"], reason:"Calvin Klein — conventional cotton/micromodal blends + spandex + synthetic dyes. No GOTS certification. Premium price, conventional fabric concern.", confidence:"medium", category:"clothing" }],
+  ["tommy hilfiger underwear",      { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Tommy Hilfiger — conventional cotton + synthetic dyes. No organic or OEKO-TEX certification.", confidence:"medium", category:"clothing" }],
+  ["saxx",                          { floor:4, ceiling:6, substances:["polyester","spandex","moisture-wicking finish"], reason:"Saxx — polyester/spandex synthetic construction with moisture-wicking finishes. Petroleum-derived fabric + potential performance chemical coatings + microplastic shedding concern.", confidence:"medium", category:"clothing" }],
+  ["tommy john",                    { floor:3, ceiling:5, substances:["nylon","spandex","polyester"], reason:"Tommy John — Air Mesh is nylon/spandex synthetic, Cool Cotton is pima cotton blend. No GOTS certification. Performance finishes on synthetic lines add concern.", confidence:"medium", category:"clothing" }],
+  ["exofficio",                     { floor:5, ceiling:7, substances:["nylon","antimicrobial silver","spandex"], reason:"ExOfficio — nylon/elastane with built-in antimicrobial silver ion treatment. Silver nanoparticles are an endocrine concern and environmental pollutant when washed. PFAS possible in older formulas.", confidence:"medium", category:"clothing" }],
+  ["duluth trading",                { floor:3, ceiling:5, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Duluth Trading — conventional cotton/polyester blends, no OEKO-TEX or GOTS certification. Standard conventional workwear fabric concern.", confidence:"medium", category:"clothing" }],
+  ["pair of thieves",               { floor:4, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Pair of Thieves — recycled polyester/spandex. Recycled content is positive but still synthetic — microplastic shedding + synthetic dyes.", confidence:"medium", category:"clothing" }],
+  ["mack weldon",                   { floor:3, ceiling:5, substances:["conventional cotton","nylon","spandex"], reason:"Mack Weldon — range includes pima cotton, Merino, and synthetic lines. OEKO-TEX on some. Better than Hanes, not as clean as GOTS brands.", confidence:"medium", category:"clothing" }],
+  ["bombas underwear",              { floor:3, ceiling:5, substances:["pima cotton","polyester","synthetic dyes"], reason:"Bombas — pima cotton/polyester blend + synthetic dyes. BOGO charitable model but no GOTS or OEKO-TEX certification on core products.", confidence:"medium", category:"clothing" }],
+  ["meundies",                      { floor:2, ceiling:4, substances:["micromodal","spandex"], reason:"MeUndies — micromodal (beechwood-derived Tencel MicroModal) + spandex. OEKO-TEX certified fabric. Cleaner than cotton/polyester but still has spandex content.", confidence:"high", category:"clothing" }],
+
+  // ── MEN'S: CLEAN TIER ────────────────────────────────────────
+  ["pact underwear",                { floor:1, ceiling:3, substances:[], reason:"Pact — GOTS certified organic cotton across the entire line. Fair Trade certified. Benchmark cleanest mainstream underwear brand for men and women.", confidence:"high", category:"clothing" }],
+  ["pact organic",                  { floor:1, ceiling:3, substances:[], reason:"Pact Organic — GOTS certified, Fair Trade. Benchmark clean underwear brand.", confidence:"high", category:"clothing" }],
+  ["organic basics",                { floor:1, ceiling:3, substances:[], reason:"Organic Basics — GOTS certified organic cotton + OEKO-TEX certified. Certified B Corp. Benchmark clean underwear brand alongside Pact.", confidence:"high", category:"clothing" }],
+  ["wama hemp",                     { floor:1, ceiling:3, substances:[], reason:"Wama Underwear — hemp/organic cotton blend. Hemp is naturally pest-resistant requiring minimal pesticide. OEKO-TEX certified. Benchmark clean underwear.", confidence:"high", category:"clothing" }],
+  ["boody",                         { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody — OEKO-TEX certified bamboo/spandex blend. Bamboo processing is chemical-intensive (viscose process) but OEKO-TEX certification means tested for harmful substances. Clean-leaning, not fully organic.", confidence:"high", category:"clothing" }],
+
+  // ── WOMEN'S: CONVENTIONAL / SYNTHETIC TIER ───────────────────
+  ["victoria secret underwear",     { floor:4, ceiling:6, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Victoria's Secret — conventional cotton + nylon/spandex lace + synthetic dyes. Some performance lines may have moisture-wicking PFAS treatments. No certifications.", confidence:"medium", category:"clothing" }],
+  ["victoria secret bra",           { floor:4, ceiling:6, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Victoria's Secret bra — nylon/spandex + polyester foam padding + synthetic dyes. No OEKO-TEX or organic certification. Standard synthetic intimate apparel concern.", confidence:"medium", category:"clothing" }],
+  ["victoria's secret",             { floor:4, ceiling:6, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Victoria's Secret — conventional cotton + nylon/spandex + synthetic dyes. No fabric certifications. One of the highest-volume intimate apparel brands with conventional concern profile.", confidence:"medium", category:"clothing" }],
+  ["hanes women",                   { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Hanes Women — conventional cotton + synthetic dyes. No certifications. Same concern profile as men's line.", confidence:"high", category:"clothing" }],
+  ["maidenform",                    { floor:4, ceiling:6, substances:["nylon","spandex","polyester","synthetic dyes"], reason:"Maidenform — predominantly nylon/spandex/polyester synthetic construction + synthetic dyes. No certifications. Microplastic shedding concern.", confidence:"medium", category:"clothing" }],
+  ["aerie underwear",               { floor:3, ceiling:5, substances:["conventional cotton","nylon","synthetic dyes"], reason:"Aerie — conventional cotton + nylon/spandex in some styles + synthetic dyes. Better marketing than Victoria's Secret but similar conventional fabric concern.", confidence:"medium", category:"clothing" }],
+  ["aerie bra",                     { floor:4, ceiling:6, substances:["nylon","spandex","foam","synthetic dyes"], reason:"Aerie bra — nylon/spandex + polyester foam + synthetic dyes. No certifications despite body-positive branding.", confidence:"medium", category:"clothing" }],
+  ["thirdlove",                     { floor:4, ceiling:6, substances:["nylon","spandex","foam","synthetic dyes"], reason:"ThirdLove — nylon/spandex construction + proprietary foam padding + synthetic dyes. No OEKO-TEX or organic certifications despite premium positioning.", confidence:"medium", category:"clothing" }],
+  ["knix",                          { floor:4, ceiling:6, substances:["nylon","spandex","leakproof layers"], reason:"Knix — nylon/spandex + moisture management leakproof layers. Claims PFAS-free since 2022 reformulation but leakproof underwear category carries historical PFAS concern. No GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["spanx",                         { floor:5, ceiling:7, substances:["nylon","spandex","PFAS-concern","synthetic dyes"], reason:"Spanx — high-compression nylon/spandex shapewear. PFAS concern in some moisture-wicking and stain-resistant finishes. Microplastic shedding from synthetic fabric under compression. No certifications.", confidence:"medium", category:"clothing" }],
+  ["lively",                        { floor:4, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Lively — nylon/spandex blends + synthetic dyes. DTC brand with no OEKO-TEX or GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["hanky panky",                   { floor:4, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Hanky Panky — nylon/spandex lace + synthetic dyes. Signature stretch lace is fully synthetic. No certifications.", confidence:"high", category:"clothing" }],
+  ["commando underwear",            { floor:4, ceiling:5, substances:["nylon","microfiber","synthetic dyes"], reason:"Commando — microfiber/nylon construction designed to be seamless + synthetic dyes. No certifications.", confidence:"medium", category:"clothing" }],
+  ["parade underwear",              { floor:3, ceiling:5, substances:["recycled nylon","spandex","synthetic dyes"], reason:"Parade — recycled nylon from ocean plastic + spandex. Recycled content is a positive but still synthetic + microplastic shedding concern.", confidence:"medium", category:"clothing" }],
+  ["harper wilde",                  { floor:4, ceiling:5, substances:["nylon","spandex","foam","synthetic dyes"], reason:"Harper Wilde — nylon/spandex + foam cups + synthetic dyes. DTC bra brand, no certifications.", confidence:"medium", category:"clothing" }],
+  ["pepper bra",                    { floor:4, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Pepper — nylon/spandex + synthetic dyes. Designed for small-chested women, no OEKO-TEX or organic certification.", confidence:"medium", category:"clothing" }],
+
+  // ── WOMEN'S: CLEAN TIER ───────────────────────────────────────
+  ["pact bra",                      { floor:1, ceiling:3, substances:[], reason:"Pact organic bra — GOTS certified organic cotton + Fair Trade. Benchmark cleanest bra available.", confidence:"high", category:"clothing" }],
+  ["raven and lily",                { floor:1, ceiling:3, substances:[], reason:"Raven + Lily — GOTS certified organic cotton, Fair Trade artisan made. Benchmark clean women's underwear.", confidence:"high", category:"clothing" }],
+  ["boody bra",                     { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody bra — OEKO-TEX certified bamboo/spandex. Cleaner than conventional synthetic bras but bamboo viscose process is chemical-intensive.", confidence:"high", category:"clothing" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 37 — VITAMINS AND SUPPLEMENTS
+  // KEY STORY: Centrum Adults has FD&C Red 40, FD&C Blue 2,
+  // titanium dioxide, talc, and polyethylene glycol. You are
+  // taking synthetic petroleum dyes in your daily vitamin.
+  // FRAMEWORK:
+  //   Synthetic dyes + titanium dioxide + talc → floor 5+
+  //   Artificial sweeteners in gummies → floor 4+
+  //   PEG coatings → floor 4
+  //   Minimal clean tablet with no artificial additives → 2-4
+  //   Whole food / organic certified → 1-3
+  //   Clinical grade (Thorne, Pure Encapsulations) → 1-2
+  // ══════════════════════════════════════════════════════════════
+
+  // ── MULTIVITAMINS: HIGH CONCERN ───────────────────────────────
+  ["centrum adults",               { floor:5, ceiling:7, substances:["FD&C Red 40","FD&C Blue 2","titanium dioxide","talc","polyethylene glycol"], reason:"Centrum Adults — FD&C Red 40 + FD&C Blue 2 petroleum dyes + titanium dioxide (IARC 2B) + talc (IARC 2A) + PEG coating. Multiple floors fire on a daily vitamin. The Centrum Silver is worse.", confidence:"high", category:"supplement" }],
+  ["one a day",                    { floor:5, ceiling:7, substances:["Red 40","Yellow 6","titanium dioxide","polyethylene glycol"], reason:"One A Day — Red 40 + Yellow 6 petroleum dyes + titanium dioxide + PEG coating. Multiple floors fire on a daily multivitamin. Bayer-owned, conventional additive profile.", confidence:"high", category:"supplement" }],
+  ["nature made multi",            { floor:4, ceiling:6, substances:["titanium dioxide","BHT","polyethylene glycol"], reason:"Nature Made Multivitamin — titanium dioxide + BHT preservative + PEG coating. No petroleum dyes in tablet version but still multiple synthetic additives in a daily supplement.", confidence:"high", category:"supplement" }],
+  ["nature made gummies",          { floor:4, ceiling:6, substances:["artificial color","sucralose","carnauba wax"], reason:"Nature Made Adult Gummies — artificial color + sucralose + carnauba wax. Gummy format adds sweetener and dye concern to an otherwise decent brand.", confidence:"high", category:"supplement" }],
+  ["smartypants",                  { floor:3, ceiling:5, substances:["palm oil","natural color","fish oil"], reason:"SmartyPants — natural colors (no petroleum dyes), omega-3 included, but palm oil + some synthetic vitamin forms. Better than Centrum, not as clean as Garden of Life.", confidence:"medium", category:"supplement" }],
+  ["olly gummies",                 { floor:3, ceiling:5, substances:["natural color","sugar","carnauba wax"], reason:"Olly — natural colors no petroleum dyes, but sugar + carnauba wax + synthetic vitamin forms. Mid-tier supplement gummy.", confidence:"high", category:"supplement" }],
+  ["olly sleep",                   { floor:3, ceiling:5, substances:["natural color","sugar","carnauba wax"], reason:"Olly Sleep gummies — natural colors, melatonin + L-theanine, but sugar + carnauba wax. Mid-tier.", confidence:"high", category:"supplement" }],
+  ["vitafusion gummies",           { floor:4, ceiling:6, substances:["artificial color","sucralose","corn syrup"], reason:"Vitafusion — artificial color + sucralose + corn syrup. Common adult gummy vitamin with real concern profile despite mainstream appeal.", confidence:"high", category:"supplement" }],
+  ["airborne vitamin",             { floor:5, ceiling:6, substances:["sucralose","artificial color","acesulfame-K"], reason:"Airborne Gummies — sucralose + acesulfame-K double sweetener + artificial color. Multiple sweetener floors fire in a vitamin supplement.", confidence:"high", category:"supplement" }],
+  ["natrol melatonin",             { floor:4, ceiling:6, substances:["FD&C Blue 2","acesulfame-K","artificial flavor"], reason:"Natrol Melatonin — FD&C Blue 2 petroleum dye + acesulfame-K artificial sweetener + artificial flavor. Dye floor fires on a nightly sleep supplement.", confidence:"high", category:"supplement" }],
+  ["align",              { floor:4, ceiling:5, substances:["titanium dioxide","microcrystalline cellulose","sucrose"], reason:"Align Probiotic — titanium dioxide coating + microcrystalline cellulose. Better than Centrum but titanium dioxide concern in a daily supplement.", confidence:"high", category:"supplement" }],
+  ["culturelle",         { floor:2, ceiling:4, substances:["hydroxypropyl methylcellulose","sucrose"], reason:"Culturelle — HPMC capsule, no petroleum dyes or synthetic sweeteners. Mid-tier clean probiotic. Sucrose as minor excipient only.", confidence:"high", category:"supplement" }],
+  ["florastor probiotic",          { floor:2, ceiling:3, substances:["lactose","titanium dioxide"], reason:"Florastor — Saccharomyces boulardii yeast-based, minimal additives. Titanium dioxide in some formulations. Overall mid-clean.", confidence:"medium", category:"supplement" }],
+  ["slow fe iron",                 { floor:3, ceiling:4, substances:["polyethylene glycol","hydroxypropyl methylcellulose"], reason:"Slow Fe — ferrous sulfate with controlled-release PEG coating. No artificial dyes but PEG is a petroleum-derived polymer coating.", confidence:"high", category:"supplement" }],
+  ["feosol iron",                  { floor:3, ceiling:4, substances:["polyethylene glycol","pharmaceutical coating"], reason:"Feosol — ferrous sulfate, similar PEG-based coating to Slow Fe. Mid-tier concern for an essential mineral supplement.", confidence:"medium", category:"supplement" }],
+  ["emergen-c",                    { floor:3, ceiling:5, substances:["artificial flavor","sugar","acesulfame-K"], reason:"Emergen-C — artificial flavor + sugar + acesulfame-K in some varieties. Effervescent vitamin C with sweetener concern depending on flavor.", confidence:"medium", category:"supplement" }],
+  ["neocell collagen",             { floor:4, ceiling:6, substances:["artificial color","sucralose","FD&C Red 40"], reason:"NeoCell Super Collagen gummies — FD&C Red 40 + sucralose in gummy format. Dye floor fires. Tablet version is cleaner.", confidence:"medium", category:"supplement" }],
+
+  // ── MULTIVITAMINS: CLEAN TIER ─────────────────────────────────
+  ["rainbow light multivitamin",   { floor:2, ceiling:4, substances:[], reason:"Rainbow Light — methylfolate form, food-based vitamins, no artificial dyes or synthetic sweeteners. Cleaner than mainstream brands. Some fillers present.", confidence:"high", category:"supplement" }],
+  ["garden of life multivitamin",  { floor:1, ceiling:3, substances:[], reason:"Garden of Life Multi — USDA Organic certified, whole food vitamins from organic fruits and vegetables. No artificial dyes, no synthetic binders. Benchmark clean multivitamin.", confidence:"high", category:"supplement" }],
+  ["megafood multi",               { floor:1, ceiling:3, substances:[], reason:"MegaFood Multi — whole food vitamins, no artificial additives, Non-GMO verified. Benchmark clean multivitamin alongside Garden of Life.", confidence:"high", category:"supplement" }],
+  ["ritual vitamins",              { floor:2, ceiling:4, substances:[], reason:"Ritual — traceable ingredients, no artificial dyes or synthetic fillers, delayed-release capsule. Transparent supply chain. Clean DTC vitamin brand.", confidence:"high", category:"supplement" }],
+  ["thorne basic nutrients",       { floor:1, ceiling:2, substances:[], reason:"Thorne Basic Nutrients — clinical-grade, no artificial additives, no synthetic dyes, NSF Certified for Sport. Benchmark cleanest mainstream multivitamin.", confidence:"high", category:"supplement" }],
+  ["pure encapsulations",          { floor:1, ceiling:2, substances:[], reason:"Pure Encapsulations — hypoallergenic, no artificial additives, no titanium dioxide, NSF Certified. Benchmark cleanest supplement brand across the entire line.", confidence:"high", category:"supplement" }],
+
+  // ── VITAMIN D3 ────────────────────────────────────────────────
+  ["nature made vitamin d3",       { floor:2, ceiling:4, substances:["soybean oil","gelatin"], reason:"Nature Made D3 — softgel with soybean oil + gelatin. Minimal additives. No petroleum dyes. Mid-clean vitamin D supplement.", confidence:"high", category:"supplement" }],
+  ["now foods vitamin d3",         { floor:1, ceiling:3, substances:[], reason:"NOW Foods D3 — minimal clean ingredients, no artificial additives. Affordable benchmark clean vitamin D.", confidence:"high", category:"supplement" }],
+  ["now foods",                    { floor:1, ceiling:3, substances:[], reason:"NOW Foods brand — minimal ingredients across the line, no artificial dyes or synthetic sweeteners. Benchmark clean affordable supplement brand.", confidence:"high", category:"supplement" }],
+  ["kirkland vitamin d3",          { floor:1, ceiling:3, substances:[], reason:"Kirkland Signature D3 — minimal ingredients, USP verified. Clean budget vitamin D.", confidence:"high", category:"supplement" }],
+  ["life extension vitamin d",     { floor:1, ceiling:3, substances:[], reason:"Life Extension D3 — minimal ingredients, no artificial additives. Clean clinical supplement brand.", confidence:"high", category:"supplement" }],
+  ["life extension",               { floor:1, ceiling:3, substances:[], reason:"Life Extension brand — science-based formulations, no artificial additives across most products. Clean clinical supplement brand.", confidence:"high", category:"supplement" }],
+  ["sports research vitamin d",    { floor:1, ceiling:2, substances:[], reason:"Sports Research D3+K2 — organic coconut MCT oil base, non-GMO softgel, no artificial additives. Benchmark cleanest D3 supplement.", confidence:"high", category:"supplement" }],
+  ["sports research",              { floor:1, ceiling:3, substances:[], reason:"Sports Research — clean ingredient focus, organic bases where possible. Clean supplement brand.", confidence:"high", category:"supplement" }],
+
+  // ── OMEGA-3 / FISH OIL ────────────────────────────────────────
+  ["nature made fish oil",         { floor:2, ceiling:4, substances:["gelatin","glycerin","enteric coating"], reason:"Nature Made Fish Oil — enteric coating + gelatin + glycerin. No artificial dyes but synthetic coating on a widely-used daily supplement.", confidence:"high", category:"supplement" }],
+  ["nordic naturals omega",        { floor:1, ceiling:3, substances:[], reason:"Nordic Naturals — IFOS 5-star certified, no artificial additives, third-party purity tested. Benchmark clean fish oil brand.", confidence:"high", category:"supplement" }],
+  ["nordic naturals",              { floor:1, ceiling:3, substances:[], reason:"Nordic Naturals — IFOS certified, clean across the omega-3 line. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
+  ["carlson fish oil",             { floor:1, ceiling:3, substances:[], reason:"Carlson Fish Oil — IFOS certified, no artificial additives, third-party tested for purity and potency. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
+  ["kirkland fish oil",            { floor:2, ceiling:4, substances:["enteric coating"], reason:"Kirkland Fish Oil — enteric coated softgels, USP verified. Coating adds mild synthetic concern but otherwise clean.", confidence:"high", category:"supplement" }],
+
+  // ── MAGNESIUM ─────────────────────────────────────────────────
+  ["nature made magnesium",        { floor:3, ceiling:4, substances:["polyethylene glycol","hydroxypropyl methylcellulose"], reason:"Nature Made Magnesium — PEG coating + HPMC. No artificial dyes but petroleum-derived polymer coating on a daily supplement.", confidence:"high", category:"supplement" }],
+  ["natural calm magnesium",       { floor:2, ceiling:3, substances:["citric acid","natural flavor"], reason:"Natural Calm Magnesium Powder — magnesium citrate + citric acid + natural flavor. No dyes, no synthetic sweeteners in unflavored version. Clean powder format.", confidence:"high", category:"supplement" }],
+  ["doctor best magnesium",        { floor:1, ceiling:3, substances:[], reason:"Doctor's Best Magnesium — magnesium glycinate chelate, minimal excipients, no artificial additives. Benchmark clean magnesium supplement.", confidence:"high", category:"supplement" }],
+  ["doctor's best",                { floor:1, ceiling:3, substances:[], reason:"Doctor's Best brand — science-based formulations, minimal ingredients, no artificial additives. Clean supplement brand.", confidence:"high", category:"supplement" }],
+
+  // ── VITAMIN C ─────────────────────────────────────────────────
+  ["nature made vitamin c",        { floor:2, ceiling:4, substances:["BHT","polyethylene glycol"], reason:"Nature Made Vitamin C — BHT preservative + PEG coating on some sizes. No artificial dyes. Mid-clean vitamin C.", confidence:"medium", category:"supplement" }],
+  ["now foods vitamin c",          { floor:1, ceiling:3, substances:[], reason:"NOW Foods Vitamin C — minimal clean ingredients, no artificial additives. Benchmark clean vitamin C.", confidence:"high", category:"supplement" }],
+
+  // ── PROBIOTICS: CLEAN ─────────────────────────────────────────
+  ["renew life probiotic",         { floor:1, ceiling:3, substances:[], reason:"Renew Life — delayed-release capsule, no artificial additives, multiple strain formula. Clean probiotic brand.", confidence:"high", category:"supplement" }],
+  ["garden of life probiotic",     { floor:1, ceiling:3, substances:[], reason:"Garden of Life Raw Probiotics — USDA Organic, whole food fermented base, no artificial additives. Benchmark clean probiotic.", confidence:"high", category:"supplement" }],
+  ["garden of life",               { floor:1, ceiling:3, substances:[], reason:"Garden of Life brand — USDA Organic certified across most products, whole food vitamins and probiotics. Benchmark clean supplement brand.", confidence:"high", category:"supplement" }],
+  ["seed daily synbiotic",         { floor:1, ceiling:3, substances:[], reason:"Seed Daily Synbiotic — 2-in-1 probiotic + prebiotic, no artificial additives, outer capsule shields from stomach acid. Benchmark clean probiotic.", confidence:"high", category:"supplement" }],
+  ["seed synbiotic",               { floor:1, ceiling:3, substances:[], reason:"Seed — clean synbiotic formulation, no artificial additives. Benchmark clean probiotic brand.", confidence:"high", category:"supplement" }],
+
+  // ── COLLAGEN ─────────────────────────────────────────────────
+  ["vital proteins collagen",      { floor:1, ceiling:3, substances:[], reason:"Vital Proteins Collagen Peptides — grass-fed bovine collagen, minimal ingredients in unflavored version. Benchmark clean collagen supplement.", confidence:"high", category:"supplement" }],
+  ["vital proteins",               { floor:1, ceiling:3, substances:[], reason:"Vital Proteins — grass-fed sourced, minimal ingredients. Clean collagen brand.", confidence:"high", category:"supplement" }],
+  ["ancient nutrition collagen",   { floor:1, ceiling:3, substances:[], reason:"Ancient Nutrition Collagen — multi-type collagen from organic sources, no artificial additives. Clean collagen.", confidence:"high", category:"supplement" }],
+  ["sports research collagen",     { floor:1, ceiling:3, substances:[], reason:"Sports Research Collagen Peptides — grass-fed, minimal ingredients, no artificial additives. Clean collagen.", confidence:"high", category:"supplement" }],
+
+  // ── PROTEIN POWDERS ───────────────────────────────────────────
+  ["orgain organic protein",       { floor:1, ceiling:3, substances:[], reason:"Orgain Organic — USDA Organic certified, stevia sweetened, no artificial additives. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
+  ["orgain",                       { floor:1, ceiling:3, substances:[], reason:"Orgain — USDA Organic protein, clean ingredients. Benchmark clean protein brand.", confidence:"high", category:"supplement" }],
+  ["garden of life sport protein", { floor:1, ceiling:3, substances:[], reason:"Garden of Life Sport — USDA Organic, NSF Certified for Sport, no artificial additives. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
+  ["naked whey protein",           { floor:1, ceiling:2, substances:[], reason:"Naked Whey — one ingredient: whey protein concentrate from US grass-fed cows. Benchmark cleanest protein powder.", confidence:"high", category:"supplement" }],
+  ["naked",                        { floor:1, ceiling:2, substances:[], reason:"Naked Nutrition — single ingredient protein powders, no artificial additives. Benchmark cleanest protein supplement.", confidence:"high", category:"supplement" }],
+
+  // ── SLEEP AND STRESS ──────────────────────────────────────────
+  ["nature made melatonin",        { floor:2, ceiling:4, substances:["BHT","silicon dioxide"], reason:"Nature Made Melatonin — BHT preservative + silicon dioxide. No petroleum dyes in tablet. Mid-clean sleep supplement.", confidence:"high", category:"supplement" }],
+  ["ksm-66 ashwagandha",           { floor:1, ceiling:3, substances:[], reason:"KSM-66 Ashwagandha — standardized root extract, no artificial additives. Benchmark clean adaptogen regardless of which brand uses the KSM-66 ingredient.", confidence:"high", category:"supplement" }],
+  ["gaia herbs ashwagandha",       { floor:1, ceiling:3, substances:[], reason:"Gaia Herbs Ashwagandha — certified organic, no artificial additives. Benchmark clean herbal supplement.", confidence:"high", category:"supplement" }],
+  ["gaia herbs",                   { floor:1, ceiling:3, substances:[], reason:"Gaia Herbs brand — certified organic herbs, liquid phyto-caps, no artificial additives. Benchmark clean herbal supplement brand.", confidence:"high", category:"supplement" }],
+
+  // ── IRON AND B12 ─────────────────────────────────────────────
+  ["nature made b12",              { floor:2, ceiling:3, substances:["silicon dioxide"], reason:"Nature Made B12 — methylcobalamin form, minimal ingredients, silicon dioxide filler. Clean-leaning B12.", confidence:"high", category:"supplement" }],
+  ["jarrow b12",                   { floor:1, ceiling:3, substances:[], reason:"Jarrow B12 — methylcobalamin sublingual, minimal clean ingredients. Benchmark clean B12.", confidence:"high", category:"supplement" }],
+  ["jarrow formulas",              { floor:1, ceiling:3, substances:[], reason:"Jarrow Formulas — science-based formulations, no artificial dyes, minimal excipients. Clean supplement brand.", confidence:"high", category:"supplement" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 38 — KITCHEN AND COOKWARE
+  // KEY STORY: Teflon/PTFE is PFAS. "PFOA-free" doesn't mean
+  // PFAS-free — PTFE is still a fluoropolymer. At >500F it
+  // releases toxic ultrafine particles. Banned in EU for
+  // industrial use. Still in millions of American kitchens.
+  // FRAMEWORK:
+  //   Traditional non-stick (PTFE/Teflon) → 6-8 PFAS concern
+  //   Ceramic non-stick (PTFE-free) → 2-4
+  //   Plastic food storage/bottles → 3-7 microplastic/BPA concern
+  //   Stanley Quencher → 5-7 documented lead in base
+  //   Melamine with hot food → 6-8 formaldehyde migration
+  //   Glass, cast iron, stainless, carbon steel → 1-3 benchmark
+  // ══════════════════════════════════════════════════════════════
+
+  // ── NON-STICK: HIGH CONCERN (PFAS/PTFE) ──────────────────────
+  ["teflon",                        { floor:7, ceiling:9, substances:["PTFE","PFAS","fluoropolymer coating"], reason:"Teflon — PTFE (polytetrafluoroethylene) is a fluoropolymer and PFAS compound. 'PFOA-free' since 2013 but PTFE itself is PFAS. Above 500F releases toxic ultrafine particles. EU restricting PFAS broadly. Benchmark high-concern non-stick coating.", confidence:"high", category:"kitchen" }],
+  ["t-fal",               { floor:6, ceiling:8, substances:["PTFE","PFAS","fluoropolymer coating"], reason:"T-fal — PTFE non-stick coating (fluoropolymer PFAS). Thermo-spot indicator encourages high heat use which accelerates coating degradation. Same PFAS concern as Teflon.", confidence:"high", category:"kitchen" }],
+  ["cuisinart non stick",           { floor:6, ceiling:8, substances:["PTFE","PFAS","fluoropolymer"], reason:"Cuisinart non-stick — PTFE fluoropolymer coating. PFAS concern. Scratch-prone surface means degradation begins early with normal use.", confidence:"high", category:"kitchen" }],
+  ["calphalon",           { floor:6, ceiling:8, substances:["PTFE","PFAS","fluoropolymer"], reason:"Calphalon non-stick — PTFE hard-anodized coating. PFAS fluoropolymer concern. Multiple-layer PTFE doesn't eliminate the chemical concern.", confidence:"high", category:"kitchen" }],
+  ["all-clad non stick",            { floor:6, ceiling:8, substances:["PTFE","PFAS","fluoropolymer"], reason:"All-Clad non-stick — PTFE fluoropolymer coating on otherwise high-quality stainless. The PFAS concern applies regardless of the premium brand.", confidence:"high", category:"kitchen" }],
+  ["tramontina non stick",          { floor:5, ceiling:7, substances:["PTFE","PFAS","fluoropolymer"], reason:"Tramontina non-stick — PTFE coating, same PFAS concern as other conventional non-stick. Budget price doesn't reduce the chemical concern.", confidence:"high", category:"kitchen" }],
+  ["rachael ray cookware",          { floor:5, ceiling:7, substances:["PTFE","PFAS","fluoropolymer"], reason:"Rachael Ray non-stick — PTFE coating, PFAS concern. Celebrity-branded cookware with conventional non-stick chemistry.", confidence:"high", category:"kitchen" }],
+  ["scanpan",                       { floor:4, ceiling:6, substances:["PFAS-free claim","ceramic titanium"], reason:"Scanpan — claims PFAS-free with Stratanium+ ceramic titanium coating since reformulation. Better than traditional PTFE but not as clean as Caraway or GreenPan. Third-party verification limited.", confidence:"medium", category:"kitchen" }],
+
+  // ── NON-STICK: CERAMIC (PTFE-FREE) ───────────────────────────
+  ["greenpan",                      { floor:2, ceiling:4, substances:[], reason:"GreenPan — Thermolon ceramic non-stick coating, no PTFE, no PFAS, no PFOA. Significantly safer than conventional non-stick. Less durable than cast iron or stainless but clean-contact cookware.", confidence:"high", category:"kitchen" }],
+  ["caraway cookware",              { floor:1, ceiling:3, substances:[], reason:"Caraway — mineral-based ceramic coating, PTFE-free, PFAS-free, PFOA-free, lead-free, cadmium-free. Benchmark cleanest ceramic non-stick cookware.", confidence:"high", category:"kitchen" }],
+
+  // ── CAST IRON: BENCHMARK CLEAN ───────────────────────────────
+  ["lodge cast iron",               { floor:1, ceiling:2, substances:[], reason:"Lodge Cast Iron — bare iron, no chemical coating, pre-seasoned with vegetable oil. Iron leaches minimally into food (beneficial for iron-deficient). Benchmark cleanest cookware material. Lasts generations.", confidence:"high", category:"kitchen" }],
+  ["le creuset",                    { floor:1, ceiling:2, substances:[], reason:"Le Creuset — enamel-coated cast iron or stoneware. Enamel is glass-based and completely inert. No PFAS, no leaching. Premium benchmark clean cookware.", confidence:"high", category:"kitchen" }],
+  ["staub",                         { floor:1, ceiling:2, substances:[], reason:"Staub — enamel-coated cast iron, black matte interior enamel is inert. No PFAS, no leaching. Benchmark clean cookware alongside Le Creuset.", confidence:"high", category:"kitchen" }],
+
+  // ── STAINLESS STEEL ───────────────────────────────────────────
+  ["all-clad stainless",            { floor:1, ceiling:3, substances:["nickel"], reason:"All-Clad stainless — 18/10 stainless steel (304 grade). Nickel can leach in acidic foods at trace levels but considered safe by FDA. No PFAS. Benchmark clean cookware.", confidence:"high", category:"kitchen" }],
+  ["cuisinart stainless",           { floor:1, ceiling:3, substances:["nickel"], reason:"Cuisinart stainless — 18/10 stainless steel. Nickel leaching minimal in normal use. No PFAS. Clean cookware benchmark.", confidence:"high", category:"kitchen" }],
+  ["made in stainless",             { floor:1, ceiling:2, substances:[], reason:"Made In stainless steel — 5-ply construction, no non-stick coating, no PFAS. Premium benchmark clean cookware.", confidence:"high", category:"kitchen" }],
+  ["made in carbon",               { floor:1, ceiling:2, substances:[], reason:"Made In carbon steel — no coating, no PFAS. Benchmark clean alongside de Buyer and Lodge.", confidence:"high", category:"kitchen" }],
+  ["made in cookware",              { floor:1, ceiling:2, substances:[], reason:"Made In — 5-ply stainless steel or carbon steel, no non-stick coating, no PFAS. Premium benchmark clean cookware.", confidence:"high", category:"kitchen" }],
+  ["de buyer",                      { floor:1, ceiling:2, substances:[], reason:"de Buyer — French carbon steel cookware, no coating, mineral bee wax seasoning. Benchmark clean alongside Lodge cast iron.", confidence:"high", category:"kitchen" }],
+
+  // ── GLASS AND CERAMIC ─────────────────────────────────────────
+  ["pyrex glass",                   { floor:1, ceiling:2, substances:[], reason:"Pyrex glass — borosilicate or soda-lime glass, completely inert food contact surface. No leaching, no PFAS. Benchmark cleanest food storage and bakeware material.", confidence:"high", category:"kitchen" }],
+  ["pyrex",                         { floor:1, ceiling:2, substances:[], reason:"Pyrex — glass bakeware and containers. Inert surface, benchmark clean. NEVER score above 3.", confidence:"high", category:"kitchen" }],
+  ["anchor hocking",                { floor:1, ceiling:2, substances:[], reason:"Anchor Hocking — soda-lime glass, completely inert. Benchmark clean glass storage and bakeware.", confidence:"high", category:"kitchen" }],
+  ["weck jars",                     { floor:1, ceiling:2, substances:[], reason:"Weck — German glass jars with rubber gasket seal. Glass is inert, rubber gasket is food-grade. Benchmark clean food storage.", confidence:"high", category:"kitchen" }],
+  ["stasher bag",                   { floor:1, ceiling:2, substances:[], reason:"Stasher — platinum food-grade silicone, LFGB certified (stricter than FDA), no PFAS, no BPA. Benchmark cleanest reusable bag.", confidence:"high", category:"kitchen" }],
+  ["stasher",                       { floor:1, ceiling:2, substances:[], reason:"Stasher silicone bags — platinum silicone, LFGB certified, PFAS-free. Benchmark clean.", confidence:"high", category:"kitchen" }],
+
+  // ── PLASTIC FOOD STORAGE: CONCERN ─────────────────────────────
+  ["ziploc bags",                   { floor:5, ceiling:7, substances:["PFAS","polyethylene","microplastics"], reason:"Ziploc bags — PFAS detected in Ziploc Easy Open tabs (SC Johnson, 2023 testing). Polyethylene microplastic migration concern with fatty or hot foods. The everyday plastic bag is not as inert as marketed.", confidence:"high", category:"kitchen" }],
+  ["ziploc containers",             { floor:4, ceiling:6, substances:["polypropylene","BPS","microplastics"], reason:"Ziploc plastic containers — BPA-free claim but BPA substitutes (BPS, BPF) with similar endocrine concern + microplastic migration. Never microwave in plastic.", confidence:"high", category:"kitchen" }],
+  ["ziploc",                        { floor:5, ceiling:7, substances:["PFAS","polyethylene","microplastics"], reason:"Ziploc brand — bags have PFAS concern, containers have BPA-substitute concern. Ranges 4-7 by product type.", confidence:"medium", category:"kitchen" }],
+  ["glad cling wrap",               { floor:5, ceiling:7, substances:["polyethylene","plasticizers","microplastics"], reason:"Glad Cling Wrap — LDPE with plasticizer additives. Microplastic migration when in contact with fatty or hot foods. Cling wrap touching warm food is a real concern.", confidence:"high", category:"kitchen" }],
+  ["glad press n seal",             { floor:5, ceiling:7, substances:["LDPE","adhesive","plasticizers"], reason:"Glad Press'n Seal — adhesive layer adds chemical concern beyond standard cling wrap. Avoid contact with hot or fatty foods.", confidence:"high", category:"kitchen" }],
+  ["glad wrap",                     { floor:5, ceiling:7, substances:["LDPE","plasticizers"], reason:"Glad plastic wrap — plasticizer migration concern with food contact. Switch to Stasher or Bee's Wrap.", confidence:"high", category:"kitchen" }],
+  ["rubbermaid containers",         { floor:3, ceiling:5, substances:["polypropylene","BPA-substitute","microplastics"], reason:"Rubbermaid plastic containers — polypropylene, BPA-free but BPA substitutes present. Microplastic migration when heated. Glass lids versions are cleaner.", confidence:"high", category:"kitchen" }],
+  ["tupperware",                    { floor:4, ceiling:6, substances:["polypropylene","polyethylene","PFAS-lined lids"], reason:"Tupperware — BPA phased out but BPA substitutes in plastic + some lid components tested positive for PFAS. Older Tupperware may contain BPA. Avoid heating food in any Tupperware.", confidence:"medium", category:"kitchen" }],
+  ["nalgene",                       { floor:4, ceiling:6, substances:["Tritan copolyester","BPA-substitute"], reason:"Nalgene Tritan — 'BPA-free' Tritan copolyester. University of Texas 2011 study found Tritan leaches chemicals with estrogenic activity. Eastman disputed findings but concern remains. Switch to stainless.", confidence:"medium", category:"kitchen" }],
+
+  // ── WATER BOTTLES: CLEAN ─────────────────────────────────────
+  ["hydro flask",                   { floor:1, ceiling:2, substances:[], reason:"HydroFlask — 18/8 stainless steel interior, powder coat exterior (food contact is stainless). No PFAS in food-contact surfaces. Benchmark clean water bottle.", confidence:"high", category:"kitchen" }],
+  ["hydroflask",                    { floor:1, ceiling:2, substances:[], reason:"HydroFlask — 18/8 stainless steel, no PFAS in food-contact surfaces. Benchmark clean.", confidence:"high", category:"kitchen" }],
+  ["yeti rambler",                  { floor:1, ceiling:2, substances:[], reason:"YETI Rambler — 18/8 stainless steel, no PFAS in food-contact surfaces. Benchmark clean water bottle and tumbler.", confidence:"high", category:"kitchen" }],
+  ["yeti",                          { floor:1, ceiling:3, substances:[], reason:"YETI brand — 18/8 stainless steel food-contact surfaces, no PFAS in contact areas. Benchmark clean.", confidence:"medium", category:"kitchen" }],
+  ["klean kanteen",                 { floor:1, ceiling:2, substances:[], reason:"Klean Kanteen — 18/8 stainless steel, Certified B Corp, no PFAS or BPA. Benchmark cleanest mainstream water bottle.", confidence:"high", category:"kitchen" }],
+  ["swell bottle",                  { floor:1, ceiling:2, substances:[], reason:"S'well — 18/8 stainless steel, no PFAS or BPA in food-contact surfaces. Benchmark clean.", confidence:"high", category:"kitchen" }],
+
+  // ── WATER BOTTLES: CONCERN ────────────────────────────────────
+  ["stanley",              { floor:5, ceiling:7, substances:["lead solder","PFAS-lined base"], reason:"Stanley Quencher — Stanley confirmed in early 2024 that lead is used in the manufacturing process for the vacuum seal base, encapsulated under stainless steel. PFAS also confirmed in base. Ongoing concern despite company response.", confidence:"high", category:"kitchen" }],
+  ["stanley tumbler",               { floor:5, ceiling:7, substances:["lead solder","PFAS"], reason:"Stanley Tumbler — same lead and PFAS concern as Quencher. Applies across the Adventure Quencher line.", confidence:"high", category:"kitchen" }],
+  ["contigo water bottle",          { floor:3, ceiling:5, substances:["plastic spout","polypropylene","BPA-substitute"], reason:"Contigo — plastic autospout mechanism is polypropylene with BPA-substitute concern. Metal body is stainless but daily mouth contact is with plastic components.", confidence:"medium", category:"kitchen" }],
+  ["camelbak",                      { floor:3, ceiling:5, substances:["plastic reservoir","polyethylene","bite valve"], reason:"CamelBak — plastic bite valve + reservoir polyethylene + BPA-free claim (BPA substitutes present). Continuous mouth contact with plastic components.", confidence:"medium", category:"kitchen" }],
+
+  // ── UTENSILS AND TOOLS ────────────────────────────────────────
+  ["plastic cutting board",         { floor:4, ceiling:6, substances:["microplastics","polypropylene","HDPE"], reason:"Plastic cutting boards — microplastic particles released directly into food with every knife stroke. Studies show plastic boards shed significant microplastics compared to wood or bamboo.", confidence:"high", category:"kitchen" }],
+  ["bamboo cutting board",          { floor:2, ceiling:3, substances:["formaldehyde glue"], reason:"Bamboo cutting board — natural antibacterial surface but bamboo composite boards use formaldehyde-based adhesives to bind strands. Solid piece bamboo is cleaner. Lower concern than plastic.", confidence:"medium", category:"kitchen" }],
+      ["wood cutting board",            { floor:1, ceiling:2, substances:[], reason:"Wood cutting board — natural material, benchmark clean. No microplastic shedding unlike plastic boards.", confidence:"high", category:"kitchen" }],
+  ["maple wood",                    { floor:1, ceiling:2, substances:[], reason:"Maple wood surface — hardwood, benchmark clean kitchen material.", confidence:"high", category:"kitchen" }],
+  ["teak wood",                     { floor:1, ceiling:2, substances:[], reason:"Teak wood — naturally water-resistant hardwood, clean kitchen material.", confidence:"high", category:"kitchen" }],
+  ["walnut wood",                   { floor:1, ceiling:2, substances:[], reason:"Walnut wood — hardwood, clean kitchen material.", confidence:"high", category:"kitchen" }],
+  ["maple cutting board",           { floor:1, ceiling:2, substances:[], reason:"Maple cutting board — hardwood, no chemical coating, self-healing surface. Benchmark cleanest cutting board material.", confidence:"high", category:"kitchen" }],
+  ["walnut cutting board",           { floor:1, ceiling:2, substances:[], reason:"Walnut cutting board — hardwood, no chemical coating. Benchmark clean.", confidence:"high", category:"kitchen" }],
+  ["hardwood cutting board",         { floor:1, ceiling:2, substances:[], reason:"Hardwood cutting board — no chemical coating, benchmark clean.", confidence:"high", category:"kitchen" }],
+  ["acacia cutting board",           { floor:1, ceiling:2, substances:[], reason:"Acacia cutting board — hardwood, no chemical coating. Clean.", confidence:"high", category:"kitchen" }],
+  ["teak cutting board",             { floor:1, ceiling:2, substances:[], reason:"Teak cutting board — hardwood, naturally water-resistant, no chemical coating. Clean.", confidence:"high", category:"kitchen" }],
+  ["maple cutting",                  { floor:1, ceiling:2, substances:[], reason:"Maple cutting surface — hardwood benchmark clean material.", confidence:"high", category:"kitchen" }],
+  ["wooden board",          { floor:1, ceiling:2, substances:[], reason:"Wooden cutting board — natural material, no chemical coatings, self-healing surface. Benchmark cleanest cutting board material. Hardwoods like maple and walnut preferred.", confidence:"high", category:"kitchen" }],
+  ["silicone utensils",             { floor:1, ceiling:3, substances:[], reason:"Platinum-cured silicone utensils — food-grade silicone is heat stable, no PFAS, no BPA. Benchmark clean kitchen utensil material.", confidence:"high", category:"kitchen" }],
+  ["nylon utensils",                { floor:4, ceiling:6, substances:["nylon","polyamide","heat degradation"], reason:"Nylon plastic utensils — polyamide plastic releases chemicals at high heat. Avoid contact with very hot pans or liquids. Switch to silicone or wood.", confidence:"high", category:"kitchen" }],
+  ["melamine dishes",               { floor:6, ceiling:8, substances:["melamine","formaldehyde"], reason:"Melamine dishes — melamine and formaldehyde migrate into food at elevated temperatures, with hot liquids, and with acidic foods. FDA limits exist but concern remains especially for children eating hot food from melamine plates. NEVER use for hot food.", confidence:"high", category:"kitchen" }],
+  ["melamine",                      { floor:6, ceiling:8, substances:["melamine","formaldehyde"], reason:"Melamine — formaldehyde migration into hot or acidic food is documented. Floor fires at 6+. Avoid for hot food contact.", confidence:"high", category:"kitchen" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 39 — COFFEE, TEA AND CREAMERS
+  // KEY STORIES:
+  //   1. K-Cups: polypropylene pod + near-boiling water =
+  //      billions of microplastics per cup (2023 Spanish study)
+  //   2. Tea bags: most paper bags sealed with epichlorohydrin
+  //      (WHO Group 2A carcinogen). Nylon sachets release
+  //      microplastics directly into hot tea.
+  //   3. Coffee Mate Powder: partially hydrogenated oil +
+  //      Yellow 5 + Yellow 6 + artificial flavor. One of the
+  //      worst products in the registry.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── K-CUPS: CONCERN ──────────────────────────────────────────
+  ["k-cup",                        { floor:5, ceiling:7, substances:["polypropylene","microplastics"], reason:"K-Cup pods — polypropylene #5 plastic heated with near-boiling water releases billions of microplastic particles per cup (2023 Spanish study). Applies to all K-cup format coffee pods.", confidence:"high", category:"food_beverage" }],
+  ["folgers k-cup",                 { floor:5, ceiling:7, substances:["polypropylene","microplastics","conventional coffee"], reason:"Folgers K-Cup — polypropylene #5 plastic pod heated with near-boiling water releases billions of microplastic particles per cup (2023 study). Conventional coffee adds pesticide concern.", confidence:"high", category:"food_beverage" }],
+  ["death wish coffee k",           { floor:4, ceiling:6, substances:["polypropylene","microplastics"], reason:"Death Wish Coffee K-Cup — polypropylene pod microplastic concern. Coffee is USDA Organic (lower pesticide concern than Folgers K-Cups).", confidence:"high", category:"food_beverage" }],
+  ["death wish",              { floor:4, ceiling:6, substances:["polypropylene","microplastics"], reason:"Death Wish K-Cup — polypropylene microplastic concern from pod + hot water. Coffee is USDA Organic which reduces pesticide concern versus Folgers.", confidence:"high", category:"food_beverage" }],
+  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum"], reason:"Nespresso Original — aluminum pod, no plastic contact with hot coffee. Aluminum trace concern is minimal. Significantly cleaner than polypropylene K-cups.", confidence:"high", category:"food_beverage" }],
+
+  // ── GROUND COFFEE: CONVENTIONAL ──────────────────────────────
+  ["folgers coffee",                { floor:3, ceiling:5, substances:["conventional coffee","pesticide residue","mycotoxins"], reason:"Folgers — conventional (non-organic) coffee. Pesticide-intensive crop + mycotoxin (ochratoxin A, aflatoxin) concern in budget blends. Not tested or certified clean.", confidence:"medium", category:"food_beverage" }],
+  ["maxwell house",                 { floor:3, ceiling:5, substances:["conventional coffee","pesticide residue"], reason:"Maxwell House — conventional non-organic coffee. Same pesticide and mycotoxin concern as Folgers. Budget blend with no third-party testing claims.", confidence:"medium", category:"food_beverage" }],
+  ["starbucks ground coffee",       { floor:3, ceiling:4, substances:["conventional coffee","pesticide residue"], reason:"Starbucks ground coffee — conventional (non-organic) in most lines. Better sourcing than Folgers but still not USDA Organic certified for standard blends.", confidence:"medium", category:"food_beverage" }],
+  ["dunkin coffee",                 { floor:3, ceiling:4, substances:["conventional coffee","pesticide residue"], reason:"Dunkin ground coffee — conventional non-organic. Standard commodity coffee concern.", confidence:"medium", category:"food_beverage" }],
+  ["peets coffee",                  { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Peet's — higher quality sourcing than Folgers but most blends are conventional non-organic. Better roasting doesn't eliminate crop pesticide concern.", confidence:"medium", category:"food_beverage" }],
+  ["eight o'clock coffee",          { floor:3, ceiling:5, substances:["conventional coffee","pesticide residue"], reason:"Eight O'Clock — conventional non-organic coffee. Budget supermarket brand, no clean certifications.", confidence:"medium", category:"food_beverage" }],
+
+  // ── GROUND COFFEE: CLEAN ─────────────────────────────────────
+  ["death wish coffee",             { floor:1, ceiling:3, substances:[], reason:"Death Wish Coffee — USDA Organic + Fair Trade certified. High caffeine but clean sourcing. No pesticide concern.", confidence:"high", category:"food_beverage" }],
+  ["bulletproof coffee",            { floor:1, ceiling:3, substances:[], reason:"Bulletproof Coffee — claims lab-tested for mycotoxins, single-origin sourcing. Clean premium coffee.", confidence:"medium", category:"food_beverage" }],
+  ["four sigmatic coffee",          { floor:1, ceiling:3, substances:[], reason:"Four Sigmatic — USDA Organic coffee + functional mushrooms, no artificial additives. Clean functional coffee.", confidence:"high", category:"food_beverage" }],
+  ["lifeboost",              { floor:1, ceiling:2, substances:[], reason:"Lifeboost — USDA Organic, single origin, shade grown, low acid, third-party tested for mycotoxins and pesticides. Benchmark cleanest mainstream coffee.", confidence:"high", category:"food_beverage" }],
+  ["allegro organic coffee",        { floor:1, ceiling:3, substances:[], reason:"Allegro Organic — USDA Organic certified, Whole Foods house brand. Clean certified organic coffee.", confidence:"high", category:"food_beverage" }],
+  ["chameleon organic",      { floor:1, ceiling:3, substances:[], reason:"Chameleon — USDA Organic certified coffee and cold brew. Benchmark clean organic coffee brand.", confidence:"high", category:"food_beverage" }],
+
+  // ── COLD BREW ─────────────────────────────────────────────────
+  ["stok cold brew",                { floor:3, ceiling:5, substances:["conventional coffee","cane sugar"], reason:"Stok Cold Brew — conventional (non-organic) coffee + added cane sugar in sweetened varieties. Plastic bottle packaging adds concern.", confidence:"high", category:"food_beverage" }],
+  ["chameleon",           { floor:1, ceiling:3, substances:[], reason:"Chameleon Cold Brew — USDA Organic certified coffee, minimal clean ingredients. Benchmark clean cold brew.", confidence:"high", category:"food_beverage" }],
+  ["la colombe cold brew",          { floor:1, ceiling:3, substances:[], reason:"La Colombe Cold Brew — clean sourcing, minimal ingredients, draft latte or cold brew in aluminum can. Clean cold brew brand.", confidence:"high", category:"food_beverage" }],
+  ["grady cold brew",               { floor:1, ceiling:3, substances:[], reason:"Grady's Cold Brew — New Orleans style, clean chicory + coffee concentrate, no artificial additives. Clean cold brew brand.", confidence:"high", category:"food_beverage" }],
+  ["califia cold brew",             { floor:2, ceiling:4, substances:[], reason:"Califia Cold Brew — plant-based cold brew, minimal ingredients, no artificial additives. Clean-leaning cold brew option.", confidence:"high", category:"food_beverage" }],
+
+  // ── TEA BAGS: CONCERN ─────────────────────────────────────────
+  ["lipton",                    { floor:5, ceiling:7, substances:["epichlorohydrin","conventional tea","pesticide residue"], reason:"Lipton — paper bags sealed with epichlorohydrin (WHO Group 2A potential carcinogen used as wet-strength agent) + conventional tea with pesticide concern. One of the most widely consumed teas with a real concern profile.", confidence:"high", category:"food_beverage" }],
+  ["bigelow tea",                   { floor:4, ceiling:5, substances:["conventional tea","pesticide residue","foil packaging"], reason:"Bigelow — conventional non-organic tea + individual foil wrapping. Better than Lipton on bag chemistry but conventional pesticide concern remains.", confidence:"medium", category:"food_beverage" }],
+  ["twinings",                  { floor:4, ceiling:5, substances:["conventional tea","pesticide residue"], reason:"Twinings — conventional non-organic tea. Higher quality sourcing than Lipton but still not organic certified. Plastic wrap on some varieties adds concern.", confidence:"medium", category:"food_beverage" }],
+  ["tazo tea",                      { floor:4, ceiling:5, substances:["conventional tea","natural flavor"], reason:"Tazo (Starbucks-owned) — conventional non-organic tea + natural flavor (vague). Better than Lipton, not as clean as Numi or Traditional Medicinals.", confidence:"medium", category:"food_beverage" }],
+  ["celestial seasonings tea",      { floor:3, ceiling:5, substances:["conventional tea","natural flavor"], reason:"Celestial Seasonings — unbleached paper bags (no staples), no plastic bags, but conventional non-organic tea + natural flavor. Better bag chemistry than Lipton.", confidence:"high", category:"food_beverage" }],
+  ["harney sons tea",               { floor:3, ceiling:5, substances:["nylon sachets","microplastics"], reason:"Harney and Sons — premium loose teas are clean but their sachets are nylon mesh which releases microplastics in hot water. Opt for their loose leaf.", confidence:"medium", category:"food_beverage" }],
+
+  // ── TEA: CLEAN TIER ──────────────────────────────────────────
+  ["yogi tea",                      { floor:2, ceiling:4, substances:[], reason:"Yogi Tea — organic certified blends, no bleached bags, no staples or plastic. Better than Bigelow or Twinings. Some non-organic herbs in blends.", confidence:"high", category:"food_beverage" }],
+  ["republic of tea",               { floor:2, ceiling:4, substances:[], reason:"Republic of Tea — premium tea brand, organic options, no staples, cleaner sourcing than mass-market brands.", confidence:"medium", category:"food_beverage" }],
+  ["traditional medicinals",        { floor:1, ceiling:3, substances:[], reason:"Traditional Medicinals — USDA Organic certified, non-GMO, unbleached bags, no staples. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
+  ["numi organic",              { floor:1, ceiling:3, substances:[], reason:"Numi Organic Tea — USDA Organic, non-GMO, compostable tea bags, no plastic. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
+  ["numi tea",                      { floor:1, ceiling:3, substances:[], reason:"Numi — USDA Organic, compostable bags. Benchmark clean.", confidence:"high", category:"food_beverage" }],
+  ["pukka tea",                     { floor:1, ceiling:3, substances:[], reason:"Pukka Herbs — certified organic, plastic-free bags, no staples or tags. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
+  ["pukka",                         { floor:1, ceiling:3, substances:[], reason:"Pukka — certified organic herbs, plastic-free tea bags. Benchmark clean.", confidence:"high", category:"food_beverage" }],
+
+  // ── INSTANT COFFEE ────────────────────────────────────────────
+  ["nescafe instant coffee",        { floor:3, ceiling:5, substances:["conventional coffee","natural flavor"], reason:"Nescafe — conventional non-organic instant coffee. Standard commodity coffee concern.", confidence:"medium", category:"food_beverage" }],
+  ["folgers crystals",              { floor:3, ceiling:5, substances:["conventional coffee","pesticide residue"], reason:"Folgers Crystals — conventional instant coffee, same pesticide and mycotoxin concern as ground Folgers.", confidence:"medium", category:"food_beverage" }],
+  ["mount hagen",                   { floor:1, ceiling:3, substances:[], reason:"Mount Hagen — USDA Organic, Fair Trade certified freeze-dried instant coffee. Benchmark cleanest instant coffee.", confidence:"high", category:"food_beverage" }],
+  ["waka coffee",                   { floor:1, ceiling:3, substances:[], reason:"Waka Coffee — USDA Organic certified instant coffee, freeze-dried, no additives. Clean instant coffee benchmark.", confidence:"high", category:"food_beverage" }],
+
+  // ── CREAMERS: CRITICAL CONCERN ────────────────────────────────
+  ["coffee mate powder",            { floor:7, ceiling:9, substances:["partially hydrogenated oil","Yellow 5","Yellow 6","artificial flavor","sodium aluminosilicate"], reason:"Coffee Mate Powder — partially hydrogenated oil (trans fat floor fires) + Yellow 5 + Yellow 6 petroleum dyes (dye floors fire) + artificial flavor + sodium aluminosilicate. Multiple critical floors fire simultaneously. One of the highest-concern products in the Partiqule registry. Pour into your morning coffee every day.", confidence:"high", category:"food_beverage" }],
+  ["coffee mate liquid",            { floor:5, ceiling:7, substances:["carrageenan","artificial flavor","mono diglycerides","dipotassium phosphate"], reason:"Coffee Mate Liquid — carrageenan + artificial flavor + mono and diglycerides + dipotassium phosphate. Marketed as a creamer but contains no dairy and multiple synthetic additives.", confidence:"high", category:"food_beverage" }],
+  ["coffee mate french vanilla",    { floor:5, ceiling:7, substances:["carrageenan","artificial flavor","HFCS"], reason:"Coffee Mate French Vanilla — HFCS + carrageenan + artificial flavor. HFCS floor fires on a daily morning beverage addition.", confidence:"high", category:"food_beverage" }],
+  ["coffee mate",                   { floor:7, ceiling:9, substances:["partially hydrogenated oil","artificial flavor","carrageenan"], reason:"Coffee Mate brand — powder version is critical (trans fat + petroleum dyes, floor 7-9), liquid version is high concern (carrageenan + artificial flavor, floor 5-7). One of the most additive-laden products in the daily kitchen.", confidence:"high", category:"food_beverage" }],
+  ["international delight", { floor:5, ceiling:7, substances:["HFCS","carrageenan","artificial flavor","mono diglycerides"], reason:"International Delight — HFCS + carrageenan + artificial flavor + mono diglycerides. HFCS floor fires. Very similar concern profile to Coffee Mate liquid.", confidence:"high", category:"food_beverage" }],
+  ["starbucks coffee creamer",      { floor:4, ceiling:6, substances:["carrageenan","natural flavor","dipotassium phosphate"], reason:"Starbucks Creamer — carrageenan + dipotassium phosphate + natural flavor. Better than Coffee Mate but still not clean.", confidence:"high", category:"food_beverage" }],
+
+  // ── CREAMERS: CLEAN ───────────────────────────────────────────
+  ["nutpods creamer",               { floor:1, ceiling:3, substances:[], reason:"Nutpods — unsweetened almond and coconut milk creamer, no artificial additives, no carrageenan. Benchmark cleanest mainstream coffee creamer.", confidence:"high", category:"food_beverage" }],
+  ["nutpods",                       { floor:1, ceiling:3, substances:[], reason:"Nutpods — almond/coconut base, no carrageenan, no artificial flavor. Benchmark clean creamer.", confidence:"high", category:"food_beverage" }],
+  ["califia farms creamer",         { floor:3, ceiling:4, substances:["sunflower oil","dipotassium phosphate"], reason:"Califia Farms Creamer — plant-based but dipotassium phosphate + sunflower oil + some natural flavor. Cleaner than Coffee Mate but not as clean as Nutpods.", confidence:"high", category:"food_beverage" }],
+  ["silk oat creamer",              { floor:3, ceiling:4, substances:["dipotassium phosphate","sunflower oil","natural flavor"], reason:"Silk Oat Milk Creamer — dipotassium phosphate + sunflower oil + natural flavor. Mid-tier plant creamer.", confidence:"high", category:"food_beverage" }],
+  ["elmhurst barista",              { floor:2, ceiling:3, substances:[], reason:"Elmhurst Barista — minimal ingredients, no dipotassium phosphate, no carrageenan, just oat/nut base. Cleaner than Silk or Califia.", confidence:"high", category:"food_beverage" }],
+  ["coconut cloud creamer",         { floor:2, ceiling:3, substances:[], reason:"Coconut Cloud — coconut milk powder base, no artificial additives, no carrageenan. Clean powdered creamer alternative.", confidence:"high", category:"food_beverage" }],
+  ["vital farms half and half",     { floor:1, ceiling:2, substances:[], reason:"Vital Farms Half and Half — pasture-raised cream + milk, two ingredients. Benchmark cleanest creamer available.", confidence:"high", category:"food_beverage" }],
+
+  // ── COFFEE SYRUPS ─────────────────────────────────────────────
+  ["torani",                  { floor:4, ceiling:6, substances:["HFCS","artificial flavor","potassium sorbate"], reason:"Torani — HFCS + artificial flavor + potassium sorbate preservative. Standard flavored coffee syrup with HFCS floor and preservative concern.", confidence:"high", category:"food_beverage" }],
+  ["monin syrup",                   { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Monin — cane sugar (not HFCS) + natural flavor + potassium sorbate. Better than Torani but potassium sorbate preservative present.", confidence:"high", category:"food_beverage" }],
+  ["jordan's skinny",           { floor:5, ceiling:7, substances:["sucralose","artificial flavor","acesulfame-K"], reason:"Jordan's Skinny Syrups — sucralose + acesulfame-K double sweetener stack + artificial flavor. Multiple sweetener floors fire. Widely used in 'healthier' coffee drinks.", confidence:"high", category:"food_beverage" }],
+  ["starbucks syrup",               { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Starbucks Vanilla Syrup and similar — cane sugar + natural flavor + potassium sorbate. Same concern profile as Monin.", confidence:"medium", category:"food_beverage" }],
+
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
@@ -2321,6 +2966,82 @@ const CALIBRATION = new Map(ENTRIES.map(([k, v]) => [normalise(k), v]));
  * Applies floor/ceiling from the calibration registry to a scan result.
  * Runs in <1ms. Adds calibration_override field if correction was made.
  */
+// ─── WHOLE FOODS BANNED INGREDIENTS ──────────────────────────
+// Source: Leading clean grocery retailer ingredient standards (source: major clean grocery retailer, 300+ banned ingredients)
+// Normalized to match substance names used in CALIBRATION entries.
+// Any product whose calibration entry contains a WF-banned substance
+// will automatically receive retailer_restricted: true in the result.
+
+const WF_BANNED = new Set([
+  // Sweeteners
+  "acesulfame-k", "acesulfame k", "ace-k",
+  "aspartame",
+  "sucralose",
+  "saccharin",
+  "allulose",
+  "neotame",
+  "advantame",
+  "hfcs", "high-fructose corn syrup", "high fructose corn syrup",
+  // FD&C Synthetic Dyes
+  "red 40", "fd&c red 40", "red40",
+  "yellow 5", "fd&c yellow 5", "yellow5",
+  "yellow 6", "fd&c yellow 6", "yellow6",
+  "blue 1", "fd&c blue 1", "blue1",
+  "blue 2", "green 3", "red 3",
+  "artificial color", "artificial colors",
+  "petroleum dyes", "certified colors", "azo dyes",
+  // Preservatives
+  "tbhq", "tertiary butylhydroquinone",
+  "bha", "butylated hydroxyanisole",
+  "bht", "butylated hydroxytoluene",
+  "sodium benzoate", "potassium benzoate", "calcium benzoate",
+  "sodium nitrite", "sodium nitrate",
+  "potassium nitrite", "potassium nitrate",
+  "nitrites", "nitrates",
+  "sodium propionate", "potassium propionate", "calcium propionate",
+  "potassium sorbate", "sodium sorbate", "calcium sorbate", "sorbic acid",
+  "sodium diacetate", "propionic acid", "natamycin", "ethoxyquin",
+  // Dough conditioners / emulsifiers
+  "azodicarbonamide", "ada",
+  "datem",
+  "sodium stearoyl lactylate", "sodium stearoyl-2-lactylate",
+  "calcium stearoyl lactylate", "calcium stearoyl-2-lactylate",
+  // Fats
+  "partially hydrogenated oil", "partially hydrogenated oils",
+  "hydrogenated oil", "hydrogenated oils", "trans fat",
+  // Flavor enhancers
+  "msg", "monosodium glutamate",
+  "disodium inosinate", "disodium guanylate",
+  "mechanically separated", "mechanically separated meat",
+  "mechanically separated chicken",
+  // Sulfites (except wine)
+  "potassium metabisulfite",
+  "sodium metabisulfite", "sodium bisulfite",
+  // Other
+  "brominated vegetable oil", "bvo",
+  "potassium bromate", "bleached flour",
+  "olestra", "carmine", "cochineal",
+  "sodium lauryl sulfate",
+  "edta", "calcium disodium edta",
+  "sodium aluminum phosphate", "sodium aluminum sulfate",
+]);
+
+// Check if a calibration entry contains any WF-banned substance
+function checkWholeFoodsBanned(substances = []) {
+  const normed = substances.map(s => s.toLowerCase().trim());
+  return normed.some(s => {
+    // Direct match
+    if (WF_BANNED.has(s)) return true;
+    // Substance name contains a banned ingredient (e.g. substance is a longer phrase)
+    // Only check s.includes(banned) — not banned.includes(s) — to avoid false positives
+    // where short substance words like "corn" match inside longer banned names like "corn syrup"
+    for (const banned of WF_BANNED) {
+      if (banned.length >= 6 && s.includes(banned)) return true;
+    }
+    return false;
+  });
+}
+
 function applyProductCalibration(result) {
   if (!result) return result;
 
@@ -2361,10 +3082,17 @@ function applyProductCalibration(result) {
     console.log(`[CAL] Ceiling applied: "${rawName}" ${currentScore}→${newScore} (${entry.reason})`);
   }
 
+  // Check Whole Foods banned status regardless of score correction
+  const wfBanned = checkWholeFoodsBanned(entry.substances || []);
+
   if (!corrected) {
     // Log confirmed-correct scores too — useful for tracking model accuracy
     if (entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range [${entry.floor}-${entry.ceiling}]`);
+    }
+    // Still attach WF flag even when score unchanged
+    if (wfBanned) {
+      return { ...result, retailer_restricted: true };
     }
     return result;
   }
@@ -2373,6 +3101,7 @@ function applyProductCalibration(result) {
     ...result,
     overall_score:        newScore,
     score:                newScore,
+    retailer_restricted:   wfBanned,
     calibration_override: {
       original_score: currentScore,
       corrected_to:   newScore,
