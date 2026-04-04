@@ -56,7 +56,7 @@ function detectCategory(q) {
   if (/macbook|iphone|ipad|imac|apple watch|airpods|apple tv|apple mac|\bapple\s+(pro|air|mini|studio|ultra|m[0-9]|laptop|computer|phone|tablet|watch|earbuds|headphones)\b|samsung galaxy|samsung phone|samsung tablet|samsung tv|pixel phone|google pixel|android phone|windows laptop|dell laptop|hp laptop|lenovo thinkpad|surface pro|microsoft surface|chromebook|gaming laptop|nvidia|amd ryzen|intel core|\blaptop\b|\bsmartphone\b|\btablet\b(?!.*food)|\bdesktop computer\b|television|\b(4k|oled|qled)\s+tv\b|smart tv|monitor|keyboard|mouse\b(?!.*trap)|headphones|earbuds|airpods|bluetooth speaker|smart speaker|alexa|google home|ring doorbell|nest thermostat|robot vacuum|roomba|printer|camera(?!.*food)|drone|gaming console|playstation|xbox|nintendo switch|smart home|wifi router|hard drive|ssd|graphics card|cpu|motherboard|charger(?!.*food)|power bank|battery pack|electric vehicle|tesla|rivian|ev car/.test(s)) return "other";
 
   // ── RESTAURANT ──
-  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin/.test(s)) return "restaurant";
+  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|sweetgreen|sweet green|cava restaurant|dave.?s hot chicken|dutch bros|jamba juice|smoothie king|pressed juicery|crumbl|nothing bundt|insomnia cookie|levain bakery|boba guys|kung fu tea|gong cha|alley|black bear diner|first watch|mod pizza|blaze pizza|pieology|california pizza kitchen|yard house|bj.?s restaurant|red lobster|longhorn|texas roadhouse|golden corral|ihop|cracker barrel|bob evans|perkins|denny|waffle house|steak.?n shake|cook.?out|habit burger|del taco|el pollo loco|church.?s chicken|captain d.?s|long john silver|a.?w restaurant|tim hortons|jack.?s|hardee.?s|krystal|white castle|steak.?n shake/.test(s)) return "restaurant";
 
   // ── TOYS ──
   if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayons|markers|play set|playset/.test(s)) return "toy";
@@ -162,7 +162,10 @@ const SUBSTANCE_FLOORS = [
   { match: /propyl gallate/i,                                         mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP concern" },
   { match: /\bEDTA\b|ethylenediaminetetraacetic/i,                    mFloor:4, uFloor:3, reason:"EDTA — environmental persistence, chelating agent" },
   // Acrylamide — IARC 2A, forms in high-heat starchy foods
-  { match: /\bacrylamide\b/i,                                         mFloor:7, uFloor:6, reason:"Acrylamide — IARC Group 2A, forms in fried/baked starchy foods at high heat" },
+  // Acrylamide: IARC Group 2A. Forms in high-heat starchy foods.
+  // Floor is 5 for general detection. Restaurant fried items scored higher via calibration.
+  // Do NOT apply mFloor:7 to bread, toast, crackers, coffee — dose is orders of magnitude lower.
+  { match: /\bacrylamide\b/i,                                         mFloor:5, uFloor:4, reason:"Acrylamide — IARC Group 2A, forms in fried/baked starchy foods at high heat" },
 
   // ══════════════════════════════════════════════════════════
   // FORMALDEHYDE & RELEASERS — IARC Group 1
@@ -410,12 +413,13 @@ const CATEGORY_FORMULAS = {
   food:          { m:0.90, u:0.00, pk:0.10, s:0.00 },
   food_beverage: { m:0.90, u:0.00, pk:0.10, s:0.00 }, // legacy alias
 
-  // BEVERAGE: Direct blood-stream consumption — container leaches into every sip
-  // Plastic water bottle matters more than plastic cereal box
-  beverage:      { m:0.75, u:0.00, pk:0.25, s:0.00 },
+  // BEVERAGE: Ingredients and what you drink matters most — packaging is still real but secondary
+  // Cans are clean packaging but shouldn't rescue a bad drink to a false safe score
+  beverage:      { m:0.85, u:0.00, pk:0.15, s:0.00 },
 
-  // RESTAURANT: Same logic as food, slight sustainability weight for practices
-  restaurant:    { m:0.85, u:0.00, pk:0.10, s:0.05 },
+  // RESTAURANT: Ingredients are the story — ingredients 90%, packaging 10%
+  // Sustainability removed: no per-item sustainability data available for restaurant items
+  restaurant:    { m:0.90, u:0.00, pk:0.10, s:0.00 },
 
   // SUPPLEMENT: Concentrated daily ingestion — ingredients + some packaging leaching
   supplement:    { m:0.65, u:0.25, pk:0.10, s:0.00 },
@@ -672,7 +676,13 @@ function needsSearch(productName) {
     "honey bunches","wheaties","total cereal","special k","mini-wheats",
     "quaker oats","nature valley","clif bar","kind bar","rxbar","larabar",
     "red bull","monster energy","gatorade","powerade","sprite","mountain dew",
-    "dr pepper","snapple","lipton","arizona tea","vitaminwater",
+    "dr pepper","snapple","lipton","arizona tea","vitaminwater","celsius",
+    "coca-cola","pepsi","diet coke","diet pepsi","coke zero","pepsi zero",
+    "starbucks","dunkin","mcdonald","burger king","wendy","chick-fil-a",
+    "taco bell","chipotle","subway","kfc","popeyes","panda express",
+    "sweetgreen","panera","olive garden","applebee","chili's","cheesecake factory",
+    "dutch bros","jamba juice","smoothie king","pressed juicery",
+    "crumbl","nothing bundt","insomnia cookie",
     "starbucks bottled","naked juice","odwalla","tropicana","minute maid",
     "lululemon","nike","adidas","under armour","gap","old navy","zara","h&m",
     "patagonia","north face","columbia","timberland","ugg","crocs","vans",
@@ -1112,6 +1122,54 @@ FUNCTIONAL BEVERAGES AND ELECTROLYTES:
 - Gatorade / Powerade (conventional with dyes): materials=5-6 (artificial dyes, sucrose/HFCS) → final 5-6.
 - Athletic Greens / AG1 (complex formulation): materials=3-4 (generally clean but ultra-processed powder).
 
+BEVERAGE CALIBRATION:
+SODAS:
+- Coca-Cola / Pepsi Classic (can): materials=5 (caramel color IV — 4-MEI IARC 2B, 39g HFCS, phosphoric acid) → final ~5
+- Diet Coke / Diet Pepsi (can): materials=5 (aspartame IARC 2B 2023, caramel color IV, artificial flavors) → final ~5. Aluminum can does NOT lower this to 4 — aspartame warrants 5 minimum.
+- Mountain Dew / Fanta / Tropical flavors with dyes: materials=7 (Yellow 5, Red 40, petroleum dyes + HFCS) → final ~7. NEVER score below 6.
+- Sprite / 7UP (no artificial dyes): materials=4 (HFCS, citric acid, natural flavors — no petroleum dyes) → final ~4
+- Zevia (stevia, no artificial dyes or sweeteners beyond stevia): materials=2 → final ~2
+
+ENERGY DRINKS:
+- Red Bull regular: materials=7 (27g sugar, taurine, B-vitamin megadoses at pharmaceutical doses, artificial flavors, 80mg caffeine — NOVA 4 stimulant formulation) → final ~6. NEVER score below 5.
+- Monster Energy (colored flavors): materials=7 (27g sugar + artificial dyes + 160mg caffeine + artificial flavors) → final ~6-7.
+- Celsius (natural caffeine, no HFCS, no artificial colors): materials=4 (sucralose in some, 200mg caffeine) → final ~4.
+- Bang Energy / Reign (300mg caffeine + sucralose + artificial flavors): materials=6 → final ~6.
+
+COFFEE DRINKS:
+- Plain black coffee / espresso: materials=1 → final ~1
+- Starbucks in-store latte (milk + espresso, no syrups): materials=3 → final ~3
+- Starbucks Pink Drink / Refreshers: materials=4 (acesulfame potassium, artificial flavors, concentrated juice) → final ~4
+- Starbucks bottled Frappuccino: materials=5 (high sugar, carrageenan, natural flavors) → final ~5
+- Dutch Bros flavored drinks (Blue Rebel base = energy drink + syrups + artificial flavors): materials=6 → final ~5-6. NEVER score Dutch Bros flavored drinks below 5. Plain Americano = 2-3.
+
+JUICE:
+- Pressed Juicery / cold-pressed raw juice (minimal ingredients, no additives): materials=2 → final ~2-3
+- Tropicana / Minute Maid / Simply Orange (pasteurized, some additives): materials=3 → final ~3
+- Capri Sun / Sunny D (HFCS, some artificial flavors): materials=5 → final ~5
+- Sunny D with artificial dyes: materials=6-7 → final ~6
+
+SMOOTHIE CHAINS:
+- Pressed Juicery smoothie (raw, no added sugar): materials=2 → final ~2-3. Cleanest smoothie chain.
+- Jamba Juice classic fruit smoothie (fruit + sherbet, up to 80g total sugar in large): materials=4 → final ~4-5
+- Jamba Juice "Peanut Butter Moo'd" / protein power smoothies (95g+ sugar, whey, ice cream): materials=5 → final ~5. NEVER score 2.
+- Smoothie King Lean1 / diet blends (sucralose, acesulfame-K, artificial flavors): materials=5 → final ~5. "Healthy" marketing does not mean clean.
+- Smoothie King Hulk series (ice cream, 1000+ calories): materials=6 → final ~6.
+
+RESTAURANT CHAIN CALIBRATION — additional chains:
+- Sweetgreen bowl (fresh whole ingredients, proprietary dressings): final score ~3-4. Simple grain bowls = 3. Loaded with creamy dressings + croutons = 4.
+- CAVA bowl (Mediterranean base — protein, vegetables, hummus): final score ~3-5. Protein bowls = 3-4. Loaded with processed sauces = 4-5.
+- Panera Bread You Pick Two (soup + sandwich): final score ~4-5. High sodium soups (1000-1500mg), processed deli meat. NOT as clean as marketing suggests.
+- Panera mac & cheese / baked goods: final score ~5-6 (ultra-processed, refined flour, high sodium).
+- Dave's Hot Chicken tenders / sandwich (fried in refined oil, TBHQ): final score ~6. Same tier as Chick-fil-A fried items.
+- Dutch Bros flavored drinks: final score ~5-6. Blue Rebel base is an energy drink. Plain cold brew = 2-3.
+- Crumbl Cookie: final score ~6. Refined flour, 40-80g sugar per cookie, artificial dyes in frosting on many flavors. NEVER score below 5.
+- Nothing Bundt Cakes: final score ~5-6. High sugar cream cheese frosting, refined flour, artificial dyes in some.
+- Insomnia Cookies: final score ~5-6. Refined flour, high sugar, artificial colors in some varieties.
+- Starbucks Unicorn / seasonal novelty drinks with dyes: final score ~7. Artificial dyes (Blue 1, Red 40 confirmed in several drinks) + high sugar.
+
+SODIUM RULE FOR RESTAURANT ITEMS: When sodium exceeds 2,000mg per serving, flag as HIGH concern and add +1 to materials. Items exceeding 3,000mg sodium (Cheesecake Factory pasta, Applebee's riblets) = materials minimum 7.
+
 DEODORANT CALIBRATION (personal_care category):
 - Conventional deodorant/antiperspirant (Secret, Dove, Old Spice): materials=5 — aluminum compounds (antiperspirant), synthetic fragrance (phthalates), parabens in some, propylene glycol. Usage=6 (daily underarm application, lymph node proximity). Final ~5-6.
 - Clinical-strength antiperspirant: materials=6 — higher aluminum concentration (20%+ aluminum chloride), synthetic fragrance. Final ~6.
@@ -1387,7 +1445,10 @@ RESTAURANT SCORE GUIDANCE — these are HARD FLOORS, do not score below them:
 - Fast food salads: final score MUST be 4-5.
 - Grilled items at fast food chains: final score MUST be 4-5 (still processed marinade, high sodium).
 - Sit-down chain restaurants (Applebee's, Chili's, Olive Garden): final score MUST be 4-6.
+- Dessert chains (Crumbl, Nothing Bundt Cakes, Insomnia Cookies): final score MUST be 5-7. Refined flour + high sugar + artificial dyes in frosting on many items.
 A fast food or fast casual item should NEVER score below 4. If your calculation gives a lower score, raise it to the minimum floor.
+
+SODIUM RULE: For any restaurant item where sodium exceeds 2,000mg per serving, flag "extreme sodium content" as a HIGH concern and add +1 to materials score. Items exceeding 3,000mg sodium (Cheesecake Factory pasta, Applebee's riblets, large fast food combos) = materials minimum 7. The FDA daily sodium limit is 2,300mg — a single item exceeding it is a meaningful health concern regardless of other ingredients.
 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
@@ -1810,7 +1871,28 @@ CALIBRATION — use these as anchors:
 - Doritos / flavored chips: final score ~6-7 — artificial flavors, MSG, synthetic dyes in some varieties
 - Whole fresh fruit or vegetables: final score ~1
 - Organic whole food snack (no synthetic additives): final score ~1-2
-- Gatorade (artificial dyes, sucrose): final score ~5-6
+- Gatorade (artificial dyes, sucrose, in plastic): final score ~6 — dyes + high sugar + plastic bottle
+- Gatorade in aluminum bottle or powder form: final score ~5
+- Coca-Cola / Pepsi Classic (can): final score ~5 — caramel color IV (4-MEI IARC 2B), HFCS, phosphoric acid
+- Diet Coke / Diet Pepsi (can): final score ~5 — aspartame IARC 2B 2023, caramel color IV. DO NOT score 4 just because it is in an aluminum can — aspartame warrants 5 minimum.
+- Mountain Dew / Fanta / Tropical Sprite with artificial dyes: final score ~7 — petroleum dyes + HFCS. NEVER score below 6.
+- Red Bull (regular): final score ~6 — 27g sugar, taurine, B-vitamin megadoses, artificial flavors, 80mg caffeine. NEVER score below 5.
+- Monster Energy (colored flavors): final score ~6-7 — artificial dyes + high stimulant dose.
+- Zevia (stevia soda, no dyes): final score ~2
+- Celsius Energy (natural caffeine, no artificial colors): final score ~4
+- Starbucks Pink Drink / Refreshers: final score ~4 — acesulfame potassium, artificial flavors
+- Dutch Bros flavored drinks: final score ~5-6 — Blue Rebel base is an energy drink, high sugar syrups, artificial flavors. NEVER score below 5.
+- Pressed Juicery cold-pressed juice (raw, no additives): final score ~2-3
+- Jamba Juice classic smoothie (up to 80g sugar, sherbet): final score ~4-5
+- Jamba Juice heavy protein smoothie (95g+ sugar, ice cream): final score ~5. NOT a 2.
+- Smoothie King Lean1 / diet blends (sucralose, artificial flavors): final score ~5
+- Plain black coffee / espresso: final score ~1
+- Sweetgreen bowl (fresh whole ingredients): final score ~3-4
+- CAVA protein bowl: final score ~3-4. Loaded with processed sauces = 4-5.
+- Panera You Pick Two (soup + sandwich): final score ~4-5. High sodium soups. NOT as clean as marketing suggests.
+- Dave's Hot Chicken tenders (fried, TBHQ): final score ~6 — same tier as Chick-fil-A fried items.
+- Crumbl Cookie: final score ~6 — refined flour, 40-80g sugar, artificial dyes in frosting on many flavors. NEVER score below 5.
+- Nothing Bundt Cakes / Insomnia Cookies: final score ~5-6 — refined flour, high sugar, some artificial dyes.
 - Conventional shampoo (SLS, synthetic fragrance, parabens): final score ~4-5
 - Cliff Bar (conventional oats, dates, nuts — oats likely have glyphosate residue): final score ~3-4
 - Kashi Organic (USDA Organic certified lines — Cinnamon Harvest, Organic Promise): final score ~1-2 — no glyphosate, whole grain, no dyes.
