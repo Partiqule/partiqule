@@ -367,6 +367,80 @@ const ENTRIES = [
   ["sweetgreen",                   { floor:2, ceiling:5, substances:[], reason:"Fresh whole ingredients — simple bowls 3-4, loaded sauces/croutons 4-5", confidence:"medium", category:"restaurant" }],
   ["crumbl cookie",                { floor:5, ceiling:7, substances:["artificial dyes","refined flour"], reason:"Refined flour + 40-80g sugar per cookie + artificial dyes in frosting on many flavors", confidence:"high", category:"restaurant" }],
 
+
+  // ══════════════════════════════════════════════════════════════
+  // CHILDREN'S MEDICINE — CRITICAL (dyes in daily sick-child use)
+  // ══════════════════════════════════════════════════════════════
+  ["children's tylenol liquid",    { floor:6, ceiling:8, substances:["Red 40","Blue 1","HFCS"], reason:"Two petroleum dyes + HFCS in medicine given daily to feverish children — child vulnerability flag", confidence:"high", category:"other" }],
+  ["children's motrin liquid",     { floor:5, ceiling:7, substances:["Red 40"], reason:"Red 40 petroleum dye in children's daily medicine — dye floor fires", confidence:"high", category:"other" }],
+  ["children's advil liquid",      { floor:5, ceiling:7, substances:["Red 40"], reason:"Red 40 dye in children's medicine — child vulnerability", confidence:"high", category:"other" }],
+  ["children's benadryl liquid",   { floor:5, ceiling:7, substances:["Red 40","HFCS"], reason:"Red 40 + HFCS in children's medicine", confidence:"high", category:"other" }],
+  ["nyquil liquid",                { floor:4, ceiling:6, substances:["Yellow 6","HFCS"], reason:"Yellow 6 dye + HFCS + 10% alcohol — dye floor fires", confidence:"high", category:"other" }],
+  ["dayquil liquid",               { floor:4, ceiling:6, substances:["Yellow 6","HFCS"], reason:"Yellow 6 + HFCS — dye floor fires", confidence:"high", category:"other" }],
+  ["zzzquil liquid",               { floor:4, ceiling:6, substances:["Blue 1"], reason:"Blue 1 dye + propylene glycol + PEG — dye floor fires", confidence:"high", category:"other" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FEMININE CARE — PERIOD UNDERWEAR
+  // ══════════════════════════════════════════════════════════════
+  ["thinx",                         { floor:7, ceiling:9, substances:["PFAS"], reason:"Mamavation 2021 lab testing confirmed PFAS fluorine above 100ppm — class action settlement", confidence:"high", category:"clothing" }],
+  ["saalt period underwear",        { floor:1, ceiling:3, substances:[], reason:"OEKO-TEX certified, no PFAS detected in independent testing", confidence:"high", category:"clothing" }],
+  ["modibodi",                       { floor:2, ceiling:4, substances:[], reason:"OEKO-TEX, PFAS-free claim", confidence:"medium", category:"clothing" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // NAIL POLISH
+  // ══════════════════════════════════════════════════════════════
+  ["zoya nail polish",              { floor:2, ceiling:4, substances:[], reason:"7-free: no TPHP, no toluene, no DBP, no formaldehyde resin — benchmark clean nail polish", confidence:"high", category:"personal_care" }],
+  ["olive & june nail polish",      { floor:1, ceiling:3, substances:[], reason:"10-free formula — removes 10 harmful chemicals including TPHP", confidence:"high", category:"personal_care" }],
+  ["sally hansen nail",             { floor:5, ceiling:7, substances:["TPHP","tosylamide"], reason:"Tosylamide/formaldehyde resin + TPHP — TPHP floor mFloor:7 fires", confidence:"high", category:"personal_care" }],
+  ["opi nail polish",               { floor:3, ceiling:5, substances:["TPHP"], reason:"3-free removes toluene/DBP/formaldehyde but TPHP still present in most formulas", confidence:"medium", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // HAIR DYE
+  // ══════════════════════════════════════════════════════════════
+  ["l'oreal excellence",            { floor:6, ceiling:8, substances:["PPD","resorcinol","ammonia"], reason:"PPD p-phenylenediamine (IARC-3, common sensitizer) + resorcinol + ammonia — PPD floor fires", confidence:"high", category:"personal_care" }],
+  ["loreal hair dye",               { floor:6, ceiling:8, substances:["PPD","resorcinol"], reason:"PPD confirmed — floor fires", confidence:"high", category:"personal_care" }],
+  ["clairol nice n easy",           { floor:6, ceiling:8, substances:["PPD","resorcinol"], reason:"PPD + resorcinol + hydrogen peroxide — PPD floor fires", confidence:"high", category:"personal_care" }],
+  ["garnier nutrisse",              { floor:6, ceiling:8, substances:["PPD","ammonia"], reason:"PPD + ammonia + resorcinol — floor fires", confidence:"high", category:"personal_care" }],
+  ["arctic fox hair dye",           { floor:1, ceiling:3, substances:[], reason:"PPD-free, ammonia-free, peroxide-free — benchmark clean hair color", confidence:"high", category:"personal_care" }],
+  ["overtone",                       { floor:1, ceiling:3, substances:[], reason:"No PPD, no ammonia, no peroxide — conditioning color deposit only", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PERFUME AND COLOGNE
+  // ══════════════════════════════════════════════════════════════
+  ["chanel no. 5",                  { floor:5, ceiling:7, substances:["synthetic fragrance","phthalates"], reason:"Undisclosed synthetic fragrance — phthalates confirmed in independent testing", confidence:"high", category:"personal_care" }],
+  ["chanel no.5",                   { floor:5, ceiling:7, substances:["synthetic fragrance"], reason:"Undisclosed synthetic fragrance", confidence:"high", category:"personal_care" }],
+  ["old spice cologne",             { floor:5, ceiling:7, substances:["synthetic fragrance"], reason:"Undisclosed synthetic fragrance — synthetic fragrance floor fires", confidence:"high", category:"personal_care" }],
+  ["bath & body works",             { floor:5, ceiling:7, substances:["synthetic fragrance","phthalates"], reason:"Phthalates confirmed in independent testing + undisclosed synthetic fragrance VOCs", confidence:"high", category:"personal_care" }],
+  ["phlur perfume",                 { floor:2, ceiling:4, substances:[], reason:"EU allergen-disclosed, phthalate-free, no animal musks — clean fragrance benchmark", confidence:"high", category:"personal_care" }],
+  ["ellis brooklyn",                { floor:1, ceiling:3, substances:[], reason:"Phthalate-free, full ingredient disclosure — clean fragrance", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FLEA AND TICK PRODUCTS
+  // ══════════════════════════════════════════════════════════════
+  ["hartz flea collar",             { floor:7, ceiling:9, substances:["tetrachlorvinphos"], reason:"Tetrachlorvinphos organophosphate — NRDC petitioned EPA for ban, carcinogenicity in rodent studies, children exposed by petting animal", confidence:"high", category:"other" }],
+  ["hartz ultraguard",              { floor:7, ceiling:9, substances:["tetrachlorvinphos"], reason:"Tetrachlorvinphos — organophosphate carcinogen concern", confidence:"high", category:"other" }],
+  ["seresto flea collar",           { floor:6, ceiling:8, substances:["flumethrin","imidacloprid"], reason:"1,698 pet deaths and 75,000 incident reports in EPA 2021 data", confidence:"high", category:"other" }],
+  ["wondercide",                     { floor:1, ceiling:3, substances:[], reason:"Cedar oil + plant-based — OMRI listed, genuinely clean flea control", confidence:"high", category:"other" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PET FOOD DYES
+  // ══════════════════════════════════════════════════════════════
+  ["friskies wet cat food",         { floor:5, ceiling:7, substances:["Red 40","Blue 1"], reason:"Petroleum dyes Red 40 + Blue 1 in dyed gravy — daily cat food consumption", confidence:"high", category:"food_beverage" }],
+  ["purina fancy feast",            { floor:4, ceiling:6, substances:["Red 40"], reason:"Red 40 in some flavors — check specific variant", confidence:"medium", category:"food_beverage" }],
+  ["purina beneful",                { floor:5, ceiling:7, substances:["artificial dyes","BHA","propylene glycol"], reason:"Artificial dyes + BHA + propylene glycol — multiple floors fire", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // GARDEN CHEMICALS
+  // ══════════════════════════════════════════════════════════════
+  ["roundup",                        { floor:7, ceiling:9, substances:["glyphosate"], reason:"Glyphosate IARC Group 2A — primary application of probable carcinogen, Bayer 3B legal settlements", confidence:"high", category:"home" }],
+  ["ortho home defense",            { floor:6, ceiling:8, substances:["bifenthrin"], reason:"Bifenthrin pyrethroid — aquatic toxin, EPA-flagged waterway harm", confidence:"high", category:"home" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // ORAL RINSE
+  // ══════════════════════════════════════════════════════════════
+  ["listerine cool mint",           { floor:5, ceiling:7, substances:["Blue 1","alcohol"], reason:"Blue 1 petroleum dye floor fires + 21.6% alcohol + saccharin", confidence:"high", category:"personal_care" }],
+  ["listerine kids",                { floor:6, ceiling:8, substances:["Red 40","Blue 1"], reason:"Two petroleum dyes + saccharin in daily children's mouth rinse — child vulnerability flag", confidence:"high", category:"personal_care" }],
+  ["therabreath",                    { floor:2, ceiling:4, substances:[], reason:"No alcohol, no dyes, no saccharin — significantly cleaner than conventional mouthwash", confidence:"high", category:"personal_care" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────

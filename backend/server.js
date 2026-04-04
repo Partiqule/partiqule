@@ -1671,13 +1671,31 @@ NON-STICK RULE: PTFE = minimum score 7 regardless of "PFOA-free" claims. Ceramic
 - Cora organic cotton pads/tampons (GOTS organic cotton, no fragrance, TCF bleaching): materials=2, usage=2 → final ~2.
 - Rael organic cotton pads (GOTS certified, no synthetic fragrance, no chlorine bleaching): materials=2, usage=2 → final ~2.
 - PFAS IN MENSTRUAL PRODUCTS: This is an active and evolving area of testing. Always Infinity FlexFoam is the most documented. Any "foam core" menstrual product without explicit PFAS-free certification should carry a MEDIUM concern for possible PFAS. Flag: "Independent testing found PFAS in foam-core menstrual products — choose organic cotton for lowest risk."
+PERIOD UNDERWEAR PFAS CALIBRATION:
+- Thinx period underwear (Mamavation 2021 independent lab testing found PFAS fluorine above 100 ppm — Thinx faced class action lawsuit and settled): materials=8 (PFAS floor fires — mFloor:8-9), usage=7 → final ~7-8. NEVER score below 7. "Period underwear" does not automatically mean clean.
+- Saalt period underwear (OEKO-TEX Standard 100 certified, no PFAS detected in independent testing): materials=2, usage=2 → final ~2. Clean period underwear benchmark.
+- Knix period underwear (PFAS testing unclear — no confirmed PFAS-free certification as of 2024): materials=5, usage=5 → final ~5. Score conservatively until PFAS-free certification confirmed.
+- Modibodi (OEKO-TEX, PFAS-free claim): materials=3, usage=3 → final ~3.
+- Bambody (no certification, PFAS status unclear): materials=5 → final ~5. Conservatively scored.
+PERIOD UNDERWEAR RULE: Without explicit PFAS-free certification AND third-party lab testing, period underwear should score minimum 5 as a precautionary default. OEKO-TEX + no PFAS detected = 2-3. Confirmed PFAS = 7-8.
 - Menstrual cup (medical silicone): materials=1, usage=2, sustainability=1 (replaces thousands of disposables) → final ~1
 - Miracle-Gro synthetic fertilizer: materials=6 (synthetic nitrogen, urea, synthetic iron chelates — runoff risk), sustainability=7 (synthetic chemical runoff, no soil biology) → final ~5-6
 - Dr. Earth/Espoma organic fertilizer: materials=1 (bone meal, feather meal, natural minerals), sustainability=2 → final ~1-2
 - Standard paraffin wax (Roundup/Scotts lawn chemicals): materials=7 (glyphosate — IARC classified probable carcinogen), usage=6 (skin/inhalation exposure), sustainability=8 (soil and waterway damage) → final ~7
 - PVC yoga mat: materials=7 (vinyl chloride, phthalate plasticizers, toxic manufacturing), usage=5 (skin contact during exercise) → final ~6
 - Natural rubber yoga mat (Liforme/Manduka natural rubber): materials=2, usage=2 → final ~2
-- Standard Advil/Tylenol/NyQuil: materials=3 (active pharmaceutical ingredients, inactive excipients including synthetic dyes, PEG, parabens in some), usage=3 (occasional ingestion) → final ~3 — note: score the product itself not just the packaging
+- Standard Advil tablets / Tylenol tablets (acetaminophen or ibuprofen — tablet form, minimal inactive ingredients, occasional ingestion): materials=2, usage=2 → final ~2-3. Tablet/caplet forms are meaningfully cleaner than liquid forms.
+- NyQuil LiquiCaps / DayQuil LiquiCaps (FD&C Red 40 in liquid gel capsule, PEG): materials=4, usage=3 → final ~3-4. Less concerning than liquid form but still has dye.
+CHILDREN'S LIQUID MEDICINE — CRITICAL CALIBRATION (petroleum dyes in daily sick-child use):
+- Children's Tylenol liquid (acetaminophen + HFCS + Red 40 + FD&C Blue 1 — two petroleum dyes FDA is phasing out + HFCS in a medicine given to feverish children): materials=7 (Red 40 + Blue 1 dye floors both fire), usage=7 (daily oral ingestion by children — child vulnerability flag) → final ~6-7. NEVER score below 6. This is one of the most important calibrations in the medicine category.
+- Children's Motrin / Children's Advil liquid (ibuprofen + Red 40 + artificial flavors): materials=6 (Red 40 dye floor fires), usage=6 (child daily ingestion — child vulnerability) → final ~5-6. NEVER score below 5.
+- Children's Benadryl liquid (diphenhydramine + Red 40 + HFCS): materials=6 (Red 40 floor fires + HFCS floor fires), usage=6 → final ~5-6.
+- NyQuil liquid / DayQuil liquid (FD&C Yellow 6 + HFCS + high alcohol 10%): materials=6 (Yellow 6 dye + HFCS + alcohol), usage=5 → final ~5-6.
+- ZzzQuil liquid (diphenhydramine + FD&C Blue 1 + PEG + propylene glycol): materials=6 (Blue 1 dye floor fires), usage=5 → final ~5-6.
+CLEAN MEDICINE ALTERNATIVES:
+- Genexa children's acetaminophen (USDA Organic inactive ingredients, no petroleum dyes, no artificial flavors): materials=2, usage=2 → final ~2. Benchmark clean children's medicine.
+- Similasan children's remedies (no petroleum dyes, homeopathic — note: homeopathic efficacy is contested but ingredient safety is high): materials=2 → final ~2-3.
+MEDICINE RULE: Active pharmaceutical ingredients do NOT themselves drive a high score — the inactive ingredients (dyes, HFCS, artificial flavors) do. A petroleum dye in daily children's medicine is the same chemical concern as in candy. Child vulnerability flag applies. NEVER score a dyed children's liquid medicine below 5.
 - Zarbees/natural honey-based cough syrup: materials=2 (honey, natural flavors, no synthetic dyes or preservatives), usage=2 → final ~2
 - Standard bandages (Band-Aid): materials=4 (synthetic polymer adhesive, possible latex, petroleum-backed strip), usage=3 → final ~3
 - Fabric/natural adhesive bandages (Welly): materials=3, usage=2 → final ~2
@@ -2167,7 +2185,84 @@ FLINTSTONES VITAMINS — highest priority children's supplement calibration:
 - Nordic Naturals Children's DHA (no dyes, clean fish oil): materials=2 → final ~2.
 - Zarbee's (no dyes in most lines, honey-based): materials=2 → final ~2-3.
 
-FIRST AID CALIBRATION:
+NAIL POLISH AND NAIL CARE CALIBRATION:
+The key variable is "free" count — how many harmful chemicals have been removed.
+CLEAN (score 2-4):
+- Zoya nail polish (7-free: no toluene, DBP, formaldehyde, formaldehyde resin, camphor, TPHP, led): materials=3, usage=3 → final ~3. Benchmark clean nail polish.
+- Olive & June nail polish (10-free — removes 10 harmful ingredients including TPHP): materials=2, usage=3 → final ~2-3.
+- Orly nail polish (12-free formula): materials=2, usage=3 → final ~2-3.
+- Ella+Mila (7-free, vegan): materials=3, usage=3 → final ~3.
+CONVENTIONAL (score 4-6):
+- OPI nail polish (3-free in most — removes toluene, DBP, formaldehyde but TPHP still present in many): materials=4, usage=5 → final ~4-5. Better than the worst but TPHP is a concern.
+- Essie (some formulas still contain TPHP — check specific product): materials=4, usage=5 → final ~4-5.
+HIGH CONCERN (score 5-7 — TPHP floor fires):
+- Sally Hansen conventional (tosylamide/formaldehyde resin + TPHP in standard formula — TPHP floor mFloor:7 fires): materials=6, usage=6 → final ~6. NEVER score below 5.
+NAIL POLISH RULE: Look for "free" count. 7-free or higher = 2-4. 3-free (only toluene/DBP/formaldehyde removed, TPHP still present) = 4-5. No claims = 5-6. TPHP confirmed = mFloor:7 fires.
+
+HAIR DYE CALIBRATION:
+CONVENTIONAL (PPD-containing — score 6-8):
+- L'Oreal Excellence / Preference hair dye (PPD p-phenylenediamine + resorcinol + ammonia — PPD floor mFloor:6 fires; IARC-3, common contact allergen): materials=7, usage=7 → final ~6-7. NEVER score below 6.
+- Clairol Nice 'n Easy (PPD + resorcinol + hydrogen peroxide — same triad as L'Oreal): materials=7, usage=7 → final ~6-7. NEVER score below 6.
+- Garnier Nutrisse (PPD + resorcinol + ammonia): materials=7, usage=7 → final ~6-7.
+- Revlon ColorSilk (PPD, lower concentration): materials=6, usage=6 → final ~6.
+PPD-FREE / CLEAN (score 2-4):
+- Madison Reed (ammonia-free in Radiant line, PPD-free in some formulas — check specific variant): materials=4, usage=4 → final ~4. Better than conventional but still has resorcinol in some.
+- Arctic Fox hair dye (vegan, PPD-free, no ammonia, no peroxide — direct deposit on existing color): materials=2, usage=2 → final ~2-3. Benchmark clean hair dye.
+- Overtone color depositing conditioner (no PPD, no ammonia, no peroxide): materials=2, usage=2 → final ~2. Clean conditioning color.
+- Henna (100% natural plant-based, no PPD): materials=1, usage=2 → final ~1-2.
+HAIR DYE RULE: PPD confirmed = floor fires (mFloor:6). PPD + ammonia + resorcinol = 6-7 minimum. PPD-free + ammonia-free = 2-4. Natural (henna) = 1-2.
+
+PERFUME AND COLOGNE CALIBRATION:
+All conventional perfumes/colognes contain "Fragrance" or "Parfum" — an undisclosed mix of potentially 50-200 individual chemicals including phthalates, musks, and VOCs. EU REACH requires disclosure of 26 allergens but US regulations do not.
+HIGH CONCERN (score 5-7 — undisclosed formula):
+- Chanel No. 5 / Chanel fragrances (synthetic fragrance — undisclosed formula, confirmed phthalates in some independent testing): materials=6, usage=6 → final ~6. Iconic brand does not mean safer formula.
+- Dior Sauvage / Miss Dior (synthetic fragrance — undisclosed): materials=6, usage=6 → final ~6.
+- Old Spice cologne (synthetic fragrance, no disclosure): materials=6, usage=6 → final ~6.
+- Victoria's Secret body mist (synthetic fragrance + alcohol): materials=5, usage=5 → final ~5.
+- Bath & Body Works fragrance (synthetic fragrance + phthalates + DEP): materials=6, usage=6 → final ~6. Flag: independent testing confirmed phthalates in BBW fragrance products.
+CLEAN FRAGRANCE (score 2-4):
+- Phlur (EU allergen-disclosed, phthalate-free, no animal-derived musks): materials=3, usage=3 → final ~3.
+- Ellis Brooklyn (phthalate-free, full ingredient disclosure): materials=2, usage=3 → final ~2-3.
+- Dedcool (phthalate-free, fragrance-free options, clean formulation): materials=2, usage=2 → final ~2.
+- Skylar (hypoallergenic, phthalate-free, clean disclosure): materials=2, usage=2 → final ~2.
+FRAGRANCE RULE: "Fragrance" or "Parfum" as an ingredient without individual disclosure = synthetic fragrance floor fires (mFloor:5). Phthalate-free + full disclosure = 2-3. No disclosure at all = 5-6 minimum.
+
+FLEA AND TICK PRODUCT CALIBRATION:
+HIGH CONCERN — ORGANOPHOSPHATE/PYRETHROID:
+- Hartz UltraGuard flea collar (tetrachlorvinphos — organophosphate NRDC-petitioned for EPA ban due to cancer risk in children and pets, carcinogenicity in rodent studies): materials=8, usage=8 (direct daily skin/fur contact for months) → final ~8. NEVER score below 7. Flag: "NRDC petitioned EPA to ban tetrachlorvinphos — carcinogenicity concerns. Children who pet the animal or sleep with it are also exposed."
+- Seresto flea collar (flumethrin + imidacloprid — EPA 2021 incident reports included 1,698 deaths and 75,000 pet incidents): materials=7, usage=7 → final ~7. NEVER score below 6.
+- Advantage II (imidacloprid — systemic insecticide absorbed into bloodstream): materials=6, usage=6 → final ~5-6.
+- Frontline Plus (fipronil — GABA antagonist, lower mammalian toxicity than organophosphates): materials=4, usage=4 → final ~4.
+CLEAN FLEA ALTERNATIVES (score 2-4):
+- Wondercide (cedar oil + sodium lauryl sulfate — OMRI listed, plant-based): materials=2, usage=2 → final ~2-3.
+- Vet's Best (plant-based — rosemary, clove, peppermint): materials=2, usage=2 → final ~2-3.
+- Flea comb (physical removal, no chemicals): materials=1, usage=1 → final ~1.
+FLEA COLLAR RULE: Tetrachlorvinphos = materials 8 minimum — NEVER score Hartz flea collar below 7. Organophosphate or carbamate compounds in any flea product = 7-8 minimum.
+
+PET FOOD DYE CALIBRATION:
+- Purina Fancy Feast classic pate (Red 40 in some flavors — artificial dye in cat food eaten daily): materials=6 (Red 40 dye floor fires), usage=5 → final ~5-6. Check specific flavor — not all have dyes.
+- Friskies wet cat food (Red 40 + Blue 1 in many flavors — the dyed gravy is the issue): materials=6 (dye floors fire), usage=5 → final ~5-6. NEVER score Friskies below 5.
+- Ol' Roy dog food (Walmart brand — Red 40, caramel color, BHA): materials=6 (dye + BHA floors fire) → final ~6.
+- Purina Beneful (artificial dyes, propylene glycol, BHA): materials=6 (multiple floors fire) → final ~6.
+
+ORAL RINSE AND MOUTHWASH CALIBRATION:
+HIGH CONCERN (score 5-7):
+- Listerine Cool Mint (21.6% ethyl alcohol + saccharin + FD&C Green 3 petroleum dye — Blue 1 in some variants): materials=6 (dye floor fires), usage=5 → final ~5-6. NEVER score below 5.
+- Listerine Kids Smart Rinse (Red 40 + Blue 1 + saccharin + daily child use — TWO petroleum dyes, child vulnerability flag): materials=7 (two dye floors fire), usage=6 → final ~6-7. NEVER score below 6.
+- ACT Kids Anticavity (FD&C Red 40, saccharin, artificial flavors — child daily use): materials=6 (Red 40 floor fires, child vulnerability), usage=6 → final ~5-6.
+CLEAN (score 2-3):
+- Listerine Zero Alcohol (no alcohol — but check for dyes in current formula): materials=4 → final ~4.
+- TheraBreath (no alcohol, no dyes, no saccharin, CPC as active): materials=3, usage=3 → final ~3. Significantly cleaner than conventional Listerine.
+- ACT Restoring fluoride rinse (alcohol-free, clean formula): materials=3 → final ~3.
+- Tom's of Maine mouth rinse (SLS-free, no artificial flavors, no alcohol in some): materials=3 → final ~3.
+
+GARDEN CHEMICAL CALIBRATION:
+- Roundup Weed & Grass Killer (glyphosate — IARC Group 2A, $13B Bayer legal settlements, WHO flagged): materials=8 (glyphosate floor mFloor:5 but product is primary application of IARC 2A carcinogen — floor should be 8 for Roundup specifically), usage=7, sustainability=9 → final ~8. NEVER score Roundup below 7.
+- Ortho Home Defense Insect Killer (bifenthrin — pyrethroid, aquatic toxin, EPA-flagged for waterway harm): materials=7, usage=6, sustainability=7 → final ~7.
+- Spectracide weed killer (2,4-D herbicide — IARC Group 2B + dicamba): materials=7, usage=6 → final ~7.
+- Espoma Organic fertilizer (OMRI listed, no synthetic chemicals): materials=2, sustainability=2 → final ~2.
+- Safer Brand insect killer (potassium salts of fatty acids, OMRI listed): materials=2, sustainability=2 → final ~2.
+- Miracle-Gro liquid fertilizer (urea-based synthetic nitrogen, some with pesticides): materials=4, sustainability=5 → final ~4.
 - Neosporin original (neomycin + polymyxin B + bacitracin — neomycin is #1 cause of contact dermatitis from topicals; AAD recommends plain petroleum jelly instead): materials=4, usage=4 → final ~4. Flag: "Neomycin — leading cause of allergic contact dermatitis from topical antibiotics."
 - Plain Vaseline petroleum jelly for wound care (single ingredient, FDA GRAS for topical, no sensitizer): materials=3, usage=2 → final ~2-3.
 - Hydrogen peroxide 3% (single ingredient, FDA OTC approved): materials=1, usage=2 → final ~1-2. — USDA/EU Organic certified, DHA from algae oil (not hexane-extracted), no corn syrup, simple ingredient list. Score 2-3.
