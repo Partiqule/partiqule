@@ -701,6 +701,27 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"How does Partiqule score planet impact?", a:"Sustainability (15% weight) covers product longevity, replaceability of single-use items, and end-of-life circularity. Together they capture the downstream impact of buying a product."},
       ],
     },
+    {
+      tag: "How Scores Get More Accurate Over Time",
+      tagColor: "#7c3aed",
+      tagBg: isDark?"#1e1433":"#f5f3ff",
+      headline: "From AI estimate to verified fact",
+      subhead: "Every scan makes the system smarter. Here is the honest explanation of how Partiqule works today, and where it is going.",
+      stats: [
+        {number:"113",  label:"confirmed harmful substances in our registry — each with a hard minimum score it enforces in code", color:"#7c3aed", bg:"#f5f3ff"},
+        {number:"2-pass", label:"every scan runs through an AI scorer and an independent AI auditor before a result is returned", color:"#6d28d9", bg:"#ede9fe"},
+        {number:"Code", label:"substance floors are enforced in code, not just in AI prompts — the AI cannot override them", color:"#5b21b6", bg:"#ddd6fe"},
+        {number:"Verified", label:"over time, known products get hard-coded scores the AI cannot deviate from — moving from estimate to fact", color:"#4c1d95", bg:"#c4b5fd"},
+      ],
+      faqs: [
+        {q:"How does Partiqule score a product it has never seen before?", a:"Two AI passes analyse the product name, brand, and any visible ingredient or material information. The first pass produces a score across four dimensions. The second pass acts as an independent auditor, checking the first result for consistency. After both passes, a code-level system applies 113 substance floors — if a confirmed harmful substance is detected, the score cannot go below a minimum threshold regardless of what the AI said."},
+        {q:"What is a substance floor and why does it matter?", a:"A substance floor is a hard minimum score enforced in code, not in a prompt. If a product contains Red 40, for example, the materials score cannot go below 7 — period. The AI cannot override it, no matter how it reasons. This is how we prevent the system from being fooled by good marketing or gaps in AI knowledge. We have 113 of these floors covering petroleum dyes, PFAS, aspartame, sucralose, formaldehyde releasers, heavy metals, and more."},
+        {q:"Can the AI get a score wrong?", a:"Yes. The AI is an expert estimator, not a database. For products it has never seen before, it reasons from ingredient patterns, brand reputation, and category norms. It will occasionally be wrong. This is why the substance floor system exists — the most dangerous mistakes are caught in code before they reach you. For well-known products, we are building a verified calibration registry that enforces correct scores regardless of what the AI produces."},
+        {q:"What is the calibration registry?", a:"The calibration registry is a growing database of verified scores for known products. When a product is in the registry, its score is enforced in code — the AI's estimate becomes irrelevant. Centrum Silver, for example, contains FD&C Blue 1 (a petroleum dye the FDA is phasing out), talc (IARC Group 2A), and titanium dioxide (IARC Group 2B). The registry locks this product to a minimum score of 6 regardless of how the AI interprets it. Over time, the most commonly scanned products all become deterministic. The AI handles new and unknown products. The registry handles everything it has already verified."},
+        {q:"How does the registry grow?", a:"Every scan generates data. When the AI scores a known product differently from the registry, that is logged as an override. Patterns in these overrides reveal where the AI is most uncertain — those products become priority candidates for the next wave of verification. Users who flag a result as wrong also feed directly into the review queue. The registry grows through a combination of manual expert review and scan-volume signals."},
+        {q:"Will Partiqule ever be fully deterministic?", a:"For commonly scanned products, yes — over time. For the long tail of new products, regional variants, and reformulations, the AI will always play a role. The goal is not to eliminate AI but to confine it to the edge cases where it is genuinely needed. A verified score for Cheerios should never be uncertain. A score for a small-batch artisan granola brand from a local market should be an expert estimate. That is the right division of labour."},
+      ],
+    },
   ];
 
   return (

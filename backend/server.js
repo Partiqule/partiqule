@@ -1663,8 +1663,13 @@ NON-STICK RULE: PTFE = minimum score 7 regardless of "PFOA-free" claims. Ceramic
 - Compostable/plant-based phone case (Pela): materials=2 (bioplastic, compostable), usage=1, sustainability=1 → final ~1-2
 - Acetate eyeglass frames (cellulose): materials=2 (plant-derived, biodegradable), usage=2 (daily skin contact) → final ~2-3
 - Standard polycarbonate/plastic frames: materials=4 (petroleum plastic, possible flame retardants in hinges), usage=3 → final ~3-4
-- Always/Tampax conventional pads/tampons: materials=6 (rayon/synthetic blend, chlorine bleaching, possible dioxin residue, plastic overwrap), usage=6 (direct mucous membrane contact) → final ~6
-- Organic cotton tampons/pads (Rael, Cora, August): materials=2 (GOTS organic cotton, no chlorine bleaching), usage=2 → final ~2
+- Always Infinity FlexFoam pads (PFAS detected in independent lab testing — Mamavation 2022, EWG 2023; synthetic foam core, plastic components, direct genital contact): materials=8 (PFAS floor fires — PFAS detected, bioaccumulative, endocrine disruption), usage=8 → final ~8. NEVER score below 7. This is one of the highest-concern mainstream menstrual products. Flag: "PFAS (forever chemicals) detected in independent testing — Mamavation/EWG — direct daily genital contact."
+- Always regular/ultra thin pads (no confirmed PFAS but rayon/synthetic blend, ECF chlorine bleaching, synthetic fragrance in scented): materials=6, usage=6 → final ~6.
+- Tampax Pearl conventional (ECF bleaching, synthetic fragrance in scented, rayon/cotton blend): materials=5, usage=6 → final ~5-6.
+- Tampax Pure organic cotton (organic cotton, no fragrance, no dye): materials=3, usage=3 → final ~3.
+- Cora organic cotton pads/tampons (GOTS organic cotton, no fragrance, TCF bleaching): materials=2, usage=2 → final ~2.
+- Rael organic cotton pads (GOTS certified, no synthetic fragrance, no chlorine bleaching): materials=2, usage=2 → final ~2.
+- PFAS IN MENSTRUAL PRODUCTS: This is an active and evolving area of testing. Always Infinity FlexFoam is the most documented. Any "foam core" menstrual product without explicit PFAS-free certification should carry a MEDIUM concern for possible PFAS. Flag: "Independent testing found PFAS in foam-core menstrual products — choose organic cotton for lowest risk."
 - Menstrual cup (medical silicone): materials=1, usage=2, sustainability=1 (replaces thousands of disposables) → final ~1
 - Miracle-Gro synthetic fertilizer: materials=6 (synthetic nitrogen, urea, synthetic iron chelates — runoff risk), sustainability=7 (synthetic chemical runoff, no soil biology) → final ~5-6
 - Dr. Earth/Espoma organic fertilizer: materials=1 (bone meal, feather meal, natural minerals), sustainability=2 → final ~1-2
@@ -2059,7 +2064,112 @@ YOPLAIT AND HIGH-HFCS YOGURT:
 - Yoplait Original (US formulation uses HFCS in most flavors — check label): materials=5 (HFCS floor) → final ~5. This is NOT the same as Stonyfield or Chobani plain. NEVER score below 4.
 - Yoplait Whips (HFCS, modified starch, gelatin, artificial flavor): materials=5 → final ~5.
 - Dannon Fruit on the Bottom (added sugar, natural flavors, modified starch — no HFCS in current formula): materials=4 → final ~4.
-- Holle / Kendamil Organic / HiPP Organic (European organic formulas): materials=2 — USDA/EU Organic certified, DHA from algae oil (not hexane-extracted), no corn syrup, simple ingredient list. Score 2-3.
+
+ELECTRONICS AND TECH CALIBRATION (category: other):
+APPLE PRODUCTS (Environmental Progress Reports published annually — materials disclosures are detailed and verifiable):
+- iPhone 15/16 (recycled aluminum, titanium, no PVC/BFR, recycled cobalt battery, EPEAT Gold): materials=2, usage=2, sustainability=3 → final ~2. Most transparent major electronics brand on materials.
+- MacBook Air M-series (recycled aluminum, no PVC/BFR/PFAS, EPEAT Gold): materials=2, usage=2, sustainability=2 → final ~2.
+- AirPods (non-repairable, non-recyclable battery, plastic housing — iFixit repairability score 0): materials=3, usage=3, sustainability=7 → final ~4-5. The non-repairability is the primary concern.
+- Apple Watch (recycled aluminum, no PVC/BFR, limited repairability): materials=2, usage=3, sustainability=5 → final ~3.
+OTHER BRANDS:
+- Samsung Galaxy (some recycled materials, EPEAT certified some models, improving supply chain transparency): materials=3, usage=2, sustainability=4 → final ~3.
+- Google Pixel (recycled aluminum, improving repairability, Fair Trade certified factory): materials=3, usage=2, sustainability=3 → final ~3.
+- Amazon Echo (ABS plastic, non-repairable, no meaningful take-back program): materials=4, usage=4, sustainability=7 → final ~5.
+- Generic / unbranded charger (unknown plastics, no RoHS confirmation, possible lead solder, no safety cert): materials=6, usage=5, sustainability=7 → final ~6. Flag: "Uncertified charger — possible lead solder, unknown plastics, fire risk."
+ELECTRONICS RULE: Apple material declarations = use them. RoHS compliance = no lead/cadmium. EPEAT Gold = sustainability 2-3. Non-repairable + no take-back = sustainability 7-8. Never score electronics above 8 unless confirmed harmful substances (PBDEs, lead above RoHS threshold).
+
+MOUTHWASH CALIBRATION:
+CLEAN (score 2-3):
+- Therabreath Fresh Breath Rinse (no alcohol, no artificial dyes, no saccharin, oxygenating): materials=2, usage=2 → final ~2. Benchmark clean mouthwash.
+- ACT Anticavity fluoride rinse (no artificial dyes, alcohol-free option, minimal additives): materials=3, usage=3 → final ~3.
+CONVENTIONAL HIGH-CONCERN (score 5-6):
+- Listerine Cool Mint (21.6% ethyl alcohol, saccharin, Blue 1 petroleum dye, artificial flavors): materials=6 (Blue 1 dye floor fires), usage=5 → final ~5-6. NEVER score below 5.
+- Scope Cool Peppermint (ethyl alcohol, saccharin, Blue 1, Yellow 5 — two petroleum dyes): materials=6 → final ~6.
+- Listerine for Kids (Red 40 + Blue 1, saccharin, child daily oral use): materials=7 (dye floor fires — child daily ingestion), usage=6 → final ~6-7. NEVER below 5.
+MOUTHWASH RULE: Alcohol 21%+ = HIGH usage concern. Artificial dyes = floor fires (materials 6+ minimum). Alcohol-free + no artificial dyes = 2-3.
+
+PET FOOD CALIBRATION:
+HIGH CONCERN KIBBLE (score 5-7):
+- Pedigree dry (BHA + artificial dyes confirmed in some): materials=6 (BHA floor + dyes) → final ~5-6.
+- Friskies cat food (Red 40, Blue 1 in some): materials=6 (dye floor) → final ~6.
+- Iams dry (BHA/BHT preservatives, by-product meal): materials=5 (BHA/BHT floor) → final ~5.
+- Purina ONE (BHT in some, by-product meal): materials=5 → final ~5.
+- Royal Canin Breed Specific (highly processed, synthetic preservatives): materials=5 → final ~4-5.
+- Hill's Science Diet (BHT, by-products — "science" branding ≠ clean): materials=5 → final ~5.
+MODERATE KIBBLE (score 3-4):
+- Purina Pro Plan (higher meat content, some BHA-preserved fat): materials=4 → final ~4.
+- Blue Buffalo Life Protection (no artificial colors/preservatives — multiple FDA recalls for vitamin D toxicity): materials=3, flag "Multiple FDA recalls — verify current formula" → final ~3-4.
+CLEAN PET FOOD (score 1-3):
+- Orijen (fresh/raw, no artificial preservatives, high meat): materials=2 → final ~2.
+- Stella & Chewy's Freeze-Dried Raw (minimal, no artificial preservatives): materials=2 → final ~2.
+- Honest Kitchen (human-grade, no by-products, no artificial preservatives): materials=2 → final ~2.
+- Open Farm (certified humane, traceable sourcing): materials=2 → final ~2.
+PET FOOD RULE: BHA or BHT = floor fires (materials 5+). Artificial dyes in pet food = floor fires (6+). "Natural preservatives" (mixed tocopherols) = clean signal.
+
+PET TREATS:
+- Milk-Bone original (BHA preserved fat, wheat flour): materials=5 (BHA floor) → final ~5.
+- Beggin' Strips (Red 40, sodium nitrite): materials=7 (nitrite floor + dye floor) → final ~6-7.
+- Zuke's Mini Naturals (no BHA/BHT, clean chicken, no artificial colors): materials=2 → final ~2.
+- Blue Buffalo Wilderness treats (no artificial colors or preservatives): materials=2 → final ~2.
+
+HOME PRODUCT GAPS:
+- Magic Eraser (melamine foam — releases fine particles during scrubbing; do NOT use on food-contact surfaces): materials=5, usage=5 → final ~5. Flag: "Melamine foam particles released during use — avoid food-contact surfaces."
+- Windex original (2-butoxyethanol — EPA hazardous air pollutant, absorbed through skin and lungs): materials=6, usage=6 → final ~6. Flag 2-butoxyethanol explicitly.
+- Pledge furniture polish (synthetic fragrance, isobutane propellant, aerosolized): materials=5, usage=5 → final ~5.
+- Downy liquid fabric softener (quaternary ammonium compounds coat fibers — QACs linked to lung accumulation; synthetic fragrance; daily skin contact from coated clothing): materials=6, usage=6 → final ~6. NEVER score below 5.
+- Wool dryer balls (reusable, no QACs, no synthetic fragrance, organic wool): materials=1, usage=1 → final ~1-2.
+
+HAND SANITIZER CALIBRATION:
+- Purell original (ethyl alcohol 70%, glycerin, minimal additives, no fragrance, no dyes): materials=3, usage=3 → final ~3. Benchmark clean sanitizer.
+- EO organic hand sanitizer (organic ethyl alcohol, essential oils, no artificial fragrance): materials=2, usage=2 → final ~2.
+- Bath & Body Works hand sanitizer (synthetic fragrance, PEG compounds, artificial dyes in some): materials=5, usage=4 → final ~5. Flag: synthetic fragrance on hands = transdermal absorption throughout the day.
+- Triclosan-based sanitizer (triclosan — FDA banned in soap, some sanitizers still use it): materials=7 (FDA-banned substance, endocrine disruptor) → final ~6-7. NEVER below 6.
+HAND SANITIZER RULE: Ethyl alcohol + glycerin only = 2-3. Synthetic fragrance = 4-5. Triclosan = floor fires (7).
+
+MATTRESS AND BEDDING CALIBRATION:
+CLEAN ORGANIC (score 1-2):
+- Avocado Green Mattress (GOLS certified organic latex + GOTS organic cotton + GOTS organic wool + Greenguard Gold, no synthetic foam, no added flame retardants): materials=1, usage=1 → final ~1-2. Benchmark clean mattress.
+- Nest Bedding / Birch (GOTS certified organic cotton + wool, natural latex, no FR treatment): materials=1, usage=1 → final ~1-2.
+CONVENTIONAL FOAM WITH CERTIPUR-US (score 2-4):
+- Saatva Classic (innerspring metal core, minimal foam contact layer, CertiPUR-US): materials=2, usage=2 → final ~2.
+- Casper Original (memory foam + springs, CertiPUR-US certified — no PBDE, no TCEP): materials=3, usage=3 → final ~3.
+- Purple mattress (Hyper-Elastic Polymer grid + CertiPUR-US foam): materials=3, usage=3 → final ~3.
+- Tempur-Pedic (proprietary viscoelastic foam, CertiPUR-US, Greenguard Gold): materials=4 (denser proprietary foam), usage=3 → final ~3-4.
+- IKEA Hasvag / Morgedal (foam, OEKO-TEX Standard 100): materials=3, usage=3 → final ~3.
+MATTRESS RULE: CertiPUR-US = no PBDE/TCEP/TDCPP, low VOC — meaningful but NOT organic. GOLS + GOTS = full organic supply chain. Uncertified memory foam = materials 5+ with off-gassing flag.
+
+HOUSEHOLD TOOLS, PAPER PRODUCTS AND FOOD STORAGE CALIBRATION:
+SPONGES AND CLEANING TOOLS:
+- Scotch-Brite synthetic sponge (nylon/polyester fibers — sheds microplastics into water every use, non-biodegradable): materials=5, sustainability=8 → final ~5-6. Flag: synthetic sponges release microplastics into wastewater.
+- Skoy cloth (cotton/wood cellulose, no synthetic fibers, compostable): materials=1, sustainability=2 → final ~1-2. Benchmark clean sponge alternative.
+- Full Circle cellulose sponge (plant-based, no synthetic microfibers): materials=2, sustainability=3 → final ~2.
+SWIFFER:
+- Swiffer WetJet (proprietary cleaning solution with PVA, synthetic fragrance, single-use plastic pads): materials=5, usage=5 (crawling babies and pets on treated floors), sustainability=7 → final ~5.
+- Swiffer Sweeper dry (no chemical solution — electrostatic dry pads only, lower exposure): materials=3, sustainability=7 → final ~4.
+PAPER PRODUCTS:
+- Bounty paper towels (conventional chlorine-bleached, single-use): materials=3, sustainability=8 → final ~4-5.
+- Seventh Generation 100% Recycled paper towels (process chlorine free, recycled): materials=2, sustainability=5 → final ~3.
+- Who Gives A Crap bamboo paper towels (FSC certified, process chlorine free): materials=2, sustainability=3 → final ~2.
+PLASTIC BAGS AND WRAPS:
+- Ziploc bags (LDPE, BPA-free, no plasticizers — but single-use plastic): materials=3, sustainability=8 → final ~4.
+- Saran Wrap (PVDC or LDPE depending on variant — PVDC contains chlorine-based plastic, more concerning): materials=4, sustainability=8 → final ~5.
+- Glad ClingWrap (LDPE, BPA-free): materials=3, sustainability=8 → final ~4.
+CLEAN FOOD STORAGE:
+- Stasher silicone bags (food-grade platinum silicone, reusable indefinitely): materials=1, usage=1, sustainability=1 → final ~1. Benchmark clean bag.
+- Beeswax wraps (organic cotton + beeswax + tree resin, compostable): materials=1, sustainability=1 → final ~1.
+- Anchor Hocking glass containers (soda-lime glass, stainless metal lids): materials=1, sustainability=2 → final ~1-2.
+
+FLINTSTONES VITAMINS — highest priority children's supplement calibration:
+- Flintstones Complete chewable vitamins (Red 40 + Yellow 6 + Blue 1 — THREE petroleum dyes FDA is actively phasing out; plus talc + titanium dioxide IARC 2B; taken DAILY by children starting from infancy): materials=8 (three dye floors fire, each at mFloor:7), usage=8 (daily oral ingestion by children — child vulnerability flag), → final ~7-8. NEVER score below 7. This is one of the most important single calibrations in the supplement database. A children's vitamin with three FDA-flagged dyes taken daily represents one of the highest cumulative dye exposures in the average American child's diet.
+- Flintstones Gummies variant (same three dyes + HFCS + sorbitol): materials=8 → final ~7-8. NEVER score below 7.
+- DO NOT confuse with: SmartyPants Kids Complete (no petroleum dyes, natural colors from turmeric/spirulina, omega-3 included): materials=2 → final ~2-3. This is what a clean children's vitamin looks like.
+- Nordic Naturals Children's DHA (no dyes, clean fish oil): materials=2 → final ~2.
+- Zarbee's (no dyes in most lines, honey-based): materials=2 → final ~2-3.
+
+FIRST AID CALIBRATION:
+- Neosporin original (neomycin + polymyxin B + bacitracin — neomycin is #1 cause of contact dermatitis from topicals; AAD recommends plain petroleum jelly instead): materials=4, usage=4 → final ~4. Flag: "Neomycin — leading cause of allergic contact dermatitis from topical antibiotics."
+- Plain Vaseline petroleum jelly for wound care (single ingredient, FDA GRAS for topical, no sensitizer): materials=3, usage=2 → final ~2-3.
+- Hydrogen peroxide 3% (single ingredient, FDA OTC approved): materials=1, usage=2 → final ~1-2. — USDA/EU Organic certified, DHA from algae oil (not hexane-extracted), no corn syrup, simple ingredient list. Score 2-3.
 - Similac / Enfamil (conventional, standard formula): materials=4 — synthetic DHA/ARA from hexane-extracted microalgae/fungal oil in some versions, corn maltodextrin as primary carb, synthetic vitamins, palm olein oil (reduces calcium absorption). Score 4.
 - Similac Organic / Earth's Best Organic formula: materials=3 — organic certified but still highly processed, synthetic vitamins added back. Score 3.
 Baby formula is always a BABY category product — apply child vulnerability flag. Parents choosing formula have no alternative — scoring reflects relative risk within the category, not a judgment on formula feeding.
@@ -2491,6 +2601,7 @@ CALIBRATION — use these as anchors:
 - Nature Made (USP Verified, minimal additives, no petroleum dyes): final score ~3.
 - Vitafusion gummy vitamins (Red 40 + Yellow 5 in most flavors — petroleum dyes taken daily): final score ~6-7. Red 40 floor fires. NEVER score below 6 if dyes confirmed.
 - Olly adult gummies (synthetic colorants in most, sugar): final score ~5-6.
+- Flintstones Complete vitamins (Red 40 + Yellow 6 + Blue 1 + talc + titanium dioxide — taken daily by children): final score ~7-8. NEVER score below 7. Three dye floors fire. Child vulnerability flag. Highest-priority supplement calibration.
 - SmartyPants gummies (no petroleum dyes, uses natural colors — turmeric, spirulina): final score ~3.
 - Garden of Life/MegaFood whole-food vitamin: final score ~1-2
 - Standard memory foam mattress (off-gassing): final score ~6
