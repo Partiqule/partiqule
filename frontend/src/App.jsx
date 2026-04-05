@@ -4836,7 +4836,7 @@ function App() {
                       <div style={{fontSize:11,color:muted,marginTop:2}}>
                         {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
                         : result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
-                        : result.category === "beverage"      ? "Ingredients 75% · Packaging 25%"
+                        : result.category === "beverage"      ? "Ingredient safety · Nutrition impact"
                         : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
                         : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
                         : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
