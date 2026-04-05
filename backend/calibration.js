@@ -154,17 +154,17 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // BEVERAGES — JUICES AND DRINKS
   // ══════════════════════════════════════════════════════════════
-  ["naked juice",                  { floor:3, ceiling:5, substances:["extreme natural sugar"], reason:"53g+ natural sugar per bottle — total sugar floor applies even without added sugar", confidence:"high", category:"beverage" }],
-  ["odwalla",                      { floor:3, ceiling:5, substances:["extreme natural sugar"], reason:"High natural sugar + pasteurized", confidence:"high", category:"beverage" }],
+  ["naked juice",                  { floor:6, ceiling:7, substances:["extreme natural sugar","53g+ per bottle"], reason:"53g+ natural sugar per bottle — 106%+ adult DV, 212%+ kids DV. Natural origin does not change glycemic impact.", confidence:"high", kidsFloor:7, category:"beverage" }],
+  ["odwalla",                      { floor:5, ceiling:7, substances:["extreme natural sugar"], reason:"High natural sugar (~50g per bottle) + pasteurized. Natural origin does not change glycemic impact.", confidence:"high", kidsFloor:7, category:"beverage" }],
   ["hi-c fruit punch",             { floor:6, ceiling:8, substances:["Red 40","Blue 1","HFCS"], reason:"HFCS + Red 40 + Blue 1 — daily children's drink with petroleum dyes — child vulnerability flag", confidence:"high", category:"beverage" }],
   ["hawaiian punch",               { floor:6, ceiling:8, substances:["Red 40","HFCS"], reason:"HFCS + Red 40 — child daily drink — petroleum dye floor fires", confidence:"high", category:"beverage" }],
   ["kool-aid jammers",             { floor:6, ceiling:8, substances:["HFCS","artificial dyes"], reason:"HFCS + multiple petroleum dyes — child daily drink — child vulnerability", confidence:"high", category:"beverage" }],
-  ["capri sun",                    { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS in original flavors — newer 25% less sugar variants cleaner", confidence:"medium", category:"beverage" }],
+  ["capri sun",                    { floor:4, ceiling:6, substances:["HFCS","16g sugar"], reason:"HFCS in original flavors — 16g sugar per pouch = 64% kids DV. Heavily marketed to children.", confidence:"medium", kidsFloor:5, category:"beverage" }],
   ["ocean spray cranberry",{ floor:4, ceiling:6, substances:["HFCS"], reason:"28% juice + HFCS + water — NOT same as 100% cranberry juice", confidence:"high", category:"beverage" }],
-  ["snapple peach tea",            { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS + 37g sugar", confidence:"high", category:"beverage" }],
+  ["snapple peach tea",            { floor:5, ceiling:6, substances:["HFCS","37g sugar"], reason:"HFCS + 37g sugar (74% adult daily limit, 148% kids daily limit)", confidence:"high", kidsFloor:6, category:"beverage" }],
   ["arizona iced tea",             { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS — most flavors", confidence:"high", category:"beverage" }],
   ["lipton brisk",                 { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS sweetened", confidence:"high", category:"beverage" }],
-  ["minute maid lemonade",         { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS + 28g sugar", confidence:"high", category:"beverage" }],
+  ["minute maid lemonade",         { floor:4, ceiling:6, substances:["HFCS","28g sugar"], reason:"HFCS + 28g sugar (56% adult DV, 112% kids DV)", confidence:"high", kidsFloor:6, category:"beverage" }],
   ["sunny d",                      { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes + 5% juice — juice impostor", confidence:"high", category:"beverage" }],
   ["pure leaf unsweetened",        { floor:1, ceiling:2, substances:[], reason:"Tea + water — zero sweetener, zero additives", confidence:"high", category:"beverage" }],
   ["honest tea",                   { floor:1, ceiling:3, substances:[], reason:"USDA Organic, fair trade, 10g natural sugar — genuinely clean", confidence:"high", category:"beverage" }],
@@ -237,7 +237,7 @@ const ENTRIES = [
   // PERSONAL CARE — SHAMPOO AND HAIR
   // ══════════════════════════════════════════════════════════════
   ["pantene pro-v",                { floor:5, ceiling:7, substances:["DMDM hydantoin","synthetic fragrance"], reason:"DMDM hydantoin formaldehyde releaser — floor fires (mFloor:6) + SLS + synthetic fragrance", confidence:"high", category:"personal_care" }],
-  ["pantene shampoo",              { floor:5, ceiling:7, substances:["DMDM hydantoin","synthetic fragrance"], reason:"DMDM formaldehyde releaser — floor fires", confidence:"high", category:"personal_care" }],
+  ["pantene",              { floor:5, ceiling:7, substances:["DMDM hydantoin","synthetic fragrance"], reason:"DMDM formaldehyde releaser — floor fires", confidence:"high", category:"personal_care" }],
   ["tresemme",                     { floor:5, ceiling:7, substances:["DMDM hydantoin","synthetic fragrance"], reason:"DMDM hydantoin in most formulas + SLS + synthetic fragrance — floor fires", confidence:"high", category:"personal_care" }],
   ["head & shoulders",             { floor:4, ceiling:6, substances:["SLS","synthetic fragrance"], reason:"SLS + zinc pyrithione + synthetic fragrance + parabens in some", confidence:"high", category:"personal_care" }],
   ["olaplex no.4",                 { floor:1, ceiling:3, substances:[], reason:"No SLS, no DMDM, no parabens, no synthetic fragrance — benchmark clean shampoo", confidence:"high", category:"personal_care" }],
@@ -313,7 +313,7 @@ const ENTRIES = [
   // BABY PRODUCTS — DIAPERS
   // ══════════════════════════════════════════════════════════════
   ["pampers swaddlers",            { floor:6, ceiling:8, substances:["PP inner liner","ECF bleaching"], reason:"Polypropylene inner liner + ECF bleaching — conventional synthetic diaper", confidence:"high", category:"baby" }],
-  ["pampers pure",                 { floor:4, ceiling:6, substances:[], reason:"Cleaner Pampers line — plant-based outer, fewer additives, no synthetic fragrance", confidence:"high", category:"baby" }],
+  ["pampers pure",                 { floor:3, ceiling:5, substances:["ECF bleaching","plant-based outer","polypropylene"], reason:"Pampers Pure Protection — plant-based outer lining, fragrance-free, no lotions, ECF bleaching (not TCF). Cleaner than Pampers Baby Dry but ECF concern remains. No third-party certification.", confidence:"high", category:"baby" }],
   ["huggies little snugglers",     { floor:6, ceiling:8, substances:["PP inner liner"], reason:"Conventional PP/PE diaper — same tier as Pampers", confidence:"high", category:"baby" }],
   ["hello bello diapers",          { floor:3, ceiling:5, substances:[], reason:"Corn-derived PLA fiber inner liner — plant-based at skin contact layer, chlorine-free", confidence:"high", category:"baby" }],
   ["andy pandy diapers",           { floor:2, ceiling:4, substances:[], reason:"Bamboo-derived, chlorine-free, no synthetic fragrance", confidence:"high", category:"baby" }],
@@ -727,6 +727,7 @@ const ENTRIES = [
   ["cholula",                       { floor:1, ceiling:3, substances:[], reason:"Clean — peppers + spices, no HFCS, no artificial anything", confidence:"high", category:"food_beverage" }],
   ["heinz yellow mustard",          { floor:1, ceiling:2, substances:[], reason:"Distilled vinegar + mustard seed + turmeric — clean", confidence:"high", category:"food_beverage" }],
   ["french's yellow mustard",       { floor:1, ceiling:2, substances:[], reason:"Same clean formula as Heinz mustard", confidence:"high", category:"food_beverage" }],
+  ["raos marinara",               { floor:1, ceiling:3, substances:["tomatoes","olive oil","basil","garlic"], reason:"Rao's Marinara — same benchmark clean profile.", confidence:"high", category:"food_beverage" }],
   ["rao's marinara",                { floor:1, ceiling:2, substances:[], reason:"Olive oil + San Marzano tomatoes + simple herbs. Benchmark clean pasta sauce.", confidence:"high", category:"food_beverage" }],
   ["prego traditional",             { floor:3, ceiling:5, substances:["HFCS"], reason:"HFCS + citric acid + natural flavors — HFCS floor fires", confidence:"high", category:"food_beverage" }],
   ["ragu traditional",              { floor:4, ceiling:6, substances:["HFCS","soybean oil"], reason:"HFCS + soybean oil + caramel color — floor fires. NEVER score same as Rao's.", confidence:"high", category:"food_beverage" }],
@@ -2649,6 +2650,7 @@ const ENTRIES = [
   ["boody",                         { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody — OEKO-TEX certified bamboo/spandex blend. Bamboo processing is chemical-intensive (viscose process) but OEKO-TEX certification means tested for harmful substances. Clean-leaning, not fully organic.", confidence:"high", category:"clothing" }],
 
   // ── WOMEN'S: CONVENTIONAL / SYNTHETIC TIER ───────────────────
+  ["victoria secret",             { floor:4, ceiling:6, substances:["nylon","spandex","synthetic dyes","polyester foam"], reason:"Victoria's Secret — nylon/spandex bras and underwear, polyester foam padding in bras. No OEKO-TEX certification. No PFAS-free claim. Mass-market intimates with conventional synthetic concern. Worn against skin all day.", confidence:"high", category:"clothing" }],
   ["victoria secret underwear",     { floor:4, ceiling:6, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Victoria's Secret — conventional cotton + nylon/spandex lace + synthetic dyes. Some performance lines may have moisture-wicking PFAS treatments. No certifications.", confidence:"medium", category:"clothing" }],
   ["victoria secret bra",           { floor:4, ceiling:6, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Victoria's Secret bra — nylon/spandex + polyester foam padding + synthetic dyes. No OEKO-TEX or organic certification. Standard synthetic intimate apparel concern.", confidence:"medium", category:"clothing" }],
   ["victoria's secret",             { floor:4, ceiling:6, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Victoria's Secret — conventional cotton + nylon/spandex + synthetic dyes. No fabric certifications. One of the highest-volume intimate apparel brands with conventional concern profile.", confidence:"medium", category:"clothing" }],
@@ -3021,6 +3023,787 @@ const ENTRIES = [
   ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod","coffee"], reason:"Nespresso Original — aluminum capsule, better than plastic K-Cups for migration concern, but aluminum production is resource-intensive. Coffee contact surface is aluminum not plastic.", confidence:"high", category:"food_beverage" }],
   ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface.", confidence:"high", category:"food_beverage" }],
 
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 40 — CLOTHING (ATHLETIC, OUTERWEAR, BASICS, DENIM,
+  //            KIDS, SOCKS)
+  // KEY STORIES:
+  //   PFAS DWR water repellent on rain jackets — Columbia,
+  //   Arc'teryx, Marmot all historically used PFAS treatments.
+  //   Some reformulating but third-party verification limited.
+  //   Flame retardants in kids' sleepwear — Carter's treated
+  //   cotton pajamas may use flame retardant chemicals.
+  //   Formaldehyde in wrinkle-resistant denim finishes.
+  //   Synthetic microplastics from polyester/nylon activewear.
+  // FRAMEWORK:
+  //   PFAS DWR rain jacket → 6-8
+  //   Synthetic activewear (no PFAS claim) → 4-6
+  //   Kids sleepwear with FR chemicals → 6-8
+  //   Conventional cotton basics → 3-5
+  //   OEKO-TEX certified → 2-4
+  //   GOTS organic cotton → 1-3
+  //   Merino wool / natural fiber certified → 1-3
+  // ══════════════════════════════════════════════════════════════
+
+  // ── ATHLETIC / ACTIVEWEAR: CONCERN ───────────────────────────
+  ["nike dri-fit",                  { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT — polyester microfiber, moisture-wicking through fiber structure NOT chemical PFAS coating. Nike confirmed PFAS eliminated from apparel by FY24. Mamavation lab testing found zero detectable fluorine in Nike products. Still 100% synthetic polyester with microplastic shedding concern but PFAS concern not lab-confirmed.", confidence:"high", category:"clothing" }],
+  ["nike pro tights",               { floor:3, ceiling:5, substances:["polyester","spandex","synthetic dyes","microplastics"], reason:"Nike Pro tights — polyester/spandex compression. Nike confirmed PFAS-free as of FY24. Mamavation found zero fluorine in Nike testing. Still synthetic construction with microplastic shedding concern.", confidence:"high", category:"clothing" }],
+  
+  // ── NIKE PRODUCT-SPECIFIC (Nike FY24 confirmed PFAS-free + Mamavation verified) ───
+  ["nike dri-fit running t",        { floor:3, ceiling:4, substances:["recycled polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT running — 100% recycled polyester. PFAS-free per Nike FY24. Mamavation zero fluorine. Microplastic shedding main concern.", confidence:"high", category:"clothing" }],
+  ["nike dri-fit t-shirt",          { floor:3, ceiling:4, substances:["recycled polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT T-Shirt — 100% polyester microfiber or recycled polyester. Moisture-wicking through fiber construction, not PFAS chemical treatment. Nike confirmed PFAS eliminated FY24. Mamavation zero fluorine detection. Microplastic shedding from synthetic fabric remains the primary concern.", confidence:"high", category:"clothing" }],
+  ["nike dri-fit polo",             { floor:3, ceiling:4, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT Polo — 100% polyester. PFAS-free per FY24 Nike commitment and Mamavation testing. Synthetic fabric microplastic concern remains.", confidence:"high", category:"clothing" }],
+  ["nike dri-fit shorts",           { floor:3, ceiling:4, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT Shorts — polyester construction, PFAS-free per Nike FY24 and Mamavation testing. Microplastic concern.", confidence:"high", category:"clothing" }],
+  ["nike dri-fit training",         { floor:3, ceiling:4, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike Dri-FIT training apparel — polyester, PFAS-free per Nike FY24. Microplastic shedding concern.", confidence:"high", category:"clothing" }],
+  ["nike storm-fit",                { floor:4, ceiling:6, substances:["polyester","waterproof treatment","synthetic dyes"], reason:"Nike Storm-FIT — waterproof outerwear. Nike transitioning to PFAS-free DWR but Storm-FIT waterproofing history includes PFAS. Transition status not fully verified on all Storm-FIT products. Score higher than standard Dri-FIT.", confidence:"medium", category:"clothing" }],
+  ["nike air force 1",              { floor:4, ceiling:6, substances:["conventional leather","chrome tanning","rubber sole","synthetic dyes","adhesives"], reason:"Nike Air Force 1 — conventional leather upper with chrome tanning concern + rubber sole + chemical adhesives + synthetic dyes. No DWR treatment. Chrome tanning is an environmental and skin contact concern in leather production.", confidence:"high", category:"clothing" }],
+  ["nike air max",                  { floor:3, ceiling:5, substances:["synthetic mesh","TPU overlays","foam midsole","adhesives"], reason:"Nike Air Max — synthetic mesh upper + TPU overlays + foam midsole + adhesives. No DWR treatment, no PFAS concern on standard Air Max. Synthetic construction with adhesives is mid-tier concern.", confidence:"high", category:"clothing" }],
+  ["nike air jordan",               { floor:4, ceiling:6, substances:["synthetic leather","rubber sole","adhesives","synthetic dyes"], reason:"Nike Air Jordan — synthetic leather or real leather upper + rubber sole + chemical adhesives. Chrome tanning concern on leather versions. Premium price, conventional shoe construction concern.", confidence:"medium", category:"clothing" }],
+  ["nike flyknit",                  { floor:3, ceiling:5, substances:["recycled polyester","synthetic dyes","adhesives"], reason:"Nike Flyknit — engineered recycled polyester knit upper. Up to 60% recycled content on newer models. PFAS-free per FY24. Cleaner than leather alternatives but still synthetic adhesives.", confidence:"high", category:"clothing" }],
+  ["nike cotton t-shirt",           { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Nike cotton tee — conventional cotton (non-organic) + synthetic dyes. No PFAS concern on cotton products. Conventional cotton pesticide concern remains.", confidence:"high", category:"clothing" }],
+  ["nike everyday",           { floor:3, ceiling:4, substances:["conventional cotton","polyester","nylon","synthetic dyes"], reason:"Nike Everyday Socks — cotton/polyester/nylon blend + synthetic dyes. PFAS-free fabric, no performance treatment on standard socks. Mid-tier concern from conventional cotton and synthetic blend.", confidence:"high", category:"clothing" }],
+  ["nike",                          { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike brand — PFAS eliminated from apparel as of FY24 per official Nike statement confirmed by Mamavation lab testing (zero fluorine detected). Still predominantly synthetic polyester construction. Score by specific product: shoes 3-6, Dri-FIT apparel 3-4, Storm-FIT waterproof 4-6.", confidence:"high", category:"clothing" }],
+  ["nike apparel",                  { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Nike apparel — PFAS eliminated from apparel as of FY24 per Nike official statement and confirmed by Mamavation zero fluorine detection. Still synthetic polyester construction with microplastic shedding. No OEKO-TEX certification.", confidence:"high", category:"clothing" }],
+  ["lululemon abc",                 { floor:5, ceiling:7, substances:["nylon","lycra","PFAS finish","Silverescent"], reason:"Lululemon ABC Pants — nylon/lycra + ABC treatment includes PFAS concern + Silverescent antimicrobial silver. Multiple synthetic performance chemical concerns.", confidence:"medium", category:"clothing" }],
+  ["lululemon",                     { floor:5, ceiling:7, substances:["PFAS","nylon","Silverescent antimicrobial"], reason:"Lululemon — EPA-certified lab testing confirmed 32ppm PFAS indicator in Align High-Rise Pants. Multiple products use Silverescent silver antimicrobial. PFAS confirmed by independent lab. Floor 5 minimum across the brand.", confidence:"high", category:"clothing" }],
+  ["under armour heatgear",          { floor:3, ceiling:4, substances:["polyester","synthetic dyes","microplastics"], reason:"Under Armour HeatGear — polyester compression fabric. Mamavation EPA-certified lab testing found ZERO detectable organic fluorine. UA committed to PFAS phase-out by 2024 and DWR elimination by 2025. Microplastic shedding from synthetic fabric remains main concern. PFAS not lab-confirmed.", confidence:"high", category:"clothing" }],
+  ["under armour storm",             { floor:4, ceiling:6, substances:["polyester","water-resistant treatment","synthetic dyes"], reason:"Under Armour Storm — water-resistant outerwear. UA eliminating fluorinated DWR by 2025. Transition may not be complete on all Storm products. Score higher than HeatGear until DWR elimination fully verified.", confidence:"medium", category:"clothing" }],
+  ["under armour rival",             { floor:3, ceiling:5, substances:["cotton","polyester","synthetic dyes"], reason:"Under Armour Rival — cotton/poly fleece. No DWR treatment. No PFAS concern on fleece. Mid-tier concern from conventional cotton blend.", confidence:"high", category:"clothing" }],
+  ["under armour",                   { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Under Armour brand — Mamavation zero fluorine detection. PFAS phase-out commitment by 2024. Predominantly synthetic polyester. Score by product: HeatGear 3-4, Storm waterproof 4-6, fleece/cotton 3-5.", confidence:"high", category:"clothing" }],
+  ["adidas",                        { floor:4, ceiling:5, substances:["recycled polyester","synthetic dyes","PFAS finish"], reason:"Adidas — recycled polyester in many products (positive) but PFAS-treated finishes on performance lines and synthetic dyes. OEKO-TEX on some products.", confidence:"medium", category:"clothing" }],
+  ["athleta",                       { floor:3, ceiling:5, substances:["recycled nylon","spandex","PFAS-free claim"], reason:"Athleta — claims PFAS-free since 2022, bluesign certified fabrics, Fair Trade some products. Better than Nike/Lululemon but still synthetic construction with microplastic concern.", confidence:"medium", category:"clothing" }],
+  ["vuori",                         { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Vuori — recycled materials, bluesign certified on some fabrics, no explicit PFAS-free claim across full line. Mid-tier clean activewear.", confidence:"medium", category:"clothing" }],
+  ["outdoor voices",                { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Outdoor Voices — recycled polyester construction, no explicit PFAS-free certification across the line. Mid-tier clean activewear.", confidence:"medium", category:"clothing" }],
+
+  // ── ATHLETIC: CLEAN TIER ─────────────────────────────────────
+  
+  // ── PATAGONIA PRODUCT-SPECIFIC (official 100% PFAS-free Spring 2025+) ───
+  ["patagonia capilene cool",        { floor:1, ceiling:3, substances:["recycled polyester","microplastics"], reason:"Patagonia Capilene Cool — 92%+ recycled materials, PFAS-free, Fair Trade certified, bluesign approved. No PFAS per Patagonia 2025 blanket commitment. Microplastic shedding from recycled polyester remains the only concern. Benchmark clean performance base layer.", confidence:"high", category:"clothing" }],
+  ["patagonia capilene",             { floor:1, ceiling:3, substances:["recycled polyester","microplastics"], reason:"Patagonia Capilene — 92%+ recycled materials, PFAS-free (100% of new products Spring 2025+ per official Patagonia statement), Fair Trade, bluesign. Benchmark clean base layer. Microplastic shedding only remaining concern.", confidence:"high", category:"clothing" }],
+  ["patagonia down sweater",         { floor:1, ceiling:3, substances:["recycled polyester","RDS certified down","microplastics"], reason:"Patagonia Down Sweater — recycled polyester shell, RDS certified traceable down, PFAS-free per 2025 blanket commitment. Fair Trade certified. Benchmark clean insulated jacket.", confidence:"high", category:"clothing" }],
+  ["patagonia better sweater",       { floor:1, ceiling:3, substances:["recycled polyester fleece","microplastics"], reason:"Patagonia Better Sweater — 100% recycled polyester fleece, PFAS-free, Fair Trade certified. Benchmark clean fleece. Microplastic shedding concern from fleece fabric.", confidence:"high", category:"clothing" }],
+  ["patagonia baggies",              { floor:1, ceiling:3, substances:["recycled nylon","microplastics"], reason:"Patagonia Baggies — recycled nylon, PFAS-free per 2025 commitment. Fair Trade certified. Clean shorts option.", confidence:"high", category:"clothing" }],
+  ["patagonia black hole",           { floor:1, ceiling:3, substances:["recycled polyester","TPU coating","microplastics"], reason:"Patagonia Black Hole bags — 100% post-consumer recycled polyester, PFAS-free matte recycled laminate per Patagonia dedicated PFAS-free bag page. Benchmark clean performance bag.", confidence:"high", category:"clothing" }],
+  ["patagonia torrentshell",         { floor:1, ceiling:3, substances:["recycled nylon","PFAS-free DWR","microplastics"], reason:"Patagonia Torrentshell — recycled nylon, PFAS-free DWR per 2025 commitment. Fair Trade. Benchmark clean rain jacket.", confidence:"high", category:"clothing" }],
+  ["patagonia storm racer",          { floor:1, ceiling:3, substances:["recycled nylon","PFAS-free DWR","microplastics"], reason:"Patagonia Storm Racer — recycled nylon, PFAS-free DWR. Fair Trade. Benchmark clean technical shell.", confidence:"high", category:"clothing" }],
+  ["patagonia r1",                   { floor:1, ceiling:3, substances:["recycled polyester","microplastics"], reason:"Patagonia R1 fleece — recycled polyester, PFAS-free, Fair Trade. Benchmark clean midlayer.", confidence:"high", category:"clothing" }],
+  ["patagonia nano puff",            { floor:1, ceiling:3, substances:["recycled polyester","PrimaLoft insulation","PFAS-free DWR","microplastics"], reason:"Patagonia Nano Puff — recycled polyester shell + PrimaLoft recycled insulation, PFAS-free DWR per 2025 commitment. Benchmark clean insulated jacket.", confidence:"high", category:"clothing" }],
+  ["patagonia",                      { floor:2, ceiling:4, substances:["recycled polyester","PFAS-free","microplastics"], reason:"Patagonia brand — 100% of new products Spring 2025+ made without intentionally added PFAS per official commitment. Fair Trade certified, bluesign approved, B Corp. Primary remaining concern is microplastic shedding from recycled synthetic fabrics. Benchmark clean outdoor brand. Floor 1-3 on specific product lines, 2-4 brand-level due to microplastic concern.", confidence:"high", category:"clothing" }],
+
+  ["icebreaker",                    { floor:1, ceiling:3, substances:[], reason:"Icebreaker — ZQ certified merino wool, no synthetic pesticides in wool production, no PFAS, no synthetic microplastics. Benchmark clean natural fiber activewear.", confidence:"high", category:"clothing" }],
+  ["girlfriend collective",         { floor:2, ceiling:4, substances:["recycled PET","spandex"], reason:"Girlfriend Collective — recycled plastic bottles into leggings, OEKO-TEX certified, no PFAS claim, transparent supply chain. Cleaner synthetic activewear option.", confidence:"high", category:"clothing" }],
+
+  // ── OUTERWEAR: PFAS DWR CONCERN ──────────────────────────────
+  ["columbia watertight",           { floor:3, ceiling:5, substances:["polyester","PFAS-free DWR","synthetic dyes"], reason:"Columbia Watertight — Better Trail independently verified: Columbia achieved PFAS-free DWR across all products by end of 2024 per its 2024 Restricted Substances List. No more PFAS concern on new Columbia waterproof products. Synthetic polyester and microplastic concern remain. Major correction from previous 6-8 entry.", confidence:"high", category:"clothing" }],
+  ["columbia outdry extreme",       { floor:2, ceiling:3, substances:["polyester","recycled content"], reason:"Columbia OutDry Extreme — membrane on outside means no DWR needed. Has always been PFAS-free by design. Columbia confirmed all products PFAS-free as of January 2025. ODX is cleanest Columbia waterproof technology.", confidence:"high", category:"clothing" }],
+  ["columbia omni-heat",             { floor:3, ceiling:5, substances:["polyester","reflective lining","synthetic dyes"], reason:"Columbia Omni-Heat — thermal reflective insulation technology, no DWR on insulation products. PFAS-free as of 2024 Columbia commitment. Polyester construction with synthetic dyes.", confidence:"high", category:"clothing" }],
+    ["columbia steens",               { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia Steens Mountain Fleece — polyester fleece, no DWR treatment, no PFAS concern. Microplastic shedding concern.", confidence:"high", category:"clothing" }],
+  ["columbia benton springs",       { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia Benton Springs Fleece — same profile as Steens. Polyester fleece, no PFAS.", confidence:"high", category:"clothing" }],
+  ["columbia fleece",                { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia fleece — polyester fleece, no DWR treatment, no PFAS concern. Microplastic shedding from fleece is a documented concern (fleece sheds more than woven synthetics). No bluesign certification since Columbia ended partnership in 2023.", confidence:"high", category:"clothing" }],
+  ["columbia pfg",                   { floor:3, ceiling:5, substances:["polyester","UPF treatment","synthetic dyes"], reason:"Columbia PFG fishing apparel — Omni-Shade UPF and Omni-Wick technology, no DWR on most PFG. PFAS-free per 2024 commitment. Mid-tier synthetic concern.", confidence:"medium", category:"clothing" }],
+  ["columbia",                       { floor:3, ceiling:5, substances:["polyester","PFAS-free DWR","synthetic dyes"], reason:"Columbia Sportswear — confirmed PFAS-free across all products as of January 2025 per Better Trail independent verification. Significant score correction from historical 5-7. Still synthetic polyester construction. OutDry Extreme 2-3, fleece 3-4, waterproof 3-5.", confidence:"high", category:"clothing" }],
+  ["arc'teryx beta ar",               { floor:3, ceiling:4, substances:["recycled nylon","FC0 DWR PFAS-free","microplastics"], reason:"Arc'teryx Beta AR (2025) — Gore-Tex PRO ePE membrane and FC0 DWR are both PFAS-free per Better Trail independent verification and Arc'teryx product page. Major 2025 redesign. Entire jacket free of intentionally added PFAS. Best-in-class sustainability for waterproof shells.", confidence:"high", category:"clothing" }],
+  ["arc'teryx beta",                  { floor:3, ceiling:4, substances:["recycled nylon","FC0 DWR PFAS-free","ePE membrane"], reason:"Arc'teryx Beta Jacket (2024+) — Gore-Tex ePE PFAS-free membrane + FC0 PFAS-free DWR. Launched 2024 as first PFAS-free Beta. Bluesign approved materials. Benchmark clean waterproof shell.", confidence:"high", category:"clothing" }],
+  ["arc'teryx atom",                  { floor:3, ceiling:5, substances:["recycled nylon","FC0 DWR PFAS-free","Coreloft insulation"], reason:"Arc'teryx Atom (2025) — updated with FC0 PFAS-free DWR in February 2025 refresh. PFAS-free across entire Atom line. Coreloft synthetic insulation is polyester-based. Still synthetic construction with microplastic concern.", confidence:"high", category:"clothing" }],
+  ["arc'teryx",                      { floor:3, ceiling:6, substances:["recycled nylon","PFAS-free transitioning"], reason:"Arc'teryx brand — as of early 2025 most products with DWRs are PFAS-free per Better Trail. Beta and Atom lines fully PFAS-free. Some older or non-transitioned products may still have PFAS. Score by product: Beta/Atom 2024+ = 3-4, pre-2024 older stock = 5-7.", confidence:"high", category:"clothing" }],
+  ["arcteryx",                      { floor:3, ceiling:6, substances:["recycled nylon","PFAS-free transitioning"], reason:"Arc'teryx — most products PFAS-free as of early 2025. Beta and Atom lines fully verified. Some product lines still transitioning. Score product-specific where possible.", confidence:"high", category:"clothing" }],
+  ["marmot precip",                 { floor:6, ceiling:8, substances:["PFAS DWR","polyester","fluoropolymer"], reason:"Marmot PreCip — PFAS DWR water repellent treatment + polyester shell. One of the most PFAS-treated entry-level rain jackets. Floor fires.", confidence:"high", category:"clothing" }],
+  ["marmot",                        { floor:5, ceiling:7, substances:["PFAS DWR","fluoropolymer"], reason:"Marmot — PFAS DWR across water-resistant product line. Committed to transition but not fully verified.", confidence:"medium", category:"clothing" }],
+  ["the north face",                { floor:5, ceiling:7, substances:["PFAS DWR","polyester","fluoropolymer"], reason:"The North Face — PFAS DWR on most water-resistant outerwear. Committed to PFAS-free DWR by 2025 but transition ongoing. Gore-Tex products still use ePTFE fluoropolymer.", confidence:"medium", category:"clothing" }],
+  ["north face",                    { floor:5, ceiling:7, substances:["PFAS DWR","fluoropolymer"], reason:"The North Face — PFAS DWR on water-resistant products. Transition ongoing. Floor concern on rain and waterproof products.", confidence:"medium", category:"clothing" }],
+  ["rei co-op rain",                { floor:5, ceiling:7, substances:["PFAS DWR","polyester"], reason:"REI Co-op rain jacket — PFAS DWR on waterproof products. REI committed to PFAS-free by 2024 on own-brand but transition not fully verified.", confidence:"medium", category:"clothing" }],
+
+  // ── OUTERWEAR: CLEANER TIER ───────────────────────────────────
+
+  ["patagonia",                     { floor:2, ceiling:4, substances:["recycled materials","Fair Trade"], reason:"Patagonia — Fair Trade certified, recycled materials, bluesign certified, PFAS-free DWR commitment. Benchmark cleanest mainstream outdoor brand for chemical concern.", confidence:"high", category:"clothing" }],
+  ["cotopaxi",                      { floor:2, ceiling:4, substances:["repurposed materials","recycled"], reason:"Cotopaxi — repurposed and recycled materials, bluesign certified fabrics, B Corp. Cleaner outdoor brand with transparent sourcing.", confidence:"high", category:"clothing" }],
+
+  // ── EVERYDAY BASICS: CONCERN ─────────────────────────────────
+  ["hanes t-shirt",                 { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde finish","synthetic dyes"], reason:"Hanes — conventional cotton (pesticide-heavy) + formaldehyde-based wrinkle finish on some products + synthetic dyes. No OEKO-TEX or GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["gildan",                        { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","azo dyes"], reason:"Gildan — conventional cotton + synthetic azo dyes. Some azo dyes can release carcinogenic aromatic amines. No OEKO-TEX certification on standard line.", confidence:"medium", category:"clothing" }],
+  ["bella canvas",                  { floor:3, ceiling:4, substances:["conventional cotton","spandex","synthetic dyes"], reason:"Bella + Canvas — conventional cotton/spandex, no GOTS certification, Airlume combed cotton is cleaner process but still conventional.", confidence:"medium", category:"clothing" }],
+  ["next level apparel",            { floor:3, ceiling:4, substances:["conventional cotton","synthetic dyes"], reason:"Next Level Apparel — conventional cotton blend, no GOTS or OEKO-TEX certification. Standard conventional basics concern.", confidence:"medium", category:"clothing" }],
+
+  // ── EVERYDAY BASICS: CLEAN TIER ──────────────────────────────
+  ["everlane",                      { floor:2, ceiling:4, substances:["conventional cotton","recycled materials"], reason:"Everlane — radical transparency in pricing and supply chain, some GOTS certified products, recycled materials. Better than Hanes/Gildan, not fully organic.", confidence:"medium", category:"clothing" }],
+  ["alternative apparel",           { floor:2, ceiling:4, substances:["eco-fleece","organic cotton"], reason:"Alternative Apparel — organic cotton and eco-fleece options, no GOTS certification across the full line but cleaner than Gildan/Hanes.", confidence:"medium", category:"clothing" }],
+  ["american apparel",              { floor:2, ceiling:4, substances:["conventional cotton","USA made"], reason:"American Apparel — USA made (better labor standards), conventional cotton, no GOTS certification but Made in USA manufacturing is cleaner than overseas fast fashion.", confidence:"medium", category:"clothing" }],
+
+  // ── DENIM ────────────────────────────────────────────────────
+  ["levi's",                  { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde finish","synthetic indigo dye","stonewashing"], reason:"Levi's — conventional cotton (pesticide concern) + synthetic indigo dye + formaldehyde in wrinkle treatments + stone washing with pumice. Levi's has sustainability initiatives but standard denim remains high-concern.", confidence:"high", category:"clothing" }],
+  ["wrangler",                { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde finish","synthetic dyes","stonewashing"], reason:"Wrangler — conventional cotton + formaldehyde wrinkle-resistant finish + synthetic dyes + stone washing. No significant sustainability certifications.", confidence:"high", category:"clothing" }],
+  ["lee jeans",                     { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde finish","synthetic dyes"], reason:"Lee Jeans — conventional cotton + formaldehyde finish + synthetic dyes. Same concern profile as Wrangler and Levi's standard line.", confidence:"high", category:"clothing" }],
+  ["madewell jeans",                { floor:3, ceiling:5, substances:["conventional cotton","synthetic indigo","stonewashing"], reason:"Madewell — conventional denim with some sustainability initiatives, cleaner finishing processes than Wrangler/Lee but still conventional cotton and synthetic dye concern.", confidence:"medium", category:"clothing" }],
+  ["ag jeans",                      { floor:3, ceiling:5, substances:["conventional cotton","synthetic indigo","ozone washing"], reason:"AG Jeans — ozone washing (cleaner than stone washing) and some responsible sourcing but still conventional cotton + synthetic indigo dye.", confidence:"medium", category:"clothing" }],
+  ["nudie jeans",                   { floor:2, ceiling:4, substances:["organic cotton","natural indigo"], reason:"Nudie Jeans — 100% organic cotton, Fair Trade certified, natural and low-impact dyes, free repairs for life. Benchmark cleanest mainstream denim brand.", confidence:"high", category:"clothing" }],
+  ["mud jeans",                     { floor:1, ceiling:3, substances:[], reason:"Mud Jeans — GOTS certified organic cotton, lease model (circular economy), low-impact dyes, Fair Trade. Benchmark cleanest denim brand available.", confidence:"high", category:"clothing" }],
+
+  // ── KIDS CLOTHING: FLAME RETARDANT CONCERN ────────────────────
+  ["carter's",              { floor:5, ceiling:7, substances:["flame retardant chemicals","conventional cotton","synthetic dyes"], reason:"Carter's treated cotton pajamas — snug-fit treated cotton uses flame retardant chemical treatments to meet federal flammability standards. FR chemicals on children's sleepwear touching skin 8-10 hours nightly is a documented concern. Look for 100% polyester or tight-fitting options which don't require FR treatment.", confidence:"high", category:"clothing" }],
+
+  ["oshkosh",                       { floor:5, ceiling:7, substances:["conventional cotton","flame retardant","synthetic dyes"], reason:"OshKosh B'gosh — conventional cotton + FR treatments on sleepwear + synthetic dyes. Same parent company as Carter's, similar concern profile.", confidence:"medium", category:"clothing" }],
+  ["gerber onesie",                 { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Gerber baby onesies — conventional cotton + synthetic dyes. No GOTS certification on standard line. Better than Carter's sleepwear (no FR concern) but still conventional.", confidence:"medium", category:"clothing" }],
+
+  // ── KIDS CLOTHING: CLEAN TIER ────────────────────────────────
+  ["primary kids",              { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Primary kids clothing — OEKO-TEX Standard 100 certified, no FR chemicals, no synthetic fragrances. Better than Cat & Jack, not fully organic.", confidence:"high", category:"clothing" }],
+  ["primary clothing",              { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Primary — OEKO-TEX Standard 100 certified, no FR chemicals, no synthetic fragrances, tested for harmful substances. Better than Carter's, not fully organic.", confidence:"high", category:"clothing" }],
+  ["burt's bees baby",              { floor:1, ceiling:3, substances:[], reason:"Burt's Bees Baby — GOTS certified organic cotton, no FR treatments, no synthetic dyes. Benchmark clean baby clothing.", confidence:"high", category:"clothing" }],
+  ["burts bees baby",               { floor:1, ceiling:3, substances:[], reason:"Burt's Bees Baby — GOTS certified organic cotton. Benchmark clean.", confidence:"high", category:"clothing" }],
+  ["little planet",                 { floor:1, ceiling:3, substances:[], reason:"Little Planet (Carter's organic line) — GOTS certified organic cotton, no FR chemical treatments, no synthetic dyes. Benchmark clean despite being owned by Carter's.", confidence:"high", category:"clothing" }],
+  ["hanna andersson",               { floor:2, ceiling:4, substances:["OEKO-TEX","conventional cotton"], reason:"Hanna Andersson — OEKO-TEX Standard 100 certified, snug-fit sleepwear avoids FR chemical treatments, tested for harmful substances. Swedish heritage brand with strong safety standards.", confidence:"high", category:"clothing" }],
+
+  // ── SOCKS ────────────────────────────────────────────────────
+  ["darn tough",              { floor:1, ceiling:3, substances:[], reason:"Darn Tough — merino wool + nylon blend, OEKO-TEX certified, made in Vermont USA, lifetime guarantee. Benchmark clean performance sock.", confidence:"high", category:"clothing" }],
+  ["smartwool",               { floor:1, ceiling:3, substances:[], reason:"Smartwool — ZQ certified merino wool, bluesign certified, responsible wool standard. Benchmark clean merino sock.", confidence:"high", category:"clothing" }],
+  ["bombas socks",                  { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes","antimicrobial"], reason:"Bombas — conventional cotton + synthetic dyes + antimicrobial treatment on some styles. BOGO charitable model but no GOTS or OEKO-TEX certification.", confidence:"medium", category:"clothing" }],
+  ["nike socks",                    { floor:3, ceiling:5, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Nike socks — conventional cotton/polyester blend + synthetic dyes. No OEKO-TEX certification.", confidence:"medium", category:"clothing" }],
+  ["stance socks",                  { floor:3, ceiling:5, substances:["conventional cotton","nylon","synthetic dyes"], reason:"Stance — conventional cotton/nylon + synthetic dyes, no OEKO-TEX or GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["swiftwick socks",               { floor:3, ceiling:4, substances:["nylon","Olefin","synthetic dyes"], reason:"Swiftwick — Olefin (polypropylene) fiber + nylon synthetic construction. No OEKO-TEX certification but no antimicrobial treatment.", confidence:"medium", category:"clothing" }],
+  ["balega socks",                  { floor:2, ceiling:4, substances:["mohair","nylon","conventional"], reason:"Balega — mohair/nylon blend, South African made, no antimicrobial treatment. Cleaner than pure synthetic socks.", confidence:"medium", category:"clothing" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 41 — APPAREL: FAST FASHION, WORKWEAR, SHOES,
+  //            SWIMWEAR, ACCESSORIES, SUITS
+  // KEY STORIES:
+  //   Shein — documented toxic chemicals above safe limits
+  //   in CBC Marketplace testing 2023. Lead, PFAS, phthalates.
+  //   Performance dress shirts — wrinkle-free = formaldehyde.
+  //   Swimwear — chlorine resistance treatments are chemical.
+  //   Fast fashion azo dyes — carcinogenic aromatic amines.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── FAST FASHION: CRITICAL CONCERN ───────────────────────────
+  ["shein",                          { floor:7, ceiling:9, substances:["lead","PFAS","phthalates","azo dyes","formaldehyde"], reason:"Shein — CBC Marketplace 2023 lab testing found lead levels 20x above Health Canada safe limits in childrens jackets, PFAS above safe limits in raincoats, phthalates above EU limits in accessories. Multiple critical substance floors fire. One of the highest-concern apparel brands ever tested.", confidence:"high", category:"clothing" }],
+  ["fashion nova",                   { floor:6, ceiling:8, substances:["azo dyes","lead","phthalates","conventional cotton"], reason:"Fashion Nova — ultra-fast fashion with undisclosed manufacturing, no transparency on chemical testing. Similar concern profile to Shein. Lead and phthalate concern in accessories and synthetic garments.", confidence:"medium", category:"clothing" }],
+  ["forever 21",                     { floor:5, ceiling:7, substances:["azo dyes","conventional cotton","synthetic dyes","PFAS finish"], reason:"Forever 21 — fast fashion with undisclosed supply chain, azo dye concern in synthetic garments, PFAS in water-resistant finishes, no chemical testing transparency.", confidence:"medium", category:"clothing" }],
+  ["zara",                           { floor:4, ceiling:6, substances:["azo dyes","conventional cotton","formaldehyde finish","synthetic dyes"], reason:"Zara — fast fashion with conventional cotton + azo synthetic dyes + formaldehyde wrinkle finishes. Inditex has sustainability commitments but supply chain chemical transparency remains limited.", confidence:"medium", category:"clothing" }],
+  ["h&m",                            { floor:4, ceiling:6, substances:["azo dyes","conventional cotton","synthetic dyes","PFAS"], reason:"H&M — fast fashion, conventional cotton + azo dyes + PFAS on water-resistant items. Conscious collection uses some organic cotton but greenwashing concerns documented. No blanket chemical testing.", confidence:"medium", category:"clothing" }],
+
+  // ── MAINSTREAM: MID CONCERN ───────────────────────────────────
+  ["gap t-shirt",                    { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Gap — conventional cotton + synthetic dyes + formaldehyde wrinkle treatments on some products. Gap has some sustainability initiatives but no GOTS certification on standard line.", confidence:"medium", category:"clothing" }],
+  ["old navy",                       { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Old Navy — conventional cotton + synthetic dyes. Gap Inc. owned, same general concern profile as Gap standard line.", confidence:"medium", category:"clothing" }],
+  ["banana republic",                { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde finish","synthetic dyes"], reason:"Banana Republic — conventional cotton + formaldehyde wrinkle-resistant finishes on dress shirts + synthetic dyes. Premium price, conventional chemistry.", confidence:"medium", category:"clothing" }],
+  ["j.crew",                         { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde"], reason:"J.Crew — conventional cotton + formaldehyde on wrinkle-resistant products + synthetic dyes. Some organic options but no blanket certification.", confidence:"medium", category:"clothing" }],
+  ["j crew",                         { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes"], reason:"J.Crew — conventional cotton + synthetic dyes. Mid-tier mainstream concern.", confidence:"medium", category:"clothing" }],
+  ["uniqlo heattech",                { floor:4, ceiling:6, substances:["polyester","rayon","PFAS moisture treatment","synthetic dyes"], reason:"Uniqlo Heattech — polyester/rayon synthetic blend with moisture-management treatment (PFAS concern) + synthetic dyes. Chemical performance finish on everyday layering.", confidence:"medium", category:"clothing" }],
+  ["uniqlo",                         { floor:3, ceiling:4, substances:["conventional cotton","synthetic dyes"], reason:"Uniqlo — conventional cotton basics, OEKO-TEX on some products, better supply chain transparency than Zara/H&M. Mid-tier mainstream, not a clean brand but not fast fashion level concern.", confidence:"medium", category:"clothing" }],
+
+  // ── WORKWEAR / DRESS SHIRTS ───────────────────────────────────
+  ["mizzen and main",                { floor:5, ceiling:7, substances:["polyester","PFAS moisture-wicking","formaldehyde wrinkle-free","synthetic dyes"], reason:"Mizzen and Main — polyester performance dress shirt with PFAS moisture-wicking finish + wrinkle-free formaldehyde treatment. Multiple concern ingredients in a shirt worn against skin all day.", confidence:"high", category:"clothing" }],
+  ["ministry of supply",             { floor:4, ceiling:6, substances:["nylon","polyester","PFAS finish","formaldehyde wrinkle-free"], reason:"Ministry of Supply — performance fabrics with PFAS-treated finishes and formaldehyde wrinkle treatments. Bluesign certified on some fabrics but PFAS concern remains.", confidence:"medium", category:"clothing" }],
+  ["brooks brothers",                { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde wrinkle-free","synthetic dyes"], reason:"Brooks Brothers — conventional cotton + formaldehyde non-iron treatments on most dress shirts. All-day skin contact with formaldehyde-treated fabric is a documented concern.", confidence:"high", category:"clothing" }],
+  ["charles tyrwhitt",               { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde wrinkle-free","synthetic dyes"], reason:"Charles Tyrwhitt — non-iron dress shirts use formaldehyde resin treatments + conventional cotton + synthetic dyes. Popular workwear brand with chemical finish concern.", confidence:"high", category:"clothing" }],
+  ["calvin klein dress",             { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Calvin Klein dress shirts — conventional cotton + formaldehyde wrinkle treatment + synthetic dyes. Standard workwear concern profile.", confidence:"medium", category:"clothing" }],
+  ["bonobos",                        { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Bonobos — conventional cotton, some Pima cotton options, no GOTS certification. Better than fast fashion, no significant sustainability certifications.", confidence:"medium", category:"clothing" }],
+  ["proper cloth",                   { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Proper Cloth — custom dress shirts, conventional cotton options, no GOTS or OEKO-TEX certification. Mid-tier concern.", confidence:"medium", category:"clothing" }],
+
+  // ── SHOES: CONCERN ────────────────────────────────────────────
+  ["nike shoes",                     { floor:4, ceiling:6, substances:["polyurethane foam","synthetic dyes","adhesives","PFAS"], reason:"Nike footwear — polyurethane midsole foam + synthetic dyes + chemical adhesives + PFAS water-resistant treatments on some models. Significant chemical construction in contact with feet daily.", confidence:"medium", category:"clothing" }],
+  ["timberland",               { floor:4, ceiling:6, substances:["PFAS DWR","conventional leather","synthetic dyes","adhesives"], reason:"Timberland — PFAS DWR water repellent treatment + conventional leather (chrome tanning concern) + chemical adhesives. Timberland has sustainability commitments but PFAS and chrome tanning remain concerns.", confidence:"medium", category:"clothing" }],
+  ["dr. martens",                    { floor:5, ceiling:7, substances:["PVC Vegan leather","conventional leather","chemical adhesives","synthetic dyes"], reason:"Dr. Martens — PVC vegan options contain vinyl chloride (IARC Group 1) + chemical adhesives. Leather versions have chrome tanning concern. Chemical construction throughout.", confidence:"medium", category:"clothing" }],
+  ["dr martens",                     { floor:5, ceiling:7, substances:["PVC","vinyl chloride","chemical adhesives"], reason:"Dr. Martens — PVC in vegan versions is a PFAS and vinyl chloride concern. Chrome-tanned leather in leather versions.", confidence:"medium", category:"clothing" }],
+
+  // ── SHOES: CLEAN TIER ─────────────────────────────────────────
+  ["allbirds",                       { floor:2, ceiling:4, substances:["merino wool","eucalyptus fiber","sugarcane sole"], reason:"Allbirds — natural materials (merino wool, eucalyptus Tencel, sugarcane-based sole), no PFAS, no chrome tanning, B Corp certified. Benchmark clean footwear brand.", confidence:"high", category:"clothing" }],
+  ["veja sneakers",                  { floor:1, ceiling:3, substances:[], reason:"Veja — organic cotton, wild Amazonian rubber soles, no chrome tanning, fair trade certified, PFAS-free. Benchmark cleanest mainstream sneaker brand.", confidence:"high", category:"clothing" }],
+  ["veja",                           { floor:1, ceiling:3, substances:[], reason:"Veja — organic cotton + wild rubber, no PFAS, fair trade. Benchmark clean sneaker.", confidence:"high", category:"clothing" }],
+  ["birkenstock",                    { floor:2, ceiling:4, substances:["cork","natural rubber","vegetable tanning"], reason:"Birkenstock — cork and natural rubber footbed, vegetable-tanned leather options, no PFAS. Benchmark clean sandal. EVA versions are plastic but no chemical treatment concern.", confidence:"high", category:"clothing" }],
+  ["new balance shoes",              { floor:4, ceiling:6, substances:["synthetic foam","conventional leather","synthetic dyes"], reason:"New Balance — synthetic foam midsole + conventional materials. USA made on some models improves oversight. No significant chemical transparency.", confidence:"medium", category:"clothing" }],
+  ["brooks running",                 { floor:3, ceiling:5, substances:["polyurethane foam","synthetic dyes","adhesives"], reason:"Brooks Running — polyurethane foam + synthetic dyes + chemical adhesives. No significant chemical certifications but focus on performance over fast fashion.", confidence:"medium", category:"clothing" }],
+  ["hoka",                           { floor:3, ceiling:5, substances:["EVA foam","synthetic dyes","adhesives"], reason:"HOKA — EVA/PEBA foam midsole + synthetic dyes + chemical adhesives. No PFAS claim, no organic certifications.", confidence:"medium", category:"clothing" }],
+  ["on running",                     { floor:3, ceiling:5, substances:["Helion foam","synthetic dyes","adhesives"], reason:"On Running — proprietary Helion superfoam + synthetic dyes + adhesives. Swiss brand, no major chemical certifications but no PFAS DWR.", confidence:"medium", category:"clothing" }],
+  ["blundstone",                     { floor:5, ceiling:7, substances:["conventional leather","PVC sole","chemical adhesives"], reason:"Blundstone — conventional leather + PVC sole + chemical adhesives. Australian made, better durability than fast fashion but conventional materials concern.", confidence:"medium", category:"clothing" }],
+  ["frye",                     { floor:5, ceiling:7, substances:["conventional leather","chrome tanning","chemical adhesives"], reason:"Frye — full-grain leather with conventional chrome tanning + chemical adhesives. Durable but chrome-tanned leather is an environmental and skin contact concern.", confidence:"medium", category:"clothing" }],
+
+  // ── SWIMWEAR ──────────────────────────────────────────────────
+  ["speedo fastskin",               { floor:6, ceiling:8, substances:["PFAS","polyurethane","competitive treatment"], reason:"Speedo Fastskin tech suits — competitive racing suits with PFAS treatments. Distinct from Endurance+ training suits.", confidence:"medium", category:"clothing" }],
+  ["speedo endurance",               { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Speedo Endurance+ — 100% polyester construction. Chlorine resistance through fiber structure not PFAS chemical treatment. Still synthetic microplastic concern.", confidence:"medium", category:"clothing" }],
+  ["speedo",                         { floor:4, ceiling:6, substances:["nylon","polyester","synthetic dyes"], reason:"Speedo brand — Endurance+ training suits use polyester chlorine resistance (3-5). Tech/competitive suits may have PFAS treatments (6-8). No brand-wide PFAS-free claim.", confidence:"medium", category:"clothing" }],
+  ["tyr tech",                      { floor:7, ceiling:9, substances:["PFAS confirmed","polyurethane","competitive treatment"], reason:"TYR tech suits — TYR website explicitly disclaims PFAS: product contains Per- and Polyfluoroalkyl Substances. Banned for sale in California and New York. Intentionally added PFAS confirmed by company itself.", confidence:"high", category:"clothing" }],
+  ["tyr durafast",                   { floor:4, ceiling:5, substances:["polyester","synthetic dyes","chlorine resistant"], reason:"TYR Durafast Elite — 100% polyester training suit. Polyester-based chlorine resistance, not PFAS-based DWR. Lower concern than TYR tech/competitive suits.", confidence:"medium", category:"clothing" }],
+  ["tyr",                            { floor:5, ceiling:7, substances:["polyester","PFAS on tech suits","synthetic dyes"], reason:"TYR brand — Durafast training suits 4-5. Tech/competitive suits confirmed PFAS by company (7-9). No brand-wide PFAS-free claim.", confidence:"high", category:"clothing" }],
+  ["summersalt",                     { floor:3, ceiling:5, substances:["recycled nylon","spandex","synthetic dyes"], reason:"Summersalt — recycled nylon from fishing nets, no explicit PFAS-free claim, no chlorine-resistant treatment. Cleaner than Speedo/TYR, mid-tier clean swimwear.", confidence:"medium", category:"clothing" }],
+  ["andie swimwear",                 { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Andie — Italian nylon/spandex, no chlorine-resistant PFAS treatment claimed, no OEKO-TEX certification. Mid-tier swim concern.", confidence:"medium", category:"clothing" }],
+  ["seea swimwear",                  { floor:2, ceiling:4, substances:["recycled nylon","spandex"], reason:"Seea — recycled nylon, UPF 50+ without chemical treatments, designed for surf. Cleaner swimwear option with recycled content.", confidence:"medium", category:"clothing" }],
+    ["patagonia nanogrip",            { floor:1, ceiling:3, substances:[], reason:"Patagonia Nanogrip swimsuit — made without PFAS per Patagonia explicit claim. Benchmark clean swimwear.", confidence:"high", category:"clothing" }],
+  ["patagonia swimsuit",            { floor:1, ceiling:3, substances:[], reason:"Patagonia swimsuit — PFAS-free commitment across swimwear line. Benchmark clean.", confidence:"high", category:"clothing" }],
+  ["patagonia one piece",           { floor:1, ceiling:3, substances:[], reason:"Patagonia one piece swimwear — PFAS-free. Benchmark clean.", confidence:"high", category:"clothing" }],
+  ["patagonia nanogrip",            { floor:1, ceiling:3, substances:[], reason:"Patagonia Nanogrip swimsuit — made without PFAS per Patagonia explicit claim. Benchmark clean swimwear.", confidence:"high", category:"clothing" }],
+  ["patagonia swimwear",             { floor:1, ceiling:3, substances:[], reason:"Patagonia swimwear — PFAS-free across swim line. Benchmark clean.", confidence:"high", category:"clothing" }],
+  ["patagonia womens swimsuit",      { floor:1, ceiling:3, substances:[], reason:"Patagonia swimsuit — PFAS-free. Benchmark clean.", confidence:"high", category:"clothing" }],
+  ["patagonia womens swim",          { floor:1, ceiling:3, substances:[], reason:"Patagonia womens swim — PFAS-free.", confidence:"high", category:"clothing" }],
+  ["patagonia swim",             { floor:1, ceiling:3, substances:[], reason:"Patagonia swimwear — recycled nylon/polyester, PFAS-free finish commitment, Fair Trade certified. Benchmark cleanest mainstream swimwear.", confidence:"high", category:"clothing" }],
+
+  // ── ACCESSORIES AND BAGS ──────────────────────────────────────
+  ["carhartt beanie",                { floor:4, ceiling:6, substances:["acrylic","synthetic dyes"], reason:"Carhartt beanie — acrylic synthetic fiber + synthetic dyes. Acrylic is petroleum-derived and sheds microplastics. No OEKO-TEX certification.", confidence:"medium", category:"clothing" }],
+  ["columbia pfg hat",               { floor:3, ceiling:5, substances:["polyester","PFAS finish","synthetic dyes"], reason:"Columbia PFG hat — polyester + PFAS UV/moisture treatment + synthetic dyes. Columbia performance accessories carry PFAS concern.", confidence:"medium", category:"clothing" }],
+  ["patagonia hat",                  { floor:2, ceiling:3, substances:[], reason:"Patagonia hats — recycled materials, Fair Trade certified, PFAS-free commitment. Benchmark clean outdoor accessory.", confidence:"high", category:"clothing" }],
+
+  ["tumi",                  { floor:4, ceiling:6, substances:["ballistic nylon","PFAS DWR","polyester lining"], reason:"Tumi — ballistic nylon with PFAS DWR water-resistant treatment + polyester lining. Premium price, PFAS concern on water-resistant finishes.", confidence:"medium", category:"clothing" }],
+
+  // ── SUITS ─────────────────────────────────────────────────────
+  ["suitsupply",                     { floor:4, ceiling:6, substances:["wool blend","formaldehyde finish","synthetic lining","conventional wool"], reason:"Suit Supply — conventional wool/polyester blend + formaldehyde wrinkle finish + synthetic polyester lining. No sustainable certification. Popular affordable suit brand with conventional chemical profile.", confidence:"medium", category:"clothing" }],
+  ["suit supply",                    { floor:4, ceiling:6, substances:["wool blend","formaldehyde","synthetic lining"], reason:"Suit Supply — same conventional concern as above.", confidence:"medium", category:"clothing" }],
+  ["indochino",                      { floor:4, ceiling:6, substances:["wool blend","polyester","formaldehyde finish","synthetic dyes"], reason:"Indochino — made-to-measure suits with conventional wool/polyester + formaldehyde wrinkle treatments + synthetic linings. Custom fit but conventional chemical profile.", confidence:"medium", category:"clothing" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 42 — RETAIL BRANDS (TARGET, WALMART, NORDSTROM,
+  //            MACYS) + VIRAL BRANDS + INTIMATES
+  // KEY STORIES:
+  //   Skims — Kim K shapewear, nylon/spandex PFAS concern,
+  //   no chemical certifications on a skin-tight daily garment.
+  //   Canada Goose — coyote fur trim + down fill controversy +
+  //   PFAS DWR on shell.
+  //   Stanley already anchored at 5-7 (lead + PFAS).
+  //   Store brand fast fashion — worst chemical transparency.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── TARGET OWNED BRANDS ───────────────────────────────────────
+  ["all in motion",                  { floor:4, ceiling:6, substances:["polyester","spandex","PFAS moisture-wicking","synthetic dyes"], reason:"All in Motion (Target) — polyester/spandex activewear with moisture-wicking PFAS treatments. No OEKO-TEX or bluesign certification. Target house brand with no chemical transparency.", confidence:"medium", category:"clothing" }],
+  ["wild fable",                     { floor:5, ceiling:7, substances:["conventional cotton","polyester","azo dyes","PFAS finish"], reason:"Wild Fable (Target) — fast fashion Target brand, conventional cotton + azo dyes + PFAS on water-resistant items. No supply chain transparency or chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["universal thread",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Universal Thread (Target) — conventional denim + formaldehyde wrinkle treatments + synthetic dyes. Target denim house brand, no sustainability certifications.", confidence:"medium", category:"clothing" }],
+  ["a new day",                      { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes","azo dyes"], reason:"A New Day (Target) — fast fashion house brand, conventional cotton/polyester + azo synthetic dyes. No chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["goodfellow",                     { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Goodfellow & Co (Target men's) — conventional cotton + synthetic dyes. No certifications. Standard Target house brand concern.", confidence:"medium", category:"clothing" }],
+  ["cat and jack",                   { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant"], reason:"Cat & Jack (Target kids) — conventional cotton + synthetic dyes + flame retardant on sleepwear. Target's top-selling kids brand with no GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["cat jack",                       { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant"], reason:"Cat & Jack — FR treatments on sleepwear + conventional cotton + synthetic dyes. Same concern as Carter's.", confidence:"medium", category:"clothing" }],
+  ["art class target",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","azo dyes"], reason:"Art Class (Target tweens) — conventional fast fashion for children, no chemical certifications, synthetic dyes.", confidence:"medium", category:"clothing" }],
+
+  // ── WALMART BRANDS ────────────────────────────────────────────
+  ["no boundaries",          { floor:5, ceiling:7, substances:["conventional cotton","polyester","azo dyes","PFAS finish"], reason:"No Boundaries (Walmart teen) — Walmart fast fashion house brand, lowest price point means least chemical transparency. Conventional materials + azo dyes + no certifications. Higher concern than Target equivalents.", confidence:"medium", category:"clothing" }],
+  ["time and tru",                   { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Time and Tru (Walmart women's) — Walmart house brand, conventional cotton/polyester + synthetic dyes. No chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["george clothing",                { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","polyester"], reason:"George (Walmart) — UK-origin Walmart brand, conventional materials, no chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["athletic works",                 { floor:4, ceiling:6, substances:["polyester","synthetic dyes","PFAS moisture-wicking"], reason:"Athletic Works (Walmart activewear) — polyester activewear with PFAS moisture treatments. Walmart's value activewear brand, no certifications.", confidence:"medium", category:"clothing" }],
+  ["wonder nation",                  { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant"], reason:"Wonder Nation (Walmart kids) — conventional cotton + FR on sleepwear + synthetic dyes. Same FR concern as Carter's and Cat & Jack.", confidence:"medium", category:"clothing" }],
+
+  // ── NORDSTROM BRANDS ──────────────────────────────────────────
+  ["halogen nordstrom",              { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde"], reason:"Halogen (Nordstrom women's) — conventional materials + formaldehyde on wrinkle-resistant items. Nordstrom house brand, better transparency than Walmart but no GOTS certification.", confidence:"medium", category:"clothing" }],
+  ["treasure bond",                  { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Treasure & Bond (Nordstrom) — conventional cotton + synthetic dyes. No OEKO-TEX or GOTS certification despite higher price point.", confidence:"medium", category:"clothing" }],
+  ["tucker tate",                    { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Tucker + Tate (Nordstrom kids) — conventional cotton + synthetic dyes. Better quality than Walmart kids brands but no clean certifications.", confidence:"medium", category:"clothing" }],
+
+  // ── MACY'S BRANDS ─────────────────────────────────────────────
+  ["style co macy",                  { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde"], reason:"Style Co (Macy's) — conventional cotton + formaldehyde wrinkle treatments + synthetic dyes. Macy's house brand, no certifications.", confidence:"medium", category:"clothing" }],
+  ["charter club",                   { floor:3, ceiling:5, substances:["conventional cotton","cashmere blend","synthetic dyes"], reason:"Charter Club (Macy's) — conventional cotton/cashmere blends + synthetic dyes. Premium positioning but no sustainable certifications.", confidence:"medium", category:"clothing" }],
+  ["inc international",              { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes","azo dyes"], reason:"INC International Concepts (Macy's) — conventional fast fashion fabrics + azo synthetic dyes. No certifications.", confidence:"medium", category:"clothing" }],
+  ["alfani",                         { floor:4, ceiling:6, substances:["conventional cotton","formaldehyde","synthetic dyes"], reason:"Alfani (Macy's men's) — conventional cotton + formaldehyde wrinkle-free finishes on dress shirts + synthetic dyes.", confidence:"medium", category:"clothing" }],
+
+  // ── VIRAL BRANDS ──────────────────────────────────────────────
+  ["skims shapewear",                { floor:5, ceiling:7, substances:["nylon","spandex","PFAS finish","synthetic dyes"], reason:"Skims shapewear — high-compression nylon/spandex with PFAS-treated finishes, no OEKO-TEX certification, no chemical transparency. Worn skin-tight against the body all day. Kim Kardashian brand with zero published chemical testing.", confidence:"medium", category:"clothing" }],
+  ["skims bodysuit",                 { floor:5, ceiling:7, substances:["nylon","spandex","PFAS finish"], reason:"Skims — same nylon/spandex PFAS concern as shapewear. No certifications on any Skims products.", confidence:"medium", category:"clothing" }],
+  ["skims",                          { floor:5, ceiling:7, substances:["nylon","spandex","PFAS finish","synthetic dyes"], reason:"Skims brand — nylon/spandex construction + PFAS-treated finishes + synthetic dyes. No OEKO-TEX, no GOTS, no bluesign. Skin-tight daily wear with no chemical transparency. Floor 5 minimum.", confidence:"medium", category:"clothing" }],
+  ["crocs",                          { floor:5, ceiling:7, substances:["Croslite foam","synthetic polymer","phthalates"], reason:"Crocs — made from Croslite, a proprietary closed-cell resin. Crocs tested positive for phthalates above EU limits in some independent tests. Synthetic polymer in direct daily foot contact.", confidence:"medium", category:"clothing" }],
+  ["ugg boots",                      { floor:4, ceiling:6, substances:["conventional sheepskin","PFAS DWR","synthetic dyes"], reason:"UGG — conventional sheepskin + PFAS DWR water repellent treatment on most styles + synthetic dyes. No PFAS-free certification, no sustainable wool sourcing certification.", confidence:"medium", category:"clothing" }],
+  ["ugg classic",                    { floor:4, ceiling:6, substances:["conventional sheepskin","PFAS DWR"], reason:"UGG Classic — PFAS DWR + conventional sheepskin. PFAS floor concern.", confidence:"medium", category:"clothing" }],
+  ["hey dude shoes",                 { floor:4, ceiling:5, substances:["synthetic textile upper","EVA sole","synthetic dyes"], reason:"Hey Dude — synthetic textile upper + EVA sole + synthetic dyes. No chemical certifications. Lightweight but fully synthetic construction.", confidence:"medium", category:"clothing" }],
+  ["skechers",                       { floor:4, ceiling:6, substances:["synthetic upper","memory foam","synthetic dyes","adhesives"], reason:"Skechers — synthetic textile/faux leather + memory foam (polyurethane) + chemical adhesives + synthetic dyes. No chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["sorel boots",                    { floor:4, ceiling:6, substances:["PFAS DWR","conventional leather","rubber sole","synthetic dyes"], reason:"Sorel — PFAS DWR water-resistant treatment + conventional leather + synthetic dyes. Winter boot with PFAS treatment concern.", confidence:"medium", category:"clothing" }],
+  ["canada goose",                   { floor:6, ceiling:8, substances:["PFAS DWR","coyote fur","down fill","nylon shell"], reason:"Canada Goose — PFAS DWR nylon shell + coyote fur trim (animal welfare + potential PFAS from trapping) + down fill. Multiple concern layers. PFAS DWR floor fires. Premium price point, multiple documented chemical and ethical concerns.", confidence:"high", category:"clothing" }],
+  ["moncler",                 { floor:6, ceiling:8, substances:["PFAS DWR","down fill","nylon shell","synthetic dyes"], reason:"Moncler — PFAS DWR nylon shell + down fill + synthetic dyes. ,000+ jacket with same PFAS concern as Columbia. No PFAS-free certification.", confidence:"high", category:"clothing" }],
+  ["ralph lauren polo",              { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes","formaldehyde"], reason:"Ralph Lauren Polo shirt — conventional cotton + synthetic dyes + formaldehyde wrinkle treatments. Classic American brand, no sustainable certifications on standard polo line.", confidence:"medium", category:"clothing" }],
+  ["ralph lauren",                   { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Ralph Lauren — conventional cotton + synthetic dyes across most products. No GOTS or OEKO-TEX on standard line.", confidence:"medium", category:"clothing" }],
+  ["lacoste polo",                   { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes","polyester blend"], reason:"Lacoste — conventional cotton/polyester blend + synthetic dyes. French brand with no significant chemical certifications on standard line.", confidence:"medium", category:"clothing" }],
+  ["lacoste",                        { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Lacoste — conventional cotton + synthetic dyes. Mid-tier mainstream concern.", confidence:"medium", category:"clothing" }],
+  ["champion hoodie",                { floor:3, ceiling:5, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Champion — conventional cotton/polyester fleece + synthetic dyes. Better than fast fashion (durable, classic), no chemical certifications but not PFAS-treated activewear.", confidence:"medium", category:"clothing" }],
+  ["champion",                       { floor:3, ceiling:5, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Champion brand — conventional cotton/polyester + synthetic dyes. Mid-tier mainstream athletic brand.", confidence:"medium", category:"clothing" }],
+  ["carhartt wip",                   { floor:4, ceiling:6, substances:["conventional cotton","PFAS finish","synthetic dyes"], reason:"Carhartt WIP — conventional cotton + PFAS water-resistant treatments on work-wear styles + synthetic dyes. Urban streetwear positioning but workwear chemical concern remains.", confidence:"medium", category:"clothing" }],
+  ["dickies",                        { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes","formaldehyde"], reason:"Dickies — conventional cotton/polyester workwear + formaldehyde wrinkle-resistant finishes on some styles + synthetic dyes. No chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["columbia fleece",                { floor:3, ceiling:5, substances:["polyester recycled","synthetic dyes"], reason:"Columbia fleece — recycled polyester fleece, no PFAS on fleece (PFAS concern is on shell/rain products). Better than rain jacket category. Mid-tier clean for Columbia.", confidence:"high", category:"clothing" }],
+
+  // ── INTIMATES ────────────────────────────────────────────────
+  ["savage x fenty",                 { floor:4, ceiling:6, substances:["nylon","spandex","synthetic dyes","lace"], reason:"Savage X Fenty — nylon/spandex + synthetic dyes + nylon lace. No OEKO-TEX certification. Rihanna brand with no chemical transparency on intimate apparel.", confidence:"medium", category:"clothing" }],
+  ["soma bra",                       { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Soma — nylon/spandex construction + synthetic dyes. No OEKO-TEX certification. Mid-tier intimate apparel concern.", confidence:"medium", category:"clothing" }],
+  ["chantelle bra",                  { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Chantelle — French brand, nylon/spandex + synthetic dyes. Better quality construction but no chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["wacoal bra",                     { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Wacoal — Japanese brand, nylon/spandex + synthetic dyes. OEKO-TEX on some products. Mid-tier intimate apparel.", confidence:"medium", category:"clothing" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // AUDIT 43 — PREMIUM ACTIVEWEAR, CASUAL, OUTERWEAR,
+  //            ON RUNNING, FOOTWEAR, LUXURY
+  // KEY STORIES:
+  //   Alo Yoga — PFAS treatments on leggings marketed to
+  //   wellness community. Ironic given the brand positioning.
+  //   Fjallraven — one of first outdoor brands to commit to
+  //   full PFAS-free across entire line. Benchmark clean.
+  //   Golden Goose — 00 sneaker with synthetic leather +
+  //   pre-distressed chemical treatments. Price is not safety.
+  //   On Running — Swiss performance brand, cleaner than Nike
+  //   but still synthetic construction.
+  // ══════════════════════════════════════════════════════════════
+
+  // ── PREMIUM ACTIVEWEAR ────────────────────────────────────────
+  ["vuori ripstop",                  { floor:5, ceiling:7, substances:["DWR PFAS","nylon","elastane"], reason:"Vuori Ripstop — DWR water-repellent finish confirmed on product page. DWR treatments are the primary PFAS concern in activewear. Fabric-level PFAS concern.", confidence:"high", category:"clothing" }],
+  ["vuori ponto",                    { floor:3, ceiling:4, substances:["recycled polyester","elastane","synthetic dyes"], reason:"Vuori Ponto Pants — 89% recycled polyester, 11% elastane, no DWR treatment, moisture-wicking through fabric structure not chemical finish. Mamavation lab testing found 23ppm fluorine in Vuori leggings (PFAS indicator) but this may reflect manufacturing contamination not intentional treatment. Bluesign certified on 63% of Vuori products.", confidence:"medium", category:"clothing" }],
+  ["vuori performance jogger",       { floor:3, ceiling:4, substances:["recycled polyester","elastane"], reason:"Vuori Performance Jogger — 89% recycled polyester, 11% elastane per REI listing. No DWR. Same profile as Ponto.", confidence:"high", category:"clothing" }],
+  ["vuori",                          { floor:3, ceiling:6, substances:["recycled polyester","DWR on some","synthetic dyes"], reason:"Vuori brand — varies significantly by product. Soft studio pants (Ponto, Jogger) score 3-4, DWR water-resistant products (Ripstop) score 5-7. 63% bluesign certified. Mamavation found 23ppm fluorine in leggings tested.", confidence:"medium", category:"clothing" }],
+  ["alo airbrush",                   { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Alo Yoga Airbrush leggings — Mamavation EPA-certified lab testing found ZERO detectable organic fluorine (below 10ppm). No PFAS detected in the specific Alo Yoga High-Waist Alosoft Flow Legging tested. Still nylon/spandex synthetic with no OEKO-TEX certification but PFAS concern not confirmed by lab testing.", confidence:"high", category:"clothing" }],
+  ["alo yoga",                       { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Alo Yoga — nylon/spandex construction, no OEKO-TEX or bluesign certification. Mamavation lab testing found NO detectable PFAS in Alo leggings tested — unlike Lululemon which tested positive at 32ppm. Still synthetic petroleum-derived fabrics but PFAS concern not lab-confirmed. Score lower than Lululemon.", confidence:"medium", category:"clothing" }],
+  ["alo",                            { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Alo Yoga — lab testing by Mamavation found no detectable PFAS. Still synthetic nylon/spandex, no certifications, but cleaner than Lululemon on PFAS specifically.", confidence:"medium", category:"clothing" }],
+  ["rhone",                          { floor:4, ceiling:6, substances:["polyester","nylon","PFAS moisture-wicking","synthetic dyes"], reason:"Rhone — polyester/nylon men's activewear with moisture-wicking PFAS treatments. No OEKO-TEX or bluesign certification. Premium DTC activewear with conventional chemical profile.", confidence:"medium", category:"clothing" }],
+  ["ten thousand apparel",           { floor:3, ceiling:5, substances:["polyester","spandex","synthetic dyes"], reason:"Ten Thousand — polyester/spandex performance shorts, no PFAS-free claim, no certifications. Mid-tier men's activewear concern.", confidence:"medium", category:"clothing" }],
+  ["reigning champ",                 { floor:3, ceiling:5, substances:["cotton fleece","conventional cotton","synthetic dyes"], reason:"Reigning Champ — heavyweight cotton fleece, conventional cotton + synthetic dyes. No GOTS certification but heavier fabric construction reduces some chemical treatment opportunity.", confidence:"medium", category:"clothing" }],
+  ["cuts",                  { floor:4, ceiling:5, substances:["polyester","nylon","PFAS finish","synthetic dyes"], reason:"Cuts — polyester/nylon blend shirts with moisture-wicking PFAS finish. No certifications. Premium DTC shirt brand with conventional performance chemistry.", confidence:"medium", category:"clothing" }],
+  ["public rec",                     { floor:3, ceiling:5, substances:["nylon","polyester","synthetic dyes"], reason:"Public Rec — nylon/polyester stretch pants, no bluesign or OEKO-TEX certification, no PFAS-free claim. Mid-tier clean DTC activewear.", confidence:"medium", category:"clothing" }],
+  ["tracksmith",                     { floor:3, ceiling:5, substances:["recycled polyester","nylon","synthetic dyes"], reason:"Tracksmith — running apparel, some recycled content, no PFAS-free certification across full line. Mid-tier clean performance brand.", confidence:"medium", category:"clothing" }],
+  ["rabbit running",                 { floor:2, ceiling:4, substances:["recycled polyester","spandex"], reason:"Rabbit — recycled polyester running apparel, bluesign certified on some fabrics, B Corp certified. Cleaner than most running brands.", confidence:"medium", category:"clothing" }],
+
+  // ── PREMIUM CASUAL ────────────────────────────────────────────
+  ["rag and bone",                   { floor:4, ceiling:5, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Rag and Bone — conventional cotton + formaldehyde wrinkle treatments on some products + synthetic dyes. Premium NYC brand, no GOTS or OEKO-TEX certification.", confidence:"medium", category:"clothing" }],
+  ["theory",                { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde"], reason:"Theory — conventional cotton/wool blends + formaldehyde wrinkle-resistant treatments + synthetic dyes. Premium minimalist brand, no chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["vince clothing",                 { floor:3, ceiling:5, substances:["conventional cotton","cashmere","synthetic dyes"], reason:"Vince — conventional cotton and cashmere basics + synthetic dyes. No GOTS certification despite premium positioning.", confidence:"medium", category:"clothing" }],
+  ["frame le",                  { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde"], reason:"Frame Denim — premium LA denim with conventional chemical concern profile.", confidence:"medium", category:"clothing" }],
+  ["frame ali",                  { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde"], reason:"Frame Denim — conventional denim concern.", confidence:"medium", category:"clothing" }],
+  ["frame denim",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde","elastane"], reason:"Frame Denim — premium LA denim, conventional cotton + synthetic indigo + formaldehyde wrinkle treatment + elastane.", confidence:"medium", category:"clothing" }],
+  ["frame jeans",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde","elastane"], reason:"Frame Denim — conventional denim concern.", confidence:"medium", category:"clothing" }],
+  ["frame denim jeans",                    { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde","elastane"], reason:"Frame Denim — conventional cotton + synthetic indigo + formaldehyde finish + elastane. Premium LA denim brand with conventional chemistry.", confidence:"medium", category:"clothing" }],
+  ["citizens of humanity",           { floor:4, ceiling:5, substances:["conventional cotton","synthetic indigo","elastane"], reason:"Citizens of Humanity — conventional denim, some organic cotton styles but not across full line. Better than Levi's mass market, not as clean as Nudie or Mud Jeans.", confidence:"medium", category:"clothing" }],
+  ["7 for all mankind",              { floor:4, ceiling:6, substances:["conventional cotton","synthetic indigo","formaldehyde","elastane"], reason:"7 For All Mankind — conventional denim + formaldehyde wrinkle treatments + synthetic indigo + elastane. Premium denim with conventional chemical concern.", confidence:"medium", category:"clothing" }],
+  ["true religion",            { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","heavy stone washing"], reason:"True Religion — conventional cotton + heavy stone washing process + synthetic dyes. Known for intensive denim treatments that add chemical concern.", confidence:"medium", category:"clothing" }],
+  ["faherty brand",                  { floor:1, ceiling:3, substances:[], reason:"Faherty — organic cotton, recycled materials, B Corp certified, transparent sourcing. One of the cleanest mainstream casual clothing brands available.", confidence:"high", category:"clothing" }],
+  ["faherty",                        { floor:1, ceiling:3, substances:[], reason:"Faherty — B Corp, organic cotton, recycled materials. Benchmark clean casual brand.", confidence:"high", category:"clothing" }],
+  ["outerknown",                     { floor:1, ceiling:3, substances:[], reason:"Outerknown (Kelly Slater brand) — GOTS certified organic cotton, Fair Trade certified, bluesign certified fabrics. Benchmark clean surf-inspired clothing brand.", confidence:"high", category:"clothing" }],
+
+  // ── PREMIUM OUTERWEAR ─────────────────────────────────────────
+  ["mackage",                   { floor:5, ceiling:7, substances:["PFAS DWR","down fill","nylon shell","synthetic dyes"], reason:"Mackage — PFAS DWR nylon shell + down fill + synthetic dyes. Canadian luxury outerwear with no PFAS-free certification. Same fluoropolymer concern as Columbia at 4x the price.", confidence:"medium", category:"clothing" }],
+  ["moose knuckles",                 { floor:5, ceiling:7, substances:["PFAS DWR","coyote fur","down fill","nylon shell"], reason:"Moose Knuckles — PFAS DWR + coyote fur trim + down fill. Same concern profile as Canada Goose at slightly lower price point.", confidence:"medium", category:"clothing" }],
+  ["stone island",                   { floor:5, ceiling:7, substances:["PFAS","proprietary chemical treatments","garment dyeing"], reason:"Stone Island — known for proprietary chemical fabric treatments (Tela Stella, Ice Jacket, Liquid Reflective) and extensive garment dyeing. Chemical treatment is core to the brand identity. Multiple PFAS and synthetic chemical concerns.", confidence:"medium", category:"clothing" }],
+  ["helly hansen",                   { floor:5, ceiling:7, substances:["PFAS DWR","nylon shell","fluoropolymer"], reason:"Helly Hansen — PFAS DWR on waterproof products, HellyTech membranes use fluoropolymers. Norwegian brand with conventional outdoor chemical profile.", confidence:"medium", category:"clothing" }],
+  ["fjallraven",                     { floor:2, ceiling:4, substances:["G-1000 wax","recycled polyester"], reason:"Fjallraven — replaced all PFAS DWR with Greenland Wax (paraffin/beeswax) system across entire line by 2020. One of first outdoor brands to fully commit to PFAS-free. G-1000 fabric is conventional polyester/cotton but no fluorochemical treatments. Benchmark clean outerwear brand.", confidence:"high", category:"clothing" }],
+  ["outdoor research",               { floor:4, ceiling:6, substances:["PFAS DWR","Gore-Tex","nylon shell"], reason:"Outdoor Research — PFAS DWR on waterproof products, Gore-Tex ePTFE on some products. Committed to PFAS-free by 2025 but transition incomplete.", confidence:"medium", category:"clothing" }],
+  ["norrona",                        { floor:3, ceiling:5, substances:["recycled nylon","PFAS-free claim","bluesign"], reason:"Norrona — Norwegian brand, bluesign certified, moved to PFAS-free DWR on most products. Better than Helly Hansen and most outdoor brands on PFAS. Premium clean outdoor tier.", confidence:"medium", category:"clothing" }],
+  ["fjallraven kanken",              { floor:2, ceiling:4, substances:["Vinylon F","wax coating"], reason:"Fjallraven Kanken — Vinylon F fabric (Japanese synthetic but no PFAS treatment), wax coating for water resistance. PFAS-free construction. Cleaner than nylon backpacks with PFAS DWR.", confidence:"high", category:"clothing" }],
+
+  // ── ON RUNNING ────────────────────────────────────────────────
+  ["on running cloud",               { floor:3, ceiling:5, substances:["Helion foam","TPU","synthetic textile","adhesives"], reason:"On Running Cloud — Helion superfoam midsole + TPU CloudTec pods + synthetic upper + chemical adhesives. Swiss performance brand, no PFAS DWR on shoes, no OEKO-TEX but cleaner than most Nike/Adidas equivalents.", confidence:"medium", category:"clothing" }],
+    ["on running active",             { floor:4, ceiling:6, substances:["recycled polyester","moisture-wicking finish","synthetic dyes"], reason:"On Running active apparel — recycled polyester with moisture-wicking treatment. No bluesign certification on apparel line. Less transparent than their footwear PFAS-free commitment.", confidence:"medium", category:"clothing" }],
+  ["on running tee",                { floor:4, ceiling:6, substances:["recycled polyester","moisture-wicking","synthetic dyes"], reason:"On Running t-shirt — recycled polyester, moisture-wicking finish. No PFAS-free claim on apparel.", confidence:"medium", category:"clothing" }],
+  ["on running shirt",             { floor:4, ceiling:6, substances:["recycled polyester","PFAS moisture treatment","synthetic dyes"], reason:"On Running apparel — recycled polyester performance fabric with moisture-wicking PFAS finish. No bluesign certification. Apparel line less transparent than shoe line.", confidence:"medium", category:"clothing" }],
+  ["on running",                     { floor:3, ceiling:5, substances:["Helion foam","synthetic materials","adhesives"], reason:"On Running footwear — synthetic foam + TPU + adhesives. No PFAS DWR on shoes. Better than Nike equivalent, not as clean as Veja or Allbirds.", confidence:"medium", category:"clothing" }],
+
+  // ── PREMIUM FOOTWEAR ──────────────────────────────────────────
+  ["golden goose",                   { floor:5, ceiling:7, substances:["synthetic leather","chemical distressing","adhesives","azo dyes"], reason:"Golden Goose — pre-distressed synthetic leather + chemical distressing treatments + azo synthetic dyes + chemical adhesives. 00 sneaker where the distressed aesthetic requires chemical treatments. No chemical certifications.", confidence:"medium", category:"clothing" }],
+  ["common projects",                { floor:5, ceiling:7, substances:["conventional leather","chrome tanning","adhesives"], reason:"Common Projects — Italian leather with chrome tanning + chemical adhesives. Minimalist sneaker, conventional leather concern. Better than synthetic alternatives but chrome tanning is an environmental concern.", confidence:"medium", category:"clothing" }],
+  ["salomon",                        { floor:3, ceiling:5, substances:["synthetic upper","EVA foam","PFAS DWR","adhesives"], reason:"Salomon — synthetic upper + EVA midsole + PFAS DWR on trail shoes + chemical adhesives. French performance brand, PFAS on water-resistant trail models.", confidence:"medium", category:"clothing" }],
+  ["merrell shoes",                  { floor:4, ceiling:6, substances:["synthetic upper","EVA foam","conventional leather","adhesives"], reason:"Merrell — synthetic/leather upper + EVA foam + adhesives. No significant PFAS on most hiking shoes. Mid-tier clean trail footwear.", confidence:"medium", category:"clothing" }],
+  ["keen shoes",                     { floor:2, ceiling:4, substances:["conventional leather","recycled materials","adhesives"], reason:"Keen — PFAS-free claim on water-resistant shoes using non-fluorinated DWR, some OEKO-TEX certified products, PFC-free commitment. Cleaner outdoor shoe brand.", confidence:"high", category:"clothing" }],
+  ["danner",                   { floor:5, ceiling:7, substances:["full grain leather","PFAS DWR","Gore-Tex","adhesives"], reason:"Danner — full grain leather + PFAS DWR on waterproof models + Gore-Tex ePTFE on some. Oregon-made construction, quality leather but PFAS concern on waterproof models.", confidence:"medium", category:"clothing" }],
+  ["oboz hiking",                    { floor:2, ceiling:3, substances:["BDry waterproofing","recycled laces"], reason:"Oboz — plants a tree per pair, BDry waterproofing is PFAS-free, uses recycled materials where possible. Benchmark clean hiking boot brand.", confidence:"high", category:"clothing" }],
+  ["oboz",                           { floor:2, ceiling:3, substances:[], reason:"Oboz — PFAS-free waterproofing, recycled content, tree planting. Benchmark clean outdoor footwear.", confidence:"high", category:"clothing" }],
+
+  // ── LUXURY FABRICS ────────────────────────────────────────────
+  ["loro piana",                     { floor:2, ceiling:4, substances:["cashmere","wool","natural dyes"], reason:"Loro Piana — high grade cashmere and wool, natural fiber sourcing, minimal synthetic processing. Premium luxury brand with generally cleaner chemistry than synthetic alternatives. Conventional livestock concern remains.", confidence:"medium", category:"clothing" }],
+  ["brunello cucinelli",             { floor:2, ceiling:4, substances:["cashmere","natural fibers","low-impact dyes"], reason:"Brunello Cucinelli — cashmere and natural fiber focus, ethical manufacturing in Solomeo Italy, low-impact processing. Cleaner luxury brand with strong sustainability ethos.", confidence:"medium", category:"clothing" }],
+  ["zegna",                          { floor:4, ceiling:6, substances:["wool","conventional processing","synthetic lining","formaldehyde finish"], reason:"Ermenegildo Zegna — premium wool suits, conventional processing, synthetic lining + formaldehyde wrinkle treatments. Luxury positioning but conventional suit chemistry.", confidence:"medium", category:"clothing" }],
+
+
+  // ── ON RUNNING PRODUCT-SPECIFIC (lab/report verified) ────────
+  ["on running cloud 5",                    { floor:3, ceiling:4, substances:["Helion foam","recycled mesh upper","adhesives"], reason:"On Running Cloud 5 — Helion superfoam midsole, engineered mesh upper, no DWR treatment on non-waterproof model. Better Trail verified: 100% of On waterproof footwear PFAS-free as of 2025. Standard Cloud 5 has no waterproof treatment at all. Cleaner than Nike equivalent.", confidence:"high", category:"clothing" }],
+  ["on running cloudmonster",              { floor:3, ceiling:4, substances:["Helion foam","recycled mesh","TPU","adhesives"], reason:"On Cloudmonster — dual density Helion superfoam, 92% recycled content upper, no DWR. No waterproof treatment means no PFAS treatment concern on this specific model. Cleaner than most major running shoe brands.", confidence:"high", category:"clothing" }],
+  ["on running cloudhorizon",   { floor:2, ceiling:4, substances:["PFAS-free membrane","recycled content"], reason:"On Cloudhorizon Waterproof — independently verified PFAS-free waterproof membrane and DWR by Better Trail. 32% recycled content. One of the cleaner waterproof hiking shoes on the market.", confidence:"high", category:"clothing" }],
+  ["on running apparel",           { floor:4, ceiling:6, substances:["recycled polyester","moisture-wicking finish","synthetic dyes"], reason:"On Running apparel — recycled polyester with moisture-wicking treatment. Apparel line less transparent than footwear line on PFAS. No bluesign certification on apparel. Footwear PFAS-free commitment does not extend to confirmed apparel.", confidence:"medium", category:"clothing" }],
+
+  // ── ATHLETA PRODUCT-SPECIFIC (Mamavation lab verified) ────────
+  ["athleta salutation legging",   { floor:4, ceiling:5, substances:["PFAS indicator 17ppm","nylon","spandex"], reason:"Athleta leggings — Mamavation EPA-certified lab testing found 17ppm organic fluorine (PFAS indicator). Above 10ppm detection threshold, below 100ppm (likely manufacturing contamination not intentional treatment). Same reading as Old Navy. Athleta claims PFAS-free commitment since 2022 — may reflect reformulation after testing.", confidence:"high", category:"clothing" }],
+  ["athleta",                      { floor:4, ceiling:5, substances:["PFAS indicator","nylon","recycled content"], reason:"Athleta — 17ppm PFAS indicator found by Mamavation lab in leggings. Gap-owned brand with PFAS-free commitment since 2022. Bluesign certified on some fabrics. Better than Lululemon (32ppm) but lab evidence still present. Floor 4 based on documented fluorine detection.", confidence:"high", category:"clothing" }],
+  ["athleta brooklyn ankle pant",  { floor:3, ceiling:5, substances:["recycled nylon","spandex"], reason:"Athleta Brooklyn — recycled nylon + spandex, no DWR treatment. Among Athleta's cleaner products as no performance finish is applied. Bluesign certified fabric on some colorways.", confidence:"medium", category:"clothing" }],
+
+  // ── RHONE PRODUCT-SPECIFIC (fabric research verified) ─────────
+  ["rhone commuter pant",          { floor:4, ceiling:5, substances:["polyester","wrinkle-resistant finish","moisture-wicking","synthetic dyes"], reason:"Rhone Commuter Pant — proprietary Flex-Knit fabric is stretch polyester blend with wrinkle-resistant treatment + moisture-wicking finish. Wrinkle-resistance in performance pants commonly uses chemical finishes. No PFAS-free claim, no bluesign certification. Worn against skin all day in work setting.", confidence:"high", category:"clothing" }],
+  ["rhone reign short",            { floor:4, ceiling:5, substances:["polyester","moisture-wicking","synthetic dyes"], reason:"Rhone Reign Short — polyester moisture-wicking construction, same Flex-Knit technology as Commuter. No PFAS-free claim, no bluesign. Mid-tier concern for men's premium activewear.", confidence:"medium", category:"clothing" }],
+  ["rhone swift short",            { floor:4, ceiling:5, substances:["polyester","moisture-wicking","synthetic dyes"], reason:"Rhone Swift Short — polyester + moisture-wicking finish. Same concern profile as Reign Short. No certifications.", confidence:"medium", category:"clothing" }],
+  ["rhone",                        { floor:4, ceiling:6, substances:["polyester","wrinkle-resistant","moisture-wicking","synthetic dyes"], reason:"Rhone — proprietary Flex-Knit polyester blend with chemical wrinkle-resistant and moisture-wicking finishes. No PFAS-free claim across the line, no bluesign or OEKO-TEX certification. Premium DTC men's brand with conventional performance chemistry.", confidence:"medium", category:"clothing" }],
+
+
+  // ══════════════════════════════════════════════════════════════
+  // DIAPER AND KIDS CLOTHING DEEP AUDIT
+  // ══════════════════════════════════════════════════════════════
+
+  // ── HUGGIES PRODUCT SPLITS ────────────────────────────────────
+  ["huggies pull-ups night",         { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching","synthetic colorants","polyurethane elastics"], reason:"Huggies Pull-Ups Night-Time — multiple class action lawsuits document chemical burns from Ahcovel (undisclosed skin irritant in all Huggies products). ECF bleaching leaves chlorine residues. Worn against sensitive mucosal skin overnight. This specific product caused documented rashes in real-world use. Score matches app output.", confidence:"high", category:"baby" }],
+  ["huggies pull-ups",               { floor:6, ceiling:8, substances:["Ahcovel skin irritant","ECF bleaching","synthetic colorants","polyurethane elastics"], reason:"Huggies Pull-Ups — class action lawsuits document Ahcovel chemical irritant causing burns across Huggies product lines. ECF bleaching. Fragrance-free per Huggies but undisclosed chemical irritants documented by litigation. Worn against sensitive skin during potty training.", confidence:"high", category:"baby" }],
+  ["huggies snug and dry",           { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching","synthetic colorants"], reason:"Huggies Snug and Dry — specific class action lawsuit documents Ahcovel chemical formulation causing chemical burns and blistering. Multiple years of consumer complaints. Hypoallergenic marketing disputed by litigation. Floor 7.", confidence:"high", category:"baby" }],
+  ["huggies snug dry",               { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching"], reason:"Huggies Snug and Dry — Ahcovel chemical burn class action documented.", confidence:"high", category:"baby" }],
+  ["huggies little movers",          { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching","blue dye colorant","undisclosed formula change"], reason:"Huggies Little Movers — 2024 class action: company secretly changed formula without disclosure. Reports of rashes within 3 days of new batch. Blue blowout blocker dye linked to skin reactions. Ahcovel concern across Huggies line. Floor 7.", confidence:"high", category:"baby" }],
+  ["huggies little snugglers",       { floor:6, ceiling:8, substances:["Ahcovel skin irritant","ECF bleaching","polyethylene","polyurethane"], reason:"Huggies Little Snugglers — newborn/infant Huggies. Ahcovel class action concern applies across all Huggies lines. ECF bleaching. No fragrance or lotion but undisclosed irritant concern documented by litigation.", confidence:"high", category:"baby" }],
+  ["huggies skin essentials",        { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Huggies Skin Essentials — newer 2024 line. Free of fragrance, parabens, phthalates, lotions, latex per Huggies. ECF bleaching (not TCF). Still petroleum-based synthetic materials. Cleaner than base Huggies but not clean-label. Dermatologist approved.", confidence:"high", category:"baby" }],
+  ["pull-ups skin essentials",       { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Pull-Ups Skin Essentials — fragrance-free, phthalate-free, paraben-free, no lotion. ECF bleaching. Cleaner than standard Pull-Ups Night-Time but still ECF bleached synthetic construction.", confidence:"high", category:"baby" }],
+  ["huggies special delivery",       { floor:4, ceiling:6, substances:["ECF bleaching","plant-based materials","polypropylene"], reason:"Huggies Special Delivery — ECF bleaching (not TCF), fragrance-free, hypoallergenic, plant-based outer cover. Better than standard Huggies but ECF concern remains. Cleaner than Little Movers/Snug & Dry.", confidence:"high", category:"baby" }],
+  ["huggies overnites",              { floor:6, ceiling:8, substances:["Ahcovel skin irritant","ECF bleaching","polyurethane elastics"], reason:"Huggies Overnites — overnight version, same Ahcovel concern as all Huggies. Worn overnight against skin. ECF bleaching. Class action concern applies.", confidence:"high", category:"baby" }],
+  ["goodnites",                      { floor:6, ceiling:8, substances:["Ahcovel skin irritant","ECF bleaching","synthetic materials"], reason:"GoodNites — Huggies brand bedwetting products. Same Ahcovel and ECF bleaching concern as Pull-Ups. Worn overnight against sensitive skin of older children.", confidence:"high", category:"baby" }],
+
+  // ── PAMPERS PRODUCT SPLITS ────────────────────────────────────
+  ["pampers baby dry",               { floor:5, ceiling:7, substances:["ECF bleaching","polypropylene","fragrance","lotion"], reason:"Pampers Baby Dry — ECF bleaching + fragrance in some versions + aloe vera lotion + petroleum-based polypropylene. Lotion and fragrance on baby skin is primary concern. Not hypoallergenic like Pampers Sensitive.", confidence:"high", category:"baby" }],
+  ["pampers cruisers",               { floor:5, ceiling:7, substances:["ECF bleaching","polypropylene","lotion","fragrance"], reason:"Pampers Cruisers — same concern profile as Pampers Baby Dry. Lotion + ECF bleaching + fragrance.", confidence:"high", category:"baby" }],
+  ["pampers swaddlers sensitive",    { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","aloe lotion"], reason:"Pampers Swaddlers Sensitive — fragrance-free version. Aloe vera lotion remains + ECF bleaching. Better than standard Pampers but still ECF and synthetic construction.", confidence:"high", category:"baby" }],
+  ["pampers pure protection",        { floor:3, ceiling:5, substances:["ECF bleaching","plant-based materials","polypropylene"], reason:"Pampers Pure Protection — fragrance-free, no lotions, plant-based liner, ECF bleaching (not TCF). Cleaner than Pampers Baby Dry but ECF concern remains. No third-party certification.", confidence:"high", category:"baby" }],
+  ["pampers aqua pure",              { floor:3, ceiling:5, substances:["ECF bleaching","plant-based materials"], reason:"Pampers Aqua Pure wipes — 99% water, gentle cleanser, fragrance-free. Among cleanest mainstream baby wipes.", confidence:"high", category:"baby" }],
+
+  // ── MISSING CLEAN DIAPER BRANDS ──────────────────────────────
+  ["millie moon diapers",            { floor:3, ceiling:5, substances:["ECF bleaching","plant-based materials","polypropylene"], reason:"Millie Moon — ECF bleaching, fragrance-free, latex-free, hypoallergenic. Plant-based outer cover. Cleaner than standard Huggies/Pampers but ECF not TCF. Target exclusive premium diaper.", confidence:"high", category:"baby" }],
+  ["millie moon",                    { floor:3, ceiling:5, substances:["ECF bleaching","plant-based materials"], reason:"Millie Moon — ECF bleaching, fragrance-free, plant-based materials. Mid-tier clean diaper.", confidence:"high", category:"baby" }],
+  ["kudos",                  { floor:2, ceiling:4, substances:["organic cotton lining","polypropylene","sodium polyacrylate"], reason:"Kudos — 100% organic cotton inner lining, total chlorine-free, no fragrances or lotions, OEKO-TEX certified. Benchmark clean mainstream diaper with organic cotton next to skin.", confidence:"high", category:"baby" }],
+  ["luvs diapers",                   { floor:6, ceiling:8, substances:["ECF bleaching","synthetic fragrance","lotion","polyurethane"], reason:"Luvs — budget P&G diaper, uses synthetic fragrance + lotion on inner lining + ECF bleaching. Multiple skin concern ingredients. Value positioning means lower ingredient standards.", confidence:"high", category:"baby" }],
+  ["luvs",                           { floor:6, ceiling:8, substances:["ECF bleaching","synthetic fragrance","lotion"], reason:"Luvs — fragrance + lotion + ECF bleaching. Higher concern than standard Pampers.", confidence:"high", category:"baby" }],
+
+  // ── KIDS CLOTHING DEEP AUDIT ──────────────────────────────────
+  // CARTER'S product splits
+  ["carter's cotton pajamas",        { floor:5, ceiling:7, substances:["flame retardant","conventional cotton","synthetic dyes"], reason:"Carter's treated cotton pajamas — FR chemical treatment required to meet federal flammability standards for loose-fitting cotton sleepwear. FR chemicals touching skin 10 hours nightly.", confidence:"high", category:"clothing" }],
+  ["carter's polyester pajamas",     { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Carter's snug-fit 100% polyester pajamas — tight-fitting construction exempts these from FR treatment requirement. Polyester is inherently less flammable and meets standards without chemical treatment. Still synthetic with microplastic concern.", confidence:"high", category:"clothing" }],
+  ["carter's onesie",               { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"Carter's onesies and everyday bodysuits — no FR treatment needed (not sleepwear). Conventional cotton + synthetic dyes. Lower concern than Carter's pajamas.", confidence:"high", category:"clothing" }],
+  ["carter's organic",              { floor:2, ceiling:4, substances:["organic cotton","OEKO-TEX"], reason:"Carter's organic cotton collection — OEKO-TEX certified on some items, no FR treatment, organic cotton. Significantly cleaner than standard Carter's sleepwear.", confidence:"medium", category:"clothing" }],
+
+  // OshKosh product splits
+  ["oshkosh pajamas",               { floor:5, ceiling:7, substances:["flame retardant","conventional cotton","synthetic dyes"], reason:"OshKosh sleepwear — FR chemical treatment on loose-fitting cotton pajamas. Same concern as Carter's sleepwear. Worn against kids' skin overnight.", confidence:"high", category:"clothing" }],
+  ["oshkosh overalls",              { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"OshKosh everyday clothing — no FR treatment needed. Conventional cotton + synthetic dyes. Lower concern than OshKosh sleepwear.", confidence:"high", category:"clothing" }],
+
+  // MISSING KIDS BRANDS
+  ["children's place",              { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant sleepwear"], reason:"The Children's Place — conventional cotton + synthetic dyes, FR on sleepwear. No GOTS or OEKO-TEX certification. Mid-price children's brand with conventional concern profile.", confidence:"medium", category:"clothing" }],
+  ["childrens place",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant sleepwear"], reason:"The Children's Place — conventional concern profile.", confidence:"medium", category:"clothing" }],
+  ["garanimals",                    { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes","flame retardant sleepwear"], reason:"Garanimals (Walmart) — conventional cotton/polyester + synthetic dyes, FR on sleepwear. Budget kids brand, no certifications. Same concern tier as Wonder Nation.", confidence:"medium", category:"clothing" }],
+  ["jumping beans",                 { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","flame retardant sleepwear"], reason:"Jumping Beans (Kohls) — conventional cotton + synthetic dyes, FR on sleepwear. No GOTS or OEKO-TEX. Budget kids brand concern.", confidence:"medium", category:"clothing" }],
+  ["gap kids",                      { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde","flame retardant sleepwear"], reason:"Gap Kids — conventional cotton + synthetic dyes + formaldehyde on wrinkle-resistant items + FR on sleepwear. No GOTS certification. Same as Gap adult concern but with additional sleepwear FR concern.", confidence:"medium", category:"clothing" }],
+  ["old navy kids",                 { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde","flame retardant sleepwear"], reason:"Old Navy Kids — conventional cotton + FR sleepwear + formaldehyde concern. Same as Old Navy adult brand plus sleepwear FR concern.", confidence:"medium", category:"clothing" }],
+  ["baby gap",                      { floor:3, ceiling:5, substances:["conventional cotton","synthetic dyes"], reason:"babyGap — conventional cotton infant clothing. Less FR concern on infant sizes (different flammability standards). No GOTS certification.", confidence:"medium", category:"clothing" }],
+
+  // CAT & JACK CONSOLIDATION — remove confusion, replace with clear splits
+  ["cat and jack pajama",       { floor:5, ceiling:7, substances:["flame retardant","conventional cotton","synthetic dyes"], reason:"Cat and Jack pajamas — FR chemical treatment on cotton sleepwear. Floor fires.", confidence:"high", category:"clothing" }],
+  ["cat jack pajama",             { floor:5, ceiling:7, substances:["flame retardant","conventional cotton","synthetic dyes"], reason:"Cat & Jack pajamas — FR on sleepwear.", confidence:"high", category:"clothing" }],
+  ["cat & jack pajamas",            { floor:5, ceiling:7, substances:["flame retardant","conventional cotton","synthetic dyes"], reason:"Cat & Jack sleepwear — FR chemical treatment on loose-fitting cotton pajamas (Target kids brand). FR chemicals against children's skin overnight. Same concern as Carter's and OshKosh sleepwear.", confidence:"high", category:"clothing" }],
+  ["cat jack oeko",             { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Cat & Jack OEKO-TEX certified items — tested for harmful substances.", confidence:"high", category:"clothing" }],
+  ["cat and jack oeko",          { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Cat & Jack OEKO-TEX certified.", confidence:"high", category:"clothing" }],
+  ["cat & jack oeko",               { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Cat & Jack OEKO-TEX — OEKO-TEX Standard 100 certified items tested for harmful substances. No FR on OEKO-TEX items, no heavy metals, no restricted dyes. Benchmark clean for Target kids brand.", confidence:"high", category:"clothing" }],
+
+
+  // ── PREMIUM BAMBOO KIDS PAJAMA BRANDS ────────────────────────
+  // Framework: bamboo viscose is chemically processed (sodium hydroxide +
+  // carbon disulfide) so not truly natural — but snug-fit = no FR chemicals,
+  // and OEKO-TEX catches harmful substance residues. Score by certification depth.
+
+  ["kickee pants",                   { floor:1, ceiling:3, substances:["bamboo viscose","low-impact dyes","spandex"], reason:"KicKee Pants — 95% bamboo viscose + 5% spandex. OEKO-TEX Standard 100 certified on BOTH fabric AND final product (dual certification is rare). USDA NOP organic bamboo source. Low-impact fiber-reactive dyes. Closed-loop chemical processing. Snug-fit so zero FR chemicals. Benchmark clean premium kids pajama brand.", confidence:"high", category:"clothing" }],
+  ["kickee",                         { floor:1, ceiling:3, substances:["bamboo viscose","low-impact dyes","spandex"], reason:"KicKee Pants — strongest certifications in the bamboo pajama space. Dual OEKO-TEX on fabric and final product. Organic bamboo source. No FR.", confidence:"high", category:"clothing" }],
+
+  ["little sleepies",                { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Little Sleepies — 95% bamboo viscose + 5% spandex. OEKO-TEX certified at fabric level. Independently lab-tested free from lead and flame retardants. Never treated with FR chemicals. Snug-fit design. Chemical processing of bamboo into viscose remains a concern (sodium hydroxide + carbon disulfide). No final-product OEKO-TEX like KicKee. Benchmark clean but one tier below KicKee.", confidence:"high", category:"clothing" }],
+
+  ["kyte baby",                      { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Kyte Baby — 95% bamboo viscose + 5% spandex. Snug-fit, no FR chemicals. Founded for eczema-prone skin. Less certification transparency than KicKee Pants — no confirmed final-product OEKO-TEX. Still cleaner than Carter's FR-treated or conventional polyester pajamas.", confidence:"high", category:"clothing" }],
+
+  ["posh peanut",                    { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Posh Peanut — 95% bamboo viscose + 5% spandex. Similar profile to Little Sleepies and Kyte Baby. Snug-fit, no FR. No confirmed OEKO-TEX final-product certification. Fashion-forward DTC brand with similar chemistry profile.", confidence:"medium", category:"clothing" }],
+
+  ["magnetic me",                    { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Magnetic Me — bamboo viscose construction, snug-fit, magnetic closure design. No FR chemicals on sleepwear. Similar bamboo viscose processing concern to Little Sleepies. Magnetic closures add nickel concern in some products — check specific items.", confidence:"medium", category:"clothing" }],
+
+  ["copper pearl",                   { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Copper Pearl — bamboo viscose + spandex. Snug-fit, no FR. Similar profile to Kyte Baby. DTC brand, less certification transparency than KicKee.", confidence:"medium", category:"clothing" }],
+
+  ["kate quinn",                     { floor:1, ceiling:3, substances:["organic cotton","bamboo viscose","low-impact dyes"], reason:"Kate Quinn — uses organic cotton and bamboo viscose, GOTS certified on some lines, snug-fit no FR. Strong sustainability focus, low-impact dyes. Solid clean certification profile for a boutique kids brand.", confidence:"medium", category:"clothing" }],
+
+  ["burt's bees baby pajamas",       { floor:2, ceiling:4, substances:["organic cotton","GOTS certified"], reason:"Burt's Bees Baby pajamas — GOTS certified organic cotton, no FR on snug-fit styles, no synthetic fragrance. Cleaner than Carter's pajamas but organic cotton still has microplastic-free concern. GOTS is a strong certification.", confidence:"high", category:"clothing" }],
+
+  ["hanna andersson pajamas",        { floor:2, ceiling:4, substances:["organic cotton","OEKO-TEX","synthetic dyes"], reason:"Hanna Andersson pajamas — 100% organic cotton, OEKO-TEX certified, snug-fit (no FR chemicals needed). Strong heritage brand with clean sleepwear credentials. Conventional dyes but OEKO-TEX testing provides some assurance.", confidence:"high", category:"clothing" }],
+
+  ["angel dear",                     { floor:2, ceiling:4, substances:["bamboo viscose","spandex","chemical processing"], reason:"Angel Dear — bamboo viscose construction, snug-fit, no FR. Similar profile to other DTC bamboo pajama brands. Targeted at sensitive skin.", confidence:"medium", category:"clothing" }],
+
+  ["little me pajamas",              { floor:3, ceiling:5, substances:["cotton","polyester","synthetic dyes"], reason:"Little Me — conventional cotton and polyester blend pajamas. Snug-fit on some styles (no FR), FR-treated on others. No OEKO-TEX certification. Mid-tier mass-market brand without the clean certifications of Little Sleepies or KicKee.", confidence:"medium", category:"clothing" }],
+
+  ["gerber pajamas",                 { floor:3, ceiling:5, substances:["conventional cotton","polyester","synthetic dyes"], reason:"Gerber baby pajamas — conventional cotton/polyester, snug-fit exempts from FR on most styles. No organic or OEKO-TEX certification. Mass-market concern profile, better than FR-treated Carter's cotton pajamas.", confidence:"medium", category:"clothing" }],
+
+  // ── STORE BRAND DIAPERS — TARGET / WALMART / SAM'S / COSTCO ──
+  ["up & up diapers",                { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants","undisclosed lotion"], reason:"Target Up & Up — ECF bleaching (not TCF), fragrance-free, latex-free, hypoallergenic. Possible aloe/vitamin E lotion on inner liner (conflicting reports — ingredient transparency is poor). Phthalate-free claim was removed from website. Budget store brand with decent but opaque ingredient profile.", confidence:"medium", category:"baby" }],
+  ["up and up diapers",              { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Target Up & Up — same concern profile as above.", confidence:"medium", category:"baby" }],
+  ["target diapers",                 { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene"], reason:"Target Up & Up store brand diapers — ECF bleaching, fragrance-free. Mid-tier store brand.", confidence:"medium", category:"baby" }],
+  ["member's mark diapers",          { floor:3, ceiling:5, substances:["ECF bleaching","polypropylene","polyethylene"], reason:"Sam's Club Member's Mark Premium Diapers (2025 redesign) — free from lotions, parabens, fragrances, latex, elemental chlorine. Phthalate-free. Hypoallergenic and dermatologist approved by Skin Health Alliance. Sustainably sourced SFI-certified pulp. Cleaner transparency than Up & Up. Still ECF not TCF.", confidence:"high", category:"baby" }],
+  ["members mark diapers",           { floor:3, ceiling:5, substances:["ECF bleaching","polypropylene"], reason:"Sam's Club Member's Mark — same profile as above.", confidence:"high", category:"baby" }],
+  ["member's mark baby",         { floor:1, ceiling:3, substances:["water","gentle cleansers"], reason:"Member's Mark baby wipes — no dyes, alcohol, parabens, chlorine, phthalates, or phenoxyethanol. Fragrance-free, dermatologist tested. Benchmark clean mainstream wipes.", confidence:"high", category:"baby" }],
+  ["member's mark wipes",            { floor:1, ceiling:3, substances:["water","gentle cleansers"], reason:"Member's Mark Premium Wipes — no dyes, alcohol, parabens, chlorine, phthalates, or phenoxyethanol. Fragrance-free, hypoallergenic, dermatologist tested. Among cleanest mainstream baby wipes.", confidence:"high", category:"baby" }],
+  ["rascal and friends",             { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Rascal + Friends — ECF bleaching, fragrance-free, hypoallergenic. New Zealand brand sold at Walmart. No lotions but limited US ingredient transparency. Similar profile to Up & Up.", confidence:"medium", category:"baby" }],
+  ["rascal friends diapers",         { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene"], reason:"Rascal + Friends — ECF bleaching, fragrance-free. Mid-tier store diaper.", confidence:"medium", category:"baby" }],
+  ["little journey diapers",         { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Aldi Little Journey — ECF bleaching, fragrance-free, hypoallergenic. Aldi exclusive budget diaper. Limited ingredient transparency. Similar to Up & Up and Parent's Choice profile.", confidence:"medium", category:"baby" }],
+  ["cuties diapers",                 { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Cuties — First Quality manufactured, ECF bleaching, fragrance-free. Budget diaper sold at Walmart and dollar stores. No premium certifications. Similar to store brand profile.", confidence:"medium", category:"baby" }],
+  ["mama bear diapers",              { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Mama Bear (Amazon brand) — ECF bleaching, fragrance-free, hypoallergenic. Amazon store brand. Limited independent certification. Mid-tier store brand profile.", confidence:"medium", category:"baby" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // MEN'S AND WOMEN'S UNDERWEAR DEEP AUDIT
+  // ══════════════════════════════════════════════════════════════
+
+  // ── TARGET HOUSE BRANDS ───────────────────────────────────────
+  ["auden bra",                      { floor:3, ceiling:4, substances:["nylon","spandex","OEKO-TEX certified","synthetic dyes"], reason:"Auden (Target brand) bras — OEKO-TEX Standard 100 certified on most products, independently tested against 350+ harmful chemicals. Nylon/spandex/cotton construction. OEKO-TEX bans the most common PFAS and tests for restricted substances. One of the cleaner mass-market intimate brands due to blanket OEKO-TEX certification.", confidence:"high", category:"clothing" }],
+  ["auden underwear",                { floor:3, ceiling:4, substances:["nylon","spandex","cotton","OEKO-TEX certified"], reason:"Auden (Target brand) underwear — OEKO-TEX certified on most items. Cotton, nylon, and spandex blends. Tested against 350+ harmful substances. Better certification than most mass-market underwear.", confidence:"high", category:"clothing" }],
+  ["auden",                          { floor:3, ceiling:4, substances:["nylon","spandex","cotton","OEKO-TEX certified"], reason:"Auden (Target) — OEKO-TEX Standard 100 certified across most of the line. Tested against 350+ harmful chemicals. Benchmark clean for mass-market intimates.", confidence:"high", category:"clothing" }],
+  ["colsie",                         { floor:3, ceiling:5, substances:["nylon","spandex","conventional cotton","synthetic dyes"], reason:"Colsie (Target brand) — Target's loungewear/sleepwear line. No OEKO-TEX certification claimed unlike Auden. Conventional nylon/cotton/spandex construction. Mid-tier store brand concern.", confidence:"medium", category:"clothing" }],
+  ["true and co",                    { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"True & Co (Target) — nylon/spandex bras and underwear, no OEKO-TEX certification on most items. DTC-style brand sold at Target. Standard synthetic concern profile.", confidence:"medium", category:"clothing" }],
+
+  // ── MAINSTREAM WOMEN'S BRANDS ─────────────────────────────────
+  ["jockey underwear",               { floor:3, ceiling:5, substances:["cotton","spandex","nylon","synthetic dyes"], reason:"Jockey — cotton/spandex and nylon/spandex blends. No OEKO-TEX certification. No PFAS-free claim. Standard conventional synthetic underwear concern. Cotton lines are lower concern than nylon-dominant lines.", confidence:"medium", category:"clothing" }],
+  ["jockey bra",                     { floor:3, ceiling:5, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Jockey bras — nylon/spandex with polyester foam padding. No OEKO-TEX certification. Standard synthetic concern for mass-market intimates.", confidence:"medium", category:"clothing" }],
+  ["jockey",                         { floor:3, ceiling:5, substances:["cotton","nylon","spandex","synthetic dyes"], reason:"Jockey — cotton and nylon/spandex blends depending on line. No certifications. Standard mass-market underwear concern profile.", confidence:"medium", category:"clothing" }],
+  ["bali bra",                       { floor:3, ceiling:5, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Bali (Hanesbrands) — nylon/spandex, polyester foam, synthetic dyes. Sister brand to Hanes. No OEKO-TEX certification. Standard mass-market bra concern.", confidence:"medium", category:"clothing" }],
+  ["bali underwear",                 { floor:3, ceiling:5, substances:["nylon","spandex","cotton","synthetic dyes"], reason:"Bali underwear — nylon/cotton/spandex blend. Hanesbrands construction. No certifications.", confidence:"medium", category:"clothing" }],
+  ["warners bra",                    { floor:3, ceiling:5, substances:["nylon","spandex","polyester","synthetic dyes"], reason:"Warners (PVH brand) — nylon/spandex construction, no OEKO-TEX certification. Mass-market bra with standard synthetic concern.", confidence:"medium", category:"clothing" }],
+  ["warners",                        { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Warners — PVH brand, conventional nylon/spandex. No certifications.", confidence:"medium", category:"clothing" }],
+  ["soma bra",                       { floor:3, ceiling:5, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Soma bras — nylon/spandex, polyester foam cups, synthetic dyes. Chico's FAS brand. No OEKO-TEX or PFAS-free claim. Mid-tier synthetic concern for intimates worn against skin daily.", confidence:"medium", category:"clothing" }],
+  ["soma",                           { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Soma — Chico's brand, nylon/spandex construction. No certifications. Standard concern.", confidence:"medium", category:"clothing" }],
+  ["natori bra",                     { floor:3, ceiling:5, substances:["nylon","spandex","lace","synthetic dyes"], reason:"Natori — luxury nylon/spandex with lace. No OEKO-TEX certification. Premium price but conventional synthetic construction. Lace may contain disperse dyes (skin sensitizer concern).", confidence:"medium", category:"clothing" }],
+  ["cosabella",                      { floor:3, ceiling:5, substances:["nylon","spandex","microfiber","synthetic dyes"], reason:"Cosabella — Italian luxury intimates, nylon/spandex, OEKO-TEX certified on some lines since 2021. Better transparency than most luxury brands. Synthetic construction with microplastic concern.", confidence:"medium", category:"clothing" }],
+  ["gap body",                       { floor:3, ceiling:5, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Gap Body — conventional cotton and nylon/spandex blends, no OEKO-TEX certification on intimates. Gap formaldehyde concern applies to wrinkle-resistant items. Standard concern.", confidence:"medium", category:"clothing" }],
+  ["true co",                        { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"True & Co — nylon/spandex DTC bras. No OEKO-TEX certification. Standard concern.", confidence:"medium", category:"clothing" }],
+  ["cuup",                           { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"CUUP — DTC bras, nylon/spandex, recycled nylon on some styles. No OEKO-TEX certification. Cleaner branding but no third-party testing certification.", confidence:"medium", category:"clothing" }],
+
+  // ── CLEAN DTC UNDERWEAR BRANDS ────────────────────────────────
+  ["negative underwear",             { floor:2, ceiling:4, substances:["recycled nylon","spandex","OEKO-TEX certified"], reason:"Negative Underwear — OEKO-TEX Standard 100 certified, recycled nylon construction. No intentionally added PFAS. One of the cleaner DTC bra and underwear brands. Still synthetic with microplastic concern.", confidence:"medium", category:"clothing" }],
+  ["tomboyx",                        { floor:2, ceiling:4, substances:["TENCEL","cotton","spandex","OEKO-TEX certified"], reason:"TomboyX — OEKO-TEX certified fabric, TENCEL and organic cotton options. Third-party tested free from PFOS and PFOA. Gender-inclusive sizing. Cleaner material approach than most mass-market underwear.", confidence:"medium", category:"clothing" }],
+  ["meundies",                       { floor:2, ceiling:4, substances:["MicroModal","spandex"], reason:"MeUndies — MicroModal (beech tree derived) + spandex. No FR treatment, no PFAS-based performance finish. OEKO-TEX certified fabric. Chemical processing of Modal is cleaner than bamboo viscose (closed-loop process). One of the better mainstream synthetic alternatives.", confidence:"high", category:"clothing" }],
+  ["kindred bravely",                { floor:2, ceiling:4, substances:["nylon","spandex","OEKO-TEX certified"], reason:"Kindred Bravely — maternity and nursing intimates, OEKO-TEX Standard 100 certified. No harmful substances in tested categories. Better certification than most nursing bra brands.", confidence:"medium", category:"clothing" }],
+  ["boody",                          { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody — bamboo viscose + spandex. OEKO-TEX certified. No FR chemicals, no PFAS claim. Bamboo viscose is chemically processed but OEKO-TEX verified clean. Cleaner than conventional nylon underwear.", confidence:"high", category:"clothing" }],
+
+  // ── MEN'S UNDERWEAR ADDITIONS ─────────────────────────────────
+  ["pair of thieves",                { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Pair of Thieves (Target men's) — recycled polyester/spandex blends. No OEKO-TEX certification. No PFAS-free claim. Mid-tier recycled synthetic. Recycled content is a modest positive.", confidence:"medium", category:"clothing" }],
+  ["saxx underwear",                 { floor:3, ceiling:5, substances:["nylon","polyester","spandex","synthetic dyes"], reason:"SAXX — nylon/polyester/spandex construction with BallPark Pouch mesh. No OEKO-TEX certification, no PFAS-free claim. Standard performance synthetic concern. Moisture-wicking through fiber structure not chemical coating.", confidence:"medium", category:"clothing" }],
+  ["saxx briefs",                    { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"SAXX — same profile as above.", confidence:"medium", category:"clothing" }],
+  ["mack weldon underwear",          { floor:3, ceiling:5, substances:["Mack Weldon Silver","nylon","spandex","synthetic dyes"], reason:"Mack Weldon — silver-ion antimicrobial treatment on 18-Hour Jersey line + nylon/spandex construction. Silver nanoparticles are endocrine disruptors and leach into waterways. No OEKO-TEX certification.", confidence:"high", category:"clothing" }],
+  ["mack weldon silver",             { floor:4, ceiling:6, substances:["silver antimicrobial","nylon","spandex"], reason:"Mack Weldon Silver line — active silver-ion antimicrobial. Silver nanoparticle treatments are endocrine disruptors with documented environmental harm. Floor bumps on silver treatment against skin.", confidence:"high", category:"clothing" }],
+  ["tommy john underwear",           { floor:3, ceiling:5, substances:["nylon","spandex","cool cotton","synthetic dyes"], reason:"Tommy John — Cool Cotton and Second Skin lines. Nylon/spandex with moisture management through fiber structure (not PFAS). No certifications. Mid-tier DTC men's underwear. Better than Mack Weldon silver line, similar to SAXX.", confidence:"medium", category:"clothing" }],
+  ["duluth trading underwear",       { floor:3, ceiling:5, substances:["conventional cotton","nylon","spandex","synthetic dyes"], reason:"Duluth Trading Buck Naked underwear — nylon/spandex construction marketed for performance. No OEKO-TEX. No silver antimicrobial. Mid-tier men's performance underwear concern.", confidence:"medium", category:"clothing" }],
+  ["exofficio underwear",            { floor:5, ceiling:7, substances:["nylon","silver nanoparticle antimicrobial","spandex","synthetic dyes"], reason:"ExOfficio Give-N-Go — explicit silver nanoparticle (Polygiene) antimicrobial treatment for odor control. Worn against sensitive skin. Silver is an endocrine disruptor that leaches into waterways with washing. Class action documented concerns. Floor 5 on confirmed silver treatment.", confidence:"high", category:"clothing" }],
+  ["meundies bra",                   { floor:2, ceiling:4, substances:["MicroModal","spandex"], reason:"MeUndies bralettes — MicroModal + spandex, OEKO-TEX certified fabric. Cleaner bra option in the DTC space.", confidence:"medium", category:"clothing" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // CONDIMENTS AND SAUCES
+  // ══════════════════════════════════════════════════════════════
+
+  // ── MAYONNAISE ────────────────────────────────────────────────
+  ["hellmanns real",           { floor:3, ceiling:5, substances:["soybean oil","calcium disodium EDTA","natural flavors"], reason:"Hellmann's Real Mayo — soybean oil (GMO, inflammatory omega-6), water, cage-free eggs, vinegar, salt, sugar, lemon juice, EDTA preservative, natural flavors. No TBHQ, no artificial colors. Mid-tier mainstream mayo. Soybean oil is the primary concern.", confidence:"high", category:"food_beverage" }],
+  ["hellmanns mayo",                 { floor:3, ceiling:5, substances:["soybean oil","EDTA","natural flavors"], reason:"Hellmann's mayo — soybean oil base, EDTA preservative. No artificial colors or TBHQ. Standard mainstream mayo concern.", confidence:"high", category:"food_beverage" }],
+  ["hellmanns avocado oil",    { floor:2, ceiling:4, substances:["avocado oil","eggs","vinegar"], reason:"Hellmann's Avocado Oil Mayo — avocado oil replaces soybean oil. Simpler ingredient profile than regular Hellmann's. Better fatty acid profile. No EDTA on some versions.", confidence:"medium", category:"food_beverage" }],
+  ["hellmanns organic",             { floor:2, ceiling:4, substances:["organic soybean oil","organic eggs","organic vinegar"], reason:"Hellmann's Organic Mayo — USDA organic, organic soybean oil, organic eggs, no EDTA. Significantly cleaner than standard Hellmann's. Still soybean oil based.", confidence:"high", category:"food_beverage" }],
+  ["duke's mayo",                    { floor:3, ceiling:5, substances:["soybean oil","cider vinegar","eggs"], reason:"Duke's Mayo — soybean/canola oil, eggs, cider vinegar, salt, natural flavor. No added sugar (key differentiator from Hellmann's), no EDTA, no HFCS. Slightly cleaner than Hellmann's. Still soybean oil base.", confidence:"high", category:"food_beverage" }],
+  ["dukes mayo",                     { floor:3, ceiling:5, substances:["soybean oil","cider vinegar","eggs"], reason:"Duke's Mayo — same profile as above.", confidence:"high", category:"food_beverage" }],
+  ["miracle whip",                   { floor:4, ceiling:6, substances:["soybean oil","HFCS","modified cornstarch","potassium sorbate"], reason:"Miracle Whip — HFCS is ingredient #3, modified cornstarch, potassium sorbate preservative, natural flavors. Technically a 'dressing' not mayo. Sweeter and more processed than Hellmann's. HFCS and modified starch are primary concerns.", confidence:"high", category:"food_beverage" }],
+  ["sir kensingtons",          { floor:2, ceiling:4, substances:["sunflower oil","free-range eggs","vinegar"], reason:"Sir Kensington's Mayo — sunflower or avocado oil, free-range eggs, cider vinegar, simple ingredients, non-GMO verified. Significantly cleaner than Hellmann's or Duke's. No EDTA, no inflammatory seed oils on some varieties.", confidence:"high", category:"food_beverage" }],
+  ["best foods mayo",                { floor:3, ceiling:5, substances:["soybean oil","EDTA","natural flavors"], reason:"Best Foods (= Hellmann's west of Rocky Mountains) — identical product, same soybean oil and EDTA concern profile as Hellmann's.", confidence:"high", category:"food_beverage" }],
+
+  // ── SALAD DRESSINGS ───────────────────────────────────────────
+  ["hidden valley ranch powder",     { floor:3, ceiling:5, substances:["buttermilk","MSG","artificial flavor"], reason:"Hidden Valley Ranch powder packets — MSG, artificial flavor, buttermilk solids, various starches. Prepared version uses soybean oil mayo. Seasoning packet alone is 3-5 concern.", confidence:"high", category:"food_beverage" }],
+  ["wishbone italian",               { floor:4, ceiling:6, substances:["soybean oil","sugar","caramel color","xanthan gum"], reason:"Wish-Bone Italian — soybean oil, water, vinegar, sugar, salt, caramel color, xanthan gum. Caramel color (Class IV contains 4-MeI carcinogen concern), soybean oil. Standard mass-market Italian dressing.", confidence:"high", category:"food_beverage" }],
+  ["kraft italian dressing",         { floor:4, ceiling:6, substances:["soybean oil","sugar","artificial color","caramel color"], reason:"Kraft Zesty Italian — soybean oil, HFCS or sugar, artificial color (Red 40 in some), caramel color. Standard mass-market dressing with synthetic additives.", confidence:"high", category:"food_beverage" }],
+  ["newman's own dressing",          { floor:3, ceiling:5, substances:["canola oil","vinegar","hydrolyzed soy protein","xanthan gum"], reason:"Newman's Own dressings — canola oil, vinegar, no artificial colors, no HFCS, but contains hydrolyzed soy protein (processed flavor enhancer) in Italian variety. Profits to charity. Mid-tier: cleaner than Wish-Bone but not clean-label.", confidence:"high", category:"food_beverage" }],
+  ["tessemae's dressing",            { floor:1, ceiling:3, substances:["organic olive oil","organic vinegar"], reason:"Tessemae's — organic olive oil, organic vinegar, simple spices. Whole30 approved, no seed oils, no added sugar in most varieties. Benchmark clean salad dressing.", confidence:"high", category:"food_beverage" }],
+  ["primal kitchen dressing",        { floor:1, ceiling:3, substances:["avocado oil","organic vinegar"], reason:"Primal Kitchen dressings — avocado oil, organic ingredients, no seed oils, no added sugar, no soy, no canola. Benchmark clean dressing line. Paleo and Whole30 approved.", confidence:"high", category:"food_beverage" }],
+  ["kraft mayo",                     { floor:3, ceiling:5, substances:["soybean oil","EDTA","modified food starch"], reason:"Kraft Mayo — soybean oil, modified food starch, EDTA, natural flavors. Similar concern to Hellmann's. Standard mass-market mayo.", confidence:"medium", category:"food_beverage" }],
+
+  // ── STEAK SAUCE AND SPECIALTY ─────────────────────────────────
+  ["a1 original",               { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 Original Steak Sauce — corn syrup, caramel color (Class IV), potassium sorbate, tomato puree. Same as a1 steak sauce entry.", confidence:"high", category:"food_beverage" }],
+  ["a.1. sauce",                 { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 Original — corn syrup, caramel color (Class IV, 4-MeI concern), potassium sorbate, tomato puree, vinegar. No HFCS in original but corn syrup is present. Caramel color is the primary concern — same class as used in Coke.", confidence:"high", category:"food_beverage" }],
+  ["a.1. sauce",                     { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 sauce — same concern as above.", confidence:"high", category:"food_beverage" }],
+  ["lea and perrins",                { floor:3, ceiling:5, substances:["molasses","corn syrup","caramel color","anchovies"], reason:"Lea & Perrins Worcestershire — corn syrup, molasses, caramel color, tamarind extract, anchovies, salt. Natural profile but corn syrup and caramel color are concerns. Concentrated use limits exposure.", confidence:"high", category:"food_beverage" }],
+
+  // ── MUSTARD ───────────────────────────────────────────────────
+  ["grey poupon",                    { floor:1, ceiling:3, substances:["mustard seeds","white wine","vinegar","salt"], reason:"Grey Poupon Dijon — white wine, mustard seeds, vinegar, salt, citric acid. Exceptionally simple ingredient list for a mainstream condiment. No preservatives, no artificial ingredients. Benchmark clean condiment.", confidence:"high", category:"food_beverage" }],
+  ["maille dijon",                   { floor:1, ceiling:3, substances:["mustard seeds","white wine","vinegar","salt"], reason:"Maille Dijon — mustard seeds, water, white wine, vinegar, salt. Same clean profile as Grey Poupon. Benchmark clean condiment.", confidence:"high", category:"food_beverage" }],
+  ["gulden's spicy brown mustard",   { floor:2, ceiling:4, substances:["vinegar","mustard seeds","salt","turmeric"], reason:"Gulden's Spicy Brown — water, vinegar, mustard seeds, salt, turmeric, natural spices. Simple ingredients. Mid-tier only due to undisclosed 'natural spices' and processing.", confidence:"high", category:"food_beverage" }],
+
+  // ── PASTA SAUCE ───────────────────────────────────────────────
+  ["classico",           { floor:2, ceiling:4, substances:["tomatoes","olive oil","garlic","citric acid"], reason:"Classico — tomato puree, crushed tomatoes, olive oil, onions, garlic, basil, salt, citric acid. No HFCS, no added sugar in most varieties, no artificial flavors. Better than Ragu or Newman's Own pasta sauce. Citric acid is the only additive concern.", confidence:"high", category:"food_beverage" }],
+  ["newman's own marinara",          { floor:2, ceiling:4, substances:["tomatoes","olive oil","onions","garlic"], reason:"Newman's Own Marinara — tomatoes, olive oil, onions, garlic, salt, citric acid. Simple ingredients, no HFCS, no artificial flavors. Similar to Classico. Profits to charity.", confidence:"high", category:"food_beverage" }],
+  ["prego traditional",              { floor:3, ceiling:5, substances:["tomato puree","soybean oil","sugar","citric acid"], reason:"Prego Traditional — tomato puree, soybean oil, sugar, onions, salt, citric acid. Added sugar and soybean oil are concerns vs. Rao's or Classico. Standard mass-market pasta sauce.", confidence:"high", category:"food_beverage" }],
+  ["ragu traditional",               { floor:3, ceiling:5, substances:["tomato puree","soybean oil","sugar","citric acid"], reason:"Ragu Traditional — tomato puree, soybean oil, sugar, added olive oil, salt. Similar to Prego. Soybean oil and added sugar are the main concerns vs cleaner alternatives.", confidence:"high", category:"food_beverage" }],
+
+  // ── SPICES AND SEASONINGS ──────────────────────────────────────
+  ["mccormick garlic",              { floor:1, ceiling:2, substances:["garlic"], reason:"McCormick pure garlic powder — single ingredient.", confidence:"high", category:"food_beverage" }],
+  ["mccormick black pepper",         { floor:1, ceiling:2, substances:["black pepper"], reason:"McCormick pure black pepper — single ingredient.", confidence:"high", category:"food_beverage" }],
+  ["mccormick onion powder",          { floor:1, ceiling:2, substances:["onion"], reason:"McCormick pure onion powder — single ingredient.", confidence:"high", category:"food_beverage" }],
+  ["mccormick pure spice",           { floor:1, ceiling:2, substances:["single spice"], reason:"McCormick pure spices (garlic powder, onion powder, black pepper, etc.) — single ingredient. No fillers, no anti-caking agents in most pure spices. Clean-label benchmark.", confidence:"high", category:"food_beverage" }],
+  ["mccormick taco seasoning",       { floor:3, ceiling:5, substances:["spices","maltodextrin","silicon dioxide"], reason:"McCormick Taco Seasoning — spices, chili pepper, maltodextrin, silicon dioxide (anti-caking), salt, autolyzed yeast extract. Autolyzed yeast is a hidden MSG source. Maltodextrin from corn. Mid-tier seasoning packet.", confidence:"high", category:"food_beverage" }],
+  ["mccormick ranch seasoning",      { floor:3, ceiling:5, substances:["buttermilk","MSG","autolyzed yeast"], reason:"McCormick Ranch Dressing Mix — MSG, autolyzed yeast extract, modified food starch, natural flavors. MSG is explicit or hidden in most ranch packets.", confidence:"high", category:"food_beverage" }],
+  ["mccormick spices",               { floor:2, ceiling:4, substances:["spices","possible anti-caking agents"], reason:"McCormick spice blends — single herbs/spices are clean; blended products vary. Pure spices (1-2), seasoning packets with additives (3-5). Score this as a middle ground for the brand.", confidence:"medium", category:"food_beverage" }],
+  ["lawry's seasoned salt",          { floor:3, ceiling:5, substances:["salt","sugar","paprika","turmeric","anti-caking agents"], reason:"Lawry's Seasoned Salt — salt, sugar, paprika, turmeric, MSG-adjacent 'natural flavors', silicon dioxide anti-caking agent. Simple enough but MSG-adjacent concern.", confidence:"medium", category:"food_beverage" }],
+  ["lawry's marinade",               { floor:4, ceiling:6, substances:["soybean oil","HFCS","caramel color","artificial flavor"], reason:"Lawry's bottled marinades — HFCS in some, soybean oil, caramel color, artificial flavor. More processed than the seasoned salt. Check specific product.", confidence:"medium", category:"food_beverage" }],
+  ["tony chachere's",                { floor:2, ceiling:4, substances:["salt","spices","MSG"], reason:"Tony Chachere's Creole Seasoning — salt, red pepper, black pepper, chili pepper, garlic, MSG. MSG is explicit on label. Straightforward: MSG is the main concern, everything else is spices.", confidence:"high", category:"food_beverage" }],
+  ["old bay seasoning",              { floor:1, ceiling:3, substances:["celery salt","spices","paprika"], reason:"Old Bay — celery salt, spices, paprika. No MSG, no artificial ingredients, no anti-caking agents. Classic clean spice blend.", confidence:"high", category:"food_beverage" }],
+  ["tajin",                          { floor:1, ceiling:3, substances:["chili peppers","salt","dehydrated lime juice"], reason:"Tajin — chili peppers, salt, dehydrated lime juice, citric acid. Simple clean spice blend. No artificial colors, no MSG.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FROZEN FOODS
+  // ══════════════════════════════════════════════════════════════
+
+  ["lean cuisine",                   { floor:4, ceiling:6, substances:["sodium","modified food starch","natural flavor","soybean oil"], reason:"Lean Cuisine — processed frozen entrees with modified food starch, natural flavors, soybean oil, high sodium (800-1100mg), often BPA-lined packaging. Low calorie positioning masks ingredient quality concerns.", confidence:"high", category:"food_beverage" }],
+  ["healthy choice power bowl",      { floor:3, ceiling:5, substances:["quinoa","vegetables","modified starch","natural flavor"], reason:"Healthy Choice Power Bowls — simpler ingredients than traditional Healthy Choice, whole grains, vegetables, lower sodium than Lean Cuisine. Still processed with modified starch and natural flavors.", confidence:"medium", category:"food_beverage" }],
+  ["healthy choice",                 { floor:4, ceiling:6, substances:["sodium","modified food starch","natural flavor","soybean oil"], reason:"Healthy Choice frozen meals — standard processed frozen entree: modified food starch, natural flavors, soybean oil, high sodium. Similar concern to Lean Cuisine.", confidence:"high", category:"food_beverage" }],
+  ["stouffers",              { floor:5, ceiling:7, substances:["enriched flour","sodium","modified starch","artificial flavor"], reason:"Stouffer's — enriched white flour, very high sodium (900-1200mg), modified food starch, DATEM, artificial flavors on some products. One of the more processed mainstream frozen brands.", confidence:"high", category:"food_beverage" }],
+  ["marie callender's frozen",       { floor:5, ceiling:7, substances:["enriched flour","high sodium","modified starch","TBHQ"], reason:"Marie Callender's — enriched flour, TBHQ preservative on some products, very high sodium, modified starch, BHA/BHT in some lines. Among the more processed mainstream frozen options.", confidence:"high", category:"food_beverage" }],
+  ["tattooed chef",                  { floor:2, ceiling:4, substances:["vegetables","quinoa","olive oil","natural flavor"], reason:"Tattooed Chef — plant-based frozen meals with vegetables, legumes, grains, olive oil. Cleaner ingredient list than Lean Cuisine or Stouffer's. No artificial colors or flavors on most products.", confidence:"medium", category:"food_beverage" }],
+  ["evol frozen",                    { floor:2, ceiling:4, substances:["vegetables","whole grains","natural flavor"], reason:"EVOL frozen meals — antibiotic-free proteins, whole grains, simple ingredients. One of the cleaner mainstream frozen meal brands. No artificial colors or flavors.", confidence:"medium", category:"food_beverage" }],
+  ["saffron road frozen",            { floor:2, ceiling:4, substances:["halal protein","organic ingredients","spices"], reason:"Saffron Road — halal certified, antibiotic-free, organic ingredients, simple spice-based flavoring. Among the cleanest mainstream frozen entree brands.", confidence:"medium", category:"food_beverage" }],
+  ["real good foods",                { floor:2, ceiling:4, substances:["chicken","cheese","cauliflower","natural flavor"], reason:"Real Good Foods — low-carb frozen meals using chicken crust, cheese, vegetables. Simple protein-first ingredients. No artificial colors, no added sugar in most products.", confidence:"medium", category:"food_beverage" }],
+  ["birds eye protein",              { floor:2, ceiling:4, substances:["vegetables","protein","sauce"], reason:"Birds Eye Protein Bowls — vegetables, chicken or other protein, simple sauces. Cleaner than Lean Cuisine but still processed sauces with natural flavors.", confidence:"medium", category:"food_beverage" }],
+  ["green giant veggie bowl",        { floor:2, ceiling:4, substances:["vegetables","whole grains","natural flavor"], reason:"Green Giant Veggie Bowls — primarily vegetables and whole grains, simple ingredient lists, no artificial colors. Cleaner than most frozen meals.", confidence:"medium", category:"food_beverage" }],
+  ["jimmy dean frozen",              { floor:5, ceiling:7, substances:["pork","sodium nitrite","BHT","modified starch"], reason:"Jimmy Dean frozen breakfast items — sodium nitrite in sausage, BHT preservative, modified starch, high sodium. Standard processed breakfast meat concern.", confidence:"high", category:"food_beverage" }],
+  ["hot pockets",                    { floor:5, ceiling:7, substances:["enriched flour","TBHQ","sodium","artificial flavor"], reason:"Hot Pockets — enriched white flour, TBHQ preservative, high sodium (600-800mg), modified starch, artificial flavor. Classic ultra-processed frozen snack.", confidence:"high", category:"food_beverage" }],
+  ["el monterey",                    { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","artificial flavor"], reason:"El Monterey frozen burritos — enriched flour, soybean oil, high sodium, modified starch, artificial flavors. Budget frozen Mexican with standard UPF concerns.", confidence:"medium", category:"food_beverage" }],
+  ["red baron pizza",                { floor:5, ceiling:7, substances:["enriched flour","soybean oil","modified starch","artificial flavor"], reason:"Red Baron frozen pizza — enriched white flour, soybean oil, modified food starch, artificial flavor, high sodium. Classic ultra-processed frozen pizza.", confidence:"high", category:"food_beverage" }],
+  ["california pizza kitchen frozen", { floor:4, ceiling:6, substances:["enriched flour","soybean oil","natural flavor","sodium"], reason:"California Pizza Kitchen frozen — slightly cleaner than Red Baron (no artificial flavor in some), enriched flour, soybean oil, still high sodium. Mid-tier frozen pizza.", confidence:"medium", category:"food_beverage" }],
+  ["trader joe's frozen",            { floor:3, ceiling:5, substances:["varied","natural flavor","sodium"], reason:"Trader Joe's frozen meals — generally simpler ingredient lists than mainstream brands, no artificial colors or flavors, but still processed with natural flavors and varying sodium levels. Quality varies by item.", confidence:"medium", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // RESTAURANT MENU ITEMS
+  // ══════════════════════════════════════════════════════════════
+
+  // PANERA
+  ["panera broccoli cheddar soup",   { floor:4, ceiling:6, substances:["cream","sodium","modified starch","natural flavor"], reason:"Panera Broccoli Cheddar Soup — cream, cheese, modified starch, natural flavors, high sodium (950mg). Signature soup with real ingredients but heavily processed with starch thickeners.", confidence:"high", category:"restaurant" }],
+  ["panera mac and cheese",          { floor:5, ceiling:7, substances:["enriched macaroni","cream","sodium","natural flavor"], reason:"Panera Mac and Cheese — enriched white pasta, cream, cheddar, high sodium (1100mg), modified starch. Despite fresh-made positioning, still a high-sodium processed entree.", confidence:"high", category:"restaurant" }],
+  ["panera chicken sandwich",        { floor:4, ceiling:6, substances:["sodium","enriched bread","soybean oil","natural flavor"], reason:"Panera chicken sandwich — enriched white bread, soybean oil, sodium (900mg+), natural flavors. Clean protein but processed bread and high sodium.", confidence:"medium", category:"restaurant" }],
+  ["panera caesar salad",            { floor:3, ceiling:5, substances:["caesar dressing","sodium","croutons","parmesan"], reason:"Panera Caesar Salad — romaine, parmesan, croutons, caesar dressing. Relatively clean protein option but dressing has natural flavors and added sodium.", confidence:"medium", category:"restaurant" }],
+
+  // PANDA EXPRESS
+  ["panda express orange chicken",   { floor:6, ceiling:8, substances:["enriched flour","HFCS","soybean oil","sodium","artificial flavor"], reason:"Panda Express Orange Chicken — the single most ordered fast food item in the US. Enriched flour batter, HFCS in sauce, soybean oil frying, very high sodium (820mg), artificial flavor. Classic ultra-processed fast food.", confidence:"high", category:"restaurant" }],
+  ["panda express fried rice",       { floor:5, ceiling:7, substances:["soybean oil","sodium","oyster sauce","soy sauce"], reason:"Panda Express Fried Rice — white rice, soybean oil, high sodium (900mg), soy sauce, oyster sauce. Standard fried rice concern: high sodium, refined carbs, seed oil.", confidence:"high", category:"restaurant" }],
+  ["panda express string bean chicken", { floor:4, ceiling:6, substances:["sodium","soybean oil","oyster sauce","natural flavor"], reason:"Panda Express String Bean Chicken — one of cleaner Panda options: chicken, string beans, soybean oil, ginger, oyster sauce. Lower sodium than orange chicken. Still soybean oil and MSG-containing sauces.", confidence:"medium", category:"restaurant" }],
+  ["panda express teriyaki chicken", { floor:4, ceiling:6, substances:["sodium","HFCS","soybean oil","natural flavor"], reason:"Panda Express Teriyaki Chicken — grilled chicken (cleaner than orange chicken) but teriyaki sauce has HFCS and high sodium (930mg).", confidence:"high", category:"restaurant" }],
+
+  // RAISING CANE'S
+  ["raising cane's chicken tenders", { floor:4, ceiling:6, substances:["enriched flour","soybean oil","sodium","natural flavor"], reason:"Raising Cane's chicken tenders — fresh never-frozen chicken breast, breaded in enriched flour, fried in soybean oil. Simpler than most fast food (no artificial colors, cleaner protein). Still fried in soybean oil + high sodium.", confidence:"high", category:"restaurant" }],
+  ["raising cane's sauce",           { floor:4, ceiling:6, substances:["mayonnaise","ketchup","Worcestershire","sodium"], reason:"Raising Cane's Sauce — mayo, ketchup, Worcestershire, garlic, black pepper. Simple condiment but soybean oil-based mayo + high sodium.", confidence:"high", category:"restaurant" }],
+
+  // OLIVE GARDEN
+  ["olive garden breadsticks",       { floor:5, ceiling:7, substances:["enriched flour","DATEM","sodium","soybean oil"], reason:"Olive Garden Breadsticks — enriched white flour, DATEM dough conditioner, high sodium (460mg each), soybean oil, garlic butter (artificial butter flavor). The iconic endless breadstick.", confidence:"high", category:"restaurant" }],
+  ["olive garden fettuccine alfredo", { floor:5, ceiling:7, substances:["enriched pasta","cream","sodium","natural flavor"], reason:"Olive Garden Fettuccine Alfredo — enriched white pasta, cream, butter, parmesan. Very high sodium (1080mg) and calories (1220 kcal). Real ingredients but extreme portion and sodium.", confidence:"high", category:"restaurant" }],
+  ["olive garden salad",             { floor:3, ceiling:5, substances:["iceberg lettuce","dressing","croutons","sodium"], reason:"Olive Garden House Salad — romaine/iceberg, pepperoncini, olives, croutons, Italian dressing. Relatively clean vegetables but dressing has soybean oil and high sodium.", confidence:"medium", category:"restaurant" }],
+
+  // CULVER'S
+  ["culvers",          { floor:5, ceiling:7, substances:["beef","enriched bun","butter","sodium"], reason:"Culver's ButterBurger — fresh never-frozen beef, enriched white bun, real butter on bun. Cleaner protein than McDonald's but enriched bun, very high sodium, standard fast food frying oils.", confidence:"high", category:"restaurant" }],
+  ["culvers cheese curds",          { floor:6, ceiling:8, substances:["soybean oil","enriched flour","sodium","artificial flavor"], reason:"Culver's Cheese Curds — white cheddar curds in enriched flour batter, fried in soybean oil. High fat, high sodium (640mg per serving), artificial flavors in batter.", confidence:"high", category:"restaurant" }],
+  ["culvers frozen custard",        { floor:4, ceiling:6, substances:["cream","corn syrup","artificial flavor","sodium"], reason:"Culver's Frozen Custard — cream, skim milk, sugar, corn syrup, eggs, natural and artificial flavor. Real dairy base but corn syrup and artificial flavor. Standard premium frozen dessert concern.", confidence:"medium", category:"restaurant" }],
+
+  // ARBY'S
+  ["arbys roast beef",              { floor:5, ceiling:7, substances:["sodium phosphates","sodium","enriched bun","natural flavor"], reason:"Arby's Roast Beef — beef with sodium phosphate injections, enriched white bun, very high sodium (970mg+), natural flavors. Phosphate additives for moisture retention are the primary concern.", confidence:"high", category:"restaurant" }],
+  ["arbys curly fries",             { floor:5, ceiling:7, substances:["soybean oil","TBHQ","sodium","enriched flour"], reason:"Arby's Curly Fries — enriched flour coating, soybean oil, TBHQ preservative, modified starch, very high sodium (1300mg for large). Classic ultra-processed side.", confidence:"high", category:"restaurant" }],
+
+  // CARL'S JR / HARDEE'S
+  ["carl's jr thickburger",          { floor:5, ceiling:7, substances:["beef","enriched bun","soybean oil","sodium","natural flavor"], reason:"Carl's Jr Thickburger — 100% beef, enriched white bun, soybean oil, very high sodium (1200mg+). Large calorie and sodium load. Standard fast food burger concern.", confidence:"high", category:"restaurant" }],
+
+  // DEL TACO
+  ["del taco crunchy tacos",         { floor:5, ceiling:7, substances:["enriched corn shell","soybean oil","sodium","artificial flavor"], reason:"Del Taco — conventional fast food Mexican with enriched shells, soybean oil, high sodium, artificial flavors. Similar concern to Taco Bell.", confidence:"medium", category:"restaurant" }],
+
+  // TEXAS ROADHOUSE
+  ["texas roadhouse rolls",          { floor:5, ceiling:7, substances:["enriched flour","DATEM","sodium","cinnamon butter"], reason:"Texas Roadhouse Rolls — enriched white flour, DATEM dough conditioner, sodium, served with 'cinnamon butter' (margarine + artificial butter flavor on some). Iconic side with ultra-processed bread.", confidence:"medium", category:"restaurant" }],
+  ["texas roadhouse sirloin",        { floor:3, ceiling:5, substances:["beef","seasoning","sodium"], reason:"Texas Roadhouse sirloin steak — USDA Choice beef with house seasoning (salt, pepper, garlic). Relatively clean protein when ordered without extra sauces. Sodium is the main concern from seasoning.", confidence:"medium", category:"restaurant" }],
+
+  // CRACKER BARREL
+  ["cracker barrel pancakes",        { floor:4, ceiling:6, substances:["enriched flour","HFCS","artificial flavor","sodium"], reason:"Cracker Barrel pancakes — enriched flour, buttermilk, HFCS in syrup, artificial vanilla flavor. Standard sit-down restaurant pancake concern.", confidence:"medium", category:"restaurant" }],
+
+  // STARBUCKS
+  ["starbucks frappuccino",          { floor:5, ceiling:7, substances:["HFCS","caramel color","artificial flavor","sodium"], reason:"Starbucks Frappuccino (bottled) — HFCS, caramel color, natural and artificial flavors, sodium. The bottled RTD version has more additives than in-store blended drinks.", confidence:"high", category:"restaurant" }],
+  ["starbucks pumpkin spice latte",  { floor:5, ceiling:7, substances:["pumpkin spice syrup","caramel color","sugar","natural flavor"], reason:"Starbucks PSL — pumpkin spice syrup contains sugar, condensed skim milk, caramel color, natural flavors, annatto (color). Very high sugar (50g per grande). Seasonal hit with significant additive load.", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PERSONAL CARE GAPS
+  // ══════════════════════════════════════════════════════════════
+
+  ["olaplex hair treatment",         { floor:2, ceiling:4, substances:["bis-aminopropyl diglycol dimaleate","PEG compounds","water"], reason:"Olaplex No. 3 — patented bis-aminopropyl diglycol dimaleate (bond builder), water, PEG-related compounds, phenoxyethanol. No parabens, no formaldehyde, no artificial fragrance. Proprietary chemistry but EWG rates most Olaplex products 1-3.", confidence:"medium", category:"personal_care" }],
+  ["vegamour gro serum",             { floor:2, ceiling:4, substances:["nicotinamide","organic plant extracts","glycerin"], reason:"Vegamour GRO serum — nicotinamide, organic plant extracts (mung bean, curcumin, red clover), glycerin. No synthetic fragrance, no sulfates, no parabens. Clean-leaning hair serum with some PEG compounds in certain products.", confidence:"medium", category:"personal_care" }],
+  ["hims hair loss",                 { floor:3, ceiling:5, substances:["minoxidil","alcohol","propylene glycol"], reason:"Hims Minoxidil — minoxidil (FDA-approved drug), propylene glycol, alcohol. Pharmaceutical active ingredient with known skin sensitization from propylene glycol. Score reflects drug actives in personal care context.", confidence:"high", category:"personal_care" }],
+  ["native body wash",               { floor:2, ceiling:4, substances:["sodium cocoyl isethionate","glycerin","fragrance"], reason:"Native Body Wash — coconut oil-derived cleansers, glycerin, no sulfates, no parabens, no phthalates. Synthetic fragrance remains a concern on scented varieties. Fragrance-free versions score lower.", confidence:"high", category:"personal_care" }],
+  ["dollar shave club",              { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","SLS","parabens on some"], reason:"Dollar Shave Club shave products — standard drugstore concern profile: synthetic fragrance, propylene glycol, SLS in shave creams, some parabens in older formulations. Mid-tier men's grooming.", confidence:"medium", category:"personal_care" }],
+  ["old spice deodorant",            { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","BHT"], reason:"Old Spice deodorant — synthetic fragrance, propylene glycol, BHT antioxidant. No aluminum (deodorant, not antiperspirant). Standard mass-market deodorant without aluminum but with fragrance concern.", confidence:"high", category:"personal_care" }],
+  ["old spice antiperspirant",       { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","propylene glycol","BHT"], reason:"Old Spice Antiperspirant — aluminum zirconium (endocrine disruption concern, breast tissue proximity), synthetic fragrance, BHT, propylene glycol. Floor fires on aluminum antiperspirant.", confidence:"high", category:"personal_care" }],
+  ["gillette body wash",             { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","SLS"], reason:"Gillette Body Wash — SLS, synthetic fragrance, propylene glycol. Standard mass-market body wash concern. No parabens in current formulation.", confidence:"medium", category:"personal_care" }],
+  ["pantene shampoo",                { floor:4, ceiling:6, substances:["silicones","DMDM hydantoin","synthetic fragrance","SLES"], reason:"Pantene — SLES, synthetic fragrance, silicones (dimethicone), DMDM hydantoin (formaldehyde releaser). EWG rates Pantene products 4-7 due to formaldehyde-releasing preservative and synthetic fragrance.", confidence:"high", category:"personal_care" }],
+  ["tresemme shampoo",               { floor:4, ceiling:6, substances:["DMDM hydantoin","SLES","silicones","synthetic fragrance"], reason:"TRESemmé — DMDM hydantoin (formaldehyde releaser), SLES, synthetic fragrance, silicones. Class action settled 2021 over DMDM hydantoin causing hair loss. Similar concern to Pantene.", confidence:"high", category:"personal_care" }],
+  ["head and shoulders",             { floor:4, ceiling:6, substances:["zinc pyrithione","SLES","synthetic fragrance","dimethicone"], reason:"Head & Shoulders — zinc pyrithione (antifungal active), SLES, synthetic fragrance, dimethicone silicone. Active ingredient is effective for dandruff but zinc pyrithione accumulates in aquatic environments.", confidence:"high", category:"personal_care" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // COOKING OILS
+  // ══════════════════════════════════════════════════════════════
+
+  // ── SEED/VEGETABLE OILS (high concern) ───────────────────────
+  ["wesson vegetable oil",            { floor:4, ceiling:6, substances:["soybean oil","hexane extraction","GMO","bleaching"], reason:"Wesson Vegetable Oil — soybean oil, hexane solvent extraction, GMO crop, caustic refining, bleaching, deodorization. Ultra-processed seed oil. High omega-6 polyunsaturated fats that oxidize under heat. One of the most refined mainstream cooking oils.", confidence:"high", category:"food_beverage" }],
+  ["wesson canola oil",               { floor:4, ceiling:6, substances:["canola oil","hexane extraction","GMO","trans fat traces"], reason:"Wesson Canola Oil — GMO canola (rapeseed), hexane extracted, bleached, deodorized. Deodorization can create trace trans fats not listed on label per Weston A. Price research. Standard refined seed oil.", confidence:"high", category:"food_beverage" }],
+  ["mazola corn oil",                 { floor:4, ceiling:6, substances:["corn oil","hexane extraction","GMO","omega-6"], reason:"Mazola Corn Oil — GMO corn, hexane extracted (confirmed by Mazola). Very high omega-6 PUFA, unstable under heat. Standard refined seed oil with same concerns as Wesson.", confidence:"high", category:"food_beverage" }],
+  ["mazola canola oil",               { floor:4, ceiling:6, substances:["canola oil","hexane extraction","GMO"], reason:"Mazola Canola — GMO canola, hexane extracted. Same concern as Wesson canola.", confidence:"high", category:"food_beverage" }],
+  ["crisco canola oil",               { floor:4, ceiling:6, substances:["canola oil","hexane extraction","GMO"], reason:"Crisco Canola Oil — GMO canola, hexane extracted, highly refined. Same concern as Mazola and Wesson canola.", confidence:"high", category:"food_beverage" }],
+  ["great value vegetable oil",       { floor:4, ceiling:6, substances:["soybean oil","hexane extraction","GMO"], reason:"Great Value (Walmart) vegetable oil — soybean oil, standard refined seed oil concerns.", confidence:"medium", category:"food_beverage" }],
+
+  // ── OLIVE OILS (score by brand transparency) ─────────────────
+  ["california olive ranch",          { floor:1, ceiling:3, substances:["extra virgin olive oil","California grown"], reason:"California Olive Ranch — US-grown EVOO, tested and certified by California Olive Oil Council (COOC). One of the most transparent and verified mainstream olive oils. No adulteration concerns.", confidence:"high", category:"food_beverage" }],
+  ["kirkland olive oil",              { floor:2, ceiling:4, substances:["extra virgin olive oil","imported"], reason:"Kirkland EVOO — Costco olive oil has passed independent testing. One of the better-value verified olive oils. Still imported blend so slightly less traceable than California Olive Ranch.", confidence:"medium", category:"food_beverage" }],
+  ["filippo berio",                   { floor:2, ceiling:4, substances:["olive oil","imported Italy"], reason:"Filippo Berio — Italian EVOO brand with UC Davis testing history mixed. Passed some independent quality tests. Mid-tier transparency for mainstream Italian olive oil.", confidence:"medium", category:"food_beverage" }],
+  ["pompeian",              { floor:2, ceiling:4, substances:["olive oil","imported"], reason:"Pompeian EVOO — large mainstream brand, North American Olive Oil Association certified on some products. Mid-tier transparency. Better than generic brands.", confidence:"medium", category:"food_beverage" }],
+  ["bertolli olive oil",              { floor:3, ceiling:5, substances:["olive oil blend","mixed origins"], reason:"Bertolli — historically flagged in UC Davis studies for adulteration and failing EVOO standards. Large Italian brand with mixed quality testing record. Lower transparency than California Olive Ranch or Filippo Berio.", confidence:"medium", category:"food_beverage" }],
+  ["la tourangelle",                  { floor:1, ceiling:3, substances:["expeller pressed oil","artisan"], reason:"La Tourangelle — artisan expeller-pressed oils (walnut, avocado, grapeseed, etc.). No hexane extraction, non-GMO. One of the cleanest mainstream specialty oil brands.", confidence:"high", category:"food_beverage" }],
+  ["spectrum naturals oil",           { floor:2, ceiling:4, substances:["organic oil","non-hexane","non-GMO"], reason:"Spectrum Organics — USDA organic, non-hexane extraction (confirmed). Non-GMO. Significantly cleaner than Wesson or Mazola despite being a canola or safflower product.", confidence:"high", category:"food_beverage" }],
+  ["thrive algae oil",                { floor:1, ceiling:3, substances:["algae oil","non-GMO","high oleic"], reason:"Thrive Algae Oil — sustainably fermented algae oil, high oleic (stable for cooking), no hexane, non-GMO. Genuinely novel clean cooking oil alternative to seed oils.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // ENERGY DRINKS (additions)
+  // ══════════════════════════════════════════════════════════════
+
+  ["alani nu energy",                 { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium","sodium benzoate","200mg caffeine"], reason:"Alani Nu — sucralose + acesulfame potassium (double artificial sweetener), sodium benzoate preservative, 200mg caffeine, erythritol. No artificial colors, no HFCS. Similar concern to Celsius. Sucralose and Ace-K are the primary flags.", confidence:"high", category:"beverage" }],
+  ["alani nu",                        { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium","preservatives"], reason:"Alani Nu — double artificial sweetener profile (sucralose + Ace-K). Mid-tier energy drink concern.", confidence:"high", category:"beverage" }],
+  ["reign",                    { floor:4, ceiling:6, substances:["sucralose","caffeine 300mg","BCAAs","coenzyme Q10"], reason:"Reign — 300mg caffeine (highest among mainstream brands), sucralose, sodium benzoate, citric acid, BCAAs. Higher caffeine than Celsius or Alani Nu. No HFCS, no artificial colors.", confidence:"high", category:"beverage" }],
+  ["rockstar",                 { floor:4, ceiling:7, substances:["sucralose or sugar","taurine","caffeine","B vitamins"], reason:"Rockstar — varies by variety. Sugar versions have HFCS + artificial color. Sugar-free versions use sucralose + acesulfame K. Pepsi owned. Mid-to-high concern depending on variety.", confidence:"medium", category:"beverage" }],
+  ["5 hour energy",                   { floor:4, ceiling:6, substances:["niacin 8333% DV","sucralose","caffeine","artificial flavor"], reason:"5-Hour Energy — 8333% daily value niacin (risk of niacin flush at high doses), sucralose, malic acid, artificial flavor, phenylalanine. 2oz format concentrates additives. Mid-tier supplement/energy concern.", confidence:"high", category:"beverage" }],
+  ["ghost energy drink",              { floor:4, ceiling:6, substances:["sucralose","natural flavor","caffeine 200mg","acetyl-l-carnitine"], reason:"Ghost Energy — sucralose, acetyl-l-carnitine, alpha GPC, 200mg caffeine, citric acid. Gaming/lifestyle brand. Similar concern profile to Alani Nu.", confidence:"medium", category:"beverage" }],
+  ["nos energy",                      { floor:5, ceiling:7, substances:["HFCS or sucralose","artificial color","taurine","caffeine"], reason:"NOS Energy — original has HFCS + caramel color. Sugar-free has sucralose + artificial colors. Coca-Cola owned. Among more processed mainstream energy drinks.", confidence:"medium", category:"beverage" }],
+  ["bloom greens",                    { floor:3, ceiling:5, substances:["spirulina","digestive enzymes","natural flavor","stevia"], reason:"Bloom Greens — greens powder with spirulina, digestive enzymes, probiotics, stevia, natural flavors. No artificial sweeteners. Mid-tier supplement powder with reasonable ingredient list.", confidence:"medium", category:"supplement" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // SPIRITS AND ALCOHOL (additions)
+  // ══════════════════════════════════════════════════════════════
+
+  ["modelo especial",                 { floor:2, ceiling:4, substances:["water","barley malt","corn","hops"], reason:"Modelo Especial — water, barley malt, non-malted cereals (corn), hops. Standard Mexican lager. Simple ingredients, no artificial additives, no added sugars. Moderate beer concern: alcohol, glyphosate residue on barley.", confidence:"high", category:"beverage" }],
+  ["michelob ultra",                  { floor:2, ceiling:4, substances:["water","barley malt","rice","hops"], reason:"Michelob Ultra — water, barley malt, rice, hops. Simple light beer ingredients. No artificial colors, no HFCS. Lower alcohol and calorie content. Same concern as standard beer: alcohol, possible glyphosate on grain.", confidence:"high", category:"beverage" }],
+  ["stella artois beer",              { floor:2, ceiling:4, substances:["water","barley malt","corn","hops"], reason:"Stella Artois — water, barley malt, corn, hops, yeast. Standard European lager. Simple ingredients. Same baseline beer concern.", confidence:"high", category:"beverage" }],
+  ["patron tequila",                  { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Patron — 100% blue agave tequila, no additives permitted under tequila regulations for 100% agave. Cleanest spirit category. Primary concern is alcohol itself.", confidence:"high", category:"beverage" }],
+  ["don julio tequila",               { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Don Julio — 100% blue agave, estate-grown, no additives. Same clean profile as Patron for 100% agave tequila.", confidence:"high", category:"beverage" }],
+  ["espolon tequila",                 { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Espolon — 100% blue agave, certified. Clean tequila profile.", confidence:"high", category:"beverage" }],
+  ["jack daniels",                    { floor:2, ceiling:4, substances:["corn","rye","barley malt","iron-free spring water","charcoal filtered"], reason:"Jack Daniel's — corn, rye, malted barley, Tennessee spring water, Lincoln County Process charcoal filtration. No additives, relatively simple American whiskey. Charcoal mellowing is a clean process.", confidence:"high", category:"beverage" }],
+  ["makers mark",                     { floor:2, ceiling:4, substances:["corn","red winter wheat","malted barley","water"], reason:"Maker's Mark — corn, soft red winter wheat, malted barley, limestone spring water. No rye, distinctive wheated bourbon profile. Simple clean whiskey ingredients.", confidence:"high", category:"beverage" }],
+  ["crown royal",                     { floor:2, ceiling:4, substances:["corn","rye","malted barley","water"], reason:"Crown Royal — Canadian whisky blend, corn/rye/barley malt, no artificial additives. Standard clean whisky profile.", confidence:"high", category:"beverage" }],
+  ["evan williams bourbon",           { floor:2, ceiling:4, substances:["corn","rye","barley malt"], reason:"Evan Williams — corn, rye, malted barley. Budget bourbon with same clean distilled spirit profile. No additives.", confidence:"high", category:"beverage" }],
+  ["fireball",                 { floor:4, ceiling:6, substances:["whisky","cinnamon flavoring","sweeteners","propylene glycol"], reason:"Fireball Cinnamon Whisky — whisky + natural cinnamon flavoring + sweeteners + propylene glycol (used as carrier). Propylene glycol is FDA-approved but a synthetic additive in an alcoholic beverage. Flavored whisky, not straight whisky.", confidence:"high", category:"beverage" }],
+  ["captain morgan",                  { floor:3, ceiling:5, substances:["rum","natural flavors","caramel color"], reason:"Captain Morgan Original Spiced — rum, natural flavors, caramel color (added color). Spiced rum with flavor additives. Caramel color is a mild concern. Higher concern than unflavored spirits.", confidence:"high", category:"beverage" }],
+  ["malibu rum",                      { floor:4, ceiling:6, substances:["coconut rum","sugar","natural flavors","artificial flavor"], reason:"Malibu — rum, sugar, coconut flavoring (natural and artificial). Artificial flavoring and added sugar make this a higher concern than unflavored spirits. Liqueur-style product.", confidence:"high", category:"beverage" }],
+  ["grey goose vodka",                { floor:1, ceiling:3, substances:["French wheat","spring water"], reason:"Grey Goose — soft winter wheat from Picardy, France + Gensac spring water. No additives, no flavoring in original. Premium unflavored vodka with simple clean ingredients.", confidence:"high", category:"beverage" }],
+  ["hendricks gin",                   { floor:2, ceiling:4, substances:["grain spirits","11 botanicals","rose","cucumber"], reason:"Hendrick's Gin — grain spirit with 11 botanicals including rose and cucumber. Natural botanicals only. No artificial flavors or colors. Standard clean gin profile.", confidence:"high", category:"beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // FAST FOOD ADDITIONS
+  // ══════════════════════════════════════════════════════════════
+
+  ["wendys crispy",          { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","DATEM","natural flavor"], reason:"Wendy's Crispy Chicken Sandwich — enriched flour breading, soybean oil frying, DATEM dough conditioner, very high sodium (1300mg+), natural flavors. Standard fast food fried chicken concern.", confidence:"high", category:"restaurant" }],
+  ["wendys chili",                   { floor:3, ceiling:5, substances:["beef","beans","tomato","sodium","natural flavor"], reason:"Wendy's Chili — ground beef, beans, tomato, chili sauce. One of the cleaner fast food items: real ingredients, no enriched flour, relatively moderate sodium. Still processed with natural flavors.", confidence:"high", category:"restaurant" }],
+  ["wendys baked",            { floor:2, ceiling:4, substances:["potato","butter","sour cream"], reason:"Wendy's Plain Baked Potato — single ingredient (russet potato) with optional simple toppings. One of the cleanest fast food sides available.", confidence:"high", category:"restaurant" }],
+  ["burger king crispy chicken",      { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","modified starch"], reason:"Burger King Crispy Chicken Sandwich — enriched flour, soybean oil, modified starch, high sodium (1100mg). Standard fast food fried chicken concern.", confidence:"medium", category:"restaurant" }],
+  ["jack in the box sourdough jack",  { floor:6, ceiling:8, substances:["enriched bread","beef","sodium","modified starch","natural flavor"], reason:"Jack in the Box Sourdough Jack — processed 'sourdough' bread (enriched flour, DATEM), beef patty, very high sodium (1200mg+), natural flavors. One of the higher-sodium fast food burgers.", confidence:"medium", category:"restaurant" }],
+  ["zaxby's chicken fingers",         { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","natural flavor"], reason:"Zaxby's — breaded chicken tenders, enriched flour, soybean oil frying, high sodium (800mg+), natural flavors. Similar to Raising Cane's but with more processing in the bread coating.", confidence:"medium", category:"restaurant" }],
+  ["el pollo loco chicken",           { floor:3, ceiling:5, substances:["fire-grilled chicken","citrus marinade","sodium"], reason:"El Pollo Loco fire-grilled chicken — marinated in citrus, spices, garlic, fire-grilled (not fried). One of the cleaner fast food protein options. Lower sodium than fried competitors. Still commercial marinade with natural flavors.", confidence:"high", category:"restaurant" }],
+  ["chick-fil-a nuggets",             { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","MSG","sugar"], reason:"Chick-fil-A Nuggets — enriched flour, soybean oil frying, MSG, sugar in batter, high sodium (940mg for 12 count). Similar concern to crispy sandwich but smaller portions.", confidence:"high", category:"restaurant" }],
+  ["mcdonald's quarter pounder",      { floor:5, ceiling:7, substances:["beef","enriched bun","sodium","DATEM","natural flavor"], reason:"McDonald's Quarter Pounder — 100% beef, enriched white bun, DATEM, high sodium (1110mg), natural flavors. Fresh never-frozen beef since 2018 is a mild positive. Still enriched bun and high sodium.", confidence:"high", category:"restaurant" }],
+  ["mcdonald's grilled chicken",      { floor:4, ceiling:6, substances:["chicken","sodium","natural flavor","enriched bun"], reason:"McDonald's Grilled Chicken Sandwich — grilled chicken breast, enriched bun, high sodium (820mg), natural flavors. Cleaner than McChicken (no frying) but still processed bun and sodium.", confidence:"medium", category:"restaurant" }],
+  ["starbucks egg white bites",       { floor:3, ceiling:5, substances:["egg whites","cottage cheese","gruyere","sodium"], reason:"Starbucks Egg White Bites — egg whites, cottage cheese, gruyere, red pepper. Relatively clean protein option. Cooked sous vide. Primary concern: high sodium (440mg) and commercial preparation.", confidence:"high", category:"restaurant" }],
+  ["chipotle carnitas",               { floor:2, ceiling:4, substances:["pork","juniper berries","bay leaves","thyme"], reason:"Chipotle Carnitas — pork shoulder braised with juniper berries, bay leaves, thyme, black pepper. Exceptionally simple restaurant ingredients. One of cleanest fast-casual proteins.", confidence:"high", category:"restaurant" }],
+
+  // ══════════════════════════════════════════════════════════════
+  // PERSONAL CARE ADDITIONS
+  // ══════════════════════════════════════════════════════════════
+
+    ["dove sensitive",             { floor:3, ceiling:5, substances:["sodium lauryl sulfate","synthetic fragrance","dimethicone"], reason:"Dove Sensitive — SLS, synthetic fragrance, dimethicone. Standard Dove concern.", confidence:"high", category:"personal_care" }],
+  ["dove original",              { floor:3, ceiling:5, substances:["sodium lauroyl isethionate","synthetic fragrance","BHT"], reason:"Dove Original — sodium lauroyl isethionate, synthetic fragrance, BHT.", confidence:"high", category:"personal_care" }],
+  ["dove deep",              { floor:3, ceiling:5, substances:["sodium lauryl sulfate","synthetic fragrance","dimethicone"], reason:"Dove Deep Moisture — SLS, synthetic fragrance, dimethicone. Same as dove body wash profile.", confidence:"high", category:"personal_care" }],
+  ["dove body",                  { floor:3, ceiling:5, substances:["sodium lauryl sulfate","synthetic fragrance","dimethicone","DMDM hydantoin"], reason:"Dove Body Wash — sodium lauryl sulfate, synthetic fragrance, dimethicone silicone, DMDM hydantoin (formaldehyde releaser) in some formulations. Positioned as moisturizing but standard mass-market synthetic concern.", confidence:"high", category:"personal_care" }],
+  ["dove soap",                   { floor:3, ceiling:5, substances:["sodium lauroyl isethionate","synthetic fragrance","BHT"], reason:"Dove Bar — sodium lauroyl isethionate (synthetic sulfactant), synthetic fragrance, BHT, stearic acid. Gentler than SLS but still synthetic fragrance and BHT antioxidant concern.", confidence:"high", category:"personal_care" }],
+  ["dove deodorant",                  { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","dimethicone"], reason:"Dove Deodorant — synthetic fragrance, propylene glycol, dimethicone. No aluminum (deodorant version). Standard mass-market deodorant without aluminum concern.", confidence:"high", category:"personal_care" }],
+  ["dove antiperspirant",             { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","propylene glycol","dimethicone"], reason:"Dove Antiperspirant — aluminum zirconium tetrachlorohydrex (endocrine concern, breast proximity), synthetic fragrance, propylene glycol. Floor fires on aluminum antiperspirant.", confidence:"high", category:"personal_care" }],
+  ["aveeno body wash",                { floor:3, ceiling:5, substances:["colloidal oatmeal","phenoxyethanol","synthetic fragrance","SLS"], reason:"Aveeno Daily Moisturizing Body Wash — colloidal oatmeal (positive), SLS in some variants, phenoxyethanol, synthetic fragrance or 'fragrance-free' versions. Oat positioning is marketing-driven; formulation has standard concerns.", confidence:"high", category:"personal_care" }],
+  ["aveeno lotion",                   { floor:3, ceiling:5, substances:["colloidal oatmeal","petrolatum","phenoxyethanol","fragrance"], reason:"Aveeno Daily Moisturizing Lotion — colloidal oatmeal, petrolatum (petroleum-derived occlusive), phenoxyethanol, synthetic fragrance in scented versions. J&J owned. Moderate concern.", confidence:"high", category:"personal_care" }],
+  ["cerave moisturizing cream",       { floor:3, ceiling:5, substances:["ceramides","hyaluronic acid","niacinamide","petrolatum","phenoxyethanol","parabens"], reason:"CeraVe Moisturizing Cream — ceramides + hyaluronic acid (excellent actives), but petrolatum, methylparaben, propylparaben in the cream formula. EWG rates 3 due to parabens. The cleanser is lower concern than the cream.", confidence:"high", category:"personal_care" }],
+  ["cerave hydrating",         { floor:2, ceiling:4, substances:["ceramides","hyaluronic acid","niacinamide","phenoxyethanol"], reason:"CeraVe Hydrating Cleanser — ceramides, hyaluronic acid, no SLS, phenoxyethanol. Cleaner than CeraVe cream.", confidence:"high", category:"personal_care" }],
+  ["cerave cleanser",                 { floor:2, ceiling:4, substances:["ceramides","hyaluronic acid","niacinamide","phenoxyethanol"], reason:"CeraVe Hydrating Facial Cleanser — ceramides, hyaluronic acid, niacinamide. No SLS, no parabens in the cleanser. Phenoxyethanol preservative. One of the cleaner drugstore cleansers.", confidence:"high", category:"personal_care" }],
+  ["cerave",                          { floor:3, ceiling:5, substances:["ceramides","hyaluronic acid","petrolatum","phenoxyethanol"], reason:"CeraVe brand — functional active ingredients (ceramides, HA) but some products contain parabens and petrolatum. Score by specific product: cleanser 2-4, cream 3-5.", confidence:"high", category:"personal_care" }],
+  ["neutrogena hydro boost",          { floor:3, ceiling:5, substances:["hyaluronic acid","dimethicone","phenoxyethanol","fragrance"], reason:"Neutrogena Hydro Boost — hyaluronic acid water gel, dimethicone, phenoxyethanol, fragrance in some variants. J&J formulation, no parabens. EWG 3. Mid-tier drugstore moisturizer.", confidence:"high", category:"personal_care" }],
+  ["neutrogena sunscreen",            { floor:4, ceiling:6, substances:["avobenzone","homosalate","octisalate","synthetic fragrance"], reason:"Neutrogena chemical sunscreens — avobenzone, homosalate, octisalate (hormone-disrupting oxybenzone-adjacent chemicals). EWG rates these 4-7. Hawaii has banned oxybenzone due to reef damage.", confidence:"high", category:"personal_care" }],
+  ["e.l.f. cosmetics",               { floor:3, ceiling:5, substances:["synthetic dyes","phenoxyethanol","synthetic fragrance"], reason:"e.l.f. — affordable mass-market cosmetics with synthetic dyes, phenoxyethanol, some fragrance. No parabens, vegan and cruelty-free. EWG rates most e.l.f. products 3-5. Better than Maybelline/L'Oreal on some concerns.", confidence:"medium", category:"personal_care" }],
+  ["nyx cosmetics",                   { floor:4, ceiling:6, substances:["synthetic dyes","BHT","parabens on some","synthetic fragrance"], reason:"NYX — L'Oreal owned. Synthetic dyes including petroleum-derived Red 40/Yellow 5, BHT, parabens in some products, synthetic fragrance. Standard mass-market cosmetic concern.", confidence:"medium", category:"personal_care" }],
+  ["revlon lipstick",                 { floor:4, ceiling:6, substances:["D&C dyes","synthetic fragrance","BHT","lead traces"], reason:"Revlon lipstick — D&C petroleum-derived color pigments, synthetic fragrance, BHT antioxidant. Historical FDA testing found trace lead in many lipstick brands including Revlon. Applied to lips = direct ingestion exposure.", confidence:"high", category:"personal_care" }],
+  ["colgate",              { floor:3, ceiling:5, substances:["fluoride","SLS","sodium saccharin","artificial flavor"], reason:"Colgate Total — fluoride (effective for dental health, controversial for systemic exposure at high doses), SLS (causes mouth ulcers in some people), sodium saccharin, artificial flavor. Standard drugstore toothpaste concern.", confidence:"high", category:"personal_care" }],
+  ["sensodyne toothpaste",            { floor:2, ceiling:4, substances:["potassium nitrate or stannous fluoride","SLS-free on some"], reason:"Sensodyne — potassium nitrate or stannous fluoride for sensitivity. Many Sensodyne formulas are SLS-free (lower irritation). Cleaner than standard Colgate/Crest for sensitive users.", confidence:"high", category:"personal_care" }],
+  ["listerine mouthwash",             { floor:3, ceiling:5, substances:["alcohol 21.6%","eucalyptol","menthol","artificial color"], reason:"Listerine Cool Mint — 21.6% alcohol (primary concern: dry mouth, microbiome disruption), eucalyptol, menthol, thymol, artificial color (Blue 1, Yellow 10). High alcohol content is the main concern for daily use.", confidence:"high", category:"personal_care" }],
 ];
 
 // ─── BUILD LOOKUP MAP ─────────────────────────────────────────
@@ -3107,11 +3890,258 @@ function checkWholeFoodsBanned(substances = []) {
   });
 }
 
+// ─── SUGAR FLOOR SYSTEM ──────────────────────────────────────────────────────
+// Applies a minimum score floor based on sugar content per serving.
+// Operates on top of ingredient-based floors — the higher of the two wins.
+//
+// Adult DV for added sugar: 50g (FDA). WHO recommends <25g free sugars/day.
+// Children DV (ages 4-8): ~25g (AAP/AHA) — thresholds are roughly halved.
+//
+// Beverages score more aggressively because there is no fiber/fat/protein
+// to buffer the glycemic impact. Food and restaurant get higher thresholds.
+
+function applySugarFloor(score, sugar_g, category, kids_mode) {
+  if (sugar_g == null || sugar_g <= 0) return score;
+
+  const isBeverage   = category === "beverage" || category === "food_beverage";
+  const isRestaurant = category === "restaurant";
+  // Food and restaurant get the same (more lenient) thresholds.
+  // Pure beverages get tighter thresholds — no buffering.
+
+  let sugarFloor = 0;
+  let sugarNote  = "";
+
+  if (!kids_mode) {
+    // ── ADULT TIERS ────────────────────────────────────────────
+    if (isBeverage) {
+      // Beverage: tighter — pure liquid, no buffering
+      if      (sugar_g >= 50) { sugarFloor = 7; sugarNote = "100%+ adult daily sugar limit in one drink"; }
+      else if (sugar_g >= 40) { sugarFloor = 6; sugarNote = "80-99% adult daily sugar limit"; }
+      else if (sugar_g >= 30) { sugarFloor = 5; sugarNote = "60-79% adult daily sugar limit"; }
+      else if (sugar_g >= 20) { sugarFloor = 4; sugarNote = "40-59% adult daily sugar limit"; }
+      else if (sugar_g >= 10) { sugarFloor = 3; sugarNote = "significant sugar for a beverage"; }
+    } else {
+      // Food / restaurant: more lenient — fiber/protein/fat buffer
+      if      (sugar_g >= 50) { sugarFloor = 6; sugarNote = "100%+ adult daily sugar limit in one serving"; }
+      else if (sugar_g >= 35) { sugarFloor = 5; sugarNote = "70-99% adult daily sugar limit"; }
+      else if (sugar_g >= 25) { sugarFloor = 4; sugarNote = "50-69% adult daily sugar limit"; }
+      else if (sugar_g >= 15) { sugarFloor = 3; sugarNote = "30-49% adult daily sugar limit"; }
+    }
+  } else {
+    // ── CHILDREN'S TIERS (DV ~25g, thresholds ~halved) ────────
+    // Kids have half the daily sugar budget. Same serving hits them twice as hard.
+    if (isBeverage) {
+      if      (sugar_g >= 25) { sugarFloor = 7; sugarNote = "100%+ children's daily sugar limit in one drink"; }
+      else if (sugar_g >= 20) { sugarFloor = 6; sugarNote = "80-99% children's daily sugar limit"; }
+      else if (sugar_g >= 15) { sugarFloor = 5; sugarNote = "60-79% children's daily sugar limit"; }
+      else if (sugar_g >= 10) { sugarFloor = 4; sugarNote = "40-59% children's daily sugar limit"; }
+      else if (sugar_g >=  5) { sugarFloor = 3; sugarNote = "significant sugar for a child's drink"; }
+    } else {
+      // Food / restaurant for kids
+      if      (sugar_g >= 25) { sugarFloor = 6; sugarNote = "100%+ children's daily sugar limit"; }
+      else if (sugar_g >= 20) { sugarFloor = 5; sugarNote = "80-99% children's daily sugar limit"; }
+      else if (sugar_g >= 14) { sugarFloor = 4; sugarNote = "56-79% children's daily sugar limit"; }
+      else if (sugar_g >=  8) { sugarFloor = 3; sugarNote = "32-55% children's daily sugar limit"; }
+    }
+  }
+
+  if (sugarFloor > score) {
+    console.log(`[CAL] Sugar floor: ${sugar_g}g sugar → floor ${sugarFloor} (${sugarNote}) [kids_mode: ${!!kids_mode}]`);
+    return sugarFloor;
+  }
+  return score;
+}
+
+// ─── SODIUM FLOOR SYSTEM ─────────────────────────────────────────────────────
+// Adult DV: 2300mg/day. Kids DV: 1500mg/day (ages 4–8, AAP).
+// Applies to food, beverage, and restaurant categories.
+// Sodium is scored uniformly — unlike sugar, beverages don't get tighter thresholds
+// because liquid sodium (e.g., soup broth, sports drinks) is less rapidly absorbed.
+
+function applySodiumFloor(score, sodium_mg, category, kids_mode) {
+  if (sodium_mg == null || sodium_mg <= 0) return score;
+  if (category === "personal_care" || category === "clothing" || category === "home" || category === "supplement") return score;
+
+  let floor = 0;
+  let note  = "";
+
+  if (!kids_mode) {
+    // Adult DV: 2300mg
+    if      (sodium_mg >= 1840) { floor = 6; note = "80%+ adult daily sodium limit"; }
+    else if (sodium_mg >= 1380) { floor = 5; note = "60-79% adult daily sodium limit"; }
+    else if (sodium_mg >= 920)  { floor = 4; note = "40-59% adult daily sodium limit"; }
+    else if (sodium_mg >= 575)  { floor = 3; note = "25-39% adult daily sodium limit"; }
+  } else {
+    // Kids DV: 1500mg
+    if      (sodium_mg >= 1200) { floor = 6; note = "80%+ children's daily sodium limit"; }
+    else if (sodium_mg >= 900)  { floor = 5; note = "60-79% children's daily sodium limit"; }
+    else if (sodium_mg >= 600)  { floor = 4; note = "40-59% children's daily sodium limit"; }
+    else if (sodium_mg >= 375)  { floor = 3; note = "25-39% children's daily sodium limit"; }
+  }
+
+  if (floor > score) {
+    console.log(`[CAL] Sodium floor: ${sodium_mg}mg → floor ${floor} (${note}) [kids_mode: ${!!kids_mode}]`);
+    return floor;
+  }
+  return score;
+}
+
+// ─── TRANS FAT FLOOR SYSTEM ──────────────────────────────────────────────────
+// Trans fat has no safe level (WHO, FDA, AHA). The FDA banned partially
+// hydrogenated oils but allows <0.5g per serving to be labelled "0g."
+// Any detected trans fat fires floor 6 regardless of other scores.
+// Applies to all food/beverage/restaurant categories.
+
+function applyTransFatFloor(score, trans_fat_g, category) {
+  if (trans_fat_g == null || trans_fat_g <= 0) return score;
+  if (category === "personal_care" || category === "clothing" || category === "home" || category === "supplement") return score;
+  const floor = 6;
+  if (floor > score) {
+    console.log(`[CAL] Trans fat floor: ${trans_fat_g}g detected — no safe level, floor ${floor}`);
+    return floor;
+  }
+  return score;
+}
+
+// ─── SATURATED FAT FLOOR SYSTEM ──────────────────────────────────────────────
+// Adult DV: 20g/day. Kids DV (ages 4–8): ~13g/day.
+// Sat fat floors are gentler than sugar — whole food sources (dairy, meat)
+// get partial credit. Applies mainly to restaurant and processed food categories.
+
+function applySatFatFloor(score, sat_fat_g, category, kids_mode) {
+  if (sat_fat_g == null || sat_fat_g <= 0) return score;
+  if (category === "beverage") return score; // Beverages rarely have meaningful sat fat
+  if (category === "personal_care" || category === "clothing" || category === "home") return score;
+
+  let floor = 0;
+  let note  = "";
+
+  if (!kids_mode) {
+    // Adult DV: 20g
+    if      (sat_fat_g >= 16) { floor = 6; note = "80%+ adult daily sat fat limit"; }
+    else if (sat_fat_g >= 12) { floor = 5; note = "60-79% adult daily sat fat limit"; }
+    else if (sat_fat_g >= 8)  { floor = 4; note = "40-59% adult daily sat fat limit"; }
+    else if (sat_fat_g >= 5)  { floor = 3; note = "25-39% adult daily sat fat limit"; }
+  } else {
+    // Kids DV: 13g
+    if      (sat_fat_g >= 10) { floor = 6; note = "77%+ children's daily sat fat limit"; }
+    else if (sat_fat_g >= 8)  { floor = 5; note = "62-76% children's daily sat fat limit"; }
+    else if (sat_fat_g >= 5)  { floor = 4; note = "38-61% children's daily sat fat limit"; }
+    else if (sat_fat_g >= 3)  { floor = 3; note = "23-37% children's daily sat fat limit"; }
+  }
+
+  if (floor > score) {
+    console.log(`[CAL] Sat fat floor: ${sat_fat_g}g → floor ${floor} (${note}) [kids_mode: ${!!kids_mode}]`);
+    return floor;
+  }
+  return score;
+}
+
+// ─── NUTRITION CONCERN BUILDER ───────────────────────────────────────────────
+// Converts raw nutrition values into structured concern objects for the frontend.
+// Each concern: { nutrient, amount, unit, dv_pct, severity, label, positive? }
+// severity: "good" | "low" | "moderate" | "high" | "very_high"
+// positive: true when the badge is a beneficial signal (protein, fiber)
+
+function buildNutritionConcerns(nutrition, category, kids_mode) {
+  if (!nutrition) return [];
+  const concerns = [];
+
+  const isBeverage   = category === "beverage" || category === "food_beverage";
+  const isRestaurant = category === "restaurant";
+  const isFood       = ["food", "food_beverage", "baby"].includes(category);
+
+  // ── Trans fat — any amount is a red flag ─────────────────────
+  if (nutrition.trans_fat_g != null && nutrition.trans_fat_g > 0) {
+    concerns.push({
+      nutrient: "trans fat", amount: nutrition.trans_fat_g, unit: "g",
+      dv_pct: null, severity: "very_high",
+      note: "No safe level — FDA banned PHOs but <0.5g/serving can still be labelled 0g"
+    });
+  }
+
+  // ── Sugar (with added vs. natural distinction) ────────────────
+  if (nutrition.sugar_g != null) {
+    const dv     = kids_mode ? 25 : 50;
+    const pct    = Math.round((nutrition.sugar_g / dv) * 100);
+    const isNat  = nutrition.sugar_natural === true;  // backend can flag natural-source sugar
+    const hasAdded = nutrition.added_sugar_g != null;
+    // Beverages get tighter thresholds — no buffering from fiber/protein/fat
+    const sev = isBeverage
+      ? (pct >= 80 ? "very_high" : pct >= 60 ? "high" : pct >= 40 ? "moderate" : pct >= 20 ? "low" : "good")
+      : (pct >= 100 ? "very_high" : pct >= 70 ? "high" : pct >= 50 ? "moderate" : pct >= 30 ? "low" : "good");
+    const addedNote = hasAdded
+      ? `${nutrition.added_sugar_g}g added`
+      : isNat ? "natural source" : null;
+    concerns.push({
+      nutrient: "sugar", amount: nutrition.sugar_g, unit: "g",
+      dv_pct: pct, severity: sev, dv: dv, note: addedNote
+    });
+  }
+
+  // ── Sodium ────────────────────────────────────────────────────
+  if (nutrition.sodium_mg != null) {
+    const dv  = kids_mode ? 1500 : 2300;
+    const pct = Math.round((nutrition.sodium_mg / dv) * 100);
+    const sev = pct >= 80 ? "very_high" : pct >= 60 ? "high" : pct >= 40 ? "moderate" : pct >= 25 ? "low" : "good";
+    concerns.push({ nutrient: "sodium", amount: nutrition.sodium_mg, unit: "mg", dv_pct: pct, severity: sev, dv: dv });
+  }
+
+  // ── Saturated Fat ─────────────────────────────────────────────
+  if (nutrition.sat_fat_g != null && !isBeverage) {
+    const dv  = kids_mode ? 13 : 20;
+    const pct = Math.round((nutrition.sat_fat_g / dv) * 100);
+    const sev = pct >= 80 ? "very_high" : pct >= 60 ? "high" : pct >= 40 ? "moderate" : pct >= 25 ? "low" : "good";
+    concerns.push({ nutrient: "sat fat", amount: nutrition.sat_fat_g, unit: "g", dv_pct: pct, severity: sev, dv: dv });
+  }
+
+  // ── Calories — beverages and restaurant only ──────────────────
+  // Liquid calories are invisible; restaurant portions are often 2-3x expected.
+  // Skip for home food — a 600-cal home meal is expected.
+  if (nutrition.calories != null && (isBeverage || isRestaurant)) {
+    const dv  = kids_mode ? 1400 : 2000;
+    const pct = Math.round((nutrition.calories / dv) * 100);
+    if (pct >= 10) {
+      const sev = pct >= 50 ? "very_high" : pct >= 35 ? "high" : pct >= 20 ? "moderate" : "low";
+      concerns.push({ nutrient: "calories", amount: nutrition.calories, unit: "", dv_pct: pct, severity: sev, dv: dv });
+    }
+  }
+
+  // ── Protein — positive badge ──────────────────────────────────
+  // FDA DV: 50g adult, 19g ages 4-8. Only badge when notably high.
+  if (nutrition.protein_g != null) {
+    const dv  = kids_mode ? 19 : 50;
+    const pct = Math.round((nutrition.protein_g / dv) * 100);
+    // Only show when ≥15% DV — below that it's unremarkable
+    if (pct >= 15) {
+      const sev = pct >= 50 ? "excellent" : pct >= 30 ? "good" : "present";
+      concerns.push({ nutrient: "protein", amount: nutrition.protein_g, unit: "g", dv_pct: pct, severity: sev, dv: dv, positive: true });
+    }
+  }
+
+  // ── Fiber — positive badge ────────────────────────────────────
+  // FDA DV: 28g adult, 14g ages 4-8. FDA "good source" = ≥3g, "excellent" = ≥5g.
+  if (nutrition.fiber_g != null && nutrition.fiber_g >= 3) {
+    const dv  = kids_mode ? 14 : 28;
+    const pct = Math.round((nutrition.fiber_g / dv) * 100);
+    const sev = pct >= 20 ? "excellent" : "good";
+    concerns.push({ nutrient: "fiber", amount: nutrition.fiber_g, unit: "g", dv_pct: pct, severity: sev, dv: dv, positive: true });
+  }
+
+  return concerns;
+}
+
 function applyProductCalibration(result) {
   if (!result) return result;
 
-  const rawName = result.product_name || result.query || "";
-  const name    = normalise(rawName);
+  const rawName  = result.product_name || result.query || "";
+  const name     = normalise(rawName);
+  const sugar_g    = result.sugar_g    ?? result.sugar_grams ?? result.nutrition?.sugar_g    ?? null;
+  const sodium_mg  = result.sodium_mg  ?? result.nutrition?.sodium_mg  ?? null;
+  const sat_fat_g  = result.sat_fat_g  ?? result.nutrition?.sat_fat_g  ?? null;
+  const trans_fat_g = result.trans_fat_g ?? result.nutrition?.trans_fat_g ?? null;
+  const kidsMode = result.kids_mode ?? result.children_mode ?? false;
+  const category = result.category  || "";
 
   // 1. Exact match
   let entry = CALIBRATION.get(name);
@@ -3127,52 +4157,81 @@ function applyProductCalibration(result) {
     }
   }
 
-  if (!entry) return result; // unknown product — leave unchanged
-
   const currentScore = result.overall_score ?? result.score ?? 5;
   let   newScore     = currentScore;
   let   corrected    = false;
 
-  // Apply floor
-  if (currentScore < entry.floor) {
-    newScore   = entry.floor;
-    corrected  = true;
-    console.log(`[CAL] Floor applied: "${rawName}" ${currentScore}→${newScore} (${entry.reason})`);
+  if (entry) {
+    // ── Ingredient-based floor/ceiling ─────────────────────────
+    // When kids_mode is active, use kidsFloor/kidsCeiling if the entry has them
+    const effectiveFloor   = (kidsMode && entry.kidsFloor   != null) ? entry.kidsFloor   : entry.floor;
+    const effectiveCeiling = (kidsMode && entry.kidsCeiling != null) ? entry.kidsCeiling : entry.ceiling;
+
+    if (currentScore < effectiveFloor) {
+      newScore  = effectiveFloor;
+      corrected = true;
+      console.log(`[CAL] Floor applied: "${rawName}" ${currentScore}→${newScore} (${entry.reason})`);
+    }
+
+    if (currentScore > effectiveCeiling) {
+      newScore  = effectiveCeiling;
+      corrected = true;
+      console.log(`[CAL] Ceiling applied: "${rawName}" ${currentScore}→${newScore} (${entry.reason})`);
+    }
   }
 
-  // Apply ceiling
-  if (currentScore > entry.ceiling) {
-    newScore   = entry.ceiling;
-    corrected  = true;
-    console.log(`[CAL] Ceiling applied: "${rawName}" ${currentScore}→${newScore} (${entry.reason})`);
-  }
+  // ── Sugar floor ───────────────────────────────────────────────
+  const afterSugar    = applySugarFloor(newScore, sugar_g, category, kidsMode);
+  if (afterSugar > newScore)   { newScore = afterSugar;   corrected = true; }
 
-  // Check Whole Foods banned status regardless of score correction
-  const wfBanned = checkWholeFoodsBanned(entry.substances || []);
+  // ── Sodium floor ──────────────────────────────────────────────
+  const afterSodium   = applySodiumFloor(newScore, sodium_mg, category, kidsMode);
+  if (afterSodium > newScore)  { newScore = afterSodium;  corrected = true; }
+
+  // ── Sat fat floor ─────────────────────────────────────────────
+  const afterSatFat   = applySatFatFloor(newScore, sat_fat_g, category, kidsMode);
+  if (afterSatFat > newScore)  { newScore = afterSatFat;  corrected = true; }
+
+  // ── Trans fat floor — any amount fires floor 6 ────────────────
+  const afterTransFat = applyTransFatFloor(newScore, trans_fat_g, category);
+  if (afterTransFat > newScore) { newScore = afterTransFat; corrected = true; }
+
+  // ── Nutrition concern badges (for frontend display) ────────────
+  const nutrition_concerns = buildNutritionConcerns(
+    result.nutrition || {
+      sugar_g,
+      sodium_mg,
+      sat_fat_g,
+      trans_fat_g,
+      calories: result.calories ?? null,
+    },
+    category,
+    kidsMode
+  );
+
+  // ── Whole Foods banned check ──────────────────────────────────
+  const wfBanned = entry ? checkWholeFoodsBanned(entry.substances || []) : false;
 
   if (!corrected) {
-    // Log confirmed-correct scores too — useful for tracking model accuracy
-    if (entry.confidence === "high") {
-      console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range [${entry.floor}-${entry.ceiling}]`);
+    if (entry && entry.confidence === "high") {
+      console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
     }
-    // Still attach WF flag even when score unchanged
-    if (wfBanned) {
-      return { ...result, retailer_restricted: true };
-    }
-    return result;
+    if (wfBanned) return { ...result, retailer_restricted: true, nutrition_concerns };
+    return { ...result, nutrition_concerns };
   }
 
   return {
     ...result,
     overall_score:        newScore,
     score:                newScore,
-    retailer_restricted:   wfBanned,
+    retailer_restricted:  wfBanned,
+    nutrition_concerns,
     calibration_override: {
       original_score: currentScore,
       corrected_to:   newScore,
-      reason:         entry.reason,
-      substances:     entry.substances,
-      confidence:     entry.confidence,
+      reason:         entry ? entry.reason : `nutrition content (sugar: ${sugar_g}g, sodium: ${sodium_mg}mg, sat fat: ${sat_fat_g}g)`,
+      substances:     entry ? entry.substances : [],
+      confidence:     entry ? entry.confidence : "high",
     },
   };
 }

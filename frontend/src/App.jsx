@@ -4730,30 +4730,6 @@ function App() {
                   </>);
                 })()}
 
-                {/* ── RETAILER RESTRICTED BADGE ── */}
-                {result.retailer_restricted && (
-                  <div style={{
-                    marginTop: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: isDark ? '#1c1a0f' : '#fffbeb',
-                    border: '1.5px solid #fbbf24',
-                    borderRadius: 10,
-                    padding: '9px 14px',
-                  }}>
-                    <span style={{fontSize: 16, flexShrink: 0}}>🚫</span>
-                    <div>
-                      <div style={{fontSize: 12, fontWeight: 700, color: isDark ? '#fcd34d' : '#92400e', lineHeight: 1.3}}>
-                        Not accepted by leading clean grocery standards
-                      </div>
-                      <div style={{fontSize: 11, color: isDark ? '#fde68a' : '#b45309', marginTop: 2, lineHeight: 1.4}}>
-                        Contains one or more ingredients banned by major clean retailers
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
                 {(() => {
                   // Generic food/processing terms that are NOT harmful substances
@@ -4836,30 +4812,124 @@ function App() {
                   );
                 })()}
 
-                {/* Hero label */}
+                {/* Macro nutrition badges — replaces "Good for beverages" label */}
                 {(() => {
-                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
-                  const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
+                  const nutritionCats = ["food","food_beverage","beverage","restaurant","baby"];
+                  const n = result.nutrition;
+                  if (!n || !nutritionCats.includes(result.category)) return null;
+
+                  const dvs = childMode
+                    ? { sugar:25, sodium:1500, sat_fat:13, calories:1400, protein:19, fiber:14 }
+                    : { sugar:50, sodium:2300, sat_fat:20, calories:2000, protein:50, fiber:28 };
+
+                  const isBev  = result.category === "beverage";
+                  const isRest = result.category === "restaurant";
+
+                  // Concern badge colours (red-spectrum)
+                  const SEV = {
+                    good:      { bg: isDark?"#14532d22":"#f0fdf4", border: isDark?"#166534":"#bbf7d0", text: isDark?"#4ade80":"#15803d" },
+                    low:       { bg: isDark?"#78350f22":"#fffbeb", border: isDark?"#92400e":"#fde68a", text: isDark?"#fbbf24":"#b45309" },
+                    moderate:  { bg: isDark?"#7c2d1222":"#fff7ed", border: isDark?"#9a3412":"#fed7aa", text: isDark?"#fb923c":"#c2410c" },
+                    high:      { bg: isDark?"#7f1d1d22":"#fef2f2", border: isDark?"#991b1b":"#fecaca", text: isDark?"#f87171":"#dc2626" },
+                    very_high: { bg: isDark?"#7f1d1d55":"#fef2f2", border: isDark?"#dc2626":"#ef4444", text: isDark?"#ef4444":"#b91c1c" },
+                  };
+                  // Positive badge colours (green-spectrum)
+                  const POS = {
+                    present:   { bg: isDark?"#14532d22":"#f0fdf4", border: isDark?"#166534":"#bbf7d0", text: isDark?"#4ade80":"#15803d" },
+                    good:      { bg: isDark?"#14532d33":"#dcfce7", border: isDark?"#166534":"#86efac", text: isDark?"#4ade80":"#16a34a" },
+                    excellent: { bg: isDark?"#14532d55":"#dcfce7", border: isDark?"#15803d":"#4ade80", text: isDark?"#22c55e":"#15803d" },
+                  };
+
+                  function getSev(pct, tight) {
+                    if (tight) {
+                      if (pct >= 80) return "very_high"; if (pct >= 60) return "high";
+                      if (pct >= 40) return "moderate";  if (pct >= 20) return "low"; return "good";
+                    }
+                    if (pct >= 100) return "very_high"; if (pct >= 70) return "high";
+                    if (pct >= 50)  return "moderate";  if (pct >= 30) return "low"; return "good";
+                  }
+
+                  // Build concern badges (red-spectrum)
+                  const concernBadges = [
+                    // Trans fat — any amount, no DV
+                    n.trans_fat_g > 0 && {
+                      key:"transfat", label:"Trans Fat", val:`${n.trans_fat_g}g`,
+                      sub:"⚠ No safe level", cfg: SEV.very_high, concern:true
+                    },
+                    // Sugar
+                    n.sugar_g != null && (() => {
+                      const pct = Math.round((n.sugar_g / dvs.sugar) * 100);
+                      const sub = n.added_sugar_g != null
+                        ? `${pct}% DV · ${n.added_sugar_g}g added`
+                        : n.sugar_natural ? `${pct}% DV · natural` : `${pct}% DV`;
+                      return { key:"sugar", label:"Sugar", val:`${n.sugar_g}g`, pct, sub, cfg: SEV[getSev(pct, isBev)], concern:true };
+                    })(),
+                    // Sodium
+                    n.sodium_mg != null && (() => {
+                      const pct = Math.round((n.sodium_mg / dvs.sodium) * 100);
+                      return { key:"sodium", label:"Sodium", val:`${n.sodium_mg}mg`, pct, sub:`${pct}% DV`, cfg: SEV[getSev(pct, false)], concern:true };
+                    })(),
+                    // Sat fat (not beverages)
+                    n.sat_fat_g != null && !isBev && (() => {
+                      const pct = Math.round((n.sat_fat_g / dvs.sat_fat) * 100);
+                      return { key:"satfat", label:"Sat Fat", val:`${n.sat_fat_g}g`, pct, sub:`${pct}% DV`, cfg: SEV[getSev(pct, false)], concern:true };
+                    })(),
+                    // Calories — beverages + restaurant only
+                    n.calories != null && (isBev || isRest) && n.calories > 80 && (() => {
+                      const pct = Math.round((n.calories / dvs.calories) * 100);
+                      if (pct < 10) return null;
+                      const sev = pct >= 50 ? "very_high" : pct >= 35 ? "high" : pct >= 20 ? "moderate" : "low";
+                      return { key:"cal", label:"Calories", val:`${n.calories}`, pct, sub:`${pct}% DV`, cfg: SEV[sev], concern:true };
+                    })(),
+                  ].filter(Boolean);
+
+                  // Build positive badges (green-spectrum)
+                  const positiveBadges = [
+                    n.protein_g != null && (() => {
+                      const pct = Math.round((n.protein_g / dvs.protein) * 100);
+                      if (pct < 15) return null;
+                      const tier = pct >= 50 ? "excellent" : pct >= 30 ? "good" : "present";
+                      return { key:"protein", label:"Protein", val:`${n.protein_g}g`, sub:`${pct}% DV`, cfg: POS[tier] };
+                    })(),
+                    n.fiber_g != null && n.fiber_g >= 3 && (() => {
+                      const pct = Math.round((n.fiber_g / dvs.fiber) * 100);
+                      const tier = pct >= 20 ? "excellent" : "good";
+                      return { key:"fiber", label:"Fiber", val:`${n.fiber_g}g`, sub:`${pct}% DV`, cfg: POS[tier] };
+                    })(),
+                  ].filter(Boolean);
+
+                  const allBadges = [...concernBadges, ...positiveBadges];
+                  if (!allBadges.length) return null;
+
+                  const cols = Math.min(allBadges.length, 4);
+                  const allClear = concernBadges.every(b => b.cfg === SEV.good) && !concernBadges.some(b => b.key === "transfat");
+
                   return (
-                    <div style={{marginBottom:16}}>
-                      <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
-                        {scoreLabel(displayScore)} — {childMode && result.child_score ? "for children" : catLabel}
+                    <div style={{marginBottom:16, marginTop:4}}>
+                      <div style={{fontSize:10, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:7}}>
+                        {childMode ? "Nutrition · Children's daily values" : "Nutrition · % of daily value"}
                       </div>
-                      <div style={{fontSize:11,color:muted,marginTop:2}}>
-                        {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
-                        : result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
-                        : result.category === "beverage"      ? "Ingredients 75% · Packaging 25%"
-                        : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
-                        : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
-                        : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
-                        : result.category === "toy"           ? "Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%"
-                        : result.category === "clothing"      ? "Materials 35% · Exposure 30% · Sustainability 35%"
-                        : result.category === "accessory"     ? "Materials 40% · Exposure 25% · Sustainability 35%"
-                        : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
-                        : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
-                        : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%"
-                        }
+                      <div style={{display:"grid", gridTemplateColumns:`repeat(${cols}, 1fr)`, gap:6}}>
+                        {allBadges.map(b => (
+                          <div key={b.key} style={{
+                            background:    b.cfg.bg,
+                            border:        `1px solid ${b.cfg.border}`,
+                            borderRadius:  10,
+                            padding:       "8px 6px",
+                            display:       "flex",
+                            flexDirection: "column",
+                            alignItems:    "center",
+                            gap:           2,
+                          }}>
+                            <div style={{fontSize:12, fontWeight:700, color:b.cfg.text, whiteSpace:"nowrap"}}>{b.val}</div>
+                            <div style={{fontSize:9,  color:muted, whiteSpace:"nowrap"}}>{b.label}</div>
+                            <div style={{fontSize:9,  fontWeight:600, color:b.cfg.text, textAlign:"center", lineHeight:1.3}}>{b.sub}</div>
+                          </div>
+                        ))}
                       </div>
+                      {allClear && concernBadges.length > 0 && (
+                        <div style={{fontSize:10, color:muted, marginTop:5, textAlign:"center"}}>No nutrition concerns flagged</div>
+                      )}
                     </div>
                   );
                 })()}
