@@ -990,7 +990,7 @@ const products = [
     id: "hl-001",
     name: "Beeswax Candles",
     brand: "Big Dipper",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Pure beeswax, cotton wick",
     description: "Paraffin candles release plastic-like particles — beeswax burns clean",
@@ -1002,7 +1002,7 @@ const products = [
     id: "hl-002",
     name: "Wool Dryer Balls",
     brand: "Friendsheep",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% New Zealand wool",
     description: "Replaces plastic dryer sheets that leave synthetic coating on fabrics",
@@ -1014,7 +1014,7 @@ const products = [
     id: "hl-003",
     name: "Stainless Steel Water Filter Pitcher",
     brand: "Clearly Filtered",
-    category: "home",
+    category: "other",
     plasticScore: 2,
     material: "Stainless steel body, plastic-free filter media",
     description: "Removes 99.9% of microplastics from tap water",
@@ -1026,7 +1026,7 @@ const products = [
     id: "hl-004",
     name: "Bamboo Toilet Paper",
     brand: "Who Gives A Crap",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Bamboo, no plastic wrap packaging",
     description: "Plastic-free packaging, no chlorine bleaching, faster-growing than trees",
@@ -1038,7 +1038,7 @@ const products = [
     id: "hl-005",
     name: "Natural Yoga Mat",
     brand: "Manduka",
-    category: "home",
+    category: "other",
     plasticScore: 2,
     material: "Natural tree rubber, no PVC",
     description: "PVC yoga mats shed microplastics during practice — natural rubber doesn't",
@@ -1050,7 +1050,7 @@ const products = [
     id: "hl-006",
     name: "Glass Water Filter Bottle",
     brand: "LifeStraw",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Borosilicate glass, activated carbon filter",
     description: "Filters microplastics from tap water on the go, zero plastic contact",
@@ -1064,7 +1064,7 @@ const products = [
     id: "el-001",
     name: "Braided Nylon USB-C Cable",
     brand: "Anker",
-    category: "accessory",
+    category: "other",
     plasticScore: 3,
     material: "Braided nylon exterior, no PVC insulation",
     description: "PVC cables shed microplastics with heat — nylon braided is far safer",
@@ -1076,7 +1076,7 @@ const products = [
     id: "el-002",
     name: "Pela Case Compostable Phone Case",
     brand: "Pela",
-    category: "accessory",
+    category: "other",
     plasticScore: 2,
     material: "Flaxstic — flax shive and biopolymer",
     description: "100% compostable, breaks down in 3-5 years vs 1000 years for plastic",
@@ -1088,7 +1088,7 @@ const products = [
     id: "el-003",
     name: "Wooden Phone Stand",
     brand: "Oakywood",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Solid walnut wood, steel base",
     description: "No plastic components, natural material, lasts indefinitely",
@@ -1100,7 +1100,7 @@ const products = [
     id: "el-004",
     name: "Cork Mouse Pad",
     brand: "Sigel",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Natural cork, no synthetic backing",
     description: "Rubber-backed plastic mouse pads shed microplastics — cork doesn't",
@@ -1112,7 +1112,7 @@ const products = [
     id: "el-005",
     name: "Wooden Keyboard and Mouse Set",
     brand: "Logitech",
-    category: "accessory",
+    category: "other",
     plasticScore: 2,
     material: "FSC-certified wood panels, recycled plastic base",
     description: "Significantly reduced virgin plastic vs conventional keyboards",
@@ -1124,7 +1124,7 @@ const products = [
     id: "el-006",
     name: "Bamboo Laptop Stand",
     brand: "Rain Design",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Solid bamboo",
     description: "No plastic, naturally heat-resistant, adjustable height",
@@ -1136,7 +1136,7 @@ const products = [
     id: "el-007",
     name: "Recycled Plastic Earbuds",
     brand: "House of Marley",
-    category: "accessory",
+    category: "other",
     plasticScore: 3,
     material: "Recycled plastic, bamboo accents",
     description: "Made from recycled materials — still contains plastic but responsible sourcing",
@@ -1148,7 +1148,7 @@ const products = [
     id: "el-008",
     name: "Solar Power Bank",
     brand: "Blavor",
-    category: "accessory",
+    category: "other",
     plasticScore: 3,
     material: "Recycled ABS plastic, solar panel",
     description: "Solar-powered reduces grid energy; better lifecycle than disposable batteries",
@@ -1260,7 +1260,7 @@ const products = [
     id: "of-001",
     name: "Recycled Paper Notebooks",
     brand: "Decomposition Book",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "100% post-consumer recycled paper, no plastic cover",
     description: "No plastic cover or binding — pure paper, fully recyclable",
@@ -1272,7 +1272,7 @@ const products = [
     id: "of-002",
     name: "Refillable Fountain Pen",
     brand: "Lamy",
-    category: "accessory",
+    category: "other",
     plasticScore: 2,
     material: "ABS body, steel nib — refillable indefinitely",
     description: "One fountain pen replaces thousands of disposable plastic ballpoints",
@@ -1284,7 +1284,7 @@ const products = [
     id: "of-003",
     name: "Beeswax Pencils",
     brand: "Faber-Castell",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Wood barrel, graphite core — no plastic",
     description: "Wooden pencils are fully plastic-free vs mechanical plastic pencils",
@@ -1296,7 +1296,7 @@ const products = [
     id: "of-004",
     name: "Cork Bulletin Board",
     brand: "Quartet",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Natural cork, wood frame",
     description: "Plastic foam boards vs natural cork — cork is fully biodegradable",
@@ -1308,7 +1308,7 @@ const products = [
     id: "of-005",
     name: "Glass Whiteboard",
     brand: "Quartet",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Tempered glass surface, aluminum frame",
     description: "Melamine whiteboards shed microplastics when erased — glass doesn't",
@@ -1320,7 +1320,7 @@ const products = [
     id: "of-006",
     name: "Bamboo Desk Organizer",
     brand: "SimpleHouseware",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "100% bamboo",
     description: "Replaces plastic desk organizers with natural, biodegradable bamboo",
@@ -1332,7 +1332,7 @@ const products = [
     id: "of-007",
     name: "Recycled Cardboard Binders",
     brand: "Avery",
-    category: "accessory",
+    category: "other",
     plasticScore: 2,
     material: "Recycled cardboard, no PVC cover",
     description: "PVC binders shed microplastics with handling — recycled cardboard doesn't",
@@ -1344,7 +1344,7 @@ const products = [
     id: "of-008",
     name: "Natural Rubber Eraser",
     brand: "Staedtler",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Natural rubber, no PVC",
     description: "PVC erasers leave plastic residue — natural rubber erases cleanly",
@@ -1370,7 +1370,7 @@ const products = [
     id: "sp-002",
     name: "Natural Rubber Resistance Bands",
     brand: "Theraband",
-    category: "accessory",
+    category: "other",
     plasticScore: 2,
     material: "Natural latex rubber",
     description: "Synthetic rubber bands shed microplastics — natural latex is biodegradable",
@@ -1382,7 +1382,7 @@ const products = [
     id: "sp-003",
     name: "Cork Yoga Block",
     brand: "Gaiam",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Natural cork",
     description: "Foam yoga blocks shed microplastics — cork is naturally antimicrobial and biodegradable",
@@ -1406,7 +1406,7 @@ const products = [
     id: "sp-005",
     name: "Natural Chalk for Climbing",
     brand: "Black Diamond",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "Magnesium carbonate, cotton chalk bag",
     description: "Pure mineral chalk — no synthetic additives or plastic packaging",
@@ -1504,7 +1504,7 @@ const products = [
     id: "ht-005",
     name: "Organic Cotton Pillow",
     brand: "Avocado Green",
-    category: "home",
+    category: "other",
     plasticScore: 2,
     material: "Organic cotton shell, natural latex fill",
     description: "Synthetic pillows shed polyester microfibers all night — natural latex doesn't",
@@ -1516,7 +1516,7 @@ const products = [
     id: "ht-006",
     name: "Linen Table Cloth",
     brand: "LinenMe",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% European linen",
     description: "Polyester tablecloths shed microplastics near food — linen is plant-based",
@@ -1528,7 +1528,7 @@ const products = [
     id: "ht-007",
     name: "Organic Cotton Bath Mat",
     brand: "Kassatex",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% organic cotton",
     description: "Synthetic bath mats shed microplastics in every wash — cotton stays clean",
@@ -1540,7 +1540,7 @@ const products = [
     id: "ht-008",
     name: "Jute Area Rug",
     brand: "nuLOOM",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% natural jute fiber",
     description: "Synthetic rugs are one of the largest sources of indoor microplastic pollution",
@@ -1552,7 +1552,7 @@ const products = [
     id: "ht-009",
     name: "Organic Cotton Shower Curtain",
     brand: "Coyuchi",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% organic cotton",
     description: "PVC and PEVA shower curtains off-gas chemicals — cotton is safe and washable",
@@ -1738,7 +1738,7 @@ const products = [
     id: "ba-001",
     name: "Bamboo Toilet Brush",
     brand: "Brush It On",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Bamboo handle, plant-fiber bristles",
     description: "Plastic toilet brushes shed microplastics — bamboo is fully compostable",
@@ -1750,7 +1750,7 @@ const products = [
     id: "ba-002",
     name: "Glass Soap Dispenser",
     brand: "Blomus",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Borosilicate glass, stainless pump",
     description: "Refillable glass dispenser eliminates endless plastic soap bottles",
@@ -1762,7 +1762,7 @@ const products = [
     id: "ba-003",
     name: "Bamboo Toothbrush Holder",
     brand: "Bambu",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% bamboo",
     description: "Replaces plastic bathroom accessories with natural bamboo",
@@ -1886,7 +1886,7 @@ const products = [
     id: "gd-001",
     name: "Terracotta Plant Pots",
     brand: "HC Companies",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Natural fired terracotta clay",
     description: "Plastic plant pots shed microplastics into soil — terracotta is naturally inert",
@@ -1898,7 +1898,7 @@ const products = [
     id: "gd-002",
     name: "Natural Cotton Garden Gloves",
     brand: "Atlas",
-    category: "home",
+    category: "other",
     plasticScore: 2,
     material: "Cotton knit with nitrile coating fingertips only",
     description: "Mostly natural fiber vs full synthetic gloves — much less microplastic contact",
@@ -1910,7 +1910,7 @@ const products = [
     id: "gd-003",
     name: "Stainless Steel Garden Tools",
     brand: "DeWit",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Stainless steel, ash wood handle",
     description: "Plastic-handled tools crack and shed — stainless and wood last generations",
@@ -1922,7 +1922,7 @@ const products = [
     id: "gd-004",
     name: "Bamboo Plant Stakes",
     brand: "Grow It",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Natural bamboo cane",
     description: "Plastic garden stakes shed microplastics into soil — bamboo composts naturally",
@@ -1934,7 +1934,7 @@ const products = [
     id: "gd-005",
     name: "Jute Plant Hangers",
     brand: "Mkono",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "100% natural jute rope",
     description: "Synthetic macramé hangers shed microplastics — jute is fully biodegradable",
@@ -1972,7 +1972,7 @@ const products = [
     id: "tr-003",
     name: "Organic Cotton Tote Bag",
     brand: "Baggu",
-    category: "accessory",
+    category: "other",
     plasticScore: 1,
     material: "100% organic cotton canvas",
     description: "Replaces thousands of single-use plastic shopping bags over its lifetime",
@@ -2342,7 +2342,7 @@ const products = [
     id: "hw-001",
     name: "Glass Supplement Bottles",
     brand: "Standard Process",
-    category: "supplement",
+    category: "other",
     plasticScore: 1,
     material: "Amber glass, metal lid",
     description: "Supplements stored in plastic leach phthalates — glass amber bottles protect and don't leach",
@@ -2366,7 +2366,7 @@ const products = [
     id: "hw-003",
     name: "Natural Latex Gloves",
     brand: "Skintx",
-    category: "supplement",
+    category: "other",
     plasticScore: 2,
     material: "Natural latex rubber",
     description: "Nitrile gloves are synthetic plastic — natural latex is plant-derived",
@@ -2378,7 +2378,7 @@ const products = [
     id: "hw-004",
     name: "Glass Dropper Bottle Vitamins",
     brand: "MaryRuth Organics",
-    category: "supplement",
+    category: "other",
     plasticScore: 1,
     material: "Glass dropper bottle",
     description: "Liquid vitamins in glass dropper bottles — no plastic cap touching the liquid",
@@ -2526,7 +2526,7 @@ const products = [
     id: "zw-006",
     name: "Natural Beeswax Polish",
     brand: "Howard",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Beeswax, carnauba wax, mineral spirits",
     description: "Spray polishes in plastic bottles vs natural wax in metal tins",
@@ -2674,7 +2674,7 @@ const products = [
     id: "cx-005",
     name: "Stainless Steel Dustpan",
     brand: "Full Circle",
-    category: "home",
+    category: "other",
     plasticScore: 1,
     material: "Stainless steel, rubber edge",
     description: "Plastic dustpans crack and shed — stainless steel lasts indefinitely",
@@ -2688,7 +2688,7 @@ const products = [
     id: "ty-001",
     name: "Wooden Doll Set",
     brand: "Hape",
-    category: "toy",
+    category: "other",
     plasticScore: 1,
     material: "FSC-certified beech wood, non-toxic paint",
     description: "Zero plastic — safe for children with skin contact during play",
@@ -2700,7 +2700,7 @@ const products = [
     id: "ty-002",
     name: "Organic Cotton Stuffed Animal",
     brand: "Under the Nile",
-    category: "toy",
+    category: "other",
     plasticScore: 1,
     material: "100% organic cotton, natural stuffing",
     description: "No synthetic fibers or plastic pellets — safe for young children",
@@ -2712,7 +2712,7 @@ const products = [
     id: "ty-003",
     name: "Natural Rubber Toy Set",
     brand: "Hevea",
-    category: "toy",
+    category: "other",
     plasticScore: 1,
     material: "100% natural rubber, food-grade paint",
     description: "Natural rubber doesn't leach plasticizers — ideal for teething and play",
@@ -2724,7 +2724,7 @@ const products = [
     id: "ty-004",
     name: "Wooden Building Blocks",
     brand: "Melissa & Doug",
-    category: "toy",
+    category: "other",
     plasticScore: 1,
     material: "Solid hardwood, non-toxic finish",
     description: "Classic wood blocks — no plastic microparticles shed during play",
@@ -2736,7 +2736,7 @@ const products = [
     id: "ty-005",
     name: "Waldorf Wooden Play Kitchen Set",
     brand: "PlanToys",
-    category: "toy",
+    category: "other",
     plasticScore: 1,
     material: "Rubberwood, non-toxic water-based dyes",
     description: "Plastic play kitchens shed particles — wood is safer for imaginative play",
@@ -3595,7 +3595,7 @@ const products = [
   // ── HOME FRAGRANCE & AIR CARE ────────────────────────────────
   {
     id:"hf-001", name:"Pura Smart Fragrance Diffuser", brand:"Pura",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"Fragrance oils — no phthalates, no formaldehyde, no carcinogens",
     description:"Smart home diffuser with phthalate-free fragrance oils. No aerosol propellants, no synthetic carcinogens.",
     affiliateUrl:`https://www.amazon.com/s?k=Pura+smart+fragrance+diffuser&tag=${AMAZON_TAG}`,
@@ -3604,7 +3604,7 @@ const products = [
   },
   {
     id:"hf-002", name:"Grow Fragrance Room Spray", brand:"Grow Fragrance",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"100% plant-based fragrance, no synthetic chemicals or phthalates",
     description:"100% plant-based room spray with no phthalates, parabens or synthetic fragrance chemicals. Biodegradable formula.",
     affiliateUrl:`https://www.amazon.com/s?k=Grow+Fragrance+room+spray&tag=${AMAZON_TAG}`,
@@ -3613,7 +3613,7 @@ const products = [
   },
   {
     id:"hf-003", name:"Fontana Candle Company Soy Candle", brand:"Fontana Candle",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"100% soy wax, cotton wick, no paraffin or synthetic fragrance",
     description:"Pure soy wax candle with cotton wick and clean fragrance. No paraffin (petroleum byproduct), no synthetic dyes.",
     affiliateUrl:`https://www.amazon.com/s?k=soy+candle+cotton+wick+clean+fragrance&tag=${AMAZON_TAG}`,
@@ -3622,7 +3622,7 @@ const products = [
   },
   {
     id:"hf-004", name:"Vitruvi Stone Diffuser", brand:"Vitruvi",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"Ceramic diffuser body — no plastic housing touching water or oil",
     description:"Ceramic ultrasonic diffuser for essential oils. No plastic in the water or oil path. Clean air delivery.",
     affiliateUrl:`https://www.amazon.com/s?k=Vitruvi+stone+diffuser&tag=${AMAZON_TAG}`,
@@ -3631,7 +3631,7 @@ const products = [
   },
   {
     id:"hf-005", name:"P.F. Candle Co. Soy Candle", brand:"P.F. Candle Co.",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"100% domestically grown soy wax, cotton-core wick, phthalate-free fragrance",
     description:"Soy wax candle with cotton wick and phthalate-free fragrance. No paraffin, no lead wick, no synthetic dyes.",
     affiliateUrl:`https://www.amazon.com/s?k=PF+Candle+Co+soy+candle&tag=${AMAZON_TAG}`,
@@ -3821,7 +3821,7 @@ const products = [
   // ── FITNESS & PERSONAL CARE ───────────────────────────────────
   {
     id:"ft-001", name:"Manduka PRO Yoga Mat", brand:"Manduka",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"PVC-free polyurethane — no toxic plasticizers, closed-cell surface",
     description:"Made without toxic plasticizers or heavy metals. Closed-cell surface prevents bacteria absorption. Lasts 10+ years.",
     affiliateUrl:`https://www.amazon.com/s?k=Manduka+PRO+yoga+mat&tag=${AMAZON_TAG}`,
@@ -3830,7 +3830,7 @@ const products = [
   },
   {
     id:"ft-002", name:"Liforme Natural Rubber Yoga Mat", brand:"Liforme",
-    plasticScore:2, category:"accessory",
+    plasticScore:2, category:"other",
     material:"Natural rubber base, polyurethane top layer — no PVC, no toxic plasticizers",
     description:"Natural rubber yoga mat — no PVC, no toxic plasticizers, biodegradable base. AlignForMe system for posture alignment.",
     affiliateUrl:`https://www.amazon.com/s?k=Liforme+yoga+mat&tag=${AMAZON_TAG}`,
@@ -3850,7 +3850,7 @@ const products = [
   // ── OFFICE & SCHOOL ───────────────────────────────────────────
   {
     id:"of-101", name:"Leuchtturm1917 Hardcover Notebook", brand:"Leuchtturm1917",
-    plasticScore:1, category:"accessory",
+    plasticScore:1, category:"other",
     material:"Paper and cardboard — no plastic coating, no synthetic binding",
     description:"FSC-certified paper hardcover notebook. No plastic coating, no synthetic binding. Acid-free pages.",
     affiliateUrl:`https://www.amazon.com/s?k=Leuchtturm1917+hardcover+notebook&tag=${AMAZON_TAG}`,
@@ -3859,7 +3859,7 @@ const products = [
   },
   {
     id:"of-102", name:"Pilot B2P Recycled Plastic Pens", brand:"Pilot",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"89% recycled plastic bottles — lower virgin plastic footprint",
     description:"Ballpoint pen made from 89% recycled plastic bottles. Lower virgin plastic footprint than standard pens.",
     affiliateUrl:`https://www.amazon.com/s?k=Pilot+B2P+recycled+plastic+pen&tag=${AMAZON_TAG}`,
@@ -3868,7 +3868,7 @@ const products = [
   },
   {
     id:"of-103", name:"Staedtler Noris Pencils", brand:"Staedtler",
-    plasticScore:1, category:"accessory",
+    plasticScore:1, category:"other",
     material:"FSC-certified wood, water-based lacquer — zero plastic",
     description:"FSC-certified wood pencils with water-based lacquer. Zero plastic — fully compostable at end of life.",
     affiliateUrl:`https://www.amazon.com/s?k=Staedtler+Noris+pencils&tag=${AMAZON_TAG}`,
@@ -3878,7 +3878,7 @@ const products = [
   // ── SUNGLASSES & EYEWEAR ──────────────────────────────────────
   {
     id:"ew-001", name:"Warby Parker Acetate Frames", brand:"Warby Parker",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Cellulose acetate — plant-derived, biodegradable vs petroleum plastic frames",
     description:"Acetate frames made from cellulose — a plant-derived, biodegradable material vs petroleum-based plastic. Lower chemical burden than standard polycarbonate.",
     affiliateUrl:`https://www.amazon.com/s?k=acetate+sunglasses+plant+based&tag=${AMAZON_TAG}`,
@@ -3887,7 +3887,7 @@ const products = [
   },
   {
     id:"ew-201", name:"Sunski Polarized Sunglasses", brand:"Sunski",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Recycled plastic frames — lower virgin plastic footprint, polarized lenses",
     description:"Sunglasses made from recycled plastic with polarized lenses. Lower virgin plastic footprint than conventional frames.",
     affiliateUrl:`https://www.amazon.com/s?k=Sunski+polarized+sunglasses&tag=${AMAZON_TAG}`,
@@ -3905,7 +3905,7 @@ const products = [
   },
   {
     id:"ew-004", name:"Pela Case Eco-Friendly Phone Case", brand:"Pela",
-    plasticScore:2, category:"accessory",
+    plasticScore:2, category:"other",
     material:"Flaxstic — compostable bioplastic from flax shive, no petroleum plastic",
     description:"Compostable phone case made from flax shive bioplastic. Breaks down in home compost — no petroleum plastic.",
     affiliateUrl:`https://www.amazon.com/s?k=Pela+compostable+phone+case&tag=${AMAZON_TAG}`,
@@ -3914,7 +3914,7 @@ const products = [
   },
   {
     id:"ew-005", name:"Gunnar Blue Light Glasses", brand:"Gunnar",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Standard plastic frames — amber-tinted lenses block blue light, no chemical coating concerns",
     description:"Blue light blocking glasses for screen use. Amber lenses reduce digital eye strain. Standard plastic but long-lasting build quality.",
     affiliateUrl:`https://www.amazon.com/s?k=Gunnar+blue+light+glasses&tag=${AMAZON_TAG}`,
@@ -3990,7 +3990,7 @@ const products = [
   // ── ART & CRAFT SUPPLIES ──────────────────────────────────────
   {
     id:"ar-001", name:"Faber-Castell Polychromos Colored Pencils", brand:"Faber-Castell",
-    plasticScore:1, category:"toy",
+    plasticScore:1, category:"other",
     material:"Cedar wood barrel, oil-based pigment — no ABS plastic casing",
     description:"Cedar wood colored pencils with lightfast oil-based pigment. No plastic barrel — fully wood construction.",
     affiliateUrl:`https://www.amazon.com/s?k=Faber-Castell+Polychromos+colored+pencils&tag=${AMAZON_TAG}`,
@@ -4008,7 +4008,7 @@ const products = [
   },
   {
     id:"ar-003", name:"Melissa and Doug Tempera Paint", brand:"Melissa and Doug",
-    plasticScore:2, category:"toy",
+    plasticScore:2, category:"other",
     material:"Water-based tempera — no solvent-based chemicals, washable formula",
     description:"Water-based washable tempera paint. No solvent-based chemicals or harsh synthetic dyes. Safe for kids.",
     affiliateUrl:`https://www.amazon.com/s?k=Melissa+Doug+tempera+paint+washable&tag=${AMAZON_TAG}`,
@@ -4017,7 +4017,7 @@ const products = [
   },
   {
     id:"ar-004", name:"Elmer's Washable School Glue", brand:"Elmers",
-    plasticScore:2, category:"toy",
+    plasticScore:2, category:"other",
     material:"PVA water-based adhesive — no solvent, no toxic compounds, washable",
     description:"Water-based PVA school glue with no solvents or toxic compounds. Fully washable, safe for all ages.",
     affiliateUrl:`https://www.amazon.com/s?k=Elmers+washable+school+glue&tag=${AMAZON_TAG}`,
@@ -4026,7 +4026,7 @@ const products = [
   },
   {
     id:"ar-005", name:"Arteza Watercolor Paints", brand:"Arteza",
-    plasticScore:2, category:"toy",
+    plasticScore:2, category:"other",
     material:"Water-based watercolor — no solvent-based chemicals or heavy metal pigments",
     description:"Water-based watercolor set with no heavy metal pigments or solvents. Non-toxic ASTM D-4236 certified.",
     affiliateUrl:`https://www.amazon.com/s?k=Arteza+watercolor+paint+set&tag=${AMAZON_TAG}`,
@@ -4035,7 +4035,7 @@ const products = [
   },
   {
     id:"ar-006", name:"ALEX Toys Finger Paint Set", brand:"ALEX Toys",
-    plasticScore:2, category:"toy",
+    plasticScore:2, category:"other",
     material:"Water-based finger paint — washable, no solvent-based chemicals",
     description:"Washable water-based finger paint. No solvent-based chemicals, no harsh synthetic dyes. Washes off skin and clothing.",
     affiliateUrl:`https://www.amazon.com/s?k=ALEX+Toys+finger+paint+set&tag=${AMAZON_TAG}`,
@@ -4046,7 +4046,7 @@ const products = [
   // ── TECH ACCESSORIES ──────────────────────────────────────────
   {
     id:"tc-001", name:"Anker USB-C Braided Cable", brand:"Anker",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Nylon braided exterior — more durable than PVC cables, reduces replacement waste",
     description:"Nylon-braided USB-C cable — significantly more durable than PVC-coated cables, reducing how often you replace it.",
     affiliateUrl:`https://www.amazon.com/s?k=Anker+USB-C+braided+cable&tag=${AMAZON_TAG}`,
@@ -4064,7 +4064,7 @@ const products = [
   },
   {
     id:"tc-003", name:"Mophie MagSafe Charger", brand:"Mophie",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Standard plastic housing — reduced cable waste through wireless charging",
     description:"Wireless MagSafe charger that eliminates cable wear and replacement waste. Fewer cables in landfill over time.",
     affiliateUrl:`https://www.amazon.com/s?k=Mophie+MagSafe+wireless+charger&tag=${AMAZON_TAG}`,
@@ -4073,7 +4073,7 @@ const products = [
   },
   {
     id:"tc-004", name:"Casetify Impact Phone Case", brand:"Casetify",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"EcoShock material — 65% recycled and plant-based materials",
     description:"Phone case made from 65% recycled and plant-based materials. Drops the petroleum plastic footprint vs standard TPU cases.",
     affiliateUrl:`https://www.amazon.com/s?k=Casetify+recycled+phone+case&tag=${AMAZON_TAG}`,
@@ -4082,7 +4082,7 @@ const products = [
   },
   {
     id:"tc-005", name:"Nimble Sustainable Power Bank", brand:"Nimble",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Recycled aluminum and plastic housing — certified B Corp, takeback recycling program",
     description:"Power bank made with recycled materials. Certified B Corp with a free mail-back recycling program for end of life.",
     affiliateUrl:`https://www.amazon.com/s?k=Nimble+sustainable+power+bank&tag=${AMAZON_TAG}`,
@@ -4093,7 +4093,7 @@ const products = [
   // ── TRAVEL ────────────────────────────────────────────────────
   {
     id:"tr-101", name:"Cadence Capsule Travel Containers", brand:"Cadence",
-    plasticScore:2, category:"accessory",
+    plasticScore:2, category:"other",
     material:"Recycled aluminum capsules — no single-use plastic travel bottles",
     description:"Refillable recycled aluminum travel capsules — eliminate single-use plastic travel bottles entirely. Leak-proof, TSA-compliant.",
     affiliateUrl:`https://www.amazon.com/s?k=Cadence+travel+capsule+container&tag=${AMAZON_TAG}`,
@@ -4102,7 +4102,7 @@ const products = [
   },
   {
     id:"tr-102", name:"Matador FlatPak Toiletry Case", brand:"Matador",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Recycled TPU — lower footprint than virgin plastic, waterproof",
     description:"Ultralight waterproof toiletry case made from recycled TPU. Collapses flat when empty to reduce bulk.",
     affiliateUrl:`https://www.amazon.com/s?k=Matador+FlatPak+toiletry+case&tag=${AMAZON_TAG}`,
@@ -4111,7 +4111,7 @@ const products = [
   },
   {
     id:"tr-103", name:"Away Carry-On Suitcase", brand:"Away",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Polycarbonate shell — BPA-free, lightweight, designed for longevity over replacement",
     description:"BPA-free polycarbonate hardshell suitcase built to last 10+ years. Lifetime warranty reduces landfill contribution vs cheap luggage.",
     affiliateUrl:`https://www.amazon.com/s?k=Away+carry+on+suitcase&tag=${AMAZON_TAG}`,
@@ -4120,7 +4120,7 @@ const products = [
   },
   {
     id:"tr-104", name:"Patagonia Black Hole Duffel", brand:"Patagonia",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"100% recycled polyester — no virgin synthetic fibers",
     description:"100% recycled polyester duffel bag. Bluesign-approved fabric — no virgin synthetic fibers, Fair Trade certified.",
     affiliateUrl:`https://www.amazon.com/s?k=Patagonia+Black+Hole+duffel+bag&tag=${AMAZON_TAG}`,
@@ -4129,7 +4129,7 @@ const products = [
   },
   {
     id:"tr-105", name:"Sea to Summit Lightweight Dry Bag", brand:"Sea to Summit",
-    plasticScore:3, category:"accessory",
+    plasticScore:3, category:"other",
     material:"Ultra-Sil nylon — extremely lightweight, replaces multiple plastic bags",
     description:"Ultralight dry bag that replaces zip-lock bags and single-use plastic bags when traveling. Waterproof, reusable indefinitely.",
     affiliateUrl:`https://www.amazon.com/s?k=Sea+to+Summit+dry+bag&tag=${AMAZON_TAG}`,
@@ -4196,7 +4196,7 @@ const products = [
   // ── GARDEN & OUTDOOR ──────────────────────────────────────────
   {
     id:"ga-001", name:"Dr. Earth Organic Fertilizer", brand:"Dr. Earth",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"100% organic matter — no synthetic nitrogen, no sewage sludge, no GMOs",
     description:"USDA certified organic fertilizer with no synthetic nitrogen, sewage sludge or GMOs. Safe around kids and pets.",
     affiliateUrl:`https://www.amazon.com/s?k=Dr+Earth+organic+fertilizer&tag=${AMAZON_TAG}`,
@@ -4205,7 +4205,7 @@ const products = [
   },
   {
     id:"ga-002", name:"Fox Farm Ocean Forest Potting Soil", brand:"Fox Farm",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"Aged forest products, earthworm castings, bat guano — no synthetic fertilizers",
     description:"Organic potting mix with aged forest products and earthworm castings. No synthetic fertilizers or harmful pesticides.",
     affiliateUrl:`https://www.amazon.com/s?k=Fox+Farm+Ocean+Forest+potting+soil&tag=${AMAZON_TAG}`,
@@ -4214,7 +4214,7 @@ const products = [
   },
   {
     id:"ga-003", name:"Safer Brand Insect Killing Soap", brand:"Safer Brand",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"Potassium salts of fatty acids — no synthetic pesticides, OMRI certified organic",
     description:"OMRI certified organic insect control using potassium salts — no synthetic pesticides, safe for edible plants.",
     affiliateUrl:`https://www.amazon.com/s?k=Safer+Brand+insect+killing+soap&tag=${AMAZON_TAG}`,
@@ -4223,7 +4223,7 @@ const products = [
   },
   {
     id:"ga-004", name:"Biodegradable Plant Pots", brand:"Jiffy",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"Peat and wood fiber — fully compostable, no plastic",
     description:"Peat and wood fiber seed starting pots — plant directly in ground, pot composts with the soil. No plastic waste.",
     affiliateUrl:`https://www.amazon.com/s?k=biodegradable+seedling+pots+compostable&tag=${AMAZON_TAG}`,
@@ -4232,7 +4232,7 @@ const products = [
   },
   {
     id:"ga-005", name:"LifeStraw Personal Water Filter", brand:"LifeStraw",
-    plasticScore:3, category:"home",
+    plasticScore:3, category:"other",
     material:"ABS plastic housing — filters 4,000 liters, replaces thousands of plastic bottles",
     description:"Filters 4,000 liters per filter — replacing thousands of single-use plastic water bottles over its lifetime.",
     affiliateUrl:`https://www.amazon.com/s?k=LifeStraw+personal+water+filter&tag=${AMAZON_TAG}`,
@@ -4241,7 +4241,7 @@ const products = [
   },
   {
     id:"ga-006", name:"Fiskars Steel Garden Trowel", brand:"Fiskars",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"Stainless steel blade, aluminum handle — no plastic, built to last decades",
     description:"All-metal garden trowel with stainless steel blade and aluminum handle. No plastic — built to last a lifetime.",
     affiliateUrl:`https://www.amazon.com/s?k=Fiskars+stainless+steel+garden+trowel&tag=${AMAZON_TAG}`,
@@ -4250,7 +4250,7 @@ const products = [
   },
   {
     id:"ga-007", name:"Espoma Organic Plant Tone", brand:"Espoma",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"All-natural ingredients — feather meal, bone meal, composted poultry. No synthetic chemicals.",
     description:"All-natural slow-release plant fertilizer. No synthetic chemicals, safe for edible plants. OMRI listed for organic gardening.",
     affiliateUrl:`https://www.amazon.com/s?k=Espoma+Plant-tone+organic+fertilizer&tag=${AMAZON_TAG}`,
@@ -4261,7 +4261,7 @@ const products = [
   // ── BEDDING (EXPANDED) ────────────────────────────────────────
   {
     id:"bd-001", name:"Avocado Green Pillow", brand:"Avocado Green",
-    plasticScore:1, category:"home",
+    plasticScore:1, category:"other",
     material:"GOTS-certified organic latex and wool — no polyurethane foam, no synthetic fill",
     description:"GOTS and MADE SAFE certified organic latex and wool pillow. No polyurethane foam, no synthetic fill or chemical treatments.",
     affiliateUrl:`https://www.amazon.com/s?k=Avocado+Green+organic+pillow&tag=${AMAZON_TAG}`,
@@ -4270,7 +4270,7 @@ const products = [
   },
   {
     id:"bd-002", name:"Saatva Latex Pillow", brand:"Saatva",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"Organic latex core, organic cotton cover — no synthetic foam or polyester fill",
     description:"Organic latex pillow with organic cotton cover. No synthetic foam, no polyester fill, no chemical fire retardants.",
     affiliateUrl:`https://www.amazon.com/s?k=natural+latex+pillow+organic+cotton&tag=${AMAZON_TAG}`,
@@ -4279,7 +4279,7 @@ const products = [
   },
   {
     id:"bd-003", name:"Buffy Breeze Comforter", brand:"Buffy",
-    plasticScore:3, category:"home",
+    plasticScore:3, category:"other",
     material:"Eucalyptus lyocell shell, recycled polyester fill — lower impact than virgin synthetic",
     description:"Eucalyptus lyocell shell with recycled bottle fill. Lower impact than virgin polyester comforters. Climate-neutral certified.",
     affiliateUrl:`https://www.amazon.com/s?k=Buffy+breeze+comforter+eucalyptus&tag=${AMAZON_TAG}`,
@@ -4288,7 +4288,7 @@ const products = [
   },
   {
     id:"bd-004", name:"Authenticity 50 Organic Cotton Mattress Topper", brand:"Authenticity 50",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"GOTS-certified organic cotton fill and cover — no synthetic foam or polyester",
     description:"GOTS-certified organic cotton mattress topper with no synthetic foam, polyester or flame retardant chemicals.",
     affiliateUrl:`https://www.amazon.com/s?k=organic+cotton+mattress+topper+GOTS&tag=${AMAZON_TAG}`,
@@ -4297,7 +4297,7 @@ const products = [
   },
   {
     id:"bd-005", name:"Weighted Idea Organic Cotton Weighted Blanket", brand:"Weighted Idea",
-    plasticScore:2, category:"home",
+    plasticScore:2, category:"other",
     material:"Organic cotton shell, glass bead filling — no plastic pellets, no synthetic shell",
     description:"Organic cotton weighted blanket filled with glass beads instead of plastic pellets. No synthetic shell, no chemical finishes.",
     affiliateUrl:`https://www.amazon.com/s?k=organic+cotton+weighted+blanket+glass+beads&tag=${AMAZON_TAG}`,
@@ -4549,6 +4549,201 @@ const products = [
     tags:["water bottle","stainless bottle","accessory","no bpa","no bps","nsf certified","insulated","swell","reusable bottle","travel bottle","tumbler","stanley alternative"]
   },
 
+  // ══════════════════════════════════════════════════════════════
+  // BEVERAGE ALTERNATIVES
+  // ══════════════════════════════════════════════════════════════
+  { id:"bv-005", name:"Spindrift Sparkling Water", brand:"Spindrift", plasticScore:1, category:"beverage",
+    material:"Real squeezed fruit + sparkling water. No concentrate, no sweeteners, no flavoring.",
+    description:"Cleanest flavored sparkling water. Real squeezed fruit, 1-2g sugar. No added sugar, no natural flavors.",
+    affiliateUrl:"https://www.amazon.com/s?k=Spindrift+sparkling+water&tag=partiqule-20", price:"$18-28",
+    tags:["sparkling water","sparkling","real fruit","flavored water","juice alternative","low sugar","soda alternative","lemon","lime","berry"] },
+
+  { id:"bv-006", name:"GT's Synergy Kombucha", brand:"GT's", plasticScore:1, category:"beverage",
+    material:"Raw organic kombucha — live cultures, USDA Organic, 4g sugar. Glass bottle.",
+    description:"Best-in-class kombucha. USDA Organic, raw, live cultures, only 4g sugar. Glass bottle.",
+    affiliateUrl:"https://www.amazon.com/s?k=GTs+Synergy+kombucha&tag=partiqule-20", price:"$4-6",
+    tags:["kombucha","probiotic drink","fermented","soda alternative","low sugar","gut health","juice alternative","tea","glass bottle","organic"] },
+
+  { id:"bv-007", name:"Olipop Prebiotic Soda", brand:"Olipop", plasticScore:2, category:"beverage",
+    material:"Plant fiber, prebiotics, botanical extracts. No HFCS, no artificial sweeteners. 2-5g sugar.",
+    description:"Soda that supports gut health. 9g fiber, 2-5g sugar, no artificial sweeteners.",
+    affiliateUrl:"https://www.amazon.com/s?k=Olipop+prebiotic+soda&tag=partiqule-20", price:"$3-5",
+    tags:["soda","soda alternative","prebiotic","low sugar","cola alternative","root beer","sparkling","gut health","juice alternative","coke alternative","pepsi alternative"] },
+
+  { id:"bv-008", name:"Waterloo Sparkling Water", brand:"Waterloo", plasticScore:1, category:"beverage",
+    material:"Purified water + natural fruit essence. Zero calories, zero sugar, zero sweeteners. Aluminum can.",
+    description:"Ultra-clean sparkling water. No sugar, no artificial sweeteners, no natural flavors.",
+    affiliateUrl:"https://www.amazon.com/s?k=Waterloo+sparkling+water&tag=partiqule-20", price:"$18-26",
+    tags:["sparkling water","sparkling","zero sugar","no sweetener","soda alternative","la croix alternative","beverage","water","grapefruit","watermelon"] },
+
+  { id:"bv-009", name:"Lakewood Organic Pure Juice", brand:"Lakewood", plasticScore:1, category:"beverage",
+    material:"USDA Organic, not-from-concentrate, no added sugar, glass bottle.",
+    description:"Cleanest bottled juice. USDA Organic, not-from-concentrate, glass bottle, no added sugar.",
+    affiliateUrl:"https://www.amazon.com/s?k=Lakewood+Organic+juice&tag=partiqule-20", price:"$6-10",
+    tags:["juice","orange juice","grape juice","apple juice","organic juice","not from concentrate","glass bottle","no added sugar","juice alternative","tropicana alternative","welchs alternative"] },
+
+  { id:"bv-010", name:"Nuun Sport Electrolyte Tablets", brand:"Nuun", plasticScore:1, category:"beverage",
+    material:"Electrolyte tablet — 1g sugar, no HFCS, no artificial colors. NSF Certified for Sport.",
+    description:"Cleanest sports hydration. Only 1g sugar, no artificial colors. NSF Certified for Sport.",
+    affiliateUrl:"https://www.amazon.com/s?k=Nuun+Sport+electrolyte+tablets&tag=partiqule-20", price:"$7-10",
+    tags:["electrolyte","sports drink","hydration","gatorade alternative","powerade alternative","low sugar","no artificial color","nsf certified","athlete","workout drink"] },
+
+  { id:"bv-011", name:"Honest Tea Organic", brand:"Honest Tea", plasticScore:2, category:"beverage",
+    material:"USDA Organic brewed tea, fair trade. 10g natural sugar. No HFCS, no artificial flavors.",
+    description:"Cleanest mainstream bottled tea. Organic, fair trade, just 10g sugar.",
+    affiliateUrl:"https://www.amazon.com/s?k=Honest+Tea+organic&tag=partiqule-20", price:"$2-4",
+    tags:["tea","bottled tea","iced tea","organic tea","green tea","black tea","low sugar","juice alternative","snapple alternative","arizona tea alternative","sweet tea alternative"] },
+
+  { id:"bv-012", name:"R.W. Knudsen Family Organic Juice", brand:"R.W. Knudsen", plasticScore:1, category:"beverage",
+    material:"USDA Organic, no preservatives, no added sugar, no artificial flavors.",
+    description:"Benchmark organic juice. USDA Organic across the range, no additives.",
+    affiliateUrl:"https://www.amazon.com/s?k=RW+Knudsen+organic+juice&tag=partiqule-20", price:"$5-8",
+    tags:["juice","cranberry juice","berry juice","apple juice","organic juice","no added sugar","juice alternative","ocean spray alternative","no preservatives"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // FROZEN FOOD ALTERNATIVES
+  // ══════════════════════════════════════════════════════════════
+  { id:"fz-001", name:"Amy's Organic Frozen Bowls", brand:"Amy's", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, whole ingredients, no artificial flavors or preservatives. Non-GMO verified.",
+    description:"Cleanest frozen bowl. Organic grains, organic vegetables, organic protein. No artificial anything.",
+    affiliateUrl:"https://www.amazon.com/s?k=Amys+organic+frozen+bowl&tag=partiqule-20", price:"$5-7",
+    tags:["frozen bowl","frozen meal","frozen entree","frozen food","organic frozen","lean cuisine alternative","healthy choice alternative","stouffers alternative","clean frozen","no preservatives","rice bowl","lasagna","pasta","italian"] },
+
+  { id:"fz-002", name:"Amy's Organic Frozen Burritos", brand:"Amy's", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, no artificial flavors or preservatives. Non-GMO. Whole ingredients.",
+    description:"Benchmark clean frozen burrito. Organic beans, organic cheese, organic vegetables.",
+    affiliateUrl:"https://www.amazon.com/s?k=Amys+organic+frozen+burrito&tag=partiqule-20", price:"$4-6",
+    tags:["frozen burrito","frozen meal","frozen food","organic frozen","frozen entree","el monterey alternative","no preservatives","clean frozen","vegetarian","mexican food"] },
+
+  { id:"fz-003", name:"EVOL Chicken Frozen Bowl", brand:"EVOL", plasticScore:2, category:"food_beverage",
+    material:"Antibiotic-free chicken, whole grains, vegetables. No artificial colors or flavors.",
+    description:"Cleaner mainstream frozen meal. Antibiotic-free protein, whole grains, no artificial anything.",
+    affiliateUrl:"https://www.amazon.com/s?k=EVOL+frozen+bowl&tag=partiqule-20", price:"$4-6",
+    tags:["frozen meal","frozen bowl","frozen entree","frozen food","antibiotic free","whole grain","lean cuisine alternative","healthy choice alternative","clean frozen","chicken","no artificial flavor"] },
+
+  { id:"fz-004", name:"Dr. Praeger's Veggie Burgers", brand:"Dr. Praeger's", plasticScore:1, category:"food_beverage",
+    material:"Whole vegetables, legumes. No isolated protein, no methylcellulose, no artificial anything.",
+    description:"Cleanest veggie burger. Real vegetables and legumes — no artificial binders. Completely different from Beyond or Impossible.",
+    affiliateUrl:"https://www.amazon.com/s?k=Dr+Praegers+veggie+burger&tag=partiqule-20", price:"$6-8",
+    tags:["veggie burger","frozen burger","plant based burger","frozen food","frozen meal","morning star alternative","beyond meat alternative","impossible alternative","vegetables","non-gmo","clean frozen"] },
+
+  { id:"fz-005", name:"Real Good Foods Chicken Enchiladas", brand:"Real Good Foods", plasticScore:2, category:"food_beverage",
+    material:"Chicken breast, cheese, simple sauce. No enriched flour, no artificial additives. Low carb.",
+    description:"Low-carb frozen meal with simple ingredients. Chicken, cheese, enchilada sauce — no enriched flour.",
+    affiliateUrl:"https://www.amazon.com/s?k=Real+Good+Foods+chicken+enchilada&tag=partiqule-20", price:"$5-7",
+    tags:["frozen meal","frozen food","frozen entree","low carb frozen","chicken","enchilada","no enriched flour","clean frozen","lean cuisine alternative","healthy choice alternative","high protein"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // HOME / CLEANING ALTERNATIVES
+  // ══════════════════════════════════════════════════════════════
+  { id:"hm-010", name:"Branch Basics Concentrate", brand:"Branch Basics", plasticScore:1, category:"home",
+    material:"Plant-derived surfactants, no synthetic fragrance, no dyes, no preservatives.",
+    description:"Strictest clean cleaning brand. No synthetic fragrance, no dyes. EWG A-rated.",
+    affiliateUrl:"https://www.amazon.com/s?k=Branch+Basics+concentrate&tag=partiqule-20", price:"$49-69",
+    tags:["cleaner","all purpose cleaner","laundry","dish soap","concentrate","non toxic cleaner","no synthetic fragrance","lysol alternative","method alternative","mrs meyers alternative","tide alternative"] },
+
+  { id:"hm-011", name:"Seventh Generation Free Clear Laundry", brand:"Seventh Generation", plasticScore:2, category:"home",
+    material:"Plant-derived, no dyes, no synthetic fragrance, no optical brighteners. EPA Safer Choice.",
+    description:"Accessible clean laundry swap. No synthetic fragrance, EPA Safer Choice. Best mainstream swap for Tide or Gain.",
+    affiliateUrl:"https://www.amazon.com/s?k=Seventh+Generation+Free+Clear+laundry&tag=partiqule-20", price:"$12-18",
+    tags:["laundry","laundry detergent","detergent","free and clear","no fragrance","no dyes","tide alternative","gain alternative","plant based","epa safer choice","washing","non toxic laundry","clothes"] },
+
+  { id:"hm-012", name:"Meliora Cleaning Products Laundry Powder", brand:"Meliora", plasticScore:1, category:"home",
+    material:"Sodium carbonate, soap, washing soda — 4 ingredients. Zero synthetic fragrance. B-Corp. Paper packaging.",
+    description:"Simplest laundry detergent possible. Just 4 ingredients, no fragrance, paper packaging.",
+    affiliateUrl:"https://www.amazon.com/s?k=Meliora+laundry+powder&tag=partiqule-20", price:"$14-20",
+    tags:["laundry","laundry detergent","detergent","powder detergent","no fragrance","zero waste laundry","tide alternative","b-corp","paper packaging","simple ingredients","non toxic laundry","clothes washing"] },
+
+  { id:"hm-013", name:"Puracy Natural Multi-Surface Cleaner", brand:"Puracy", plasticScore:1, category:"home",
+    material:"Plant-derived, no synthetic fragrance, no dyes. EWG Verified, pediatrician recommended.",
+    description:"EWG Verified multi-surface cleaner. Plant-derived, no synthetic fragrance, no dyes.",
+    affiliateUrl:"https://www.amazon.com/s?k=Puracy+natural+multi-surface+cleaner&tag=partiqule-20", price:"$10-14",
+    tags:["cleaner","multi surface cleaner","all purpose cleaner","non toxic cleaner","no synthetic fragrance","ewg verified","plant based cleaner","lysol alternative","windex alternative","method alternative","spray cleaner","household cleaner"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // RESTAURANT ALTERNATIVES
+  // ══════════════════════════════════════════════════════════════
+  { id:"rs-001", name:"Sweetgreen Harvest Bowl", brand:"Sweetgreen", plasticScore:2, category:"restaurant",
+    material:"Local and organic ingredients, whole grains, roasted vegetables, clean proteins.",
+    description:"Benchmark clean fast-casual meal. Seasonal ingredients, whole grains, no artificial anything.",
+    affiliateUrl:"https://www.sweetgreen.com", price:"$14-17",
+    tags:["restaurant","fast casual","salad","bowl","grain bowl","clean restaurant","healthy fast food","whole grain","panda express alternative","chipotle alternative","lunch","dinner"] },
+
+  { id:"rs-002", name:"Chipotle Burrito Bowl", brand:"Chipotle", plasticScore:2, category:"restaurant",
+    material:"Responsibly raised chicken, whole ingredients, no artificial colors or preservatives.",
+    description:"Cleanest major fast-casual chain. Responsibly raised protein, no artificial preservatives.",
+    affiliateUrl:"https://www.chipotle.com", price:"$10-13",
+    tags:["restaurant","fast casual","burrito bowl","bowl","chicken","mexican food","panda express alternative","taco bell alternative","clean restaurant","lunch","dinner","rice bowl"] },
+
+  { id:"rs-003", name:"Cava Mediterranean Bowl", brand:"Cava", plasticScore:2, category:"restaurant",
+    material:"Whole grains, hummus, roasted vegetables, grilled protein.",
+    description:"Mediterranean fast-casual. Whole grains, legumes, olive oil, grilled protein. High protein, high fiber.",
+    affiliateUrl:"https://www.cava.com", price:"$13-16",
+    tags:["restaurant","fast casual","mediterranean","bowl","grain bowl","hummus","clean restaurant","panda express alternative","chipotle alternative","healthy fast food","high protein","lunch","dinner"] },
+
+  { id:"rs-004", name:"El Pollo Loco Fire-Grilled Chicken", brand:"El Pollo Loco", plasticScore:2, category:"restaurant",
+    material:"Fire-grilled marinated chicken. Citrus marinade, spices. Not fried.",
+    description:"Cleanest major chicken chain. Fire-grilled not fried — no enriched flour batter.",
+    affiliateUrl:"https://www.elpolloloco.com", price:"$9-13",
+    tags:["restaurant","chicken","fast food","grilled chicken","kfc alternative","popeyes alternative","not fried","lower sodium","clean restaurant","lunch","dinner","panda express alternative"] },
+
+  { id:"rs-005", name:"Panera Half Salad and Cup of Soup", brand:"Panera", plasticScore:2, category:"restaurant",
+    material:"Whole ingredients, clean greens, broth-based soups.",
+    description:"Best clean option at Panera. Half salad and cup of broth soup — lower sodium than most fast food.",
+    affiliateUrl:"https://www.panerabread.com", price:"$11-14",
+    tags:["restaurant","fast casual","salad","soup","panera","clean restaurant","lower sodium","lunch","healthy fast food","broth soup"] },
+
+  // ── CANDY AND CHOCOLATE ALTERNATIVES ─────────────────────────
+  { id:"ca-001", name:"YumEarth Organic Gummy Bears", brand:"YumEarth", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, no petroleum dyes, no artificial flavors. Plant-based colors from fruit and vegetable juice.",
+    description:"The benchmark clean gummy candy. No Red 40, Yellow 5/6, or Blue 1. USDA Organic, no synthetic dyes.",
+    affiliateUrl:"https://www.amazon.com/s?k=YumEarth+organic+gummy+bears&tag=partiqule-20", price:"$4-7",
+    tags:["gummy bears","gummy candy","candy","gummies","organic candy","no artificial dye","no red 40","haribo alternative","trolli alternative","chewy candy","kids candy","fruit snack"] },
+
+  { id:"ca-002", name:"Hu Chocolate Bar", brand:"Hu", plasticScore:1, category:"food_beverage",
+    material:"Organic cacao, organic coconut sugar. No refined sugar, no soy lecithin, no palm oil, no synthetic additives.",
+    description:"The cleanest mainstream chocolate bar. No petroleum dyes, no HFCS, no soy lecithin. Direct clean swap for M&Ms or Snickers.",
+    affiliateUrl:"https://www.amazon.com/s?k=Hu+chocolate+bar&tag=partiqule-20", price:"$4-6",
+    tags:["chocolate","chocolate bar","candy","dark chocolate","clean chocolate","no refined sugar","m&m alternative","snickers alternative","candy alternative","paleo chocolate","vegan chocolate","chocolate candy"] },
+
+  { id:"ca-003", name:"Unreal Dark Chocolate Gems", brand:"Unreal", plasticScore:2, category:"food_beverage",
+    material:"No artificial colors — plant-based colors from vegetable juice. No corn syrup, no preservatives. Fair trade certified.",
+    description:"The direct M&Ms swap. Same format, no petroleum dyes, no HFCS. Plant-based colors instead of Red 40 and Yellow 5/6.",
+    affiliateUrl:"https://www.amazon.com/s?k=Unreal+dark+chocolate+gems&tag=partiqule-20", price:"$4-6",
+    tags:["chocolate gems","candy coated chocolate","chocolate candy","candy","m&m alternative","no artificial dye","no red 40","no hfcs","fair trade","clean candy","chocolate pieces","chocolate coated"] },
+
+  { id:"ca-004", name:"SmartSweets Gummy Bears", brand:"SmartSweets", plasticScore:2, category:"food_beverage",
+    material:"Plant-based, no artificial sweeteners, no synthetic dyes, 3g sugar per bag.",
+    description:"Low-sugar gummy candy with no artificial dyes or sweeteners. 3g sugar vs 47g in Skittles.",
+    affiliateUrl:"https://www.amazon.com/s?k=SmartSweets+gummy+bears&tag=partiqule-20", price:"$3-5",
+    tags:["gummy bears","gummy candy","candy","low sugar candy","no artificial dye","skittles alternative","starburst alternative","sour patch alternative","clean candy","kids candy","no red 40","chewy candy"] },
+
+  { id:"ca-005", name:"Alter Eco Dark Chocolate Bar", brand:"Alter Eco", plasticScore:1, category:"food_beverage",
+    material:"USDA Organic, fair trade, compostable wrapper. Simple ingredient list, no synthetic additives.",
+    description:"Organic fair-trade dark chocolate with a compostable wrapper. No petroleum dyes, no HFCS.",
+    affiliateUrl:"https://www.amazon.com/s?k=Alter+Eco+dark+chocolate&tag=partiqule-20", price:"$4-6",
+    tags:["chocolate","dark chocolate","chocolate bar","candy","fair trade chocolate","organic chocolate","candy alternative","m&m alternative","kit kat alternative","clean candy","chocolate candy"] },
+
+  { id:"ca-006", name:"Justin's Peanut Butter Cups", brand:"Justin's", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, no artificial colors or flavors, fair trade cocoa.",
+    description:"The clean Reese's swap. Organic ingredients, no artificial dyes, fair trade cocoa.",
+    affiliateUrl:"https://www.amazon.com/s?k=Justins+peanut+butter+cups&tag=partiqule-20", price:"$2-4",
+    tags:["peanut butter cups","chocolate","candy","peanut butter candy","reese alternative","reese's alternative","organic candy","no artificial color","clean candy","chocolate candy"] },
+
+  { id:"ca-007", name:"Lily's Dark Chocolate Chips", brand:"Lily's", plasticScore:2, category:"food_beverage",
+    material:"Stevia-sweetened, no sugar, fair trade cocoa, non-GMO. No artificial colors or flavors.",
+    description:"Zero-sugar chocolate. No petroleum dyes, no HFCS, stevia-sweetened.",
+    affiliateUrl:"https://www.amazon.com/s?k=Lilys+dark+chocolate&tag=partiqule-20", price:"$4-7",
+    tags:["chocolate","candy","dark chocolate","no sugar","low sugar candy","clean chocolate","m&m alternative","reese alternative","chocolate candy","stevia"] },
+
+  { id:"ca-008", name:"Theo Organic Chocolate Bar", brand:"Theo", plasticScore:1, category:"food_beverage",
+    material:"USDA Organic, fair trade, non-GMO. No synthetic additives, no soy lecithin.",
+    description:"Bean-to-bar organic chocolate. USDA Organic, fair trade, clean throughout.",
+    affiliateUrl:"https://www.amazon.com/s?k=Theo+organic+chocolate+bar&tag=partiqule-20", price:"$4-6",
+    tags:["chocolate","chocolate bar","dark chocolate","candy","organic chocolate","fair trade chocolate","candy alternative","snickers alternative","m&m alternative","clean chocolate","chocolate candy"] },
+
+
+
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
@@ -4558,7 +4753,12 @@ const STOPWORDS = new Set([
   "set", "sets", "kit", "kits", "pad", "pads", "pan", "pans",
   "pot", "pots", "bar", "bars", "the", "and", "for", "its",
   "new", "pro", "eco", "use", "one", "all", "free", "with",
-  "water", "baby", "kids", "child", "mini", "size", "type"
+  "water", "baby", "kids", "child", "mini", "size", "type",
+  // Food descriptor words that appear in product names but are not category signals
+  "milk", "dark", "white", "light", "rich", "classic", "original",
+  "real", "pure", "fresh", "raw", "wild", "whole", "extra",
+  "plus", "ultra", "max", "select", "premium", "natural", "simply",
+  "good", "great", "old", "best", "true", "big"
 ]);
 
 function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
@@ -4606,7 +4806,15 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   // Minimum threshold — food needs higher bar since category is broad
   const minScore = ["food", "food_beverage", "beverage"].includes(category) ? 18 : 13;
 
-  // Relevance scoring — category match + tag overlap must reach threshold
+  // Word-boundary helper — prevents "lean" matching "cleaner", "meal" matching "meals" etc.
+  function wordMatch(haystack, needle) {
+    if (!haystack || !needle) return false;
+    if (haystack === needle) return true;
+    const words = haystack.split(/\s+/);
+    return words.includes(needle);
+  }
+
+  // Relevance scoring
   const scored = products
     .filter(p => p.plasticScore <= 4)
     .filter(p => {
@@ -4625,18 +4833,18 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
         // Skip ultra-generic words that match everything in food category
         if (["food","organic","natural","beverage","drink"].includes(word)) return;
         p.tags.forEach(tag => {
-          if (tag.includes(word) || word.includes(tag)) {
+          if (wordMatch(tag, word) || wordMatch(word, tag)) {
             score += 5;
             meaningfulTagMatches++;
           }
         });
-        if (p.name.toLowerCase().includes(word)) score += 4;
-        if (p.brand.toLowerCase().includes(word)) score += 2;
+        if (p.name.toLowerCase().split(/\s+/).includes(word)) score += 4;
+        if (p.brand.toLowerCase().split(/\s+/).includes(word)) score += 2;
         if (p.material?.toLowerCase().includes(word)) score += 2;
       });
-      // Full phrase matches
+      // Full phrase matches — use substring for multi-word tag phrases like "skittles alternative"
       queries.forEach(q => {
-        p.tags.forEach(tag => { if (q.includes(tag)) { score += 7; meaningfulTagMatches++; } });
+        p.tags.forEach(tag => { if (q.includes(tag) || tag.includes(q.slice(0,20))) { score += 7; meaningfulTagMatches++; } });
         if (p.name.toLowerCase().includes(q.slice(0, 20))) score += 6;
       });
       // For food category: require at least one meaningful tag match beyond category
