@@ -4742,16 +4742,18 @@ function App() {
                   </>);
                 })()}
 
-                {/* ── NUTRITION BADGES — sugar / sodium / calories with % DV ── */}
+                {/* ── NUTRITION BADGES — sugar / sodium / sat fat / calories with % DV ── */}
                 {(() => {
                   const n = result.nutrition;
                   const cat = result.category || "";
-                  const isBev = cat === "beverage" || cat === "food_beverage" || cat === "restaurant";
-                  if (!n || !isBev) return null;
+                  const isFood = ["food","food_beverage","beverage","restaurant","supplement"].includes(cat);
+                  const isBevOnly = cat === "beverage";
+                  if (!n || !isFood) return null;
 
-                  const sugarDV  = childMode ? 25  : 50;
-                  const sodiumDV = childMode ? 1500 : 2300;
-                  const calDV   = childMode ? 1400 : 2000;
+                  const sugarDV   = childMode ? 25   : 50;
+                  const sodiumDV  = childMode ? 1500 : 2300;
+                  const satFatDV  = childMode ? 13   : 20;
+                  const calDV     = childMode ? 1400 : 2000;
 
                   const getSev = (pct) => pct >= 100 ? "very_high" : pct >= 60 ? "high" : pct >= 30 ? "moderate" : "low";
                   const SEV = {
@@ -4767,8 +4769,8 @@ function App() {
                     const pct = Math.round((n.sugar_g / sugarDV) * 100);
                     const cfg = SEV[getSev(pct)];
                     badges.push(
-                      <div key="sugar" style={{flex:"1 1 auto", minWidth:90, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:18, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
+                      <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
                         <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
@@ -4779,21 +4781,33 @@ function App() {
                     const pct = Math.round((n.sodium_mg / sodiumDV) * 100);
                     const cfg = SEV[getSev(pct)];
                     badges.push(
-                      <div key="sodium" style={{flex:"1 1 auto", minWidth:90, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:18, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
+                      <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
                         <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
                   }
 
-                  if (n.calories != null) {
+                  if (n.sat_fat_g != null && !isBevOnly) {
+                    const pct = Math.round((n.sat_fat_g / satFatDV) * 100);
+                    const cfg = SEV[getSev(pct)];
+                    badges.push(
+                      <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
+                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
+                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
+                      </div>
+                    );
+                  }
+
+                  if (n.calories != null && isBevOnly) {
                     const pct = Math.round((n.calories / calDV) * 100);
                     if (pct >= 10) {
                       const cfg = SEV[getSev(pct)];
                       badges.push(
-                        <div key="cal" style={{flex:"1 1 auto", minWidth:90, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                          <div style={{fontSize:18, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.calories}</div>
+                        <div key="cal" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                          <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.calories}</div>
                           <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Calories</div>
                           <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                         </div>
