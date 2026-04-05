@@ -4639,7 +4639,7 @@ const products = [
     material:"USDA Organic, whole ingredients, no artificial flavors or preservatives. Non-GMO verified.",
     description:"Cleanest frozen bowl. Organic grains, organic vegetables, organic protein. No artificial colors, flavors, or preservatives. Far cleaner than Lean Cuisine or Healthy Choice.",
     affiliateUrl:"https://www.amazon.com/s?k=Amys+organic+frozen+bowl&tag=partiqule-20", price:"$5-7",
-    tags:["frozen bowl","frozen meal","frozen entree","frozen food","organic frozen","lean cuisine alternative","healthy choice alternative","stouffers alternative","clean frozen","no preservatives","rice bowl","grain bowl","mac cheese"] },
+    tags:["frozen bowl","frozen meal","frozen entree","frozen food","organic frozen","lean cuisine alternative","healthy choice alternative","stouffers alternative","clean frozen","no preservatives","rice bowl","grain bowl","mac cheese","lasagna","pasta","pizza","italian"] },
 
   { id:"ff-003", name:"Tattooed Chef Cauliflower Bowl", brand:"Tattooed Chef", plasticScore:2, category:"food_beverage",
     material:"Vegetables, cauliflower rice, olive oil. No artificial colors or flavors. Plant-based.",

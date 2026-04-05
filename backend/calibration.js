@@ -41,6 +41,17 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // FOOD — CEREALS AND GRAINS
   // ══════════════════════════════════════════════════════════════
+  // ── KEY SODAS AND DRINKS (calibration entries with nutrition baked in) ───
+  ["gatorade",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","artificial color","34g sugar per 20oz"], reason:"Gatorade — 34g sugar per 20oz = 68% adult DV, 136% children's DV. Artificial colors in some flavors. Sugar floor fires on beverage thresholds.", confidence:"high", category:"beverage" }],
+  ["gatorade thirst quencher",    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["34g sugar","artificial color"], reason:"Gatorade Thirst Quencher — 34g sugar per 20oz.", confidence:"high", category:"beverage" }],
+  ["coke",                        { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:39, sodium_mg:45, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","caramel color","phosphoric acid","39g sugar"], reason:"Coca-Cola — 39g sugar per 12oz can = 78% adult DV, 156% kids DV. Caramel color Class IV (4-MeI). Ultra-processed beverage.", confidence:"high", category:"beverage" }],
+  ["pepsi",                       { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:41, sodium_mg:30, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","41g sugar"], reason:"Pepsi — 41g sugar per 12oz = 82% adult DV, 164% kids DV. Caramel color. Ultra-processed.", confidence:"high", category:"beverage" }],
+  ["mountain dew",                { floor:5, ceiling:7, kidsFloor:9, kidsCeiling:9, nutrition:{sugar_g:46, sodium_mg:65, sat_fat_g:0, calories:170}, substances:["HFCS","Yellow 5","BVO","46g sugar"], reason:"Mountain Dew — 46g sugar per 12oz = 92% adult DV. Yellow 5 petroleum dye. BVO (brominated vegetable oil) in some formulations. One of the most concerning mainstream sodas.", confidence:"high", category:"beverage" }],
+  ["dr pepper",                   { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:40, sodium_mg:55, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","40g sugar"], reason:"Dr Pepper — 40g sugar per 12oz = 80% adult DV. Caramel color.", confidence:"high", category:"beverage" }],
+  ["sprite",                      { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:38, sodium_mg:65, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","38g sugar"], reason:"Sprite — 38g sugar per 12oz = 76% adult DV, 152% kids DV.", confidence:"high", category:"beverage" }],
+  ["powerade",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:150, sat_fat_g:0, calories:130}, substances:["34g sugar","HFCS"], reason:"Powerade — 34g sugar per 20oz. HFCS. Similar concern to Gatorade.", confidence:"high", category:"beverage" }],
+  ["chocolate milk",              { floor:3, ceiling:5, kidsFloor:5, kidsCeiling:7, nutrition:{sugar_g:25, sodium_mg:180, sat_fat_g:2.5, calories:200, protein_g:8}, substances:["25g sugar","HFCS in some","artificial flavor"], reason:"Chocolate milk — 25g sugar per 8oz (including added sugar). Protein positive. 100% kids DV sugar in one cup.", confidence:"medium", category:"beverage" }],
+  ["lemonade",                    { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:28, sodium_mg:15, sat_fat_g:0, calories:120}, substances:["28g sugar","HFCS or corn syrup"], reason:"Commercial lemonade — 28g sugar per 8oz. Most commercial versions use HFCS.", confidence:"medium", category:"beverage" }],
   ["honey nut cheerios",           { floor:6, ceiling:8, substances:["glyphosate","added sugar"], reason:"Primary conventional oat with EWG-confirmed glyphosate above child threshold + 12g added sugar", confidence:"high", category:"food_beverage" }],
   ["cheerios honey nut",           { floor:6, ceiling:8, substances:["glyphosate","added sugar"], reason:"Primary conventional oat — EWG confirmed glyphosate above child threshold", confidence:"high", category:"food_beverage" }],
   ["original cheerios",            { floor:6, ceiling:8, substances:["glyphosate"], reason:"Primary conventional oat — EWG confirmed glyphosate above child threshold", confidence:"high", category:"food_beverage" }],
@@ -60,8 +71,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // FOOD — CANDY AND CONFECTIONS
   // ══════════════════════════════════════════════════════════════
-  ["m&ms",                         { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"Four FDA-phasing-out petroleum dyes — all confirmed in formula", confidence:"high", category:"food_beverage" }],
-  ["m&m",                          { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"Four petroleum dyes confirmed", confidence:"high", category:"food_beverage" }],
+  ["m&ms",                         { floor:7, ceiling:9, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:31, sodium_mg:30, sat_fat_g:5, calories:230}, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"M&Ms — four FDA-phasing-out petroleum dyes + 31g sugar per serving (62% adult DV, 124% kids DV). Floor 7 adult, 8 kids.", confidence:"high", category:"food_beverage" }],
+  ["m&m",                          { floor:7, ceiling:9, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:31, sodium_mg:30, sat_fat_g:5, calories:230}, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"M&M — four petroleum dyes + 31g sugar.", confidence:"high", category:"food_beverage" }],
   ["skittles",                     { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Blue 1","titanium dioxide"], reason:"Multiple petroleum dyes + titanium dioxide IARC 2B", confidence:"high", category:"food_beverage" }],
   ["sour patch kids",              { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"HFCS + three petroleum dyes confirmed", confidence:"high", category:"food_beverage" }],
   ["starburst",                    { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Yellow 6","HFCS"], reason:"HFCS + petroleum dyes + hydrogenated palm kernel oil", confidence:"high", category:"food_beverage" }],
@@ -133,6 +144,13 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // BEVERAGES — SODAS
   // ══════════════════════════════════════════════════════════════
+  ["coca-cola",                    { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["coke classic",                  { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["diet coke",                     { sugar_g:0,  sodium_mg:40,  sat_fat_g:0,   calories:0,               kidsFloor:5, kidsCeiling:7 }],
+  ["sprite",                        { sugar_g:38, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["gatorade zero",                 { sugar_g:0,  sodium_mg:270, sat_fat_g:0,   calories:10,              kidsFloor:4, kidsCeiling:6 }],
+  ["gatorade endurance",            { sugar_g:36, sodium_mg:460, sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
+  ["mcflurry",                      { sugar_g:66, sodium_mg:170, sat_fat_g:9,   calories:510,             kidsFloor:8, kidsCeiling:9 }],
   ["coca-cola",                    { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV (4-MEI IARC 2B) + phosphoric acid", confidence:"high", category:"beverage" }],
   ["coke classic",                 { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV", confidence:"high", category:"beverage" }],
   ["diet coke",                    { floor:4, ceiling:6, substances:["aspartame","caramel color IV"], reason:"Aspartame IARC 2B 2023 + caramel color IV — aluminum can does NOT lower below 5", confidence:"high", category:"beverage" }],
@@ -2760,6 +2778,9 @@ const ENTRIES = [
   ["orgain",                       { floor:1, ceiling:3, substances:[], reason:"Orgain — USDA Organic protein, clean ingredients. Benchmark clean protein brand.", confidence:"high", category:"supplement" }],
   ["garden of life sport protein", { floor:1, ceiling:3, substances:[], reason:"Garden of Life Sport — USDA Organic, NSF Certified for Sport, no artificial additives. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
   ["naked whey protein",           { floor:1, ceiling:2, substances:[], reason:"Naked Whey — one ingredient: whey protein concentrate from US grass-fed cows. Benchmark cleanest protein powder.", confidence:"high", category:"supplement" }],
+  ["naked green machine",         { floor:6, ceiling:7, kidsFloor:9, kidsCeiling:9, nutrition:{sugar_g:53, sodium_mg:10, sat_fat_g:0, calories:270}, substances:["53g natural sugar per bottle"], reason:"Naked Green Machine — 53g sugar per bottle = 106% adult DV, 212% children's DV. PepsiCo-owned. Despite fruit origin, glycemic impact identical to sugary soda.", confidence:"high", category:"beverage" }],
+  ["naked red machine",           { floor:6, ceiling:7, kidsFloor:9, kidsCeiling:9, nutrition:{sugar_g:53, sodium_mg:10, sat_fat_g:0, calories:270}, substances:["53g natural sugar per bottle"], reason:"Naked Red Machine — 53g sugar per bottle. Same concern as Green Machine.", confidence:"high", category:"beverage" }],
+  ["naked smoothie",              { floor:6, ceiling:7, kidsFloor:9, kidsCeiling:9, nutrition:{sugar_g:53, sodium_mg:10, sat_fat_g:0, calories:270}, substances:["53g natural sugar per bottle"], reason:"Naked Juice — 53g sugar per bottle.", confidence:"high", category:"beverage" }],
   ["naked",                        { floor:1, ceiling:2, substances:[], reason:"Naked Nutrition — single ingredient protein powders, no artificial additives. Benchmark cleanest protein supplement.", confidence:"high", category:"supplement" }],
 
   // ── SLEEP AND STRESS ──────────────────────────────────────────
@@ -3887,6 +3908,908 @@ const WF_BANNED = new Set([
   "sodium aluminum phosphate", "sodium aluminum sulfate",
 ]);
 
+// ─── NUTRITION LOOKUP TABLE ───────────────────────────────────────────────────
+// Bakes known per-serving nutrition into calibration entries at startup.
+// This ensures sugar/sodium/sat_fat floors fire even when the AI returns null
+// nutrition — which happens frequently for text-only scans.
+//
+// Format: key → { sugar_g, sodium_mg, sat_fat_g, calories, protein_g?, fiber_g?,
+//                 kidsFloor?, kidsCeiling? }
+// Keys must match calibration keys exactly (normalised lowercase).
+//
+// Sources: USDA FoodData Central, FDA label data, manufacturer sites.
+// Per-serving as defined on the product label.
+
+const NUTRITION_LOOKUP = new Map([
+  // ── CEREALS ────────────────────────────────────────────────────────────────
+  ["honey nut cheerios",           { sugar_g:12, sodium_mg:190, sat_fat_g:0.5, calories:140, fiber_g:2,  kidsFloor:6, kidsCeiling:9 }],
+  ["cheerios honey nut",           { sugar_g:12, sodium_mg:190, sat_fat_g:0.5, calories:140, fiber_g:2,  kidsFloor:6, kidsCeiling:9 }],
+  ["original cheerios",            { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:100, fiber_g:3,  kidsFloor:6, kidsCeiling:8 }],
+  ["cheerios original",            { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:100, fiber_g:3,  kidsFloor:6, kidsCeiling:8 }],
+  ["frosted flakes",               { sugar_g:11, sodium_mg:190, sat_fat_g:0,   calories:140,             kidsFloor:5, kidsCeiling:8 }],
+  ["froot loops",                  { sugar_g:12, sodium_mg:135, sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
+  ["lucky charms",                 { sugar_g:13, sodium_mg:200, sat_fat_g:0.5, calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["cap'n crunch",                 { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
+  ["capn crunch",                  { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
+  ["captain crunch",               { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
+  ["cocoa puffs",                  { sugar_g:12, sodium_mg:160, sat_fat_g:0.5, calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["cinnamon toast crunch",        { sugar_g:12, sodium_mg:210, sat_fat_g:0.5, calories:170,             kidsFloor:7, kidsCeiling:9 }],
+  ["special k",                    { sugar_g:4,  sodium_mg:190, sat_fat_g:0,   calories:120, fiber_g:0,  kidsFloor:5, kidsCeiling:7 }],
+  ["rice krispies",                { sugar_g:4,  sodium_mg:190, sat_fat_g:0,   calories:130, fiber_g:0,  kidsFloor:5, kidsCeiling:7 }],
+  ["corn flakes",                  { sugar_g:3,  sodium_mg:200, sat_fat_g:0,   calories:100, fiber_g:1,  kidsFloor:5, kidsCeiling:7 }],
+  ["raisin bran",                  { sugar_g:18, sodium_mg:210, sat_fat_g:0,   calories:190, fiber_g:7,  kidsFloor:5, kidsCeiling:7 }],
+  ["honey bunches of oats",        { sugar_g:8,  sodium_mg:150, sat_fat_g:0.5, calories:160, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
+  ["wheaties",                     { sugar_g:5,  sodium_mg:180, sat_fat_g:0,   calories:130, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
+  ["life cereal",                  { sugar_g:8,  sodium_mg:160, sat_fat_g:0,   calories:160, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
+  ["trix cereal",                  { sugar_g:12, sodium_mg:180, sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["kashi go",                     { sugar_g:9,  sodium_mg:125, sat_fat_g:0.5, calories:180, fiber_g:8, protein_g:9, kidsFloor:3, kidsCeiling:6 }],
+  ["quaker oats",                  { sugar_g:1,  sodium_mg:0,   sat_fat_g:0.5, calories:150, fiber_g:4, protein_g:5, kidsFloor:4, kidsCeiling:6 }],
+  ["quaker instant oatmeal",       { sugar_g:1,  sodium_mg:75,  sat_fat_g:0.5, calories:100, fiber_g:3, protein_g:4, kidsFloor:4, kidsCeiling:6 }],
+  ["quaker maple brown sugar",     { sugar_g:15, sodium_mg:260, sat_fat_g:0.5, calories:160, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
+  ["three wishes cereal",          { sugar_g:3,  sodium_mg:135, sat_fat_g:0,   calories:90,  fiber_g:2, protein_g:8, kidsFloor:2, kidsCeiling:5 }],
+  ["magic spoon cereal",           { sugar_g:3,  sodium_mg:200, sat_fat_g:0,   calories:130, fiber_g:0, protein_g:13,kidsFloor:3, kidsCeiling:5 }],
+  ["purely elizabeth granola",     { sugar_g:8,  sodium_mg:85,  sat_fat_g:1,   calories:200, fiber_g:3, protein_g:5, kidsFloor:3, kidsCeiling:5 }],
+  ["nature's path organic granola", { sugar_g:7, sodium_mg:90,  sat_fat_g:1,   calories:190, fiber_g:3, protein_g:4, kidsFloor:3, kidsCeiling:5 }],
+
+  // ── CANDY & CHOCOLATE ──────────────────────────────────────────────────────
+  ["skittles",                     { sugar_g:47, sodium_mg:10,  sat_fat_g:0,   calories:230,             kidsFloor:9, kidsCeiling:9 }],
+  ["starburst",                    { sugar_g:34, sodium_mg:55,  sat_fat_g:1,   calories:240,             kidsFloor:8, kidsCeiling:9 }],
+  ["starbursts",                   { sugar_g:34, sodium_mg:55,  sat_fat_g:1,   calories:240,             kidsFloor:8, kidsCeiling:9 }],
+  ["sour patch kids",              { sugar_g:35, sodium_mg:40,  sat_fat_g:0,   calories:210,             kidsFloor:8, kidsCeiling:9 }],
+  ["jolly rancher",                { sugar_g:27, sodium_mg:10,  sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
+  ["airheads",                     { sugar_g:28, sodium_mg:40,  sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
+  ["swedish fish",                 { sugar_g:31, sodium_mg:40,  sat_fat_g:0,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
+  ["haribo gummy bears",           { sugar_g:22, sodium_mg:55,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["haribo",                       { sugar_g:22, sodium_mg:55,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["snickers",                     { sugar_g:27, sodium_mg:120, sat_fat_g:4,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
+  ["twix",                         { sugar_g:24, sodium_mg:110, sat_fat_g:5,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
+  ["kit kat",                      { sugar_g:22, sodium_mg:25,  sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["milky way",                    { sugar_g:35, sodium_mg:95,  sat_fat_g:5,   calories:260,             kidsFloor:8, kidsCeiling:9 }],
+  ["reese's",                      { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["reese's peanut butter cup",    { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["hershey's milk chocolate",     { sugar_g:24, sodium_mg:35,  sat_fat_g:8,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["hershey's kisses",             { sugar_g:22, sodium_mg:25,  sat_fat_g:7,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
+  ["hershey's special dark",       { sugar_g:18, sodium_mg:5,   sat_fat_g:5,   calories:180,             kidsFloor:6, kidsCeiling:8 }],
+  ["nutella",                      { sugar_g:22, sodium_mg:15,  sat_fat_g:4,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
+  ["lindt milk chocolate",         { sugar_g:24, sodium_mg:35,  sat_fat_g:9,   calories:230,             kidsFloor:7, kidsCeiling:8 }],
+  ["gushers",                      { sugar_g:14, sodium_mg:60,  sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
+  ["fruit roll-ups",               { sugar_g:12, sodium_mg:55,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
+  ["fruit by the foot",            { sugar_g:13, sodium_mg:50,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
+
+  // ── SNACKS & CHIPS ─────────────────────────────────────────────────────────
+  ["doritos",                      { sugar_g:1,  sodium_mg:180, sat_fat_g:1.5, calories:140,             kidsFloor:5, kidsCeiling:8 }],
+  ["doritos cool ranch",           { sugar_g:2,  sodium_mg:190, sat_fat_g:1.5, calories:150,             kidsFloor:5, kidsCeiling:8 }],
+  ["doritos nacho",                { sugar_g:1,  sodium_mg:210, sat_fat_g:1.5, calories:140,             kidsFloor:5, kidsCeiling:8 }],
+  ["cheetos",                      { sugar_g:1,  sodium_mg:250, sat_fat_g:2,   calories:160,             kidsFloor:5, kidsCeiling:8 }],
+  ["cheetos flamin hot",           { sugar_g:1,  sodium_mg:300, sat_fat_g:2,   calories:170,             kidsFloor:5, kidsCeiling:8 }],
+  ["lays",                         { sugar_g:0,  sodium_mg:170, sat_fat_g:1.5, calories:160,             kidsFloor:4, kidsCeiling:7 }],
+  ["lays classic",                 { sugar_g:0,  sodium_mg:170, sat_fat_g:1.5, calories:160,             kidsFloor:4, kidsCeiling:7 }],
+  ["lays bbq",                     { sugar_g:2,  sodium_mg:210, sat_fat_g:1.5, calories:160,             kidsFloor:5, kidsCeiling:7 }],
+  ["pringles",                     { sugar_g:1,  sodium_mg:150, sat_fat_g:2,   calories:150,             kidsFloor:5, kidsCeiling:8 }],
+  ["ruffles",                      { sugar_g:1,  sodium_mg:160, sat_fat_g:2,   calories:160,             kidsFloor:4, kidsCeiling:7 }],
+  ["cheez it",                     { sugar_g:0,  sodium_mg:230, sat_fat_g:3,   calories:150,             kidsFloor:5, kidsCeiling:7 }],
+  ["cheez-its",                    { sugar_g:0,  sodium_mg:230, sat_fat_g:3,   calories:150,             kidsFloor:5, kidsCeiling:7 }],
+  ["goldfish",                     { sugar_g:0,  sodium_mg:230, sat_fat_g:2,   calories:140,             kidsFloor:4, kidsCeiling:7 }],
+  ["goldfish crackers",            { sugar_g:0,  sodium_mg:230, sat_fat_g:2,   calories:140,             kidsFloor:4, kidsCeiling:7 }],
+  ["ritz crackers",                { sugar_g:2,  sodium_mg:135, sat_fat_g:1.5, calories:80,              kidsFloor:4, kidsCeiling:7 }],
+  ["ritz",                         { sugar_g:2,  sodium_mg:135, sat_fat_g:1.5, calories:80,              kidsFloor:4, kidsCeiling:7 }],
+  ["oreo",                         { sugar_g:14, sodium_mg:135, sat_fat_g:2,   calories:160,             kidsFloor:6, kidsCeiling:8 }],
+  ["chips ahoy",                   { sugar_g:11, sodium_mg:135, sat_fat_g:2.5, calories:160,             kidsFloor:6, kidsCeiling:8 }],
+  ["nutter butter",                { sugar_g:11, sodium_mg:135, sat_fat_g:2,   calories:170,             kidsFloor:6, kidsCeiling:8 }],
+  ["pop tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
+  ["pop-tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
+  ["little debbie",                { sugar_g:19, sodium_mg:190, sat_fat_g:3,   calories:270,             kidsFloor:7, kidsCeiling:9 }],
+  ["cosmic brownies",              { sugar_g:25, sodium_mg:150, sat_fat_g:4,   calories:280,             kidsFloor:7, kidsCeiling:9 }],
+  ["skinny pop",                   { sugar_g:0,  sodium_mg:75,  sat_fat_g:0.5, calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
+  ["skinnypop",                    { sugar_g:0,  sodium_mg:75,  sat_fat_g:0.5, calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
+  ["boom chicka pop",              { sugar_g:2,  sodium_mg:95,  sat_fat_g:1,   calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
+  ["veggie straws",                { sugar_g:1,  sodium_mg:290, sat_fat_g:0.5, calories:130,             kidsFloor:4, kidsCeiling:7 }],
+  ["pirate's booty",               { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:80,              kidsFloor:3, kidsCeiling:5 }],
+  ["pirates booty",                { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:80,              kidsFloor:3, kidsCeiling:5 }],
+  ["clif bar",                     { sugar_g:21, sodium_mg:160, sat_fat_g:1,   calories:250, fiber_g:5, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
+  ["kind bar",                     { sugar_g:8,  sodium_mg:60,  sat_fat_g:3,   calories:200, fiber_g:3, protein_g:6, kidsFloor:4, kidsCeiling:6 }],
+  ["rxbar",                        { sugar_g:13, sodium_mg:200, sat_fat_g:2,   calories:210, fiber_g:5, protein_g:12,kidsFloor:4, kidsCeiling:6 }],
+  ["rx bar",                       { sugar_g:13, sodium_mg:200, sat_fat_g:2,   calories:210, fiber_g:5, protein_g:12,kidsFloor:4, kidsCeiling:6 }],
+  ["nature valley granola bar",    { sugar_g:12, sodium_mg:160, sat_fat_g:1,   calories:190, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
+  ["nature valley bar",            { sugar_g:12, sodium_mg:160, sat_fat_g:1,   calories:190, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
+  ["nutri-grain bar",              { sugar_g:12, sodium_mg:150, sat_fat_g:1,   calories:130,             kidsFloor:5, kidsCeiling:7 }],
+  ["nutri grain bar",              { sugar_g:12, sodium_mg:150, sat_fat_g:1,   calories:130,             kidsFloor:5, kidsCeiling:7 }],
+  ["lunchables",                   { sugar_g:8,  sodium_mg:730, sat_fat_g:5,   calories:350,             kidsFloor:7, kidsCeiling:9 }],
+  ["lunchables pizza",             { sugar_g:11, sodium_mg:790, sat_fat_g:6,   calories:380,             kidsFloor:7, kidsCeiling:9 }],
+  ["lunchables turkey",            { sugar_g:5,  sodium_mg:800, sat_fat_g:4,   calories:320,             kidsFloor:7, kidsCeiling:9 }],
+
+  // ── BEVERAGES ──────────────────────────────────────────────────────────────
+  ["red bull",                     { sugar_g:27, sodium_mg:105, sat_fat_g:0,   calories:110,             kidsFloor:8, kidsCeiling:9 }],
+  ["monster energy",               { sugar_g:27, sodium_mg:370, sat_fat_g:0,   calories:210,             kidsFloor:8, kidsCeiling:9 }],
+  ["bang energy",                  { sugar_g:0,  sodium_mg:40,  sat_fat_g:0,   calories:0,               kidsFloor:6, kidsCeiling:8 }],
+  ["celsius energy",               { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
+  ["alani nu energy",              { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
+  ["alani nu",                     { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
+  ["reign",                        { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
+  ["c4 original",                  { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:0,               kidsFloor:6, kidsCeiling:8 }],
+  ["prime hydration",              { sugar_g:2,  sodium_mg:10,  sat_fat_g:0,   calories:25,              kidsFloor:5, kidsCeiling:7 }],
+  ["gatorade",                     { sugar_g:34, sodium_mg:270, sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["powerade",                     { sugar_g:34, sodium_mg:150, sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
+  ["tropicana orange juice",       { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
+  ["tropicana",                    { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
+  ["simply orange",                { sugar_g:23, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
+  ["florida's natural",            { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
+  ["minute maid",                  { sugar_g:24, sodium_mg:15,  sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
+  ["minute maid lemonade",         { sugar_g:28, sodium_mg:15,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
+  ["capri sun",                    { sugar_g:16, sodium_mg:30,  sat_fat_g:0,   calories:60,              kidsFloor:5, kidsCeiling:8 }],
+  ["hi-c fruit punch",             { sugar_g:28, sodium_mg:10,  sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
+  ["kool-aid",                     { sugar_g:25, sodium_mg:35,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
+  ["snapple peach tea",            { sugar_g:37, sodium_mg:10,  sat_fat_g:0,   calories:160,             kidsFloor:7, kidsCeiling:9 }],
+  ["arizona sweet tea",            { sugar_g:23, sodium_mg:10,  sat_fat_g:0,   calories:90,              kidsFloor:6, kidsCeiling:8 }],
+  ["lipton",                       { sugar_g:20, sodium_mg:10,  sat_fat_g:0,   calories:80,              kidsFloor:6, kidsCeiling:8 }],
+  ["honest tea",                   { sugar_g:10, sodium_mg:10,  sat_fat_g:0,   calories:45,              kidsFloor:4, kidsCeiling:6 }],
+  ["naked juice",                  { sugar_g:53, sodium_mg:10,  sat_fat_g:0,   calories:270,             kidsFloor:9, kidsCeiling:9 }],
+  ["odwalla",                      { sugar_g:42, sodium_mg:20,  sat_fat_g:0,   calories:220,             kidsFloor:8, kidsCeiling:9 }],
+  ["bolthouse farms juice",        { sugar_g:28, sodium_mg:40,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
+  ["ocean spray cranberry",        { sugar_g:28, sodium_mg:35,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
+  ["coca-cola",                    { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["coke",                         { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["pepsi",                        { sugar_g:41, sodium_mg:30,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
+  ["mountain dew",                 { sugar_g:46, sodium_mg:65,  sat_fat_g:0,   calories:170,             kidsFloor:9, kidsCeiling:9 }],
+  ["sprite",                       { sugar_g:38, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
+  ["dr pepper",                    { sugar_g:40, sodium_mg:55,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
+  ["root beer",                    { sugar_g:39, sodium_mg:50,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
+  ["lemonade",                     { sugar_g:28, sodium_mg:15,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
+  ["chocolate milk",               { sugar_g:25, sodium_mg:180, sat_fat_g:2.5, calories:200, protein_g:8, kidsFloor:6, kidsCeiling:8 }],
+  ["starbucks frappuccino",        { sugar_g:46, sodium_mg:90,  sat_fat_g:3,   calories:290,             kidsFloor:8, kidsCeiling:9 }],
+  ["starbucks pumpkin spice latte",{ sugar_g:50, sodium_mg:240, sat_fat_g:5,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
+  ["dutch bros",                   { sugar_g:40, sodium_mg:110, sat_fat_g:4,   calories:320,             kidsFloor:8, kidsCeiling:9 }],
+  ["smoothie king",                { sugar_g:60, sodium_mg:120, sat_fat_g:2,   calories:450,             kidsFloor:9, kidsCeiling:9 }],
+  ["jamba juice",                  { sugar_g:60, sodium_mg:90,  sat_fat_g:1,   calories:380,             kidsFloor:9, kidsCeiling:9 }],
+  ["white claw",                   { sugar_g:2,  sodium_mg:10,  sat_fat_g:0,   calories:100,             kidsFloor:4, kidsCeiling:6 }],
+  ["truly hard seltzer",           { sugar_g:1,  sodium_mg:10,  sat_fat_g:0,   calories:100,             kidsFloor:4, kidsCeiling:6 }],
+  ["bud light",                    { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:110,             kidsFloor:3, kidsCeiling:5 }],
+  ["budweiser",                    { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:145,             kidsFloor:3, kidsCeiling:5 }],
+  ["coors light",                  { sugar_g:1,  sodium_mg:10,  sat_fat_g:0,   calories:102,             kidsFloor:3, kidsCeiling:5 }],
+
+  // ── BREAKFAST ──────────────────────────────────────────────────────────────
+  ["eggo waffles",                 { sugar_g:6,  sodium_mg:370, sat_fat_g:1.5, calories:280,             kidsFloor:6, kidsCeiling:8 }],
+  ["eggo",                         { sugar_g:6,  sodium_mg:370, sat_fat_g:1.5, calories:280,             kidsFloor:6, kidsCeiling:8 }],
+  ["pancake mix",                  { sugar_g:4,  sodium_mg:580, sat_fat_g:0.5, calories:200,             kidsFloor:5, kidsCeiling:7 }],
+  ["bisquick",                     { sugar_g:4,  sodium_mg:580, sat_fat_g:0.5, calories:160,             kidsFloor:5, kidsCeiling:7 }],
+  ["aunt jemima pancake",          { sugar_g:4,  sodium_mg:680, sat_fat_g:0.5, calories:200,             kidsFloor:5, kidsCeiling:7 }],
+  ["aunt jemima syrup",            { sugar_g:32, sodium_mg:110, sat_fat_g:0,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["mrs butterworth",              { sugar_g:32, sodium_mg:85,  sat_fat_g:0,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
+  ["log cabin syrup",              { sugar_g:30, sodium_mg:75,  sat_fat_g:0,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
+  ["pop tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
+  ["pillsbury cinnamon rolls",     { sugar_g:13, sodium_mg:340, sat_fat_g:4,   calories:280,             kidsFloor:6, kidsCeiling:8 }],
+
+  // ── FAST FOOD & RESTAURANT ─────────────────────────────────────────────────
+  ["big mac",                      { sugar_g:9,  sodium_mg:1010,sat_fat_g:11,  calories:550, protein_g:25,kidsFloor:7, kidsCeiling:9 }],
+  ["mcdonald's french fries",      { sugar_g:0,  sodium_mg:400, sat_fat_g:2,   calories:320, fiber_g:3,   kidsFloor:6, kidsCeiling:8 }],
+  ["mcdonald's quarter pounder",   { sugar_g:9,  sodium_mg:1110,sat_fat_g:14,  calories:520, protein_g:30,kidsFloor:7, kidsCeiling:9 }],
+  ["chicken mcnuggets",            { sugar_g:0,  sodium_mg:470, sat_fat_g:2.5, calories:190, protein_g:14,kidsFloor:7, kidsCeiling:9 }],
+  ["mcflurry",                     { sugar_g:66, sodium_mg:170, sat_fat_g:9,   calories:510,             kidsFloor:9, kidsCeiling:9 }],
+  ["mcdonald's hotcakes",          { sugar_g:45, sodium_mg:580, sat_fat_g:5,   calories:590,             kidsFloor:8, kidsCeiling:9 }],
+  ["sausage mcmuffin",             { sugar_g:3,  sodium_mg:770, sat_fat_g:9,   calories:400, protein_g:21,kidsFloor:7, kidsCeiling:9 }],
+  ["egg mcmuffin",                 { sugar_g:3,  sodium_mg:750, sat_fat_g:5,   calories:310, protein_g:17,kidsFloor:7, kidsCeiling:9 }],
+  ["whopper",                      { sugar_g:11, sodium_mg:1120,sat_fat_g:13,  calories:660, protein_g:28,kidsFloor:7, kidsCeiling:9 }],
+  ["baconator",                    { sugar_g:9,  sodium_mg:1330,sat_fat_g:22,  calories:940, protein_g:57,kidsFloor:8, kidsCeiling:9 }],
+  ["wendy's frosty",               { sugar_g:47, sodium_mg:230, sat_fat_g:5,   calories:350,             kidsFloor:8, kidsCeiling:9 }],
+  ["wendy's chili",                { sugar_g:8,  sodium_mg:980, sat_fat_g:2.5, calories:250, protein_g:17,fiber_g:6, kidsFloor:6, kidsCeiling:8 }],
+  ["chick-fil-a crispy",           { sugar_g:6,  sodium_mg:1350,sat_fat_g:4,   calories:470, protein_g:27,kidsFloor:7, kidsCeiling:9 }],
+  ["chick-fil-a grilled",          { sugar_g:4,  sodium_mg:910, sat_fat_g:1,   calories:320, protein_g:40,kidsFloor:6, kidsCeiling:8 }],
+  ["popeyes chicken sandwich",     { sugar_g:5,  sodium_mg:1440,sat_fat_g:7,   calories:700, protein_g:28,kidsFloor:7, kidsCeiling:9 }],
+  ["kfc original recipe",          { sugar_g:0,  sodium_mg:1160,sat_fat_g:5,   calories:400, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
+  ["panda express orange chicken", { sugar_g:19, sodium_mg:820, sat_fat_g:5,   calories:490, protein_g:19,kidsFloor:7, kidsCeiling:9 }],
+  ["panda express fried rice",     { sugar_g:3,  sodium_mg:900, sat_fat_g:1.5, calories:530, fiber_g:3,   kidsFloor:7, kidsCeiling:9 }],
+  ["chipotle burrito bowl",        { sugar_g:3,  sodium_mg:890, sat_fat_g:4,   calories:560, protein_g:40,fiber_g:8, kidsFloor:6, kidsCeiling:8 }],
+  ["chipotle bowl",                { sugar_g:3,  sodium_mg:890, sat_fat_g:4,   calories:560, protein_g:40,fiber_g:8, kidsFloor:6, kidsCeiling:8 }],
+  ["taco bell chalupa",            { sugar_g:5,  sodium_mg:710, sat_fat_g:7,   calories:370, protein_g:17,kidsFloor:6, kidsCeiling:8 }],
+  ["taco bell crunchwrap",         { sugar_g:5,  sodium_mg:1170,sat_fat_g:8,   calories:530, protein_g:17,kidsFloor:7, kidsCeiling:9 }],
+  ["olive garden fettuccine alfredo",{ sugar_g:4,sodium_mg:1080,sat_fat_g:29,  calories:1220,protein_g:36,kidsFloor:8, kidsCeiling:9 }],
+  ["olive garden breadsticks",     { sugar_g:2,  sodium_mg:460, sat_fat_g:2,   calories:140,             kidsFloor:6, kidsCeiling:8 }],
+  ["panera broccoli cheddar soup", { sugar_g:8,  sodium_mg:950, sat_fat_g:10,  calories:360, protein_g:14,kidsFloor:6, kidsCeiling:8 }],
+  ["panera mac and cheese",        { sugar_g:7,  sodium_mg:1110,sat_fat_g:18,  calories:800, protein_g:30,kidsFloor:7, kidsCeiling:9 }],
+  ["domino's pepperoni pizza",     { sugar_g:4,  sodium_mg:820, sat_fat_g:7,   calories:380, protein_g:16,kidsFloor:6, kidsCeiling:8 }],
+  ["crumbl cookie",                { sugar_g:55, sodium_mg:320, sat_fat_g:15,  calories:700,             kidsFloor:9, kidsCeiling:9 }],
+  ["dairy queen blizzard",         { sugar_g:74, sodium_mg:280, sat_fat_g:14,  calories:690,             kidsFloor:9, kidsCeiling:9 }],
+  ["sonic cherry limeade",         { sugar_g:65, sodium_mg:45,  sat_fat_g:0,   calories:270,             kidsFloor:9, kidsCeiling:9 }],
+  ["raising cane's chicken tenders",{ sugar_g:1, sodium_mg:470, sat_fat_g:3,   calories:400, protein_g:39,kidsFloor:6, kidsCeiling:8 }],
+  ["culvers butterburger",         { sugar_g:8,  sodium_mg:700, sat_fat_g:8,   calories:440, protein_g:28,kidsFloor:6, kidsCeiling:8 }],
+  ["arbys roast beef",             { sugar_g:5,  sodium_mg:970, sat_fat_g:4,   calories:360, protein_g:23,kidsFloor:7, kidsCeiling:8 }],
+  ["wingstop wings",               { sugar_g:2,  sodium_mg:1260,sat_fat_g:7,   calories:520, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
+  ["wingstop",                     { sugar_g:2,  sodium_mg:1260,sat_fat_g:7,   calories:520, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
+  ["buffalo wild wings",           { sugar_g:3,  sodium_mg:1560,sat_fat_g:7,   calories:620, protein_g:40,kidsFloor:7, kidsCeiling:9 }],
+  ["ihop buttermilk pancakes",     { sugar_g:8,  sodium_mg:1760,sat_fat_g:5,   calories:490,             kidsFloor:7, kidsCeiling:9 }],
+
+  // ── CONDIMENTS ─────────────────────────────────────────────────────────────
+  ["heinz ketchup",                { sugar_g:4,  sodium_mg:160, sat_fat_g:0,   calories:20,              kidsFloor:3, kidsCeiling:6 }],
+  ["sweet baby ray's",             { sugar_g:16, sodium_mg:290, sat_fat_g:0,   calories:70,              kidsFloor:5, kidsCeiling:7 }],
+  ["stubbs bbq",                   { sugar_g:9,  sodium_mg:280, sat_fat_g:0,   calories:50,              kidsFloor:3, kidsCeiling:5 }],
+  ["a1 original",                  { sugar_g:3,  sodium_mg:280, sat_fat_g:0,   calories:15,              kidsFloor:4, kidsCeiling:6 }],
+  ["hidden valley ranch",          { sugar_g:1,  sodium_mg:260, sat_fat_g:2.5, calories:130,             kidsFloor:4, kidsCeiling:6 }],
+  ["hellmanns real",               { sugar_g:0,  sodium_mg:90,  sat_fat_g:1.5, calories:90,              kidsFloor:3, kidsCeiling:5 }],
+  ["miracle whip",                 { sugar_g:3,  sodium_mg:130, sat_fat_g:0.5, calories:35,              kidsFloor:4, kidsCeiling:6 }],
+
+  // ── DAIRY ──────────────────────────────────────────────────────────────────
+  ["yoplait original",             { sugar_g:19, sodium_mg:95,  sat_fat_g:1,   calories:150, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
+  ["yoplait",                      { sugar_g:19, sodium_mg:95,  sat_fat_g:1,   calories:150, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
+  ["chobani flip",                 { sugar_g:22, sodium_mg:75,  sat_fat_g:3,   calories:190, protein_g:12,kidsFloor:6, kidsCeiling:7 }],
+  ["dannon activia",               { sugar_g:16, sodium_mg:75,  sat_fat_g:1,   calories:120, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
+  ["yoplait go-gurt",              { sugar_g:10, sodium_mg:80,  sat_fat_g:0.5, calories:80,  protein_g:3, kidsFloor:4, kidsCeiling:7 }],
+  ["yoplait gogurt",               { sugar_g:10, sodium_mg:80,  sat_fat_g:0.5, calories:80,  protein_g:3, kidsFloor:4, kidsCeiling:7 }],
+  ["kraft singles",                { sugar_g:1,  sodium_mg:250, sat_fat_g:2.5, calories:60,  protein_g:4, kidsFloor:4, kidsCeiling:6 }],
+  ["velveeta",                     { sugar_g:2,  sodium_mg:410, sat_fat_g:4,   calories:80,  protein_g:5, kidsFloor:5, kidsCeiling:7 }],
+
+  // ── FROZEN ─────────────────────────────────────────────────────────────────
+  ["hot pockets",                  { sugar_g:3,  sodium_mg:680, sat_fat_g:5,   calories:300,             kidsFloor:7, kidsCeiling:8 }],
+  ["lean cuisine",                 { sugar_g:4,  sodium_mg:820, sat_fat_g:3,   calories:280, protein_g:17,kidsFloor:6, kidsCeiling:8 }],
+  ["stouffers",                    { sugar_g:5,  sodium_mg:980, sat_fat_g:7,   calories:380, protein_g:18,kidsFloor:7, kidsCeiling:8 }],
+  ["marie callender",              { sugar_g:5,  sodium_mg:900, sat_fat_g:7,   calories:420,             kidsFloor:7, kidsCeiling:8 }],
+  ["digiorno pepperoni",           { sugar_g:5,  sodium_mg:820, sat_fat_g:9,   calories:380, protein_g:16,kidsFloor:6, kidsCeiling:8 }],
+  ["red baron pepperoni",          { sugar_g:4,  sodium_mg:790, sat_fat_g:8,   calories:360, protein_g:15,kidsFloor:6, kidsCeiling:8 }],
+  ["totino's pizza rolls",         { sugar_g:2,  sodium_mg:420, sat_fat_g:2.5, calories:210,             kidsFloor:6, kidsCeiling:8 }],
+  ["el monterey",                  { sugar_g:2,  sodium_mg:560, sat_fat_g:4,   calories:280,             kidsFloor:6, kidsCeiling:7 }],
+
+  // ── BREAD & BAKERY ─────────────────────────────────────────────────────────
+  ["wonder bread",                 { sugar_g:3,  sodium_mg:160, sat_fat_g:0.5, calories:80,              kidsFloor:4, kidsCeiling:6 }],
+  ["dave's killer bread",          { sugar_g:5,  sodium_mg:160, sat_fat_g:0,   calories:100, fiber_g:3, protein_g:5, kidsFloor:3, kidsCeiling:5 }],
+  ["thomas english muffins",       { sugar_g:1,  sodium_mg:200, sat_fat_g:0.5, calories:130, protein_g:4, kidsFloor:4, kidsCeiling:6 }],
+  ["king's hawaiian",              { sugar_g:10, sodium_mg:170, sat_fat_g:3,   calories:200,             kidsFloor:5, kidsCeiling:7 }],
+  ["pepperidge farm bread",        { sugar_g:4,  sodium_mg:150, sat_fat_g:0.5, calories:130,             kidsFloor:4, kidsCeiling:6 }],
+  ["mission flour tortillas",      { sugar_g:1,  sodium_mg:440, sat_fat_g:1,   calories:140,             kidsFloor:5, kidsCeiling:7 }],
+
+  // ── PEANUT BUTTER & SPREADS ────────────────────────────────────────────────
+  ["jif peanut butter",            { sugar_g:3,  sodium_mg:135, sat_fat_g:3,   calories:190, protein_g:7, fiber_g:1, kidsFloor:4, kidsCeiling:6 }],
+  ["skippy peanut butter",         { sugar_g:3,  sodium_mg:150, sat_fat_g:3,   calories:190, protein_g:7, kidsFloor:4, kidsCeiling:6 }],
+  ["uncrustables",                 { sugar_g:11, sodium_mg:170, sat_fat_g:2.5, calories:210,             kidsFloor:5, kidsCeiling:7 }],
+
+  // ── SOUPS & CANNED ─────────────────────────────────────────────────────────
+  ["campbell's chunky",            { sugar_g:4,  sodium_mg:870, sat_fat_g:2,   calories:190, protein_g:14,kidsFloor:6, kidsCeiling:8 }],
+  ["progresso soup",               { sugar_g:3,  sodium_mg:790, sat_fat_g:2,   calories:180, protein_g:11,kidsFloor:6, kidsCeiling:8 }],
+  ["ramen",                        { sugar_g:2,  sodium_mg:1540,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
+  ["maruchan ramen",               { sugar_g:2,  sodium_mg:1540,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
+  ["top ramen",                    { sugar_g:1,  sodium_mg:1850,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
+
+  // ── PASTA & GRAINS ─────────────────────────────────────────────────────────
+  ["kraft mac",                    { sugar_g:5,  sodium_mg:580, sat_fat_g:2.5, calories:250, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
+  ["kraft macaroni",               { sugar_g:5,  sodium_mg:580, sat_fat_g:2.5, calories:250, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
+  ["stouffer's mac",               { sugar_g:5,  sodium_mg:930, sat_fat_g:8,   calories:360, protein_g:14,kidsFloor:7, kidsCeiling:8 }],
+
+  // ── KIDS FOOD ──────────────────────────────────────────────────────────────
+  ["gogo squeez",                  { sugar_g:12, sodium_mg:0,   sat_fat_g:0,   calories:60,  fiber_g:1,   kidsFloor:4, kidsCeiling:6 }],
+  ["plum organics kids",           { sugar_g:10, sodium_mg:20,  sat_fat_g:0,   calories:70,  fiber_g:2,   kidsFloor:3, kidsCeiling:5 }],
+  ["annie's organic mac",          { sugar_g:3,  sodium_mg:530, sat_fat_g:2,   calories:190, protein_g:8, kidsFloor:4, kidsCeiling:6 }],
+  ["mott's applesauce",            { sugar_g:11, sodium_mg:0,   sat_fat_g:0,   calories:50,  fiber_g:1,   kidsFloor:4, kidsCeiling:6 }],
+  ["welch's fruit snacks",         { sugar_g:19, sodium_mg:15,  sat_fat_g:0,   calories:80,              kidsFloor:7, kidsCeiling:9 }],
+  ["welchs fruit snacks",          { sugar_g:19, sodium_mg:15,  sat_fat_g:0,   calories:80,              kidsFloor:7, kidsCeiling:9 }],
+  ["yumearth fruit snacks",        { sugar_g:11, sodium_mg:10,  sat_fat_g:0,   calories:60,              kidsFloor:4, kidsCeiling:6 }],
+  ["clif kids zbar",               { sugar_g:11, sodium_mg:105, sat_fat_g:1,   calories:130, fiber_g:3, protein_g:3, kidsFloor:4, kidsCeiling:6 }],
+  ["rxbar kids",                   { sugar_g:9,  sodium_mg:160, sat_fat_g:1,   calories:130, fiber_g:3, protein_g:6, kidsFloor:3, kidsCeiling:5 }],
+
+  // ── SODAS AND SUGARY DRINKS ───────────────────────────────────
+  ["coke classic",            { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["coca cola classic",       { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["coca-cola",               { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["pepsi cola",              { sugar_g:41, sodium_mg:30,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
+  ["pepsi",                   { sugar_g:41, sodium_mg:30,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
+  ["diet coke",               { sugar_g:0,  sodium_mg:40,  sat_fat_g:0, calories:0 }],
+  ["diet pepsi",              { sugar_g:0,  sodium_mg:35,  sat_fat_g:0, calories:0 }],
+  ["sprite",                  { sugar_g:38, sodium_mg:65,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["mountain dew",            { sugar_g:46, sodium_mg:60,  sat_fat_g:0, calories:170, kidsFloor:7, kidsCeiling:9 }],
+  ["dr pepper",               { sugar_g:40, sodium_mg:55,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
+  ["fanta orange",            { sugar_g:44, sodium_mg:55,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
+  ["root beer",               { sugar_g:43, sodium_mg:45,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
+  ["canada dry",              { sugar_g:35, sodium_mg:35,  sat_fat_g:0, calories:130, kidsFloor:7, kidsCeiling:9 }],
+  ["schweppes",               { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
+  ["ginger ale",              { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
+  ["tonic water",             { sugar_g:22, sodium_mg:30,  sat_fat_g:0, calories:90,  kidsFloor:6, kidsCeiling:8 }],
+  ["hi-c",                    { sugar_g:26, sodium_mg:10,  sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["kool aid jammers",        { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
+  ["kool-aid jammers",        { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
+  ["capri sun original",      { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
+  ["hawaiian punch",          { sugar_g:15, sodium_mg:35,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
+  ["sunny d",                 { sugar_g:14, sodium_mg:40,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
+  ["arizona iced tea",        { sugar_g:24, sodium_mg:10,  sat_fat_g:0, calories:90,  kidsFloor:6, kidsCeiling:8 }],
+  ["lipton brisk",            { sugar_g:22, sodium_mg:10,  sat_fat_g:0, calories:80,  kidsFloor:6, kidsCeiling:8 }],
+  ["vitaminwater",            { sugar_g:13, sodium_mg:0,   sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
+  ["vitamin water",           { sugar_g:13, sodium_mg:0,   sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
+  ["powerade",                { sugar_g:21, sodium_mg:150, sat_fat_g:0, calories:80,  kidsFloor:6, kidsCeiling:8 }],
+  ["powerade zero",           { sugar_g:0,  sodium_mg:150, sat_fat_g:0, calories:0 }],
+  ["gatorade zero",           { sugar_g:0,  sodium_mg:270, sat_fat_g:0, calories:0 }],
+  ["ocean spray cranberry cocktail", { sugar_g:25, sodium_mg:35, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["great value fruit punch", { sugar_g:28, sodium_mg:35,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["great value juice drink", { sugar_g:28, sodium_mg:35,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["pedialyte",               { sugar_g:9,  sodium_mg:370, sat_fat_g:0, calories:45 }],
+
+  // ── ENERGY DRINKS ─────────────────────────────────────────────
+  ["red bull",                { sugar_g:27, sodium_mg:105, sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["monster energy",          { sugar_g:27, sodium_mg:370, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["bang energy",             { sugar_g:0,  sodium_mg:40,  sat_fat_g:0, calories:0 }],
+  ["celsius energy",          { sugar_g:0,  sodium_mg:10,  sat_fat_g:0, calories:10 }],
+  ["prime hydration",         { sugar_g:2,  sodium_mg:10,  sat_fat_g:0, calories:25 }],
+  ["alani nu",                { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:10 }],
+  ["reign",                   { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:10 }],
+  ["rockstar",                { sugar_g:24, sodium_mg:160, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["5 hour energy",           { sugar_g:0,  sodium_mg:18,  sat_fat_g:0, calories:4 }],
+  ["ghost energy drink",      { sugar_g:0,  sodium_mg:70,  sat_fat_g:0, calories:5 }],
+  ["nos energy",              { sugar_g:27, sodium_mg:55,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["c4",                      { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:0 }],
+
+  // ── ALCOHOL ───────────────────────────────────────────────────
+  ["barefoot",                { sugar_g:6,  sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["yellow tail wine",        { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["franzia",                 { sugar_g:5,  sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["apothic red",             { sugar_g:8,  sodium_mg:10, sat_fat_g:0, calories:130 }],
+  ["dark horse wine",         { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["jose cuervo gold",        { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:97 }],
+  ["fireball",                { sugar_g:11, sodium_mg:0,  sat_fat_g:0, calories:108 }],
+  ["malibu rum",              { sugar_g:14, sodium_mg:0,  sat_fat_g:0, calories:140 }],
+  ["captain morgan",          { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:86 }],
+  ["margarita mix",           { sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
+  ["jose cuervo margarita mix",{ sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
+  ["margaritaville",          { sugar_g:26, sodium_mg:60, sat_fat_g:0, calories:100 }],
+  ["master of mixes",         { sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
+  ["bud light",               { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:110 }],
+  ["budweiser",               { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:145 }],
+  ["coors light",             { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:102 }],
+  ["miller lite",             { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:96 }],
+  ["corona extra",            { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:148 }],
+  ["white claw",              { sugar_g:2,  sodium_mg:10, sat_fat_g:0, calories:100 }],
+  ["truly hard seltzer",      { sugar_g:1,  sodium_mg:10, sat_fat_g:0, calories:100 }],
+  ["high noon seltzer",       { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:100 }],
+
+  // ── CANDY ─────────────────────────────────────────────────────
+  ["skittles",                { sugar_g:47, sodium_mg:10,  sat_fat_g:0,  calories:230, kidsFloor:9, kidsCeiling:9 }],
+  ["starburst",               { sugar_g:34, sodium_mg:55,  sat_fat_g:2,  calories:160, kidsFloor:8, kidsCeiling:9 }],
+  ["starbursts",              { sugar_g:34, sodium_mg:55,  sat_fat_g:2,  calories:160, kidsFloor:8, kidsCeiling:9 }],
+  ["snickers",                { sugar_g:27, sodium_mg:120, sat_fat_g:4,  calories:250, kidsFloor:8, kidsCeiling:9 }],
+  ["milky way",               { sugar_g:35, sodium_mg:95,  sat_fat_g:5,  calories:260, kidsFloor:8, kidsCeiling:9 }],
+  ["kit kat",                 { sugar_g:22, sodium_mg:30,  sat_fat_g:5,  calories:210, kidsFloor:7, kidsCeiling:9 }],
+  ["twix",                    { sugar_g:25, sodium_mg:95,  sat_fat_g:8,  calories:250, kidsFloor:8, kidsCeiling:9 }],
+  ["hershey's milk chocolate",{ sugar_g:24, sodium_mg:35,  sat_fat_g:8,  calories:210, kidsFloor:7, kidsCeiling:9 }],
+  ["hershey's kisses",        { sugar_g:22, sodium_mg:30,  sat_fat_g:7,  calories:190, kidsFloor:7, kidsCeiling:9 }],
+  ["hershey's special dark",  { sugar_g:21, sodium_mg:0,   sat_fat_g:6,  calories:180, kidsFloor:7, kidsCeiling:9 }],
+  ["airheads",                { sugar_g:16, sodium_mg:10,  sat_fat_g:0,  calories:60,  kidsFloor:5, kidsCeiling:8 }],
+  ["jolly rancher",           { sugar_g:17, sodium_mg:10,  sat_fat_g:0,  calories:70,  kidsFloor:5, kidsCeiling:8 }],
+  ["swedish fish",            { sugar_g:26, sodium_mg:35,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["haribo gummy bears",      { sugar_g:22, sodium_mg:20,  sat_fat_g:0,  calories:110, kidsFloor:6, kidsCeiling:9 }],
+  ["haribo",                  { sugar_g:22, sodium_mg:20,  sat_fat_g:0,  calories:110, kidsFloor:6, kidsCeiling:9 }],
+  ["sour patch kids",         { sugar_g:25, sodium_mg:55,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["ring pop",                { sugar_g:13, sodium_mg:0,   sat_fat_g:0,  calories:60,  kidsFloor:4, kidsCeiling:7 }],
+  ["black forest gummy",      { sugar_g:21, sodium_mg:5,   sat_fat_g:0,  calories:100, kidsFloor:6, kidsCeiling:8 }],
+  ["fruit roll-ups",          { sugar_g:10, sodium_mg:55,  sat_fat_g:0,  calories:50,  kidsFloor:4, kidsCeiling:7 }],
+  ["fruit by the foot",       { sugar_g:12, sodium_mg:50,  sat_fat_g:0,  calories:80,  kidsFloor:4, kidsCeiling:7 }],
+  ["gushers",                 { sugar_g:14, sodium_mg:45,  sat_fat_g:0,  calories:90,  kidsFloor:5, kidsCeiling:7 }],
+  ["stretch island",          { sugar_g:11, sodium_mg:0,   sat_fat_g:0,  calories:45,  kidsFloor:4, kidsCeiling:6 }],
+  ["nutella",                 { sugar_g:21, sodium_mg:15,  sat_fat_g:3,  calories:200, kidsFloor:7, kidsCeiling:9 }],
+  ["cosmic brownies",         { sugar_g:24, sodium_mg:150, sat_fat_g:4,  calories:270, kidsFloor:7, kidsCeiling:9 }],
+  ["little debbie swiss rolls",{ sugar_g:24, sodium_mg:150, sat_fat_g:5, calories:270, kidsFloor:7, kidsCeiling:9 }],
+  ["hostess twinkies",        { sugar_g:18, sodium_mg:190, sat_fat_g:4,  calories:270, kidsFloor:6, kidsCeiling:9 }],
+  ["hostess ding dongs",      { sugar_g:22, sodium_mg:160, sat_fat_g:8,  calories:360, kidsFloor:7, kidsCeiling:9 }],
+  ["hostess",                 { sugar_g:20, sodium_mg:175, sat_fat_g:6,  calories:310, kidsFloor:7, kidsCeiling:9 }],
+  ["entenmann's",             { sugar_g:18, sodium_mg:150, sat_fat_g:5,  calories:250, kidsFloor:6, kidsCeiling:8 }],
+  ["entenmanns",              { sugar_g:18, sodium_mg:150, sat_fat_g:5,  calories:250, kidsFloor:6, kidsCeiling:8 }],
+  ["krispy kreme",            { sugar_g:10, sodium_mg:95,  sat_fat_g:3,  calories:190, kidsFloor:5, kidsCeiling:7 }],
+  ["otis spunkmeyer",         { sugar_g:14, sodium_mg:210, sat_fat_g:4,  calories:250, kidsFloor:5, kidsCeiling:7 }],
+  ["pop tarts",               { sugar_g:17, sodium_mg:170, sat_fat_g:2,  calories:200, kidsFloor:6, kidsCeiling:8 }],
+  ["pop-tarts",               { sugar_g:17, sodium_mg:170, sat_fat_g:2,  calories:200, kidsFloor:6, kidsCeiling:8 }],
+  ["chips ahoy",              { sugar_g:11, sodium_mg:130, sat_fat_g:3,  calories:160, kidsFloor:5, kidsCeiling:7 }],
+  ["oreo",                    { sugar_g:14, sodium_mg:160, sat_fat_g:2,  calories:160, kidsFloor:5, kidsCeiling:7 }],
+  ["nutter butter",           { sugar_g:13, sodium_mg:110, sat_fat_g:2,  calories:170, kidsFloor:5, kidsCeiling:7 }],
+  ["nilla wafers",            { sugar_g:11, sodium_mg:90,  sat_fat_g:2,  calories:140, kidsFloor:4, kidsCeiling:7 }],
+  ["fig newtons",             { sugar_g:12, sodium_mg:95,  sat_fat_g:0,  calories:110, kidsFloor:4, kidsCeiling:6 }],
+  ["teddy grahams",           { sugar_g:8,  sodium_mg:95,  sat_fat_g:1,  calories:130, kidsFloor:4, kidsCeiling:6 }],
+  ["great value cookies",     { sugar_g:13, sodium_mg:140, sat_fat_g:3,  calories:160, kidsFloor:5, kidsCeiling:7 }],
+
+  // ── CEREALS (additions) ───────────────────────────────────────
+  ["cap n crunch",            { sugar_g:12, sodium_mg:200, sat_fat_g:1, calories:150, fiber_g:1, kidsFloor:6, kidsCeiling:8 }],
+  ["cocoa puffs",             { sugar_g:13, sodium_mg:160, sat_fat_g:0, calories:140, fiber_g:1, kidsFloor:5, kidsCeiling:8 }],
+  ["trix cereal",             { sugar_g:12, sodium_mg:180, sat_fat_g:0, calories:140, fiber_g:2, kidsFloor:5, kidsCeiling:8 }],
+  ["corn flakes",             { sugar_g:4,  sodium_mg:200, sat_fat_g:0, calories:100, fiber_g:1 }],
+  ["rice krispies",           { sugar_g:4,  sodium_mg:190, sat_fat_g:0, calories:130, fiber_g:0 }],
+  ["total cereal",            { sugar_g:5,  sodium_mg:190, sat_fat_g:0, calories:140, fiber_g:3 }],
+  ["nutri-grain",             { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
+  ["nutri grain",             { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
+  ["nutrigrain bar",          { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
+  ["fiber one",               { sugar_g:0,  sodium_mg:140, sat_fat_g:0, calories:90,  fiber_g:9 }],
+  ["special k bar",           { sugar_g:12, sodium_mg:85,  sat_fat_g:1, calories:90,  fiber_g:1, kidsFloor:5, kidsCeiling:7 }],
+
+  // ── SNACK CHIPS ───────────────────────────────────────────────
+  ["pringles original",       { sugar_g:1,  sodium_mg:150, sat_fat_g:3, calories:150 }],
+  ["lay's bbq",               { sugar_g:2,  sodium_mg:160, sat_fat_g:1, calories:160 }],
+  ["lays baked",              { sugar_g:2,  sodium_mg:130, sat_fat_g:0, calories:130 }],
+  ["fritos chili cheese",     { sugar_g:1,  sodium_mg:260, sat_fat_g:2, calories:160 }],
+  ["club crackers",           { sugar_g:3,  sodium_mg:230, sat_fat_g:3, calories:160 }],
+  ["pepperidge farm",         { sugar_g:4,  sodium_mg:170, sat_fat_g:2, calories:140 }],
+  ["cheetos original",        { sugar_g:0,  sodium_mg:250, sat_fat_g:2, calories:160 }],
+  ["orville redenbacher",     { sugar_g:0,  sodium_mg:310, sat_fat_g:3, calories:160 }],
+  ["act ii popcorn",          { sugar_g:0,  sodium_mg:300, sat_fat_g:3, calories:170 }],
+  ["act ii",                  { sugar_g:0,  sodium_mg:300, sat_fat_g:3, calories:170 }],
+
+  // ── BREAKFAST ITEMS ───────────────────────────────────────────
+  ["aunt jemima syrup",       { sugar_g:32, sodium_mg:120, sat_fat_g:0, calories:210, kidsFloor:7, kidsCeiling:9 }],
+  ["log cabin",               { sugar_g:31, sodium_mg:120, sat_fat_g:0, calories:200, kidsFloor:7, kidsCeiling:9 }],
+  ["mrs. butterworth",        { sugar_g:31, sodium_mg:125, sat_fat_g:0, calories:200, kidsFloor:7, kidsCeiling:9 }],
+  ["pearl milling",           { sugar_g:32, sodium_mg:120, sat_fat_g:0, calories:210, kidsFloor:7, kidsCeiling:9 }],
+  ["pearl milling pancake",   { sugar_g:8,  sodium_mg:530, sat_fat_g:1, calories:240 }],
+  ["aunt jemima pancake",     { sugar_g:8,  sodium_mg:530, sat_fat_g:1, calories:240 }],
+  ["pillsbury cinnamon rolls", { sugar_g:15, sodium_mg:530, sat_fat_g:4, calories:310, kidsFloor:6, kidsCeiling:8 }],
+  ["pillsbury crescent",      { sugar_g:4,  sodium_mg:530, sat_fat_g:5, calories:230 }],
+  ["danimals",                { sugar_g:10, sodium_mg:75,  sat_fat_g:0, calories:80,  kidsFloor:4, kidsCeiling:6 }],
+  ["yoplait light",           { sugar_g:14, sodium_mg:85,  sat_fat_g:0, calories:90,  kidsFloor:5, kidsCeiling:7 }],
+  ["dannon light and fit",    { sugar_g:9,  sodium_mg:65,  sat_fat_g:0, calories:80,  kidsFloor:4, kidsCeiling:6 }],
+
+  // ── BREAD AND BAKED GOODS ─────────────────────────────────────
+  ["wonder bread",            { sugar_g:3,  sodium_mg:125, sat_fat_g:1, calories:130 }],
+  ["wonder hamburger buns",   { sugar_g:5,  sodium_mg:200, sat_fat_g:1, calories:180 }],
+  ["wonder",                  { sugar_g:3,  sodium_mg:125, sat_fat_g:1, calories:130 }],
+  ["nature's own",            { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["natures own",             { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["natures own bread",       { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["sara lee bread",          { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
+  ["sara lee white bread",    { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
+  ["sara lee",                { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
+  ["arnold bread",            { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["arnold",                  { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["oroweat",                 { sugar_g:3,  sodium_mg:140, sat_fat_g:0, calories:110 }],
+  ["nature's harvest bread",  { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
+  ["great value white bread", { sugar_g:3,  sodium_mg:140, sat_fat_g:0, calories:120 }],
+  ["thomas bagels",           { sugar_g:6,  sodium_mg:430, sat_fat_g:0, calories:270 }],
+  ["thomas english muffins",  { sugar_g:1,  sodium_mg:230, sat_fat_g:0, calories:120 }],
+  ["thomas",                  { sugar_g:4,  sodium_mg:330, sat_fat_g:0, calories:195 }],
+  ["einstein bagels",         { sugar_g:6,  sodium_mg:430, sat_fat_g:1, calories:280 }],
+  ["einstein",                { sugar_g:6,  sodium_mg:430, sat_fat_g:1, calories:280 }],
+  ["kings hawaiian",          { sugar_g:8,  sodium_mg:160, sat_fat_g:2, calories:200, kidsFloor:4, kidsCeiling:6 }],
+  ["king hawaiian",           { sugar_g:8,  sodium_mg:160, sat_fat_g:2, calories:200, kidsFloor:4, kidsCeiling:6 }],
+  ["martin's potato bread",   { sugar_g:2,  sodium_mg:140, sat_fat_g:0, calories:120 }],
+  ["martin's potato rolls",   { sugar_g:4,  sodium_mg:180, sat_fat_g:1, calories:150 }],
+  ["martins potato rolls",    { sugar_g:4,  sodium_mg:180, sat_fat_g:1, calories:150 }],
+  ["franz bread",             { sugar_g:3,  sodium_mg:160, sat_fat_g:0, calories:120 }],
+  ["mission flour tortillas", { sugar_g:1,  sodium_mg:360, sat_fat_g:1, calories:140 }],
+  ["mission flour",           { sugar_g:1,  sodium_mg:360, sat_fat_g:1, calories:140 }],
+  ["guerrero flour tortillas",{ sugar_g:1,  sodium_mg:350, sat_fat_g:1, calories:140 }],
+  ["guerrero tortillas",      { sugar_g:1,  sodium_mg:350, sat_fat_g:1, calories:140 }],
+  ["la banderita",            { sugar_g:1,  sodium_mg:340, sat_fat_g:1, calories:130 }],
+  ["old el paso tortillas",   { sugar_g:1,  sodium_mg:310, sat_fat_g:1, calories:120 }],
+  ["old el paso",             { sugar_g:2,  sodium_mg:310, sat_fat_g:1, calories:130 }],
+
+  // ── DELI MEAT AND PROCESSED MEAT ─────────────────────────────
+  ["oscar mayer wieners",     { sugar_g:2,  sodium_mg:500, sat_fat_g:6,  calories:180 }],
+  ["oscar mayer classic",     { sugar_g:2,  sodium_mg:500, sat_fat_g:6,  calories:180 }],
+  ["oscar mayer deli fresh",  { sugar_g:1,  sodium_mg:530, sat_fat_g:1,  calories:50 }],
+  ["oscar mayer bacon",       { sugar_g:0,  sodium_mg:380, sat_fat_g:4,  calories:110 }],
+  ["oscar mayer p3",          { sugar_g:1,  sodium_mg:500, sat_fat_g:4,  calories:180 }],
+  ["ball park franks",        { sugar_g:2,  sodium_mg:480, sat_fat_g:7,  calories:170 }],
+  ["ball park beef franks",   { sugar_g:2,  sodium_mg:480, sat_fat_g:7,  calories:170 }],
+  ["hebrew national",         { sugar_g:0,  sodium_mg:460, sat_fat_g:5,  calories:150 }],
+  ["eckrich",                 { sugar_g:2,  sodium_mg:490, sat_fat_g:6,  calories:170 }],
+  ["eckrich sausage",         { sugar_g:2,  sodium_mg:490, sat_fat_g:6,  calories:170 }],
+  ["jimmy dean sausage",      { sugar_g:1,  sodium_mg:400, sat_fat_g:9,  calories:220 }],
+  ["jimmy dean frozen",       { sugar_g:2,  sodium_mg:580, sat_fat_g:11, calories:360 }],
+  ["hillshire farm turkey",   { sugar_g:1,  sodium_mg:480, sat_fat_g:1,  calories:60 }],
+  ["jack link's",             { sugar_g:5,  sodium_mg:590, sat_fat_g:1,  calories:80 }],
+  ["jack links",              { sugar_g:5,  sodium_mg:590, sat_fat_g:1,  calories:80 }],
+  ["slim jim",                { sugar_g:1,  sodium_mg:430, sat_fat_g:4,  calories:110 }],
+  ["old wisconsin",           { sugar_g:0,  sodium_mg:510, sat_fat_g:5,  calories:170 }],
+  ["good & gather sliced turkey",{ sugar_g:1, sodium_mg:460, sat_fat_g:0, calories:50 }],
+  ["good & gather deli",      { sugar_g:1,  sodium_mg:460, sat_fat_g:0,  calories:50 }],
+  ["applegate naturals turkey",{ sugar_g:0,  sodium_mg:390, sat_fat_g:0, calories:50 }],
+  ["applegate hot dogs",      { sugar_g:1,  sodium_mg:370, sat_fat_g:3,  calories:100 }],
+
+  // ── FROZEN FOOD ───────────────────────────────────────────────
+  ["lean cuisine",            { sugar_g:5,  sodium_mg:820,  sat_fat_g:3,  calories:280, kidsFloor:6, kidsCeiling:8 }],
+  ["healthy choice",          { sugar_g:6,  sodium_mg:600,  sat_fat_g:3,  calories:300, kidsFloor:5, kidsCeiling:7 }],
+  ["stouffers",               { sugar_g:7,  sodium_mg:1100, sat_fat_g:9,  calories:440, kidsFloor:7, kidsCeiling:9 }],
+  ["marie callender's frozen",{ sugar_g:8,  sodium_mg:950,  sat_fat_g:7,  calories:420, kidsFloor:7, kidsCeiling:9 }],
+  ["hot pockets",             { sugar_g:5,  sodium_mg:700,  sat_fat_g:6,  calories:290, kidsFloor:6, kidsCeiling:8 }],
+  ["lean pockets",            { sugar_g:4,  sodium_mg:600,  sat_fat_g:4,  calories:240, kidsFloor:5, kidsCeiling:7 }],
+  ["el monterey",             { sugar_g:2,  sodium_mg:560,  sat_fat_g:6,  calories:310, kidsFloor:6, kidsCeiling:8 }],
+  ["red baron pizza",         { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:390, kidsFloor:7, kidsCeiling:9 }],
+  ["california pizza kitchen frozen",{ sugar_g:4, sodium_mg:690, sat_fat_g:6, calories:330, kidsFloor:6, kidsCeiling:8 }],
+  ["digiorno pepperoni",      { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:380, kidsFloor:7, kidsCeiling:9 }],
+  ["tyson chicken nuggets",   { sugar_g:0,  sodium_mg:390,  sat_fat_g:2,  calories:170 }],
+  ["perdue chicken nuggets",  { sugar_g:1,  sodium_mg:330,  sat_fat_g:2,  calories:160 }],
+  ["trader joe's mandarin orange chicken",{ sugar_g:15, sodium_mg:420, sat_fat_g:3, calories:310, kidsFloor:5, kidsCeiling:7 }],
+  ["morning star farms",      { sugar_g:1,  sodium_mg:350,  sat_fat_g:1,  calories:110, protein_g:12 }],
+  ["boca burger",             { sugar_g:2,  sodium_mg:380,  sat_fat_g:1,  calories:110, protein_g:13 }],
+
+  // ── COFFEE CREAMERS AND SYRUPS ────────────────────────────────
+  ["coffee mate powder",      { sugar_g:5,  sodium_mg:0,  sat_fat_g:2, calories:60 }],
+  ["coffee mate liquid",      { sugar_g:5,  sodium_mg:30, sat_fat_g:1, calories:35 }],
+  ["coffee mate french vanilla",{ sugar_g:5, sodium_mg:30, sat_fat_g:1, calories:35 }],
+  ["coffee mate",             { sugar_g:5,  sodium_mg:30, sat_fat_g:1, calories:35 }],
+  ["international delight",   { sugar_g:6,  sodium_mg:35, sat_fat_g:1, calories:45 }],
+  ["starbucks coffee creamer",{ sugar_g:5,  sodium_mg:40, sat_fat_g:1, calories:35 }],
+  ["torani",                  { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
+  ["jordan's skinny",         { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
+  ["monin syrup",             { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
+
+  // ── CONDIMENTS ────────────────────────────────────────────────
+  ["kikkoman teriyaki",       { sugar_g:6,  sodium_mg:960, sat_fat_g:0, calories:40 }],
+  ["sweet baby ray's",        { sugar_g:16, sodium_mg:290, sat_fat_g:0, calories:70 }],
+  ["sweet baby rays",         { sugar_g:16, sodium_mg:290, sat_fat_g:0, calories:70 }],
+  ["heinz bbq sauce",         { sugar_g:13, sodium_mg:300, sat_fat_g:0, calories:60 }],
+  ["smucker's strawberry jam",{ sugar_g:12, sodium_mg:0,   sat_fat_g:0, calories:50 }],
+  ["smucker's jam",           { sugar_g:12, sodium_mg:0,   sat_fat_g:0, calories:50 }],
+  ["tostitos queso dip",      { sugar_g:2,  sodium_mg:280, sat_fat_g:1, calories:40 }],
+  ["panda express sauce",     { sugar_g:9,  sodium_mg:360, sat_fat_g:0, calories:50 }],
+  ["wishbone italian",        { sugar_g:2,  sodium_mg:290, sat_fat_g:0, calories:70 }],
+  ["kraft italian dressing",  { sugar_g:3,  sodium_mg:310, sat_fat_g:0, calories:80 }],
+  ["a.1. sauce",              { sugar_g:4,  sodium_mg:280, sat_fat_g:0, calories:25 }],
+  ["a1 original",             { sugar_g:4,  sodium_mg:280, sat_fat_g:0, calories:25 }],
+
+  // ── LUNCHABLES ────────────────────────────────────────────────
+  ["lunchables nachos",       { sugar_g:2,  sodium_mg:820, sat_fat_g:5,  calories:440, kidsFloor:7, kidsCeiling:9 }],
+  ["lunchables pizza",        { sugar_g:5,  sodium_mg:760, sat_fat_g:5,  calories:360, kidsFloor:6, kidsCeiling:8 }],
+  ["lunchables turkey",       { sugar_g:5,  sodium_mg:830, sat_fat_g:4,  calories:330, kidsFloor:6, kidsCeiling:8 }],
+  ["lunchables with smoothie",{ sugar_g:22, sodium_mg:760, sat_fat_g:5,  calories:450, kidsFloor:8, kidsCeiling:9 }],
+
+  // ── PROTEIN BARS ─────────────────────────────────────────────
+  ["quest bar",               { sugar_g:1,  sodium_mg:220, sat_fat_g:3, calories:190, protein_g:21, fiber_g:14 }],
+  ["one bar",                 { sugar_g:1,  sodium_mg:160, sat_fat_g:3, calories:220, protein_g:20, fiber_g:10 }],
+  ["built bar",               { sugar_g:5,  sodium_mg:150, sat_fat_g:2, calories:150, protein_g:17, fiber_g:6 }],
+  ["rxbar",                   { sugar_g:13, sodium_mg:200, sat_fat_g:2, calories:210, protein_g:12, fiber_g:5 }],
+  ["rx bar",                  { sugar_g:13, sodium_mg:200, sat_fat_g:2, calories:210, protein_g:12, fiber_g:5 }],
+  ["power bar",               { sugar_g:20, sodium_mg:200, sat_fat_g:2, calories:240, protein_g:8,  fiber_g:2, kidsFloor:6, kidsCeiling:8 }],
+  ["barebells",               { sugar_g:2,  sodium_mg:220, sat_fat_g:3, calories:210, protein_g:20, fiber_g:2 }],
+  ["legendary foods",         { sugar_g:1,  sodium_mg:230, sat_fat_g:2, calories:180, protein_g:20, fiber_g:7 }],
+  ["halo top",                { sugar_g:6,  sodium_mg:95,  sat_fat_g:1, calories:80,  protein_g:6 }],
+  ["arctic zero",             { sugar_g:4,  sodium_mg:60,  sat_fat_g:0, calories:40,  protein_g:3 }],
+  ["rebel keto ice cream",    { sugar_g:1,  sodium_mg:75,  sat_fat_g:7, calories:170, protein_g:3 }],
+
+  // ── FAST FOOD — MCDONALD'S ────────────────────────────────────
+  ["big mac",                 { sugar_g:9,  sodium_mg:1010, sat_fat_g:11, calories:550 }],
+  ["mcchicken",               { sugar_g:5,  sodium_mg:670,  sat_fat_g:4,  calories:400 }],
+  ["chicken mcnuggets",       { sugar_g:0,  sodium_mg:940,  sat_fat_g:5,  calories:420 }],
+  ["sausage mcmuffin",        { sugar_g:2,  sodium_mg:790,  sat_fat_g:9,  calories:400 }],
+  ["sausage biscuit mcdonald",{ sugar_g:3,  sodium_mg:1040, sat_fat_g:11, calories:460 }],
+  ["mcdonald's french fries", { sugar_g:0,  sodium_mg:400,  sat_fat_g:2,  calories:490 }],
+  ["mcdonald's hotcakes",     { sugar_g:14, sodium_mg:590,  sat_fat_g:6,  calories:590 }],
+  ["mcdonald's apple pie",    { sugar_g:13, sodium_mg:85,   sat_fat_g:4,  calories:240 }],
+  ["mcflurry",                { sugar_g:64, sodium_mg:190,  sat_fat_g:7,  calories:510, kidsFloor:9, kidsCeiling:9 }],
+  ["mcdonald's quarter pounder",{ sugar_g:9, sodium_mg:1110, sat_fat_g:12, calories:520 }],
+  ["mcdonald's grilled chicken",{ sugar_g:6, sodium_mg:820, sat_fat_g:2,  calories:380 }],
+  ["egg mcmuffin",            { sugar_g:3,  sodium_mg:760,  sat_fat_g:5,  calories:310 }],
+  ["mcdonald's oatmeal",      { sugar_g:18, sodium_mg:150,  sat_fat_g:1,  calories:290, fiber_g:5 }],
+
+  // ── FAST FOOD — BURGER KING ───────────────────────────────────
+  ["whopper",                 { sugar_g:11, sodium_mg:980,  sat_fat_g:13, calories:660 }],
+  ["impossible whopper",      { sugar_g:12, sodium_mg:1080, sat_fat_g:8,  calories:630 }],
+  ["bk chicken fries",        { sugar_g:1,  sodium_mg:630,  sat_fat_g:4,  calories:280 }],
+  ["bk croissanwich",         { sugar_g:6,  sodium_mg:1010, sat_fat_g:14, calories:500 }],
+  ["baconator",               { sugar_g:9,  sodium_mg:1330, sat_fat_g:22, calories:950 }],
+  ["dave's single",           { sugar_g:8,  sodium_mg:1060, sat_fat_g:16, calories:590 }],
+  ["son of baconator",        { sugar_g:7,  sodium_mg:1080, sat_fat_g:16, calories:660 }],
+  ["burger king crispy chicken",{ sugar_g:6, sodium_mg:1100, sat_fat_g:9, calories:660 }],
+
+  // ── FAST FOOD — CHICK-FIL-A ──────────────────────────────────
+  ["chick-fil-a crispy",      { sugar_g:5,  sodium_mg:1350, sat_fat_g:4,  calories:440 }],
+  ["chick-fil-a grilled",     { sugar_g:4,  sodium_mg:900,  sat_fat_g:1,  calories:310, protein_g:28 }],
+  ["chick-fil-a chicken biscuit",{ sugar_g:7, sodium_mg:1310, sat_fat_g:8, calories:490 }],
+  ["chick-fil-a nuggets",     { sugar_g:2,  sodium_mg:940,  sat_fat_g:3,  calories:280 }],
+
+  // ── FAST FOOD — KFC / POPEYES ─────────────────────────────────
+  ["kfc original recipe",     { sugar_g:0,  sodium_mg:1030, sat_fat_g:7,  calories:400 }],
+  ["kfc extra crispy",        { sugar_g:0,  sodium_mg:970,  sat_fat_g:8,  calories:470 }],
+  ["kfc grilled chicken",     { sugar_g:0,  sodium_mg:730,  sat_fat_g:2,  calories:210, protein_g:29 }],
+  ["kfc famous bowl",         { sugar_g:4,  sodium_mg:1360, sat_fat_g:6,  calories:720 }],
+  ["popeyes chicken sandwich",{ sugar_g:5,  sodium_mg:1445, sat_fat_g:9,  calories:700 }],
+  ["popeyes original chicken",{ sugar_g:0,  sodium_mg:420,  sat_fat_g:4,  calories:260, protein_g:17 }],
+  ["popeyes spicy chicken",   { sugar_g:0,  sodium_mg:460,  sat_fat_g:4,  calories:260, protein_g:17 }],
+  ["raising cane's chicken tenders",{ sugar_g:0, sodium_mg:660, sat_fat_g:3, calories:340, protein_g:24 }],
+  ["raising cane's sauce",    { sugar_g:2,  sodium_mg:300,  sat_fat_g:3,  calories:190 }],
+  ["whataburger",             { sugar_g:8,  sodium_mg:890,  sat_fat_g:11, calories:590 }],
+  ["five guys burger",        { sugar_g:8,  sodium_mg:670,  sat_fat_g:18, calories:700 }],
+  ["five guys fries",         { sugar_g:0,  sodium_mg:770,  sat_fat_g:5,  calories:530 }],
+  ["in-n-out double double",  { sugar_g:10, sodium_mg:1160, sat_fat_g:17, calories:670 }],
+  ["in-n-out double-double",  { sugar_g:10, sodium_mg:1160, sat_fat_g:17, calories:670 }],
+  ["in-n-out burger",         { sugar_g:7,  sodium_mg:650,  sat_fat_g:9,  calories:400 }],
+  ["in-n-out animal style",   { sugar_g:12, sodium_mg:1440, sat_fat_g:18, calories:750 }],
+  ["jack in the box tacos",   { sugar_g:3,  sodium_mg:310,  sat_fat_g:4,  calories:170 }],
+  ["jack in the box sourdough jack",{ sugar_g:8, sodium_mg:1160, sat_fat_g:20, calories:730 }],
+  ["sonic cherry limeade",    { sugar_g:60, sodium_mg:35,   sat_fat_g:0,  calories:230, kidsFloor:9, kidsCeiling:9 }],
+  ["sonic footlong coney",    { sugar_g:6,  sodium_mg:1280, sat_fat_g:15, calories:640 }],
+  ["dq chicken strip",        { sugar_g:2,  sodium_mg:1190, sat_fat_g:3,  calories:400 }],
+  ["dairy queen blizzard",    { sugar_g:65, sodium_mg:310,  sat_fat_g:14, calories:690, kidsFloor:9, kidsCeiling:9 }],
+  ["wingstop",                { sugar_g:0,  sodium_mg:820,  sat_fat_g:6,  calories:500 }],
+  ["buffalo wild wings",      { sugar_g:0,  sodium_mg:1490, sat_fat_g:9,  calories:720 }],
+  ["zaxby's chicken fingers", { sugar_g:1,  sodium_mg:820,  sat_fat_g:4,  calories:420 }],
+  ["el pollo loco chicken",   { sugar_g:1,  sodium_mg:380,  sat_fat_g:1,  calories:190, protein_g:28 }],
+  ["carl's jr thickburger",   { sugar_g:8,  sodium_mg:1200, sat_fat_g:22, calories:850 }],
+  ["del taco crunchy tacos",  { sugar_g:2,  sodium_mg:630,  sat_fat_g:9,  calories:450 }],
+  ["culvers",                 { sugar_g:8,  sodium_mg:810,  sat_fat_g:10, calories:510 }],
+  ["culvers butterburger",    { sugar_g:8,  sodium_mg:810,  sat_fat_g:10, calories:510 }],
+  ["culvers cheese curds",    { sugar_g:1,  sodium_mg:640,  sat_fat_g:16, calories:590 }],
+  ["culvers frozen custard",  { sugar_g:27, sodium_mg:160,  sat_fat_g:9,  calories:310, kidsFloor:7, kidsCeiling:9 }],
+  ["arbys roast beef",        { sugar_g:5,  sodium_mg:970,  sat_fat_g:5,  calories:360 }],
+  ["arbys curly fries",       { sugar_g:1,  sodium_mg:1300, sat_fat_g:5,  calories:550 }],
+  ["texas roadhouse rolls",   { sugar_g:7,  sodium_mg:460,  sat_fat_g:3,  calories:340, kidsFloor:5, kidsCeiling:7 }],
+  ["texas roadhouse sirloin", { sugar_g:0,  sodium_mg:480,  sat_fat_g:3,  calories:260, protein_g:36 }],
+
+  // ── FAST FOOD — PIZZA ─────────────────────────────────────────
+  ["dominos pepperoni",       { sugar_g:4,  sodium_mg:820,  sat_fat_g:8,  calories:380 }],
+  ["domino's pepperoni pizza",{ sugar_g:4,  sodium_mg:820,  sat_fat_g:8,  calories:380 }],
+  ["pizza hut pepperoni",     { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:380 }],
+  ["little caesars pepperoni",{ sugar_g:4,  sodium_mg:730,  sat_fat_g:7,  calories:360 }],
+
+  // ── FAST FOOD — SUBWAY / SANDWICHES ──────────────────────────
+  ["subway italian bmt",      { sugar_g:6,  sodium_mg:1590, sat_fat_g:7,  calories:480 }],
+  ["subway meatball marinara",{ sugar_g:12, sodium_mg:1380, sat_fat_g:9,  calories:580 }],
+  ["jersey mike's italian",   { sugar_g:4,  sodium_mg:1770, sat_fat_g:11, calories:720 }],
+
+  // ── FAST FOOD — BREAKFAST ─────────────────────────────────────
+  ["dunkin bacon egg",        { sugar_g:3,  sodium_mg:870,  sat_fat_g:10, calories:500 }],
+  ["dunkin' bacon egg",       { sugar_g:3,  sodium_mg:870,  sat_fat_g:10, calories:500 }],
+  ["ihop buttermilk pancakes",{ sugar_g:16, sodium_mg:1310, sat_fat_g:5,  calories:680, kidsFloor:7, kidsCeiling:9 }],
+  ["denny's grand slam",      { sugar_g:10, sodium_mg:2090, sat_fat_g:14, calories:790 }],
+  ["cracker barrel pancakes", { sugar_g:12, sodium_mg:980,  sat_fat_g:4,  calories:520, kidsFloor:5, kidsCeiling:7 }],
+
+  // ── SIT-DOWN RESTAURANTS ─────────────────────────────────────
+  ["applebee's riblets",      { sugar_g:18, sodium_mg:3540, sat_fat_g:18, calories:1270 }],
+  ["chili's awesome blossom", { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
+  ["cheesecake factory pasta",{ sugar_g:8,  sodium_mg:1400, sat_fat_g:18, calories:1580 }],
+  ["olive garden fettuccine alfredo",{ sugar_g:6, sodium_mg:1080, sat_fat_g:47, calories:1220 }],
+  ["olive garden breadsticks",{ sugar_g:2,  sodium_mg:460,  sat_fat_g:1,  calories:140 }],
+
+  // ── TACO BELL / CHIPOTLE ──────────────────────────────────────
+  ["taco bell crunchwrap",    { sugar_g:4,  sodium_mg:1210, sat_fat_g:10, calories:530 }],
+  ["taco bell chalupa",       { sugar_g:4,  sodium_mg:680,  sat_fat_g:7,  calories:350 }],
+  ["taco bell bean burrito",  { sugar_g:3,  sodium_mg:1000, sat_fat_g:4,  calories:350 }],
+  ["taco bell power bowl",    { sugar_g:4,  sodium_mg:950,  sat_fat_g:7,  calories:430, protein_g:25 }],
+  ["chipotle burrito",        { sugar_g:4,  sodium_mg:1745, sat_fat_g:20, calories:975, protein_g:36, fiber_g:15 }],
+  ["chipotle bowl",           { sugar_g:4,  sodium_mg:1620, sat_fat_g:16, calories:800, protein_g:34, fiber_g:15 }],
+  ["chipotle carnitas",       { sugar_g:0,  sodium_mg:580,  sat_fat_g:6,  calories:220, protein_g:21 }],
+  ["chipotle sofritas",       { sugar_g:1,  sodium_mg:420,  sat_fat_g:2,  calories:145, protein_g:9, fiber_g:4 }],
+  ["in-n-out protein style",  { sugar_g:8,  sodium_mg:730,  sat_fat_g:9,  calories:330, protein_g:25 }],
+
+  // ── PANERA / STARBUCKS / OTHER CHAINS ────────────────────────
+  ["panera broccoli cheddar soup",{ sugar_g:6, sodium_mg:950, sat_fat_g:8, calories:290 }],
+  ["panera mac and cheese",   { sugar_g:5,  sodium_mg:1100, sat_fat_g:10, calories:530 }],
+  ["panera chicken sandwich", { sugar_g:8,  sodium_mg:910,  sat_fat_g:4,  calories:480 }],
+  ["starbucks pumpkin spice latte",{ sugar_g:50, sodium_mg:240, sat_fat_g:7, calories:380, kidsFloor:9, kidsCeiling:9 }],
+  ["starbucks frappuccino",   { sugar_g:56, sodium_mg:230,  sat_fat_g:7,  calories:420, kidsFloor:9, kidsCeiling:9 }],
+  ["starbucks egg bites",     { sugar_g:3,  sodium_mg:440,  sat_fat_g:9,  calories:260, protein_g:19 }],
+  ["smoothie king",           { sugar_g:52, sodium_mg:90,   sat_fat_g:0,  calories:290, kidsFloor:9, kidsCeiling:9 }],
+  ["jamba juice",             { sugar_g:48, sodium_mg:60,   sat_fat_g:0,  calories:290, kidsFloor:9, kidsCeiling:9 }],
+  ["dutch bros",              { sugar_g:44, sodium_mg:200,  sat_fat_g:5,  calories:360, kidsFloor:9, kidsCeiling:9 }],
+  ["crumbl cookie",           { sugar_g:55, sodium_mg:310,  sat_fat_g:12, calories:680, kidsFloor:9, kidsCeiling:9 }],
+
+  // ── PANDA EXPRESS ─────────────────────────────────────────────
+  ["panda express orange chicken",{ sugar_g:19, sodium_mg:820, sat_fat_g:5, calories:490 }],
+  ["panda express fried rice",{ sugar_g:0,  sodium_mg:900,  sat_fat_g:4,  calories:590, fiber_g:3 }],
+  ["panda express string bean chicken",{ sugar_g:4, sodium_mg:730, sat_fat_g:2, calories:190, protein_g:18 }],
+  ["panda express teriyaki chicken",{ sugar_g:9, sodium_mg:930, sat_fat_g:1, calories:280, protein_g:36 }],
+
+  // ── WENDYS ───────────────────────────────────────────────────
+  ["wendys crispy",           { sugar_g:5,  sodium_mg:1300, sat_fat_g:8,  calories:600 }],
+  ["wendys chili",            { sugar_g:6,  sodium_mg:1100, sat_fat_g:3,  calories:240, protein_g:21, fiber_g:6 }],
+  ["wendys baked",            { sugar_g:3,  sodium_mg:40,   sat_fat_g:0,  calories:270, fiber_g:7 }],
+  ["wendys frosty",           { sugar_g:47, sodium_mg:200,  sat_fat_g:8,  calories:340, kidsFloor:8, kidsCeiling:9 }],
+  ["shake shack shackburger", { sugar_g:8,  sodium_mg:810,  sat_fat_g:15, calories:520 }],
+  ["shake shack burger",      { sugar_g:8,  sodium_mg:810,  sat_fat_g:15, calories:520 }],
+  ["shake shack fries",       { sugar_g:0,  sodium_mg:470,  sat_fat_g:4,  calories:490 }],
+  ["blaze pizza",             { sugar_g:4,  sodium_mg:780,  sat_fat_g:9,  calories:560 }],
+  ["mod pizza",               { sugar_g:4,  sodium_mg:790,  sat_fat_g:9,  calories:570 }],
+  ["sweetgreen harvest bowl", { sugar_g:12, sodium_mg:680,  sat_fat_g:5,  calories:600, protein_g:27, fiber_g:8 }],
+
+  // ── K-CUPS AND PLAIN COFFEE ───────────────────────────────────
+  ["k-cup",                   { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["keurig k-cup",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["starbucks k-cup",         { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["folgers k-cup",           { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["green mountain k-cup",    { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["dunkin k-cup",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+  ["death wish coffee k",     { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
+
+  // ── REMAINING 126 ENTRIES ─────────────────────────────────────
+
+  // Fruit snacks / kid beverages
+  ["mott's fruit snacks",     { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
+  ["motts fruit snacks",      { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
+  ["welch fruit",             { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
+  ["favorite day cookies",    { sugar_g:14, sodium_mg:130, sat_fat_g:3, calories:160, kidsFloor:5, kidsCeiling:7 }],
+  ["favorite day",            { sugar_g:10, sodium_mg:100, sat_fat_g:2, calories:130 }],
+  ["kirkland signature trail mix", { sugar_g:12, sodium_mg:65, sat_fat_g:2, calories:160, protein_g:4, fiber_g:2 }],
+
+  // Sweeteners
+  ["splenda",                 { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["equal",                   { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["equal packet",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["equal sweetener",         { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["sweet n low",             { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["sweet'n low",             { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["truvia",                  { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["swerve sweetener",        { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+  ["lakanto monk fruit",      { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
+
+  // Juices and juice drinks (not yet covered)
+  ["nature's nectar",         { sugar_g:38, sodium_mg:25, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["juicy juice",             { sugar_g:24, sodium_mg:15, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["tree top",                { sugar_g:26, sodium_mg:10, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["apple and eve",           { sugar_g:24, sodium_mg:15, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["ocean spray 100",         { sugar_g:24, sodium_mg:35, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
+  ["florida natural oj",      { sugar_g:22, sodium_mg:0,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
+  ["motts applesauce",        { sugar_g:13, sodium_mg:0,  sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
+  ["evolution fresh",         { sugar_g:28, sodium_mg:10, sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
+  ["lakewood",                { sugar_g:26, sodium_mg:10, sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["odwalla juice",           { sugar_g:32, sodium_mg:20, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["welch's",                 { sugar_g:36, sodium_mg:15, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["welch",                   { sugar_g:36, sodium_mg:15, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["naked juice",             { sugar_g:53, sodium_mg:10, sat_fat_g:0, calories:270, kidsFloor:9, kidsCeiling:9 }],
+  ["minute maid oj",          { sugar_g:24, sodium_mg:5,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
+  ["simply orange",           { sugar_g:22, sodium_mg:0,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
+  ["honest kids",             { sugar_g:8,  sodium_mg:5,  sat_fat_g:0, calories:40,  kidsFloor:4, kidsCeiling:6 }],
+
+  // Plant milks
+  ["oatly original",          { sugar_g:7,  sodium_mg:100, sat_fat_g:0.5, calories:120 }],
+  ["oatly oat milk",          { sugar_g:7,  sodium_mg:100, sat_fat_g:0.5, calories:120 }],
+  ["oatly barista",           { sugar_g:8,  sodium_mg:100, sat_fat_g:1,   calories:130 }],
+  ["silk almond",             { sugar_g:7,  sodium_mg:170, sat_fat_g:0,   calories:60 }],
+  ["califia farms oat",       { sugar_g:6,  sodium_mg:120, sat_fat_g:0,   calories:100 }],
+  ["ripple",                  { sugar_g:0,  sodium_mg:130, sat_fat_g:0,   calories:70, protein_g:8 }],
+  ["fairlife",                { sugar_g:6,  sodium_mg:130, sat_fat_g:3,   calories:120, protein_g:13 }],
+
+  // Sports / hydration
+  ["liquid iv",               { sugar_g:11, sodium_mg:500, sat_fat_g:0, calories:45 }],
+  ["liquid i.v.",             { sugar_g:11, sodium_mg:500, sat_fat_g:0, calories:45 }],
+  ["electrolit",              { sugar_g:8,  sodium_mg:250, sat_fat_g:0, calories:35 }],
+  ["rowdy energy",            { sugar_g:0,  sodium_mg:180, sat_fat_g:0, calories:0 }],
+  ["kevita sparkling probiotic",{ sugar_g:4, sodium_mg:15, sat_fat_g:0, calories:15 }],
+
+  // Coffee creamers / syrups
+  ["califia farms creamer",   { sugar_g:4,  sodium_mg:30, sat_fat_g:0, calories:35 }],
+  ["silk oat creamer",        { sugar_g:6,  sodium_mg:65, sat_fat_g:0, calories:45 }],
+  ["starbucks syrup",         { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
+  ["starbucks via",           { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
+  ["nescafe instant",         { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:5 }],
+  ["nescafe instant coffee",  { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:5 }],
+  ["folgers crystals",        { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
+  ["maxwell house",           { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
+  ["stok cold brew",          { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
+  ["cafe bustelo",            { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
+  ["lavazza",                 { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
+  ["bigelow tea",             { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:0 }],
+  ["bigelow",                 { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:0 }],
+  ["twinings",                { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
+
+  // Condiments / sauces
+  ["hellmanns mayo",          { sugar_g:0,  sodium_mg:90,  sat_fat_g:2, calories:90 }],
+  ["duke's mayo",             { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
+  ["dukes mayo",              { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
+  ["best foods mayo",         { sugar_g:0,  sodium_mg:90,  sat_fat_g:2, calories:90 }],
+  ["kraft mayo",              { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
+  ["kraft italian dressing",  { sugar_g:3,  sodium_mg:310, sat_fat_g:0, calories:80 }],
+  ["newman's own dressing",   { sugar_g:2,  sodium_mg:280, sat_fat_g:1, calories:90 }],
+  ["ken's steakhouse",        { sugar_g:2,  sodium_mg:300, sat_fat_g:2, calories:130 }],
+  ["lea and perrins",         { sugar_g:3,  sodium_mg:160, sat_fat_g:0, calories:15 }],
+  ["lawry's seasoned salt",   { sugar_g:0,  sodium_mg:380, sat_fat_g:0, calories:0 }],
+  ["lawry's marinade",        { sugar_g:5,  sodium_mg:370, sat_fat_g:0, calories:30 }],
+  ["mae ploy sweet chili sauce",{ sugar_g:9, sodium_mg:220, sat_fat_g:0, calories:40 }],
+  ["kewpie mayonnaise",       { sugar_g:0,  sodium_mg:100, sat_fat_g:2, calories:100 }],
+  ["la choy soy sauce",       { sugar_g:1,  sodium_mg:920, sat_fat_g:0, calories:10 }],
+  ["hoisin sauce",            { sugar_g:7,  sodium_mg:260, sat_fat_g:0, calories:35 }],
+  ["lee kum kee hoisin",      { sugar_g:7,  sodium_mg:260, sat_fat_g:0, calories:35 }],
+  ["lee kum kee oyster sauce",{ sugar_g:4,  sodium_mg:490, sat_fat_g:0, calories:20 }],
+  ["kikkoman mirin",          { sugar_g:8,  sodium_mg:310, sat_fat_g:0, calories:40 }],
+  ["aji mirin",               { sugar_g:8,  sodium_mg:310, sat_fat_g:0, calories:40 }],
+  ["maggi seasoning",         { sugar_g:1,  sodium_mg:610, sat_fat_g:0, calories:5 }],
+  ["knorr liquid seasoning",  { sugar_g:1,  sodium_mg:590, sat_fat_g:0, calories:5 }],
+  ["prego traditional",       { sugar_g:8,  sodium_mg:430, sat_fat_g:1, calories:70 }],
+  ["ragu traditional",        { sugar_g:7,  sodium_mg:380, sat_fat_g:1, calories:70 }],
+  ["swanson chicken broth",   { sugar_g:0,  sodium_mg:860, sat_fat_g:0, calories:15 }],
+  ["campbell's cream of mushroom",{ sugar_g:1, sodium_mg:870, sat_fat_g:2, calories:100 }],
+  ["mccormick taco seasoning",{ sugar_g:1,  sodium_mg:350, sat_fat_g:0, calories:20 }],
+
+  // Snacks and crackers
+  ["wheat thins",             { sugar_g:4,  sodium_mg:200, sat_fat_g:1, calories:140, fiber_g:2 }],
+  ["smartfood popcorn",       { sugar_g:1,  sodium_mg:300, sat_fat_g:3, calories:160 }],
+  ["smartfood",               { sugar_g:1,  sodium_mg:300, sat_fat_g:3, calories:160 }],
+  ["planters",                { sugar_g:2,  sodium_mg:115, sat_fat_g:2, calories:170, protein_g:7 }],
+  ["planters dry roasted peanuts",{ sugar_g:2, sodium_mg:115, sat_fat_g:2, calories:170, protein_g:7 }],
+  ["stacy's pita",            { sugar_g:1,  sodium_mg:200, sat_fat_g:1, calories:130 }],
+  ["popchips",                { sugar_g:1,  sodium_mg:200, sat_fat_g:0, calories:120 }],
+  ["krave jerky",             { sugar_g:7,  sodium_mg:450, sat_fat_g:1, calories:80,  protein_g:10 }],
+  ["lorissa's kitchen",       { sugar_g:4,  sodium_mg:380, sat_fat_g:1, calories:70,  protein_g:11 }],
+
+  // Dairy / eggs
+  ["laughing cow",            { sugar_g:0,  sodium_mg:200, sat_fat_g:2, calories:35 }],
+  ["two good greek yogurt",   { sugar_g:2,  sodium_mg:65,  sat_fat_g:0, calories:90,  protein_g:12 }],
+  ["quaker old fashioned oats",{ sugar_g:1, sodium_mg:0,   sat_fat_g:0.5, calories:150, fiber_g:4, protein_g:5 }],
+  ["maple grove farms",       { sugar_g:29, sodium_mg:0,   sat_fat_g:0, calories:110 }],
+
+  // Bread / gluten-free
+  ["canyon bakehouse",        { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:100, fiber_g:3 }],
+  ["udi's gluten free",       { sugar_g:3,  sodium_mg:160, sat_fat_g:1, calories:130 }],
+  ["udis",                    { sugar_g:3,  sodium_mg:160, sat_fat_g:1, calories:130 }],
+  ["schar bread",             { sugar_g:2,  sodium_mg:220, sat_fat_g:0, calories:110, fiber_g:3 }],
+  ["la tortilla factory",     { sugar_g:0,  sodium_mg:290, sat_fat_g:0, calories:45,  fiber_g:10 }],
+  ["maria and ricardos",      { sugar_g:0,  sodium_mg:170, sat_fat_g:0, calories:100 }],
+
+  // Rice / pantry staples
+  ["minute rice",             { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
+  ["minute rice cup",         { sugar_g:0,  sodium_mg:400, sat_fat_g:0, calories:190, protein_g:4 }],
+  ["success boil",            { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
+  ["success boil in bag",     { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
+  ["maseca masa harina",      { sugar_g:0,  sodium_mg:3,  sat_fat_g:0.5, calories:110, fiber_g:4 }],
+  ["bush's baked beans",      { sugar_g:12, sodium_mg:550, sat_fat_g:0, calories:150, protein_g:7, fiber_g:5 }],
+  ["bush's best",             { sugar_g:12, sodium_mg:550, sat_fat_g:0, calories:150, protein_g:7, fiber_g:5 }],
+
+  // Alcohol (remaining)
+  ["smirnoff vodka",          { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
+  ["jim beam",                { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
+  ["johnnie walker",          { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
+  ["vizzy hard seltzer",      { sugar_g:1, sodium_mg:10, sat_fat_g:0, calories:100 }],
+  ["heineken beer",           { sugar_g:0, sodium_mg:10, sat_fat_g:0, calories:142 }],
+  ["bota box",                { sugar_g:4, sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["josh cellars",            { sugar_g:3, sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["kim crawford",            { sugar_g:2, sodium_mg:10, sat_fat_g:0, calories:120 }],
+  ["meiomi pinot noir",       { sugar_g:7, sodium_mg:10, sat_fat_g:0, calories:130 }],
+  ["la marca prosecco",       { sugar_g:3, sodium_mg:10, sat_fat_g:0, calories:110 }],
+
+  // Indian / international
+  ["mtr ready meals",         { sugar_g:4,  sodium_mg:680, sat_fat_g:5, calories:230 }],
+  ["kitchens of india",       { sugar_g:5,  sodium_mg:620, sat_fat_g:4, calories:210 }],
+  ["patak's",                 { sugar_g:5,  sodium_mg:580, sat_fat_g:4, calories:200 }],
+  ["pataks",                  { sugar_g:5,  sodium_mg:580, sat_fat_g:4, calories:200 }],
+  ["jones dairy sausage",     { sugar_g:1,  sodium_mg:350, sat_fat_g:8, calories:180 }],
+
+  // Restaurant missing
+  ["panera caesar salad",     { sugar_g:4,  sodium_mg:640, sat_fat_g:5, calories:350, protein_g:12 }],
+  ["olive garden salad",      { sugar_g:4,  sodium_mg:540, sat_fat_g:3, calories:150 }],
+  ["starbucks egg white bites",{ sugar_g:3, sodium_mg:440, sat_fat_g:9, calories:260, protein_g:19 }],
+
+  // Frozen / trader joe's
+  ["trader joe's frozen",     { sugar_g:4,  sodium_mg:620, sat_fat_g:4, calories:300 }],
+
+  // Misc
+  ["smart balance",           { sugar_g:0,  sodium_mg:85,  sat_fat_g:2, calories:80 }],
+  ["i can't believe it's not butter",{ sugar_g:0, sodium_mg:90, sat_fat_g:2, calories:70 }],
+  ["no cow",                  { sugar_g:1,  sodium_mg:240, sat_fat_g:1, calories:180, protein_g:21, fiber_g:16 }],
+  ["olipop",                  { sugar_g:3,  sodium_mg:35,  sat_fat_g:0, calories:35,  fiber_g:9 }],
+  ["poppi",                   { sugar_g:5,  sodium_mg:0,   sat_fat_g:0, calories:25 }],
+
+  // Remaining food items (non-pet-food)
+  ["crisco shortening",       { sugar_g:0,  sodium_mg:0,   sat_fat_g:3,  calories:110 }],
+  ["crisco",                  { sugar_g:0,  sodium_mg:0,   sat_fat_g:3,  calories:110 }],
+  ["twinkies",                { sugar_g:18, sodium_mg:190, sat_fat_g:4,  calories:270, kidsFloor:6, kidsCeiling:8 }],
+  ["mott's",                  { sugar_g:22, sodium_mg:15,  sat_fat_g:0,  calories:90,  kidsFloor:6, kidsCeiling:8 }],
+  ["welch's",                 { sugar_g:36, sodium_mg:15,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["mdh",                     { sugar_g:0,  sodium_mg:580, sat_fat_g:0,  calories:25 }],
+  ["everest",                 { sugar_g:0,  sodium_mg:580, sat_fat_g:0,  calories:25 }],
+  ["ol roy",                  { sugar_g:5,  sodium_mg:330, sat_fat_g:4,  calories:350 }],
+  ["milk-bone",               { sugar_g:1,  sodium_mg:65,  sat_fat_g:0,  calories:40 }],
+  ["milk bone",               { sugar_g:1,  sodium_mg:65,  sat_fat_g:0,  calories:40 }],
+  ["beggin strips",           { sugar_g:4,  sodium_mg:120, sat_fat_g:1,  calories:50 }],
+  ["pup-peroni",              { sugar_g:4,  sodium_mg:190, sat_fat_g:1,  calories:60 }],
+  ["minute maid",             { sugar_g:28, sodium_mg:15,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
+  ["snapple peach tea",       { sugar_g:37, sodium_mg:10,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["snapple",                 { sugar_g:37, sodium_mg:10,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
+  ["margarita mix",           { sugar_g:29, sodium_mg:80,  sat_fat_g:0,  calories:110 }],
+  ["chilis awesome blossom",  { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
+  ["chili's awesome blossom", { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
+  ["starbucks psl",           { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
+  ["pumpkin spice latte",     { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
+]);
+
+// ─── APPLY NUTRITION LOOKUP TO CALIBRATION ENTRIES ───────────────────────────
+// At startup, merge nutrition lookup data into any calibration entry that
+// doesn't already have nutrition baked in. Also applies kidsFloor/kidsCeiling.
+(function applyNutritionLookup() {
+  for (const [key, entry] of CALIBRATION) {
+    const lookup = NUTRITION_LOOKUP.get(key);
+    if (!lookup) continue;
+    if (!entry.nutrition) {
+      entry.nutrition = {
+        sugar_g:    lookup.sugar_g    ?? null,
+        sodium_mg:  lookup.sodium_mg  ?? null,
+        sat_fat_g:  lookup.sat_fat_g  ?? null,
+        calories:   lookup.calories   ?? null,
+        protein_g:  lookup.protein_g  ?? null,
+        fiber_g:    lookup.fiber_g    ?? null,
+      };
+    }
+    if (entry.kidsFloor  == null && lookup.kidsFloor  != null) entry.kidsFloor  = lookup.kidsFloor;
+    if (entry.kidsCeiling == null && lookup.kidsCeiling != null) entry.kidsCeiling = lookup.kidsCeiling;
+  }
+})();
+
 // Check if a calibration entry contains any WF-banned substance
 function checkWholeFoodsBanned(substances = []) {
   const normed = substances.map(s => s.toLowerCase().trim());
@@ -3979,14 +4902,16 @@ function applySodiumFloor(score, sodium_mg, category, kids_mode) {
   let note  = "";
 
   if (!kids_mode) {
-    // Adult DV: 2300mg
-    if      (sodium_mg >= 1840) { floor = 6; note = "80%+ adult daily sodium limit"; }
+    // Adult DV: 2300mg — added tier 7 for extreme (>100% DV, restaurant/processed food)
+    if      (sodium_mg >= 2300) { floor = 7; note = "100%+ adult daily sodium limit in one serving"; }
+    else if (sodium_mg >= 1840) { floor = 6; note = "80-99% adult daily sodium limit"; }
     else if (sodium_mg >= 1380) { floor = 5; note = "60-79% adult daily sodium limit"; }
     else if (sodium_mg >= 920)  { floor = 4; note = "40-59% adult daily sodium limit"; }
     else if (sodium_mg >= 575)  { floor = 3; note = "25-39% adult daily sodium limit"; }
   } else {
     // Kids DV: 1500mg
-    if      (sodium_mg >= 1200) { floor = 6; note = "80%+ children's daily sodium limit"; }
+    if      (sodium_mg >= 1500) { floor = 7; note = "100%+ children's daily sodium limit"; }
+    else if (sodium_mg >= 1200) { floor = 6; note = "80-99% children's daily sodium limit"; }
     else if (sodium_mg >= 900)  { floor = 5; note = "60-79% children's daily sodium limit"; }
     else if (sodium_mg >= 600)  { floor = 4; note = "40-59% children's daily sodium limit"; }
     else if (sodium_mg >= 375)  { floor = 3; note = "25-39% children's daily sodium limit"; }
@@ -4030,14 +4955,16 @@ function applySatFatFloor(score, sat_fat_g, category, kids_mode) {
   let note  = "";
 
   if (!kids_mode) {
-    // Adult DV: 20g
-    if      (sat_fat_g >= 16) { floor = 6; note = "80%+ adult daily sat fat limit"; }
+    // Adult DV: 20g — added tier 7 for sat fat >100% DV
+    if      (sat_fat_g >= 20) { floor = 7; note = "100%+ adult daily sat fat limit"; }
+    else if (sat_fat_g >= 16) { floor = 6; note = "80-99% adult daily sat fat limit"; }
     else if (sat_fat_g >= 12) { floor = 5; note = "60-79% adult daily sat fat limit"; }
     else if (sat_fat_g >= 8)  { floor = 4; note = "40-59% adult daily sat fat limit"; }
     else if (sat_fat_g >= 5)  { floor = 3; note = "25-39% adult daily sat fat limit"; }
   } else {
     // Kids DV: 13g
-    if      (sat_fat_g >= 10) { floor = 6; note = "77%+ children's daily sat fat limit"; }
+    if      (sat_fat_g >= 13) { floor = 7; note = "100%+ children's daily sat fat limit"; }
+    else if (sat_fat_g >= 10) { floor = 6; note = "77-99% children's daily sat fat limit"; }
     else if (sat_fat_g >= 8)  { floor = 5; note = "62-76% children's daily sat fat limit"; }
     else if (sat_fat_g >= 5)  { floor = 4; note = "38-61% children's daily sat fat limit"; }
     else if (sat_fat_g >= 3)  { floor = 3; note = "23-37% children's daily sat fat limit"; }
@@ -4166,19 +5093,34 @@ function applyProductCalibration(result) {
     }
   }
 
-  // ── Nutrition — merge three sources: result fields, result.nutrition, entry.nutrition
-  // Priority: explicit result fields > result.nutrition > calibration entry nutrition fallback
-  // This ensures floors fire even when the AI returns null nutrition for a text scan.
+  // ── Nutrition — merge four sources in priority order:
+  // 1. Explicit result top-level fields
+  // 2. result.nutrition from AI pass
+  // 3. entry.nutrition from calibration entry
+  // 4. NUTRITION_LOOKUP reference table (covers all major products)
   const entryNutrition  = entry?.nutrition  || {};
   const resultNutrition = result.nutrition  || {};
 
-  const sugar_g     = result.sugar_g     ?? resultNutrition.sugar_g     ?? entryNutrition.sugar_g     ?? null;
-  const sodium_mg   = result.sodium_mg   ?? resultNutrition.sodium_mg   ?? entryNutrition.sodium_mg   ?? null;
-  const sat_fat_g   = result.sat_fat_g   ?? resultNutrition.sat_fat_g   ?? entryNutrition.sat_fat_g   ?? null;
-  const trans_fat_g = result.trans_fat_g ?? resultNutrition.trans_fat_g ?? entryNutrition.trans_fat_g ?? null;
-  const calories_v  = result.calories    ?? resultNutrition.calories    ?? entryNutrition.calories    ?? null;
-  const protein_g   = result.protein_g   ?? resultNutrition.protein_g   ?? entryNutrition.protein_g   ?? null;
-  const fiber_g     = result.fiber_g     ?? resultNutrition.fiber_g     ?? entryNutrition.fiber_g     ?? null;
+  // Look up from reference table — try longest matching key
+  // Strip apostrophes from both sides for robust matching
+  let lookupNutrition = {};
+  let lookupBestLen = 0;
+  const nameStripped = name.replace(/['']/g, "");
+  for (const [k, v] of NUTRITION_LOOKUP) {
+    const kStripped = k.replace(/['']/g, "");
+    if (nameStripped.includes(kStripped) && kStripped.length > lookupBestLen) {
+      lookupNutrition = v;
+      lookupBestLen = kStripped.length;
+    }
+  }
+
+  const sugar_g     = result.sugar_g     ?? resultNutrition.sugar_g     ?? entryNutrition.sugar_g     ?? lookupNutrition.sugar_g     ?? null;
+  const sodium_mg   = result.sodium_mg   ?? resultNutrition.sodium_mg   ?? entryNutrition.sodium_mg   ?? lookupNutrition.sodium_mg   ?? null;
+  const sat_fat_g   = result.sat_fat_g   ?? resultNutrition.sat_fat_g   ?? entryNutrition.sat_fat_g   ?? lookupNutrition.sat_fat_g   ?? null;
+  const trans_fat_g = result.trans_fat_g ?? resultNutrition.trans_fat_g ?? entryNutrition.trans_fat_g ?? lookupNutrition.trans_fat_g ?? null;
+  const calories_v  = result.calories    ?? resultNutrition.calories    ?? entryNutrition.calories    ?? lookupNutrition.calories    ?? null;
+  const protein_g   = result.protein_g   ?? resultNutrition.protein_g   ?? entryNutrition.protein_g   ?? lookupNutrition.protein_g   ?? null;
+  const fiber_g     = result.fiber_g     ?? resultNutrition.fiber_g     ?? entryNutrition.fiber_g     ?? lookupNutrition.fiber_g     ?? null;
 
   // Merged nutrition object for badge display
   const mergedNutrition = (sugar_g != null || sodium_mg != null || sat_fat_g != null || calories_v != null)
@@ -4262,5 +5204,13 @@ function applyProductCalibration(result) {
   };
 }
 
+// ─── NUTRITION LOOKUP TABLE ───────────────────────────────────────────────────
+// Reference nutrition data keyed by normalised product name fragment.
+// Used as a third-tier fallback when: (1) no result.nutrition from AI,
+// (2) no entry.nutrition in calibration. Covers all major food/bev/restaurant
+// products. Values are per-serving as labelled. sugar_g = total sugar.
+// Format: [normalised_key]: { sugar_g, sodium_mg, sat_fat_g, calories, protein_g?, fiber_g? }
+// kidsFloor applied automatically via calibration entry — not stored here.
+
 // ─── EXPORTS ─────────────────────────────────────────────────
-module.exports = { applyProductCalibration, CALIBRATION, normalise };
+module.exports = { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP };
