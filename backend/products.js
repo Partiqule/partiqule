@@ -4549,6 +4549,196 @@ const products = [
     tags:["water bottle","stainless bottle","accessory","no bpa","no bps","nsf certified","insulated","swell","reusable bottle","travel bottle","tumbler","stanley alternative"]
   },
 
+  // ══════════════════════════════════════════════════════════════
+  // BEVERAGE ALTERNATIVES (expanded)
+  // ══════════════════════════════════════════════════════════════
+
+  { id:"bv-005", name:"Spindrift Sparkling Water + Real Fruit", brand:"Spindrift", plasticScore:1, category:"beverage",
+    material:"Real squeezed fruit + sparkling water — no concentrate, no sweeteners, no flavoring.",
+    description:"The cleanest flavored sparkling water. Real squeezed lemon/lime/berry — 1-2g sugar from actual fruit. No added sugar, no natural flavors, no sweeteners.",
+    affiliateUrl:"https://www.amazon.com/s?k=Spindrift+sparkling+water&tag=partiqule-20", price:"$18-28",
+    tags:["sparkling water","sparkling","real fruit","flavored water","juice alternative","low sugar","no added sugar","soda alternative","clean beverage","lemon","lime","berry"] },
+
+  { id:"bv-006", name:"GT's Synergy Organic Kombucha", brand:"GT's", plasticScore:1, category:"beverage",
+    material:"Raw organic kombucha — live cultures, USDA Organic, 4g natural sugar. Glass bottle.",
+    description:"Best-in-class kombucha. USDA Organic, raw, live cultures, only 4g sugar. Glass bottle. No artificial flavors or sweeteners.",
+    affiliateUrl:"https://www.amazon.com/s?k=GTs+Synergy+kombucha&tag=partiqule-20", price:"$4-6",
+    tags:["kombucha","probiotic drink","fermented","soda alternative","low sugar","gut health","juice alternative","tea","glass bottle","organic"] },
+
+  { id:"bv-007", name:"Olipop Prebiotic Soda", brand:"Olipop", plasticScore:2, category:"beverage",
+    material:"Plant fiber, prebiotics, botanical extracts. No HFCS, no artificial sweeteners. 2-5g sugar.",
+    description:"Soda that supports gut health. 9g fiber, 2-5g sugar, no artificial sweeteners. The cleanest soda alternative.",
+    affiliateUrl:"https://www.amazon.com/s?k=Olipop+prebiotic+soda&tag=partiqule-20", price:"$3-5",
+    tags:["soda","soda alternative","prebiotic","low sugar","cola alternative","root beer","sparkling","fiber","gut health","juice alternative","coke alternative","pepsi alternative"] },
+
+  { id:"bv-008", name:"Poppi Prebiotic Soda", brand:"Poppi", plasticScore:2, category:"beverage",
+    material:"Apple cider vinegar, fruit juice, inulin fiber. 5g sugar. No artificial sweeteners.",
+    description:"ACV-based prebiotic soda. 5g sugar, no artificial sweeteners. Cleaner than any conventional soda.",
+    affiliateUrl:"https://www.amazon.com/s?k=Poppi+prebiotic+soda&tag=partiqule-20", price:"$3-5",
+    tags:["soda","soda alternative","prebiotic","low sugar","apple cider vinegar","cola alternative","sparkling","gut health","juice alternative","coke alternative"] },
+
+  { id:"bv-009", name:"Honest Tea Organic", brand:"Honest Tea", plasticScore:2, category:"beverage",
+    material:"USDA Organic brewed tea, fair trade. 10g natural sugar. No HFCS, no artificial flavors.",
+    description:"The cleanest mainstream bottled tea. Organic, fair trade, just 10g sugar. No HFCS, no artificial flavors.",
+    affiliateUrl:"https://www.amazon.com/s?k=Honest+Tea+organic&tag=partiqule-20", price:"$2-4",
+    tags:["tea","bottled tea","iced tea","organic tea","green tea","black tea","low sugar","juice alternative","snapple alternative","arizona tea alternative","sweet tea alternative"] },
+
+  { id:"bv-010", name:"Chameleon Cold Brew Organic Coffee", brand:"Chameleon", plasticScore:1, category:"beverage",
+    material:"USDA Organic, fair trade, single-origin coffee. No additives, no preservatives.",
+    description:"Best organic cold brew. Single-origin, fair trade, USDA Organic. Nothing but coffee and water.",
+    affiliateUrl:"https://www.amazon.com/s?k=Chameleon+Cold+Brew+organic&tag=partiqule-20", price:"$8-12",
+    tags:["cold brew","coffee","iced coffee","organic coffee","ready to drink coffee","starbucks alternative","dunkin alternative","beverage","no additives"] },
+
+  { id:"bv-011", name:"Waterloo Sparkling Water", brand:"Waterloo", plasticScore:1, category:"beverage",
+    material:"Purified water + natural fruit essence. Zero calories, zero sugar, zero sweeteners. Aluminum can.",
+    description:"Ultra-clean sparkling water. No sugar, no artificial sweeteners, no natural flavors — uses real fruit essences.",
+    affiliateUrl:"https://www.amazon.com/s?k=Waterloo+sparkling+water&tag=partiqule-20", price:"$18-26",
+    tags:["sparkling water","sparkling","zero sugar","no sweetener","soda alternative","la croix alternative","beverage","water","fruit flavored","grapefruit","watermelon"] },
+
+  { id:"bv-012", name:"Liquid Death Mountain Water", brand:"Liquid Death", plasticScore:1, category:"beverage",
+    material:"Austrian mountain spring water, infinitely recyclable aluminum can. No plastic.",
+    description:"Spring water in infinitely recyclable aluminum — zero plastic. Austrian Alps mountain water.",
+    affiliateUrl:"https://www.amazon.com/s?k=Liquid+Death+mountain+water&tag=partiqule-20", price:"$18-28",
+    tags:["water","spring water","mountain water","aluminum can","no plastic","still water","sparkling water","beverage","clean water"] },
+
+  { id:"bv-013", name:"Lakewood Organic Pure Juice", brand:"Lakewood", plasticScore:1, category:"beverage",
+    material:"USDA Organic, not-from-concentrate, no added sugar, glass bottle. 100% juice.",
+    description:"The cleanest bottled juice. USDA Organic, not-from-concentrate, glass bottle, no added sugar.",
+    affiliateUrl:"https://www.amazon.com/s?k=Lakewood+Organic+juice&tag=partiqule-20", price:"$6-10",
+    tags:["juice","orange juice","grape juice","apple juice","organic juice","not from concentrate","glass bottle","no added sugar","juice alternative","tropicana alternative","welchs alternative","simply orange alternative"] },
+
+  { id:"bv-014", name:"R.W. Knudsen Family Organic Juice", brand:"R.W. Knudsen", plasticScore:1, category:"beverage",
+    material:"USDA Organic, no preservatives, no added sugar, no artificial flavors.",
+    description:"Benchmark organic juice. USDA Organic across the range, no additives, no preservatives.",
+    affiliateUrl:"https://www.amazon.com/s?k=RW+Knudsen+organic+juice&tag=partiqule-20", price:"$5-8",
+    tags:["juice","cranberry juice","berry juice","apple juice","organic juice","no added sugar","juice alternative","ocean spray alternative","no preservatives"] },
+
+  { id:"bv-015", name:"Nuun Sport Electrolyte Tablets", brand:"Nuun", plasticScore:1, category:"beverage",
+    material:"Electrolyte tablet — 1g sugar, no HFCS, no artificial colors. NSF Certified for Sport.",
+    description:"The cleanest sports hydration. Only 1g sugar, no HFCS, no artificial colors. NSF Certified for Sport. Gatorade's clean replacement.",
+    affiliateUrl:"https://www.amazon.com/s?k=Nuun+Sport+electrolyte+tablets&tag=partiqule-20", price:"$7-10",
+    tags:["electrolyte","sports drink","hydration","gatorade alternative","powerade alternative","low sugar","no artificial color","tablet","nsf certified","athlete","workout drink"] },
+
+  { id:"bv-016", name:"Nooma Organic Electrolyte Drink", brand:"Nooma", plasticScore:1, category:"beverage",
+    material:"USDA Organic coconut water base + sea salt electrolytes. No added sugar, no artificial anything.",
+    description:"The cleanest ready-to-drink electrolyte option. Organic coconut water, sea salt — nothing artificial. 0g added sugar.",
+    affiliateUrl:"https://www.amazon.com/s?k=Nooma+organic+electrolyte&tag=partiqule-20", price:"$3-5",
+    tags:["electrolyte","sports drink","hydration","gatorade alternative","coconut water","organic","no added sugar","workout drink","athlete"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // FROZEN FOOD ALTERNATIVES
+  // ══════════════════════════════════════════════════════════════
+
+  { id:"ff-001", name:"Amy's Organic Frozen Burritos", brand:"Amy's", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, no artificial flavors or preservatives. Non-GMO. Whole ingredients.",
+    description:"The benchmark clean frozen burrito. Organic beans, organic cheese, organic vegetables. No artificial anything.",
+    affiliateUrl:"https://www.amazon.com/s?k=Amys+organic+frozen+burrito&tag=partiqule-20", price:"$4-6",
+    tags:["frozen burrito","frozen meal","frozen food","organic frozen","frozen entree","el monterey alternative","no preservatives","clean frozen","vegetarian","mexican food"] },
+
+  { id:"ff-002", name:"Amy's Organic Frozen Bowls", brand:"Amy's", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic, whole ingredients, no artificial flavors or preservatives. Non-GMO verified.",
+    description:"Cleanest frozen bowl. Organic grains, organic vegetables, organic protein. No artificial colors, flavors, or preservatives. Far cleaner than Lean Cuisine or Healthy Choice.",
+    affiliateUrl:"https://www.amazon.com/s?k=Amys+organic+frozen+bowl&tag=partiqule-20", price:"$5-7",
+    tags:["frozen bowl","frozen meal","frozen entree","frozen food","organic frozen","lean cuisine alternative","healthy choice alternative","stouffers alternative","clean frozen","no preservatives","rice bowl","grain bowl","mac cheese"] },
+
+  { id:"ff-003", name:"Tattooed Chef Cauliflower Bowl", brand:"Tattooed Chef", plasticScore:2, category:"food_beverage",
+    material:"Vegetables, cauliflower rice, olive oil. No artificial colors or flavors. Plant-based.",
+    description:"Plant-forward frozen meals with simple ingredients. Lower sodium than Lean Cuisine. The cleaner frozen meal option.",
+    affiliateUrl:"https://www.amazon.com/s?k=Tattooed+Chef+cauliflower+bowl&tag=partiqule-20", price:"$4-6",
+    tags:["frozen bowl","frozen meal","frozen food","cauliflower","plant based","lean cuisine alternative","healthy choice alternative","low carb frozen","clean frozen","no artificial flavor"] },
+
+  { id:"ff-004", name:"EVOL Chicken Frozen Bowl", brand:"EVOL", plasticScore:2, category:"food_beverage",
+    material:"Antibiotic-free chicken, whole grains, vegetables. No artificial colors or flavors.",
+    description:"Cleaner mainstream frozen meal. Antibiotic-free protein, whole grains, no artificial colors or flavors. Better than Lean Cuisine or Stouffer's.",
+    affiliateUrl:"https://www.amazon.com/s?k=EVOL+frozen+bowl&tag=partiqule-20", price:"$4-6",
+    tags:["frozen meal","frozen bowl","frozen entree","frozen food","antibiotic free","whole grain","lean cuisine alternative","healthy choice alternative","clean frozen","chicken","no artificial flavor"] },
+
+  { id:"ff-005", name:"Dr. Praeger's Veggie Burgers", brand:"Dr. Praeger's", plasticScore:1, category:"food_beverage",
+    material:"Whole vegetables, legumes — no isolated protein, no methylcellulose, no artificial anything. Non-GMO.",
+    description:"The cleanest veggie burger. Real vegetables and legumes — no artificial binders. Completely different from Beyond or Impossible.",
+    affiliateUrl:"https://www.amazon.com/s?k=Dr+Praegers+veggie+burger&tag=partiqule-20", price:"$6-8",
+    tags:["veggie burger","frozen burger","plant based burger","frozen food","frozen meal","morning star alternative","beyond meat alternative","impossible alternative","vegetables","non-gmo","clean frozen"] },
+
+  { id:"ff-006", name:"Saffron Road Chicken Tikka Masala", brand:"Saffron Road", plasticScore:2, category:"food_beverage",
+    material:"Halal-certified, antibiotic-free chicken, organic spices, no MSG, no artificial flavors.",
+    description:"The cleanest frozen Indian meal. Halal-certified, antibiotic-free chicken, organic spices. No MSG, no artificial flavors.",
+    affiliateUrl:"https://www.amazon.com/s?k=Saffron+Road+chicken+tikka+masala+frozen&tag=partiqule-20", price:"$5-7",
+    tags:["frozen meal","frozen entree","frozen food","indian food","tikka masala","halal","antibiotic free","lean cuisine alternative","clean frozen","no msg","chicken"] },
+
+  { id:"ff-007", name:"Real Good Foods Chicken Enchiladas", brand:"Real Good Foods", plasticScore:2, category:"food_beverage",
+    material:"Chicken breast crust, cheese, simple sauce. No enriched flour, no artificial additives. Low carb.",
+    description:"Low-carb frozen meal with genuinely simple ingredients. Chicken, cheese, enchilada sauce — no enriched flour, no artificial anything.",
+    affiliateUrl:"https://www.amazon.com/s?k=Real+Good+Foods+chicken+enchilada&tag=partiqule-20", price:"$5-7",
+    tags:["frozen meal","frozen food","frozen entree","low carb frozen","keto frozen","chicken","enchilada","no enriched flour","clean frozen","lean cuisine alternative","healthy choice alternative","high protein"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // HOME / CLEANING ALTERNATIVES (expanded)
+  // ══════════════════════════════════════════════════════════════
+
+  { id:"hm-010", name:"Branch Basics Concentrate", brand:"Branch Basics", plasticScore:1, category:"home",
+    material:"Plant-derived surfactants, no synthetic fragrance, no dyes, no preservatives. One concentrate replaces all cleaners.",
+    description:"The strictest clean cleaning brand. No synthetic fragrance, no dyes, no preservatives. EWG A-rated. Pediatrician recommended.",
+    affiliateUrl:"https://www.amazon.com/s?k=Branch+Basics+concentrate&tag=partiqule-20", price:"$49-69",
+    tags:["cleaner","all purpose cleaner","laundry","dish soap","concentrate","non toxic cleaner","no synthetic fragrance","no dyes","baby safe","lysol alternative","method alternative","mrs meyers alternative","tide alternative","spray cleaner"] },
+
+  { id:"hm-011", name:"Puracy Natural Multi-Surface Cleaner", brand:"Puracy", plasticScore:1, category:"home",
+    material:"Plant-derived, no synthetic fragrance, no dyes. EWG Verified, pediatrician recommended.",
+    description:"EWG Verified multi-surface cleaner. Plant-derived, no synthetic fragrance, no dyes.",
+    affiliateUrl:"https://www.amazon.com/s?k=Puracy+natural+multi-surface+cleaner&tag=partiqule-20", price:"$10-14",
+    tags:["cleaner","multi surface cleaner","all purpose cleaner","non toxic cleaner","no synthetic fragrance","ewg verified","plant based cleaner","lysol alternative","windex alternative","method alternative","spray cleaner","household cleaner"] },
+
+  { id:"hm-012", name:"Seventh Generation Free & Clear Laundry", brand:"Seventh Generation", plasticScore:2, category:"home",
+    material:"Plant-derived, no dyes, no synthetic fragrance, no optical brighteners. EPA Safer Choice certified.",
+    description:"The accessible clean laundry swap. No synthetic fragrance, no optical brighteners, EPA Safer Choice. The best mainstream swap for Tide or Gain.",
+    affiliateUrl:"https://www.amazon.com/s?k=Seventh+Generation+Free+Clear+laundry&tag=partiqule-20", price:"$12-18",
+    tags:["laundry","laundry detergent","detergent","free and clear","no fragrance","no dyes","tide alternative","gain alternative","plant based","epa safer choice","washing","non toxic laundry","clothes"] },
+
+  { id:"hm-013", name:"Meliora Cleaning Products Laundry Powder", brand:"Meliora", plasticScore:1, category:"home",
+    material:"Sodium carbonate, soap, washing soda — 4 ingredients. Zero synthetic fragrance. B-Corp. Paper packaging.",
+    description:"The simplest laundry detergent possible. Just 4 ingredients, no fragrance, no dyes, paper packaging. B-Corp certified.",
+    affiliateUrl:"https://www.amazon.com/s?k=Meliora+laundry+powder&tag=partiqule-20", price:"$14-20",
+    tags:["laundry","laundry detergent","detergent","powder detergent","no fragrance","zero waste laundry","tide alternative","b-corp","paper packaging","simple ingredients","non toxic laundry","clothes washing"] },
+
+  { id:"hm-014", name:"Grove Co. Concentrated Dish Soap", brand:"Grove Co.", plasticScore:1, category:"home",
+    material:"Plant-derived, concentrated, no synthetic fragrance, no dyes. Carbon neutral, B-Corp.",
+    description:"The cleanest dish soap in a mainstream format. Plant-derived, concentrated, no synthetic fragrance, B-Corp certified.",
+    affiliateUrl:"https://www.amazon.com/s?k=Grove+Co+dish+soap&tag=partiqule-20", price:"$6-10",
+    tags:["dish soap","dishwashing","washing","soap","dawn alternative","palmolive alternative","no synthetic fragrance","plant based","concentrated","b-corp","non toxic dish","dish cleaner"] },
+
+  // ══════════════════════════════════════════════════════════════
+  // RESTAURANT ALTERNATIVES — cleaner fast-casual picks
+  // ══════════════════════════════════════════════════════════════
+
+  { id:"rs-001", name:"Sweetgreen Harvest Bowl", brand:"Sweetgreen", plasticScore:2, category:"restaurant",
+    material:"Local and organic ingredients, whole grains, roasted vegetables, clean proteins.",
+    description:"The benchmark clean fast-casual meal. Seasonal ingredients, whole grains, clean proteins, no artificial anything.",
+    affiliateUrl:"https://www.sweetgreen.com", price:"$14-17",
+    tags:["restaurant","fast casual","salad","bowl","grain bowl","clean restaurant","healthy fast food","whole grain","panda express alternative","chipotle alternative","mcdonald's alternative","lunch","dinner"] },
+
+  { id:"rs-002", name:"Chipotle Burrito Bowl", brand:"Chipotle", plasticScore:2, category:"restaurant",
+    material:"Responsibly raised chicken, whole ingredients, no artificial colors or preservatives.",
+    description:"The cleanest major fast-casual chain. Responsibly raised protein, no artificial preservatives or flavors. Skip sour cream to reduce sat fat.",
+    affiliateUrl:"https://www.chipotle.com", price:"$10-13",
+    tags:["restaurant","fast casual","burrito bowl","bowl","chicken","mexican food","panda express alternative","taco bell alternative","clean restaurant","no artificial preservatives","lunch","dinner","rice bowl"] },
+
+  { id:"rs-003", name:"Cava Mediterranean Bowl", brand:"Cava", plasticScore:2, category:"restaurant",
+    material:"Whole grains, hummus, roasted vegetables, grilled protein — Mediterranean whole food ingredients.",
+    description:"Mediterranean fast-casual. Whole grains, legumes, olive oil, grilled protein. High protein, high fiber, lower sodium than most fast food.",
+    affiliateUrl:"https://www.cava.com", price:"$13-16",
+    tags:["restaurant","fast casual","mediterranean","bowl","grain bowl","hummus","clean restaurant","panda express alternative","chipotle alternative","healthy fast food","high protein","high fiber","lunch","dinner"] },
+
+  { id:"rs-004", name:"El Pollo Loco Fire-Grilled Chicken", brand:"El Pollo Loco", plasticScore:2, category:"restaurant",
+    material:"Fire-grilled marinated chicken — citrus marinade, spices, garlic. Not fried.",
+    description:"The cleanest major chicken chain. Fire-grilled not fried — no enriched flour batter, no soybean oil frying. Lower sodium than any fried alternative.",
+    affiliateUrl:"https://www.elpolloloco.com", price:"$9-13",
+    tags:["restaurant","chicken","fast food","grilled chicken","kfc alternative","popeyes alternative","raising canes alternative","not fried","lower sodium","clean restaurant","lunch","dinner","panda express alternative"] },
+
+  { id:"rs-005", name:"Panera Half Salad + Cup of Soup", brand:"Panera", plasticScore:2, category:"restaurant",
+    material:"Whole ingredients, clean greens, broth-based soups. Lower sodium than most fast food.",
+    description:"Best clean option at Panera. Half salad + cup of broth soup stays under 700mg sodium. Avoid mac & cheese and bread bowls.",
+    affiliateUrl:"https://www.panerabread.com", price:"$11-14",
+    tags:["restaurant","fast casual","salad","soup","panera","clean restaurant","lower sodium","lunch","mcdonald's alternative","half salad","broth soup","healthy fast food"] },
+
 ];
 
 // ── FIND ALTERNATIVES ────────────────────────────────────────
@@ -4598,13 +4788,26 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   const allWords = expandedWords;
 
   // Hard block: other and restaurant categories get no DB alternatives
-  if (category === "other" || category === "restaurant") return [];
+  if (category === "other") return [];
+
+  // Restaurant: only suggest alternatives if we have restaurant-category products
+  // (currently none, so falls through to empty — AI alternatives handle restaurant)
 
   // Extract brand from query to avoid recommending same brand as alternative
   const queryLower = query.toLowerCase();
 
   // Minimum threshold — food needs higher bar since category is broad
   const minScore = ["food", "food_beverage", "beverage"].includes(category) ? 18 : 13;
+
+  // Word-boundary helper — prevents "lean" matching "cleaner", "meal" matching "meals" etc.
+  function wordMatch(haystack, needle) {
+    if (!haystack || !needle) return false;
+    // Exact tag match
+    if (haystack === needle) return true;
+    // Needle is a full word inside a multi-word tag (e.g. "sparkling water" contains "water")
+    const words = haystack.split(/\s+/);
+    return words.includes(needle);
+  }
 
   // Relevance scoring — category match + tag overlap must reach threshold
   const scored = products
@@ -4625,18 +4828,18 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
         // Skip ultra-generic words that match everything in food category
         if (["food","organic","natural","beverage","drink"].includes(word)) return;
         p.tags.forEach(tag => {
-          if (tag.includes(word) || word.includes(tag)) {
+          if (wordMatch(tag, word) || wordMatch(word, tag)) {
             score += 5;
             meaningfulTagMatches++;
           }
         });
-        if (p.name.toLowerCase().includes(word)) score += 4;
-        if (p.brand.toLowerCase().includes(word)) score += 2;
+        if (p.name.toLowerCase().split(/\s+/).includes(word)) score += 4;
+        if (p.brand.toLowerCase().split(/\s+/).includes(word)) score += 2;
         if (p.material?.toLowerCase().includes(word)) score += 2;
       });
       // Full phrase matches
       queries.forEach(q => {
-        p.tags.forEach(tag => { if (q.includes(tag)) { score += 7; meaningfulTagMatches++; } });
+        p.tags.forEach(tag => { if (wordMatch(q, tag) || wordMatch(tag, q)) { score += 7; meaningfulTagMatches++; } });
         if (p.name.toLowerCase().includes(q.slice(0, 20))) score += 6;
       });
       // For food category: require at least one meaningful tag match beyond category
