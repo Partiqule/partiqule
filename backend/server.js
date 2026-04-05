@@ -800,13 +800,20 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
         headers: {
           "Content-Type": "application/json",
           "anthropic-version": "2023-06-01",
+          "anthropic-beta": "prompt-caching-2024-07-31",
           "x-api-key": process.env.ANTHROPIC_API_KEY,
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: maxTokens,
           temperature: 0,   // deterministic — same product always same score
-          system,
+          system: [
+            {
+              type: "text",
+              text: system,
+              cache_control: { type: "ephemeral" }
+            }
+          ],
           messages: [{ role: "user", content: userPrompt }]
         })
       });
@@ -857,13 +864,17 @@ async function callClaudeVision(imageBase64, mediaType, retries=3) {
         headers: {
           "Content-Type": "application/json",
           "anthropic-version": "2023-06-01",
+          "anthropic-beta": "prompt-caching-2024-07-31",
           "x-api-key": process.env.ANTHROPIC_API_KEY,
         },
     body: JSON.stringify({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2400,
       temperature: 0,
-      system: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
+      system: [
+        {
+          type: "text",
+          text: `You are a senior research scientist specializing in polymer chemistry, toxicology, and consumer product safety. You will be shown a photo of a product label, packaging, clothing tag, or product itself. Read any visible text, brand names, or product names to identify the product, then score it across 5 dimensions. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
 
 SCORING RULES:
 - PP/PVC in food-contact products (cookware, food storage containers, food packaging, baby bottles, food wraps, reusable water bottles used for hot liquids): materials score 8-9 (NEJM 2024). EXPLICIT EXCEPTIONS — the food-contact rule does NOT apply to: diapers, clothing, baby toys, plastic toys, teething toys, personal care products, or any product where plastic is skin/mouth contact but not used to store/heat food. Score those using their own category calibration. A PP baby teether = materials 5-6 (mouthing concern but not food-contact heating). A polypropylene storage container for hot food = materials 8-9.
@@ -898,6 +909,9 @@ CLOTHING HIGH concerns: PFAS/DWR coating, Formaldehyde finish, Flame retardants,
 KITCHEN HIGH concerns: PTFE/PFAS coating, BPA/BPS, Quaternary ammonium compounds, Chlorine bleach, Synthetic fragrance VOCs, PVC, 1,4-dioxane
 BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products
 NUTRITION: For food_beverage only — read the nutrition facts label in the photo if visible, or use known product data. Return per-serving values EXACTLY as listed on the label — use the manufacturer's defined serving size, NOT the whole package total. Populate nutrition with serving_size, calories, protein_g, carbs_g, sugar_g, fat_g, fiber_g, sodium_mg. Set any unknown fields to null. Set nutrition to null for non-food products.`,
+          cache_control: { type: "ephemeral" }
+        }
+      ],
       messages: [{
         role: "user",
         content: [
@@ -3498,8 +3512,6 @@ app.post("/analyze", async (req, res) => {
         scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
-        nutrition:           p1.nutrition || null,
-        nutrition_verified:  p1.nutrition_verified !== false,
         cached:              false,
         scannedAt:           new Date().toISOString(),
         dimensions: {
@@ -3776,8 +3788,6 @@ app.post("/analyze", async (req, res) => {
       scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
       break_even:          p2?.break_even || null,
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
-      nutrition:           p1.nutrition || null,
-      nutrition_verified:  p1.nutrition_verified !== false,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,

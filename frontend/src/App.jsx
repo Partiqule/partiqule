@@ -660,7 +660,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods. Partiqule flags each dye individually with its severity level and the research behind it."},
         {q:"What are ultra-processed foods and why do they score higher?", a:"Ultra-processed foods (NOVA Group 4) are industrial formulations containing ingredients not found in home kitchens — synthetic dyes, preservatives like BHA and BHT, emulsifiers, and artificial flavors. A 2025 Lancet review linked regular ultra-processed food consumption to cardiovascular disease, cognitive decline, and stroke. Partiqule scores these products higher on Materials and Usage because the chemical load is meaningfully higher than minimally processed or whole foods."},
         {q:"What are pesticide residues and should I be concerned?", a:"The EWG's 2026 Dirty Dozen report — analysing 54,344 USDA produce samples — found pesticide residues on 96% of the 12 most contaminated fruits and vegetables, including PFAS forever chemicals on 63% of samples. Spinach ranked highest for pesticide residues by weight. Partiqule flags conventional Dirty Dozen produce with a pesticide concern and credits organic produce as a positive. Importantly, all produce is healthy — the goal is to reduce exposure where practical, not avoid fruits and vegetables."},
-        {q:"How does Partiqule score chemical safety?", a:"The Materials score covers what the product is made of — synthetic pesticides, petroleum dyes, IARC carcinogens, BHA/BHT, PFAS, and similar substances. The Usage and Exposure score covers how using the product creates contact with those materials — whether you ingest it, absorb it through skin, or breathe it in. For food, beverages, and restaurant items, a second scoring layer also accounts for nutritional impact: sugar, sodium, saturated fat, and trans fat are each scored against their daily values and can raise a product's floor score independently of ingredient concerns. A juice with clean ingredients but 38g of sugar will score differently than sparkling water — because the glycemic impact is real regardless of the ingredient list. Protein and fiber are shown as positive signals when notably high."},
+        {q:"How does Partiqule calculate the product health score?", a:"The score combines two independent layers into one number. The first is chemical safety — synthetic pesticides, petroleum dyes, IARC carcinogens, BHA/BHT, PFAS, and similar substances. The second, for food and beverages, is nutritional impact — sugar, sodium, saturated fat, and trans fat are each scored against their daily recommended values, and the higher of the two floors wins. A juice with clean ingredients but 38g of sugar scores 5 because the glycemic impact is real regardless of what is in the ingredient list. Organic butter scores 2 — no pesticides, no synthetic additives. Protein and fiber appear as positive green badges when notably high."},
       ],
     },
     {
@@ -1615,7 +1615,7 @@ const ShareBadge = ({result}) => {
       // Fallback if no dimensions — just show score
       ctx.fillStyle = "#888";
       ctx.font = "13px system-ui";
-      ctx.fillText("Ingredient Safety Score", RX+14, 145);
+      ctx.fillText("Product Health Score", RX+14, 145);
       ctx.fillStyle = overallColor;
       ctx.font = "bold 48px system-ui";
       ctx.fillText(`${os}/10`, RX+14, 210);
@@ -1667,7 +1667,7 @@ const ShareBadge = ({result}) => {
             const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
             await navigator.share({
               title: `${safeName}: Ingredient Safety ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Ingredient safety score: ${result.overall_score||result.score}/10 — measures chemical risk, not nutrition. Scan anything at partiqule.com`,
+              text: `I scanned ${safeName} on Partiqule. Product health score: ${result.overall_score||result.score}/10 — ingredient safety + nutritional impact combined. Scan anything at partiqule.com`,
               files: [file],
             });
           } else if (navigator.clipboard?.write) {
@@ -2743,8 +2743,8 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           heading: "Dual scoring formula — food vs non-food",
           body: "Food and non-food products use different dimension weights because the risks are fundamentally different. What goes in your body matters more than what touches your skin.",
           list: [
-            "Food and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately.",
-            "Beverage: Ingredient safety is the primary score. A separate nutrition badge row shows sugar, sodium, and calorie impact as % of daily value — because a juice with 38g of sugar and clean ingredients should not score the same as sparkling water.",
+            "Food, Beverage and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately, not used to tank a clean food.",
+            "Beverage: Ingredients 75% · Packaging 25% — the container leaches directly into every sip. A plastic water bottle consumed daily is different from a plastic cereal box.",
             "Beauty and Personal Care: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5% — leave-on daily skin contact makes exposure equally important as what's in the product.",
             "Clothing and Shoes: Materials 35% · Exposure 30% · Sustainability 35% — microfiber shedding into waterways gives sustainability real weight.",
             "Home (cleaning, candles, furniture): Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15% — inhalation and residue contact is the primary story.",
@@ -2762,30 +2762,24 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           ]
         },
         {
-          heading: "Nutrition impact scoring — food, beverage and restaurant",
-          body: "Ingredient safety and nutritional impact are scored as two separate layers — the higher floor wins. A product with clean ingredients but extreme sugar content will still score high. Scores are shown as % of daily value (DV) in the badge row beneath the score.",
+          heading: "Added sugar penalty — food only",
+          body: "WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and flavored beverages are consumed daily, so cumulative sugar exposure is scored independently of substance concerns:",
           list: [
-            "Sugar — beverages scored tighter than food (no fiber or protein to buffer glycemic impact). Adult DV: 50g. Children's DV: 25g.",
-            "Beverage sugar tiers (adult): 20g = floor 4 · 30g = floor 5 · 40g = floor 6 · 50g+ = floor 7",
-            "Food sugar tiers (adult): 25g = floor 4 · 35g = floor 5 · 50g+ = floor 6",
-            "Children's mode uses half the thresholds — a drink with 25g of sugar hits 100% of a child's daily limit and floors at 7",
-            "Sodium — adult DV 2300mg, children's DV 1500mg. Tiers: 25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6",
-            "Saturated fat — adult DV 20g, children's DV 13g. Same tier structure as sodium. Does not apply to beverages.",
-            "Trans fat — no safe level. Any detected trans fat fires floor 6 regardless of other scores.",
-            "Natural sugar is scored the same as added sugar for beverages — grape juice hits the same glycemic peak as soda.",
-            "Protein and fiber show as positive green badges when notably high. They do not lower the score but signal nutritional value.",
-            "Calories flagged for beverages and restaurant items only — liquid calories and restaurant portions are the two cases where people most systematically underestimate intake.",
+            "0–5g added sugar per serving: no penalty",
+            "6–10g added sugar per serving: materials +1",
+            ">10g added sugar per serving: materials +2",
+            ">20g added sugar per serving: materials +3 — exceeds half the WHO daily limit in one serving",
           ]
         },
         {
           heading: "What the score means",
-          body: "For food, beverages, and restaurant items the score reflects both ingredient safety and nutritional impact — whichever raises more concern sets the floor. For all other categories it is a pure ingredient and exposure safety score. Organic butter still scores 1-2 (no pesticides, no synthetic additives). Grape juice with 38g of sugar scores 5 — clean ingredients, real glycemic concern.",
+          body: "This is an ingredient safety score — it measures chemical risk, not nutritional quality. Organic butter scores 1-2. That means no pesticides, no synthetic additives. It does not mean unlimited consumption is recommended.",
           list: [
-            "1-2 Safe — No significant chemical or nutritional concerns. Cleanest in its category.",
+            "1-2 Safe — No significant chemical or ingredient concerns. Cleanest in its category from a safety standpoint.",
             "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Fine for regular use.",
             "5-6 Caution — Real concerns worth knowing. Consider reducing use or finding a cleaner alternative.",
             "7-8 Switch — Significant concerns. We will show you a better option.",
-            "9-10 Avoid — Known harmful substances or extreme nutritional impact. Significant and documented risk.",
+            "9-10 Avoid — Known harmful substances. Significant and documented safety risk.",
           ]
         },
         {
@@ -3358,27 +3352,22 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           </div>
         </div>
 
-        {/* Nutrition impact scoring */}
+        {/* Sugar penalty */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
           <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
-            <div style={{fontSize:13, fontWeight:700, color:text}}>Nutrition Impact Scoring — layered on top of ingredient safety</div>
-            <div style={{fontSize:12, color:muted, marginTop:2}}>Ingredient safety and nutritional impact are scored independently — the higher floor wins. Scores show as % of daily value in the badge row. Children's mode uses separate DVs (sugar 25g, sodium 1500mg, sat fat 13g).</div>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Added Sugar Penalty — scored independently of other concerns</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and beverages are consumed daily — cumulative exposure matters.</div>
           </div>
           <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:8}}>
             {[
-              {range:"Sugar — beverages (adult DV 50g, kids DV 25g)", penalty:"20g = floor 4 · 30g = floor 5 · 40g = floor 6 · 50g+ = floor 7", color:"#c2410c", note:"Tighter than food — no fiber/protein to buffer glycemic impact"},
-              {range:"Sugar — food and restaurant (adult DV 50g)", penalty:"25g = floor 4 · 35g = floor 5 · 50g+ = floor 6", color:"#d97706", note:""},
-              {range:"Sodium (adult DV 2300mg, kids DV 1500mg)", penalty:"25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6", color:"#d97706", note:""},
-              {range:"Saturated fat (adult DV 20g, kids DV 13g)", penalty:"25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6", color:"#d97706", note:"Not applied to beverages"},
-              {range:"Trans fat — any detected amount", penalty:"Floor 6 minimum — no safe level", color:"#dc2626", note:"FDA banned PHOs but <0.5g/serving can still be labelled 0g"},
-              {range:"Protein and fiber — positive signals", penalty:"Green badge when notably high — does not lower score", color:"#16a34a", note:""},
+              {range:"0–5g added sugar per serving", penalty:"No penalty", color:"#16a34a"},
+              {range:"6–10g added sugar per serving", penalty:"Materials +1", color:"#d97706"},
+              {range:">10g added sugar per serving", penalty:"Materials +2", color:"#ea580c"},
+              {range:">20g added sugar per serving", penalty:"Materials +3 — exceeds half the WHO daily limit in one serving", color:"#dc2626"},
             ].map((row,i)=>(
-              <div key={i} style={{padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
-                <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12}}>
-                  <div style={{fontSize:12, color:text, fontWeight:600}}>{row.range}</div>
-                  <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, textAlign:"right"}}>{row.penalty}</div>
-                </div>
-                {row.note ? <div style={{fontSize:11, color:muted, marginTop:3}}>{row.note}</div> : null}
+              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
+                <div style={{fontSize:13, color:text}}>{row.range}</div>
+                <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, marginLeft:12}}>{row.penalty}</div>
               </div>
             ))}
           </div>
@@ -4642,7 +4631,7 @@ function App() {
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
-                    <><IcoRating size={14}/> Ingredient Safety Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = most dangerous)</span>
+                    <><IcoRating size={14}/> Product Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = highest concern)</span>
                   </div>
                   {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
                   {result.confidence && (
@@ -4669,6 +4658,18 @@ function App() {
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
                       <ScoreArc score={displayScore}/>
                     </div>
+
+                    {/* Dual scoring explanation — one line, always visible */}
+                    {(() => {
+                      const foodCats = ["food_beverage","beverage","restaurant","baby"];
+                      if (!foodCats.includes(result.category)) return null;
+                      return (
+                        <div style={{fontSize:10, color:muted, marginTop:4, marginBottom:2, letterSpacing:"0.02em"}}>
+                          Chemical safety + nutritional impact · combined into one score
+                        </div>
+                      );
+                    })()}
+
                     <RiskBar score={displayScore}/>
 
                     {/* Child mode toggle */}
@@ -4823,124 +4824,30 @@ function App() {
                   );
                 })()}
 
-                {/* Macro nutrition badges — replaces "Good for beverages" label */}
+                {/* Hero label */}
                 {(() => {
-                  const nutritionCats = ["food","food_beverage","beverage","restaurant","baby"];
-                  const n = result.nutrition;
-                  if (!n || !nutritionCats.includes(result.category)) return null;
-
-                  const dvs = childMode
-                    ? { sugar:25, sodium:1500, sat_fat:13, calories:1400, protein:19, fiber:14 }
-                    : { sugar:50, sodium:2300, sat_fat:20, calories:2000, protein:50, fiber:28 };
-
-                  const isBev  = result.category === "beverage";
-                  const isRest = result.category === "restaurant";
-
-                  // Concern badge colours (red-spectrum)
-                  const SEV = {
-                    good:      { bg: isDark?"#14532d22":"#f0fdf4", border: isDark?"#166534":"#bbf7d0", text: isDark?"#4ade80":"#15803d" },
-                    low:       { bg: isDark?"#78350f22":"#fffbeb", border: isDark?"#92400e":"#fde68a", text: isDark?"#fbbf24":"#b45309" },
-                    moderate:  { bg: isDark?"#7c2d1222":"#fff7ed", border: isDark?"#9a3412":"#fed7aa", text: isDark?"#fb923c":"#c2410c" },
-                    high:      { bg: isDark?"#7f1d1d22":"#fef2f2", border: isDark?"#991b1b":"#fecaca", text: isDark?"#f87171":"#dc2626" },
-                    very_high: { bg: isDark?"#7f1d1d55":"#fef2f2", border: isDark?"#dc2626":"#ef4444", text: isDark?"#ef4444":"#b91c1c" },
-                  };
-                  // Positive badge colours (green-spectrum)
-                  const POS = {
-                    present:   { bg: isDark?"#14532d22":"#f0fdf4", border: isDark?"#166534":"#bbf7d0", text: isDark?"#4ade80":"#15803d" },
-                    good:      { bg: isDark?"#14532d33":"#dcfce7", border: isDark?"#166534":"#86efac", text: isDark?"#4ade80":"#16a34a" },
-                    excellent: { bg: isDark?"#14532d55":"#dcfce7", border: isDark?"#15803d":"#4ade80", text: isDark?"#22c55e":"#15803d" },
-                  };
-
-                  function getSev(pct, tight) {
-                    if (tight) {
-                      if (pct >= 80) return "very_high"; if (pct >= 60) return "high";
-                      if (pct >= 40) return "moderate";  if (pct >= 20) return "low"; return "good";
-                    }
-                    if (pct >= 100) return "very_high"; if (pct >= 70) return "high";
-                    if (pct >= 50)  return "moderate";  if (pct >= 30) return "low"; return "good";
-                  }
-
-                  // Build concern badges (red-spectrum)
-                  const concernBadges = [
-                    // Trans fat — any amount, no DV
-                    n.trans_fat_g > 0 && {
-                      key:"transfat", label:"Trans Fat", val:`${n.trans_fat_g}g`,
-                      sub:"⚠ No safe level", cfg: SEV.very_high, concern:true
-                    },
-                    // Sugar
-                    n.sugar_g != null && (() => {
-                      const pct = Math.round((n.sugar_g / dvs.sugar) * 100);
-                      const sub = n.added_sugar_g != null
-                        ? `${pct}% DV · ${n.added_sugar_g}g added`
-                        : n.sugar_natural ? `${pct}% DV · natural` : `${pct}% DV`;
-                      return { key:"sugar", label:"Sugar", val:`${n.sugar_g}g`, pct, sub, cfg: SEV[getSev(pct, isBev)], concern:true };
-                    })(),
-                    // Sodium
-                    n.sodium_mg != null && (() => {
-                      const pct = Math.round((n.sodium_mg / dvs.sodium) * 100);
-                      return { key:"sodium", label:"Sodium", val:`${n.sodium_mg}mg`, pct, sub:`${pct}% DV`, cfg: SEV[getSev(pct, false)], concern:true };
-                    })(),
-                    // Sat fat (not beverages)
-                    n.sat_fat_g != null && !isBev && (() => {
-                      const pct = Math.round((n.sat_fat_g / dvs.sat_fat) * 100);
-                      return { key:"satfat", label:"Sat Fat", val:`${n.sat_fat_g}g`, pct, sub:`${pct}% DV`, cfg: SEV[getSev(pct, false)], concern:true };
-                    })(),
-                    // Calories — beverages + restaurant only
-                    n.calories != null && (isBev || isRest) && n.calories > 80 && (() => {
-                      const pct = Math.round((n.calories / dvs.calories) * 100);
-                      if (pct < 10) return null;
-                      const sev = pct >= 50 ? "very_high" : pct >= 35 ? "high" : pct >= 20 ? "moderate" : "low";
-                      return { key:"cal", label:"Calories", val:`${n.calories}`, pct, sub:`${pct}% DV`, cfg: SEV[sev], concern:true };
-                    })(),
-                  ].filter(Boolean);
-
-                  // Build positive badges (green-spectrum)
-                  const positiveBadges = [
-                    n.protein_g != null && (() => {
-                      const pct = Math.round((n.protein_g / dvs.protein) * 100);
-                      if (pct < 15) return null;
-                      const tier = pct >= 50 ? "excellent" : pct >= 30 ? "good" : "present";
-                      return { key:"protein", label:"Protein", val:`${n.protein_g}g`, sub:`${pct}% DV`, cfg: POS[tier] };
-                    })(),
-                    n.fiber_g != null && n.fiber_g >= 3 && (() => {
-                      const pct = Math.round((n.fiber_g / dvs.fiber) * 100);
-                      const tier = pct >= 20 ? "excellent" : "good";
-                      return { key:"fiber", label:"Fiber", val:`${n.fiber_g}g`, sub:`${pct}% DV`, cfg: POS[tier] };
-                    })(),
-                  ].filter(Boolean);
-
-                  const allBadges = [...concernBadges, ...positiveBadges];
-                  if (!allBadges.length) return null;
-
-                  const cols = Math.min(allBadges.length, 4);
-                  const allClear = concernBadges.every(b => b.cfg === SEV.good) && !concernBadges.some(b => b.key === "transfat");
-
+                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+                  const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
                   return (
-                    <div style={{marginBottom:16, marginTop:4}}>
-                      <div style={{fontSize:10, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:7}}>
-                        {childMode ? "Nutrition · Children's daily values" : "Nutrition · % of daily value"}
+                    <div style={{marginBottom:16}}>
+                      <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
+                        {scoreLabel(displayScore)} — {childMode && result.child_score ? "for children" : catLabel}
                       </div>
-                      <div style={{display:"grid", gridTemplateColumns:`repeat(${cols}, 1fr)`, gap:6}}>
-                        {allBadges.map(b => (
-                          <div key={b.key} style={{
-                            background:    b.cfg.bg,
-                            border:        `1px solid ${b.cfg.border}`,
-                            borderRadius:  10,
-                            padding:       "8px 6px",
-                            display:       "flex",
-                            flexDirection: "column",
-                            alignItems:    "center",
-                            gap:           2,
-                          }}>
-                            <div style={{fontSize:12, fontWeight:700, color:b.cfg.text, whiteSpace:"nowrap"}}>{b.val}</div>
-                            <div style={{fontSize:9,  color:muted, whiteSpace:"nowrap"}}>{b.label}</div>
-                            <div style={{fontSize:9,  fontWeight:600, color:b.cfg.text, textAlign:"center", lineHeight:1.3}}>{b.sub}</div>
-                          </div>
-                        ))}
+                      <div style={{fontSize:11,color:muted,marginTop:2}}>
+                        {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
+                        : result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
+                        : result.category === "beverage"      ? "Ingredients 75% · Packaging 25%"
+                        : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
+                        : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
+                        : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
+                        : result.category === "toy"           ? "Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%"
+                        : result.category === "clothing"      ? "Materials 35% · Exposure 30% · Sustainability 35%"
+                        : result.category === "accessory"     ? "Materials 40% · Exposure 25% · Sustainability 35%"
+                        : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
+                        : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
+                        : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%"
+                        }
                       </div>
-                      {allClear && concernBadges.length > 0 && (
-                        <div style={{fontSize:10, color:muted, marginTop:5, textAlign:"center"}}>No nutrition concerns flagged</div>
-                      )}
                     </div>
                   );
                 })()}
