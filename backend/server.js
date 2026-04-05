@@ -3544,7 +3544,14 @@ app.post("/analyze", async (req, res) => {
         nutrition: p1.nutrition || null,
       };
 
-      return res.json(applyProductCalibration(result));
+      return res.json((() => {
+        const calibrated     = applyProductCalibration(result);
+        const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true });
+        return {
+          ...calibrated,
+          child_score: Math.max(calibrated.child_score || 0, kidsCalibrated.overall_score || kidsCalibrated.score || 0) || calibrated.child_score,
+        };
+      })());
     } catch(err) {
       console.error("Vision analyze error:", err);
       return res.status(500).json({ error: err.message || "Image scan failed" });
@@ -3803,11 +3810,17 @@ app.post("/analyze", async (req, res) => {
     };
 
     // ── Calibration registry — deterministic floor/ceiling enforcement ──
-    const calibrated = applyProductCalibration(result);
+    // Run once for adult score, once for kids score, so the toggle is meaningful
+    const calibrated     = applyProductCalibration(result);
+    const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true });
+    const finalResult    = {
+      ...calibrated,
+      child_score: Math.max(calibrated.child_score || 0, kidsCalibrated.overall_score || kidsCalibrated.score || 0) || calibrated.child_score,
+    };
 
-    scoreCache.set(key, calibrated);
-    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence})`);
-    res.json(calibrated);
+    scoreCache.set(key, finalResult);
+    console.log(`Cached: ${key} (score: ${finalResult.score}, kids: ${finalResult.child_score}, confidence: ${finalResult.confidence})`);
+    res.json(finalResult);
 
   } catch (err) {
     console.error("Error:", err.message);
