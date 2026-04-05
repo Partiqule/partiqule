@@ -3498,6 +3498,8 @@ app.post("/analyze", async (req, res) => {
         scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
+        nutrition:           p1.nutrition || null,
+        nutrition_verified:  p1.nutrition_verified !== false,
         cached:              false,
         scannedAt:           new Date().toISOString(),
         dimensions: {
@@ -3774,6 +3776,8 @@ app.post("/analyze", async (req, res) => {
       scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
       break_even:          p2?.break_even || null,
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
+      nutrition:           p1.nutrition || null,
+      nutrition_verified:  p1.nutrition_verified !== false,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,
