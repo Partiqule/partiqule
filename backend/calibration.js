@@ -3707,6 +3707,19 @@ const ENTRIES = [
   ["tresemme shampoo",               { floor:4, ceiling:6, substances:["DMDM hydantoin","SLES","silicones","synthetic fragrance"], reason:"TRESemmé — DMDM hydantoin (formaldehyde releaser), SLES, synthetic fragrance, silicones. Class action settled 2021 over DMDM hydantoin causing hair loss. Similar concern to Pantene.", confidence:"high", category:"personal_care" }],
   ["head and shoulders",             { floor:4, ceiling:6, substances:["zinc pyrithione","SLES","synthetic fragrance","dimethicone"], reason:"Head & Shoulders — zinc pyrithione (antifungal active), SLES, synthetic fragrance, dimethicone silicone. Active ingredient is effective for dandruff but zinc pyrithione accumulates in aquatic environments.", confidence:"high", category:"personal_care" }],
 
+  // ── SPECIFIC HIGH-SUGAR JUICES (nutrition baked in as fallback) ──
+  ["natures nectar white grape",   { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:38, sodium_mg:25, calories:140}, substances:["38g natural sugar per 8oz"], reason:"Nature's Nectar White Grape Juice — 38g sugar per 8oz = 76% adult daily sugar limit, 152% of children's daily limit. Natural sugar has identical glycemic impact to added sugar.", confidence:"high", category:"beverage" }],
+  ["natures nectar",               { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:38, sodium_mg:25, calories:140}, substances:["38g natural sugar per 8oz"], reason:"Nature's Nectar juice — high natural sugar, floor based on 38g per serving.", confidence:"high", category:"beverage" }],
+  ["welchs grape juice",            { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:36, sodium_mg:15, calories:140}, substances:["36g natural sugar per 8oz"], reason:"Welch's Grape Juice — 36g sugar per 8oz = 72% adult DV, 144% children's DV.", confidence:"high", category:"beverage" }],
+  ["apple juice",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:28, sodium_mg:20, calories:120}, substances:["28g natural sugar per 8oz"], reason:"Apple juice — 28g sugar per 8oz = 56% adult DV, 112% children's DV.", confidence:"high", category:"beverage" }],
+  ["white grape juice",              { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:38, sodium_mg:20, calories:140}, substances:["38g natural sugar per 8oz"], reason:"White grape juice — 38g sugar per 8oz, same as Nature's Nectar. Floor 5 adult, 7 kids.", confidence:"high", category:"beverage" }],
+  ["grape juice",                    { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:36, sodium_mg:15, calories:140}, substances:["36g natural sugar per 8oz"], reason:"Grape juice — 36g sugar per 8oz = 72% adult DV, 144% children's DV.", confidence:"high", category:"beverage" }],
+  ["cranberry juice cocktail",       { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:30, sodium_mg:35, calories:120}, substances:["30g sugar per 8oz","HFCS or corn syrup"], reason:"Cranberry juice cocktail — only ~27% real juice, 30g sugar, often HFCS. Floor on both ingredient and sugar concern.", confidence:"high", category:"beverage" }],
+  ["ocean spray cranberry",          { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:30, sodium_mg:35, calories:120}, substances:["30g sugar per 8oz","HFCS"], reason:"Ocean Spray Cranberry Cocktail — primarily sugar water with minimal real juice. 30g sugar, often HFCS.", confidence:"high", category:"beverage" }],
+  ["simply lemonade",                { floor:5, ceiling:6, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:28, sodium_mg:10, calories:120}, substances:["28g sugar per 8oz"], reason:"Simply Lemonade — 28g sugar per 8oz. Clean ingredients but very high natural + added sugar.", confidence:"high", category:"beverage" }],
+  ["minute maid orange juice",       { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:24, sodium_mg:5, calories:110}, substances:["24g natural sugar per 8oz"], reason:"Minute Maid OJ — 24g sugar per 8oz = 48% adult DV, 96% children's DV.", confidence:"high", category:"beverage" }],
+  ["tropicana orange juice",         { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:22, sodium_mg:0, calories:110}, substances:["22g natural sugar per 8oz"], reason:"Tropicana OJ — 22g sugar per 8oz = 44% adult DV, 88% children's DV. 'Flavor packs' added after pasteurization.", confidence:"high", category:"beverage" }],
+  ["simply orange",                  { floor:4, ceiling:5, kidsFloor:6, kidsCeiling:7, nutrition:{sugar_g:22, sodium_mg:0, calories:110}, substances:["22g natural sugar per 8oz"], reason:"Simply Orange — 22g sugar per 8oz. No flavor packs claimed. Mid-tier OJ.", confidence:"high", category:"beverage" }],
   // ══════════════════════════════════════════════════════════════
   // COOKING OILS
   // ══════════════════════════════════════════════════════════════
@@ -4136,17 +4149,13 @@ function applyProductCalibration(result) {
 
   const rawName  = result.product_name || result.query || "";
   const name     = normalise(rawName);
-  const sugar_g    = result.sugar_g    ?? result.sugar_grams ?? result.nutrition?.sugar_g    ?? null;
-  const sodium_mg  = result.sodium_mg  ?? result.nutrition?.sodium_mg  ?? null;
-  const sat_fat_g  = result.sat_fat_g  ?? result.nutrition?.sat_fat_g  ?? null;
-  const trans_fat_g = result.trans_fat_g ?? result.nutrition?.trans_fat_g ?? null;
   const kidsMode = result.kids_mode ?? result.children_mode ?? false;
   const category = result.category  || "";
 
   // 1. Exact match
   let entry = CALIBRATION.get(name);
 
-  // 2. Key-term match — try every entry key against the product name
+  // 2. Key-term match
   if (!entry) {
     let bestLen = 0;
     for (const [key, val] of CALIBRATION) {
@@ -4156,6 +4165,25 @@ function applyProductCalibration(result) {
       }
     }
   }
+
+  // ── Nutrition — merge three sources: result fields, result.nutrition, entry.nutrition
+  // Priority: explicit result fields > result.nutrition > calibration entry nutrition fallback
+  // This ensures floors fire even when the AI returns null nutrition for a text scan.
+  const entryNutrition  = entry?.nutrition  || {};
+  const resultNutrition = result.nutrition  || {};
+
+  const sugar_g     = result.sugar_g     ?? resultNutrition.sugar_g     ?? entryNutrition.sugar_g     ?? null;
+  const sodium_mg   = result.sodium_mg   ?? resultNutrition.sodium_mg   ?? entryNutrition.sodium_mg   ?? null;
+  const sat_fat_g   = result.sat_fat_g   ?? resultNutrition.sat_fat_g   ?? entryNutrition.sat_fat_g   ?? null;
+  const trans_fat_g = result.trans_fat_g ?? resultNutrition.trans_fat_g ?? entryNutrition.trans_fat_g ?? null;
+  const calories_v  = result.calories    ?? resultNutrition.calories    ?? entryNutrition.calories    ?? null;
+  const protein_g   = result.protein_g   ?? resultNutrition.protein_g   ?? entryNutrition.protein_g   ?? null;
+  const fiber_g     = result.fiber_g     ?? resultNutrition.fiber_g     ?? entryNutrition.fiber_g     ?? null;
+
+  // Merged nutrition object for badge display
+  const mergedNutrition = (sugar_g != null || sodium_mg != null || sat_fat_g != null || calories_v != null)
+    ? { ...entryNutrition, ...resultNutrition, sugar_g, sodium_mg, sat_fat_g, trans_fat_g, calories: calories_v, protein_g, fiber_g }
+    : null;
 
   const currentScore = result.overall_score ?? result.score ?? 5;
   let   newScore     = currentScore;
@@ -4198,16 +4226,13 @@ function applyProductCalibration(result) {
 
   // ── Nutrition concern badges (for frontend display) ────────────
   const nutrition_concerns = buildNutritionConcerns(
-    result.nutrition || {
-      sugar_g,
-      sodium_mg,
-      sat_fat_g,
-      trans_fat_g,
-      calories: result.calories ?? null,
-    },
+    mergedNutrition,
     category,
     kidsMode
   );
+
+  // Also expose merged nutrition on the result so the frontend badge row can render
+  const nutrition_out = mergedNutrition || result.nutrition || null;
 
   // ── Whole Foods banned check ──────────────────────────────────
   const wfBanned = entry ? checkWholeFoodsBanned(entry.substances || []) : false;
@@ -4216,20 +4241,21 @@ function applyProductCalibration(result) {
     if (entry && entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
     }
-    if (wfBanned) return { ...result, retailer_restricted: true, nutrition_concerns };
-    return { ...result, nutrition_concerns };
+    if (wfBanned) return { ...result, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns };
+    return { ...result, nutrition: nutrition_out, nutrition_concerns };
   }
 
   return {
     ...result,
     overall_score:        newScore,
     score:                newScore,
+    nutrition:            nutrition_out,
     retailer_restricted:  wfBanned,
     nutrition_concerns,
     calibration_override: {
       original_score: currentScore,
       corrected_to:   newScore,
-      reason:         entry ? entry.reason : `nutrition content (sugar: ${sugar_g}g, sodium: ${sodium_mg}mg, sat fat: ${sat_fat_g}g)`,
+      reason:         entry ? entry.reason : `nutrition content (sugar: ${sugar_g}g, sodium: ${sodium_mg}mg)`,
       substances:     entry ? entry.substances : [],
       confidence:     entry ? entry.confidence : "high",
     },
