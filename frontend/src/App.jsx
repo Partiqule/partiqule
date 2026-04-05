@@ -660,7 +660,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
         {q:"Why are artificial dyes a concern?", a:"The FDA banned Red 3 in 2025 and has begun phasing out all petroleum-derived synthetic dyes including Red 40, Yellow 5, Yellow 6, and Blue 1. Multiple studies have linked these dyes to hyperactivity in children and potential carcinogenicity. They appear in candy, cereals, drinks, and many processed foods. Partiqule flags each dye individually with its severity level and the research behind it."},
         {q:"What are ultra-processed foods and why do they score higher?", a:"Ultra-processed foods (NOVA Group 4) are industrial formulations containing ingredients not found in home kitchens — synthetic dyes, preservatives like BHA and BHT, emulsifiers, and artificial flavors. A 2025 Lancet review linked regular ultra-processed food consumption to cardiovascular disease, cognitive decline, and stroke. Partiqule scores these products higher on Materials and Usage because the chemical load is meaningfully higher than minimally processed or whole foods."},
         {q:"What are pesticide residues and should I be concerned?", a:"The EWG's 2026 Dirty Dozen report — analysing 54,344 USDA produce samples — found pesticide residues on 96% of the 12 most contaminated fruits and vegetables, including PFAS forever chemicals on 63% of samples. Spinach ranked highest for pesticide residues by weight. Partiqule flags conventional Dirty Dozen produce with a pesticide concern and credits organic produce as a positive. Importantly, all produce is healthy — the goal is to reduce exposure where practical, not avoid fruits and vegetables."},
-        {q:"How does Partiqule score chemical safety?", a:"The Materials score covers what the product is made of — synthetic pesticides, petroleum dyes, IARC carcinogens, BHA/BHT, PFAS, and similar substances. The Usage and Exposure score covers how using the product creates contact with those materials — whether you ingest it, absorb it through skin, or breathe it in. This is a chemical safety score, not a nutritional or dietary score. Organic butter scores 1-2 because it has no synthetic pesticides or additives — that reflects ingredient safety, not a recommendation on how much to consume."},
+        {q:"How does Partiqule score chemical safety?", a:"The Materials score covers what the product is made of — synthetic pesticides, petroleum dyes, IARC carcinogens, BHA/BHT, PFAS, and similar substances. The Usage and Exposure score covers how using the product creates contact with those materials — whether you ingest it, absorb it through skin, or breathe it in. For food, beverages, and restaurant items, a second scoring layer also accounts for nutritional impact: sugar, sodium, saturated fat, and trans fat are each scored against their daily values and can raise a product's floor score independently of ingredient concerns. A juice with clean ingredients but 38g of sugar will score differently than sparkling water — because the glycemic impact is real regardless of the ingredient list. Protein and fiber are shown as positive signals when notably high."},
       ],
     },
     {
@@ -2743,8 +2743,8 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           heading: "Dual scoring formula — food vs non-food",
           body: "Food and non-food products use different dimension weights because the risks are fundamentally different. What goes in your body matters more than what touches your skin.",
           list: [
-            "Food, Beverage and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately, not used to tank a clean food.",
-            "Beverage: Ingredients 75% · Packaging 25% — the container leaches directly into every sip. A plastic water bottle consumed daily is different from a plastic cereal box.",
+            "Food and Restaurant: Ingredients 90% · Packaging 10% — ingredients are the story. Organic spinach in a plastic bag still scores 2. The packaging concern is flagged separately.",
+            "Beverage: Ingredient safety is the primary score. A separate nutrition badge row shows sugar, sodium, and calorie impact as % of daily value — because a juice with 38g of sugar and clean ingredients should not score the same as sparkling water.",
             "Beauty and Personal Care: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5% — leave-on daily skin contact makes exposure equally important as what's in the product.",
             "Clothing and Shoes: Materials 35% · Exposure 30% · Sustainability 35% — microfiber shedding into waterways gives sustainability real weight.",
             "Home (cleaning, candles, furniture): Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15% — inhalation and residue contact is the primary story.",
@@ -2762,24 +2762,30 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           ]
         },
         {
-          heading: "Added sugar penalty — food only",
-          body: "WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and flavored beverages are consumed daily, so cumulative sugar exposure is scored independently of substance concerns:",
+          heading: "Nutrition impact scoring — food, beverage and restaurant",
+          body: "Ingredient safety and nutritional impact are scored as two separate layers — the higher floor wins. A product with clean ingredients but extreme sugar content will still score high. Scores are shown as % of daily value (DV) in the badge row beneath the score.",
           list: [
-            "0–5g added sugar per serving: no penalty",
-            "6–10g added sugar per serving: materials +1",
-            ">10g added sugar per serving: materials +2",
-            ">20g added sugar per serving: materials +3 — exceeds half the WHO daily limit in one serving",
+            "Sugar — beverages scored tighter than food (no fiber or protein to buffer glycemic impact). Adult DV: 50g. Children's DV: 25g.",
+            "Beverage sugar tiers (adult): 20g = floor 4 · 30g = floor 5 · 40g = floor 6 · 50g+ = floor 7",
+            "Food sugar tiers (adult): 25g = floor 4 · 35g = floor 5 · 50g+ = floor 6",
+            "Children's mode uses half the thresholds — a drink with 25g of sugar hits 100% of a child's daily limit and floors at 7",
+            "Sodium — adult DV 2300mg, children's DV 1500mg. Tiers: 25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6",
+            "Saturated fat — adult DV 20g, children's DV 13g. Same tier structure as sodium. Does not apply to beverages.",
+            "Trans fat — no safe level. Any detected trans fat fires floor 6 regardless of other scores.",
+            "Natural sugar is scored the same as added sugar for beverages — grape juice hits the same glycemic peak as soda.",
+            "Protein and fiber show as positive green badges when notably high. They do not lower the score but signal nutritional value.",
+            "Calories flagged for beverages and restaurant items only — liquid calories and restaurant portions are the two cases where people most systematically underestimate intake.",
           ]
         },
         {
           heading: "What the score means",
-          body: "This is an ingredient safety score — it measures chemical risk, not nutritional quality. Organic butter scores 1-2. That means no pesticides, no synthetic additives. It does not mean unlimited consumption is recommended.",
+          body: "For food, beverages, and restaurant items the score reflects both ingredient safety and nutritional impact — whichever raises more concern sets the floor. For all other categories it is a pure ingredient and exposure safety score. Organic butter still scores 1-2 (no pesticides, no synthetic additives). Grape juice with 38g of sugar scores 5 — clean ingredients, real glycemic concern.",
           list: [
-            "1-2 Safe — No significant chemical or ingredient concerns. Cleanest in its category from a safety standpoint.",
+            "1-2 Safe — No significant chemical or nutritional concerns. Cleanest in its category.",
             "3-4 Good — Mostly clean. Minor concerns, nothing alarming. Fine for regular use.",
             "5-6 Caution — Real concerns worth knowing. Consider reducing use or finding a cleaner alternative.",
             "7-8 Switch — Significant concerns. We will show you a better option.",
-            "9-10 Avoid — Known harmful substances. Significant and documented safety risk.",
+            "9-10 Avoid — Known harmful substances or extreme nutritional impact. Significant and documented risk.",
           ]
         },
         {
@@ -3352,22 +3358,27 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           </div>
         </div>
 
-        {/* Sugar penalty */}
+        {/* Nutrition impact scoring */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
           <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
-            <div style={{fontSize:13, fontWeight:700, color:text}}>Added Sugar Penalty — scored independently of other concerns</div>
-            <div style={{fontSize:12, color:muted, marginTop:2}}>WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and beverages are consumed daily — cumulative exposure matters.</div>
+            <div style={{fontSize:13, fontWeight:700, color:text}}>Nutrition Impact Scoring — layered on top of ingredient safety</div>
+            <div style={{fontSize:12, color:muted, marginTop:2}}>Ingredient safety and nutritional impact are scored independently — the higher floor wins. Scores show as % of daily value in the badge row. Children's mode uses separate DVs (sugar 25g, sodium 1500mg, sat fat 13g).</div>
           </div>
           <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:8}}>
             {[
-              {range:"0–5g added sugar per serving", penalty:"No penalty", color:"#16a34a"},
-              {range:"6–10g added sugar per serving", penalty:"Materials +1", color:"#d97706"},
-              {range:">10g added sugar per serving", penalty:"Materials +2", color:"#ea580c"},
-              {range:">20g added sugar per serving", penalty:"Materials +3 — exceeds half the WHO daily limit in one serving", color:"#dc2626"},
+              {range:"Sugar — beverages (adult DV 50g, kids DV 25g)", penalty:"20g = floor 4 · 30g = floor 5 · 40g = floor 6 · 50g+ = floor 7", color:"#c2410c", note:"Tighter than food — no fiber/protein to buffer glycemic impact"},
+              {range:"Sugar — food and restaurant (adult DV 50g)", penalty:"25g = floor 4 · 35g = floor 5 · 50g+ = floor 6", color:"#d97706", note:""},
+              {range:"Sodium (adult DV 2300mg, kids DV 1500mg)", penalty:"25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6", color:"#d97706", note:""},
+              {range:"Saturated fat (adult DV 20g, kids DV 13g)", penalty:"25% DV = floor 3 · 40% = floor 4 · 60% = floor 5 · 80%+ = floor 6", color:"#d97706", note:"Not applied to beverages"},
+              {range:"Trans fat — any detected amount", penalty:"Floor 6 minimum — no safe level", color:"#dc2626", note:"FDA banned PHOs but <0.5g/serving can still be labelled 0g"},
+              {range:"Protein and fiber — positive signals", penalty:"Green badge when notably high — does not lower score", color:"#16a34a", note:""},
             ].map((row,i)=>(
-              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
-                <div style={{fontSize:13, color:text}}>{row.range}</div>
-                <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, marginLeft:12}}>{row.penalty}</div>
+              <div key={i} style={{padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
+                <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12}}>
+                  <div style={{fontSize:12, color:text, fontWeight:600}}>{row.range}</div>
+                  <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, textAlign:"right"}}>{row.penalty}</div>
+                </div>
+                {row.note ? <div style={{fontSize:11, color:muted, marginTop:3}}>{row.note}</div> : null}
               </div>
             ))}
           </div>
