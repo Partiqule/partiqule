@@ -5174,12 +5174,12 @@ function applyProductCalibration(result) {
   let   newScore     = currentScore;
   let   corrected    = false;
 
-  // ── Tier 4 floor — ultra-processed / high-concern products never score below 4 ──
+  // ── Tier 4 floor — ultra-processed / high-concern products never score below 5 ──
   const compositionTier = result.composition_tier ?? result.product_analysis?.composition_tier ?? null;
   const foodCats = ["food","food_beverage","beverage","restaurant","supplement"];
-  if (compositionTier === 4 && foodCats.includes(category) && newScore < 4) {
-    console.log(`[CAL] Tier 4 floor: "${rawName}" ${newScore}→4 (ultra-processed/high-concern — NOVA 4 minimum floor)`);
-    newScore  = 4;
+  if (compositionTier === 4 && foodCats.includes(category) && newScore < 5) {
+    console.log(`[CAL] Tier 4 floor: "${rawName}" ${newScore}→5 (ultra-processed/high-concern — NOVA 4 minimum floor)`);
+    newScore  = 5;
     corrected = true;
   }
 
