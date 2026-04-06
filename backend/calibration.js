@@ -208,12 +208,12 @@ const ENTRIES = [
   ["gomacro",                      { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole food ingredients", confidence:"high", category:"food_beverage" }],
   ["perfect bar",                  { floor:2, ceiling:4, substances:[], reason:"Peanut butter + honey + nonfat milk — refrigerated, whole food base", confidence:"high", category:"food_beverage" }],
   ["quest bar",                    { floor:4, ceiling:6, substances:["sucralose","palm kernel oil"], reason:"Sucralose + protein isolate + palm kernel oil + NOVA 4 — not clean", confidence:"high", category:"food_beverage" }],
-  ["david protein bar",            { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol","EPG modified plant fat"], reason:"David Protein Bar — milk protein isolate, whey, collagen. Binding system uses maltitol (sugar alcohol, GI effects), sucralose + acesulfame-K for sweetness, artificial flavors, and EPG (modified plant fat, novel ingredient with limited long-term data). No artificial dyes. High protein density is a positive. Score reflects additive load, not protein quality.", confidence:"high", category:"supplement" }],
-  ["david bar",                    { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Bar — sucralose + ace-K + maltitol + artificial flavors. Novel EPG fat system. Clean protein sources but synthetic additive load prevents clean score.", confidence:"high", category:"supplement" }],
-  ["david protein",                { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Protein — sucralose + acesulfame-K + maltitol + artificial flavors. Full ingredient list publicly available.", confidence:"high", category:"supplement" }],
-  ["david peanut",                 { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Peanut Butter bar — sucralose + ace-K + maltitol + artificial flavors + EPG fat. Confirmed ingredient list from davidprotein.com.", confidence:"high", category:"supplement" }],
-  ["david chocolate",              { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Chocolate bar — sucralose + ace-K + maltitol + artificial flavors. Same formulation platform as other David bars.", confidence:"high", category:"supplement" }],
-  ["david fudge",                  { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Fudge Brownie bar — sucralose + ace-K + maltitol + artificial flavors.", confidence:"high", category:"supplement" }],
+  ["david protein bar",            { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol","EPG modified plant fat"], reason:"David Protein Bar — milk protein isolate, whey, collagen. Binding system uses maltitol (sugar alcohol, GI effects), sucralose + acesulfame-K for sweetness, artificial flavors, and EPG (modified plant fat, novel ingredient with limited long-term data). No artificial dyes. High protein density is a positive. Score reflects additive load, not protein quality.", confidence:"high", category:"supplement" }],
+  ["david bar",                    { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Bar — sucralose + ace-K + maltitol + artificial flavors. Novel EPG fat system. Clean protein sources but synthetic additive load prevents clean score.", confidence:"high", category:"supplement" }],
+  ["david protein",                { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Protein — sucralose + acesulfame-K + maltitol + artificial flavors. Full ingredient list publicly available.", confidence:"high", category:"supplement" }],
+  ["david peanut",                 { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Peanut Butter bar — sucralose + ace-K + maltitol + artificial flavors + EPG fat. Confirmed ingredient list from davidprotein.com.", confidence:"high", category:"supplement" }],
+  ["david chocolate",              { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Chocolate bar — sucralose + ace-K + maltitol + artificial flavors. Same formulation platform as other David bars.", confidence:"high", category:"supplement" }],
+  ["david fudge",                  { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Fudge Brownie bar — sucralose + ace-K + maltitol + artificial flavors.", confidence:"high", category:"supplement" }],
   ["one bar",                      { floor:4, ceiling:6, substances:["sucralose","erythritol"], reason:"Sucralose + erythritol + protein isolate + NOVA 4", confidence:"high", category:"food_beverage" }],
   ["built bar",                    { floor:4, ceiling:6, substances:["sucralose","erythritol","carrageenan"], reason:"Sucralose + erythritol + carrageenan — multiple floors fire", confidence:"high", category:"food_beverage" }],
   ["kind bar",                     { floor:2, ceiling:4, substances:[], reason:"Nuts + honey — no sucralose, no dyes, relatively clean", confidence:"high", category:"food_beverage" }],
@@ -353,6 +353,9 @@ const ENTRIES = [
   ["gain laundry",                 { floor:5, ceiling:7, substances:["synthetic fragrance","optical brighteners","PVA"], reason:"Synthetic fragrance + optical brighteners + PVA pod film", confidence:"high", category:"home" }],
   ["seventh generation free clear",{ floor:1, ceiling:3, substances:[], reason:"Plant-based, no synthetic fragrance, no optical brighteners, EPA Safer Choice", confidence:"high", category:"home" }],
   ["blueland laundry",             { floor:1, ceiling:2, substances:[], reason:"No PVA, no synthetic fragrance, tablet format — benchmark clean laundry", confidence:"high", category:"home" }],
+  ["blueland multi-surface",       { floor:1, ceiling:2, substances:[], reason:"Blueland Multi-Surface Cleaner — EWG A-rated, no synthetic fragrance, no PVA film, concentrated tablet format, B Corp certified. Benchmark clean household cleaner.", confidence:"high", category:"home" }],
+  ["blueland clean",               { floor:1, ceiling:2, substances:[], reason:"Blueland cleaning product — EWG A-rated formulas, no synthetic fragrance, no PVA, tablet-based concentrate. Benchmark clean.", confidence:"high", category:"home" }],
+  ["blueland",                     { floor:1, ceiling:3, substances:[], reason:"Blueland brand — EWG A-rated, B Corp certified, no PVA film, no synthetic fragrance, concentrated tablet format. Benchmark clean household cleaning across all product lines.", confidence:"high", category:"home" }],
   ["branch basics",                { floor:1, ceiling:2, substances:[], reason:"Plant-based concentrate — zero synthetic additives, safest multi-purpose cleaner", confidence:"high", category:"home" }],
   ["lysol disinfectant spray",     { floor:6, ceiling:8, substances:["quaternary ammonium","synthetic fragrance"], reason:"Quaternary ammonium EPA-registered pesticide + aerosolized synthetic fragrance — linked to asthma induction", confidence:"high", category:"home" }],
   ["clorox disinfecting spray",    { floor:6, ceiling:8, substances:["quaternary ammonium","synthetic fragrance"], reason:"Quaternary ammonium + synthetic fragrance — same concern as Lysol", confidence:"high", category:"home" }],
@@ -4632,7 +4635,60 @@ const NUTRITION_LOOKUP = new Map([
   ["mod pizza",               { sugar_g:4,  sodium_mg:790,  sat_fat_g:9,  calories:570 }],
   ["sweetgreen harvest bowl", { sugar_g:12, sodium_mg:680,  sat_fat_g:5,  calories:600, protein_g:27, fiber_g:8 }],
 
-  // ── K-CUPS AND PLAIN COFFEE ───────────────────────────────────
+  // ── SUBWAY ────────────────────────────────────────────────────
+  ["subway turkey sandwich",  { sugar_g:7,  sodium_mg:960,  sat_fat_g:2,  calories:320, protein_g:24 }],
+  ["subway chicken teriyaki", { sugar_g:12, sodium_mg:960,  sat_fat_g:2,  calories:370, protein_g:26 }],
+  ["subway tuna",             { sugar_g:5,  sodium_mg:760,  sat_fat_g:5,  calories:480, protein_g:23 }],
+  ["subway italian bmt",      { sugar_g:6,  sodium_mg:1470, sat_fat_g:8,  calories:390, protein_g:22 }],
+  ["subway meatball",         { sugar_g:11, sodium_mg:1270, sat_fat_g:11, calories:480, protein_g:25 }],
+
+  // ── DOMINOS ───────────────────────────────────────────────────
+  ["dominos pepperoni pizza", { sugar_g:3,  sodium_mg:640,  sat_fat_g:7,  calories:290 }],
+  ["dominos cheese pizza",    { sugar_g:3,  sodium_mg:500,  sat_fat_g:5,  calories:250 }],
+  ["dominos thin crust",      { sugar_g:2,  sodium_mg:540,  sat_fat_g:5,  calories:220 }],
+  ["dominos",                 { sugar_g:3,  sodium_mg:580,  sat_fat_g:6,  calories:270 }],
+
+  // ── PIZZA HUT ─────────────────────────────────────────────────
+  ["pizza hut pepperoni",     { sugar_g:3,  sodium_mg:700,  sat_fat_g:7,  calories:300 }],
+  ["pizza hut cheese",        { sugar_g:3,  sodium_mg:560,  sat_fat_g:5,  calories:260 }],
+  ["pizza hut",               { sugar_g:3,  sodium_mg:630,  sat_fat_g:6,  calories:280 }],
+
+  // ── FIVE GUYS ─────────────────────────────────────────────────
+  ["five guys burger",        { sugar_g:8,  sodium_mg:1050, sat_fat_g:23, calories:700, protein_g:40 }],
+  ["five guys little burger",  { sugar_g:7, sodium_mg:640,  sat_fat_g:13, calories:440, protein_g:24 }],
+  ["five guys fries",         { sugar_g:1,  sodium_mg:1000, sat_fat_g:5,  calories:526 }],
+  ["five guys",               { sugar_g:8,  sodium_mg:1050, sat_fat_g:23, calories:700 }],
+
+  // ── IN-N-OUT ──────────────────────────────────────────────────
+  ["in-n-out double double",  { sugar_g:10, sodium_mg:1440, sat_fat_g:18, calories:670, protein_g:37 }],
+  ["in-n-out hamburger",      { sugar_g:10, sodium_mg:650,  sat_fat_g:9,  calories:390, protein_g:16 }],
+  ["in-n-out cheeseburger",   { sugar_g:10, sodium_mg:1000, sat_fat_g:13, calories:480, protein_g:22 }],
+  ["in-n-out animal fries",   { sugar_g:5,  sodium_mg:1400, sat_fat_g:12, calories:750 }],
+  ["in-n-out fries",          { sugar_g:0,  sodium_mg:245,  sat_fat_g:3,  calories:395 }],
+
+  // ── PAPA JOHNS ────────────────────────────────────────────────
+  ["papa johns pepperoni",    { sugar_g:4,  sodium_mg:720,  sat_fat_g:7,  calories:310 }],
+  ["papa johns",              { sugar_g:4,  sodium_mg:660,  sat_fat_g:6,  calories:290 }],
+
+  // ── TACO BELL ─────────────────────────────────────────────────
+  ["taco bell taco",          { sugar_g:2,  sodium_mg:310,  sat_fat_g:4,  calories:170, protein_g:8 }],
+  ["taco bell burrito",       { sugar_g:4,  sodium_mg:1060, sat_fat_g:7,  calories:430, protein_g:18 }],
+  ["taco bell quesadilla",    { sugar_g:2,  sodium_mg:1030, sat_fat_g:12, calories:470, protein_g:25 }],
+  ["taco bell nachos",        { sugar_g:4,  sodium_mg:870,  sat_fat_g:9,  calories:430 }],
+
+  // ── APPLEBEES / CHEESECAKE FACTORY / RED ROBIN ────────────────
+  ["applebees",               { sugar_g:10, sodium_mg:1800, sat_fat_g:12, calories:750 }],
+  ["cheesecake factory",      { sugar_g:12, sodium_mg:2200, sat_fat_g:15, calories:1100 }],
+  ["red robin burger",        { sugar_g:9,  sodium_mg:1200, sat_fat_g:16, calories:760, protein_g:40 }],
+  ["red robin",               { sugar_g:9,  sodium_mg:1200, sat_fat_g:16, calories:760 }],
+
+  // ── MCDONALDS EXPANDED ────────────────────────────────────────
+  ["mcdonalds quarter pounder",{ sugar_g:10, sodium_mg:1110, sat_fat_g:13, calories:520, protein_g:30 }],
+  ["mcdonalds chicken sandwich",{ sugar_g:5, sodium_mg:1110, sat_fat_g:4,  calories:470, protein_g:26 }],
+  ["mcdonalds egg mcmuffin",   { sugar_g:3,  sodium_mg:760,  sat_fat_g:7,  calories:310, protein_g:17 }],
+  ["mcdonalds fries large",    { sugar_g:0,  sodium_mg:400,  sat_fat_g:3,  calories:490 }],
+  ["mcdonalds fries medium",   { sugar_g:0,  sodium_mg:270,  sat_fat_g:2,  calories:320 }],
+  ["mcdonalds happy meal",     { sugar_g:5,  sodium_mg:620,  sat_fat_g:4,  calories:470, kidsFloor:6, kidsCeiling:8 }],
   ["k-cup",                   { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
   ["keurig k-cup",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
   ["starbucks k-cup",         { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
@@ -5174,13 +5230,48 @@ function applyProductCalibration(result) {
   let   newScore     = currentScore;
   let   corrected    = false;
 
-  // ── Tier 4 floor — ultra-processed / high-concern products never score below 5 ──
+  // ── Tier-based floors and ceilings ───────────────────────────
+  // Named calibration entries always take priority — tier rules only apply when no entry match
   const compositionTier = result.composition_tier ?? result.product_analysis?.composition_tier ?? null;
-  const foodCats = ["food","food_beverage","beverage","restaurant","supplement"];
-  if (compositionTier === 4 && foodCats.includes(category) && newScore < 5) {
-    console.log(`[CAL] Tier 4 floor: "${rawName}" ${newScore}→5 (ultra-processed/high-concern — NOVA 4 minimum floor)`);
-    newScore  = 5;
-    corrected = true;
+  const nonRestaurantCats = ["food","food_beverage","beverage","supplement","personal_care","clothing","baby","home","home_furnishing","kitchen","toy","pet"];
+  const foodOnlyCats = ["food","food_beverage","beverage","supplement"];
+
+  if (compositionTier !== null && !entry && category !== "restaurant") {
+    // Tier 1 — benchmark clean, hard ceiling of 2
+    if (compositionTier === 1 && newScore > 2) {
+      console.log(`[CAL] Tier 1 ceiling: "${rawName}" ${newScore}→2`);
+      newScore = 2; corrected = true;
+    }
+    // Tier 2 — conventional, range 3-5
+    if (compositionTier === 2 && newScore < 3) {
+      console.log(`[CAL] Tier 2 floor: "${rawName}" ${newScore}→3`);
+      newScore = 3; corrected = true;
+    }
+    if (compositionTier === 2 && newScore > 5) {
+      console.log(`[CAL] Tier 2 ceiling: "${rawName}" ${newScore}→5`);
+      newScore = 5; corrected = true;
+    }
+    // Tier 3 — synthetic/processed, range 4-7
+    if (compositionTier === 3 && newScore < 4) {
+      console.log(`[CAL] Tier 3 floor: "${rawName}" ${newScore}→4`);
+      newScore = 4; corrected = true;
+    }
+    if (compositionTier === 3 && newScore > 7) {
+      console.log(`[CAL] Tier 3 ceiling: "${rawName}" ${newScore}→7`);
+      newScore = 7; corrected = true;
+    }
+    // Tier 4 — high concern, floor 6 (7 for baby)
+    if (compositionTier === 4 && nonRestaurantCats.includes(category) && newScore < 6) {
+      console.log(`[CAL] Tier 4 floor: "${rawName}" ${newScore}→6`);
+      newScore = 6; corrected = true;
+    }
+    if (compositionTier === 4 && category === "baby" && newScore < 7) {
+      console.log(`[CAL] Baby tier 4 floor: "${rawName}" ${newScore}→7`);
+      newScore = 7; corrected = true;
+    }
+    if (compositionTier === 4 && newScore > 9) {
+      newScore = 9; corrected = true;
+    }
   }
 
   if (entry) {

@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// Detect if running inside Capacitor iOS app
+const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
+const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
@@ -3930,8 +3934,11 @@ function App() {
     if (!q.trim()) return Promise.resolve();
     // ── Scan limit gate ──
     if (!isSubscribed) {
-      if (!user && scanCount >= FREE_LIMIT) { setShowLimitModal("account"); return; }
-      if (user  && scanCount >= PAID_LIMIT) { setShowLimitModal("paywall"); return; }
+      if (scanCount >= FREE_LIMIT) {
+        if (!user) setShowLimitModal("account");
+        else setShowLimitModal("paywall");
+        return;
+      }
     }
     setLoading(true); setError(null); setResult(null);
     track("Scan", { product: q.trim() });
@@ -3949,8 +3956,10 @@ function App() {
         const newCount = scanCount + 1;
         setScanCount(newCount);
         try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-        if (!user && newCount >= FREE_LIMIT) setShowLimitModal("account");
-        else if (user && newCount >= PAID_LIMIT) setShowLimitModal("paywall");
+        if (newCount >= FREE_LIMIT) {
+          if (!user) setShowLimitModal("account");
+          else setShowLimitModal("paywall");
+        }
       }
     } catch(e){
       const msg = e.name === "AbortError"
@@ -4084,7 +4093,7 @@ function App() {
       <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0}to{opacity:1}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0}to{opacity:1}}.score-reveal{animation:slideInUp 0.5s ease forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
 
       {/* HEADER */}
-      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s"}}>
+      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: isMobile ? "max(env(safe-area-inset-top), 44px)" : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
             <svg width="32" height="32" viewBox="0 0 44 44">
@@ -4170,7 +4179,7 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id); setScanCount(0); try{localStorage.setItem("ps_scan_count","0");}catch{}}}/>}
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id); setShowLimitModal("paywall");}}/>}
 
       {/* ── Scan limit modals ── */}
       {showLimitModal && (
@@ -4178,9 +4187,9 @@ function App() {
           <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:400,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
 
             {showLimitModal === "account" && (<>
-              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>Save your scans and keep going</div>
-              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create a free account to unlock {FREE_LIMIT} more — no credit card needed.</div>
-              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create free account</button>
+              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've been busy.</div>
+              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $3.99/month.</div>
+              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create account</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
