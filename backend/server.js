@@ -633,6 +633,8 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
 
 function detectChildProduct(productName, category) {
   if (category === "baby") return true;
+  // All food products get a child score — children eat all food products
+  if (["food","food_beverage","beverage","restaurant","supplement","personal_care"].includes(category)) return true;
   const name = (productName || "").toLowerCase();
   if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
   if (CHILD_FOOD_BRANDS.test(name)) return true;
