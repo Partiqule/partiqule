@@ -3505,8 +3505,8 @@ app.post("/analyze", async (req, res) => {
         scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
+        composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
         cached:              false,
-        scannedAt:           new Date().toISOString(),
         dimensions: {
           materials: {
             score: mScore, label: p1.materials?.label || "", concerns: p1.materials?.concerns || [],
@@ -3784,6 +3784,7 @@ app.post("/analyze", async (req, res) => {
       scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
       break_even:          p2?.break_even || null,
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
+      composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
       cached:              false,
       alternatives: finalAlternatives.map(p => ({
         id:           p.id,
