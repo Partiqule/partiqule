@@ -7,6 +7,16 @@ const API_BASE = "https://partiqule-production.up.railway.app";
 const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
 const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+// Inject safe area CSS globally
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = `
+    :root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); }
+    body { padding-top: env(safe-area-inset-top, 0px); }
+  `;
+  document.head.appendChild(style);
+}
+
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
@@ -3974,15 +3984,21 @@ function App() {
   const runDemo = () => {
     const demo = {
       product_name: "M&Ms Milk Chocolate Candies",
-      category: "food_beverage",
+      category: "food",
       score: 7,
       overall_score: 7,
+      child_score: 9,
+      child_bumps: ["Children's developing organ systems require more protective thresholds", "Petroleum dyes disrupt neurodevelopment — hyperactivity link confirmed in children (McCann, Lancet 2007)", "Child vulnerability — M&Ms commonly consumed by children daily"],
+      is_child_product: true,
       summary: "Ultra-processed candy with four FDA-flagged petroleum dyes, daily ingestion pathway, and single-use plastic packaging.",
       confidence: "high",
       confidence_note: "Ingredient list confirmed — well-documented formula",
       cached: true,
       isDemo: true,
-      identified_plastics: ["Polyethylene (bag packaging)", "Carnauba wax coating"],
+      composition_tier: 4,
+      nutrition: { serving_size:"1.69 oz (48g)", calories:240, protein_g:2, carbs_g:33, sugar_g:31, fat_g:10, sat_fat_g:5, fiber_g:0, sodium_mg:30 },
+      ingredient_list: ["milk chocolate (sugar, chocolate, skim milk, cocoa butter, lactose, milkfat, soy lecithin, salt, artificial flavors)", "sugar", "cornstarch", "corn syrup", "gum acacia", "coloring (Red 40, Yellow 5, Yellow 6, Blue 1)", "carnauba wax", "dextrin"],
+      identified_plastics: ["Polyethylene (bag packaging)"],
       harmful_chemicals: ["Red 40", "Yellow 5", "Yellow 6", "Blue 1", "Titanium dioxide"],
       natural_materials: [],
       concerns: ["Four FDA-flagged petroleum dyes linked to hyperactivity and carcinogenicity", "Titanium dioxide banned in EU food — IARC Group 2B", "Ultra-processed formula with daily ingestion pathway"],
@@ -3994,7 +4010,8 @@ function App() {
         composition_tier: 4,
         tier_label: "ultra_processed",
         tier_description: "Industrial candy with multiple synthetic additives",
-        nutrition: { serving_size:"about 7 pieces (37g)", calories:180, protein_g:2, carbs_g:25, sugar_g:22, fat_g:7, fiber_g:1, sodium_mg:20 },
+        nutrition: { serving_size:"1.69 oz (48g)", calories:240, protein_g:2, carbs_g:33, sugar_g:31, fat_g:10, sat_fat_g:5, fiber_g:0, sodium_mg:30 },
+        nutrition_verified: true,
         concerns: [
           { substance: "Red 40 (Allura Red)", type: "dye", severity: "high", reason: "FDA phasing out — hyperactivity and carcinogenicity in studies" },
           { substance: "Yellow 5 (Tartrazine)", type: "dye", severity: "high", reason: "Linked to hyperactivity and ADHD in children (McCann, Lancet 2007)" },
@@ -4002,7 +4019,7 @@ function App() {
           { substance: "Blue 1 (Brilliant Blue)", type: "dye", severity: "high", reason: "FDA phasing out all petroleum-based food dyes (2025)" },
           { substance: "Titanium dioxide", type: "additive", severity: "high", reason: "IARC Group 2B — banned in EU food since 2022" },
           { substance: "Artificial flavors", type: "additive", severity: "low", reason: "Undisclosed petroleum-derived compounds" },
-          { substance: "Sugar", type: "additive", severity: "low", reason: "High glycemic index, 31g per serving" },
+          { substance: "Sugar", type: "additive", severity: "low", reason: "31g per serving — 62% adult DV, 124% children's DV" },
         ],
         positives: [],
         confidence: "high",
@@ -4010,15 +4027,15 @@ function App() {
       },
       dimensions: {
         materials:    { score:8, label:"Four FDA-flagged petroleum dyes + titanium dioxide — all high concern", concerns:["Red 40, Yellow 5, Yellow 6, Blue 1 — FDA phasing out entire class","Titanium dioxide banned in EU food (IARC Group 2B)"] },
-        usage_exposure:{ score:7, label:"Daily candy ingestion — direct chemical consumption", frequency:"daily", type:"ingestion", intensity:"single-contact", vulnerable:false, concerns:["Daily direct ingestion of multiple synthetic chemicals","Children particularly sensitive — developing immune and hormonal systems"] },
+        usage_exposure:{ score:7, label:"Daily candy ingestion — direct chemical consumption", frequency:"daily", type:"ingestion", intensity:"single-contact", vulnerable:true, concerns:["Daily direct ingestion of multiple synthetic chemicals","Children particularly sensitive — developing immune and hormonal systems"] },
         packaging:    { score:5, label:"Single-use plastic bag — not recyclable", primary:"plastic", refillable:false, end_of_life:"landfill", concerns:["Multi-layer plastic film bag — not accepted by curbside recycling"] },
         sustainability:{ score:6, label:"Single-use by design — packaging discarded at every purchase", reusable:false, replaces_single_use:false, replaces_count:null, circularity:"landfill", concerns:["Single-use plastic packaging","Mars Inc. sustainability commitments unverified at product level"] },
         manufacturing: { score:5, label:"Large-scale industrial confectionery manufacturing", tier:"neutral", confidence:"low", concerns:["Supply chain data not independently verified"] },
       },
       alternatives: [
-        { id:"hu-bar", name:"Hu Chocolate Bar", brand:"Hu", score:2, material:"Organic cacao, no refined sugar, no soy lecithin", description:"No refined sugar, no dairy, no emulsifiers, no artificial flavors. USDA Organic.", price:"$3-4", affiliateUrl:"https://www.amazon.com/s?k=hu+chocolate+bar&tag=partiqule-20", category:"food_beverage" },
-        { id:"unreal-choc", name:"Unreal Dark Chocolate Gems", brand:"Unreal", score:2, material:"No artificial dyes — colored with plant-based ingredients", description:"M&M-style chocolate candies with no artificial colors, flavors or preservatives.", price:"$5-7", affiliateUrl:"https://www.amazon.com/s?k=unreal+dark+chocolate+gems&tag=partiqule-20", category:"food_beverage" },
-        { id:"yum-earth", name:"YumEarth Organic Gummy Bears", brand:"YumEarth", score:2, material:"Organic fruit juice colors, no petroleum dyes", description:"USDA Organic, no artificial dyes, allergen-free. Colored with organic fruit and vegetable juice.", price:"$6-8", affiliateUrl:"https://www.amazon.com/s?k=yumearth+organic+candy&tag=partiqule-20", category:"food_beverage" },
+        { id:"hu-bar", name:"Hu Chocolate Bar", brand:"Hu", score:2, material:"Organic cacao, no refined sugar, no soy lecithin", description:"No refined sugar, no dairy, no emulsifiers, no artificial flavors. USDA Organic.", price:"$3-4", affiliateUrl:"https://www.amazon.com/s?k=hu+chocolate+bar&tag=partiqule-20", category:"food" },
+        { id:"unreal-choc", name:"Unreal Dark Chocolate Gems", brand:"Unreal", score:2, material:"No artificial dyes — colored with plant-based ingredients", description:"M&M-style chocolate candies with no artificial colors, flavors or preservatives.", price:"$5-7", affiliateUrl:"https://www.amazon.com/s?k=unreal+dark+chocolate+gems&tag=partiqule-20", category:"food" },
+        { id:"yum-earth", name:"YumEarth Organic Gummy Bears", brand:"YumEarth", score:2, material:"Organic fruit juice colors, no petroleum dyes", description:"USDA Organic, no artificial dyes, allergen-free. Colored with organic fruit and vegetable juice.", price:"$6-8", affiliateUrl:"https://www.amazon.com/s?k=yumearth+organic+candy&tag=partiqule-20", category:"food" },
       ],
       ai_alternatives: [],
       peer_comparison: "M&Ms scores higher than 85% of scanned food and beverage products.",
@@ -4093,7 +4110,7 @@ function App() {
       <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0}to{opacity:1}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0}to{opacity:1}}.score-reveal{animation:slideInUp 0.5s ease forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
 
       {/* HEADER */}
-      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: isMobile ? "max(env(safe-area-inset-top), 44px)" : 0}}>
+      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s"}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
             <svg width="32" height="32" viewBox="0 0 44 44">
