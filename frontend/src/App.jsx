@@ -3720,6 +3720,15 @@ function App() {
   const [fabOpen,     setFabOpen]    = useState(false);
   const [showScanModal, setShowScanModal] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
+  // ── Scan counter + subscription ───────────────────────────────
+  const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
+  const [promoCode,    setPromoCode]    = useState("");
+  const [promoError,   setPromoError]   = useState("");
+  const [checkingOut,  setCheckingOut]  = useState(false);
+  const FREE_LIMIT = 10;
+  const PAID_LIMIT = 20;
   // ── Accessibility: font scale ────────────────────────────────
   const [fontScale,   setFontScale]  = useState(()=>{try{return parseFloat(localStorage.getItem("ps_font_scale")||"1");}catch{return 1;}});
   const cycleFontScale = () => {
@@ -3736,17 +3745,50 @@ function App() {
   const isMobile = width < 768;
 
   // ── Auth listener ────────────────────────────────────────────
+  const checkSubscription = async (userId) => {
+    try {
+      const r = await fetch(`${API_BASE}/subscription-status?userId=${userId}`);
+      const d = await r.json();
+      setIsSubscribed(!!d.is_subscribed);
+    } catch { setIsSubscribed(false); }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) { setUser(session.user); loadCloudHistory(session.user.id); }
+      if (session?.user) {
+        setUser(session.user);
+        loadCloudHistory(session.user.id);
+        checkSubscription(session.user.id);
+        // Reset scan count when user logs in — they get fresh 20 scans tracked server-side
+        setScanCount(0);
+        try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
       setUser(u);
-      if (u) loadCloudHistory(u.id);
+      if (u) { loadCloudHistory(u.id); checkSubscription(u.id); }
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // ── Stripe checkout ───────────────────────────────────────────
+  const startCheckout = async () => {
+    if (!user) { setShowAuth(true); return; }
+    setCheckingOut(true);
+    setPromoError("");
+    try {
+      const r = await fetch(`${API_BASE}/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, email: user.email, promo: promoCode.trim() || undefined }),
+      });
+      const d = await r.json();
+      if (d.url) { window.location.href = d.url; }
+      else if (d.error) { setPromoError(d.error); }
+    } catch { setPromoError("Something went wrong. Please try again."); }
+    setCheckingOut(false);
+  };
 
   const loadCloudHistory = async (userId) => {
     const { data, error } = await supabase
@@ -3801,6 +3843,14 @@ function App() {
   useEffect(() => {
     const path   = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
+
+    // Stripe redirect — subscription confirmed
+    if (params.get("subscribed") === "true") {
+      setIsSubscribed(true);
+      setScanCount(0);
+      try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+      window.history.replaceState({}, "", path); // clean URL
+    }
 
     // Admin page — key check (move PARTIQULE_ADMIN_KEY to env var for production hardening)
     if (path === "/admin") {
@@ -3878,20 +3928,33 @@ function App() {
 
   const analyze = async (q=query) => {
     if (!q.trim()) return Promise.resolve();
+    // ── Scan limit gate ──
+    if (!isSubscribed) {
+      if (!user && scanCount >= FREE_LIMIT) { setShowLimitModal("account"); return; }
+      if (user  && scanCount >= PAID_LIMIT) { setShowLimitModal("paywall"); return; }
+    }
     setLoading(true); setError(null); setResult(null);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 45000); // 45s — two AI passes + alts
+      const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
       const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
       clearTimeout(timeout);
       if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
       const data = await res.json();
       setResult(data); saveToHistory(data);
       track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
+      // ── Scan counter — increment and check limits ──
+      if (!isSubscribed) {
+        const newCount = scanCount + 1;
+        setScanCount(newCount);
+        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+        if (!user && newCount >= FREE_LIMIT) setShowLimitModal("account");
+        else if (user && newCount >= PAID_LIMIT) setShowLimitModal("paywall");
+      }
     } catch(e){
       const msg = e.name === "AbortError"
-        ? "Scan timed out — our servers are warming up. Please try again in a moment."
+        ? "Scan timed out — please try again in a moment."
         : e.message;
       setError(msg);
       track("Scan Error", { error: msg });
@@ -3983,7 +4046,7 @@ function App() {
         img.src = url;
       });
       const imgController = new AbortController();
-      const imgTimeout = setTimeout(() => imgController.abort(), 45000);
+      const imgTimeout = setTimeout(() => imgController.abort(), 75000);
       const idResp = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -4004,7 +4067,7 @@ function App() {
       console.error("Image scan error:", err);
       setLoading(false); setQuery("");
       setError(err.name === "AbortError"
-        ? "Scan timed out — our servers are warming up. Please try again in a moment."
+        ? "Scan timed out — please try again in a moment."
         : "Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
     }
   };
@@ -4107,7 +4170,37 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>setUser(u)}/>}
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id); setScanCount(0); try{localStorage.setItem("ps_scan_count","0");}catch{}}}/>}
+
+      {/* ── Scan limit modals ── */}
+      {showLimitModal && (
+        <div onClick={()=>setShowLimitModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:400,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+
+            {showLimitModal === "account" && (<>
+              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>Save your scans and keep going</div>
+              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create a free account to unlock {FREE_LIMIT} more — no credit card needed.</div>
+              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create free account</button>
+              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+            </>)}
+
+            {showLimitModal === "paywall" && (<>
+              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
+              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $3.99/month. Cancel anytime.</div>
+              <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
+                {checkingOut ? "Loading..." : "Subscribe — $3.99/month"}
+              </button>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <input value={promoCode} onChange={e=>setPromoCode(e.target.value)} placeholder="Promo code" style={{flex:1,padding:"10px 12px",borderRadius:8,border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,background:isDark?"#111":"#fff",color:isDark?"#fff":"#1a1a18",fontSize:14}}/>
+                <button onClick={startCheckout} disabled={checkingOut||!promoCode.trim()} style={{padding:"10px 14px",borderRadius:8,background:"#052e16",border:"none",color:"#4ade80",fontSize:14,fontWeight:600,cursor:"pointer",opacity:(!promoCode.trim()||checkingOut)?0.5:1}}>Apply</button>
+              </div>
+              {promoError && <div style={{fontSize:12,color:"#dc2626",marginBottom:8}}>{promoError}</div>}
+              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+            </>)}
+
+          </div>
+        </div>
+      )}
 
       {page === "admin" ? (
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted} history={history}/>
@@ -4740,92 +4833,6 @@ function App() {
                       )}
                     </div>
                   </>);
-                })()}
-
-                {/* ── NUTRITION BADGES — sugar / sodium / sat fat / calories with % DV ── */}
-                {(() => {
-                  const n = result.nutrition;
-                  const cat = result.category || "";
-                  const isFood = ["food","food_beverage","beverage","restaurant","supplement"].includes(cat);
-                  const isBevOnly = cat === "beverage";
-                  if (!n || !isFood) return null;
-
-                  const sugarDV   = childMode ? 25   : 50;
-                  const sodiumDV  = childMode ? 1500 : 2300;
-                  const satFatDV  = childMode ? 13   : 20;
-                  const calDV     = childMode ? 1400 : 2000;
-
-                  const getSev = (pct) => pct >= 100 ? "very_high" : pct >= 60 ? "high" : pct >= 30 ? "moderate" : "low";
-                  const SEV = {
-                    very_high: { bg: isDark?"#3b0a0a":"#fef2f2", border:"#fca5a5", color:"#dc2626" },
-                    high:      { bg: isDark?"#2a1a00":"#fff7ed", border:"#fdba74", color:"#c2410c" },
-                    moderate:  { bg: isDark?"#2a2000":"#fefce8", border:"#fde047", color:"#a16207" },
-                    low:       { bg: isDark?"#1a1f2e":"#f1f5f9", border:"#cbd5e1", color:"#475569" },
-                  };
-
-                  const badges = [];
-
-                  if (n.sugar_g != null) {
-                    const pct = Math.round((n.sugar_g / sugarDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (n.sodium_mg != null) {
-                    const pct = Math.round((n.sodium_mg / sodiumDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (n.sat_fat_g != null && !isBevOnly) {
-                    const pct = Math.round((n.sat_fat_g / satFatDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (n.calories != null && isBevOnly) {
-                    const pct = Math.round((n.calories / calDV) * 100);
-                    if (pct >= 10) {
-                      const cfg = SEV[getSev(pct)];
-                      badges.push(
-                        <div key="cal" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                          <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.calories}</div>
-                          <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Calories</div>
-                          <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                        </div>
-                      );
-                    }
-                  }
-
-                  if (!badges.length) return null;
-                  return (
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10, fontWeight:700, color:isDark?"#94a3b8":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
-                        Nutrition · {childMode ? "Children's Daily Values" : "Daily Values"}
-                      </div>
-                      <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                        {badges}
-                      </div>
-                    </div>
-                  );
                 })()}
 
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}

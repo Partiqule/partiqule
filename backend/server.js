@@ -812,10 +812,10 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
         })
       });
       clearTimeout(timeout);
-      // Retry on 429 (rate limit) and 529 (overloaded) with backoff
+      // Retry on 429 (rate limit) and 529 (overloaded) with exponential backoff
       if ((res.status === 429 || res.status === 529) && attempt < retries) {
-        const wait = (attempt + 1) * 3000;
-        console.log(`Anthropic ${res.status}, retrying in ${wait}ms (attempt ${attempt+1}/${retries})`);
+        const wait = Math.min((attempt + 1) * 8000 + Math.random() * 2000, 30000);
+        console.log(`Anthropic ${res.status}, retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/${retries})`);
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
@@ -944,8 +944,8 @@ SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a g
   });
       clearTimeout(timeout);
       if ((res.status === 429 || res.status === 529) && attempt < retries) {
-        const wait = (attempt + 1) * 3000;
-        console.log(`Vision ${res.status}, retrying in ${wait}ms (attempt ${attempt+1}/${retries})`);
+        const wait = Math.min((attempt + 1) * 8000 + Math.random() * 2000, 30000);
+        console.log(`Vision ${res.status}, retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/${retries})`);
         await new Promise(r => setTimeout(r, wait));
         continue;
       }
@@ -3544,14 +3544,7 @@ app.post("/analyze", async (req, res) => {
         nutrition: p1.nutrition || null,
       };
 
-      return res.json((() => {
-        const calibrated     = applyProductCalibration(result);
-        const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true });
-        return {
-          ...calibrated,
-          child_score: Math.max(calibrated.child_score || 0, kidsCalibrated.overall_score || kidsCalibrated.score || 0) || calibrated.child_score,
-        };
-      })());
+      return res.json(applyProductCalibration(result));
     } catch(err) {
       console.error("Vision analyze error:", err);
       return res.status(500).json({ error: err.message || "Image scan failed" });
@@ -3810,17 +3803,11 @@ app.post("/analyze", async (req, res) => {
     };
 
     // ── Calibration registry — deterministic floor/ceiling enforcement ──
-    // Run once for adult score, once for kids score, so the toggle is meaningful
-    const calibrated     = applyProductCalibration(result);
-    const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true });
-    const finalResult    = {
-      ...calibrated,
-      child_score: Math.max(calibrated.child_score || 0, kidsCalibrated.overall_score || kidsCalibrated.score || 0) || calibrated.child_score,
-    };
+    const calibrated = applyProductCalibration(result);
 
-    scoreCache.set(key, finalResult);
-    console.log(`Cached: ${key} (score: ${finalResult.score}, kids: ${finalResult.child_score}, confidence: ${finalResult.confidence})`);
-    res.json(finalResult);
+    scoreCache.set(key, calibrated);
+    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence})`);
+    res.json(calibrated);
 
   } catch (err) {
     console.error("Error:", err.message);
@@ -3847,8 +3834,126 @@ app.post("/subscribe", async (req, res) => {
   const already = emailList.has(email.toLowerCase().trim());
   emailList.add(email.toLowerCase().trim());
   console.log(`Email captured: ${email} (total: ${emailList.size})`);
-  // TODO: when accounts are built, persist to DB and send welcome email via Resend
   res.json({ ok: true, already });
+});
+
+// ── STRIPE SUBSCRIPTION ROUTES ────────────────────────────────
+const stripe = process.env.STRIPE_SECRET_KEY ? require("stripe")(process.env.STRIPE_SECRET_KEY) : null;
+const STRIPE_PRICE_ID      = process.env.STRIPE_PRICE_ID || "";       // price_xxx from Stripe dashboard
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || ""; // whsec_xxx from Stripe dashboard
+const { createClient: createSupabaseClient } = require("@supabase/supabase-js");
+const supabaseAdmin = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY)
+  ? createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+  : null;
+
+// Create Stripe checkout session
+app.post("/create-checkout", async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
+  const { userId, email, promo } = req.body;
+  if (!userId || !email) return res.status(400).json({ error: "userId and email required" });
+
+  try {
+    const params = {
+      mode: "subscription",
+      payment_method_types: ["card"],
+      customer_email: email,
+      line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+      success_url: `${process.env.FRONTEND_URL || "https://partiqule.com"}/account?subscribed=true`,
+      cancel_url:  `${process.env.FRONTEND_URL || "https://partiqule.com"}/?cancelled=true`,
+      metadata: { userId },
+      allow_promotion_codes: true,
+    };
+    if (promo) {
+      // Validate promo code
+      const codes = await stripe.promotionCodes.list({ code: promo, active: true, limit: 1 });
+      if (codes.data.length > 0) params.discounts = [{ promotion_code: codes.data[0].id }];
+    }
+    const session = await stripe.checkout.sessions.create(params);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe checkout error:", err.message);
+    res.status(500).json({ error: "Could not create checkout session" });
+  }
+});
+
+// Check subscription status by userId
+app.get("/subscription-status", async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("is_subscribed, stripe_customer_id, subscription_ends_at")
+      .eq("id", userId)
+      .single();
+    if (error) return res.json({ is_subscribed: false });
+    res.json({ is_subscribed: !!data?.is_subscribed, ends_at: data?.subscription_ends_at || null });
+  } catch (err) {
+    res.json({ is_subscribed: false });
+  }
+});
+
+// Stripe webhook — updates subscription status in Supabase
+app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) return res.status(503).send("Stripe not configured");
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers["stripe-signature"], STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error("Webhook signature failed:", err.message);
+    return res.status(400).send("Webhook signature verification failed");
+  }
+
+  const setSubscribed = async (customerId, subscribed, endsAt = null) => {
+    if (!supabaseAdmin) return;
+    // Find user by stripe_customer_id
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("stripe_customer_id", customerId)
+      .limit(1);
+    if (!profiles?.length) return;
+    await supabaseAdmin.from("profiles").update({
+      is_subscribed: subscribed,
+      subscription_ends_at: endsAt,
+    }).eq("id", profiles[0].id);
+    console.log(`[Stripe] ${subscribed ? "Activated" : "Deactivated"} subscription for customer ${customerId}`);
+  };
+
+  const session = event.data.object;
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      // Link Stripe customer to Supabase user
+      const userId = session.metadata?.userId;
+      const customerId = session.customer;
+      if (userId && customerId && supabaseAdmin) {
+        await supabaseAdmin.from("profiles").upsert({
+          id: userId,
+          stripe_customer_id: customerId,
+          is_subscribed: true,
+          subscription_ends_at: null,
+        });
+        console.log(`[Stripe] Checkout complete — linked ${userId} to customer ${customerId}`);
+      }
+      break;
+    }
+    case "customer.subscription.updated":
+    case "customer.subscription.deleted": {
+      const active = session.status === "active" || session.status === "trialing";
+      const endsAt = session.current_period_end
+        ? new Date(session.current_period_end * 1000).toISOString()
+        : null;
+      await setSubscribed(session.customer, active, active ? null : endsAt);
+      break;
+    }
+    case "invoice.payment_failed": {
+      console.log(`[Stripe] Payment failed for customer ${session.customer}`);
+      break;
+    }
+  }
+  res.json({ received: true });
 });
 
 app.get("/cache-stats",  (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
