@@ -3547,8 +3547,8 @@ app.post("/analyze", async (req, res) => {
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
         })),
-        // ── Nutrition — passed from vision AI so calibration can apply floors/badges ──
-        nutrition: p1.nutrition || null,
+        // ── Nutrition — pull from top-level or product_analysis ──
+        nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
         ingredient_list: p1.ingredient_list || [],
       };
 
@@ -3807,8 +3807,8 @@ app.post("/analyze", async (req, res) => {
         estimated_score: a.estimated_score || 2,
         source:          "ai",
       })),
-      // ── Nutrition — passed from AI pass so calibration can apply floors/badges ──
-      nutrition: p1.nutrition || null,
+      // ── Nutrition — pull from top-level or product_analysis ──
+      nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
       ingredient_list: p1.ingredient_list || [],
     };
 
