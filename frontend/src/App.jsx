@@ -4994,6 +4994,76 @@ function App() {
                   </div>
                 )}
 
+                {/* ── NUTRITION BADGES — % Daily Values ── */}
+                {(() => {
+                  const n = result.nutrition;
+                  const cat = result.category || "";
+                  const isFood = ["food","food_beverage","beverage","restaurant","supplement"].includes(cat);
+                  if (!n || !isFood) return null;
+
+                  const sugarDV  = childMode ? 25  : 50;
+                  const sodiumDV = childMode ? 1500 : 2300;
+                  const satFatDV = childMode ? 13  : 20;
+
+                  const getSev = (pct) => pct >= 100 ? "very_high" : pct >= 60 ? "high" : pct >= 30 ? "moderate" : "low";
+                  const SEV = {
+                    very_high: { bg: isDark?"#3b0a0a":"#fef2f2", border:"#fca5a5", color:"#dc2626" },
+                    high:      { bg: isDark?"#2a1a00":"#fff7ed", border:"#fdba74", color:"#c2410c" },
+                    moderate:  { bg: isDark?"#2a2000":"#fefce8", border:"#fde047", color:"#a16207" },
+                    low:       { bg: isDark?"#1a1f2e":"#f1f5f9", border:"#cbd5e1", color:"#475569" },
+                  };
+
+                  const badges = [];
+
+                  if (n.sugar_g != null) {
+                    const pct = Math.round((n.sugar_g / sugarDV) * 100);
+                    const cfg = SEV[getSev(pct)];
+                    badges.push(
+                      <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
+                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
+                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
+                      </div>
+                    );
+                  }
+
+                  if (n.sodium_mg != null) {
+                    const pct = Math.round((n.sodium_mg / sodiumDV) * 100);
+                    const cfg = SEV[getSev(pct)];
+                    badges.push(
+                      <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
+                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
+                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
+                      </div>
+                    );
+                  }
+
+                  if (n.sat_fat_g != null) {
+                    const pct = Math.round((n.sat_fat_g / satFatDV) * 100);
+                    const cfg = SEV[getSev(pct)];
+                    badges.push(
+                      <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
+                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
+                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
+                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
+                      </div>
+                    );
+                  }
+
+                  if (!badges.length) return null;
+                  return (
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:10, fontWeight:700, color:isDark?"#94a3b8":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
+                        Nutrition · {childMode ? "Children's Daily Values" : "Daily Values"}
+                      </div>
+                      <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                        {badges}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* ── INGREDIENT LIST ── */}
                 {result.ingredient_list && result.ingredient_list.length > 0 && (
                   <div style={{marginBottom:16}}>
