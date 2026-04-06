@@ -930,6 +930,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
     "confidence_note": "max 10 words"
   },
   "summary": "max 30 words",
+  "ingredient_list": ["ingredient 1", "ingredient 2"],
   "raw_concerns": ["concern 1"],
   "confidence": "high|medium|low",
   "confidence_reason": "why",
@@ -937,6 +938,7 @@ NUTRITION: For food_beverage only — read the nutrition facts label in the phot
   "ai_alternatives": [{"name": "safer alternative", "reason": "why safer", "material": "material", "estimated_score": 2}]
 }
 NOTE: For food_beverage or restaurant, populate nutrition with values you know or can reasonably confirm. For restaurant items from major chains, populate what you know and set nutrition_verified: false. Only set nutrition_verified: true if you are certain of exact values. Set individual fields to null if uncertain — partial data is useful. Only set the entire nutrition object to null if you have no useful data at all.
+INGREDIENT_LIST RULE: For ALL food, beverage, supplement, and personal care products, populate ingredient_list with the actual ingredients in order as they appear on the label. For food products, this is always publicly available via FDA-required labeling. Return each ingredient as a separate string in the array. If a product has sub-ingredients (e.g. "CHOCOLATE CHIPS (sugar, cocoa butter, chocolate)"), include the parent ingredient only. If you cannot find the ingredient list for a truly obscure product, return an empty array. Never return null for ingredient_list on food products.
 SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.` }
         ]
       }]
@@ -1453,6 +1455,7 @@ CONFIDENCE DISCIPLINE — apply to ALL products, not just food:
 - For store brands (Target, Walmart, Costco, Amazon Basics, IKEA): assume conventional materials and supply chains unless explicitly certified. Low supply chain transparency = confidence low, score conservatively.
 - For any product where chemical treatments or processing aids could affect safety but aren't disclosed (clothing finishes, food processing chemicals, cosmetic preservatives): flag the uncertainty in the concerns list with severity "low" and note it as unverified.
 - The confidence field should reflect ingredient certainty, not just product identification certainty. Knowing what a product is called is different from knowing what's in it.
+- FOOD CONFIDENCE RULE: Any mainstream packaged food product sold in US retail (grocery stores, Target, Walmart, Amazon, convenience stores) is REQUIRED by FDA to list all ingredients on its packaging. This information is publicly available on the brand's website, USDA FoodData Central, Open Food Facts, or retailer listings. For any mainstream food brand (protein bars, snacks, beverages, candy, cereals, condiments, etc.) you MUST use "high" confidence — the ingredient list exists and is publicly accessible. Only use "medium" confidence for truly obscure, small-batch, or regional food products with no online presence. Never use "medium" or "low" confidence for nationally distributed food brands.
 
 CALIBRATION EXAMPLES to ensure differentiation:
 - Cascade dishwasher pods: materials=7 (PVA film+synthetic fragrance+optical brighteners), usage=5 (residue on dishes), packaging=3 (recyclable tub), sustainability=6 (PVA in waterways) → final ~6
@@ -3067,6 +3070,7 @@ Return ONLY this JSON:
     "confidence_note": "max 10 words"
   },
   "summary": "max 30 words covering the main risk or safety story",
+  "ingredient_list": ["ingredient 1", "ingredient 2", "ingredient 3"],
   "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
   "confidence_reason": "why",
@@ -3542,6 +3546,7 @@ app.post("/analyze", async (req, res) => {
         })),
         // ── Nutrition — passed from vision AI so calibration can apply floors/badges ──
         nutrition: p1.nutrition || null,
+        ingredient_list: p1.ingredient_list || [],
       };
 
       return res.json(applyProductCalibration(result));
@@ -3800,10 +3805,19 @@ app.post("/analyze", async (req, res) => {
       })),
       // ── Nutrition — passed from AI pass so calibration can apply floors/badges ──
       nutrition: p1.nutrition || null,
+      ingredient_list: p1.ingredient_list || [],
     };
 
     // ── Calibration registry — deterministic floor/ceiling enforcement ──
     const calibrated = applyProductCalibration(result);
+
+    // ── Kids mode calibration — run second pass with kids_mode:true to get calibrated child score ──
+    if (calibrated.child_score != null) {
+      const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
+      // Use the higher of server-computed child_score and calibration-corrected child score
+      // but cap at kidsCeiling if calibration has one
+      calibrated.child_score = kidsCalibrated.overall_score;
+    }
 
     scoreCache.set(key, calibrated);
     console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence})`);

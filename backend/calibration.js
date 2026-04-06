@@ -208,6 +208,12 @@ const ENTRIES = [
   ["gomacro",                      { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole food ingredients", confidence:"high", category:"food_beverage" }],
   ["perfect bar",                  { floor:2, ceiling:4, substances:[], reason:"Peanut butter + honey + nonfat milk — refrigerated, whole food base", confidence:"high", category:"food_beverage" }],
   ["quest bar",                    { floor:4, ceiling:6, substances:["sucralose","palm kernel oil"], reason:"Sucralose + protein isolate + palm kernel oil + NOVA 4 — not clean", confidence:"high", category:"food_beverage" }],
+  ["david protein bar",            { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol","EPG modified plant fat"], reason:"David Protein Bar — milk protein isolate, whey, collagen. Binding system uses maltitol (sugar alcohol, GI effects), sucralose + acesulfame-K for sweetness, artificial flavors, and EPG (modified plant fat, novel ingredient with limited long-term data). No artificial dyes. High protein density is a positive. Score reflects additive load, not protein quality.", confidence:"high", category:"supplement" }],
+  ["david bar",                    { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Bar — sucralose + ace-K + maltitol + artificial flavors. Novel EPG fat system. Clean protein sources but synthetic additive load prevents clean score.", confidence:"high", category:"supplement" }],
+  ["david protein",                { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Protein — sucralose + acesulfame-K + maltitol + artificial flavors. Full ingredient list publicly available.", confidence:"high", category:"supplement" }],
+  ["david peanut",                 { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Peanut Butter bar — sucralose + ace-K + maltitol + artificial flavors + EPG fat. Confirmed ingredient list from davidprotein.com.", confidence:"high", category:"supplement" }],
+  ["david chocolate",              { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Chocolate bar — sucralose + ace-K + maltitol + artificial flavors. Same formulation platform as other David bars.", confidence:"high", category:"supplement" }],
+  ["david fudge",                  { floor:3, ceiling:5, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Fudge Brownie bar — sucralose + ace-K + maltitol + artificial flavors.", confidence:"high", category:"supplement" }],
   ["one bar",                      { floor:4, ceiling:6, substances:["sucralose","erythritol"], reason:"Sucralose + erythritol + protein isolate + NOVA 4", confidence:"high", category:"food_beverage" }],
   ["built bar",                    { floor:4, ceiling:6, substances:["sucralose","erythritol","carrageenan"], reason:"Sucralose + erythritol + carrageenan — multiple floors fire", confidence:"high", category:"food_beverage" }],
   ["kind bar",                     { floor:2, ceiling:4, substances:[], reason:"Nuts + honey — no sucralose, no dyes, relatively clean", confidence:"high", category:"food_beverage" }],
@@ -1373,6 +1379,8 @@ const ENTRIES = [
   ["earth and eden diapers",        { floor:3, ceiling:5, substances:[], reason:"Amazon store-brand — chlorine-free pulp, fragrance-free. Cleaner than Pampers/Luvs but not certified organic or fully plant-based SAP.", confidence:"medium", category:"baby" }],
 
   // ── DIAPERS: CLEANER TIER ─────────────────────────────────────
+  ["nest diapers",                 { floor:2, ceiling:4, kidsFloor:3, kidsCeiling:5, substances:[], reason:"Nest Diapers — OEKO-TEX 100 and SGS certified, free from chlorine, parabens, phthalates, fragrances, lotions, latex. Wood fluff core + PLA compostable materials. Cleaner than Honest Company, comparable to Andy Pandy tier.", confidence:"high", category:"baby" }],
+  ["nest baby",                    { floor:2, ceiling:4, kidsFloor:3, kidsCeiling:5, substances:[], reason:"Nest Baby Diapers — OEKO-TEX 100 certified, no chlorine, parabens, phthalates. Plant-based materials. Clean tier.", confidence:"high", category:"baby" }],
   ["honest company",                { floor:2, ceiling:4, substances:[], reason:"Honest Company diapers — plant-based SAP, no fragrance, no chlorine, no latex, EWG certified. Significantly cleaner than Pampers.", confidence:"high", category:"baby" }],
   ["seventh generation diapers",    { floor:2, ceiling:4, substances:[], reason:"Chlorine-free, fragrance-free, no latex — one of the first mainstream clean diapers. Unbleached pulp. Significantly lower chemical load than conventional.", confidence:"high", category:"baby" }],
   ["bambo nature",                  { floor:1, ceiling:3, substances:[], reason:"FSC wood pulp, no chlorine, no fragrance, OEKO-TEX certified, Nordic Swan Ecolabel. Benchmark clean conventional-style diaper.", confidence:"high", category:"baby" }],
@@ -5217,6 +5225,7 @@ function applyProductCalibration(result) {
   if (!corrected) {
     if (entry && entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
+      return { ...result, confidence: "high", nutrition: nutrition_out, retailer_restricted: wfBanned, nutrition_concerns };
     }
     if (wfBanned) return { ...result, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns };
     return { ...result, nutrition: nutrition_out, nutrition_concerns };
@@ -5226,6 +5235,7 @@ function applyProductCalibration(result) {
     ...result,
     overall_score:        newScore,
     score:                newScore,
+    confidence:           entry?.confidence === "high" ? "high" : result.confidence,
     nutrition:            nutrition_out,
     retailer_restricted:  wfBanned,
     nutrition_concerns,
