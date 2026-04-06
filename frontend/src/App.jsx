@@ -2580,7 +2580,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           The things that affect your health most aren't always the things on the front of the label. Microplastics in food-contact packaging. Synthetic dyes linked to carcinogenicity. PFAS in non-stick coatings. PVA film dissolving into waterways. Synthetic textiles shedding microfibers onto your skin every day. The research is there — but it's scattered, technical, and inaccessible to most people.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Partiqule is built to close that gap. We combine peer-reviewed science with AI-powered analysis to give every person access to the kind of information that used to require a toxicologist. Scan anything — a cleaning product, a piece of clothing, a food item, a baby product — and get a complete health picture in seconds.
+          Partiqule is built to close that gap. We combine peer-reviewed science with two independent research passes to give every person access to the kind of information that used to require a toxicologist. Scan anything — a cleaning product, a piece of clothing, a food item, a baby product — and get a complete health picture in seconds.
         </p>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           Every score we produce is grounded in published research, including the New England Journal of Medicine, Nature Medicine, The Lancet, and the FDA. We flag what matters, explain why it matters, and show you what to do about it.
@@ -4467,7 +4467,7 @@ function App() {
                 pointerEvents: loading ? "none" : "auto",
               }}>
               <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", color:"#86efac", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:24, textTransform:"uppercase", letterSpacing:"0.05em", backdropFilter:"blur(4px)"}}>
-                <IconShield size={13} color="#86efac"/> AI-Powered Risk Analysis
+                <IconShield size={13} color="#86efac"/> Research-Backed Scoring
               </div>
               <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?34:52, fontWeight:700, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-1.5px", lineHeight:1.15}}>
                 Scan anything.<br/>Know everything.
@@ -4525,7 +4525,7 @@ function App() {
                   <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
                   <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>No sign-up</div>
                   <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>AI-powered</div>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>Science-backed</div>
                   <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
                   <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>Two-pass verified</div>
                 </div>
@@ -4981,6 +4981,20 @@ function App() {
                       <div style={{fontSize:11, color:result.confidence==="medium"?"#78350f":"#7f1d1d", lineHeight:1.5}}>
                         {result.confidence_reason || "Full ingredient list not publicly available. Score based on known brand practices and typical materials for this product type."}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── INGREDIENT LIST ── */}
+                {result.ingredient_list && result.ingredient_list.length > 0 && (
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:10, fontWeight:700, color:isDark?"#94a3b8":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
+                      Full ingredient list
+                    </div>
+                    <div style={{background:isDark?"#1a1a18":"#f8f9fa", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a2a28":"#e9ecef"}`}}>
+                      <p style={{fontSize:12, color:isDark?"#94a3b8":"#64748b", lineHeight:1.7, margin:0}}>
+                        {result.ingredient_list.join(", ")}
+                      </p>
                     </div>
                   </div>
                 )}
