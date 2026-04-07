@@ -97,6 +97,8 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── GLOBE LOADING ─────────────────────────────────────────────
+
+
 // 200 points evenly distributed on a sphere (Fibonacci lattice)
 const SPHERE_POINTS = (() => {
   const pts = [];
@@ -537,7 +539,6 @@ const ScoreArc = ({score}) => {
   );
 };
 
-// ── RISK BAR ─────────────────────────────────────────────────
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
   const meaning = score <= 2
@@ -1633,265 +1634,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
-// ── SHARE BADGE (with copy-as-image) ─────────────────────────
 // ── PRODUCT CARD ─────────────────────────────────────────────
-
-  const buildCanvas = () => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const dpr    = window.devicePixelRatio || 1;
-      const W = 600, H = 400;
-      canvas.width  = W * dpr;
-      canvas.height = H * dpr;
-      const ctx = canvas.getContext("2d");
-      ctx.scale(dpr, dpr);
-
-      const os = result.overall_score || result.score;
-      const dims = result.dimensions;
-
-      const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
-      const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
-
-      const drawContent = (logoImg) => {
-
-    // ── Background ──
-    ctx.fillStyle = bgColor;
-    ctx.beginPath();
-    ctx.roundRect(0, 0, W, H, 20);
-    ctx.fill();
-
-    // Top bar
-    ctx.fillStyle = "#052e16";
-    ctx.fillRect(0, 0, W, 6);
-
-    // ── Logo + tagline ──
-    if (logoImg) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(46, 40, 16, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(logoImg, 30, 24, 32, 32);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = "#16a34a";
-      ctx.beginPath();
-      ctx.arc(46, 40, 14, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.fillStyle = "#052e16";
-    ctx.font = "bold 16px system-ui";
-    ctx.fillText("Partiqule", 68, 45);
-    ctx.fillStyle = "#aaa";
-    ctx.font = "12px system-ui";
-    ctx.fillText("Scan anything. Know everything.", 32, 68);
-
-    // ── Product name ──
-    ctx.fillStyle = "#111";
-    ctx.font = "bold 22px system-ui";
-    const name = safeName?.length > 36 ? safeName.slice(0,33)+"…" : safeName;
-    ctx.fillText(name, 32, 96);
-
-    // ── LEFT: Big overall score ──
-    ctx.fillStyle = overallColor;
-    ctx.font = "bold 100px system-ui";
-    ctx.fillText(os, 32, 220);
-    ctx.fillStyle = "#bbb";
-    ctx.font = "bold 26px system-ui";
-    ctx.fillText("/ 10", 32 + (os >= 10 ? 128 : 80), 220);
-
-    // Overall label pill
-    const overallLabel = os<=3?"Minimal Risk":os<=6?"Moderate Risk":os<=8?"High Risk":"Very High Risk";
-    const oBgColor = os<=3?"#dcfce7":os<=6?"#fef9c3":os<=8?"#ffedd5":"#fee2e2";
-    ctx.fillStyle = oBgColor;
-    ctx.beginPath();
-    ctx.roundRect(32, 234, 210, 30, 15);
-    ctx.fill();
-    ctx.fillStyle = overallColor;
-    ctx.font = "bold 13px system-ui";
-    ctx.fillText(overallLabel, 48, 254);
-
-    // Sub-label
-    ctx.fillStyle = "#aaa";
-    ctx.font = "11px system-ui";
-    ctx.fillText("Materials · Exposure · Packaging · Sustainability", 32, 282);
-
-    // ── DIVIDER ──
-    ctx.strokeStyle = "#e5e7eb";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(W/2 - 10, 108);
-    ctx.lineTo(W/2 - 10, 300);
-    ctx.stroke();
-
-    // ── RIGHT: 4 dimension mini bars ──
-    const RX = W/2 + 10;
-
-    // Dynamic weights per category — match server CATEGORY_FORMULAS exactly
-    const CAT_WEIGHTS = {
-      food:          {m:0.90, u:0.00, pk:0.10, s:0.00},
-      food_beverage: {m:0.90, u:0.00, pk:0.10, s:0.00},
-      beverage:      {m:0.75, u:0.00, pk:0.25, s:0.00},
-      restaurant:    {m:0.85, u:0.00, pk:0.10, s:0.05},
-      supplement:    {m:0.65, u:0.25, pk:0.10, s:0.00},
-      personal_care: {m:0.45, u:0.45, pk:0.05, s:0.05},
-      toy:           {m:0.50, u:0.40, pk:0.05, s:0.05},
-      clothing:      {m:0.35, u:0.30, pk:0.00, s:0.35},
-      accessory:     {m:0.40, u:0.25, pk:0.00, s:0.35},
-      home:          {m:0.30, u:0.45, pk:0.10, s:0.15},
-      kitchen:       {m:0.30, u:0.45, pk:0.10, s:0.15},
-      baby:          {m:0.55, u:0.40, pk:0.05, s:0.00},
-      other:         {m:0.45, u:0.30, pk:0.10, s:0.15},
-    };
-    const cat = result.category || "other";
-    const wt  = CAT_WEIGHTS[cat] || CAT_WEIGHTS.other;
-    const pct = (v) => v === 0 ? "0%" : `${Math.round(v*100)}%`;
-
-    const dimList = dims ? [
-      {label:"Materials",    score: dims.materials?.score,        weight: pct(wt.m)},
-      {label:"Exposure",     score: dims.usage_exposure?.score,   weight: pct(wt.u)},
-      {label:"Packaging",    score: dims.packaging?.score,        weight: pct(wt.pk)},
-      {label:"Sustainability",score:dims.sustainability?.score,   weight: pct(wt.s)},
-    ].filter(d => d.weight !== "0%") : []; // hide dimensions that don't contribute for this category
-
-    if (dimList.length) {
-      dimList.forEach((d, i) => {
-        const y = 118 + i * 38;
-        const sc = d.score || 0;
-        const barColor = sc<=3?"#16a34a":sc<=6?"#ca8a04":sc<=8?"#ea580c":"#dc2626";
-        // Label
-        ctx.fillStyle = "#666";
-        ctx.font = "10px system-ui";
-        ctx.fillText(d.label, RX+4, y);
-        ctx.fillStyle = "#bbb";
-        ctx.fillText(d.weight, W-48, y);
-        // Track
-        ctx.fillStyle = "#e5e7eb";
-        ctx.beginPath();
-        ctx.roundRect(RX+4, y+6, W-RX-28, 12, 6);
-        ctx.fill();
-        // Fill
-        ctx.fillStyle = barColor;
-        ctx.beginPath();
-        ctx.roundRect(RX+4, y+6, Math.max(12, ((W-RX-28) * sc/10)), 12, 6);
-        ctx.fill();
-        // Score text
-        ctx.fillStyle = barColor;
-        ctx.font = "bold 10px system-ui";
-        ctx.fillText(sc, W-22, y+16);
-      });
-    } else {
-      // Fallback if no dimensions — just show score
-      ctx.fillStyle = "#888";
-      ctx.font = "13px system-ui";
-      ctx.fillText("Product Health Score", RX+14, 145);
-      ctx.fillStyle = overallColor;
-      ctx.font = "bold 48px system-ui";
-      ctx.fillText(`${os}/10`, RX+14, 210);
-    }
-
-    // ── Summary ──
-    ctx.fillStyle = "#555";
-    ctx.font = "13px system-ui";
-    const words = (result.summary || "").split(" ");
-    let line = "", y = 316, lineH = 19;
-    for (const word of words) {
-      const test = line + (line ? " " : "") + word;
-      if (ctx.measureText(test).width > W-64 && line) {
-        ctx.fillText(line, 32, y); line = word; y += lineH;
-        if (y > 356) { ctx.fillText(line+"…", 32, y); break; }
-      } else { line = test; }
-    }
-    if (y <= 356) ctx.fillText(line, 32, y);
-
-    // ── Footer ──
-    ctx.strokeStyle = "#e5e7eb";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(32, 368); ctx.lineTo(W-32, 368);
-    ctx.stroke();
-    ctx.fillStyle = "#bbb";
-    ctx.font = "12px system-ui";
-    ctx.fillText("partiqule.com · Scan anything. Know everything.", 32, 388);
-
-        resolve(canvas);
-      }; // end drawContent
-
-      const logoImg = new Image();
-      logoImg.onload = () => drawContent(logoImg);
-      logoImg.onerror = () => drawContent(null);
-      logoImg.src = "/partiqule-icon.svg";
-    });
-  };
-
-  const share = async () => {
-    setSharing(true);
-    track("Share", { product: safeName, score: result.overall_score||result.score, category: result.category });
-    try {
-      const canvas = await buildCanvas();
-      canvas.toBlob(async (blob) => {
-        try {
-          // Mobile: use native share sheet if available — lets users save to photos or share to any app
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
-            const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
-            await navigator.share({
-              title: `${safeName}: Ingredient Safety ${result.overall_score||result.score}/10`,
-              text: `I scanned ${safeName} on Partiqule. Product health score: ${result.overall_score||result.score}/10 — ingredient safety + nutritional impact combined. Scan anything at partiqule.com`,
-              files: [file],
-            });
-          } else if (navigator.clipboard?.write) {
-            // Desktop: copy image to clipboard
-            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
-            setDone(true);
-            setTimeout(() => setDone(false), 2500);
-          } else {
-            // Fallback: download the image
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
-            a.click();
-            URL.revokeObjectURL(url);
-            setDone(true);
-            setTimeout(() => setDone(false), 2500);
-          }
-        } catch(e) {
-          // If share was cancelled by user, silently fail
-          if (e.name !== "AbortError") {
-            // Last resort: download
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }
-        }
-        setSharing(false);
-      }, "image/png");
-    } catch(e) {
-      console.error(e);
-      setSharing(false);
-    }
-  };
-
-  return (
-    <div style={{marginTop:20, padding:"14px 18px", background:"rgba(0,0,0,0.03)", borderRadius:12, border:"1px dashed #ddd"}}>
-      <div style={{fontSize:11, color:"#aaa", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em"}}>Share result</div>
-      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:"#fff", borderRadius:9, padding:"10px 14px", border:"1px solid #eee"}}>
-        <div style={{display:"flex", alignItems:"center", gap:10}}>
-          <div style={{width:34, height:34, borderRadius:8, background:scoreBg(result.overall_score||result.score), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, color}}>{result.overall_score||result.score}</div>
-          <div>
-            <div style={{fontSize:12, fontWeight:600, color:"#111"}}>{displayName}</div>
-            <div style={{fontSize:11, color}}>{label} Danger</div>
-          </div>
-        </div>
-        <button onClick={share} disabled={sharing} style={{display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:8, border:"none", background:"#052e16", fontSize:13, fontWeight:600, color:"#4ade80", cursor:"pointer"}}>
-          {sharing ? "…" : done ? "✓ Copied!" : <><IconShare size={13} color="#4ade80"/> Share</>}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
 const ProductCard = ({product, isDark, altSource="amazon"}) => {
@@ -4083,6 +3826,7 @@ function App() {
   const [showAuth,    setShowAuth]   = useState(false);
   const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
+  const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -4327,7 +4071,7 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setRevealDone(false);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
@@ -4436,7 +4180,7 @@ function App() {
     }
     setShowScanModal(false);
     setResult(null); setError(null); setPage("home");
-    setLoading(true); setQuery("Reading label…");
+    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null);
     try {
       const base64 = await new Promise((res, rej) => {
         const img = new Image();
