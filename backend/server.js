@@ -3188,12 +3188,6 @@ function filterDbAlternatives(alternatives, category, productName, productScore 
       return false;
     }
 
-  return alternatives.filter(alt => {
-    const name   = (alt.name   || "").toLowerCase();
-    const tags   = (alt.tags   || []).join(" ").toLowerCase();
-    const desc   = (alt.description || "").toLowerCase();
-    const combined = `${name} ${tags} ${desc}`;
-
     // Food scans: block medicine, personal care, cleaning products
     if (isFoodCat) {
       if (MEDICINE_TAGS.test(combined)) {
