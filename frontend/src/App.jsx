@@ -6159,7 +6159,7 @@ function App() {
         </div>
         <div style={{color:"#444", borderTop:"1px solid #222", paddingTop:16, marginTop:8}}>
           <div style={{marginBottom:6}}>
-            © 2026 Partiqule
+            © 2026 Partiqule Ltd.
           </div>
           <div style={{marginBottom:8, fontSize:12, color:"#555", lineHeight:1.6}}>
             As an Amazon Associate I earn from qualifying purchases. Affiliate links are always clearly labeled and never influence our scores.
