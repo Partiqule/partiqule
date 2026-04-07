@@ -5570,7 +5570,7 @@ function App() {
                       </div>
                       );
                     })}
-                    {(!filterAltsBySource(result.alternatives, altSource)?.length && !filterAltsBySource(result.ai_alternatives, altSource)?.filter(a=>a.estimated_score < displayScore).length) && (
+                    {(!filterAltsBySource(result.alternatives, altSource)?.length && !filterAltsBySource(result.ai_alternatives, altSource)?.filter(a=>a.estimated_score < (result.overall_score||result.score)).length) && (
                       <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
                         <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>
                           {altSource === "brand" ? "No direct brand alternatives" : altSource === "bigbox" ? "No big-box alternatives" : "No swap needed"}
