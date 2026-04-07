@@ -3,6 +3,77 @@ import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// ── Brand direct website lookup ────────────────────────────
+const BRAND_URLS = {
+  "hu":               "https://hukitchen.com",
+  "hu chocolate":     "https://hukitchen.com",
+  "blueland":         "https://blueland.com",
+  "branch basics":    "https://branchbasics.com",
+  "grove collaborative": "https://grove.co",
+  "seventh generation": "https://seventhgeneration.com",
+  "dr. bronner":      "https://drbronner.com",
+  "dr bronner":       "https://drbronner.com",
+  "schmidt's":        "https://schmidtsnaturals.com",
+  "schmidts":         "https://schmidtsnaturals.com",
+  "native":           "https://nativecos.com",
+  "wellnesse":        "https://wellnesse.com",
+  "larabar":          "https://larabar.com",
+  "rxbar":            "https://rxbar.com",
+  "rx bar":           "https://rxbar.com",
+  "yumearth":         "https://yumearth.com",
+  "unreal":           "https://getunreal.com",
+  "pact":             "https://wearpact.com",
+  "girlfriend collective": "https://girlfriend.com",
+  "patagonia":        "https://patagonia.com",
+  "allbirds":         "https://allbirds.com",
+  "eileen fisher":    "https://eileenfisher.com",
+  "prAna":            "https://prana.com",
+  "prana":            "https://prana.com",
+  "olipop":           "https://drinkolipop.com",
+  "poppi":            "https://drinkpoppi.com",
+  "spindrift":        "https://spindriftfresh.com",
+  "liquid death":     "https://liquiddeath.com",
+  "harmless harvest": "https://harmlessharvest.com",
+  "guayaki":          "https://guayaki.com",
+  "alter eco":        "https://alterecofoods.com",
+  "theo":             "https://theochocolate.com",
+  "badger":           "https://badgerbalm.com",
+  "bite":             "https://bitetoothpastebits.com",
+  "risewell":         "https://risewell.com",
+  "primally pure":    "https://primallypure.com",
+  "ursa major":       "https://ursamajorbeauty.com",
+  "ilia":             "https://iliabeauty.com",
+  "thinksport":       "https://gothinksport.com",
+  "raw elements":     "https://rawelementssunscreen.com",
+  "beautycounter":    "https://beautycounter.com",
+  "honest company":   "https://honest.com",
+  "dyper":            "https://dyper.com",
+  "coterie":          "https://coterie.com",
+  "andy pandy":       "https://andypandydiapers.com",
+  "healthybaby":      "https://healthybaby.com",
+  "kudos":            "https://kudosdiapers.com",
+  "klean kanteen":    "https://kleankanteen.com",
+  "stasher":          "https://stasherbag.com",
+  "vuori":            "https://vuoriclothing.com",
+};
+
+// Big box search URLs
+const BIGBOX_URLS = {
+  target: (name) => `https://www.target.com/s?searchTerm=${encodeURIComponent(name)}`,
+  walmart: (name) => `https://www.walmart.com/search?q=${encodeURIComponent(name)}`,
+};
+
+function getBrandUrl(brandName, productName) {
+  const key = (brandName || "").toLowerCase().trim();
+  if (BRAND_URLS[key]) return BRAND_URLS[key];
+  // Try partial match
+  for (const [k, v] of Object.entries(BRAND_URLS)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  // Fallback to Google search for brand website
+  return `https://www.google.com/search?q=${encodeURIComponent((brandName || productName) + " official site")}`;
+}
+
 // Detect if running inside Capacitor iOS app
 const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
 const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -3735,6 +3806,7 @@ function App() {
   const [childMode,   setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
+  const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
@@ -4065,6 +4137,12 @@ function App() {
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
     if (!file) return;
+    // ── Scan limit gate — same as text scan ──
+    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+      if (!user) setShowLimitModal("account");
+      else setShowLimitModal("paywall");
+      return;
+    }
     setShowScanModal(false);
     setResult(null); setError(null); setPage("home");
     setLoading(true); setQuery("Reading label…");
@@ -4101,6 +4179,16 @@ function App() {
       setQuery(data.product_name);
       setResult(data);
       saveToHistory(data);
+      // ── Increment scan counter ──
+      if (!isSubscribed) {
+        const newCount = scanCount + 1;
+        setScanCount(newCount);
+        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+        if (newCount >= FREE_LIMIT) {
+          if (!user) setShowLimitModal("account");
+          else setShowLimitModal("paywall");
+        }
+      }
       setLoading(false);
       if (onDone) onDone();
     } catch(err) {
@@ -5330,9 +5418,21 @@ function App() {
                         ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
                         : "Exploring alternatives"}
                     </div>
+                    {/* Source toggle */}
+                    <div style={{display:"flex", gap:6, marginTop:10, flexWrap:"wrap"}}>
+                      {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src,label]) => (
+                        <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, border:"none", cursor:"pointer", background: altSource===src ? "#4ade80" : "rgba(255,255,255,0.1)", color: altSource===src ? "#052e16" : "#86efac"}}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div style={{padding:"16px", display:"flex", flexDirection:"column", gap:10, maxHeight:600, overflowY:"auto"}}>
-                    {(result.alternatives || []).map((alt, i) => (
+                    {(result.alternatives || []).map((alt, i) => {
+                      const shopUrl = altSource === "brand" ? getBrandUrl(alt.brand, alt.name)
+                        : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
+                        : alt.affiliateUrl;
+                      return (
                       <div key={i} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
@@ -5340,29 +5440,35 @@ function App() {
                         </div>
                         {alt.material && <div style={{fontSize:12, color:muted, marginBottom:6, lineHeight:1.4}}>{alt.material}</div>}
                         {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
-                        {alt.affiliateUrl && (
-                          <a href={alt.affiliateUrl} target="_blank" rel="noopener noreferrer"
-                            onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel", category:result.category})}
+                        {shopUrl && (
+                          <a href={shopUrl} target="_blank" rel="noopener noreferrer"
+                            onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel", source:altSource, category:result.category})}
                             style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
-                            Shop →
+                            {altSource === "brand" ? "Brand site →" : altSource === "bigbox" ? "Target →" : "Amazon →"}
                           </a>
                         )}
                       </div>
-                    ))}
-                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < (result.overall_score || result.score)).map((alt, i) => (
+                      );
+                    })}
+                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < (result.overall_score || result.score)).map((alt, i) => {
+                      const shopUrl = altSource === "brand" ? getBrandUrl(alt.name, alt.name)
+                        : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
+                        : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
+                      return (
                       <div key={`ai-${i}`} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
                           <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"#f0fdf4", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.estimated_score}/10</div>
                         </div>
                         {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
-                        <a href={`https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`} target="_blank" rel="noopener noreferrer"
-                          onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel_ai", category:result.category})}
+                        <a href={shopUrl} target="_blank" rel="noopener noreferrer"
+                          onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel_ai", source:altSource, category:result.category})}
                           style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
-                          Shop →
+                          {altSource === "brand" ? "Brand site →" : altSource === "bigbox" ? "Target →" : "Amazon →"}
                         </a>
                       </div>
-                    ))}
+                      );
+                    })}
                     {(!result.alternatives?.length && !result.ai_alternatives?.length) && (
                       <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
                         <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>No swap needed</div>
@@ -5429,6 +5535,16 @@ function App() {
             {/* Content */}
             <div style={{maxWidth:640, margin:"0 auto", padding:isMobile?"20px 12px 60px":"32px 24px 80px", display:"flex", flexDirection:"column", gap:20}}>
 
+              {/* Source toggle */}
+              <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
+                <span style={{fontSize:12, color:muted, fontWeight:600}}>Shop via:</span>
+                {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src,label]) => (
+                  <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:12, fontWeight:600, padding:"5px 14px", borderRadius:20, border:`1px solid ${altSource===src?"#16a34a":"#e2e8f0"}`, cursor:"pointer", background: altSource===src ? "#16a34a" : "transparent", color: altSource===src ? "#fff" : muted}}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {/* DB alternatives */}
               {(() => {
                 const isRestaurant = result.category === "restaurant";
@@ -5473,9 +5589,9 @@ function App() {
                           style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
                           <IcoSearch size={14}/> Scan this →
                         </button>
-                        <a href={buyUrl} target="_blank" rel="noopener noreferrer"
+                        <a href={altSource === "brand" ? getBrandUrl(alt.brand || alt.name, alt.name) : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name) : buyUrl} target="_blank" rel="noopener noreferrer"
                           style={{display:"flex", alignItems:"center", gap:4, fontSize:12, color:isDark?"#94a3b8":"#6b7280", fontWeight:600, textDecoration:"none"}}>
-                          🛒 Find on Amazon
+                          🛒 {altSource === "brand" ? "Brand site" : altSource === "bigbox" ? "Find on Target" : "Find on Amazon"}
                         </a>
                       </div>
                     </div>
