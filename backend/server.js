@@ -1044,6 +1044,16 @@ RESTAURANT: Ingredients 85% · Packaging 10% · Sustainability 5%
 SUPPLEMENT: Ingredients 65% · Exposure 25% · Packaging 10%
 BEAUTY/PERSONAL CARE: Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%
 TOYS: Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%
+
+TOY SCORING RULES — composition_tier is required for all toys:
+Tier 1 (clean): Natural wood with water-based non-toxic finishes, ASTM F963 or EN71 certified, FSC-certified wood, no PVC, no lead. Examples: PlanToys, Fagus, Fokus, Hape, BRIO, Bigjigs, Lovevery. Score 1-2. Never score a tier 1 wooden toy above 3.
+Tier 2 (conventional): ASTM certified, ABS plastic (no BPA, no phthalates), or conventional wood without FSC certification. Examples: Melissa & Doug (conventional), standard wooden toys without certifications. Score 2-4.
+Tier 3 (synthetic): ABS + PVC mix, conventional plastic with some phthalate concern, standard toy brands. Examples: LEGO (ABS only, clean), Fisher-Price standard, Hot Wheels. Score 3-6.
+Tier 4 (high concern): PVC-dominant, historical recalls, unverified Chinese manufacturing with no testing documentation, lead paint concern, phthalate-positive testing. Score 6-9.
+
+WOODEN TOY RULE: Any toy described as "wooden" or "wood" with water-based or food-safe finishes = Tier 1. Never score a natural wooden toy with certified non-toxic finishes above 3. The primary exposure pathway for toys is mouthing — natural wood with water-based paint has negligible chemical exposure vs ABS plastic or PVC.
+
+ALTERNATIVES for clean toys (score 1-2): Do NOT suggest alternatives. A product scoring 1-2 has no meaningful improvement to offer. Only suggest alternatives when the product scores 4 or above.
 CLOTHING/SHOES: Materials 35% · Exposure 30% · Sustainability 35% · Packaging 0%
 ACCESSORIES: Materials 40% · Exposure 25% · Sustainability 35% · Packaging 0%
 HOME: Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%
@@ -3143,6 +3153,8 @@ CATEGORY MAPPING — only suggest alternatives within these categories:
 FOOD ALTERNATIVES must be the same type of food. Cheerios = breakfast cereal → suggest Bob's Red Mill Organic Oats, Nature's Path Organic Corn Flakes, One Degree Organic Sprouted Oat O's. NEVER suggest a medication, supplement, or non-food item as a food alternative.
 
 If you cannot think of a genuine same-category alternative, return an empty ai_alternatives array rather than suggesting something from a different category. An empty array is far better than a wrong suggestion.
+
+CRITICAL ALTERNATIVES RULE: Every alternative you suggest MUST have an estimated_score strictly lower than the product being scanned. If the product scores 2, return an empty array — there is nothing meaningfully cleaner to suggest. If the product scores 4, only suggest alternatives scoring 1-3. Never suggest an alternative that scores the same or higher than the product. A user scanning a clean product should never see alternatives that are worse.
 For CLOTHING: always specify material and certification. Name real brands.
 estimated_score must reflect the same scoring framework.
 Respond with ONLY the JSON object above — no text before or after it.
@@ -3159,9 +3171,22 @@ const MEDICINE_TAGS = /cough|syrup|medicine|medication|remedy|first aid|suppleme
 const CLEANING_TAGS = /cleaner|detergent|disinfect|sanitiz|laundry|bleach|spray cleaner|floor cleaner/i;
 const PERSONAL_CARE_TAGS = /shampoo|conditioner|lotion|cream|moisturizer|serum|deodorant|toothpaste|makeup|sunscreen/i;
 
-function filterDbAlternatives(alternatives, category, productName) {
+function filterDbAlternatives(alternatives, category, productName, productScore = null) {
   if (!alternatives?.length) return alternatives || [];
   const isFoodCat = FOOD_CATEGORIES_SET.has(category);
+
+  return alternatives.filter(alt => {
+    const name   = (alt.name   || "").toLowerCase();
+    const tags   = (alt.tags   || []).join(" ").toLowerCase();
+    const desc   = (alt.description || "").toLowerCase();
+    const combined = `${name} ${tags} ${desc}`;
+
+    // Block alternatives that score worse than the product being scanned
+    const altScore = alt.plasticScore ?? alt.score ?? null;
+    if (productScore !== null && altScore !== null && altScore >= productScore) {
+      console.log(`DB filter: blocked "${alt.name}" (score ${altScore} >= product score ${productScore}) for "${productName}"`);
+      return false;
+    }
 
   return alternatives.filter(alt => {
     const name   = (alt.name   || "").toLowerCase();
@@ -3735,13 +3760,13 @@ app.post("/analyze", async (req, res) => {
         console.log("PA API returned no results — falling back to static DB");
         finalAlternatives = filterDbAlternatives(
           findAlternatives(aiProductName, finalCategory, 3, productName),
-          finalCategory, productName
+          finalCategory, productName, finalScore
         ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
       }
     } else {
       finalAlternatives = filterDbAlternatives(
         findAlternatives(aiProductName, finalCategory, 3, productName),
-        finalCategory, productName
+        finalCategory, productName, finalScore
       ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
     }
 
