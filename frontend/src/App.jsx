@@ -96,7 +96,121 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-// ── GLOBE LOADING ─────────────────────────────────────────────
+// ── SCAN OVERLAY ──────────────────────────────────────────────
+// Fullscreen overlay: globe spins → particles morph to score on-screen
+// → overlay fades out revealing the result card already rendered behind it
+const ScanOverlay = ({loading, result, isMobile, onDone}) => {
+  const [morphActive, setMorphActive] = useState(false);
+  const [fading,      setFading]      = useState(false);
+  const [gone,        setGone]        = useState(false);
+  const canvasRef  = useRef(null);
+  const rafRef     = useRef(null);
+  const doneRef    = useRef(false);
+  const NUM = 200, golden = Math.PI*(3-Math.sqrt(5));
+  const SZ = isMobile ? 320 : 370;
+  const CX = SZ/2, CY = SZ/2, GR = isMobile ? 108 : 124;
+
+  function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function easeOut(t){return 1-Math.pow(1-t,3);}
+
+  function project(sx,sy,sz,rotY){
+    const cosY=Math.cos(rotY),sinY=Math.sin(rotY),cosX=Math.cos(0.22),sinX=Math.sin(0.22);
+    const x1=sx*cosY+sz*sinY, z1=-sx*sinY+sz*cosY;
+    const y1=sy*cosX-z1*sinX, z2=sy*sinX+z1*cosX;
+    const sc=(380)/(380+z2*GR);
+    return {px:CX+x1*GR*sc, py:CY+y1*GR*sc};
+  }
+
+  function sampleDigit(digit){
+    const off=document.createElement('canvas'); off.width=SZ; off.height=SZ;
+    const oc=off.getContext('2d');
+    oc.fillStyle='#fff';
+    oc.font=`bold ${isMobile?195:225}px 'Outfit',system-ui,sans-serif`;
+    oc.textAlign='center'; oc.textBaseline='middle';
+    oc.fillText(String(digit),SZ/2,SZ/2);
+    const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
+    for(let y=0;y<SZ;y+=5) for(let x=0;x<SZ;x+=5)
+      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*4, y:y+(Math.random()-.5)*4});
+    for(let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
+    return pts;
+  }
+
+  useEffect(()=>{
+    if(!result||morphActive||doneRef.current) return;
+    const score=result.overall_score||result.score;
+    const color=scoreColor(score);
+    const [r,g,b]=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16)];
+    const rotY=Math.random()*Math.PI*2;
+    const particles=[];
+    for(let i=0;i<NUM;i++){
+      const y=1-(i/(NUM-1))*2, rr=Math.sqrt(1-y*y), theta=golden*i;
+      const {px,py}=project(Math.cos(theta)*rr,y,Math.sin(theta)*rr,rotY+Math.random()*.3);
+      particles.push({fromX:px,fromY:py,tx:CX,ty:CY});
+    }
+    const textPts=sampleDigit(score), n=Math.min(NUM,textPts.length);
+    particles.forEach((p,i)=>{
+      p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*8;
+      p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*8;
+    });
+    setMorphActive(true);
+    const canvas=canvasRef.current; if(!canvas) return;
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
+    let morphT=0, arcProg=0, lastTime=performance.now(), fired=false;
+    const loop=(ts)=>{
+      const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
+      ctx.clearRect(0,0,SZ,SZ);
+      morphT=Math.min(morphT+dt*.88,1);
+      const t=easeIO(morphT);
+      particles.forEach(p=>{
+        const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
+        ctx.beginPath(); ctx.arc(px,py,Math.max(1.5,3.2*(1-t*.5)),0,Math.PI*2);
+        ctx.fillStyle=`rgba(${r},${g},${b},${.28+.72*t})`; ctx.fill();
+      });
+      if(morphT>.5){
+        arcProg=Math.min(arcProg+dt*2.0,1);
+        const ap=easeOut(arcProg), startA=-Math.PI/2;
+        const arcR=isMobile?148:172;
+        ctx.beginPath(); ctx.arc(CX,CY,arcR,startA,startA+Math.PI*2);
+        ctx.strokeStyle=`rgba(${r},${g},${b},.1)`; ctx.lineWidth=7; ctx.stroke();
+        ctx.beginPath(); ctx.arc(CX,CY,arcR,startA,startA+Math.PI*2*(score/10)*ap);
+        ctx.strokeStyle=color; ctx.lineWidth=7; ctx.lineCap='round'; ctx.stroke();
+        ctx.globalAlpha=easeOut(arcProg);
+        ctx.fillStyle=color; ctx.font=`bold 17px 'Outfit',system-ui`;
+        ctx.textAlign='center'; ctx.fillText('/10',CX,CY+(isMobile?112:130)); ctx.globalAlpha=1;
+      }
+      if(morphT<1||arcProg<1){ rafRef.current=requestAnimationFrame(loop); }
+      else if(!fired){
+        fired=true; doneRef.current=true;
+        setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },650); },380);
+      }
+    };
+    rafRef.current=requestAnimationFrame(loop);
+    return()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); };
+  },[result]);
+
+  useEffect(()=>{
+    if(!loading&&!result&&!doneRef.current){
+      setFading(true); setTimeout(()=>{ setGone(true); onDone(); },400);
+    }
+  },[loading,result]);
+
+  if(gone) return null;
+  return(
+    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#052e16',zIndex:9999,
+      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+      opacity:fading?0:1, transition:fading?'opacity 0.65s ease':'opacity 0.4s ease',
+      pointerEvents:fading?'none':'auto',
+    }}>
+      <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
+      {!morphActive && <GlobeLoading isMobile={isMobile}/>}
+      <canvas ref={canvasRef} style={{display:morphActive?'block':'none', width:SZ, height:SZ}}/>
+    </div>
+  );
+};
+
+
 // 200 points evenly distributed on a sphere (Fibonacci lattice)
 const SPHERE_POINTS = (() => {
   const pts = [];
@@ -539,7 +653,7 @@ const ScoreArc = ({score}) => {
 
 // ── PARTICLE SCORE REVEAL ────────────────────────────────────
 // Globe spins → particles morph into the score digit → arc draws in
-const ParticleScoreReveal = ({score, onRevealComplete}) => {
+const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
   const canvasRef  = useRef(null);
   const stateRef   = useRef(null);
   const W = 240, H = 220, CX = 120, CY = 98, GR = 62, ROT_X = 0.22;
@@ -577,6 +691,30 @@ const ParticleScoreReveal = ({score, onRevealComplete}) => {
   useEffect(()=>{
     const canvas=canvasRef.current; if(!canvas) return;
     const ctx=canvas.getContext('2d');
+
+    // Instant mode: overlay already ran the animation — just draw completed state
+    if(instant){
+      const textPts=sampleText(score);
+      const n=Math.min(NUM,textPts.length);
+      ctx.clearRect(0,0,W,H);
+      const col=scoreColor(score);
+      const [r,g,b]=[parseInt(col.slice(1,3),16),parseInt(col.slice(3,5),16),parseInt(col.slice(5,7),16)];
+      for(let i=0;i<NUM;i++){
+        const tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
+        const ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
+        ctx.beginPath(); ctx.arc(tx,ty,1.6,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${r},${g},${b},0.88)`; ctx.fill();
+      }
+      const startA=-Math.PI/2;
+      ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2);
+      ctx.strokeStyle=`rgba(${r},${g},${b},.12)`; ctx.lineWidth=5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2*(score/10));
+      ctx.strokeStyle=col; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
+      ctx.fillStyle=col; ctx.font=`bold 13px 'Outfit',system-ui`;
+      ctx.textAlign='center'; ctx.fillText('/10',CX,CY+78);
+      onRevealComplete&&onRevealComplete();
+      return;
+    }
 
     const pts=[];
     const glow=new Array(NUM).fill(0);
@@ -648,7 +786,7 @@ const ParticleScoreReveal = ({score, onRevealComplete}) => {
     };
     s.rafId=requestAnimationFrame(loop);
     return ()=>{cancelAnimationFrame(s.rafId); clearTimeout(morphTO);};
-  },[score]);
+  },[score, instant]);
 
   return <canvas ref={canvasRef} width={W} height={H} style={{display:'block',margin:'0 auto'}}/>;
 };
@@ -3940,6 +4078,8 @@ function App() {
   const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
   const [revealDone,    setRevealDone]  = useState(false);
+  const [overlayDone,   setOverlayDone] = useState(false);
+  const [scanKey,       setScanKey]     = useState(0);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -4184,7 +4324,7 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setResult(null); setRevealDone(false);
+    setLoading(true); setError(null); setResult(null); setRevealDone(false); setOverlayDone(false); setScanKey(k=>k+1);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
@@ -4293,7 +4433,7 @@ function App() {
     }
     setShowScanModal(false);
     setResult(null); setError(null); setPage("home");
-    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null);
+    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null); setOverlayDone(false); setScanKey(k=>k+1);
     try {
       const base64 = await new Promise((res, rej) => {
         const img = new Image();
@@ -4818,20 +4958,14 @@ function App() {
             </div>
           </section>
 
-          {/* Fixed fullscreen globe overlay — covers entire viewport, centered */}
-          {loading && (
-            <div style={{
-              position:"fixed", top:0, left:0, right:0, bottom:0,
-              background:"#052e16",
-              zIndex:9999,
-              display:"flex", flexDirection:"column",
-              alignItems:"center", justifyContent:"center",
-              animation:"globeOverlayIn 0.4s ease forwards",
-            }}>
-              <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
-              <GlobeLoading isMobile={isMobile}/>
-            </div>
-          )}
+          {/* Scan overlay — globe → particle morph → fade to reveal result */}
+          <ScanOverlay
+            key={scanKey}
+            loading={loading}
+            result={result}
+            isMobile={isMobile}
+            onDone={()=>{ setOverlayDone(true); setRevealDone(true); }}
+          />
 
           <div style={{paddingTop:isMobile?32:56}}>
 
@@ -5024,7 +5158,7 @@ function App() {
                 {(() => {
                   return (<>
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                      <ParticleScoreReveal score={displayScore} onRevealComplete={()=>setRevealDone(true)}/>
+                      <ParticleScoreReveal score={displayScore} onRevealComplete={()=>setRevealDone(true)} instant={overlayDone}/>
                     </div>
 
                     {/* Dual scoring explanation — one line, always visible */}
