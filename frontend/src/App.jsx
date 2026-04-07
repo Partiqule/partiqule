@@ -103,9 +103,12 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const [morphActive, setMorphActive] = useState(false);
   const [fading,      setFading]      = useState(false);
   const [gone,        setGone]        = useState(false);
-  const canvasRef  = useRef(null);
-  const rafRef     = useRef(null);
-  const doneRef    = useRef(false);
+  const canvasRef   = useRef(null);
+  const rafRef      = useRef(null);
+  const doneRef     = useRef(false);
+  const scanStart   = useRef(Date.now());
+  const morphTimerRef = useRef(null);
+  const MIN_MORPH_DELAY = 7000; // show globe for at least 7s before morphing
   const NUM = 600, golden = Math.PI*(3-Math.sqrt(5));
   const SZ = isMobile ? 320 : 370;
   const CX = SZ/2, CY = SZ/2, GR = isMobile ? 108 : 124;
@@ -137,6 +140,14 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
 
   useEffect(()=>{
     if(!result||morphActive||doneRef.current) return;
+    const elapsed = Date.now() - scanStart.current;
+    const wait = Math.max(0, MIN_MORPH_DELAY - elapsed);
+    morphTimerRef.current = setTimeout(()=>{ triggerMorph(result); }, wait);
+    return ()=>{ if(morphTimerRef.current) clearTimeout(morphTimerRef.current); };
+  },[result]);
+
+  const triggerMorph = (result) => {
+    if(morphActive||doneRef.current) return;
     const score=result.overall_score||result.score;
     const color=scoreColor(score);
     const [r,g,b]=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16)];
@@ -175,14 +186,15 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
       }
     };
     rafRef.current=requestAnimationFrame(loop);
-    return()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); };
-  },[result]);
+  };
 
   useEffect(()=>{
     if(!loading&&!result&&!doneRef.current){
       setFading(true); setTimeout(()=>{ setGone(true); onDone(); },400);
     }
   },[loading,result]);
+
+  useEffect(()=>{ return()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); }; },[]);
 
   if(gone) return null;
   return(
