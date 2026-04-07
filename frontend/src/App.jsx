@@ -4663,7 +4663,7 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id); setShowLimitModal("paywall");}}/>}
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
 
       {/* ── Scan limit modals ── */}
       {showLimitModal && (
