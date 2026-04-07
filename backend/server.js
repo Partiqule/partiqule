@@ -595,12 +595,22 @@ const CHILD_CONCERN_SUBSTANCES = [
   { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i,        bump: 2, reason: "PFAS disrupts immune and hormone development in children — CDC flagged as priority child health concern" },
   { match: /phthalate|DEHP|DBP/i,                  bump: 2, reason: "Phthalates disrupt reproductive development — most critical during early childhood (Swan 2021)" },
   { match: /flame retardant|PBDE|TCEP|TDCPP/i,     bump: 2, reason: "Flame retardant neurotoxicity disproportionately affects developing brains (Stapleton 2011)" },
-  { match: /synthetic fragrance|artificial fragrance/i, bump: 1, reason: "Children's developing endocrine systems are more sensitive to fragrance chemicals and phthalates" },
-  { match: /formaldehyde|DMDM hydantoin/i,          bump: 1, reason: "Formaldehyde exposure more concerning for developing respiratory systems" },
-  { match: /parabens?|methylparaben|propylparaben/i, bump: 1, reason: "Parabens disrupt hormones — developing endocrine systems more vulnerable" },
+  { match: /synthetic fragrance|artificial fragrance|fragrance.*parfum|\bparfum\b/i, bump: 2, reason: "Undisclosed fragrance chemicals include phthalates and VOCs — children's developing endocrine systems are more sensitive and skin absorption is 2-3x higher than adults" },
+  { match: /formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea/i, bump: 2, reason: "Formaldehyde and formaldehyde-releasing preservatives — carcinogen with heightened concern for developing respiratory systems in children" },
+  { match: /parabens?|methylparaben|propylparaben|butylparaben/i, bump: 1, reason: "Parabens — endocrine disruption concern, developing hormonal systems more vulnerable" },
   { match: /bisphenol|BPA|BPS/i,                   bump: 2, reason: "BPA/BPS endocrine disruption most harmful during developmental windows in childhood" },
   { match: /chlorine.*bleach|chlorine.*pulp|dioxin/i, bump: 1, reason: "Chlorine bleaching byproducts (dioxins) have child-specific developmental endpoints" },
   { match: /polypropylene.*liner|polyester.*skin|synthetic.*liner/i, bump: 1, reason: "Synthetic materials in direct contact with sensitive baby skin — higher absorption rate" },
+  // Clothing/home specific
+  { match: /azo dye|azo.*color|disperse.*dye|reactive.*dye/i, bump: 2, reason: "Azo dyes can release carcinogenic aromatic amines — banned in EU for skin-contact textiles. Children's skin absorbs at 2-3x adult rate" },
+  { match: /DWR|water.*repellent|stain.*resist|C8|C6 fluorocarbon/i, bump: 1, reason: "Durable water repellent (DWR) treatments often contain PFAS — persistent in body and environment, endocrine disruption concern for children" },
+  // Candle/home air quality specific
+  { match: /paraffin|petroleum wax|mineral.*wax/i,  bump: 1, reason: "Paraffin wax combustion releases VOCs including benzene and toluene — children's developing lungs more vulnerable to airborne toxicants" },
+  { match: /synthetic.*fragrance.*candle|fragrance.*oil.*candle|candle.*parfum/i, bump: 2, reason: "Synthetic fragrance in candles releases VOCs when burned — children's lungs are more permeable and developing nervous systems more sensitive to VOC exposure" },
+  { match: /lead.*wick|metal.*wick/i,               bump: 3, reason: "Lead core wicks banned in US since 2003 — if present, lead combustion poses severe neurotoxicity risk. Child IQ impacts documented at very low blood lead levels" },
+  // Neurotoxicity class — EWG-inspired
+  { match: /toluene|xylene|benzene|styrene/i,       bump: 2, reason: "Neurotoxic solvent — children's developing brains are uniquely vulnerable. EPA classifies benzene as known human carcinogen" },
+  { match: /1,4-dioxane|ethylene oxide/i,           bump: 2, reason: "1,4-dioxane is a probable carcinogen found as a contaminant in SLES/PEG ingredients — children's lower body weight means higher effective dose" },
 ];
 
 function computeChildScore(baseScore, concernsText, category, productName, isChildProduct) {
@@ -621,10 +631,24 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
     }
   }
 
-  // Baby category gets additional bump — most vulnerable population
+  // Category-specific bumps
   if (category === "baby") {
     bump += 1;
     bumps.push("Baby products: highest vulnerability — newborn skin is 5x more permeable than adult skin");
+  }
+
+  // Clothing bump — children wear fabrics against skin all day, higher absorption
+  if (category === "clothing") {
+    bump += 1;
+    bumps.push("Children's skin absorbs chemicals from fabrics at 2-3x adult rate — daily all-day contact amplifies exposure");
+  }
+
+  // Candle/home fragrance bump — children's lungs are more vulnerable to VOCs
+  if (category === "home" || category === "home_furnishing") {
+    if (/candle|wax|diffuser|air freshener|reed diffuser/i.test(productName + " " + concernsText)) {
+      bump += 1;
+      bumps.push("Airborne VOCs and fragrance particulates from candles — children's developing lungs and nervous systems more vulnerable to inhalation exposure");
+    }
   }
 
   const childScore = Math.min(10, baseScore + bump);
@@ -633,8 +657,8 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
 
 function detectChildProduct(productName, category) {
   if (category === "baby") return true;
-  // All food products get a child score — children eat all food products
-  if (["food","food_beverage","beverage","restaurant","supplement","personal_care"].includes(category)) return true;
+  // Extended to all categories where children have meaningful exposure
+  if (["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","toy"].includes(category)) return true;
   const name = (productName || "").toLowerCase();
   if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
   if (CHILD_FOOD_BRANDS.test(name)) return true;
@@ -897,10 +921,13 @@ CLOTHING tier labels: natural_fiber|conventional|synthetic|chemical_treated
 KITCHEN tier labels: plant_based|conventional|synthetic_heavy|industrial_chemical
 BABY tier labels: clean_safe|conventional|concern_flagged|high_risk_infants
 FOOD HIGH concerns: Red 40, Red 3 (banned 2025), Yellow 5/6, Blue 1/2, Titanium dioxide, BHA/BHT, Sodium nitrate, Trans fats, HFCS
-PERSONAL CARE HIGH concerns: Oxybenzone, Parabens, Formaldehyde releasers, Triclosan, Phthalates, PFAS in cosmetics, Coal tar dyes
-CLOTHING HIGH concerns: PFAS/DWR coating, Formaldehyde finish, Flame retardants, Carcinogenic azo dyes
-KITCHEN HIGH concerns: PTFE/PFAS coating, BPA/BPS, Quaternary ammonium compounds, Chlorine bleach, Synthetic fragrance VOCs, PVC, 1,4-dioxane
-BABY HIGH concerns: Any synthetic fragrance, Talc, Phenoxyethanol, Parabens, Phthalates in products
+PERSONAL CARE HIGH concerns: Oxybenzone/octinoxate (endocrine disruptors, EU restricted), Parabens (endocrine disruption), Formaldehyde releasers (DMDM hydantoin, quaternium-15, diazolidinyl urea — carcinogens), Triclosan (thyroid disruption, banned EU), Phthalates (reproductive toxicity), PFAS in cosmetics (bioaccumulation), Coal tar dyes (carcinogens, EU banned), 1,4-dioxane contamination in SLES/PEG ingredients (probable carcinogen), Methylisothiazolinone/MIT (contact allergen, neurotoxin — EU banned in leave-on products), Lead acetate (neurotoxin — banned EU), Hydroquinone (carcinogen — banned EU leave-on), Resorcinol (thyroid disruptor — EU restricted)
+PERSONAL CARE MEDIUM concerns: SLS/SLES (skin irritant, 1,4-dioxane contamination risk), PEG compounds (1,4-dioxane contamination risk), Phenoxyethanol (CNS depression concern at high doses), Synthetic fragrance (undisclosed phthalates/VOCs), BHT in cosmetics (possible endocrine disruptor), Benzophenone (possible carcinogen), Retinyl palmitate (tumor promoter on sun-exposed skin), Talc without asbestos-free certification (IARC Group 2B)
+CLOTHING HIGH concerns: PFAS/DWR coating (bioaccumulative endocrine disruptors), Formaldehyde finish (carcinogen — EU textile standard EN ISO 14184), Flame retardants PBDE/TCEP/TDCPP (neurotoxins), Carcinogenic azo dyes (EU Directive 2002/61/EC bans 22 azo colorants in textiles), Heavy metal dyes (lead, chromium, cadmium in conventional dyes)
+CLOTHING MEDIUM concerns: Conventional synthetic dyes (contact sensitizers), Optical brighteners (skin sensitizer, UV reactive), Nonylphenol ethoxylates (NPE — endocrine disruptor, EU banned in textiles), Chlorine bleaching residues
+HOME HIGH concerns: Paraffin wax combustion VOCs (benzene, toluene — carcinogens), PTFE/PFAS coating (bioaccumulative), BPA/BPS (endocrine disruptors), Quaternary ammonium compounds (reproductive toxicity), Chlorine bleach (respiratory irritant, dioxin byproducts), Synthetic fragrance VOCs (phthalates, toluene), PVC off-gassing (phthalates), Formaldehyde off-gassing (pressed wood, carpet — IARC Group 1 carcinogen)
+HOME MEDIUM concerns: Petroleum-based candle wax (VOC combustion byproducts), Synthetic fragrance in candles (VOC release during burning), Lead wicks — banned 2003 but still found in imports
+BABY HIGH concerns: Any synthetic fragrance, Talc without asbestos-free certification, Phenoxyethanol (CNS concern — EU limits in baby products), Parabens (endocrine disruption), Phthalates (reproductive toxicity), Formaldehyde releasers, PFAS, Oxybenzone in baby sunscreen
 NUTRITION: For ANY food, beverage, supplement, or restaurant product — read the nutrition facts label in the photo if visible, or use known product data. Return per-serving values EXACTLY as listed on the label — use the manufacturer's defined serving size, NOT the whole package total. Populate nutrition with serving_size, calories, protein_g, carbs_g, sugar_g, fat_g, sat_fat_g, fiber_g, sodium_mg. Set any unknown fields to null. Set nutrition to null ONLY for non-food products like clothing, home goods, or personal care.` }],
       messages: [{
         role: "user",
@@ -996,6 +1023,35 @@ PRESERVATIVES: NTP (2023): BHA reasonably anticipated to be a human carcinogen. 
 SUNSCREEN: Matta et al. (2019) JAMA: oxybenzone detected in bloodstream after single application. FDA (2020): oxybenzone, avobenzone flagged for further safety study. Score chemical UV filters 7-8.
 FRAGRANCE: Steinemann (2017): 156 VOCs identified in 25 scented products. Dodson et al. (2012): synthetic fragrance phthalates linked to asthma and endocrine disruption.
 TEXTILES: Browne et al. (2011): synthetic textiles identified as major ocean microfiber source. Henry et al. (2019): 700K+ fibers shed per wash from single fleece.
+
+EU VS US REGULATORY GAP — use this to inform scoring:
+The EU has banned or restricted over 2,400 ingredients in cosmetics. The US has banned fewer than 15. When an ingredient is banned in the EU but permitted in the US, this is a meaningful signal — add it as a concern and raise the score. Key EU-restricted ingredients not banned in the US:
+- Hydroquinone (skin lightener) — EU banned in leave-on cosmetics. Score 7+ if present.
+- Lead acetate (hair dye) — EU banned. Score 8+ if present.
+- Coal tar (dandruff/psoriasis shampoos) — EU restricted. Score 7+ if present.
+- Triclosan — EU banned in personal care except toothpaste. Score 6+ if present.
+- Methylisothiazolinone (MIT) — EU banned in leave-on products, restricted in rinse-off. Score 6+ in leave-on.
+- Formaldehyde and releasers — EU restricted (cosmetics limit 0.2%). Score 6+ if present.
+- Azo dyes (22 specific) — EU banned in textiles that contact skin (Directive 2002/61/EC). Score 7+ if present.
+- Nonylphenol ethoxylates (NPE) — EU banned in textiles. Score 6+ if present.
+- Resorcinol — EU restricted in hair dyes and nail products. Score 6+ if present.
+
+PERSISTENCE AND BIOACCUMULATION — apply when relevant:
+Ingredients that accumulate in the body over time warrant higher scores than single-exposure concerns. Key bioaccumulative categories:
+- PFAS (all classes) — "forever chemicals," do not break down, accumulate in blood and organs. Score minimum 7 for any confirmed PFAS.
+- Heavy metals (lead, mercury, cadmium, arsenic) — bioaccumulate, no safe threshold for lead. Score 8+ if present.
+- Organochlorines (DDT metabolites, PCBs) — persistent, bioaccumulate up the food chain. Score 8+ if confirmed.
+- Certain parabens (butylparaben, propylparaben) — detected in breast tissue. Score 5+ for long-chain parabens in leave-on products.
+- Synthetic musks (galaxolide, tonalide) — bioaccumulate in body fat. Score 5+ in rinse-off, 6+ in leave-on.
+
+NEUROTOXICITY FRAMEWORK:
+Neurotoxic concerns warrant higher scores because neurological damage is often irreversible, and children's developing brains are uniquely vulnerable. Apply minimum floor of 6 for confirmed neurotoxins in direct contact products:
+- Lead (all forms) — no safe blood level, IQ impacts documented at nanogram levels
+- Mercury/thimerosal — neurotoxin, banned in cosmetics
+- Toluene (in nail products) — developmental neurotoxin
+- PBDE flame retardants — developmental neurotoxin (Stapleton 2011)
+- TCEP/TDCPP flame retardants — probable human carcinogens, neurotoxic
+- Chlorpyrifos (agricultural) — banned EU, neurodevelopmental toxin
 PACKAGING-ONLY PLASTIC: If a product is genuinely plastic-free but has incidental packaging (film pouch, wrapper, cap) that is discarded during use, the packaging score should be 2-4. Do NOT let discarded packaging dominate the materials score. Example: Blueland tablet in film pouch = materials score 1, packaging score 3.`,
 
     `Analyze "${productName}" across 5 dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing.
