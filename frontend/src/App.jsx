@@ -3767,21 +3767,32 @@ function App() {
     } catch { setIsSubscribed(false); }
   };
 
+  const syncScanCount = async (userId) => {
+    try {
+      const r = await fetch(`${API_BASE}/scan-count?userId=${userId}`);
+      const d = await r.json();
+      const serverCount = d.scan_count || 0;
+      const localCount = parseInt(localStorage.getItem("ps_scan_count") || "0");
+      // Use whichever is higher — server wins across devices
+      const finalCount = Math.max(serverCount, localCount);
+      setScanCount(finalCount);
+      try { localStorage.setItem("ps_scan_count", String(finalCount)); } catch {}
+    } catch {}
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
         loadCloudHistory(session.user.id);
         checkSubscription(session.user.id);
-        // Reset scan count when user logs in — they get fresh 20 scans tracked server-side
-        setScanCount(0);
-        try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+        syncScanCount(session.user.id);
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
       setUser(u);
-      if (u) { loadCloudHistory(u.id); checkSubscription(u.id); }
+      if (u) { loadCloudHistory(u.id); checkSubscription(u.id); syncScanCount(u.id); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -3955,7 +3966,7 @@ function App() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim(), userId: user?.id || null}),signal:controller.signal});
       clearTimeout(timeout);
       if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
       const data = await res.json();
@@ -4076,7 +4087,7 @@ function App() {
       const idResp = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" }),
+        body: JSON.stringify({ image: base64, mediaType: "image/jpeg", userId: user?.id || null }),
         signal: imgController.signal,
       });
       clearTimeout(imgTimeout);

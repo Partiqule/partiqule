@@ -3396,7 +3396,16 @@ app.post("/analyze", async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.set("Pragma", "no-cache");
-  let { query, image, mediaType } = req.body;
+  let { query, image, mediaType, userId } = req.body;
+
+  // Increment server-side scan count for logged-in users
+  if (userId && supabaseAdmin) {
+    try {
+      const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
+      const newCount = (profile?.scan_count || 0) + 1;
+      await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
+    } catch(e) { console.warn("scan_count increment failed:", e.message); }
+  }
 
   // If image provided, use vision to identify + analyze in one pass
   if (image) {
@@ -3895,6 +3904,18 @@ app.post("/create-checkout", async (req, res) => {
 });
 
 // Check subscription status by userId
+app.get("/scan-count", async (req, res) => {
+  if (!supabaseAdmin) return res.json({ scan_count: 0 });
+  const { userId } = req.query;
+  if (!userId) return res.json({ scan_count: 0 });
+  try {
+    const { data } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
+    res.json({ scan_count: data?.scan_count || 0 });
+  } catch(e) {
+    res.json({ scan_count: 0 });
+  }
+});
+
 app.get("/subscription-status", async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
   const { userId } = req.query;
