@@ -564,73 +564,6 @@ const RiskBar = ({score}) => {
 };
 
 // ── SCAN VS SAFE SPLIT VIEW ───────────────────────────────────
-const SplitView = ({result, isDark, onScan}) => {
-  // Priority: same-category static alternative → any static alternative → AI alternative
-  const sameCat = result.alternatives?.find(p => p.category === result.category);
-  const anyStatic = result.alternatives?.[0];
-  const aiAlt = result.ai_alternatives?.[0];
-
-  // Use same-category static if available, else AI alternative, else any static
-  // Never show if score is already low
-  const best = sameCat || (aiAlt ? null : anyStatic);
-  const useAi = !sameCat && aiAlt;
-
-  if ((!best && !useAi) || result.score <= 3) return null;
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  return (
-    <div style={{marginTop:24}}>
-      <div style={{fontSize:12, color:"#aaa", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12, textAlign:"center"}}>Side-by-Side Comparison</div>
-      <div style={{display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:0, alignItems:"stretch"}}>
-        {/* Risky side */}
-        <div style={{background:scoreBg(result.overall_score||result.score), borderRadius:"12px 0 0 12px", padding:"20px", border:`1.5px solid ${scoreColor(result.overall_score||result.score)}33`, borderRight:"none"}}>
-          <div style={{fontSize:11, color:scoreColor(result.overall_score||result.score), textTransform:"uppercase", fontWeight:700, marginBottom:6}}>Your Product</div>
-          <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{result.product_name?.length>40?result.product_name.slice(0,37)+"…":result.product_name}</div>
-          <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <div style={{fontSize:28, fontWeight:800, color:scoreColor(result.overall_score||result.score), fontFamily:"'Outfit',sans-serif"}}>{result.overall_score||result.score}</div>
-            <div style={{fontSize:12, color:scoreColor(result.overall_score||result.score), fontWeight:600}}>/10 overall</div>
-          </div>
-          <div style={{fontSize:12, color:scoreColor(result.overall_score||result.score), fontWeight:600, marginTop:6, padding:"4px 10px", background:`${scoreColor(result.overall_score||result.score)}15`, borderRadius:20, display:"inline-block"}}>{scoreLabel(result.overall_score||result.score)} Overall</div>
-        </div>
-        {/* VS divider */}
-        <div style={{display:"flex", alignItems:"center", justifyContent:"center", background:isDark?"#131929":"#f5f5f5", padding:"0 14px", zIndex:1}}>
-          <div style={{fontSize:13, fontWeight:800, color:"#999", letterSpacing:"0.05em"}}>VS</div>
-        </div>
-        {/* Safe side */}
-        <div style={{background:"#f0fdf4", borderRadius:"0 12px 12px 0", padding:"20px", border:"1.5px solid #16a34a33", borderLeft:"none"}}>
-          <div style={{fontSize:11, color:"#16a34a", textTransform:"uppercase", fontWeight:700, marginBottom:6}}>Better Choice</div>
-          {useAi ? (
-            <>
-              <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:6, lineHeight:1.3}}>{aiAlt.name}</div>
-              <div style={{fontSize:12, color:"#16a34a", marginBottom:8, lineHeight:1.4}}>{aiAlt.material}</div>
-              <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
-                <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{aiAlt.estimated_score}</div>
-                <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
-              </div>
-              <button onClick={()=>onScan && onScan(aiAlt.name)}
-                style={{fontSize:12, color:"#16a34a", fontWeight:600, marginTop:4, padding:"5px 14px", background:"#f0fdf4", border:"1.5px solid #16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, cursor:"pointer"}}>
-                Scan this → <IconArrow size={11} color="#16a34a"/>
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif", marginBottom:10, lineHeight:1.3}}>{best.name}</div>
-              <div style={{display:"flex", alignItems:"center", gap:8}}>
-                <div style={{fontSize:28, fontWeight:800, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{best.score}</div>
-                <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>/10 danger</div>
-              </div>
-              <a href={best.affiliateUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:12, color:"#fff", fontWeight:600, marginTop:8, padding:"5px 14px", background:"#16a34a", borderRadius:20, display:"inline-flex", alignItems:"center", gap:4, textDecoration:"none"}}>
-                Shop now <IconArrow size={11} color="#fff"/>
-              </a>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── BUNDLE RECOMMENDATION (replaced with simple CTA) ─────────
 const BundleCard = ({category, isDark}) => {
   const bundle = BUNDLES[category] || BUNDLES.other;
@@ -1701,13 +1634,7 @@ const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
 // ── SHARE BADGE (with copy-as-image) ─────────────────────────
-const ShareBadge = ({result}) => {
-  const [sharing,     setSharing]     = useState(false);
-  const [done,        setDone]        = useState(false);
-  const safeName    = (result.product_name || "").startsWith("http") ? "Scanned product" : result.product_name;
-  const displayName = safeName?.length > 40 ? safeName.slice(0, 37) + "…" : safeName;
-  const color       = scoreColor(result.overall_score || result.score);
-  const label       = scoreLabel(result.overall_score || result.score);
+// ── PRODUCT CARD ─────────────────────────────────────────────
 
   const buildCanvas = () => {
     return new Promise((resolve) => {
@@ -2205,7 +2132,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const clearCache = async () => {
     setClearing(true);
     try {
-      await fetch(`${API_BASE}/cache-clear`);
+      await fetch(`${API_BASE}/cache-clear?key=RowenaRavenclaw2024!`);
       await fetchCacheStatus();
     } finally { setClearing(false); }
   };

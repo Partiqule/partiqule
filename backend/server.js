@@ -37,6 +37,32 @@ app.use((req, res, next) => {
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const scoreCache    = new Map();
 
+// ── ADMIN KEY ─────────────────────────────────────────────────
+const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
+const requireAdmin = (req, res, next) => {
+  const key = req.query.key || req.headers["x-admin-key"];
+  if (key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
+  next();
+};
+
+// ── RATE LIMITER — per IP, max 30 scans/hour on /analyze ──────
+const rateLimitMap = new Map();
+const RATE_LIMIT   = 30;
+const RATE_WINDOW  = 60 * 60 * 1000; // 1 hour
+const rateLimit = (req, res, next) => {
+  const ip  = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  const now = Date.now();
+  const rec = rateLimitMap.get(ip) || { count: 0, start: now };
+  if (now - rec.start > RATE_WINDOW) { rec.count = 0; rec.start = now; }
+  rec.count++;
+  rateLimitMap.set(ip, rec);
+  if (rec.count > RATE_LIMIT) {
+    console.warn(`[RATE] IP ${ip} exceeded ${RATE_LIMIT} scans/hour`);
+    return res.status(429).json({ error: "Too many scans. Please wait before trying again." });
+  }
+  next();
+};
+
 // ── HELPERS ───────────────────────────────────────────────────
 
 function cacheKey(q, category) {
@@ -3582,7 +3608,7 @@ async function safePass2(productName, pass1Result) {
 }
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
-app.post("/analyze", async (req, res) => {
+app.post("/analyze", rateLimit, async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.set("Pragma", "no-cache");
@@ -4188,12 +4214,12 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
   res.json({ received: true });
 });
 
-app.get("/cache-stats",  (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
-app.get("/cache-status", (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
-app.get("/cache-clear",  (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
+app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
+app.get("/cache-clear",  requireAdmin, (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
 
 // Recent scans — returns last N cached product names and scores for admin dashboard
-app.get("/recent-scans", (req, res) => {
+app.get("/recent-scans", requireAdmin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
   const entries = [...scoreCache.entries()].slice(-limit).reverse().map(([key, val]) => ({
     product_name: val.product_name || key,
