@@ -29,7 +29,10 @@ app.use(cors({
   credentials: true,
 }));
 app.options("*", cors()); // handle preflight for all routes
-app.use(express.json({ limit: "2mb" })); // images resized to max 1200px ≈ 150-400KB — 2MB is ample
+app.use((req, res, next) => {
+  if (req.path === "/stripe-webhook") return next();
+  express.json({ limit: "2mb" })(req, res, next);
+}); // images resized to max 1200px ≈ 150-400KB — 2MB is ample
 
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const scoreCache    = new Map();
