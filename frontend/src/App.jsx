@@ -109,9 +109,9 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const MIN_DELAY    = 7000;
   const NUM          = 1200;
   const golden       = Math.PI*(3-Math.sqrt(5));
-  const SZ           = isMobile ? 400 : 640;
+  const SZ           = isMobile ? 300 : 520;
   const CX           = SZ/2;
-  const CY           = isMobile ? 200 : 270;
+  const CY           = isMobile ? 150 : 220;
   const GR           = isMobile ? 82 : 115;
 
   function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
@@ -128,7 +128,7 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     const off=document.createElement('canvas'); off.width=SZ; off.height=SZ;
     const oc=off.getContext('2d');
     oc.fillStyle='#fff';
-    oc.font=`bold ${isMobile?260:320}px 'Outfit',system-ui,sans-serif`;
+    oc.font=`bold ${isMobile?155:200}px 'Outfit',system-ui,sans-serif`;
     oc.textAlign='center'; oc.textBaseline='middle';
     oc.fillText(String(digit),CX,CY);
     const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
@@ -194,7 +194,7 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
           ctx.fillStyle='#fff';
           ctx.font=`bold ${isMobile?28:34}px 'Outfit',system-ui,sans-serif`;
           ctx.textAlign='center';
-          ctx.fillText('/10',CX,CY+(isMobile?105:130));
+          ctx.fillText('/10',CX,CY+(isMobile?82:100));
           ctx.globalAlpha=1;
         }
         if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
