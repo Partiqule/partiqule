@@ -3208,6 +3208,15 @@ CATEGORY MAPPING — only suggest alternatives within these categories:
 
 FOOD ALTERNATIVES must be the same type of food. Cheerios = breakfast cereal → suggest Bob's Red Mill Organic Oats, Nature's Path Organic Corn Flakes, One Degree Organic Sprouted Oat O's. NEVER suggest a medication, supplement, or non-food item as a food alternative.
 
+SUPPLEMENT AND MEDICINE ALTERNATIVES — must be the same type of product:
+- Cough syrup → suggest Zarbee's (honey-based, no dyes, no alcohol, score 1-2), Genexa (USDA organic inactive ingredients, no dyes, score 2), Maty's Organic (organic honey and herbs, score 1-2)
+- Children's cough syrup → Zarbee's Kids (score 1-2), Little Remedies (no dyes, simpler formula, score 2-3)
+- Children's acetaminophen/fever reducer → Genexa Kids' Acetaminophen (organic inactive ingredients, no petroleum dyes, score 2)
+- Adult cough syrup → Zarbee's Adult (honey-based), Boiron Chestal (homeopathic, no alcohol, score 2-3)
+- Multivitamin → Ritual, Thorne, Garden of Life (score 1-3)
+- Children's multivitamin → Llama Naturals (no dyes, freeze-dried fruit), MaryRuth's (no artificial dyes), SmartyPants Kids (score 3-4)
+- NEVER suggest a food, personal care product, or cleaning product as a supplement alternative
+
 If you cannot think of a genuine same-category alternative, return an empty ai_alternatives array rather than suggesting something from a different category. An empty array is far better than a wrong suggestion.
 
 CRITICAL ALTERNATIVES RULE: Every alternative you suggest MUST have an estimated_score strictly lower than the product being scanned. If the product scores 2, return an empty array — there is nothing meaningfully cleaner to suggest. If the product scores 4, only suggest alternatives scoring 1-3. Never suggest an alternative that scores the same or higher than the product. A user scanning a clean product should never see alternatives that are worse.

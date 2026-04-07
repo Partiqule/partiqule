@@ -1082,35 +1082,37 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
       {/* Expanded content */}
       {open && (<>
       {/* Tabs */}
-      <div style={{padding:"0 18px", borderTop:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", gap:2}}>
+      <div style={{padding:"0 12px", borderTop:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", gap:0}}>
         {tabs.map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            flex:1, padding:"7px 6px", fontSize:isMobile?11:12, fontWeight:700,
+            flex:1, padding:"8px 4px", fontSize:11, fontWeight:700,
             border:"none", background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
             color: tab===t.id ? "#16a34a" : muted,
-            borderBottom: tab===t.id ? "2px solid #16a34a" : "none",
-            cursor:"pointer",
+            borderBottom: tab===t.id ? "2px solid #16a34a" : "2px solid transparent",
+            cursor:"pointer", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
           }}>{t.label}</button>
         ))}
       </div>
 
-      <div style={{padding:"16px 18px"}}>
+      <div style={{padding:"14px 14px"}}>
 
-        {/* Inputs row */}
-        <div style={{display:"grid", gridTemplateColumns:hasKids?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr", gap:12, marginBottom:14, alignItems:"end"}}>
-          <div style={{gridColumn:"1 / -1"}}>
+        {/* Inputs row — stacked on mobile */}
+        <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:14}}>
+          <div>
             <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
               {cat === "food_beverage" ? "How often do you eat this?" : "How often do you use this?"}
             </div>
             <select value={freq} onChange={e=>setFreq(e.target.value)} style={{
-              width:"100%", padding:"7px 10px", borderRadius:8, fontSize:13,
+              width:"100%", padding:"8px 10px", borderRadius:8, fontSize:13,
               border:`1px solid ${border}`, background:surface, color:text, cursor:"pointer",
             }}>
               {FREQ_OPTIONS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}
             </select>
           </div>
-          <Stepper label="Adults" value={adults} setValue={setAdults} min={1} max={8}/>
-          <Stepper label="Children" value={kids} setValue={setKids} min={0} max={8}/>
+          <div style={{display:"flex", gap:20}}>
+            <Stepper label="Adults" value={adults} setValue={setAdults} min={1} max={8}/>
+            <Stepper label="Children" value={kids} setValue={setKids} min={0} max={8}/>
+          </div>
         </div>
 
         {/* What's in this product — chips */}
@@ -4601,12 +4603,12 @@ function App() {
             </div>
           ) : (
             /* Desktop nav */
-            <nav style={{display:"flex", gap:24, alignItems:"center"}}>
-              <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:14, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
-              <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:14, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
-              <span onClick={()=>{setPage("methodology"); setResult(null);}} style={{fontSize:14, color:page==="methodology"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="methodology"?600:400}}>How it Works</span>
-              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:14, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={14}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
-              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:14, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>⚙ Settings</span>
+            <nav style={{display:"flex", gap:16, alignItems:"center"}}>
+              <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:13, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
+              <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:13, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
+              <span onClick={()=>{setPage("routine"); setResult(null);}} style={{fontSize:13, color:page==="routine"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="routine"?600:400}}>My Routine</span>
+              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={13}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
+              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:13, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>⚙ Settings</span>
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
                   <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
@@ -5212,6 +5214,9 @@ function App() {
           <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0}}>
 
             {/* LEFT */}
+            {(() => {
+            const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+            return (
             <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
               <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
                 {/* Header row */}
@@ -5239,7 +5244,6 @@ function App() {
 
                 {/* Hero score — swaps to child score when childMode active */}
                 {(() => {
-                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
                   return (<>
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
                       <ScoreArc score={displayScore}/>
@@ -5726,7 +5730,7 @@ function App() {
                 })()}
 
                 {/* Exposure Calculator — only show for products that need a swap */}
-                {(result.overall_score || result.score) > 3 && (result.break_even || result.alternatives?.length > 0) && (
+                {displayScore > 3 && (result.break_even || result.alternatives?.length > 0) && (
                   <ExposureCalculator
                     result={result}
                     isDark={isDark}
@@ -5772,9 +5776,10 @@ function App() {
               )}
 
             </div>
+            );})()}
 
             {/* RIGHT — desktop alternatives sticky panel — only show if score > 3 */}
-            {!isMobile && (result.overall_score || result.score) > 3 && (
+            {!isMobile && ((childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
                 <div style={{background:isDark?"#1e2433":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden"}}>
                   <div style={{background:"#052e16", padding:"20px 24px"}}>
