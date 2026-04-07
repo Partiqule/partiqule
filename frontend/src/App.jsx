@@ -4611,7 +4611,7 @@ function App() {
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:13, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("routine"); setResult(null);}} style={{fontSize:13, color:page==="routine"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="routine"?600:400}}>My Routine</span>
               <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={13}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
-              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:13, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>⚙ Settings</span>
+              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:13, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>Settings</span>
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
                   <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
@@ -4636,7 +4636,7 @@ function App() {
               {label:"How it Works",       pg:"methodology"},
               {label:"My Routine",         pg:"routine"},
               {label:"My Scans",           pg:"history"},
-              {label:"⚙ Settings",         pg:"settings"},
+              {label:"Settings",           pg:"settings"},
             ].map(item=>(
               <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
                 style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
@@ -4768,40 +4768,6 @@ function App() {
                 </button>
               </div>
 
-              {/* Text size */}
-              <div style={{padding:"16px 20px"}}>
-                <div style={{marginBottom:14}}>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Text size</div>
-                  <div style={{fontSize:13, color:muted}}>Adjust for readability — applies across the whole app</div>
-                </div>
-                <div style={{display:"flex", gap:10}}>
-                  {[
-                    {label:"A", scale:1,   name:"Normal"},
-                    {label:"A", scale:1.2, name:"Large"},
-                    {label:"A", scale:1.4, name:"Extra large"},
-                  ].map(opt => (
-                    <button key={opt.scale} onClick={()=>{
-                      setFontScale(opt.scale);
-                      try { localStorage.setItem("ps_font_scale", opt.scale); } catch {}
-                    }} style={{
-                      flex:1, padding:"12px 8px", borderRadius:12, cursor:"pointer",
-                      border: fontScale === opt.scale ? "2px solid #16a34a" : `1.5px solid ${border}`,
-                      background: fontScale === opt.scale ? "#f0fdf4" : isDark ? "#1e2433" : "#f9fafb",
-                      display:"flex", flexDirection:"column", alignItems:"center", gap:6,
-                      transition:"all 0.15s",
-                    }}>
-                      <span style={{
-                        fontSize: opt.scale === 1 ? 18 : opt.scale === 1.2 ? 22 : 26,
-                        fontWeight:700,
-                        color: fontScale === opt.scale ? "#16a34a" : text,
-                        fontFamily:"'Outfit',sans-serif",
-                        lineHeight:1,
-                      }}>{opt.label}</span>
-                      <span style={{fontSize:11, color: fontScale === opt.scale ? "#16a34a" : muted, fontWeight: fontScale === opt.scale ? 700 : 400}}>{opt.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Account */}
