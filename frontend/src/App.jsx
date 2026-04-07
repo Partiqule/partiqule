@@ -1814,11 +1814,14 @@ const ShareBadge = ({result}) => {
 };
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
-const ProductCard = ({product, isDark}) => {
+const ProductCard = ({product, isDark, altSource="amazon"}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
   const amazonFallback = `https://www.amazon.com/s?k=${encodeURIComponent((product.brand ? product.brand + " " : "") + product.name)}&tag=partiqule-20`;
-  const linkUrl = product.affiliateUrl || amazonFallback;
-  const hasLink = true; // always have Amazon fallback
+  const linkUrl = altSource === "brand" ? getBrandUrl(product.brand, product.name)
+    : altSource === "bigbox" ? `https://www.target.com/s?searchTerm=${encodeURIComponent(product.name)}`
+    : (product.affiliateUrl || amazonFallback);
+  const shopLabel = altSource === "brand" ? "Brand site" : altSource === "bigbox" ? "Target" : "Shop now";
+  const hasLink = true;
 
   const cardStyle = {
     textDecoration:"none", display:"block",
@@ -1856,7 +1859,7 @@ const ProductCard = ({product, isDark}) => {
             <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{product.price}</span>
             {product.source === "amazon" && <span style={{fontSize:10, color:"#f59e0b", fontWeight:600, background:"#fffbeb", padding:"2px 6px", borderRadius:10}}>Amazon</span>}
           </div>
-          {hasLink && <span style={{display:"flex", alignItems:"center", gap:4, fontSize:13, color:"#16a34a", fontWeight:600}}>Shop now <IconArrow size={13} color="#16a34a"/></span>}
+          {hasLink && <span style={{display:"flex", alignItems:"center", gap:4, fontSize:13, color:"#16a34a", fontWeight:600}}>{shopLabel} <IconArrow size={13} color="#16a34a"/></span>}
         </div>
       </div>
     </div>
@@ -5611,7 +5614,7 @@ function App() {
                       </>)}
                     </>) : (<>
                       <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
-                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark}/>)}
+                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource}/>)}
                       {aiAlts.length > 0 && (
                         <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
                           {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
