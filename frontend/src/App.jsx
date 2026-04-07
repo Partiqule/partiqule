@@ -106,7 +106,7 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const canvasRef  = useRef(null);
   const rafRef     = useRef(null);
   const doneRef    = useRef(false);
-  const NUM = 200, golden = Math.PI*(3-Math.sqrt(5));
+  const NUM = 600, golden = Math.PI*(3-Math.sqrt(5));
   const SZ = isMobile ? 320 : 370;
   const CX = SZ/2, CY = SZ/2, GR = isMobile ? 108 : 124;
 
@@ -129,8 +129,8 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     oc.textAlign='center'; oc.textBaseline='middle';
     oc.fillText(String(digit),SZ/2,SZ/2);
     const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
-    for(let y=0;y<SZ;y+=5) for(let x=0;x<SZ;x+=5)
-      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*4, y:y+(Math.random()-.5)*4});
+    for(let y=0;y<SZ;y+=3) for(let x=0;x<SZ;x+=3)
+      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*3, y:y+(Math.random()-.5)*3});
     for(let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
     return pts;
   }
@@ -157,33 +157,21 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     const ctx=canvas.getContext('2d');
     const dpr=window.devicePixelRatio||1;
     canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
-    let morphT=0, arcProg=0, lastTime=performance.now(), fired=false;
+    let morphT=0, lastTime=performance.now(), fired=false;
     const loop=(ts)=>{
       const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
       ctx.clearRect(0,0,SZ,SZ);
-      morphT=Math.min(morphT+dt*.88,1);
+      morphT=Math.min(morphT+dt*.42,1);
       const t=easeIO(morphT);
       particles.forEach(p=>{
         const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
-        ctx.beginPath(); ctx.arc(px,py,Math.max(1.5,3.2*(1-t*.5)),0,Math.PI*2);
-        ctx.fillStyle=`rgba(${r},${g},${b},${.28+.72*t})`; ctx.fill();
+        ctx.beginPath(); ctx.arc(px,py,Math.max(1.2,2.4*(1-t*.35)),0,Math.PI*2);
+        ctx.fillStyle=`rgba(${r},${g},${b},${.25+.75*t})`; ctx.fill();
       });
-      if(morphT>.5){
-        arcProg=Math.min(arcProg+dt*2.0,1);
-        const ap=easeOut(arcProg), startA=-Math.PI/2;
-        const arcR=isMobile?148:172;
-        ctx.beginPath(); ctx.arc(CX,CY,arcR,startA,startA+Math.PI*2);
-        ctx.strokeStyle=`rgba(${r},${g},${b},.1)`; ctx.lineWidth=7; ctx.stroke();
-        ctx.beginPath(); ctx.arc(CX,CY,arcR,startA,startA+Math.PI*2*(score/10)*ap);
-        ctx.strokeStyle=color; ctx.lineWidth=7; ctx.lineCap='round'; ctx.stroke();
-        ctx.globalAlpha=easeOut(arcProg);
-        ctx.fillStyle=color; ctx.font=`bold 17px 'Outfit',system-ui`;
-        ctx.textAlign='center'; ctx.fillText('/10',CX,CY+(isMobile?112:130)); ctx.globalAlpha=1;
-      }
-      if(morphT<1||arcProg<1){ rafRef.current=requestAnimationFrame(loop); }
+      if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
       else if(!fired){
         fired=true; doneRef.current=true;
-        setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },650); },380);
+        setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },650); },500);
       }
     };
     rafRef.current=requestAnimationFrame(loop);
