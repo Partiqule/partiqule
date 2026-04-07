@@ -96,151 +96,7 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-// ── SCAN OVERLAY ──────────────────────────────────────────────
-const ScanOverlay = ({loading, result, isMobile, onDone}) => {
-  const [morphActive, setMorphActive] = useState(false);
-  const [fading,      setFading]      = useState(false);
-  const [gone,        setGone]        = useState(false);
-  const canvasRef    = useRef(null);
-  const rafRef       = useRef(null);
-  const doneRef      = useRef(false);
-  const scanStart    = useRef(Date.now());
-  const morphTimerRef = useRef(null);
-  const MIN_DELAY    = 7000;
-  const NUM          = 1200;
-  const golden       = Math.PI*(3-Math.sqrt(5));
-  const SZ           = isMobile ? 300 : 520;
-  const CX           = SZ/2;
-  const CY           = isMobile ? 150 : 220;
-  const GR           = isMobile ? 82 : 115;
-
-  function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
-
-  function project(sx,sy,sz,rotY){
-    const cosY=Math.cos(rotY),sinY=Math.sin(rotY),cosX=Math.cos(0.22),sinX=Math.sin(0.22);
-    const x1=sx*cosY+sz*sinY,z1=-sx*sinY+sz*cosY;
-    const y1=sy*cosX-z1*sinX,z2=sy*sinX+z1*cosX;
-    const sc=380/(380+z2*GR);
-    return {px:CX+x1*GR*sc, py:CY+y1*GR*sc};
-  }
-
-  function sampleDigit(digit){
-    const off=document.createElement('canvas'); off.width=SZ; off.height=SZ;
-    const oc=off.getContext('2d');
-    oc.fillStyle='#fff';
-    oc.font=`bold ${isMobile?155:200}px 'Outfit',system-ui,sans-serif`;
-    oc.textAlign='center'; oc.textBaseline='middle';
-    oc.fillText(String(digit),CX,CY);
-    const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
-    for(let y=0;y<SZ;y+=2) for(let x=0;x<SZ;x+=2)
-      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*2, y:y+(Math.random()-.5)*2});
-    for(let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
-    return pts;
-  }
-
-  useEffect(()=>{
-    if(!result||doneRef.current) return;
-    const score=result.overall_score||result.score;
-    const color=scoreColor(score);
-    const [r,g,b]=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16)];
-    const elapsed=Date.now()-scanStart.current;
-    const wait=Math.max(0,MIN_DELAY-elapsed);
-
-    // Safety fallback — if morph fails for any reason, fade overlay after 4s
-    const safetyTimer=setTimeout(()=>{
-      if(doneRef.current) return;
-      doneRef.current=true;
-      setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700);
-    }, wait+4000);
-
-    morphTimerRef.current=setTimeout(()=>{
-      if(doneRef.current) return;
-      const rotY=Math.random()*Math.PI*2;
-      const particles=[];
-      for(let i=0;i<NUM;i++){
-        const y=1-(i/(NUM-1))*2,rr=Math.sqrt(1-y*y),theta=golden*i;
-        const {px,py}=project(Math.cos(theta)*rr,y,Math.sin(theta)*rr,rotY+Math.random()*.3);
-        particles.push({fromX:px,fromY:py,tx:CX,ty:CY});
-      }
-      const textPts=sampleDigit(score),n=Math.min(NUM,textPts.length);
-      particles.forEach((p,i)=>{
-        p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
-        p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
-      });
-
-      const canvas=canvasRef.current; if(!canvas) return;
-      const ctx=canvas.getContext('2d');
-      const dpr=window.devicePixelRatio||1;
-      canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
-      setMorphActive(true);
-
-      // Use bright white particles — score color is invisible on dark green bg
-      const pr=255, pg=255, pb=255;
-
-      let morphT=0,lastTime=performance.now(),fired=false;
-      const loop=(ts)=>{
-        const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
-        ctx.clearRect(0,0,SZ,SZ);
-        morphT=Math.min(morphT+dt*.38,1);
-        const t=easeIO(morphT);
-        particles.forEach(p=>{
-          const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
-          ctx.beginPath(); ctx.arc(px,py,Math.max(1.4,2.2*(1-t*.2)),0,Math.PI*2);
-          ctx.fillStyle=`rgba(${pr},${pg},${pb},${.2+.8*t})`; ctx.fill();
-        });
-        if(morphT>0.7){
-          const la=Math.min(1,(morphT-0.7)/0.3);
-          ctx.globalAlpha=la;
-          ctx.fillStyle='#fff';
-          ctx.font=`bold ${isMobile?28:34}px 'Outfit',system-ui,sans-serif`;
-          ctx.textAlign='center';
-          ctx.fillText('/10',CX,CY+(isMobile?82:100));
-          ctx.globalAlpha=1;
-        }
-        if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
-        else if(!fired){
-          fired=true; doneRef.current=true;
-          clearTimeout(safetyTimer);
-          setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700); },1400);
-        }
-      };
-      rafRef.current=requestAnimationFrame(loop);
-    },wait);
-
-    return()=>{
-      if(morphTimerRef.current) clearTimeout(morphTimerRef.current);
-      clearTimeout(safetyTimer);
-    };
-  },[result]);
-
-  useEffect(()=>{
-    if(!loading&&!result&&!doneRef.current){
-      setFading(true); setTimeout(()=>{ setGone(true); onDone(); },400);
-    }
-  },[loading,result]);
-
-  useEffect(()=>()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); },[]);
-
-  if(gone) return null;
-  return(
-    <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#052e16',zIndex:9999,
-      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-      opacity:fading?0:1,transition:fading?'opacity 0.7s ease':'opacity 0.4s ease',
-      pointerEvents:fading?'none':'auto',
-    }}>
-      <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
-      <GlobeLoading isMobile={isMobile}/>
-      <canvas ref={canvasRef} style={{
-        display: morphActive?'block':'none',
-        position:'absolute', top:'50%', left:'50%',
-        transform:`translate(-50%,-${isMobile?'52':'58'}%)`,
-        width:SZ, height:SZ, pointerEvents:'none',
-      }}/>
-    </div>
-  );
-};
-
-
+// ── GLOBE LOADING ─────────────────────────────────────────────
 // 200 points evenly distributed on a sphere (Fibonacci lattice)
 const SPHERE_POINTS = (() => {
   const pts = [];
@@ -681,132 +537,7 @@ const ScoreArc = ({score}) => {
   );
 };
 
-// ── PARTICLE SCORE REVEAL ────────────────────────────────────
-// Globe spins → particles morph into the score digit → arc draws in
-const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
-  const canvasRef  = useRef(null);
-  const stateRef   = useRef(null);
-  const W = 240, H = 220, CX = 120, CY = 98, GR = 62, ROT_X = 0.22;
-  const NUM = 400;
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  const color = scoreColor(score);
-  const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
-
-  function project(sx,sy,sz,rotY) {
-    const cosY=Math.cos(rotY),sinY=Math.sin(rotY),cosX=Math.cos(ROT_X),sinX=Math.sin(ROT_X);
-    const x1=sx*cosY+sz*sinY, z1=-sx*sinY+sz*cosY;
-    const y1=sy*cosX-z1*sinX, z2=sy*sinX+z1*cosX;
-    const fov=300, sc=fov/(fov+z2*GR);
-    return {px:CX+x1*GR*sc, py:CY+y1*GR*sc, z:z2, scale:sc};
-  }
-
-  function sampleText(score) {
-    const off=document.createElement('canvas'); off.width=W*2; off.height=H*2;
-    const oc=off.getContext('2d');
-    oc.fillStyle='#fff';
-    oc.font=`bold 256px 'Outfit',system-ui,sans-serif`;
-    oc.textAlign='center'; oc.textBaseline='middle';
-    oc.fillText(String(score),W,H-20);
-    const d=oc.getImageData(0,0,W*2,H*2).data;
-    const pts=[]; const step=3;
-    for (let y=0;y<H*2;y+=step) for (let x=0;x<W*2;x+=step)
-      if (d[(y*W*2+x)*4+3]>100) pts.push({x:x/2+(Math.random()-.5)*1.5, y:y/2+(Math.random()-.5)*1.5});
-    for (let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
-    return pts;
-  }
-
-  function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
-  function easeOut(t){return 1-Math.pow(1-t,3);}
-
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas) return;
-    const ctx=canvas.getContext('2d');
-
-    // Instant mode: overlay already ran the animation — just draw completed state
-    if(instant){
-      const dpr=window.devicePixelRatio||1;
-      canvas.width=W*dpr; canvas.height=H*dpr; ctx.scale(dpr,dpr);
-      const textPts=sampleText(score);
-      const n=Math.min(NUM,textPts.length);
-      ctx.clearRect(0,0,W,H);
-      const col=scoreColor(score);
-      const [cr,cg,cb]=[parseInt(col.slice(1,3),16),parseInt(col.slice(3,5),16),parseInt(col.slice(5,7),16)];
-      for(let i=0;i<NUM;i++){
-        const tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*4;
-        const ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*4;
-        ctx.beginPath(); ctx.arc(tx,ty,1.0,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${cr},${cg},${cb},0.92)`; ctx.fill();
-      }
-      onRevealComplete&&onRevealComplete();
-      return;
-    }
-
-    const dpr=window.devicePixelRatio||1;
-    canvas.width=W*dpr; canvas.height=H*dpr; ctx.scale(dpr,dpr);
-
-    const pts=[];
-    const glow=new Array(NUM).fill(0);
-    const glowT=Array.from({length:NUM},()=>Math.floor(Math.random()*120));
-    for (let i=0;i<NUM;i++){
-      const y=1-(i/(NUM-1))*2,rr=Math.sqrt(1-y*y),theta=golden*i;
-      pts.push({sx:Math.cos(theta)*rr,sy:y,sz:Math.sin(theta)*rr,fromX:CX,fromY:CY,tx:CX,ty:CY});
-    }
-
-    const s={phase:'globe',morphT:0,arcProg:0,rotY:0,lastTime:performance.now(),fired:false};
-    stateRef.current=s;
-
-    const morphTO=setTimeout(()=>{
-      const textPts=sampleText(score);
-      const n=Math.min(NUM,textPts.length);
-      pts.forEach((p,i)=>{
-        const pr=project(p.sx,p.sy,p.sz,s.rotY);
-        p.fromX=pr.px; p.fromY=pr.py;
-        p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
-        p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
-      });
-      s.phase='morph'; s.morphT=0;
-    },680);
-
-    const loop=(ts)=>{
-      const dt=Math.min((ts-s.lastTime)/1000,.05); s.lastTime=ts;
-      ctx.clearRect(0,0,W,H);
-
-      if (s.phase==='globe'){
-        s.rotY+=dt*0.42;
-        for (let i=0;i<NUM;i++){
-          if(glowT[i]<=0){glowT[i]=40+Math.floor(Math.random()*150);if(Math.random()<.25)glow[i]=1;}
-          else glowT[i]--;
-          if(glow[i]>0)glow[i]=Math.max(0,glow[i]-.033);
-        }
-        const sorted=pts.map((p,i)=>({...project(p.sx,p.sy,p.sz,s.rotY),i})).sort((a,b)=>a.z-b.z);
-        sorted.forEach(({px,py,z,scale,i})=>{
-          const bright=.2+.8*((z+1)/2), gl=glow[i];
-          ctx.beginPath(); ctx.arc(px,py,Math.max(1,(2+gl*1.5)*scale),0,Math.PI*2);
-          ctx.fillStyle=gl>.35?`rgba(134,239,172,${Math.min(1,bright*.9+gl*.8)})`:`rgba(74,222,128,${Math.min(1,bright*.88)})`;
-          ctx.fill();
-        });
-      }
-
-      if (s.phase==='morph'||s.phase==='done'){
-        if(s.phase==='morph'){
-          s.morphT=Math.min(s.morphT+dt*1.05,1);
-          if(s.morphT>=1&&!s.fired){s.phase='done';s.fired=true;onRevealComplete&&onRevealComplete();}
-        }
-        const t=easeIO(Math.min(s.morphT,1));
-        pts.forEach(p=>{
-          const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
-          ctx.beginPath(); ctx.arc(px,py,Math.max(1.2,2.2*(1-t*.4)),0,Math.PI*2);
-          ctx.fillStyle=`rgba(${r},${g},${b},${.35+.65*t})`; ctx.fill();
-        });
-      }
-      s.rafId=requestAnimationFrame(loop);
-    };
-    s.rafId=requestAnimationFrame(loop);
-    return ()=>{cancelAnimationFrame(s.rafId); clearTimeout(morphTO);};
-  },[score, instant]);
-
-  return <canvas ref={canvasRef} width={W} height={H} style={{display:'block',margin:'0 auto'}}/>;
-};
+// ── RISK BAR ─────────────────────────────────────────────────
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
   const meaning = score <= 2
@@ -1902,7 +1633,265 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
+// ── SHARE BADGE (with copy-as-image) ─────────────────────────
 // ── PRODUCT CARD ─────────────────────────────────────────────
+
+  const buildCanvas = () => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const dpr    = window.devicePixelRatio || 1;
+      const W = 600, H = 400;
+      canvas.width  = W * dpr;
+      canvas.height = H * dpr;
+      const ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
+
+      const os = result.overall_score || result.score;
+      const dims = result.dimensions;
+
+      const overallColor = os<=3?"#16a34a":os<=6?"#ca8a04":os<=8?"#ea580c":"#dc2626";
+      const bgColor = os<=3?"#f0fdf4":os<=6?"#fefce8":os<=8?"#fff7ed":"#fff5f5";
+
+      const drawContent = (logoImg) => {
+
+    // ── Background ──
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, W, H, 20);
+    ctx.fill();
+
+    // Top bar
+    ctx.fillStyle = "#052e16";
+    ctx.fillRect(0, 0, W, 6);
+
+    // ── Logo + tagline ──
+    if (logoImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(46, 40, 16, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logoImg, 30, 24, 32, 32);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#16a34a";
+      ctx.beginPath();
+      ctx.arc(46, 40, 14, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#052e16";
+    ctx.font = "bold 16px system-ui";
+    ctx.fillText("Partiqule", 68, 45);
+    ctx.fillStyle = "#aaa";
+    ctx.font = "12px system-ui";
+    ctx.fillText("Scan anything. Know everything.", 32, 68);
+
+    // ── Product name ──
+    ctx.fillStyle = "#111";
+    ctx.font = "bold 22px system-ui";
+    const name = safeName?.length > 36 ? safeName.slice(0,33)+"…" : safeName;
+    ctx.fillText(name, 32, 96);
+
+    // ── LEFT: Big overall score ──
+    ctx.fillStyle = overallColor;
+    ctx.font = "bold 100px system-ui";
+    ctx.fillText(os, 32, 220);
+    ctx.fillStyle = "#bbb";
+    ctx.font = "bold 26px system-ui";
+    ctx.fillText("/ 10", 32 + (os >= 10 ? 128 : 80), 220);
+
+    // Overall label pill
+    const overallLabel = os<=3?"Minimal Risk":os<=6?"Moderate Risk":os<=8?"High Risk":"Very High Risk";
+    const oBgColor = os<=3?"#dcfce7":os<=6?"#fef9c3":os<=8?"#ffedd5":"#fee2e2";
+    ctx.fillStyle = oBgColor;
+    ctx.beginPath();
+    ctx.roundRect(32, 234, 210, 30, 15);
+    ctx.fill();
+    ctx.fillStyle = overallColor;
+    ctx.font = "bold 13px system-ui";
+    ctx.fillText(overallLabel, 48, 254);
+
+    // Sub-label
+    ctx.fillStyle = "#aaa";
+    ctx.font = "11px system-ui";
+    ctx.fillText("Materials · Exposure · Packaging · Sustainability", 32, 282);
+
+    // ── DIVIDER ──
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W/2 - 10, 108);
+    ctx.lineTo(W/2 - 10, 300);
+    ctx.stroke();
+
+    // ── RIGHT: 4 dimension mini bars ──
+    const RX = W/2 + 10;
+
+    // Dynamic weights per category — match server CATEGORY_FORMULAS exactly
+    const CAT_WEIGHTS = {
+      food:          {m:0.90, u:0.00, pk:0.10, s:0.00},
+      food_beverage: {m:0.90, u:0.00, pk:0.10, s:0.00},
+      beverage:      {m:0.75, u:0.00, pk:0.25, s:0.00},
+      restaurant:    {m:0.85, u:0.00, pk:0.10, s:0.05},
+      supplement:    {m:0.65, u:0.25, pk:0.10, s:0.00},
+      personal_care: {m:0.45, u:0.45, pk:0.05, s:0.05},
+      toy:           {m:0.50, u:0.40, pk:0.05, s:0.05},
+      clothing:      {m:0.35, u:0.30, pk:0.00, s:0.35},
+      accessory:     {m:0.40, u:0.25, pk:0.00, s:0.35},
+      home:          {m:0.30, u:0.45, pk:0.10, s:0.15},
+      kitchen:       {m:0.30, u:0.45, pk:0.10, s:0.15},
+      baby:          {m:0.55, u:0.40, pk:0.05, s:0.00},
+      other:         {m:0.45, u:0.30, pk:0.10, s:0.15},
+    };
+    const cat = result.category || "other";
+    const wt  = CAT_WEIGHTS[cat] || CAT_WEIGHTS.other;
+    const pct = (v) => v === 0 ? "0%" : `${Math.round(v*100)}%`;
+
+    const dimList = dims ? [
+      {label:"Materials",    score: dims.materials?.score,        weight: pct(wt.m)},
+      {label:"Exposure",     score: dims.usage_exposure?.score,   weight: pct(wt.u)},
+      {label:"Packaging",    score: dims.packaging?.score,        weight: pct(wt.pk)},
+      {label:"Sustainability",score:dims.sustainability?.score,   weight: pct(wt.s)},
+    ].filter(d => d.weight !== "0%") : []; // hide dimensions that don't contribute for this category
+
+    if (dimList.length) {
+      dimList.forEach((d, i) => {
+        const y = 118 + i * 38;
+        const sc = d.score || 0;
+        const barColor = sc<=3?"#16a34a":sc<=6?"#ca8a04":sc<=8?"#ea580c":"#dc2626";
+        // Label
+        ctx.fillStyle = "#666";
+        ctx.font = "10px system-ui";
+        ctx.fillText(d.label, RX+4, y);
+        ctx.fillStyle = "#bbb";
+        ctx.fillText(d.weight, W-48, y);
+        // Track
+        ctx.fillStyle = "#e5e7eb";
+        ctx.beginPath();
+        ctx.roundRect(RX+4, y+6, W-RX-28, 12, 6);
+        ctx.fill();
+        // Fill
+        ctx.fillStyle = barColor;
+        ctx.beginPath();
+        ctx.roundRect(RX+4, y+6, Math.max(12, ((W-RX-28) * sc/10)), 12, 6);
+        ctx.fill();
+        // Score text
+        ctx.fillStyle = barColor;
+        ctx.font = "bold 10px system-ui";
+        ctx.fillText(sc, W-22, y+16);
+      });
+    } else {
+      // Fallback if no dimensions — just show score
+      ctx.fillStyle = "#888";
+      ctx.font = "13px system-ui";
+      ctx.fillText("Product Health Score", RX+14, 145);
+      ctx.fillStyle = overallColor;
+      ctx.font = "bold 48px system-ui";
+      ctx.fillText(`${os}/10`, RX+14, 210);
+    }
+
+    // ── Summary ──
+    ctx.fillStyle = "#555";
+    ctx.font = "13px system-ui";
+    const words = (result.summary || "").split(" ");
+    let line = "", y = 316, lineH = 19;
+    for (const word of words) {
+      const test = line + (line ? " " : "") + word;
+      if (ctx.measureText(test).width > W-64 && line) {
+        ctx.fillText(line, 32, y); line = word; y += lineH;
+        if (y > 356) { ctx.fillText(line+"…", 32, y); break; }
+      } else { line = test; }
+    }
+    if (y <= 356) ctx.fillText(line, 32, y);
+
+    // ── Footer ──
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(32, 368); ctx.lineTo(W-32, 368);
+    ctx.stroke();
+    ctx.fillStyle = "#bbb";
+    ctx.font = "12px system-ui";
+    ctx.fillText("partiqule.com · Scan anything. Know everything.", 32, 388);
+
+        resolve(canvas);
+      }; // end drawContent
+
+      const logoImg = new Image();
+      logoImg.onload = () => drawContent(logoImg);
+      logoImg.onerror = () => drawContent(null);
+      logoImg.src = "/partiqule-icon.svg";
+    });
+  };
+
+  const share = async () => {
+    setSharing(true);
+    track("Share", { product: safeName, score: result.overall_score||result.score, category: result.category });
+    try {
+      const canvas = await buildCanvas();
+      canvas.toBlob(async (blob) => {
+        try {
+          // Mobile: use native share sheet if available — lets users save to photos or share to any app
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
+            const file = new File([blob], `partiqule-${safeName?.slice(0,20)||"result"}.png`, { type: "image/png" });
+            await navigator.share({
+              title: `${safeName}: Ingredient Safety ${result.overall_score||result.score}/10`,
+              text: `I scanned ${safeName} on Partiqule. Product health score: ${result.overall_score||result.score}/10 — ingredient safety + nutritional impact combined. Scan anything at partiqule.com`,
+              files: [file],
+            });
+          } else if (navigator.clipboard?.write) {
+            // Desktop: copy image to clipboard
+            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+            setDone(true);
+            setTimeout(() => setDone(false), 2500);
+          } else {
+            // Fallback: download the image
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            setDone(true);
+            setTimeout(() => setDone(false), 2500);
+          }
+        } catch(e) {
+          // If share was cancelled by user, silently fail
+          if (e.name !== "AbortError") {
+            // Last resort: download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `partiqule-${safeName?.slice(0,20)||"result"}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        }
+        setSharing(false);
+      }, "image/png");
+    } catch(e) {
+      console.error(e);
+      setSharing(false);
+    }
+  };
+
+  return (
+    <div style={{marginTop:20, padding:"14px 18px", background:"rgba(0,0,0,0.03)", borderRadius:12, border:"1px dashed #ddd"}}>
+      <div style={{fontSize:11, color:"#aaa", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.06em"}}>Share result</div>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:"#fff", borderRadius:9, padding:"10px 14px", border:"1px solid #eee"}}>
+        <div style={{display:"flex", alignItems:"center", gap:10}}>
+          <div style={{width:34, height:34, borderRadius:8, background:scoreBg(result.overall_score||result.score), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:800, fontSize:16, color}}>{result.overall_score||result.score}</div>
+          <div>
+            <div style={{fontSize:12, fontWeight:600, color:"#111"}}>{displayName}</div>
+            <div style={{fontSize:11, color}}>{label} Danger</div>
+          </div>
+        </div>
+        <button onClick={share} disabled={sharing} style={{display:"flex", alignItems:"center", gap:6, padding:"8px 16px", borderRadius:8, border:"none", background:"#052e16", fontSize:13, fontWeight:600, color:"#4ade80", cursor:"pointer"}}>
+          {sharing ? "…" : done ? "✓ Copied!" : <><IconShare size={13} color="#4ade80"/> Share</>}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
 const ProductCard = ({product, isDark, altSource="amazon"}) => {
@@ -4094,16 +4083,6 @@ function App() {
   const [showAuth,    setShowAuth]   = useState(false);
   const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
-  const [revealDone,    setRevealDone]  = useState(false);
-  const [overlayDone,   setOverlayDone] = useState(false);
-  const [scanKey,       setScanKey]     = useState(0);
-
-  // Safety: if overlay never completes, reveal the card after 5s
-  useEffect(()=>{
-    if(!result||revealDone) return;
-    const t=setTimeout(()=>setRevealDone(true),5000);
-    return()=>clearTimeout(t);
-  },[result,revealDone]);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -4348,7 +4327,7 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setResult(null); setRevealDone(false); setOverlayDone(false); setScanKey(k=>k+1);
+    setLoading(true); setError(null); setResult(null);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
@@ -4457,7 +4436,7 @@ function App() {
     }
     setShowScanModal(false);
     setResult(null); setError(null); setPage("home");
-    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null); setOverlayDone(false); setScanKey(k=>k+1);
+    setLoading(true); setQuery("Reading label…");
     try {
       const base64 = await new Promise((res, rej) => {
         const img = new Image();
@@ -4982,14 +4961,20 @@ function App() {
             </div>
           </section>
 
-          {/* Scan overlay — globe → particle morph → fade to reveal result */}
-          <ScanOverlay
-            key={scanKey}
-            loading={loading}
-            result={result}
-            isMobile={isMobile}
-            onDone={()=>{ setOverlayDone(true); setRevealDone(true); }}
-          />
+          {/* Fixed fullscreen globe overlay — covers entire viewport, centered */}
+          {loading && (
+            <div style={{
+              position:"fixed", top:0, left:0, right:0, bottom:0,
+              background:"#052e16",
+              zIndex:9999,
+              display:"flex", flexDirection:"column",
+              alignItems:"center", justifyContent:"center",
+              animation:"globeOverlayIn 0.4s ease forwards",
+            }}>
+              <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
+              <GlobeLoading isMobile={isMobile}/>
+            </div>
+          )}
 
           <div style={{paddingTop:isMobile?32:56}}>
 
@@ -5182,7 +5167,7 @@ function App() {
                 {(() => {
                   return (<>
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                      <ParticleScoreReveal score={displayScore} onRevealComplete={()=>setRevealDone(true)} instant={overlayDone}/>
+                      <ScoreArc score={displayScore}/>
                     </div>
 
                     {/* Dual scoring explanation — one line, always visible */}
@@ -5537,7 +5522,7 @@ function App() {
                 )}
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
-                <div style={{...(isMobile ? {margin:"0 -14px"} : {}), opacity:revealDone?1:0, transform:revealDone?"translateY(0)":"translateY(12px)", transition:"opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s"}}>
+                <div style={isMobile ? {margin:"0 -14px"} : {}}>
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   // When child mode is on, bump health-relevant dimensions by the same delta as overall score
@@ -5676,7 +5661,7 @@ function App() {
                 </div>{/* end dropdowns negative-margin wrapper */}
 
                 {/* Peer comparison */}
-                <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left",opacity:revealDone?1:0,transform:revealDone?"translateY(0)":"translateY(12px)",transition:"opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s"}}>{result.summary}</p>
+                <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
                 {/* Fix 2: Nutrition disclaimer — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
