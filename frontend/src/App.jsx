@@ -109,9 +109,9 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const MIN_DELAY    = 7000;
   const NUM          = 1200;
   const golden       = Math.PI*(3-Math.sqrt(5));
-  const SZ           = isMobile ? 360 : 600;
+  const SZ           = isMobile ? 400 : 640;
   const CX           = SZ/2;
-  const CY           = isMobile ? 180 : 250;
+  const CY           = isMobile ? 200 : 270;
   const GR           = isMobile ? 82 : 115;
 
   function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
@@ -128,7 +128,7 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     const off=document.createElement('canvas'); off.width=SZ; off.height=SZ;
     const oc=off.getContext('2d');
     oc.fillStyle='#fff';
-    oc.font=`bold ${isMobile?195:225}px 'Outfit',system-ui,sans-serif`;
+    oc.font=`bold ${isMobile?260:320}px 'Outfit',system-ui,sans-serif`;
     oc.textAlign='center'; oc.textBaseline='middle';
     oc.fillText(String(digit),CX,CY);
     const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
@@ -175,13 +175,23 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
         const t=easeIO(morphT);
         particles.forEach(p=>{
           const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
-          ctx.beginPath(); ctx.arc(px,py,Math.max(1,1.8*(1-t*.25)),0,Math.PI*2);
+          ctx.beginPath(); ctx.arc(px,py,Math.max(1.4,2.2*(1-t*.2)),0,Math.PI*2);
           ctx.fillStyle=`rgba(${r},${g},${b},${.2+.8*t})`; ctx.fill();
         });
+        // /10 label fades in as morph completes
+        if(morphT>0.7){
+          const la=Math.min(1,(morphT-0.7)/0.3);
+          ctx.globalAlpha=la;
+          ctx.fillStyle=color;
+          ctx.font=`bold ${isMobile?28:34}px 'Outfit',system-ui,sans-serif`;
+          ctx.textAlign='center';
+          ctx.fillText('/10',CX,CY+(isMobile?105:130));
+          ctx.globalAlpha=1;
+        }
         if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
         else if(!fired){
           fired=true; doneRef.current=true;
-          setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700); },600);
+          setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700); },1400);
         }
       };
       rafRef.current=requestAnimationFrame(loop);
