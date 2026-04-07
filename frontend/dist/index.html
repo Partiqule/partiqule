@@ -2,13 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"/>
 
     <!-- Primary SEO -->
     <title>Partiqule — Know What's In Your Products</title>
-    <meta name="description" content="Scan any product to instantly get its microplastics risk score. Discover which everyday items contain BPA, PFAS, nylon and other harmful plastics — and find safer alternatives." />
-    <meta name="keywords" content="microplastics, plastic-free, BPA free, PFAS, microplastic risk, product safety, plastic alternatives, healthy living, toxic chemicals" />
+    <meta name="description" content="Scan any product to understand its risks for you, your home and your planet. Free, instant health scoring across materials, exposure, packaging, sustainability and manufacturing." />
+    <script>document.title = "Partiqule — Know What's In Your Products";</script>
+    <meta name="keywords" content="product health score, microplastics, PFAS, BPA, product safety, toxic chemicals, sustainable products, healthy home, plastic-free alternatives" />
     <meta name="author" content="Partiqule" />
     <link rel="canonical" href="https://partiqule.com" />
 
@@ -16,7 +17,7 @@
     <meta property="og:type"        content="website" />
     <meta property="og:url"         content="https://partiqule.com" />
     <meta property="og:title"       content="Partiqule — Know What's In Your Products" />
-    <meta property="og:description" content="Scan any product for microplastics risk. See exactly what plastics are in your food, clothing, and personal care items — and shop safer alternatives." />
+    <meta property="og:description" content="Scan any product to understand its risks for you, your home and your planet. AI-powered health scoring across materials, exposure, packaging and sustainability. Free, no account needed." />
     <meta property="og:image"       content="https://partiqule.com/og-image.png" />
     <meta property="og:site_name"   content="Partiqule" />
 
@@ -24,7 +25,7 @@
     <meta name="twitter:card"        content="summary_large_image" />
     <meta name="twitter:site"        content="@partiqule" />
     <meta name="twitter:title"       content="Partiqule — Know What's In Your Products" />
-    <meta name="twitter:description" content="Scan any product for microplastics risk. See exactly what plastics are lurking in your everyday items." />
+    <meta name="twitter:description" content="Scan any product to understand its risks for you, your home and your planet. Free, instant, science-backed." />
     <meta name="twitter:image"       content="https://partiqule.com/og-image.png" />
 
     <!-- Structured Data (Google Rich Results) -->
@@ -34,7 +35,7 @@
       "@type": "WebApplication",
       "name": "Partiqule",
       "url": "https://partiqule.com",
-      "description": "AI-powered microplastics risk scanner for consumer products",
+      "description": "AI-powered product health scanner. Understand the impact of any product on your health, your home and the planet.",
       "applicationCategory": "HealthApplication",
       "operatingSystem": "Any",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -46,9 +47,19 @@
     <!-- Replace YOUR_DOMAIN with your actual domain e.g. partiqule.com -->
     <script defer data-domain="partiqule.com" src="https://plausible.io/js/script.tagged-events.js"></script>
 
-    <!-- Favicon (replace with real icon later) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><rect width='44' height='44' rx='11' fill='%23052e16'/><ellipse cx='22' cy='21' rx='11' ry='10' fill='%234ade80'/><ellipse cx='22' cy='14' rx='8' ry='7' fill='%2386efac'/></svg>" />
-    <script type="module" crossorigin src="/assets/index-D6oHVnSJ.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#052e16" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Partiqule" />
+    <script type="module" crossorigin src="/assets/index-Ba05qxug.js"></script>
   </head>
   <body>
     <div id="root"></div>

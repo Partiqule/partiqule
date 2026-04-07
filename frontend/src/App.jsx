@@ -1005,7 +1005,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
   const [notPurchased, setNotPurchased] = useState(new Set()); // product names marked as "just researching"
 
   const now = Date.now();
-  const TIME_CUTOFFS = { "30d": 30*24*60*60*1000, "90d": 90*24*60*60*1000, "all": Infinity };
+  const TIME_CUTOFFS = { "7d": 7*24*60*60*1000, "30d": 30*24*60*60*1000, "90d": 90*24*60*60*1000, "1y": 365*24*60*60*1000, "all": Infinity };
 
   const filteredHistory = history.filter(h => {
     if (h.product_name === result.product_name) return false;
@@ -1140,7 +1140,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
             {/* Time filter */}
             <div style={{display:"flex", gap:6, marginBottom:12, alignItems:"center"}}>
               <span style={{fontSize:11, color:muted, fontWeight:600, whiteSpace:"nowrap"}}>Show:</span>
-              {[["all","All time"],["90d","90 days"],["30d","30 days"]].map(([val, label]) => (
+              {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val, label]) => (
                 <button key={val} onClick={()=>setTimeFilter(val)} style={{
                   fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, cursor:"pointer",
                   border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
@@ -2449,7 +2449,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
   const [notPurchased, setNotPurchased] = useState(new Set());
 
   const now = Date.now();
-  const TIME_CUTOFFS = {"30d":30*24*60*60*1000, "90d":90*24*60*60*1000, "all":Infinity};
+  const TIME_CUTOFFS = {"7d":7*24*60*60*1000, "30d":30*24*60*60*1000, "90d":90*24*60*60*1000, "1y":365*24*60*60*1000, "all":Infinity};
 
   const filtered = history.filter(h => {
     if (timeFilter !== "all" && h.scannedAt) {
@@ -2506,7 +2506,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
         {/* Time filter + stats row */}
         <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:16, flexWrap:"wrap"}}>
-          {[["all","All time"],["90d","90 days"],["30d","30 days"]].map(([val,label])=>(
+          {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val,label])=>(
             <button key={val} onClick={()=>setTimeFilter(val)} style={{
               fontSize:12, fontWeight:600, padding:"5px 12px", borderRadius:20, cursor:"pointer",
               border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
