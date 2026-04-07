@@ -146,6 +146,13 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     const elapsed=Date.now()-scanStart.current;
     const wait=Math.max(0,MIN_DELAY-elapsed);
 
+    // Safety fallback — if morph fails for any reason, fade overlay after 4s
+    const safetyTimer=setTimeout(()=>{
+      if(doneRef.current) return;
+      doneRef.current=true;
+      setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700);
+    }, wait+4000);
+
     morphTimerRef.current=setTimeout(()=>{
       if(doneRef.current) return;
       const rotY=Math.random()*Math.PI*2;
@@ -167,6 +174,9 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
       canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
       setMorphActive(true);
 
+      // Use bright white particles — score color is invisible on dark green bg
+      const pr=255, pg=255, pb=255;
+
       let morphT=0,lastTime=performance.now(),fired=false;
       const loop=(ts)=>{
         const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
@@ -176,13 +186,12 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
         particles.forEach(p=>{
           const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
           ctx.beginPath(); ctx.arc(px,py,Math.max(1.4,2.2*(1-t*.2)),0,Math.PI*2);
-          ctx.fillStyle=`rgba(${r},${g},${b},${.2+.8*t})`; ctx.fill();
+          ctx.fillStyle=`rgba(${pr},${pg},${pb},${.2+.8*t})`; ctx.fill();
         });
-        // /10 label fades in as morph completes
         if(morphT>0.7){
           const la=Math.min(1,(morphT-0.7)/0.3);
           ctx.globalAlpha=la;
-          ctx.fillStyle=color;
+          ctx.fillStyle='#fff';
           ctx.font=`bold ${isMobile?28:34}px 'Outfit',system-ui,sans-serif`;
           ctx.textAlign='center';
           ctx.fillText('/10',CX,CY+(isMobile?105:130));
@@ -191,13 +200,17 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
         if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
         else if(!fired){
           fired=true; doneRef.current=true;
+          clearTimeout(safetyTimer);
           setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700); },1400);
         }
       };
       rafRef.current=requestAnimationFrame(loop);
     },wait);
 
-    return()=>{ if(morphTimerRef.current) clearTimeout(morphTimerRef.current); };
+    return()=>{
+      if(morphTimerRef.current) clearTimeout(morphTimerRef.current);
+      clearTimeout(safetyTimer);
+    };
   },[result]);
 
   useEffect(()=>{
@@ -674,7 +687,7 @@ const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
   const canvasRef  = useRef(null);
   const stateRef   = useRef(null);
   const W = 240, H = 220, CX = 120, CY = 98, GR = 62, ROT_X = 0.22;
-  const NUM = 170;
+  const NUM = 400;
   const golden = Math.PI * (3 - Math.sqrt(5));
   const color = scoreColor(score);
   const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
@@ -688,16 +701,16 @@ const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
   }
 
   function sampleText(score) {
-    const off=document.createElement('canvas'); off.width=W; off.height=H;
+    const off=document.createElement('canvas'); off.width=W*2; off.height=H*2;
     const oc=off.getContext('2d');
     oc.fillStyle='#fff';
-    oc.font=`bold 128px 'Outfit',system-ui,sans-serif`;
+    oc.font=`bold 256px 'Outfit',system-ui,sans-serif`;
     oc.textAlign='center'; oc.textBaseline='middle';
-    oc.fillText(String(score),W/2,H/2-10);
-    const d=oc.getImageData(0,0,W,H).data;
-    const pts=[]; const step=4;
-    for (let y=0;y<H;y+=step) for (let x=0;x<W;x+=step)
-      if (d[(y*W+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*step, y:y+(Math.random()-.5)*step});
+    oc.fillText(String(score),W,H-20);
+    const d=oc.getImageData(0,0,W*2,H*2).data;
+    const pts=[]; const step=3;
+    for (let y=0;y<H*2;y+=step) for (let x=0;x<W*2;x+=step)
+      if (d[(y*W*2+x)*4+3]>100) pts.push({x:x/2+(Math.random()-.5)*1.5, y:y/2+(Math.random()-.5)*1.5});
     for (let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
     return pts;
   }
@@ -711,20 +724,25 @@ const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
 
     // Instant mode: overlay already ran the animation — just draw completed state
     if(instant){
+      const dpr=window.devicePixelRatio||1;
+      canvas.width=W*dpr; canvas.height=H*dpr; ctx.scale(dpr,dpr);
       const textPts=sampleText(score);
       const n=Math.min(NUM,textPts.length);
       ctx.clearRect(0,0,W,H);
       const col=scoreColor(score);
-      const [r,g,b]=[parseInt(col.slice(1,3),16),parseInt(col.slice(3,5),16),parseInt(col.slice(5,7),16)];
+      const [cr,cg,cb]=[parseInt(col.slice(1,3),16),parseInt(col.slice(3,5),16),parseInt(col.slice(5,7),16)];
       for(let i=0;i<NUM;i++){
         const tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*4;
         const ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*4;
-        ctx.beginPath(); ctx.arc(tx,ty,1.4,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${r},${g},${b},0.9)`; ctx.fill();
+        ctx.beginPath(); ctx.arc(tx,ty,1.0,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${cr},${cg},${cb},0.92)`; ctx.fill();
       }
       onRevealComplete&&onRevealComplete();
       return;
     }
+
+    const dpr=window.devicePixelRatio||1;
+    canvas.width=W*dpr; canvas.height=H*dpr; ctx.scale(dpr,dpr);
 
     const pts=[];
     const glow=new Array(NUM).fill(0);
@@ -4079,6 +4097,13 @@ function App() {
   const [revealDone,    setRevealDone]  = useState(false);
   const [overlayDone,   setOverlayDone] = useState(false);
   const [scanKey,       setScanKey]     = useState(0);
+
+  // Safety: if overlay never completes, reveal the card after 5s
+  useEffect(()=>{
+    if(!result||revealDone) return;
+    const t=setTimeout(()=>setRevealDone(true),5000);
+    return()=>clearTimeout(t);
+  },[result,revealDone]);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
