@@ -671,6 +671,83 @@ function detectChildProduct(productName, category) {
   return false;
 }
 
+// ── PREGNANCY SCORING ─────────────────────────────────────────
+// Substances with specific pregnancy safety concerns —
+// teratogenicity, fetal toxicity, placental transfer, and developmental endpoints.
+const PREGNANCY_CONCERN_SUBSTANCES = [
+  // Teratogenic vitamin A derivatives — FDA Category X/D
+  { match: /\bretinol\b|retinyl palmitate|retinyl acetate|retinaldehyde|tretinoin|isotretinoin|retin-?a\b|retinoid/i, bump: 3, reason: "Retinoids are teratogenic — FDA Category X/D. High-dose vitamin A causes birth defects. Dermatologists universally advise avoiding during pregnancy (Teratology Society 1987)" },
+  // Alcohol
+  { match: /\bethanol\b|\balcohol\b(?!.*free)|ethyl alcohol/i, bump: 3, reason: "Alcohol crosses the placenta — fetal alcohol spectrum disorders are entirely preventable. No safe level of alcohol in pregnancy has been established (CDC, AAP)" },
+  // High-mercury fish
+  { match: /\bshark\b|swordfish|king mackerel|tilefish|bigeye tuna/i, bump: 2, reason: "High-mercury fish — methylmercury crosses the placenta and accumulates in fetal brain tissue, impairing neurodevelopment (FDA/EPA 2024 fish advice)" },
+  // Moderate mercury
+  { match: /albacore tuna|yellowfin tuna|white tuna/i, bump: 1, reason: "Moderate mercury — FDA recommends limiting albacore tuna to 1 serving per week during pregnancy" },
+  // Hydroquinone
+  { match: /hydroquinone/i, bump: 2, reason: "Hydroquinone has 35-45% systemic absorption through skin — safety in pregnancy not established. Many countries restrict use during pregnancy" },
+  // Toluene
+  { match: /\btoluene\b/i, bump: 2, reason: "Toluene causes fetal solvent syndrome at high exposures — nail salon workers show elevated miscarriage risk. Avoid during pregnancy (OTIS 2012)" },
+  // Formaldehyde and releasers
+  { match: /formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea/i, bump: 2, reason: "Formaldehyde is a known carcinogen and developmental toxicant — linked to adverse pregnancy outcomes at occupational exposures" },
+  // BPA/BPS/BPF
+  { match: /bisphenol|BPA|BPS|BPF/i, bump: 2, reason: "Bisphenol A disrupts estrogen signaling — most critical during fetal development. Associated with altered birth weight and early puberty (Braun 2017)" },
+  // Phthalates
+  { match: /phthalate|DEHP|DBP|DEP|DnBP/i, bump: 2, reason: "Phthalates are anti-androgenic — prenatal exposure linked to altered genital development in male infants (Swan 2005, Environmental Health Perspectives)" },
+  // PFAS
+  { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i, bump: 2, reason: "PFAS crosses the placenta — associated with reduced birth weight, immune disruption, and altered thyroid function in newborns (Grandjean 2020)" },
+  // Chemical UV filters
+  { match: /oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate/i, bump: 1, reason: "Chemical UV filters detected in cord blood and breast milk — oxybenzone shows hormonal activity in vitro. FDA requested more safety data in 2019" },
+  // Parabens
+  { match: /parabens?|methylparaben|propylparaben|butylparaben|ethylparaben/i, bump: 1, reason: "Parabens mimic estrogen and have been detected in cord blood — endocrine disruption concern during fetal development" },
+  // Nitrites/nitrates
+  { match: /sodium nitrite|sodium nitrate|cured meat|processed meat.*nitrite/i, bump: 1, reason: "Nitrites form nitrosamines — WHO recommends limiting processed meat with nitrites during pregnancy" },
+  // Caffeine
+  { match: /caffeine|guarana|kola nut/i, bump: 1, reason: "Caffeine crosses the placenta — ACOG recommends under 200mg/day. High intake associated with restricted fetal growth (Chen 2012)" },
+  // Contraindicated herbs
+  { match: /dong quai|black cohosh|blue cohosh|pennyroyal|tansy|wormwood|mugwort|sassafras/i, bump: 3, reason: "Contraindicated herbs during pregnancy — can stimulate uterine contractions or cause miscarriage (Natural Medicines Comprehensive Database)" },
+  // Synthetic fragrance
+  { match: /synthetic fragrance|artificial fragrance|fragrance.*parfum|\bparfum\b/i, bump: 1, reason: "Synthetic fragrance contains undisclosed phthalates and VOCs — placental transfer of fragrance chemicals documented (Rudel 2010)" },
+  // Salicylic acid
+  { match: /salicylic acid/i, bump: 1, reason: "High-dose or large-area topical salicylic acid linked to complications — most dermatologists recommend avoiding in first trimester" },
+  // Listeria-risk foods
+  { match: /unpasteurized|raw milk|soft cheese|brie\b|camembert|raw sprouts|raw.*fish|sashimi|smoked salmon|\blox\b|deli meat/i, bump: 2, reason: "Listeria risk — listeriosis during pregnancy can cause miscarriage, stillbirth, or severe newborn illness. FDA advises avoiding these foods" },
+  // Artificial sweeteners
+  { match: /\bsaccharin\b|aspartame|acesulfame/i, bump: 1, reason: "Artificial sweeteners cross the placenta — emerging evidence of altered gut microbiome in offspring. ACOG advises moderation (Azad 2016)" },
+  // Spray self-tanners
+  { match: /dihydroxyacetone|DHA.*self.?tan|self.?tan.*DHA/i, bump: 1, reason: "DHA in spray self-tanners may be inhaled — inhalation safety during pregnancy not established. Topical application is considered lower risk" },
+];
+
+function computePregnancyScore(baseScore, concernsText, category, productName) {
+  let bump = 0;
+  const bumps = [];
+
+  // Baseline +1 — pregnancy threshold is more protective across all products
+  bump += 1;
+  bumps.push("Pregnancy mode applies more conservative scoring — the developing fetus is sensitive to chemical exposure at every stage");
+
+  for (const concern of PREGNANCY_CONCERN_SUBSTANCES) {
+    if (concern.match.test(concernsText)) {
+      bump += concern.bump;
+      bumps.push(concern.reason);
+    }
+  }
+
+  // Supplement category — unregulated, safety during pregnancy often unstudied
+  if (category === "supplement") {
+    bump += 1;
+    bumps.push("Supplements are unregulated — safety during pregnancy is often unstudied. Always consult your OB or midwife before taking any supplement");
+  }
+
+  // Personal care — transdermal absorption matters more during pregnancy
+  if (category === "personal_care") {
+    bump += 1;
+    bumps.push("Topical personal care products absorb transdermally — blood levels of ingredients can reach the fetus. Pregnancy warrants more conservative ingredient choices");
+  }
+
+  const pregnancyScore = Math.min(10, baseScore + bump);
+  return { pregnancyScore, pregnancyBumps: bumps };
+}
+
 
 // Average scores by category — used for peer comparison stat
 const CATEGORY_AVERAGES = {
@@ -3852,10 +3929,13 @@ app.post("/analyze", async (req, res) => {
           ...(p1.raw_concerns || []),
         ]).toLowerCase();
         const { childScore, childBumps } = computeChildScore(finalScore, concernsText, finalCategory, p1.product_name || productName, isChild);
+        const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, concernsText, finalCategory, p1.product_name || productName);
         return {
-          is_child_product: isChild,
-          child_score:      childScore,
-          child_bumps:      childBumps,
+          is_child_product:  isChild,
+          child_score:       childScore,
+          child_bumps:       childBumps,
+          pregnancy_score:   pregnancyScore,
+          pregnancy_bumps:   pregnancyBumps,
         };
       })(),
       // ── 5 dimensions ──

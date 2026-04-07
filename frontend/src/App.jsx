@@ -4154,7 +4154,8 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
-  const [childMode,   setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
+  const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
+  const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -4271,19 +4272,21 @@ function App() {
         score:        item.score || 0,
         // Store lightweight version — skip large AI arrays to keep row size manageable
         result_json:  {
-          product_name:    item.product_name,
-          category:        item.category,
-          score:           item.score,
-          overall_score:   item.overall_score,
-          child_score:     item.child_score     ?? null,
-          is_child_product:item.is_child_product ?? null,
-          child_bumps:     item.child_bumps      ?? null,
-          summary:         item.summary,
-          confidence:      item.confidence,
-          concerns:        item.concerns,
-          dimensions:      item.dimensions,
-          food_analysis:   item.food_analysis,
-          cached:          item.cached,
+          product_name:     item.product_name,
+          category:         item.category,
+          score:            item.score,
+          overall_score:    item.overall_score,
+          child_score:      item.child_score      ?? null,
+          is_child_product: item.is_child_product ?? null,
+          child_bumps:      item.child_bumps       ?? null,
+          pregnancy_score:  item.pregnancy_score   ?? null,
+          pregnancy_bumps:  item.pregnancy_bumps   ?? null,
+          summary:          item.summary,
+          confidence:       item.confidence,
+          concerns:         item.concerns,
+          dimensions:       item.dimensions,
+          food_analysis:    item.food_analysis,
+          cached:           item.cached,
         },
         scanned_at:   new Date().toISOString(),
       }, { onConflict: "user_id,product_name" });
@@ -4826,6 +4829,28 @@ function App() {
                   }}/>
                 </button>
               </div>
+              <div style={{height:1, background:border, margin:"0 20px"}}/>
+              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Pregnancy safety mode</div>
+                  <div style={{fontSize:13, color:muted}}>Show pregnancy-adjusted scores — flags retinoids, mercury, alcohol, and other pregnancy concerns</div>
+                </div>
+                <button onClick={()=>{
+                  const next = !pregnancyMode;
+                  setPregnancyMode(next);
+                  try { localStorage.setItem("ps_pregnancy_mode", next); } catch {}
+                }} style={{
+                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
+                  background: pregnancyMode ? "#9333ea" : "#d1d5db",
+                  position:"relative", transition:"background 0.2s", flexShrink:0,
+                }}>
+                  <div style={{
+                    position:"absolute", top:3, left: pregnancyMode ? 24 : 3,
+                    width:24, height:24, borderRadius:"50%", background:"white",
+                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
+                  }}/>
+                </button>
+              </div>
             </div>
 
             {/* About */}
@@ -5184,7 +5209,7 @@ function App() {
 
             {/* LEFT */}
             {(() => {
-            const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+            const displayScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
             return (
             <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
               <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
@@ -5231,7 +5256,40 @@ function App() {
 
                     <RiskBar score={displayScore}/>
 
-                    {/* Child mode toggle */}
+                    {/* Pregnancy mode indicator — shown when pregnancy mode active in settings */}
+                    {pregnancyMode && result.pregnancy_score && (
+                      <div style={{marginTop:14, marginBottom:4}}>
+                        <div style={{
+                          display:"flex", alignItems:"center", gap:8, margin:"0 auto", width:"fit-content",
+                          padding:"7px 16px", borderRadius:20,
+                          background:"#4a1942", border:"none",
+                        }}>
+                          <span style={{fontSize:16}}>🤰</span>
+                          <span style={{fontSize:12, fontWeight:700, color:"#f9a8d4", letterSpacing:"0.03em"}}>
+                            Viewing pregnancy safety score
+                          </span>
+                        </div>
+                        {result.pregnancy_score !== (result.overall_score || result.score) && (
+                          <div style={{
+                            marginTop:12, background:isDark?"#2a1a2a":"#fdf4ff",
+                            border:"1.5px solid #a855f744", borderRadius:12,
+                            padding:"12px 16px", textAlign:"left",
+                          }}>
+                            <div style={{fontSize:12, fontWeight:700, color:"#7e22ce", marginBottom:6}}>
+                              Pregnancy safety score: {result.pregnancy_score}/10 vs {result.overall_score || result.score}/10 standard
+                            </div>
+                            {(result.pregnancy_bumps || []).slice(0,2).map((b,i) => (
+                              <div key={i} style={{fontSize:11, color:isDark?"#d8b4fe":"#6b21a8", lineHeight:1.5, marginBottom:i < (result.pregnancy_bumps||[]).length-1 ? 4 : 0}}>
+                                · {b}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Child mode toggle — only shown when pregnancy mode is off */}
+                    {!pregnancyMode && (
                     <div style={{marginTop:14, marginBottom:4}}>
                       <button
                         onClick={() => { const next = !childMode; setChildMode(next); track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
@@ -5298,6 +5356,7 @@ function App() {
                         </div>
                       )}
                     </div>
+                    )}
                   </>);
                 })()}
 
@@ -5385,12 +5444,12 @@ function App() {
 
                 {/* Hero label */}
                 {(() => {
-                  const displayScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+                  const displayScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
                   const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
                   return (
                     <div style={{marginBottom:16}}>
                       <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
-                        {scoreLabel(displayScore)} — {childMode && result.child_score ? "for children" : catLabel}
+                        {scoreLabel(displayScore)} — {pregnancyMode && result.pregnancy_score ? "pregnancy safety" : childMode && result.child_score ? "for children" : catLabel}
                       </div>
                       <div style={{fontSize:11,color:muted,marginTop:2}}>
                         {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
@@ -5414,7 +5473,7 @@ function App() {
                 {/* Alt teaser — below hero label */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-                  const currentScore = (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+                  const currentScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
                   if (!topAlt || currentScore <= 3) return null;
                   const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
                   if (altS >= currentScore) return null;
@@ -5540,7 +5599,9 @@ function App() {
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   // When child mode is on, bump health-relevant dimensions by the same delta as overall score
-                  const childDimBump = (childMode && result.child_score && result.overall_score)
+                  const childDimBump = pregnancyMode && result.pregnancy_score && result.overall_score
+                    ? Math.max(0, result.pregnancy_score - (result.overall_score || result.score))
+                    : (childMode && result.child_score && result.overall_score)
                     ? Math.max(0, result.child_score - (result.overall_score || result.score))
                     : 0;
                   return (<>
