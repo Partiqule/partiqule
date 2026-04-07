@@ -5551,7 +5551,7 @@ function App() {
                       </div>
                       );
                     })}
-                    {(filterAltsBySource(result.ai_alternatives, altSource) || []).filter(a => a.estimated_score && a.estimated_score < displayScore).map((alt, i) => {
+                    {(filterAltsBySource(result.ai_alternatives, altSource) || []).filter(a => a.estimated_score && a.estimated_score < (result.overall_score||result.score)).map((alt, i) => {
                       const shopUrl = altSource === "brand" ? getBrandUrl(alt.name, alt.name)
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
