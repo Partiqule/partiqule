@@ -74,6 +74,31 @@ function getBrandUrl(brandName, productName) {
   return `https://www.google.com/search?q=${encodeURIComponent((brandName || productName) + " official site")}`;
 }
 
+// Returns true if we have a known direct brand URL for this product
+function hasBrandUrl(brandName, productName) {
+  const key = (brandName || "").toLowerCase().trim();
+  if (key && BRAND_URLS[key]) return true;
+  for (const k of Object.keys(BRAND_URLS)) {
+    if (key && (key.includes(k) || k.includes(key))) return true;
+  }
+  const pkey = (productName || "").toLowerCase().trim();
+  if (pkey && BRAND_URLS[pkey]) return true;
+  for (const k of Object.keys(BRAND_URLS)) {
+    if (pkey && (pkey.includes(k) || k.includes(pkey))) return true;
+  }
+  return false;
+}
+
+// Filter alternatives list based on selected shopping source
+// Amazon: everything | Brand: DTC brands only | Target: non-DTC / mass-market
+function filterAltsBySource(alts, source) {
+  if (!alts?.length) return [];
+  if (source === "amazon") return alts;
+  if (source === "brand")  return alts.filter(a => hasBrandUrl(a.brand, a.name));
+  if (source === "bigbox") return alts.filter(a => !hasBrandUrl(a.brand, a.name));
+  return alts;
+}
+
 // Detect if running inside Capacitor iOS app
 const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
 const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -5504,7 +5529,7 @@ function App() {
                     </div>
                   </div>
                   <div style={{padding:"16px", display:"flex", flexDirection:"column", gap:10, maxHeight:600, overflowY:"auto"}}>
-                    {(result.alternatives || []).map((alt, i) => {
+                    {(filterAltsBySource(result.alternatives, altSource) || []).map((alt, i) => {
                       const shopUrl = altSource === "brand" ? getBrandUrl(alt.brand, alt.name)
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : alt.affiliateUrl;
@@ -5526,7 +5551,7 @@ function App() {
                       </div>
                       );
                     })}
-                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < displayScore).map((alt, i) => {
+                    {(filterAltsBySource(result.ai_alternatives, altSource) || []).filter(a => a.estimated_score && a.estimated_score < displayScore).map((alt, i) => {
                       const shopUrl = altSource === "brand" ? getBrandUrl(alt.name, alt.name)
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
@@ -5545,10 +5570,14 @@ function App() {
                       </div>
                       );
                     })}
-                    {(!result.alternatives?.length && !result.ai_alternatives?.length) && (
+                    {(!filterAltsBySource(result.alternatives, altSource)?.length && !filterAltsBySource(result.ai_alternatives, altSource)?.filter(a=>a.estimated_score < displayScore).length) && (
                       <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
-                        <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>No swap needed</div>
-                        <div style={{fontSize:12}}>This product scores well — we don't have a specific alternative to recommend.</div>
+                        <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>
+                          {altSource === "brand" ? "No direct brand alternatives" : altSource === "bigbox" ? "No big-box alternatives" : "No swap needed"}
+                        </div>
+                        <div style={{fontSize:12}}>
+                          {altSource === "brand" ? "Try Amazon for more options →" : altSource === "bigbox" ? "Try Amazon or brand sites instead →" : "This product scores well — no specific alternative to recommend."}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -5624,9 +5653,9 @@ function App() {
               {/* DB alternatives */}
               {(() => {
                 const isRestaurant = result.category === "restaurant";
-                const dbAlts = (result.alternatives || []).slice(0, 3);
+                const dbAlts = filterAltsBySource(result.alternatives, altSource).slice(0, 3);
                 const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
-                const aiAlts = (result.ai_alternatives || [])
+                const aiAlts = filterAltsBySource(result.ai_alternatives, altSource)
                   .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
                   .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
                   .slice(0, 3 - dbAlts.length);
@@ -5641,7 +5670,7 @@ function App() {
                 const noResults = isRestaurant ? restAlts.length === 0 : (!dbAlts.length && !aiAlts.length);
                 if (noResults) return (
                   <div style={{textAlign:"center", padding:"40px 20px", color:muted, fontSize:14}}>
-                    No specific alternatives found. Try scanning a similar product for recommendations.
+                    {altSource === "brand" ? "No direct brand alternatives found. Try Amazon for more options." : altSource === "bigbox" ? "No big-box alternatives found. Try Amazon or brand sites instead." : "No specific alternatives found. Try scanning a similar product for recommendations."}
                   </div>
                 );
 
