@@ -5570,6 +5570,10 @@ function App() {
                 <div style={isMobile ? {margin:"0 -14px"} : {}}>
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
+                  // When child mode is on, bump health-relevant dimensions by the same delta as overall score
+                  const childDimBump = (childMode && result.child_score && result.overall_score)
+                    ? Math.max(0, result.child_score - (result.overall_score || result.score))
+                    : 0;
                   return (<>
                     {/* Product Insights — all categories */}
                     {result.food_analysis && (
@@ -5582,7 +5586,7 @@ function App() {
                       </div>
                     )}
                     {/* 1. Materials */}
-                    <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={d.materials?.score||result.score} concerns={d.materials?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={Math.min(10,(d.materials?.score||result.score)+childDimBump)} concerns={d.materials?.concerns} isDark={isDark}>
                       {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
                       {/* Only show chips when no Product Insights — otherwise redundant */}
                       {!result.food_analysis && (<>
@@ -5620,7 +5624,7 @@ function App() {
                     </DimensionDropdown>
 
                     {/* 2. Usage & Exposure */}
-                    <DimensionDropdown icon={<IcoSafety size={20}/>} label="Usage & Exposure" score={d.usage_exposure?.score||5} concerns={d.usage_exposure?.concerns} isDark={isDark}>
+                    <DimensionDropdown icon={<IcoSafety size={20}/>} label="Usage & Exposure" score={Math.min(10,(d.usage_exposure?.score||5)+childDimBump)} concerns={d.usage_exposure?.concerns} isDark={isDark}>
                       {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
                         {d.usage_exposure?.frequency && d.usage_exposure.frequency !== "unknown" && (

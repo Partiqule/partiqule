@@ -658,7 +658,7 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
 function detectChildProduct(productName, category) {
   if (category === "baby") return true;
   // Extended to all categories where children have meaningful exposure
-  if (["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","toy"].includes(category)) return true;
+  if (["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","toy","kitchen"].includes(category)) return true;
   const name = (productName || "").toLowerCase();
   if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
   if (CHILD_FOOD_BRANDS.test(name)) return true;
