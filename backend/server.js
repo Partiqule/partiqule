@@ -1015,7 +1015,10 @@ MATERIALS (what the product is physically made of):
 - PACKAGING-ONLY: if plastic is only in discarded packaging, materials score stays 1-3.
 - PVA (polyvinyl alcohol) pod film in dishwasher/laundry pods: score 6-7 — PVA dissolves but enters waterways as microplastic pollution. Cascade, Tide, Finish pods all use PVA film.
 - Synthetic fragrances in cleaning products: score +1 — endocrine disrupting compounds, poorly regulated.
-- NATURAL FRAGRANCE vs SYNTHETIC: Salt & Stone, Tatcha, Herbivore, and documented clean beauty brands explicitly avoid synthetic fragrance. When these brands list "Fragrance (Parfum)" alongside individually disclosed natural components (limonene, linalool, eugenol, geraniol, citral) this is transparent natural fragrance disclosure — NOT synthetic. Do NOT apply synthetic fragrance penalty. Salt & Stone body care = materials 1-3, final 2-3.
+- NATURAL FRAGRANCE vs SYNTHETIC: Salt & Stone, Tatcha, Herbivore, Wellnesse, RiseWell, Bite, Earthpaste, and documented clean beauty brands explicitly avoid synthetic fragrance. When these brands list "Fragrance (Parfum)" alongside individually disclosed natural components (limonene, linalool, eugenol, geraniol, citral) this is transparent natural fragrance disclosure — NOT synthetic. Do NOT apply synthetic fragrance penalty. Salt & Stone body care = materials 1-3, final 2-3.
+- TOOTHPASTE FLAVOR RULE: "Mentha Piperita (Peppermint) Flavor", "Natural Peppermint Flavor", "Spearmint Flavor", or any named essential oil flavor in toothpaste = natural, NOT synthetic fragrance. Do NOT flag as fragrance concern. Only flag "Fragrance", "Parfum", or "Artificial Flavor" without disclosure as synthetic.
+- CERTIFIED CLEAN BRAND RULE: When a product is from a B Corp, EWG Verified, Non-Toxic Project, or Leaping Bunny certified brand AND the ingredient list confirms no synthetic fragrance, parabens, SLS, or artificial dyes — do NOT flag individual ingredients as synthetic unless they actually are. Neem oil, green tea extract, aloe, xylitol, hydroxyapatite, calcium carbonate, sodium bicarbonate are all clean ingredients. Never flag these as concerns.
+- INGREDIENT LIST CAPTURE: For personal care products, you MUST capture the full ingredient list in ingredient_list field. Read every ingredient carefully. Distinguish between: (1) natural essential oils and plant extracts listed by INCI name — these are clean; (2) "Fragrance" or "Parfum" without disclosure — this is synthetic; (3) "Natural Flavor" with a named source — this is clean. Misidentifying peppermint oil as synthetic fragrance is a critical scoring error.
 - Optical brighteners in laundry/dishwasher products: score +1 — persistent in environment, potential skin sensitizer.
 - Phosphates and surfactants in cleaning products: add to concerns.
 - SYNTHETIC TEXTILES: polyester, nylon, spandex/elastane, acrylic shed microfibers with every wash and wear. Daily skin contact with synthetic fabric = score 5-7. A product described as "spandex" or "elastane" that is majority synthetic = score 6-7.
@@ -1845,6 +1848,23 @@ Any fast food breakfast item containing sausage or bacon = sodium nitrite floor 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
 personal_care: tier1=clean_formula, tier2=conventional, tier3=synthetic_heavy, tier4=high_concern
+
+PERSONAL CARE COMPOSITION TIERS — you MUST populate composition_tier for every personal care product. It drives the calibration system.
+
+Tier 1 (clean formula): EWG Verified OR certified by Leaping Bunny + Non-Toxic Project + B Corp. No synthetic fragrance, no parabens, no SLS/SLES, no phthalates, no formaldehyde releasers, no oxybenzone. Examples: Wellnesse, Badger, Schmidt's unscented, Bite toothpaste, Earthpaste, RiseWell, Primally Pure, Ursa Major, ILIA, Countertop brands certified by EWG. Score range 1-3.
+
+Tier 2 (conventional): Standard drugstore formula. May have synthetic fragrance, SLS, some preservatives but no confirmed high-concern substances. No parabens, no oxybenzone, no formaldehyde releasers. Examples: CeraVe, Dove unscented, simple drugstore moisturizers, fluoride toothpaste without artificial dyes. Score range 3-5.
+
+Tier 3 (synthetic heavy): Contains synthetic fragrance (undisclosed phthalates), SLS/SLES, PEGs, silicones, artificial colors in leave-on products. Multiple preservatives. Examples: Pantene, Head & Shoulders, Herbal Essences, Old Spice, Axe, conventional perfumed lotions. Score range 4-7.
+
+Tier 4 (high concern): Contains oxybenzone/octinoxate (endocrine disruptors, reef-banned), formaldehyde releasers (DMDM hydantoin, quaternium-15), lead acetate, coal tar dyes, mercury compounds, or products with confirmed contamination recalls. Score range 6-9.
+
+TOOTHPASTE SPECIFIC RULES:
+- Hydroxyapatite + clean ingredients (no SLS, no artificial dyes, no artificial sweeteners) = Tier 1, score 1-2
+- Fluoride only, no artificial dyes, no SLS = Tier 2, score 3-4  
+- Fluoride + SLS + artificial flavors/colors = Tier 2-3, score 4-5
+- Whitening strips with hydrogen peroxide or carbamide peroxide = Tier 3, score 4-6
+- Products with titanium dioxide as whitener = Tier 3 minimum, score 5+
 clothing: tier1=natural_fiber, tier2=conventional, tier3=synthetic, tier4=chemical_treated
 kitchen: tier1=plant_based, tier2=conventional, tier3=synthetic_heavy, tier4=industrial_chemical
 baby: tier1=clean_safe, tier2=conventional, tier3=concern_flagged, tier4=high_risk_infants
