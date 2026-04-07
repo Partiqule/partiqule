@@ -537,7 +537,121 @@ const ScoreArc = ({score}) => {
   );
 };
 
-// ── RISK BAR ─────────────────────────────────────────────────
+// ── PARTICLE SCORE REVEAL ────────────────────────────────────
+// Globe spins → particles morph into the score digit → arc draws in
+const ParticleScoreReveal = ({score, onRevealComplete}) => {
+  const canvasRef  = useRef(null);
+  const stateRef   = useRef(null);
+  const W = 240, H = 220, CX = 120, CY = 98, GR = 62, ROT_X = 0.22;
+  const NUM = 170;
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const color = scoreColor(score);
+  const [r,g,b] = [parseInt(color.slice(1,3),16), parseInt(color.slice(3,5),16), parseInt(color.slice(5,7),16)];
+
+  function project(sx,sy,sz,rotY) {
+    const cosY=Math.cos(rotY),sinY=Math.sin(rotY),cosX=Math.cos(ROT_X),sinX=Math.sin(ROT_X);
+    const x1=sx*cosY+sz*sinY, z1=-sx*sinY+sz*cosY;
+    const y1=sy*cosX-z1*sinX, z2=sy*sinX+z1*cosX;
+    const fov=300, sc=fov/(fov+z2*GR);
+    return {px:CX+x1*GR*sc, py:CY+y1*GR*sc, z:z2, scale:sc};
+  }
+
+  function sampleText(score) {
+    const off=document.createElement('canvas'); off.width=W; off.height=H;
+    const oc=off.getContext('2d');
+    oc.fillStyle='#fff';
+    oc.font=`bold 128px 'Outfit',system-ui,sans-serif`;
+    oc.textAlign='center'; oc.textBaseline='middle';
+    oc.fillText(String(score),W/2,H/2-10);
+    const d=oc.getImageData(0,0,W,H).data;
+    const pts=[]; const step=4;
+    for (let y=0;y<H;y+=step) for (let x=0;x<W;x+=step)
+      if (d[(y*W+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*step, y:y+(Math.random()-.5)*step});
+    for (let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
+    return pts;
+  }
+
+  function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function easeOut(t){return 1-Math.pow(1-t,3);}
+
+  useEffect(()=>{
+    const canvas=canvasRef.current; if(!canvas) return;
+    const ctx=canvas.getContext('2d');
+
+    const pts=[];
+    const glow=new Array(NUM).fill(0);
+    const glowT=Array.from({length:NUM},()=>Math.floor(Math.random()*120));
+    for (let i=0;i<NUM;i++){
+      const y=1-(i/(NUM-1))*2,rr=Math.sqrt(1-y*y),theta=golden*i;
+      pts.push({sx:Math.cos(theta)*rr,sy:y,sz:Math.sin(theta)*rr,fromX:CX,fromY:CY,tx:CX,ty:CY});
+    }
+
+    const s={phase:'globe',morphT:0,arcProg:0,rotY:0,lastTime:performance.now(),fired:false};
+    stateRef.current=s;
+
+    const morphTO=setTimeout(()=>{
+      const textPts=sampleText(score);
+      const n=Math.min(NUM,textPts.length);
+      pts.forEach((p,i)=>{
+        const pr=project(p.sx,p.sy,p.sz,s.rotY);
+        p.fromX=pr.px; p.fromY=pr.py;
+        p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
+        p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
+      });
+      s.phase='morph'; s.morphT=0;
+    },680);
+
+    const loop=(ts)=>{
+      const dt=Math.min((ts-s.lastTime)/1000,.05); s.lastTime=ts;
+      ctx.clearRect(0,0,W,H);
+
+      if (s.phase==='globe'){
+        s.rotY+=dt*0.42;
+        for (let i=0;i<NUM;i++){
+          if(glowT[i]<=0){glowT[i]=40+Math.floor(Math.random()*150);if(Math.random()<.25)glow[i]=1;}
+          else glowT[i]--;
+          if(glow[i]>0)glow[i]=Math.max(0,glow[i]-.033);
+        }
+        const sorted=pts.map((p,i)=>({...project(p.sx,p.sy,p.sz,s.rotY),i})).sort((a,b)=>a.z-b.z);
+        sorted.forEach(({px,py,z,scale,i})=>{
+          const bright=.2+.8*((z+1)/2), gl=glow[i];
+          ctx.beginPath(); ctx.arc(px,py,Math.max(1,(2+gl*1.5)*scale),0,Math.PI*2);
+          ctx.fillStyle=gl>.35?`rgba(134,239,172,${Math.min(1,bright*.9+gl*.8)})`:`rgba(74,222,128,${Math.min(1,bright*.88)})`;
+          ctx.fill();
+        });
+      }
+
+      if (s.phase==='morph'||s.phase==='done'){
+        if(s.phase==='morph'){
+          s.morphT=Math.min(s.morphT+dt*1.05,1);
+          if(s.morphT>=1&&!s.fired){s.phase='done';s.fired=true;onRevealComplete&&onRevealComplete();}
+        }
+        const t=easeIO(Math.min(s.morphT,1));
+        pts.forEach(p=>{
+          const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
+          ctx.beginPath(); ctx.arc(px,py,Math.max(1.2,2.2*(1-t*.4)),0,Math.PI*2);
+          ctx.fillStyle=`rgba(${r},${g},${b},${.35+.65*t})`; ctx.fill();
+        });
+        if(s.morphT>.55){
+          s.arcProg=Math.min(s.arcProg+dt*2.6,1);
+          const ap=easeOut(s.arcProg), startA=-Math.PI/2;
+          ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2);
+          ctx.strokeStyle=`rgba(${r},${g},${b},.12)`; ctx.lineWidth=5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2*(score/10)*ap);
+          ctx.strokeStyle=color; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
+          ctx.globalAlpha=easeOut(s.arcProg);
+          ctx.fillStyle=color; ctx.font=`bold 13px 'Outfit',system-ui`;
+          ctx.textAlign='center'; ctx.fillText('/10',CX,CY+78); ctx.globalAlpha=1;
+        }
+      }
+      s.rafId=requestAnimationFrame(loop);
+    };
+    s.rafId=requestAnimationFrame(loop);
+    return ()=>{cancelAnimationFrame(s.rafId); clearTimeout(morphTO);};
+  },[score]);
+
+  return <canvas ref={canvasRef} width={W} height={H} style={{display:'block',margin:'0 auto'}}/>;
+};
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
   const meaning = score <= 2
@@ -4083,6 +4197,7 @@ function App() {
   const [showAuth,    setShowAuth]   = useState(false);
   const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
   const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
+  const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -4327,7 +4442,7 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setResult(null);
+    setLoading(true); setError(null); setResult(null); setRevealDone(false);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
@@ -4436,7 +4551,7 @@ function App() {
     }
     setShowScanModal(false);
     setResult(null); setError(null); setPage("home");
-    setLoading(true); setQuery("Reading label…");
+    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null);
     try {
       const base64 = await new Promise((res, rej) => {
         const img = new Image();
@@ -5167,7 +5282,7 @@ function App() {
                 {(() => {
                   return (<>
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                      <ScoreArc score={displayScore}/>
+                      <ParticleScoreReveal score={displayScore} onRevealComplete={()=>setRevealDone(true)}/>
                     </div>
 
                     {/* Dual scoring explanation — one line, always visible */}
@@ -5522,7 +5637,7 @@ function App() {
                 )}
 
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
-                <div style={isMobile ? {margin:"0 -14px"} : {}}>
+                <div style={{...(isMobile ? {margin:"0 -14px"} : {}), opacity:revealDone?1:0, transform:revealDone?"translateY(0)":"translateY(12px)", transition:"opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s"}}>
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
                   // When child mode is on, bump health-relevant dimensions by the same delta as overall score
@@ -5661,7 +5776,7 @@ function App() {
                 </div>{/* end dropdowns negative-margin wrapper */}
 
                 {/* Peer comparison */}
-                <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
+                <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left",opacity:revealDone?1:0,transform:revealDone?"translateY(0)":"translateY(12px)",transition:"opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s"}}>{result.summary}</p>
 
                 {/* Fix 2: Nutrition disclaimer — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
