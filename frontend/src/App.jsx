@@ -5382,7 +5382,7 @@ function App() {
           <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#131929":"#fafafa", overflowY:"auto"}}>
 
             {/* Globe-inspired header */}
-            <div style={{background:"#052e16", padding:isMobile?"28px 20px 32px":"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
+            <div style={{background:"#052e16", padding:isMobile?`${28 + SAFE_TOP}px 20px 32px`:"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
               <style>{`
                 @keyframes orbitSpin1{from{transform:rotate(-25deg)}to{transform:rotate(335deg)}}
                 @keyframes orbitSpin2{from{transform:rotate(50deg)}to{transform:rotate(410deg)}}
