@@ -77,8 +77,14 @@ function detectCategory(q) {
   // ── BEAUTY / PERSONAL CARE ──
   if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf/.test(s)) return "personal_care";
 
-  // ── HOME (cleaning, kitchen, furnishing, candles) ──
-  if (/pan|pot|cookware|sponge|dish|laundry|detergent|cleaner|towel|broom|mop|teflon|non.?stick|pfas|ceramic.*pan|cooking|tide pod|dishwasher|washing machine|dryer|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|scrub|brush|vacuum|air freshener|candle|wax melt|mattress|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|foam|memory foam|latex mattress|carpet|rug|curtain|drape|upholster/.test(s)) return "home";
+  // ── HOME FURNISHING — before general home catch ──
+  if (/mattress|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|memory foam|latex mattress|carpet|rug|curtain|drape|upholster|sectional|armchair|loveseat|ottoman|dresser|nightstand|bookshelf|bookcase|bed frame|headboard/.test(s)) return "home_furnishing";
+
+  // ── KITCHEN — before general home catch ──
+  if (/\b(pan|pot|cookware|skillet|wok|dutch oven|saucepan|baking sheet|sheet pan|cast iron|ceramic.*pan|non.?stick|teflon|pfas.*pan|cooking.*pot|knife|cutting board|mixing bowl|colander|strainer|spatula|tongs|whisk|ladle|measuring cup|food processor|blender|toaster|air fryer|instant pot|rice cooker|slow cooker|pressure cooker|coffee maker|espresso machine|kettle|microwave)\b/.test(s)) return "kitchen";
+
+  // ── HOME (cleaning, candles, general household) ──
+  if (/laundry|detergent|cleaner|sponge|dish soap|broom|mop|scrub|brush|vacuum|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|tide pod|dishwasher|washing machine|dryer|air freshener|candle|wax melt|towel/.test(s)) return "home";
 
   // ── BEVERAGE — drinkable consumption ──
   if (

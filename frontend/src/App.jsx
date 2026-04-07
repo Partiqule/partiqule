@@ -4271,16 +4271,19 @@ function App() {
         score:        item.score || 0,
         // Store lightweight version — skip large AI arrays to keep row size manageable
         result_json:  {
-          product_name: item.product_name,
-          category:     item.category,
-          score:        item.score,
-          overall_score:item.overall_score,
-          summary:      item.summary,
-          confidence:   item.confidence,
-          concerns:     item.concerns,
-          dimensions:   item.dimensions,
-          food_analysis:item.food_analysis,
-          cached:       item.cached,
+          product_name:    item.product_name,
+          category:        item.category,
+          score:           item.score,
+          overall_score:   item.overall_score,
+          child_score:     item.child_score     ?? null,
+          is_child_product:item.is_child_product ?? null,
+          child_bumps:     item.child_bumps      ?? null,
+          summary:         item.summary,
+          confidence:      item.confidence,
+          concerns:        item.concerns,
+          dimensions:      item.dimensions,
+          food_analysis:   item.food_analysis,
+          cached:          item.cached,
         },
         scanned_at:   new Date().toISOString(),
       }, { onConflict: "user_id,product_name" });
@@ -5825,7 +5828,7 @@ function App() {
                       </div>
                       );
                     })}
-                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < (result.overall_score || result.score)).map((alt, i) => {
+                    {(result.ai_alternatives || []).filter(a => a.estimated_score && a.estimated_score < displayScore).map((alt, i) => {
                       const shopUrl = altSource === "brand" ? getBrandUrl(alt.name, alt.name)
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
