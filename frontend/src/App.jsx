@@ -907,7 +907,7 @@ const CATEGORY_EXPOSURE = {
   },
 };
 
-const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
+const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]}) => {
   const [tab,       setTab]     = useState("exposure");
   const [freq,      setFreq]    = useState(() => {
     const f = result.dimensions?.usage_exposure?.frequency || result.exposure_frequency;
@@ -1000,10 +1000,63 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
 
   const [open,     setOpen]     = useState(false);
 
+  // ── Cumulative routine analysis from scan history ─────────────
+  const [timeFilter, setTimeFilter] = useState("all"); // "30d" | "90d" | "all"
+  const [notPurchased, setNotPurchased] = useState(new Set()); // product names marked as "just researching"
+
+  const now = Date.now();
+  const TIME_CUTOFFS = { "30d": 30*24*60*60*1000, "90d": 90*24*60*60*1000, "all": Infinity };
+
+  const filteredHistory = history.filter(h => {
+    if (h.product_name === result.product_name) return false;
+    if (timeFilter !== "all" && h.scannedAt) {
+      const age = now - new Date(h.scannedAt).getTime();
+      if (age > TIME_CUTOFFS[timeFilter]) return false;
+    }
+    return true;
+  }).slice(0, 20);
+
+  const allProducts = [result, ...filteredHistory];
+  const activeProducts = allProducts.filter(h => !notPurchased.has(h.product_name));
+
+  // Build chemical frequency map — only counting active (purchased) products
+  const chemicalCount = {};
+  activeProducts.forEach(item => {
+    const chemicals = [
+      ...(item.harmful_chemicals || []),
+      ...(item.identified_plastics || []),
+      ...((item.food_analysis?.concerns || []).filter(c => c.severity === "high").map(c => c.substance || c.ingredient || "")),
+    ].filter(Boolean);
+    chemicals.forEach(chem => {
+      const key = chem.toLowerCase().trim();
+      if (!chemicalCount[key]) chemicalCount[key] = { name: chem, count: 0, products: [] };
+      if (!chemicalCount[key].products.includes(item.product_name)) {
+        chemicalCount[key].count++;
+        chemicalCount[key].products.push(item.product_name);
+      }
+    });
+  });
+
+  // Sort by frequency — chemicals in multiple products are most concerning
+  const repeatedChemicals = Object.values(chemicalCount)
+    .filter(c => c.count >= 2)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  const allChemicals = Object.values(chemicalCount)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
+
+  // Routine load score — only active products
+  const FREQ_MAP = {daily:365, weekly:52, monthly:18, occasional:18, rare:6};
+  const routineScore = activeProducts.length > 1
+    ? Math.round(activeProducts.reduce((sum, h) => sum + (h.overall_score || h.score || 5), 0) / activeProducts.length * 10) / 10
+    : null;
+
   const tabs = [
-    {id:"exposure", label:"My Exposure"},
-    {id:"overtime", label:"Over Time"},
-    {id:"switch",   label:"Switch & Save"},
+    {id:"exposure", label:"This product"},
+    {id:"routine",  label:`My routine${activeProducts.length > 1 ? ` (${activeProducts.length})` : ""}`},
+    {id:"overtime", label:"Over time"},
   ];
 
   return (
@@ -1014,7 +1067,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
         <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
           <div style={{display:"flex", alignItems:"center", gap:6}}>
             <IcoScore size={14} color="#16a34a"/>
-            <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>Usage Calculator</span>
+            <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>Exposure Calculator</span>
           </div>
           {!open && (
             <span style={{fontSize:11, color:muted, fontWeight:500}}>
@@ -1076,6 +1129,153 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
                 }}>{item.name}</span>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── MY ROUTINE (cumulative across history) ── */}
+        {tab === "routine" && (
+          <div>
+            {/* Time filter */}
+            <div style={{display:"flex", gap:6, marginBottom:12, alignItems:"center"}}>
+              <span style={{fontSize:11, color:muted, fontWeight:600, whiteSpace:"nowrap"}}>Show:</span>
+              {[["all","All time"],["90d","90 days"],["30d","30 days"]].map(([val, label]) => (
+                <button key={val} onClick={()=>setTimeFilter(val)} style={{
+                  fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, cursor:"pointer",
+                  border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
+                  background: timeFilter===val ? "#16a34a" : "transparent",
+                  color: timeFilter===val ? "#fff" : muted,
+                }}>{label}</button>
+              ))}
+            </div>
+
+            {filteredHistory.length === 0 && allProducts.length <= 1 ? (
+              <div style={{textAlign:"center", padding:"24px 16px", color:muted}}>
+                <div style={{fontSize:32, marginBottom:8}}>📋</div>
+                <div style={{fontSize:14, fontWeight:600, color:text, marginBottom:6}}>Scan more products to see your routine</div>
+                <div style={{fontSize:12, lineHeight:1.6}}>Partiqule tracks chemicals across everything you scan and shows you which ones appear most often — that's where your real cumulative exposure comes from.</div>
+              </div>
+            ) : (<>
+
+              {/* Product list with purchased toggles */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
+                  Your scanned products — toggle off what you don't actually use
+                </div>
+                <div style={{display:"flex", flexDirection:"column", gap:5}}>
+                  {allProducts.map((item, i) => {
+                    const s = item.overall_score || item.score || 5;
+                    const isPurchased = !notPurchased.has(item.product_name);
+                    const isCurrentProduct = item.product_name === result.product_name;
+                    return (
+                      <div key={i} style={{
+                        display:"flex", alignItems:"center", gap:10, padding:"8px 10px",
+                        borderRadius:8, border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,
+                        background: isPurchased ? (isDark?"#1e2433":"#fff") : (isDark?"#131929":"#f8fafb"),
+                        opacity: isPurchased ? 1 : 0.5,
+                      }}>
+                        <div style={{width:28, height:28, borderRadius:6, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                          <span style={{fontSize:11, fontWeight:800, color:scoreColor(s)}}>{s}</span>
+                        </div>
+                        <div style={{flex:1, minWidth:0}}>
+                          <div style={{fontSize:12, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
+                          {!isPurchased && <div style={{fontSize:10, color:muted}}>Not in my home</div>}
+                        </div>
+                        {!isCurrentProduct && (
+                          <button onClick={()=>{
+                            setNotPurchased(prev => {
+                              const next = new Set(prev);
+                              if (next.has(item.product_name)) next.delete(item.product_name);
+                              else next.add(item.product_name);
+                              return next;
+                            });
+                          }} style={{
+                            fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:12, cursor:"pointer",
+                            border:`1px solid ${isPurchased ? "#16a34a" : (isDark?"#374151":"#d1d5db")}`,
+                            background: isPurchased ? "#f0fdf4" : "transparent",
+                            color: isPurchased ? "#16a34a" : muted,
+                            flexShrink:0,
+                          }}>
+                            {isPurchased ? "In my home" : "Not using"}
+                          </button>
+                        )}
+                        {isCurrentProduct && (
+                          <span style={{fontSize:10, color:"#16a34a", fontWeight:600, flexShrink:0}}>Current scan</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Routine score — only active products */}
+              {routineScore !== null && activeProducts.length > 1 && (
+                <div style={{background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:12}}>
+                  <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
+                    Active routine score ({activeProducts.length} products)
+                  </div>
+                  <div style={{display:"flex", alignItems:"center", gap:12}}>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:scoreColor(Math.round(routineScore)), lineHeight:1}}>{routineScore}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12, fontWeight:700, color:scoreColor(Math.round(routineScore)), marginBottom:4}}>{scoreLabel(Math.round(routineScore))}</div>
+                      <div style={{height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                        <div style={{height:"100%", width:`${Math.min(100,(routineScore/10)*100)}%`, background:scoreColor(Math.round(routineScore)), borderRadius:99}}/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Repeated chemicals — the key insight */}
+              {repeatedChemicals.length > 0 && (
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:10, color:"#dc2626", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>
+                    ⚠ Chemicals in multiple active products
+                  </div>
+                  <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                    {repeatedChemicals.map((chem, i) => (
+                      <div key={i} style={{background:isDark?"#2a1a1a":"#fef2f2", borderRadius:8, padding:"8px 12px", border:"1px solid #fca5a533"}}>
+                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:2}}>
+                          <span style={{fontSize:13, fontWeight:700, color:"#dc2626"}}>{chem.name}</span>
+                          <span style={{fontSize:11, fontWeight:700, color:"#dc2626", background:"#fef2f2", padding:"2px 8px", borderRadius:20, border:"1px solid #fca5a5"}}>{chem.count}× exposure</span>
+                        </div>
+                        <div style={{fontSize:11, color:muted}}>
+                          {chem.products.slice(0,3).join(", ")}{chem.products.length > 3 ? ` +${chem.products.length-3} more` : ""}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11, color:"#d97706", marginTop:8, lineHeight:1.5, padding:"8px 10px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
+                    Repeated exposure across multiple products is where your real risk accumulates — even low amounts from each source compound over time.
+                    {kids > 0 && <span style={{fontWeight:600}}> For children, cumulative exposure is 2-3x more impactful due to lower body weight.</span>}
+                  </div>
+                </div>
+              )}
+
+              {/* All chemicals */}
+              {allChemicals.length > 0 && (
+                <div>
+                  <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>All flagged in active routine</div>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
+                    {allChemicals.map((chem, i) => (
+                      <span key={i} style={{
+                        fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:16,
+                        background: chem.count >= 2 ? (isDark?"#2a1a1a":"#fef2f2") : (isDark?"#1e2433":"#f8fafb"),
+                        color: chem.count >= 2 ? "#dc2626" : muted,
+                        border:`1px solid ${chem.count >= 2 ? "#fca5a533" : (isDark?"#2a3347":"#e5e7eb")}`,
+                      }}>
+                        {chem.name}{chem.count >= 2 ? ` ×${chem.count}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {notPurchased.size > 0 && (
+                <button onClick={()=>setNotPurchased(new Set())} style={{marginTop:10, fontSize:11, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline"}}>
+                  Reset — mark all as in my home
+                </button>
+              )}
+            </>)}
           </div>
         )}
 
@@ -1231,55 +1431,6 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile}) => {
           </div>
         )}
 
-        {/* ── SWITCH & SAVE ── */}
-        {tab === "switch" && (
-          <div>
-            {/* Spend input — used only for Trasande health cost estimate */}
-            <div style={{marginBottom:16}}>
-              <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
-                What do you spend on this per month? ($)
-              </div>
-              <div style={{display:"flex", alignItems:"center", gap:8}}>
-                <input type="number" min={1} max={500} value={spend}
-                  onChange={e=>setSpend(Math.max(1,parseInt(e.target.value)||1))}
-                  style={{width:80, padding:"7px 10px", borderRadius:8, fontSize:14, fontWeight:700,
-                    border:`1px solid ${border}`, background:surface, color:text}}/>
-                <span style={{fontSize:12, color:muted}}>per month = <strong>${annualSpend}/yr</strong></span>
-              </div>
-            </div>
-
-            {/* Kids health cost card */}
-            {hasKids && healthSaved > 0 && (
-              <div style={{background:isDark?"#2a1a00":"#fffbeb", borderRadius:10, padding:"12px 14px", border:"1px solid #fde68a", marginBottom:10}}>
-                <div style={{fontSize:11, color:"#d97706", fontWeight:700, marginBottom:4, display:"flex", alignItems:"center", gap:5}}>
-                  <IcoProfile size={13}/> Estimated health cost avoided for {kids} child{kids>1?"ren":""}
-                </div>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:24, color:"#d97706", marginBottom:4}}>
-                  ~${healthSaved}/year
-                </div>
-                <div style={{fontSize:11, color:muted, lineHeight:1.5}}>
-                  Based on Trasande et al. (2018) — EDC-related health costs estimated at ~$494/child/year. Switching eliminates {reductionPct}% of {exposureNames} exposure for children in your household.
-                </div>
-              </div>
-            )}
-
-            {/* The bottom line */}
-            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:10, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:20, color:"#16a34a", marginBottom:6}}>
-                {reductionPct}% less {exposureNames} exposure
-              </div>
-              <div style={{fontSize:12, color:muted, lineHeight:1.6}}>
-                Switching to <strong style={{color:text}}>{altName}</strong> eliminates <strong style={{color:text}}>{reduction.toLocaleString()} {catConfig.unit}</strong> of {exposureNames} from your household per year.
-                {hasKids && <span style={{color:"#d97706"}}> For the {kids} child{kids>1?"ren":""} in your household, whose developing systems are more sensitive to these chemicals, this is one of the most impactful switches you can make.</span>}
-              </div>
-              {result.break_even?.uses && (
-                <div style={{fontSize:11, color:muted, marginTop:8, opacity:0.7}}>
-                  Sustainability break-even: ~{result.break_even.uses} uses. {result.break_even.source}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
       </>)}
     </div>
@@ -5371,6 +5522,7 @@ function App() {
                     text={text}
                     muted={muted}
                     isMobile={isMobile}
+                    history={history}
                   />
                 )}
 
