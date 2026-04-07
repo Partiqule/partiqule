@@ -110,8 +110,10 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const morphTimerRef = useRef(null);
   const MIN_MORPH_DELAY = 7000; // show globe for at least 7s before morphing
   const NUM = 600, golden = Math.PI*(3-Math.sqrt(5));
-  const SZ = isMobile ? 320 : 370;
-  const CX = SZ/2, CY = SZ/2, GR = isMobile ? 108 : 124;
+  const SZ = isMobile ? 360 : 600;
+  const CX = SZ/2;
+  const CY = isMobile ? 180 : 250;
+  const GR = isMobile ? 82 : 115;
 
   function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
   function easeOut(t){return 1-Math.pow(1-t,3);}
@@ -130,7 +132,7 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     oc.fillStyle='#fff';
     oc.font=`bold ${isMobile?195:225}px 'Outfit',system-ui,sans-serif`;
     oc.textAlign='center'; oc.textBaseline='middle';
-    oc.fillText(String(digit),SZ/2,SZ/2);
+    oc.fillText(String(digit),CX,CY);
     const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
     for(let y=0;y<SZ;y+=3) for(let x=0;x<SZ;x+=3)
       if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*3, y:y+(Math.random()-.5)*3});
