@@ -7,15 +7,18 @@ const API_BASE = "https://partiqule-production.up.railway.app";
 const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
 const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-// Inject safe area CSS globally
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    :root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); }
-    body { padding-top: env(safe-area-inset-top, 0px); }
-  `;
-  document.head.appendChild(style);
+// Get safe area inset top — works in Capacitor and Safari
+function getSafeAreaTop() {
+  if (typeof document === "undefined") return 0;
+  const el = document.createElement("div");
+  el.style.cssText = "position:fixed;top:env(safe-area-inset-top,0px);left:0;width:0;height:0;pointer-events:none;";
+  document.body.appendChild(el);
+  const top = el.getBoundingClientRect().top;
+  document.body.removeChild(el);
+  return top > 0 ? top : (isIOS ? 47 : 0);
 }
+
+const SAFE_TOP = getSafeAreaTop();
 
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
@@ -3806,7 +3809,7 @@ function App() {
       const r = await fetch(`${API_BASE}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, email: user.email, promo: promoCode.trim() || undefined }),
+        body: JSON.stringify({ userId: user.id, email: user.email, promo: promoCode.trim().toUpperCase() || undefined }),
       });
       const d = await r.json();
       if (d.url) { window.location.href = d.url; }
@@ -4121,7 +4124,7 @@ function App() {
       <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0}to{opacity:1}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0}to{opacity:1}}.score-reveal{animation:slideInUp 0.5s ease forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
 
       {/* HEADER */}
-      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s"}}>
+      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
             <svg width="32" height="32" viewBox="0 0 44 44">
@@ -4228,7 +4231,7 @@ function App() {
                 {checkingOut ? "Loading..." : "Subscribe — $3.99/month"}
               </button>
               <div style={{display:"flex",gap:8,marginBottom:8}}>
-                <input value={promoCode} onChange={e=>setPromoCode(e.target.value)} placeholder="Promo code" style={{flex:1,padding:"10px 12px",borderRadius:8,border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,background:isDark?"#111":"#fff",color:isDark?"#fff":"#1a1a18",fontSize:14}}/>
+                <input value={promoCode} onChange={e=>setPromoCode(e.target.value.toUpperCase())} placeholder="Promo code" style={{flex:1,padding:"10px 12px",borderRadius:8,border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,background:isDark?"#111":"#fff",color:isDark?"#fff":"#1a1a18",fontSize:14}}/>
                 <button onClick={startCheckout} disabled={checkingOut||!promoCode.trim()} style={{padding:"10px 14px",borderRadius:8,background:"#052e16",border:"none",color:"#4ade80",fontSize:14,fontWeight:600,cursor:"pointer",opacity:(!promoCode.trim()||checkingOut)?0.5:1}}>Apply</button>
               </div>
               {promoError && <div style={{fontSize:12,color:"#dc2626",marginBottom:8}}>{promoError}</div>}
