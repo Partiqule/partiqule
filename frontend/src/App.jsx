@@ -97,32 +97,30 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── SCAN OVERLAY ──────────────────────────────────────────────
-// Fullscreen overlay: globe spins → particles morph to score on-screen
-// → overlay fades out revealing the result card already rendered behind it
 const ScanOverlay = ({loading, result, isMobile, onDone}) => {
   const [morphActive, setMorphActive] = useState(false);
   const [fading,      setFading]      = useState(false);
   const [gone,        setGone]        = useState(false);
-  const canvasRef   = useRef(null);
-  const rafRef      = useRef(null);
-  const doneRef     = useRef(false);
-  const scanStart   = useRef(Date.now());
+  const canvasRef    = useRef(null);
+  const rafRef       = useRef(null);
+  const doneRef      = useRef(false);
+  const scanStart    = useRef(Date.now());
   const morphTimerRef = useRef(null);
-  const MIN_MORPH_DELAY = 7000; // show globe for at least 7s before morphing
-  const NUM = 600, golden = Math.PI*(3-Math.sqrt(5));
-  const SZ = isMobile ? 360 : 600;
-  const CX = SZ/2;
-  const CY = isMobile ? 180 : 250;
-  const GR = isMobile ? 82 : 115;
+  const MIN_DELAY    = 7000;
+  const NUM          = 1200;
+  const golden       = Math.PI*(3-Math.sqrt(5));
+  const SZ           = isMobile ? 360 : 600;
+  const CX           = SZ/2;
+  const CY           = isMobile ? 180 : 250;
+  const GR           = isMobile ? 82 : 115;
 
   function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
-  function easeOut(t){return 1-Math.pow(1-t,3);}
 
   function project(sx,sy,sz,rotY){
     const cosY=Math.cos(rotY),sinY=Math.sin(rotY),cosX=Math.cos(0.22),sinX=Math.sin(0.22);
-    const x1=sx*cosY+sz*sinY, z1=-sx*sinY+sz*cosY;
-    const y1=sy*cosX-z1*sinX, z2=sy*sinX+z1*cosX;
-    const sc=(380)/(380+z2*GR);
+    const x1=sx*cosY+sz*sinY,z1=-sx*sinY+sz*cosY;
+    const y1=sy*cosX-z1*sinX,z2=sy*sinX+z1*cosX;
+    const sc=380/(380+z2*GR);
     return {px:CX+x1*GR*sc, py:CY+y1*GR*sc};
   }
 
@@ -134,61 +132,63 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     oc.textAlign='center'; oc.textBaseline='middle';
     oc.fillText(String(digit),CX,CY);
     const d=oc.getImageData(0,0,SZ,SZ).data, pts=[];
-    for(let y=0;y<SZ;y+=3) for(let x=0;x<SZ;x+=3)
-      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*3, y:y+(Math.random()-.5)*3});
+    for(let y=0;y<SZ;y+=2) for(let x=0;x<SZ;x+=2)
+      if(d[(y*SZ+x)*4+3]>100) pts.push({x:x+(Math.random()-.5)*2, y:y+(Math.random()-.5)*2});
     for(let i=pts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]];}
     return pts;
   }
 
   useEffect(()=>{
-    if(!result||morphActive||doneRef.current) return;
-    const elapsed = Date.now() - scanStart.current;
-    const wait = Math.max(0, MIN_MORPH_DELAY - elapsed);
-    morphTimerRef.current = setTimeout(()=>{ triggerMorph(result); }, wait);
-    return ()=>{ if(morphTimerRef.current) clearTimeout(morphTimerRef.current); };
-  },[result]);
-
-  const triggerMorph = (result) => {
-    if(morphActive||doneRef.current) return;
+    if(!result||doneRef.current) return;
     const score=result.overall_score||result.score;
     const color=scoreColor(score);
     const [r,g,b]=[parseInt(color.slice(1,3),16),parseInt(color.slice(3,5),16),parseInt(color.slice(5,7),16)];
-    const rotY=Math.random()*Math.PI*2;
-    const particles=[];
-    for(let i=0;i<NUM;i++){
-      const y=1-(i/(NUM-1))*2, rr=Math.sqrt(1-y*y), theta=golden*i;
-      const {px,py}=project(Math.cos(theta)*rr,y,Math.sin(theta)*rr,rotY+Math.random()*.3);
-      particles.push({fromX:px,fromY:py,tx:CX,ty:CY});
-    }
-    const textPts=sampleDigit(score), n=Math.min(NUM,textPts.length);
-    particles.forEach((p,i)=>{
-      p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*8;
-      p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*8;
-    });
-    setMorphActive(true);
-    const canvas=canvasRef.current; if(!canvas) return;
-    const ctx=canvas.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
-    let morphT=0, lastTime=performance.now(), fired=false;
-    const loop=(ts)=>{
-      const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
-      ctx.clearRect(0,0,SZ,SZ);
-      morphT=Math.min(morphT+dt*.42,1);
-      const t=easeIO(morphT);
-      particles.forEach(p=>{
-        const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
-        ctx.beginPath(); ctx.arc(px,py,Math.max(1.2,2.4*(1-t*.35)),0,Math.PI*2);
-        ctx.fillStyle=`rgba(${r},${g},${b},${.25+.75*t})`; ctx.fill();
-      });
-      if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
-      else if(!fired){
-        fired=true; doneRef.current=true;
-        setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },650); },500);
+    const elapsed=Date.now()-scanStart.current;
+    const wait=Math.max(0,MIN_DELAY-elapsed);
+
+    morphTimerRef.current=setTimeout(()=>{
+      if(doneRef.current) return;
+      const rotY=Math.random()*Math.PI*2;
+      const particles=[];
+      for(let i=0;i<NUM;i++){
+        const y=1-(i/(NUM-1))*2,rr=Math.sqrt(1-y*y),theta=golden*i;
+        const {px,py}=project(Math.cos(theta)*rr,y,Math.sin(theta)*rr,rotY+Math.random()*.3);
+        particles.push({fromX:px,fromY:py,tx:CX,ty:CY});
       }
-    };
-    rafRef.current=requestAnimationFrame(loop);
-  };
+      const textPts=sampleDigit(score),n=Math.min(NUM,textPts.length);
+      particles.forEach((p,i)=>{
+        p.tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
+        p.ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
+      });
+
+      const canvas=canvasRef.current; if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+      const dpr=window.devicePixelRatio||1;
+      canvas.width=SZ*dpr; canvas.height=SZ*dpr; ctx.scale(dpr,dpr);
+      setMorphActive(true);
+
+      let morphT=0,lastTime=performance.now(),fired=false;
+      const loop=(ts)=>{
+        const dt=Math.min((ts-lastTime)/1000,.05); lastTime=ts;
+        ctx.clearRect(0,0,SZ,SZ);
+        morphT=Math.min(morphT+dt*.38,1);
+        const t=easeIO(morphT);
+        particles.forEach(p=>{
+          const px=p.fromX+(p.tx-p.fromX)*t, py=p.fromY+(p.ty-p.fromY)*t;
+          ctx.beginPath(); ctx.arc(px,py,Math.max(1,1.8*(1-t*.25)),0,Math.PI*2);
+          ctx.fillStyle=`rgba(${r},${g},${b},${.2+.8*t})`; ctx.fill();
+        });
+        if(morphT<1){ rafRef.current=requestAnimationFrame(loop); }
+        else if(!fired){
+          fired=true; doneRef.current=true;
+          setTimeout(()=>{ setFading(true); setTimeout(()=>{ setGone(true); onDone(); },700); },600);
+        }
+      };
+      rafRef.current=requestAnimationFrame(loop);
+    },wait);
+
+    return()=>{ if(morphTimerRef.current) clearTimeout(morphTimerRef.current); };
+  },[result]);
 
   useEffect(()=>{
     if(!loading&&!result&&!doneRef.current){
@@ -196,18 +196,23 @@ const ScanOverlay = ({loading, result, isMobile, onDone}) => {
     }
   },[loading,result]);
 
-  useEffect(()=>{ return()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); }; },[]);
+  useEffect(()=>()=>{ if(rafRef.current) cancelAnimationFrame(rafRef.current); },[]);
 
   if(gone) return null;
   return(
     <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'#052e16',zIndex:9999,
       display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-      opacity:fading?0:1, transition:fading?'opacity 0.65s ease':'opacity 0.4s ease',
+      opacity:fading?0:1,transition:fading?'opacity 0.7s ease':'opacity 0.4s ease',
       pointerEvents:fading?'none':'auto',
     }}>
       <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
-      {!morphActive && <GlobeLoading isMobile={isMobile}/>}
-      <canvas ref={canvasRef} style={{display:morphActive?'block':'none', width:SZ, height:SZ}}/>
+      <GlobeLoading isMobile={isMobile}/>
+      <canvas ref={canvasRef} style={{
+        display: morphActive?'block':'none',
+        position:'absolute', top:'50%', left:'50%',
+        transform:`translate(-50%,-${isMobile?'52':'58'}%)`,
+        width:SZ, height:SZ, pointerEvents:'none',
+      }}/>
     </div>
   );
 };
@@ -702,18 +707,11 @@ const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
       const col=scoreColor(score);
       const [r,g,b]=[parseInt(col.slice(1,3),16),parseInt(col.slice(3,5),16),parseInt(col.slice(5,7),16)];
       for(let i=0;i<NUM;i++){
-        const tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*6;
-        const ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*6;
-        ctx.beginPath(); ctx.arc(tx,ty,1.6,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${r},${g},${b},0.88)`; ctx.fill();
+        const tx=i<n?textPts[i].x:textPts[i%textPts.length].x+(Math.random()-.5)*4;
+        const ty=i<n?textPts[i].y:textPts[i%textPts.length].y+(Math.random()-.5)*4;
+        ctx.beginPath(); ctx.arc(tx,ty,1.4,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${r},${g},${b},0.9)`; ctx.fill();
       }
-      const startA=-Math.PI/2;
-      ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2);
-      ctx.strokeStyle=`rgba(${r},${g},${b},.12)`; ctx.lineWidth=5; ctx.stroke();
-      ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2*(score/10));
-      ctx.strokeStyle=col; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
-      ctx.fillStyle=col; ctx.font=`bold 13px 'Outfit',system-ui`;
-      ctx.textAlign='center'; ctx.fillText('/10',CX,CY+78);
       onRevealComplete&&onRevealComplete();
       return;
     }
@@ -772,17 +770,6 @@ const ParticleScoreReveal = ({score, onRevealComplete, instant=false}) => {
           ctx.beginPath(); ctx.arc(px,py,Math.max(1.2,2.2*(1-t*.4)),0,Math.PI*2);
           ctx.fillStyle=`rgba(${r},${g},${b},${.35+.65*t})`; ctx.fill();
         });
-        if(s.morphT>.55){
-          s.arcProg=Math.min(s.arcProg+dt*2.6,1);
-          const ap=easeOut(s.arcProg), startA=-Math.PI/2;
-          ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2);
-          ctx.strokeStyle=`rgba(${r},${g},${b},.12)`; ctx.lineWidth=5; ctx.stroke();
-          ctx.beginPath(); ctx.arc(CX,CY,105,startA,startA+Math.PI*2*(score/10)*ap);
-          ctx.strokeStyle=color; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
-          ctx.globalAlpha=easeOut(s.arcProg);
-          ctx.fillStyle=color; ctx.font=`bold 13px 'Outfit',system-ui`;
-          ctx.textAlign='center'; ctx.fillText('/10',CX,CY+78); ctx.globalAlpha=1;
-        }
       }
       s.rafId=requestAnimationFrame(loop);
     };
