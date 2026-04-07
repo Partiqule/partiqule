@@ -2441,6 +2441,201 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   );
 };
 
+// ── ROUTINE PAGE ──────────────────────────────────────────────
+const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
+  const [timeFilter,   setTimeFilter]   = useState("all");
+  const [notPurchased, setNotPurchased] = useState(new Set());
+
+  const now = Date.now();
+  const TIME_CUTOFFS = {"30d":30*24*60*60*1000, "90d":90*24*60*60*1000, "all":Infinity};
+
+  const filtered = history.filter(h => {
+    if (timeFilter !== "all" && h.scannedAt) {
+      if (now - new Date(h.scannedAt).getTime() > TIME_CUTOFFS[timeFilter]) return false;
+    }
+    return true;
+  });
+
+  const active   = filtered.filter(h => !notPurchased.has(h.product_name));
+  const inactive = filtered.filter(h => notPurchased.has(h.product_name));
+
+  // Chemical overlap across active products
+  const chemMap = {};
+  active.forEach(item => {
+    const chems = [
+      ...(item.harmful_chemicals || []),
+      ...(item.identified_plastics || []),
+      ...((item.food_analysis?.concerns || []).filter(c=>c.severity==="high").map(c=>c.substance||c.ingredient||"")),
+    ].filter(Boolean);
+    chems.forEach(chem => {
+      const key = chem.toLowerCase().trim();
+      if (!chemMap[key]) chemMap[key] = {name:chem, count:0, products:[]};
+      if (!chemMap[key].products.includes(item.product_name)) {
+        chemMap[key].count++;
+        chemMap[key].products.push(item.product_name);
+      }
+    });
+  });
+
+  const repeated = Object.values(chemMap).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count).slice(0,10);
+  const allChems = Object.values(chemMap).sort((a,b)=>b.count-a.count).slice(0,16);
+  const routineAvg = active.length
+    ? Math.round(active.reduce((s,h)=>s+(h.overall_score||h.score||5),0)/active.length*10)/10
+    : null;
+
+  const bg = isDark?"#131929":"#fafafa";
+
+  return (
+    <div style={{maxWidth:680, margin:"0 auto", padding:isMobile?"16px 12px 80px":"32px 24px 80px"}}>
+
+      {/* Header */}
+      <div style={{marginBottom:20}}>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?22:28, color:text, margin:"0 0 4px"}}>My Routine</h1>
+        <p style={{fontSize:14, color:muted, margin:0}}>Track your real chemical exposure across everything in your home</p>
+      </div>
+
+      {history.length === 0 ? (
+        <div style={{textAlign:"center", padding:"60px 20px", color:muted}}>
+          <div style={{fontSize:48, marginBottom:12}}>📋</div>
+          <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>No scans yet</div>
+          <div style={{fontSize:14, lineHeight:1.6}}>Scan products to build your routine and see which chemicals appear most often across your home.</div>
+        </div>
+      ) : (<>
+
+        {/* Time filter + stats row */}
+        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:16, flexWrap:"wrap"}}>
+          {[["all","All time"],["90d","90 days"],["30d","30 days"]].map(([val,label])=>(
+            <button key={val} onClick={()=>setTimeFilter(val)} style={{
+              fontSize:12, fontWeight:600, padding:"5px 12px", borderRadius:20, cursor:"pointer",
+              border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
+              background:timeFilter===val?"#16a34a":"transparent",
+              color:timeFilter===val?"#fff":muted,
+            }}>{label}</button>
+          ))}
+          <span style={{fontSize:12, color:muted, marginLeft:"auto"}}>{active.length} active · {inactive.length} not using</span>
+        </div>
+
+        {/* Routine score card */}
+        {routineAvg !== null && (
+          <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, marginBottom:16, display:"flex", alignItems:"center", gap:16}}>
+            <div style={{textAlign:"center", flexShrink:0}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:40, color:scoreColor(Math.round(routineAvg)), lineHeight:1}}>{routineAvg}</div>
+              <div style={{fontSize:11, color:muted, marginTop:2}}>avg score</div>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14, fontWeight:700, color:scoreColor(Math.round(routineAvg)), marginBottom:6}}>{scoreLabel(Math.round(routineAvg))} routine</div>
+              <div style={{height:8, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                <div style={{height:"100%", width:`${Math.min(100,(routineAvg/10)*100)}%`, background:scoreColor(Math.round(routineAvg)), borderRadius:99, transition:"width 0.4s"}}/>
+              </div>
+              <div style={{fontSize:11, color:muted, marginTop:4}}>{active.length} products marked as in your home</div>
+            </div>
+          </div>
+        )}
+
+        {/* Repeated chemicals */}
+        {repeated.length > 0 && (
+          <div style={{background:isDark?"#1e1a1a":"#fff9f9", borderRadius:16, padding:"16px 20px", border:`1.5px solid #fca5a533`, marginBottom:16}}>
+            <div style={{fontSize:11, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12}}>⚠ Repeated exposure across products</div>
+            <div style={{display:"flex", flexDirection:"column", gap:8}}>
+              {repeated.map((c,i)=>(
+                <div key={i} style={{display:"flex", alignItems:"flex-start", gap:10}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:3}}>
+                      <span style={{fontSize:13, fontWeight:700, color:"#dc2626"}}>{c.name}</span>
+                      <span style={{fontSize:10, fontWeight:700, color:"#fff", background:"#dc2626", padding:"1px 7px", borderRadius:20}}>{c.count}×</span>
+                    </div>
+                    <div style={{height:4, borderRadius:99, background:isDark?"#2a3347":"#fee2e2", overflow:"hidden", marginBottom:3}}>
+                      <div style={{height:"100%", width:`${Math.min(100,(c.count/active.length)*100)}%`, background:"#dc2626", borderRadius:99}}/>
+                    </div>
+                    <div style={{fontSize:11, color:muted}}>{c.products.slice(0,2).join(", ")}{c.products.length>2?` +${c.products.length-2} more`:""}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:11, color:"#d97706", marginTop:12, lineHeight:1.5, padding:"8px 10px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
+              Chemicals repeated across multiple products represent your highest real-world exposure — small amounts from each source compound over time.
+            </div>
+          </div>
+        )}
+
+        {/* All chemicals bubble cloud */}
+        {allChems.length > 0 && (
+          <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, marginBottom:16}}>
+            <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>All flagged substances in active routine</div>
+            <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+              {allChems.map((c,i)=>(
+                <span key={i} style={{
+                  fontSize:12, fontWeight:600, padding:"4px 11px", borderRadius:20,
+                  background:c.count>=2?(isDark?"#2a1a1a":"#fef2f2"):(isDark?"#131929":"#f8fafb"),
+                  color:c.count>=2?"#dc2626":muted,
+                  border:`1px solid ${c.count>=2?"#fca5a544":(isDark?"#2a3347":"#e5e7eb")}`,
+                }}>
+                  {c.name}{c.count>=2?` ×${c.count}`:""}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Product list */}
+        <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden", marginBottom:16}}>
+          <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"#2a3347":"#f0f0f0"}`}}>
+            <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Your products</div>
+          </div>
+
+          {/* Active products */}
+          {active.map((item,i)=>{
+            const s = item.overall_score||item.score||5;
+            return (
+              <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`}}>
+                <div style={{width:36, height:36, borderRadius:8, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
+                </div>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
+                  <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{item.category}</div>
+                </div>
+                <div style={{display:"flex", gap:6, flexShrink:0}}>
+                  <button onClick={()=>onSelect(item)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#e2e8f0"}`, background:"transparent", color:muted, cursor:"pointer"}}>View</button>
+                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.add(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:"1px solid #16a34a", background:"#f0fdf4", color:"#16a34a", cursor:"pointer"}}>In my home</button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Inactive products */}
+          {inactive.length > 0 && (<>
+            <div style={{padding:"8px 20px", background:isDark?"#131929":"#fafafa"}}>
+              <div style={{fontSize:10, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.07em"}}>Not in my home</div>
+            </div>
+            {inactive.map((item,i)=>{
+              const s = item.overall_score||item.score||5;
+              return (
+                <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`, opacity:0.5}}>
+                  <div style={{width:36, height:36, borderRadius:8, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                    <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
+                  </div>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
+                    <div style={{fontSize:11, color:muted}}>Not using</div>
+                  </div>
+                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.delete(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#d1d5db"}`, background:"transparent", color:muted, cursor:"pointer", flexShrink:0}}>Mark active</button>
+                </div>
+              );
+            })}
+          </>)}
+        </div>
+
+        {notPurchased.size > 0 && (
+          <button onClick={()=>setNotPurchased(new Set())} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline"}}>
+            Reset — mark all as in my home
+          </button>
+        )}
+      </>)}
+    </div>
+  );
+};
+
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
   const [priceFilter, setPriceFilter] = useState("all");
@@ -3993,7 +4188,8 @@ function App() {
       const r = await fetch(`${API_BASE}/subscription-status?userId=${userId}`);
       const d = await r.json();
       setIsSubscribed(!!d.is_subscribed);
-    } catch { setIsSubscribed(false); }
+      return !!d.is_subscribed;
+    } catch { setIsSubscribed(false); return false; }
   };
 
   const syncScanCount = async (userId) => {
@@ -4014,14 +4210,20 @@ function App() {
       if (session?.user) {
         setUser(session.user);
         loadCloudHistory(session.user.id);
-        checkSubscription(session.user.id);
-        syncScanCount(session.user.id);
+        // Check subscription FIRST before syncing scan count — prevents race condition
+        // where high server scan count fires paywall before subscription status arrives
+        checkSubscription(session.user.id).then(() => {
+          syncScanCount(session.user.id);
+        });
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user || null;
       setUser(u);
-      if (u) { loadCloudHistory(u.id); checkSubscription(u.id); syncScanCount(u.id); }
+      if (u) {
+        loadCloudHistory(u.id);
+        checkSubscription(u.id).then(() => syncScanCount(u.id));
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -4427,6 +4629,7 @@ function App() {
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"How it Works",       pg:"methodology"},
+              {label:"My Routine",         pg:"routine"},
               {label:"My Scans",           pg:"history"},
               {label:"⚙ Settings",         pg:"settings"},
             ].map(item=>(
@@ -4503,6 +4706,14 @@ function App() {
             Go to Partiqule →
           </button>
         </div>
+      ) : page === "routine" ? (
+        <RoutinePage
+          history={history}
+          isDark={isDark} surface={surface} border={border} text={text} muted={muted}
+          isMobile={isMobile} user={user}
+          onSelect={(item)=>{setResult(item); setPage("home");}}
+          onSearch={(q)=>{setPage("home"); setQuery(q); analyze(q);}}
+        />
       ) : page === "history" ? (
         <HistoryPage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
