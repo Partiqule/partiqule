@@ -1616,6 +1616,9 @@ const ENTRIES = [
 
   // ── CAT FOOD: MID / PREMIUM ───────────────────────────────────
   ["blue buffalo cat",              { floor:3, ceiling:5, substances:["pea protein"], reason:"Blue Buffalo Cat — no artificial preservatives or colors, but pea protein heavy in some formulas. Better than Friskies/Meow Mix.", confidence:"high", category:"food_beverage" }],
+  ["wellnesse toothpaste",            { floor:1, ceiling:2, substances:[], reason:"Wellnesse Whitening Toothpaste — hydroxyapatite, xylitol, neem oil, green tea extract. No SLS, no fluoride, no artificial dyes, no parabens. B Corp + Non-Toxic Project certified. Benchmark clean toothpaste.", confidence:"high", category:"personal_care" }],
+  ["wellnesse whitening",             { floor:1, ceiling:2, substances:[], reason:"Wellnesse Whitening — B Corp, Non-Toxic Project certified, hydroxyapatite based. Benchmark clean.", confidence:"high", category:"personal_care" }],
+  ["wellnesse",                       { floor:1, ceiling:3, substances:[], reason:"Wellnesse brand — B Corp certified, Non-Toxic Project certified, clean ingredients across all product lines.", confidence:"high", category:"personal_care" }],
   ["wellness",                        { floor:2, ceiling:3, substances:[], reason:"Wellness brand — no by-products, no artificial preservatives or colors across the line. Clean premium pet food brand.", confidence:"high", category:"food_beverage" }],
   ["wellness cat food",             { floor:2, ceiling:3, substances:[], reason:"Wellness Cat — no by-products, no artificial preservatives or colors, high protein. Clean premium cat food.", confidence:"high", category:"food_beverage" }],
   ["orijen cat food",               { floor:1, ceiling:3, substances:[], reason:"Orijen Cat — 85% meat ingredients, biologically appropriate, no artificial additives. Benchmark clean premium cat food.", confidence:"high", category:"food_beverage" }],
