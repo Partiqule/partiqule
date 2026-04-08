@@ -4083,7 +4083,36 @@ app.post("/subscribe", async (req, res) => {
   res.json({ ok: true, already });
 });
 
-// ── STRIPE SUBSCRIPTION ROUTES ────────────────────────────────
+// ── DELETE ACCOUNT ────────────────────────────────────────────
+app.post("/delete-account", async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    // Cancel Stripe subscription if active
+    if (stripe) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles").select("stripe_customer_id").eq("id", userId).single();
+      if (profile?.stripe_customer_id) {
+        const subs = await stripe.subscriptions.list({ customer: profile.stripe_customer_id, status: "active", limit: 5 });
+        for (const sub of subs.data) {
+          await stripe.subscriptions.cancel(sub.id);
+        }
+      }
+    }
+    // Delete profile row
+    await supabaseAdmin.from("profiles").delete().eq("id", userId);
+    // Delete Supabase auth user
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+    console.log(`[DELETE ACCOUNT] User ${userId} deleted`);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error("[DELETE ACCOUNT]", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 const stripe = process.env.STRIPE_SECRET_KEY ? require("stripe")(process.env.STRIPE_SECRET_KEY) : null;
 const STRIPE_PRICE_ID      = process.env.STRIPE_PRICE_ID || "";       // price_xxx from Stripe dashboard
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || ""; // whsec_xxx from Stripe dashboard

@@ -3863,6 +3863,21 @@ function App() {
   const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
   const [promoCode,    setPromoCode]    = useState("");
   const [promoError,   setPromoError]   = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const deleteAccount = async () => {
+    if (!user) return;
+    try {
+      await fetch(`${API}/delete-account`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ userId: user.id }),
+      });
+      await supabase.auth.signOut();
+      setShowDeleteConfirm(false);
+      setPage("home");
+      setResult(null);
+    } catch(e) { console.error("Delete account failed", e); }
+  };
   const [checkingOut,  setCheckingOut]  = useState(false);
   const FREE_LIMIT = 10;
   const PAID_LIMIT = 20;
@@ -4361,6 +4376,18 @@ function App() {
 
       {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
 
+      {/* ── Delete account confirmation modal ── */}
+      {showDeleteConfirm && (
+        <div onClick={()=>setShowDeleteConfirm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+            <div style={{fontSize:20,fontWeight:700,color:"#dc2626",marginBottom:8}}>Delete account?</div>
+            <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
+            <button onClick={deleteAccount} style={{width:"100%",padding:"13px",borderRadius:10,background:"#dc2626",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Yes, delete my account</button>
+            <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
+          </div>
+        </div>
+      )}
+
       {/* ── Scan limit modals ── */}
       {showLimitModal && (
         <div onClick={()=>setShowLimitModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
@@ -4368,22 +4395,17 @@ function App() {
 
             {showLimitModal === "account" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've been busy.</div>
-              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $3.99/month.</div>
+              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $4.99/month.</div>
               <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create account</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
             {showLimitModal === "paywall" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
-              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $3.99/month. Cancel anytime.</div>
+              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $4.99/month. Cancel anytime.</div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
-                {checkingOut ? "Loading..." : "Subscribe — $3.99/month"}
+                {checkingOut ? "Loading..." : "Subscribe — $4.99/month"}
               </button>
-              <div style={{display:"flex",gap:8,marginBottom:8}}>
-                <input value={promoCode} onChange={e=>setPromoCode(e.target.value.toUpperCase())} placeholder="Promo code" style={{flex:1,padding:"10px 12px",borderRadius:8,border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,background:isDark?"#111":"#fff",color:isDark?"#fff":"#1a1a18",fontSize:14}}/>
-                <button onClick={startCheckout} disabled={checkingOut||!promoCode.trim()} style={{padding:"10px 14px",borderRadius:8,background:"#052e16",border:"none",color:"#4ade80",fontSize:14,fontWeight:600,cursor:"pointer",opacity:(!promoCode.trim()||checkingOut)?0.5:1}}>Apply</button>
-              </div>
-              {promoError && <div style={{fontSize:12,color:"#dc2626",marginBottom:8}}>{promoError}</div>}
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
@@ -4487,6 +4509,9 @@ function App() {
                   </div>
                   <button onClick={signOut} style={{width:"100%", padding:"12px", borderRadius:10, border:`1.5px solid ${border}`, background:"none", color:muted, fontSize:14, fontWeight:600, cursor:"pointer"}}>
                     Sign out
+                  </button>
+                  <button onClick={()=>setShowDeleteConfirm(true)} style={{width:"100%", padding:"12px", borderRadius:10, border:"1.5px solid #fee2e2", background:"none", color:"#dc2626", fontSize:14, fontWeight:600, cursor:"pointer", marginTop:8}}>
+                    Delete account
                   </button>
                 </div>
               ) : (
