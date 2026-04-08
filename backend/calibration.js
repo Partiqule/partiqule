@@ -5429,17 +5429,31 @@ function applyProductCalibration(result) {
   // ── Whole Foods banned check ──────────────────────────────────
   const wfBanned = entry ? checkWholeFoodsBanned(entry.substances || []) : false;
 
+  // ── Strip false substance flags for products with confirmed natural colorants ──
+  // When calibration entry explicitly states no petroleum dyes, remove any AI-flagged dyes
+  const NATURAL_COLORANT_MARKER = /natural.*dye|vegetable.*dye|no petroleum dye|natural colorant|vegetable.*color|fruit.*color|colored with vegetable|colored with fruit/i;
+  const PETROLEUM_DYE_PATTERN   = /^(Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|FD&?C|petroleum dye|artificial.*dye|artificial.*color)$/i;
+
+  let cleanedSubstances    = result.flagged_substances || result.concerns || [];
+  let cleanedConcerns      = result.concerns || [];
+  if (entry && NATURAL_COLORANT_MARKER.test(entry.reason || "")) {
+    cleanedSubstances = cleanedSubstances.filter(s => !PETROLEUM_DYE_PATTERN.test(s));
+    cleanedConcerns   = cleanedConcerns.filter(s => !PETROLEUM_DYE_PATTERN.test(s));
+  }
+
   if (!corrected) {
     if (entry && entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
-      return { ...result, confidence: "high", nutrition: nutrition_out, retailer_restricted: wfBanned, nutrition_concerns };
+      return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, confidence: "high", nutrition: nutrition_out, retailer_restricted: wfBanned, nutrition_concerns };
     }
-    if (wfBanned) return { ...result, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns };
-    return { ...result, nutrition: nutrition_out, nutrition_concerns };
+    if (wfBanned) return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns };
+    return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, nutrition_concerns };
   }
 
   return {
     ...result,
+    flagged_substances:   cleanedSubstances,
+    concerns:             cleanedConcerns,
     overall_score:        newScore,
     score:                newScore,
     confidence:           entry?.confidence === "high" ? "high" : result.confidence,
