@@ -2181,10 +2181,24 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
-      {/* Back */}
-      <button onClick={()=>onNavigate("guides")} style={{display:"flex",alignItems:"center",gap:6,color:muted,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600,marginBottom:32,padding:0}}>
-        ← All guides
-      </button>
+      {/* Back + Share row */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:32}}>
+        <button onClick={()=>onNavigate("guides")} style={{display:"flex",alignItems:"center",gap:6,color:muted,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>
+          ← All guides
+        </button>
+        <button onClick={async()=>{
+          const url = `${window.location.origin}/guides/${guide.slug}`;
+          if(navigator.share){
+            try{ await navigator.share({ title: guide.title, text: guide.excerpt || guide.title, url }); }
+            catch{}
+          } else {
+            await navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+          }
+        }} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 18px",borderRadius:20,border:`1.5px solid ${border}`,background:"none",color:text,fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <IconShare size={14} color={muted}/> Share
+        </button>
+      </div>
 
       {/* Category + meta */}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
