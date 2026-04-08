@@ -42,7 +42,7 @@ const scoreCache    = new Map();
 const fs   = require("fs");
 const path = require("path");
 const CACHE_FILE = path.join("/tmp", "partiqule_cache.json");
-const CACHE_MAX  = 500; // max entries to persist
+const CACHE_MAX  = 2000; // max entries to persist
 
 const loadCacheFromDisk = () => {
   try {
