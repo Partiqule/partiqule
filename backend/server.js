@@ -191,6 +191,33 @@ function cacheKey(q, category) {
   return category ? `${category}:${norm}` : norm;
 }
 
+// Fuzzy calibration lookup — handles name variations like "soap" vs "dish"
+// Checks exact match first, then partial match (query contains key or key contains query)
+function fuzzyCalibrationLookup(productName) {
+  const norm = normalise(productName);
+
+  // 1. Exact match
+  const exact = CALIBRATION.get(norm);
+  if (exact) return { key: norm, entry: exact };
+
+  // 2. Query starts with a calibration key (e.g. "seventh generation soap" starts with "seventh generation")
+  for (const [k, v] of CALIBRATION.entries()) {
+    if (k.length >= 4 && norm.startsWith(k)) return { key: k, entry: v };
+  }
+
+  // 3. Calibration key starts with query (e.g. "seventh generation" found from "seventh gen")
+  for (const [k, v] of CALIBRATION.entries()) {
+    if (norm.length >= 4 && k.startsWith(norm)) return { key: k, entry: v };
+  }
+
+  // 4. Query contains calibration key as a phrase (e.g. "method all purpose cleaner" contains "method")
+  for (const [k, v] of CALIBRATION.entries()) {
+    if (k.length >= 6 && norm.includes(k)) return { key: k, entry: v };
+  }
+
+  return null;
+}
+
 function cleanProductName(name) {
   if (!name) return "Unknown product";
   if (/^https?:\/\//i.test(name) || name.includes("://") || name.includes("utm_") || name.includes(".com/"))
@@ -3956,6 +3983,34 @@ app.post("/analyze", rateLimit, async (req, res) => {
     console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
     return res.json({ ...cached, cached: true });
   }
+
+  // Fuzzy calibration lookup — catches name variations before going to AI
+  // e.g. "Seventh Generation soap" matches "seventh generation dish"
+  const fuzzyHit = fuzzyCalibrationLookup(productName);
+  if (fuzzyHit) {
+    const { entry } = fuzzyHit;
+    const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+    const fuzzyResult = applyProductCalibration({
+      product_name: productName,
+      score: midScore, overall_score: midScore,
+      category: entry.category || category,
+      confidence: entry.confidence || "high",
+      dimensions: {
+        materials:      { score: 5, concerns: entry.substances || [] },
+        usage_exposure: { score: 5, concerns: [] },
+        packaging:      { score: 5, concerns: [] },
+        sustainability: { score: 5, concerns: [] },
+      },
+      concerns: entry.substances || [],
+      flagged_substances: entry.substances || [],
+      summary: entry.reason || "",
+      alternatives: [], ai_alternatives: [],
+    });
+    cacheSet(key, fuzzyResult);
+    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}`);
+    return res.json({ ...fuzzyResult, cached: false });
+  }
+
   console.log(`[CACHE MISS] ${key} — running AI pass`);
 
   try {
