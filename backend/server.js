@@ -4756,7 +4756,28 @@ const autoWarmFromSupabase = async () => {
   }
 };
 
-// External cron can hit this to keep cache warm — e.g. cron-job.org daily
+// Clear a single product from cache (memory + Redis)
+app.get("/cache-clear-product", requireAdmin, async (req, res) => {
+  const name = req.query.name;
+  if (!name) return res.status(400).json({ error: "name param required" });
+  const category = detectCategory(name);
+  const key = cacheKey(name, category);
+  const wasInMemory = scoreCache.has(key);
+  scoreCache.delete(key);
+  if (hasRedis) {
+    try {
+      await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+      });
+    } catch(e) { console.warn("[REDIS] del error:", e.message); }
+  }
+  saveCacheToDisk();
+  console.log(`[CACHE] Cleared "${name}" (key: ${key}, wasInMemory: ${wasInMemory})`);
+  res.json({ ok: true, key, wasInMemory });
+});
+
+ — e.g. cron-job.org daily
 app.post("/cache-warm", requireAdmin, (req, res) => {
   const missing = WARM_LIST.filter(name => {
     const key = cacheKey(name, detectCategory(name));
