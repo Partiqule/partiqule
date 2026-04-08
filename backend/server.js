@@ -37,6 +37,45 @@ app.use((req, res, next) => {
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const scoreCache    = new Map();
 
+// ── FILE CACHE PERSISTENCE ────────────────────────────────────
+// Survives Railway restarts — reads from disk on boot, writes on each new score
+const fs   = require("fs");
+const path = require("path");
+const CACHE_FILE = path.join("/tmp", "partiqule_cache.json");
+const CACHE_MAX  = 500; // max entries to persist
+
+const loadCacheFromDisk = () => {
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const raw  = fs.readFileSync(CACHE_FILE, "utf8");
+      const data = JSON.parse(raw);
+      let loaded = 0;
+      for (const [k, v] of Object.entries(data)) {
+        scoreCache.set(k, v);
+        loaded++;
+      }
+      console.log(`[CACHE] Loaded ${loaded} entries from disk`);
+    } else {
+      console.log("[CACHE] No cache file found — starting fresh");
+    }
+  } catch(e) {
+    console.warn("[CACHE] Failed to load from disk:", e.message);
+  }
+};
+
+const saveCacheToDisk = () => {
+  try {
+    // Keep only most recent CACHE_MAX entries
+    const entries = [...scoreCache.entries()].slice(-CACHE_MAX);
+    const obj     = Object.fromEntries(entries);
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(obj), "utf8");
+  } catch(e) {
+    console.warn("[CACHE] Failed to save to disk:", e.message);
+  }
+};
+
+loadCacheFromDisk();
+
 // ── ADMIN KEY ─────────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
 const requireAdmin = (req, res, next) => {
@@ -3795,9 +3834,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const key      = cacheKey(productName, category);
 
   if (scoreCache.has(key)) {
-    console.log(`Cache hit: ${key}`);
+    console.log(`[CACHE HIT] ${key} (${scoreCache.size} total cached)`);
     return res.json({ ...scoreCache.get(key), cached: true });
   }
+  console.log(`[CACHE MISS] ${key} — running AI pass`);
 
   try {
 
@@ -4052,7 +4092,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
 
     scoreCache.set(key, calibrated);
-    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence})`);
+    saveCacheToDisk();
+    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence}, total cached: ${scoreCache.size})`);
     res.json(calibrated);
 
   } catch (err) {
@@ -4299,6 +4340,8 @@ app.get("/health", (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured - using static database",
   cachedProducts: scoreCache.size,
+  cacheFile: fs.existsSync(CACHE_FILE) ? `${Math.round(fs.statSync(CACHE_FILE).size/1024)}KB` : "none",
+  uptime: Math.round(process.uptime()) + "s",
 }));
 
 const PORT = process.env.PORT || 3001;
