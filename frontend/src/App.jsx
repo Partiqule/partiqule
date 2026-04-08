@@ -3,6 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// Team emails — these accounts get automatic admin nav access
+const ADMIN_EMAILS = ["paul@partiqule.com", "sara@partiqule.com"];
+const isAdminUser = (user) => user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
+
 // Detect if running inside Capacitor iOS wrapper vs browser
 // When StoreKit is implemented, use this to branch between Apple IAP and Stripe
 const IS_NATIVE = typeof window !== "undefined" &&
@@ -2035,8 +2039,417 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
   );
 };
 
+// ── GUIDES SYSTEM ─────────────────────────────────────────────
+const GUIDE_CATEGORIES = ["general","food","beauty","home","baby","pregnancy"];
+const CATEGORY_COLORS  = {general:"#6366f1",food:"#16a34a",beauty:"#ec4899",home:"#0891b2",baby:"#f59e0b",pregnancy:"#9333ea"};
+
+// Simple markdown-like renderer for guide body HTML
+const GuideBody = ({html}) => (
+  <div dangerouslySetInnerHTML={{__html: html}}
+    style={{lineHeight:1.85, fontSize:17, color:"inherit"}}
+    className="guide-body"
+  />
+);
+
+// Guides index page
+const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}) => {
+  const [guides, setGuides]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter]   = useState("all");
+
+  useEffect(()=>{
+    supabase.from("guides").select("id,slug,title,excerpt,category,author,read_time_minutes,created_at,cover_image_url")
+      .eq("published",true).order("created_at",{ascending:false})
+      .then(({data})=>{ setGuides(data||[]); setLoading(false); });
+  },[]);
+
+  const filtered = filter==="all" ? guides : guides.filter(g=>g.category===filter);
+
+  return (
+    <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
+      <style>{`
+        .guide-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+        .guide-card{transition:transform 0.2s,box-shadow 0.2s;}
+        .guide-body h2{font-size:24px;font-weight:700;margin:36px 0 12px;font-family:'Outfit',sans-serif;}
+        .guide-body h3{font-size:20px;font-weight:700;margin:28px 0 10px;font-family:'Outfit',sans-serif;}
+        .guide-body p{margin:0 0 20px;}
+        .guide-body ul,.guide-body ol{margin:0 0 20px;padding-left:24px;}
+        .guide-body li{margin-bottom:8px;}
+        .guide-body strong{font-weight:700;}
+        .guide-body em{font-style:italic;}
+        .guide-body blockquote{border-left:4px solid #4ade80;margin:24px 0;padding:12px 20px;background:rgba(74,222,128,0.06);border-radius:0 8px 8px 0;}
+        .guide-body a{color:#16a34a;text-decoration:underline;}
+      `}</style>
+
+      {/* Header */}
+      <div style={{marginBottom:40}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>From the team</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?30:42,fontWeight:800,color:text,margin:"0 0 12px",letterSpacing:"-0.5px",lineHeight:1.1}}>Product Safety Guides</h1>
+        <p style={{fontSize:17,color:muted,margin:"0 0 28px",lineHeight:1.6}}>Real research. Real opinions. No brand influence.</p>
+
+        {/* Category filter */}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {["all",...GUIDE_CATEGORIES].map(cat=>(
+            <button key={cat} onClick={()=>setFilter(cat)} style={{
+              padding:"6px 16px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
+              background:filter===cat?(CATEGORY_COLORS[cat]||"#052e16"):(isDark?"#1e2433":"#f1f5f9"),
+              color:filter===cat?"#fff":(isDark?"#94a3b8":"#64748b"),
+              transition:"all 0.15s",
+            }}>{cat.charAt(0).toUpperCase()+cat.slice(1)}</button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{textAlign:"center",padding:"60px 0",color:muted}}>Loading guides…</div>
+      ) : filtered.length===0 ? (
+        <div style={{textAlign:"center",padding:"60px 0",color:muted}}>
+          <div style={{fontSize:18,fontWeight:600,marginBottom:8}}>No guides yet</div>
+          <div style={{fontSize:14}}>Check back soon — we are working on it.</div>
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:24}}>
+          {filtered.map(g=>(
+            <div key={g.id} className="guide-card" onClick={()=>onNavigate("guide",g.slug)}
+              style={{background:surface,borderRadius:16,border:`1px solid ${border}`,overflow:"hidden",cursor:"pointer",display:"flex",flexDirection:isMobile?"column":"row"}}>
+              {/* Cover image or color block */}
+              <div style={{
+                width:isMobile?"100%":220, height:isMobile?160:160, flexShrink:0,
+                background:g.cover_image_url?"none":(CATEGORY_COLORS[g.category]||"#052e16"),
+                backgroundImage:g.cover_image_url?`url(${g.cover_image_url})`:"none",
+                backgroundSize:"cover",backgroundPosition:"center",
+                display:"flex",alignItems:"center",justifyContent:"center",
+              }}>
+                {!g.cover_image_url && (
+                  <span style={{fontSize:48,opacity:0.4}}>
+                    {g.category==="food"?"🥗":g.category==="beauty"?"✨":g.category==="home"?"🏠":g.category==="baby"?"👶":g.category==="pregnancy"?"🤰":"📖"}
+                  </span>
+                )}
+              </div>
+              <div style={{padding:"20px 24px",flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                    <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em"}}>{g.category}</span>
+                    <span style={{fontSize:11,color:muted}}>{g.read_time_minutes} min read</span>
+                  </div>
+                  <div style={{fontFamily:"'Outfit',sans-serif",fontSize:20,fontWeight:700,color:text,marginBottom:8,lineHeight:1.3}}>{g.title}</div>
+                  <div style={{fontSize:14,color:muted,lineHeight:1.6}}>{g.excerpt}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:16}}>
+                  <span style={{fontSize:13,color:muted}}>By {g.author}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:"#16a34a"}}>Read →</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Individual guide page
+const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, onNavigate, onScan}) => {
+  const [guide, setGuide] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(()=>{
+    if(!slug) return;
+    supabase.from("guides").select("*").eq("slug",slug).eq("published",true).single()
+      .then(({data,error})=>{
+        if(error||!data){ setNotFound(true); } else { setGuide(data); }
+        setLoading(false);
+      });
+  },[slug]);
+
+  if(loading) return <div style={{textAlign:"center",padding:"80px 0",color:muted}}>Loading…</div>;
+  if(notFound) return (
+    <div style={{textAlign:"center",padding:"80px 20px"}}>
+      <div style={{fontSize:20,fontWeight:700,color:text,marginBottom:8}}>Guide not found</div>
+      <button onClick={()=>onNavigate("guides")} style={{color:"#16a34a",background:"none",border:"none",cursor:"pointer",fontSize:15,fontWeight:600}}>← Back to guides</button>
+    </div>
+  );
+
+  return (
+    <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
+      {/* Back */}
+      <button onClick={()=>onNavigate("guides")} style={{display:"flex",alignItems:"center",gap:6,color:muted,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600,marginBottom:32,padding:0}}>
+        ← All guides
+      </button>
+
+      {/* Category + meta */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#1e2433":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
+        <span style={{fontSize:13,color:muted}}>{guide.read_time_minutes} min read</span>
+      </div>
+
+      {/* Title */}
+      <h1 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?28:40,fontWeight:800,color:text,margin:"0 0 16px",letterSpacing:"-0.5px",lineHeight:1.15}}>{guide.title}</h1>
+
+      {/* Excerpt */}
+      <p style={{fontSize:18,color:muted,margin:"0 0 24px",lineHeight:1.6,fontStyle:"italic"}}>{guide.excerpt}</p>
+
+      {/* Author + date */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:36,paddingBottom:32,borderBottom:`1px solid ${border}`}}>
+        <div style={{width:40,height:40,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"#4ade80",fontWeight:700,fontSize:16}}>{(guide.author||"P")[0]}</span>
+        </div>
+        <div>
+          <div style={{fontSize:14,fontWeight:600,color:text}}>{guide.author}</div>
+          <div style={{fontSize:12,color:muted}}>Co-founder, Partiqule · {new Date(guide.created_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
+        </div>
+      </div>
+
+      {/* Cover image */}
+      {guide.cover_image_url && (
+        <img src={guide.cover_image_url} alt={guide.title}
+          style={{width:"100%",borderRadius:16,marginBottom:36,maxHeight:420,objectFit:"cover"}}/>
+      )}
+
+      {/* Body */}
+      <div style={{color:text}}>
+        <GuideBody html={guide.body||""}/>
+      </div>
+
+      {/* CTA */}
+      <div style={{marginTop:48,padding:"28px 24px",background:"#052e16",borderRadius:16,textAlign:"center"}}>
+        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>Scan the products mentioned in this guide</div>
+        <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",marginBottom:20}}>Free scans, no account required</div>
+        <button onClick={()=>onNavigate("home")} style={{background:"#4ade80",color:"#052e16",border:"none",borderRadius:10,padding:"13px 32px",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+          Start scanning →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Guide admin — write and publish guides
+const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
+  const [guides, setGuides]         = useState([]);
+  const [editing, setEditing]       = useState(null); // null = list, {} = new/edit
+  const [saving, setSaving]         = useState(false);
+  const [msg, setMsg]               = useState("");
+
+  // Form state
+  const [title, setTitle]           = useState("");
+  const [slug, setSlug]             = useState("");
+  const [excerpt, setExcerpt]       = useState("");
+  const [body, setBody]             = useState("");
+  const [category, setCategory]     = useState("general");
+  const [author, setAuthor]         = useState("Paul Miller");
+  const [readTime, setReadTime]     = useState(5);
+  const [coverUrl, setCoverUrl]     = useState("");
+  const [published, setPublished]   = useState(false);
+
+  const load = () => {
+    supabase.from("guides").select("*").order("created_at",{ascending:false})
+      .then(({data})=>setGuides(data||[]));
+  };
+
+  useEffect(()=>{ load(); },[]);
+
+  const autoSlug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+
+  const startNew = () => {
+    setTitle(""); setSlug(""); setExcerpt(""); setBody(""); setCategory("general");
+    setAuthor("Paul Miller"); setReadTime(5); setCoverUrl(""); setPublished(false);
+    setEditing({isNew:true});
+  };
+
+  const startEdit = (g) => {
+    setTitle(g.title||""); setSlug(g.slug||""); setExcerpt(g.excerpt||"");
+    setBody(g.body||""); setCategory(g.category||"general"); setAuthor(g.author||"Paul Miller");
+    setReadTime(g.read_time_minutes||5); setCoverUrl(g.cover_image_url||""); setPublished(g.published||false);
+    setEditing(g);
+  };
+
+  const save = async () => {
+    if(!title.trim()||!slug.trim()) return setMsg("Title and slug are required.");
+    setSaving(true); setMsg("");
+    const payload = {
+      title:title.trim(), slug:slug.trim(), excerpt:excerpt.trim(),
+      body, category, author:author.trim(), read_time_minutes:parseInt(readTime)||5,
+      cover_image_url:coverUrl.trim()||null, published, updated_at:new Date().toISOString(),
+    };
+    let err;
+    if(editing?.isNew){
+      ({error:err} = await supabase.from("guides").insert([payload]));
+    } else {
+      ({error:err} = await supabase.from("guides").update(payload).eq("id",editing.id));
+    }
+    setSaving(false);
+    if(err){ setMsg("Error: "+err.message); }
+    else { setMsg(published?"Published!":"Saved as draft."); load(); setTimeout(()=>setEditing(null),800); }
+  };
+
+  const deleteGuide = async (id) => {
+    if(!window.confirm("Delete this guide?")) return;
+    await supabase.from("guides").delete().eq("id",id);
+    load();
+  };
+
+  const inp = (val,set,ph,type="text",rows) => rows ? (
+    <textarea value={val} onChange={e=>set(e.target.value)} placeholder={ph} rows={rows}
+      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+  ) : (
+    <input type={type} value={val} onChange={e=>set(e.target.value)} placeholder={ph}
+      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,boxSizing:"border-box"}}/>
+  );
+
+  const label = (l) => <div style={{fontSize:12,fontWeight:700,color:muted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6,marginTop:16}}>{l}</div>;
+
+  // Rich text toolbar actions
+  const insertTag = (open,close) => {
+    const ta = document.getElementById("guide-body-editor");
+    if(!ta) return;
+    const s=ta.selectionStart, e=ta.selectionEnd, val=ta.value;
+    const selected=val.slice(s,e);
+    const newVal=val.slice(0,s)+open+selected+close+val.slice(e);
+    setBody(newVal);
+    setTimeout(()=>{ ta.focus(); ta.setSelectionRange(s+open.length,e+open.length); },0);
+  };
+
+  const ToolbarBtn = ({label:l, onClick}) => (
+    <button type="button" onClick={onClick}
+      style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+      {l}
+    </button>
+  );
+
+  if(editing){
+    return (
+      <div style={{maxWidth:760,margin:"0 auto",padding:isMobile?"16px 16px 80px":"32px 40px 80px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
+          <button onClick={()=>setEditing(null)} style={{color:muted,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
+          <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>{editing.isNew?"New Guide":"Edit Guide"}</h2>
+        </div>
+
+        {label("Title")}
+        {inp(title,(v)=>{ setTitle(v); if(editing.isNew) setSlug(autoSlug(v)); },"e.g. The safest cookware we tested")}
+
+        {label("Slug (URL)")}
+        {inp(slug,setSlug,"e.g. safest-cookware-tested")}
+
+        {label("Author")}
+        <div style={{display:"flex",gap:8}}>
+          {["Paul Miller","Sara Miller"].map(a=>(
+            <button key={a} type="button" onClick={()=>setAuthor(a)}
+              style={{padding:"8px 16px",borderRadius:8,border:`1.5px solid ${author===a?"#16a34a":border}`,background:author===a?"#f0fdf4":"none",color:author===a?"#16a34a":muted,fontSize:14,fontWeight:600,cursor:"pointer"}}>
+              {a}
+            </button>
+          ))}
+        </div>
+
+        {label("Category")}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {GUIDE_CATEGORIES.map(c=>(
+            <button key={c} type="button" onClick={()=>setCategory(c)}
+              style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
+                background:category===c?(CATEGORY_COLORS[c]||"#052e16"):(isDark?"#1e2433":"#f1f5f9"),
+                color:category===c?"#fff":(isDark?"#94a3b8":"#64748b")}}>
+              {c.charAt(0).toUpperCase()+c.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {label("Excerpt (shown in guide list)")}
+        {inp(excerpt,setExcerpt,"A one or two sentence summary…","text",2)}
+
+        {label("Body (HTML)")}
+        {/* Toolbar */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+          <ToolbarBtn label="B" onClick={()=>insertTag("<strong>","</strong>")}/>
+          <ToolbarBtn label="I" onClick={()=>insertTag("<em>","</em>")}/>
+          <ToolbarBtn label="H2" onClick={()=>insertTag("<h2>","</h2>")}/>
+          <ToolbarBtn label="H3" onClick={()=>insertTag("<h3>","</h3>")}/>
+          <ToolbarBtn label="Link" onClick={()=>insertTag('<a href="">',"</a>")}/>
+          <ToolbarBtn label="Quote" onClick={()=>insertTag("<blockquote>","</blockquote>")}/>
+          <ToolbarBtn label="UL" onClick={()=>insertTag("<ul>\n  <li>","</li>\n</ul>")}/>
+          <ToolbarBtn label="P" onClick={()=>insertTag("<p>","</p>")}/>
+        </div>
+        <textarea id="guide-body-editor" value={body} onChange={e=>setBody(e.target.value)}
+          placeholder="Write your guide here using HTML tags, or use the toolbar buttons above..."
+          rows={18}
+          style={{width:"100%",padding:"12px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"'Outfit',monospace,sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
+
+        {/* Preview */}
+        {body && (
+          <div style={{marginTop:12,padding:"20px 24px",background:surface,borderRadius:12,border:`1px solid ${border}`,color:text}}>
+            <div style={{fontSize:11,fontWeight:700,color:muted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:12}}>Preview</div>
+            <GuideBody html={body}/>
+          </div>
+        )}
+
+        {label("Cover image URL (optional)")}
+        {inp(coverUrl,setCoverUrl,"https://...")}
+
+        {label("Read time (minutes)")}
+        <input type="number" value={readTime} onChange={e=>setReadTime(e.target.value)} min={1} max={60}
+          style={{width:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14}}/>
+
+        <div style={{display:"flex",alignItems:"center",gap:12,marginTop:24}}>
+          <button onClick={()=>setPublished(p=>!p)} style={{
+            width:52,height:30,borderRadius:15,border:"none",cursor:"pointer",
+            background:published?"#16a34a":"#d1d5db",position:"relative",transition:"background 0.2s",flexShrink:0,
+          }}>
+            <div style={{position:"absolute",top:3,left:published?24:3,width:24,height:24,borderRadius:"50%",background:"white",transition:"left 0.2s"}}/>
+          </button>
+          <span style={{fontSize:14,color:text,fontWeight:600}}>{published?"Published — visible on guides page":"Draft — not visible publicly"}</span>
+        </div>
+
+        {msg && <div style={{marginTop:12,fontSize:14,color:msg.startsWith("Error")?"#dc2626":"#16a34a",fontWeight:600}}>{msg}</div>}
+
+        <div style={{display:"flex",gap:10,marginTop:20}}>
+          <button onClick={save} disabled={saving} style={{flex:1,padding:"13px",borderRadius:10,background:"#052e16",border:"none",color:"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",opacity:saving?0.7:1}}>
+            {saving?"Saving…":published?"Publish guide":"Save draft"}
+          </button>
+          <button onClick={()=>setEditing(null)} style={{padding:"13px 20px",borderRadius:10,border:`1.5px solid ${border}`,background:"none",color:muted,fontSize:15,cursor:"pointer"}}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Guide list view
+  return (
+    <div style={{maxWidth:760,margin:"0 auto",padding:isMobile?"16px 16px 80px":"32px 40px 80px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:28}}>
+        <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>Guides</h2>
+        <button onClick={startNew} style={{padding:"10px 20px",borderRadius:10,background:"#052e16",border:"none",color:"#4ade80",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+          + New guide
+        </button>
+      </div>
+      {guides.length===0 ? (
+        <div style={{textAlign:"center",padding:"40px 0",color:muted}}>No guides yet. Write your first one.</div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {guides.map(g=>(
+            <div key={g.id} style={{background:surface,borderRadius:12,border:`1px solid ${border}`,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#6366f1",textTransform:"uppercase"}}>{g.category}</span>
+                  <span style={{fontSize:11,padding:"2px 8px",borderRadius:10,background:g.published?"#f0fdf4":"#f1f5f9",color:g.published?"#16a34a":"#9ca3af",fontWeight:600}}>{g.published?"Live":"Draft"}</span>
+                </div>
+                <div style={{fontSize:15,fontWeight:600,color:text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</div>
+                <div style={{fontSize:12,color:muted,marginTop:2}}>By {g.author} · {g.read_time_minutes}min</div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={()=>startEdit(g)} style={{padding:"7px 14px",borderRadius:8,border:`1px solid ${border}`,background:"none",color:text,fontSize:13,cursor:"pointer"}}>Edit</button>
+                <button onClick={()=>deleteGuide(g.id)} style={{padding:"7px 14px",borderRadius:8,border:"1px solid #fee2e2",background:"none",color:"#dc2626",fontSize:13,cursor:"pointer"}}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── ADMIN PAGE ────────────────────────────────────────────────
 const AdminPage = ({isDark, surface, border, text, muted, history: historyProp = []}) => {
+  const [adminTab, setAdminTab] = useState("dashboard"); // dashboard | guides
   const [cacheStatus, setCacheStatus]   = useState(null);
   const [clearing, setClearing]         = useState(false);
   const [testQuery, setTestQuery]       = useState("");
@@ -2128,9 +2541,24 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     <div style={{maxWidth:1000, margin:"0 auto", padding:"32px 24px 80px"}}>
       <div style={{marginBottom:28}}>
         <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Internal</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 4px"}}>Admin Dashboard</h1>
-        <div style={{fontSize:13, color:muted}}>Partiqule · Scoring system health · Score distribution · Cache status</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
+        {/* Tab bar */}
+        <div style={{display:"flex", gap:8, borderBottom:`2px solid ${border}`, paddingBottom:0}}>
+          {[["dashboard","Dashboard"],["guides","Guides"]].map(([t,l])=>(
+            <button key={t} onClick={()=>setAdminTab(t)} style={{
+              padding:"8px 20px", border:"none", background:"none", cursor:"pointer",
+              fontSize:14, fontWeight:600,
+              color:adminTab===t?"#16a34a":muted,
+              borderBottom:adminTab===t?"2px solid #16a34a":"2px solid transparent",
+              marginBottom:-2,
+            }}>{l}</button>
+          ))}
+        </div>
       </div>
+
+      {adminTab==="guides" ? (
+        <GuideAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={false}/>
+      ) : (<>
 
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:20}}>
         {[
@@ -2307,6 +2735,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
       <div style={{textAlign:"center", fontSize:11, color:muted, marginTop:8}}>
         Admin key required · Partiqule internal · Not indexed
       </div>
+    </>)}
     </div>
   );
 };
@@ -4015,6 +4444,14 @@ function App() {
   const [error,       setError]      = useState(null);
   const [isDark,      setIsDark]     = useState(false);
   const [page,        setPage]       = useState("home");
+  const [guideSlug,   setGuideSlug]  = useState("");
+
+  const navigateTo = (pg, slug="") => {
+    setPage(pg);
+    if(pg==="guides"){ setGuideSlug(""); window.history.pushState({},"","/guides"); }
+    else if(pg==="guide"&&slug){ setGuideSlug(slug); window.history.pushState({},"",`/guides/${slug}`); }
+    else if(pg==="home"){ setResult(null); window.history.pushState({},"","/"); }
+  };
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
@@ -4240,10 +4677,13 @@ function App() {
     if (path === "/about") { setPage("about"); return; }
     if (path === "/methodology") { setPage("methodology"); return; }
     if (path === "/terms") { setPage("terms"); return; }
+    if (path === "/guides") { setPage("guides"); return; }
+    if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides"];
     const isScanPath = path.startsWith("/scan/");
-    if (!known.includes(path) && !isScanPath) setPage("404");
+    const isGuidePath = path.startsWith("/guides/");
+    if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
   }, []);
 
   // Update browser URL when result changes
@@ -4505,10 +4945,14 @@ function App() {
             /* Desktop nav */
             <nav style={{display:"flex", gap:16, alignItems:"center"}}>
               <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:13, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
+              <span onClick={()=>navigateTo("guides")} style={{fontSize:13, color:page==="guides"||page==="guide"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="guides"||page==="guide"?600:400}}>Guides</span>
               <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:13, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
               <span onClick={()=>{setPage("routine"); setResult(null);}} style={{fontSize:13, color:page==="routine"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="routine"?600:400}}>My Routine</span>
-              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}><IcoSaved size={13}/> My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
+              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
               <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:13, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>Settings</span>
+              {isAdminUser(user) && (
+                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontSize:13, color:page==="admin"?"#16a34a":"#9333ea", cursor:"pointer", fontWeight:page==="admin"?700:600}}>Admin</span>
+              )}
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
                   <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
@@ -4531,11 +4975,17 @@ function App() {
               {label:"About",              pg:"about"},
               {label:"The Science",        pg:"science"},
               {label:"How it Works",       pg:"methodology"},
+              {label:"Guides",             pg:"guides"},
               {label:"My Routine",         pg:"routine"},
               {label:"My Scans",           pg:"history"},
               {label:"Settings",           pg:"settings"},
+              ...(isAdminUser(user) ? [{label:"Admin", pg:"admin"}] : []),
             ].map(item=>(
-              <button key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); setMenuOpen(false);}}
+              <button key={item.pg} onClick={()=>{
+                if(item.pg==="guides") navigateTo("guides");
+                else { setPage(item.pg); setResult(null); }
+                setMenuOpen(false);
+              }}
                 style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
                 {item.label}
               </button>
@@ -4557,7 +5007,7 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
 
       {/* ── Delete account confirmation modal ── */}
       {showDeleteConfirm && (
@@ -4598,6 +5048,10 @@ function App() {
 
       {page === "admin" ? (
         <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted} history={history}/>
+      ) : page === "guides" ? (
+        <GuidesPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onNavigate={navigateTo}/>
+      ) : page === "guide" ? (
+        <GuideViewPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} slug={guideSlug} onNavigate={navigateTo} onScan={reset}/>
       ) : page === "privacy" ? (
         <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "terms" ? (
