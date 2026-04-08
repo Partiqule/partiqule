@@ -37,12 +37,51 @@ app.use((req, res, next) => {
 const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
 const scoreCache    = new Map();
 
-// ── FILE CACHE PERSISTENCE ────────────────────────────────────
-// Survives Railway restarts — reads from disk on boot, writes on each new score
+// ── REDIS CACHE (Upstash REST — no npm package needed) ────────
+const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL  || "";
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+const REDIS_TTL   = 60 * 60 * 24 * 90; // 90 days in seconds
+const hasRedis    = !!(REDIS_URL && REDIS_TOKEN);
+
+const redisGet = async (key) => {
+  if (!hasRedis) return null;
+  try {
+    const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+    const d = await r.json();
+    if (d.result) return JSON.parse(d.result);
+  } catch(e) { console.warn("[REDIS] get error:", e.message); }
+  return null;
+};
+
+const redisSet = async (key, value) => {
+  if (!hasRedis) return;
+  try {
+    await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ value: JSON.stringify(value), ex: REDIS_TTL }),
+    });
+  } catch(e) { console.warn("[REDIS] set error:", e.message); }
+};
+
+const redisKeys = async (pattern) => {
+  if (!hasRedis) return [];
+  try {
+    const r = await fetch(`${REDIS_URL}/keys/${encodeURIComponent(pattern)}`, {
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+    const d = await r.json();
+    return d.result || [];
+  } catch(e) { return []; }
+};
+
+// ── FILE CACHE PERSISTENCE (fallback when Redis not configured) ─
 const fs   = require("fs");
 const path = require("path");
 const CACHE_FILE = path.join("/tmp", "partiqule_cache.json");
-const CACHE_MAX  = 2000; // max entries to persist
+const CACHE_MAX  = 2000;
 
 const loadCacheFromDisk = () => {
   try {
@@ -56,7 +95,7 @@ const loadCacheFromDisk = () => {
       }
       console.log(`[CACHE] Loaded ${loaded} entries from disk`);
     } else {
-      console.log("[CACHE] No cache file found — starting fresh");
+      console.log("[CACHE] No disk cache — starting fresh");
     }
   } catch(e) {
     console.warn("[CACHE] Failed to load from disk:", e.message);
@@ -65,7 +104,6 @@ const loadCacheFromDisk = () => {
 
 const saveCacheToDisk = () => {
   try {
-    // Keep only most recent CACHE_MAX entries
     const entries = [...scoreCache.entries()].slice(-CACHE_MAX);
     const obj     = Object.fromEntries(entries);
     fs.writeFileSync(CACHE_FILE, JSON.stringify(obj), "utf8");
@@ -74,7 +112,51 @@ const saveCacheToDisk = () => {
   }
 };
 
-loadCacheFromDisk();
+// ── UNIFIED CACHE HELPERS ─────────────────────────────────────
+// Read: memory first, then Redis, then miss
+const cacheGet = async (key) => {
+  if (scoreCache.has(key)) return scoreCache.get(key);
+  const redisVal = await redisGet(key);
+  if (redisVal) {
+    scoreCache.set(key, redisVal); // populate memory from Redis
+    return redisVal;
+  }
+  return null;
+};
+
+// Write: memory + Redis + disk
+const cacheSet = (key, value) => {
+  scoreCache.set(key, value);
+  redisSet(key, value); // async, non-blocking
+  saveCacheToDisk();    // async-ish file write
+};
+
+// Boot sequence — load disk cache, then sync from Redis if available
+const initCache = async () => {
+  loadCacheFromDisk();
+  if (hasRedis) {
+    console.log("[REDIS] Connected — syncing top products from Redis...");
+    try {
+      const keys = await redisKeys("score:*");
+      let synced = 0;
+      for (const k of keys.slice(0, 2000)) {
+        if (!scoreCache.has(k)) {
+          const val = await redisGet(k);
+          if (val) { scoreCache.set(k, val); synced++; }
+        }
+      }
+      console.log(`[REDIS] Synced ${synced} products into memory (${scoreCache.size} total)`);
+    } catch(e) {
+      console.warn("[REDIS] Sync failed:", e.message);
+    }
+  } else {
+    console.log("[REDIS] Not configured — using file cache only");
+  }
+};
+
+initCache();
+
+
 
 // ── ADMIN KEY ─────────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
@@ -3866,13 +3948,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const productName  = extracted || query.trim();
 
   // Detect category FIRST so it's included in the cache key
-  // Prevents "Apple" (fruit) vs "Apple" (iPhone) collision
   const category = detectCategory(productName);
   const key      = cacheKey(productName, category);
 
-  if (scoreCache.has(key)) {
-    console.log(`[CACHE HIT] ${key} (${scoreCache.size} total cached)`);
-    return res.json({ ...scoreCache.get(key), cached: true });
+  const cached = await cacheGet(key);
+  if (cached) {
+    console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
+    return res.json({ ...cached, cached: true });
   }
   console.log(`[CACHE MISS] ${key} — running AI pass`);
 
@@ -4128,9 +4210,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       calibrated.child_score = kidsCalibrated.overall_score;
     }
 
-    scoreCache.set(key, calibrated);
-    saveCacheToDisk();
-    console.log(`Cached: ${key} (score: ${calibrated.score}, confidence: ${calibrated.confidence}, total cached: ${scoreCache.size})`);
+    cacheSet(key, calibrated);
+    console.log(`[CACHED] ${key} (score: ${calibrated.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
     res.json(calibrated);
 
   } catch (err) {
@@ -4437,6 +4518,8 @@ app.listen(PORT, () => {
   // Pre-warm cache with top in-store products after a short delay
   // Runs in background — never blocks requests
   setTimeout(warmCache, 8000);
+  // Auto-warm from Supabase scan history — picks up real user patterns
+  setTimeout(autoWarmFromSupabase, 15000);
 });
 
 // ── CACHE WARM LIST ───────────────────────────────────────────
@@ -4586,11 +4669,11 @@ async function warmCache() {
           ai_alternatives: [],
           _warmCache: true,
         });
-        scoreCache.set(key, result);
+        cacheSet(key, result);
         warmed++;
       } else {
         // No calibration hit — run full AI score via internal request (rate-limited)
-        await new Promise(r => setTimeout(r, 3000)); // 3s between AI calls to avoid overload
+        await new Promise(r => setTimeout(r, 3000));
         try {
           const r = await fetch(`http://localhost:${PORT}/analyze`, {
             method: "POST",
@@ -4606,9 +4689,72 @@ async function warmCache() {
       console.warn(`[WARM] Failed to warm "${name}":`, e.message);
     }
   }
-  saveCacheToDisk();
   console.log(`[WARM] Done — ${warmed} warmed, ${skipped} already cached, ${scoreCache.size} total`);
 }
+
+// ── SUPABASE AUTO-WARM ────────────────────────────────────────
+// Pulls top scanned products from Supabase scan history and warms cache
+// Called daily via cron. Self-building — reflects actual user scan patterns.
+const autoWarmFromSupabase = async () => {
+  if (!supabaseAdmin) { console.log("[AUTO-WARM] Supabase not configured"); return; }
+  try {
+    // Get most frequently scanned product names in last 90 days
+    const { data, error } = await supabaseAdmin
+      .from("scans")
+      .select("result_json->product_name")
+      .gte("scanned_at", new Date(Date.now() - 90*24*60*60*1000).toISOString())
+      .limit(5000);
+
+    if (error || !data?.length) {
+      console.log("[AUTO-WARM] No scan history found");
+      return;
+    }
+
+    // Count frequency
+    const freq = {};
+    for (const row of data) {
+      const name = row.product_name;
+      if (name) freq[name] = (freq[name] || 0) + 1;
+    }
+
+    // Sort by frequency, take top 500
+    const topProducts = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 500)
+      .map(([name]) => name);
+
+    const uncached = topProducts.filter(name => {
+      const key = cacheKey(name, detectCategory(name));
+      return !scoreCache.has(key);
+    });
+
+    console.log(`[AUTO-WARM] ${topProducts.length} top products from history, ${uncached.length} need warming`);
+
+    // Add to warm list and trigger
+    if (uncached.length > 0) {
+      // Warm calibration hits instantly (free)
+      for (const name of uncached) {
+        const key    = cacheKey(name, detectCategory(name));
+        const calHit = CALIBRATION.get(normalise(name)) || CALIBRATION.get(name.toLowerCase().trim());
+        if (calHit) {
+          const result = applyProductCalibration({
+            product_name: name, score: Math.round((calHit.floor + calHit.ceiling) / 2),
+            overall_score: Math.round((calHit.floor + calHit.ceiling) / 2),
+            category: calHit.category || detectCategory(name),
+            confidence: calHit.confidence || "high",
+            dimensions: { materials:{score:5,concerns:calHit.substances||[]}, usage_exposure:{score:5,concerns:[]}, packaging:{score:5,concerns:[]}, sustainability:{score:5,concerns:[]} },
+            concerns: calHit.substances || [], summary: calHit.reason || "",
+            alternatives: [], ai_alternatives: [], _warmCache: true,
+          });
+          cacheSet(key, result);
+        }
+      }
+      console.log(`[AUTO-WARM] Complete — ${scoreCache.size} total cached`);
+    }
+  } catch(e) {
+    console.error("[AUTO-WARM] Error:", e.message);
+  }
+};
 
 // External cron can hit this to keep cache warm — e.g. cron-job.org daily
 app.post("/cache-warm", requireAdmin, (req, res) => {
@@ -4616,11 +4762,13 @@ app.post("/cache-warm", requireAdmin, (req, res) => {
     const key = cacheKey(name, detectCategory(name));
     return !scoreCache.has(key);
   });
-  res.json({ ok: true, cached: scoreCache.size, missing: missing.length, warming: missing.length > 0 });
+  res.json({ ok: true, cached: scoreCache.size, missing: missing.length, warming: missing.length > 0, redis: hasRedis });
   if (missing.length > 0) {
     console.log(`[WARM] External trigger — ${missing.length} products need warming`);
     warmCache();
   }
+  // Also run Supabase auto-warm to pick up popular user scans
+  autoWarmFromSupabase();
 });
 // When the AI returns no scan_next suggestions, generate smart defaults
 // from the alternatives DB — same category, different products.
