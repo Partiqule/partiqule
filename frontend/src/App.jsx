@@ -4494,6 +4494,27 @@ function App() {
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
+  const [captureEmail,   setCaptureEmail]   = useState("");
+  const [captureSubmitting, setCaptureSubmitting] = useState(false);
+  const [captureMsg,     setCaptureMsg]     = useState("");
+
+  const submitCaptureEmail = async () => {
+    if (!captureEmail.includes("@")) return;
+    setCaptureSubmitting(true);
+    try {
+      await fetch(`${API_BASE}/subscribe`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: captureEmail.trim(), source: "scan_result" }),
+      });
+      setCaptureMsg("You are in! Check your inbox for a welcome email.");
+      try { localStorage.setItem("ps_email_captured","1"); } catch {}
+      setTimeout(()=>setEmailDismissed(true), 3000);
+    } catch {
+      setCaptureMsg("Something went wrong. Please try again.");
+    }
+    setCaptureSubmitting(false);
+  };
   const [emailInput,  setEmailInput] = useState("");
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
@@ -5428,6 +5449,29 @@ function App() {
               </div>{/* end hero content fade wrapper */}
 
               {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
+
+              {/* Homepage email capture */}
+              {!emailDismissed && !user && (
+                <div style={{marginTop:24, maxWidth:480, margin:"24px auto 0"}}>
+                  <div style={{fontSize:12, color:"rgba(255,255,255,0.45)", textAlign:"center", marginBottom:10}}>
+                    Get weekly safety alerts and product recalls in your inbox
+                  </div>
+                  <div style={{display:"flex", gap:0, borderRadius:12, overflow:"hidden", boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={captureEmail}
+                      onChange={e=>setCaptureEmail(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
+                      style={{flex:1, padding:"12px 16px", border:"none", outline:"none", fontSize:14, background:"rgba(255,255,255,0.95)", color:"#111", minWidth:0}}
+                    />
+                    <button onClick={submitCaptureEmail} disabled={captureSubmitting}
+                      style={{padding:"12px 20px", background:"#4ade80", color:"#052e16", border:"none", fontWeight:700, fontSize:14, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1}}>
+                      {captureSubmitting ? "..." : captureMsg ? "Done!" : "Stay updated"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -6180,25 +6224,34 @@ function App() {
 
               </div>
 
-              {/* ACCOUNT / EMAIL CAPTURE — after 3rd scan */}
-              {history.length >= 3 && !user && !emailDismissed && (
+              {/* ACCOUNT / EMAIL CAPTURE — after 1st scan */}
+              {result && !user && !emailDismissed && (
                 <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
                   <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
-                    style={{float:"right", background:"none", border:"none", color:muted, cursor:"pointer", fontSize:16, lineHeight:1, padding:0}}>×</button>
-                  <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:4}}>
-                    Never lose your scan history
+                    style={{float:"right", background:"none", border:"none", color:muted, cursor:"pointer", fontSize:18, lineHeight:1, padding:0}}>×</button>
+                  <div style={{fontSize:14, fontWeight:700, color:"#16a34a", marginBottom:4}}>Get your results by email</div>
+                  <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:14}}>
+                    We will send you a weekly roundup of products to avoid, plus tips on safer swaps. No spam, unsubscribe any time.
                   </div>
-                  <div style={{fontSize:12, color:muted, lineHeight:1.5, marginBottom:12}}>
-                    Create a free account to save your scans across devices and get notified when a product you have scanned is recalled or reformulated.
-                  </div>
-                  <div style={{display:"flex", gap:8}}>
-                    <button onClick={()=>setShowAuth(true)}
-                      style={{flex:1, padding:"9px 16px", borderRadius:8, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:13, cursor:"pointer"}}>
-                      Create free account
+                  <div style={{display:"flex", gap:8, marginBottom:8}}>
+                    <input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={captureEmail}
+                      onChange={e=>setCaptureEmail(e.target.value)}
+                      onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
+                      style={{flex:1, padding:"10px 14px", borderRadius:8, border:`1px solid ${isDark?"#374151":"#d1fae5"}`, background:isDark?"#111":"#fff", color:text, fontSize:14}}
+                    />
+                    <button onClick={submitCaptureEmail} disabled={captureSubmitting}
+                      style={{padding:"10px 18px", borderRadius:8, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:13, cursor:"pointer", opacity:captureSubmitting?0.7:1}}>
+                      {captureSubmitting ? "..." : "Subscribe"}
                     </button>
-                    <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
-                      style={{padding:"9px 14px", borderRadius:8, background:"none", color:muted, border:`1px solid ${isDark?"#2a3347":"#d1d5db"}`, fontSize:13, cursor:"pointer"}}>
-                      Not now
+                  </div>
+                  {captureMsg && <div style={{fontSize:12, color:"#16a34a", fontWeight:600}}>{captureMsg}</div>}
+                  <div style={{display:"flex", gap:8, marginTop:10}}>
+                    <button onClick={()=>setShowAuth(true)}
+                      style={{fontSize:12, color:"#16a34a", background:"none", border:"none", cursor:"pointer", fontWeight:600, padding:0}}>
+                      Or create a free account →
                     </button>
                   </div>
                 </div>

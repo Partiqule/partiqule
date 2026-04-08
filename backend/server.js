@@ -3,7 +3,7 @@ const express = require("express");
 const cors    = require("cors");
 const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
-const { applyProductCalibration, CALIBRATION } = require("./calibration");
+const { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP } = require("./calibration");
 
 const app = express();
 app.use(cors({
@@ -664,7 +664,7 @@ const CHILD_FOOD_BRANDS = /froot loops|fruit loops|lucky charms|cocoa puffs|coun
 
 // Substances with specific child developmental concerns — higher weight than adult scoring
 const CHILD_CONCERN_SUBSTANCES = [
-  { match: /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|titanium dioxide|petroleum dye|artificial.*color|artificial.*dye/i, bump: 2, reason: "Petroleum dyes linked to childhood ADHD and hyperactivity (McCann et al., Lancet 2007) — children are uniquely vulnerable" },
+  { match: /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|titanium dioxide|petroleum dye|artificial.*color(?! from| derived from| of fruit| of vegetable)|artificial.*dye(?! from| of)/i, bump: 2, reason: "Petroleum dyes linked to childhood ADHD and hyperactivity (McCann et al., Lancet 2007) — children are uniquely vulnerable" },
   { match: /glyphosate/i,                          bump: 1, reason: "EWG child-specific glyphosate threshold is lower than adult — body weight adjustment means children receive higher effective dose" },
   { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i,        bump: 2, reason: "PFAS disrupts immune and hormone development in children — CDC flagged as priority child health concern" },
   { match: /phthalate|DEHP|DBP/i,                  bump: 2, reason: "Phthalates disrupt reproductive development — most critical during early childhood (Swan 2021)" },
@@ -685,6 +685,8 @@ const CHILD_CONCERN_SUBSTANCES = [
   // Neurotoxicity class — EWG-inspired
   { match: /toluene|xylene|benzene|styrene/i,       bump: 2, reason: "Neurotoxic solvent — children's developing brains are uniquely vulnerable. EPA classifies benzene as known human carcinogen" },
   { match: /1,4-dioxane|ethylene oxide/i,           bump: 2, reason: "1,4-dioxane is a probable carcinogen found as a contaminant in SLES/PEG ingredients — children's lower body weight means higher effective dose" },
+  // High added sugar — children's DV is half adults', and early sugar patterns drive lifelong metabolic outcomes
+  { match: /high added sugar|>20g added sugar|>15g added sugar|extreme added sugar|sugar.*exceeds.*daily/i, bump: 1, reason: "Added sugar: children's recommended daily limit is 25g (half adult DV) — early high-sugar dietary patterns linked to metabolic and developmental outcomes" },
 ];
 
 function computeChildScore(baseScore, concernsText, category, productName, isChildProduct) {
@@ -693,12 +695,22 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
   let bump = 0;
   const bumps = [];
 
+  // Detect confirmed natural/vegetable colorants — these exempt the dye bump
+  const NATURAL_COLORANT = /colored? with (vegetable|fruit|plant)|vegetable (juice|extract|color)|fruit (juice|extract|color)|beet(root)? (juice|powder|extract|color)|turmeric (color|extract|powder)|spirulina (extract|color)|annatto (extract|color)|carrot (juice|extract|color)|natural color from|colors? from (nature|plants?|fruits?|vegetables?)|plant.based color|carotenoid|lycopene|chlorophyll|butterfly pea|black carrot|red cabbage|paprika extract/i;
+  const hasNaturalColorantsOnly = NATURAL_COLORANT.test(concernsText + " " + productName);
+  const hasPetroleumDyes = /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|FD&C|petroleum dye/i.test(concernsText);
+
   // Always add +1 for child product — developing systems baseline
   bump += 1;
   bumps.push("Children's developing organ systems require more protective thresholds than adult scoring");
 
   // Check for specific child-concern substances
   for (const concern of CHILD_CONCERN_SUBSTANCES) {
+    // Skip the dye bump if only natural colorants confirmed and no petroleum dyes present
+    if (hasNaturalColorantsOnly && !hasPetroleumDyes &&
+        concern.match.toString().includes("petroleum dye|artificial.*color|artificial.*dye")) {
+      continue;
+    }
     if (concern.match.test(concernsText)) {
       bump += concern.bump;
       bumps.push(concern.reason);
@@ -1170,6 +1182,7 @@ PFAS: FDA (2024): PTFE/PFAS non-stick = primary dietary exposure — score 8-9, 
 ENDOCRINE DISRUPTORS: Braun et al. (2021) Endocrine Society: BPA, phthalates, PFAS all confirmed EDCs. Swan et al. (2021): phthalate and BPA exposure linked to reduced fertility. Trasande et al. (2018): EDC exposure costs USD 163 billion annually in health burden. Rochester (2013): BPA endocrine disruption confirmed at low doses.
 FOOD: Monteiro et al. (2025) Lancet: ultra-processed foods linked to cardiovascular risk and cognitive decline — score 6-8. Srour et al. (2024) BMJ: 30% higher all-cause mortality with high UPF intake. Lane et al. (2024) Neurology: UPF linked to cognitive decline and stroke. Whole natural foods score 1-3.
 DYES: FDA (2025): Red 3 banned, all petroleum dyes being phased out. Red 40, Yellow 5/6, Blue 1/2 = score 6-8. EFSA (2021): titanium dioxide banned in EU food — IARC Group 2B. McCann et al. (2007) Lancet: synthetic dyes linked to hyperactivity in children.
+NATURAL DYE RULE (CRITICAL): "Colored with vegetable juice," "dyed with fruit and vegetable extracts," "colored with spirulina," "beet juice," "turmeric," "annatto," "carrot juice," and similar natural/plant-based colorants are NOT petroleum dyes and must NOT trigger dye penalties. These are clean ingredients. A product colored entirely with natural/vegetable dyes should score 1-3 on materials for color — never flag natural colorants as a concern. Only petroleum/synthetic dyes (Red 40, Yellow 5, Yellow 6, Blue 1, Blue 2, FD&C colors) warrant the dye floor.
 PRESERVATIVES: NTP (2023): BHA reasonably anticipated to be a human carcinogen. IARC: BHA = Group 2B. Bouvard et al. (2015) Lancet Oncology: processed meat (sodium nitrate) = Group 1 carcinogen.
 SUNSCREEN: Matta et al. (2019) JAMA: oxybenzone detected in bloodstream after single application. FDA (2020): oxybenzone, avobenzone flagged for further safety study. Score chemical UV filters 7-8.
 FRAGRANCE: Steinemann (2017): 156 VOCs identified in 25 scented products. Dodson et al. (2012): synthetic fragrance phthalates linked to asthma and endocrine disruption.
@@ -1293,13 +1306,37 @@ NOVA 4 — Ultra-processed formulations: industrial ingredients not found in hom
 NOVA 4 examples: breakfast cereals with 10+ ingredients and synthetic dyes, packaged cookies, flavored chips, plant-based meat (Beyond Meat, Impossible Burger), most fast food, flavored protein bars with 20+ ingredients.
 
 SUGAR PENALTY — added sugar matters independently of other concerns:
+CRITICAL DISTINCTION: "Added sugar" and "natural sugar" are not the same thing and must never be treated the same.
+
+ADDED SUGAR (sucrose, HFCS, cane sugar, agave, honey added during processing):
 - 0-5g added sugar per serving: no penalty
 - 6-10g added sugar per serving: materials +1 (moderate concern, daily consumption adds up)
-- >10g added sugar per serving: materials +2 (high concern — WHO recommends <25g/day total)
+- >10g added sugar per serving: materials +2 (high concern — WHO recommends <25g/day total added sugar)
 - >20g added sugar per serving: materials +3 (exceeds half the daily limit in one serving)
-Apply sugar penalty on top of NOVA and substance assessments. A NOVA 3 product with 15g sugar = materials 2-3 base + 2 sugar = materials 4-5.
+Apply sugar penalty on top of NOVA and substance assessments. A NOVA 3 product with 15g ADDED sugar = materials 2-3 base + 2 sugar = materials 4-5.
 
-TOTAL SUGAR RULE FOR BEVERAGES (natural OR added): A beverage with >30g total sugar per serving — even 100% natural fruit sugar — must not score below 3. A beverage with >50g total sugar per serving must not score below 4. Naked Juice, Odwalla, Bolthouse Farms smoothies, and large fruit juices frequently contain 50-70g total sugar — more than a can of Coke. "No added sugar" and "100% juice" are not clean signals when the sugar load is this high. Flag "extreme natural sugar content — [Xg per serving, equivalent to [N] teaspoons of sugar]" as a MEDIUM concern and raise materials floor accordingly.
+NATURAL SUGAR (intrinsic to whole food — fruit, dairy, vegetables):
+- Plain fruit, whole fruit snacks, unsweetened dairy: natural sugar is NOT penalized regardless of amount
+- A banana with 14g natural sugar scores the same as a banana with 0g sugar — no penalty
+- Plain whole milk (12g lactose): no sugar penalty — lactose is intrinsic to milk
+- Plain Greek yogurt (natural lactose): no sugar penalty
+- 100% fruit (no added sugar, not concentrated): no sugar penalty for natural fructose
+- Dried fruit (dates, raisins — no added sugar): natural sugar, no penalty. These are NOVA 1.
+- Fruit juice concentrate used as sweetener: this IS added sugar — penalize as added sugar
+- "No added sugar" does NOT mean no sugar concern for beverages — see beverage rule below
+
+BEVERAGE TOTAL SUGAR RULE (natural OR added — because liquid sugar absorbs faster):
+A beverage with >30g total sugar per serving — even 100% natural — must not score below 3.
+A beverage with >50g total sugar per serving must not score below 4.
+Naked Juice, Odwalla, Bolthouse Farms smoothies frequently contain 50-70g total sugar.
+Flag as MEDIUM concern: "extreme sugar content — Xg per serving" but only bump materials +1 for natural, +2-3 for added.
+
+KIDS MODE SUGAR ADJUSTMENT:
+Children's DV for added sugar is 25g/day (vs 50g for adults). Apply 2x sensitivity:
+- >5g added sugar per serving in kids mode: materials +1
+- >12g added sugar per serving in kids mode: materials +2
+- >20g added sugar per serving in kids mode: materials +3
+Natural sugar in whole fruit/dairy: still no penalty in kids mode.
 
 FOOD TIER SCORE IMPACT — synthesizing NOVA, sugar, and substance concerns:
 Score 1-2 (Safe): NOVA 1-2, organic certified, no confirmed IARC substances, <5g added sugar. Organic produce, organic plain oats, plain organic yogurt, wild salmon.
@@ -4114,15 +4151,61 @@ app.post("/analyze", rateLimit, async (req, res) => {
 // ── EMAIL CAPTURE ─────────────────────────────────────────────
 // Simple in-memory store — replace with DB when accounts are built
 const emailList = new Set();
+const LOOPS_API_KEY = process.env.LOOPS_API_KEY || "";
+
+const addToLoops = async (email, source="web") => {
+  if (!LOOPS_API_KEY) { console.warn("[LOOPS] No API key — skipping"); return; }
+  try {
+    const r = await fetch("https://app.loops.so/api/v1/contacts/create", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${LOOPS_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        source,
+        userGroup: "Partiqule Users",
+        mailingLists: { "Partiqule Users": true },
+      }),
+    });
+    const d = await r.json();
+    if (d.success) console.log(`[LOOPS] Added ${email} (source: ${source})`);
+    else console.warn(`[LOOPS] Failed to add ${email}:`, d.message);
+    return d;
+  } catch(e) {
+    console.error("[LOOPS] Error:", e.message);
+  }
+};
+
+const triggerLoopsEvent = async (email, eventName, properties={}) => {
+  if (!LOOPS_API_KEY) return;
+  try {
+    await fetch("https://app.loops.so/api/v1/events/send", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${LOOPS_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, eventName, ...properties }),
+    });
+    console.log(`[LOOPS] Event "${eventName}" sent for ${email}`);
+  } catch(e) {
+    console.error("[LOOPS] Event error:", e.message);
+  }
+};
+
 app.post("/subscribe", async (req, res) => {
   res.set("Cache-Control", "no-store");
-  const { email } = req.body;
+  const { email, source="web" } = req.body;
   if (!email || !email.includes("@")) return res.status(400).json({ error: "Invalid email" });
   const already = emailList.has(email.toLowerCase().trim());
   emailList.add(email.toLowerCase().trim());
-  console.log(`Email captured: ${email} (total: ${emailList.size})`);
+  console.log(`[EMAIL] Captured: ${email} from ${source} (total: ${emailList.size})`);
+
+  // Add to Loops and trigger welcome sequence
+  const result = await addToLoops(email.toLowerCase().trim(), source);
+  if (!already && result?.success) {
+    await triggerLoopsEvent(email.toLowerCase().trim(), "signup");
+  }
+
   res.json({ ok: true, already });
 });
+
 
 // ── DELETE ACCOUNT ────────────────────────────────────────────
 app.post("/delete-account", async (req, res) => {
@@ -4350,9 +4433,195 @@ app.listen(PORT, () => {
   console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
   console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
   console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
+
+  // Pre-warm cache with top in-store products after a short delay
+  // Runs in background — never blocks requests
+  setTimeout(warmCache, 8000);
 });
 
-// ── SCAN_NEXT FALLBACK ────────────────────────────────────────
+// ── CACHE WARM LIST ───────────────────────────────────────────
+// Products most likely to be scanned in stores.
+// Calibration hits are instant — this just ensures they're in memory.
+// AI products pre-score in background so first real user gets instant result.
+const WARM_LIST = [
+  // ── BABY / KIDS AISLE ────────────────────────────────
+  "Carter's cotton pajamas",
+  "Carter's polyester pajamas",
+  "Carter's onesie",
+  "KicKee Pants pajamas",
+  "Little Sleepies pajamas",
+  "Kyte Baby pajamas",
+  "Hanna Andersson pajamas",
+  "Leveret pajamas",
+  "Simple Joys pajamas",
+  "Burt's Bees Baby pajamas",
+  "Pampers Swaddlers",
+  "Huggies Little Snugglers",
+  "Luvs diapers",
+  "Honest Company diapers",
+  "Seventh Generation diapers",
+  "Coterie diapers",
+  "Andy Pandy diapers",
+  "WaterWipes",
+  "Pampers Sensitive wipes",
+  "Huggies Natural Care wipes",
+  // ── KIDS SNACKS ──────────────────────────────────────
+  "Goldfish crackers",
+  "Goldfish Colors",
+  "Goldfish Whole Grain",
+  "Annie's Cheddar Bunnies",
+  "Pirate's Booty",
+  "Cheetos",
+  "Welch's Fruit Snacks",
+  "Annie's Organic Fruit Snacks",
+  "Gushers",
+  "Fruit Roll-Ups",
+  "Capri Sun Original",
+  "Honest Kids juice",
+  "Yoplait Go-Gurt",
+  "Danimals",
+  "Stonyfield YoKids",
+  "Uncrustables",
+  "Lunchables",
+  "Teddy Grahams",
+  "Happy Baby Organic Puffs",
+  "Gerber Puffs",
+  "GoGo Squeez applesauce",
+  "Plum Organics baby pouch",
+  "Happy Baby organic pouch",
+  // ── CEREALS ──────────────────────────────────────────
+  "Cheerios",
+  "Honey Nut Cheerios",
+  "Froot Loops",
+  "Lucky Charms",
+  "Cinnamon Toast Crunch",
+  "Frosted Flakes",
+  "Cocoa Puffs",
+  "Kashi Go",
+  "Nature's Path Organic Corn Flakes",
+  // ── PERSONAL CARE ────────────────────────────────────
+  "Cetaphil moisturizer",
+  "CeraVe moisturizing cream",
+  "Neutrogena sunscreen",
+  "Coppertone sunscreen",
+  "Banana Boat sunscreen",
+  "EltaMD sunscreen",
+  "Dove body wash",
+  "Dial body wash",
+  "Head and Shoulders shampoo",
+  "Pantene shampoo",
+  "Suave shampoo",
+  "Aveeno baby wash",
+  "Johnson's baby wash",
+  "Burt's Bees baby wash",
+  // ── CLEANING ─────────────────────────────────────────
+  "Tide Pods",
+  "Gain detergent",
+  "Seventh Generation laundry detergent",
+  "Blueland cleaning tablets",
+  "Method all purpose cleaner",
+  "Clorox wipes",
+  "Lysol spray",
+  "Mrs Meyer's dish soap",
+  "Dawn dish soap",
+  // ── FOOD STAPLES ─────────────────────────────────────
+  "Kraft mac and cheese",
+  "Annie's mac and cheese",
+  "Skippy peanut butter",
+  "Jif peanut butter",
+  "Justin's peanut butter",
+  "Nutella",
+  "Smucker's strawberry jam",
+  "Pepperidge Farm goldfish",
+  "Oreo cookies",
+  "Chips Ahoy",
+  "Ritz crackers",
+  "Triscuits",
+  "Lay's potato chips",
+  "Doritos",
+  "SkinnyPop popcorn",
+  // ── COOKWARE ─────────────────────────────────────────
+  "Teflon pan",
+  "Caraway cookware",
+  "All-Clad stainless pan",
+  "Lodge cast iron skillet",
+  "Calphalon nonstick pan",
+];
+
+async function warmCache() {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.log("[WARM] No API key — skipping cache warm");
+    return;
+  }
+  const toWarm = WARM_LIST.filter(name => {
+    const key = cacheKey(name, detectCategory(name));
+    return !scoreCache.has(key);
+  });
+  if (toWarm.length === 0) {
+    console.log("[WARM] All products already cached — nothing to warm");
+    return;
+  }
+  console.log(`[WARM] Pre-warming ${toWarm.length} products in background...`);
+  let warmed = 0, skipped = 0;
+  for (const name of toWarm) {
+    // Check again in case a real user scan populated it while we waited
+    const key = cacheKey(name, detectCategory(name));
+    if (scoreCache.has(key)) { skipped++; continue; }
+    try {
+      // Use the same analyze path but internally — no HTTP round-trip
+      const category = detectCategory(name);
+      const calHit   = CALIBRATION.get(normalise(name)) || CALIBRATION.get(name.toLowerCase().trim());
+      if (calHit) {
+        // Calibration hit — build minimal result and cache instantly
+        const result = applyProductCalibration({
+          product_name: name,
+          score: Math.round((calHit.floor + calHit.ceiling) / 2),
+          overall_score: Math.round((calHit.floor + calHit.ceiling) / 2),
+          category,
+          confidence: calHit.confidence || "high",
+          dimensions: { materials:{score:5,concerns:calHit.substances||[]}, usage_exposure:{score:5,concerns:[]}, packaging:{score:5,concerns:[]}, sustainability:{score:5,concerns:[]} },
+          concerns: calHit.substances || [],
+          summary: calHit.reason || "",
+          alternatives: [],
+          ai_alternatives: [],
+          _warmCache: true,
+        });
+        scoreCache.set(key, result);
+        warmed++;
+      } else {
+        // No calibration hit — run full AI score via internal request (rate-limited)
+        await new Promise(r => setTimeout(r, 3000)); // 3s between AI calls to avoid overload
+        try {
+          const r = await fetch(`http://localhost:${PORT}/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: name }),
+          });
+          if (r.ok) warmed++;
+        } catch(e2) {
+          console.warn(`[WARM] AI score failed for "${name}":`, e2.message);
+        }
+      }
+    } catch(e) {
+      console.warn(`[WARM] Failed to warm "${name}":`, e.message);
+    }
+  }
+  saveCacheToDisk();
+  console.log(`[WARM] Done — ${warmed} warmed, ${skipped} already cached, ${scoreCache.size} total`);
+}
+
+// External cron can hit this to keep cache warm — e.g. cron-job.org daily
+app.post("/cache-warm", requireAdmin, (req, res) => {
+  const missing = WARM_LIST.filter(name => {
+    const key = cacheKey(name, detectCategory(name));
+    return !scoreCache.has(key);
+  });
+  res.json({ ok: true, cached: scoreCache.size, missing: missing.length, warming: missing.length > 0 });
+  if (missing.length > 0) {
+    console.log(`[WARM] External trigger — ${missing.length} products need warming`);
+    warmCache();
+  }
+});
 // When the AI returns no scan_next suggestions, generate smart defaults
 // from the alternatives DB — same category, different products.
 function buildScanNextFallback(productName, category, alternatives) {
