@@ -1702,6 +1702,8 @@ const ENTRIES = [
 
   // ── DISH SOAP: CLEAN TIER ─────────────────────────────────────
   ["seventh generation dish",       { floor:2, ceiling:3, substances:[], reason:"Seventh Generation dish soap — plant-based, EWG A on fragrance-free formula, no MI, biodegradable. Clean dish soap.", confidence:"high", category:"home" }],
+  ["seventh generation soap",       { floor:2, ceiling:3, substances:[], reason:"Seventh Generation dish soap — plant-based, EWG A on fragrance-free formula, no MI, biodegradable. Clean dish soap.", confidence:"high", category:"home" }],
+  ["seventh generation hand soap",  { floor:2, ceiling:3, substances:[], reason:"Seventh Generation hand soap — plant-based, no synthetic fragrance, no triclosan. Clean hand soap.", confidence:"high", category:"personal_care" }],
   ["method dish soap",              { floor:2, ceiling:3, substances:[], reason:"Method dish soap — plant-based, biodegradable, no MI. EWG B. Clean tier dish soap.", confidence:"high", category:"home" }],
   ["ecover",              { floor:1, ceiling:3, substances:[], reason:"Ecover — plant-based, biodegradable, no synthetic fragrance in most formulas, EWG A. Clean European dish soap brand.", confidence:"high", category:"home" }],
   ["better life dish",              { floor:1, ceiling:2, substances:[], reason:"Better Life dish soap — EWG A, plant-based, no synthetic fragrance, no MI. Benchmark clean dish soap.", confidence:"high", category:"home" }],
@@ -2448,6 +2450,10 @@ const ENTRIES = [
   ["matt's bakery",                 { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery soft baked cookies — colored with vegetable and fruit extracts only (NO petroleum dyes). Natural colorants do not trigger dye concern. Clean additives profile. Main concerns: cane sugar and palm oil. Natural dye rule applies — do not penalize vegetable-based color.", confidence:"high", category:"food_beverage" }],
   ["matts bakery",                  { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery — natural vegetable dyes, no petroleum dyes. Natural colorant rule applies.", confidence:"high", category:"food_beverage" }],
   ["matt's monster cookie",         { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery Monster Cookie — colored with vegetable juice. Natural dye, not petroleum dye. No dye penalty applies.", confidence:"high", category:"food_beverage" }],
+  ["matt's bakery monster soft-baked cookies", { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery Monster Soft-Baked Cookies — colored with vegetable juice. Natural dye only. No petroleum dye penalty.", confidence:"high", category:"food_beverage" }],
+  ["matts bakery monster soft-baked cookies",  { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery Monster Soft-Baked Cookies — natural vegetable dyes only.", confidence:"high", category:"food_beverage" }],
+  ["matt's bakery soft baked cookies", { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery soft baked cookies — natural colorants only.", confidence:"high", category:"food_beverage" }],
+  ["matts bakery soft baked",       { floor:2, ceiling:4, kidsFloor:2, kidsCeiling:4, substances:["cane sugar","palm oil"], reason:"Matt's Bakery soft baked — natural colorants only.", confidence:"high", category:"food_beverage" }],
 
   // ── KIDS YOGURT TUBES ────────────────────────────────────────
   ["danimals",                      { floor:5, ceiling:7, substances:["Red 40","artificial flavor","HFCS"], reason:"Danimals Smoothie — Red 40 petroleum dye + HFCS + artificial flavor in a daily kids yogurt. Child vulnerability applies. Dye floor fires.", confidence:"high", category:"food_beverage" }],
