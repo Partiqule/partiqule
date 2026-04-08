@@ -2188,13 +2188,27 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
         </button>
         <button onClick={async()=>{
           const url = `${window.location.origin}/guides/${guide.slug}`;
-          if(navigator.share){
-            try{ await navigator.share({ title: guide.title, text: guide.excerpt || guide.title, url }); }
-            catch{}
-          } else {
-            await navigator.clipboard.writeText(url);
-            alert("Link copied to clipboard!");
+          const shareData = { title: guide.title, text: guide.excerpt || guide.title, url };
+
+          // Try to fetch cover image and share as file
+          if(guide.cover_image_url && navigator.share){
+            try{
+              const resp = await fetch(guide.cover_image_url);
+              const blob = await resp.blob();
+              const file = new File([blob], "partiqule-guide.png", {type: blob.type||"image/png"});
+              if(navigator.canShare?.({files:[file]})){
+                await navigator.share({ title: guide.title, text: guide.excerpt||guide.title, url, files:[file] });
+                return;
+              }
+            } catch{}
           }
+          // Fallback — share link only
+          if(navigator.share){
+            try{ await navigator.share(shareData); return; } catch{}
+          }
+          // Last resort — copy link
+          await navigator.clipboard.writeText(url);
+          alert("Link copied!");
         }} style={{display:"flex",alignItems:"center",gap:7,padding:"8px 18px",borderRadius:20,border:`1.5px solid ${border}`,background:"none",color:text,fontSize:13,fontWeight:600,cursor:"pointer"}}>
           <IconShare size={14} color={muted}/> Share
         </button>
