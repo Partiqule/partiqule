@@ -4777,7 +4777,7 @@ app.get("/cache-clear-product", requireAdmin, async (req, res) => {
   res.json({ ok: true, key, wasInMemory });
 });
 
- — e.g. cron-job.org daily
+// External cron can hit this to keep cache warm - e.g. cron-job.org daily
 app.post("/cache-warm", requireAdmin, (req, res) => {
   const missing = WARM_LIST.filter(name => {
     const key = cacheKey(name, detectCategory(name));
