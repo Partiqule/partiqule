@@ -4258,14 +4258,56 @@ app.get("/recent-scans", requireAdmin, (req, res) => {
   res.json(entries);
 });
 
-app.get("/health",      (req, res) => res.json({
+// ── APPLE IAP — STUBS (ready to implement post-approval) ──────
+const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET || "";
+
+// Receipt verification — called by iOS app after purchase
+// TODO: implement full receipt verification with Apple sandbox/production endpoints
+app.post("/verify-apple-receipt", async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const { receipt, userId } = req.body;
+  if (!receipt || !userId) return res.status(400).json({ error: "receipt and userId required" });
+  try {
+    // Placeholder — verify receipt with Apple and activate subscription
+    // Will call https://buy.itunes.apple.com/verifyReceipt (prod) or
+    // https://sandbox.itunes.apple.com/verifyReceipt (sandbox)
+    // For now just log and return pending
+    console.log(`[APPLE IAP] Receipt verification pending for user ${userId}`);
+    res.json({ ok: false, message: "Apple IAP verification not yet implemented" });
+  } catch(e) {
+    console.error("[APPLE IAP]", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Apple App Store Server Notifications — called by Apple when subscription status changes
+// TODO: parse and verify Apple signed JWT notifications
+app.post("/apple-webhook", async (req, res) => {
+  try {
+    // Always return 200 so Apple doesn't retry indefinitely
+    // Will implement JWT verification and subscription activation here
+    console.log("[APPLE WEBHOOK] Notification received — implementation pending");
+    res.status(200).json({ ok: true });
+  } catch(e) {
+    console.error("[APPLE WEBHOOK]", e.message);
+    res.status(200).json({ ok: true }); // still return 200
+  }
+});
+
+
+app.get("/health", (req, res) => res.json({
   status: "ok",
-  paApi: isPaApiConfigured() ? "active" : "not configured — using static database",
+  paApi: isPaApiConfigured() ? "active" : "not configured - using static database",
   cachedProducts: scoreCache.size,
 }));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Partiqule API running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Partiqule API running on port ${PORT}`);
+  console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
+  console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
+  console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
+});
 
 // ── SCAN_NEXT FALLBACK ────────────────────────────────────────
 // When the AI returns no scan_next suggestions, generate smart defaults

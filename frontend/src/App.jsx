@@ -3,6 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// Detect if running inside Capacitor iOS wrapper vs browser
+// When StoreKit is implemented, use this to branch between Apple IAP and Stripe
+const IS_NATIVE = typeof window !== "undefined" &&
+  (window?.Capacitor?.isNativePlatform?.() || window?.Capacitor?.platform === "ios");
+
+
 // ── Brand direct website lookup ────────────────────────────
 const BRAND_URLS = {
   "hu":               "https://hukitchen.com",
@@ -3945,13 +3951,23 @@ function App() {
   // ── Stripe checkout ───────────────────────────────────────────
   const startCheckout = async () => {
     if (!user) { setShowAuth(true); return; }
+
+    // iOS native app — will use Apple IAP via StoreKit when implemented
+    // For now, direct to web purchase page as fallback
+    if (IS_NATIVE) {
+      // TODO: replace with StoreKit purchase trigger once implemented
+      // window.Capacitor.Plugins.Purchases.purchaseProduct({ productIdentifier: "com.partiqule.app.premium.monthly" });
+      window.open("https://partiqule.com?subscribe=1", "_blank");
+      return;
+    }
+
+    // Web — Stripe checkout
     setCheckingOut(true);
-    setPromoError("");
     try {
       const r = await fetch(`${API_BASE}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, email: user.email, promo: promoCode.trim().toUpperCase() || undefined }),
+        body: JSON.stringify({ userId: user.id, email: user.email }),
       });
       const d = await r.json();
       if (d.url) { window.location.href = d.url; }
