@@ -127,6 +127,173 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
+// ── SHARE CARD ────────────────────────────────────────────────
+// Renders a canvas share card and provides copy/share functionality
+const ShareCard = ({result, displayScore, isMobile, isDark}) => {
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("idle"); // idle | copying | copied | error
+  const score = displayScore || result.overall_score || result.score;
+  const label = scoreLabel(score);
+  const color = scoreColor(score);
+  const bg    = score<=2?"#f0fdf4":score<=4?"#f7fee7":score<=6?"#fefce8":score<=8?"#fff7ed":"#fff0f0";
+  const name  = result.product_name || "";
+  const concerns = [
+    ...(result.dimensions?.materials?.concerns||[]),
+    ...(result.dimensions?.usage_exposure?.concerns||[]),
+    ...(result.flagged_substances||[]),
+  ].filter(Boolean).slice(0,3);
+
+  useEffect(()=>{
+    const canvas = canvasRef.current; if(!canvas) return;
+    const dpr = window.devicePixelRatio||1;
+    const W = 1080, H = 1080;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const parseHex = (h) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return [r,g,b]; };
+
+    // Background
+    ctx.fillStyle = "#052e16";
+    ctx.fillRect(0,0,W,H);
+
+    // Subtle grid pattern
+    ctx.strokeStyle = "rgba(74,222,128,0.04)";
+    ctx.lineWidth = 1;
+    for(let x=0;x<W;x+=60){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0;y<H;y+=60){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Score circle background
+    const cx=W/2, cy=390;
+    ctx.beginPath(); ctx.arc(cx,cy,220,0,Math.PI*2);
+    const [sr,sg,sb]=parseHex(color);
+    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.08)`; ctx.fill();
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.25)`; ctx.lineWidth=3; ctx.stroke();
+
+    // Score arc
+    const startA=-Math.PI*0.75, endA=startA+Math.PI*1.5*(score/10);
+    ctx.beginPath(); ctx.arc(cx,cy,185,startA,startA+Math.PI*1.5);
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.15)`; ctx.lineWidth=18; ctx.lineCap="round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,185,startA,endA);
+    ctx.strokeStyle=color; ctx.lineWidth=18; ctx.lineCap="round"; ctx.stroke();
+
+    // Score number
+    ctx.fillStyle="#fff";
+    ctx.font=`bold 180px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(String(score),cx,cy);
+
+    // /10
+    ctx.fillStyle="rgba(255,255,255,0.4)";
+    ctx.font=`600 36px 'Outfit',system-ui,sans-serif`;
+    ctx.fillText("/10",cx,cy+110);
+
+    // Label pill
+    const pillW=200, pillH=52, pillX=cx-pillW/2, pillY=cy+148;
+    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,26);
+    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.18)`; ctx.fill();
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.4)`; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=color; ctx.font=`bold 26px 'Outfit',system-ui,sans-serif`;
+    ctx.fillText(label,cx,pillY+28);
+
+    // Product name
+    const maxW=880;
+    ctx.fillStyle="#fff";
+    ctx.font=`bold 52px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="center";
+    // Word wrap
+    const words=name.split(" "); let line="", lines=[];
+    for(const w of words){
+      const test=line?line+" "+w:w;
+      if(ctx.measureText(test).width>maxW&&line){ lines.push(line); line=w; } else line=test;
+    }
+    if(line) lines.push(line);
+    lines=lines.slice(0,2);
+    if(lines.length===2&&ctx.measureText(lines[1]).width>maxW) lines[1]=lines[1].slice(0,28)+"…";
+    const nameY=670;
+    lines.forEach((l,i)=>ctx.fillText(l,cx,nameY+i*62));
+
+    // Concerns
+    if(concerns.length>0){
+      const startY=nameY+lines.length*62+36;
+      ctx.fillStyle="rgba(255,255,255,0.5)";
+      ctx.font=`600 24px 'Outfit',system-ui,sans-serif`;
+      ctx.fillText("FLAGGED",cx,startY);
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.font=`500 28px 'Outfit',system-ui,sans-serif`;
+      concerns.forEach((c,i)=>{
+        const txt=c.length>38?c.slice(0,35)+"…":c;
+        ctx.fillText(txt,cx,startY+36+i*40);
+      });
+    }
+
+    // Bottom bar
+    ctx.fillStyle="rgba(74,222,128,0.12)";
+    ctx.fillRect(0,H-110,W,110);
+    ctx.strokeStyle="rgba(74,222,128,0.2)";
+    ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,H-110); ctx.lineTo(W,H-110); ctx.stroke();
+
+    // Logo + URL
+    ctx.fillStyle="#4ade80";
+    ctx.font=`bold 36px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="left"; ctx.fillText("Partiqule",72,H-52);
+    ctx.fillStyle="rgba(255,255,255,0.4)";
+    ctx.font=`500 28px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="right"; ctx.fillText("partiqule.com",W-72,H-52);
+
+  },[score, result]);
+
+  const share = async () => {
+    const canvas = canvasRef.current; if(!canvas) return;
+    setStatus("copying");
+    try {
+      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
+      // Try native share first (mobile)
+      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
+        await navigator.share({
+          title:`${result.product_name} — Partiqule Score: ${score}/10`,
+          text:`I scanned ${result.product_name} and it scored ${score}/10. Check what's really in your products.`,
+          files:[new File([blob],"partiqule.png",{type:"image/png"})],
+        });
+        setStatus("copied");
+      } else {
+        // Copy to clipboard
+        await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+        setStatus("copied");
+      }
+    } catch {
+      // Fallback — download the image
+      const url=URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
+      const a=document.createElement("a"); a.href=url;
+      a.download=`partiqule-${(result.product_name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
+      a.click(); URL.revokeObjectURL(url);
+      setStatus("copied");
+    }
+    setTimeout(()=>setStatus("idle"),3000);
+  };
+
+  return (
+    <div style={{marginTop:24}}>
+      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
+      <button onClick={share} disabled={status==="copying"} style={{
+        marginTop:12, width:"100%", padding:"13px", borderRadius:12,
+        background: status==="copied" ? "#16a34a" : "#052e16",
+        border:"none", color: status==="copied" ? "#fff" : "#4ade80",
+        fontSize:15, fontWeight:700, cursor:"pointer",
+        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+        transition:"background 0.2s",
+      }}>
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied to clipboard!" : "Share this result"}
+      </button>
+      <p style={{fontSize:11,color:isDark?"#4b5563":"#9ca3af",textAlign:"center",marginTop:8}}>
+        Copies a 1080x1080 image — ready to post to Instagram or Stories
+      </p>
+    </div>
+  );
+};
+
 // ── GLOBE LOADING ─────────────────────────────────────────────
 
 
@@ -5473,7 +5640,13 @@ function App() {
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
-                {/* Fix 2: Nutrition disclaimer — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
+                {/* Share card */}
+                <ShareCard
+                  result={result}
+                  displayScore={pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)}
+                  isMobile={isMobile}
+                  isDark={isDark}
+                /> — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
                   const score = result.overall_score || result.score;
                   const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
