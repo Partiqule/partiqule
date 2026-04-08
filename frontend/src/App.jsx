@@ -2136,7 +2136,15 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
                   <div style={{fontSize:14,color:muted,lineHeight:1.6}}>{g.excerpt}</div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:16}}>
-                  <span style={{fontSize:13,color:muted}}>By {g.author}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",overflow:"hidden",flexShrink:0}}>
+                      {g.author==="Sara Miller"
+                        ? <img src="/sara.jpg" alt="Sara" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",transform:"scale(1.7)"}}/>
+                        : <img src="/paul.jpg" alt="Paul" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",transform:"scale(1.7)"}}/>
+                      }
+                    </div>
+                    <span style={{fontSize:13,color:muted}}>{g.author}</span>
+                  </div>
                   <span style={{fontSize:13,fontWeight:600,color:"#16a34a"}}>Read →</span>
                 </div>
               </div>
@@ -2192,8 +2200,11 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
       {/* Author + date */}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:36,paddingBottom:32,borderBottom:`1px solid ${border}`}}>
-        <div style={{width:40,height:40,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{color:"#4ade80",fontWeight:700,fontSize:16}}>{(guide.author||"P")[0]}</span>
+        <div style={{width:48,height:48,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:`2px solid ${border}`}}>
+          {guide.author==="Sara Miller"
+            ? <img src="/sara.jpg" alt="Sara Miller" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",transform:"scale(1.7)"}}/>
+            : <img src="/paul.jpg" alt="Paul Miller" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",transform:"scale(1.7)"}}/>
+          }
         </div>
         <div>
           <div style={{fontSize:14,fontWeight:600,color:text}}>{guide.author}</div>
