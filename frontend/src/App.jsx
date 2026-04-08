@@ -4480,6 +4480,24 @@ function App() {
   const [searchMode,  setSearchMode] = useState("name");
   const [result,      setResult]     = useState(null);
   const [loading,     setLoading]    = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const overlayTimerRef = useRef(null);
+  const loadingStartRef = useRef(null);
+  const MIN_OVERLAY_MS  = 2000; // minimum time to show globe
+
+  useEffect(()=>{
+    if(loading){
+      setShowOverlay(true);
+      loadingStartRef.current = Date.now();
+      clearTimeout(overlayTimerRef.current);
+    } else {
+      // Loading done — calculate how long we've already shown the globe
+      const elapsed  = Date.now() - (loadingStartRef.current || Date.now());
+      const remaining = Math.max(0, MIN_OVERLAY_MS - elapsed);
+      overlayTimerRef.current = setTimeout(()=>setShowOverlay(false), remaining);
+    }
+    return()=>clearTimeout(overlayTimerRef.current);
+  },[loading]);
   const [error,       setError]      = useState(null);
   const [isDark,      setIsDark]     = useState(false);
   const [page,        setPage]       = useState("home");
@@ -5476,7 +5494,7 @@ function App() {
           </section>
 
           {/* Fixed fullscreen globe overlay — covers entire viewport, centered */}
-          {loading && (
+          {showOverlay && (
             <div style={{
               position:"fixed", top:0, left:0, right:0, bottom:0,
               background:"#052e16",
