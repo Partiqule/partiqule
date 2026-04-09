@@ -4854,6 +4854,19 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "formula":   ["baby formula","infant formula","formula"],
   };
 
+  // Category-based keyword injection — when query contains a known brand but not
+  // the product type word, inject it so tag matching works
+  const categoryKeywords = {
+    baby: {
+      brands: ["huggies","pampers","luvs","goodnites","pull-ups","honest","dyper","coterie","kudos","healthybaby","hello bello","millie moon","andy pandy"],
+      inject: ["diaper","diapers","nappy"],
+    },
+  };
+  const catInject = categoryKeywords[category];
+  const queryJoined = queries.join(" ");
+  const shouldInject = catInject && catInject.brands.some(b => queryJoined.includes(b))
+    && !catInject.inject.some(k => queryJoined.includes(k));
+
   const expandedWords = [...new Set(
     queries.flatMap(q => {
       const base = q.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
@@ -4861,6 +4874,8 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       return [...base, ...synonyms];
     })
   )];
+
+  if (shouldInject) expandedWords.push(...catInject.inject);
 
   const allWords = expandedWords;
 
