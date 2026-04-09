@@ -733,42 +733,6 @@ const AnimatedScore = ({target, color}) => {
 };
 
 // ── SHARE CARD ────────────────────────────────────────────────
-const ShareCard = ({result, displayScore, isMobile, isDark}) => {
-  const canvasRef = useRef(null);
-  const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = result.category || "";
-  const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
-
-  // Collect concerns
-  const concerns = [
-    ...(result.flagged_substances||[]),
-    ...(result.dimensions?.materials?.concerns||[]),
-    ...(result.dimensions?.usage_exposure?.concerns||[]),
-  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
-
-  // Collect top alternative
-  const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-
-  useEffect(()=>{
-    const canvas = canvasRef.current; if(!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio||1, 2);
-    const W = 1080, H = 1350; // 4:5 ratio — better for Instagram
-    canvas.width = W*dpr; canvas.height = H*dpr;
-    canvas.style.width = "100%"; canvas.style.height = "auto";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
-
-    const parseHex = (h) => {
-      if (!h || h[0]!=='#') return [74,222,128];
-      return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-    };
-    const [sr,sg,sb] = parseHex(color);
-
     // ── Background gradient ──
     const grad = ctx.createLinearGradient(0,0,W,H);
     grad.addColorStop(0,"#031a0d");
