@@ -191,29 +191,38 @@ function cacheKey(q, category) {
   return category ? `${category}:${norm}` : norm;
 }
 
-// Fuzzy calibration lookup — handles name variations like "soap" vs "dish"
-// Checks exact match first, then partial match (query contains key or key contains query)
+// Fuzzy calibration lookup — handles name variations and apostrophes
+// "Matt's bakery" matches "matts bakery", "Seventh Generation soap" matches "seventh generation dish"
 function fuzzyCalibrationLookup(productName) {
-  const norm = normalise(productName);
-  const normNoApos = norm.replace(/'/g, "");
+  const norm        = normalise(productName);
+  const normNoApos  = norm.replace(/'/g, "");
+
+  // 1. Exact match (with and without apostrophes)
   const exact = CALIBRATION.get(norm) || CALIBRATION.get(normNoApos);
   if (exact) return { key: norm, entry: exact };
 
-  // 2. Query starts with a calibration key (e.g. "seventh generation soap" starts with "seventh generation")
+  // 2. Query starts with a calibration key
   for (const [k, v] of CALIBRATION.entries()) {
     const kn = k.replace(/'/g, "");
-    if (k.length >= 4 && (norm.startsWith(k) || normNoApos.startsWith(kn))) return { key: k, entry: v };
+    if (k.length >= 4 && (norm.startsWith(k) || normNoApos.startsWith(kn))) {
+      return { key: k, entry: v };
+    }
   }
 
-  // 3. Calibration key starts with query (e.g. "seventh generation" found from "seventh gen")
-  for (const [k, v] of CALIBRATION.entries()) {
-    if (norm.length >= 4 && k.startsWith(norm)) return { key: k, entry: v };
-  }
-
-  // 4. Query contains calibration key as a phrase (e.g. "method all purpose cleaner" contains "method")
+  // 3. Calibration key starts with query
   for (const [k, v] of CALIBRATION.entries()) {
     const kn = k.replace(/'/g, "");
-    if (k.length >= 6 && (norm.includes(k) || normNoApos.includes(kn))) return { key: k, entry: v };
+    if (norm.length >= 4 && (k.startsWith(norm) || kn.startsWith(normNoApos))) {
+      return { key: k, entry: v };
+    }
+  }
+
+  // 4. Query contains calibration key as a phrase
+  for (const [k, v] of CALIBRATION.entries()) {
+    const kn = k.replace(/'/g, "");
+    if (k.length >= 6 && (norm.includes(k) || normNoApos.includes(kn))) {
+      return { key: k, entry: v };
+    }
   }
 
   return null;
@@ -4030,12 +4039,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const fuzzyHit = fuzzyCalibrationLookup(productName);
   if (fuzzyHit) {
     const { entry } = fuzzyHit;
-    const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+    const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
+    const kidsFloor = entry.kidsFloor || entry.floor;
+    const kidsCeil  = entry.kidsCeiling || entry.ceiling;
+    const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+    const isChild   = detectChildProduct(productName, entry.category || category);
+    const concernsText = (entry.substances || []).join(" ");
+    const { childScore, childBumps } = computeChildScore(midScore, concernsText, entry.category || category, productName, isChild);
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
       category: entry.category || category,
       confidence: entry.confidence || "high",
+      is_child_product: isChild,
+      child_score: entry.kidsFloor ? kidsMid : childScore,
+      child_bumps: childBumps || [],
       dimensions: {
         materials:      { score: 5, concerns: entry.substances || [] },
         usage_exposure: { score: 5, concerns: [] },
@@ -4048,7 +4066,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       alternatives: [], ai_alternatives: [],
     });
     cacheSet(key, fuzzyResult);
-    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}`);
+    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${childScore}`);
     return res.json({ ...fuzzyResult, cached: false });
   }
 

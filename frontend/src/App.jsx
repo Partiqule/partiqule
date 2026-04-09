@@ -552,7 +552,6 @@ const AnimatedScore = ({target, color}) => {
   useEffect(() => {
     const t = Number(target);
     if (!t || t <= 0 || isNaN(t)) { setDisplay(0); return; }
-    setDisplay(0);
     let current = 0;
     let rafId;
     let done = false;
@@ -563,9 +562,8 @@ const AnimatedScore = ({target, color}) => {
       setDisplay(Math.floor(current));
       rafId = requestAnimationFrame(step);
     };
-    // 50ms delay ensures component is stable before animating
-    const timer = setTimeout(() => { if (!done) rafId = requestAnimationFrame(step); }, 50);
-    return () => { done = true; cancelAnimationFrame(rafId); clearTimeout(timer); };
+    rafId = requestAnimationFrame(step);
+    return () => { done = true; cancelAnimationFrame(rafId); };
   }, [target]);
   return <tspan fill={color}>{display}</tspan>;
 };
