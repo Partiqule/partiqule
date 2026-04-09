@@ -4856,16 +4856,36 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
 
   // Category-based keyword injection — when query contains a known brand but not
   // the product type word, inject it so tag matching works
-  const categoryKeywords = {
-    baby: {
+  const categoryKeywordRules = [
+    {
+      categories: ["baby"],
       brands: ["huggies","pampers","luvs","goodnites","pull-ups","honest","dyper","coterie","kudos","healthybaby","hello bello","millie moon","andy pandy"],
       inject: ["diaper","diapers","nappy"],
     },
-  };
-  const catInject = categoryKeywords[category];
+    {
+      categories: ["baby"],
+      brands: ["enfamil","similac","gerber","earth's best","happy baby","bobbie","byheart","else nutrition"],
+      inject: ["baby formula","infant formula","formula"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["crest","colgate","sensodyne","arm & hammer","arm and hammer","oral-b","oral b"],
+      inject: ["toothpaste","tooth paste","dental"],
+    },
+    {
+      categories: ["home"],
+      brands: ["dawn","palmolive","finish","cascade","seventh generation"],
+      inject: ["dish soap","dishwashing","dish detergent"],
+    },
+  ];
   const queryJoined = queries.join(" ");
-  const shouldInject = catInject && catInject.brands.some(b => queryJoined.includes(b))
-    && !catInject.inject.some(k => queryJoined.includes(k));
+  const injections = [];
+  for (const rule of categoryKeywordRules) {
+    if (!rule.categories.includes(category)) continue;
+    if (!rule.brands.some(b => queryJoined.includes(b))) continue;
+    if (rule.inject.some(k => queryJoined.includes(k))) continue;
+    injections.push(...rule.inject);
+  }
 
   const expandedWords = [...new Set(
     queries.flatMap(q => {
@@ -4875,7 +4895,7 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     })
   )];
 
-  if (shouldInject) expandedWords.push(...catInject.inject);
+  if (injections.length) expandedWords.push(...injections);
 
   const allWords = expandedWords;
 

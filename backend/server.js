@@ -244,34 +244,34 @@ function detectCategory(q) {
   if (/macbook|iphone|ipad|imac|apple watch|airpods|apple tv|apple mac|\bapple\s+(pro|air|mini|studio|ultra|m[0-9]|laptop|computer|phone|tablet|watch|earbuds|headphones)\b|samsung galaxy|samsung phone|samsung tablet|samsung tv|pixel phone|google pixel|android phone|windows laptop|dell laptop|hp laptop|lenovo thinkpad|surface pro|microsoft surface|chromebook|gaming laptop|nvidia|amd ryzen|intel core|\blaptop\b|\bsmartphone\b|\btablet\b(?!.*food)|\bdesktop computer\b|television|\b(4k|oled|qled)\s+tv\b|smart tv|monitor|keyboard|mouse\b(?!.*trap)|headphones|earbuds|airpods|bluetooth speaker|smart speaker|alexa|google home|ring doorbell|nest thermostat|robot vacuum|roomba|printer|camera(?!.*food)|drone|gaming console|playstation|xbox|nintendo switch|smart home|wifi router|hard drive|ssd|graphics card|cpu|motherboard|charger(?!.*food)|power bank|battery pack|electric vehicle|tesla|rivian|ev car/.test(s)) return "other";
 
   // ── RESTAURANT ──
-  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|sweetgreen|sweet green|cava restaurant|dave.?s hot chicken|dutch bros|jamba juice|smoothie king|pressed juicery|crumbl|nothing bundt|insomnia cookie|levain bakery|boba guys|kung fu tea|gong cha|alley|black bear diner|first watch|mod pizza|blaze pizza|pieology|california pizza kitchen|yard house|bj.?s restaurant|red lobster|longhorn|texas roadhouse|golden corral|ihop|cracker barrel|bob evans|perkins|denny|waffle house|steak.?n shake|cook.?out|habit burger|del taco|el pollo loco|church.?s chicken|captain d.?s|long john silver|a.?w restaurant|tim hortons|jack.?s|hardee.?s|krystal|white castle|steak.?n shake|naked farmer/.test(s)) return "restaurant";
+  if (/chick.?fil.?a|mcdonald|burger king|wendy.?s|taco bell|chipotle|subway|domino|pizza hut|kfc|popeyes|in.?n.?out|shake shack|five guys|panda express|starbucks|dunkin|krispy kreme|sonic|dairy queen|jack in the box|whataburger|culver.?s|fuzzy.?s|raising cane|wingstop|jersey mike|jimmy john|panera|cheesecake factory|olive garden|applebee|chili.?s|outback|ihop|denny.?s|waffle house|del taco|carl.?s jr|hardee.?s|bojangles|zaxby.?s|cookout|checkers|rally.?s|arby.?s|buffalo wild wings|hooters|red robin|sweetgreen|sweet green|cava restaurant|dave.?s hot chicken|dutch bros|jamba juice|smoothie king|pressed juicery|crumbl|nothing bundt|insomnia cookie|levain bakery|boba guys|kung fu tea|gong cha|alley|black bear diner|first watch|mod pizza|blaze pizza|pieology|california pizza kitchen|yard house|bj.?s restaurant|red lobster|longhorn|texas roadhouse|golden corral|ihop|cracker barrel|bob evans|perkins|denny|waffle house|steak.?n shake|cook.?out|habit burger|del taco|el pollo loco|church.?s chicken|captain d.?s|long john silver|a.?w restaurant|tim hortons|jack.?s|hardee.?s|krystal|white castle|steak.?n shake|naked farmer|big mac/.test(s)) return "restaurant";
 
   // ── TOYS ──
-  if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayons|markers|play set|playset/.test(s)) return "toy";
+  if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play.?doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayola|crayons|markers|play set|playset/.test(s)) return "toy";
 
   // ── ACCESSORIES — jewelry, bags, watches ──
   if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|ring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
 
   // ── BABY — before clothing to catch training pants ──
-  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet|training pants|pull.?up.*diaper|potty training/.test(s)) return "baby";
+  if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet|training pants|pull.?up.*diaper|potty training|enfamil|similac|waterwipes|desitin/.test(s)) return "baby";
 
   // ── CLOTHING ──
-  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|dress|skirt|shorts|tights|blazer|coat|swimsuit|bikini|shoe|sneaker|boot|sandal|heel|loafer|oxford|slipper|flip flop/.test(s)) return "clothing";
+  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|dress|skirt|shorts|tights|blazer|coat|swimsuit|bikini|shoe|sneaker|boot|sandal|heel|loafer|oxford|slipper|flip flop|birkenstock|crocs|\bnike\b|adidas|new balance|puma/.test(s)) return "clothing";
 
-  // ── SUPPLEMENT ──
-  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|gummy vitamin/.test(s)) return "supplement";
-
-  // ── BEAUTY / PERSONAL CARE ──
-  if (/shampoo|conditioner|lotion|soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf/.test(s)) return "personal_care";
+  // ── SUPPLEMENT / OTC MEDICINE ──
+  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|gummy vitamin|tylenol|acetaminophen|advil|ibuprofen|benadryl|diphenhydramine|zyrtec|cetirizine|tums|antacid|allegra|claritin|pepto|robitussin|mucinex|dayquil|nyquil/.test(s)) return "supplement";
 
   // ── HOME FURNISHING — before general home catch ──
   if (/mattress|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|memory foam|latex mattress|carpet|rug|curtain|drape|upholster|sectional|armchair|loveseat|ottoman|dresser|nightstand|bookshelf|bookcase|bed frame|headboard/.test(s)) return "home_furnishing";
 
   // ── KITCHEN — before general home catch ──
-  if (/\b(pan|pot|cookware|skillet|wok|dutch oven|saucepan|baking sheet|sheet pan|cast iron|ceramic.*pan|non.?stick|teflon|pfas.*pan|cooking.*pot|knife|cutting board|mixing bowl|colander|strainer|spatula|tongs|whisk|ladle|measuring cup|food processor|blender|toaster|air fryer|instant pot|rice cooker|slow cooker|pressure cooker|coffee maker|espresso machine|kettle|microwave)\b/.test(s)) return "kitchen";
+  if (/\b(pan|pot|cookware|skillet|wok|dutch oven|saucepan|baking sheet|sheet pan|cast iron|ceramic.*pan|non.?stick|teflon|pfas.*pan|cooking.*pot|knife|cutting board|mixing bowl|colander|strainer|spatula|tongs|whisk|ladle|measuring cup|food processor|blender|toaster|air fryer|instant pot|rice cooker|slow cooker|pressure cooker|coffee maker|espresso machine|kettle|microwave|tumbler|stanley tumbler|yeti|hydro.?flask)\b/.test(s)) return "kitchen";
 
-  // ── HOME (cleaning, candles, general household) ──
-  if (/laundry|detergent|cleaner|sponge|dish soap|broom|mop|scrub|brush|vacuum|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|tide pod|dishwasher|washing machine|dryer|air freshener|candle|wax melt|towel/.test(s)) return "home";
+  // ── HOME (cleaning, candles, general household) — before personal_care to catch "dish soap" before bare "soap" ──
+  if (/laundry|detergent|cleaner|sponge|dish soap|broom|mop|scrub|brush|vacuum|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|tide pod|dishwasher|washing machine|dryer|air freshener|candle|wax melt|towel|clorox|lysol|ziploc|swiffer|febreze|glad\b|reynolds wrap|saran wrap|trash bag|garbage bag|aluminum foil|tupperware|paper towel|wax paper|parchment|glade|yankee candle|bath and body works candle/.test(s)) return "home";
+
+  // ── BEAUTY / PERSONAL CARE ──
+  if (/shampoo|conditioner|lotion|(?<!dish )soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf|crest|colgate|oral.?b|sensodyne/.test(s)) return "personal_care";
 
   // ── BEVERAGE — drinkable consumption ──
   if (
@@ -287,7 +287,7 @@ function detectCategory(q) {
     /\b(cheese|yogurt|yoghurt|butter|cream|ghee|cottage|ricotta|mozzarella|cheddar|parmesan|brie)\b/.test(s) ||
     /\b(bread|bagel|muffin|croissant|tortilla|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
     /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|cheerio|cereal|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauce|salsa|dressing|vinegar|olive oil|syrup|hot sauce|sriracha|hummus|guacamole|pesto|marinara)\b/.test(s) ||
-    /\b(soup|broth|stock|stew|chili|curry|ramen|frozen meal|canned food|baby food|infant formula|snack|food|meal|lunch|dinner|breakfast|salad|wrap|bowl|burrito|sandwich|taco|burger|pizza|fries|wings|nuggets|entree|appetizer|side dish)\b/.test(s)
+    /\b(soup|broth|stock|stew|chili|curry|ramen|frozen meal|canned food|baby food|infant formula|snack|food|meal|lunch|dinner|breakfast|salad|(?<!saran )wrap|bowl|burrito|sandwich|taco|burger|pizza|fries|wings|nuggets|entree|appetizer|side dish)\b/.test(s)
   ) return "food";
 
   return null;
