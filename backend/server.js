@@ -137,7 +137,7 @@ const initCache = async () => {
   if (hasRedis) {
     console.log("[REDIS] Connected — syncing top products from Redis...");
     try {
-      const keys = await redisKeys("score:*");
+      const keys = await redisKeys("*");
       let synced = 0;
       for (const k of keys.slice(0, 2000)) {
         if (!scoreCache.has(k)) {
@@ -3814,19 +3814,56 @@ app.post("/analyze", rateLimit, async (req, res) => {
       console.log("Image scan — using vision pass1");
       const p1 = await callClaudeVision(image, mediaType || "image/jpeg");
       const productName = p1.product_name || "Scanned product";
+      const category = p1.category || "other";
+
+      // ── Check cache AFTER vision identifies product name ──
+      // Camera scan of Goldfish = text scan of "Goldfish crackers" — same result
+      const imgKey = cacheKey(productName, category);
+      const imgCached = await cacheGet(imgKey);
+      if (imgCached) {
+        console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
+        return res.json({ ...imgCached, cached: true });
+      }
+
+      // ── Fuzzy calibration check before running pass2 ──
+      const imgFuzzy = fuzzyCalibrationLookup(productName);
+      if (imgFuzzy) {
+        const { entry } = imgFuzzy;
+        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+        const fuzzyResult = applyProductCalibration({
+          product_name: productName, score: midScore, overall_score: midScore,
+          category: entry.category || category,
+          confidence: entry.confidence || "high",
+          dimensions: {
+            materials:      { score: 5, concerns: entry.substances || [] },
+            usage_exposure: { score: 5, concerns: [] },
+            packaging:      { score: 5, concerns: [] },
+            sustainability: { score: 5, concerns: [] },
+          },
+          concerns: entry.substances || [],
+          flagged_substances: entry.substances || [],
+          summary: entry.reason || "",
+          alternatives: [], ai_alternatives: [],
+          nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
+          ingredient_list: p1.ingredient_list || [],
+        });
+        cacheSet(imgKey, fuzzyResult);
+        console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
+        return res.json({ ...fuzzyResult, cached: false });
+      }
 
       // Pass 2 audit using identified name
       let p2 = null;
       try { p2 = await pass2(productName, p1); } catch(e) { console.warn("Pass2 failed:", e.message); }
 
-      const category = p1.category || "other";
-      let finalAlternatives = filterDbAlternatives(findAlternatives(productName, category), category, productName);
+      const imgCategory = p1.category || "other";
+      let finalAlternatives = filterDbAlternatives(findAlternatives(productName, imgCategory), imgCategory, productName);
       if (!finalAlternatives.length && p1.ai_alternatives?.length) {
         finalAlternatives = p1.ai_alternatives.map(a => ({
           id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 2,
           material: a.material || "", description: a.reason || "", price: "",
           affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
-          category
+          category: imgCategory
         }));
       }
 
@@ -3844,7 +3881,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         console.log(`Image path substance floors: ${imgSubstance.triggered.join(", ")}`);
       }
 
-      if (category === "restaurant") {
+      if (imgCategory === "restaurant") {
         const rname = (p1.product_name || productName).toLowerCase();
         const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(rname);
         const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(rname);
@@ -3854,11 +3891,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
         sScore  = Math.max(sScore,  3);
       }
 
-      let finalScore = computeScore(mScore, uScore, pkScore, sScore, category);
+      let finalScore = computeScore(mScore, uScore, pkScore, sScore, imgCategory);
 
       // ── Consistency checks — catch hallucinations before result ──
       ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
-        mScore, uScore, pkScore, sScore, finalScore, p1, p2, category, productName
+        mScore, uScore, pkScore, sScore, finalScore, p1, p2, imgCategory, productName
       ));
 
       // ── Positive ceilings — pull genuinely clean food products down ──
@@ -3889,21 +3926,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       const result = {
-        product_name: productName, category,
+        product_name: productName, category: imgCategory,
         score: finalScore,
         overall_score: finalScore,
         summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
         // ── Child vulnerability ──
         ...(() => {
-          const isChild = detectChildProduct(productName, category);
+          const isChild = detectChildProduct(productName, imgCategory);
           const imgConcernsText = JSON.stringify([
             ...(p1.product_analysis?.concerns || []),
             ...(p1.materials?.concerns || []),
             ...(p2?.refined_concerns || []),
             ...(p1.raw_concerns || []),
           ]).toLowerCase();
-          const { childScore, childBumps } = computeChildScore(finalScore, imgConcernsText, category, productName, isChild);
+          const { childScore, childBumps } = computeChildScore(finalScore, imgConcernsText, imgCategory, productName, isChild);
           return { is_child_product: isChild, child_score: childScore, child_bumps: childBumps };
         })(),
         identified_plastics: p1.identified_plastics || [],
@@ -3914,7 +3951,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         confidence:          p2?.confidence    || p1.confidence    || "medium",
         confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
         score_reasoning:     p2?.score_reasoning || "",
-        scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
+        scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(productName, imgCategory, finalAlternatives),
         break_even:          p2?.break_even || null,
         food_analysis:       p1.product_analysis || p1.food_analysis || null,
         composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
@@ -3951,18 +3988,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
           id: p.id, name: p.name, brand: p.brand || "",
           score: p.score ?? 3, material: p.material || "",
           description: p.description || "", price: p.price || "",
-          affiliateUrl: p.affiliateUrl, category: p.category || category
+          affiliateUrl: p.affiliateUrl, category: p.category || imgCategory
         })),
-        ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
+        ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, imgCategory, productName) || []).map(a => ({
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
         })),
-        // ── Nutrition — pull from top-level or product_analysis ──
         nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
         ingredient_list: p1.ingredient_list || [],
       };
 
-      return res.json(applyProductCalibration(result));
+      const calibratedResult = applyProductCalibration(result);
+      // Cache the result so next camera scan of same product is instant
+      cacheSet(imgKey, calibratedResult);
+      console.log(`[CACHED] Vision "${productName}" → score ${calibratedResult.score}`);
+      return res.json(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
       return res.status(500).json({ error: err.message || "Image scan failed" });
