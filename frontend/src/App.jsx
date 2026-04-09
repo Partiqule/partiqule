@@ -4664,6 +4664,7 @@ function App() {
   const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
   const [iapPrice,     setIapPrice]     = useState("$4.99/month"); // loaded from StoreKit
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAccountDeleted, setShowAccountDeleted] = useState(false);
 
   const deleteAccount = async () => {
     if (!user) { alert("Not signed in — please sign in and try again."); return; }
@@ -4674,14 +4675,15 @@ function App() {
       });
       const d = await r.json();
       if (!r.ok) { alert("Delete failed: " + (d.error || r.status)); return; }
-      await supabase.auth.signOut();
+      await supabase.auth.signOut().catch(()=>{});
       setUser(null);
       setShowDeleteConfirm(false);
       setHistory([]);
       try { localStorage.removeItem("ps_history"); } catch {}
       setPage("home");
       setResult(null);
-      alert("Account deleted.");
+      setShowAccountDeleted(true);
+      setTimeout(() => setShowAccountDeleted(false), 4000);
     } catch(e) {
       alert("Delete account error: " + e.message);
       console.error("Delete account failed", e);
@@ -5243,6 +5245,18 @@ function App() {
       {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
 
       {/* ── Delete account confirmation modal ── */}
+      {/* Account deleted toast */}
+      {showAccountDeleted && (
+        <div style={{position:"fixed", bottom:32, left:"50%", transform:"translateX(-50%)", zIndex:9999,
+          background:"#052e16", color:"#4ade80", padding:"14px 28px", borderRadius:14,
+          fontSize:15, fontWeight:700, boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
+          display:"flex", alignItems:"center", gap:10, whiteSpace:"nowrap",
+          animation:"fadeUp 0.3s ease",
+        }}>
+          <span style={{fontSize:18}}>✓</span> Account deleted
+        </div>
+      )}
+
       {showDeleteConfirm && (
         <div onClick={()=>setShowDeleteConfirm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
