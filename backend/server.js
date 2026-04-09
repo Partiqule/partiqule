@@ -1175,13 +1175,13 @@ async function callClaudeVisionIdentify(imageBase64, mediaType) {
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-            { type: "text", text: 'Read this product image and identify exactly what product it is. Return ONLY valid JSON, nothing else, no markdown:
+            { type: "text", text: `Read this product image and identify exactly what product it is. Return ONLY valid JSON, nothing else, no markdown:
 {"product_name": "Brand Name Product Name Variant", "brand": "Brand Name", "category": "food_beverage|beverage|personal_care|clothing|baby|kitchen|home|supplement|toy|other"}
 
 Examples:
 {"product_name": "Huggies Little Movers Size 4", "brand": "Huggies", "category": "baby"}
 {"product_name": "Goldfish Cheddar Crackers", "brand": "Pepperidge Farm", "category": "food_beverage"}
-{"product_name": "Tide Original Pods", "brand": "Tide", "category": "home"}' }
+{"product_name": "Tide Original Pods", "brand": "Tide", "category": "home"}` }
           ]
         }]
       }),
