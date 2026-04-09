@@ -4666,17 +4666,26 @@ function App() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const deleteAccount = async () => {
-    if (!user) return;
+    if (!user) { alert("Not signed in — please sign in and try again."); return; }
     try {
-      await fetch(`${API_BASE}/delete-account`, {
+      const r = await fetch(`${API_BASE}/delete-account`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ userId: user.id }),
       });
+      const d = await r.json();
+      if (!r.ok) { alert("Delete failed: " + (d.error || r.status)); return; }
       await supabase.auth.signOut();
+      setUser(null);
       setShowDeleteConfirm(false);
+      setHistory([]);
+      try { localStorage.removeItem("ps_history"); } catch {}
       setPage("home");
       setResult(null);
-    } catch(e) { console.error("Delete account failed", e); }
+      alert("Account deleted.");
+    } catch(e) {
+      alert("Delete account error: " + e.message);
+      console.error("Delete account failed", e);
+    }
   };
   const [checkingOut,  setCheckingOut]  = useState(false);
   const FREE_LIMIT = 10;
