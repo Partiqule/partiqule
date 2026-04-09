@@ -187,7 +187,7 @@ const rateLimit = (req, res, next) => {
 // ── HELPERS ───────────────────────────────────────────────────
 
 function cacheKey(q, category) {
-  const norm = q.toLowerCase().trim().replace(/\s+/g, " ");
+  const norm = q.toLowerCase().trim().replace(/\s+/g, " ").replace(/['’]/g, "");
   return category ? `${category}:${norm}` : norm;
 }
 
@@ -4887,19 +4887,24 @@ app.get("/cache-clear-product", requireAdmin, async (req, res) => {
   if (!name) return res.status(400).json({ error: "name param required" });
   const category = detectCategory(name);
   const key = cacheKey(name, category);
-  const wasInMemory = scoreCache.has(key);
+  // Also clear legacy key that may have apostrophes intact
+  const keyLegacy = (category ? category + ":" : "") + name.toLowerCase().trim().replace(/\s+/g, " ");
+  const wasInMemory = scoreCache.has(key) || scoreCache.has(keyLegacy);
   scoreCache.delete(key);
+  scoreCache.delete(keyLegacy);
   if (hasRedis) {
-    try {
-      await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-      });
-    } catch(e) { console.warn("[REDIS] del error:", e.message); }
+    for (const k of [key, keyLegacy]) {
+      try {
+        await fetch(`${REDIS_URL}/del/${encodeURIComponent(k)}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+        });
+      } catch(e) { console.warn("[REDIS] del error:", e.message); }
+    }
   }
   saveCacheToDisk();
-  console.log(`[CACHE] Cleared "${name}" (key: ${key}, wasInMemory: ${wasInMemory})`);
-  res.json({ ok: true, key, wasInMemory });
+  console.log(`[CACHE] Cleared "${name}" keys: ${key} + ${keyLegacy}, wasInMemory: ${wasInMemory}`);
+  res.json({ ok: true, key, keyLegacy, wasInMemory });
 });
 
 // External cron can hit this to keep cache warm - e.g. cron-job.org daily
