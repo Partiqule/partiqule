@@ -50,7 +50,14 @@ const redisGet = async (key) => {
       headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
     });
     const d = await r.json();
-    if (d.result) return JSON.parse(d.result);
+    if (d.result) {
+      let parsed = JSON.parse(d.result);
+      // Fix legacy entries where redisSet stored {value, ex} wrapper
+      if (parsed && typeof parsed.value === "string" && parsed.ex) {
+        try { parsed = JSON.parse(parsed.value); } catch {}
+      }
+      return parsed;
+    }
   } catch(e) { console.warn("[REDIS] get error:", e.message); }
   return null;
 };
@@ -58,10 +65,11 @@ const redisGet = async (key) => {
 const redisSet = async (key, value) => {
   if (!hasRedis) return;
   try {
-    await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+    // Upstash REST: POST /pipeline with [["SET", key, value, "EX", ttl]]
+    await fetch(`${REDIS_URL}/pipeline`, {
       method: "POST",
       headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ value: JSON.stringify(value), ex: REDIS_TTL }),
+      body: JSON.stringify([["SET", key, JSON.stringify(value), "EX", REDIS_TTL]]),
     });
   } catch(e) { console.warn("[REDIS] set error:", e.message); }
 };
