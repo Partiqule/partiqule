@@ -133,662 +133,189 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── SHARE CARD ────────────────────────────────────────────────
-// Renders a canvas share card and provides copy/share functionality
-// ── GLOBE LOADING ─────────────────────────────────────────────
-
-
-// 200 points evenly distributed on a sphere (Fibonacci lattice)
-const SPHERE_POINTS = (() => {
-  const pts = [];
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < 200; i++) {
-    const y = 1 - (i / 199) * 2;
-    const r = Math.sqrt(1 - y * y);
-    const theta = golden * i;
-    pts.push({ x: Math.cos(theta) * r, y, z: Math.sin(theta) * r });
-  }
-  return pts;
-})();
-
-const HEALTH_FACTS = [
-  { stat: "100%",   text: "of human blood samples tested contain microplastics",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412022001258" },
-  { stat: "58%",    text: "of arterial plaques studied contained polypropylene — NEJM 2024",
-    url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2309822" },
-  { stat: "11B",    text: "microplastic particles per cup from nylon tea bags",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b02540" },
-  { stat: "2025",   text: "FDA banned Red 3 and began phasing out petroleum-based dyes",
-    url: "https://www.fda.gov/food/food-additives-petitions/color-additive-petitions" },
-  { stat: "700K",   text: "microfibers shed per wash from a single synthetic fleece jacket",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412019300503" },
-  { stat: "8M",     text: "tonnes of plastic enter the world\'s oceans every year",
-    url: "https://www.science.org/doi/10.1126/science.1260352" },
-  { stat: "PFAS",   text: "in non-stick cookware linked to thyroid disruption and infertility",
-    url: "https://ehp.niehs.nih.gov/doi/10.1289/ehp.0800084" },
-  { stat: "1,000+", text: "everyday chemicals are known or suspected endocrine disruptors",
-    url: "https://www.endocrine.org/advocacy/position-statements/endocrine-disrupting-chemicals" },
-  { stat: "10x",    text: "higher microplastic levels found in infants compared to adults",
-    url: "https://pubs.acs.org/doi/10.1021/acs.estlett.0c00193" },
-  { stat: "PVA",    text: "pod film dissolves but enters waterways as microplastic pollution",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.1c01498" },
-  { stat: "97%",    text: "of Americans tested have PFAS forever chemicals in their blood",
-    url: "https://www.cdc.gov/biomonitoring/PFAS_BiomonitoringSummary.html" },
-  { stat: "260C",   text: "the temperature at which PTFE non-stick coatings begin to break down",
-    url: "https://www.ewg.org/research/canaries-kitchen" },
-  { stat: "2024",   text: "Nature Medicine confirmed microplastics accumulating in human brain tissue",
-    url: "https://www.nature.com/articles/s41591-024-03453-1" },
-  { stat: "3,000",  text: "undisclosed chemicals can hide under the single word fragrance on a label",
-    url: "https://link.springer.com/article/10.1007/s11869-016-0442-z" },
-  { stat: "1M",     text: "plastic bottles are purchased around the world every single minute",
-    url: "https://www.theguardian.com/environment/2017/jun/28/a-million-a-minute-worlds-plastic-bottle-binge-as-dangerous-as-climate-change" },
-  { stat: "500yr",  text: "the time it takes a standard plastic bag to break down in landfill",
-    url: "https://www.scienceadvances.org/content/3/7/e1700782" },
-  { stat: "1B",     text: "plastic toothbrushes are discarded globally every year",
-    url: "https://www.ewg.org/research/over-1-billion-plastic-toothbrushes-trashed-annually" },
-  { stat: "BPA",    text: "replacements BPS and BPF show similar hormonal disruption to BPA",
-    url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4114051/" },
-  { stat: "74K",    text: "microplastic particles the average person consumes or inhales every year",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b01517" },
-  { stat: "2021",   text: "microplastics were confirmed in human placentas for the first time",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412020322297" },
-  { stat: "Glass",  text: "containers have zero leaching risk even when heated, frozen, or acidic",
-    url: "https://www.sciencedirect.com/science/article/pii/S0048969719355457" },
-  { stat: "4.4lb",  text: "of trash generated per person per day in the US — most of it packaging",
-    url: "https://www.epa.gov/facts-and-figures-about-materials-waste-and-recycling" },
-  { stat: "80%",    text: "of ocean plastic pollution originates from land-based sources",
-    url: "https://www.science.org/doi/10.1126/science.1260352" },
-  { stat: "Breast", text: "milk was found to contain microplastics in studies across multiple countries",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412022000460" },
-  { stat: "40%",    text: "of plastic produced is single-use — designed to be discarded within minutes",
-    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
-  { stat: "UPF",    text: "ultra-processed foods linked to cardiovascular disease and cognitive decline",
-    url: "https://www.thelancet.com/journals/lanhl/article/PIIS2666-7568(24)00007-2/fulltext" },
-  { stat: "50",     text: "uses to offset a stainless steel bottle vs single-use plastic",
-    url: "https://www.ellenmacarthurfoundation.org/the-new-plastics-economy-rethinking-the-future-of-plastics" },
-  { stat: "Nylon",  text: "and polyester shed microfibers during wear — not just during washing",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412018316350" },
-  { stat: "6.3B",   text: "tonnes of plastic waste generated since the 1950s — only 9% ever recycled",
-    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
-  { stat: "Heated", text: "polypropylene baby bottles release millions of microplastic particles per litre",
-    url: "https://www.nature.com/articles/s43016-020-00171-y" },
-  { stat: "63%",   text: "of EWG Dirty Dozen produce samples contain PFAS forever chemical pesticides — 2026 report",
-    url: "https://www.ewg.org/foodnews/dirty-dozen.php" },
-  { stat: "96%",   text: "of Dirty Dozen produce tested positive for pesticide residues even after washing",
-    url: "https://www.ewg.org/news-insights/news-release/2026/03/ewgs-2026-shoppers-guide-pesticides-producetm-finds-widespread" },
-];
-
-const STAGES = [
-  "Searching for product data...",
-  "Analysing materials and exposure...",
-  "Auditing the score...",
-  "Finding safer alternatives...",
-];
-
-const GlobeLoading = ({isMobile}) => {
-  const containerRef = useRef(null);
-  const angleRef     = useRef(0);
-  const frameRef     = useRef(null);
-  const glowRef      = useRef(Array.from({length:200}, () => 0));
-  const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
-  const shuffledFacts = useRef([...HEALTH_FACTS].sort(() => Math.random() - 0.5));
-  const [activeFacts, setActiveFacts] = useState([]);
-  const [stage, setStage] = useState(0);
-
-  // Layout — computed once
-  const mob = isMobile || (typeof window !== 'undefined' && window.innerWidth < 640);
-  const W   = mob ? Math.min(typeof window !== 'undefined' ? window.innerWidth - 24 : 340, 360) : 600;
-  const R   = mob ? 82  : 115;
-  const CX  = W / 2;
-  const CY  = mob ? 188 : 250;
-  const H   = CY + R + (mob ? 100 : 120);
-
-  // Slots: globe surface point (gx,gy) → line endpoint (lx,ly) → card (cx,cy,cw,ch)
-  const SLOTS = mob ? [
-    // Top — full-width card above globe
-    { gx:CX,         gy:CY-R,       lx:CX,       ly:68,       cx:8,        cy:8,        cw:W-16,        ch:58 },
-    // Bottom left
-    { gx:CX-R*.72,   gy:CY+R*.52,   lx:20,       ly:CY+R+18,  cx:8,        cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
-    // Bottom right
-    { gx:CX+R*.72,   gy:CY+R*.52,   lx:W-20,     ly:CY+R+18,  cx:(W+4)/2,  cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
-  ] : [
-    { gx:CX,        gy:CY-R,       lx:CX,        ly:78,       cx:CX-88,    cy:10,       cw:176, ch:68 },
-    { gx:CX+R*.866, gy:CY-R*.5,    lx:CX+R+15,   ly:CY-96,    cx:CX+R+15,  cy:CY-128,   cw:158, ch:68 },
-    { gx:CX+R*.866, gy:CY+R*.5,    lx:CX+R+15,   ly:CY+42,    cx:CX+R+15,  cy:CY+8,     cw:158, ch:68 },
-    { gx:CX-R*.866, gy:CY+R*.5,    lx:CX-R-15,   ly:CY+42,    cx:0,        cy:CY+8,     cw:158, ch:68 },
-    { gx:CX-R*.866, gy:CY-R*.5,    lx:CX-R-15,   ly:CY-96,    cx:0,        cy:CY-128,   cw:158, ch:68 },
-  ];
-
-  // rAF: rotation + per-particle glow pulses
-  useEffect(() => {
-    const animate = () => {
-      angleRef.current += 0.006;
-      if (containerRef.current) {
-        const els = containerRef.current.querySelectorAll("[data-pt]");
-        const cos = Math.cos(angleRef.current);
-        const sin = Math.sin(angleRef.current);
-        els.forEach((el, i) => {
-          const p = SPHERE_POINTS[i];
-          const rx = p.x * cos - p.z * sin;
-          const rz = p.x * sin + p.z * cos;
-          const persp = 2.6 / (2.6 + rz);
-          const sx = CX + rx * R * persp;
-          const sy = CY - p.y * R * persp;
-          const sz = Math.max(1.5, 1.5 + persp * 4.5).toFixed(1);
-          const baseOp = Math.max(0.05, Math.min(0.88, 0.08 + (rz + 1) * 0.40));
-
-          if (glowTimer.current[i] <= 0) {
-            glowTimer.current[i] = 50 + Math.floor(Math.random() * 220);
-            if (Math.random() < 0.28) glowRef.current[i] = 1.0;
-          } else {
-            glowTimer.current[i]--;
-          }
-          const g = glowRef.current[i];
-          if (g > 0) glowRef.current[i] = Math.max(0, g - 0.032);
-
-          el.style.transform = `translate(${(sx-2).toFixed(1)}px,${(sy-2).toFixed(1)}px)`;
-          el.style.opacity   = Math.min(1, baseOp + g * 0.82).toFixed(2);
-          el.style.width     = sz + "px";
-          el.style.height    = sz + "px";
-          el.style.background   = g > 0.4 ? "#86efac" : "#4ade80";
-          el.style.boxShadow    = g > 0.35 ? `0 0 ${Math.round(g*10)}px rgba(74,222,128,${(g*0.85).toFixed(2)})` : "none";
-        });
-      }
-      frameRef.current = requestAnimationFrame(animate);
-    };
-    frameRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameRef.current);
-  }, [CX, CY, R]);
-
-  // Stage progression
-  useEffect(() => {
-    const t = [
-      setTimeout(() => setStage(1), 8000),
-      setTimeout(() => setStage(2), 16000),
-      setTimeout(() => setStage(3), 22000),
-    ];
-    return () => t.forEach(clearTimeout);
-  }, []);
-
-  // Facts branch out one at a time, all stay for entire scan
-  useEffect(() => {
-    const maxSlots = SLOTS.length;
-    let count = 0;
-    const launch = () => {
-      if (count >= maxSlots) return;
-      const slot = SLOTS[count];
-      const fact = shuffledFacts.current[count % shuffledFacts.current.length];
-      setActiveFacts(prev => [...prev, { id: Date.now() + count, slot, fact }]);
-      count++;
-    };
-    const t0 = setTimeout(launch, 900);
-    const iv = setInterval(() => { if (count < maxSlots) launch(); }, 4000);
-    return () => { clearTimeout(t0); clearInterval(iv); };
-  }, []);
-
-  return (
-    <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
-      <style>{`
-        @keyframes factBranch {
-          0%   { opacity:0; transform:scale(0.35); }
-          55%  { opacity:1; transform:scale(1.05); }
-          100% { opacity:1; transform:scale(1); }
-        }
-        @keyframes lineGrow {
-          from { stroke-dashoffset: var(--ll); }
-          to   { stroke-dashoffset: 0; }
-        }
-        @keyframes nodePop {
-          0%   { r:0; opacity:0; }
-          70%  { r:6; opacity:1; }
-          100% { r:4.5; opacity:1; }
-        }
-        @keyframes globeRing {
-          0%,100% { opacity:0.07; } 50% { opacity:0.18; }
-        }
-      `}</style>
-
-      <div style={{position:"relative", width:W, height:H}}>
-
-        {/* Particle layer — covers full container so transforms stay in sync */}
-        <div ref={containerRef} style={{position:"absolute",top:0,left:0,width:W,height:H,pointerEvents:"none"}}>
-          {SPHERE_POINTS.map((_, i) => (
-            <div key={i} data-pt={i} style={{
-              position:"absolute", top:0, left:0, width:4, height:4,
-              borderRadius:"50%", background:"#4ade80",
-            }}/>
-          ))}
-        </div>
-
-        {/* SVG: globe ring + connecting lines + attachment dots */}
-        <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none",zIndex:6}} width={W} height={H}>
-          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#4ade80" strokeWidth={0.6}
-            style={{animation:"globeRing 3.5s ease-in-out infinite"}}/>
-
-          {activeFacts.map(af => {
-            const s = af.slot;
-            const len = Math.hypot(s.lx - s.gx, s.ly - s.gy).toFixed(1);
-            return (
-              <g key={af.id}>
-                <line
-                  x1={s.gx} y1={s.gy} x2={s.lx} y2={s.ly}
-                  stroke="rgba(74,222,128,0.45)" strokeWidth={1.5}
-                  strokeDasharray={len}
-                  style={{"--ll": len, animation:"lineGrow 0.65s ease-out 0.08s forwards", strokeDashoffset: len}}
-                />
-                <circle cx={s.gx} cy={s.gy} r={0} fill="#4ade80"
-                  style={{animation:"nodePop 0.45s ease-out 0.05s forwards"}}/>
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Fact cards — stay in place for entire scan, tap to open source */}
-        {activeFacts.map(af => (
-          <a key={`c-${af.id}`}
-            href={af.fact.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
-            style={{
-              position:"absolute",
-              left: af.slot.cx, top: af.slot.cy,
-              width: af.slot.cw,
-              animation:"factBranch 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.12s both",
-              zIndex:10,
-              textDecoration:"none",
-              cursor: af.fact.url ? "pointer" : "default",
-            }}>
-            <div style={{
-              background:"rgba(5,46,22,0.96)",
-              border:"1.5px solid rgba(74,222,128,0.55)",
-              borderRadius:12, padding:"10px 14px",
-              boxShadow:"0 4px 24px rgba(74,222,128,0.18)",
-              transition:"border-color 0.15s, box-shadow 0.15s",
-            }}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.9)"; e.currentTarget.style.boxShadow="0 4px 32px rgba(74,222,128,0.35)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.55)"; e.currentTarget.style.boxShadow="0 4px 24px rgba(74,222,128,0.18)";}}>
-              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,
-                fontSize:mob?18:20,color:"#4ade80",lineHeight:1,marginBottom:5}}>
-                {af.fact.stat}
-              </div>
-              <div style={{fontSize:mob?10:11,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>
-                {af.fact.text}
-              </div>
-              {af.fact.url && (
-                <div style={{fontSize:9,color:"rgba(74,222,128,0.5)",marginTop:5,letterSpacing:"0.04em"}}>
-                  TAP TO READ STUDY ↗
-                </div>
-              )}
-            </div>
-          </a>
-        ))}
-
-        {/* Stage indicator */}
-        <div style={{position:"absolute",bottom:0,left:0,right:0,textAlign:"center"}}>
-          {/* Progress bar */}
-          <div style={{width:"60%", maxWidth:280, height:3, borderRadius:99, background:"rgba(74,222,128,0.15)", margin:"0 auto 12px", overflow:"hidden"}}>
-            <div style={{height:"100%", borderRadius:99, background:"#4ade80", transition:"width 1.2s ease",
-              width: stage === 0 ? "15%" : stage === 1 ? "40%" : stage === 2 ? "72%" : "95%"
-            }}/>
-          </div>
-          <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
-            {STAGES.map((_, i) => (
-              <div key={i} style={{
-                width: i === stage ? 20 : 7, height:7, borderRadius:99,
-                background: i <= stage ? "#4ade80" : "rgba(74,222,128,0.15)",
-                transition:"all 0.5s ease",
-              }}/>
-            ))}
-          </div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em"}}>
-            {STAGES[stage]}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-
-
-const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
-const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
-const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
-const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
-
-const categoryMeta = {
-  clothing:      {label:"Clothing",      color:"#6366f1",bg:"#eef2ff"},
-  food_beverage: {label:"Food & Drink",  color:"#0891b2",bg:"#ecfeff"},
-  personal_care: {label:"Personal Care", color:"#db2777",bg:"#fdf2f8"},
-  kitchen:       {label:"Kitchen",       color:"#d97706",bg:"#fffbeb"},
-  baby:          {label:"Baby & Kids",   color:"#7c3aed",bg:"#f5f3ff"},
-  other:         {label:"General",       color:"#6b7280",bg:"#f9fafb"},
-};
-
-// ── URL SLUG HELPERS ──────────────────────────────────────────
-function toSlug(str) {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-}
-function getShareUrl(productName) {
-  return `${window.location.origin}/scan/${toSlug(productName)}`;
-}
-
-const EXAMPLES = [
-  {label:"Lipton tea bags",        hint:"plastic mesh!"},
-  {label:"Styrofoam coffee cup",   hint:"high danger!"},
-  {label:"Glad Press'n Seal wrap", hint:"pure plastic"},
-];
-
-const MOST_SEARCHED = [
-  {label:"Lipton tea bags",        score:7, category:"food_beverage"},
-  {label:"Non-stick frying pan",   score:8, category:"kitchen"},
-  {label:"Plastic water bottle",   score:8, category:"food_beverage"},
-  {label:"Synthetic fleece jacket",score:7, category:"clothing"},
-  {label:"Baby formula bottle",    score:6, category:"baby"},
-  {label:"Liquid foundation",      score:6, category:"personal_care"},
-  {label:"Glass water bottle",     score:1, category:"food_beverage"},
-  {label:"Organic cotton t-shirt", score:2, category:"clothing"},
-];
-
-// Source citations by category
-const SOURCES = {
-  clothing:      [{title:"Microfiber Pollution & the Apparel Industry", url:"https://www.patagonia.com/stories/an-update-on-microfiber-pollution/story-18783.html",journal:"Patagonia Research"},{title:"Synthetic Textile Microfiber Release Study",url:"https://www.nature.com/articles/s41598-019-43023-x",journal:"Nature Scientific Reports"},{title:"Microplastics in Freshwater Systems",url:"https://www.sciencedirect.com/science/article/pii/S0043135416307533",journal:"Water Research"}],
-  food_beverage: [{title:"Microplastics in Bottled Water",url:"https://www.who.int/news/item/22-08-2019-who-calls-for-further-research-into-microplastics",journal:"WHO Report 2019"},{title:"Plastic Tea Bag Microparticle Release",url:"https://pubs.acs.org/doi/10.1021/acs.est.9b02540",journal:"Environmental Science & Technology"},{title:"Microplastics in Tap & Bottled Water",url:"https://orbmedia.org/stories/plus-plastic",journal:"Orb Media Study"}],
-  personal_care: [{title:"Microbeads in Personal Care Products",url:"https://www.beatthemicrobead.org/science/",journal:"Beat the Microbead"},{title:"Plastic Packaging Leaching Study",url:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5920378/",journal:"NIH Environmental Health"},{title:"Cosmetic Microplastic Regulations",url:"https://ec.europa.eu/environment/chemicals/reach/microplastics_en.htm",journal:"European Commission"}],
-  kitchen:       [{title:"PTFE Non-stick Coating Health Research",url:"https://www.ewg.org/research/pfas-forever-chemicals-widespread-present-blood-97-percent-americans",journal:"Environmental Working Group"},{title:"Plastic Food Container Leaching",url:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3222987/",journal:"NIH: Endocrine Disruption"},{title:"Microplastics in Household Dust",url:"https://pubs.acs.org/doi/10.1021/acs.est.9b03037",journal:"Environmental Science & Technology"}],
-  baby:          [{title:"Infant Microplastic Exposure Study",url:"https://www.nature.com/articles/s43016-020-00171-y",journal:"Nature Food"},{title:"Microplastics in Baby Products",url:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7068600/",journal:"NIH Environmental Research"},{title:"BPA & Phthalates in Baby Bottles",url:"https://www.healthystuff.org/",journal:"Healthy Stuff Study"}],
-  other:         [{title:"Global Microplastics Overview",url:"https://www.unep.org/resources/report/plastics-planet-how-plastics-are-polluting-our-world",journal:"UNEP Report"},{title:"Microplastics in Human Body",url:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7068600/",journal:"NIH Review Study"},{title:"Plastic Health Effects Research",url:"https://www.plastichealthcoalition.org/",journal:"Plastic Health Coalition"}],
-};
-
-// Bundle suggestions by category
-const BUNDLES = {
-  clothing: {title:"Plastic-Free Wardrobe Starter",desc:"Replace your 3 highest-shedding items",saving:"Save ~$0 in plastic exposure",items:["Pact Organic Cotton Underwear","Thought Clothing Bamboo Socks","prAna Hemp Blend T-Shirt","Guppyfriend Washing Bag"]},
-  food_beverage: {title:"Plastic-Free Kitchen Bundle",desc:"Eliminate single-use plastics from your kitchen",saving:"Replaces hundreds of single-use items",items:["Klean Kanteen Stainless Water Bottle","Stasher Silicone Food Bags","Bee's Wrap Beeswax Food Wrap","Swedish Dishcloths"]},
-  personal_care: {title:"Plastic-Free Bathroom Bundle",desc:"Replace your top plastic-heavy personal care items",saving:"Cuts bathroom plastic by ~80%",items:["Ethique Shampoo Bar","Bite Toothpaste Bits","Meow Meow Tweet Deodorant","LastObject Reusable Cotton Rounds"]},
-  kitchen: {title:"Plastic-Free Cooking Bundle",desc:"Upgrade your cookware and cleaning essentials",saving:"Eliminates daily plastic exposure at mealtime",items:["Xtrema Pure Ceramic Cookware","Full Circle Loofah Dish Brush","Swedish Dishcloths","Ecover Laundry Detergent Sheets"]},
-  baby: {title:"Plastic-Free Baby Essentials",desc:"The safest start for your little one",saving:"Reduces infant microplastic exposure",items:["Pehr Organic Cotton Onesie","Green Sprouts Glass Baby Bottles","Hanna Andersson Organic PJs","Bumkins Silicone Bib"]},
-  other: {title:"Plastic-Free Starter Kit",desc:"The best low-plastic swaps across categories",saving:"Great starting point for any household",items:["Klean Kanteen Water Bottle","Ethique Shampoo Bar","Bee's Wrap Food Wrap","Swedish Dishcloths"]},
-};
-
-// ── SVG ICONS ─────────────────────────────────────────────────
-const IconMicroscope = ({size=22,color="#fff"})  => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M9.5 2a1 1 0 0 1 1 1v1h1a1 1 0 0 1 0 2h-1v1.5l2.24 2.24A7 7 0 1 1 5.06 16H3a1 1 0 0 1 0-2h2.06A7.01 7.01 0 0 1 9 8.07V6h-.5a1 1 0 0 1 0-2H9V3a1 1 0 0 1 .5-1zM12 11a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>;
-const IconSearch     = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M10 2a8 8 0 1 0 4.906 14.32l4.387 4.387a1 1 0 0 0 1.414-1.414l-4.387-4.387A8 8 0 0 0 10 2zm0 2a6 6 0 1 1 0 12A6 6 0 0 1 10 4z"/></svg>;
-const IconChart      = ({size=26,color="#16a34a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3 3a1 1 0 0 1 1 1v14h16a1 1 0 0 1 0 2H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm14 2a1 1 0 0 1 1 1v8a1 1 0 0 1-2 0V6a1 1 0 0 1 1-1zm-4 3a1 1 0 0 1 1 1v5a1 1 0 0 1-2 0V9a1 1 0 0 1 1-1zm-4 3a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1z"/></svg>;
-const IconShield     = ({size=26,color="#16a34a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg>;
-const IconWarning    = ({size=20,color="#dc2626"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>;
-const IconCheck      = ({size=20,color="#16a34a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>;
-const IconArrow      = ({size=14,color="#16a34a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>;
-const IconTag        = ({size=22,color="#16a34a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M21.41 11.58l-9-9A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .59 1.42l9 9A2 2 0 0 0 13 22a2 2 0 0 0 1.41-.59l7-7A2 2 0 0 0 22 13a2 2 0 0 0-.59-1.42zM6.5 8C5.67 8 5 7.33 5 6.5S5.67 5 6.5 5 8 5.67 8 6.5 7.33 8 6.5 8z"/></svg>;
-const IconHistory    = ({size=18,color="#6b7280"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7v3l4-4-4-4v3zm1 10h-2V8h2v4.41l2.29 2.3-1.41 1.41L14 13.83V13z"/></svg>;
-const IconInstagram  = ({size=18,color="#fff"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>;
-const IconShare      = ({size=16,color="#6b7280"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 16c-.8 0-1.5.3-2 .8l-7.1-4.1c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.1c-.1.2-.1.4-.1.7 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>;
-
-// ── CUSTOM BRAND ICONS ────────────────────────────────────────
-const IcoScore       = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><polyline points="6,32 16,32 22,14 30,50 38,22 44,40 52,32 58,32" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="30" cy="50" r="4" fill="#3EC44A"/></svg>;
-const IcoSafety      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 6L10 16v16c0 13 10 22 22 26 12-4 22-13 22-26V16L32 6z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M22 32l6 6 14-12" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoVerified    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><rect x="10" y="10" width="44" height="44" rx="6" fill="#3EC44A" opacity="0.15"/><path d="M20 10h-6a4 4 0 00-4 4v36a4 4 0 004 4h28a4 4 0 004-4V14a4 4 0 00-4-4h-6" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M24 10a4 4 0 014-4h8a4 4 0 014 4v2H24v-2z" stroke="#3EC44A" strokeWidth="2.5"/><path d="M22 32l6 6 14-12" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoScan        = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M8 22V12a4 4 0 014-4h10" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M56 22V12a4 4 0 00-4-4H42" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M8 42v10a4 4 0 004 4h10" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M56 42v10a4 4 0 01-4 4H42" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="#3EC44A" strokeWidth="3" strokeLinecap="round"/><rect x="20" y="20" width="24" height="24" rx="4" fill="#3EC44A" opacity="0.18"/></svg>;
-const IcoSearch      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="28" cy="28" r="16" fill="#3EC44A" opacity="0.15"/><circle cx="28" cy="28" r="16" stroke="#3EC44A" strokeWidth="2.5"/><line x1="40" y1="40" x2="54" y2="54" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/></svg>;
-const IcoProducts    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M8 26L32 8l24 18v28a4 4 0 01-4 4H12a4 4 0 01-4-4V26z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M24 56V36h16v20" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-const IcoCategory    = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M14 24h28l-4 24H18L14 24z" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/><path d="M42 28h6a6 6 0 010 12h-6" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="10" y1="56" x2="50" y2="56" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><path d="M22 18c0-4 4-4 4-8" stroke="#3EC44A" strokeWidth="2" strokeLinecap="round"/><path d="M30 18c0-4 4-4 4-8" stroke="#3EC44A" strokeWidth="2" strokeLinecap="round"/></svg>;
-const IcoIngredients = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="40" rx="6" fill="#3EC44A" opacity="0.1"/><line x1="22" y1="20" x2="52" y2="20" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="22" y1="32" x2="52" y2="32" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><line x1="22" y1="44" x2="52" y2="44" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><circle cx="12" cy="20" r="3.5" fill="#3EC44A"/><circle cx="12" cy="32" r="3.5" fill="#3EC44A"/><circle cx="12" cy="44" r="3.5" fill="#3EC44A"/></svg>;
-const IcoRating      = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 8l6 12 14 2-10 10 2 14-12-6-12 6 2-14L12 22l14-2z" fill="#3EC44A" opacity="0.85" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
-const IcoSaved       = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><path d="M32 52S10 40 10 24a12 12 0 0122-6.7A12 12 0 0154 24c0 16-22 28-22 28z" fill="#3EC44A" opacity="0.8" stroke="#3EC44A" strokeWidth="2.5" strokeLinejoin="round"/></svg>;
-const IcoInfo        = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="24" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5"/><line x1="32" y1="28" x2="32" y2="44" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/><circle cx="32" cy="21" r="2.5" fill="#3EC44A"/></svg>;
-const IcoProfile     = ({size=24}) => <svg width={size} height={size} viewBox="0 0 64 64" fill="none"><circle cx="32" cy="22" r="12" fill="#3EC44A" opacity="0.15" stroke="#3EC44A" strokeWidth="2.5"/><path d="M10 56a22 22 0 0144 0" stroke="#3EC44A" strokeWidth="2.5" strokeLinecap="round"/></svg>;
-
-
-const IconTrash      = ({size=15,color="#9ca3af"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/></svg>;
-const IconMoon       = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>;
-const IconSun        = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-12.37-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0zM7.05 18.36l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0z"/></svg>;
-const IconFire       = ({size=14,color="#ef4444"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>;
-const IconBook       = ({size=20,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>;
-const IconLink       = ({size=14,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>;
-const IconBundle     = ({size=20,color="#7c3aed"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.05 15.96 0 13.36 0c-1.31 0-2.4.5-3.27 1.33L9 2.5 7.91 1.33C7.04.5 5.95 0 4.64 0 2.04 0 0 2.05 0 4.64c0 .48.11.92.18 1.36H0v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.64-4c.9 0 1.64.74 1.64 1.64 0 .97-.79 1.72-1.64 2.36C12.15 5.36 11.35 4.61 11.35 3.64 11.35 2.74 12.1 2 13.36 2zM4.64 2c1.26 0 2.01.74 2.01 1.64 0 .97-.8 1.72-2.01 2.36C3.43 5.36 2.64 4.61 2.64 3.64 2.64 2.74 3.38 2 4.64 2zM20 19H2v-2h18v2zm0-5H2V8h18v6z"/></svg>;
-
-// ── ANIMATED SCORE ────────────────────────────────────────────
-const AnimatedScore = ({target, color}) => {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    const t = Number(target);
-    if (!t || t <= 0 || isNaN(t)) { setDisplay(0); return; }
-    let current = 0;
-    let rafId;
-    let done = false;
-    const step = () => {
-      if (done) return;
-      current += 0.35;
-      if (current >= t) { setDisplay(t); done = true; return; }
-      setDisplay(Math.floor(current));
-      rafId = requestAnimationFrame(step);
-    };
-    rafId = requestAnimationFrame(step);
-    return () => { done = true; cancelAnimationFrame(rafId); };
-  }, [target]);
-  return <tspan fill={color}>{display}</tspan>;
-};
-
-// ── SHARE CARD ────────────────────────────────────────────────
+// Magazine cover style — bold, high contrast, score front and center
 const ShareCard = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = result.category || "";
+  const score   = displayScore || result.overall_score || result.score;
+  const label   = scoreLabel(score);
+  const color   = scoreColor(score);
+  const name    = result.product_name || "";
+  const category = (result.category || "").toUpperCase().replace(/_/g, " ");
   const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
+  const hasKids = childScore && childScore !== score;
 
-  // Collect concerns
-  const concerns = [
+  // Score color palette
+  const scoreBg2 = score<=2?"#f0fdf4":score<=4?"#f7fee7":score<=6?"#fefce8":score<=8?"#fff7ed":"#fff1f2";
+  const scoreInk = score<=2?"#14532d":score<=4?"#365314":score<=6?"#713f12":score<=8?"#7c2d12":"#881337";
+
+  // Top 3 flagged substances
+  const flags = [
     ...(result.flagged_substances||[]),
     ...(result.dimensions?.materials?.concerns||[]),
-    ...(result.dimensions?.usage_exposure?.concerns||[]),
   ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
 
-  // Collect top alternative
-  const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
+  // Top alternative
+  const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
 
   useEffect(()=>{
     const canvas = canvasRef.current; if(!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio||1, 2);
-    const W = 1080, H = 1350; // 4:5 ratio — better for Instagram
+    const dpr = Math.min(window.devicePixelRatio||1,2);
+    const W = 1080, H = 1080;
     canvas.width = W*dpr; canvas.height = H*dpr;
     canvas.style.width = "100%"; canvas.style.height = "auto";
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
+    ctx.scale(dpr,dpr);
 
-    const parseHex = (h) => {
-      if (!h || h[0]!=='#') return [74,222,128];
-      return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-    };
+    const parseHex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
     const [sr,sg,sb] = parseHex(color);
 
-    // ── Background gradient ──
-    const grad = ctx.createLinearGradient(0,0,W,H);
-    grad.addColorStop(0,"#031a0d");
-    grad.addColorStop(0.5,"#052e16");
-    grad.addColorStop(1,"#021508");
-    ctx.fillStyle = grad;
+    // ── BACKGROUND — off-white magazine paper ──
+    ctx.fillStyle = "#FAFAF7";
     ctx.fillRect(0,0,W,H);
 
-    // ── Floating particles ──
-    const rng = (seed) => { let x=Math.sin(seed)*10000; return x-Math.floor(x); };
-    const particles = Array.from({length:60},(_,i)=>({
-      x: rng(i*3+1)*W,
-      y: rng(i*3+2)*H,
-      r: rng(i*3+3)*3+0.5,
-      a: rng(i*3+4)*0.35+0.05,
-      type: i%5===0?"square":i%7===0?"diamond":"circle",
-    }));
-    particles.forEach(p=>{
-      ctx.save();
-      ctx.globalAlpha = p.a;
-      ctx.fillStyle = `rgb(${sr},${sg},${sb})`;
-      if(p.type==="circle"){
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      } else if(p.type==="square"){
-        ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2);
-      } else {
-        ctx.translate(p.x,p.y); ctx.rotate(Math.PI/4);
-        ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2);
-      }
-      ctx.restore();
-    });
+    // ── TOP MASTHEAD BAND ──
+    ctx.fillStyle = "#0A0A0A";
+    ctx.fillRect(0,0,W,88);
 
-    // ── Subtle grid ──
-    ctx.strokeStyle = "rgba(74,222,128,0.03)";
-    ctx.lineWidth = 1;
-    for(let x=0;x<W;x+=80){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for(let y=0;y<H;y+=80){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    // ── Top bar — Partiqule branding ──
-    ctx.fillStyle = "rgba(74,222,128,0.08)";
-    ctx.fillRect(0,0,W,90);
-    ctx.strokeStyle = "rgba(74,222,128,0.15)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0,90); ctx.lineTo(W,90); ctx.stroke();
+    // Partiqule wordmark
     ctx.fillStyle = "#4ade80";
-    ctx.font = `bold 38px 'Outfit',system-ui,sans-serif`;
+    ctx.font = "bold 40px system-ui,sans-serif";
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("Partiqule", 60, 45);
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = `500 26px 'Outfit',system-ui,sans-serif`;
+    ctx.fillText("Partiqule", 52, 44);
+
+    // Category tag right side
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.font = "600 22px system-ui,sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("partiqule.com", W-60, 45);
+    ctx.fillText(category || "PRODUCT SCAN", W-52, 44);
 
-    // ── Product name ──
-    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    ctx.font = `600 26px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(category.toUpperCase().replace(/_/g," "), W/2, 155);
+    // ── GIANT SCORE NUMBER — the hero ──
+    // Score color wash behind number
+    const scoreFontSize = 520;
+    ctx.font = `900 ${scoreFontSize}px system-ui,Arial,sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
 
-    const maxNameW = 900;
+    // Shadow / glow layer
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 60;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.08;
+    ctx.fillText(String(score), W/2, 480);
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    // Main score number — bold ink
+    ctx.fillStyle = "#0A0A0A";
+    ctx.fillText(String(score), W/2, 480);
+
+    // ── SCORE LABEL PILL ── sits just below number
+    const pillW = 280, pillH = 56, pillX = W/2 - pillW/2, pillY = 760;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, 28);
+    ctx.fillStyle = color;
+    ctx.fill();
     ctx.fillStyle = "#fff";
-    ctx.font = `bold 56px 'Outfit',system-ui,sans-serif`;
-    const words = name.split(" "); let line="", nameLines=[];
+    ctx.font = "bold 28px system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label.toUpperCase(), W/2, pillY + pillH/2);
+
+    // ── PRODUCT NAME ── above the score
+    const maxNameW = 900;
+    ctx.fillStyle = "#111";
+    ctx.textBaseline = "alphabetic";
+
+    // Measure and wrap
+    ctx.font = "bold 62px system-ui,sans-serif";
+    const words = name.split(" "); let line = "", nameLines = [];
     for(const w of words){
       const test = line ? line+" "+w : w;
       if(ctx.measureText(test).width > maxNameW && line){ nameLines.push(line); line=w; } else line=test;
     }
     if(line) nameLines.push(line);
     nameLines = nameLines.slice(0,2);
-    nameLines.forEach((l,i) => ctx.fillText(l, W/2, 215+i*68));
 
-    // ── Score circle ──
-    const cx = W/2, cy = 520;
-    // Outer glow
-    const glow = ctx.createRadialGradient(cx,cy,140,cx,cy,280);
-    glow.addColorStop(0,`rgba(${sr},${sg},${sb},0.12)`);
-    glow.addColorStop(1,`rgba(${sr},${sg},${sb},0)`);
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx,cy,280,0,Math.PI*2); ctx.fill();
+    // Draw name — above masthead bottom
+    const nameY = nameLines.length === 2 ? 164 : 182;
+    ctx.textAlign = "center";
+    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*74));
 
-    // Circle bg
-    ctx.beginPath(); ctx.arc(cx,cy,195,0,Math.PI*2);
-    ctx.fillStyle = `rgba(${sr},${sg},${sb},0.07)`; ctx.fill();
-    ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=2; ctx.stroke();
+    // Thin color rule under name
+    ctx.fillStyle = color;
+    ctx.fillRect(W/2 - 200, nameLines.length===2?252:230, 400, 5);
 
-    // Arc track
-    const startA=-Math.PI*0.75;
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5);
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.12)`; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
-    // Arc fill
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5*(score/10));
-    ctx.strokeStyle=color; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
+    // ── OUT OF 10 label ──
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.font = "600 26px system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("OUT OF 10", W/2, 840);
 
-    // Score number
-    ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.font=`bold 160px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(String(score),cx,cy-10);
-    ctx.fillStyle="rgba(255,255,255,0.35)";
-    ctx.font=`600 32px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText("/10",cx,cy+92);
+    // ── BOTTOM SECTION — dark band ──
+    ctx.fillStyle = "#0A0A0A";
+    ctx.fillRect(0, 896, W, H-896);
 
-    // Label pill
-    const pW=220,pH=50,pX=cx-110,pY=cy+130;
-    ctx.beginPath(); ctx.roundRect(pX,pY,pW,pH,25);
-    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.15)`; ctx.fill();
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.35)`; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`bold 24px 'Outfit',system-ui,sans-serif`;
-    ctx.textBaseline="middle"; ctx.fillText(label,cx,pY+25);
+    // Flagged substances or clean message
+    if(flags.length > 0){
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.font = "700 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("FLAGGED", 52, 928);
 
-    // Kids score badge if different
-    if(hasKids){
-      const kpW=320,kpH=46,kpX=cx-160,kpY=cy+198;
-      ctx.beginPath(); ctx.roundRect(kpX,kpY,kpW,kpH,23);
-      ctx.fillStyle="rgba(251,191,36,0.12)"; ctx.fill();
-      ctx.strokeStyle="rgba(251,191,36,0.3)"; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle="#fbbf24"; ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(`Kids score: ${childScore}/10`,cx,kpY+23);
-    }
-
-    // ── Divider ──
-    const divY = hasKids ? 820 : 780;
-    ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(60,divY); ctx.lineTo(W-60,divY); ctx.stroke();
-
-    // ── Concerns section ──
-    let yPos = divY + 44;
-    if(concerns.length>0){
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("FLAGGED CONCERNS", 60, yPos);
-      yPos += 36;
-      concerns.forEach((c)=>{
-        const txt = c.length>50 ? c.slice(0,47)+"…" : c;
-        // Concern pill
-        const cW = Math.min(ctx.measureText(txt).width+48, W-120);
-        ctx.beginPath(); ctx.roundRect(60,yPos,cW,44,22);
-        ctx.fillStyle=`rgba(${sr},${sg},${sb},0.1)`; ctx.fill();
-        ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=1.5; ctx.stroke();
-        ctx.fillStyle="rgba(255,255,255,0.8)";
-        ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.textBaseline="middle";
-        ctx.fillText(txt, 84, yPos+22);
-        ctx.textBaseline="alphabetic";
-        yPos += 56;
+      // Substance pills
+      let px = 180;
+      flags.slice(0,3).forEach((flag, i) => {
+        const flagText = flag.length > 22 ? flag.slice(0,20)+"…" : flag;
+        ctx.font = "600 20px system-ui,sans-serif";
+        const fw = ctx.measureText(flagText).width;
+        const pw = fw + 28, ph = 38, py = 910;
+        // pill bg
+        ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 19);
+        ctx.fillStyle = `rgba(${sr},${sg},${sb},0.25)`; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        // pill text
+        ctx.fillStyle = color;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(flagText, px + pw/2, py + ph/2);
+        px += pw + 12;
+        if(px > W - 200) return;
       });
     } else {
+      // Clean product message
       ctx.fillStyle = "#4ade80";
-      ctx.font = `600 28px 'Outfit',system-ui,sans-serif`;
+      ctx.font = "700 24px system-ui,sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("No major concerns detected", W/2, yPos+22);
-      yPos += 60;
+      ctx.fillText("✓ No significant concerns detected", W/2, 928);
     }
 
-    // ── Alternative suggestion ──
-    if(topAlt){
-      yPos += 10;
-      ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(60,yPos); ctx.lineTo(W-60,yPos); ctx.stroke();
-      yPos += 36;
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("CLEANER ALTERNATIVE", 60, yPos);
-      yPos += 36;
-      const altName = (topAlt.name||"").length>45 ? (topAlt.name||"").slice(0,42)+"…" : (topAlt.name||"");
-      ctx.fillStyle="#4ade80"; ctx.font=`bold 28px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(altName, 60, yPos);
-      if(topAlt.score || topAlt.estimated_score){
-        const altScore = topAlt.score || topAlt.estimated_score;
-        ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.fillText(`scores ${altScore}/10`, 60, yPos+34);
-      }
+    // Better alternative
+    if(alt && score > 3){
+      const altName = (alt.name||alt.brand||"").slice(0,36);
+      const altScore = alt.score || alt.estimated_score || "";
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.font = "600 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("BETTER OPTION", 52, 984);
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 22px system-ui,sans-serif";
+      ctx.fillText(altName + (altScore ? `  ${altScore}/10` : ""), 220, 984);
     }
 
-    // ── Bottom CTA ──
-    ctx.fillStyle="rgba(74,222,128,0.1)";
-    ctx.fillRect(0,H-120,W,120);
-    ctx.strokeStyle="rgba(74,222,128,0.15)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(0,H-120); ctx.lineTo(W,H-120); ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.55)";
-    ctx.font=`500 26px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("Scan your products at partiqule.com", W/2, H-60);
+    // partiqule.com bottom right
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.font = "500 22px system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText("partiqule.com", W-52, 1048);
+
+    // Kids score badge — top right if present
+    if(hasKids){
+      const badgeW = 200, badgeH = 48, badgeX = W-badgeW-40, badgeY = 104;
+      ctx.beginPath(); ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 24);
+      ctx.fillStyle = "#052e16"; ctx.fill();
+      ctx.fillStyle = "#4ade80";
+      ctx.font = "bold 20px system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(`👶 Kids: ${childScore}/10`, badgeX + badgeW/2, badgeY + badgeH/2);
+    }
 
   },[score, result]);
 
@@ -799,19 +326,18 @@ const ShareCard = ({result, displayScore, isMobile, isDark}) => {
       const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
       if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
         await navigator.share({
-          title:`${result.product_name} scored ${score}/10 on Partiqule`,
-          text:`I scanned ${result.product_name} and it scored ${score}/10. Check what's really in your products at partiqule.com`,
+          title:`${name} scored ${score}/10 on Partiqule`,
+          text:`I scanned ${name} and it scored ${score}/10. Check what's really in your products at partiqule.com`,
           files:[new File([blob],"partiqule.png",{type:"image/png"})],
         });
-        setStatus("copied");
       } else {
         await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-        setStatus("copied");
       }
+      setStatus("copied");
     } catch {
-      const url=URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
-      const a=document.createElement("a"); a.href=url;
-      a.download=`partiqule-${(result.product_name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
+      const url = URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
+      const a = document.createElement("a"); a.href=url;
+      a.download=`partiqule-${(name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
       a.click(); URL.revokeObjectURL(url);
       setStatus("copied");
     }
@@ -829,11 +355,13 @@ const ShareCard = ({result, displayScore, isMobile, isDark}) => {
         display:"flex", alignItems:"center", justifyContent:"center", gap:8,
         transition:"background 0.2s",
       }}>
-        {status==="copying" ? "Preparing…" : status==="copied" ? "Shared!" : "Share Result"}
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
       </button>
     </div>
   );
 };
+
 
 // ── SCORE ARC ────────────────────────────────────────────────
 const ScoreArc = ({score}) => {
