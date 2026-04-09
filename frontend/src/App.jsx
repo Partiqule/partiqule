@@ -133,6 +133,171 @@ const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── SHARE CARD ────────────────────────────────────────────────
 // Renders a canvas share card and provides copy/share functionality
+const ShareCard = ({result, displayScore, isMobile, isDark}) => {
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("idle"); // idle | copying | copied | error
+  const score = displayScore || result.overall_score || result.score;
+  const label = scoreLabel(score);
+  const color = scoreColor(score);
+  const bg    = score<=2?"#f0fdf4":score<=4?"#f7fee7":score<=6?"#fefce8":score<=8?"#fff7ed":"#fff0f0";
+  const name  = result.product_name || "";
+  const concerns = [
+    ...(result.dimensions?.materials?.concerns||[]),
+    ...(result.dimensions?.usage_exposure?.concerns||[]),
+    ...(result.flagged_substances||[]),
+  ].filter(Boolean).slice(0,3);
+
+  useEffect(()=>{
+    const canvas = canvasRef.current; if(!canvas) return;
+    const dpr = window.devicePixelRatio||1;
+    const W = 1080, H = 1080;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const parseHex = (h) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return [r,g,b]; };
+
+    // Background
+    ctx.fillStyle = "#052e16";
+    ctx.fillRect(0,0,W,H);
+
+    // Subtle grid pattern
+    ctx.strokeStyle = "rgba(74,222,128,0.04)";
+    ctx.lineWidth = 1;
+    for(let x=0;x<W;x+=60){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0;y<H;y+=60){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Score circle background
+    const cx=W/2, cy=390;
+    ctx.beginPath(); ctx.arc(cx,cy,220,0,Math.PI*2);
+    const [sr,sg,sb]=parseHex(color);
+    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.08)`; ctx.fill();
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.25)`; ctx.lineWidth=3; ctx.stroke();
+
+    // Score arc
+    const startA=-Math.PI*0.75, endA=startA+Math.PI*1.5*(score/10);
+    ctx.beginPath(); ctx.arc(cx,cy,185,startA,startA+Math.PI*1.5);
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.15)`; ctx.lineWidth=18; ctx.lineCap="round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,185,startA,endA);
+    ctx.strokeStyle=color; ctx.lineWidth=18; ctx.lineCap="round"; ctx.stroke();
+
+    // Score number
+    ctx.fillStyle="#fff";
+    ctx.font=`bold 180px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(String(score),cx,cy);
+
+    // /10
+    ctx.fillStyle="rgba(255,255,255,0.4)";
+    ctx.font=`600 36px 'Outfit',system-ui,sans-serif`;
+    ctx.fillText("/10",cx,cy+110);
+
+    // Label pill
+    const pillW=200, pillH=52, pillX=cx-pillW/2, pillY=cy+148;
+    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,26);
+    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.18)`; ctx.fill();
+    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.4)`; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=color; ctx.font=`bold 26px 'Outfit',system-ui,sans-serif`;
+    ctx.fillText(label,cx,pillY+28);
+
+    // Product name
+    const maxW=880;
+    ctx.fillStyle="#fff";
+    ctx.font=`bold 52px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="center";
+    // Word wrap
+    const words=name.split(" "); let line="", lines=[];
+    for(const w of words){
+      const test=line?line+" "+w:w;
+      if(ctx.measureText(test).width>maxW&&line){ lines.push(line); line=w; } else line=test;
+    }
+    if(line) lines.push(line);
+    lines=lines.slice(0,2);
+    if(lines.length===2&&ctx.measureText(lines[1]).width>maxW) lines[1]=lines[1].slice(0,28)+"…";
+    const nameY=670;
+    lines.forEach((l,i)=>ctx.fillText(l,cx,nameY+i*62));
+
+    // Concerns
+    if(concerns.length>0){
+      const startY=nameY+lines.length*62+36;
+      ctx.fillStyle="rgba(255,255,255,0.5)";
+      ctx.font=`600 24px 'Outfit',system-ui,sans-serif`;
+      ctx.fillText("FLAGGED",cx,startY);
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.font=`500 28px 'Outfit',system-ui,sans-serif`;
+      concerns.forEach((c,i)=>{
+        const txt=c.length>38?c.slice(0,35)+"…":c;
+        ctx.fillText(txt,cx,startY+36+i*40);
+      });
+    }
+
+    // Bottom bar
+    ctx.fillStyle="rgba(74,222,128,0.12)";
+    ctx.fillRect(0,H-110,W,110);
+    ctx.strokeStyle="rgba(74,222,128,0.2)";
+    ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(0,H-110); ctx.lineTo(W,H-110); ctx.stroke();
+
+    // Logo + URL
+    ctx.fillStyle="#4ade80";
+    ctx.font=`bold 36px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="left"; ctx.fillText("Partiqule",72,H-52);
+    ctx.fillStyle="rgba(255,255,255,0.4)";
+    ctx.font=`500 28px 'Outfit',system-ui,sans-serif`;
+    ctx.textAlign="right"; ctx.fillText("partiqule.com",W-72,H-52);
+
+  },[score, result]);
+
+  const share = async () => {
+    const canvas = canvasRef.current; if(!canvas) return;
+    setStatus("copying");
+    try {
+      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
+      // Try native share first (mobile)
+      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
+        await navigator.share({
+          title:`${result.product_name} — Partiqule Score: ${score}/10`,
+          text:`I scanned ${result.product_name} and it scored ${score}/10. Check what's really in your products.`,
+          files:[new File([blob],"partiqule.png",{type:"image/png"})],
+        });
+        setStatus("copied");
+      } else {
+        // Copy to clipboard
+        await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+        setStatus("copied");
+      }
+    } catch {
+      // Fallback — download the image
+      const url=URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
+      const a=document.createElement("a"); a.href=url;
+      a.download=`partiqule-${(result.product_name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
+      a.click(); URL.revokeObjectURL(url);
+      setStatus("copied");
+    }
+    setTimeout(()=>setStatus("idle"),3000);
+  };
+
+  return (
+    <div style={{marginTop:24}}>
+      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
+      <button onClick={share} disabled={status==="copying"} style={{
+        marginTop:12, width:"100%", padding:"13px", borderRadius:12,
+        background: status==="copied" ? "#16a34a" : "#052e16",
+        border:"none", color: status==="copied" ? "#fff" : "#4ade80",
+        fontSize:15, fontWeight:700, cursor:"pointer",
+        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+        transition:"background 0.2s",
+      }}>
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied to clipboard!" : "Share this result"}
+      </button>
+      <p style={{fontSize:11,color:isDark?"#4b5563":"#9ca3af",textAlign:"center",marginTop:8}}>
+        Copies a 1080x1080 image — ready to post to Instagram or Stories
+      </p>
+    </div>
+  );
+};
+
 // ── GLOBE LOADING ─────────────────────────────────────────────
 
 
@@ -550,7 +715,6 @@ const IconBundle     = ({size=20,color="#7c3aed"}) => <svg width={size} height={
 const AnimatedScore = ({target, color}) => {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
-    if (!target || target <= 0) { setDisplay(0); return; }
     let current = 0;
     let rafId;
     let cancelled = false;
@@ -565,272 +729,6 @@ const AnimatedScore = ({target, color}) => {
     return () => { cancelled = true; cancelAnimationFrame(rafId); };
   }, [target]);
   return <tspan fill={color}>{display}</tspan>;
-};
-
-// ── SHARE CARD ────────────────────────────────────────────────
-const ShareCard = ({result, displayScore, isMobile, isDark}) => {
-  const canvasRef = useRef(null);
-  const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = result.category || "";
-  const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
-
-  // Collect concerns
-  const concerns = [
-    ...(result.flagged_substances||[]),
-    ...(result.dimensions?.materials?.concerns||[]),
-    ...(result.dimensions?.usage_exposure?.concerns||[]),
-  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
-
-  // Collect top alternative
-  const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-
-  useEffect(()=>{
-    const canvas = canvasRef.current; if(!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio||1, 2);
-    const W = 1080, H = 1350; // 4:5 ratio — better for Instagram
-    canvas.width = W*dpr; canvas.height = H*dpr;
-    canvas.style.width = "100%"; canvas.style.height = "auto";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
-
-    const parseHex = (h) => {
-      if (!h || h[0]!=='#') return [74,222,128];
-      return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-    };
-    const [sr,sg,sb] = parseHex(color);
-
-    // ── Background gradient ──
-    const grad = ctx.createLinearGradient(0,0,W,H);
-    grad.addColorStop(0,"#031a0d");
-    grad.addColorStop(0.5,"#052e16");
-    grad.addColorStop(1,"#021508");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,H);
-
-    // ── Floating particles ──
-    const rng = (seed) => { let x=Math.sin(seed)*10000; return x-Math.floor(x); };
-    const particles = Array.from({length:60},(_,i)=>({
-      x: rng(i*3+1)*W,
-      y: rng(i*3+2)*H,
-      r: rng(i*3+3)*3+0.5,
-      a: rng(i*3+4)*0.35+0.05,
-      type: i%5===0?"square":i%7===0?"diamond":"circle",
-    }));
-    particles.forEach(p=>{
-      ctx.save();
-      ctx.globalAlpha = p.a;
-      ctx.fillStyle = `rgb(${sr},${sg},${sb})`;
-      if(p.type==="circle"){
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      } else if(p.type==="square"){
-        ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2);
-      } else {
-        ctx.translate(p.x,p.y); ctx.rotate(Math.PI/4);
-        ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2);
-      }
-      ctx.restore();
-    });
-
-    // ── Subtle grid ──
-    ctx.strokeStyle = "rgba(74,222,128,0.03)";
-    ctx.lineWidth = 1;
-    for(let x=0;x<W;x+=80){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for(let y=0;y<H;y+=80){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    // ── Top bar — Partiqule branding ──
-    ctx.fillStyle = "rgba(74,222,128,0.08)";
-    ctx.fillRect(0,0,W,90);
-    ctx.strokeStyle = "rgba(74,222,128,0.15)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0,90); ctx.lineTo(W,90); ctx.stroke();
-    ctx.fillStyle = "#4ade80";
-    ctx.font = `bold 38px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("Partiqule", 60, 45);
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = `500 26px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign = "right";
-    ctx.fillText("partiqule.com", W-60, 45);
-
-    // ── Product name ──
-    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    ctx.font = `600 26px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(category.toUpperCase().replace(/_/g," "), W/2, 155);
-
-    const maxNameW = 900;
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold 56px 'Outfit',system-ui,sans-serif`;
-    const words = name.split(" "); let line="", nameLines=[];
-    for(const w of words){
-      const test = line ? line+" "+w : w;
-      if(ctx.measureText(test).width > maxNameW && line){ nameLines.push(line); line=w; } else line=test;
-    }
-    if(line) nameLines.push(line);
-    nameLines = nameLines.slice(0,2);
-    nameLines.forEach((l,i) => ctx.fillText(l, W/2, 215+i*68));
-
-    // ── Score circle ──
-    const cx = W/2, cy = 520;
-    // Outer glow
-    const glow = ctx.createRadialGradient(cx,cy,140,cx,cy,280);
-    glow.addColorStop(0,`rgba(${sr},${sg},${sb},0.12)`);
-    glow.addColorStop(1,`rgba(${sr},${sg},${sb},0)`);
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx,cy,280,0,Math.PI*2); ctx.fill();
-
-    // Circle bg
-    ctx.beginPath(); ctx.arc(cx,cy,195,0,Math.PI*2);
-    ctx.fillStyle = `rgba(${sr},${sg},${sb},0.07)`; ctx.fill();
-    ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=2; ctx.stroke();
-
-    // Arc track
-    const startA=-Math.PI*0.75;
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5);
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.12)`; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
-    // Arc fill
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5*(score/10));
-    ctx.strokeStyle=color; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
-
-    // Score number
-    ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.font=`bold 160px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(String(score),cx,cy-10);
-    ctx.fillStyle="rgba(255,255,255,0.35)";
-    ctx.font=`600 32px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText("/10",cx,cy+92);
-
-    // Label pill
-    const pW=220,pH=50,pX=cx-110,pY=cy+130;
-    ctx.beginPath(); ctx.roundRect(pX,pY,pW,pH,25);
-    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.15)`; ctx.fill();
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.35)`; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`bold 24px 'Outfit',system-ui,sans-serif`;
-    ctx.textBaseline="middle"; ctx.fillText(label,cx,pY+25);
-
-    // Kids score badge if different
-    if(hasKids){
-      const kpW=320,kpH=46,kpX=cx-160,kpY=cy+198;
-      ctx.beginPath(); ctx.roundRect(kpX,kpY,kpW,kpH,23);
-      ctx.fillStyle="rgba(251,191,36,0.12)"; ctx.fill();
-      ctx.strokeStyle="rgba(251,191,36,0.3)"; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle="#fbbf24"; ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(`Kids score: ${childScore}/10`,cx,kpY+23);
-    }
-
-    // ── Divider ──
-    const divY = hasKids ? 820 : 780;
-    ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(60,divY); ctx.lineTo(W-60,divY); ctx.stroke();
-
-    // ── Concerns section ──
-    let yPos = divY + 44;
-    if(concerns.length>0){
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("FLAGGED CONCERNS", 60, yPos);
-      yPos += 36;
-      concerns.forEach((c)=>{
-        const txt = c.length>50 ? c.slice(0,47)+"…" : c;
-        // Concern pill
-        const cW = Math.min(ctx.measureText(txt).width+48, W-120);
-        ctx.beginPath(); ctx.roundRect(60,yPos,cW,44,22);
-        ctx.fillStyle=`rgba(${sr},${sg},${sb},0.1)`; ctx.fill();
-        ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=1.5; ctx.stroke();
-        ctx.fillStyle="rgba(255,255,255,0.8)";
-        ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.textBaseline="middle";
-        ctx.fillText(txt, 84, yPos+22);
-        ctx.textBaseline="alphabetic";
-        yPos += 56;
-      });
-    } else {
-      ctx.fillStyle = "#4ade80";
-      ctx.font = `600 28px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("No major concerns detected", W/2, yPos+22);
-      yPos += 60;
-    }
-
-    // ── Alternative suggestion ──
-    if(topAlt){
-      yPos += 10;
-      ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(60,yPos); ctx.lineTo(W-60,yPos); ctx.stroke();
-      yPos += 36;
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("CLEANER ALTERNATIVE", 60, yPos);
-      yPos += 36;
-      const altName = (topAlt.name||"").length>45 ? (topAlt.name||"").slice(0,42)+"…" : (topAlt.name||"");
-      ctx.fillStyle="#4ade80"; ctx.font=`bold 28px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(altName, 60, yPos);
-      if(topAlt.score || topAlt.estimated_score){
-        const altScore = topAlt.score || topAlt.estimated_score;
-        ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.fillText(`scores ${altScore}/10`, 60, yPos+34);
-      }
-    }
-
-    // ── Bottom CTA ──
-    ctx.fillStyle="rgba(74,222,128,0.1)";
-    ctx.fillRect(0,H-120,W,120);
-    ctx.strokeStyle="rgba(74,222,128,0.15)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(0,H-120); ctx.lineTo(W,H-120); ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.55)";
-    ctx.font=`500 26px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("Scan your products at partiqule.com", W/2, H-60);
-
-  },[score, result]);
-
-  const share = async () => {
-    const canvas = canvasRef.current; if(!canvas) return;
-    setStatus("copying");
-    try {
-      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
-      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
-        await navigator.share({
-          title:`${result.product_name} scored ${score}/10 on Partiqule`,
-          text:`I scanned ${result.product_name} and it scored ${score}/10. Check what's really in your products at partiqule.com`,
-          files:[new File([blob],"partiqule.png",{type:"image/png"})],
-        });
-        setStatus("copied");
-      } else {
-        await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-        setStatus("copied");
-      }
-    } catch {
-      const url=URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
-      const a=document.createElement("a"); a.href=url;
-      a.download=`partiqule-${(result.product_name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
-      a.click(); URL.revokeObjectURL(url);
-      setStatus("copied");
-    }
-    setTimeout(()=>setStatus("idle"),3000);
-  };
-
-  return (
-    <div style={{marginTop:24}}>
-      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
-      <button onClick={share} disabled={status==="copying"} style={{
-        marginTop:12, width:"100%", padding:"13px", borderRadius:12,
-        background: status==="copied" ? "#16a34a" : "#052e16",
-        border:"none", color: status==="copied" ? "#fff" : "#4ade80",
-        fontSize:15, fontWeight:700, cursor:"pointer",
-        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-        transition:"background 0.2s",
-      }}>
-        {status==="copying" ? "Preparing…" : status==="copied" ? "Shared!" : "Share Result"}
-      </button>
-    </div>
-  );
 };
 
 // ── SCORE ARC ────────────────────────────────────────────────
