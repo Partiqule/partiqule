@@ -1817,7 +1817,7 @@ const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 // ── PRODUCT CARD ─────────────────────────────────────────────
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
-const ProductCard = ({product, isDark, altSource="amazon"}) => {
+const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
   const amazonFallback = `https://www.amazon.com/s?k=${encodeURIComponent((product.brand ? product.brand + " " : "") + product.name)}&tag=partiqule-20`;
   const linkUrl = altSource === "brand" ? getBrandUrl(product.brand, product.name)
@@ -1852,7 +1852,7 @@ const ProductCard = ({product, isDark, altSource="amazon"}) => {
             <div style={{fontSize:15, fontWeight:700, color:isDark?"#f1f5f9":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
-            <div style={{background:scoreBg(product.score), color:scoreColor(product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{product.score}/10</div>
+            <div style={{background:scoreBg(childMode && product.child_score != null ? product.child_score : product.score), color:scoreColor(childMode && product.child_score != null ? product.child_score : product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{childMode && product.child_score != null ? product.child_score : product.score}/10</div>
             <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
           </div>
         </div>
@@ -6629,7 +6629,7 @@ function App() {
                       </>)}
                     </>) : (<>
                       <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
-                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource}/>)}
+                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource} childMode={childMode}/>)}
                       {aiAlts.length > 0 && (
                         <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
                           {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}

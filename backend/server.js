@@ -4289,18 +4289,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
       composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
       cached:              false,
-      alternatives: finalAlternatives.map(p => ({
-        id:           p.id,
-        name:         p.name,
-        brand:        p.brand || "",
-        score:        p.score ?? p.plasticScore ?? 3,
-        material:     p.material || "",
-        description:  p.description || "",
-        price:        p.price || "",
-        affiliateUrl: p.affiliateUrl,
-        imageUrl:     p.imageUrl || null,
-        source:       p.source || "static",
-      })),
+      alternatives: finalAlternatives.map(p => {
+        const altScore = p.score ?? p.plasticScore ?? 3;
+        const altCat = p.category || finalCategory || category;
+        const altIsChild = detectChildProduct(p.name, altCat);
+        const altConcerns = (p.tags || []).join(" ") + " " + (p.material || "");
+        const { childScore: altChildScore } = computeChildScore(altScore, altConcerns, altCat, p.name, altIsChild);
+        return {
+          id:           p.id,
+          name:         p.name,
+          brand:        p.brand || "",
+          score:        altScore,
+          child_score:  altChildScore,
+          material:     p.material || "",
+          description:  p.description || "",
+          price:        p.price || "",
+          affiliateUrl: p.affiliateUrl,
+          imageUrl:     p.imageUrl || null,
+          source:       p.source || "static",
+        };
+      }),
       ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
         name:            a.name || "",
         reason:          a.reason || "",

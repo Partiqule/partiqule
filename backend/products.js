@@ -4810,6 +4810,101 @@ const products = [
     tags:["chocolate","chocolate bar","dark chocolate","candy","organic chocolate","fair trade chocolate","candy alternative","snickers alternative","m&m alternative","clean chocolate","chocolate candy"] },
 
 
+  // ── CLEAN FORMULA ALTERNATIVES ──────────────────────────────
+  { id:"fm-001", name:"Bobbie Organic Infant Formula", brand:"Bobbie", plasticScore:2, category:"baby",
+    material:"USDA Organic, EU-style, DHA/ARA from water-extracted algal oil. No corn syrup, no maltodextrin, no palm oil.",
+    description:"EU-modeled organic formula. No corn syrup solids, no palm oil, USDA Organic certified.",
+    affiliateUrl:"https://www.amazon.com/s?k=Bobbie+organic+infant+formula&tag=partiqule-20", price:"$28-32",
+    tags:["baby formula","infant formula","formula","organic formula","baby","infant","newborn","milk","feeding","clean formula"] },
+
+  { id:"fm-002", name:"ByHeart Whole Nutrition Infant Formula", brand:"ByHeart", plasticScore:2, category:"baby",
+    material:"Whole milk protein, organic lactose, no corn syrup, no maltodextrin, no soy oil. DHA from algal source.",
+    description:"Whole milk protein formula. No corn syrup, no soy oil, clean ingredient list.",
+    affiliateUrl:"https://www.amazon.com/s?k=ByHeart+infant+formula&tag=partiqule-20", price:"$33-36",
+    tags:["baby formula","infant formula","formula","organic formula","baby","infant","newborn","milk","feeding","clean formula","whole milk"] },
+
+  { id:"fm-003", name:"Kendamil Organic Infant Formula", brand:"Kendamil", plasticScore:2, category:"baby",
+    material:"British organic whole milk, palm oil free, no fish oil DHA, plant-based DHA. No corn syrup, no soy.",
+    description:"UK organic formula. Whole milk based, palm oil free, plant-based DHA.",
+    affiliateUrl:"https://www.amazon.com/s?k=Kendamil+organic+formula&tag=partiqule-20", price:"$28-34",
+    tags:["baby formula","infant formula","formula","organic formula","baby","infant","newborn","milk","feeding","clean formula"] },
+
+  // ── CLEANING WIPES ALTERNATIVES ─────────────────────────────
+  { id:"cw-001", name:"Blueland Multi-Surface Cleaning Kit", brand:"Blueland", plasticScore:1, category:"home",
+    material:"Refillable glass bottle, dry tablet dissolves in water. No single-use plastic. Plant-derived ingredients.",
+    description:"Refillable cleaning system — eliminates single-use wipes entirely. Plant-based tablets.",
+    affiliateUrl:"https://www.amazon.com/s?k=Blueland+cleaning+kit&tag=partiqule-20", price:"$12-16",
+    tags:["cleaning wipes","wipes","disinfecting wipes","cleaning","multi surface","clorox alternative","lysol alternative","spray cleaner","refillable","reusable"] },
+
+  { id:"cw-002", name:"Marley's Monsters Reusable UNpaper Towels", brand:"Marley's Monsters", plasticScore:1, category:"home",
+    material:"GOTS organic cotton flannel. Machine washable, reusable 100+ times. Zero plastic.",
+    description:"Reusable cloth wipes replace disposable cleaning wipes. Organic cotton, machine washable.",
+    affiliateUrl:"https://www.amazon.com/s?k=Marleys+Monsters+unpaper+towels&tag=partiqule-20", price:"$18-24",
+    tags:["cleaning wipes","wipes","paper towel","reusable wipes","cloth wipes","clorox alternative","reusable","organic cotton","cleaning"] },
+
+  { id:"cw-003", name:"Branch Basics Starter Kit", brand:"Branch Basics", plasticScore:1, category:"home",
+    material:"Plant-based concentrate, refillable bottles. No fragrances, no preservatives, no dyes.",
+    description:"One concentrate replaces all cleaners. Refillable system, no single-use plastic wipes needed.",
+    affiliateUrl:"https://www.amazon.com/s?k=Branch+Basics+starter+kit&tag=partiqule-20", price:"$50-60",
+    tags:["cleaning wipes","wipes","cleaning","multi surface","all purpose","clorox alternative","lysol alternative","dish soap","refillable","concentrate","cleaning spray"] },
+
+  // ── DISH SOAP ALTERNATIVES ──────────────────────────────────
+  { id:"ds-001", name:"Blueland Dish Soap Powder", brand:"Blueland", plasticScore:1, category:"home",
+    material:"Powder in compostable packaging. No plastic bottle, no phosphates, no synthetic fragrance.",
+    description:"Plastic-free dish soap powder. Compostable packaging, plant-based formula.",
+    affiliateUrl:"https://www.amazon.com/s?k=Blueland+dish+soap&tag=partiqule-20", price:"$8-12",
+    tags:["dish soap","dishwashing","dish detergent","dawn alternative","palmolive alternative","kitchen cleaning","dishes","refillable"] },
+
+  { id:"ds-002", name:"Meliora Dish Soap Bar", brand:"Meliora", plasticScore:1, category:"home",
+    material:"Solid bar, zero plastic packaging. Coconut oil based, no synthetic fragrance, no preservatives.",
+    description:"Solid dish soap bar — zero plastic packaging. Lasts 2-3 months.",
+    affiliateUrl:"https://www.amazon.com/s?k=Meliora+dish+soap&tag=partiqule-20", price:"$8-10",
+    tags:["dish soap","dishwashing","dish detergent","dawn alternative","palmolive alternative","kitchen cleaning","dishes","bar soap","zero waste"] },
+
+  { id:"ds-003", name:"Cleancult Liquid Dish Soap Refills", brand:"Cleancult", plasticScore:2, category:"home",
+    material:"Plant-based formula in recyclable paper-based carton refills. Refillable glass bottle system.",
+    description:"Paper carton refills for glass bottle. Plant-based, no petroleum-derived ingredients.",
+    affiliateUrl:"https://www.amazon.com/s?k=Cleancult+dish+soap&tag=partiqule-20", price:"$6-10",
+    tags:["dish soap","dishwashing","dish detergent","dawn alternative","palmolive alternative","kitchen cleaning","dishes","refillable"] },
+
+  // ── FOOD STORAGE / TUPPERWARE ALTERNATIVES ──────────────────
+  { id:"fs-001", name:"Pyrex Glass Food Storage Set", brand:"Pyrex", plasticScore:2, category:"kitchen",
+    material:"Tempered borosilicate glass containers with BPA-free lids. Oven, microwave, dishwasher safe.",
+    description:"Glass food storage — no plastic touching food. Microwave and oven safe.",
+    affiliateUrl:"https://www.amazon.com/s?k=Pyrex+glass+food+storage&tag=partiqule-20", price:"$20-35",
+    tags:["food storage","container","tupperware","tupperware alternative","glass container","meal prep","leftover","kitchen","BPA free","glass"] },
+
+  { id:"fs-002", name:"Bee's Wrap Reusable Food Wraps", brand:"Bee's Wrap", plasticScore:1, category:"kitchen",
+    material:"Organic cotton, beeswax, jojoba oil, tree resin. Fully compostable, no plastic.",
+    description:"Beeswax wraps replace plastic wrap and bags. Washable, compostable, lasts a year.",
+    affiliateUrl:"https://www.amazon.com/s?k=Bees+Wrap+reusable+food+wraps&tag=partiqule-20", price:"$14-18",
+    tags:["food storage","ziploc","ziploc alternative","bag","bags","reusable wrap","beeswax wrap","sandwich wrap","snack bag","freezer","kitchen","compostable","saran wrap alternative","plastic wrap alternative"] },
+
+  { id:"fs-003", name:"Weck Glass Canning Jars", brand:"Weck", plasticScore:1, category:"kitchen",
+    material:"Borosilicate glass with glass lid, rubber seal. No plastic components touching food.",
+    description:"All-glass storage jars. No plastic lid — glass-on-glass seal.",
+    affiliateUrl:"https://www.amazon.com/s?k=Weck+glass+jars&tag=partiqule-20", price:"$15-30",
+    tags:["food storage","container","tupperware","tupperware alternative","glass container","glass jar","canning","kitchen","zero waste","meal prep"] },
+
+  // ── SHOE ALTERNATIVES ───────────────────────────────────────
+  { id:"sh-001", name:"Allbirds Wool Runners", brand:"Allbirds", plasticScore:2, category:"clothing",
+    material:"Merino wool upper, sugarcane-based sole (SweetFoam), no synthetic dyes. Carbon neutral.",
+    description:"Wool sneakers — merino upper, plant-based sole. Minimal synthetic materials.",
+    affiliateUrl:"https://www.amazon.com/s?k=Allbirds+wool+runners&tag=partiqule-20", price:"$98-110",
+    tags:["shoe","shoes","sneaker","sneakers","footwear","nike alternative","adidas alternative","wool","natural","running shoe","casual shoe"] },
+
+  { id:"sh-002", name:"Veja Campo Sneakers", brand:"Veja", plasticScore:3, category:"clothing",
+    material:"Organic cotton canvas, wild rubber sole from Amazon, vegetable-tanned leather. Fair trade.",
+    description:"Organic cotton + wild rubber sneakers. Transparent supply chain, fair trade.",
+    affiliateUrl:"https://www.amazon.com/s?k=Veja+Campo+sneakers&tag=partiqule-20", price:"$130-150",
+    tags:["shoe","shoes","sneaker","sneakers","footwear","nike alternative","adidas alternative","organic cotton","fair trade","casual shoe"] },
+
+  { id:"sh-003", name:"Vivobarefoot Primus Lite III", brand:"Vivobarefoot", plasticScore:3, category:"clothing",
+    material:"Recycled PET upper, natural rubber outsole. Regenerative sourcing program. Minimal sole.",
+    description:"Barefoot shoes with recycled materials and natural rubber sole.",
+    affiliateUrl:"https://www.amazon.com/s?k=Vivobarefoot+Primus+Lite&tag=partiqule-20", price:"$120-160",
+    tags:["shoe","shoes","sneaker","sneakers","footwear","nike alternative","running shoe","barefoot shoe","natural","minimalist"] },
+
 
 ];
 
