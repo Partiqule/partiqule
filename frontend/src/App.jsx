@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases";
 import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
@@ -4661,14 +4662,13 @@ function App() {
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
-  const [promoCode,    setPromoCode]    = useState("");
-  const [promoError,   setPromoError]   = useState("");
+  const [iapPrice,     setIapPrice]     = useState("$4.99/month"); // loaded from StoreKit
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const deleteAccount = async () => {
     if (!user) return;
     try {
-      await fetch(`${API}/delete-account`, {
+      await fetch(`${API_BASE}/delete-account`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ userId: user.id }),
       });
@@ -4743,15 +4743,50 @@ function App() {
   }, []);
 
   // ── Stripe checkout ───────────────────────────────────────────
+  const IAP_PRODUCT_ID = "com.partiqule.app.premium.monthly";
+
+  // Load product price from StoreKit on iOS so we show the real App Store price
+  useEffect(() => {
+    if (!IS_NATIVE) return;
+    NativePurchases.getProducts({ productIdentifiers: [IAP_PRODUCT_ID], productType: PURCHASE_TYPE.SUBS })
+      .then(({ products }) => {
+        if (products?.[0]?.priceString) setIapPrice(products[0].priceString + "/month");
+      })
+      .catch(() => {}); // silently fall back to default price string
+  }, []);
+
   const startCheckout = async () => {
     if (!user) { setShowAuth(true); return; }
 
-    // iOS native app — will use Apple IAP via StoreKit when implemented
-    // For now, direct to web purchase page as fallback
     if (IS_NATIVE) {
-      // TODO: replace with StoreKit purchase trigger once implemented
-      // window.Capacitor.Plugins.Purchases.purchaseProduct({ productIdentifier: "com.partiqule.app.premium.monthly" });
-      window.open("https://partiqule.com?subscribe=1", "_blank");
+      // iOS — purchase via StoreKit through @capgo/native-purchases
+      setCheckingOut(true);
+      try {
+        const { transaction } = await NativePurchases.purchaseProduct({
+          productIdentifier: IAP_PRODUCT_ID,
+          productType: PURCHASE_TYPE.SUBS,
+        });
+        if (transaction) {
+          // Mark subscribed locally — server validation can happen in background
+          setIsSubscribed(true);
+          setScanCount(0);
+          try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+          setShowLimitModal(null);
+          // Notify backend to record the subscription
+          try {
+            await fetch(`${API_BASE}/apple-iap-confirm`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
+            });
+          } catch {} // non-critical — local state already updated
+        }
+      } catch (e) {
+        if (!e.message?.includes("cancelled")) {
+          alert("Purchase could not be completed. Please try again.");
+        }
+      }
+      setCheckingOut(false);
       return;
     }
 
@@ -4765,8 +4800,7 @@ function App() {
       });
       const d = await r.json();
       if (d.url) { window.location.href = d.url; }
-      else if (d.error) { setPromoError(d.error); }
-    } catch { setPromoError("Something went wrong. Please try again."); }
+    } catch { alert("Something went wrong. Please try again."); }
     setCheckingOut(false);
   };
 
@@ -5040,13 +5074,13 @@ function App() {
         const url = URL.createObjectURL(file);
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX = 1024;
+          const MAX = 1200;
           const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
           canvas.width  = Math.round(img.width  * ratio);
           canvas.height = Math.round(img.height * ratio);
           canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
-          res(canvas.toDataURL("image/jpeg", 0.80).split(",")[1]);
+          res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
         };
         img.onerror = rej;
         img.src = url;
@@ -5227,8 +5261,13 @@ function App() {
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
               <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $4.99/month. Cancel anytime.</div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
-                {checkingOut ? "Loading..." : "Subscribe — $4.99/month"}
+                {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
               </button>
+              {IS_NATIVE && (
+                <div style={{fontSize:11,color:isDark?"#64748b":"#9ca3af",textAlign:"center",marginTop:8,lineHeight:1.5}}>
+                  Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
+                </div>
+              )}
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 

@@ -4623,6 +4623,26 @@ app.get("/health", (req, res) => res.json({
 }));
 
 const PORT = process.env.PORT || 3001;
+
+// ── Apple IAP confirmation — called after successful StoreKit purchase ──
+app.post('/apple-iap-confirm', async (req, res) => {
+  const { userId, transactionId, receipt } = req.body;
+  if (!userId || !transactionId) return res.status(400).json({ error: 'Missing params' });
+  try {
+    await supabase.from('subscriptions').upsert({
+      user_id: userId,
+      is_subscribed: true,
+      platform: 'apple',
+      transaction_id: transactionId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+    console.log('[IAP] Apple subscription confirmed for user', userId);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('[IAP] Confirm error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Partiqule API running on port ${PORT}`);
   console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
