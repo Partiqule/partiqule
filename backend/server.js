@@ -3839,11 +3839,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const imgFuzzy = fuzzyCalibrationLookup(productName);
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
-        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+        const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
+        const kidsFloor = entry.kidsFloor || entry.floor;
+        const kidsCeil  = entry.kidsCeiling || entry.ceiling;
+        const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+        const isChild   = detectChildProduct(productName, entry.category || category);
+        const imgConcernsText = (entry.substances || []).join(' ');
+        const { childScore: imgChildScore, childBumps: imgChildBumps } = computeChildScore(midScore, imgConcernsText, entry.category || category, productName, isChild);
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: entry.category || category,
           confidence: entry.confidence || "high",
+          is_child_product: isChild,
+          child_score: entry.kidsFloor ? kidsMid : imgChildScore,
+          child_bumps: imgChildBumps || [],
           dimensions: {
             materials:      { score: 5, concerns: entry.substances || [] },
             usage_exposure: { score: 5, concerns: [] },
@@ -3858,7 +3867,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ingredient_list: p1.ingredient_list || [],
         });
         cacheSet(imgKey, fuzzyResult);
-        console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
+        console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}, child ${imgChildScore}`);
         return res.json({ ...fuzzyResult, cached: false });
       }
 
