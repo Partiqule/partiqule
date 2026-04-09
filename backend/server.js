@@ -195,14 +195,14 @@ function cacheKey(q, category) {
 // Checks exact match first, then partial match (query contains key or key contains query)
 function fuzzyCalibrationLookup(productName) {
   const norm = normalise(productName);
-
-  // 1. Exact match
-  const exact = CALIBRATION.get(norm);
+  const normNoApos = norm.replace(/'/g, "");
+  const exact = CALIBRATION.get(norm) || CALIBRATION.get(normNoApos);
   if (exact) return { key: norm, entry: exact };
 
   // 2. Query starts with a calibration key (e.g. "seventh generation soap" starts with "seventh generation")
   for (const [k, v] of CALIBRATION.entries()) {
-    if (k.length >= 4 && norm.startsWith(k)) return { key: k, entry: v };
+    const kn = k.replace(/'/g, "");
+    if (k.length >= 4 && (norm.startsWith(k) || normNoApos.startsWith(kn))) return { key: k, entry: v };
   }
 
   // 3. Calibration key starts with query (e.g. "seventh generation" found from "seventh gen")
@@ -212,7 +212,8 @@ function fuzzyCalibrationLookup(productName) {
 
   // 4. Query contains calibration key as a phrase (e.g. "method all purpose cleaner" contains "method")
   for (const [k, v] of CALIBRATION.entries()) {
-    if (k.length >= 6 && norm.includes(k)) return { key: k, entry: v };
+    const kn = k.replace(/'/g, "");
+    if (k.length >= 6 && (norm.includes(k) || normNoApos.includes(kn))) return { key: k, entry: v };
   }
 
   return null;
