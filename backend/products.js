@@ -459,6 +459,73 @@ const products = [
     tags: ["bib", "silicone", "baby", "feeding", "toddler", "mealtime", "food"]
   },
 
+  // ── DIAPERS ───────────────────────────────────────────────────
+  {
+    id: "bk-005",
+    name: "Coterie Diapers",
+    brand: "Coterie",
+    category: "baby",
+    score: 3,
+    plasticScore: 3,
+    material: "Plant-based topsheet, no fragrance, no lotions",
+    description: "Free of chlorine bleaching, fragrance, lotions, and parabens. TCF pulp. No Ahcovel or known chemical irritants.",
+    affiliateUrl: "https://www.amazon.com/s?k=Coterie+diapers&tag=partiqule-20",
+    price: "$28–38",
+    tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "disposable", "clean"]
+  },
+  {
+    id: "bk-006",
+    name: "Dyper Bamboo Diapers",
+    brand: "Dyper",
+    category: "baby",
+    score: 2,
+    plasticScore: 2,
+    material: "Viscose from bamboo topsheet, TCF pulp, no fragrance",
+    description: "No chlorine, no fragrance, no lotions, no parabens, no phthalates. USDA biobased certified. Compostable via Dyper service.",
+    affiliateUrl: "https://www.amazon.com/s?k=Dyper+bamboo+diapers&tag=partiqule-20",
+    price: "$25–35",
+    tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "bamboo", "compostable", "clean"]
+  },
+  {
+    id: "bk-007",
+    name: "Andy Pandy Bamboo Diapers",
+    brand: "Andy Pandy",
+    category: "baby",
+    score: 2,
+    plasticScore: 2,
+    material: "Bamboo topsheet, chlorine-free pulp, no fragrances",
+    description: "Bamboo-based, fragrance-free, no parabens or phthalates. Dermatologist tested.",
+    affiliateUrl: "https://www.amazon.com/s?k=Andy+Pandy+bamboo+diapers&tag=partiqule-20",
+    price: "$20–28",
+    tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "bamboo", "clean"]
+  },
+  {
+    id: "bk-008",
+    name: "Healthybaby Diapers",
+    brand: "Healthybaby",
+    category: "baby",
+    score: 2,
+    plasticScore: 2,
+    material: "USDA organic certified materials, TCF pulp, plant-based topsheet",
+    description: "EWG verified. No fragrance, no lotion, no chlorine bleaching, no optical brighteners.",
+    affiliateUrl: "https://www.amazon.com/s?k=Healthybaby+diapers&tag=partiqule-20",
+    price: "$30–40",
+    tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "organic", "EWG", "clean"]
+  },
+  {
+    id: "bk-009",
+    name: "Kudos Diapers",
+    brand: "Kudos",
+    category: "baby",
+    score: 3,
+    plasticScore: 3,
+    material: "100% cotton inner layer, TCF pulp, no fragrance",
+    description: "Only diaper with a 100% cotton layer touching baby's skin. No fragrance, no lotion, no chlorine bleaching.",
+    affiliateUrl: "https://www.amazon.com/s?k=Kudos+cotton+diapers&tag=partiqule-20",
+    price: "$26–34",
+    tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "cotton", "clean"]
+  }
+
   // ── FOOD & BEVERAGE (expanded) ───────────────────────────────
   {
     id: "fb-005",
