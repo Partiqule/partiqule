@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+let NativePurchases = null, PURCHASE_TYPE = { SUBS: "subs" };
+try { const _iap = require("@capgo/native-purchases"); NativePurchases = _iap.NativePurchases; PURCHASE_TYPE = _iap.PURCHASE_TYPE; } catch {}
 import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases";
 import { createClient } from "@supabase/supabase-js";
 
@@ -133,7 +135,137 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── SHARE CARD ────────────────────────────────────────────────
-// Renders a canvas share card and provides copy/share functionality
+// Magazine cover style — bold, high contrast, score front and center
+const ShareCard = ({result, displayScore, isMobile, isDark}) => {
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("idle");
+  const score   = displayScore || result.overall_score || result.score;
+  const label   = scoreLabel(score);
+  const color   = scoreColor(score);
+  const name    = result.product_name || "";
+  const category = (result.category || "").toUpperCase().replace(/_/g, " ");
+  const childScore = result.child_score;
+  const hasKids = childScore && childScore !== score;
+  const flags = [
+    ...(result.flagged_substances||[]),
+    ...(result.dimensions?.materials?.concerns||[]),
+  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
+  const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
+
+  useEffect(()=>{
+    const canvas = canvasRef.current; if(!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio||1,2);
+    const W = 1080, H = 1080;
+    canvas.width = W*dpr; canvas.height = H*dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr,dpr);
+    const parseHex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    const [sr,sg,sb] = parseHex(color);
+    ctx.fillStyle = "#FAFAF7"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,0,W,88);
+    ctx.fillStyle = "#4ade80"; ctx.font = "bold 40px system-ui,sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("Partiqule", 52, 44);
+    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "600 22px system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.fillText(category || "PRODUCT SCAN", W-52, 44);
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.font = "bold 62px system-ui,sans-serif";
+    const words = name.split(" "); let line = "", nameLines = [];
+    for(const w of words){ const test = line ? line+" "+w : w; if(ctx.measureText(test).width > 900 && line){ nameLines.push(line); line=w; } else line=test; }
+    if(line) nameLines.push(line);
+    nameLines = nameLines.slice(0,2);
+    ctx.fillStyle = "#111";
+    const nameY = nameLines.length === 2 ? 164 : 182;
+    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*74));
+    ctx.fillStyle = color; ctx.fillRect(W/2-200, nameLines.length===2?252:230, 400, 5);
+    ctx.font = "900 520px system-ui,Arial,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.shadowColor = color; ctx.shadowBlur = 60;
+    ctx.fillStyle = color; ctx.globalAlpha = 0.08;
+    ctx.fillText(String(score), W/2, 480);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    ctx.fillStyle = "#0A0A0A"; ctx.fillText(String(score), W/2, 480);
+    const pillW = 280, pillH = 56, pillX = W/2-pillW/2, pillY = 762;
+    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,28);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 28px system-ui,sans-serif"; ctx.textBaseline = "middle";
+    ctx.fillText(label.toUpperCase(), W/2, pillY+pillH/2);
+    ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.font = "600 26px system-ui,sans-serif";
+    ctx.fillText("OUT OF 10", W/2, 842);
+    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,896,W,H-896);
+    if(flags.length > 0){
+      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = "700 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("FLAGGED", 52, 928);
+      let px = 180;
+      flags.forEach(flag => {
+        const ft = flag.length > 22 ? flag.slice(0,20)+"…" : flag;
+        ctx.font = "600 20px system-ui,sans-serif";
+        const fw = ctx.measureText(ft).width;
+        const pw = fw+28, ph = 38, py = 910;
+        ctx.beginPath(); ctx.roundRect(px,py,pw,ph,19);
+        ctx.fillStyle = `rgba(${sr},${sg},${sb},0.25)`; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = color; ctx.textAlign = "center";
+        ctx.fillText(ft, px+pw/2, py+ph/2);
+        px += pw+12;
+        if(px > W-200) return;
+      });
+    } else {
+      ctx.fillStyle = "#4ade80"; ctx.font = "700 24px system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("✓ No significant concerns detected", W/2, 928);
+    }
+    if(alt && score > 3){
+      const altName = (alt.name||"").slice(0,36);
+      const altScore = alt.score || alt.estimated_score || "";
+      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "600 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("BETTER OPTION", 52, 984);
+      ctx.fillStyle = "#fff"; ctx.font = "700 22px system-ui,sans-serif";
+      ctx.fillText(altName + (altScore ? `  ${altScore}/10` : ""), 220, 984);
+    }
+    ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "500 22px system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText("partiqule.com", W-52, 1048);
+    if(hasKids){
+      const bw=200,bh=48,bx=W-bw-40,by=104;
+      ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,24);
+      ctx.fillStyle="#052e16"; ctx.fill();
+      ctx.fillStyle="#4ade80"; ctx.font="bold 20px system-ui,sans-serif";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(`Kids: ${childScore}/10`, bx+bw/2, by+bh/2);
+    }
+  },[score, result]);
+
+  const share = async () => {
+    const canvas = canvasRef.current; if(!canvas) return;
+    setStatus("copying");
+    try {
+      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
+      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
+        await navigator.share({ title:`${name} scored ${score}/10 on Partiqule`, text:`I scanned ${name} and it scored ${score}/10. Check what is in your products at partiqule.com`, files:[new File([blob],"partiqule.png",{type:"image/png"})] });
+      } else { await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); }
+      setStatus("copied");
+    } catch {
+      const url = URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
+      const a = document.createElement("a"); a.href=url;
+      a.download=`partiqule-${(name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
+      a.click(); URL.revokeObjectURL(url); setStatus("copied");
+    }
+    setTimeout(()=>setStatus("idle"),3000);
+  };
+
+  return (
+    <div style={{marginTop:24}}>
+      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
+      <button onClick={share} disabled={status==="copying"} style={{marginTop:12,width:"100%",padding:"13px",borderRadius:12,background:status==="copied"?"#16a34a":"#052e16",border:"none",color:status==="copied"?"#fff":"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background 0.2s"}}>
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
+      </button>
+    </div>
+  );
+};
+
 // ── GLOBE LOADING ─────────────────────────────────────────────
 
 
@@ -567,272 +699,6 @@ const AnimatedScore = ({target, color}) => {
     return () => { done = true; cancelAnimationFrame(rafId); };
   }, [target]);
   return <tspan fill={color}>{display}</tspan>;
-};
-
-// ── SHARE CARD ────────────────────────────────────────────────
-const ShareCard = ({result, displayScore, isMobile, isDark}) => {
-  const canvasRef = useRef(null);
-  const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = result.category || "";
-  const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
-
-  // Collect concerns
-  const concerns = [
-    ...(result.flagged_substances||[]),
-    ...(result.dimensions?.materials?.concerns||[]),
-    ...(result.dimensions?.usage_exposure?.concerns||[]),
-  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
-
-  // Collect top alternative
-  const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
-
-  useEffect(()=>{
-    const canvas = canvasRef.current; if(!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio||1, 2);
-    const W = 1080, H = 1350; // 4:5 ratio — better for Instagram
-    canvas.width = W*dpr; canvas.height = H*dpr;
-    canvas.style.width = "100%"; canvas.style.height = "auto";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
-
-    const parseHex = (h) => {
-      if (!h || h[0]!=='#') return [74,222,128];
-      return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-    };
-    const [sr,sg,sb] = parseHex(color);
-
-    // ── Background gradient ──
-    const grad = ctx.createLinearGradient(0,0,W,H);
-    grad.addColorStop(0,"#031a0d");
-    grad.addColorStop(0.5,"#052e16");
-    grad.addColorStop(1,"#021508");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,H);
-
-    // ── Floating particles ──
-    const rng = (seed) => { let x=Math.sin(seed)*10000; return x-Math.floor(x); };
-    const particles = Array.from({length:60},(_,i)=>({
-      x: rng(i*3+1)*W,
-      y: rng(i*3+2)*H,
-      r: rng(i*3+3)*3+0.5,
-      a: rng(i*3+4)*0.35+0.05,
-      type: i%5===0?"square":i%7===0?"diamond":"circle",
-    }));
-    particles.forEach(p=>{
-      ctx.save();
-      ctx.globalAlpha = p.a;
-      ctx.fillStyle = `rgb(${sr},${sg},${sb})`;
-      if(p.type==="circle"){
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-      } else if(p.type==="square"){
-        ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2);
-      } else {
-        ctx.translate(p.x,p.y); ctx.rotate(Math.PI/4);
-        ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2);
-      }
-      ctx.restore();
-    });
-
-    // ── Subtle grid ──
-    ctx.strokeStyle = "rgba(74,222,128,0.03)";
-    ctx.lineWidth = 1;
-    for(let x=0;x<W;x+=80){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for(let y=0;y<H;y+=80){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    // ── Top bar — Partiqule branding ──
-    ctx.fillStyle = "rgba(74,222,128,0.08)";
-    ctx.fillRect(0,0,W,90);
-    ctx.strokeStyle = "rgba(74,222,128,0.15)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0,90); ctx.lineTo(W,90); ctx.stroke();
-    ctx.fillStyle = "#4ade80";
-    ctx.font = `bold 38px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("Partiqule", 60, 45);
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = `500 26px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign = "right";
-    ctx.fillText("partiqule.com", W-60, 45);
-
-    // ── Product name ──
-    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    ctx.font = `600 26px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(category.toUpperCase().replace(/_/g," "), W/2, 155);
-
-    const maxNameW = 900;
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold 56px 'Outfit',system-ui,sans-serif`;
-    const words = name.split(" "); let line="", nameLines=[];
-    for(const w of words){
-      const test = line ? line+" "+w : w;
-      if(ctx.measureText(test).width > maxNameW && line){ nameLines.push(line); line=w; } else line=test;
-    }
-    if(line) nameLines.push(line);
-    nameLines = nameLines.slice(0,2);
-    nameLines.forEach((l,i) => ctx.fillText(l, W/2, 215+i*68));
-
-    // ── Score circle ──
-    const cx = W/2, cy = 520;
-    // Outer glow
-    const glow = ctx.createRadialGradient(cx,cy,140,cx,cy,280);
-    glow.addColorStop(0,`rgba(${sr},${sg},${sb},0.12)`);
-    glow.addColorStop(1,`rgba(${sr},${sg},${sb},0)`);
-    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(cx,cy,280,0,Math.PI*2); ctx.fill();
-
-    // Circle bg
-    ctx.beginPath(); ctx.arc(cx,cy,195,0,Math.PI*2);
-    ctx.fillStyle = `rgba(${sr},${sg},${sb},0.07)`; ctx.fill();
-    ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=2; ctx.stroke();
-
-    // Arc track
-    const startA=-Math.PI*0.75;
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5);
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.12)`; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
-    // Arc fill
-    ctx.beginPath(); ctx.arc(cx,cy,168,startA,startA+Math.PI*1.5*(score/10));
-    ctx.strokeStyle=color; ctx.lineWidth=20; ctx.lineCap="round"; ctx.stroke();
-
-    // Score number
-    ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.font=`bold 160px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText(String(score),cx,cy-10);
-    ctx.fillStyle="rgba(255,255,255,0.35)";
-    ctx.font=`600 32px 'Outfit',system-ui,sans-serif`;
-    ctx.fillText("/10",cx,cy+92);
-
-    // Label pill
-    const pW=220,pH=50,pX=cx-110,pY=cy+130;
-    ctx.beginPath(); ctx.roundRect(pX,pY,pW,pH,25);
-    ctx.fillStyle=`rgba(${sr},${sg},${sb},0.15)`; ctx.fill();
-    ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.35)`; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle=color; ctx.font=`bold 24px 'Outfit',system-ui,sans-serif`;
-    ctx.textBaseline="middle"; ctx.fillText(label,cx,pY+25);
-
-    // Kids score badge if different
-    if(hasKids){
-      const kpW=320,kpH=46,kpX=cx-160,kpY=cy+198;
-      ctx.beginPath(); ctx.roundRect(kpX,kpY,kpW,kpH,23);
-      ctx.fillStyle="rgba(251,191,36,0.12)"; ctx.fill();
-      ctx.strokeStyle="rgba(251,191,36,0.3)"; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle="#fbbf24"; ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(`Kids score: ${childScore}/10`,cx,kpY+23);
-    }
-
-    // ── Divider ──
-    const divY = hasKids ? 820 : 780;
-    ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(60,divY); ctx.lineTo(W-60,divY); ctx.stroke();
-
-    // ── Concerns section ──
-    let yPos = divY + 44;
-    if(concerns.length>0){
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("FLAGGED CONCERNS", 60, yPos);
-      yPos += 36;
-      concerns.forEach((c)=>{
-        const txt = c.length>50 ? c.slice(0,47)+"…" : c;
-        // Concern pill
-        const cW = Math.min(ctx.measureText(txt).width+48, W-120);
-        ctx.beginPath(); ctx.roundRect(60,yPos,cW,44,22);
-        ctx.fillStyle=`rgba(${sr},${sg},${sb},0.1)`; ctx.fill();
-        ctx.strokeStyle=`rgba(${sr},${sg},${sb},0.2)`; ctx.lineWidth=1.5; ctx.stroke();
-        ctx.fillStyle="rgba(255,255,255,0.8)";
-        ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.textBaseline="middle";
-        ctx.fillText(txt, 84, yPos+22);
-        ctx.textBaseline="alphabetic";
-        yPos += 56;
-      });
-    } else {
-      ctx.fillStyle = "#4ade80";
-      ctx.font = `600 28px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("No major concerns detected", W/2, yPos+22);
-      yPos += 60;
-    }
-
-    // ── Alternative suggestion ──
-    if(topAlt){
-      yPos += 10;
-      ctx.strokeStyle="rgba(74,222,128,0.1)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(60,yPos); ctx.lineTo(W-60,yPos); ctx.stroke();
-      yPos += 36;
-      ctx.fillStyle="rgba(255,255,255,0.4)";
-      ctx.font=`600 22px 'Outfit',system-ui,sans-serif`;
-      ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-      ctx.fillText("CLEANER ALTERNATIVE", 60, yPos);
-      yPos += 36;
-      const altName = (topAlt.name||"").length>45 ? (topAlt.name||"").slice(0,42)+"…" : (topAlt.name||"");
-      ctx.fillStyle="#4ade80"; ctx.font=`bold 28px 'Outfit',system-ui,sans-serif`;
-      ctx.fillText(altName, 60, yPos);
-      if(topAlt.score || topAlt.estimated_score){
-        const altScore = topAlt.score || topAlt.estimated_score;
-        ctx.fillStyle="rgba(255,255,255,0.4)"; ctx.font=`500 24px 'Outfit',system-ui,sans-serif`;
-        ctx.fillText(`scores ${altScore}/10`, 60, yPos+34);
-      }
-    }
-
-    // ── Bottom CTA ──
-    ctx.fillStyle="rgba(74,222,128,0.1)";
-    ctx.fillRect(0,H-120,W,120);
-    ctx.strokeStyle="rgba(74,222,128,0.15)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(0,H-120); ctx.lineTo(W,H-120); ctx.stroke();
-    ctx.fillStyle="rgba(255,255,255,0.55)";
-    ctx.font=`500 26px 'Outfit',system-ui,sans-serif`;
-    ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("Scan your products at partiqule.com", W/2, H-60);
-
-  },[score, result]);
-
-  const share = async () => {
-    const canvas = canvasRef.current; if(!canvas) return;
-    setStatus("copying");
-    try {
-      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
-      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
-        await navigator.share({
-          title:`${result.product_name} scored ${score}/10 on Partiqule`,
-          text:`I scanned ${result.product_name} and it scored ${score}/10. Check what's really in your products at partiqule.com`,
-          files:[new File([blob],"partiqule.png",{type:"image/png"})],
-        });
-        setStatus("copied");
-      } else {
-        await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-        setStatus("copied");
-      }
-    } catch {
-      const url=URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
-      const a=document.createElement("a"); a.href=url;
-      a.download=`partiqule-${(result.product_name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
-      a.click(); URL.revokeObjectURL(url);
-      setStatus("copied");
-    }
-    setTimeout(()=>setStatus("idle"),3000);
-  };
-
-  return (
-    <div style={{marginTop:24}}>
-      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
-      <button onClick={share} disabled={status==="copying"} style={{
-        marginTop:12, width:"100%", padding:"13px", borderRadius:12,
-        background: status==="copied" ? "#16a34a" : "#052e16",
-        border:"none", color: status==="copied" ? "#fff" : "#4ade80",
-        fontSize:15, fontWeight:700, cursor:"pointer",
-        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-        transition:"background 0.2s",
-      }}>
-        {status==="copying" ? "Preparing…" : status==="copied" ? "Shared!" : "Share Result"}
-      </button>
-    </div>
-  );
 };
 
 // ── SCORE ARC ────────────────────────────────────────────────
@@ -4667,7 +4533,7 @@ function App() {
   const [showAccountDeleted, setShowAccountDeleted] = useState(false);
 
   const deleteAccount = async () => {
-    if (!user) { alert("Not signed in — please sign in and try again."); return; }
+    if (!user) { alert("Not signed in."); return; }
     try {
       const r = await fetch(`${API_BASE}/delete-account`, {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -4684,10 +4550,7 @@ function App() {
       setResult(null);
       setShowAccountDeleted(true);
       setTimeout(() => setShowAccountDeleted(false), 4000);
-    } catch(e) {
-      alert("Delete account error: " + e.message);
-      console.error("Delete account failed", e);
-    }
+    } catch(e) { alert("Error: " + e.message); }
   };
   const [checkingOut,  setCheckingOut]  = useState(false);
   const FREE_LIMIT = 10;
@@ -5247,12 +5110,10 @@ function App() {
       {/* ── Delete account confirmation modal ── */}
       {/* Account deleted toast */}
       {showAccountDeleted && (
-        <div style={{position:"fixed", bottom:32, left:"50%", transform:"translateX(-50%)", zIndex:9999,
-          background:"#052e16", color:"#4ade80", padding:"14px 28px", borderRadius:14,
-          fontSize:15, fontWeight:700, boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
-          display:"flex", alignItems:"center", gap:10, whiteSpace:"nowrap",
-          animation:"fadeUp 0.3s ease",
-        }}>
+        <div style={{position:"fixed",bottom:32,left:"50%",transform:"translateX(-50%)",zIndex:9999,
+          background:"#052e16",color:"#4ade80",padding:"14px 28px",borderRadius:14,
+          fontSize:15,fontWeight:700,boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
+          display:"flex",alignItems:"center",gap:10,whiteSpace:"nowrap"}}>
           <span style={{fontSize:18}}>✓</span> Account deleted
         </div>
       )}
