@@ -716,8 +716,17 @@ const AnimatedScore = ({target, color}) => {
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     let current = 0;
-    const step = () => { current += 0.35; if (current >= target) { setDisplay(target); return; } setDisplay(Math.floor(current)); requestAnimationFrame(step); };
-    requestAnimationFrame(step);
+    let rafId;
+    let cancelled = false;
+    const step = () => {
+      if (cancelled) return;
+      current += 0.35;
+      if (current >= target) { setDisplay(target); return; }
+      setDisplay(Math.floor(current));
+      rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
+    return () => { cancelled = true; cancelAnimationFrame(rafId); };
   }, [target]);
   return <tspan fill={color}>{display}</tspan>;
 };
