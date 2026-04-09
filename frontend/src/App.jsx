@@ -5040,13 +5040,13 @@ function App() {
         const url = URL.createObjectURL(file);
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX = 1200;
+          const MAX = 900;
           const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
           canvas.width  = Math.round(img.width  * ratio);
           canvas.height = Math.round(img.height * ratio);
           canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
-          res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+          res(canvas.toDataURL("image/jpeg", 0.75).split(",")[1]);
         };
         img.onerror = rej;
         img.src = url;
