@@ -4577,43 +4577,6 @@ app.get("/recent-scans", requireAdmin, (req, res) => {
   res.json(entries);
 });
 
-// ── PRODUCT SUGGESTIONS ───────────────────────────────────────
-app.post("/suggest", async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Suggestions not configured" });
-  const { product_name, user_email } = req.body;
-  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name is required" });
-
-  try {
-    const { error } = await supabaseAdmin.from("suggestions").insert({
-      product_name: product_name.trim(),
-      user_email: user_email?.trim() || null,
-      status: "pending",
-    });
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (e) {
-    console.error("[SUGGEST] error:", e.message);
-    res.status(500).json({ error: "Could not save suggestion" });
-  }
-});
-
-app.get("/pending-suggestions", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("suggestions")
-      .select("id, product_name, user_email, created_at")
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    console.error("[SUGGEST] fetch error:", e.message);
-    res.status(500).json({ error: "Could not fetch suggestions" });
-  }
-});
-
 // ── APPLE IAP — STUBS (ready to implement post-approval) ──────
 const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET || "";
 
