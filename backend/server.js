@@ -4051,6 +4051,31 @@ app.post("/analyze", rateLimit, async (req, res) => {
     return res.json({ ...fuzzyResult, cached: false });
   }
 
+  // Fuzzy calibration — catches name variations before AI
+  const fuzzyHit = fuzzyCalibrationLookup(productName);
+  if (fuzzyHit) {
+    const { entry } = fuzzyHit;
+    const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+    const fuzzyResult = applyProductCalibration({
+      product_name: productName, score: midScore, overall_score: midScore,
+      category: entry.category || category,
+      confidence: entry.confidence || "high",
+      dimensions: {
+        materials:      { score: 5, concerns: entry.substances || [] },
+        usage_exposure: { score: 5, concerns: [] },
+        packaging:      { score: 5, concerns: [] },
+        sustainability: { score: 5, concerns: [] },
+      },
+      concerns: entry.substances || [],
+      flagged_substances: entry.substances || [],
+      summary: entry.reason || "",
+      alternatives: [], ai_alternatives: [],
+    });
+    cacheSet(key, fuzzyResult);
+    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}`);
+    return res.json({ ...fuzzyResult, cached: false });
+  }
+
   console.log(`[CACHE MISS] ${key} — running AI pass`);
 
   try {
