@@ -4967,6 +4967,47 @@ app.get("/cache-clear-product", requireAdmin, async (req, res) => {
   res.json({ ok: true, key, wasInMemory });
 });
 
+// Migrate legacy Redis entries — unwraps {value, ex} wrapper and re-stores correctly
+app.post("/cache-migrate-redis", requireAdmin, async (req, res) => {
+  if (!hasRedis) return res.json({ ok: false, error: "Redis not configured" });
+  try {
+    const keys = await redisKeys("*");
+    let migrated = 0, skipped = 0, failed = 0;
+    for (const key of keys) {
+      try {
+        // Read raw value from Redis (bypassing our unwrap fix)
+        const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+        });
+        const d = await r.json();
+        if (!d.result) { skipped++; continue; }
+        const parsed = JSON.parse(d.result);
+        // Check if it's a legacy wrapped entry
+        if (parsed && typeof parsed.value === "string" && parsed.ex) {
+          const unwrapped = JSON.parse(parsed.value);
+          // Re-store with correct format via pipeline
+          await fetch(`${REDIS_URL}/pipeline`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify([["SET", key, JSON.stringify(unwrapped), "EX", REDIS_TTL]]),
+          });
+          // Also fix in-memory cache
+          scoreCache.set(key, unwrapped);
+          migrated++;
+        } else {
+          skipped++; // already in correct format
+        }
+      } catch(e) { failed++; }
+    }
+    saveCacheToDisk();
+    console.log(`[MIGRATE] Redis migration complete — ${migrated} fixed, ${skipped} already ok, ${failed} failed (${keys.length} total)`);
+    res.json({ ok: true, total: keys.length, migrated, skipped, failed });
+  } catch(e) {
+    console.error("[MIGRATE] Error:", e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // External cron can hit this to keep cache warm - e.g. cron-job.org daily
 app.post("/cache-warm", requireAdmin, (req, res) => {
   const missing = WARM_LIST.filter(name => {
