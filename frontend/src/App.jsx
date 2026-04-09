@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 let NativePurchases = null, PURCHASE_TYPE = { SUBS: "subs" };
 try { const _iap = require("@capgo/native-purchases"); NativePurchases = _iap.NativePurchases; PURCHASE_TYPE = _iap.PURCHASE_TYPE; } catch {}
-import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases";
 import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
