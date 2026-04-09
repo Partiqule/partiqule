@@ -524,7 +524,7 @@ const products = [
     affiliateUrl: "https://www.amazon.com/s?k=Kudos+cotton+diapers&tag=partiqule-20",
     price: "$26–34",
     tags: ["diaper", "diapers", "baby", "newborn", "infant", "toddler", "nappy", "cotton", "clean"]
-  }
+  },
 
   // ── FOOD & BEVERAGE (expanded) ───────────────────────────────
   {
