@@ -5776,7 +5776,7 @@ function App() {
               </button>
             </div>
           )}
-          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0}}>
+          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":((result.overall_score||result.score)>3?"1fr 1fr":"1fr"), gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0, maxWidth:(result.overall_score||result.score)<=3&&!isMobile?640:undefined, margin:(result.overall_score||result.score)<=3&&!isMobile?"0 auto":undefined}}>
 
             {/* LEFT */}
             {(() => {
