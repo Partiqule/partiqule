@@ -5040,13 +5040,13 @@ function App() {
         const url = URL.createObjectURL(file);
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX = 900;
+          const MAX = 1024;
           const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
           canvas.width  = Math.round(img.width  * ratio);
           canvas.height = Math.round(img.height * ratio);
           canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
-          res(canvas.toDataURL("image/jpeg", 0.75).split(",")[1]);
+          res(canvas.toDataURL("image/jpeg", 0.80).split(",")[1]);
         };
         img.onerror = rej;
         img.src = url;
@@ -5776,7 +5776,7 @@ function App() {
               </button>
             </div>
           )}
-          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":((result.overall_score||result.score)>3?"1fr 1fr":"1fr"), gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0, maxWidth:(result.overall_score||result.score)<=3&&!isMobile?640:undefined, margin:(result.overall_score||result.score)<=3&&!isMobile?"0 auto":undefined}}>
+          <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?12:28, alignItems:"start", padding:isMobile?"0 8px":0}}>
 
             {/* LEFT */}
             {(() => {
@@ -5892,7 +5892,7 @@ function App() {
                       </button>
 
                       {/* Child score explanation card */}
-                      {childMode && result.child_score != null && result.child_score !== (result.overall_score || result.score) && (
+                      {childMode && result.child_score && result.child_score !== (result.overall_score || result.score) && (
                         <div style={{
                           marginTop:12, background:isDark?"#1a2a1a":"#f0fdf4",
                           border:"1.5px solid #16a34a44", borderRadius:12,
@@ -5906,34 +5906,6 @@ function App() {
                               · {b}
                             </div>
                           ))}
-                        </div>
-                      )}
-                      {/* Clean product — child score same as adult */}
-                      {childMode && result.child_score != null && result.child_score === (result.overall_score || result.score) && (
-                        <div style={{
-                          marginTop:12, background:isDark?"#1a2a1a":"#f0fdf4",
-                          border:"1.5px solid #16a34a44", borderRadius:12,
-                          padding:"12px 16px", textAlign:"left",
-                          display:"flex", alignItems:"center", gap:8,
-                        }}>
-                          <span style={{fontSize:16, flexShrink:0}}>✓</span>
-                          <div style={{fontSize:12, fontWeight:700, color:"#15803d", lineHeight:1.5}}>
-                            Child score matches adults ({result.child_score}/10) — this product is clean enough that children face the same risk as adults.
-                          </div>
-                        </div>
-                      )}
-                      {/* Old result without child_score — prompt to rescan */}
-                      {childMode && result.child_score == null && (
-                        <div style={{
-                          marginTop:12, background:isDark?"#1e2433":"#f8fafc",
-                          border:"1px dashed " + (isDark?"#374151":"#d1d5db"), borderRadius:12,
-                          padding:"12px 16px", textAlign:"left",
-                          display:"flex", alignItems:"center", gap:8,
-                        }}>
-                          <span style={{fontSize:14, color:muted}}>↻</span>
-                          <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                            <strong style={{color:text}}>Rescan for child safety score</strong> — this result was saved before child scoring was added.
-                          </div>
                         </div>
                       )}
 

@@ -1153,42 +1153,6 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
   }
 }
 
-// ── VISION QUICK IDENTIFY — just gets product name, no scoring ──
-async function callClaudeVisionIdentify(imageBase64, mediaType) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  try {
-    const res = await fetch(ANTHROPIC_API, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 120,
-        temperature: 0,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
-            { type: "text", text: 'Identify this product. Return ONLY raw JSON: {"product_name": "exact product name", "brand": "brand name", "category": "food_beverage|beverage|personal_care|clothing|baby|kitchen|home|supplement|toy|other"}. No markdown.' }
-          ]
-        }]
-      }),
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const raw = (data.content?.[0]?.text || "").trim();
-    if (!raw) return null;
-    const clean = raw.replace(/^```[a-z]*\n?/i, "").replace(/```$/, "").trim();
-    return JSON.parse(clean);
-  } catch { clearTimeout(timeout); return null; }
-}
-
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
 // Vision pass — identifies product from image AND scores it in one call
 async function callClaudeVision(imageBase64, mediaType, retries=3) {
@@ -3854,75 +3818,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
     } catch(e) { console.warn("scan_count increment failed:", e.message); }
   }
 
-  // If image provided — two-stage: fast identify first, cache/fuzzy check, full score only if needed
+  // If image provided, use vision to identify + analyze in one pass
   if (image) {
     try {
-      const mType = mediaType || "image/jpeg";
-      const rawImage = image;
+      console.log("Image scan — using vision pass1");
+      const p1 = await callClaudeVision(image, mediaType || "image/jpeg");
+      const productName = p1.product_name || "Scanned product";
+      const category = p1.category || "other";
 
-      // Stage 1: Fast lightweight identify (~2s, 120 tokens)
-      console.log("Image scan — fast identify stage");
-      const identified = await callClaudeVisionIdentify(rawImage, mType);
-
-      if (identified?.product_name) {
-        const quickName = identified.product_name;
-        const quickCat  = identified.category || "other";
-        const quickKey  = cacheKey(quickName, quickCat);
-
-        // Cache hit on identified name
-        const quickCached = await cacheGet(quickKey);
-        if (quickCached) {
-          console.log(`[CACHE HIT] Vision fast-id "${quickName}" — cached`);
-          return res.json({ ...quickCached, cached: true });
-        }
-
-        // Fuzzy calibration hit on identified name — skip full vision entirely
-        const quickFuzzy = fuzzyCalibrationLookup(quickName);
-        if (quickFuzzy) {
-          console.log(`[FUZZY HIT] Vision fast-id "${quickName}" — skipping full vision pass`);
-          const { entry } = quickFuzzy;
-          const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
-          const kfl = entry.kidsFloor || entry.floor;
-          const kce = entry.kidsCeiling || entry.ceiling;
-          const kidsMid = Math.round((kfl + kce) / 2);
-          const isChild = detectChildProduct(quickName, entry.category || quickCat);
-          const qct = (entry.substances || []).join(" ");
-          const { childScore: qcs, childBumps: qcb } = computeChildScore(midScore, qct, entry.category || quickCat, quickName, isChild);
-          const qResult = applyProductCalibration({
-            product_name: quickName, score: midScore, overall_score: midScore,
-            category: entry.category || quickCat,
-            confidence: entry.confidence || "high",
-            is_child_product: isChild,
-            child_score: entry.kidsFloor ? kidsMid : qcs,
-            child_bumps: qcb || [],
-            dimensions: {
-              materials:      { score: 5, concerns: entry.substances || [] },
-              usage_exposure: { score: 5, concerns: [] },
-              packaging:      { score: 5, concerns: [] },
-              sustainability: { score: 5, concerns: [] },
-            },
-            concerns: entry.substances || [],
-            flagged_substances: entry.substances || [],
-            summary: entry.reason || "",
-            alternatives: filterDbAlternatives(findAlternatives(quickName, entry.category || quickCat, 3, quickName), entry.category || quickCat, quickName, midScore),
-            ai_alternatives: [],
-          });
-          cacheSet(quickKey, qResult);
-          return res.json({ ...qResult, cached: false });
-        }
-      }
-
-      // Stage 2: Full vision pass — product not in cache or calibration
-      console.log("Image scan — full vision pass (unknown product)");
-      const p1 = await callClaudeVision(rawImage, mType);
-      const productName = p1.product_name || identified?.product_name || "Scanned product";
-      const category = p1.category || identified?.category || "other";
-
-      // Cache check with full vision name
+      // ── Check cache AFTER vision identifies product name ──
+      // Camera scan of Goldfish = text scan of "Goldfish crackers" — same result
       const imgKey = cacheKey(productName, category);
       const imgCached = await cacheGet(imgKey);
       if (imgCached) {
-        console.log(`[CACHE HIT] Vision full pass "${productName}" — cached`);
+        console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
         return res.json({ ...imgCached, cached: true });
       }
 
