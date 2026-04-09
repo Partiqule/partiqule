@@ -3862,7 +3862,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
           concerns: entry.substances || [],
           flagged_substances: entry.substances || [],
           summary: entry.reason || "",
-          alternatives: [], ai_alternatives: [],
+          alternatives: filterDbAlternatives(findAlternatives(productName, entry.category || category, 3, productName), entry.category || category, productName, midScore),
+          ai_alternatives: [],
           nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
           ingredient_list: p1.ingredient_list || [],
         });
@@ -4072,7 +4073,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       concerns: entry.substances || [],
       flagged_substances: entry.substances || [],
       summary: entry.reason || "",
-      alternatives: [], ai_alternatives: [],
+      alternatives: filterDbAlternatives(findAlternatives(productName, entry.category || category, 3, productName), entry.category || category, productName, midScore),
+      ai_alternatives: [],
     });
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${childScore}`);
