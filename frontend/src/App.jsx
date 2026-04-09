@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 let NativePurchases = null, PURCHASE_TYPE = { SUBS: "subs" };
 try { const _iap = require("@capgo/native-purchases"); NativePurchases = _iap.NativePurchases; PURCHASE_TYPE = _iap.PURCHASE_TYPE; } catch {}
+import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases";
 import { createClient } from "@supabase/supabase-js";
 
 const API_BASE = "https://partiqule-production.up.railway.app";
@@ -2474,6 +2475,11 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const [testLoading, setTestLoading]   = useState(false);
   const [history, setHistory]           = useState(historyProp);
   const [recentScans, setRecentScans]   = useState([]);
+  const [scansLoading, setScansLoading] = useState(false);
+  const [scansSearch,  setScansSearch]  = useState("");
+  const [scansCat,     setScansCat]     = useState("");
+  const [scansOffset,  setScansOffset]  = useState(0);
+  const [scansTotal,   setScansTotal]   = useState(0);
 
   useEffect(() => {
     if (!historyProp.length) {
@@ -2493,11 +2499,23 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     } catch { setCacheStatus({error:"unreachable"}) }
   };
 
-  const fetchRecentScans = async () => {
+  const fetchRecentScans = async (opts = {}) => {
+    setScansLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/recent-scans?limit=20`);
-      if (r.ok) setRecentScans(await r.json());
+      const cat    = opts.cat    ?? scansCat;
+      const search = opts.search ?? scansSearch;
+      const offset = opts.offset ?? scansOffset;
+      const params = new URLSearchParams({ limit: 50, offset });
+      if (cat)    params.set("category", cat);
+      if (search) params.set("search", search);
+      const r = await fetch(`${API_BASE}/recent-scans?${params}&key=RowenaRavenclaw2024!`);
+      if (r.ok) {
+        const data = await r.json();
+        setRecentScans(offset > 0 ? prev => [...prev, ...data] : data);
+        setScansTotal(data.length);
+      }
     } catch {}
+    setScansLoading(false);
   };
 
   const clearCache = async () => {
@@ -2561,7 +2579,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
         {/* Tab bar */}
         <div style={{display:"flex", gap:8, borderBottom:`2px solid ${border}`, paddingBottom:0}}>
-          {[["dashboard","Dashboard"],["guides","Guides"]].map(([t,l])=>(
+          {[["dashboard","Dashboard"],["scores","Score Review"],["guides","Guides"]].map(([t,l])=>(
             <button key={t} onClick={()=>setAdminTab(t)} style={{
               padding:"8px 20px", border:"none", background:"none", cursor:"pointer",
               fontSize:14, fontWeight:600,
@@ -2575,6 +2593,90 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 
       {adminTab==="guides" ? (
         <GuideAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={false}/>
+      ) : adminTab==="scores" ? (
+        <div>
+          {/* Search + filter bar */}
+          <div style={{display:"flex", gap:10, marginBottom:20, flexWrap:"wrap"}}>
+            <input
+              value={scansSearch}
+              onChange={e=>setScansSearch(e.target.value)}
+              onKeyDown={e=>{ if(e.key==="Enter"){ setScansOffset(0); fetchRecentScans({search:e.target.value, offset:0}); }}}
+              placeholder="Search products…"
+              style={{flex:1, minWidth:180, padding:"9px 14px", borderRadius:10, border:`1px solid ${border}`, background:surface, color:text, fontSize:14}}
+            />
+            <select value={scansCat} onChange={e=>{ setScansCat(e.target.value); setScansOffset(0); fetchRecentScans({cat:e.target.value, offset:0}); }}
+              style={{padding:"9px 14px", borderRadius:10, border:`1px solid ${border}`, background:surface, color:text, fontSize:14, cursor:"pointer"}}>
+              <option value="">All categories</option>
+              {["food_beverage","beverage","personal_care","clothing","baby","home","supplement","toy","other"].map(c=>(
+                <option key={c} value={c}>{c.replace(/_/g," ")}</option>
+              ))}
+            </select>
+            <button onClick={()=>{ setScansOffset(0); fetchRecentScans({offset:0}); }} style={{padding:"9px 18px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:14, cursor:"pointer"}}>
+              {scansLoading ? "Loading…" : "Search"}
+            </button>
+          </div>
+
+          {/* Score list */}
+          {recentScans.length === 0 && !scansLoading && (
+            <div style={{textAlign:"center", color:muted, padding:"60px 0", fontSize:14}}>No scans found</div>
+          )}
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {recentScans.map((s, i) => {
+              const sc = s.score || 0;
+              const col = sc<=2?"#16a34a":sc<=4?"#65a30d":sc<=6?"#d97706":sc<=8?"#dc2626":"#7f1d1d";
+              const bg  = sc<=2?"#f0fdf4":sc<=4?"#f7fee7":sc<=6?"#fefce8":sc<=8?"#fff7ed":"#fff1f2";
+              const flags = (s.flagged_substances||[]).slice(0,4);
+              return (
+                <div key={i} style={{background:surface, border:`1px solid ${border}`, borderRadius:12, padding:"14px 18px", display:"flex", alignItems:"flex-start", gap:14}}>
+                  {/* Score badge */}
+                  <div style={{minWidth:48, height:48, borderRadius:10, background:bg, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", border:`1px solid ${col}22`}}>
+                    <div style={{fontSize:20, fontWeight:800, color:col, lineHeight:1}}>{sc}</div>
+                    <div style={{fontSize:9, color:col, fontWeight:600, opacity:0.7}}>/10</div>
+                  </div>
+                  {/* Info */}
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontWeight:700, fontSize:15, color:text, marginBottom:3, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{s.product_name}</div>
+                    <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginBottom:flags.length?6:0}}>
+                      <span style={{fontSize:11, fontWeight:600, color:muted, background:isDark?"#1e293b":"#f1f5f9", padding:"2px 8px", borderRadius:6}}>{(s.category||"other").replace(/_/g," ")}</span>
+                      {s.confidence && <span style={{fontSize:11, color:muted}}>{s.confidence} confidence</span>}
+                      {s.child_score && s.child_score !== sc && (
+                        <span style={{fontSize:11, fontWeight:600, color:"#2563eb"}}>👶 Kids: {s.child_score}/10</span>
+                      )}
+                      {s.scanned_at && (
+                        <span style={{fontSize:11, color:muted}}>{new Date(s.scanned_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</span>
+                      )}
+                    </div>
+                    {flags.length > 0 && (
+                      <div style={{display:"flex", gap:5, flexWrap:"wrap"}}>
+                        {flags.map((f,j)=>(
+                          <span key={j} style={{fontSize:11, fontWeight:600, color:col, background:`${col}15`, padding:"2px 8px", borderRadius:20, border:`1px solid ${col}30`}}>{f}</span>
+                        ))}
+                      </div>
+                    )}
+                    {s.summary && (
+                      <div style={{fontSize:12, color:muted, marginTop:5, lineHeight:1.5, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>{s.summary}</div>
+                    )}
+                  </div>
+                  {/* Quick action */}
+                  <button
+                    onClick={()=>{ window.open(`https://partiqule.com?q=${encodeURIComponent(s.product_name)}`, "_blank"); }}
+                    title="Re-scan this product"
+                    style={{padding:"6px 10px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, cursor:"pointer", whiteSpace:"nowrap"}}>
+                    Re-scan
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Load more */}
+          {recentScans.length >= 50 && (
+            <button onClick={()=>{ const next = scansOffset+50; setScansOffset(next); fetchRecentScans({offset:next}); }}
+              style={{width:"100%", marginTop:16, padding:"12px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:14, cursor:"pointer"}}>
+              {scansLoading ? "Loading…" : "Load more"}
+            </button>
+          )}
+        </div>
       ) : (<>
 
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:20}}>
