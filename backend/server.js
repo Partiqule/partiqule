@@ -568,6 +568,46 @@ const NEGATION_PHRASES = [
 const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
 const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
 
+// Apply substance floors directly to a raw ingredient text string (e.g. from Open Food Facts).
+// Used by the barcode endpoint BEFORE the AI runs, so code-enforced floors are honored
+// regardless of what the AI says about the ingredient list.
+function applySubstanceFloorsToText(ingredText) {
+  if (!ingredText) return { mFloor: 0, uFloor: 0, triggered: [] };
+  const text = ingredText.toLowerCase();
+
+  // Respect the natural-colorant override (same rule used by the vision prompt)
+  const NATURAL_COLORANT_PATTERN = /colored? with (vegetable|fruit|plant)|vegetable (juice|extract|color)|fruit (juice|extract|color)|beet(root)? (juice|powder|extract|color)|turmeric (color|extract|powder)|spirulina (extract|color)|annatto (extract|color)|carrot (juice|extract|color)|natural color from|colors? from (nature|plants?|fruits?|vegetables?)|plant.based color|carotenoid|lycopene|chlorophyll|butterfly pea|black carrot|red cabbage|paprika extract/i;
+  const hasNaturalColorants = NATURAL_COLORANT_PATTERN.test(text);
+  const hasPetroleumDyes    = /red\s*40|yellow\s*5|yellow\s*6|blue\s*1|blue\s*2|fd&?c|allura red|tartrazine|sunset yellow|brilliant blue/i.test(text);
+
+  let mFloor = 0, uFloor = 0;
+  const triggered = [];
+
+  for (const rule of SUBSTANCE_FLOORS) {
+    // Skip petroleum-dye rules when only natural colorants are present
+    if (hasNaturalColorants && !hasPetroleumDyes &&
+        (rule.reason.includes("Red 40") || rule.reason.includes("Yellow 5") || rule.reason.includes("Blue 1") || rule.reason.includes("petroleum dye"))) {
+      continue;
+    }
+    if (rule.match.test(text)) {
+      if (rule.mFloor > mFloor) mFloor = rule.mFloor;
+      if (rule.uFloor > uFloor) uFloor = rule.uFloor;
+      triggered.push(rule.reason);
+    }
+  }
+  return { mFloor, uFloor, triggered };
+}
+
+// NOVA group hard floor — only for food and food_beverage (not beverage, which
+// would wrongly penalize sparkling water and other inert NOVA 4 items).
+function novaFloor(novaGroup, category) {
+  if (!novaGroup) return 0;
+  if (category !== "food" && category !== "food_beverage") return 0;
+  if (novaGroup === 4) return 5; // ultra-processed → materials min 5
+  if (novaGroup === 3) return 4; // processed → materials min 4
+  return 0;
+}
+
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
@@ -2276,6 +2316,86 @@ IN-N-OUT NOTE: Genuinely cleaner than McDonald's at the ingredient level but NOT
 
 BREAKFAST RULE (applies to ALL chains):
 Any fast food breakfast item containing sausage or bacon = sodium nitrite floor fires → final score MINIMUM 6. NEVER score a fast food breakfast sausage or bacon item below 6. Eggs only + bread = 4-5. Oatmeal or avocado toast = 3.
+
+FRESH / HEALTHY CHAIN ANCHORS — these chains use whole ingredients and minimal processing. Default lower scores apply.
+
+CAVA (Mediterranean fast casual):
+- Grain bowl with greens, grilled chicken/falafel, hummus, veggies: final score ~3 — whole grains, fresh produce, minimal processing. Kids score ~4 due to moderate sodium. Pregnancy safe.
+- Pita wrap with any protein: final score ~4 — refined flour pita adds 1 point vs bowl.
+- CAVA braised lamb: final score ~3 — simple braised preparation, cleanest protein.
+- Sofritas-style plant items: final score ~4 — more processing than whole grains.
+- CAVA kids meal: anchor at ~4 max — minimally processed but sodium concern for children.
+
+SWEETGREEN:
+- Harvest Bowl, Shroomami, Guacamole Greens, any whole-ingredient bowl: final score ~2-3 — fresh produce, whole grains, minimal additives. One of the cleanest fast casual options available. Pregnancy: safe, listed as safe for children 4+ with moderate sodium awareness.
+- Sweetgreen "Crispy Rice" or anything with fried elements: final score ~4 — bumps 1 point for refined oil.
+- Sweetgreen kale caesar: final score ~3 — real parmesan, no shortcut dressings.
+- Sweetgreen with warm bowls (miso bowl, hot honey chicken): final score ~3.
+- Kids mode: most Sweetgreen bowls safe for kids, score 3-4.
+
+PANERA:
+- Broth bowls / power bowls (quinoa, chicken, veggies): final score ~4 — whole grains + lean protein. Watch sodium.
+- Panera sandwiches on white bread (Italian, Smokehouse BBQ, Bacon Turkey Bravo): final score ~6 — sodium nitrite in deli meat + refined bread.
+- Panera Mediterranean Veggie Sandwich: final score ~4 — no processed meat, cleaner choice.
+- Panera soups (broccoli cheddar, cream based): final score ~5-6 — modified food starch + carrageenan + high sodium (often 1200-1800mg).
+- Panera Fuji Apple Chicken Salad / Green Goddess Cobb: final score ~4 — but dressing adds processing.
+- Panera Kids Mac and Cheese: final score ~6 — annatto colored cheese, enriched pasta, very high sodium. NEVER below 5 for kids.
+- Panera Cinnamon Crunch Bagel / Pastries: final score ~7 — HFCS, sugar bombs, enriched flour. Kids score ~7.
+
+STARBUCKS:
+- Brewed coffee / plain espresso / Americano (no sweetener, no milk): final score ~2 — just coffee and water.
+- Latte / cappuccino / flat white (with dairy or alt milk): final score ~3-4 — dairy or oat milk adds processing but still modest.
+- Caramel Macchiato / Vanilla Latte: final score ~5 — added syrups with "natural flavor" + sugar.
+- Caramel Frappuccino / Mocha Frappuccino / Java Chip: final score ~7 — 50+ grams sugar + artificial flavoring + carrageenan in base. NEVER below 6.
+- Pumpkin Spice Latte: final score ~6-7 — HFCS, caramel color IV, "natural" flavoring blend, 50g sugar venti.
+- Refresher drinks (Strawberry Acai, Mango Dragonfruit): final score ~6 — sugar + green coffee extract + artificial green/red coloring (may be freeze-dried fruit, verify before applying dye floor).
+- Pink Drink: final score ~5 — coconut milk cuts sugar impact slightly but still sugary.
+- Iced Coffee with Classic Syrup: final score ~5.
+- Starbucks Egg Bites (bacon/gruyere): final score ~6 — sodium nitrite in bacon. NEVER below 5.
+- Starbucks banana bread / cheese danish / pastries: final score ~6 — refined flour + sugar + often BHT.
+- Kids mode: ANY Starbucks frappuccino or refresher = child score minimum 7 (50+g sugar + caffeine not child-appropriate + possible dyes).
+- Pregnancy: flag caffeine content — refreshers have 45mg (safe), frappuccinos 50-125mg, venti iced coffee 330mg (exceeds ACOG 200mg daily limit).
+
+CHIPOTLE (additions):
+- Chipotle kids quesadilla: final score ~5 — simpler than most kids menu but enriched flour tortilla.
+- Chipotle kids bowl: final score ~4 — scales down the adult bowl.
+
+FIRST WATCH / SNOOZE / BREAKFAST CHAINS:
+- First Watch avocado toast / power bowl: final score ~3-4 — whole grain toast + eggs + avocado. Pregnancy: ensure eggs fully cooked.
+- Snooze pancakes / french toast: final score ~6-7 — 80+g sugar, artificial maple flavoring, enriched flour.
+- IHOP stack of buttermilk pancakes: final score ~7 — 80g+ sugar + HFCS syrup + enriched flour. Kids score ~8.
+- IHOP Rooty Tooty Fresh 'N Fruity: final score ~7 — same base + sausage (nitrite floor fires).
+- Cracker Barrel Old Timer's Breakfast: final score ~7 — sausage + bacon nitrite floors + high sodium.
+
+SMOOTHIE / JUICE CHAINS:
+- Jamba Juice classic smoothies (Strawberries Wild, Razzmatazz): final score ~5-6 — sherbet base has HFCS + artificial flavor. Kids: ~6.
+- Jamba Whirl'ins / Ice cream blends: final score ~7 — 80g+ sugar.
+- Jamba Harvest Bowl: final score ~3 — whole fruit + granola + honey.
+- Smoothie King "Gladiator" protein smoothies: final score ~5 — sucralose base + whey isolate + "natural flavor" mix.
+- Pressed Juicery cold-pressed juices (single ingredient): final score ~2-3 — unprocessed fruit/veggie juice.
+- Pressed Juicery Freeze: final score ~4 — blended with coconut cream, some sugar.
+
+DONUT / COOKIE / DESSERT CHAINS:
+- Krispy Kreme Original Glazed: final score ~7 — enriched flour, partially hydrogenated alternatives, sugar glaze with titanium dioxide historically.
+- Dunkin donut with sprinkles: final score ~7 — enriched flour + Red 40/Yellow 5/Blue 1 in sprinkles. Kids: ~8.
+- Crumbl Cookies: final score ~7 — refined flour + 20-40g sugar per cookie + dyes in many varieties. ALL Crumbl cookies kids-score 8 minimum.
+- Insomnia Cookies: final score ~7 — same profile as Crumbl.
+- Nothing Bundt Cakes: final score ~7 — refined flour + sugar + Red 40 in many flavors. Wedding cake style colored frosting scores 8.
+
+KIDS MODE REMINDER FOR RESTAURANT ITEMS:
+When childMode is on, apply these additional restaurant bumps:
+- Any item with 500mg+ sodium for a child serving: +1 to child_score (children tolerate less sodium than adults)
+- Any kids menu item with included soda/juice drink: +1 (assume Red 40 or HFCS present)
+- Any breaded/fried item on kids menu: +1 (higher TBHQ exposure per body weight)
+
+PREGNANCY MODE REMINDER FOR RESTAURANT ITEMS:
+When pregnancyMode is on, apply these additional restaurant bumps:
+- Any item containing deli meat, pepperoni, salami, prosciutto, hot dogs, cold cuts: +2 to pregnancy_score (listeria + nitrite concern)
+- Any sushi, raw fish, rare/raw meat: +2 (listeria + mercury + parasites)
+- Any unpasteurized cheese (queso fresco, some fetas, soft brie): +2
+- Caffeine: flag items with >200mg caffeine as ACOG daily limit concern
+- Alcohol: any alcoholic beverage = pregnancy_score 10
+- High mercury fish (tuna, swordfish, king mackerel): +2
 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
@@ -4426,18 +4546,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
         const altIsChild = detectChildProduct(p.name, altCat);
         const altConcerns = (p.tags || []).join(" ") + " " + (p.material || "");
         const { childScore: altChildScore } = computeChildScore(altScore, altConcerns, altCat, p.name, altIsChild);
+        const { pregnancyScore: altPregScore } = computePregnancyScore(altScore, altConcerns, altCat, p.name);
         return {
-          id:           p.id,
-          name:         p.name,
-          brand:        p.brand || "",
-          score:        altScore,
-          child_score:  altChildScore,
-          material:     p.material || "",
-          description:  p.description || "",
-          price:        p.price || "",
-          affiliateUrl: p.affiliateUrl,
-          imageUrl:     p.imageUrl || null,
-          source:       p.source || "static",
+          id:              p.id,
+          name:            p.name,
+          brand:           p.brand || "",
+          score:           altScore,
+          child_score:     altChildScore,
+          pregnancy_score: altPregScore,
+          material:        p.material || "",
+          description:     p.description || "",
+          price:           p.price || "",
+          affiliateUrl:    p.affiliateUrl,
+          imageUrl:        p.imageUrl || null,
+          source:          p.source || "static",
         };
       }),
       ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
@@ -5492,6 +5614,28 @@ app.post("/barcode", rateLimit, async (req, res) => {
     let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
     let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
 
+    // ── Substance floors from OFF ingredient text (code-enforced, AI-immune) ──
+    // This is the key guarantee: if OFF lists Red 40, we force materials ≥ 7
+    // regardless of what the AI decided to score it.
+    const textFloors = applySubstanceFloorsToText(ingredText);
+    if (textFloors.mFloor > mScore) {
+      console.log(`[BARCODE] Text substance floor raised materials ${mScore} → ${textFloors.mFloor} (${textFloors.triggered[0]})`);
+      mScore = textFloors.mFloor;
+    }
+    if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
+
+    // Also run the AI-concern based floor check (catches things AI spots but OFF doesn't list)
+    const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
+    mScore = aiFloors.mScore;
+    uScore = aiFloors.uScore;
+
+    // ── NOVA group hard floor — NOVA 4 → materials ≥ 5, NOVA 3 → ≥ 4 ──
+    const novaMin = novaFloor(novaGroup, cat);
+    if (novaMin > mScore) {
+      console.log(`[BARCODE] NOVA ${novaGroup} floor raised materials ${mScore} → ${novaMin}`);
+      mScore = novaMin;
+    }
+
     let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
 
     ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
@@ -5506,16 +5650,26 @@ app.post("/barcode", rateLimit, async (req, res) => {
       : "Avoid — known harmful substances";
 
     const isChild = detectChildProduct(productName, cat);
-    const flagText = [...(p1.flagged_substances||[]), ...(p1.materials?.concerns||[])].join(" ");
+    // Include OFF ingredient text in the flag text so child/pregnancy scoring
+    // sees substances the AI may have missed
+    const flagText = [
+      ...(p1.flagged_substances||[]),
+      ...(p1.materials?.concerns||[]),
+      ingredText || "",
+      ...textFloors.triggered,
+    ].join(" ");
     const { childScore, childBumps } = computeChildScore(finalScore, flagText, cat, productName, isChild);
+    const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, cat, productName);
 
     const alternatives = filterDbAlternatives(
       findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
     ).map(p => {
       const as = p.score ?? 3;
       const ac = detectChildProduct(p.name, p.category || cat);
-      const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||cat, p.name, ac);
-      return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs,
+      const altFlags = (p.tags||[]).join(" ")+" "+(p.material||"");
+      const { childScore: acs } = computeChildScore(as, altFlags, p.category||cat, p.name, ac);
+      const { pregnancyScore: aps } = computePregnancyScore(as, altFlags, p.category||cat, p.name);
+      return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs, pregnancy_score:aps,
                material:p.material||"", description:p.description||"", price:p.price||"",
                affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
     });
@@ -5536,7 +5690,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
       is_child_product:    isChild,
       child_score:         childScore,
       child_bumps:         childBumps || [],
-      flagged_substances:  p1.flagged_substances || [],
+      pregnancy_score:     pregnancyScore,
+      pregnancy_bumps:     pregnancyBumps || [],
+      flagged_substances:  [...(p1.flagged_substances || []), ...textFloors.triggered],
       concerns:            p1.concerns || [],
       summary:             p1.summary || "",
       peer_comparison:     peerComparison,
