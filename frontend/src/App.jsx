@@ -6467,9 +6467,9 @@ function App() {
             return (
               <div style={{paddingBottom: isMobile ? 160 : 60}}>
 
-                {/* ── STICKY SCAN BAR (Uber-style "Where to?") ── */}
+                {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
                 <div style={{
-                  position:"sticky", top:0, zIndex:40,
+                  position:"fixed", top:56, left:0, right:0, zIndex:40,
                   background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
                   borderBottom:"1px solid rgba(34,197,94,0.15)",
                   padding: isMobile ? "10px 16px" : "12px 40px",
@@ -6490,7 +6490,7 @@ function App() {
                 </div>
 
                 {/* ── FEED CONTENT ── */}
-                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? "24px 16px" : "32px 40px"}}>
+                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? "88px 16px 24px" : "80px 40px 32px"}}>
 
                   {/* Greeting + streak */}
                   <div style={{marginBottom:20, display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
@@ -6701,10 +6701,10 @@ function App() {
           <>
           {/* ── NEW USER: full hero ── */}
 
-          {/* ── STICKY SCAN BAR (same as returning user, always present) ── */}
+          {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
           {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
           <div style={{
-            position:"sticky", top:0, zIndex:40,
+            position:"fixed", top:56, left:0, right:0, zIndex:40,
             background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
             borderBottom:"1px solid rgba(34,197,94,0.15)",
             padding: isMobile ? "10px 16px" : "12px 40px",
@@ -6733,7 +6733,7 @@ function App() {
             </div>
           </div>
 
-          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "48px 20px 40px" : "72px 40px 56px"}}>
+          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "112px 20px 40px" : "128px 40px 56px"}}>
             {/* Animated gradient mesh background */}
             <div style={{position:"absolute", inset:0, background:"linear-gradient(135deg,#052e16 0%,#0a3d1f 25%,#052e16 50%,#071f0c 75%,#052e16 100%)", backgroundSize:"400% 400%", animation:"gradientShift 12s ease infinite", pointerEvents:"none"}}/>
             {/* Radial glow that breathes */}
