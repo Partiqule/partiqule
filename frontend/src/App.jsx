@@ -133,6 +133,238 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
+// ── BARCODE SCANNER ──────────────────────────────────────────
+// Full-screen camera viewfinder with live barcode detection.
+// Uses ML Kit on iOS (via Capacitor) and ZXing on mobile web.
+const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
+  const videoRef  = useRef(null);
+  const canvasRef = useRef(null);
+  const [status,     setStatus]     = useState("starting");
+  const [flash,      setFlash]      = useState(false);
+  const [scanMsg,    setScanMsg]    = useState("Starting camera...");
+  const streamRef   = useRef(null);
+  const controlsRef = useRef(null);
+  const stopRef     = useRef(false);
+
+  const cleanup = async () => {
+    stopRef.current = true;
+    try { controlsRef.current?.stop?.(); } catch(e) {}
+    try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch(e) {}
+    if (IS_NATIVE) {
+      try {
+        const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
+        await BarcodeScanner.stopScan();
+        await BarcodeScanner.removeAllListeners();
+      } catch(e) {}
+    }
+  };
+
+  const onFound = (value) => {
+    if (stopRef.current) return;
+    stopRef.current = true;
+    setFlash(true);
+    try { window.navigator?.vibrate?.(50); } catch(e) {}
+    setTimeout(() => { cleanup(); onBarcode(value); }, 350);
+  };
+
+  useEffect(() => {
+    const start = async () => {
+      if (IS_NATIVE) {
+        try {
+          const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
+          const { camera } = await BarcodeScanner.requestPermissions();
+          if (camera !== "granted" && camera !== "limited") {
+            setStatus("error"); setScanMsg("Camera permission denied"); return;
+          }
+          await BarcodeScanner.addListener("barcodeScanned", ({ barcode }) => onFound(barcode.rawValue));
+          await BarcodeScanner.startScan();
+          setStatus("scanning"); setScanMsg("Point at a barcode");
+        } catch(e) {
+          setStatus("error"); setScanMsg("Scanner unavailable");
+        }
+      } else {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+          });
+          streamRef.current = stream;
+          if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+          setStatus("scanning"); setScanMsg("Point at a barcode");
+          const { BrowserMultiFormatReader } = await import("@zxing/browser");
+          const reader = new BrowserMultiFormatReader();
+          const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
+            (result) => { if (result && !stopRef.current) onFound(result.getText()); }
+          );
+          controlsRef.current = controls;
+        } catch(e) {
+          setStatus("error"); setScanMsg("Camera unavailable — try typing instead");
+        }
+      }
+    };
+    start();
+    return () => { cleanup(); };
+  }, []);
+
+  const takePhoto = async () => {
+    if (IS_NATIVE) {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*"; input.capture = "environment";
+      input.onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (file) { await cleanup(); onPhoto(file); }
+      };
+      input.click();
+    } else {
+      if (!videoRef.current || !canvasRef.current) return;
+      const cv = canvasRef.current;
+      cv.width  = videoRef.current.videoWidth;
+      cv.height = videoRef.current.videoHeight;
+      cv.getContext("2d").drawImage(videoRef.current, 0, 0);
+      cv.toBlob(async (blob) => {
+        const file = new File([blob], "scan.jpg", { type: "image/jpeg" });
+        await cleanup(); onPhoto(file);
+      }, "image/jpeg", 0.85);
+    }
+  };
+
+  // Corner bracket helper
+  const Bracket = ({ top, left, right, bottom }) => (
+    <div style={{
+      position:"absolute",
+      ...(top    != null ? { top }    : {}),
+      ...(left   != null ? { left }   : {}),
+      ...(right  != null ? { right }  : {}),
+      ...(bottom != null ? { bottom } : {}),
+      width:28, height:28,
+      borderTop:    top    != null ? "3px solid #4ade80" : "none",
+      borderBottom: bottom != null ? "3px solid #4ade80" : "none",
+      borderLeft:   left   != null ? "3px solid #4ade80" : "none",
+      borderRight:  right  != null ? "3px solid #4ade80" : "none",
+      borderRadius: top != null && left != null ? "4px 0 0 0"
+                  : top != null && right != null ? "0 4px 0 0"
+                  : bottom != null && left != null ? "0 0 0 4px" : "0 0 4px 0",
+    }}/>
+  );
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:9999,background:"#000",display:"flex",flexDirection:"column"}}>
+      <style>{`
+        @keyframes scanLine {
+          0%   { top:8px;  opacity:0 }
+          8%   { opacity:1 }
+          92%  { opacity:1 }
+          100% { top:calc(100% - 10px); opacity:0 }
+        }
+        @keyframes barcodeFlash { 0%,100%{opacity:0} 50%{opacity:1} }
+      `}</style>
+
+      {/* Live camera feed — web only (iOS uses native layer) */}
+      {!IS_NATIVE && (
+        <video ref={videoRef} playsInline muted autoPlay
+          style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
+      )}
+      <canvas ref={canvasRef} style={{display:"none"}}/>
+
+      {/* Green flash on barcode detect */}
+      {flash && (
+        <div style={{position:"absolute",inset:0,zIndex:10,background:"rgba(74,222,128,0.3)",
+          animation:"barcodeFlash 0.35s ease",pointerEvents:"none"}}/>
+      )}
+
+      {/* Dark overlay + scanning frame */}
+      <div style={{position:"absolute",inset:0,zIndex:5,
+        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+
+        {/* Frame — box-shadow creates the dark surround / cutout effect */}
+        <div style={{position:"relative",width:270,height:270,
+          boxShadow:"0 0 0 9999px rgba(0,0,0,0.68)",borderRadius:20}}>
+          <Bracket top={-3}   left={-3}  />
+          <Bracket top={-3}   right={-3} />
+          <Bracket bottom={-3} left={-3} />
+          <Bracket bottom={-3} right={-3}/>
+
+          {/* Animated scan line */}
+          {status === "scanning" && (
+            <div style={{position:"absolute",left:10,right:10,height:2,
+              background:"linear-gradient(90deg,transparent,#4ade80,transparent)",
+              borderRadius:2,animation:"scanLine 2.2s ease-in-out infinite"}}/>
+          )}
+        </div>
+
+        {/* Status message */}
+        <div style={{marginTop:32,textAlign:"center",padding:"0 40px"}}>
+          <div style={{color:"#fff",fontSize:15,fontWeight:600,letterSpacing:"-0.2px",marginBottom:6}}>
+            {status === "starting" ? "Starting camera…"
+           : status === "error"   ? scanMsg
+           : "Point at a barcode to scan instantly"}
+          </div>
+          {status === "scanning" && (
+            <div style={{color:"rgba(255,255,255,0.45)",fontSize:13}}>
+              or tap below to photograph the label
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top bar — logo + close */}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:20,
+        padding:`${SAFE_TOP+16}px 20px 16px`,
+        display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <svg width="28" height="28" viewBox="0 0 44 44">
+            <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
+            <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
+            <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
+            <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
+            <circle cx="37" cy="8" r="2.5" fill="#4ade80" opacity="0.8"/>
+            <circle cx="5" cy="14" r="2" fill="#86efac" opacity="0.6"/>
+          </svg>
+          <span style={{color:"#fff",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:18,letterSpacing:"-0.3px"}}>
+            Partiqule
+          </span>
+        </div>
+        <button onClick={() => { cleanup(); onClose(); }}
+          style={{width:38,height:38,borderRadius:"50%",
+            background:"rgba(255,255,255,0.15)",
+            border:"1.5px solid rgba(255,255,255,0.2)",
+            backdropFilter:"blur(8px)",cursor:"pointer",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Bottom bar — photo button + hint */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:20,
+        padding:"24px 40px 52px",
+        display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+        {status === "scanning" && (
+          <button onClick={takePhoto}
+            style={{width:72,height:72,borderRadius:"50%",
+              background:"rgba(255,255,255,0.95)",
+              border:"5px solid rgba(255,255,255,0.3)",
+              boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
+              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"transform 0.15s"}}
+            onMouseDown={e=>e.currentTarget.style.transform="scale(0.93)"}
+            onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
+        )}
+        <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,textAlign:"center",letterSpacing:"0.02em"}}>
+          BARCODE SCANS AUTOMATICALLY · TAP FOR PHOTO
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
@@ -255,17 +487,10 @@ const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   return (
     <div style={{marginTop:24}}>
       <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
-      <div style={{textAlign:"center",marginTop:12}}>
-        <button onClick={share} disabled={status==="copying"}
-          style={{padding:"9px 22px",borderRadius:24,background:"none",
-            border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,
-            color:status==="copied"?"#16a34a":isDark?"#94a3b8":"#6b7280",
-            fontSize:13,fontWeight:600,cursor:"pointer",
-            display:"inline-flex",alignItems:"center",gap:7,transition:"all 0.2s"}}>
-          <IconShare size={14} color={status==="copied"?"#16a34a":isDark?"#94a3b8":"#6b7280"}/>
-          {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
-        </button>
-      </div>
+      <button onClick={share} disabled={status==="copying"} style={{marginTop:12,width:"100%",padding:"13px",borderRadius:12,background:status==="copied"?"#16a34a":"#052e16",border:"none",color:status==="copied"?"#fff":"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background 0.2s"}}>
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
+      </button>
     </div>
   );
 };
@@ -4628,6 +4853,7 @@ function App() {
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
@@ -5033,7 +5259,7 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setModalQuery(""); setChildMode(false);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery(""); setChildMode(false);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -6335,6 +6561,7 @@ function App() {
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
+                {/* for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
                   const score = result.overall_score || result.score;
                   const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
@@ -6746,27 +6973,46 @@ function App() {
                   </div>
                 </div>
 
-                {/* Camera bubble */}
-                <label style={{position:"absolute", bottom:104, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, cursor:"pointer", display:"flex", alignItems:"center", gap:10, zIndex:9001}}>
-                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
-                    onChange={async(e)=>{
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      e.target.value = "";
-                      setShowScanModal(false);
-                      await handleImageScan(file);
-                    }}/>
-                  <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
+                {/* Camera / Barcode bubble */}
+                {isMobile ? (
+                  /* Mobile: open full scanner (barcode auto-detect + photo fallback) */
+                  <div
+                    onClick={()=>{setShowScanModal(false); setFabOpen(false); setShowBarcodeScanner(true);}}
+                    style={{position:"absolute", bottom:104, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, cursor:"pointer", display:"flex", alignItems:"center", gap:10, zIndex:9001}}>
+                    <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{fontSize:13, fontWeight:600, color:text}}>Scan barcode or photo</div>
+                      <div style={{fontSize:11, color:muted}}>Auto-detects barcodes instantly</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{fontSize:13, fontWeight:600, color:text}}>Photo scan</div>
-                    <div style={{fontSize:11, color:muted}}>Photograph a label</div>
-                  </div>
-                </label>
+                ) : (
+                  /* Desktop: file input only */
+                  <label style={{position:"absolute", bottom:104, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, cursor:"pointer", display:"flex", alignItems:"center", gap:10, zIndex:9001}}>
+                    <input type="file" accept="image/*" style={{display:"none"}}
+                      onChange={async(e)=>{
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        e.target.value = "";
+                        setShowScanModal(false);
+                        await handleImageScan(file);
+                      }}/>
+                    <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{fontSize:13, fontWeight:600, color:text}}>Photo scan</div>
+                      <div style={{fontSize:11, color:muted}}>Upload a label image</div>
+                    </div>
+                  </label>
+                )}
               </>)}
 
               <button onClick={()=>{setShowScanModal(o=>!o); setModalQuery("");}}
@@ -6787,6 +7033,62 @@ function App() {
             </button>
           </div>
         </>
+      )}
+
+      {/* BARCODE SCANNER — full screen, mobile only */}
+      {showBarcodeScanner && (
+        <BarcodeScannerView
+          onClose={() => setShowBarcodeScanner(false)}
+          onBarcode={async (barcode) => {
+            setShowBarcodeScanner(false);
+            setLoading(true);
+            setQuery("Scanning barcode…");
+            setRevealDone(false);
+            setResult(null);
+            try {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 30000);
+              const resp = await fetch(`${API_BASE}/barcode`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ barcode, userId: user?.id || null }),
+                signal: controller.signal,
+              });
+              clearTimeout(timeout);
+              if (resp.status === 404) {
+                // Not in Open Food Facts — prompt photo
+                setLoading(false);
+                setQuery("");
+                setError("Barcode not found in our database. Try photographing the label instead.");
+                return;
+              }
+              if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+              const data = await resp.json();
+              setQuery(data.product_name || barcode);
+              setResult(data);
+              saveToHistory(data);
+              if (!isSubscribed) {
+                const newCount = scanCount + 1;
+                setScanCount(newCount);
+                try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+                if (newCount >= FREE_LIMIT) {
+                  if (!user) setShowLimitModal("account");
+                  else       setShowLimitModal("paywall");
+                }
+              }
+            } catch(err) {
+              setError(err.name === "AbortError"
+                ? "Scan timed out. Please try again."
+                : "Barcode lookup failed. Try typing the product name instead.");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          onPhoto={async (file) => {
+            setShowBarcodeScanner(false);
+            await handleImageScan(file);
+          }}
+        />
       )}
 
       {/* FOOTER */}

@@ -179,6 +179,9 @@ const rateLimitMap = new Map();
 const RATE_LIMIT   = 30;
 const RATE_WINDOW  = 60 * 60 * 1000; // 1 hour
 const rateLimit = (req, res, next) => {
+  // Admin key bypasses rate limiting — used by internal reload and trusted scripts
+  const adminKey = req.query.key || req.headers["x-admin-key"];
+  if (adminKey === ADMIN_KEY) return next();
   const ip  = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   const rec = rateLimitMap.get(ip) || { count: 0, start: now };
@@ -5142,10 +5145,11 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
 
         // Call the internal analyze logic by constructing a mock request
         // We hit the same AI pipeline used by real user scans
-        const analyzeUrl = `http://localhost:${process.env.PORT || 3000}/analyze`;
+        const PORT = process.env.PORT || 3000;
+        const analyzeUrl = `http://localhost:${PORT}/analyze`;
         const analyzeRes = await fetch(analyzeUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-internal-reload": "1" },
+          headers: { "Content-Type": "application/json", "x-admin-key": ADMIN_KEY },
           body: JSON.stringify({ query: productName }),
         });
 
@@ -5176,6 +5180,204 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
     res.end();
   }
 });
+// ── BARCODE SCAN — Open Food Facts lookup + full AI pipeline ────────────────
+// Accepts a UPC/EAN barcode, looks up product data from Open Food Facts (free,
+// 3M+ products), passes exact ingredient list as ground truth to pass1/pass2,
+// and returns a fully scored result identical to a text scan.
+app.post("/barcode", rateLimit, async (req, res) => {
+  const { barcode, userId } = req.body || {};
+  if (!barcode) return res.status(400).json({ error: "barcode required" });
+
+  const barcodeKey = `barcode:${barcode}`;
+
+  // ── Cache check (same staleness logic as /analyze) ──
+  const bCached = await cacheGet(barcodeKey);
+  if (bCached) {
+    const noIng   = !bCached.ingredient_list   || bCached.ingredient_list.length === 0;
+    const noFlag  = !bCached.flagged_substances || bCached.flagged_substances.length === 0;
+    const allFive = bCached.dimensions &&
+      bCached.dimensions.materials?.score      === 5 &&
+      bCached.dimensions.usage_exposure?.score === 5 &&
+      bCached.dimensions.packaging?.score      === 5 &&
+      bCached.dimensions.sustainability?.score === 5;
+    const bStale = !bCached.dimensions || bCached._preloaded || (noIng && noFlag && allFive);
+    if (!bStale) {
+      console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
+      return res.json({ ...bCached, cached: true });
+    }
+    scoreCache.delete(barcodeKey);
+  }
+
+  // ── Open Food Facts lookup ──
+  let offProduct = null;
+  try {
+    const offRes = await fetch(
+      `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`,
+      { headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
+        signal: AbortSignal.timeout(8000) }
+    );
+    if (offRes.ok) {
+      const offJson = await offRes.json();
+      if (offJson.status === 1 && offJson.product) offProduct = offJson.product;
+    }
+  } catch(e) { console.warn("[BARCODE] OFF lookup failed:", e.message); }
+
+  if (!offProduct) {
+    console.log(`[BARCODE] ${barcode} not in Open Food Facts`);
+    return res.status(404).json({
+      error: "Product not found",
+      barcode,
+      suggestion: "Try photographing the label instead"
+    });
+  }
+
+  // ── Extract product data from OFF response ──
+  const productName  = offProduct.product_name_en || offProduct.product_name || `Product ${barcode}`;
+  const brand        = offProduct.brands           || "";
+  const ingredText   = offProduct.ingredients_text_en || offProduct.ingredients_text || "";
+  const novaGroup    = offProduct.nova_group;
+  const servingG     = parseFloat(offProduct.serving_quantity) || 100;
+  const nutr         = offProduct.nutriments || {};
+  const toServing    = (per100) => per100 != null ? Math.round(per100 * servingG / 100 * 10) / 10 : null;
+  const sugar_g      = toServing(nutr["sugars_100g"]);
+  const sat_fat_g    = toServing(nutr["saturated-fat_100g"]);
+  const calories     = toServing(nutr["energy-kcal_100g"]);
+  const sodium_mg    = nutr["sodium_100g"] != null
+    ? Math.round(nutr["sodium_100g"] * servingG / 100 * 1000)
+    : null;
+  const servingLabel = offProduct.serving_size || (servingG ? `${servingG}g` : "");
+
+  // Parse ingredient list into array
+  const ingredientList = ingredText
+    ? ingredText.split(/,(?![^(]*\))/).map(s => s.trim()).filter(Boolean)
+    : [];
+
+  // ── Check if already cached by product name ──
+  const cat     = detectCategory(productName);
+  const nameKey = cacheKey(productName, cat);
+  const nCached = await cacheGet(nameKey);
+  if (nCached) {
+    const ni = !nCached.ingredient_list   || nCached.ingredient_list.length === 0;
+    const nf = !nCached.flagged_substances || nCached.flagged_substances.length === 0;
+    const na = nCached.dimensions &&
+      nCached.dimensions.materials?.score      === 5 &&
+      nCached.dimensions.usage_exposure?.score === 5 &&
+      nCached.dimensions.packaging?.score      === 5 &&
+      nCached.dimensions.sustainability?.score === 5;
+    if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na))) {
+      cacheSet(barcodeKey, nCached);
+      return res.json({ ...nCached, cached: true, barcode });
+    }
+    scoreCache.delete(nameKey);
+  }
+
+  // ── Build rich context from OFF data for pass1 ──
+  const offContext = [
+    `EXACT PRODUCT: ${productName}${brand ? ` by ${brand}` : ""}`,
+    `BARCODE: ${barcode} (use this as ground truth — do not guess the product)`,
+    ingredText ? `FULL INGREDIENT LIST: ${ingredText}` : null,
+    novaGroup  ? `NOVA GROUP: ${novaGroup}${novaGroup === 4 ? " (ultra-processed)" : novaGroup === 3 ? " (processed)" : " (minimally processed)"}` : null,
+    sugar_g    != null ? `SUGAR PER SERVING: ${sugar_g}g` : null,
+    sodium_mg  != null ? `SODIUM PER SERVING: ${sodium_mg}mg` : null,
+    sat_fat_g  != null ? `SATURATED FAT PER SERVING: ${sat_fat_g}g` : null,
+    calories   != null ? `CALORIES PER SERVING: ${calories}kcal` : null,
+    servingLabel ? `SERVING SIZE: ${servingLabel}` : null,
+  ].filter(Boolean).join("\n");
+
+  console.log(`[BARCODE] "${productName}" — running AI with OFF ingredient context`);
+
+  try {
+    // ── Full AI pipeline — same as text scan but with exact ingredients ──
+    const p1 = await pass1(productName, offContext, cat);
+    let p2 = null;
+    try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[BARCODE] pass2 failed:", e.message); }
+
+    let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
+    let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+    let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
+    let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+
+    let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
+
+    ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
+      mScore, uScore, pkScore, sScore, finalScore, p1, p2, cat, productName
+    ));
+    ({ finalScore } = applyPositiveCeilings(finalScore, cat, p1, p2, []));
+
+    const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
+      : finalScore <= 4 ? "Good — mostly clean, use with awareness"
+      : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
+      : finalScore <= 8 ? "Switch — real concerns, time to swap"
+      : "Avoid — known harmful substances";
+
+    const isChild = detectChildProduct(productName, cat);
+    const flagText = [...(p1.flagged_substances||[]), ...(p1.materials?.concerns||[])].join(" ");
+    const { childScore, childBumps } = computeChildScore(finalScore, flagText, cat, productName, isChild);
+
+    const alternatives = filterDbAlternatives(
+      findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
+    ).map(p => {
+      const as = p.score ?? 3;
+      const ac = detectChildProduct(p.name, p.category || cat);
+      const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||cat, p.name, ac);
+      return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs,
+               material:p.material||"", description:p.description||"", price:p.price||"",
+               affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+    });
+
+    // Use OFF nutrition as ground truth; fall back to AI if OFF didn't have it
+    const nutrition = (sugar_g != null || sodium_mg != null || sat_fat_g != null)
+      ? { sugar_g, sodium_mg, sat_fat_g, calories, serving_size: servingLabel }
+      : (p1.nutrition || p1.product_analysis?.nutrition || null);
+
+    const result = {
+      product_name:        productName,
+      brand,
+      barcode,
+      score:               finalScore,
+      overall_score:       finalScore,
+      category:            cat,
+      confidence:          "high",
+      is_child_product:    isChild,
+      child_score:         childScore,
+      child_bumps:         childBumps || [],
+      flagged_substances:  p1.flagged_substances || [],
+      concerns:            p1.concerns || [],
+      summary:             p1.summary || "",
+      peer_comparison:     peerComparison,
+      data_source:         "open_food_facts",
+      dimensions: {
+        materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
+        usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },
+        packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [] },
+        sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [] },
+      },
+      identified_plastics: p1.identified_plastics || [],
+      harmful_chemicals:   p1.harmful_chemicals   || [],
+      natural_materials:   p1.natural_materials   || [],
+      nutrition,
+      ingredient_list:     ingredientList.length ? ingredientList : (p1.ingredient_list || []),
+      alternatives,
+      ai_alternatives:     [],
+      scan_next:           buildScanNextFallback(productName, cat, alternatives),
+      cached:              false,
+    };
+
+    const calibrated = applyProductCalibration(result);
+
+    // Cache under both barcode key and product name key
+    cacheSet(barcodeKey, calibrated);
+    cacheSet(nameKey,    calibrated);
+
+    console.log(`[BARCODE] Scored "${productName}" -> ${calibrated.overall_score}/10 (${ingredientList.length} ingredients)`);
+    res.json(calibrated);
+
+  } catch(err) {
+    console.error("[BARCODE] AI error:", err.message);
+    res.status(500).json({ error: "Analysis failed. Please try photographing the label instead." });
+  }
+});
+
 // When the AI returns no scan_next suggestions, generate smart defaults
 // from the alternatives DB — same category, different products.
 function buildScanNextFallback(productName, category, alternatives) {
