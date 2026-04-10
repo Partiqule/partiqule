@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-
-# Allow Google to crawl all product scan pages
-Allow: /scan/
-Allow: /worst-offenders
-
-Sitemap: https://partiqule.com/sitemap.xml
