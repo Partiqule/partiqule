@@ -3848,10 +3848,29 @@ app.post("/analyze", rateLimit, async (req, res) => {
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+        const imgFuzzyCat = entry.category || category;
+        const imgIsChild = detectChildProduct(productName, imgFuzzyCat);
+        const imgConcernsText = (entry.substances || []).join(" ");
+        const { childScore: imgChildScore, childBumps: imgChildBumps } = computeChildScore(midScore, imgConcernsText, imgFuzzyCat, productName, imgIsChild);
+        const imgKidsFloor = entry.kidsFloor || entry.floor;
+        const imgKidsCeil = entry.kidsCeiling || entry.ceiling;
+        const imgKidsMid = Math.round((imgKidsFloor + imgKidsCeil) / 2);
+        const imgFuzzyAlts = filterDbAlternatives(
+          findAlternatives(productName, imgFuzzyCat, 3, productName),
+          imgFuzzyCat, productName, midScore
+        ).map(p => {
+          const as = p.score ?? p.plasticScore ?? 3;
+          const ac = detectChildProduct(p.name, p.category || imgFuzzyCat);
+          const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||imgFuzzyCat, p.name, ac);
+          return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+        });
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
-          category: entry.category || category,
+          category: imgFuzzyCat,
           confidence: entry.confidence || "high",
+          is_child_product: imgIsChild,
+          child_score: entry.kidsFloor ? imgKidsMid : imgChildScore,
+          child_bumps: imgChildBumps || [],
           dimensions: {
             materials:      { score: 5, concerns: entry.substances || [] },
             usage_exposure: { score: 5, concerns: [] },
@@ -3861,8 +3880,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
           concerns: entry.substances || [],
           flagged_substances: entry.substances || [],
           summary: entry.reason || "",
-          alternatives: [], ai_alternatives: [],
-          nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
+          alternatives: imgFuzzyAlts, ai_alternatives: [],
+          nutrition: entry.nutrition || p1.nutrition || p1.product_analysis?.nutrition || null,
           ingredient_list: p1.ingredient_list || [],
         });
         cacheSet(imgKey, fuzzyResult);
@@ -4054,10 +4073,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
     const isChild   = detectChildProduct(productName, entry.category || category);
     const concernsText = (entry.substances || []).join(" ");
     const { childScore, childBumps } = computeChildScore(midScore, concernsText, entry.category || category, productName, isChild);
+    const fuzzyCat = entry.category || category;
+    const fuzzyAlts = filterDbAlternatives(
+      findAlternatives(productName, fuzzyCat, 3, productName),
+      fuzzyCat, productName, midScore
+    ).map(p => {
+      const altScore = p.score ?? p.plasticScore ?? 3;
+      const altIsChild = detectChildProduct(p.name, p.category || fuzzyCat);
+      const { childScore: altCS } = computeChildScore(altScore, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||fuzzyCat, p.name, altIsChild);
+      return { id:p.id, name:p.name, brand:p.brand||"", score:altScore, child_score:altCS, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+    });
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
-      category: entry.category || category,
+      category: fuzzyCat,
       confidence: entry.confidence || "high",
       is_child_product: isChild,
       child_score: entry.kidsFloor ? kidsMid : childScore,
@@ -4071,7 +4100,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       concerns: entry.substances || [],
       flagged_substances: entry.substances || [],
       summary: entry.reason || "",
-      alternatives: [], ai_alternatives: [],
+      nutrition: entry.nutrition || null,
+      alternatives: fuzzyAlts, ai_alternatives: [],
     });
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${childScore}`);
