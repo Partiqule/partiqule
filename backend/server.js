@@ -5587,26 +5587,60 @@ app.post("/barcode", rateLimit, async (req, res) => {
     scoreCache.delete(barcodeKey);
   }
 
-  // ── Open Food Facts lookup ──
+  // ── Multi-source barcode lookup ──
+  // Try Open Food Facts first (food/beverage), then Open Beauty Facts (personal care),
+  // then Open Products Facts (everything else). All share the same schema.
+  const BARCODE_SOURCES = [
+    { name: "food",    url: `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
+    { name: "beauty",  url: `https://world.openbeautyfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
+    { name: "product", url: `https://world.openproductsfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
+  ];
+
   let offProduct = null;
-  try {
-    const offRes = await fetch(
-      `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json`,
-      { headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
-        signal: AbortSignal.timeout(8000) }
-    );
-    if (offRes.ok) {
-      const offJson = await offRes.json();
-      if (offJson.status === 1 && offJson.product) offProduct = offJson.product;
-    }
-  } catch(e) { console.warn("[BARCODE] OFF lookup failed:", e.message); }
+  let sourceName = null;
+  for (const src of BARCODE_SOURCES) {
+    try {
+      const offRes = await fetch(src.url, {
+        headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (offRes.ok) {
+        const offJson = await offRes.json();
+        if (offJson.status === 1 && offJson.product) {
+          offProduct = offJson.product;
+          sourceName = src.name;
+          console.log(`[BARCODE] ${barcode} found in ${src.name} database`);
+          break;
+        }
+      }
+    } catch(e) { console.warn(`[BARCODE] ${src.name} lookup failed:`, e.message); }
+  }
 
   if (!offProduct) {
-    console.log(`[BARCODE] ${barcode} not in Open Food Facts`);
-    return res.status(404).json({
-      error: "Product not found",
+    console.log(`[BARCODE] ${barcode} not found in any database — returning fallback`);
+    // Return a 200 with fallback_required so the frontend can render a
+    // friendly "scan the label instead" UI instead of a hard 404
+    const gs1Prefix = barcode.slice(0, 3);
+    const gs1Hint = (gs1Prefix >= "000" && gs1Prefix <= "139") ? "US or Canada"
+                  : (gs1Prefix >= "300" && gs1Prefix <= "379") ? "France"
+                  : (gs1Prefix >= "400" && gs1Prefix <= "440") ? "Germany"
+                  : (gs1Prefix >= "500" && gs1Prefix <= "509") ? "UK"
+                  : (gs1Prefix >= "690" && gs1Prefix <= "699") ? "China"
+                  : (gs1Prefix >= "800" && gs1Prefix <= "839") ? "Italy"
+                  : (gs1Prefix >= "840" && gs1Prefix <= "849") ? "Spain"
+                  : (gs1Prefix >= "850" && gs1Prefix <= "859") ? "Cuba"
+                  : (gs1Prefix >= "870" && gs1Prefix <= "879") ? "Netherlands"
+                  : (gs1Prefix >= "880" && gs1Prefix <= "889") ? "South Korea"
+                  : null;
+    return res.status(200).json({
+      fallback_required: true,
       barcode,
-      suggestion: "Try photographing the label instead"
+      origin_country: gs1Hint,
+      message: gs1Hint
+        ? `We couldn't identify this barcode, but it looks like a product from ${gs1Hint}. Try photographing the label for a full scan.`
+        : "We couldn't identify this barcode automatically. Try photographing the label for a full scan.",
+      action: "photo_scan",
+      cta: "Scan the label instead",
     });
   }
 
@@ -5765,7 +5799,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
       concerns:            p1.concerns || [],
       summary:             p1.summary || "",
       peer_comparison:     peerComparison,
-      data_source:         "open_food_facts",
+      data_source:         sourceName === "food" ? "open_food_facts" : sourceName === "beauty" ? "open_beauty_facts" : "open_products_facts",
       dimensions: {
         materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
         usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },

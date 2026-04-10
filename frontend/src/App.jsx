@@ -7255,15 +7255,18 @@ function App() {
                 signal: controller.signal,
               });
               clearTimeout(timeout);
-              if (resp.status === 404) {
-                // Not in Open Food Facts — prompt photo
-                setLoading(false);
-                setQuery("");
-                setError("Barcode not found in our database. Try photographing the label instead.");
-                return;
-              }
               if (!resp.ok) throw new Error(`Server error ${resp.status}`);
               const data = await resp.json();
+              // Graceful fallback — barcode not in any product database
+              if (data.fallback_required) {
+                setLoading(false);
+                setQuery("");
+                // Re-open scanner in photo mode so user can snap the label
+                setShowBarcodeScanner(true);
+                setError(data.message || "Barcode not found. Please scan the label instead.");
+                try { track("Barcode Fallback", {barcode, origin: data.origin_country || "unknown"}); } catch {}
+                return;
+              }
               setQuery(data.product_name || barcode);
               setResult(data);
               saveToHistory(data);
