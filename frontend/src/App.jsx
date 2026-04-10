@@ -225,25 +225,17 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   }, []);
 
   const takePhoto = async () => {
-    if (IS_NATIVE) {
-      const input = document.createElement("input");
-      input.type = "file"; input.accept = "image/*"; input.capture = "environment";
-      input.onchange = async (e) => {
-        const file = e.target.files?.[0];
-        if (file) { await cleanup(); onPhoto(file); }
-      };
-      input.click();
-    } else {
-      if (!videoRef.current || !canvasRef.current) return;
-      const cv = canvasRef.current;
-      cv.width  = videoRef.current.videoWidth;
-      cv.height = videoRef.current.videoHeight;
-      cv.getContext("2d").drawImage(videoRef.current, 0, 0);
-      cv.toBlob(async (blob) => {
-        const file = new File([blob], "scan.jpg", { type: "image/jpeg" });
-        await cleanup(); onPhoto(file);
-      }, "image/jpeg", 0.85);
-    }
+    // Always use the native camera for photos — much higher resolution and quality
+    // than capturing a frame from the barcode scanner's 1280x720 video stream.
+    // The live video feed is for barcode detection only, not photo quality.
+    await cleanup();
+    const input = document.createElement("input");
+    input.type = "file"; input.accept = "image/*"; input.capture = "environment";
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (file) onPhoto(file);
+    };
+    input.click();
   };
 
   // Corner bracket helper
