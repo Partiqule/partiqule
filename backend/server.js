@@ -166,6 +166,17 @@ initCache();
 
 
 
+// ── STRUCTURED LOGGING ────────────────────────────────────────
+// Wraps console.log with JSON output for easier searching/filtering
+// in Railway logs. Pass a level, event name, and any structured fields.
+// Example: log.info("scan_complete", {product, score, duration_ms, path: "text"})
+// Legacy console.log calls still work — this is additive.
+const log = {
+  info:  (event, data={}) => console.log(JSON.stringify({level:"info",  event, ts:new Date().toISOString(), ...data})),
+  warn:  (event, data={}) => console.warn(JSON.stringify({level:"warn",  event, ts:new Date().toISOString(), ...data})),
+  error: (event, data={}) => console.error(JSON.stringify({level:"error", event, ts:new Date().toISOString(), ...data})),
+};
+
 // ── ADMIN KEY ─────────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
 const requireAdmin = (req, res, next) => {
@@ -215,7 +226,7 @@ const rateLimit = async (req, res, next) => {
   rec.count++;
   rateLimitMap.set(key, rec);
   if (rec.count > cap) {
-    console.warn(`[RATE] ${who} exceeded ${cap} scans/hour`);
+    log.warn("rate_limit_exceeded", {who, cap, count: rec.count, anonymous: !userId});
     return res.status(429).json({
       error: userId
         ? `You've reached your hourly scan limit (${cap}). Please wait a bit before scanning more.`
@@ -1286,7 +1297,7 @@ const incrementApiCount = () => {
     redisSet(apiCallCounts.monthKey, apiCallCounts.month);
   }
   if (apiCallCounts.day % 50 === 0) {
-    console.log(`[API BUDGET] ${apiCallCounts.day}/${API_DAILY_CAP} today, ${apiCallCounts.month}/${API_MONTHLY_CAP} this month`);
+    log.info("api_budget_checkpoint", {day: apiCallCounts.day, dailyCap: API_DAILY_CAP, month: apiCallCounts.month, monthlyCap: API_MONTHLY_CAP});
   }
 
   // Check threshold alerts — only fire each threshold once per day
@@ -1294,6 +1305,7 @@ const incrementApiCount = () => {
   for (const threshold of ALERT_THRESHOLDS) {
     if (pct >= threshold && !apiCallCounts.alertedToday.includes(threshold)) {
       apiCallCounts.alertedToday.push(threshold);
+      log.warn("api_budget_threshold", {threshold, pct, used: apiCallCounts.day, cap: API_DAILY_CAP});
       fireBudgetAlert(pct, apiCallCounts.day, API_DAILY_CAP);
       break;
     }
@@ -4794,6 +4806,64 @@ app.get("/score-feedback", requireAdmin, async (req, res) => {
   } catch (e) {
     console.error("[FEEDBACK] fetch error:", e.message);
     res.status(500).json({ error: "Could not fetch feedback" });
+  }
+});
+
+// ── PRODUCT SUGGESTIONS ───────────────────────────────────────
+// Users can suggest a product they want scored. Stored in Supabase
+// suggestions table for admin review + action.
+app.post("/suggest", async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Suggestions not configured" });
+  const { product_name, user_email } = req.body || {};
+  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name required" });
+  try {
+    const { error } = await supabaseAdmin.from("suggestions").insert({
+      product_name: product_name.trim().slice(0, 200),
+      user_email:   user_email?.trim()?.slice(0, 200) || null,
+      status:       "pending",
+    });
+    if (error) throw error;
+    console.log(`[SUGGEST] "${product_name}" submitted`);
+    res.json({ success: true });
+  } catch (e) {
+    console.error("[SUGGEST] save error:", e.message);
+    res.status(500).json({ error: "Could not save suggestion" });
+  }
+});
+
+app.get("/suggestions", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.json([]);
+  try {
+    const status = req.query.status || "pending";
+    const { data, error } = await supabaseAdmin
+      .from("suggestions")
+      .select("id, product_name, user_email, created_at, status")
+      .eq("status", status)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) {
+    console.error("[SUGGEST] fetch error:", e.message);
+    res.status(500).json({ error: "Could not fetch suggestions" });
+  }
+});
+
+app.post("/suggestions/resolve", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const { id, status } = req.body || {};
+  if (!id || !["added", "dismissed", "pending"].includes(status)) {
+    return res.status(400).json({ error: "id and valid status required" });
+  }
+  try {
+    const { error } = await supabaseAdmin
+      .from("suggestions")
+      .update({ status })
+      .eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

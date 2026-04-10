@@ -2055,6 +2055,75 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
+// ── SUGGESTION BOX ────────────────────────────────────────────
+// Users can suggest a product they want scored. Appears at the bottom
+// of the home page. Submits to /suggest, shows in admin panel.
+const SuggestionBox = ({isDark, isMobile, surface, border, text, muted, user}) => {
+  const [name, setName]     = useState("");
+  const [email, setEmail]   = useState("");
+  const [status, setStatus] = useState(null);
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    setStatus("sending");
+    try {
+      const r = await fetch(`${API_BASE}/suggest`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          product_name: name.trim(),
+          user_email:   email.trim() || user?.email || null,
+        }),
+      });
+      if (!r.ok) throw new Error();
+      setStatus("sent");
+      setName(""); setEmail("");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{maxWidth:600, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
+      <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, padding:isMobile?"24px 20px":"32px 32px"}}>
+        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Suggest a product</div>
+        <p style={{fontSize:14, color:muted, margin:"0 0 20px", lineHeight:1.6}}>Want us to score a specific product? Let us know and we'll add it.</p>
+        {status === "sent" ? (
+          <div style={{fontSize:14, color:"#16a34a", fontWeight:600, padding:"16px 0", textAlign:"center"}}>
+            Thanks! We'll add this to our queue.
+          </div>
+        ) : (
+          <>
+            <input
+              value={name} onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit()}
+              placeholder="e.g. Stanley Quencher tumbler, Olaplex No. 3..."
+              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+            />
+            {!user && (
+              <input
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="Email (optional — to get notified)"
+                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+              />
+            )}
+            <button onClick={submit} disabled={!name.trim() || status === "sending"} style={{
+              width:"100%", padding:"12px", borderRadius:10, border:"none",
+              background: name.trim() ? "#16a34a" : isDark ? "#1e2433" : "#e2e8f0",
+              color: name.trim() ? "#fff" : muted,
+              fontSize:14, fontWeight:700, cursor: name.trim() ? "pointer" : "default",
+              opacity: status === "sending" ? 0.6 : 1,
+            }}>
+              {status === "sending" ? "Submitting..." : "Submit suggestion"}
+            </button>
+            {status === "error" && <div style={{fontSize:13, color:"#dc2626", marginTop:8, textAlign:"center"}}>Something went wrong. Please try again.</div>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── SCORE EXPLAINER ───────────────────────────────────────────
 // Collapsible "How we got this score" panel that shows the triggered
 // substance floors, dimension breakdown, and child/pregnancy bumps.
@@ -2951,6 +3020,8 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const [scansTotal,   setScansTotal]   = useState(0);
   const [feedback, setFeedback]         = useState([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [suggestions, setSuggestions]   = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   useEffect(() => {
     if (!historyProp.length) {
@@ -2962,6 +3033,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     fetchCacheStatus();
     fetchRecentScans();
     fetchFeedback();
+    fetchSuggestions();
   }, []);
 
   const fetchFeedback = async () => {
@@ -2971,6 +3043,26 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
       if (r.ok) setFeedback(await r.json());
     } catch {}
     setFeedbackLoading(false);
+  };
+
+  const fetchSuggestions = async () => {
+    setSuggestionsLoading(true);
+    try {
+      const r = await fetch(`${API_BASE}/suggestions?key=RowenaRavenclaw2024!`);
+      if (r.ok) setSuggestions(await r.json());
+    } catch {}
+    setSuggestionsLoading(false);
+  };
+
+  const resolveSuggestion = async (id, status) => {
+    try {
+      await fetch(`${API_BASE}/suggestions/resolve?key=RowenaRavenclaw2024!`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id, status }),
+      });
+      setSuggestions(s => s.filter(x => x.id !== id));
+    } catch {}
   };
 
   const resolveFeedback = async (id, status) => {
@@ -3388,6 +3480,36 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Pending product suggestions */}
+      <div style={card}>
+        <div style={sectionHead}>Pending suggestions {suggestions.length > 0 && <span style={{color:"#16a34a", marginLeft:8}}>({suggestions.length})</span>}</div>
+        {suggestionsLoading ? (
+          <div style={{fontSize:13, color:muted}}>Loading...</div>
+        ) : suggestions.length === 0 ? (
+          <div style={{fontSize:13, color:muted}}>No pending suggestions.</div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:8}}>
+            {suggestions.map(s => (
+              <div key={s.id} style={{padding:"10px 14px", background:isDark?"#0f1923":"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6}}>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:14, fontWeight:700, color:text}}>{s.product_name}</div>
+                    <div style={{fontSize:11, color:muted, marginTop:2}}>
+                      {s.user_email || "anonymous"} · {new Date(s.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:"flex", gap:6, marginTop:6}}>
+                  <button onClick={() => { setTestQuery(s.product_name); runTestScan(); }} style={{padding:"5px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Score now</button>
+                  <button onClick={() => resolveSuggestion(s.id, "added")} style={{padding:"5px 12px", borderRadius:6, border:"none", background:"#16a34a", color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer"}}>Mark added</button>
+                  <button onClick={() => resolveSuggestion(s.id, "dismissed")} style={{padding:"5px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Dismiss</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -6325,6 +6447,9 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {/* Suggest a product — users can request new products for scoring */}
+            <SuggestionBox isDark={isDark} isMobile={isMobile} surface={surface} border={border} text={text} muted={muted} user={user}/>
 
           </div>
         </>
