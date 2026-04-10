@@ -4665,6 +4665,75 @@ app.post("/subscribe", async (req, res) => {
   res.json({ ok: true, already });
 });
 
+// ── SCORE FEEDBACK ────────────────────────────────────────────
+// Users can report a score they think is wrong. Stored in Supabase for
+// admin review. The feedback table has columns:
+//   id uuid, product_name text, category text, returned_score int,
+//   suggested_tier text ('too_high' | 'too_low' | 'wrong_category' | 'other'),
+//   note text, user_email text, created_at timestamptz, status text
+app.post("/score-feedback", async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Feedback not configured" });
+  const { product_name, category, returned_score, suggested_tier, note, user_email } = req.body || {};
+  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name required" });
+  const validTiers = ["too_high", "too_low", "wrong_category", "missing_concern", "other"];
+  if (suggested_tier && !validTiers.includes(suggested_tier)) {
+    return res.status(400).json({ error: "invalid suggested_tier" });
+  }
+  try {
+    const { error } = await supabaseAdmin.from("score_feedback").insert({
+      product_name:   product_name.trim(),
+      category:       category || null,
+      returned_score: typeof returned_score === "number" ? returned_score : null,
+      suggested_tier: suggested_tier || "other",
+      note:           (note || "").trim().slice(0, 500) || null,
+      user_email:     user_email?.trim()?.slice(0, 200) || null,
+      status:         "pending",
+    });
+    if (error) throw error;
+    console.log(`[FEEDBACK] "${product_name}" flagged as ${suggested_tier} (was ${returned_score}/10)`);
+    res.json({ success: true });
+  } catch (e) {
+    console.error("[FEEDBACK] save error:", e.message);
+    res.status(500).json({ error: "Could not save feedback" });
+  }
+});
+
+app.get("/score-feedback", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.json([]);
+  try {
+    const status = req.query.status || "pending";
+    const { data, error } = await supabaseAdmin
+      .from("score_feedback")
+      .select("id, product_name, category, returned_score, suggested_tier, note, user_email, created_at, status")
+      .eq("status", status)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) {
+    console.error("[FEEDBACK] fetch error:", e.message);
+    res.status(500).json({ error: "Could not fetch feedback" });
+  }
+});
+
+app.post("/score-feedback/resolve", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const { id, status } = req.body || {};
+  if (!id || !["resolved", "dismissed", "pending"].includes(status)) {
+    return res.status(400).json({ error: "id and valid status required" });
+  }
+  try {
+    const { error } = await supabaseAdmin
+      .from("score_feedback")
+      .update({ status })
+      .eq("id", id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 // ── DELETE ACCOUNT ────────────────────────────────────────────
 app.post("/delete-account", async (req, res) => {

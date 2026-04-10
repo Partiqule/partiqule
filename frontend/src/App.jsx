@@ -2055,6 +2055,112 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
+// ── FEEDBACK BUTTON ───────────────────────────────────────────
+// "Report this score" button on the result page. Collapses into a form
+// when clicked, submits to /score-feedback, shows success confirmation.
+const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) => {
+  const [open, setOpen]         = useState(false);
+  const [tier, setTier]         = useState("");
+  const [note, setNote]         = useState("");
+  const [status, setStatus]     = useState(null); // null | "sending" | "sent" | "error"
+
+  const submit = async () => {
+    if (!tier) return;
+    setStatus("sending");
+    try {
+      const r = await fetch(`${API_BASE}/score-feedback`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          product_name:   result.product_name,
+          category:       result.category,
+          returned_score: result.overall_score || result.score,
+          suggested_tier: tier,
+          note,
+          user_email:     user?.email || null,
+        }),
+      });
+      if (!r.ok) throw new Error();
+      setStatus("sent");
+      try { track("Score Feedback", {product: result.product_name, score: result.overall_score, tier}); } catch {}
+      setTimeout(() => { setOpen(false); setStatus(null); setTier(""); setNote(""); }, 2200);
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <div style={{padding:"12px 16px", borderRadius:12, background:isDark?"#052e16":"#f0fdf4", border:`1px solid ${isDark?"#14532d":"#bbf7d0"}`, textAlign:"center"}}>
+        <div style={{fontSize:13, fontWeight:700, color:"#16a34a"}}>Thanks — feedback received</div>
+        <div style={{fontSize:12, color:muted, marginTop:2}}>We review every report to improve scores.</div>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button onClick={()=>setOpen(true)} style={{
+        width:"100%", padding:"10px 14px", borderRadius:10,
+        border:`1px dashed ${border}`, background:"none", color:muted,
+        fontSize:12, fontWeight:600, cursor:"pointer",
+        display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+      }}>
+        <span style={{fontSize:14}}>⚑</span> Think this score is wrong? Let us know
+      </button>
+    );
+  }
+
+  const TIER_OPTIONS = [
+    {key:"too_high",        label:"Score is too high"},
+    {key:"too_low",         label:"Score is too low"},
+    {key:"wrong_category",  label:"Wrong category"},
+    {key:"missing_concern", label:"Missing a concern"},
+    {key:"other",           label:"Other issue"},
+  ];
+
+  return (
+    <div style={{background:surface, borderRadius:12, border:`1px solid ${border}`, padding:"16px 18px"}}>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+        <div style={{fontSize:13, fontWeight:700, color:text}}>Report this score</div>
+        <button onClick={()=>setOpen(false)} style={{background:"none", border:"none", color:muted, fontSize:18, cursor:"pointer", padding:0, lineHeight:1}}>×</button>
+      </div>
+      <div style={{display:"flex", flexDirection:"column", gap:6, marginBottom:12}}>
+        {TIER_OPTIONS.map(opt => (
+          <button key={opt.key} onClick={()=>setTier(opt.key)} style={{
+            textAlign:"left", padding:"10px 12px", borderRadius:8,
+            border:`1.5px solid ${tier === opt.key ? "#16a34a" : border}`,
+            background: tier === opt.key ? (isDark?"#052e16":"#f0fdf4") : "none",
+            color: tier === opt.key ? "#16a34a" : text,
+            fontSize:13, fontWeight: tier === opt.key ? 700 : 500, cursor:"pointer",
+          }}>{opt.label}</button>
+        ))}
+      </div>
+      <textarea
+        value={note} onChange={e=>setNote(e.target.value)}
+        placeholder="Optional — what's the issue? (500 chars max)"
+        maxLength={500}
+        style={{
+          width:"100%", minHeight:60, padding:"10px 12px", borderRadius:8,
+          border:`1px solid ${border}`, background:isDark?"#0f1923":"#fff",
+          color:text, fontSize:13, fontFamily:"inherit", resize:"vertical",
+          boxSizing:"border-box", marginBottom:10, outline:"none",
+        }}
+      />
+      <button onClick={submit} disabled={!tier || status === "sending"} style={{
+        width:"100%", padding:"11px", borderRadius:10, border:"none",
+        background: tier ? "#16a34a" : (isDark?"#1e2433":"#e2e8f0"),
+        color: tier ? "#fff" : muted,
+        fontSize:14, fontWeight:700, cursor: tier ? "pointer" : "default",
+        opacity: status === "sending" ? 0.6 : 1,
+      }}>
+        {status === "sending" ? "Submitting..." : "Submit feedback"}
+      </button>
+      {status === "error" && <div style={{fontSize:12, color:"#dc2626", marginTop:8, textAlign:"center"}}>Something went wrong. Please try again.</div>}
+    </div>
+  );
+};
+
 // ── PRODUCT CARD ─────────────────────────────────────────────
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
@@ -2720,6 +2826,8 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const [scansCat,     setScansCat]     = useState("");
   const [scansOffset,  setScansOffset]  = useState(0);
   const [scansTotal,   setScansTotal]   = useState(0);
+  const [feedback, setFeedback]         = useState([]);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   useEffect(() => {
     if (!historyProp.length) {
@@ -2730,7 +2838,28 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     }
     fetchCacheStatus();
     fetchRecentScans();
+    fetchFeedback();
   }, []);
+
+  const fetchFeedback = async () => {
+    setFeedbackLoading(true);
+    try {
+      const r = await fetch(`${API_BASE}/score-feedback?key=RowenaRavenclaw2024!`);
+      if (r.ok) setFeedback(await r.json());
+    } catch {}
+    setFeedbackLoading(false);
+  };
+
+  const resolveFeedback = async (id, status) => {
+    try {
+      await fetch(`${API_BASE}/score-feedback/resolve?key=RowenaRavenclaw2024!`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ id, status }),
+      });
+      setFeedback(f => f.filter(x => x.id !== id));
+    } catch {}
+  };
 
   const fetchCacheStatus = async () => {
     try {
@@ -3090,6 +3219,55 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
           </div>
         </div>
       )}
+
+      {/* Score feedback from users */}
+      <div style={card}>
+        <div style={sectionHead}>User score feedback {feedback.length > 0 && <span style={{color:"#dc2626", marginLeft:8}}>({feedback.length} pending)</span>}</div>
+        {feedbackLoading ? (
+          <div style={{fontSize:13, color:muted}}>Loading...</div>
+        ) : feedback.length === 0 ? (
+          <div style={{fontSize:13, color:muted}}>No pending feedback. Users haven't flagged any scores yet.</div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {feedback.map(f => {
+              const tierColor = {
+                too_high:        "#dc2626",
+                too_low:         "#d97706",
+                wrong_category:  "#7c3aed",
+                missing_concern: "#dc2626",
+                other:           "#6b7280",
+              }[f.suggested_tier] || "#6b7280";
+              const tierLabel = {
+                too_high:        "Too high",
+                too_low:         "Too low",
+                wrong_category:  "Wrong category",
+                missing_concern: "Missing concern",
+                other:           "Other",
+              }[f.suggested_tier] || f.suggested_tier;
+              return (
+                <div key={f.id} style={{padding:"12px 14px", background:isDark?"#0f1923":"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
+                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:8}}>
+                    <div style={{flex:1, minWidth:0}}>
+                      <div style={{fontSize:14, fontWeight:700, color:text}}>{f.product_name}</div>
+                      <div style={{fontSize:11, color:muted, marginTop:2}}>
+                        {f.category || "uncategorized"} · was scored {f.returned_score ?? "?"}/10 · {new Date(f.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div style={{background:tierColor, color:"#fff", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0}}>{tierLabel}</div>
+                  </div>
+                  {f.note && <div style={{fontSize:12, color:muted, marginBottom:8, padding:"8px 10px", background:isDark?"#1e2433":"#fff", borderRadius:6, borderLeft:`3px solid ${tierColor}`}}>{f.note}</div>}
+                  {f.user_email && <div style={{fontSize:11, color:muted, marginBottom:8}}>from {f.user_email}</div>}
+                  <div style={{display:"flex", gap:8}}>
+                    <button onClick={() => { setTestQuery(f.product_name); runTestScan(); }} style={{padding:"6px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Rescan</button>
+                    <button onClick={() => resolveFeedback(f.id, "resolved")} style={{padding:"6px 12px", borderRadius:6, border:"none", background:"#16a34a", color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer"}}>Mark resolved</button>
+                    <button onClick={() => resolveFeedback(f.id, "dismissed")} style={{padding:"6px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Dismiss</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div style={{textAlign:"center", fontSize:11, color:muted, marginTop:8}}>
         Admin key required · Partiqule internal · Not indexed
@@ -6916,6 +7094,9 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* Feedback — "this score seems wrong" */}
+              <FeedbackButton result={result} isDark={isDark} text={text} muted={muted} border={border} surface={surface} user={user}/>
 
               {/* Scan again CTA */}
               <button onClick={()=>{setShowAlts(false); reset();}}
