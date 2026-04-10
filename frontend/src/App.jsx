@@ -134,253 +134,132 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── SHARE CARD ────────────────────────────────────────────────
-// Landing page aesthetic — cream, ink, moss, Instrument Serif energy
+// Magazine cover style — bold, high contrast, score front and center
 const ShareCard = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = (result.category || "").replace(/_/g, " ");
+  const score   = displayScore || result.overall_score || result.score;
+  const label   = scoreLabel(score);
+  const color   = scoreColor(score);
+  const name    = result.product_name || "";
+  const category = (result.category || "").toUpperCase().replace(/_/g, " ");
   const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
-
-  // Score ring color — matches landing page gradient stops
-  const ringColor = score <= 3 ? "#22863a" : score <= 5 ? "#e07b00" : score <= 7 ? "#c8781a" : "#c0392b";
-
-  // Top 3 flagged substances
+  const hasKids = childScore && childScore !== score;
   const flags = [
-    ...(result.flagged_substances || []),
-    ...(result.dimensions?.materials?.concerns || []),
-  ].filter(Boolean).filter((c,i,a) => a.indexOf(c) === i).slice(0, 3);
-
-  // Top alternative
+    ...(result.flagged_substances||[]),
+    ...(result.dimensions?.materials?.concerns||[]),
+  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
   const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
 
-  // Dimension scores for bars
-  const dims = result.dimensions || {};
-  const dimList = [
-    { label: "Materials",      score: dims.materials?.score      || 5 },
-    { label: "Exposure",       score: dims.usage_exposure?.score || 5 },
-    { label: "Packaging",      score: dims.packaging?.score      || 5 },
-  ];
-
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  useEffect(()=>{
+    const canvas = canvasRef.current; if(!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio||1,2);
     const W = 1080, H = 1080;
-    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.width = W*dpr; canvas.height = H*dpr;
     canvas.style.width = "100%"; canvas.style.height = "auto";
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
-
-    // ── BACKGROUND — landing page cream ──
-    ctx.fillStyle = "#F5F0E8";
-    ctx.fillRect(0, 0, W, H);
-
-    // Subtle texture — fine dot grid
-    ctx.fillStyle = "rgba(15,26,14,0.04)";
-    for (let x = 0; x < W; x += 32) {
-      for (let y = 0; y < H; y += 32) {
-        ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-
-    // ── TOP NAV BAR — cream with moss wordmark ──
-    ctx.fillStyle = "rgba(245,240,232,0.95)";
-    ctx.fillRect(0, 0, W, 96);
-    ctx.strokeStyle = "rgba(15,26,14,0.10)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, 96); ctx.lineTo(W, 96); ctx.stroke();
-
-    // Wordmark
-    ctx.fillStyle = "#2d5a27";
-    ctx.font = "italic 500 44px Georgia,serif";
+    ctx.scale(dpr,dpr);
+    const parseHex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    const [sr,sg,sb] = parseHex(color);
+    ctx.fillStyle = "#FAFAF7"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,0,W,88);
+    ctx.fillStyle = "#4ade80"; ctx.font = "bold 40px system-ui,sans-serif";
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("Partiqule", 56, 48);
-
-    // Category badge — moss pill top right
-    ctx.font = "600 20px system-ui,sans-serif";
-    const catText = category.toUpperCase() || "PRODUCT SCAN";
-    const catW = ctx.measureText(catText).width + 36;
-    ctx.beginPath(); ctx.roundRect(W - catW - 48, 24, catW, 48, 24);
-    ctx.fillStyle = "rgba(45,90,39,0.12)"; ctx.fill();
-    ctx.fillStyle = "#2d5a27";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(catText, W - catW / 2 - 48, 48);
-
-    // ── PRODUCT NAME ── serif, ink, generous spacing
-    ctx.fillStyle = "#0f1a0e";
+    ctx.fillText("Partiqule", 52, 44);
+    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "600 22px system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.fillText(category || "PRODUCT SCAN", W-52, 44);
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.font = "bold 62px system-ui,sans-serif";
     const words = name.split(" "); let line = "", nameLines = [];
-    ctx.font = "400 64px Georgia,serif";
-    for (const w of words) {
-      const test = line ? line + " " + w : w;
-      if (ctx.measureText(test).width > 860 && line) { nameLines.push(line); line = w; }
-      else line = test;
-    }
-    if (line) nameLines.push(line);
-    nameLines = nameLines.slice(0, 2);
-    const nameY = nameLines.length === 2 ? 176 : 200;
-    nameLines.forEach((l, i) => ctx.fillText(l, W / 2, nameY + i * 76));
-
-    // Thin amber rule under name
-    const ruleY = nameLines.length === 2 ? 270 : 252;
-    ctx.strokeStyle = "#c8781a";
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(W / 2 - 120, ruleY); ctx.lineTo(W / 2 + 120, ruleY); ctx.stroke();
-
-    // ── SCORE RING — the hero, centered ──
-    const cx = W / 2, cy = 520, outerR = 220, innerR = 168;
-
-    // Outer ring track
-    ctx.beginPath(); ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(15,26,14,0.08)"; ctx.lineWidth = 28; ctx.stroke();
-
-    // Score arc — clockwise from top
-    const startAngle = -Math.PI / 2;
-    const endAngle   = startAngle + (Math.PI * 2 * (score / 10));
-    ctx.beginPath(); ctx.arc(cx, cy, outerR, startAngle, endAngle);
-    ctx.strokeStyle = ringColor; ctx.lineWidth = 28;
-    ctx.lineCap = "round"; ctx.stroke();
-
-    // Inner circle fill
-    ctx.beginPath(); ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(15,26,14,0.03)"; ctx.fill();
-    ctx.strokeStyle = "rgba(15,26,14,0.08)"; ctx.lineWidth = 1; ctx.stroke();
-
-    // Score number — large serif
-    ctx.fillStyle = ringColor;
-    ctx.font = "400 160px Georgia,serif";
+    for(const w of words){ const test = line ? line+" "+w : w; if(ctx.measureText(test).width > 900 && line){ nameLines.push(line); line=w; } else line=test; }
+    if(line) nameLines.push(line);
+    nameLines = nameLines.slice(0,2);
+    ctx.fillStyle = "#111";
+    const nameY = nameLines.length === 2 ? 164 : 182;
+    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*74));
+    ctx.fillStyle = color; ctx.fillRect(W/2-200, nameLines.length===2?252:230, 400, 5);
+    ctx.font = "900 520px system-ui,Arial,sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(String(score), cx, cy - 16);
-
-    // "out of 10" below number
-    ctx.fillStyle = "rgba(15,26,14,0.35)";
-    ctx.font = "400 24px system-ui,sans-serif";
-    ctx.fillText("out of 10", cx, cy + 68);
-
-    // Score label below ring
-    ctx.fillStyle = "#0f1a0e";
-    ctx.font = "600 26px system-ui,sans-serif";
-    ctx.fillText(label, cx, cy + 290);
-
-    // Kids badge — top right of ring
-    if (hasKids) {
-      const bx = cx + innerR - 10, by = cy - innerR - 10;
-      ctx.beginPath(); ctx.roundRect(bx - 80, by - 22, 160, 44, 22);
-      ctx.fillStyle = "#2d5a27"; ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "600 20px system-ui,sans-serif";
-      ctx.fillText(`Kids: ${childScore}/10`, bx, by);
-    }
-
-    // ── DIMENSION BARS ── three slim bars below ring
-    const barY = 830;
-    const barW = 280, barH = 6, barGap = 110;
-    const barStart = cx - barW / 2;
-    dimList.forEach((d, i) => {
-      const y = barY + i * barGap;
-      // Label + score
-      ctx.fillStyle = "rgba(15,26,14,0.4)";
-      ctx.font = "500 19px system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText(d.label.toUpperCase(), barStart, y - 16);
-      ctx.textAlign = "right";
-      ctx.fillText(d.score + "/10", barStart + barW, y - 16);
-      // Track
-      ctx.beginPath(); ctx.roundRect(barStart, y - 3, barW, barH, 3);
-      ctx.fillStyle = "rgba(15,26,14,0.08)"; ctx.fill();
-      // Fill
-      ctx.beginPath(); ctx.roundRect(barStart, y - 3, barW * (d.score / 10), barH, 3);
-      ctx.fillStyle = ringColor; ctx.fill();
-    });
-
-    // ── FLAGS — bottom section ──
-    if (flags.length > 0) {
-      const flagY = 1008;
-      ctx.fillStyle = "rgba(15,26,14,0.35)";
-      ctx.font = "600 18px system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText("FLAGGED", 56, flagY);
-      let px = 56 + ctx.measureText("FLAGGED").width + 20;
+    ctx.shadowColor = color; ctx.shadowBlur = 60;
+    ctx.fillStyle = color; ctx.globalAlpha = 0.08;
+    ctx.fillText(String(score), W/2, 480);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    ctx.fillStyle = "#0A0A0A"; ctx.fillText(String(score), W/2, 480);
+    const pillW = 280, pillH = 56, pillX = W/2-pillW/2, pillY = 762;
+    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,28);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 28px system-ui,sans-serif"; ctx.textBaseline = "middle";
+    ctx.fillText(label.toUpperCase(), W/2, pillY+pillH/2);
+    ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.font = "600 26px system-ui,sans-serif";
+    ctx.fillText("OUT OF 10", W/2, 842);
+    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,896,W,H-896);
+    if(flags.length > 0){
+      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = "700 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("FLAGGED", 52, 928);
+      let px = 180;
       flags.forEach(flag => {
-        const ft = flag.length > 20 ? flag.slice(0, 18) + "…" : flag;
-        ctx.font = "500 18px system-ui,sans-serif";
+        const ft = flag.length > 22 ? flag.slice(0,20)+"…" : flag;
+        ctx.font = "600 20px system-ui,sans-serif";
         const fw = ctx.measureText(ft).width;
-        const pw = fw + 24, ph = 36, py = flagY - 18;
-        ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 18);
-        ctx.strokeStyle = "rgba(200,120,26,0.4)"; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = "rgba(200,120,26,0.08)"; ctx.fill();
-        ctx.fillStyle = "#c8781a";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(ft, px + pw / 2, flagY);
-        px += pw + 10;
+        const pw = fw+28, ph = 38, py = 910;
+        ctx.beginPath(); ctx.roundRect(px,py,pw,ph,19);
+        ctx.fillStyle = `rgba(${sr},${sg},${sb},0.25)`; ctx.fill();
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = color; ctx.textAlign = "center";
+        ctx.fillText(ft, px+pw/2, py+ph/2);
+        px += pw+12;
+        if(px > W-200) return;
       });
+    } else {
+      ctx.fillStyle = "#4ade80"; ctx.font = "700 24px system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("✓ No significant concerns detected", W/2, 928);
     }
-
-    // ── BETTER OPTION ──
-    if (alt && score > 3) {
-      const altName = (alt.name || "").slice(0, 34);
+    if(alt && score > 3){
+      const altName = (alt.name||"").slice(0,36);
       const altScore = alt.score || alt.estimated_score || "";
-      ctx.fillStyle = "rgba(15,26,14,0.35)";
-      ctx.font = "600 18px system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText("BETTER OPTION", W - 420, 1010);
-      ctx.fillStyle = "#2d5a27";
-      ctx.font = "600 20px system-ui,sans-serif";
-      ctx.fillText(altName + (altScore ? "  " + altScore + "/10" : ""), W - 420, 1036);
+      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "600 18px system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("BETTER OPTION", 52, 984);
+      ctx.fillStyle = "#fff"; ctx.font = "700 22px system-ui,sans-serif";
+      ctx.fillText(altName + (altScore ? `  ${altScore}/10` : ""), 220, 984);
     }
-
-    // ── BOTTOM RULE + URL ──
-    ctx.strokeStyle = "rgba(15,26,14,0.10)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(56, 1048); ctx.lineTo(W - 56, 1048); ctx.stroke();
-    ctx.fillStyle = "rgba(15,26,14,0.3)";
-    ctx.font = "400 20px Georgia,serif";
+    ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "500 22px system-ui,sans-serif";
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
-    ctx.fillText("partiqule.com", W - 56, 1066);
-
-  }, [score, result]);
+    ctx.fillText("partiqule.com", W-52, 1048);
+    if(hasKids){
+      const bw=200,bh=48,bx=W-bw-40,by=104;
+      ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,24);
+      ctx.fillStyle="#052e16"; ctx.fill();
+      ctx.fillStyle="#4ade80"; ctx.font="bold 20px system-ui,sans-serif";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(`Kids: ${childScore}/10`, bx+bw/2, by+bh/2);
+    }
+  },[score, result]);
 
   const share = async () => {
-    const canvas = canvasRef.current; if (!canvas) return;
+    const canvas = canvasRef.current; if(!canvas) return;
     setStatus("copying");
     try {
-      const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-      if (navigator.share && navigator.canShare?.({ files: [new File([blob], "partiqule.png", { type: "image/png" })] })) {
-        await navigator.share({
-          title: `${name} scored ${score}/10 on Partiqule`,
-          text: `I scanned ${name} on Partiqule — it scored ${score}/10. See what is really in your products at partiqule.com`,
-          files: [new File([blob], "partiqule.png", { type: "image/png" })],
-        });
-      } else {
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      }
+      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
+      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
+        await navigator.share({ title:`${name} scored ${score}/10 on Partiqule`, text:`I scanned ${name} and it scored ${score}/10. Check what is in your products at partiqule.com`, files:[new File([blob],"partiqule.png",{type:"image/png"})] });
+      } else { await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); }
       setStatus("copied");
     } catch {
-      const url = URL.createObjectURL(await new Promise(r => canvas.toBlob(r, "image/png")));
-      const a = document.createElement("a"); a.href = url;
-      a.download = `partiqule-${(name || "score").replace(/\s+/g, "-").toLowerCase()}.png`;
-      a.click(); URL.revokeObjectURL(url);
-      setStatus("copied");
+      const url = URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
+      const a = document.createElement("a"); a.href=url;
+      a.download=`partiqule-${(name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
+      a.click(); URL.revokeObjectURL(url); setStatus("copied");
     }
-    setTimeout(() => setStatus("idle"), 3000);
+    setTimeout(()=>setStatus("idle"),3000);
   };
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <canvas ref={canvasRef} style={{ display: "block", width: "100%", borderRadius: 16, border: `1px solid ${isDark ? "#2a3347" : "#e2d9c8"}` }} />
-      <button onClick={share} disabled={status === "copying"} style={{
-        marginTop: 12, width: "100%", padding: "13px", borderRadius: 12,
-        background: status === "copied" ? "#2d5a27" : "#0f1a0e",
-        border: "none", color: status === "copied" ? "#fff" : "#f5f0e8",
-        fontSize: 15, fontWeight: 600, cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        transition: "background 0.2s",
-      }}>
-        <IconShare size={16} color={status === "copied" ? "#fff" : "#f5f0e8"} />
-        {status === "copying" ? "Preparing…" : status === "copied" ? "Copied!" : "Share Result"}
+    <div style={{marginTop:24}}>
+      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
+      <button onClick={share} disabled={status==="copying"} style={{marginTop:12,width:"100%",padding:"13px",borderRadius:12,background:status==="copied"?"#16a34a":"#052e16",border:"none",color:status==="copied"?"#fff":"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background 0.2s"}}>
+        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
+        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
       </button>
     </div>
   );
@@ -704,7 +583,7 @@ const GlobeLoading = ({isMobile}) => {
 
 
 
-const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"High Risk":"Avoid";
+const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
@@ -1938,7 +1817,7 @@ const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 // ── PRODUCT CARD ─────────────────────────────────────────────
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
-const ProductCard = ({product, isDark, altSource="amazon"}) => {
+const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
   const amazonFallback = `https://www.amazon.com/s?k=${encodeURIComponent((product.brand ? product.brand + " " : "") + product.name)}&tag=partiqule-20`;
   const linkUrl = altSource === "brand" ? getBrandUrl(product.brand, product.name)
@@ -1973,7 +1852,7 @@ const ProductCard = ({product, isDark, altSource="amazon"}) => {
             <div style={{fontSize:15, fontWeight:700, color:isDark?"#f1f5f9":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
-            <div style={{background:scoreBg(product.score), color:scoreColor(product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{product.score}/10</div>
+            <div style={{background:scoreBg(childMode && product.child_score != null ? product.child_score : product.score), color:scoreColor(childMode && product.child_score != null ? product.child_score : product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{childMode && product.child_score != null ? product.child_score : product.score}/10</div>
             <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
           </div>
         </div>
@@ -6457,7 +6336,7 @@ function App() {
                   displayScore={pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)}
                   isMobile={isMobile}
                   isDark={isDark}
-                />
+                /> — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
                   const score = result.overall_score || result.score;
                   const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
@@ -6750,7 +6629,7 @@ function App() {
                       </>)}
                     </>) : (<>
                       <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
-                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource}/>)}
+                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource} childMode={childMode}/>)}
                       {aiAlts.length > 0 && (
                         <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
                           {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
