@@ -174,23 +174,53 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-// ── RATE LIMITER — per IP, max 30 scans/hour on /analyze ──────
+// ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
+// Prevents one bad IP (coffee shop wifi) from hitting the cap for everyone
+// and gives signed-in paid users a higher cap.
 const rateLimitMap = new Map();
-const RATE_LIMIT   = 30;
 const RATE_WINDOW  = 60 * 60 * 1000; // 1 hour
-const rateLimit = (req, res, next) => {
-  // Admin key bypasses rate limiting — used by internal reload and trusted scripts
+const RATE_LIMIT_ANON = 20;   // anonymous (per IP) — tighter to prevent shared-wifi exhaustion
+const RATE_LIMIT_USER = 40;   // signed-in free user (per userId)
+const RATE_LIMIT_PAID = 120;  // signed-in paid user (per userId)
+const rateLimit = async (req, res, next) => {
+  // Admin key bypasses rate limiting
   const adminKey = req.query.key || req.headers["x-admin-key"];
   if (adminKey === ADMIN_KEY) return next();
-  const ip  = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+
+  // Prefer userId (from body or header) over IP — gives per-user limits
+  const userId = req.body?.userId || req.headers["x-user-id"] || null;
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+
+  // Determine effective cap — look up subscription status for signed-in users
+  let cap = RATE_LIMIT_ANON;
+  let key = `ip:${ip}`;
+  let who = ip;
+
+  if (userId) {
+    key = `user:${userId}`;
+    who = `user ${userId.slice(0, 8)}`;
+    cap = RATE_LIMIT_USER;
+    // Check if paid (non-blocking — safe if supabaseAdmin isn't initialized yet)
+    try {
+      if (typeof supabaseAdmin !== "undefined" && supabaseAdmin) {
+        const { data } = await supabaseAdmin.from("profiles").select("is_subscribed").eq("id", userId).single();
+        if (data?.is_subscribed) cap = RATE_LIMIT_PAID;
+      }
+    } catch {}
+  }
+
   const now = Date.now();
-  const rec = rateLimitMap.get(ip) || { count: 0, start: now };
+  const rec = rateLimitMap.get(key) || { count: 0, start: now };
   if (now - rec.start > RATE_WINDOW) { rec.count = 0; rec.start = now; }
   rec.count++;
-  rateLimitMap.set(ip, rec);
-  if (rec.count > RATE_LIMIT) {
-    console.warn(`[RATE] IP ${ip} exceeded ${RATE_LIMIT} scans/hour`);
-    return res.status(429).json({ error: "Too many scans. Please wait before trying again." });
+  rateLimitMap.set(key, rec);
+  if (rec.count > cap) {
+    console.warn(`[RATE] ${who} exceeded ${cap} scans/hour`);
+    return res.status(429).json({
+      error: userId
+        ? `You've reached your hourly scan limit (${cap}). Please wait a bit before scanning more.`
+        : "Too many scans from this network. Sign in for a higher limit, or try again in an hour.",
+    });
   }
   next();
 };
@@ -1201,7 +1231,28 @@ function extractJson(text) {
 // Override with env vars: API_DAILY_CAP, API_MONTHLY_CAP
 const API_DAILY_CAP   = parseInt(process.env.API_DAILY_CAP   || "500");
 const API_MONTHLY_CAP = parseInt(process.env.API_MONTHLY_CAP || "5000");
-let apiCallCounts = { day: 0, month: 0, dayKey: "", monthKey: "" };
+const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL || ""; // Slack/Discord/any webhook
+const ALERT_THRESHOLDS = [0.5, 0.8, 0.95]; // fire at 50%, 80%, 95% of daily cap
+let apiCallCounts = { day: 0, month: 0, dayKey: "", monthKey: "", alertedToday: [] };
+
+// Fire-and-forget webhook alert. Formats for Slack's incoming webhook format
+// but any webhook that accepts {text} will work (including Discord with a tiny tweak).
+const fireBudgetAlert = async (pct, used, cap) => {
+  if (!ALERT_WEBHOOK_URL) return;
+  const emoji = pct >= 0.95 ? "🚨" : pct >= 0.8 ? "⚠️" : "📊";
+  const text = `${emoji} Partiqule API usage at ${Math.round(pct * 100)}% — ${used}/${cap} Claude calls today`;
+  try {
+    await fetch(ALERT_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(5000),
+    });
+    console.log(`[ALERT] Sent budget alert: ${text}`);
+  } catch (e) {
+    console.warn(`[ALERT] Failed to send webhook: ${e.message}`);
+  }
+};
 
 const loadApiCounts = async () => {
   const now = new Date();
@@ -1221,7 +1272,7 @@ const checkApiBudget = () => {
   const now = new Date();
   const dayKey   = `api_count:${now.toISOString().slice(0,10)}`;
   const monthKey = `api_count:${now.toISOString().slice(0,7)}`;
-  if (dayKey !== apiCallCounts.dayKey)     { apiCallCounts.day = 0;   apiCallCounts.dayKey = dayKey; }
+  if (dayKey !== apiCallCounts.dayKey)     { apiCallCounts.day = 0; apiCallCounts.dayKey = dayKey; apiCallCounts.alertedToday = []; }
   if (monthKey !== apiCallCounts.monthKey) { apiCallCounts.month = 0; apiCallCounts.monthKey = monthKey; }
   if (apiCallCounts.day   >= API_DAILY_CAP)   throw new Error(`API_BUDGET_EXCEEDED: daily cap ${API_DAILY_CAP} reached (${apiCallCounts.day})`);
   if (apiCallCounts.month >= API_MONTHLY_CAP) throw new Error(`API_BUDGET_EXCEEDED: monthly cap ${API_MONTHLY_CAP} reached (${apiCallCounts.month})`);
@@ -1236,6 +1287,16 @@ const incrementApiCount = () => {
   }
   if (apiCallCounts.day % 50 === 0) {
     console.log(`[API BUDGET] ${apiCallCounts.day}/${API_DAILY_CAP} today, ${apiCallCounts.month}/${API_MONTHLY_CAP} this month`);
+  }
+
+  // Check threshold alerts — only fire each threshold once per day
+  const pct = apiCallCounts.day / API_DAILY_CAP;
+  for (const threshold of ALERT_THRESHOLDS) {
+    if (pct >= threshold && !apiCallCounts.alertedToday.includes(threshold)) {
+      apiCallCounts.alertedToday.push(threshold);
+      fireBudgetAlert(pct, apiCallCounts.day, API_DAILY_CAP);
+      break;
+    }
   }
 };
 

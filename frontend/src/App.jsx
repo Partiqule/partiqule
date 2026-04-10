@@ -2055,6 +2055,129 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 const PlasticScoreDropdown = ({result, isDark, muted}) => null;
 const HealthScoreDropdown  = ({result, isDark, muted}) => null;
 
+// ── SCORE EXPLAINER ───────────────────────────────────────────
+// Collapsible "How we got this score" panel that shows the triggered
+// substance floors, dimension breakdown, and child/pregnancy bumps.
+// Builds user trust by making the sophisticated scoring logic visible.
+const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode, pregnancyMode}) => {
+  const [open, setOpen] = useState(false);
+  const score = result.overall_score || result.score;
+
+  // Collect all the triggered reasons from the result
+  const substanceFlags = result.flagged_substances || [];
+  const childBumps = result.child_bumps || [];
+  const pregnancyBumps = result.pregnancy_bumps || [];
+  const dims = result.dimensions || {};
+
+  // Nothing to show if we have no explanations
+  const hasExplanations =
+    substanceFlags.length > 0 ||
+    (childMode && childBumps.length > 0) ||
+    (pregnancyMode && pregnancyBumps.length > 0) ||
+    Object.keys(dims).length > 0;
+
+  if (!hasExplanations) return null;
+
+  return (
+    <div style={{background:surface, borderRadius:12, border:`1px solid ${border}`, overflow:"hidden", marginTop:16}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{
+        width:"100%", padding:"14px 18px", background:"none", border:"none",
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        cursor:"pointer", color:text, textAlign:"left",
+      }}>
+        <div>
+          <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:2}}>Transparency</div>
+          <div style={{fontSize:15, fontWeight:700}}>Why is this a {score}/10?</div>
+        </div>
+        <div style={{fontSize:20, color:muted, transition:"transform 0.2s", transform: open ? "rotate(180deg)" : "none"}}>⌄</div>
+      </button>
+
+      {open && (
+        <div style={{padding:"4px 18px 18px", borderTop:`1px solid ${border}`}}>
+
+          {/* Dimension breakdown */}
+          {Object.keys(dims).length > 0 && (
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Dimension breakdown</div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {[
+                  {key:"materials",      label:"Materials",      dim:dims.materials},
+                  {key:"usage_exposure", label:"Usage & Exposure", dim:dims.usage_exposure},
+                  {key:"packaging",      label:"Packaging",      dim:dims.packaging},
+                  {key:"sustainability", label:"Sustainability", dim:dims.sustainability},
+                ].filter(x=>x.dim).map(({key,label,dim}) => {
+                  const s = dim.score ?? 5;
+                  const c = s <= 3 ? "#16a34a" : s <= 5 ? "#d97706" : s <= 7 ? "#ea580c" : "#dc2626";
+                  return (
+                    <div key={key} style={{display:"flex", alignItems:"center", gap:12, fontSize:13}}>
+                      <div style={{flex:"0 0 130px", color:text, fontWeight:500}}>{label}</div>
+                      <div style={{flex:1, height:6, background:isDark?"#1e2433":"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
+                        <div style={{width:`${s*10}%`, height:"100%", background:c, borderRadius:3}}/>
+                      </div>
+                      <div style={{flex:"0 0 36px", fontWeight:700, color:c, textAlign:"right"}}>{s}/10</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Substance floors triggered */}
+          {substanceFlags.length > 0 && (
+            <div style={{marginTop:18}}>
+              <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Flags that raised this score</div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {substanceFlags.slice(0,8).map((flag, i) => (
+                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a1a":"#fff1f2", borderRadius:8, borderLeft:"3px solid #dc2626", fontSize:12, color:isDark?"#fecaca":"#7f1d1d", lineHeight:1.5}}>
+                    {typeof flag === "string" ? flag : (flag.reason || flag.concern || JSON.stringify(flag))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Child score bumps — show when child mode is on */}
+          {childMode && childBumps.length > 0 && (
+            <div style={{marginTop:18}}>
+              <div style={{fontSize:11, fontWeight:700, color:"#9d174d", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
+                Why child score is higher ({result.child_score}/10)
+              </div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {childBumps.slice(0, 6).map((bump, i) => (
+                  <div key={i} style={{padding:"8px 12px", background:isDark?"#2a1a1f":"#fdf2f8", borderRadius:8, borderLeft:"3px solid #9d174d", fontSize:12, color:isDark?"#fbcfe8":"#831843", lineHeight:1.5}}>
+                    {bump}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pregnancy score bumps — show when pregnancy mode is on */}
+          {pregnancyMode && pregnancyBumps.length > 0 && (
+            <div style={{marginTop:18}}>
+              <div style={{fontSize:11, fontWeight:700, color:"#7c3aed", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
+                Why pregnancy score is higher ({result.pregnancy_score}/10)
+              </div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {pregnancyBumps.slice(0, 6).map((bump, i) => (
+                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a2e":"#f5f3ff", borderRadius:8, borderLeft:"3px solid #7c3aed", fontSize:12, color:isDark?"#ddd6fe":"#5b21b6", lineHeight:1.5}}>
+                    {bump}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{marginTop:16, paddingTop:12, borderTop:`1px solid ${border}`, fontSize:11, color:muted, textAlign:"center"}}>
+            Our scores are code-enforced from 113 substance floors + two independent AI passes.{" "}
+            <a href="/methodology" style={{color:"#16a34a", textDecoration:"none"}}>Read our methodology →</a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── FEEDBACK BUTTON ───────────────────────────────────────────
 // "Report this score" button on the result page. Collapses into a form
 // when clicked, submits to /score-feedback, shows success confirmation.
@@ -6757,6 +6880,18 @@ function App() {
 
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
+
+                {/* Score explainability — "why is this a 7?" */}
+                <ScoreExplainer
+                  result={result}
+                  isDark={isDark}
+                  text={text}
+                  muted={muted}
+                  surface={surface}
+                  border={border}
+                  childMode={childMode}
+                  pregnancyMode={pregnancyMode}
+                />
 
                 {/* for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
