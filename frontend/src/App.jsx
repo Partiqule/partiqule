@@ -5772,8 +5772,16 @@ function App() {
                     placeholder="Search any product…"
                     style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
 
-                  {/* Camera button — mobile only */}
-                  {isMobile && (
+                  {/* Camera button — mobile opens full barcode+photo scanner, desktop uses file picker */}
+                  {isMobile ? (
+                    <div onClick={()=>setShowBarcodeScanner(true)}
+                      style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
+                  ) : (
                     <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
                       <input type="file" accept="image/*" style={{display:"none"}}
                         onChange={async(e)=>{
