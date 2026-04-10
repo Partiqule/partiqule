@@ -133,9 +133,7 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-// ── SHARE CARD ────────────────────────────────────────────────
-// Magazine cover style — bold, high contrast, score front and center
-const ShareCard = ({result, displayScore, isMobile, isDark}) => {
+const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const score   = displayScore || result.overall_score || result.score;
@@ -6330,13 +6328,7 @@ function App() {
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
-                {/* Share card */}
-                <ShareCard
-                  result={result}
-                  displayScore={pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)}
-                  isMobile={isMobile}
-                  isDark={isDark}
-                /> — for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
+                {/* for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
                   const score = result.overall_score || result.score;
                   const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
