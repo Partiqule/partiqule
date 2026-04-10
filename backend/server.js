@@ -4057,8 +4057,22 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
   const cached = await cacheGet(key);
   if (cached) {
-    console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
-    return res.json({ ...cached, cached: true });
+    // Staleness check — old cached entries missing fields added in recent schema updates
+    // (ingredient_list, flagged_substances, dimensions) get evicted so the product
+    // re-scans and picks up ingredients, flagged dyes, and dimension scores.
+    const isStale = (
+      cached.ingredient_list === undefined ||
+      cached.dimensions      === undefined ||
+      cached.flagged_substances === undefined
+    );
+    if (isStale) {
+      console.log(`[CACHE STALE] ${key} — missing schema fields, evicting and re-scanning`);
+      scoreCache.delete(key);
+      // Redis entry will be overwritten by cacheSet after the fresh scan completes
+    } else {
+      console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
+      return res.json({ ...cached, cached: true });
+    }
   }
 
   // Fuzzy calibration lookup — catches name variations before going to AI

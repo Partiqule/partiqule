@@ -255,10 +255,17 @@ const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   return (
     <div style={{marginTop:24}}>
       <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
-      <button onClick={share} disabled={status==="copying"} style={{marginTop:12,width:"100%",padding:"13px",borderRadius:12,background:status==="copied"?"#16a34a":"#052e16",border:"none",color:status==="copied"?"#fff":"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background 0.2s"}}>
-        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
-        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
-      </button>
+      <div style={{textAlign:"center",marginTop:12}}>
+        <button onClick={share} disabled={status==="copying"}
+          style={{padding:"9px 22px",borderRadius:24,background:"none",
+            border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,
+            color:status==="copied"?"#16a34a":isDark?"#94a3b8":"#6b7280",
+            fontSize:13,fontWeight:600,cursor:"pointer",
+            display:"inline-flex",alignItems:"center",gap:7,transition:"all 0.2s"}}>
+          <IconShare size={14} color={status==="copied"?"#16a34a":isDark?"#94a3b8":"#6b7280"}/>
+          {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
+        </button>
+      </div>
     </div>
   );
 };
@@ -6328,7 +6335,6 @@ function App() {
                 {/* Peer comparison */}
                 <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
-                {/* for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
                 {(() => {
                   const score = result.overall_score || result.score;
                   const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
