@@ -6035,7 +6035,7 @@ function App() {
       <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
-            <img src="/Partiqule.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
+            <img src="/logo.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
             <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:800, fontSize:isMobile?18:22, color:"#f0fdf4", letterSpacing:"-0.5px"}}>Partiqule</span>
           </div>
 
@@ -6556,22 +6556,260 @@ function App() {
             </div>
           </section>
 
-          {/* Fixed fullscreen globe overlay — covers entire viewport, centered */}
+          {/* Fixed fullscreen globe overlay */}
           {showOverlay && (
-            <div style={{
-              position:"fixed", top:0, left:0, right:0, bottom:0,
-              background:"#052e16",
-              zIndex:9999,
-              display:"flex", flexDirection:"column",
-              alignItems:"center", justifyContent:"center",
-              animation:"globeOverlayIn 0.4s ease forwards",
-            }}>
+            <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#052e16",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"globeOverlayIn 0.4s ease forwards"}}>
               <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
               <GlobeLoading isMobile={isMobile}/>
             </div>
           )}
 
-          <div style={{paddingTop:isMobile?32:56}}>
+          {/* ═══════════════════════════════════════════
+              DISCOVERY FEED — shown when user has history
+              Serial Position Effect: Routine anchors top,
+              Danger Zone anchors bottom.
+          ═══════════════════════════════════════════ */}
+          {history.length > 0 && (() => {
+            const routineScore = history.length
+              ? Math.round(history.slice(0,20).reduce((a,h)=>a+(h.overall_score||h.score||5),0)/Math.min(history.length,20)*10)/10
+              : null;
+            const highRisk = history.filter(h=>(h.overall_score||h.score||0)>=7).slice(0,2);
+            const swapList = history.filter(h=>(h.overall_score||h.score||0)>=5).slice(0,2);
+            const firstName = user?.email ? user.email.split("@")[0].split(".")[0] : null;
+            const greet = firstName ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${firstName.charAt(0).toUpperCase()+firstName.slice(1)}` : "Welcome back";
+
+            // Rotate daily comparison by day of week
+            const comparisons = [
+              {a:{name:"Heinz Ketchup",score:6,flags:"HFCS · Caramel color"},    b:{name:"Annie's Ketchup",score:2,flags:"Organic · 5 ingredients"}},
+              {a:{name:"Tide Pods",score:7,flags:"PVA film · Optical brighteners"},b:{name:"Blueland Laundry",score:2,flags:"Plastic-free · Clean formula"}},
+              {a:{name:"Neutrogena SPF 50",score:6,flags:"Oxybenzone · Parabens"}, b:{name:"Badger Mineral SPF",score:2,flags:"Zinc oxide only"}},
+              {a:{name:"Febreze Air",score:7,flags:"Synthetic fragrance · VOCs"},  b:{name:"Branch Basics Spray",score:2,flags:"No synthetic fragrance"}},
+              {a:{name:"Gatorade",score:6,flags:"Artificial dyes · HFCS"},         b:{name:"Liquid IV",score:3,flags:"Cleaner formula"}},
+              {a:{name:"Dawn Dish Soap",score:5,flags:"Synthetic fragrance · SLS"}, b:{name:"Branch Basics Dish",score:2,flags:"Fragrance-free · Clean"}},
+              {a:{name:"Lay's Chips",score:5,flags:"Seed oils · Natural flavors"},  b:{name:"Siete Chips",score:2,flags:"Avocado oil · Clean"}},
+            ];
+            const todayComp = comparisons[new Date().getDay()];
+            const scoreCol = s => s<=2?"#22c55e":s<=4?"#a3e635":s<=6?"#f59e0b":s<=8?"#f97316":"#ef4444";
+
+            return (
+              <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 100px":"48px 40px 60px"}}>
+
+                {/* ── GREETING + ROUTINE SCORE ── */}
+                <div style={{marginBottom:20}}>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
+                  <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""}  scanned</div>
+                </div>
+
+                {/* Routine score pill */}
+                {routineScore && (
+                  <div onClick={()=>{setPage("routine"); setResult(null);}}
+                    style={{marginBottom:24, background:"linear-gradient(135deg,rgba(20,83,45,0.8),rgba(15,42,24,0.8))", border:"1px solid rgba(34,197,94,0.2)", borderRadius:16, padding:"16px 20px", display:"flex", alignItems:"center", gap:16, cursor:"pointer"}}>
+                    {/* Conic ring */}
+                    <div style={{width:52, height:52, borderRadius:"50%", background:`conic-gradient(${scoreCol(routineScore)} 0% ${routineScore*10}%, rgba(34,197,94,0.1) ${routineScore*10}% 100%)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, position:"relative"}}>
+                      <div style={{position:"absolute", inset:5, borderRadius:"50%", background:"#0f2a18", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:900, color:scoreCol(routineScore)}}>{routineScore}</span>
+                      </div>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4", marginBottom:2}}>My Routine Score</div>
+                      <div style={{fontSize:12, color:"#6ee7b7", opacity:0.7}}>{history.length} products · {highRisk.length > 0 ? `${highRisk.length} need attention` : "looking good"}</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2.5" opacity="0.4"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                )}
+
+                {/* ── FOR YOU ── Zeigarnik: unresolved risks pull users back */}
+                {(() => {
+                  const forYou = [];
+                  // High-scoring items from routine
+                  history.filter(h=>(h.overall_score||h.score||0)>=6).slice(0,1).forEach(h=>{
+                    forYou.push({type:"warn", reason:"In your routine", name:h.product_name, detail:`Scored ${h.overall_score||h.score}/10 — tap to see safer alternatives`, cta:"See swaps"});
+                  });
+                  // Items with flagged substances
+                  history.filter(h=>(h.flagged_substances||[]).length>0&&(h.overall_score||h.score||0)>=5).slice(0,1).forEach(h=>{
+                    const flag = h.flagged_substances[0];
+                    forYou.push({type:"bad", reason:"Based on your scan", name:h.product_name, detail:`Contains ${flag} — worth a closer look`, cta:"Dig deeper"});
+                  });
+                  // A clean product from history as positive reinforcement
+                  history.filter(h=>(h.overall_score||h.score||0)<=2).slice(0,1).forEach(h=>{
+                    forYou.push({type:"good", reason:"You scanned this", name:h.product_name, detail:`Scored ${h.overall_score||h.score}/10 — one of your cleanest products`, cta:"View result"});
+                  });
+                  if (forYou.length === 0) return null;
+                  const typeStyle = {
+                    warn: {accent:"#f59e0b", bg:"rgba(245,158,11,0.1)", border:"rgba(245,158,11,0.25)", ctaBg:"rgba(245,158,11,0.12)", ctaColor:"#f59e0b"},
+                    bad:  {accent:"#ef4444", bg:"rgba(239,68,68,0.1)",  border:"rgba(239,68,68,0.25)",  ctaBg:"rgba(239,68,68,0.12)",  ctaColor:"#ef4444"},
+                    good: {accent:"#22c55e", bg:"rgba(34,197,94,0.08)", border:"rgba(34,197,94,0.2)",   ctaBg:"rgba(34,197,94,0.12)",   ctaColor:"#22c55e"},
+                  };
+                  return (
+                    <div style={{marginBottom:24}}>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, color:"#f0fdf4"}}>For You</div>
+                        <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:12, color:"#22c55e", fontWeight:600, cursor:"pointer"}}>See all</span>
+                      </div>
+                      <div style={{display:"flex", gap:10, overflowX:"auto", paddingBottom:4, scrollbarWidth:"none"}}>
+                        {forYou.map((card,i)=>{
+                          const st = typeStyle[card.type];
+                          const item = history.find(h=>h.product_name===card.name);
+                          return (
+                            <div key={i} onClick={()=>item&&setResult(item)}
+                              style={{flexShrink:0, width:156, background:st.bg, border:`1px solid ${st.border}`, borderRadius:14, padding:12, cursor:"pointer", position:"relative", overflow:"hidden"}}>
+                              <div style={{position:"absolute", top:0, left:0, right:0, height:3, background:st.accent, borderRadius:"14px 14px 0 0"}}/>
+                              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, letterSpacing:"0.1em", textTransform:"uppercase", color:st.accent, marginBottom:8, marginTop:2}}>{card.reason}</div>
+                              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:6, lineHeight:1.3}}>{card.name.length>28?card.name.slice(0,26)+"…":card.name}</div>
+                              <div style={{fontSize:10, color:"#6ee7b7", lineHeight:1.5, marginBottom:10, opacity:0.8}}>{card.detail}</div>
+                              <div style={{display:"inline-block", fontFamily:"'Outfit',sans-serif", fontSize:10, fontWeight:700, padding:"4px 10px", borderRadius:20, background:st.ctaBg, color:st.ctaColor}}>{card.cta} →</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── TODAY'S COMPARISON — daily head-to-head ── */}
+                <div style={{marginBottom:24}}>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, color:"#f0fdf4", marginBottom:12}}>Today's Comparison</div>
+                  <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, overflow:"hidden", position:"relative"}}>
+                    <div style={{position:"absolute", top:10, left:10, background:"#a3e635", color:"#052e16", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, padding:"3px 10px", borderRadius:20, letterSpacing:"0.08em", textTransform:"uppercase"}}>Head to Head</div>
+                    <div style={{padding:"36px 20px 20px"}}>
+                      <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14}}>
+                        {/* Product A */}
+                        <div style={{flex:1, background:"rgba(0,0,0,0.2)", borderRadius:12, padding:"14px 10px", textAlign:"center", border:"1px solid rgba(34,197,94,0.1)"}}>
+                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{todayComp.a.name}</div>
+                          <div style={{width:44, height:44, borderRadius:"50%", background:`${scoreCol(todayComp.a.score)}18`, border:`2px solid ${scoreCol(todayComp.a.score)}44`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 6px"}}>
+                            <span style={{fontFamily:"'Outfit',sans-serif", fontSize:18, fontWeight:900, color:scoreCol(todayComp.a.score)}}>{todayComp.a.score}</span>
+                          </div>
+                          <div style={{fontSize:10, color:"#6ee7b7", opacity:0.6, lineHeight:1.4}}>{todayComp.a.flags}</div>
+                        </div>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:800, color:"#6ee7b7", opacity:0.5, flexShrink:0}}>VS</div>
+                        {/* Product B */}
+                        <div style={{flex:1, background:"rgba(0,0,0,0.2)", borderRadius:12, padding:"14px 10px", textAlign:"center", border:"1px solid rgba(34,197,94,0.1)"}}>
+                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{todayComp.b.name}</div>
+                          <div style={{width:44, height:44, borderRadius:"50%", background:`${scoreCol(todayComp.b.score)}18`, border:`2px solid ${scoreCol(todayComp.b.score)}44`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 6px"}}>
+                            <span style={{fontFamily:"'Outfit',sans-serif", fontSize:18, fontWeight:900, color:scoreCol(todayComp.b.score)}}>{todayComp.b.score}</span>
+                          </div>
+                          <div style={{fontSize:10, color:"#6ee7b7", opacity:0.6, lineHeight:1.4}}>{todayComp.b.flags}</div>
+                        </div>
+                      </div>
+                      <div style={{fontSize:12, color:"#6ee7b7", lineHeight:1.6, paddingTop:12, borderTop:"1px solid rgba(34,197,94,0.1)"}}>
+                        <span style={{color:"#22c55e", fontWeight:600}}>{todayComp.b.name}</span> is the cleaner choice — tap either product to scan and see the full breakdown.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── TRENDING SCANS ── */}
+                <div style={{marginBottom:24}}>
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, color:"#f0fdf4"}}>Trending Scans</div>
+                  </div>
+                  <div style={{display:"flex", gap:10, overflowX:"auto", paddingBottom:4, scrollbarWidth:"none"}}>
+                    {[
+                      {name:"Honey Nut Cheerios", cat:"Cereal", score:6, scans:"2.4k"},
+                      {name:"Dawn Dish Soap",     cat:"Cleaning", score:5, scans:"1.8k"},
+                      {name:"Skittles",           cat:"Candy",   score:8, scans:"980"},
+                      {name:"Aveeno Lotion",      cat:"Skincare", score:3, scans:"1.1k"},
+                      {name:"Liquid Death",       cat:"Beverage", score:1, scans:"870"},
+                    ].map((item,i)=>(
+                      <div key={i} onClick={()=>{setQuery(item.name); analyze(item.name);}}
+                        style={{flexShrink:0, width:136, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.15)", borderRadius:14, padding:12, cursor:"pointer"}}>
+                        <div style={{fontSize:11, color:"#6ee7b7", opacity:0.6, marginBottom:8}}>{item.cat}</div>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:10, lineHeight:1.3}}>{item.name}</div>
+                        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                          <span style={{fontFamily:"'Outfit',sans-serif", fontSize:20, fontWeight:900, color:scoreCol(item.score)}}>{item.score}</span>
+                          <span style={{fontSize:9, color:"#6ee7b7", opacity:0.5}}>{item.scans} scans</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── SWAP LIST — Goal-Gradient: action feels like completion ── */}
+                {swapList.length > 0 && (
+                  <div style={{marginBottom:24}}>
+                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, color:"#f0fdf4"}}>Your Swap List</div>
+                      <span onClick={()=>{setPage("routine"); setResult(null);}} style={{fontSize:12, color:"#22c55e", fontWeight:600, cursor:"pointer"}}>All swaps</span>
+                    </div>
+                    {swapList.map((h,i)=>{
+                      const s = h.overall_score||h.score||5;
+                      const alt = h.alternatives?.[0]||h.ai_alternatives?.[0];
+                      return (
+                        <div key={i} onClick={()=>setResult(h)}
+                          style={{marginBottom:10, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.15)", borderRadius:14, padding:"14px 16px", cursor:"pointer", position:"relative", overflow:"hidden"}}>
+                          <div style={{position:"absolute", left:0, top:0, bottom:0, width:3, background:`linear-gradient(180deg,${scoreCol(s)},${scoreCol(s)}88)`, borderRadius:"14px 0 0 14px"}}/>
+                          <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
+                            <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", flex:1}}>{h.product_name?.length>36?h.product_name.slice(0,34)+"…":h.product_name}</div>
+                            <div style={{width:28, height:28, borderRadius:"50%", background:`${scoreCol(s)}18`, border:`1.5px solid ${scoreCol(s)}44`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                              <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:scoreCol(s)}}>{s}</span>
+                            </div>
+                          </div>
+                          {alt && (
+                            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(34,197,94,0.07)", border:"1px solid rgba(34,197,94,0.18)", borderRadius:10, padding:"8px 12px"}}>
+                              <div>
+                                <div style={{fontSize:9, fontWeight:800, letterSpacing:"0.1em", textTransform:"uppercase", color:"#22c55e", marginBottom:2}}>Try instead</div>
+                                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4"}}>{(alt.name||"").slice(0,34)}</div>
+                              </div>
+                              <span style={{fontFamily:"'Outfit',sans-serif", fontSize:20, fontWeight:900, color:"#22c55e"}}>{alt.score||alt.estimated_score||2}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ── DANGER ZONE — Von Restorff + Peak-End Rule ── */}
+                {highRisk.length > 0 && (
+                  <div>
+                    {/* Visual break from green theme */}
+                    <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:16, color:"rgba(239,68,68,0.4)"}}>
+                      <div style={{flex:1, height:1, background:"rgba(239,68,68,0.15)"}}/>
+                      <span style={{fontFamily:"'Outfit',sans-serif", fontSize:10, fontWeight:800, letterSpacing:"0.12em", textTransform:"uppercase"}}>Danger Zone</span>
+                      <div style={{flex:1, height:1, background:"rgba(239,68,68,0.15)"}}/>
+                    </div>
+                    <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <span style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:800, color:"#ef4444"}}>Danger Zone</span>
+                      <div style={{background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, color:"#ef4444"}}>{highRisk.length} Products</div>
+                    </div>
+                    {highRisk.map((h,i)=>{
+                      const s = h.overall_score||h.score||8;
+                      const flags = (h.flagged_substances||[]).slice(0,3);
+                      return (
+                        <div key={i} onClick={()=>setResult(h)}
+                          style={{marginBottom:10, background:"linear-gradient(135deg,#1a0a0a,#1f0f0f)", border:"1px solid rgba(239,68,68,0.35)", borderRadius:14, padding:"16px", cursor:"pointer", position:"relative", overflow:"hidden"}}>
+                          {/* Animated scan line */}
+                          <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:"linear-gradient(90deg,transparent,#ef4444,transparent)", backgroundSize:"200% 100%", animation:"scanLine 2s linear infinite"}}/>
+                          <style>{`@keyframes scanLine{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+                          <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800, color:"#fca5a5", marginBottom:6}}>{h.product_name?.length>36?h.product_name.slice(0,34)+"…":h.product_name}</div>
+                              {flags.length>0 && (
+                                <div style={{display:"flex", flexWrap:"wrap", gap:4, marginBottom:6}}>
+                                  {flags.map((f,j)=>(
+                                    <span key={j} style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:700, padding:"2px 7px", borderRadius:4, background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.25)", color:"#fca5a5", letterSpacing:"0.04em"}}>{f}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div style={{fontFamily:"'Outfit',sans-serif", fontSize:40, fontWeight:900, color:"#ef4444", lineHeight:1, textShadow:"0 0 20px rgba(239,68,68,0.4)", marginLeft:12, flexShrink:0}}>{s}</div>
+                          </div>
+                          <div style={{display:"flex", gap:8}}>
+                            <div style={{flex:1, padding:"9px 12px", borderRadius:10, background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.3)", textAlign:"center", fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:700, color:"#fca5a5"}}>Find a safe swap</div>
+                            <div style={{padding:"9px 14px", borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.35)"}}>Learn why</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+              </div>
+            );
+          })()}
+
+          <div style={{paddingTop: history.length > 0 ? 0 : isMobile?32:56}}>
 
             {/* Trust strip — moved up, first thing below hero */}
             <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
