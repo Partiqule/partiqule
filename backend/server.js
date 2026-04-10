@@ -5095,90 +5095,181 @@ app.post("/cache-warm", requireAdmin, (req, res) => {
   autoWarmFromSupabase();
 });
 
-// ── ADMIN: Full Redis reload — rescans every stale entry with full AI ──────
-// Streams newline-delimited JSON progress so the caller can watch in real time.
-// Each line is { done, total, product, score, status } or { complete: true, summary }
+// ── ADMIN: Full Redis reload — rescans every stale entry directly via AI pipeline ──
+// Runs entirely server-side (no HTTP round-trips). Stores progress in Redis so
+// it survives Railway restarts and can resume where it left off.
+// GET /admin/reload-redis?key=...           — start or resume
+// GET /admin/reload-redis?key=...&status=1  — check progress without starting
+
+const RELOAD_PROGRESS_KEY = "__reload_progress__";
+let reloadRunning = false;
+
 app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
   if (!hasRedis) return res.status(400).json({ error: "Redis not configured" });
 
-  res.setHeader("Content-Type", "application/x-ndjson");
-  res.setHeader("Transfer-Encoding", "chunked");
-  res.setHeader("Cache-Control", "no-cache");
+  // Status check — return current progress without starting a new run
+  if (req.query.status) {
+    const prog = await redisGet(RELOAD_PROGRESS_KEY);
+    return res.json(prog || { status: "not_started" });
+  }
 
-  const send = (obj) => res.write(JSON.stringify(obj) + "\n");
+  if (reloadRunning) {
+    const prog = await redisGet(RELOAD_PROGRESS_KEY);
+    return res.json({ status: "already_running", progress: prog });
+  }
 
-  try {
-    // 1. Fetch all Redis keys
-    const allKeys = await redisKeys("*");
-    send({ phase: "scan", total: allKeys.length, message: `Found ${allKeys.length} Redis keys` });
+  // Respond immediately — reload runs in background
+  res.json({ status: "started", message: "Reload running in background on Railway. Poll /admin/reload-redis?key=...&status=1 to watch progress." });
 
-    let done = 0, skipped = 0, failed = 0, reloaded = 0;
-    const DELAY_MS = 2500; // ~24 products/min — well within Anthropic rate limits
+  reloadRunning = true;
 
-    for (const key of allKeys) {
+  // Run async — detached from the HTTP response
+  (async () => {
+    const DELAY_MS = 2000; // ~30/min — safe for Anthropic rate limits
+    let allKeys, startIndex = 0;
+
+    // Resume from checkpoint if one exists
+    const existing = await redisGet(RELOAD_PROGRESS_KEY);
+    if (existing?.status === "running" && existing?.nextIndex > 0 && existing?.allKeys?.length) {
+      allKeys   = existing.allKeys;
+      startIndex = existing.nextIndex;
+      console.log(`[RELOAD] Resuming from index ${startIndex} of ${allKeys.length}`);
+    } else {
+      allKeys = await redisKeys("*");
+      // Filter out our own progress key
+      allKeys = allKeys.filter(k => k !== RELOAD_PROGRESS_KEY);
+      console.log(`[RELOAD] Starting fresh — ${allKeys.length} keys`);
+    }
+
+    const total    = allKeys.length;
+    let reloaded   = existing?.reloaded   || 0;
+    let skipped    = existing?.skipped    || 0;
+    let failed     = existing?.failed     || 0;
+
+    const saveProgress = async (nextIndex) => {
+      await redisSet(RELOAD_PROGRESS_KEY, {
+        status: nextIndex >= total ? "complete" : "running",
+        total, nextIndex, reloaded, skipped, failed,
+        pct: Math.round(nextIndex / total * 100),
+        allKeys, // store key list so we can resume
+        updatedAt: new Date().toISOString(),
+      });
+    };
+
+    for (let i = startIndex; i < allKeys.length; i++) {
+      const key = allKeys[i];
       try {
-        // Fetch current value
         const current = await redisGet(key);
         if (!current) { skipped++; continue; }
 
-        // Staleness check — same logic as the main analyze route
-        const noIngredients = !current.ingredient_list || current.ingredient_list.length === 0;
-        const noFlags       = !current.flagged_substances || current.flagged_substances.length === 0;
-        const allFiveDims   = current.dimensions &&
+        const productName = current.product_name || key.split(":").slice(1).join(":") || key;
+
+        // Staleness check
+        const noIng   = !current.ingredient_list   || current.ingredient_list.length === 0;
+        const noFlag  = !current.flagged_substances || current.flagged_substances.length === 0;
+        const allFive = current.dimensions &&
           current.dimensions.materials?.score      === 5 &&
           current.dimensions.usage_exposure?.score === 5 &&
           current.dimensions.packaging?.score      === 5 &&
           current.dimensions.sustainability?.score === 5;
-        const isStale = !current.dimensions || current._preloaded === true || (noIngredients && noFlags && allFiveDims);
+        const isStale = !current.dimensions || current._preloaded === true || (noIng && noFlag && allFive);
 
-        const productName = current.product_name || key.split(":").slice(1).join(":") || key;
+        if (!isStale) { skipped++; continue; }
 
-        if (!isStale) {
-          done++;
-          skipped++;
-          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "ok", score: current.overall_score || current.score });
-          continue;
-        }
-
-        // Delete stale entry from memory cache so the analyze call re-scans
+        // Evict from memory and run full AI pipeline directly
         scoreCache.delete(key);
 
-        // Call the internal analyze logic by constructing a mock request
-        // We hit the same AI pipeline used by real user scans
-        const PORT = process.env.PORT || 3000;
-        const analyzeUrl = `http://localhost:${PORT}/analyze`;
-        const analyzeRes = await fetch(analyzeUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-admin-key": ADMIN_KEY },
-          body: JSON.stringify({ query: productName }),
-        });
+        try {
+          const cat  = current.category || detectCategory(productName);
+          const p1   = await pass1(productName, null, cat);
+          let p2 = null;
+          try { p2 = await pass2(productName, p1); } catch(e) {}
 
-        if (!analyzeRes.ok) {
-          failed++;
-          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "error", error: `HTTP ${analyzeRes.status}` });
-        } else {
-          const fresh = await analyzeRes.json();
+          let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
+          let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+          let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
+          let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+
+          let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
+          ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
+            mScore, uScore, pkScore, sScore, finalScore, p1, p2, cat, productName
+          ));
+          ({ finalScore } = applyPositiveCeilings(finalScore, cat, p1, p2, []));
+
+          const isChild = detectChildProduct(productName, cat);
+          const flagText = [...(p1.flagged_substances||[]), ...(p1.materials?.concerns||[])].join(" ");
+          const { childScore } = computeChildScore(finalScore, flagText, cat, productName, isChild);
+
+          const alternatives = filterDbAlternatives(
+            findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
+          ).map(p => {
+            const as = p.score ?? 3;
+            const ac = detectChildProduct(p.name, p.category || cat);
+            const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||cat, p.name, ac);
+            return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs,
+                     material:p.material||"", description:p.description||"", price:p.price||"",
+                     affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+          });
+
+          const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
+            : finalScore <= 4 ? "Good — mostly clean, use with awareness"
+            : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
+            : finalScore <= 8 ? "Switch — real concerns, time to swap"
+            : "Avoid — known harmful substances";
+
+          const result = {
+            product_name:       productName,
+            score:              finalScore,
+            overall_score:      finalScore,
+            category:           cat,
+            confidence:         p1.confidence || "medium",
+            is_child_product:   isChild,
+            child_score:        childScore,
+            flagged_substances: p1.flagged_substances || [],
+            concerns:           p1.concerns           || [],
+            summary:            p1.summary            || "",
+            peer_comparison:    peerComparison,
+            dimensions: {
+              materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
+              usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },
+              packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [] },
+              sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [] },
+            },
+            identified_plastics: p1.identified_plastics || [],
+            harmful_chemicals:   p1.harmful_chemicals   || [],
+            natural_materials:   p1.natural_materials   || [],
+            nutrition:           p1.nutrition || p1.product_analysis?.nutrition || current.nutrition || null,
+            ingredient_list:     p1.ingredient_list || [],
+            alternatives,
+            ai_alternatives:     [],
+            scan_next:           buildScanNextFallback(productName, cat, alternatives),
+            cached:              false,
+          };
+
+          const calibrated = applyProductCalibration(result);
+          cacheSet(key, calibrated);
           reloaded++;
-          done++;
-          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "reloaded", score: fresh.overall_score || fresh.score, ingredients: (fresh.ingredient_list || []).length, flags: (fresh.flagged_substances || []).length });
+          console.log(`[RELOAD] ${i+1}/${total} ✓ ${productName} -> ${calibrated.overall_score}/10`);
+
+        } catch(aiErr) {
+          failed++;
+          console.warn(`[RELOAD] ${i+1}/${total} ✗ ${productName}: ${aiErr.message}`);
         }
 
-        // Throttle between AI calls
+        // Save checkpoint every 10 products and throttle
+        if (i % 10 === 0) await saveProgress(i + 1);
         await new Promise(r => setTimeout(r, DELAY_MS));
 
-      } catch (err) {
+      } catch(err) {
         failed++;
-        send({ done: done + skipped + failed, total: allKeys.length, product: key, status: "error", error: err.message });
+        console.warn(`[RELOAD] Key error ${key}: ${err.message}`);
       }
     }
 
-    send({ complete: true, summary: { total: allKeys.length, reloaded, skipped, failed } });
-    res.end();
-
-  } catch (err) {
-    send({ complete: true, error: err.message });
-    res.end();
-  }
+    await saveProgress(total);
+    reloadRunning = false;
+    console.log(`[RELOAD] Complete — ${reloaded} reloaded, ${skipped} skipped, ${failed} failed`);
+  })();
 });
 // ── BARCODE SCAN — Open Food Facts lookup + full AI pipeline ────────────────
 // Accepts a UPC/EAN barcode, looks up product data from Open Food Facts (free,
