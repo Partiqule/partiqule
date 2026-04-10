@@ -608,6 +608,54 @@ function novaFloor(novaGroup, category) {
   return 0;
 }
 
+// ── UNIFIED ALTERNATIVE SERIALIZATION ─────────────────────────
+// Every scoring path (text, vision, barcode, fuzzy calibration) converts
+// raw DB alternatives into the public-facing shape through this helper.
+// Guarantees consistent fields (score, child_score, pregnancy_score) across
+// all paths so frontend can rely on the same contract.
+function serializeAlternatives(rawAlts, category) {
+  return (rawAlts || []).map(p => {
+    const altScore   = p.score ?? p.plasticScore ?? 3;
+    const altCat     = p.category || category;
+    const altName    = p.name || "";
+    const altIsChild = detectChildProduct(altName, altCat);
+    const altConcernsText = (p.tags || []).join(" ") + " " + (p.material || "");
+    const { childScore: altChildScore } = computeChildScore(altScore, altConcernsText, altCat, altName, altIsChild);
+    const { pregnancyScore: altPregScore } = computePregnancyScore(altScore, altConcernsText, altCat, altName);
+    return {
+      id:              p.id || `static-${Math.random().toString(36).slice(2, 8)}`,
+      name:            altName,
+      brand:           p.brand || "",
+      score:           altScore,
+      child_score:     altChildScore,
+      pregnancy_score: altPregScore,
+      material:        p.material || "",
+      description:     p.description || "",
+      price:           p.price || "",
+      affiliateUrl:    p.affiliateUrl,
+      imageUrl:        p.imageUrl || null,
+      source:          p.source || "static",
+    };
+  });
+}
+
+// Compute child + pregnancy scores from the final score and a flag text.
+// Collects flag text from multiple sources (p1 concerns, substance triggers,
+// raw ingredient text) so we catch concerns regardless of which path we're in.
+function computeSafetyScores(finalScore, category, productName, p1, substanceTriggers = [], extraText = "") {
+  const isChild = detectChildProduct(productName, category);
+  const flagText = [
+    ...(p1?.flagged_substances || []),
+    ...(p1?.materials?.concerns || []),
+    ...(p1?.concerns || []),
+    ...substanceTriggers,
+    extraText || "",
+  ].filter(Boolean).join(" ");
+  const { childScore, childBumps } = computeChildScore(finalScore, flagText, category, productName, isChild);
+  const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, category, productName);
+  return { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild };
+}
+
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
@@ -4036,28 +4084,27 @@ app.post("/analyze", rateLimit, async (req, res) => {
         const { entry } = imgFuzzy;
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
         const imgFuzzyCat = entry.category || category;
-        const imgIsChild = detectChildProduct(productName, imgFuzzyCat);
         const imgConcernsText = (entry.substances || []).join(" ");
-        const { childScore: imgChildScore, childBumps: imgChildBumps } = computeChildScore(midScore, imgConcernsText, imgFuzzyCat, productName, imgIsChild);
+        const imgSafety = computeSafetyScores(midScore, imgFuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], imgConcernsText);
         const imgKidsFloor = entry.kidsFloor || entry.floor;
         const imgKidsCeil = entry.kidsCeiling || entry.ceiling;
         const imgKidsMid = Math.round((imgKidsFloor + imgKidsCeil) / 2);
-        const imgFuzzyAlts = filterDbAlternatives(
-          findAlternatives(productName, imgFuzzyCat, 3, productName),
-          imgFuzzyCat, productName, midScore
-        ).map(p => {
-          const as = p.score ?? p.plasticScore ?? 3;
-          const ac = detectChildProduct(p.name, p.category || imgFuzzyCat);
-          const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||imgFuzzyCat, p.name, ac);
-          return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
-        });
+        const imgFuzzyAlts = serializeAlternatives(
+          filterDbAlternatives(
+            findAlternatives(productName, imgFuzzyCat, 3, productName),
+            imgFuzzyCat, productName, midScore
+          ),
+          imgFuzzyCat
+        );
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: imgFuzzyCat,
           confidence: entry.confidence || "high",
-          is_child_product: imgIsChild,
-          child_score: entry.kidsFloor ? imgKidsMid : imgChildScore,
-          child_bumps: imgChildBumps || [],
+          is_child_product: imgSafety.isChild,
+          child_score: entry.kidsFloor ? imgKidsMid : imgSafety.childScore,
+          child_bumps: imgSafety.childBumps || [],
+          pregnancy_score: imgSafety.pregnancyScore,
+          pregnancy_bumps: imgSafety.pregnancyBumps || [],
           dimensions: {
             materials:      { score: 5, concerns: entry.substances || [] },
             usage_exposure: { score: 5, concerns: [] },
@@ -4208,12 +4255,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
             concerns: p1.sustainability?.concerns || [],
           },
         },
-        alternatives: finalAlternatives.map(p => ({
-          id: p.id, name: p.name, brand: p.brand || "",
-          score: p.score ?? 3, material: p.material || "",
-          description: p.description || "", price: p.price || "",
-          affiliateUrl: p.affiliateUrl, category: p.category || imgCategory
-        })),
+        alternatives: serializeAlternatives(finalAlternatives, imgCategory),
         ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, imgCategory, productName) || []).map(a => ({
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
@@ -4283,27 +4325,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
     const kidsFloor = entry.kidsFloor || entry.floor;
     const kidsCeil  = entry.kidsCeiling || entry.ceiling;
     const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
-    const isChild   = detectChildProduct(productName, entry.category || category);
-    const concernsText = (entry.substances || []).join(" ");
-    const { childScore, childBumps } = computeChildScore(midScore, concernsText, entry.category || category, productName, isChild);
-    const fuzzyCat = entry.category || category;
-    const fuzzyAlts = filterDbAlternatives(
-      findAlternatives(productName, fuzzyCat, 3, productName),
-      fuzzyCat, productName, midScore
-    ).map(p => {
-      const altScore = p.score ?? p.plasticScore ?? 3;
-      const altIsChild = detectChildProduct(p.name, p.category || fuzzyCat);
-      const { childScore: altCS } = computeChildScore(altScore, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||fuzzyCat, p.name, altIsChild);
-      return { id:p.id, name:p.name, brand:p.brand||"", score:altScore, child_score:altCS, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
-    });
+    const fuzzyCat  = entry.category || category;
+    const fuzzyConcernsText = (entry.substances || []).join(" ");
+    const fuzzySafety = computeSafetyScores(midScore, fuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], fuzzyConcernsText);
+    const fuzzyAlts = serializeAlternatives(
+      filterDbAlternatives(
+        findAlternatives(productName, fuzzyCat, 3, productName),
+        fuzzyCat, productName, midScore
+      ),
+      fuzzyCat
+    );
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
       category: fuzzyCat,
       confidence: entry.confidence || "high",
-      is_child_product: isChild,
-      child_score: entry.kidsFloor ? kidsMid : childScore,
-      child_bumps: childBumps || [],
+      is_child_product: fuzzySafety.isChild,
+      child_score: entry.kidsFloor ? kidsMid : fuzzySafety.childScore,
+      child_bumps: fuzzySafety.childBumps || [],
+      pregnancy_score: fuzzySafety.pregnancyScore,
+      pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
       dimensions: {
         materials:      { score: 5, concerns: entry.substances || [] },
         usage_exposure: { score: 5, concerns: [] },
@@ -4317,7 +4358,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       alternatives: fuzzyAlts, ai_alternatives: [],
     });
     cacheSet(key, fuzzyResult);
-    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${childScore}`);
+    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
     return res.json({ ...fuzzyResult, cached: false });
   }
 
@@ -4540,28 +4581,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
       composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
       cached:              false,
-      alternatives: finalAlternatives.map(p => {
-        const altScore = p.score ?? p.plasticScore ?? 3;
-        const altCat = p.category || finalCategory || category;
-        const altIsChild = detectChildProduct(p.name, altCat);
-        const altConcerns = (p.tags || []).join(" ") + " " + (p.material || "");
-        const { childScore: altChildScore } = computeChildScore(altScore, altConcerns, altCat, p.name, altIsChild);
-        const { pregnancyScore: altPregScore } = computePregnancyScore(altScore, altConcerns, altCat, p.name);
-        return {
-          id:              p.id,
-          name:            p.name,
-          brand:           p.brand || "",
-          score:           altScore,
-          child_score:     altChildScore,
-          pregnancy_score: altPregScore,
-          material:        p.material || "",
-          description:     p.description || "",
-          price:           p.price || "",
-          affiliateUrl:    p.affiliateUrl,
-          imageUrl:        p.imageUrl || null,
-          source:          p.source || "static",
-        };
-      }),
+      alternatives: serializeAlternatives(finalAlternatives, finalCategory || category),
       ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
         name:            a.name || "",
         reason:          a.reason || "",
@@ -5460,20 +5480,15 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
           ));
           ({ finalScore } = applyPositiveCeilings(finalScore, cat, p1, p2, []));
 
-          const isChild = detectChildProduct(productName, cat);
-          const flagText = [...(p1.flagged_substances||[]), ...(p1.materials?.concerns||[])].join(" ");
-          const { childScore } = computeChildScore(finalScore, flagText, cat, productName, isChild);
+          const safety = computeSafetyScores(finalScore, cat, productName, p1);
+          const { childScore, isChild } = safety;
 
-          const alternatives = filterDbAlternatives(
-            findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
-          ).map(p => {
-            const as = p.score ?? 3;
-            const ac = detectChildProduct(p.name, p.category || cat);
-            const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||cat, p.name, ac);
-            return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs,
-                     material:p.material||"", description:p.description||"", price:p.price||"",
-                     affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
-          });
+          const alternatives = serializeAlternatives(
+            filterDbAlternatives(
+              findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
+            ),
+            cat
+          );
 
           const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
             : finalScore <= 4 ? "Good — mostly clean, use with awareness"
@@ -5489,6 +5504,9 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
             confidence:         p1.confidence || "medium",
             is_child_product:   isChild,
             child_score:        childScore,
+            child_bumps:        safety.childBumps || [],
+            pregnancy_score:    safety.pregnancyScore,
+            pregnancy_bumps:    safety.pregnancyBumps || [],
             flagged_substances: p1.flagged_substances || [],
             concerns:           p1.concerns           || [],
             summary:            p1.summary            || "",
@@ -5752,30 +5770,19 @@ app.post("/barcode", rateLimit, async (req, res) => {
       : finalScore <= 8 ? "Switch — real concerns, time to swap"
       : "Avoid — known harmful substances";
 
-    const isChild = detectChildProduct(productName, cat);
-    // Include OFF ingredient text in the flag text so child/pregnancy scoring
-    // sees substances the AI may have missed
-    const flagText = [
-      ...(p1.flagged_substances||[]),
-      ...(p1.materials?.concerns||[]),
-      ingredText || "",
-      ...textFloors.triggered,
-    ].join(" ");
-    const { childScore, childBumps } = computeChildScore(finalScore, flagText, cat, productName, isChild);
-    const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, cat, productName);
+    // Unified safety scoring — includes OFF ingredient text so substances
+    // the AI may have missed still trigger kid/pregnancy bumps
+    const barcodeSafety = computeSafetyScores(
+      finalScore, cat, productName, p1, textFloors.triggered, ingredText || ""
+    );
+    const { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild } = barcodeSafety;
 
-    const alternatives = filterDbAlternatives(
-      findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
-    ).map(p => {
-      const as = p.score ?? 3;
-      const ac = detectChildProduct(p.name, p.category || cat);
-      const altFlags = (p.tags||[]).join(" ")+" "+(p.material||"");
-      const { childScore: acs } = computeChildScore(as, altFlags, p.category||cat, p.name, ac);
-      const { pregnancyScore: aps } = computePregnancyScore(as, altFlags, p.category||cat, p.name);
-      return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs, pregnancy_score:aps,
-               material:p.material||"", description:p.description||"", price:p.price||"",
-               affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
-    });
+    const alternatives = serializeAlternatives(
+      filterDbAlternatives(
+        findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
+      ),
+      cat
+    );
 
     // Use OFF nutrition as ground truth; fall back to AI if OFF didn't have it
     const nutrition = (sugar_g != null || sodium_mg != null || sat_fat_g != null)
