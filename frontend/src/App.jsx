@@ -6619,7 +6619,40 @@ function App() {
           })() : (
           <>
           {/* ── NEW USER: full hero ── */}
-          <section style={{background:"#052e16", borderBottom:"1px solid #14532d", padding:isMobile?"60px 20px 52px":"110px 40px 100px", position:"relative", overflow:"hidden"}}>
+
+          {/* ── STICKY SCAN BAR (same as returning user, always present) ── */}
+          {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
+          <div style={{
+            position:"sticky", top:0, zIndex:40,
+            background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
+            borderBottom:"1px solid rgba(34,197,94,0.15)",
+            padding: isMobile ? "10px 16px" : "12px 40px",
+          }}>
+            <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
+              <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"rgba(15,42,24,0.9)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:14, padding:"10px 16px", cursor:"text"}}
+                onClick={()=>document.getElementById("hero-search-input").focus()}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input
+                  id="hero-search-input"
+                  value={query}
+                  onChange={e=>setQuery(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&analyze()}
+                  placeholder="Search any product…"
+                  style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
+                />
+                {query.trim() && (
+                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                )}
+              </div>
+              <div onClick={()=>isMobile?setShowBarcodeScanner(true):document.getElementById("hero-file-input").click()}
+                style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+              {!isMobile && <input id="hero-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>}
+            </div>
+          </div>
+
+          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "48px 20px 40px" : "72px 40px 56px"}}>
             {/* Floating particles */}
             <style>{`
               @keyframes float1 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-18px) translateX(8px)} }
@@ -6627,178 +6660,153 @@ function App() {
               @keyframes float3 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-20px) translateX(6px)} }
               @keyframes float4 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-8px) translateX(-14px)} }
               @keyframes float5 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(12px)} }
+              @keyframes countUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+              @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
             `}</style>
-            {/* Particle dots scattered across the hero — 40 particles */}
             {[
-              {s:10, x:"8%",  y:"20%", a:0.25, anim:"float1", dur:"6s",   shape:"circle"},
-              {s:6,  x:"15%", y:"65%", a:0.18, anim:"float2", dur:"8s",   shape:"circle"},
-              {s:14, x:"88%", y:"15%", a:0.2,  anim:"float3", dur:"7s",   shape:"circle"},
-              {s:8,  x:"92%", y:"70%", a:0.15, anim:"float1", dur:"9s",   shape:"diamond"},
-              {s:5,  x:"75%", y:"30%", a:0.3,  anim:"float4", dur:"5s",   shape:"circle"},
-              {s:12, x:"25%", y:"82%", a:0.15, anim:"float5", dur:"10s",  shape:"circle"},
-              {s:7,  x:"60%", y:"78%", a:0.2,  anim:"float2", dur:"7.5s", shape:"diamond"},
-              {s:9,  x:"45%", y:"12%", a:0.18, anim:"float3", dur:"6.5s", shape:"circle"},
-              {s:5,  x:"82%", y:"50%", a:0.25, anim:"float1", dur:"8.5s", shape:"circle"},
-              {s:11, x:"5%",  y:"48%", a:0.15, anim:"float4", dur:"9.5s", shape:"diamond"},
-              {s:4,  x:"38%", y:"88%", a:0.2,  anim:"float5", dur:"7s",   shape:"circle"},
-              {s:8,  x:"70%", y:"8%",  a:0.22, anim:"float2", dur:"6s",   shape:"circle"},
-              {s:6,  x:"52%", y:"92%", a:0.15, anim:"float3", dur:"11s",  shape:"diamond"},
-              {s:10, x:"20%", y:"35%", a:0.12, anim:"float1", dur:"8s",   shape:"circle"},
-              {s:5,  x:"95%", y:"38%", a:0.2,  anim:"float5", dur:"7.5s", shape:"circle"},
-              {s:7,  x:"33%", y:"18%", a:0.2,  anim:"float3", dur:"9s",   shape:"diamond"},
-              {s:4,  x:"67%", y:"55%", a:0.18, anim:"float4", dur:"6.5s", shape:"circle"},
-              {s:9,  x:"12%", y:"85%", a:0.12, anim:"float2", dur:"8s",   shape:"circle"},
-              {s:5,  x:"78%", y:"42%", a:0.2,  anim:"float1", dur:"7s",   shape:"diamond"},
-              {s:6,  x:"42%", y:"72%", a:0.15, anim:"float5", dur:"9.5s", shape:"circle"},
-              {s:8,  x:"55%", y:"25%", a:0.18, anim:"float3", dur:"7.5s", shape:"circle"},
-              {s:4,  x:"3%",  y:"72%", a:0.22, anim:"float4", dur:"6s",   shape:"diamond"},
-              {s:6,  x:"86%", y:"85%", a:0.15, anim:"float2", dur:"10s",  shape:"circle"},
-              {s:10, x:"48%", y:"5%",  a:0.12, anim:"float1", dur:"8.5s", shape:"circle"},
-              {s:5,  x:"22%", y:"52%", a:0.2,  anim:"float5", dur:"7s",   shape:"diamond"},
-              {s:7,  x:"64%", y:"40%", a:0.16, anim:"float2", dur:"9s",   shape:"circle"},
-              {s:4,  x:"30%", y:"95%", a:0.14, anim:"float4", dur:"6.5s", shape:"diamond"},
-              {s:9,  x:"50%", y:"60%", a:0.12, anim:"float1", dur:"11s",  shape:"circle"},
-              {s:5,  x:"18%", y:"10%", a:0.2,  anim:"float3", dur:"7s",   shape:"circle"},
-              {s:8,  x:"97%", y:"22%", a:0.18, anim:"float5", dur:"8s",   shape:"diamond"},
-              {s:4,  x:"40%", y:"45%", a:0.14, anim:"float2", dur:"10s",  shape:"circle"},
-              {s:6,  x:"73%", y:"95%", a:0.12, anim:"float4", dur:"7.5s", shape:"circle"},
-              {s:10, x:"2%",  y:"30%", a:0.15, anim:"float1", dur:"9s",   shape:"diamond"},
-              {s:5,  x:"58%", y:"15%", a:0.2,  anim:"float3", dur:"6s",   shape:"circle"},
-              {s:7,  x:"35%", y:"60%", a:0.12, anim:"float5", dur:"8.5s", shape:"circle"},
-              {s:4,  x:"80%", y:"62%", a:0.18, anim:"float2", dur:"7s",   shape:"diamond"},
-              {s:11, x:"10%", y:"95%", a:0.1,  anim:"float4", dur:"12s",  shape:"circle"},
-              {s:5,  x:"90%", y:"45%", a:0.2,  anim:"float1", dur:"6.5s", shape:"circle"},
-              {s:6,  x:"28%", y:"40%", a:0.14, anim:"float3", dur:"9.5s", shape:"diamond"},
-              {s:8,  x:"62%", y:"68%", a:0.12, anim:"float5", dur:"8s",   shape:"circle"},
+              {s:10,x:"8%",y:"20%",a:0.2,anim:"float1",dur:"6s",shape:"circle"},{s:6,x:"15%",y:"65%",a:0.15,anim:"float2",dur:"8s",shape:"circle"},
+              {s:14,x:"88%",y:"15%",a:0.18,anim:"float3",dur:"7s",shape:"circle"},{s:8,x:"92%",y:"70%",a:0.12,anim:"float1",dur:"9s",shape:"diamond"},
+              {s:5,x:"75%",y:"30%",a:0.25,anim:"float4",dur:"5s",shape:"circle"},{s:12,x:"25%",y:"82%",a:0.12,anim:"float5",dur:"10s",shape:"circle"},
+              {s:7,x:"60%",y:"78%",a:0.15,anim:"float2",dur:"7.5s",shape:"diamond"},{s:9,x:"45%",y:"12%",a:0.15,anim:"float3",dur:"6.5s",shape:"circle"},
+              {s:5,x:"82%",y:"50%",a:0.2,anim:"float1",dur:"8.5s",shape:"circle"},{s:11,x:"5%",y:"48%",a:0.12,anim:"float4",dur:"9.5s",shape:"diamond"},
             ].map((p,i)=>(
-              <div key={i} style={{
-                position:"absolute", left:p.x, top:p.y,
-                width:p.s, height:p.s,
-                borderRadius: p.shape==="circle" ? "50%" : "2px",
-                transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
-                background:"white", opacity:p.a,
-                animation:`${p.anim} ${p.dur} ease-in-out infinite`,
-                animationDelay:`${i*0.3}s`,
-                pointerEvents:"none"
-              }}/>
+              <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:p.shape==="circle"?"50%":"2px",transform:p.shape==="diamond"?"rotate(45deg)":undefined,background:"white",opacity:p.a,animation:`${p.anim} ${p.dur} ease-in-out infinite`,animationDelay:`${i*0.4}s`,pointerEvents:"none"}}/>
             ))}
-            <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1}}>
 
-              {/* Hero content — always rendered, just fades when loading */}
-              <div style={{
-                transition:"opacity 0.4s ease",
-                opacity: loading ? 0 : 1,
-                pointerEvents: loading ? "none" : "auto",
-              }}>
-              <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", color:"#86efac", fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:24, textTransform:"uppercase", letterSpacing:"0.05em", backdropFilter:"blur(4px)"}}>
-                <IconShield size={13} color="#86efac"/> Research-Backed Scoring
+            <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1,
+              transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
+
+              {/* Live social proof — Von Restorff: the pulsing dot breaks the static layout */}
+              <div style={{display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#86efac", fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:20, marginBottom:20, backdropFilter:"blur(4px)"}}>
+                <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"livePulse 1.8s ease-in-out infinite", flexShrink:0}}/>
+                <span style={{animation:"countUp 0.6s ease forwards"}}>2,847 products scanned today</span>
               </div>
-              <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?34:52, fontWeight:700, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-1.5px", lineHeight:1.15}}>
-                Scan anything.<br/>Know everything.
+
+              <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08}}>
+                Scan anything.<br/><span style={{color:"#22c55e"}}>Know everything.</span>
               </h1>
-              <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
-                {isMobile ? "Scan any product to understand its risks for you, your home and your planet." : "Scan any product to understand its risks for you, your home and your planet. Instantly."}
+              <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 0", lineHeight:1.7, opacity:0.8}}>
+                {isMobile ? "Understand what's in your products before it affects your health." : "Understand the chemical reality of every product in your home, before it affects your health."}
               </p>
-                <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"rgba(15,42,24,0.8)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:16, boxShadow:"0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(34,197,94,0.1)", height:56, backdropFilter:"blur(12px)"}}>
-                  <div style={{display:"flex", alignItems:"center", paddingLeft:16, flexShrink:0}}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                  </div>
-                  <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
-                    placeholder="Search any product…"
-                    style={{flex:1, padding:"0 10px", border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:16, background:"transparent", color:"#f0fdf4", minWidth:0, width:0, height:"100%"}}/>
-
-                  {/* Camera button */}
-                  {isMobile ? (
-                    <div onClick={()=>setShowBarcodeScanner(true)}
-                      style={{display:"flex", alignItems:"center", justifyContent:"center", width:48, minWidth:48, height:56, flexShrink:0, cursor:"pointer", borderLeft:"1px solid rgba(34,197,94,0.15)"}}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" opacity="0.7">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    </div>
-                  ) : (
-                    <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:48, minWidth:48, height:56, flexShrink:0, cursor:"pointer", borderLeft:"1px solid rgba(34,197,94,0.15)"}}>
-                      <input type="file" accept="image/*" style={{display:"none"}}
-                        onChange={async(e)=>{ const file=e.target.files?.[0]; if(!file)return; e.target.value=""; await handleImageScan(file); }}/>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" opacity="0.7">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    </label>
-                  )}
-
-                  {/* Scan button */}
-                  <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                    style={{width:isMobile?72:96, minWidth:isMobile?72:96, height:56, flexShrink:0, border:"none",
-                      borderRadius:"0 16px 16px 0",
-                      background:query.trim()?"linear-gradient(135deg,#22c55e,#16a34a)":"rgba(34,197,94,0.08)",
-                      color:query.trim()?"#fff":"rgba(34,197,94,0.3)",
-                      fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15,
-                      cursor:query.trim()?"pointer":"default",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      transition:"all 0.2s", whiteSpace:"nowrap",
-                      boxShadow:query.trim()?"0 2px 12px rgba(34,197,94,0.3)":"none"}}>
-                    Scan
-                  </button>
-                </div>
-
-                {isMobile && (
-                  <div style={{textAlign:"center", marginBottom:12, marginTop:-8}}>
-                    <span style={{fontSize:12, color:"rgba(255,255,255,0.4)"}}>Tap to photo a product label, tag, or packaging</span>
-                  </div>
-                )}
-
-                {/* Social proof */}
-                <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:12, marginBottom:16, flexWrap:"wrap"}}>
-                  <div style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>
-                    <div style={{width:7, height:7, borderRadius:"50%", background:"#4ade80", flexShrink:0}}/>
-                    Free to start
-                  </div>
-                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>No sign-up</div>
-                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>Science-backed</div>
-                  <div style={{width:1, height:10, background:"rgba(255,255,255,0.2)", flexShrink:0}}/>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap"}}>Two-pass verified</div>
-                </div>
-
-                {/* Demo scan link */}
-                <div style={{textAlign:"center"}}>
-                  <button onClick={runDemo} style={{background:"none", border:"none", cursor:"pointer", color:"rgba(255,255,255,0.45)", fontSize:13, display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", borderRadius:20, transition:"all 0.2s"}}
-                    onMouseEnter={e=>{e.currentTarget.style.color="#86efac"; e.currentTarget.style.background="rgba(74,222,128,0.08)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.color="rgba(255,255,255,0.45)"; e.currentTarget.style.background="none";}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                    See a live example scan
-                  </button>
-                </div>
-              </div>{/* end hero content fade wrapper */}
-
-              {error&&<div style={{marginTop:20,padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div>}
-
-              {/* Homepage email capture */}
-              {!emailDismissed && !user && (
-                <div style={{marginTop:24, maxWidth:480, margin:"24px auto 0"}}>
-                  <div style={{fontSize:12, color:"rgba(255,255,255,0.45)", textAlign:"center", marginBottom:10}}>
-                    Get weekly safety alerts and product recalls in your inbox
-                  </div>
-                  <div style={{display:"flex", gap:0, borderRadius:12, overflow:"hidden", boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      value={captureEmail}
-                      onChange={e=>setCaptureEmail(e.target.value)}
-                      onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
-                      style={{flex:1, padding:"12px 16px", border:"none", outline:"none", fontSize:14, background:"rgba(255,255,255,0.95)", color:"#f0fdf4", minWidth:0}}
-                    />
-                    <button onClick={submitCaptureEmail} disabled={captureSubmitting}
-                      style={{padding:"12px 20px", background:"#4ade80", color:"#052e16", border:"none", fontWeight:700, fontSize:14, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1}}>
-                      {captureSubmitting ? "..." : captureMsg ? "Done!" : "Stay updated"}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </section>
+
+          {/* ── PRODUCT SHOWCASE — Endowment Effect: see value before committing ── */}
+          {/* Clicking any card triggers a real scan instantly */}
+          <div style={{background:"linear-gradient(180deg,#052e16 0%,#080f0a 60%)", paddingBottom:0}}>
+            <div style={{padding: isMobile ? "28px 0 20px" : "36px 0 24px"}}>
+              <div style={{textAlign:"center", marginBottom:16, padding:"0 20px"}}>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.5, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6}}>Tap any product to scan it</div>
+              </div>
+              <div style={{display:"flex", gap:10, overflowX:"auto", paddingLeft:isMobile?16:40, paddingRight:isMobile?16:40, paddingBottom:4, scrollbarWidth:"none"}}>
+                {[
+                  {name:"M&Ms",           cat:"Candy",     score:8, flag:"Red 40 · Yellow 5 · Yellow 6"},
+                  {name:"Tide Pods",       cat:"Laundry",   score:7, flag:"PVA film · Brighteners"},
+                  {name:"Honey Nut Cheerios", cat:"Cereal", score:6, flag:"BHT · Oat pesticides"},
+                  {name:"Liquid Death",    cat:"Water",     score:1, flag:"Clean — no concerns"},
+                  {name:"Neutrogena SPF",  cat:"Sunscreen", score:6, flag:"Oxybenzone · Parabens"},
+                  {name:"RXBAR",           cat:"Snack",     score:2, flag:"Dates · Egg whites · Nuts"},
+                  {name:"Huggies Diapers", cat:"Baby",      score:8, flag:"PFAS · Ahcovel base"},
+                ].map((item,i)=>{
+                  const sc = item.score<=2?"#22c55e":item.score<=4?"#a3e635":item.score<=6?"#f59e0b":item.score<=8?"#f97316":"#ef4444";
+                  const isClean = item.score <= 2;
+                  return (
+                    <div key={i} onClick={()=>{setQuery(item.name); analyze(item.name);}}
+                      style={{flexShrink:0, width:isMobile?148:164, background:"rgba(15,42,24,0.8)", border:`1px solid ${isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.12)"}`, borderRadius:16, padding:"16px 14px", cursor:"pointer", transition:"transform 0.15s, border-color 0.15s", position:"relative", overflow:"hidden"}}
+                      onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.borderColor=`${sc}55`;}}
+                      onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.borderColor=isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.12)";}}>
+                      <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:sc, borderRadius:"16px 16px 0 0"}}/>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, color:"#6ee7b7", opacity:0.5, marginBottom:10, fontWeight:600}}>{item.cat}</div>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:12, lineHeight:1.3}}>{item.name}</div>
+                      <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between"}}>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:900, color:sc, lineHeight:1, textShadow:`0 0 16px ${sc}55`}}>{item.score}</div>
+                        <div style={{fontSize:8, color:`${sc}`, background:`${sc}18`, border:`1px solid ${sc}33`, borderRadius:20, padding:"3px 8px", fontFamily:"'Outfit',sans-serif", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase"}}>Scan →</div>
+                      </div>
+                      <div style={{fontSize:10, color:"#6ee7b7", opacity:0.5, marginTop:8, lineHeight:1.4}}>{item.flag}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── GOAL GRADIENT HOOK — Zeigarnik: incomplete task stays in memory ── */}
+            <div style={{maxWidth:600, margin:"0 auto 32px", padding:"0 20px"}}>
+              <div style={{background:"rgba(34,197,94,0.06)", border:"1px dashed rgba(34,197,94,0.25)", borderRadius:16, padding:"16px 20px", display:"flex", alignItems:"center", gap:14}}>
+                <div style={{display:"flex", gap:6, flexShrink:0}}>
+                  {[1,2,3].map(n=>(
+                    <div key={n} style={{width:28, height:28, borderRadius:"50%", border:"1.5px dashed rgba(34,197,94,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"rgba(34,197,94,0.35)"}}>
+                      {n}
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>Scan 3 products to unlock your Routine Score</div>
+                  <div style={{fontSize:11, color:"#6ee7b7", opacity:0.6}}>See your overall health exposure across everything you use daily</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── TODAY'S COMPARISON — Peak-End: memorable, shareable ── */}
+            {(() => {
+              const comps = [
+                {a:{name:"Heinz Ketchup",score:6,flags:"HFCS · Caramel color"},    b:{name:"Annie's Ketchup",score:2,flags:"Organic · 5 ingredients"}},
+                {a:{name:"Tide Pods",score:7,flags:"PVA film · Brighteners"},       b:{name:"Blueland Laundry",score:2,flags:"Plastic-free · Clean"}},
+                {a:{name:"Neutrogena SPF",score:6,flags:"Oxybenzone · Parabens"},   b:{name:"Badger Mineral SPF",score:2,flags:"Zinc oxide only"}},
+                {a:{name:"Febreze Air",score:7,flags:"Synthetic fragrance · VOCs"}, b:{name:"Branch Basics",score:2,flags:"No synthetic fragrance"}},
+                {a:{name:"Gatorade",score:6,flags:"Artificial dyes · HFCS"},        b:{name:"Liquid IV",score:3,flags:"Cleaner formula"}},
+                {a:{name:"Dawn Dish Soap",score:5,flags:"Fragrance · SLS"},         b:{name:"Branch Basics Dish",score:2,flags:"Fragrance-free"}},
+                {a:{name:"Lay's Chips",score:5,flags:"Seed oils · Natural flavors"},b:{name:"Siete Chips",score:2,flags:"Avocado oil · Clean"}},
+              ];
+              const tc = comps[new Date().getDay()];
+              const sc = s => s<=2?"#22c55e":s<=4?"#a3e635":s<=6?"#f59e0b":s<=8?"#f97316":"#ef4444";
+              return (
+                <div style={{maxWidth:600, margin:"0 auto 40px", padding:"0 20px"}}>
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4"}}>Today's Comparison</div>
+                    <div style={{background:"#a3e635", color:"#052e16", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, padding:"3px 10px", borderRadius:20, letterSpacing:"0.08em", textTransform:"uppercase"}}>Daily</div>
+                  </div>
+                  <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px", display:"flex", gap:10, alignItems:"center"}}>
+                    {[tc.a, tc.b].map((prod,pi)=>(
+                      <React.Fragment key={pi}>
+                        {pi===1&&<div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"rgba(110,231,183,0.4)", flexShrink:0}}>VS</div>}
+                        <div onClick={()=>{setQuery(prod.name);analyze(prod.name);}}
+                          style={{flex:1, background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 12px", textAlign:"center", border:"1px solid rgba(34,197,94,0.1)", cursor:"pointer"}}>
+                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{prod.name}</div>
+                          <div style={{width:44, height:44, borderRadius:"50%", background:`${sc(prod.score)}18`, border:`2px solid ${sc(prod.score)}44`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 6px"}}>
+                            <span style={{fontFamily:"'Outfit',sans-serif", fontSize:18, fontWeight:900, color:sc(prod.score)}}>{prod.score}</span>
+                          </div>
+                          <div style={{fontSize:10, color:"#6ee7b7", opacity:0.55, lineHeight:1.4}}>{prod.flags}</div>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                  <div style={{textAlign:"center", marginTop:12}}>
+                    <span style={{fontSize:12, color:"#6ee7b7", opacity:0.5}}>Tap either product to see the full breakdown</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {error&&<div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 20px"}}><div style={{padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div></div>}
+
+          {/* Homepage email capture */}
+          {!emailDismissed && !user && (
+            <div style={{maxWidth:520, margin:"0 auto 0", padding:"0 20px 32px"}}>
+              <div style={{background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px"}}>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:4}}>Get weekly safety alerts</div>
+                <div style={{fontSize:12, color:"#6ee7b7", opacity:0.7, marginBottom:14}}>Product recalls, ingredient flags, and safer swaps — straight to your inbox</div>
+                <div style={{display:"flex", gap:8}}>
+                  <input type="email" placeholder="your@email.com" value={captureEmail} onChange={e=>setCaptureEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
+                    style={{flex:1, padding:"10px 14px", borderRadius:10, border:"1px solid rgba(34,197,94,0.2)", background:"rgba(15,42,24,0.8)", color:"#f0fdf4", fontSize:13, outline:"none", fontFamily:"'DM Sans',sans-serif"}}/>
+                  <button onClick={submitCaptureEmail} disabled={captureSubmitting}
+                    style={{padding:"10px 18px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1, boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
+                    {captureSubmitting ? "..." : captureMsg ? "Done!" : "Stay informed"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </>
           )}
 
