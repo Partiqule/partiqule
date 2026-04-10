@@ -5373,6 +5373,13 @@ app.post("/barcode", rateLimit, async (req, res) => {
     sat_fat_g  != null ? `SATURATED FAT PER SERVING: ${sat_fat_g}g` : null,
     calories   != null ? `CALORIES PER SERVING: ${calories}kcal` : null,
     servingLabel ? `SERVING SIZE: ${servingLabel}` : null,
+    // Scoring guidance for common barcode scan patterns
+    brand?.toLowerCase().includes("nespresso") || productName?.toLowerCase().includes("nespresso")
+      ? "SCORING NOTE: Nespresso uses aluminum capsules — inert food contact surface, no plastic migration. Natural coffee flavoring (hazelnut, vanilla, caramel) is food-grade and must NOT be flagged as a synthetic chemical concern. Score 2-4."
+      : null,
+    /natural.*flavor|flavoring/i.test(ingredText) && !/artificial/i.test(ingredText)
+      ? "SCORING NOTE: Ingredient list confirms NATURAL flavoring only — do not penalize as synthetic. Natural flavors are food-grade extracts, not petrochemicals."
+      : null,
   ].filter(Boolean).join("\n");
 
   console.log(`[BARCODE] "${productName}" — running AI with OFF ingredient context`);

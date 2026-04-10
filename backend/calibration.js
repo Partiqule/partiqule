@@ -3118,8 +3118,18 @@ const ENTRIES = [
   ["golde matcha",                  { floor:2, ceiling:4, substances:[], reason:"Golde — matcha + coconut milk + functional ingredients, clean sourcing, no artificial additives. Clean wellness matcha blend.", confidence:"high", category:"food_beverage" }],
 
   // ── NESPRESSO PODS ────────────────────────────────────────────
-  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod","coffee"], reason:"Nespresso Original — aluminum capsule, better than plastic K-Cups for migration concern, but aluminum production is resource-intensive. Coffee contact surface is aluminum not plastic.", confidence:"high", category:"food_beverage" }],
-  ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface.", confidence:"high", category:"food_beverage" }],
+  // Aluminum capsule = inert contact surface, no plastic migration.
+  // Natural coffee flavoring (hazelnut, vanilla, caramel) is food-grade
+  // and NOT a synthetic dye or petrochemical concern.
+  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Original — aluminum capsule, inert food contact surface. No plastic migration risk unlike K-Cups. Natural flavoring variants are clean.", confidence:"high", category:"food_beverage" }],
+  ["nespresso vertuo",              { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Vertuo — aluminum capsule, inert food contact surface, no plastic in water path. Natural flavoring is not a concern.", confidence:"high", category:"food_beverage" }],
+  ["nespresso roasted hazelnut",    { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Roasted Hazelnut — aluminum capsule, natural hazelnut flavoring is food-grade not a synthetic chemical concern.", confidence:"high", category:"food_beverage" }],
+  ["nespresso hazelnut",            { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Hazelnut — aluminum pod, natural hazelnut flavor. No petroleum dyes, no synthetic additives of concern.", confidence:"high", category:"food_beverage" }],
+  ["nespresso vanilla",             { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Vanilla — aluminum pod, natural vanilla flavoring. Clean profile.", confidence:"high", category:"food_beverage" }],
+  ["nespresso caramel",             { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Caramel — aluminum pod, natural caramel flavoring. Clean profile.", confidence:"high", category:"food_beverage" }],
+  ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface. Natural flavor variants are not a concern.", confidence:"high", category:"food_beverage" }],
+  ["roasted hazelnut coffee pod",   { floor:2, ceiling:4, substances:[], reason:"Flavored coffee pod — natural hazelnut flavoring is food-grade, not a petrochemical concern.", confidence:"medium", category:"food_beverage" }],
+  ["hazelnut coffee capsule",       { floor:2, ceiling:4, substances:[], reason:"Hazelnut coffee capsule — natural hazelnut flavor is not a synthetic additive concern.", confidence:"medium", category:"food_beverage" }],
 
 
   // ══════════════════════════════════════════════════════════════
