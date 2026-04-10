@@ -1108,7 +1108,52 @@ function extractJson(text) {
   return null;
 }
 
+// ── API SPEND GUARDRAILS ──────────────────────────────────────
+// Hard cap on Claude API calls to prevent runaway costs like the reload incident.
+// Override with env vars: API_DAILY_CAP, API_MONTHLY_CAP
+const API_DAILY_CAP   = parseInt(process.env.API_DAILY_CAP   || "500");
+const API_MONTHLY_CAP = parseInt(process.env.API_MONTHLY_CAP || "5000");
+let apiCallCounts = { day: 0, month: 0, dayKey: "", monthKey: "" };
+
+const loadApiCounts = async () => {
+  const now = new Date();
+  apiCallCounts.dayKey   = `api_count:${now.toISOString().slice(0,10)}`;
+  apiCallCounts.monthKey = `api_count:${now.toISOString().slice(0,7)}`;
+  if (hasRedis) {
+    try {
+      const [d, m] = await Promise.all([redisGet(apiCallCounts.dayKey), redisGet(apiCallCounts.monthKey)]);
+      apiCallCounts.day   = typeof d === "number" ? d : (d?.count || 0);
+      apiCallCounts.month = typeof m === "number" ? m : (m?.count || 0);
+    } catch {}
+  }
+};
+loadApiCounts();
+
+const checkApiBudget = () => {
+  const now = new Date();
+  const dayKey   = `api_count:${now.toISOString().slice(0,10)}`;
+  const monthKey = `api_count:${now.toISOString().slice(0,7)}`;
+  if (dayKey !== apiCallCounts.dayKey)     { apiCallCounts.day = 0;   apiCallCounts.dayKey = dayKey; }
+  if (monthKey !== apiCallCounts.monthKey) { apiCallCounts.month = 0; apiCallCounts.monthKey = monthKey; }
+  if (apiCallCounts.day   >= API_DAILY_CAP)   throw new Error(`API_BUDGET_EXCEEDED: daily cap ${API_DAILY_CAP} reached (${apiCallCounts.day})`);
+  if (apiCallCounts.month >= API_MONTHLY_CAP) throw new Error(`API_BUDGET_EXCEEDED: monthly cap ${API_MONTHLY_CAP} reached (${apiCallCounts.month})`);
+};
+
+const incrementApiCount = () => {
+  apiCallCounts.day++;
+  apiCallCounts.month++;
+  if (hasRedis) {
+    redisSet(apiCallCounts.dayKey,   apiCallCounts.day);
+    redisSet(apiCallCounts.monthKey, apiCallCounts.month);
+  }
+  if (apiCallCounts.day % 50 === 0) {
+    console.log(`[API BUDGET] ${apiCallCounts.day}/${API_DAILY_CAP} today, ${apiCallCounts.month}/${API_MONTHLY_CAP} this month`);
+  }
+};
+
 async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
+  checkApiBudget();
+  incrementApiCount();
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
@@ -1167,6 +1212,8 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
 // Vision pass — identifies product from image AND scores it in one call
 async function callClaudeVision(imageBase64, mediaType, retries=3) {
+  checkApiBudget();
+  incrementApiCount();
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
@@ -4061,6 +4108,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
       return res.json(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
+      if (String(err.message).includes("API_BUDGET_EXCEEDED")) {
+        return res.status(503).json({ error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
+      }
       return res.status(500).json({ error: err.message || "Image scan failed" });
     }
   }
@@ -4426,8 +4476,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ? "That scan took too long. Please try again."
       : err.message?.includes("No JSON") || err.message?.includes("JSON parse")
       ? "We had trouble analysing that product. Please try again or rephrase the product name."
+      : err.message?.includes("API_BUDGET_EXCEEDED")
+      ? "Partiqule has hit its daily scan limit. Please try again tomorrow."
       : err.message;
-    res.status(500).json({ error: msg });
+    const statusCode = err.message?.includes("API_BUDGET_EXCEEDED") ? 503 : 500;
+    res.status(statusCode).json({ error: msg });
   }
 });
 
@@ -4653,6 +4706,17 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
 app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
 app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
 app.get("/cache-clear",  requireAdmin, (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+
+// View or reset API spend budget
+app.get("/admin/api-budget", requireAdmin, async (req, res) => {
+  await loadApiCounts();
+  if (req.query.reset === "day")   { apiCallCounts.day = 0;   if (hasRedis) redisSet(apiCallCounts.dayKey, 0); }
+  if (req.query.reset === "month") { apiCallCounts.month = 0; if (hasRedis) redisSet(apiCallCounts.monthKey, 0); }
+  res.json({
+    today:     { used: apiCallCounts.day,   cap: API_DAILY_CAP,   remaining: API_DAILY_CAP - apiCallCounts.day },
+    thisMonth: { used: apiCallCounts.month, cap: API_MONTHLY_CAP, remaining: API_MONTHLY_CAP - apiCallCounts.month },
+  });
+});
 
 // Recent scans — returns last N cached product names and scores for admin dashboard
 app.get("/recent-scans", requireAdmin, async (req, res) => {
