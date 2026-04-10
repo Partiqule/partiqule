@@ -5113,50 +5113,41 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
     return res.json(prog || { status: "not_started" });
   }
 
-  if (reloadRunning) {
-    const prog = await redisGet(RELOAD_PROGRESS_KEY);
-    return res.json({ status: "already_running", progress: prog });
+  // Reset command — clear stuck state
+  if (req.query.reset) {
+    reloadRunning = false;
+    await redisSet(RELOAD_PROGRESS_KEY, null);
+    return res.json({ status: "reset" });
   }
 
-  // Respond immediately — reload runs in background
-  res.json({ status: "started", message: "Reload running in background on Railway. Poll /admin/reload-redis?key=...&status=1 to watch progress." });
+  // Process this many items per request (sync, so Railway keeps the process alive)
+  const BATCH_SIZE = parseInt(req.query.batch) || 25;
 
-  reloadRunning = true;
+  // Load or init progress
+  let progress = await redisGet(RELOAD_PROGRESS_KEY);
+  let allKeys, startIndex = 0, reloaded = 0, skipped = 0, failed = 0;
 
-  // Run async — detached from the HTTP response
-  (async () => {
-    const DELAY_MS = 2000; // ~30/min — safe for Anthropic rate limits
-    let allKeys, startIndex = 0;
+  if (progress?.status === "running" && progress?.allKeys?.length) {
+    allKeys = progress.allKeys;
+    startIndex = progress.nextIndex || 0;
+    reloaded = progress.reloaded || 0;
+    skipped = progress.skipped || 0;
+    failed = progress.failed || 0;
+  } else if (progress?.status === "complete") {
+    return res.json({ status: "complete", progress });
+  } else {
+    allKeys = (await redisKeys("*")).filter(k => k !== RELOAD_PROGRESS_KEY);
+    console.log(`[RELOAD] Starting fresh — ${allKeys.length} keys`);
+  }
 
-    // Resume from checkpoint if one exists
-    const existing = await redisGet(RELOAD_PROGRESS_KEY);
-    if (existing?.status === "running" && existing?.nextIndex > 0 && existing?.allKeys?.length) {
-      allKeys   = existing.allKeys;
-      startIndex = existing.nextIndex;
-      console.log(`[RELOAD] Resuming from index ${startIndex} of ${allKeys.length}`);
-    } else {
-      allKeys = await redisKeys("*");
-      // Filter out our own progress key
-      allKeys = allKeys.filter(k => k !== RELOAD_PROGRESS_KEY);
-      console.log(`[RELOAD] Starting fresh — ${allKeys.length} keys`);
-    }
+  const total = allKeys.length;
+  const endIndex = Math.min(startIndex + BATCH_SIZE, total);
 
-    const total    = allKeys.length;
-    let reloaded   = existing?.reloaded   || 0;
-    let skipped    = existing?.skipped    || 0;
-    let failed     = existing?.failed     || 0;
+  // Process batch synchronously within this HTTP request
+  await (async () => {
+    const DELAY_MS = 500; // faster since we're doing small batches per request
 
-    const saveProgress = async (nextIndex) => {
-      await redisSet(RELOAD_PROGRESS_KEY, {
-        status: nextIndex >= total ? "complete" : "running",
-        total, nextIndex, reloaded, skipped, failed,
-        pct: Math.round(nextIndex / total * 100),
-        allKeys, // store key list so we can resume
-        updatedAt: new Date().toISOString(),
-      });
-    };
-
-    for (let i = startIndex; i < allKeys.length; i++) {
+    for (let i = startIndex; i < endIndex; i++) {
       const key = allKeys[i];
       try {
         const current = await redisGet(key);
@@ -5256,8 +5247,6 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
           console.warn(`[RELOAD] ${i+1}/${total} ✗ ${productName}: ${aiErr.message}`);
         }
 
-        // Save checkpoint every 10 products and throttle
-        if (i % 10 === 0) await saveProgress(i + 1);
         await new Promise(r => setTimeout(r, DELAY_MS));
 
       } catch(err) {
@@ -5265,11 +5254,26 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
         console.warn(`[RELOAD] Key error ${key}: ${err.message}`);
       }
     }
-
-    await saveProgress(total);
-    reloadRunning = false;
-    console.log(`[RELOAD] Complete — ${reloaded} reloaded, ${skipped} skipped, ${failed} failed`);
   })();
+
+  // Save progress and return
+  const finalIndex = endIndex;
+  const isComplete = finalIndex >= total;
+  await redisSet(RELOAD_PROGRESS_KEY, {
+    status: isComplete ? "complete" : "running",
+    total, nextIndex: finalIndex, reloaded, skipped, failed,
+    pct: Math.round(finalIndex / total * 100),
+    allKeys,
+    updatedAt: new Date().toISOString(),
+  });
+
+  console.log(`[RELOAD] Batch done — ${startIndex}→${finalIndex}/${total} (reloaded: ${reloaded}, skipped: ${skipped}, failed: ${failed})`);
+  res.json({
+    status: isComplete ? "complete" : "batch_done",
+    total, nextIndex: finalIndex, reloaded, skipped, failed,
+    pct: Math.round(finalIndex / total * 100),
+    batch: endIndex - startIndex,
+  });
 });
 // ── BARCODE SCAN — Open Food Facts lookup + full AI pipeline ────────────────
 // Accepts a UPC/EAN barcode, looks up product data from Open Food Facts (free,
