@@ -6027,9 +6027,53 @@ function App() {
         @keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
         @keyframes pulseScan{0%,100%{box-shadow:0 4px 20px rgba(34,197,94,0.5),0 0 0 4px rgba(34,197,94,0.12)}50%{box-shadow:0 4px 28px rgba(34,197,94,0.7),0 0 0 6px rgba(34,197,94,0.18)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
+        @keyframes gFloat1{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-22px) translateX(10px)}}
+        @keyframes gFloat2{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(-12px)}}
+        @keyframes gFloat3{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-18px) translateX(8px)}}
+        @keyframes gFloat4{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-10px) translateX(-16px)}}
+        @keyframes gFloat5{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-20px) translateX(14px)}}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3,.outfit{font-family:'Outfit',sans-serif;}
       `}</style>
+
+      {/* ── GLOBAL FLOATING PARTICLES — fixed, full viewport, always present ── */}
+      {/* Low opacity so they read as ambient texture not foreground elements */}
+      {!result && [
+        {s:8, x:"6%",  y:"12%", a:0.09, anim:"gFloat1", dur:"7s",   delay:"0s",   shape:"circle"},
+        {s:5, x:"14%", y:"55%", a:0.07, anim:"gFloat2", dur:"9s",   delay:"1.2s", shape:"circle"},
+        {s:12,x:"22%", y:"80%", a:0.08, anim:"gFloat3", dur:"8s",   delay:"0.5s", shape:"diamond"},
+        {s:6, x:"35%", y:"20%", a:0.10, anim:"gFloat1", dur:"6.5s", delay:"2s",   shape:"circle"},
+        {s:4, x:"48%", y:"70%", a:0.07, anim:"gFloat4", dur:"10s",  delay:"0.8s", shape:"diamond"},
+        {s:9, x:"58%", y:"8%",  a:0.09, anim:"gFloat2", dur:"7.5s", delay:"3s",   shape:"circle"},
+        {s:5, x:"68%", y:"45%", a:0.08, anim:"gFloat5", dur:"8.5s", delay:"1.5s", shape:"circle"},
+        {s:11,x:"76%", y:"88%", a:0.07, anim:"gFloat3", dur:"11s",  delay:"0.3s", shape:"circle"},
+        {s:4, x:"84%", y:"30%", a:0.10, anim:"gFloat1", dur:"6s",   delay:"2.5s", shape:"diamond"},
+        {s:7, x:"92%", y:"65%", a:0.08, anim:"gFloat4", dur:"9.5s", delay:"1s",   shape:"circle"},
+        {s:5, x:"3%",  y:"40%", a:0.07, anim:"gFloat5", dur:"8s",   delay:"4s",   shape:"circle"},
+        {s:8, x:"28%", y:"92%", a:0.08, anim:"gFloat2", dur:"7s",   delay:"1.8s", shape:"diamond"},
+        {s:6, x:"44%", y:"35%", a:0.09, anim:"gFloat1", dur:"9s",   delay:"0.6s", shape:"circle"},
+        {s:4, x:"62%", y:"78%", a:0.07, anim:"gFloat3", dur:"6.5s", delay:"3.5s", shape:"circle"},
+        {s:10,x:"88%", y:"15%", a:0.08, anim:"gFloat5", dur:"10s",  delay:"2.2s", shape:"diamond"},
+        {s:5, x:"52%", y:"55%", a:0.06, anim:"gFloat4", dur:"12s",  delay:"0.9s", shape:"circle"},
+        {s:7, x:"18%", y:"25%", a:0.08, anim:"gFloat2", dur:"8s",   delay:"1.4s", shape:"circle"},
+        {s:4, x:"72%", y:"20%", a:0.07, anim:"gFloat1", dur:"7.5s", delay:"3.2s", shape:"diamond"},
+        {s:6, x:"96%", y:"50%", a:0.09, anim:"gFloat3", dur:"9s",   delay:"0.4s", shape:"circle"},
+        {s:8, x:"38%", y:"60%", a:0.06, anim:"gFloat5", dur:"11s",  delay:"2.8s", shape:"circle"},
+      ].map((p,i)=>(
+        <div key={`gp-${i}`} style={{
+          position:"fixed",
+          left:p.x, top:p.y,
+          width:p.s, height:p.s,
+          borderRadius: p.shape==="circle" ? "50%" : "2px",
+          transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
+          background:"#22c55e",
+          opacity:p.a,
+          animation:`${p.anim} ${p.dur} ease-in-out infinite`,
+          animationDelay:p.delay,
+          pointerEvents:"none",
+          zIndex:0,
+        }}/>
+      ))}
 
       {/* HEADER */}
       <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
@@ -6241,25 +6285,6 @@ function App() {
           </div>
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
-
-            {/* Appearance */}
-            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
-                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Appearance</div>
-              </div>
-
-              {/* Theme — always dark */}
-              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:`1px solid ${border}`}}>
-                <div>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Theme</div>
-                  <div style={{fontSize:13, color:muted}}>Dark — optimised for readability</div>
-                </div>
-                <div style={{padding:"5px 14px", borderRadius:20, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)"}}>
-                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#22c55e"}}>Dark</span>
-                </div>
-              </div>
-
-            </div>
 
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
@@ -6728,13 +6753,48 @@ function App() {
               @keyframes scoreReveal { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
             `}</style>
             {[
-              {s:10,x:"8%",y:"20%",a:0.2,anim:"float1",dur:"6s",shape:"circle"},{s:6,x:"15%",y:"65%",a:0.15,anim:"float2",dur:"8s",shape:"circle"},
-              {s:14,x:"88%",y:"15%",a:0.18,anim:"float3",dur:"7s",shape:"circle"},{s:8,x:"92%",y:"70%",a:0.12,anim:"float1",dur:"9s",shape:"diamond"},
-              {s:5,x:"75%",y:"30%",a:0.25,anim:"float4",dur:"5s",shape:"circle"},{s:12,x:"25%",y:"82%",a:0.12,anim:"float5",dur:"10s",shape:"circle"},
-              {s:7,x:"60%",y:"78%",a:0.15,anim:"float2",dur:"7.5s",shape:"diamond"},{s:9,x:"45%",y:"12%",a:0.15,anim:"float3",dur:"6.5s",shape:"circle"},
-              {s:5,x:"82%",y:"50%",a:0.2,anim:"float1",dur:"8.5s",shape:"circle"},{s:11,x:"5%",y:"48%",a:0.12,anim:"float4",dur:"9.5s",shape:"diamond"},
+              {s:10,x:"8%",  y:"20%",a:0.25,anim:"float1",dur:"6s",  shape:"circle"},
+              {s:6, x:"15%", y:"65%",a:0.18,anim:"float2",dur:"8s",  shape:"circle"},
+              {s:14,x:"88%", y:"15%",a:0.20,anim:"float3",dur:"7s",  shape:"circle"},
+              {s:8, x:"92%", y:"70%",a:0.15,anim:"float1",dur:"9s",  shape:"diamond"},
+              {s:5, x:"75%", y:"30%",a:0.30,anim:"float4",dur:"5s",  shape:"circle"},
+              {s:12,x:"25%", y:"82%",a:0.15,anim:"float5",dur:"10s", shape:"circle"},
+              {s:7, x:"60%", y:"78%",a:0.20,anim:"float2",dur:"7.5s",shape:"diamond"},
+              {s:9, x:"45%", y:"12%",a:0.18,anim:"float3",dur:"6.5s",shape:"circle"},
+              {s:5, x:"82%", y:"50%",a:0.25,anim:"float1",dur:"8.5s",shape:"circle"},
+              {s:11,x:"5%",  y:"48%",a:0.15,anim:"float4",dur:"9.5s",shape:"diamond"},
+              {s:4, x:"38%", y:"88%",a:0.20,anim:"float5",dur:"7s",  shape:"circle"},
+              {s:8, x:"70%", y:"8%", a:0.22,anim:"float2",dur:"6s",  shape:"circle"},
+              {s:6, x:"52%", y:"92%",a:0.15,anim:"float3",dur:"11s", shape:"diamond"},
+              {s:10,x:"20%", y:"35%",a:0.12,anim:"float1",dur:"8s",  shape:"circle"},
+              {s:5, x:"95%", y:"38%",a:0.20,anim:"float5",dur:"7.5s",shape:"circle"},
+              {s:7, x:"33%", y:"18%",a:0.20,anim:"float3",dur:"9s",  shape:"diamond"},
+              {s:4, x:"67%", y:"55%",a:0.18,anim:"float4",dur:"6.5s",shape:"circle"},
+              {s:9, x:"12%", y:"85%",a:0.12,anim:"float2",dur:"8s",  shape:"circle"},
+              {s:5, x:"78%", y:"42%",a:0.20,anim:"float1",dur:"7s",  shape:"diamond"},
+              {s:6, x:"42%", y:"72%",a:0.15,anim:"float5",dur:"9.5s",shape:"circle"},
+              {s:8, x:"55%", y:"25%",a:0.18,anim:"float3",dur:"7.5s",shape:"circle"},
+              {s:4, x:"3%",  y:"72%",a:0.22,anim:"float4",dur:"6s",  shape:"diamond"},
+              {s:6, x:"86%", y:"85%",a:0.15,anim:"float2",dur:"10s", shape:"circle"},
+              {s:10,x:"48%", y:"5%", a:0.12,anim:"float1",dur:"8.5s",shape:"circle"},
+              {s:5, x:"22%", y:"52%",a:0.20,anim:"float5",dur:"7s",  shape:"diamond"},
+              {s:7, x:"64%", y:"40%",a:0.16,anim:"float2",dur:"9s",  shape:"circle"},
+              {s:4, x:"30%", y:"95%",a:0.14,anim:"float4",dur:"6.5s",shape:"diamond"},
+              {s:9, x:"50%", y:"60%",a:0.12,anim:"float1",dur:"11s", shape:"circle"},
+              {s:5, x:"18%", y:"10%",a:0.20,anim:"float3",dur:"7s",  shape:"circle"},
+              {s:8, x:"97%", y:"22%",a:0.18,anim:"float5",dur:"8s",  shape:"diamond"},
+              {s:4, x:"40%", y:"45%",a:0.14,anim:"float2",dur:"10s", shape:"circle"},
+              {s:6, x:"73%", y:"95%",a:0.12,anim:"float4",dur:"7.5s",shape:"circle"},
+              {s:10,x:"2%",  y:"30%",a:0.15,anim:"float1",dur:"9s",  shape:"diamond"},
+              {s:5, x:"58%", y:"15%",a:0.20,anim:"float3",dur:"6s",  shape:"circle"},
+              {s:7, x:"35%", y:"60%",a:0.12,anim:"float5",dur:"8.5s",shape:"circle"},
+              {s:4, x:"80%", y:"62%",a:0.18,anim:"float2",dur:"7s",  shape:"diamond"},
+              {s:11,x:"10%", y:"95%",a:0.10,anim:"float4",dur:"12s", shape:"circle"},
+              {s:5, x:"90%", y:"45%",a:0.20,anim:"float1",dur:"6.5s",shape:"circle"},
+              {s:6, x:"28%", y:"40%",a:0.14,anim:"float3",dur:"9.5s",shape:"diamond"},
+              {s:8, x:"62%", y:"68%",a:0.12,anim:"float5",dur:"8s",  shape:"circle"},
             ].map((p,i)=>(
-              <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:p.shape==="circle"?"50%":"2px",transform:p.shape==="diamond"?"rotate(45deg)":undefined,background:"white",opacity:p.a,animation:`${p.anim} ${p.dur} ease-in-out infinite`,animationDelay:`${i*0.4}s`,pointerEvents:"none"}}/>
+              <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:p.shape==="circle"?"50%":"2px",transform:p.shape==="diamond"?"rotate(45deg)":undefined,background:"white",opacity:p.a,animation:`${p.anim} ${p.dur} ease-in-out infinite`,animationDelay:`${i*0.3}s`,pointerEvents:"none"}}/>
             ))}
 
             <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1,
