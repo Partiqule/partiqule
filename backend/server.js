@@ -3838,13 +3838,29 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // Camera scan of Goldfish = text scan of "Goldfish crackers" — same result
       const imgKey = cacheKey(productName, category);
       const imgCached = await cacheGet(imgKey);
+      let imgSkipFuzzy = false;
       if (imgCached) {
-        console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
-        return res.json({ ...imgCached, cached: true });
+        const imgNoIng  = !imgCached.ingredient_list || imgCached.ingredient_list.length === 0;
+        const imgNoFlag = !imgCached.flagged_substances || imgCached.flagged_substances.length === 0;
+        const imgAllFive = imgCached.dimensions &&
+          imgCached.dimensions.materials?.score      === 5 &&
+          imgCached.dimensions.usage_exposure?.score === 5 &&
+          imgCached.dimensions.packaging?.score      === 5 &&
+          imgCached.dimensions.sustainability?.score === 5;
+        const imgStale = !imgCached.dimensions || imgCached._preloaded === true || (imgNoIng && imgNoFlag && imgAllFive);
+        if (imgStale) {
+          console.log(`[CACHE STALE] Vision "${productName}" — evicting placeholder, forcing full scan`);
+          scoreCache.delete(imgKey);
+          imgSkipFuzzy = true;
+        } else {
+          console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
+          return res.json({ ...imgCached, cached: true });
+        }
       }
 
       // ── Fuzzy calibration check before running pass2 ──
-      const imgFuzzy = fuzzyCalibrationLookup(productName);
+      // Skipped when stale entry was evicted so pass2 runs and enriches the result.
+      const imgFuzzy = !imgSkipFuzzy && fuzzyCalibrationLookup(productName);
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
@@ -4055,29 +4071,38 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const category = detectCategory(productName);
   const key      = cacheKey(productName, category);
 
+  // skipFuzzyCalibration is set when a stale preloaded entry is evicted.
+  // It forces the full AI pass to run once so the product gets real ingredients
+  // and dimension scores. Calibration floor/ceiling is still enforced afterwards
+  // via applyProductCalibration at the bottom of the AI path.
+  let skipFuzzyCalibration = false;
+
   const cached = await cacheGet(key);
   if (cached) {
-    // Staleness check — old cached entries missing fields added in recent schema updates
-    // (ingredient_list, flagged_substances, dimensions) get evicted so the product
-    // re-scans and picks up ingredients, flagged dyes, and dimension scores.
-    const isStale = (
-      cached.ingredient_list === undefined ||
-      cached.dimensions      === undefined ||
-      cached.flagged_substances === undefined
-    );
+    // Staleness check — evict entries that predate the full schema or were
+    // bulk-preloaded with placeholder data (all dimensions = 5, no ingredients).
+    const noIngredients = !cached.ingredient_list || cached.ingredient_list.length === 0;
+    const noFlags       = !cached.flagged_substances || cached.flagged_substances.length === 0;
+    const allFiveDims   = cached.dimensions &&
+      cached.dimensions.materials?.score      === 5 &&
+      cached.dimensions.usage_exposure?.score === 5 &&
+      cached.dimensions.packaging?.score      === 5 &&
+      cached.dimensions.sustainability?.score === 5;
+    const isStale = !cached.dimensions || cached._preloaded === true || (noIngredients && noFlags && allFiveDims);
     if (isStale) {
-      console.log(`[CACHE STALE] ${key} — missing schema fields, evicting and re-scanning`);
+      console.log(`[CACHE STALE] ${key} — evicting placeholder data, forcing full AI scan`);
       scoreCache.delete(key);
-      // Redis entry will be overwritten by cacheSet after the fresh scan completes
+      skipFuzzyCalibration = true; // bypass fuzzy cal this once so AI enriches the result
     } else {
       console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
       return res.json({ ...cached, cached: true });
     }
   }
 
-  // Fuzzy calibration lookup — catches name variations before going to AI
+  // Fuzzy calibration lookup — catches name variations before going to AI.
+  // Skipped when a stale entry was just evicted so AI runs and enriches the result.
   // e.g. "Seventh Generation soap" matches "seventh generation dish"
-  const fuzzyHit = fuzzyCalibrationLookup(productName);
+  const fuzzyHit = !skipFuzzyCalibration && fuzzyCalibrationLookup(productName);
   if (fuzzyHit) {
     const { entry } = fuzzyHit;
     const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
@@ -5065,6 +5090,91 @@ app.post("/cache-warm", requireAdmin, (req, res) => {
   }
   // Also run Supabase auto-warm to pick up popular user scans
   autoWarmFromSupabase();
+});
+
+// ── ADMIN: Full Redis reload — rescans every stale entry with full AI ──────
+// Streams newline-delimited JSON progress so the caller can watch in real time.
+// Each line is { done, total, product, score, status } or { complete: true, summary }
+app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
+  if (!hasRedis) return res.status(400).json({ error: "Redis not configured" });
+
+  res.setHeader("Content-Type", "application/x-ndjson");
+  res.setHeader("Transfer-Encoding", "chunked");
+  res.setHeader("Cache-Control", "no-cache");
+
+  const send = (obj) => res.write(JSON.stringify(obj) + "\n");
+
+  try {
+    // 1. Fetch all Redis keys
+    const allKeys = await redisKeys("*");
+    send({ phase: "scan", total: allKeys.length, message: `Found ${allKeys.length} Redis keys` });
+
+    let done = 0, skipped = 0, failed = 0, reloaded = 0;
+    const DELAY_MS = 2500; // ~24 products/min — well within Anthropic rate limits
+
+    for (const key of allKeys) {
+      try {
+        // Fetch current value
+        const current = await redisGet(key);
+        if (!current) { skipped++; continue; }
+
+        // Staleness check — same logic as the main analyze route
+        const noIngredients = !current.ingredient_list || current.ingredient_list.length === 0;
+        const noFlags       = !current.flagged_substances || current.flagged_substances.length === 0;
+        const allFiveDims   = current.dimensions &&
+          current.dimensions.materials?.score      === 5 &&
+          current.dimensions.usage_exposure?.score === 5 &&
+          current.dimensions.packaging?.score      === 5 &&
+          current.dimensions.sustainability?.score === 5;
+        const isStale = !current.dimensions || current._preloaded === true || (noIngredients && noFlags && allFiveDims);
+
+        const productName = current.product_name || key.split(":").slice(1).join(":") || key;
+
+        if (!isStale) {
+          done++;
+          skipped++;
+          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "ok", score: current.overall_score || current.score });
+          continue;
+        }
+
+        // Delete stale entry from memory cache so the analyze call re-scans
+        scoreCache.delete(key);
+
+        // Call the internal analyze logic by constructing a mock request
+        // We hit the same AI pipeline used by real user scans
+        const analyzeUrl = `http://localhost:${process.env.PORT || 3000}/analyze`;
+        const analyzeRes = await fetch(analyzeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-internal-reload": "1" },
+          body: JSON.stringify({ query: productName }),
+        });
+
+        if (!analyzeRes.ok) {
+          failed++;
+          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "error", error: `HTTP ${analyzeRes.status}` });
+        } else {
+          const fresh = await analyzeRes.json();
+          reloaded++;
+          done++;
+          send({ done: done + skipped + failed, total: allKeys.length, product: productName, status: "reloaded", score: fresh.overall_score || fresh.score, ingredients: (fresh.ingredient_list || []).length, flags: (fresh.flagged_substances || []).length });
+        }
+
+        // Throttle between AI calls
+        await new Promise(r => setTimeout(r, DELAY_MS));
+
+      } catch (err) {
+        failed++;
+        send({ done: done + skipped + failed, total: allKeys.length, product: key, status: "error", error: err.message });
+      }
+    }
+
+    send({ complete: true, summary: { total: allKeys.length, reloaded, skipped, failed } });
+    res.end();
+
+  } catch (err) {
+    send({ complete: true, error: err.message });
+    res.end();
+  }
 });
 // When the AI returns no scan_next suggestions, generate smart defaults
 // from the alternatives DB — same category, different products.
