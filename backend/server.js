@@ -1241,6 +1241,7 @@ SCORING RULES:
 - Single-use disposables: sustainability score 8-9
 - Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7
 - Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 7-8, usage 6-7, final 6-7
+- NATURAL DYE RULE: Never apply the synthetic dye floor if the label shows natural colorants like vegetable juice, fruit extracts, spirulina, beet juice, turmeric, annatto, or carrot juice. Matt's Bakery, YumEarth, and Unreal use natural colorants — score materials 2-4, never 6+. When in doubt default to natural and do not apply the dye floor.
 - Chemical sunscreen (oxybenzone, octinoxate): materials 6-7, usage 6-7
 - "Reef safe" / "reef friendly" sunscreen claims are UNREGULATED MARKETING — always check actual UV filter ingredients. If oxybenzone or octinoxate is visible, apply the 6-7 floor regardless of reef-safe label.
 - Synthetic fragrance in personal care: materials 5-6
