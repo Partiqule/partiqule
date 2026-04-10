@@ -6077,7 +6077,7 @@ function App() {
 
       {/* HEADER */}
       <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:44, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
             <img src="/logo.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
             <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:800, fontSize:isMobile?18:22, color:"#f0fdf4", letterSpacing:"-0.5px"}}>Partiqule</span>
@@ -6469,7 +6469,7 @@ function App() {
 
                 {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
                 <div style={{
-                  position:"fixed", top:56, left:0, right:0, zIndex:40,
+                  position:"fixed", top:44, left:0, right:0, zIndex:40,
                   background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
                   borderBottom:"1px solid rgba(34,197,94,0.15)",
                   padding: isMobile ? "10px 16px" : "12px 40px",
@@ -6490,7 +6490,7 @@ function App() {
                 </div>
 
                 {/* ── FEED CONTENT ── */}
-                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? "88px 16px 24px" : "80px 40px 32px"}}>
+                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? "76px 16px 24px" : "68px 40px 32px"}}>
 
                   {/* Greeting + streak */}
                   <div style={{marginBottom:20, display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
@@ -6499,10 +6499,10 @@ function App() {
                       <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""} scanned</div>
                     </div>
                     {/* Streak — Zeigarnik: loss aversion keeps people coming back */}
-                    {streak > 1 && (
+                    {streak >= 1 && (
                       <div style={{display:"flex", alignItems:"center", gap:6, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)", borderRadius:20, padding:"6px 12px", flexShrink:0}}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day{streak!==1?"s":""}</span>
+                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day streak</span>
                       </div>
                     )}</div>
 
@@ -6564,7 +6564,7 @@ function App() {
                   <div style={{marginBottom:24}}>
                     <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
                       <div style={{fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:600, color:"#6ee7b7", opacity:0.5}}>{todayLabel}</div>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:700, color:"#6ee7b7", opacity:0.8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:20, padding:"3px 10px"}}>{todayLabel}</div>
                     </div>
                     <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:16,overflow:"hidden",position:"relative"}}>
                       <div style={{position:"absolute",top:10,left:10,background:"#a3e635",color:"#052e16",fontFamily:"'Outfit',sans-serif",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:"0.08em",textTransform:"uppercase"}}>Head to Head</div>
@@ -6704,7 +6704,7 @@ function App() {
           {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
           {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
           <div style={{
-            position:"fixed", top:56, left:0, right:0, zIndex:40,
+            position:"fixed", top:44, left:0, right:0, zIndex:40,
             background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
             borderBottom:"1px solid rgba(34,197,94,0.15)",
             padding: isMobile ? "10px 16px" : "12px 40px",
@@ -6733,7 +6733,7 @@ function App() {
             </div>
           </div>
 
-          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "112px 20px 40px" : "128px 40px 56px"}}>
+          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "96px 20px 40px" : "112px 40px 56px"}}>
             {/* Animated gradient mesh background */}
             <div style={{position:"absolute", inset:0, background:"linear-gradient(135deg,#052e16 0%,#0a3d1f 25%,#052e16 50%,#071f0c 75%,#052e16 100%)", backgroundSize:"400% 400%", animation:"gradientShift 12s ease infinite", pointerEvents:"none"}}/>
             {/* Radial glow that breathes */}
