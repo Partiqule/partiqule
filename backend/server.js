@@ -5268,11 +5268,22 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
   });
 
   console.log(`[RELOAD] Batch done — ${startIndex}→${finalIndex}/${total} (reloaded: ${reloaded}, skipped: ${skipped}, failed: ${failed})`);
+
+  // Self-drive: kick off the next batch via fetch before responding.
+  // Fire-and-forget — we don't await it, so it runs after we return.
+  if (!isComplete && req.query.auto !== "0") {
+    const selfUrl = `http://localhost:${PORT}/admin/reload-redis?key=${encodeURIComponent(ADMIN_KEY)}&batch=${BATCH_SIZE}&auto=1`;
+    setTimeout(() => {
+      fetch(selfUrl).catch(e => console.warn(`[RELOAD] self-trigger failed: ${e.message}`));
+    }, 100);
+  }
+
   res.json({
     status: isComplete ? "complete" : "batch_done",
     total, nextIndex: finalIndex, reloaded, skipped, failed,
     pct: Math.round(finalIndex / total * 100),
     batch: endIndex - startIndex,
+    auto_next: !isComplete,
   });
 });
 // ── BARCODE SCAN — Open Food Facts lookup + full AI pipeline ────────────────
