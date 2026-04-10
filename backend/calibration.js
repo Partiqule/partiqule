@@ -2191,6 +2191,10 @@ const ENTRIES = [
   ["garden of eatin",               { floor:1, ceiling:3, substances:[], reason:"Garden of Eatin' — USDA Organic tortilla chips, non-GMO, no artificial additives. Benchmark clean mainstream chip.", confidence:"high", category:"food_beverage" }],
   ["late july chips",               { floor:1, ceiling:3, substances:[], reason:"Late July — USDA Organic tortilla chips, no artificial additives, fair trade. Benchmark clean chip.", confidence:"high", category:"food_beverage" }],
   ["late july",                     { floor:1, ceiling:3, substances:[], reason:"Late July brand — organic snack chips, no artificial additives. Clean snack brand.", confidence:"high", category:"food_beverage" }],
+  // Full product name as returned by barcode lookup (no brand name in string)
+  ["organic sea salt lime restaurant style tortilla chips", { floor:1, ceiling:3, substances:[], reason:"Late July Organic Sea Salt & Lime — USDA Organic, non-GMO, no artificial additives. Barcode-matched full product name.", confidence:"high", category:"food_beverage" }],
+  ["sea salt lime restaurant style tortilla chips", { floor:1, ceiling:3, substances:[], reason:"Late July organic tortilla chip — barcode name variant.", confidence:"high", category:"food_beverage" }],
+  ["restaurant style tortilla chips", { floor:2, ceiling:4, substances:[], reason:"Generic restaurant-style tortilla chips — usually corn + oil + salt. Score reflects no artificial additives assumption.", confidence:"medium", category:"food_beverage" }],
   ["xochitl",                       { floor:1, ceiling:3, substances:[], reason:"Xochitl — stone-ground organic corn + oil + salt. Traditional tortilla chip process, no artificial additives. Clean benchmark.", confidence:"high", category:"food_beverage" }],
   ["food should taste good",        { floor:1, ceiling:3, substances:[], reason:"Food Should Taste Good — non-GMO, no artificial additives, whole grain options. Clean chip brand.", confidence:"high", category:"food_beverage" }],
   ["santitas",                      { floor:2, ceiling:4, substances:["corn","sunflower oil"], reason:"Santitas — corn + sunflower oil + salt. Minimal ingredients, no artificial additives. Affordable clean chip option.", confidence:"high", category:"food_beverage" }],
@@ -3118,18 +3122,8 @@ const ENTRIES = [
   ["golde matcha",                  { floor:2, ceiling:4, substances:[], reason:"Golde — matcha + coconut milk + functional ingredients, clean sourcing, no artificial additives. Clean wellness matcha blend.", confidence:"high", category:"food_beverage" }],
 
   // ── NESPRESSO PODS ────────────────────────────────────────────
-  // Aluminum capsule = inert contact surface, no plastic migration.
-  // Natural coffee flavoring (hazelnut, vanilla, caramel) is food-grade
-  // and NOT a synthetic dye or petrochemical concern.
-  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Original — aluminum capsule, inert food contact surface. No plastic migration risk unlike K-Cups. Natural flavoring variants are clean.", confidence:"high", category:"food_beverage" }],
-  ["nespresso vertuo",              { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Vertuo — aluminum capsule, inert food contact surface, no plastic in water path. Natural flavoring is not a concern.", confidence:"high", category:"food_beverage" }],
-  ["nespresso roasted hazelnut",    { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Roasted Hazelnut — aluminum capsule, natural hazelnut flavoring is food-grade not a synthetic chemical concern.", confidence:"high", category:"food_beverage" }],
-  ["nespresso hazelnut",            { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Hazelnut — aluminum pod, natural hazelnut flavor. No petroleum dyes, no synthetic additives of concern.", confidence:"high", category:"food_beverage" }],
-  ["nespresso vanilla",             { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Vanilla — aluminum pod, natural vanilla flavoring. Clean profile.", confidence:"high", category:"food_beverage" }],
-  ["nespresso caramel",             { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso Caramel — aluminum pod, natural caramel flavoring. Clean profile.", confidence:"high", category:"food_beverage" }],
-  ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface. Natural flavor variants are not a concern.", confidence:"high", category:"food_beverage" }],
-  ["roasted hazelnut coffee pod",   { floor:2, ceiling:4, substances:[], reason:"Flavored coffee pod — natural hazelnut flavoring is food-grade, not a petrochemical concern.", confidence:"medium", category:"food_beverage" }],
-  ["hazelnut coffee capsule",       { floor:2, ceiling:4, substances:[], reason:"Hazelnut coffee capsule — natural hazelnut flavor is not a synthetic additive concern.", confidence:"medium", category:"food_beverage" }],
+  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod","coffee"], reason:"Nespresso Original — aluminum capsule, better than plastic K-Cups for migration concern, but aluminum production is resource-intensive. Coffee contact surface is aluminum not plastic.", confidence:"high", category:"food_beverage" }],
+  ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface.", confidence:"high", category:"food_beverage" }],
 
 
   // ══════════════════════════════════════════════════════════════
@@ -4291,7 +4285,16 @@ const NUTRITION_LOOKUP = new Map([
   ["miracle whip",                 { sugar_g:3,  sodium_mg:130, sat_fat_g:0.5, calories:35,              kidsFloor:4, kidsCeiling:6 }],
 
   // ── DAIRY ──────────────────────────────────────────────────────────────────
-  ["yoplait original",             { sugar_g:19, sodium_mg:95,  sat_fat_g:1,   calories:150, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
+  // Mascarpone: cream + citric/tartaric acid — 2 ingredients, no additives
+  ["mascarpone",                    { floor:2, ceiling:3, substances:[], reason:"Mascarpone — pasteurised cream + citric or tartaric acid. Two ingredients, minimal processing, no artificial additives. Sat fat is high but ingredient list is clean. Floor 2, ceiling 3.", confidence:"high", category:"food_beverage" }],
+  ["mascarpone cheese",             { floor:2, ceiling:3, substances:[], reason:"Mascarpone cheese — cream + citric acid. Same as mascarpone entry.", confidence:"high", category:"food_beverage" }],
+  ["mascarpone farmstead",          { floor:2, ceiling:3, substances:[], reason:"Farmstead mascarpone — small batch cream cheese, clean ingredient profile.", confidence:"high", category:"food_beverage" }],
+  ["farmstead mascarpone",          { floor:2, ceiling:3, substances:[], reason:"Farmstead mascarpone — same as mascarpone entry.", confidence:"high", category:"food_beverage" }],
+  // Other clean fresh cheeses
+  ["fresh mozzarella",              { floor:1, ceiling:2, substances:[], reason:"Fresh mozzarella — pasteurised milk + cultures + salt. Minimal processing. One of the cleanest dairy products.", confidence:"high", category:"food_beverage" }],
+  ["burrata",                       { floor:1, ceiling:2, substances:[], reason:"Burrata — fresh mozzarella + cream. Two ingredients, no additives.", confidence:"high", category:"food_beverage" }],
+  ["ricotta",                       { floor:1, ceiling:3, substances:[], reason:"Ricotta — whey + cream or milk + acid. Simple ingredients, low concern unless additives present.", confidence:"high", category:"food_beverage" }],
+  ["cottage cheese",                { floor:2, ceiling:4, substances:[], reason:"Cottage cheese — milk + cultures + salt, sometimes gum thickeners. Clean base; some brands add carrageenan which bumps score.", confidence:"medium", category:"food_beverage" }],
   ["yoplait",                      { sugar_g:19, sodium_mg:95,  sat_fat_g:1,   calories:150, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
   ["chobani flip",                 { sugar_g:22, sodium_mg:75,  sat_fat_g:3,   calories:190, protein_g:12,kidsFloor:6, kidsCeiling:7 }],
   ["dannon activia",               { sugar_g:16, sodium_mg:75,  sat_fat_g:1,   calories:120, protein_g:5, kidsFloor:5, kidsCeiling:7 }],

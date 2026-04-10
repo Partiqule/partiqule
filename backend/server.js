@@ -5,57 +5,6 @@ const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 const { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP } = require("./calibration");
 
-// ── CALIBRATION OVERRIDES ─────────────────────────────────────
-// Admin can add/edit calibration entries via Supabase without a code deploy.
-// Overrides are merged into the in-memory CALIBRATION Map at boot and after
-// each admin edit. Runtime cost is zero — same Map lookup as before.
-// Supabase schema: calibration_overrides table with columns:
-//   name text (primary key, normalised), floor int, ceiling int, kids_floor int,
-//   kids_ceiling int, category text, substances jsonb, reason text, confidence text,
-//   updated_at timestamptz, updated_by text
-const calibrationOverrideKeys = new Set(); // tracks which keys came from overrides
-
-const loadCalibrationOverrides = async () => {
-  if (typeof supabaseAdmin === "undefined" || !supabaseAdmin) return { count: 0 };
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .select("*");
-    if (error) throw error;
-
-    // Remove any previously loaded overrides (so deleted ones go away)
-    for (const k of calibrationOverrideKeys) CALIBRATION.delete(k);
-    calibrationOverrideKeys.clear();
-
-    let loaded = 0;
-    for (const row of data || []) {
-      const key = normalise(row.name);
-      if (!key) continue;
-      CALIBRATION.set(key, {
-        floor:        row.floor,
-        ceiling:      row.ceiling,
-        kidsFloor:    row.kids_floor || undefined,
-        kidsCeiling:  row.kids_ceiling || undefined,
-        substances:   row.substances || [],
-        reason:       row.reason || "",
-        confidence:   row.confidence || "high",
-        category:     row.category || "other",
-        __override:   true,
-      });
-      calibrationOverrideKeys.add(key);
-      loaded++;
-    }
-    console.log(`[CALIBRATION] Loaded ${loaded} overrides from Supabase`);
-    return { count: loaded };
-  } catch (e) {
-    console.warn("[CALIBRATION] Override load failed:", e.message);
-    return { count: 0, error: e.message };
-  }
-};
-// Load on boot (deferred so supabaseAdmin exists) + periodic refresh every 5 min
-setTimeout(() => loadCalibrationOverrides(), 2000);
-setInterval(() => loadCalibrationOverrides(), 5 * 60 * 1000);
-
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
@@ -217,17 +166,6 @@ initCache();
 
 
 
-// ── STRUCTURED LOGGING ────────────────────────────────────────
-// Wraps console.log with JSON output for easier searching/filtering
-// in Railway logs. Pass a level, event name, and any structured fields.
-// Example: log.info("scan_complete", {product, score, duration_ms, path: "text"})
-// Legacy console.log calls still work — this is additive.
-const log = {
-  info:  (event, data={}) => console.log(JSON.stringify({level:"info",  event, ts:new Date().toISOString(), ...data})),
-  warn:  (event, data={}) => console.warn(JSON.stringify({level:"warn",  event, ts:new Date().toISOString(), ...data})),
-  error: (event, data={}) => console.error(JSON.stringify({level:"error", event, ts:new Date().toISOString(), ...data})),
-};
-
 // ── ADMIN KEY ─────────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
 const requireAdmin = (req, res, next) => {
@@ -236,53 +174,20 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-// ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
-// Prevents one bad IP (coffee shop wifi) from hitting the cap for everyone
-// and gives signed-in paid users a higher cap.
+// ── RATE LIMITER — per IP, max 30 scans/hour on /analyze ──────
 const rateLimitMap = new Map();
+const RATE_LIMIT   = 30;
 const RATE_WINDOW  = 60 * 60 * 1000; // 1 hour
-const RATE_LIMIT_ANON = 20;   // anonymous (per IP) — tighter to prevent shared-wifi exhaustion
-const RATE_LIMIT_USER = 40;   // signed-in free user (per userId)
-const RATE_LIMIT_PAID = 120;  // signed-in paid user (per userId)
-const rateLimit = async (req, res, next) => {
-  // Admin key bypasses rate limiting
-  const adminKey = req.query.key || req.headers["x-admin-key"];
-  if (adminKey === ADMIN_KEY) return next();
-
-  // Prefer userId (from body or header) over IP — gives per-user limits
-  const userId = req.body?.userId || req.headers["x-user-id"] || null;
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
-
-  // Determine effective cap — look up subscription status for signed-in users
-  let cap = RATE_LIMIT_ANON;
-  let key = `ip:${ip}`;
-  let who = ip;
-
-  if (userId) {
-    key = `user:${userId}`;
-    who = `user ${userId.slice(0, 8)}`;
-    cap = RATE_LIMIT_USER;
-    // Check if paid (non-blocking — safe if supabaseAdmin isn't initialized yet)
-    try {
-      if (typeof supabaseAdmin !== "undefined" && supabaseAdmin) {
-        const { data } = await supabaseAdmin.from("profiles").select("is_subscribed").eq("id", userId).single();
-        if (data?.is_subscribed) cap = RATE_LIMIT_PAID;
-      }
-    } catch {}
-  }
-
+const rateLimit = (req, res, next) => {
+  const ip  = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
   const now = Date.now();
-  const rec = rateLimitMap.get(key) || { count: 0, start: now };
+  const rec = rateLimitMap.get(ip) || { count: 0, start: now };
   if (now - rec.start > RATE_WINDOW) { rec.count = 0; rec.start = now; }
   rec.count++;
-  rateLimitMap.set(key, rec);
-  if (rec.count > cap) {
-    log.warn("rate_limit_exceeded", {who, cap, count: rec.count, anonymous: !userId});
-    return res.status(429).json({
-      error: userId
-        ? `You've reached your hourly scan limit (${cap}). Please wait a bit before scanning more.`
-        : "Too many scans from this network. Sign in for a higher limit, or try again in an hour.",
-    });
+  rateLimitMap.set(ip, rec);
+  if (rec.count > RATE_LIMIT) {
+    console.warn(`[RATE] IP ${ip} exceeded ${RATE_LIMIT} scans/hour`);
+    return res.status(429).json({ error: "Too many scans. Please wait before trying again." });
   }
   next();
 };
@@ -660,94 +565,6 @@ const NEGATION_PHRASES = [
 const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
 const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
 
-// Apply substance floors directly to a raw ingredient text string (e.g. from Open Food Facts).
-// Used by the barcode endpoint BEFORE the AI runs, so code-enforced floors are honored
-// regardless of what the AI says about the ingredient list.
-function applySubstanceFloorsToText(ingredText) {
-  if (!ingredText) return { mFloor: 0, uFloor: 0, triggered: [] };
-  const text = ingredText.toLowerCase();
-
-  // Respect the natural-colorant override (same rule used by the vision prompt)
-  const NATURAL_COLORANT_PATTERN = /colored? with (vegetable|fruit|plant)|vegetable (juice|extract|color)|fruit (juice|extract|color)|beet(root)? (juice|powder|extract|color)|turmeric (color|extract|powder)|spirulina (extract|color)|annatto (extract|color)|carrot (juice|extract|color)|natural color from|colors? from (nature|plants?|fruits?|vegetables?)|plant.based color|carotenoid|lycopene|chlorophyll|butterfly pea|black carrot|red cabbage|paprika extract/i;
-  const hasNaturalColorants = NATURAL_COLORANT_PATTERN.test(text);
-  const hasPetroleumDyes    = /red\s*40|yellow\s*5|yellow\s*6|blue\s*1|blue\s*2|fd&?c|allura red|tartrazine|sunset yellow|brilliant blue/i.test(text);
-
-  let mFloor = 0, uFloor = 0;
-  const triggered = [];
-
-  for (const rule of SUBSTANCE_FLOORS) {
-    // Skip petroleum-dye rules when only natural colorants are present
-    if (hasNaturalColorants && !hasPetroleumDyes &&
-        (rule.reason.includes("Red 40") || rule.reason.includes("Yellow 5") || rule.reason.includes("Blue 1") || rule.reason.includes("petroleum dye"))) {
-      continue;
-    }
-    if (rule.match.test(text)) {
-      if (rule.mFloor > mFloor) mFloor = rule.mFloor;
-      if (rule.uFloor > uFloor) uFloor = rule.uFloor;
-      triggered.push(rule.reason);
-    }
-  }
-  return { mFloor, uFloor, triggered };
-}
-
-// NOVA group hard floor — only for food and food_beverage (not beverage, which
-// would wrongly penalize sparkling water and other inert NOVA 4 items).
-function novaFloor(novaGroup, category) {
-  if (!novaGroup) return 0;
-  if (category !== "food" && category !== "food_beverage") return 0;
-  if (novaGroup === 4) return 5; // ultra-processed → materials min 5
-  if (novaGroup === 3) return 4; // processed → materials min 4
-  return 0;
-}
-
-// ── UNIFIED ALTERNATIVE SERIALIZATION ─────────────────────────
-// Every scoring path (text, vision, barcode, fuzzy calibration) converts
-// raw DB alternatives into the public-facing shape through this helper.
-// Guarantees consistent fields (score, child_score, pregnancy_score) across
-// all paths so frontend can rely on the same contract.
-function serializeAlternatives(rawAlts, category) {
-  return (rawAlts || []).map(p => {
-    const altScore   = p.score ?? p.plasticScore ?? 3;
-    const altCat     = p.category || category;
-    const altName    = p.name || "";
-    const altIsChild = detectChildProduct(altName, altCat);
-    const altConcernsText = (p.tags || []).join(" ") + " " + (p.material || "");
-    const { childScore: altChildScore } = computeChildScore(altScore, altConcernsText, altCat, altName, altIsChild);
-    const { pregnancyScore: altPregScore } = computePregnancyScore(altScore, altConcernsText, altCat, altName);
-    return {
-      id:              p.id || `static-${Math.random().toString(36).slice(2, 8)}`,
-      name:            altName,
-      brand:           p.brand || "",
-      score:           altScore,
-      child_score:     altChildScore,
-      pregnancy_score: altPregScore,
-      material:        p.material || "",
-      description:     p.description || "",
-      price:           p.price || "",
-      affiliateUrl:    p.affiliateUrl,
-      imageUrl:        p.imageUrl || null,
-      source:          p.source || "static",
-    };
-  });
-}
-
-// Compute child + pregnancy scores from the final score and a flag text.
-// Collects flag text from multiple sources (p1 concerns, substance triggers,
-// raw ingredient text) so we catch concerns regardless of which path we're in.
-function computeSafetyScores(finalScore, category, productName, p1, substanceTriggers = [], extraText = "") {
-  const isChild = detectChildProduct(productName, category);
-  const flagText = [
-    ...(p1?.flagged_substances || []),
-    ...(p1?.materials?.concerns || []),
-    ...(p1?.concerns || []),
-    ...substanceTriggers,
-    extraText || "",
-  ].filter(Boolean).join(" ");
-  const { childScore, childBumps } = computeChildScore(finalScore, flagText, category, productName, isChild);
-  const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, category, productName);
-  return { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild };
-}
-
 function applySubstanceFloors(mScore, uScore, p1, p2) {
   const concernsArr = [
     ...(p1.product_analysis?.concerns || []),
@@ -1053,8 +870,9 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
 
 function detectChildProduct(productName, category) {
   if (category === "baby") return true;
-  // Extended to all categories where children have meaningful exposure
-  if (["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","toy","kitchen"].includes(category)) return true;
+  if (category === "toy") return true;
+  // Only flag by name — do NOT flag entire food/beverage/home categories
+  // or every grocery item shows "This looks like a child's product"
   const name = (productName || "").toLowerCase();
   if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
   if (CHILD_FOOD_BRANDS.test(name)) return true;
@@ -1288,84 +1106,7 @@ function extractJson(text) {
   return null;
 }
 
-// ── API SPEND GUARDRAILS ──────────────────────────────────────
-// Hard cap on Claude API calls to prevent runaway costs like the reload incident.
-// Override with env vars: API_DAILY_CAP, API_MONTHLY_CAP
-const API_DAILY_CAP   = parseInt(process.env.API_DAILY_CAP   || "500");
-const API_MONTHLY_CAP = parseInt(process.env.API_MONTHLY_CAP || "5000");
-const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL || ""; // Slack/Discord/any webhook
-const ALERT_THRESHOLDS = [0.5, 0.8, 0.95]; // fire at 50%, 80%, 95% of daily cap
-let apiCallCounts = { day: 0, month: 0, dayKey: "", monthKey: "", alertedToday: [] };
-
-// Fire-and-forget webhook alert. Formats for Slack's incoming webhook format
-// but any webhook that accepts {text} will work (including Discord with a tiny tweak).
-const fireBudgetAlert = async (pct, used, cap) => {
-  if (!ALERT_WEBHOOK_URL) return;
-  const emoji = pct >= 0.95 ? "🚨" : pct >= 0.8 ? "⚠️" : "📊";
-  const text = `${emoji} Partiqule API usage at ${Math.round(pct * 100)}% — ${used}/${cap} Claude calls today`;
-  try {
-    await fetch(ALERT_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-      signal: AbortSignal.timeout(5000),
-    });
-    console.log(`[ALERT] Sent budget alert: ${text}`);
-  } catch (e) {
-    console.warn(`[ALERT] Failed to send webhook: ${e.message}`);
-  }
-};
-
-const loadApiCounts = async () => {
-  const now = new Date();
-  apiCallCounts.dayKey   = `api_count:${now.toISOString().slice(0,10)}`;
-  apiCallCounts.monthKey = `api_count:${now.toISOString().slice(0,7)}`;
-  if (hasRedis) {
-    try {
-      const [d, m] = await Promise.all([redisGet(apiCallCounts.dayKey), redisGet(apiCallCounts.monthKey)]);
-      apiCallCounts.day   = typeof d === "number" ? d : (d?.count || 0);
-      apiCallCounts.month = typeof m === "number" ? m : (m?.count || 0);
-    } catch {}
-  }
-};
-loadApiCounts();
-
-const checkApiBudget = () => {
-  const now = new Date();
-  const dayKey   = `api_count:${now.toISOString().slice(0,10)}`;
-  const monthKey = `api_count:${now.toISOString().slice(0,7)}`;
-  if (dayKey !== apiCallCounts.dayKey)     { apiCallCounts.day = 0; apiCallCounts.dayKey = dayKey; apiCallCounts.alertedToday = []; }
-  if (monthKey !== apiCallCounts.monthKey) { apiCallCounts.month = 0; apiCallCounts.monthKey = monthKey; }
-  if (apiCallCounts.day   >= API_DAILY_CAP)   throw new Error(`API_BUDGET_EXCEEDED: daily cap ${API_DAILY_CAP} reached (${apiCallCounts.day})`);
-  if (apiCallCounts.month >= API_MONTHLY_CAP) throw new Error(`API_BUDGET_EXCEEDED: monthly cap ${API_MONTHLY_CAP} reached (${apiCallCounts.month})`);
-};
-
-const incrementApiCount = () => {
-  apiCallCounts.day++;
-  apiCallCounts.month++;
-  if (hasRedis) {
-    redisSet(apiCallCounts.dayKey,   apiCallCounts.day);
-    redisSet(apiCallCounts.monthKey, apiCallCounts.month);
-  }
-  if (apiCallCounts.day % 50 === 0) {
-    log.info("api_budget_checkpoint", {day: apiCallCounts.day, dailyCap: API_DAILY_CAP, month: apiCallCounts.month, monthlyCap: API_MONTHLY_CAP});
-  }
-
-  // Check threshold alerts — only fire each threshold once per day
-  const pct = apiCallCounts.day / API_DAILY_CAP;
-  for (const threshold of ALERT_THRESHOLDS) {
-    if (pct >= threshold && !apiCallCounts.alertedToday.includes(threshold)) {
-      apiCallCounts.alertedToday.push(threshold);
-      log.warn("api_budget_threshold", {threshold, pct, used: apiCallCounts.day, cap: API_DAILY_CAP});
-      fireBudgetAlert(pct, apiCallCounts.day, API_DAILY_CAP);
-      break;
-    }
-  }
-};
-
 async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
-  checkApiBudget();
-  incrementApiCount();
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
@@ -1424,8 +1165,6 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
 // Vision pass — identifies product from image AND scores it in one call
 async function callClaudeVision(imageBase64, mediaType, retries=3) {
-  checkApiBudget();
-  incrementApiCount();
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
@@ -1453,7 +1192,6 @@ SCORING RULES:
 - Single-use disposables: sustainability score 8-9
 - Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7
 - Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 7-8, usage 6-7, final 6-7
-- NATURAL DYE RULE: Never apply the synthetic dye floor if the label shows natural colorants like vegetable juice, fruit extracts, spirulina, beet juice, turmeric, annatto, or carrot juice. Matt's Bakery, YumEarth, and Unreal use natural colorants — score materials 2-4, never 6+. When in doubt default to natural and do not apply the dye floor.
 - Chemical sunscreen (oxybenzone, octinoxate): materials 6-7, usage 6-7
 - "Reef safe" / "reef friendly" sunscreen claims are UNREGULATED MARKETING — always check actual UV filter ingredients. If oxybenzone or octinoxate is visible, apply the 6-7 floor regardless of reef-safe label.
 - Synthetic fragrance in personal care: materials 5-6
@@ -2488,86 +2226,6 @@ IN-N-OUT NOTE: Genuinely cleaner than McDonald's at the ingredient level but NOT
 
 BREAKFAST RULE (applies to ALL chains):
 Any fast food breakfast item containing sausage or bacon = sodium nitrite floor fires → final score MINIMUM 6. NEVER score a fast food breakfast sausage or bacon item below 6. Eggs only + bread = 4-5. Oatmeal or avocado toast = 3.
-
-FRESH / HEALTHY CHAIN ANCHORS — these chains use whole ingredients and minimal processing. Default lower scores apply.
-
-CAVA (Mediterranean fast casual):
-- Grain bowl with greens, grilled chicken/falafel, hummus, veggies: final score ~3 — whole grains, fresh produce, minimal processing. Kids score ~4 due to moderate sodium. Pregnancy safe.
-- Pita wrap with any protein: final score ~4 — refined flour pita adds 1 point vs bowl.
-- CAVA braised lamb: final score ~3 — simple braised preparation, cleanest protein.
-- Sofritas-style plant items: final score ~4 — more processing than whole grains.
-- CAVA kids meal: anchor at ~4 max — minimally processed but sodium concern for children.
-
-SWEETGREEN:
-- Harvest Bowl, Shroomami, Guacamole Greens, any whole-ingredient bowl: final score ~2-3 — fresh produce, whole grains, minimal additives. One of the cleanest fast casual options available. Pregnancy: safe, listed as safe for children 4+ with moderate sodium awareness.
-- Sweetgreen "Crispy Rice" or anything with fried elements: final score ~4 — bumps 1 point for refined oil.
-- Sweetgreen kale caesar: final score ~3 — real parmesan, no shortcut dressings.
-- Sweetgreen with warm bowls (miso bowl, hot honey chicken): final score ~3.
-- Kids mode: most Sweetgreen bowls safe for kids, score 3-4.
-
-PANERA:
-- Broth bowls / power bowls (quinoa, chicken, veggies): final score ~4 — whole grains + lean protein. Watch sodium.
-- Panera sandwiches on white bread (Italian, Smokehouse BBQ, Bacon Turkey Bravo): final score ~6 — sodium nitrite in deli meat + refined bread.
-- Panera Mediterranean Veggie Sandwich: final score ~4 — no processed meat, cleaner choice.
-- Panera soups (broccoli cheddar, cream based): final score ~5-6 — modified food starch + carrageenan + high sodium (often 1200-1800mg).
-- Panera Fuji Apple Chicken Salad / Green Goddess Cobb: final score ~4 — but dressing adds processing.
-- Panera Kids Mac and Cheese: final score ~6 — annatto colored cheese, enriched pasta, very high sodium. NEVER below 5 for kids.
-- Panera Cinnamon Crunch Bagel / Pastries: final score ~7 — HFCS, sugar bombs, enriched flour. Kids score ~7.
-
-STARBUCKS:
-- Brewed coffee / plain espresso / Americano (no sweetener, no milk): final score ~2 — just coffee and water.
-- Latte / cappuccino / flat white (with dairy or alt milk): final score ~3-4 — dairy or oat milk adds processing but still modest.
-- Caramel Macchiato / Vanilla Latte: final score ~5 — added syrups with "natural flavor" + sugar.
-- Caramel Frappuccino / Mocha Frappuccino / Java Chip: final score ~7 — 50+ grams sugar + artificial flavoring + carrageenan in base. NEVER below 6.
-- Pumpkin Spice Latte: final score ~6-7 — HFCS, caramel color IV, "natural" flavoring blend, 50g sugar venti.
-- Refresher drinks (Strawberry Acai, Mango Dragonfruit): final score ~6 — sugar + green coffee extract + artificial green/red coloring (may be freeze-dried fruit, verify before applying dye floor).
-- Pink Drink: final score ~5 — coconut milk cuts sugar impact slightly but still sugary.
-- Iced Coffee with Classic Syrup: final score ~5.
-- Starbucks Egg Bites (bacon/gruyere): final score ~6 — sodium nitrite in bacon. NEVER below 5.
-- Starbucks banana bread / cheese danish / pastries: final score ~6 — refined flour + sugar + often BHT.
-- Kids mode: ANY Starbucks frappuccino or refresher = child score minimum 7 (50+g sugar + caffeine not child-appropriate + possible dyes).
-- Pregnancy: flag caffeine content — refreshers have 45mg (safe), frappuccinos 50-125mg, venti iced coffee 330mg (exceeds ACOG 200mg daily limit).
-
-CHIPOTLE (additions):
-- Chipotle kids quesadilla: final score ~5 — simpler than most kids menu but enriched flour tortilla.
-- Chipotle kids bowl: final score ~4 — scales down the adult bowl.
-
-FIRST WATCH / SNOOZE / BREAKFAST CHAINS:
-- First Watch avocado toast / power bowl: final score ~3-4 — whole grain toast + eggs + avocado. Pregnancy: ensure eggs fully cooked.
-- Snooze pancakes / french toast: final score ~6-7 — 80+g sugar, artificial maple flavoring, enriched flour.
-- IHOP stack of buttermilk pancakes: final score ~7 — 80g+ sugar + HFCS syrup + enriched flour. Kids score ~8.
-- IHOP Rooty Tooty Fresh 'N Fruity: final score ~7 — same base + sausage (nitrite floor fires).
-- Cracker Barrel Old Timer's Breakfast: final score ~7 — sausage + bacon nitrite floors + high sodium.
-
-SMOOTHIE / JUICE CHAINS:
-- Jamba Juice classic smoothies (Strawberries Wild, Razzmatazz): final score ~5-6 — sherbet base has HFCS + artificial flavor. Kids: ~6.
-- Jamba Whirl'ins / Ice cream blends: final score ~7 — 80g+ sugar.
-- Jamba Harvest Bowl: final score ~3 — whole fruit + granola + honey.
-- Smoothie King "Gladiator" protein smoothies: final score ~5 — sucralose base + whey isolate + "natural flavor" mix.
-- Pressed Juicery cold-pressed juices (single ingredient): final score ~2-3 — unprocessed fruit/veggie juice.
-- Pressed Juicery Freeze: final score ~4 — blended with coconut cream, some sugar.
-
-DONUT / COOKIE / DESSERT CHAINS:
-- Krispy Kreme Original Glazed: final score ~7 — enriched flour, partially hydrogenated alternatives, sugar glaze with titanium dioxide historically.
-- Dunkin donut with sprinkles: final score ~7 — enriched flour + Red 40/Yellow 5/Blue 1 in sprinkles. Kids: ~8.
-- Crumbl Cookies: final score ~7 — refined flour + 20-40g sugar per cookie + dyes in many varieties. ALL Crumbl cookies kids-score 8 minimum.
-- Insomnia Cookies: final score ~7 — same profile as Crumbl.
-- Nothing Bundt Cakes: final score ~7 — refined flour + sugar + Red 40 in many flavors. Wedding cake style colored frosting scores 8.
-
-KIDS MODE REMINDER FOR RESTAURANT ITEMS:
-When childMode is on, apply these additional restaurant bumps:
-- Any item with 500mg+ sodium for a child serving: +1 to child_score (children tolerate less sodium than adults)
-- Any kids menu item with included soda/juice drink: +1 (assume Red 40 or HFCS present)
-- Any breaded/fried item on kids menu: +1 (higher TBHQ exposure per body weight)
-
-PREGNANCY MODE REMINDER FOR RESTAURANT ITEMS:
-When pregnancyMode is on, apply these additional restaurant bumps:
-- Any item containing deli meat, pepperoni, salami, prosciutto, hot dogs, cold cuts: +2 to pregnancy_score (listeria + nitrite concern)
-- Any sushi, raw fish, rare/raw meat: +2 (listeria + mercury + parasites)
-- Any unpasteurized cheese (queso fresco, some fetas, soft brie): +2
-- Caffeine: flag items with >200mg caffeine as ACOG daily limit concern
-- Alcohol: any alcoholic beverage = pregnancy_score 10
-- High mercury fish (tuna, swordfish, king mackerel): +2
 
 CATEGORY-SPECIFIC TIER LABELS:
 food_beverage: tier1=whole_food, tier2=minimally_processed, tier3=processed, tier4=ultra_processed
@@ -4181,54 +3839,39 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // Camera scan of Goldfish = text scan of "Goldfish crackers" — same result
       const imgKey = cacheKey(productName, category);
       const imgCached = await cacheGet(imgKey);
-      let imgSkipFuzzy = false;
       if (imgCached) {
-        const imgNoIng  = !imgCached.ingredient_list || imgCached.ingredient_list.length === 0;
-        const imgNoFlag = !imgCached.flagged_substances || imgCached.flagged_substances.length === 0;
-        const imgAllFive = imgCached.dimensions &&
-          imgCached.dimensions.materials?.score      === 5 &&
-          imgCached.dimensions.usage_exposure?.score === 5 &&
-          imgCached.dimensions.packaging?.score      === 5 &&
-          imgCached.dimensions.sustainability?.score === 5;
-        const imgStale = !imgCached.dimensions || imgCached._preloaded === true || (imgNoIng && imgNoFlag && imgAllFive);
-        if (imgStale) {
-          console.log(`[CACHE STALE] Vision "${productName}" — evicting placeholder, forcing full scan`);
-          scoreCache.delete(imgKey);
-          imgSkipFuzzy = true;
-        } else {
-          console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
-          return res.json({ ...imgCached, cached: true });
-        }
+        console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
+        return res.json({ ...imgCached, cached: true });
       }
 
       // ── Fuzzy calibration check before running pass2 ──
-      // Skipped when stale entry was evicted so pass2 runs and enriches the result.
-      const imgFuzzy = !imgSkipFuzzy && fuzzyCalibrationLookup(productName);
+      const imgFuzzy = fuzzyCalibrationLookup(productName);
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
         const imgFuzzyCat = entry.category || category;
+        const imgIsChild = detectChildProduct(productName, imgFuzzyCat);
         const imgConcernsText = (entry.substances || []).join(" ");
-        const imgSafety = computeSafetyScores(midScore, imgFuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], imgConcernsText);
+        const { childScore: imgChildScore, childBumps: imgChildBumps } = computeChildScore(midScore, imgConcernsText, imgFuzzyCat, productName, imgIsChild);
         const imgKidsFloor = entry.kidsFloor || entry.floor;
         const imgKidsCeil = entry.kidsCeiling || entry.ceiling;
         const imgKidsMid = Math.round((imgKidsFloor + imgKidsCeil) / 2);
-        const imgFuzzyAlts = serializeAlternatives(
-          filterDbAlternatives(
-            findAlternatives(productName, imgFuzzyCat, 3, productName),
-            imgFuzzyCat, productName, midScore
-          ),
-          imgFuzzyCat
-        );
+        const imgFuzzyAlts = filterDbAlternatives(
+          findAlternatives(productName, imgFuzzyCat, 3, productName),
+          imgFuzzyCat, productName, midScore
+        ).map(p => {
+          const as = p.score ?? p.plasticScore ?? 3;
+          const ac = detectChildProduct(p.name, p.category || imgFuzzyCat);
+          const { childScore: acs } = computeChildScore(as, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||imgFuzzyCat, p.name, ac);
+          return { id:p.id, name:p.name, brand:p.brand||"", score:as, child_score:acs, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+        });
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: imgFuzzyCat,
           confidence: entry.confidence || "high",
-          is_child_product: imgSafety.isChild,
-          child_score: entry.kidsFloor ? imgKidsMid : imgSafety.childScore,
-          child_bumps: imgSafety.childBumps || [],
-          pregnancy_score: imgSafety.pregnancyScore,
-          pregnancy_bumps: imgSafety.pregnancyBumps || [],
+          is_child_product: imgIsChild,
+          child_score: entry.kidsFloor ? imgKidsMid : imgChildScore,
+          child_bumps: imgChildBumps || [],
           dimensions: {
             materials:      { score: 5, concerns: entry.substances || [] },
             usage_exposure: { score: 5, concerns: [] },
@@ -4379,7 +4022,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
             concerns: p1.sustainability?.concerns || [],
           },
         },
-        alternatives: serializeAlternatives(finalAlternatives, imgCategory),
+        alternatives: finalAlternatives.map(p => ({
+          id: p.id, name: p.name, brand: p.brand || "",
+          score: p.score ?? 3, material: p.material || "",
+          description: p.description || "", price: p.price || "",
+          affiliateUrl: p.affiliateUrl, category: p.category || imgCategory
+        })),
         ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, imgCategory, productName) || []).map(a => ({
           name: a.name || "", reason: a.reason || "",
           material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
@@ -4395,9 +4043,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
       return res.json(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
-      if (String(err.message).includes("API_BUDGET_EXCEEDED")) {
-        return res.status(503).json({ error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
-      }
       return res.status(500).json({ error: err.message || "Image scan failed" });
     }
   }
@@ -4411,64 +4056,42 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const category = detectCategory(productName);
   const key      = cacheKey(productName, category);
 
-  // skipFuzzyCalibration is set when a stale preloaded entry is evicted.
-  // It forces the full AI pass to run once so the product gets real ingredients
-  // and dimension scores. Calibration floor/ceiling is still enforced afterwards
-  // via applyProductCalibration at the bottom of the AI path.
-  let skipFuzzyCalibration = false;
-
   const cached = await cacheGet(key);
   if (cached) {
-    // Staleness check — evict entries that predate the full schema or were
-    // bulk-preloaded with placeholder data (all dimensions = 5, no ingredients).
-    const noIngredients = !cached.ingredient_list || cached.ingredient_list.length === 0;
-    const noFlags       = !cached.flagged_substances || cached.flagged_substances.length === 0;
-    const allFiveDims   = cached.dimensions &&
-      cached.dimensions.materials?.score      === 5 &&
-      cached.dimensions.usage_exposure?.score === 5 &&
-      cached.dimensions.packaging?.score      === 5 &&
-      cached.dimensions.sustainability?.score === 5;
-    const isStale = !cached.dimensions || cached._preloaded === true || (noIngredients && noFlags && allFiveDims);
-    if (isStale) {
-      console.log(`[CACHE STALE] ${key} — evicting placeholder data, forcing full AI scan`);
-      scoreCache.delete(key);
-      skipFuzzyCalibration = true; // bypass fuzzy cal this once so AI enriches the result
-    } else {
-      console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
-      return res.json({ ...cached, cached: true });
-    }
+    console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
+    return res.json({ ...cached, cached: true });
   }
 
-  // Fuzzy calibration lookup — catches name variations before going to AI.
-  // Skipped when a stale entry was just evicted so AI runs and enriches the result.
+  // Fuzzy calibration lookup — catches name variations before going to AI
   // e.g. "Seventh Generation soap" matches "seventh generation dish"
-  const fuzzyHit = !skipFuzzyCalibration && fuzzyCalibrationLookup(productName);
+  const fuzzyHit = fuzzyCalibrationLookup(productName);
   if (fuzzyHit) {
     const { entry } = fuzzyHit;
     const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
     const kidsFloor = entry.kidsFloor || entry.floor;
     const kidsCeil  = entry.kidsCeiling || entry.ceiling;
     const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
-    const fuzzyCat  = entry.category || category;
-    const fuzzyConcernsText = (entry.substances || []).join(" ");
-    const fuzzySafety = computeSafetyScores(midScore, fuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], fuzzyConcernsText);
-    const fuzzyAlts = serializeAlternatives(
-      filterDbAlternatives(
-        findAlternatives(productName, fuzzyCat, 3, productName),
-        fuzzyCat, productName, midScore
-      ),
-      fuzzyCat
-    );
+    const isChild   = detectChildProduct(productName, entry.category || category);
+    const concernsText = (entry.substances || []).join(" ");
+    const { childScore, childBumps } = computeChildScore(midScore, concernsText, entry.category || category, productName, isChild);
+    const fuzzyCat = entry.category || category;
+    const fuzzyAlts = filterDbAlternatives(
+      findAlternatives(productName, fuzzyCat, 3, productName),
+      fuzzyCat, productName, midScore
+    ).map(p => {
+      const altScore = p.score ?? p.plasticScore ?? 3;
+      const altIsChild = detectChildProduct(p.name, p.category || fuzzyCat);
+      const { childScore: altCS } = computeChildScore(altScore, (p.tags||[]).join(" ")+" "+(p.material||""), p.category||fuzzyCat, p.name, altIsChild);
+      return { id:p.id, name:p.name, brand:p.brand||"", score:altScore, child_score:altCS, material:p.material||"", description:p.description||"", price:p.price||"", affiliateUrl:p.affiliateUrl, imageUrl:p.imageUrl||null, source:p.source||"static" };
+    });
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
       category: fuzzyCat,
       confidence: entry.confidence || "high",
-      is_child_product: fuzzySafety.isChild,
-      child_score: entry.kidsFloor ? kidsMid : fuzzySafety.childScore,
-      child_bumps: fuzzySafety.childBumps || [],
-      pregnancy_score: fuzzySafety.pregnancyScore,
-      pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
+      is_child_product: isChild,
+      child_score: entry.kidsFloor ? kidsMid : childScore,
+      child_bumps: childBumps || [],
       dimensions: {
         materials:      { score: 5, concerns: entry.substances || [] },
         usage_exposure: { score: 5, concerns: [] },
@@ -4482,7 +4105,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       alternatives: fuzzyAlts, ai_alternatives: [],
     });
     cacheSet(key, fuzzyResult);
-    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
+    console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${childScore}`);
     return res.json({ ...fuzzyResult, cached: false });
   }
 
@@ -4705,7 +4328,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
       food_analysis:       p1.product_analysis || p1.food_analysis || null,
       composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
       cached:              false,
-      alternatives: serializeAlternatives(finalAlternatives, finalCategory || category),
+      alternatives: finalAlternatives.map(p => {
+        const altScore = p.score ?? p.plasticScore ?? 3;
+        const altCat = p.category || finalCategory || category;
+        const altIsChild = detectChildProduct(p.name, altCat);
+        const altConcerns = (p.tags || []).join(" ") + " " + (p.material || "");
+        const { childScore: altChildScore } = computeChildScore(altScore, altConcerns, altCat, p.name, altIsChild);
+        return {
+          id:           p.id,
+          name:         p.name,
+          brand:        p.brand || "",
+          score:        altScore,
+          child_score:  altChildScore,
+          material:     p.material || "",
+          description:  p.description || "",
+          price:        p.price || "",
+          affiliateUrl: p.affiliateUrl,
+          imageUrl:     p.imageUrl || null,
+          source:       p.source || "static",
+        };
+      }),
       ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
         name:            a.name || "",
         reason:          a.reason || "",
@@ -4743,11 +4385,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ? "That scan took too long. Please try again."
       : err.message?.includes("No JSON") || err.message?.includes("JSON parse")
       ? "We had trouble analysing that product. Please try again or rephrase the product name."
-      : err.message?.includes("API_BUDGET_EXCEEDED")
-      ? "Partiqule has hit its daily scan limit. Please try again tomorrow."
       : err.message;
-    const statusCode = err.message?.includes("API_BUDGET_EXCEEDED") ? 503 : 500;
-    res.status(statusCode).json({ error: msg });
+    res.status(500).json({ error: msg });
   }
 });
 
@@ -4807,133 +4446,6 @@ app.post("/subscribe", async (req, res) => {
   }
 
   res.json({ ok: true, already });
-});
-
-// ── SCORE FEEDBACK ────────────────────────────────────────────
-// Users can report a score they think is wrong. Stored in Supabase for
-// admin review. The feedback table has columns:
-//   id uuid, product_name text, category text, returned_score int,
-//   suggested_tier text ('too_high' | 'too_low' | 'wrong_category' | 'other'),
-//   note text, user_email text, created_at timestamptz, status text
-app.post("/score-feedback", async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Feedback not configured" });
-  const { product_name, category, returned_score, suggested_tier, note, user_email } = req.body || {};
-  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name required" });
-  const validTiers = ["too_high", "too_low", "wrong_category", "missing_concern", "other"];
-  if (suggested_tier && !validTiers.includes(suggested_tier)) {
-    return res.status(400).json({ error: "invalid suggested_tier" });
-  }
-  try {
-    const { error } = await supabaseAdmin.from("score_feedback").insert({
-      product_name:   product_name.trim(),
-      category:       category || null,
-      returned_score: typeof returned_score === "number" ? returned_score : null,
-      suggested_tier: suggested_tier || "other",
-      note:           (note || "").trim().slice(0, 500) || null,
-      user_email:     user_email?.trim()?.slice(0, 200) || null,
-      status:         "pending",
-    });
-    if (error) throw error;
-    console.log(`[FEEDBACK] "${product_name}" flagged as ${suggested_tier} (was ${returned_score}/10)`);
-    res.json({ success: true });
-  } catch (e) {
-    console.error("[FEEDBACK] save error:", e.message);
-    res.status(500).json({ error: "Could not save feedback" });
-  }
-});
-
-app.get("/score-feedback", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const status = req.query.status || "pending";
-    const { data, error } = await supabaseAdmin
-      .from("score_feedback")
-      .select("id, product_name, category, returned_score, suggested_tier, note, user_email, created_at, status")
-      .eq("status", status)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    console.error("[FEEDBACK] fetch error:", e.message);
-    res.status(500).json({ error: "Could not fetch feedback" });
-  }
-});
-
-// ── PRODUCT SUGGESTIONS ───────────────────────────────────────
-// Users can suggest a product they want scored. Stored in Supabase
-// suggestions table for admin review + action.
-app.post("/suggest", async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Suggestions not configured" });
-  const { product_name, user_email } = req.body || {};
-  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name required" });
-  try {
-    const { error } = await supabaseAdmin.from("suggestions").insert({
-      product_name: product_name.trim().slice(0, 200),
-      user_email:   user_email?.trim()?.slice(0, 200) || null,
-      status:       "pending",
-    });
-    if (error) throw error;
-    console.log(`[SUGGEST] "${product_name}" submitted`);
-    res.json({ success: true });
-  } catch (e) {
-    console.error("[SUGGEST] save error:", e.message);
-    res.status(500).json({ error: "Could not save suggestion" });
-  }
-});
-
-app.get("/suggestions", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const status = req.query.status || "pending";
-    const { data, error } = await supabaseAdmin
-      .from("suggestions")
-      .select("id, product_name, user_email, created_at, status")
-      .eq("status", status)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    console.error("[SUGGEST] fetch error:", e.message);
-    res.status(500).json({ error: "Could not fetch suggestions" });
-  }
-});
-
-app.post("/suggestions/resolve", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const { id, status } = req.body || {};
-  if (!id || !["added", "dismissed", "pending"].includes(status)) {
-    return res.status(400).json({ error: "id and valid status required" });
-  }
-  try {
-    const { error } = await supabaseAdmin
-      .from("suggestions")
-      .update({ status })
-      .eq("id", id);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post("/score-feedback/resolve", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const { id, status } = req.body || {};
-  if (!id || !["resolved", "dismissed", "pending"].includes(status)) {
-    return res.status(400).json({ error: "id and valid status required" });
-  }
-  try {
-    const { error } = await supabaseAdmin
-      .from("score_feedback")
-      .update({ status })
-      .eq("id", id);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 
@@ -5100,109 +4612,6 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
 app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
 app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
 app.get("/cache-clear",  requireAdmin, (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
-
-// ── CALIBRATION OVERRIDE ADMIN ────────────────────────────────
-// List all overrides (admin UI)
-app.get("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Create or update an override
-app.post("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const {
-    name, floor, ceiling, kids_floor, kids_ceiling,
-    category, substances, reason, confidence, updated_by,
-  } = req.body || {};
-  if (!name || typeof floor !== "number" || typeof ceiling !== "number") {
-    return res.status(400).json({ error: "name, floor, ceiling required" });
-  }
-  if (floor > ceiling) {
-    return res.status(400).json({ error: "floor cannot be greater than ceiling" });
-  }
-  try {
-    const key = normalise(name);
-    const { error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .upsert({
-        name:         key,
-        floor:        Math.max(1, Math.min(10, floor)),
-        ceiling:      Math.max(1, Math.min(10, ceiling)),
-        kids_floor:   kids_floor ? Math.max(1, Math.min(10, kids_floor)) : null,
-        kids_ceiling: kids_ceiling ? Math.max(1, Math.min(10, kids_ceiling)) : null,
-        category:     category || "other",
-        substances:   substances || [],
-        reason:       reason || "",
-        confidence:   confidence || "high",
-        updated_by:   updated_by || "admin",
-        updated_at:   new Date().toISOString(),
-      }, { onConflict: "name" });
-    if (error) throw error;
-    // Refresh in-memory CALIBRATION so the change takes effect immediately
-    await loadCalibrationOverrides();
-    // Also clear the product's cached score so next scan gets the new value
-    const cacheKey = `${category || "other"}:${key}`;
-    scoreCache.delete(cacheKey);
-    scoreCache.delete(key);
-    if (hasRedis) {
-      try {
-        await fetch(`${REDIS_URL}/del/${encodeURIComponent(cacheKey)}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-        });
-        await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-        });
-      } catch {}
-    }
-    log.info("calibration_override_saved", {name: key, floor, ceiling, category, updated_by});
-    res.json({ success: true, name: key });
-  } catch (e) {
-    log.error("calibration_override_error", {error: e.message});
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Delete an override
-app.delete("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const name = req.query.name || req.body?.name;
-  if (!name) return res.status(400).json({ error: "name required" });
-  try {
-    const key = normalise(name);
-    const { error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .delete()
-      .eq("name", key);
-    if (error) throw error;
-    await loadCalibrationOverrides();
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// View or reset API spend budget
-app.get("/admin/api-budget", requireAdmin, async (req, res) => {
-  await loadApiCounts();
-  if (req.query.reset === "day")   { apiCallCounts.day = 0;   if (hasRedis) redisSet(apiCallCounts.dayKey, 0); }
-  if (req.query.reset === "month") { apiCallCounts.month = 0; if (hasRedis) redisSet(apiCallCounts.monthKey, 0); }
-  res.json({
-    today:     { used: apiCallCounts.day,   cap: API_DAILY_CAP,   remaining: API_DAILY_CAP - apiCallCounts.day },
-    thisMonth: { used: apiCallCounts.month, cap: API_MONTHLY_CAP, remaining: API_MONTHLY_CAP - apiCallCounts.month },
-  });
-});
 
 // Recent scans — returns last N cached product names and scores for admin dashboard
 app.get("/recent-scans", requireAdmin, async (req, res) => {
@@ -5644,475 +5053,6 @@ app.post("/cache-warm", requireAdmin, (req, res) => {
   // Also run Supabase auto-warm to pick up popular user scans
   autoWarmFromSupabase();
 });
-
-// ── ADMIN: Full Redis reload — rescans every stale entry directly via AI pipeline ──
-// Runs entirely server-side (no HTTP round-trips). Stores progress in Redis so
-// it survives Railway restarts and can resume where it left off.
-// GET /admin/reload-redis?key=...           — start or resume
-// GET /admin/reload-redis?key=...&status=1  — check progress without starting
-
-const RELOAD_PROGRESS_KEY = "__reload_progress__";
-let reloadRunning = false;
-let reloadStopFlag = false;
-
-app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
-  if (!hasRedis) return res.status(400).json({ error: "Redis not configured" });
-
-  // Status check — return current progress without starting a new run
-  if (req.query.status) {
-    const prog = await redisGet(RELOAD_PROGRESS_KEY);
-    return res.json(prog || { status: "not_started" });
-  }
-
-  // Reset command — clear stuck state and set stop flag
-  if (req.query.reset) {
-    reloadRunning = false;
-    reloadStopFlag = true;
-    await redisSet(RELOAD_PROGRESS_KEY, null);
-    return res.json({ status: "reset" });
-  }
-
-  // Stop command — halts any chain of auto-triggered batches
-  if (req.query.stop) {
-    reloadStopFlag = true;
-    return res.json({ status: "stopped" });
-  }
-
-  // Clear stop flag on a fresh trigger (no auto chain)
-  if (req.query.auto !== "1") reloadStopFlag = false;
-
-  // Honor stop flag
-  if (reloadStopFlag) {
-    return res.json({ status: "stopped" });
-  }
-
-  // Process this many items per request (sync, so Railway keeps the process alive)
-  const BATCH_SIZE = parseInt(req.query.batch) || 25;
-
-  // Load or init progress
-  let progress = await redisGet(RELOAD_PROGRESS_KEY);
-  let allKeys, startIndex = 0, reloaded = 0, skipped = 0, failed = 0;
-
-  if (progress?.status === "running" && progress?.allKeys?.length) {
-    allKeys = progress.allKeys;
-    startIndex = progress.nextIndex || 0;
-    reloaded = progress.reloaded || 0;
-    skipped = progress.skipped || 0;
-    failed = progress.failed || 0;
-  } else if (progress?.status === "complete") {
-    return res.json({ status: "complete", progress });
-  } else {
-    allKeys = (await redisKeys("*")).filter(k => k !== RELOAD_PROGRESS_KEY);
-    console.log(`[RELOAD] Starting fresh — ${allKeys.length} keys`);
-  }
-
-  const total = allKeys.length;
-  const endIndex = Math.min(startIndex + BATCH_SIZE, total);
-
-  // Process batch synchronously within this HTTP request
-  await (async () => {
-    const DELAY_MS = 500; // faster since we're doing small batches per request
-
-    for (let i = startIndex; i < endIndex; i++) {
-      if (reloadStopFlag) { console.log(`[RELOAD] Stop flag set — exiting batch`); break; }
-      const key = allKeys[i];
-      try {
-        const current = await redisGet(key);
-        if (!current) { skipped++; continue; }
-
-        const productName = current.product_name || key.split(":").slice(1).join(":") || key;
-
-        // Staleness check
-        const noIng   = !current.ingredient_list   || current.ingredient_list.length === 0;
-        const noFlag  = !current.flagged_substances || current.flagged_substances.length === 0;
-        const allFive = current.dimensions &&
-          current.dimensions.materials?.score      === 5 &&
-          current.dimensions.usage_exposure?.score === 5 &&
-          current.dimensions.packaging?.score      === 5 &&
-          current.dimensions.sustainability?.score === 5;
-        const isStale = !current.dimensions || current._preloaded === true || (noIng && noFlag && allFive);
-
-        if (!isStale) { skipped++; continue; }
-
-        // Evict from memory and run full AI pipeline directly
-        scoreCache.delete(key);
-
-        try {
-          const cat  = current.category || detectCategory(productName);
-          const p1   = await pass1(productName, null, cat);
-          let p2 = null;
-          try { p2 = await pass2(productName, p1); } catch(e) {}
-
-          let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
-          let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
-          let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
-          let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
-
-          let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
-          ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
-            mScore, uScore, pkScore, sScore, finalScore, p1, p2, cat, productName
-          ));
-          ({ finalScore } = applyPositiveCeilings(finalScore, cat, p1, p2, []));
-
-          const safety = computeSafetyScores(finalScore, cat, productName, p1);
-          const { childScore, isChild } = safety;
-
-          const alternatives = serializeAlternatives(
-            filterDbAlternatives(
-              findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
-            ),
-            cat
-          );
-
-          const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
-            : finalScore <= 4 ? "Good — mostly clean, use with awareness"
-            : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
-            : finalScore <= 8 ? "Switch — real concerns, time to swap"
-            : "Avoid — known harmful substances";
-
-          const result = {
-            product_name:       productName,
-            score:              finalScore,
-            overall_score:      finalScore,
-            category:           cat,
-            confidence:         p1.confidence || "medium",
-            is_child_product:   isChild,
-            child_score:        childScore,
-            child_bumps:        safety.childBumps || [],
-            pregnancy_score:    safety.pregnancyScore,
-            pregnancy_bumps:    safety.pregnancyBumps || [],
-            flagged_substances: p1.flagged_substances || [],
-            concerns:           p1.concerns           || [],
-            summary:            p1.summary            || "",
-            peer_comparison:    peerComparison,
-            dimensions: {
-              materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
-              usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },
-              packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [] },
-              sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [] },
-            },
-            identified_plastics: p1.identified_plastics || [],
-            harmful_chemicals:   p1.harmful_chemicals   || [],
-            natural_materials:   p1.natural_materials   || [],
-            nutrition:           p1.nutrition || p1.product_analysis?.nutrition || current.nutrition || null,
-            ingredient_list:     p1.ingredient_list || [],
-            alternatives,
-            ai_alternatives:     [],
-            scan_next:           buildScanNextFallback(productName, cat, alternatives),
-            cached:              false,
-          };
-
-          const calibrated = applyProductCalibration(result);
-          cacheSet(key, calibrated);
-          reloaded++;
-          console.log(`[RELOAD] ${i+1}/${total} ✓ ${productName} -> ${calibrated.overall_score}/10`);
-
-        } catch(aiErr) {
-          failed++;
-          console.warn(`[RELOAD] ${i+1}/${total} ✗ ${productName}: ${aiErr.message}`);
-        }
-
-        await new Promise(r => setTimeout(r, DELAY_MS));
-
-      } catch(err) {
-        failed++;
-        console.warn(`[RELOAD] Key error ${key}: ${err.message}`);
-      }
-    }
-  })();
-
-  // Save progress and return
-  const finalIndex = endIndex;
-  const isComplete = finalIndex >= total;
-  await redisSet(RELOAD_PROGRESS_KEY, {
-    status: isComplete ? "complete" : "running",
-    total, nextIndex: finalIndex, reloaded, skipped, failed,
-    pct: Math.round(finalIndex / total * 100),
-    allKeys,
-    updatedAt: new Date().toISOString(),
-  });
-
-  console.log(`[RELOAD] Batch done — ${startIndex}→${finalIndex}/${total} (reloaded: ${reloaded}, skipped: ${skipped}, failed: ${failed})`);
-
-  // Self-drive: kick off the next batch via fetch before responding.
-  // Fire-and-forget — we don't await it, so it runs after we return.
-  if (!isComplete && !reloadStopFlag && req.query.auto !== "0") {
-    const selfUrl = `http://localhost:${PORT}/admin/reload-redis?key=${encodeURIComponent(ADMIN_KEY)}&batch=${BATCH_SIZE}&auto=1`;
-    setTimeout(() => {
-      fetch(selfUrl).catch(e => console.warn(`[RELOAD] self-trigger failed: ${e.message}`));
-    }, 100);
-  }
-
-  res.json({
-    status: isComplete ? "complete" : "batch_done",
-    total, nextIndex: finalIndex, reloaded, skipped, failed,
-    pct: Math.round(finalIndex / total * 100),
-    batch: endIndex - startIndex,
-    auto_next: !isComplete,
-  });
-});
-// ── BARCODE SCAN — Open Food Facts lookup + full AI pipeline ────────────────
-// Accepts a UPC/EAN barcode, looks up product data from Open Food Facts (free,
-// 3M+ products), passes exact ingredient list as ground truth to pass1/pass2,
-// and returns a fully scored result identical to a text scan.
-app.post("/barcode", rateLimit, async (req, res) => {
-  const { barcode, userId } = req.body || {};
-  if (!barcode) return res.status(400).json({ error: "barcode required" });
-
-  const barcodeKey = `barcode:${barcode}`;
-
-  // ── Cache check (same staleness logic as /analyze) ──
-  const bCached = await cacheGet(barcodeKey);
-  if (bCached) {
-    const noIng   = !bCached.ingredient_list   || bCached.ingredient_list.length === 0;
-    const noFlag  = !bCached.flagged_substances || bCached.flagged_substances.length === 0;
-    const allFive = bCached.dimensions &&
-      bCached.dimensions.materials?.score      === 5 &&
-      bCached.dimensions.usage_exposure?.score === 5 &&
-      bCached.dimensions.packaging?.score      === 5 &&
-      bCached.dimensions.sustainability?.score === 5;
-    const bStale = !bCached.dimensions || bCached._preloaded || (noIng && noFlag && allFive);
-    if (!bStale) {
-      console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
-      return res.json({ ...bCached, cached: true });
-    }
-    scoreCache.delete(barcodeKey);
-  }
-
-  // ── Multi-source barcode lookup ──
-  // Try Open Food Facts first (food/beverage), then Open Beauty Facts (personal care),
-  // then Open Products Facts (everything else). All share the same schema.
-  const BARCODE_SOURCES = [
-    { name: "food",    url: `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-    { name: "beauty",  url: `https://world.openbeautyfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-    { name: "product", url: `https://world.openproductsfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-  ];
-
-  let offProduct = null;
-  let sourceName = null;
-  for (const src of BARCODE_SOURCES) {
-    try {
-      const offRes = await fetch(src.url, {
-        headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (offRes.ok) {
-        const offJson = await offRes.json();
-        if (offJson.status === 1 && offJson.product) {
-          offProduct = offJson.product;
-          sourceName = src.name;
-          console.log(`[BARCODE] ${barcode} found in ${src.name} database`);
-          break;
-        }
-      }
-    } catch(e) { console.warn(`[BARCODE] ${src.name} lookup failed:`, e.message); }
-  }
-
-  if (!offProduct) {
-    console.log(`[BARCODE] ${barcode} not found in any database — returning fallback`);
-    // Return a 200 with fallback_required so the frontend can render a
-    // friendly "scan the label instead" UI instead of a hard 404
-    const gs1Prefix = barcode.slice(0, 3);
-    const gs1Hint = (gs1Prefix >= "000" && gs1Prefix <= "139") ? "US or Canada"
-                  : (gs1Prefix >= "300" && gs1Prefix <= "379") ? "France"
-                  : (gs1Prefix >= "400" && gs1Prefix <= "440") ? "Germany"
-                  : (gs1Prefix >= "500" && gs1Prefix <= "509") ? "UK"
-                  : (gs1Prefix >= "690" && gs1Prefix <= "699") ? "China"
-                  : (gs1Prefix >= "800" && gs1Prefix <= "839") ? "Italy"
-                  : (gs1Prefix >= "840" && gs1Prefix <= "849") ? "Spain"
-                  : (gs1Prefix >= "850" && gs1Prefix <= "859") ? "Cuba"
-                  : (gs1Prefix >= "870" && gs1Prefix <= "879") ? "Netherlands"
-                  : (gs1Prefix >= "880" && gs1Prefix <= "889") ? "South Korea"
-                  : null;
-    return res.status(200).json({
-      fallback_required: true,
-      barcode,
-      origin_country: gs1Hint,
-      message: gs1Hint
-        ? `We couldn't identify this barcode, but it looks like a product from ${gs1Hint}. Try photographing the label for a full scan.`
-        : "We couldn't identify this barcode automatically. Try photographing the label for a full scan.",
-      action: "photo_scan",
-      cta: "Scan the label instead",
-    });
-  }
-
-  // ── Extract product data from OFF response ──
-  const productName  = offProduct.product_name_en || offProduct.product_name || `Product ${barcode}`;
-  const brand        = offProduct.brands           || "";
-  const ingredText   = offProduct.ingredients_text_en || offProduct.ingredients_text || "";
-  const novaGroup    = offProduct.nova_group;
-  const servingG     = parseFloat(offProduct.serving_quantity) || 100;
-  const nutr         = offProduct.nutriments || {};
-  const toServing    = (per100) => per100 != null ? Math.round(per100 * servingG / 100 * 10) / 10 : null;
-  const sugar_g      = toServing(nutr["sugars_100g"]);
-  const sat_fat_g    = toServing(nutr["saturated-fat_100g"]);
-  const calories     = toServing(nutr["energy-kcal_100g"]);
-  const sodium_mg    = nutr["sodium_100g"] != null
-    ? Math.round(nutr["sodium_100g"] * servingG / 100 * 1000)
-    : null;
-  const servingLabel = offProduct.serving_size || (servingG ? `${servingG}g` : "");
-
-  // Parse ingredient list into array
-  const ingredientList = ingredText
-    ? ingredText.split(/,(?![^(]*\))/).map(s => s.trim()).filter(Boolean)
-    : [];
-
-  // ── Check if already cached by product name ──
-  const cat     = detectCategory(productName);
-  const nameKey = cacheKey(productName, cat);
-  const nCached = await cacheGet(nameKey);
-  if (nCached) {
-    const ni = !nCached.ingredient_list   || nCached.ingredient_list.length === 0;
-    const nf = !nCached.flagged_substances || nCached.flagged_substances.length === 0;
-    const na = nCached.dimensions &&
-      nCached.dimensions.materials?.score      === 5 &&
-      nCached.dimensions.usage_exposure?.score === 5 &&
-      nCached.dimensions.packaging?.score      === 5 &&
-      nCached.dimensions.sustainability?.score === 5;
-    if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na))) {
-      cacheSet(barcodeKey, nCached);
-      return res.json({ ...nCached, cached: true, barcode });
-    }
-    scoreCache.delete(nameKey);
-  }
-
-  // ── Build rich context from OFF data for pass1 ──
-  const offContext = [
-    `EXACT PRODUCT: ${productName}${brand ? ` by ${brand}` : ""}`,
-    `BARCODE: ${barcode} (use this as ground truth — do not guess the product)`,
-    ingredText ? `FULL INGREDIENT LIST: ${ingredText}` : null,
-    novaGroup  ? `NOVA GROUP: ${novaGroup}${novaGroup === 4 ? " (ultra-processed)" : novaGroup === 3 ? " (processed)" : " (minimally processed)"}` : null,
-    sugar_g    != null ? `SUGAR PER SERVING: ${sugar_g}g` : null,
-    sodium_mg  != null ? `SODIUM PER SERVING: ${sodium_mg}mg` : null,
-    sat_fat_g  != null ? `SATURATED FAT PER SERVING: ${sat_fat_g}g` : null,
-    calories   != null ? `CALORIES PER SERVING: ${calories}kcal` : null,
-    servingLabel ? `SERVING SIZE: ${servingLabel}` : null,
-    // Scoring guidance for common barcode scan patterns
-    brand?.toLowerCase().includes("nespresso") || productName?.toLowerCase().includes("nespresso")
-      ? "SCORING NOTE: Nespresso uses aluminum capsules — inert food contact surface, no plastic migration. Natural coffee flavoring (hazelnut, vanilla, caramel) is food-grade and must NOT be flagged as a synthetic chemical concern. Score 2-4."
-      : null,
-    /natural.*flavor|flavoring/i.test(ingredText) && !/artificial/i.test(ingredText)
-      ? "SCORING NOTE: Ingredient list confirms NATURAL flavoring only — do not penalize as synthetic. Natural flavors are food-grade extracts, not petrochemicals."
-      : null,
-  ].filter(Boolean).join("\n");
-
-  console.log(`[BARCODE] "${productName}" — running AI with OFF ingredient context`);
-
-  try {
-    // ── Full AI pipeline — same as text scan but with exact ingredients ──
-    const p1 = await pass1(productName, offContext, cat);
-    let p2 = null;
-    try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[BARCODE] pass2 failed:", e.message); }
-
-    let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
-    let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
-    let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
-    let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
-
-    // ── Substance floors from OFF ingredient text (code-enforced, AI-immune) ──
-    // This is the key guarantee: if OFF lists Red 40, we force materials ≥ 7
-    // regardless of what the AI decided to score it.
-    const textFloors = applySubstanceFloorsToText(ingredText);
-    if (textFloors.mFloor > mScore) {
-      console.log(`[BARCODE] Text substance floor raised materials ${mScore} → ${textFloors.mFloor} (${textFloors.triggered[0]})`);
-      mScore = textFloors.mFloor;
-    }
-    if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
-
-    // Also run the AI-concern based floor check (catches things AI spots but OFF doesn't list)
-    const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
-    mScore = aiFloors.mScore;
-    uScore = aiFloors.uScore;
-
-    // ── NOVA group hard floor — NOVA 4 → materials ≥ 5, NOVA 3 → ≥ 4 ──
-    const novaMin = novaFloor(novaGroup, cat);
-    if (novaMin > mScore) {
-      console.log(`[BARCODE] NOVA ${novaGroup} floor raised materials ${mScore} → ${novaMin}`);
-      mScore = novaMin;
-    }
-
-    let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
-
-    ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
-      mScore, uScore, pkScore, sScore, finalScore, p1, p2, cat, productName
-    ));
-    ({ finalScore } = applyPositiveCeilings(finalScore, cat, p1, p2, []));
-
-    const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
-      : finalScore <= 4 ? "Good — mostly clean, use with awareness"
-      : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
-      : finalScore <= 8 ? "Switch — real concerns, time to swap"
-      : "Avoid — known harmful substances";
-
-    // Unified safety scoring — includes OFF ingredient text so substances
-    // the AI may have missed still trigger kid/pregnancy bumps
-    const barcodeSafety = computeSafetyScores(
-      finalScore, cat, productName, p1, textFloors.triggered, ingredText || ""
-    );
-    const { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild } = barcodeSafety;
-
-    const alternatives = serializeAlternatives(
-      filterDbAlternatives(
-        findAlternatives(productName, cat, 5, productName), cat, productName, finalScore
-      ),
-      cat
-    );
-
-    // Use OFF nutrition as ground truth; fall back to AI if OFF didn't have it
-    const nutrition = (sugar_g != null || sodium_mg != null || sat_fat_g != null)
-      ? { sugar_g, sodium_mg, sat_fat_g, calories, serving_size: servingLabel }
-      : (p1.nutrition || p1.product_analysis?.nutrition || null);
-
-    const result = {
-      product_name:        productName,
-      brand,
-      barcode,
-      score:               finalScore,
-      overall_score:       finalScore,
-      category:            cat,
-      confidence:          "high",
-      is_child_product:    isChild,
-      child_score:         childScore,
-      child_bumps:         childBumps || [],
-      pregnancy_score:     pregnancyScore,
-      pregnancy_bumps:     pregnancyBumps || [],
-      flagged_substances:  [...(p1.flagged_substances || []), ...textFloors.triggered],
-      concerns:            p1.concerns || [],
-      summary:             p1.summary || "",
-      peer_comparison:     peerComparison,
-      data_source:         sourceName === "food" ? "open_food_facts" : sourceName === "beauty" ? "open_beauty_facts" : "open_products_facts",
-      dimensions: {
-        materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
-        usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },
-        packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [] },
-        sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [] },
-      },
-      identified_plastics: p1.identified_plastics || [],
-      harmful_chemicals:   p1.harmful_chemicals   || [],
-      natural_materials:   p1.natural_materials   || [],
-      nutrition,
-      ingredient_list:     ingredientList.length ? ingredientList : (p1.ingredient_list || []),
-      alternatives,
-      ai_alternatives:     [],
-      scan_next:           buildScanNextFallback(productName, cat, alternatives),
-      cached:              false,
-    };
-
-    const calibrated = applyProductCalibration(result);
-
-    // Cache under both barcode key and product name key
-    cacheSet(barcodeKey, calibrated);
-    cacheSet(nameKey,    calibrated);
-
-    console.log(`[BARCODE] Scored "${productName}" -> ${calibrated.overall_score}/10 (${ingredientList.length} ingredients)`);
-    res.json(calibrated);
-
-  } catch(err) {
-    console.error("[BARCODE] AI error:", err.message);
-    res.status(500).json({ error: "Analysis failed. Please try photographing the label instead." });
-  }
-});
-
 // When the AI returns no scan_next suggestions, generate smart defaults
 // from the alternatives DB — same category, different products.
 function buildScanNextFallback(productName, category, alternatives) {
