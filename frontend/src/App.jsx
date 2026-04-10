@@ -3022,6 +3022,9 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [overrides, setOverrides] = useState([]);
+  const [newOverride, setNewOverride] = useState({name:"", floor:5, ceiling:7, category:"food_beverage", reason:"", substances:""});
+  const [savingOverride, setSavingOverride] = useState(false);
 
   useEffect(() => {
     if (!historyProp.length) {
@@ -3034,7 +3037,48 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     fetchRecentScans();
     fetchFeedback();
     fetchSuggestions();
+    fetchOverrides();
   }, []);
+
+  const fetchOverrides = async () => {
+    try {
+      const r = await fetch(`${API_BASE}/admin/calibration?key=RowenaRavenclaw2024!`);
+      if (r.ok) setOverrides(await r.json());
+    } catch {}
+  };
+
+  const saveOverride = async () => {
+    if (!newOverride.name.trim()) return;
+    setSavingOverride(true);
+    try {
+      const body = {
+        ...newOverride,
+        floor:      parseInt(newOverride.floor),
+        ceiling:    parseInt(newOverride.ceiling),
+        substances: newOverride.substances ? newOverride.substances.split(",").map(s=>s.trim()).filter(Boolean) : [],
+        updated_by: "admin",
+      };
+      const r = await fetch(`${API_BASE}/admin/calibration?key=RowenaRavenclaw2024!`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body),
+      });
+      if (r.ok) {
+        await fetchOverrides();
+        setNewOverride({name:"", floor:5, ceiling:7, category:"food_beverage", reason:"", substances:""});
+      }
+    } catch {}
+    setSavingOverride(false);
+  };
+
+  const deleteOverride = async (name) => {
+    try {
+      await fetch(`${API_BASE}/admin/calibration?name=${encodeURIComponent(name)}&key=RowenaRavenclaw2024!`, {
+        method: "DELETE",
+      });
+      await fetchOverrides();
+    } catch {}
+  };
 
   const fetchFeedback = async () => {
     setFeedbackLoading(true);
@@ -3484,6 +3528,76 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         )}
       </div>
 
+      {/* Calibration overrides — add/edit scores without code deploy */}
+      <div style={card}>
+        <div style={sectionHead}>Calibration overrides {overrides.length > 0 && <span style={{marginLeft:8, color:muted, fontWeight:400}}>({overrides.length} active)</span>}</div>
+        <p style={{fontSize:12, color:muted, margin:"0 0 14px", lineHeight:1.5}}>Override or add product scores without a code deploy. Changes take effect within seconds and clear the product's cache automatically.</p>
+
+        {/* Add new override form */}
+        <div style={{background:isDark?"#0f1923":"#f8fafb", borderRadius:10, padding:"14px 16px", border:`1px solid ${border}`, marginBottom:12}}>
+          <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Add / update override</div>
+          <div style={{display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:8, marginBottom:8}}>
+            <input
+              value={newOverride.name} onChange={e=>setNewOverride({...newOverride, name:e.target.value})}
+              placeholder="Product name (e.g. Huggies Little Movers)"
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+            />
+            <input
+              type="number" min="1" max="10" value={newOverride.floor} onChange={e=>setNewOverride({...newOverride, floor:e.target.value})}
+              placeholder="Floor"
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+            />
+            <input
+              type="number" min="1" max="10" value={newOverride.ceiling} onChange={e=>setNewOverride({...newOverride, ceiling:e.target.value})}
+              placeholder="Ceiling"
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+            />
+          </div>
+          <div style={{display:"grid", gridTemplateColumns:"1fr 2fr", gap:8, marginBottom:8}}>
+            <select
+              value={newOverride.category} onChange={e=>setNewOverride({...newOverride, category:e.target.value})}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+            >
+              {["food_beverage","beverage","baby","personal_care","home","kitchen","clothing","toy","supplement","restaurant","home_furnishing","accessory","other"].map(c =>
+                <option key={c} value={c}>{c}</option>
+              )}
+            </select>
+            <input
+              value={newOverride.substances} onChange={e=>setNewOverride({...newOverride, substances:e.target.value})}
+              placeholder="Substances (comma-separated, e.g. Red 40, BHT)"
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+            />
+          </div>
+          <textarea
+            value={newOverride.reason} onChange={e=>setNewOverride({...newOverride, reason:e.target.value})}
+            placeholder="Reason / summary (shown in app)"
+            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
+          />
+          <button onClick={saveOverride} disabled={!newOverride.name.trim() || savingOverride}
+            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : isDark?"#1e2433":"#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
+            {savingOverride ? "Saving..." : "Save override"}
+          </button>
+        </div>
+
+        {/* Active overrides list */}
+        {overrides.length > 0 && (
+          <div style={{display:"flex", flexDirection:"column", gap:6}}>
+            {overrides.map(o => (
+              <div key={o.name} style={{display:"flex", alignItems:"center", gap:12, padding:"8px 12px", background:isDark?"#0f1923":"#fff", borderRadius:8, border:`1px solid ${border}`}}>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:13, fontWeight:600, color:text}}>{o.name}</div>
+                  <div style={{fontSize:11, color:muted, marginTop:1}}>
+                    floor {o.floor} · ceiling {o.ceiling} · {o.category}
+                    {o.updated_by && ` · by ${o.updated_by}`}
+                  </div>
+                </div>
+                <button onClick={() => deleteOverride(o.name)} style={{padding:"4px 10px", borderRadius:5, border:`1px solid ${border}`, background:"none", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer"}}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Pending product suggestions */}
       <div style={card}>
         <div style={sectionHead}>Pending suggestions {suggestions.length > 0 && <span style={{color:"#16a34a", marginLeft:8}}>({suggestions.length})</span>}</div>
@@ -3723,6 +3837,23 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   const avg = history.length ? Math.round(history.reduce((a,h)=>a+h.score,0)/history.length*10)/10 : 0;
   const highest = history.length ? history.reduce((a,h)=>h.score>a.score?h:a, history[0]) : null;
 
+  // Month-over-month comparison — shows if user is getting cleaner over time
+  const now = Date.now();
+  const ONE_MONTH = 30 * 24 * 60 * 60 * 1000;
+  const thisMonthScans = history.filter(h => h.scanned_at && (now - new Date(h.scanned_at).getTime()) < ONE_MONTH);
+  const lastMonthScans = history.filter(h => {
+    if (!h.scanned_at) return false;
+    const age = now - new Date(h.scanned_at).getTime();
+    return age >= ONE_MONTH && age < 2 * ONE_MONTH;
+  });
+  const thisMonthAvg = thisMonthScans.length ? Math.round(thisMonthScans.reduce((a,h)=>a+(h.overall_score||h.score||0),0)/thisMonthScans.length*10)/10 : null;
+  const lastMonthAvg = lastMonthScans.length ? Math.round(lastMonthScans.reduce((a,h)=>a+(h.overall_score||h.score||0),0)/lastMonthScans.length*10)/10 : null;
+  const monthDelta = (thisMonthAvg !== null && lastMonthAvg !== null) ? Math.round((thisMonthAvg - lastMonthAvg) * 10) / 10 : null;
+  // Category breakdown
+  const catCounts = {};
+  history.forEach(h => { const c = h.category || "other"; catCounts[c] = (catCounts[c] || 0) + 1; });
+  const topCategory = Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+
   // Collect all alternatives from scan history, deduplicate by name
   const allAlts = [];
   const seen = new Set();
@@ -3817,6 +3948,41 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
               </div>
             )}
           </div>
+
+          {/* Month-over-month comparison */}
+          {thisMonthScans.length >= 3 && (
+            <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`, marginBottom:24}}>
+              <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16, flexWrap:"wrap"}}>
+                <div style={{flex:1, minWidth:200}}>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>This month</div>
+                  <div style={{display:"flex", alignItems:"baseline", gap:12, marginBottom:6}}>
+                    <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:text}}>{thisMonthScans.length}</span>
+                    <span style={{fontSize:13, color:muted}}>scan{thisMonthScans.length!==1?"s":""}</span>
+                  </div>
+                  {thisMonthAvg !== null && (
+                    <div style={{fontSize:13, color:muted}}>
+                      Average score: <strong style={{color: thisMonthAvg<=3?"#16a34a":thisMonthAvg<=6?"#d97706":"#dc2626"}}>{thisMonthAvg}/10</strong>
+                      {monthDelta !== null && (
+                        <span style={{marginLeft:10, fontSize:12, color: monthDelta < 0 ? "#16a34a" : monthDelta > 0 ? "#dc2626" : muted, fontWeight:600}}>
+                          {monthDelta < 0 ? "↓" : monthDelta > 0 ? "↑" : "="} {Math.abs(monthDelta)} vs last month
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {topCategory && (
+                    <div style={{fontSize:13, color:muted, marginTop:4}}>
+                      Most scanned: <strong style={{color:text}}>{topCategory.replace(/_/g," ")}</strong>
+                    </div>
+                  )}
+                </div>
+                {monthDelta !== null && monthDelta < 0 && (
+                  <div style={{fontSize:12, color:"#16a34a", fontWeight:600, maxWidth:220, textAlign:"right"}}>
+                    🎉 Your average is trending cleaner. Keep it up!
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Household Exposure Summary */}
           {history.length >= 2 && (() => {

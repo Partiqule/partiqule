@@ -5,6 +5,57 @@ const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 const { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP } = require("./calibration");
 
+// ── CALIBRATION OVERRIDES ─────────────────────────────────────
+// Admin can add/edit calibration entries via Supabase without a code deploy.
+// Overrides are merged into the in-memory CALIBRATION Map at boot and after
+// each admin edit. Runtime cost is zero — same Map lookup as before.
+// Supabase schema: calibration_overrides table with columns:
+//   name text (primary key, normalised), floor int, ceiling int, kids_floor int,
+//   kids_ceiling int, category text, substances jsonb, reason text, confidence text,
+//   updated_at timestamptz, updated_by text
+const calibrationOverrideKeys = new Set(); // tracks which keys came from overrides
+
+const loadCalibrationOverrides = async () => {
+  if (typeof supabaseAdmin === "undefined" || !supabaseAdmin) return { count: 0 };
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("calibration_overrides")
+      .select("*");
+    if (error) throw error;
+
+    // Remove any previously loaded overrides (so deleted ones go away)
+    for (const k of calibrationOverrideKeys) CALIBRATION.delete(k);
+    calibrationOverrideKeys.clear();
+
+    let loaded = 0;
+    for (const row of data || []) {
+      const key = normalise(row.name);
+      if (!key) continue;
+      CALIBRATION.set(key, {
+        floor:        row.floor,
+        ceiling:      row.ceiling,
+        kidsFloor:    row.kids_floor || undefined,
+        kidsCeiling:  row.kids_ceiling || undefined,
+        substances:   row.substances || [],
+        reason:       row.reason || "",
+        confidence:   row.confidence || "high",
+        category:     row.category || "other",
+        __override:   true,
+      });
+      calibrationOverrideKeys.add(key);
+      loaded++;
+    }
+    console.log(`[CALIBRATION] Loaded ${loaded} overrides from Supabase`);
+    return { count: loaded };
+  } catch (e) {
+    console.warn("[CALIBRATION] Override load failed:", e.message);
+    return { count: 0, error: e.message };
+  }
+};
+// Load on boot (deferred so supabaseAdmin exists) + periodic refresh every 5 min
+setTimeout(() => loadCalibrationOverrides(), 2000);
+setInterval(() => loadCalibrationOverrides(), 5 * 60 * 1000);
+
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
@@ -5049,6 +5100,98 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
 app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
 app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
 app.get("/cache-clear",  requireAdmin, (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+
+// ── CALIBRATION OVERRIDE ADMIN ────────────────────────────────
+// List all overrides (admin UI)
+app.get("/admin/calibration", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.json([]);
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("calibration_overrides")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Create or update an override
+app.post("/admin/calibration", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const {
+    name, floor, ceiling, kids_floor, kids_ceiling,
+    category, substances, reason, confidence, updated_by,
+  } = req.body || {};
+  if (!name || typeof floor !== "number" || typeof ceiling !== "number") {
+    return res.status(400).json({ error: "name, floor, ceiling required" });
+  }
+  if (floor > ceiling) {
+    return res.status(400).json({ error: "floor cannot be greater than ceiling" });
+  }
+  try {
+    const key = normalise(name);
+    const { error } = await supabaseAdmin
+      .from("calibration_overrides")
+      .upsert({
+        name:         key,
+        floor:        Math.max(1, Math.min(10, floor)),
+        ceiling:      Math.max(1, Math.min(10, ceiling)),
+        kids_floor:   kids_floor ? Math.max(1, Math.min(10, kids_floor)) : null,
+        kids_ceiling: kids_ceiling ? Math.max(1, Math.min(10, kids_ceiling)) : null,
+        category:     category || "other",
+        substances:   substances || [],
+        reason:       reason || "",
+        confidence:   confidence || "high",
+        updated_by:   updated_by || "admin",
+        updated_at:   new Date().toISOString(),
+      }, { onConflict: "name" });
+    if (error) throw error;
+    // Refresh in-memory CALIBRATION so the change takes effect immediately
+    await loadCalibrationOverrides();
+    // Also clear the product's cached score so next scan gets the new value
+    const cacheKey = `${category || "other"}:${key}`;
+    scoreCache.delete(cacheKey);
+    scoreCache.delete(key);
+    if (hasRedis) {
+      try {
+        await fetch(`${REDIS_URL}/del/${encodeURIComponent(cacheKey)}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+        });
+        await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+        });
+      } catch {}
+    }
+    log.info("calibration_override_saved", {name: key, floor, ceiling, category, updated_by});
+    res.json({ success: true, name: key });
+  } catch (e) {
+    log.error("calibration_override_error", {error: e.message});
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Delete an override
+app.delete("/admin/calibration", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const name = req.query.name || req.body?.name;
+  if (!name) return res.status(400).json({ error: "name required" });
+  try {
+    const key = normalise(name);
+    const { error } = await supabaseAdmin
+      .from("calibration_overrides")
+      .delete()
+      .eq("name", key);
+    if (error) throw error;
+    await loadCalibrationOverrides();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // View or reset API spend budget
 app.get("/admin/api-budget", requireAdmin, async (req, res) => {
