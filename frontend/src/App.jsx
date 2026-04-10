@@ -137,23 +137,17 @@ const supabase = createClient(SUPA_URL, SUPA_KEY);
 // Full-screen camera viewfinder with live barcode detection.
 // Uses ML Kit on iOS (via Capacitor) and ZXing on mobile web.
 const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
-  const videoRef    = useRef(null);
-  const canvasRef   = useRef(null);
+  const videoRef  = useRef(null);
+  const canvasRef = useRef(null);
   const [status,     setStatus]     = useState("starting");
   const [flash,      setFlash]      = useState(false);
   const [scanMsg,    setScanMsg]    = useState("Starting camera...");
-  const [hint,       setHint]       = useState(false); // show "try photo" hint after timeout
   const streamRef   = useRef(null);
   const controlsRef = useRef(null);
   const stopRef     = useRef(false);
-  const rafRef      = useRef(null); // store requestAnimationFrame ID for clean cancellation
-  const hintTimer   = useRef(null);
 
   const cleanup = async () => {
     stopRef.current = true;
-    // Cancel animation frame immediately — prevents continued scanning after stop
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-    if (hintTimer.current) { clearTimeout(hintTimer.current); hintTimer.current = null; }
     try { controlsRef.current?.stop?.(); } catch(e) {}
     try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch(e) {}
     if (IS_NATIVE) {
@@ -168,8 +162,6 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   const onFound = (value) => {
     if (stopRef.current) return;
     stopRef.current = true;
-    // Cancel the scan loop immediately so it cannot fire again
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     setFlash(true);
     try { window.navigator?.vibrate?.(50); } catch(e) {}
     setTimeout(() => { cleanup(); onBarcode(value); }, 350);
@@ -192,6 +184,7 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
         }
       } else {
         try {
+          // Lower resolution = faster barcode decoding
           const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
           });
@@ -199,14 +192,10 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
           if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
           setStatus("scanning"); setScanMsg("Point at a barcode");
 
-          // Show "try photo" hint after 12 seconds if no barcode found yet
-          hintTimer.current = setTimeout(() => {
-            if (!stopRef.current) setHint(true);
-          }, 12000);
-
+          // Use native BarcodeDetector (iOS 17+ / Chrome Android) — hardware-accelerated, much faster than ZXing
           if ("BarcodeDetector" in window) {
             const detector = new window.BarcodeDetector({
-              formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","qr_code","data_matrix","itf","codabar"]
+              formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","qr_code","data_matrix"]
             });
             const scan = async () => {
               if (stopRef.current || !videoRef.current) return;
@@ -214,11 +203,11 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
                 const barcodes = await detector.detect(videoRef.current);
                 if (barcodes.length > 0) { onFound(barcodes[0].rawValue); return; }
               } catch(e) {}
-              if (!stopRef.current) rafRef.current = requestAnimationFrame(scan);
+              requestAnimationFrame(scan);
             };
-            rafRef.current = requestAnimationFrame(scan);
+            requestAnimationFrame(scan);
           } else {
-            // ZXing fallback
+            // ZXing fallback for older browsers
             const { BrowserMultiFormatReader } = await import("@zxing/browser");
             const reader = new BrowserMultiFormatReader();
             const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
@@ -236,6 +225,9 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   }, []);
 
   const takePhoto = async () => {
+    // Always use the native camera for photos — much higher resolution and quality
+    // than capturing a frame from the barcode scanner's 1280x720 video stream.
+    // The live video feed is for barcode detection only, not photo quality.
     await cleanup();
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.capture = "environment";
@@ -317,21 +309,9 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
            : status === "error"   ? scanMsg
            : "Point at a barcode to scan instantly"}
           </div>
-          {status === "scanning" && !hint && (
+          {status === "scanning" && (
             <div style={{color:"rgba(255,255,255,0.45)",fontSize:13}}>
               or tap below to photograph the label
-            </div>
-          )}
-          {/* Hint shown after 12s — nudges user to photo mode if barcode isn't scanning */}
-          {hint && (
-            <div style={{marginTop:8}}>
-              <div style={{color:"rgba(255,255,255,0.55)",fontSize:13,marginBottom:10}}>
-                Having trouble? Tap the button below to photograph the label instead.
-              </div>
-              <button onClick={takePhoto}
-                style={{background:"rgba(34,197,94,0.2)",border:"1.5px solid rgba(34,197,94,0.5)",borderRadius:20,padding:"8px 20px",color:"#4ade80",fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                Scan label photo
-              </button>
             </div>
           )}
         </div>
@@ -367,46 +347,30 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
         </button>
       </div>
 
-      {/* Bottom bar — two clear options from the start */}
+      {/* Bottom bar — photo button + hint */}
       <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:20,
-        padding:"20px 32px 48px",
-        display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+        padding:"24px 40px 52px",
+        display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
         {status === "scanning" && (
-          <div style={{display:"flex",gap:14,width:"100%",maxWidth:320}}>
-            {/* Barcode — already scanning automatically, this is the active mode indicator */}
-            <div style={{flex:1,background:"rgba(34,197,94,0.2)",border:"2px solid rgba(34,197,94,0.6)",borderRadius:18,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:8,cursor:"default"}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2">
-                <rect x="2" y="4" width="3" height="16"/><rect x="7" y="4" width="1.5" height="16"/>
-                <rect x="10.5" y="4" width="3" height="16"/><rect x="16" y="4" width="1.5" height="16"/>
-                <rect x="19" y="4" width="3" height="16"/>
-              </svg>
-              <span style={{fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:800,color:"#4ade80",letterSpacing:"0.04em"}}>Barcode</span>
-              <span style={{fontSize:10,color:"rgba(74,222,128,0.6)",textAlign:"center",lineHeight:1.3}}>Auto-scanning</span>
-            </div>
-            {/* Photo — tap to photograph the label */}
-            <button onClick={takePhoto}
-              style={{flex:1,background:"rgba(255,255,255,0.1)",border:"2px solid rgba(255,255,255,0.25)",borderRadius:18,padding:"16px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:8,cursor:"pointer",transition:"all 0.15s"}}
-              onMouseDown={e=>{e.currentTarget.style.background="rgba(255,255,255,0.2)";}}
-              onMouseUp={e=>{e.currentTarget.style.background="rgba(255,255,255,0.1)";}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-              <span style={{fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:800,color:"white",letterSpacing:"0.04em"}}>Photo</span>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",textAlign:"center",lineHeight:1.3}}>Scan the label</span>
-            </button>
-          </div>
+          <button onClick={takePhoto}
+            style={{width:72,height:72,borderRadius:"50%",
+              background:"rgba(255,255,255,0.95)",
+              border:"5px solid rgba(255,255,255,0.3)",
+              boxShadow:"0 4px 24px rgba(0,0,0,0.4)",
+              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"transform 0.15s"}}
+            onMouseDown={e=>e.currentTarget.style.transform="scale(0.93)"}
+            onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
         )}
-        {hint && (
-          <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,textAlign:"center"}}>
-            Barcode not scanning? Tap Photo to capture the label
-          </div>
-        )}
-        {status !== "scanning" && (
-          <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,textAlign:"center",letterSpacing:"0.02em"}}>
-            {status === "starting" ? "OPENING CAMERA…" : "CAMERA UNAVAILABLE"}
-          </div>
-        )}
+        <div style={{color:"rgba(255,255,255,0.35)",fontSize:11,textAlign:"center",letterSpacing:"0.02em"}}>
+          BARCODE SCANS AUTOMATICALLY · TAP FOR PHOTO
+        </div>
       </div>
     </div>
   );
@@ -5865,7 +5829,6 @@ function App() {
 
   const analyze = async (q=query) => {
     if (!q.trim()) return Promise.resolve();
-    setShowScanModal(false); // always close the modal when a scan kicks off
     // ── Scan limit gate ──
     if (!isSubscribed) {
       if (scanCount >= FREE_LIMIT) {
@@ -8218,12 +8181,13 @@ function App() {
               clearTimeout(timeout);
               if (!resp.ok) throw new Error(`Server error ${resp.status}`);
               const data = await resp.json();
-              // Barcode not in any product database — don't re-open scanner,
-              // just close and let user scan the label as a photo or type the name
+              // Graceful fallback — barcode not in any product database
               if (data.fallback_required) {
                 setLoading(false);
                 setQuery("");
-                setError("Barcode not recognised. Tap the camera button to photograph the label, or type the product name.");
+                // Re-open scanner in photo mode so user can snap the label
+                setShowBarcodeScanner(true);
+                setError(data.message || "Barcode not found. Please scan the label instead.");
                 try { track("Barcode Fallback", {barcode, origin: data.origin_country || "unknown"}); } catch {}
                 return;
               }
