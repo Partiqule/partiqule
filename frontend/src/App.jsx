@@ -6389,6 +6389,45 @@ function App() {
             const swapList = history.filter(h=>(h.overall_score||h.score||0)>=5).slice(0,2);
             const firstName = user?.email ? user.email.split("@")[0].split(".")[0] : null;
             const greet = firstName ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${firstName.charAt(0).toUpperCase()+firstName.slice(1)}` : "Welcome back";
+
+            // ── Streak counter (Serial Position Effect: anchors the greeting) ──
+            const streak = (() => {
+              try {
+                const today = new Date().toDateString();
+                const visits = JSON.parse(localStorage.getItem("pq_visits")||"[]");
+                if (!visits.length || visits[0] !== today) {
+                  visits.unshift(today);
+                  localStorage.setItem("pq_visits", JSON.stringify(visits.slice(0,60)));
+                }
+                let s = 0;
+                for (let i = 0; i < visits.length; i++) {
+                  const exp = new Date(); exp.setDate(exp.getDate()-i);
+                  if (visits[i] === exp.toDateString()) s++; else break;
+                }
+                return s;
+              } catch { return 1; }
+            })();
+
+            // ── New badge: tracks which For You products were seen before today ──
+            const isNewCard = (() => {
+              try {
+                const today = new Date().toDateString();
+                const stored = JSON.parse(localStorage.getItem("pq_foryou")||"{}");
+                return (name) => stored.date !== today || !(stored.seen||[]).includes(name);
+              } catch { return () => false; }
+            })();
+            const markSeen = (names) => {
+              try {
+                const today = new Date().toDateString();
+                const existing = JSON.parse(localStorage.getItem("pq_foryou")||"{}");
+                const seen = existing.date === today ? [...new Set([...(existing.seen||[]),...names])] : names;
+                localStorage.setItem("pq_foryou", JSON.stringify({date:today, seen}));
+              } catch {}
+            };
+
+            // ── Date labels for comparison card ──
+            const todayLabel = new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+
             const comparisons = [
               {a:{name:"Heinz Ketchup",score:6,flags:"HFCS · Caramel color"},    b:{name:"Annie's Ketchup",score:2,flags:"Organic · 5 ingredients"}},
               {a:{name:"Tide Pods",score:7,flags:"PVA film · Optical brighteners"},b:{name:"Blueland Laundry",score:2,flags:"Plastic-free · Clean formula"}},
@@ -6428,11 +6467,19 @@ function App() {
                 {/* ── FEED CONTENT ── */}
                 <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? "24px 16px" : "32px 40px"}}>
 
-                  {/* Greeting */}
-                  <div style={{marginBottom:20}}>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
-                    <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""} scanned</div>
-                  </div>
+                  {/* Greeting + streak */}
+                  <div style={{marginBottom:20, display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
+                    <div>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
+                      <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""} scanned</div>
+                    </div>
+                    {/* Streak — Zeigarnik: loss aversion keeps people coming back */}
+                    {streak > 1 && (
+                      <div style={{display:"flex", alignItems:"center", gap:6, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)", borderRadius:20, padding:"6px 12px", flexShrink:0}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day{streak!==1?"s":""}</span>
+                      </div>
+                    )}</div>
 
                   {/* Routine score pill */}
                   <div onClick={()=>{setPage("routine"); setResult(null);}}
@@ -6456,6 +6503,7 @@ function App() {
                     history.filter(h=>(h.flagged_substances||[]).length>0&&(h.overall_score||h.score||0)>=5).slice(0,1).forEach(h=>forYou.push({type:"bad",reason:"Based on your scan",name:h.product_name,detail:`Contains ${h.flagged_substances[0]} — worth a closer look`,cta:"Dig deeper",item:h}));
                     history.filter(h=>(h.overall_score||h.score||0)<=2).slice(0,1).forEach(h=>forYou.push({type:"good",reason:"You scanned this",name:h.product_name,detail:`Scored ${h.overall_score||h.score}/10 — one of your cleanest products`,cta:"View result",item:h}));
                     if (!forYou.length) return null;
+                    markSeen(forYou.map(c=>c.name));
                     const ts = {warn:{accent:"#f59e0b",bg:"rgba(245,158,11,0.08)",border:"rgba(245,158,11,0.2)",ctaBg:"rgba(245,158,11,0.12)",ctaColor:"#f59e0b"},bad:{accent:"#ef4444",bg:"rgba(239,68,68,0.08)",border:"rgba(239,68,68,0.2)",ctaBg:"rgba(239,68,68,0.12)",ctaColor:"#ef4444"},good:{accent:"#22c55e",bg:"rgba(34,197,94,0.06)",border:"rgba(34,197,94,0.18)",ctaBg:"rgba(34,197,94,0.12)",ctaColor:"#22c55e"}};
                     return (
                       <div style={{marginBottom:24}}>
@@ -6466,10 +6514,15 @@ function App() {
                         <div style={{display:"flex",gap:10,overflowX:"auto",paddingBottom:4,scrollbarWidth:"none"}}>
                           {forYou.map((card,i)=>{
                             const st=ts[card.type];
+                            const isNew = isNewCard(card.name);
                             return (
                               <div key={i} onClick={()=>card.item&&setResult(card.item)}
                                 style={{flexShrink:0,width:160,background:st.bg,border:`1px solid ${st.border}`,borderRadius:14,padding:12,cursor:"pointer",position:"relative",overflow:"hidden"}}>
                                 <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:st.accent,borderRadius:"14px 14px 0 0"}}/>
+                                {/* New badge — Von Restorff: breaks pattern on first daily visit */}
+                                {isNew && (
+                                  <div style={{position:"absolute",top:8,right:8,background:"#22c55e",color:"#052e16",fontFamily:"'Outfit',sans-serif",fontSize:8,fontWeight:900,padding:"2px 6px",borderRadius:20,letterSpacing:"0.08em"}}>NEW</div>
+                                )}
                                 <div style={{fontFamily:"'Outfit',sans-serif",fontSize:9,fontWeight:800,letterSpacing:"0.1em",textTransform:"uppercase",color:st.accent,marginBottom:8,marginTop:2}}>{card.reason}</div>
                                 <div style={{fontFamily:"'Outfit',sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:6,lineHeight:1.3}}>{card.name.length>28?card.name.slice(0,26)+"…":card.name}</div>
                                 <div style={{fontSize:10,color:"#6ee7b7",lineHeight:1.5,marginBottom:10,opacity:0.8}}>{card.detail}</div>
@@ -6484,7 +6537,10 @@ function App() {
 
                   {/* Today's Comparison */}
                   <div style={{marginBottom:24}}>
-                    <div style={{fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4",marginBottom:12}}>Today's Comparison</div>
+                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                      <div style={{fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
+                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:600, color:"#6ee7b7", opacity:0.5}}>{todayLabel}</div>
+                    </div>
                     <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:16,overflow:"hidden",position:"relative"}}>
                       <div style={{position:"absolute",top:10,left:10,background:"#a3e635",color:"#052e16",fontFamily:"'Outfit',sans-serif",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:"0.08em",textTransform:"uppercase"}}>Head to Head</div>
                       <div style={{padding:"36px 20px 20px"}}>
@@ -6653,6 +6709,10 @@ function App() {
           </div>
 
           <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? "48px 20px 40px" : "72px 40px 56px"}}>
+            {/* Animated gradient mesh background */}
+            <div style={{position:"absolute", inset:0, background:"linear-gradient(135deg,#052e16 0%,#0a3d1f 25%,#052e16 50%,#071f0c 75%,#052e16 100%)", backgroundSize:"400% 400%", animation:"gradientShift 12s ease infinite", pointerEvents:"none"}}/>
+            {/* Radial glow that breathes */}
+            <div style={{position:"absolute", top:"30%", left:"50%", transform:"translateX(-50%)", width:600, height:300, borderRadius:"50%", background:"radial-gradient(ellipse,rgba(34,197,94,0.12) 0%,transparent 70%)", animation:"livePulse 4s ease-in-out infinite", pointerEvents:"none"}}/>
             {/* Floating particles */}
             <style>{`
               @keyframes float1 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-18px) translateX(8px)} }
@@ -6662,6 +6722,10 @@ function App() {
               @keyframes float5 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(12px)} }
               @keyframes countUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
               @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+              @keyframes heroReveal { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+              @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+              @keyframes autoScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+              @keyframes scoreReveal { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
             `}</style>
             {[
               {s:10,x:"8%",y:"20%",a:0.2,anim:"float1",dur:"6s",shape:"circle"},{s:6,x:"15%",y:"65%",a:0.15,anim:"float2",dur:"8s",shape:"circle"},
@@ -6676,16 +6740,16 @@ function App() {
             <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1,
               transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
 
-              {/* Live social proof — Von Restorff: the pulsing dot breaks the static layout */}
-              <div style={{display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#86efac", fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:20, marginBottom:20, backdropFilter:"blur(4px)"}}>
+              {/* Live social proof */}
+              <div style={{display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#86efac", fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:20, marginBottom:20, backdropFilter:"blur(4px)", animation:"heroReveal 0.6s ease 0.1s both"}}>
                 <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"livePulse 1.8s ease-in-out infinite", flexShrink:0}}/>
-                <span style={{animation:"countUp 0.6s ease forwards"}}>2,847 products scanned today</span>
+                <span>2,847 products scanned today</span>
               </div>
 
-              <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08}}>
+              <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08, animation:"heroReveal 0.6s ease 0.2s both"}}>
                 Scan anything.<br/><span style={{color:"#22c55e"}}>Know everything.</span>
               </h1>
-              <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 0", lineHeight:1.7, opacity:0.8}}>
+              <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0", lineHeight:1.7, opacity:0.8, animation:"heroReveal 0.6s ease 0.35s both"}}>
                 {isMobile ? "Understand what's in your products before it affects your health." : "Understand the chemical reality of every product in your home, before it affects your health."}
               </p>
             </div>
@@ -6698,34 +6762,53 @@ function App() {
               <div style={{textAlign:"center", marginBottom:16, padding:"0 20px"}}>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.5, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6}}>Tap any product to scan it</div>
               </div>
-              <div style={{display:"flex", gap:10, overflowX:"auto", paddingLeft:isMobile?16:40, paddingRight:isMobile?16:40, paddingBottom:4, scrollbarWidth:"none"}}>
-                {[
-                  {name:"M&Ms",           cat:"Candy",     score:8, flag:"Red 40 · Yellow 5 · Yellow 6"},
-                  {name:"Tide Pods",       cat:"Laundry",   score:7, flag:"PVA film · Brighteners"},
-                  {name:"Honey Nut Cheerios", cat:"Cereal", score:6, flag:"BHT · Oat pesticides"},
-                  {name:"Liquid Death",    cat:"Water",     score:1, flag:"Clean — no concerns"},
-                  {name:"Neutrogena SPF",  cat:"Sunscreen", score:6, flag:"Oxybenzone · Parabens"},
-                  {name:"RXBAR",           cat:"Snack",     score:2, flag:"Dates · Egg whites · Nuts"},
-                  {name:"Huggies Diapers", cat:"Baby",      score:8, flag:"PFAS · Ahcovel base"},
-                ].map((item,i)=>{
-                  const sc = item.score<=2?"#22c55e":item.score<=4?"#a3e635":item.score<=6?"#f59e0b":item.score<=8?"#f97316":"#ef4444";
-                  const isClean = item.score <= 2;
-                  return (
-                    <div key={i} onClick={()=>{setQuery(item.name); analyze(item.name);}}
-                      style={{flexShrink:0, width:isMobile?148:164, background:"rgba(15,42,24,0.8)", border:`1px solid ${isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.12)"}`, borderRadius:16, padding:"16px 14px", cursor:"pointer", transition:"transform 0.15s, border-color 0.15s", position:"relative", overflow:"hidden"}}
-                      onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)"; e.currentTarget.style.borderColor=`${sc}55`;}}
-                      onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"; e.currentTarget.style.borderColor=isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.12)";}}>
-                      <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:sc, borderRadius:"16px 16px 0 0"}}/>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, color:"#6ee7b7", opacity:0.5, marginBottom:10, fontWeight:600}}>{item.cat}</div>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:12, lineHeight:1.3}}>{item.name}</div>
-                      <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between"}}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:32, fontWeight:900, color:sc, lineHeight:1, textShadow:`0 0 16px ${sc}55`}}>{item.score}</div>
-                        <div style={{fontSize:8, color:`${sc}`, background:`${sc}18`, border:`1px solid ${sc}33`, borderRadius:20, padding:"3px 8px", fontFamily:"'Outfit',sans-serif", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase"}}>Scan →</div>
+              {/* Auto-scrolling infinite carousel — pauses on hover */}
+              <style>{`.showcase-track:hover{animation-play-state:paused!important}`}</style>
+              <div style={{overflow:"hidden",position:"relative"}}>
+                <div style={{position:"absolute",left:0,top:0,bottom:0,width:60,background:"linear-gradient(90deg,#080f0a,transparent)",zIndex:2,pointerEvents:"none"}}/>
+                <div style={{position:"absolute",right:0,top:0,bottom:0,width:60,background:"linear-gradient(270deg,#080f0a,transparent)",zIndex:2,pointerEvents:"none"}}/>
+                <div className="showcase-track" style={{display:"flex",gap:10,paddingBottom:4,animation:"autoScroll 32s linear infinite",width:"max-content"}}>
+                  {[
+                    {name:"M&Ms",cat:"Candy",score:8,flag:"Red 40 · Yellow 5"},
+                    {name:"Tide Pods",cat:"Laundry",score:7,flag:"PVA film · Brighteners"},
+                    {name:"Honey Nut Cheerios",cat:"Cereal",score:6,flag:"BHT · Pesticides"},
+                    {name:"Liquid Death",cat:"Water",score:1,flag:"Clean — no concerns"},
+                    {name:"Neutrogena SPF",cat:"Sunscreen",score:6,flag:"Oxybenzone"},
+                    {name:"RXBAR",cat:"Snack",score:2,flag:"Dates · Eggs · Nuts"},
+                    {name:"Huggies Diapers",cat:"Baby",score:8,flag:"PFAS · Ahcovel"},
+                    {name:"Skittles",cat:"Candy",score:8,flag:"Red 40 · Titanium dioxide"},
+                    {name:"Lodge Cast Iron",cat:"Cookware",score:1,flag:"No coating — pure iron"},
+                    {name:"Teflon Pan",cat:"Cookware",score:9,flag:"PTFE · Heat volatiles"},
+                    {name:"Oat Yeah Oat Milk",cat:"Beverage",score:2,flag:"Oats · Water · Clean"},
+                    {name:"Dawn Dish Soap",cat:"Cleaning",score:5,flag:"Synthetic fragrance"},
+                    {name:"M&Ms",cat:"Candy",score:8,flag:"Red 40 · Yellow 5"},
+                    {name:"Tide Pods",cat:"Laundry",score:7,flag:"PVA film · Brighteners"},
+                    {name:"Honey Nut Cheerios",cat:"Cereal",score:6,flag:"BHT · Pesticides"},
+                    {name:"Liquid Death",cat:"Water",score:1,flag:"Clean — no concerns"},
+                    {name:"Neutrogena SPF",cat:"Sunscreen",score:6,flag:"Oxybenzone"},
+                    {name:"RXBAR",cat:"Snack",score:2,flag:"Dates · Eggs · Nuts"},
+                    {name:"Huggies Diapers",cat:"Baby",score:8,flag:"PFAS · Ahcovel"},
+                    {name:"Skittles",cat:"Candy",score:8,flag:"Red 40 · Titanium dioxide"},
+                    {name:"Lodge Cast Iron",cat:"Cookware",score:1,flag:"No coating — pure iron"},
+                    {name:"Teflon Pan",cat:"Cookware",score:9,flag:"PTFE · Heat volatiles"},
+                    {name:"Oat Yeah Oat Milk",cat:"Beverage",score:2,flag:"Oats · Water · Clean"},
+                    {name:"Dawn Dish Soap",cat:"Cleaning",score:5,flag:"Synthetic fragrance"},
+                  ].map((item,i)=>{
+                    const sc=item.score<=2?"#22c55e":item.score<=4?"#a3e635":item.score<=6?"#f59e0b":item.score<=8?"#f97316":"#ef4444";
+                    const isClean=item.score<=2;
+                    return(
+                      <div key={i} onClick={()=>{setQuery(item.name);analyze(item.name);}}
+                        style={{flexShrink:0,width:148,background:"rgba(15,42,24,0.85)",border:`1px solid ${isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.1)"}`,borderRadius:16,padding:"14px",cursor:"pointer",position:"relative",overflow:"hidden",
+                          marginLeft:i===0?(isMobile?16:40):0}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:sc,borderRadius:"16px 16px 0 0"}}/>
+                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:10,color:"#6ee7b7",opacity:0.55,marginBottom:8,fontWeight:600}}>{item.cat}</div>
+                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:10,lineHeight:1.3}}>{item.name}</div>
+                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:30,fontWeight:900,color:sc,lineHeight:1,textShadow:`0 0 12px ${sc}66`}}>{item.score}</div>
+                        <div style={{fontSize:9,color:sc,opacity:0.6,marginTop:6,lineHeight:1.4}}>{item.flag}</div>
                       </div>
-                      <div style={{fontSize:10, color:"#6ee7b7", opacity:0.5, marginTop:8, lineHeight:1.4}}>{item.flag}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
