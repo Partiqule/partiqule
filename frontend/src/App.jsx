@@ -184,18 +184,37 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
         }
       } else {
         try {
+          // Lower resolution = faster barcode decoding
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
           });
           streamRef.current = stream;
           if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
           setStatus("scanning"); setScanMsg("Point at a barcode");
-          const { BrowserMultiFormatReader } = await import("@zxing/browser");
-          const reader = new BrowserMultiFormatReader();
-          const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
-            (result) => { if (result && !stopRef.current) onFound(result.getText()); }
-          );
-          controlsRef.current = controls;
+
+          // Use native BarcodeDetector (iOS 17+ / Chrome Android) — hardware-accelerated, much faster than ZXing
+          if ("BarcodeDetector" in window) {
+            const detector = new window.BarcodeDetector({
+              formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","qr_code","data_matrix"]
+            });
+            const scan = async () => {
+              if (stopRef.current || !videoRef.current) return;
+              try {
+                const barcodes = await detector.detect(videoRef.current);
+                if (barcodes.length > 0) { onFound(barcodes[0].rawValue); return; }
+              } catch(e) {}
+              requestAnimationFrame(scan);
+            };
+            requestAnimationFrame(scan);
+          } else {
+            // ZXing fallback for older browsers
+            const { BrowserMultiFormatReader } = await import("@zxing/browser");
+            const reader = new BrowserMultiFormatReader();
+            const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
+              (result) => { if (result && !stopRef.current) onFound(result.getText()); }
+            );
+            controlsRef.current = controls;
+          }
         } catch(e) {
           setStatus("error"); setScanMsg("Camera unavailable — try typing instead");
         }
