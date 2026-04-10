@@ -379,13 +379,14 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
 const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
-  const score   = displayScore || result.overall_score || result.score;
-  const label   = scoreLabel(score);
-  const color   = scoreColor(score);
-  const name    = result.product_name || "";
+  const score    = displayScore || result.overall_score || result.score;
+  const label    = scoreLabel(score);
+  const color    = scoreColor(score);
+  const name     = result.product_name || "";
   const category = (result.category || "").toUpperCase().replace(/_/g, " ");
   const childScore = result.child_score;
-  const hasKids = childScore && childScore !== score;
+  const hasKids  = childScore && childScore !== score;
+  const isClean  = score <= 3;
   const flags = [
     ...(result.flagged_substances||[]),
     ...(result.dimensions?.materials?.concerns||[]),
@@ -400,81 +401,103 @@ const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
     canvas.style.width = "100%"; canvas.style.height = "auto";
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr,dpr);
-    const parseHex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-    const [sr,sg,sb] = parseHex(color);
-    ctx.fillStyle = "#FAFAF7"; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,0,W,88);
-    ctx.fillStyle = "#4ade80"; ctx.font = "bold 40px system-ui,sans-serif";
+
+    // Deep green background
+    const bgGrad = ctx.createLinearGradient(0,0,W,H);
+    bgGrad.addColorStop(0, "#031a09");
+    bgGrad.addColorStop(0.5, "#052e16");
+    bgGrad.addColorStop(1, "#071f0c");
+    ctx.fillStyle = bgGrad; ctx.fillRect(0,0,W,H);
+
+    // Glow radial
+    const glow = ctx.createRadialGradient(W*0.75,H*0.2,0,W*0.75,H*0.2,W*0.6);
+    glow.addColorStop(0, `${color}18`); glow.addColorStop(1, "transparent");
+    ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+
+    // Logo row
+    ctx.fillStyle = "rgba(34,197,94,0.4)";
+    ctx.font = "800 32px 'Outfit',system-ui,sans-serif";
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("Partiqule", 52, 44);
-    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = "600 22px system-ui,sans-serif";
-    ctx.textAlign = "right"; ctx.fillText(category || "PRODUCT SCAN", W-52, 44);
+    ctx.fillText("PARTIQULE", 60, 60);
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.fillText("partiqule.com", W-60, 60);
+
+    // Horizontal rule
+    ctx.fillStyle = "rgba(34,197,94,0.12)"; ctx.fillRect(60,88,W-120,1);
+
+    // Product name
+    ctx.fillStyle = "#f0fdf4"; ctx.font = "800 58px 'Outfit',system-ui,sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    ctx.font = "bold 62px system-ui,sans-serif";
     const words = name.split(" "); let line = "", nameLines = [];
     for(const w of words){ const test = line ? line+" "+w : w; if(ctx.measureText(test).width > 900 && line){ nameLines.push(line); line=w; } else line=test; }
     if(line) nameLines.push(line);
     nameLines = nameLines.slice(0,2);
-    ctx.fillStyle = "#111";
-    const nameY = nameLines.length === 2 ? 164 : 182;
-    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*74));
-    ctx.fillStyle = color; ctx.fillRect(W/2-200, nameLines.length===2?252:230, 400, 5);
-    ctx.font = "900 520px system-ui,Arial,sans-serif";
+    const nameY = nameLines.length === 2 ? 178 : 196;
+    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*70));
+
+    // BIG SCORE NUMBER
+    const scoreY = 600;
+    ctx.save();
+    ctx.font = "900 480px 'Outfit',system-ui,sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.shadowColor = color; ctx.shadowBlur = 60;
-    ctx.fillStyle = color; ctx.globalAlpha = 0.08;
-    ctx.fillText(String(score), W/2, 480);
-    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-    ctx.fillStyle = "#0A0A0A"; ctx.fillText(String(score), W/2, 480);
-    const pillW = 280, pillH = 56, pillX = W/2-pillW/2, pillY = 762;
-    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,28);
-    ctx.fillStyle = color; ctx.fill();
-    ctx.fillStyle = "#fff"; ctx.font = "bold 28px system-ui,sans-serif"; ctx.textBaseline = "middle";
-    ctx.fillText(label.toUpperCase(), W/2, pillY+pillH/2);
-    ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.font = "600 26px system-ui,sans-serif";
-    ctx.fillText("OUT OF 10", W/2, 842);
-    ctx.fillStyle = "#0A0A0A"; ctx.fillRect(0,896,W,H-896);
-    if(flags.length > 0){
-      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = "700 18px system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("FLAGGED", 52, 928);
-      let px = 180;
-      flags.forEach(flag => {
-        const ft = flag.length > 22 ? flag.slice(0,20)+"…" : flag;
-        ctx.font = "600 20px system-ui,sans-serif";
-        const fw = ctx.measureText(ft).width;
-        const pw = fw+28, ph = 38, py = 910;
-        ctx.beginPath(); ctx.roundRect(px,py,pw,ph,19);
-        ctx.fillStyle = `rgba(${sr},${sg},${sb},0.25)`; ctx.fill();
-        ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = color; ctx.textAlign = "center";
-        ctx.fillText(ft, px+pw/2, py+ph/2);
-        px += pw+12;
-        if(px > W-200) return;
-      });
-    } else {
-      ctx.fillStyle = "#4ade80"; ctx.font = "700 24px system-ui,sans-serif";
+    ctx.shadowColor = color; ctx.shadowBlur = 80;
+    ctx.fillStyle = color; ctx.globalAlpha = 0.1;
+    ctx.fillText(String(score), W/2, scoreY);
+    ctx.globalAlpha = 1; ctx.shadowBlur = 40;
+    ctx.fillStyle = color;
+    ctx.fillText(String(score), W/2, scoreY);
+    ctx.restore();
+
+    // /10 label
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font = "600 28px 'Outfit',system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("OUT OF 10", W/2, scoreY + 260);
+
+    // Verdict pill
+    const pillW = 260, pillH = 60, pillX = W/2-pillW/2, pillY = scoreY+300;
+    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,30);
+    ctx.fillStyle = `${color}22`; ctx.fill();
+    ctx.strokeStyle = `${color}55`; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = color; ctx.font = "800 26px 'Outfit',system-ui,sans-serif";
+    ctx.textBaseline = "middle"; ctx.fillText(label.toUpperCase(), W/2, pillY+pillH/2);
+
+    // Bottom section
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(0,H-192,W,192);
+    ctx.fillStyle = "rgba(34,197,94,0.15)"; ctx.fillRect(0,H-192,W,1);
+
+    if(isClean){
+      ctx.fillStyle = "#22c55e"; ctx.font = "700 28px 'Outfit',system-ui,sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("✓ No significant concerns detected", W/2, 928);
+      ctx.fillText("No harmful substances detected — clean all the way through", W/2, H-140);
+      ctx.fillStyle = "rgba(34,197,94,0.5)"; ctx.font = "700 22px 'Outfit',system-ui,sans-serif";
+      ctx.fillText("VERIFIED CLEAN", W/2, H-88);
+    } else if(flags.length > 0){
+      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "700 20px 'Outfit',system-ui,sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("FLAGGED", 60, H-148);
+      let px = 200;
+      flags.forEach(flag => {
+        const ft = flag.length > 20 ? flag.slice(0,18)+"…" : flag;
+        ctx.font = "600 22px 'DM Sans',system-ui,sans-serif";
+        const fw = ctx.measureText(ft).width + 36, fh = 44, fy = H-170;
+        ctx.beginPath(); ctx.roundRect(px,fy,fw,fh,22);
+        ctx.fillStyle = `${color}20`; ctx.fill();
+        ctx.strokeStyle = `${color}44`; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = color; ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(ft, px+fw/2, fy+fh/2);
+        px += fw+10; if(px>W-200) return;
+      });
+      if(alt && score > 3){
+        ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "600 20px 'DM Sans',system-ui,sans-serif";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("TRY INSTEAD", 60, H-92);
+        ctx.fillStyle = "#f0fdf4"; ctx.font = "700 22px 'Outfit',system-ui,sans-serif";
+        const altName = (alt.name||"").slice(0,40);
+        const altScore = alt.score || alt.estimated_score || "";
+        ctx.fillText(altName + (altScore ? `  —  ${altScore}/10` : ""), 220, H-92);
+      }
     }
-    if(alt && score > 3){
-      const altName = (alt.name||"").slice(0,36);
-      const altScore = alt.score || alt.estimated_score || "";
-      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "600 18px system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("BETTER OPTION", 52, 984);
-      ctx.fillStyle = "#fff"; ctx.font = "700 22px system-ui,sans-serif";
-      ctx.fillText(altName + (altScore ? `  ${altScore}/10` : ""), 220, 984);
-    }
-    ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "500 22px system-ui,sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.15)"; ctx.font = "500 20px 'DM Sans',system-ui,sans-serif";
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
-    ctx.fillText("partiqule.com", W-52, 1048);
-    if(hasKids){
-      const bw=200,bh=48,bx=W-bw-40,by=104;
-      ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,24);
-      ctx.fillStyle="#052e16"; ctx.fill();
-      ctx.fillStyle="#4ade80"; ctx.font="bold 20px system-ui,sans-serif";
-      ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(`Kids: ${childScore}/10`, bx+bw/2, by+bh/2);
-    }
+    ctx.fillText("Know what is in your products", W-60, H-44);
   },[score, result]);
 
   const share = async () => {
@@ -497,11 +520,42 @@ const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
 
   return (
     <div style={{marginTop:24}}>
-      <canvas ref={canvasRef} style={{display:"block",width:"100%",borderRadius:16,border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}/>
-      <button onClick={share} disabled={status==="copying"} style={{marginTop:12,width:"100%",padding:"13px",borderRadius:12,background:status==="copied"?"#16a34a":"#052e16",border:"none",color:status==="copied"?"#fff":"#4ade80",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background 0.2s"}}>
-        <IconShare size={16} color={status==="copied"?"#fff":"#4ade80"}/>
-        {status==="copying" ? "Preparing…" : status==="copied" ? "Copied!" : "Share Result"}
-      </button>
+      {/* Card preview */}
+      <div style={{position:"relative", borderRadius:16, overflow:"hidden", border:"1.5px solid rgba(34,197,94,0.2)", cursor:"pointer"}} onClick={share}>
+        <canvas ref={canvasRef} style={{display:"block", width:"100%"}}/>
+        <div style={{position:"absolute", inset:0, background:"rgba(0,0,0,0)", display:"flex", alignItems:"center", justifyContent:"center", opacity:0, transition:"opacity 0.2s"}}
+          onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,0,0,0.35)"; e.currentTarget.style.opacity=1;}}
+          onMouseLeave={e=>{e.currentTarget.style.background="rgba(0,0,0,0)"; e.currentTarget.style.opacity=0;}}>
+          <span style={{fontFamily:"'Outfit',sans-serif", fontSize:16, fontWeight:800, color:"white"}}>Tap to share</span>
+        </div>
+      </div>
+      {/* Button row */}
+      <div style={{display:"flex", gap:8, marginTop:10}}>
+        <button onClick={share} disabled={status==="copying"} style={{
+          flex:1, padding:"13px 16px", borderRadius:12,
+          background: status==="copied" ? "#16a34a" : "linear-gradient(135deg,#22c55e,#16a34a)",
+          border:"none", color:"#fff",
+          fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800,
+          cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          boxShadow:"0 4px 16px rgba(34,197,94,0.3)", transition:"all 0.2s",
+        }}>
+          <IconShare size={16} color="#fff"/>
+          {status==="copying" ? "Preparing…" : status==="copied" ? "Shared!" : "Share this result"}
+        </button>
+        <button onClick={async()=>{
+          try {
+            const url = `${window.location.origin}?q=${encodeURIComponent(name)}`;
+            await navigator.clipboard.writeText(url);
+            setStatus("copied"); setTimeout(()=>setStatus("idle"),2000);
+          } catch {}
+        }} style={{
+          width:46, height:46, borderRadius:12, flexShrink:0,
+          background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)",
+          display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+      </div>
     </div>
   );
 };
@@ -944,42 +998,62 @@ const AnimatedScore = ({target, color}) => {
 // ── SCORE ARC ────────────────────────────────────────────────
 const ScoreArc = ({score}) => {
   const [animated, setAnimated] = useState(false);
-  useEffect(() => { const t = setTimeout(()=>setAnimated(true), 100); return ()=>clearTimeout(t); }, [score]);
-  const angle = (score/10)*180, r=96, cx=120, cy=120;
-  const toRad = (d) => (d*Math.PI)/180;
-  const arcX  = (d) => cx + r*Math.cos(toRad(180-d));
-  const arcY  = (d) => cy - r*Math.sin(toRad(180-d));
-  const color = scoreColor(score);
-  const currentAngle = animated ? angle : 0;
+  useEffect(() => { const t = setTimeout(()=>setAnimated(true), 120); return ()=>clearTimeout(t); }, [score]);
+  const color  = scoreColor(score);
+  const r      = 70;
+  const circ   = 2 * Math.PI * r; // 439.8
+  const filled = animated ? circ * (score / 10) : 0;
+  const offset = circ - filled;
+  const glow   = score <= 2 ? "rgba(34,197,94,0.35)"
+               : score <= 4 ? "rgba(101,163,13,0.35)"
+               : score <= 6 ? "rgba(202,138,4,0.35)"
+               : score <= 8 ? "rgba(234,88,12,0.35)"
+               : "rgba(220,38,38,0.35)";
   return (
-    <svg width="240" height="136" viewBox="0 0 240 136">
-      <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`} fill="none" stroke="#e0e0e0" strokeWidth="18" strokeLinecap="round"/>
-      <path d={`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${arcX(currentAngle)} ${arcY(currentAngle)}`} fill="none" stroke={color} strokeWidth="18" strokeLinecap="round" style={{transition:"all 1.2s cubic-bezier(.4,0,.2,1)"}}/>
-      <text x={cx} y={cy-10} textAnchor="middle" fontSize="52" fontWeight="800" fontFamily="Georgia,serif"><AnimatedScore target={score} color={color}/></text>
-    </svg>
+    <div style={{position:"relative", width:176, height:176, margin:"0 auto"}}>
+      <svg width="176" height="176" viewBox="0 0 176 176" style={{transform:"rotate(-90deg)"}}>
+        {/* Glow filter */}
+        <defs>
+          <filter id="score-glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        {/* Track */}
+        <circle cx="88" cy="88" r={r} fill="none" stroke="rgba(34,197,94,0.1)" strokeWidth="10"/>
+        {/* Fill */}
+        <circle cx="88" cy="88" r={r} fill="none" stroke={color} strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          filter="url(#score-glow)"
+          style={{transition:"stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1), stroke 0.3s"}}/>
+      </svg>
+      {/* Centered score */}
+      <div style={{position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:0}}>
+        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:64, fontWeight:900, lineHeight:1, letterSpacing:"-0.04em", color, textShadow:`0 0 32px ${glow}`}}>
+          <AnimatedScore target={score} color={color}/>
+        </div>
+        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, color:"#6ee7b7", opacity:0.5, marginTop:2}}>out of 10</div>
+      </div>
+    </div>
   );
 };
 
 const RiskBar = ({score}) => {
   const pct = (score/10)*100;
-  const meaning = score <= 2
-    ? "Safe — no significant chemical or ingredient concerns"
-    : score <= 4
-    ? "Good — mostly clean, use with awareness"
-    : score <= 6
-    ? "Caution — real concerns, reduce use or find an alternative"
-    : score <= 8
-    ? "Switch — real concerns, time to swap"
-    : "Avoid — known harmful substances";
+  const meaning = score <= 2 ? "Safe — no significant concerns"
+    : score <= 4 ? "Good — mostly clean, use with awareness"
+    : score <= 6 ? "Caution — real concerns, consider alternatives"
+    : score <= 8 ? "Switch — known concerns, time to swap"
+    : "Avoid — confirmed harmful substances";
   return (
-    <div style={{marginTop:20}}>
-      <div style={{display:"flex", justifyContent:"space-between", fontSize:11, color:"#aaa", marginBottom:7}}>
-        <span>Safer ←</span>
-        <span style={{fontWeight:700, color:scoreColor(score), fontSize:12, textAlign:"center", flex:1, padding:"0 8px"}}>{meaning}</span>
-        <span>→ Riskier</span>
+    <div style={{marginTop:16}}>
+      <div style={{textAlign:"center", marginBottom:10}}>
+        <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:scoreColor(score), padding:"5px 16px", borderRadius:20, background:`${scoreColor(score)}18`, border:`1px solid ${scoreColor(score)}33`}}>{meaning}</span>
       </div>
-      <div style={{position:"relative", height:12, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
-        <div style={{position:"absolute", top:"50%", left:`${pct}%`, transform:"translate(-50%,-50%)", width:22, height:22, borderRadius:"50%", background:"#fff", border:`3px solid ${scoreColor(score)}`, boxShadow:"0 2px 10px rgba(0,0,0,0.25)", transition:"left 1.2s cubic-bezier(.4,0,.2,1)"}}/>
+      <div style={{position:"relative", height:8, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
+        <div style={{position:"absolute", top:"50%", left:`${pct}%`, transform:"translate(-50%,-50%)", width:18, height:18, borderRadius:"50%", background:"#0f2a18", border:`3px solid ${scoreColor(score)}`, boxShadow:`0 0 12px ${scoreColor(score)}66`, transition:"left 1.2s cubic-bezier(.4,0,.2,1)"}}/>
+      </div>
+      <div style={{display:"flex", justifyContent:"space-between", fontSize:10, color:"#6ee7b7", opacity:0.4, marginTop:7, fontWeight:600, letterSpacing:"0.06em"}}>
+        <span>SAFER</span><span>RISKIER</span>
       </div>
     </div>
   );
@@ -989,10 +1063,10 @@ const RiskBar = ({score}) => {
 // ── BUNDLE RECOMMENDATION (replaced with simple CTA) ─────────
 const BundleCard = ({category, isDark}) => {
   const bundle = BUNDLES[category] || BUNDLES.other;
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  const muted   = isDark?"#64748b":"#888";
+  const surface = isDark?"#0f2a18":"#fff";
+  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
+  const text    = isDark?"#f0fdf4":"#111";
+  const muted   = isDark?"#6ee7b7":"#888";
   const searches = {
     clothing:      "plastic-free organic cotton clothing",
     food_beverage: "plastic-free reusable food storage",
@@ -1004,7 +1078,7 @@ const BundleCard = ({category, isDark}) => {
   const searchQuery = searches[category] || searches.other;
   const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchQuery)}&tag=partiqule-20`;
   return (
-    <div style={{background:isDark?"#1a1f2e":"#f5f3ff", borderRadius:16, padding:"24px", border:`1.5px solid ${isDark?"#2a3347":"#ddd6fe"}`}}>
+    <div style={{background:isDark?"#1a1f2e":"#f5f3ff", borderRadius:16, padding:"24px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#ddd6fe"}`}}>
       <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:16}}>
         <div style={{width:40, height:40, borderRadius:10, background:"#7c3aed", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
           <IconBundle size={20} color="#fff"/>
@@ -1017,8 +1091,8 @@ const BundleCard = ({category, isDark}) => {
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:6, marginBottom:16}}>
         {bundle.items.map((item,i) => (
-          <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:isDark?"#94a3b8":"#444"}}>
-            <div style={{width:18, height:18, borderRadius:"50%", background:"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+          <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:isDark?"#6ee7b7":"#444"}}>
+            <div style={{width:18, height:18, borderRadius:"50%", background:"rgba(34,197,94,0.08)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
               <IconCheck size={11} color="#16a34a"/>
             </div>
             {item}
@@ -1037,10 +1111,10 @@ const BundleCard = ({category, isDark}) => {
 const SourceCitations = ({category, isDark}) => {
   const [open, setOpen] = useState(false);
   const sources = SOURCES[category] || SOURCES.other;
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  const muted   = isDark?"#64748b":"#888";
+  const surface = isDark?"#0f2a18":"#fff";
+  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
+  const text    = isDark?"#f0fdf4":"#111";
+  const muted   = isDark?"#6ee7b7":"#888";
   return (
     <div style={{background:surface, borderRadius:16, border:`1.5px solid ${border}`, overflow:"hidden"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 24px", background:"none", border:"none", cursor:"pointer", textAlign:"left"}}>
@@ -1078,11 +1152,11 @@ const SourceCitations = ({category, isDark}) => {
 
 // ── EDUCATION SECTION ─────────────────────────────────────────
 const EducationSection = ({isDark, isMobile=false}) => {
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  const muted   = isDark?"#64748b":"#666";
-  const bg      = isDark?"#131929":"#fafafa";
+  const surface = isDark?"#0f2a18":"#fff";
+  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
+  const text    = isDark?"#f0fdf4":"#111";
+  const muted   = isDark?"#6ee7b7":"#666";
+  const bg      = isDark?"#080f0a":"#fafafa";
 
   const sections = [
     {
@@ -1184,9 +1258,9 @@ const EducationSection = ({isDark, isMobile=false}) => {
             {/* Stats grid */}
             <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
               {sec.stats.map((s,i) => (
-                <div key={i} style={{background:isDark?"#1e2433":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"#2a3347":"transparent"}`, textAlign:"center"}}>
+                <div key={i} style={{background:isDark?"#0f2a18":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"transparent"}`, textAlign:"center"}}>
                   <div style={{fontFamily:"'Outfit',sans-serif", fontSize:28, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
-                  <div style={{fontSize:13, color:isDark?"#64748b":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
+                  <div style={{fontSize:13, color:isDark?"#6ee7b7":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1338,8 +1412,8 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
   const annualSpend  = spend * 12;
   const healthSaved  = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
 
-  const surface = isDark ? "#1e2433" : "#fff";
-  const border  = isDark ? "#2a3347" : "#e5e7eb";
+  const surface = isDark ? "#0f2a18" : "#fff";
+  const border  = isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
 
   // Stepper component
   const Stepper = ({label, value, setValue, min=0, max=10}) => (
@@ -1441,7 +1515,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
         {tabs.map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             flex:1, padding:"8px 4px", fontSize:11, fontWeight:700,
-            border:"none", background: tab===t.id ? (isDark?"#1e2433":"#fff") : "transparent",
+            border:"none", background: tab===t.id ? (isDark?"#0f2a18":"#fff") : "transparent",
             color: tab===t.id ? "#16a34a" : muted,
             borderBottom: tab===t.id ? "2px solid #16a34a" : "2px solid transparent",
             cursor:"pointer", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
@@ -1498,7 +1572,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
               {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val, label]) => (
                 <button key={val} onClick={()=>setTimeFilter(val)} style={{
                   fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, cursor:"pointer",
-                  border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
+                  border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"rgba(34,197,94,0.15)":"#e2e8f0")}`,
                   background: timeFilter===val ? "#16a34a" : "transparent",
                   color: timeFilter===val ? "#fff" : muted,
                 }}>{label}</button>
@@ -1507,7 +1581,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
 
             {filteredHistory.length === 0 && allProducts.length <= 1 ? (
               <div style={{textAlign:"center", padding:"24px 16px", color:muted}}>
-                <div style={{fontSize:32, marginBottom:8}}>📋</div>
+                <div style={{marginBottom:8, display:"flex", justifyContent:"center"}}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
                 <div style={{fontSize:14, fontWeight:600, color:text, marginBottom:6}}>Scan more products to see your routine</div>
                 <div style={{fontSize:12, lineHeight:1.6}}>Partiqule tracks chemicals across everything you scan and shows you which ones appear most often — that's where your real cumulative exposure comes from.</div>
               </div>
@@ -1526,11 +1600,11 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                     return (
                       <div key={i} style={{
                         display:"flex", alignItems:"center", gap:10, padding:"8px 10px",
-                        borderRadius:8, border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,
-                        background: isPurchased ? (isDark?"#1e2433":"#fff") : (isDark?"#131929":"#f8fafb"),
+                        borderRadius:8, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`,
+                        background: isPurchased ? (isDark?"#0f2a18":"#fff") : (isDark?"#080f0a":"#f8fafb"),
                         opacity: isPurchased ? 1 : 0.5,
                       }}>
-                        <div style={{width:28, height:28, borderRadius:6, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                        <div style={{width:28, height:28, borderRadius:6, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                           <span style={{fontSize:11, fontWeight:800, color:scoreColor(s)}}>{s}</span>
                         </div>
                         <div style={{flex:1, minWidth:0}}>
@@ -1566,7 +1640,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
 
               {/* Routine score — only active products */}
               {routineScore !== null && activeProducts.length > 1 && (
-                <div style={{background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"12px 14px", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:12}}>
+                <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"12px 14px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`, marginBottom:12}}>
                   <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
                     Active routine score ({activeProducts.length} products)
                   </div>
@@ -1574,7 +1648,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                     <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:scoreColor(Math.round(routineScore)), lineHeight:1}}>{routineScore}</div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:12, fontWeight:700, color:scoreColor(Math.round(routineScore)), marginBottom:4}}>{scoreLabel(Math.round(routineScore))}</div>
-                      <div style={{height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                      <div style={{height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                         <div style={{height:"100%", width:`${Math.min(100,(routineScore/10)*100)}%`, background:scoreColor(Math.round(routineScore)), borderRadius:99}}/>
                       </div>
                     </div>
@@ -1616,9 +1690,9 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                     {allChemicals.map((chem, i) => (
                       <span key={i} style={{
                         fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:16,
-                        background: chem.count >= 2 ? (isDark?"#2a1a1a":"#fef2f2") : (isDark?"#1e2433":"#f8fafb"),
+                        background: chem.count >= 2 ? (isDark?"#2a1a1a":"#fef2f2") : (isDark?"#0f2a18":"#f8fafb"),
                         color: chem.count >= 2 ? "#dc2626" : muted,
-                        border:`1px solid ${chem.count >= 2 ? "#fca5a533" : (isDark?"#2a3347":"#e5e7eb")}`,
+                        border:`1px solid ${chem.count >= 2 ? "#fca5a533" : (isDark?"rgba(34,197,94,0.15)":"#e5e7eb")}`,
                       }}>
                         {chem.name}{chem.count >= 2 ? ` ×${chem.count}` : ""}
                       </span>
@@ -1648,7 +1722,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:scoreColor(score), lineHeight:1}}>
                   {totalCurrent.toLocaleString()}
                 </span>
-                <span style={{fontSize:14, color:isDark?"#94a3b8":"#555", fontWeight:500}}>
+                <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
                   {catConfig.unit} per year containing {exposureNames}
                 </span>
               </div>
@@ -1659,7 +1733,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                 </div>
               )}
               <div style={{display:"flex", alignItems:"center", gap:8, marginTop:4}}>
-                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                   <div style={{height:"100%", width:`${Math.min(100,(score/10)*100)}%`, background:scoreColor(score), borderRadius:99}}/>
                 </div>
                 <span style={{fontSize:11, color:scoreColor(score), fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(score)} risk</span>
@@ -1677,12 +1751,12 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                 <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:"#16a34a", lineHeight:1}}>
                   {altTotal.toLocaleString()}
                 </span>
-                <span style={{fontSize:14, color:isDark?"#94a3b8":"#555", fontWeight:500}}>
+                <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
                   {catConfig.unit} per year
                 </span>
               </div>
               <div style={{display:"flex", alignItems:"center", gap:8}}>
-                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                   <div style={{height:"100%", width:`${Math.min(100,(altScore/10)*100)}%`, background:"#16a34a", borderRadius:99}}/>
                 </div>
                 <span style={{fontSize:11, color:"#16a34a", fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(altScore)} risk</span>
@@ -1690,11 +1764,11 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
             </div>
 
             {/* The big why */}
-            <div style={{background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+            <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1fae5"}`}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:"#16a34a", marginBottom:4}}>
                 {reductionPct}% fewer exposures
               </div>
-              <div style={{fontSize:13, color:isDark?"#94a3b8":"#444", lineHeight:1.6}}>
+              <div style={{fontSize:13, color:isDark?"#6ee7b7":"#444", lineHeight:1.6}}>
                 That's <strong style={{color:text}}>{reduction.toLocaleString()} fewer {catConfig.unit}</strong> containing {exposureNames} for your household every year.
                 {hasKids && (
                   <span style={{color:"#d97706"}}> For your {kids} child{kids>1?"ren":""}, whose developing systems are 2-3x more sensitive to these chemicals, this matters most.</span>
@@ -1736,7 +1810,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                       <span style={{fontSize:11, color:scoreColor(score), fontWeight:600}}>Current product</span>
                       <span style={{fontSize:12, color:scoreColor(score), fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{curr.toLocaleString()}</span>
                     </div>
-                    <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                    <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                       <div style={{height:"100%", width:"100%", background:scoreColor(score), borderRadius:99}}/>
                     </div>
                   </div>
@@ -1753,7 +1827,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                           </span>
                           <span style={{fontSize:12, color:"#d97706", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{kidsOnly.toLocaleString()}</span>
                         </div>
-                        <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                        <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                           <div style={{height:"100%", width:`${pctBar}%`, background:"#d97706", borderRadius:99}}/>
                         </div>
                       </div>
@@ -1766,7 +1840,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                       <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>{altName}</span>
                       <span style={{fontSize:12, color:"#16a34a", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{alt.toLocaleString()}</span>
                     </div>
-                    <div style={{height:10, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+                    <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                       <div style={{height:"100%", width:`${Math.round((alt/curr)*100)}%`, background:"#16a34a", borderRadius:99}}/>
                     </div>
                   </div>
@@ -1872,12 +1946,12 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
   const lows   = concerns.filter(c => c.severity === "low");
   const hasAny = concerns.length > 0 || analysis.positives?.length > 0;
 
-  const headerBorder = highs.length > 0 ? "#fecaca" : isDark ? "#2a3347" : "#e5e7eb";
-  const headerColor  = highs.length > 0 ? "#dc2626" : isDark ? "#94a3b8" : "#555";
+  const headerBorder = highs.length > 0 ? "#fecaca" : isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
+  const headerColor  = highs.length > 0 ? "#dc2626" : isDark ? "#6ee7b7" : "#555";
   const dropdownLabel = CATEGORY_DROPDOWN_LABEL[category] || CATEGORY_DROPDOWN_LABEL.other;
 
   return (
-    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:isDark?"#1e2433":"#f9fafb", textAlign:"left"}}>
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:isDark?"#0f2a18":"#f9fafb", textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
           <span style={{display:"flex", alignItems:"center", opacity:0.9}}><IcoIngredients size={20}/></span>
@@ -1911,7 +1985,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           {analysis.nutrition && (() => {
             const n = analysis.nutrition;
             const verified = analysis.nutrition_verified !== false;
-            const nutColor  = isDark ? "#f1f5f9" : "#111";
+            const nutColor  = isDark ? "#f0fdf4" : "#111";
             const nutMuted  = isDark ? "#64748b"  : "#888";
             const items = [
               n.calories   != null && { label:"cal",     val:n.calories,  unit:"" },
@@ -1924,7 +1998,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
             ].filter(Boolean);
             if (!items.length) return null;
             return (
-              <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+              <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#0f2a18":"#f9fafb", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
                   <div style={{fontSize:10, color:nutMuted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>
                     Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
@@ -1966,7 +2040,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
                             <span style={{fontSize:10, fontWeight:600, color:cfg.color, opacity:0.75, background:"rgba(0,0,0,0.05)", padding:"1px 6px", borderRadius:8}}>{TYPE_LABELS[c.type]}</span>
                           )}
                         </div>
-                        <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{c.reason}</div>
+                        <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555", lineHeight:1.5}}>{c.reason}</div>
                       </div>
                     );
                   })}
@@ -1985,7 +2059,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
                     <span style={{color:"#16a34a", fontWeight:700, fontSize:14, flexShrink:0}}>✓</span>
                     <div>
                       <div style={{fontSize:12, fontWeight:700, color:"#16a34a", marginBottom:2}}>{p.attribute}</div>
-                      {p.reason && <div style={{fontSize:12, color:isDark?"#94a3b8":"#555", lineHeight:1.5}}>{p.reason}</div>}
+                      {p.reason && <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555", lineHeight:1.5}}>{p.reason}</div>}
                     </div>
                   </div>
                 ))}
@@ -1994,11 +2068,11 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           )}
 
           {!hasAny && (
-            <div style={{fontSize:13, color:isDark?"#94a3b8":"#555", marginTop:10, fontStyle:"italic"}}>No specific substance concerns identified.</div>
+            <div style={{fontSize:13, color:isDark?"#6ee7b7":"#555", marginTop:10, fontStyle:"italic"}}>No specific substance concerns identified.</div>
           )}
 
           {analysis.confidence_note && analysis.confidence !== "high" && (
-            <div style={{fontSize:11, color:isDark?"#64748b":"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
+            <div style={{fontSize:11, color:isDark?"#6ee7b7":"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
               <IcoInfo size={12}/> {analysis.confidence_note}
             </div>
           )}
@@ -2017,9 +2091,9 @@ const FoodAnalysisDropdown = ({food, isDark}) => (
 const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
   const [open, setOpen] = useState(false);
   const isHigh      = score > 6;
-  const color       = isHigh ? "#dc2626" : (isDark ? "#94a3b8" : "#555");
-  const bg          = isHigh ? (isDark ? "#2a1a1a" : "#fef2f2") : (isDark ? "#1e2433" : "#f9fafb");
-  const borderColor = isHigh ? "#fecaca" : (isDark ? "#2a3347" : "#e5e7eb");
+  const color       = isHigh ? "#dc2626" : (isDark ? "#6ee7b7" : "#555");
+  const bg          = isHigh ? (isDark ? "#2a1a1a" : "#fef2f2") : (isDark ? "#0f2a18" : "#f9fafb");
+  const borderColor = isHigh ? "#fecaca" : (isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb");
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
@@ -2039,7 +2113,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
               {concerns.map((c,i)=>(
                 <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
                   <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
-                  <span style={{fontSize:13, color:isDark?"#94a3b8":"#555", lineHeight:1.5, textAlign:"left"}}>{c}</span>
+                  <span style={{fontSize:13, color:isDark?"#6ee7b7":"#555", lineHeight:1.5, textAlign:"left"}}>{c}</span>
                 </div>
               ))}
             </div>
@@ -2098,18 +2172,18 @@ const SuggestionBox = ({isDark, isMobile, surface, border, text, muted, user}) =
               value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="e.g. Stanley Quencher tumbler, Olaplex No. 3..."
-              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
             />
             {!user && (
               <input
                 value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email (optional — to get notified)"
-                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
               />
             )}
             <button onClick={submit} disabled={!name.trim() || status === "sending"} style={{
               width:"100%", padding:"12px", borderRadius:10, border:"none",
-              background: name.trim() ? "#16a34a" : isDark ? "#1e2433" : "#e2e8f0",
+              background: name.trim() ? "#16a34a" : isDark ? "#0f2a18" : "#e2e8f0",
               color: name.trim() ? "#fff" : muted,
               fontSize:14, fontWeight:700, cursor: name.trim() ? "pointer" : "default",
               opacity: status === "sending" ? 0.6 : 1,
@@ -2180,7 +2254,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
                   return (
                     <div key={key} style={{display:"flex", alignItems:"center", gap:12, fontSize:13}}>
                       <div style={{flex:"0 0 130px", color:text, fontWeight:500}}>{label}</div>
-                      <div style={{flex:1, height:6, background:isDark?"#1e2433":"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
+                      <div style={{flex:1, height:6, background:isDark?"#0f2a18":"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
                         <div style={{width:`${s*10}%`, height:"100%", background:c, borderRadius:3}}/>
                       </div>
                       <div style={{flex:"0 0 36px", fontWeight:700, color:c, textAlign:"right"}}>{s}/10</div>
@@ -2341,7 +2415,7 @@ const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) =>
       />
       <button onClick={submit} disabled={!tier || status === "sending"} style={{
         width:"100%", padding:"11px", borderRadius:10, border:"none",
-        background: tier ? "#16a34a" : (isDark?"#1e2433":"#e2e8f0"),
+        background: tier ? "#16a34a" : (isDark?"#0f2a18":"#e2e8f0"),
         color: tier ? "#fff" : muted,
         fontSize:14, fontWeight:700, cursor: tier ? "pointer" : "default",
         opacity: status === "sending" ? 0.6 : 1,
@@ -2367,9 +2441,9 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
 
   const cardStyle = {
     textDecoration:"none", display:"block",
-    background:isDark?"#1e2433":"#fff",
+    background:isDark?"#0f2a18":"#fff",
     borderRadius:12, padding:"18px 22px",
-    border:`1.5px solid ${isDark?"#2a3347":"#e8e8e8"}`,
+    border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e8e8e8"}`,
     transition:"border-color 0.2s, box-shadow 0.2s",
     cursor: hasLink ? "pointer" : "default",
     WebkitTapHighlightColor:"transparent",
@@ -2378,7 +2452,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
   const inner = (
     <div style={{display:"flex", gap:14, alignItems:"flex-start"}}>
       {/* Product image */}
-      <div style={{width:56, height:56, borderRadius:10, background:"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden"}}>
+      <div style={{width:56, height:56, borderRadius:10, background:"rgba(34,197,94,0.08)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden"}}>
         {product.imageUrl
           ? <img src={product.imageUrl} alt={product.name} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
           : <IconTag size={24} color="#16a34a"/>
@@ -2388,14 +2462,14 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:3}}>
           <div>
             <div style={{fontSize:11, color:"#888", textTransform:"uppercase", letterSpacing:"0.05em"}}>{product.brand}</div>
-            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f1f5f9":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
+            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f0fdf4":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
             <div style={{background:scoreBg(childMode && product.child_score != null ? product.child_score : product.score), color:scoreColor(childMode && product.child_score != null ? product.child_score : product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{childMode && product.child_score != null ? product.child_score : product.score}/10</div>
             <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
           </div>
         </div>
-        <div style={{fontSize:13, color:isDark?"#94a3b8":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
+        <div style={{fontSize:13, color:isDark?"#6ee7b7":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10}}>
           <div style={{display:"flex", alignItems:"center", gap:6}}>
             <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{product.price}</span>
@@ -2417,7 +2491,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
       onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
       style={cardStyle}
       onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
-      onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
+      onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"rgba(34,197,94,0.15)":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
       {inner}
     </a>
   );
@@ -2528,10 +2602,10 @@ const LoadingState = () => {
 };
 
 const MostSearched = ({onSelect, isDark, isMobile}) => {
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  const muted   = isDark?"#64748b":"#888";
+  const surface = isDark?"#0f2a18":"#fff";
+  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
+  const text    = isDark?"#f0fdf4":"#111";
+  const muted   = isDark?"#6ee7b7":"#888";
   const px      = isMobile?"16px":"40px";
   return (
     <section style={{maxWidth:1100, margin:"0 auto 48px", padding:`0 ${px}`}}>
@@ -2544,7 +2618,7 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
             <button key={item.label} onClick={()=>onSelect(item.label)}
               style={{background:surface, border:`1.5px solid ${border}`, borderRadius:12, padding:"16px", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
               onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 16px rgba(22,163,74,0.1)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"#2a3347":"#eee"; e.currentTarget.style.boxShadow="none";}}>
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"rgba(34,197,94,0.15)":"#eee"; e.currentTarget.style.boxShadow="none";}}>
               {item.score>=7&&<div style={{display:"flex", alignItems:"center", gap:2, fontSize:11, color:"#ef4444", fontWeight:600, marginBottom:6}}><IconFire size={12} color="#ef4444"/>Trending</div>}
               <div style={{fontSize:14, fontWeight:600, color:text, lineHeight:1.3, marginBottom:6}}>{item.label}</div>
               <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, display:"inline-block"}}>{cat.label}</div>
@@ -2609,8 +2683,8 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
           {["all",...GUIDE_CATEGORIES].map(cat=>(
             <button key={cat} onClick={()=>setFilter(cat)} style={{
               padding:"6px 16px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
-              background:filter===cat?(CATEGORY_COLORS[cat]||"#052e16"):(isDark?"#1e2433":"#f1f5f9"),
-              color:filter===cat?"#fff":(isDark?"#94a3b8":"#64748b"),
+              background:filter===cat?(CATEGORY_COLORS[cat]||"#052e16"):(isDark?"#0f2a18":"#f1f5f9"),
+              color:filter===cat?"#fff":(isDark?"#6ee7b7":"#64748b"),
               transition:"all 0.15s",
             }}>{cat.charAt(0).toUpperCase()+cat.slice(1)}</button>
           ))}
@@ -2639,7 +2713,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
               }}>
                 {!g.cover_image_url && (
                   <span style={{fontSize:48,opacity:0.4}}>
-                    {g.category==="food"?"🥗":g.category==="beauty"?"✨":g.category==="home"?"🏠":g.category==="baby"?"👶":g.category==="pregnancy"?"🤰":"📖"}
+                    {g.category==="food"?"Food":g.category==="beauty"?"Beauty":g.category==="home"?"Home":g.category==="baby"?"Baby":g.category==="pregnancy"?"Pregnancy":"Guide"}
                   </span>
                 )}
               </div>
@@ -2733,7 +2807,7 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
       {/* Category + meta */}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#1e2433":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
+        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#0f2a18":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
         <span style={{fontSize:13,color:muted}}>{guide.read_time_minutes} min read</span>
       </div>
 
@@ -2868,7 +2942,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
   const ToolbarBtn = ({label:l, onClick}) => (
     <button type="button" onClick={onClick}
-      style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+      style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:isDark?"#0f2a18":"#f1f5f9",color:text,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
       {l}
     </button>
   );
@@ -2902,8 +2976,8 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
           {GUIDE_CATEGORIES.map(c=>(
             <button key={c} type="button" onClick={()=>setCategory(c)}
               style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
-                background:category===c?(CATEGORY_COLORS[c]||"#052e16"):(isDark?"#1e2433":"#f1f5f9"),
-                color:category===c?"#fff":(isDark?"#94a3b8":"#64748b")}}>
+                background:category===c?(CATEGORY_COLORS[c]||"#052e16"):(isDark?"#0f2a18":"#f1f5f9"),
+                color:category===c?"#fff":(isDark?"#6ee7b7":"#64748b")}}>
               {c.charAt(0).toUpperCase()+c.slice(1)}
             </button>
           ))}
@@ -3268,7 +3342,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                       <span style={{fontSize:11, fontWeight:600, color:muted, background:isDark?"#1e293b":"#f1f5f9", padding:"2px 8px", borderRadius:6}}>{(s.category||"other").replace(/_/g," ")}</span>
                       {s.confidence && <span style={{fontSize:11, color:muted}}>{s.confidence} confidence</span>}
                       {s.child_score && s.child_score !== sc && (
-                        <span style={{fontSize:11, fontWeight:600, color:"#2563eb"}}>👶 Kids: {s.child_score}/10</span>
+                        <span style={{fontSize:11, fontWeight:600, color:"#60a5fa", display:"flex", alignItems:"center", gap:3}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 018 0v2"/></svg>Kids: {s.child_score}/10</span>
                       )}
                       {s.scanned_at && (
                         <span style={{fontSize:11, color:muted}}>{new Date(s.scanned_at).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</span>
@@ -3330,7 +3404,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             {buckets.map((b,i) => (
               <div key={i} style={{display:"flex", alignItems:"center", gap:12}}>
                 <div style={{fontSize:13, fontWeight:700, color:b.color, width:36, flexShrink:0}}>{b.label}</div>
-                <div style={{flex:1, height:28, background:isDark?"#1e2433":"#f1f5f9", borderRadius:6, overflow:"hidden"}}>
+                <div style={{flex:1, height:28, background:isDark?"#0f2a18":"#f1f5f9", borderRadius:6, overflow:"hidden"}}>
                   <div style={{
                     width: b.pct + "%", height:"100%", background:b.color,
                     borderRadius:6, minWidth: b.count > 0 ? 4 : 0,
@@ -3367,7 +3441,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
           <div style={sectionHead}>Top scanned categories</div>
           <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
             {topCats.map(([cat, count]) => (
-              <div key={cat} style={{background:isDark?"#1e2433":"#f1f5f9", borderRadius:8, padding:"6px 14px", fontSize:13}}>
+              <div key={cat} style={{background:isDark?"#0f2a18":"#f1f5f9", borderRadius:8, padding:"6px 14px", fontSize:13}}>
                 <span style={{color:text, fontWeight:600}}>{cat}</span>
                 <span style={{color:muted, marginLeft:6}}>{count}</span>
               </div>
@@ -3411,7 +3485,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             value={testQuery} onChange={e => setTestQuery(e.target.value)}
             onKeyDown={e => e.key === "Enter" && runTestScan()}
             placeholder="e.g. Honey Nut Cheerios, Pampers Swaddlers, Tide pods..."
-            style={{flex:1, padding:"10px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:14, outline:"none"}}
+            style={{flex:1, padding:"10px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none"}}
           />
           <button onClick={runTestScan} disabled={testLoading} style={{padding:"10px 24px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", opacity: testLoading ? 0.6 : 1}}>
             {testLoading ? "Scanning…" : "Scan"}
@@ -3445,7 +3519,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                 {testResult.dimension_scores && (
                   <div style={{marginTop:12, display:"flex", gap:8, flexWrap:"wrap"}}>
                     {Object.entries(testResult.dimension_scores).map(([k,v]) => (
-                      <div key={k} style={{background:isDark?"#1e2433":"#fff", borderRadius:8, padding:"4px 10px", fontSize:11, border:`1px solid ${border}`}}>
+                      <div key={k} style={{background:isDark?"#0f2a18":"#fff", borderRadius:8, padding:"4px 10px", fontSize:11, border:`1px solid ${border}`}}>
                         <span style={{color:muted}}>{k}: </span><span style={{fontWeight:700, color:text}}>{v}</span>
                       </div>
                     ))}
@@ -3466,7 +3540,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
               const score = h.score || h.overall_score || 0;
               const scoreColor = score <= 3 ? "#16a34a" : score <= 5 ? "#d97706" : "#dc2626";
               return (
-                <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:isDark?"#1e2433":"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
+                <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:isDark?"#0f2a18":"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
                   <div style={{flex:1}}>
                     <span style={{fontSize:13, fontWeight:600, color:text}}>{h.product_name}</span>
                     <span style={{fontSize:11, color:muted, marginLeft:8}}>{h.category}</span>
@@ -3514,7 +3588,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                     </div>
                     <div style={{background:tierColor, color:"#fff", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0}}>{tierLabel}</div>
                   </div>
-                  {f.note && <div style={{fontSize:12, color:muted, marginBottom:8, padding:"8px 10px", background:isDark?"#1e2433":"#fff", borderRadius:6, borderLeft:`3px solid ${tierColor}`}}>{f.note}</div>}
+                  {f.note && <div style={{fontSize:12, color:muted, marginBottom:8, padding:"8px 10px", background:isDark?"#0f2a18":"#fff", borderRadius:6, borderLeft:`3px solid ${tierColor}`}}>{f.note}</div>}
                   {f.user_email && <div style={{fontSize:11, color:muted, marginBottom:8}}>from {f.user_email}</div>}
                   <div style={{display:"flex", gap:8}}>
                     <button onClick={() => { setTestQuery(f.product_name); runTestScan(); }} style={{padding:"6px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Rescan</button>
@@ -3540,23 +3614,23 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             <input
               value={newOverride.name} onChange={e=>setNewOverride({...newOverride, name:e.target.value})}
               placeholder="Product name (e.g. Huggies Little Movers)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
             />
             <input
               type="number" min="1" max="10" value={newOverride.floor} onChange={e=>setNewOverride({...newOverride, floor:e.target.value})}
               placeholder="Floor"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
             />
             <input
               type="number" min="1" max="10" value={newOverride.ceiling} onChange={e=>setNewOverride({...newOverride, ceiling:e.target.value})}
               placeholder="Ceiling"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
             />
           </div>
           <div style={{display:"grid", gridTemplateColumns:"1fr 2fr", gap:8, marginBottom:8}}>
             <select
               value={newOverride.category} onChange={e=>setNewOverride({...newOverride, category:e.target.value})}
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
             >
               {["food_beverage","beverage","baby","personal_care","home","kitchen","clothing","toy","supplement","restaurant","home_furnishing","accessory","other"].map(c =>
                 <option key={c} value={c}>{c}</option>
@@ -3565,16 +3639,16 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             <input
               value={newOverride.substances} onChange={e=>setNewOverride({...newOverride, substances:e.target.value})}
               placeholder="Substances (comma-separated, e.g. Red 40, BHT)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
             />
           </div>
           <textarea
             value={newOverride.reason} onChange={e=>setNewOverride({...newOverride, reason:e.target.value})}
             placeholder="Reason / summary (shown in app)"
-            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#1e2433":"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
+            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
           />
           <button onClick={saveOverride} disabled={!newOverride.name.trim() || savingOverride}
-            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : isDark?"#1e2433":"#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
+            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : isDark?"#0f2a18":"#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
             {savingOverride ? "Saving..." : "Save override"}
           </button>
         </div>
@@ -3678,7 +3752,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
     ? Math.round(active.reduce((s,h)=>s+(h.overall_score||h.score||5),0)/active.length*10)/10
     : null;
 
-  const bg = isDark?"#131929":"#fafafa";
+  const bg = isDark?"#080f0a":"#fafafa";
 
   return (
     <div style={{maxWidth:680, margin:"0 auto", padding:isMobile?"16px 12px 80px":"32px 24px 80px"}}>
@@ -3691,7 +3765,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
       {history.length === 0 ? (
         <div style={{textAlign:"center", padding:"60px 20px", color:muted}}>
-          <div style={{fontSize:48, marginBottom:12}}>📋</div>
+          <div style={{marginBottom:12, display:"flex", justifyContent:"center"}}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
           <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>No scans yet</div>
           <div style={{fontSize:14, lineHeight:1.6}}>Scan products to build your routine and see which chemicals appear most often across your home.</div>
         </div>
@@ -3702,7 +3776,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
           {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val,label])=>(
             <button key={val} onClick={()=>setTimeFilter(val)} style={{
               fontSize:12, fontWeight:600, padding:"5px 12px", borderRadius:20, cursor:"pointer",
-              border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"#2a3347":"#e2e8f0")}`,
+              border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"rgba(34,197,94,0.15)":"#e2e8f0")}`,
               background:timeFilter===val?"#16a34a":"transparent",
               color:timeFilter===val?"#fff":muted,
             }}>{label}</button>
@@ -3712,14 +3786,14 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
         {/* Routine score card */}
         {routineAvg !== null && (
-          <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, marginBottom:16, display:"flex", alignItems:"center", gap:16}}>
+          <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, marginBottom:16, display:"flex", alignItems:"center", gap:16}}>
             <div style={{textAlign:"center", flexShrink:0}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:40, color:scoreColor(Math.round(routineAvg)), lineHeight:1}}>{routineAvg}</div>
               <div style={{fontSize:11, color:muted, marginTop:2}}>avg score</div>
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:14, fontWeight:700, color:scoreColor(Math.round(routineAvg)), marginBottom:6}}>{scoreLabel(Math.round(routineAvg))} routine</div>
-              <div style={{height:8, borderRadius:99, background:isDark?"#2a3347":"#e5e7eb", overflow:"hidden"}}>
+              <div style={{height:8, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                 <div style={{height:"100%", width:`${Math.min(100,(routineAvg/10)*100)}%`, background:scoreColor(Math.round(routineAvg)), borderRadius:99, transition:"width 0.4s"}}/>
               </div>
               <div style={{fontSize:11, color:muted, marginTop:4}}>{active.length} products marked as in your home</div>
@@ -3739,7 +3813,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
                       <span style={{fontSize:13, fontWeight:700, color:"#dc2626"}}>{c.name}</span>
                       <span style={{fontSize:10, fontWeight:700, color:"#fff", background:"#dc2626", padding:"1px 7px", borderRadius:20}}>{c.count}×</span>
                     </div>
-                    <div style={{height:4, borderRadius:99, background:isDark?"#2a3347":"#fee2e2", overflow:"hidden", marginBottom:3}}>
+                    <div style={{height:4, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#fee2e2", overflow:"hidden", marginBottom:3}}>
                       <div style={{height:"100%", width:`${Math.min(100,(c.count/active.length)*100)}%`, background:"#dc2626", borderRadius:99}}/>
                     </div>
                     <div style={{fontSize:11, color:muted}}>{c.products.slice(0,2).join(", ")}{c.products.length>2?` +${c.products.length-2} more`:""}</div>
@@ -3755,15 +3829,15 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
         {/* All chemicals bubble cloud */}
         {allChems.length > 0 && (
-          <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, marginBottom:16}}>
+          <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, marginBottom:16}}>
             <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>All flagged substances in active routine</div>
             <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
               {allChems.map((c,i)=>(
                 <span key={i} style={{
                   fontSize:12, fontWeight:600, padding:"4px 11px", borderRadius:20,
-                  background:c.count>=2?(isDark?"#2a1a1a":"#fef2f2"):(isDark?"#131929":"#f8fafb"),
+                  background:c.count>=2?(isDark?"#2a1a1a":"#fef2f2"):(isDark?"#080f0a":"#f8fafb"),
                   color:c.count>=2?"#dc2626":muted,
-                  border:`1px solid ${c.count>=2?"#fca5a544":(isDark?"#2a3347":"#e5e7eb")}`,
+                  border:`1px solid ${c.count>=2?"#fca5a544":(isDark?"rgba(34,197,94,0.15)":"#e5e7eb")}`,
                 }}>
                   {c.name}{c.count>=2?` ×${c.count}`:""}
                 </span>
@@ -3773,8 +3847,8 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
         )}
 
         {/* Product list */}
-        <div style={{background:isDark?"#1e2433":"#fff", borderRadius:16, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden", marginBottom:16}}>
-          <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"#2a3347":"#f0f0f0"}`}}>
+        <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, overflow:"hidden", marginBottom:16}}>
+          <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#f0f0f0"}`}}>
             <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Your products</div>
           </div>
 
@@ -3783,7 +3857,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
             const s = item.overall_score||item.score||5;
             return (
               <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`}}>
-                <div style={{width:36, height:36, borderRadius:8, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                <div style={{width:36, height:36, borderRadius:8, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
                 </div>
                 <div style={{flex:1, minWidth:0}}>
@@ -3791,8 +3865,8 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
                   <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{item.category}</div>
                 </div>
                 <div style={{display:"flex", gap:6, flexShrink:0}}>
-                  <button onClick={()=>onSelect(item)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#e2e8f0"}`, background:"transparent", color:muted, cursor:"pointer"}}>View</button>
-                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.add(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:"1px solid #16a34a", background:"#f0fdf4", color:"#16a34a", cursor:"pointer"}}>In my home</button>
+                  <button onClick={()=>onSelect(item)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, background:"transparent", color:muted, cursor:"pointer"}}>View</button>
+                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.add(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:"1px solid #16a34a", background:"rgba(34,197,94,0.08)", color:"#16a34a", cursor:"pointer"}}>In my home</button>
                 </div>
               </div>
             );
@@ -3800,21 +3874,21 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
           {/* Inactive products */}
           {inactive.length > 0 && (<>
-            <div style={{padding:"8px 20px", background:isDark?"#131929":"#fafafa"}}>
+            <div style={{padding:"8px 20px", background:isDark?"#080f0a":"#fafafa"}}>
               <div style={{fontSize:10, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.07em"}}>Not in my home</div>
             </div>
             {inactive.map((item,i)=>{
               const s = item.overall_score||item.score||5;
               return (
                 <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`, opacity:0.5}}>
-                  <div style={{width:36, height:36, borderRadius:8, background:scoreBg(s), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <div style={{width:36, height:36, borderRadius:8, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                     <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
                   </div>
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
                     <div style={{fontSize:11, color:muted}}>Not using</div>
                   </div>
-                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.delete(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#d1d5db"}`, background:"transparent", color:muted, cursor:"pointer", flexShrink:0}}>Mark active</button>
+                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.delete(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1d5db"}`, background:"transparent", color:muted, cursor:"pointer", flexShrink:0}}>Mark active</button>
                 </div>
               );
             })}
@@ -4065,7 +4139,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                     )}
 
                     {/* Total exposure summary */}
-                    <div style={{background:isDark?"#1e2433":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#d1fae5"}`}}>
+                    <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1fae5"}`}}>
                       <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>
                         If you switched every high-risk product
                       </div>
@@ -4139,7 +4213,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                     {/* Score badge */}
                     <div style={{padding:"12px 14px 0"}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8}}>
-                        <div style={{fontSize:10, fontWeight:700, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}>
+                        <div style={{fontSize:10, fontWeight:700, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 8px", borderRadius:10}}>
                           {alt.score}/10 danger
                         </div>
                         {alt.price && alt.price !== "See on Amazon" && (
@@ -4346,7 +4420,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           </p>
         </div>
 
-        <div style={{padding:"14px 18px", background:isDark?"#1e2433":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
+        <div style={{padding:"14px 18px", background:isDark?"#0f2a18":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
           <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
             Learn more:{" "}
             <span onClick={()=>onNavigate("science")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>The Science</span>
@@ -4955,14 +5029,14 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       {/* ── SCORING SYSTEM ─────────────────────────────────────── */}
       <div style={{marginBottom:40}}>
         <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
-          <span style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", background:"#f0fdf4", padding:"3px 10px", borderRadius:20}}>How We Score</span>
+          <span style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", background:"rgba(34,197,94,0.08)", padding:"3px 10px", borderRadius:20}}>How We Score</span>
         </div>
         <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?20:26, fontWeight:700, color:text, margin:"0 0 8px", letterSpacing:"-0.3px"}}>The scoring system, in full</h2>
         <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:"0 0 28px"}}>Every score is the output of a deterministic formula applied server-side. The AI provides dimension scores — we apply the weights. Here is the complete logic.</p>
 
         {/* Category formula table */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Category Formulas — applied server-side, AI cannot override</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>Manufacturing removed — too inconsistent to measure fairly. All weights sum to 100%.</div>
           </div>
@@ -5004,7 +5078,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* NOVA processing modifier */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>NOVA Processing Level — applied before substance scoring</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>The biggest predictor of food risk after specific substances. Ultra-processed formulations (NOVA 4) start with a structural materials penalty regardless of individual ingredient claims.</div>
           </div>
@@ -5038,7 +5112,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Sugar penalty */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Added Sugar Penalty — scored independently of other concerns</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and beverages are consumed daily — cumulative exposure matters.</div>
           </div>
@@ -5059,7 +5133,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* IARC substance floors - updated */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>IARC Substance Floors — context-sensitive, not a blanket rule</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>IARC classifies the strength of evidence, not the dose. A trace of glyphosate in a multi-grain product is not the same as glyphosate as the primary ingredient in a children's cereal.</div>
           </div>
@@ -5096,7 +5170,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {
                 tier:"Speculative — hedged language only",
                 floor:"No floor applied",
-                color:"#6b7280", bg:isDark?"#1e2433":"#f8fafc", border_:border,
+                color:"#6b7280", bg:isDark?"#0f2a18":"#f8fafc", border_:border,
                 examples:"\"May contain,\" \"possible trace,\" \"could include\" — stripped before floors are checked.",
                 note:"Speculation does not warrant a penalty regardless of how dangerous the theoretical substance is."
               },
@@ -5106,7 +5180,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                   <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.tier}</div>
                   <div style={{fontSize:12, fontWeight:700, color:item.color, background:"white", padding:"2px 10px", borderRadius:10, border:`1px solid ${item.border_}`, whiteSpace:"nowrap", flexShrink:0}}>{item.floor}</div>
                 </div>
-                <div style={{fontSize:12, color:isDark?"#94a3b8":"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
+                <div style={{fontSize:12, color:isDark?"#6ee7b7":"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
                 <div style={{fontSize:11, color:item.color, fontStyle:"italic"}}>{item.note}</div>
               </div>
             ))}
@@ -5115,7 +5189,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Positive ceilings */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Positive Ceilings — clean products are protected from over-scoring</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>We have 113 substance floors that push risky products up. These ceilings prevent genuinely clean products from being over-penalised by a paranoid AI. Applied server-side — the AI cannot override them.</div>
           </div>
@@ -5124,7 +5198,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {label:"USDA Organic certified + no confirmed dangerous substances", cap:"Final score cannot exceed 3", color:"#16a34a", note:"Organic certification prohibits synthetic pesticides, GMOs, and most synthetic additives. If no dangerous substance floors fired, the product is genuinely clean."},
               {label:"Non-GMO Project Verified + no synthetic dyes + no synthetic preservatives", cap:"Final score cannot exceed 4", color:"#059669", note:"Conventionally farmed but free of the worst additives. Kashi GO, clean conventional snacks, and similar products land here."},
             ].map((item,i)=>(
-              <div key={i} style={{padding:"12px 16px", background:isDark?"#1a2433":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`}}>
+              <div key={i} style={{padding:"12px 16px", background:isDark?"#1a2433":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`}}>
                 <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6, flexWrap:"wrap"}}>
                   <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.label}</div>
                   <div style={{fontSize:12, fontWeight:700, color:"#fff", background:item.color, padding:"3px 12px", borderRadius:10, flexShrink:0}}>{item.cap}</div>
@@ -5137,7 +5211,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Child vulnerability system */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Child Vulnerability System</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>Children have thinner skin, developing organ systems, and lower body weight — meaning a higher effective dose per kilogram. Every score can be viewed through a child safety lens.</div>
           </div>
@@ -5162,7 +5236,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                 </div>
               ))}
             </div>
-            <div style={{fontSize:12, color:muted, background:isDark?"#1a2433":"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`}}>
+            <div style={{fontSize:12, color:muted, background:isDark?"#1a2433":"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`}}>
               <strong style={{color:"#16a34a"}}>How to use it:</strong> Tap the child safety toggle on any result to see the child-adjusted score. Child products (Honey Nut Cheerios, Pampers, baby lotions) are auto-detected and show a prompt automatically.
             </div>
           </div>
@@ -5170,7 +5244,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Consistency checks */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Hallucination Guards — 4 rules that run after every score</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>The AI scores dimensions. These rules catch cases where those scores contradict the AI's own reasoning.</div>
           </div>
@@ -5194,7 +5268,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       </div>
 
       {/* Footer note */}
-      <div style={{background:isDark?"#1e2433":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
+      <div style={{background:isDark?"#0f2a18":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
         <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:8}}>Questions about our methodology?</div>
         <p style={{fontSize:14, color:muted, lineHeight:1.7, margin:0}}>
           We welcome scrutiny. If you believe a score is inaccurate, or have published research that should inform our parameters, email us at{" "}
@@ -5216,10 +5290,10 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
   const [error,    setError]    = useState(null);
   const [success,  setSuccess]  = useState(null);
 
-  const surface = isDark ? "#1e2433" : "#fff";
-  const border  = isDark ? "#2a3347" : "#e5e7eb";
-  const text    = isDark ? "#f1f5f9" : "#111";
-  const muted   = isDark ? "#94a3b8" : "#666";
+  const surface = isDark ? "#0f2a18" : "#fff";
+  const border  = isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
+  const text    = isDark ? "#f0fdf4" : "#111";
+  const muted   = isDark ? "#6ee7b7" : "#666";
 
   const submit = async () => {
     if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
@@ -5276,16 +5350,16 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
         </p>
 
         {error   && <div style={{background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#dc2626", marginBottom:16}}>{error}</div>}
-        {success && <div style={{background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#16a34a", marginBottom:16}}>{success}</div>}
+        {success && <div style={{background:"rgba(34,197,94,0.08)", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#16a34a", marginBottom:16}}>{success}</div>}
 
         <div style={{display:"flex", flexDirection:"column", gap:12}}>
           <input type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&submit()}
-            style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+            style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#080f0a":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
           {mode !== "reset" && (
             <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&submit()}
-              style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+              style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#080f0a":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
           )}
           <button onClick={submit} disabled={loading}
             style={{padding:"12px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:loading?"default":"pointer", opacity:loading?0.7:1}}>
@@ -5408,7 +5482,7 @@ function App() {
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
   const [error,       setError]      = useState(null);
-  const [isDark,      setIsDark]     = useState(false);
+  const [isDark,      setIsDark]     = useState(true);
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
 
@@ -5927,34 +6001,42 @@ function App() {
     }
   };
 
-  const bg      = isDark?"#131929":"#fafafa";
-  const surface = isDark?"#1e2433":"#fff";
-  const border  = isDark?"#2a3347":"#eee";
-  const text    = isDark?"#f1f5f9":"#111";
-  const muted   = isDark?"#64748b":"#888";
+  const bg      = isDark?"#080f0a":"#fafafa";
+  const surface = isDark?"#0f2a18":"#fff";
+  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
+  const text    = isDark?"#f0fdf4":"#111";
+  const muted   = isDark?"#6ee7b7":"#888";
   const px      = isMobile ? "16px" : "40px";
 
   return (
-    <div style={{minHeight:"100vh", background:bg, fontFamily:"system-ui,-apple-system,sans-serif", transition:"background 0.3s"}}>
-      <style>{`*{box-sizing:border-box;}body{margin:0;}@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0}to{opacity:1}}.fade-up{animation:fadeUp 0.4s ease forwards}@keyframes slideInUp{from{opacity:0}to{opacity:1}}.score-reveal{animation:slideInUp 0.5s ease forwards}@keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}@keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}`}</style>
+    <div style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif", transition:"background 0.3s"}}>
+      <style>{`
+        *{box-sizing:border-box;}
+        body{margin:0;background:#080f0a;}
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
+        :root{
+          --green-deep:#052e16;--green-mid:#14532d;--green-bright:#22c55e;
+          --lime:#a3e635;--amber:#f59e0b;--orange:#f97316;--red:#ef4444;
+          --surface:#0f2a18;--card:#0f2a18;--border:rgba(34,197,94,0.15);
+          --text:#f0fdf4;--muted:#6ee7b7;
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}
+        @keyframes slideInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.score-reveal{animation:slideInUp 0.5s ease forwards}
+        @keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}
+        @keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
+        @keyframes pulseScan{0%,100%{box-shadow:0 4px 20px rgba(34,197,94,0.5),0 0 0 4px rgba(34,197,94,0.12)}50%{box-shadow:0 4px 28px rgba(34,197,94,0.7),0 0 0 6px rgba(34,197,94,0.18)}}
+        @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
+        input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
+        h1,h2,h3,.outfit{font-family:'Outfit',sans-serif;}
+      `}</style>
 
       {/* HEADER */}
-      <header style={{background:surface, borderBottom:`1px solid ${border}`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
+      <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:56, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
-            <svg width="32" height="32" viewBox="0 0 44 44">
-              <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-              <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-              <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-              <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-              <circle cx="37" cy="8"  r="2.5" fill="#4ade80" opacity="0.8"/>
-              <circle cx="39" cy="24" r="1.8" fill="#4ade80" opacity="0.5"/>
-              <circle cx="5"  cy="14" r="2"   fill="#86efac" opacity="0.6"/>
-              <circle cx="4"  cy="28" r="1.5" fill="#4ade80" opacity="0.45"/>
-              <circle cx="28" cy="4"  r="1.8" fill="#86efac" opacity="0.55"/>
-              <circle cx="12" cy="4"  r="1.5" fill="#4ade80" opacity="0.4"/>
-            </svg>
-            <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, letterSpacing:"-0.3px"}}>Partiqule</span>
+            <img src="/Partiqule.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
+            <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:800, fontSize:isMobile?18:22, color:"#f0fdf4", letterSpacing:"-0.5px"}}>Partiqule</span>
           </div>
 
           {isMobile ? (
@@ -5972,42 +6054,51 @@ function App() {
             </div>
           ) : (
             /* Desktop nav */
-            <nav style={{display:"flex", gap:16, alignItems:"center"}}>
-              <span onClick={()=>{setPage("about"); setResult(null);}} style={{fontSize:13, color:page==="about"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="about"?600:400}}>About</span>
-              <span onClick={()=>navigateTo("guides")} style={{fontSize:13, color:page==="guides"||page==="guide"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="guides"||page==="guide"?600:400}}>Guides</span>
-              <span onClick={()=>{setPage("science"); setResult(null);}} style={{fontSize:13, color:page==="science"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="science"?600:400}}>The Science</span>
-              <span onClick={()=>{setPage("routine"); setResult(null);}} style={{fontSize:13, color:page==="routine"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="routine"?600:400}}>My Routine</span>
-              <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:page==="history"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="history"?600:400}}>My Scans {history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{history.length}</span>}</span>
-              <span onClick={()=>{setPage("settings"); setResult(null);}} style={{fontSize:13, color:page==="settings"?"#16a34a":muted, cursor:"pointer", fontWeight:page==="settings"?600:400}}>Settings</span>
+            <nav style={{display:"flex", gap:4, alignItems:"center"}}>
+              {[
+                {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
+                {label:"Guides",     action:()=>navigateTo("guides"),                      active:page==="guides"||page==="guide"},
+                {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
+                {label:"My Routine", action:()=>{setPage("routine"); setResult(null);},    active:page==="routine"},
+                {label:"My Scans",   action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
+              ].map((item,i)=>(
+                <span key={i} onClick={item.action} style={{
+                  fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:item.active?700:500,
+                  color:item.active?"#22c55e":"#6ee7b7", opacity:item.active?1:0.55,
+                  cursor:"pointer", padding:"6px 12px", borderRadius:8,
+                  background:item.active?"rgba(34,197,94,0.1)":"transparent",
+                  transition:"all 0.15s",
+                }}>{item.label}{item.label==="My Scans"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
+              ))}
               {isAdminUser(user) && (
-                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontSize:13, color:page==="admin"?"#16a34a":"#9333ea", cursor:"pointer", fontWeight:page==="admin"?700:600}}>Admin</span>
+                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'Outfit',sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
               )}
               {user ? (
-                <div style={{display:"flex", alignItems:"center", gap:10}}>
-                  <div style={{width:32, height:32, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
-                    <span style={{color:"#4ade80", fontWeight:700, fontSize:13}}>{user.email[0].toUpperCase()}</span>
+                <div style={{display:"flex", alignItems:"center", gap:8, marginLeft:8}}>
+                  <div style={{width:32, height:32, borderRadius:"50%", background:"rgba(34,197,94,0.15)", border:"1px solid rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
+                    <span style={{fontFamily:"'Outfit',sans-serif", color:"#22c55e", fontWeight:800, fontSize:13}}>{user.email[0].toUpperCase()}</span>
                   </div>
-                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>Sign out</button>
+                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
                 </div>
               ) : (
-                <button onClick={()=>setShowAuth(true)} style={{padding:"8px 18px", borderRadius:8, border:"none", background:"#052e16", color:"#4ade80", fontWeight:600, fontSize:14, cursor:"pointer"}}>Sign in</button>
+                <button onClick={()=>setShowAuth(true)} style={{marginLeft:8, padding:"8px 18px", borderRadius:10, border:"none", background:"rgba(34,197,94,0.12)", color:"#22c55e", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", border:"1px solid rgba(34,197,94,0.2)"}}>Sign in</button>
               )}
-              <button onClick={reset} style={{padding:"8px 18px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontWeight:600, fontSize:14, cursor:"pointer"}}>New Search</button>
+              <button onClick={reset} style={{padding:"8px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>New Scan</button>
             </nav>
           )}
         </div>
 
         {/* Mobile dropdown menu */}
         {isMobile && menuOpen && (
-          <div style={{background:surface, borderTop:`1px solid ${border}`, padding:"12px 16px", display:"flex", flexDirection:"column", gap:4}}>
+          <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2}}>
             {[
-              {label:"About",              pg:"about"},
-              {label:"The Science",        pg:"science"},
-              {label:"How it Works",       pg:"methodology"},
-              {label:"Guides",             pg:"guides"},
-              {label:"My Routine",         pg:"routine"},
-              {label:"My Scans",           pg:"history"},
-              {label:"Settings",           pg:"settings"},
+              {label:"About",        pg:"about"},
+              {label:"The Science",  pg:"science"},
+              {label:"How it Works", pg:"methodology"},
+              {label:"Guides",       pg:"guides"},
+              {label:"My Routine",   pg:"routine"},
+              {label:"My Scans",     pg:"history"},
+              {label:"Settings",     pg:"settings"},
               ...(isAdminUser(user) ? [{label:"Admin", pg:"admin"}] : []),
             ].map(item=>(
               <button key={item.pg} onClick={()=>{
@@ -6015,22 +6106,28 @@ function App() {
                 else { setPage(item.pg); setResult(null); }
                 setMenuOpen(false);
               }}
-                style={{padding:"12px 16px", borderRadius:8, border:"none", background:page===item.pg?"#f0fdf4":"none", color:page===item.pg?"#16a34a":text, fontSize:15, fontWeight:page===item.pg?600:400, cursor:"pointer", textAlign:"left"}}>
+                style={{padding:"12px 16px", borderRadius:10, border:"none",
+                  background:page===item.pg?"rgba(34,197,94,0.12)":"transparent",
+                  color:page===item.pg?"#22c55e":"#6ee7b7",
+                  fontFamily:"'Outfit',sans-serif", fontSize:15,
+                  fontWeight:page===item.pg?700:500, cursor:"pointer", textAlign:"left",
+                  opacity:page===item.pg?1:0.7,
+                }}>
                 {item.label}
               </button>
             ))}
             {user ? (
-              <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-                <span style={{fontSize:13, color:muted}}>{user.email}</span>
-                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:13, cursor:"pointer"}}>Sign out</button>
+              <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, borderTop:"1px solid rgba(34,197,94,0.1)"}}>
+                <span style={{fontSize:13, color:"#6ee7b7", opacity:0.6}}>{user.email}</span>
+                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
               </div>
             ) : (
-              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:8, border:`1.5px solid #16a34a`, background:"none", color:"#16a34a", fontSize:15, fontWeight:600, cursor:"pointer", textAlign:"left", marginTop:4}}>
+              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:10, border:"1.5px solid rgba(34,197,94,0.3)", background:"none", color:"#22c55e", fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"left", marginTop:8}}>
                 Sign in / Create account
               </button>
             )}
-            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontSize:15, fontWeight:600, cursor:"pointer", marginTop:4}}>
-              New Search
+            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"13px 16px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:800, cursor:"pointer", marginTop:8, boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>
+              New Scan
             </button>
           </div>
         )}
@@ -6053,9 +6150,9 @@ function App() {
         <div onClick={()=>setShowDeleteConfirm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
             <div style={{fontSize:20,fontWeight:700,color:"#dc2626",marginBottom:8}}>Delete account?</div>
-            <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
+            <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
             <button onClick={deleteAccount} style={{width:"100%",padding:"13px",borderRadius:10,background:"#dc2626",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Yes, delete my account</button>
-            <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
+            <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
           </div>
         </div>
       )}
@@ -6067,23 +6164,23 @@ function App() {
 
             {showLimitModal === "account" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've been busy.</div>
-              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $4.99/month.</div>
+              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $4.99/month.</div>
               <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create account</button>
-              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
             {showLimitModal === "paywall" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
-              <div style={{fontSize:14,color:isDark?"#94a3b8":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $4.99/month. Cancel anytime.</div>
+              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $4.99/month. Cancel anytime.</div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
                 {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
               </button>
               {IS_NATIVE && (
-                <div style={{fontSize:11,color:isDark?"#64748b":"#9ca3af",textAlign:"center",marginTop:8,lineHeight:1.5}}>
+                <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:8,lineHeight:1.5}}>
                   Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
                 </div>
               )}
-              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#94a3b8":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
           </div>
@@ -6147,34 +6244,26 @@ function App() {
 
             {/* Appearance */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Appearance</div>
               </div>
 
-              {/* Dark mode */}
+              {/* Theme — always dark */}
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom:`1px solid ${border}`}}>
                 <div>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Dark mode</div>
-                  <div style={{fontSize:13, color:muted}}>{isDark ? "Dark theme active" : "Light theme active"}</div>
+                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Theme</div>
+                  <div style={{fontSize:13, color:muted}}>Dark — optimised for readability</div>
                 </div>
-                <button onClick={()=>setIsDark(d=>!d)} style={{
-                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
-                  background: isDark ? "#16a34a" : "#d1d5db",
-                  position:"relative", transition:"background 0.2s", flexShrink:0,
-                }}>
-                  <div style={{
-                    position:"absolute", top:3, left: isDark ? 24 : 3,
-                    width:24, height:24, borderRadius:"50%", background:"white",
-                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
-                  }}/>
-                </button>
+                <div style={{padding:"5px 14px", borderRadius:20, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)"}}>
+                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#22c55e"}}>Dark</span>
+                </div>
               </div>
 
             </div>
 
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Account</div>
               </div>
               {user ? (
@@ -6207,7 +6296,7 @@ function App() {
 
             {/* Child safety default */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Scoring</div>
               </div>
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
@@ -6257,7 +6346,7 @@ function App() {
 
             {/* About */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#131929":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>About</div>
               </div>
               {[
@@ -6366,32 +6455,29 @@ function App() {
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0 0 28px", lineHeight:1.7}}>
                 {isMobile ? "Scan any product to understand its risks for you, your home and your planet." : "Scan any product to understand its risks for you, your home and your planet. Instantly."}
               </p>
-                <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"white", borderRadius:14, boxShadow:"0 8px 32px rgba(0,0,0,0.3)", height:52}}>
-                  <div style={{display:"flex", alignItems:"center", paddingLeft:12, flexShrink:0, borderRadius:"14px 0 0 14px"}}><IcoSearch size={20}/></div>
+                <div style={{display:"flex", maxWidth:580, margin:"0 auto 16px", background:"rgba(15,42,24,0.8)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:16, boxShadow:"0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(34,197,94,0.1)", height:56, backdropFilter:"blur(12px)"}}>
+                  <div style={{display:"flex", alignItems:"center", paddingLeft:16, flexShrink:0}}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  </div>
                   <input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==="Enter"&&analyze()}
                     placeholder="Search any product…"
-                    style={{flex:1, padding:"0 8px", border:"none", outline:"none", fontSize:16, background:"transparent", color:"#111", minWidth:0, width:0, height:"100%"}}/>
+                    style={{flex:1, padding:"0 10px", border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:16, background:"transparent", color:"#f0fdf4", minWidth:0, width:0, height:"100%"}}/>
 
-                  {/* Camera button — mobile opens full barcode+photo scanner, desktop uses file picker */}
+                  {/* Camera button */}
                   {isMobile ? (
                     <div onClick={()=>setShowBarcodeScanner(true)}
-                      style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      style={{display:"flex", alignItems:"center", justifyContent:"center", width:48, minWidth:48, height:56, flexShrink:0, cursor:"pointer", borderLeft:"1px solid rgba(34,197,94,0.15)"}}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" opacity="0.7">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                         <circle cx="12" cy="13" r="4"/>
                       </svg>
                     </div>
                   ) : (
-                    <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:44, minWidth:44, height:52, flexShrink:0, cursor:"pointer", borderLeft:"1px solid #eee"}}>
+                    <label style={{display:"flex", alignItems:"center", justifyContent:"center", width:48, minWidth:48, height:56, flexShrink:0, cursor:"pointer", borderLeft:"1px solid rgba(34,197,94,0.15)"}}>
                       <input type="file" accept="image/*" style={{display:"none"}}
-                        onChange={async(e)=>{
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          e.target.value = "";
-                          await handleImageScan(file);
-                        }}/>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        onChange={async(e)=>{ const file=e.target.files?.[0]; if(!file)return; e.target.value=""; await handleImageScan(file); }}/>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="1.8" opacity="0.7">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                         <circle cx="12" cy="13" r="4"/>
                       </svg>
                     </label>
@@ -6399,12 +6485,15 @@ function App() {
 
                   {/* Scan button */}
                   <button onClick={()=>analyze()} disabled={!query.trim()||loading}
-                    style={{width:isMobile?64:88, minWidth:isMobile?64:88, height:52, flexShrink:0, border:"none",
-                      borderRadius:"0 14px 14px 0",
-                      background:query.trim()?"#052e16":"#e0e0e0", color:query.trim()?"#4ade80":"#999",
-                      fontWeight:700, fontSize:15, cursor:query.trim()?"pointer":"default",
+                    style={{width:isMobile?72:96, minWidth:isMobile?72:96, height:56, flexShrink:0, border:"none",
+                      borderRadius:"0 16px 16px 0",
+                      background:query.trim()?"linear-gradient(135deg,#22c55e,#16a34a)":"rgba(34,197,94,0.08)",
+                      color:query.trim()?"#fff":"rgba(34,197,94,0.3)",
+                      fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15,
+                      cursor:query.trim()?"pointer":"default",
                       display:"flex", alignItems:"center", justifyContent:"center",
-                      transition:"background 0.15s", whiteSpace:"nowrap"}}>
+                      transition:"all 0.2s", whiteSpace:"nowrap",
+                      boxShadow:query.trim()?"0 2px 12px rgba(34,197,94,0.3)":"none"}}>
                     Scan
                   </button>
                 </div>
@@ -6455,7 +6544,7 @@ function App() {
                       value={captureEmail}
                       onChange={e=>setCaptureEmail(e.target.value)}
                       onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
-                      style={{flex:1, padding:"12px 16px", border:"none", outline:"none", fontSize:14, background:"rgba(255,255,255,0.95)", color:"#111", minWidth:0}}
+                      style={{flex:1, padding:"12px 16px", border:"none", outline:"none", fontSize:14, background:"rgba(255,255,255,0.95)", color:"#f0fdf4", minWidth:0}}
                     />
                     <button onClick={submitCaptureEmail} disabled={captureSubmitting}
                       style={{padding:"12px 20px", background:"#4ade80", color:"#052e16", border:"none", fontWeight:700, fontSize:14, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1}}>
@@ -6494,16 +6583,16 @@ function App() {
                   {icon:"scan",     title:"Free to start",          body:"No account needed to get started. Create a free account to save your scan history across devices"},
                 ].map((item,i) => (
                   <div key={i} style={{
-                    background:isDark?"#1e2433":"#fff",
+                    background:isDark?"#0f2a18":"#fff",
                     borderRadius:16, padding:"24px 20px", textAlign:"center",
-                    border:`1.5px solid ${isDark?"#2a3347":"#f0fdf4"}`,
+                    border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#f0fdf4"}`,
                     display:"flex", flexDirection:"column", alignItems:"center", gap:12,
                   }}>
                     <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
                       {item.icon==="score"&&<IcoScore size={36}/>}{item.icon==="safety"&&<IcoSafety size={36}/>}{item.icon==="verified"&&<IcoVerified size={36}/>}{item.icon==="scan"&&<IcoScan size={36}/>}
                     </div>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f1f5f9":"#111"}}>{item.title}</div>
-                    <div style={{fontSize:13, color:isDark?"#64748b":"#888", lineHeight:1.6}}>{item.body}</div>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f0fdf4":"#111"}}>{item.title}</div>
+                    <div style={{fontSize:13, color:isDark?"#6ee7b7":"#888", lineHeight:1.6}}>{item.body}</div>
                   </div>
                 ))}
               </div>
@@ -6540,7 +6629,7 @@ function App() {
             )}
             {/* Impact stats box */}
             <div style={{maxWidth:960, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{background:isDark?"#1e2433":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", border:`1.5px solid ${isDark?"#2a3347":"#d1e8d1"}`}}>
+              <div style={{background:isDark?"#0f2a18":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#d1e8d1"}`}}>
                 {/* Floating particles */}
                 {[
                   {s:8, x:"5%",  y:"20%", a:0.25, shape:"circle"},
@@ -6557,7 +6646,7 @@ function App() {
 
                 <div style={{position:"relative", zIndex:1}}>
                   <div style={{fontSize:isMobile?13:14, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8, textAlign:"center"}}>Why it matters</div>
-                  <p style={{fontSize:isMobile?14:16, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:560, margin:"0 auto 40px", textAlign:"center"}}>
+                  <p style={{fontSize:isMobile?14:16, color:isDark?"#6ee7b7":"#555", lineHeight:1.7, maxWidth:560, margin:"0 auto 40px", textAlign:"center"}}>
                     The products around you affect more than you realize. Here is what the research says.
                   </p>
 
@@ -6597,16 +6686,16 @@ function App() {
                         {sphere.stats.map((s,i)=>(
                           <div key={i} style={{textAlign:isMobile?"center":"left"}}>
                             <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?26:32, color:sphere.color, lineHeight:1, marginBottom:8}}>{s.number}</div>
-                            <div style={{fontSize:12, color:isDark?"#94a3b8":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
+                            <div style={{fontSize:12, color:isDark?"#6ee7b7":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
                             <div style={{fontSize:10, color:isDark?"#475569":"#999", fontStyle:"italic"}}>{s.sub}</div>
                           </div>
                         ))}
                       </div>
-                      {si < 2 && <div style={{borderTop:`1px solid ${isDark?"#2a3347":"#d1e8d1"}`, marginTop:isMobile?28:32}}/>}
+                      {si < 2 && <div style={{borderTop:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1e8d1"}`, marginTop:isMobile?28:32}}/>}
                     </div>
                   ))}
 
-                  <div style={{fontSize:isMobile?14:16, color:isDark?"#94a3b8":"#555", lineHeight:1.7, maxWidth:520, margin:"36px auto 0", textAlign:"center"}}>
+                  <div style={{fontSize:isMobile?14:16, color:isDark?"#6ee7b7":"#555", lineHeight:1.7, maxWidth:520, margin:"36px auto 0", textAlign:"center"}}>
                     Most products carry no warning. No label. No guidance on what to do instead.
                     <span style={{color:"#16a34a", fontWeight:700}}> That is why Partiqule exists.</span>
                   </div>
@@ -6633,7 +6722,7 @@ function App() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
                 <div>
                   <div style={{fontSize:13, fontWeight:700, color:"#2563eb"}}>This is a demo scan</div>
-                  <div style={{fontSize:12, color:isDark?"#94a3b8":"#555"}}>M&Ms is a real example. Scan any product to get your own result.</div>
+                  <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555"}}>M&Ms is a real example. Scan any product to get your own result.</div>
                 </div>
               </div>
               <button onClick={reset} style={{padding:"7px 16px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontWeight:600, fontSize:13, cursor:"pointer", whiteSpace:"nowrap"}}>
@@ -6648,13 +6737,13 @@ function App() {
             const displayScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
             return (
             <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
-              <div className="score-reveal" style={{background:isDark?"#1e2433":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"#2a3347":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
+              <div className="score-reveal" style={{background:isDark?"#0f2a18":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
                 {/* Header row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
                   <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
                     <><IcoRating size={14}/> Product Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = highest concern)</span>
                   </div>
-                  {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"#f0fdf4", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
+                  {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
                   {result.confidence && (
                     <div style={{fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10,
                       background:result.confidence==="high"?"#f0fdf4":result.confidence==="medium"?"#fffbeb":"#fef2f2",
@@ -6664,7 +6753,7 @@ function App() {
                   )}
                   {/* Social proof — scanned by others */}
                   {result.cached && (
-                    <div style={{fontSize:10, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f9fafb", border:`1px solid ${border}`}}>
+                    <div style={{fontSize:10, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#0f2a18":"#f9fafb", border:`1px solid ${border}`}}>
                       Scanned by others ✓
                     </div>
                   )}
@@ -6700,7 +6789,7 @@ function App() {
                           padding:"7px 16px", borderRadius:20,
                           background:"#4a1942", border:"none",
                         }}>
-                          <span style={{fontSize:16}}>🤰</span>
+                          <span style={{fontSize:13, fontWeight:700, color:"#f9a8d4"}}>PREG</span>
                           <span style={{fontSize:12, fontWeight:700, color:"#f9a8d4", letterSpacing:"0.03em"}}>
                             Viewing pregnancy safety score
                           </span>
@@ -6732,8 +6821,8 @@ function App() {
                         style={{
                           display:"flex", alignItems:"center", gap:8, margin:"0 auto",
                           padding:"7px 16px", borderRadius:20,
-                          background: childMode ? "#052e16" : isDark ? "#1e2433" : "#f1f5f9",
-                          border: childMode ? "none" : `1px solid ${isDark?"#2a3347":"#e2e8f0"}`,
+                          background: childMode ? "#052e16" : isDark ? "#0f2a18" : "#f1f5f9",
+                          border: childMode ? "none" : `1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`,
                           cursor:"pointer", transition:"all 0.2s",
                         }}>
                         <span style={{fontSize:12, fontWeight:700,
@@ -6853,14 +6942,16 @@ function App() {
                   });
                   if (flagged.length === 0) return null;
                   const sStyle = (sev) => ({
-                    high:   {bg:"#fef2f2", color:"#dc2626", border:"1.5px solid #fecaca"},
-                    medium: {bg:"#fffbeb", color:"#d97706", border:"1.5px solid #fde68a"},
-                    low:    {bg:"#f0fdf4", color:"#16a34a", border:"1.5px solid #bbf7d0"},
-                  })[sev] || {bg:"#fffbeb", color:"#d97706", border:"1.5px solid #fde68a"};
+                    high:   {bg:"rgba(239,68,68,0.12)",   color:"#fca5a5", border:"1.5px solid rgba(239,68,68,0.3)"},
+                    medium: {bg:"rgba(245,158,11,0.12)",  color:"#fcd34d", border:"1.5px solid rgba(245,158,11,0.3)"},
+                    low:    {bg:"rgba(34,197,94,0.1)",    color:"#86efac", border:"1.5px solid rgba(34,197,94,0.25)"},
+                  })[sev] || {bg:"rgba(245,158,11,0.12)", color:"#fcd34d", border:"1.5px solid rgba(245,158,11,0.3)"};
                   return (
                     <div style={{marginTop:16, marginBottom:4, textAlign:"left"}}>
-                      <div style={{fontSize:10, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>
-                        ⚠ Flagged substances
+                      <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#ef4444", textTransform:"uppercase", letterSpacing:"0.1em"}}>Flagged Substances</span>
+                        <span style={{background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, color:"#ef4444"}}>{flagged.slice(0,8).length}</span>
                       </div>
                       <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
                         {flagged.slice(0, 8).map((f, i) => {
@@ -6868,7 +6959,7 @@ function App() {
                           const displayName = cleanName(f.name);
                           if (!displayName || isGeneric(displayName)) return null;
                           return (
-                            <span key={i} style={{fontSize:12, fontWeight:700, padding:"4px 11px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap"}}>
+                            <span key={i} style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, padding:"5px 12px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
                               {displayName}
                             </span>
                           );
@@ -6884,7 +6975,7 @@ function App() {
                   const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
                   return (
                     <div style={{marginBottom:16}}>
-                      <div style={{display:"inline-block",background:scoreBg(displayScore),color:scoreColor(displayScore),padding:"7px 22px",borderRadius:20,fontSize:15,fontWeight:700,margin:"18px 0 8px"}}>
+                      <div style={{display:"inline-block", background:`${scoreColor(displayScore)}18`, color:scoreColor(displayScore), border:`1px solid ${scoreColor(displayScore)}33`, padding:"7px 22px", borderRadius:20, fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800, margin:"18px 0 8px", letterSpacing:"0.02em"}}>
                         {scoreLabel(displayScore)} — {pregnancyMode && result.pregnancy_score ? "pregnancy safety" : childMode && result.child_score ? "for children" : catLabel}
                       </div>
                       <div style={{fontSize:11,color:muted,marginTop:2}}>
@@ -6922,7 +7013,7 @@ function App() {
                       <div style={{display:"flex", alignItems:"center", gap:8}}>
                         <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Better option</span>
                         <span style={{fontSize:13, color:text, fontWeight:600}}>{topAlt.name}</span>
-                        <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"#f0fdf4", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
+                        <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"rgba(34,197,94,0.08)", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
                       </div>
                       <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>
                         {isMobile ? "See alternatives →" : "See right →"}
@@ -6973,7 +7064,7 @@ function App() {
                     badges.push(
                       <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
+                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -6985,7 +7076,7 @@ function App() {
                     badges.push(
                       <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
+                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -6997,7 +7088,7 @@ function App() {
                     badges.push(
                       <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#94a3b8":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
+                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -7006,7 +7097,7 @@ function App() {
                   if (!badges.length) return null;
                   return (
                     <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10, fontWeight:700, color:isDark?"#94a3b8":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
+                      <div style={{fontSize:10, fontWeight:700, color:isDark?"#6ee7b7":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
                         Nutrition · {childMode ? "Children's Daily Values" : "Daily Values"}
                       </div>
                       <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
@@ -7019,11 +7110,11 @@ function App() {
                 {/* ── INGREDIENT LIST ── */}
                 {result.ingredient_list && result.ingredient_list.length > 0 && (
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:10, fontWeight:700, color:isDark?"#94a3b8":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
+                    <div style={{fontSize:10, fontWeight:700, color:isDark?"#6ee7b7":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
                       Full ingredient list
                     </div>
                     <div style={{background:isDark?"#1a1a18":"#f8f9fa", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a2a28":"#e9ecef"}`}}>
-                      <p style={{fontSize:12, color:isDark?"#94a3b8":"#64748b", lineHeight:1.7, margin:0}}>
+                      <p style={{fontSize:12, color:isDark?"#6ee7b7":"#64748b", lineHeight:1.7, margin:0}}>
                         {result.ingredient_list.join(", ")}
                       </p>
                     </div>
@@ -7053,7 +7144,7 @@ function App() {
                     )}
                     {/* 1. Materials */}
                     <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={Math.min(10,(d.materials?.score||result.score)+childDimBump)} concerns={d.materials?.concerns} isDark={isDark}>
-                      {d.materials?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
+                      {d.materials?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
                       {/* Only show chips when no Product Insights — otherwise redundant */}
                       {!result.food_analysis && (<>
                         {result.identified_plastics?.length > 0 && (
@@ -7091,7 +7182,7 @@ function App() {
 
                     {/* 2. Usage & Exposure */}
                     <DimensionDropdown icon={<IcoSafety size={20}/>} label="Usage & Exposure" score={Math.min(10,(d.usage_exposure?.score||5)+childDimBump)} concerns={d.usage_exposure?.concerns} isDark={isDark}>
-                      {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
+                      {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
                         {d.usage_exposure?.frequency && d.usage_exposure.frequency !== "unknown" && (
                           <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#eff6ff",color:"#1d4ed8",display:"flex",alignItems:"center",gap:4}}>
@@ -7116,16 +7207,16 @@ function App() {
 
                     {/* 3. Packaging */}
                     <DimensionDropdown icon={<IcoCategory size={20}/>} label="Packaging" score={d.packaging?.score||5} concerns={d.packaging?.concerns} isDark={isDark}>
-                      {d.packaging?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.packaging.label}</p>}
+                      {d.packaging?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.packaging.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoSaved size={12}/> Refillable</span>}
+                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoSaved size={12}/> Refillable</span>}
                         {d.packaging?.primary && d.packaging.primary !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
                             {d.packaging.primary}
                           </span>
                         )}
                         {d.packaging?.end_of_life && d.packaging.end_of_life !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
                             {d.packaging.end_of_life}
                           </span>
                         )}
@@ -7134,12 +7225,12 @@ function App() {
 
                     {/* 4. Sustainability */}
                     <DimensionDropdown icon={<IcoSaved size={20}/>} label="Sustainability" score={d.sustainability?.score||5} concerns={d.sustainability?.concerns} isDark={isDark}>
-                      {d.sustainability?.label && <p style={{fontSize:13,color:isDark?"#94a3b8":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.sustainability.label}</p>}
+                      {d.sustainability?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.sustainability.label}</p>}
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoSaved size={12}/> Reusable</span>}
-                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#f0fdf4",color:"#16a34a"}}><IcoVerified size={12}/> Replaces single-use</span>}
+                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoSaved size={12}/> Reusable</span>}
+                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoVerified size={12}/> Replaces single-use</span>}
                         {d.sustainability?.circularity && d.sustainability.circularity !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#1e2433":"#f9fafb",color:isDark?"#94a3b8":"#555",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`}}>
+                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
                             {d.sustainability.circularity}
                           </span>
                         )}
@@ -7162,7 +7253,7 @@ function App() {
                     </button>
                   </>);
                 })() : (
-                  <div style={{padding:"12px 16px", background:isDark?"#1e2433":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"#2a3347":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
+                  <div style={{padding:"12px 16px", background:isDark?"#0f2a18":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
                     <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging and Sustainability scores.</div>
                   </div>
                 )}
@@ -7170,7 +7261,7 @@ function App() {
                 </div>{/* end dropdowns negative-margin wrapper */}
 
                 {/* Peer comparison */}
-                <p style={{fontSize:15,color:isDark?"#94a3b8":"#555",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
+                <p style={{fontSize:15,color:"#6ee7b7",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
 
                 {/* Score explainability — "why is this a 7?" */}
                 <ScoreExplainer
@@ -7199,7 +7290,7 @@ function App() {
                     <div style={{
                       marginTop:12, padding:"10px 16px", borderRadius:10,
                       background:isDark?"#1a2030":"#f8fafc",
-                      border:`1px solid ${isDark?"#2a3347":"#e2e8f0"}`,
+                      border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`,
                       display:"flex", alignItems:"flex-start", gap:10,
                     }}>
                       <span style={{fontSize:16, flexShrink:0, marginTop:1}}>ℹ</span>
@@ -7222,6 +7313,48 @@ function App() {
                     history={history}
                   />
                 )}
+
+                {/* ADD TO ROUTINE CTA — Goal-Gradient Effect: feels like completing something */}
+                {(() => {
+                  const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                  return (
+                    <div
+                      onClick={() => {
+                        if (!alreadyInRoutine) {
+                          const entry = {...result, scannedAt: new Date().toISOString()};
+                          const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                          setHistory(next);
+                          try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                        } else {
+                          setPage("routine"); setResult(null);
+                        }
+                      }}
+                      style={{
+                        marginTop:16, padding:"14px 18px",
+                        background:"rgba(34,197,94,0.06)",
+                        border:"1.5px dashed rgba(34,197,94,0.35)",
+                        borderRadius:14, display:"flex", alignItems:"center", gap:14,
+                        cursor:"pointer", transition:"background 0.2s",
+                      }}
+                    >
+                      <div style={{width:38, height:38, borderRadius:"50%", background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                        {alreadyInRoutine
+                          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        }
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>
+                          {alreadyInRoutine ? "In My Routine — view breakdown" : "Add to My Routine"}
+                        </div>
+                        <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>
+                          {alreadyInRoutine ? "See cumulative exposure and your overall score" : "Track cumulative exposure across all your products"}
+                        </div>
+                      </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" style={{opacity:0.5}}><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+                  );
+                })()}
 
               </div>
 
@@ -7272,7 +7405,7 @@ function App() {
             {/* RIGHT — desktop alternatives sticky panel — only show if score > 3 */}
             {!isMobile && ((childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
-                <div style={{background:isDark?"#1e2433":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"#2a3347":"#e2e8f0"}`, overflow:"hidden"}}>
+                <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, overflow:"hidden"}}>
                   <div style={{background:"#052e16", padding:"20px 24px"}}>
                     <div style={{fontSize:11, fontWeight:700, color:"#4ade80", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
                     <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'Outfit',sans-serif"}}>
@@ -7295,10 +7428,10 @@ function App() {
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : alt.affiliateUrl;
                       return (
-                      <div key={i} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
+                      <div key={i} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
-                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"#f0fdf4", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.score}/10</div>
+                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.score}/10</div>
                         </div>
                         {alt.material && <div style={{fontSize:12, color:muted, marginBottom:6, lineHeight:1.4}}>{alt.material}</div>}
                         {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
@@ -7317,10 +7450,10 @@ function App() {
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
                       return (
-                      <div key={`ai-${i}`} style={{background:isDark?"#131929":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"#2a3347":"#e8f5e9"}`}}>
+                      <div key={`ai-${i}`} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
-                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"#f0fdf4", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.estimated_score}/10</div>
+                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.estimated_score}/10</div>
                         </div>
                         {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
                         <a href={shopUrl} target="_blank" rel="noopener noreferrer"
@@ -7351,7 +7484,7 @@ function App() {
 
         {/* ── ALTERNATIVES PAGE OVERLAY ── */}
         {showAlts && result && (
-          <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#131929":"#fafafa", overflowY:"auto"}}>
+          <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#080f0a":"#fafafa", overflowY:"auto"}}>
 
             {/* Globe-inspired header */}
             <div style={{background:"#052e16", padding:isMobile?`${28 + SAFE_TOP}px 20px 32px`:"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
@@ -7446,7 +7579,7 @@ function App() {
                     <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
                         <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                        <div style={{background:scoreBg(score), color:scoreColor(score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{score}/10</div>
+                        <div style={{background:`${scoreColor(score)}18`, color:scoreColor(score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{score}/10</div>
                       </div>
                       {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
                       {reason && <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{reason}</div>}
@@ -7456,7 +7589,7 @@ function App() {
                           <IcoSearch size={14}/> Scan this →
                         </button>
                         <a href={altSource === "brand" ? getBrandUrl(alt.brand || alt.name, alt.name) : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name) : buyUrl} target="_blank" rel="noopener noreferrer"
-                          style={{display:"flex", alignItems:"center", gap:4, fontSize:12, color:isDark?"#94a3b8":"#6b7280", fontWeight:600, textDecoration:"none"}}>
+                          style={{display:"flex", alignItems:"center", gap:4, fontSize:12, color:isDark?"#6ee7b7":"#6b7280", fontWeight:600, textDecoration:"none"}}>
                           🛒 {altSource === "brand" ? "Brand site" : altSource === "bigbox" ? "Find on Target" : "Find on Amazon"}
                         </a>
                       </div>
@@ -7507,7 +7640,7 @@ function App() {
                   <div style={{display:"flex", flexDirection:"column", gap:8}}>
                     {result.scan_next.map((item,i)=>(
                       <button key={i} onClick={()=>{setShowAlts(false); setResult(null); setQuery(item); analyze(item); track("Scan Next Click", {item, from: result.product_name, category: result.category});}}
-                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"#2a3347":"#bbf7d0"}`, background:isDark?"#1e2433":"#fff", cursor:"pointer", textAlign:"left"}}>
+                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`, background:isDark?"#0f2a18":"#fff", cursor:"pointer", textAlign:"left"}}>
                         <div style={{display:"flex", alignItems:"center", gap:10}}>
                           <div style={{width:32, height:32, borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                             <IcoScan size={16}/>
@@ -7535,128 +7668,105 @@ function App() {
         </>
       )}
 
-      {/* MOBILE FAB — shows when result is active */}
-      {isMobile && result && (
+      {/* ── PERSISTENT MOBILE BOTTOM NAV + FLOATING SCAN ── */}
+      {isMobile && (
         <>
-          {/* Backdrop */}
-          {(fabOpen || showScanModal) && (
-            <div onClick={()=>{setFabOpen(false); setShowScanModal(false);}} style={{position:"fixed", inset:0, zIndex:8998, background:fabOpen?"rgba(0,0,0,0.5)":"transparent"}}/>
+          {/* Scan modal backdrop */}
+          {showScanModal && (
+            <div onClick={()=>setShowScanModal(false)} style={{position:"fixed", inset:0, zIndex:8998, background:"rgba(0,0,0,0.6)"}}/>
           )}
 
-          {/* FAB menu options */}
-          {fabOpen && (
-            <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, padding:"0 20px", width:"100%", maxWidth:360}}>
-              {[
-                { icon:<IcoScan size={28}/>,    label:"New scan",    action:()=>{setShowScanModal(o=>!o); setModalQuery(""); setFabOpen(false);} },
-                { icon:<IcoSaved size={28}/>,   label:"My scans",    action:()=>{setPage("history"); setResult(null); setFabOpen(false);} },
-                { icon:<IcoScore size={28}/>,   label:"How it works", action:()=>{setPage("methodology"); setResult(null); setFabOpen(false);} },
-                { icon:<IcoProfile size={28}/>, label: user ? "Account" : "Sign in",
-                  action:()=>{ user ? signOut() : setShowAuth(true); setFabOpen(false); } },
-              ].map((item, i) => (
-                <button key={i} onClick={item.action}
-                  style={{background:isDark?"#1e2433":"#fff", border:`1px solid ${border}`, borderRadius:16, padding:"20px 16px", display:"flex", flexDirection:"column", alignItems:"center", gap:10, cursor:"pointer", boxShadow:"0 4px 24px rgba(0,0,0,0.15)"}}>
-                  <div style={{color:"#16a34a"}}>{item.icon}</div>
-                  <span style={{fontSize:14, fontWeight:600, color:text}}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Floating button row */}
-          <div style={{position:"fixed", bottom:24, right:24, zIndex:9000, display:"flex", alignItems:"center", gap:10}}>
-            {/* My Scans bubble */}
-            <button onClick={()=>{setPage("history"); setResult(null); setFabOpen(false); setShowScanModal(false);}}
-              style={{width:44, height:44, borderRadius:"50%", background:isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)", position:"relative"}}>
-              <IcoSaved size={18}/>
-              {history.length > 0 && <span style={{position:"absolute", top:0, right:0, width:10, height:10, borderRadius:"50%", background:"#16a34a", border:"2px solid #fff"}}/>}
-            </button>
-
-            {/* New Scan bubble — tap to show search/camera options */}
-            <div style={{position:"relative"}}>
-              {/* Scan sub-bubbles */}
-              {showScanModal && (<>
-                {/* Type search bubble */}
-                <div style={{position:"absolute", bottom:54, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, zIndex:9001}}>
-                  <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:8}}>Type a product name</div>
-                  <div style={{display:"flex", gap:6}}>
-                    <input
-                      value={modalQuery}
-                      onChange={e=>setModalQuery(e.target.value)}
-                      onKeyDown={e=>{
-                        if (e.key==="Enter" && modalQuery.trim()) {
-                          setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery);
-                        }
-                      }}
-                      placeholder="e.g. M&Ms, Tide pods…"
-                      style={{flex:1, padding:"7px 10px", borderRadius:8, border:`1px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:13, outline:"none"}}/>
-                    <button
-                      onClick={()=>{
-                        if (modalQuery.trim()) { setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery); }
-                      }}
-                      style={{padding:"7px 12px", borderRadius:8, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:13, cursor:"pointer"}}>
-                      Go
-                    </button>
+          {/* Scan input popover */}
+          {showScanModal && (
+            <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, width:"calc(100% - 32px)", maxWidth:360, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"16px 16px", boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}>
+              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.6, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10}}>Scan a product</div>
+              <div style={{display:"flex", gap:8, marginBottom:10}}>
+                <input
+                  autoFocus
+                  value={modalQuery}
+                  onChange={e=>setModalQuery(e.target.value)}
+                  onKeyDown={e=>{ if (e.key==="Enter" && modalQuery.trim()) { setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery); }}}
+                  placeholder="Type a product name..."
+                  style={{flex:1, padding:"10px 14px", borderRadius:12, border:"1px solid rgba(34,197,94,0.2)", background:"#080f0a", color:"#f0fdf4", fontSize:14, outline:"none", fontFamily:"'DM Sans',sans-serif"}}/>
+                <button
+                  onClick={()=>{ if (modalQuery.trim()) { setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery); }}}
+                  style={{padding:"10px 16px", borderRadius:12, background:"#22c55e", color:"#052e16", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:14, cursor:"pointer"}}>Go</button>
+              </div>
+              {/* Camera option */}
+              {isMobile ? (
+                <div onClick={()=>{setShowScanModal(false); setShowBarcodeScanner(true);}}
+                  style={{display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:12, cursor:"pointer"}}>
+                  <div style={{width:32, height:32, borderRadius:8, background:"rgba(34,197,94,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4"}}>Scan barcode or photo</div>
+                    <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>Point camera at a product</div>
                   </div>
                 </div>
-
-                {/* Camera / Barcode bubble */}
-                {isMobile ? (
-                  /* Mobile: open full scanner (barcode auto-detect + photo fallback) */
-                  <div
-                    onClick={()=>{setShowScanModal(false); setFabOpen(false); setShowBarcodeScanner(true);}}
-                    style={{position:"absolute", bottom:104, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, cursor:"pointer", display:"flex", alignItems:"center", gap:10, zIndex:9001}}>
-                    <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div style={{fontSize:13, fontWeight:600, color:text}}>Scan barcode or photo</div>
-                      <div style={{fontSize:11, color:muted}}>Auto-detects barcodes instantly</div>
-                    </div>
+              ) : (
+                <label style={{display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:12, cursor:"pointer"}}>
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{ const file=e.target.files?.[0]; if(!file)return; e.target.value=""; setShowScanModal(false); await handleImageScan(file);}}/>
+                  <div style={{width:32, height:32, borderRadius:8, background:"rgba(34,197,94,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
-                ) : (
-                  /* Desktop: file input only */
-                  <label style={{position:"absolute", bottom:104, right:0, background:isDark?"#1e2433":"#fff", borderRadius:16, padding:"12px 14px", border:`1.5px solid ${border}`, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", width:220, cursor:"pointer", display:"flex", alignItems:"center", gap:10, zIndex:9001}}>
-                    <input type="file" accept="image/*" style={{display:"none"}}
-                      onChange={async(e)=>{
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        e.target.value = "";
-                        setShowScanModal(false);
-                        await handleImageScan(file);
-                      }}/>
-                    <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                        <circle cx="12" cy="13" r="4"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div style={{fontSize:13, fontWeight:600, color:text}}>Photo scan</div>
-                      <div style={{fontSize:11, color:muted}}>Upload a label image</div>
-                    </div>
-                  </label>
-                )}
-              </>)}
-
-              <button onClick={()=>{setShowScanModal(o=>!o); setModalQuery("");}}
-                style={{width:44, height:44, borderRadius:"50%", background:showScanModal?(isDark?"#2a3347":"#e5e7eb"):isDark?"#1e2433":"#fff", border:`1.5px solid ${border}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
-                <IcoScan size={18}/>
-              </button>
+                  <div>
+                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4"}}>Upload photo</div>
+                    <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>Scan a label image</div>
+                  </div>
+                </label>
+              )}
             </div>
+          )}
 
-            {/* Main FAB */}
-            <button onClick={()=>{setFabOpen(o=>!o); setShowScanModal(false);}}
-              style={{width:56, height:56, borderRadius:"50%", background:"#052e16", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 20px rgba(0,0,0,0.3)", transition:"transform 0.2s"}}>
-              <div style={{transition:"transform 0.25s", transform:fabOpen?"rotate(45deg)":"rotate(0deg)"}}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <line x1="12" y1="5" x2="12" y2="19" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
-                  <line x1="5" y1="12" x2="19" y2="12" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-            </button>
+          {/* Floating Scan Another pill — only visible on results page */}
+          {result && (
+            <div
+              onClick={()=>{setShowScanModal(true); setModalQuery(""); setFabOpen(false);}}
+              style={{
+                position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)",
+                zIndex:8997,
+                background:"linear-gradient(135deg,#22c55e,#16a34a)",
+                borderRadius:50, padding:"12px 24px",
+                display:"flex", alignItems:"center", gap:10,
+                boxShadow:"0 4px 20px rgba(34,197,94,0.45), 0 0 0 3px rgba(34,197,94,0.12)",
+                cursor:"pointer", whiteSpace:"nowrap",
+                animation:"pulseScan 2.5s ease-in-out infinite",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800, color:"white", letterSpacing:"0.02em"}}>Scan Another</span>
+            </div>
+          )}
+
+          {/* Bottom Nav — always visible */}
+          <div style={{
+            position:"fixed", bottom:0, left:0, right:0, height:72,
+            background:"rgba(5,46,22,0.97)", backdropFilter:"blur(16px)",
+            borderTop:"1px solid rgba(34,197,94,0.15)",
+            display:"flex", alignItems:"flex-start", paddingTop:10,
+            zIndex:9000,
+          }}>
+            {[
+              { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
+              { label:"My Scans",icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
+              { label:"Scan",    icon:null, action:()=>{setShowScanModal(o=>!o); setModalQuery("");}, active:false, isScan:true },
+              { label:"Routine", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>, action:()=>{setPage("routine"); setResult(null);}, active: page==="routine" },
+              { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("account") : setShowAuth(true); }, active: page==="account" },
+            ].map((item,i) => (
+              item.isScan ? (
+                /* Center scan button placeholder — the real button is the floating pill on result, modal trigger otherwise */
+                <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, opacity:0, pointerEvents:"none"}}>
+                  <div style={{width:20, height:20}}/>
+                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:600}}>Scan</span>
+                </div>
+              ) : (
+                <div key={i} onClick={item.action} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", color: item.active ? "#22c55e" : "#6ee7b7", opacity: item.active ? 1 : 0.4, transition:"opacity 0.15s"}}>
+                  {item.icon}
+                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:600, letterSpacing:"0.04em"}}>{item.label}</span>
+                </div>
+              )
+            ))}
           </div>
         </>
       )}
@@ -7736,7 +7846,7 @@ function App() {
           </svg>
           <span style={{fontFamily:"'Outfit',sans-serif",fontSize:20,color:"#fff",fontWeight:700}}>Partiqule</span>
         </div>
-        <div style={{marginBottom:20, color:"#666", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
+        <div style={{marginBottom:20, color:"#6ee7b7", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
         <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
           {[
             {label:"About",           pg:"about",       path:"/about"},
@@ -7747,27 +7857,27 @@ function App() {
             {label:"Terms of Service",pg:"terms",       path:"/terms"},
           ].map(item=>(
             <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({},"",item.path); window.scrollTo(0,0);}}
-              style={{color:"#555", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}
+              style={{color:"#6ee7b7", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}
               onMouseEnter={e=>e.target.style.color="#16a34a"}
               onMouseLeave={e=>e.target.style.color="#555"}>
               {item.label}
             </span>
           ))}
           <a href="https://instagram.com/partiquleapp" target="_blank" rel="noopener noreferrer"
-            style={{color:"#555", fontSize:13, textDecoration:"none", display:"flex", alignItems:"center", gap:5, transition:"color 0.15s"}}
+            style={{color:"#6ee7b7", fontSize:13, textDecoration:"none", display:"flex", alignItems:"center", gap:5, transition:"color 0.15s"}}
             onMouseEnter={e=>e.currentTarget.style.color="#e1306c"}
             onMouseLeave={e=>e.currentTarget.style.color="#555"}>
             <IconInstagram size={14} color="currentColor"/> @partiquleapp
           </a>
         </div>
-        <div style={{color:"#444", borderTop:"1px solid #222", paddingTop:16, marginTop:8}}>
+        <div style={{color:"#6ee7b7", borderTop:"1px solid #222", paddingTop:16, marginTop:8}}>
           <div style={{marginBottom:6}}>
             © 2026 Partiqule Ltd.
           </div>
-          <div style={{marginBottom:8, fontSize:12, color:"#555", lineHeight:1.6}}>
+          <div style={{marginBottom:8, fontSize:12, color:"#6ee7b7", lineHeight:1.6}}>
             As an Amazon Associate I earn from qualifying purchases. Affiliate links are always clearly labeled and never influence our scores.
           </div>
-          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#555", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
+          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#6ee7b7", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
             onMouseEnter={e=>e.target.style.color="#4ade80"}
             onMouseLeave={e=>e.target.style.color="#555"}>
             paul@partiqule.com

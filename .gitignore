@@ -3,3 +3,8 @@ frontend/dist/
 .DS_Store
 *.DS_Store
 backend/.env
+
+# Auto-generated SEO pages — rebuilt on every deploy via prebuild script
+frontend/public/products/
+frontend/public/sitemap.xml
+frontend/public/robots.txt
