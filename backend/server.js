@@ -5103,6 +5103,7 @@ app.post("/cache-warm", requireAdmin, (req, res) => {
 
 const RELOAD_PROGRESS_KEY = "__reload_progress__";
 let reloadRunning = false;
+let reloadStopFlag = false;
 
 app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
   if (!hasRedis) return res.status(400).json({ error: "Redis not configured" });
@@ -5113,11 +5114,26 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
     return res.json(prog || { status: "not_started" });
   }
 
-  // Reset command — clear stuck state
+  // Reset command — clear stuck state and set stop flag
   if (req.query.reset) {
     reloadRunning = false;
+    reloadStopFlag = true;
     await redisSet(RELOAD_PROGRESS_KEY, null);
     return res.json({ status: "reset" });
+  }
+
+  // Stop command — halts any chain of auto-triggered batches
+  if (req.query.stop) {
+    reloadStopFlag = true;
+    return res.json({ status: "stopped" });
+  }
+
+  // Clear stop flag on a fresh trigger (no auto chain)
+  if (req.query.auto !== "1") reloadStopFlag = false;
+
+  // Honor stop flag
+  if (reloadStopFlag) {
+    return res.json({ status: "stopped" });
   }
 
   // Process this many items per request (sync, so Railway keeps the process alive)
@@ -5148,6 +5164,7 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
     const DELAY_MS = 500; // faster since we're doing small batches per request
 
     for (let i = startIndex; i < endIndex; i++) {
+      if (reloadStopFlag) { console.log(`[RELOAD] Stop flag set — exiting batch`); break; }
       const key = allKeys[i];
       try {
         const current = await redisGet(key);
@@ -5271,7 +5288,7 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
 
   // Self-drive: kick off the next batch via fetch before responding.
   // Fire-and-forget — we don't await it, so it runs after we return.
-  if (!isComplete && req.query.auto !== "0") {
+  if (!isComplete && !reloadStopFlag && req.query.auto !== "0") {
     const selfUrl = `http://localhost:${PORT}/admin/reload-redis?key=${encodeURIComponent(ADMIN_KEY)}&batch=${BATCH_SIZE}&auto=1`;
     setTimeout(() => {
       fetch(selfUrl).catch(e => console.warn(`[RELOAD] self-trigger failed: ${e.message}`));
