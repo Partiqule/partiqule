@@ -4905,6 +4905,59 @@ const products = [
     affiliateUrl:"https://www.amazon.com/s?k=Vivobarefoot+Primus+Lite&tag=partiqule-20", price:"$120-160",
     tags:["shoe","shoes","sneaker","sneakers","footwear","nike alternative","running shoe","barefoot shoe","natural","minimalist"] },
 
+  // ── MIIR DRINKWARE — direct brand partnership via Awin ──────
+  // To deep-link a specific product page later, append
+  //   &ued=<URL-encoded miir.com product URL>
+  // to the base Awin URL. For now, all MiiR entries land on the
+  // brand homepage and browse-to-purchase still gets credit.
+  { id:"miir-001", name:"MiiR Wide Mouth Water Bottle", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"18/8 medical-grade stainless steel interior, BPA-free, phthalate-free, vacuum insulated. Climate Neutral Certified.",
+    description:"Wide-mouth stainless steel water bottle — no plastic food contact, no PFAS. 1% of every sale funds water projects.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$30-40",
+    tags:["water bottle","bottle","stainless steel bottle","reusable bottle","hydro flask alternative","yeti alternative","stanley alternative","nalgene alternative","camelbak alternative","vacuum insulated","kitchen"] },
+
+  { id:"miir-002", name:"MiiR Narrow Mouth Bottle", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"18/8 medical-grade stainless steel, leakproof threaded cap, no plastic food contact. Climate Neutral Certified.",
+    description:"Narrow-mouth stainless steel bottle — ideal for everyday carry, coffee, tea. No interior coating.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$28-38",
+    tags:["water bottle","bottle","stainless steel bottle","reusable bottle","hydro flask alternative","yeti alternative","stanley alternative","coffee bottle","kitchen"] },
+
+  { id:"miir-003", name:"MiiR Vacuum Insulated Tumbler", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"Double-wall 18/8 stainless steel, slide-lock lid, BPA-free. Climate Neutral Certified.",
+    description:"Insulated tumbler for coffee, tea, or water — hot 12h / cold 24h. Direct brand partnership.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$25-35",
+    tags:["tumbler","coffee tumbler","travel mug","stainless tumbler","yeti rambler alternative","stanley quencher alternative","starbucks tumbler alternative","kitchen","vacuum insulated"] },
+
+  { id:"miir-004", name:"MiiR Camp Cup", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"18/8 stainless steel, no interior lining, no coatings. Climate Neutral Certified.",
+    description:"Stackable camp cup for outdoor coffee and tea — no plastic, no lining. 1% For Water program.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$16-22",
+    tags:["camp cup","camp mug","camping mug","coffee cup","stainless cup","outdoor","kitchen","mug"] },
+
+  { id:"miir-005", name:"MiiR Pint Cup", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"Double-wall 18/8 stainless steel, vacuum insulated. No interior coating.",
+    description:"Insulated pint cup for beer, cocktails, or cold drinks. No plastic mouth contact.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$22-30",
+    tags:["pint cup","pint glass","beer cup","tumbler","stainless cup","solo cup alternative","kitchen","vacuum insulated"] },
+
+  { id:"miir-006", name:"MiiR Coffee Carafe", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"Double-wall vacuum insulated 18/8 stainless steel. Holds temperature 12h. No plastic food contact.",
+    description:"Stainless steel coffee carafe — keeps pour-over hot for hours. No interior lining, no BPA.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$65-85",
+    tags:["coffee carafe","carafe","coffee pot","french press alternative","thermal carafe","kitchen","vacuum insulated","coffee"] },
+
+  { id:"miir-007", name:"MiiR Pour Over Coffee Maker", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"All stainless steel dripper with reusable stainless mesh filter. No paper, no plastic.",
+    description:"Pour-over coffee maker with built-in reusable stainless mesh filter. Zero-waste brewing.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$40-55",
+    tags:["pour over","coffee maker","coffee dripper","reusable filter","stainless coffee","kitchen","coffee","zero waste"] },
+
+  { id:"miir-008", name:"MiiR Travel Tumbler", brand:"MiiR", plasticScore:1, category:"kitchen",
+    material:"18/8 stainless steel body with splash-resistant lid. Vacuum insulated, Climate Neutral Certified.",
+    description:"Travel tumbler for daily coffee commute — fits standard car cup holders. Food-contact surface is stainless.",
+    affiliateUrl:"https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392", price:"$30-40",
+    tags:["travel mug","travel tumbler","coffee mug","commuter mug","contigo alternative","stanley alternative","stainless travel mug","kitchen"] },
+
 
 ];
 
