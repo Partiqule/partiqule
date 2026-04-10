@@ -1,7 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-let NativePurchases = null, PURCHASE_TYPE = { SUBS: "subs" };
-try { const _iap = require("@capgo/native-purchases"); NativePurchases = _iap.NativePurchases; PURCHASE_TYPE = _iap.PURCHASE_TYPE; } catch {}
 import { createClient } from "@supabase/supabase-js";
+
+// Lazy-load @capgo/native-purchases via dynamic import so it only runs in
+// Capacitor iOS (where require() doesn't exist and static import may fail
+// at module load time on web). Stays null on non-native platforms.
+let NativePurchases = null;
+let PURCHASE_TYPE = { SUBS: "subs" };
+let nativePurchasesLoading = null;
+const loadNativePurchases = async () => {
+  if (NativePurchases) return NativePurchases;
+  if (nativePurchasesLoading) return nativePurchasesLoading;
+  nativePurchasesLoading = (async () => {
+    try {
+      const mod = await import("@capgo/native-purchases");
+      NativePurchases = mod.NativePurchases || null;
+      if (mod.PURCHASE_TYPE) PURCHASE_TYPE = mod.PURCHASE_TYPE;
+      return NativePurchases;
+    } catch (e) {
+      console.warn("NativePurchases unavailable:", e.message);
+      return null;
+    }
+  })();
+  return nativePurchasesLoading;
+};
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
@@ -5651,11 +5672,19 @@ function App() {
   // Load product price from StoreKit on iOS so we show the real App Store price
   useEffect(() => {
     if (!IS_NATIVE) return;
-    NativePurchases.getProducts({ productIdentifiers: [IAP_PRODUCT_ID], productType: PURCHASE_TYPE.SUBS })
-      .then(({ products }) => {
+    (async () => {
+      try {
+        const np = await loadNativePurchases();
+        if (!np) return; // StoreKit unavailable — use default price
+        const { products } = await np.getProducts({
+          productIdentifiers: [IAP_PRODUCT_ID],
+          productType: PURCHASE_TYPE.SUBS,
+        });
         if (products?.[0]?.priceString) setIapPrice(products[0].priceString + "/month");
-      })
-      .catch(() => {}); // silently fall back to default price string
+      } catch (e) {
+        // silently fall back to default price string
+      }
+    })();
   }, []);
 
   const startCheckout = async () => {
@@ -5665,7 +5694,13 @@ function App() {
       // iOS — purchase via StoreKit through @capgo/native-purchases
       setCheckingOut(true);
       try {
-        const { transaction } = await NativePurchases.purchaseProduct({
+        const np = await loadNativePurchases();
+        if (!np) {
+          setCheckingOut(false);
+          alert("In-app purchases are unavailable on this device. Please try again later.");
+          return;
+        }
+        const { transaction } = await np.purchaseProduct({
           productIdentifier: IAP_PRODUCT_ID,
           productType: PURCHASE_TYPE.SUBS,
         });
