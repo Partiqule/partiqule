@@ -182,6 +182,9 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
         await BarcodeScanner.stopScan();
         await BarcodeScanner.removeAllListeners();
       } catch(e) {}
+      // Restore the webview background so the rest of the app looks normal
+      document.documentElement.classList.remove("barcode-active");
+      document.body.classList.remove("barcode-active");
     }
   };
 
@@ -198,16 +201,31 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
     const start = async () => {
       if (IS_NATIVE) {
         try {
+          // Make the webview transparent so the native ML Kit camera shows through
+          document.documentElement.classList.add("barcode-active");
+          document.body.classList.add("barcode-active");
+
           const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
+
+          // Check that ML Kit is supported on this device
+          const { supported } = await BarcodeScanner.isSupported();
+          if (!supported) {
+            setStatus("error"); setScanMsg("Barcode scanning not supported on this device");
+            return;
+          }
+
           const { camera } = await BarcodeScanner.requestPermissions();
           if (camera !== "granted" && camera !== "limited") {
-            setStatus("error"); setScanMsg("Camera permission denied"); return;
+            setStatus("error"); setScanMsg("Camera permission denied. Enable in Settings.");
+            return;
           }
+
           await BarcodeScanner.addListener("barcodeScanned", ({ barcode }) => onFound(barcode.rawValue));
           await BarcodeScanner.startScan();
           setStatus("scanning"); setScanMsg("Point at a barcode");
         } catch(e) {
-          setStatus("error"); setScanMsg("Scanner unavailable");
+          console.warn("[BARCODE] native scanner error:", e?.message || e);
+          setStatus("error"); setScanMsg("Scanner unavailable — try photo instead");
         }
       } else {
         try {
@@ -289,7 +307,13 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   );
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:9999,background:"#000",display:"flex",flexDirection:"column"}}>
+    <div style={{
+      position:"fixed",inset:0,zIndex:9999,display:"flex",flexDirection:"column",
+      // On iOS native, the ML Kit camera renders in a native layer behind the
+      // webview — the webview must be transparent for the camera to show through.
+      // On web, solid black is the correct base for the <video> feed.
+      background: IS_NATIVE ? "transparent" : "#000",
+    }}>
       <style>{`
         @keyframes scanLine {
           0%   { top:8px;  opacity:0 }
@@ -298,6 +322,12 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
           100% { top:calc(100% - 10px); opacity:0 }
         }
         @keyframes barcodeFlash { 0%,100%{opacity:0} 50%{opacity:1} }
+        /* When native ML Kit is active, make the webview transparent so
+           the camera feed (rendered in a native layer behind the webview)
+           is visible through it. Class toggled by the scanner mount effect. */
+        html.barcode-active,
+        body.barcode-active,
+        .barcode-active #root { background: transparent !important; }
       `}</style>
 
       {/* Live camera feed — web only (iOS uses native layer) */}
@@ -5527,7 +5557,18 @@ function App() {
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
   const [error,       setError]      = useState(null);
-  const [isDark,      setIsDark]     = useState(true);
+  const [isDark,      setIsDark]     = useState(() => {
+    try {
+      const saved = localStorage.getItem("pq_theme");
+      if (saved === "light") return false;
+      if (saved === "dark")  return true;
+    } catch {}
+    return true; // default to dark
+  });
+  // Persist theme choice so it survives refreshes
+  useEffect(() => {
+    try { localStorage.setItem("pq_theme", isDark ? "dark" : "light"); } catch {}
+  }, [isDark]);
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
 
@@ -6346,6 +6387,30 @@ function App() {
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
+            {/* Appearance */}
+            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Appearance</div>
+              </div>
+              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Dark mode</div>
+                  <div style={{fontSize:13, color:muted}}>{isDark ? "Dark theme active" : "Light theme active"}</div>
+                </div>
+                <button onClick={()=>setIsDark(d=>!d)} style={{
+                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
+                  background: isDark ? "#16a34a" : "#d1d5db",
+                  position:"relative", transition:"background 0.2s", flexShrink:0,
+                }}>
+                  <div style={{
+                    position:"absolute", top:3, left: isDark ? 24 : 3,
+                    width:24, height:24, borderRadius:"50%", background:"white",
+                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
+                  }}/>
+                </button>
+              </div>
+            </div>
+
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
               <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
@@ -6536,9 +6601,19 @@ function App() {
                 }}>
                   <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
                     <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"rgba(15,42,24,0.9)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:14, padding:"10px 16px", cursor:"text"}}
-                      onClick={()=>{setShowScanModal(true); setModalQuery("");}}>
+                      onClick={()=>document.getElementById("home-search-input")?.focus()}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                      <span style={{fontFamily:"'DM Sans',sans-serif", fontSize:15, color:"#6ee7b7", opacity:0.45}}>Search any product…</span>
+                      <input
+                        id="home-search-input"
+                        value={query}
+                        onChange={e=>setQuery(e.target.value)}
+                        onKeyDown={e=>e.key==="Enter"&&query.trim()&&analyze()}
+                        placeholder="Search any product…"
+                        style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
+                      />
+                      {query.trim() && (
+                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                      )}
                     </div>
                     {/* Camera button */}
                     <div onClick={()=>isMobile?setShowBarcodeScanner(true):document.getElementById("home-file-input").click()}
