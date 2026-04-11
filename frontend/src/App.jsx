@@ -6128,23 +6128,40 @@ function App() {
         /* ── LIGHT MODE GLOBAL OVERRIDES ──────────────────────────
            React renders inline styles like: style="color:#f0fdf4;..."
            — no quotes around the hex value. These selectors match that.
-           Elements opted out with .keep-dark keep their dark styling
-           (used for hero, sticky scan bar, CTA sections). */
-        .pq-light [style*="color:#f0fdf4"]:not(.keep-dark):not(.keep-dark *) { color: #0a0a0a !important; }
-        .pq-light [style*="color:#6ee7b7"]:not(.keep-dark):not(.keep-dark *) { color: #6b7280 !important; }
-        .pq-light [style*="color:#86efac"]:not(.keep-dark):not(.keep-dark *) { color: #16a34a !important; }
-        .pq-light [style*="color: #f0fdf4"]:not(.keep-dark):not(.keep-dark *) { color: #0a0a0a !important; }
-        .pq-light [style*="color: #6ee7b7"]:not(.keep-dark):not(.keep-dark *) { color: #6b7280 !important; }
-        .pq-light [style*="color: #86efac"]:not(.keep-dark):not(.keep-dark *) { color: #16a34a !important; }
-        .pq-light [style*="background:#0f2a18"]:not(.keep-dark):not(.keep-dark *) {
-          background-color: #ffffff !important;
-        }
-        .pq-light [style*="background: #0f2a18"]:not(.keep-dark):not(.keep-dark *) {
-          background-color: #ffffff !important;
-        }
-        .pq-light [style*="background:#080f0a"]:not(.keep-dark):not(.keep-dark *) {
-          background-color: #fafafa !important;
-        }
+           First rule: flip everything.
+           Second rule: revert inside .keep-dark subtrees (hero, nav, etc).
+           Cascade order + equal specificity means the second rule wins
+           for descendants of .keep-dark. */
+        .pq-light [style*="color:#f0fdf4"] { color: #0a0a0a !important; }
+        .pq-light [style*="color: #f0fdf4"] { color: #0a0a0a !important; }
+        .pq-light [style*="color:#6ee7b7"] { color: #6b7280 !important; }
+        .pq-light [style*="color: #6ee7b7"] { color: #6b7280 !important; }
+        .pq-light [style*="color:#86efac"] { color: #16a34a !important; }
+        .pq-light [style*="color: #86efac"] { color: #16a34a !important; }
+        .pq-light [style*="background:#0f2a18"] { background-color: #ffffff !important; }
+        .pq-light [style*="background: #0f2a18"] { background-color: #ffffff !important; }
+        .pq-light [style*="background:#080f0a"] { background-color: #fafafa !important; }
+
+        /* Revert inside .keep-dark subtrees so the sticky scan bar,
+           hero, bottom nav, scan modal etc. keep their dark styling */
+        .pq-light .keep-dark [style*="color:#f0fdf4"],
+        .pq-light .keep-dark[style*="color:#f0fdf4"] { color: #f0fdf4 !important; }
+        .pq-light .keep-dark [style*="color: #f0fdf4"],
+        .pq-light .keep-dark[style*="color: #f0fdf4"] { color: #f0fdf4 !important; }
+        .pq-light .keep-dark [style*="color:#6ee7b7"],
+        .pq-light .keep-dark[style*="color:#6ee7b7"] { color: #6ee7b7 !important; }
+        .pq-light .keep-dark [style*="color: #6ee7b7"],
+        .pq-light .keep-dark[style*="color: #6ee7b7"] { color: #6ee7b7 !important; }
+        .pq-light .keep-dark [style*="color:#86efac"],
+        .pq-light .keep-dark[style*="color:#86efac"] { color: #86efac !important; }
+        .pq-light .keep-dark [style*="background:#0f2a18"],
+        .pq-light .keep-dark[style*="background:#0f2a18"] { background-color: #0f2a18 !important; }
+        .pq-light .keep-dark [style*="background: #0f2a18"],
+        .pq-light .keep-dark[style*="background: #0f2a18"] { background-color: #0f2a18 !important; }
+
+        /* Darken the floating particles in light mode — they're
+           pure white by default and invisible on the light bg */
+        .pq-light .particle { background-color: rgba(22,163,74,0.35) !important; }
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}
         @keyframes slideInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.score-reveal{animation:slideInUp 0.5s ease forwards}
