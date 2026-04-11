@@ -6376,6 +6376,74 @@ function App() {
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
+            {/* ── PARTIQULE PREMIUM — always visible, discoverable purchase path ── */}
+            <div style={{background:isDark?"linear-gradient(135deg,#052e16 0%,#0f2a18 100%)":"linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%)", borderRadius:16, border:`1.5px solid ${isSubscribed?"#16a34a":(isDark?"rgba(34,197,94,0.3)":"#bbf7d0")}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "0 4px 20px rgba(34,197,94,0.15)"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`, background:"rgba(22,163,74,0.08)"}}>
+                <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", display:"flex", alignItems:"center", gap:6}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Partiqule Premium
+                </div>
+              </div>
+              <div style={{padding:"18px 20px"}}>
+                {isSubscribed ? (
+                  <>
+                    <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
+                      <div style={{width:10, height:10, borderRadius:"50%", background:"#16a34a"}}/>
+                      <div style={{fontSize:15, fontWeight:700, color:text}}>You're subscribed</div>
+                    </div>
+                    <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
+                      Thanks for supporting Partiqule. You have unlimited scans, kids mode, pregnancy mode, and full access to all alternatives.
+                    </div>
+                    {IS_NATIVE && (
+                      <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                        Manage subscription
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{fontSize:17, fontWeight:800, color:text, marginBottom:6, fontFamily:"'Outfit',sans-serif", letterSpacing:"-0.3px"}}>
+                      Unlock unlimited scans
+                    </div>
+                    <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
+                      Unlimited scans, kids mode, pregnancy safety scores, and full access to clean alternatives.
+                    </div>
+                    <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:16}}>
+                      {[
+                        "Unlimited product scans",
+                        "Kids mode — child-specific safety scores",
+                        "Pregnancy safety mode",
+                        "Full clean-product database + alternatives",
+                      ].map((feature,i)=>(
+                        <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:text}}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={()=>{
+                      if (!user) { setShowAuth(true); return; }
+                      setShowLimitModal("paywall");
+                    }} style={{
+                      width:"100%", padding:"14px", borderRadius:12, border:"none",
+                      background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
+                      fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
+                      boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
+                      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                    }}>
+                      Subscribe — {iapPrice}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                    {IS_NATIVE && (
+                      <div style={{fontSize:10, color:muted, textAlign:"center", marginTop:10, lineHeight:1.5}}>
+                        Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
               <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
