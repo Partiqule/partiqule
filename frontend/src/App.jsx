@@ -5557,18 +5557,7 @@ function App() {
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
   const [error,       setError]      = useState(null);
-  const [isDark,      setIsDark]     = useState(() => {
-    try {
-      const saved = localStorage.getItem("pq_theme");
-      if (saved === "light") return false;
-      if (saved === "dark")  return true;
-    } catch {}
-    return true; // default to dark
-  });
-  // Persist theme choice so it survives refreshes
-  useEffect(() => {
-    try { localStorage.setItem("pq_theme", isDark ? "dark" : "light"); } catch {}
-  }, [isDark]);
+  const [isDark,      setIsDark]     = useState(true); // dark-only for now
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
 
@@ -6110,58 +6099,17 @@ function App() {
   const px      = isMobile ? "16px" : "40px";
 
   return (
-    <div className={isDark ? "pq-dark" : "pq-light"} style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif", transition:"background 0.3s"}}>
+    <div style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif", transition:"background 0.3s"}}>
       <style>{`
         *{box-sizing:border-box;}
-        body{margin:0;background:${isDark ? "#080f0a" : "#fafafa"};}
+        body{margin:0;background:#080f0a;}
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
         :root{
           --green-deep:#052e16;--green-mid:#14532d;--green-bright:#22c55e;
           --lime:#a3e635;--amber:#f59e0b;--orange:#f97316;--red:#ef4444;
-          --surface:${isDark ? "#0f2a18" : "#ffffff"};
-          --card:${isDark ? "#0f2a18" : "#ffffff"};
-          --border:${isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb"};
-          --text:${isDark ? "#f0fdf4" : "#0a0a0a"};
-          --muted:${isDark ? "#6ee7b7" : "#6b7280"};
+          --surface:#0f2a18;--card:#0f2a18;--border:rgba(34,197,94,0.15);
+          --text:#f0fdf4;--muted:#6ee7b7;
         }
-
-        /* ── LIGHT MODE GLOBAL OVERRIDES ──────────────────────────
-           React renders inline styles like: style="color:#f0fdf4;..."
-           — no quotes around the hex value. These selectors match that.
-           First rule: flip everything.
-           Second rule: revert inside .keep-dark subtrees (hero, nav, etc).
-           Cascade order + equal specificity means the second rule wins
-           for descendants of .keep-dark. */
-        .pq-light [style*="color:#f0fdf4"] { color: #0a0a0a !important; }
-        .pq-light [style*="color: #f0fdf4"] { color: #0a0a0a !important; }
-        .pq-light [style*="color:#6ee7b7"] { color: #6b7280 !important; }
-        .pq-light [style*="color: #6ee7b7"] { color: #6b7280 !important; }
-        .pq-light [style*="color:#86efac"] { color: #16a34a !important; }
-        .pq-light [style*="color: #86efac"] { color: #16a34a !important; }
-        .pq-light [style*="background:#0f2a18"] { background-color: #ffffff !important; }
-        .pq-light [style*="background: #0f2a18"] { background-color: #ffffff !important; }
-        .pq-light [style*="background:#080f0a"] { background-color: #fafafa !important; }
-
-        /* Revert inside .keep-dark subtrees so the sticky scan bar,
-           hero, bottom nav, scan modal etc. keep their dark styling */
-        .pq-light .keep-dark [style*="color:#f0fdf4"],
-        .pq-light .keep-dark[style*="color:#f0fdf4"] { color: #f0fdf4 !important; }
-        .pq-light .keep-dark [style*="color: #f0fdf4"],
-        .pq-light .keep-dark[style*="color: #f0fdf4"] { color: #f0fdf4 !important; }
-        .pq-light .keep-dark [style*="color:#6ee7b7"],
-        .pq-light .keep-dark[style*="color:#6ee7b7"] { color: #6ee7b7 !important; }
-        .pq-light .keep-dark [style*="color: #6ee7b7"],
-        .pq-light .keep-dark[style*="color: #6ee7b7"] { color: #6ee7b7 !important; }
-        .pq-light .keep-dark [style*="color:#86efac"],
-        .pq-light .keep-dark[style*="color:#86efac"] { color: #86efac !important; }
-        .pq-light .keep-dark [style*="background:#0f2a18"],
-        .pq-light .keep-dark[style*="background:#0f2a18"] { background-color: #0f2a18 !important; }
-        .pq-light .keep-dark [style*="background: #0f2a18"],
-        .pq-light .keep-dark[style*="background: #0f2a18"] { background-color: #0f2a18 !important; }
-
-        /* Darken the floating particles in light mode — they're
-           pure white by default and invisible on the light bg */
-        .pq-light .particle { background-color: rgba(22,163,74,0.35) !important; }
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp 0.4s ease forwards}
         @keyframes slideInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.score-reveal{animation:slideInUp 0.5s ease forwards}
@@ -6218,7 +6166,7 @@ function App() {
       ))}
 
       {/* HEADER */}
-      <header className="keep-dark" style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
+      <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:44, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
             <img src="/logo.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
@@ -6276,7 +6224,7 @@ function App() {
 
         {/* Mobile dropdown menu */}
         {isMobile && menuOpen && (
-          <div className="keep-dark" style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2}}>
+          <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2}}>
             {[
               {label:"About",        pg:"about"},
               {label:"The Science",  pg:"science"},
@@ -6427,30 +6375,6 @@ function App() {
           </div>
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
-
-            {/* Appearance */}
-            <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
-                <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Appearance</div>
-              </div>
-              <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-                <div>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Dark mode</div>
-                  <div style={{fontSize:13, color:muted}}>{isDark ? "Dark theme active" : "Light theme active"}</div>
-                </div>
-                <button onClick={()=>setIsDark(d=>!d)} style={{
-                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
-                  background: isDark ? "#16a34a" : "#d1d5db",
-                  position:"relative", transition:"background 0.2s", flexShrink:0,
-                }}>
-                  <div style={{
-                    position:"absolute", top:3, left: isDark ? 24 : 3,
-                    width:24, height:24, borderRadius:"50%", background:"white",
-                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
-                  }}/>
-                </button>
-              </div>
-            </div>
 
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
@@ -6634,7 +6558,7 @@ function App() {
               <div style={{paddingBottom: isMobile ? 160 : 60}}>
 
                 {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
-                <div className="keep-dark" style={{
+                <div style={{
                   position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
                   background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
                   borderBottom:"1px solid rgba(34,197,94,0.15)",
@@ -6879,7 +6803,7 @@ function App() {
 
           {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
           {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
-          <div className="keep-dark" style={{
+          <div style={{
             position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
             background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
             borderBottom:"1px solid rgba(34,197,94,0.15)",
@@ -6909,7 +6833,7 @@ function App() {
             </div>
           </div>
 
-          <section className="keep-dark" style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? `${44 + SAFE_TOP + 52}px 20px 40px` : "112px 40px 56px"}}>
+          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? `${44 + SAFE_TOP + 52}px 20px 40px` : "112px 40px 56px"}}>
             {/* Animated gradient mesh background */}
             <div style={{position:"absolute", inset:0, background:"linear-gradient(135deg,#052e16 0%,#0a3d1f 25%,#052e16 50%,#071f0c 75%,#052e16 100%)", backgroundSize:"400% 400%", animation:"gradientShift 12s ease infinite", pointerEvents:"none"}}/>
             {/* Radial glow that breathes */}
@@ -8238,7 +8162,7 @@ function App() {
 
           {/* Scan input popover */}
           {showScanModal && (
-            <div className="keep-dark" style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, width:"calc(100% - 32px)", maxWidth:360, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"16px 16px", boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}>
+            <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, width:"calc(100% - 32px)", maxWidth:360, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"16px 16px", boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}>
               <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.6, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10}}>Scan a product</div>
               <div style={{display:"flex", gap:8, marginBottom:10}}>
                 <input
@@ -8300,7 +8224,7 @@ function App() {
           )}
 
           {/* Bottom Nav — always visible */}
-          <div className="keep-dark" style={{
+          <div style={{
             position:"fixed", bottom:0, left:0, right:0, height:72,
             background:"rgba(5,46,22,0.97)", backdropFilter:"blur(16px)",
             borderTop:"1px solid rgba(34,197,94,0.15)",
