@@ -1099,6 +1099,30 @@ const GlobeLoading = ({isMobile}) => {
 
 
 const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
+const getSuggestedAudit = (history) => {
+  if (!history || history.length < 5) return null;
+  const AUDIT_MAP = {
+    food: "pantry", food_beverage: "pantry", beverage: "pantry", snack: "pantry",
+    personal_care: "beauty", skincare: "beauty",
+    cleaning: "home", home: "home",
+    clothing: "closet",
+    baby: "nursery", toy: "nursery",
+  };
+  const counts = {};
+  history.forEach(h => {
+    const auditType = AUDIT_MAP[h.category];
+    if (auditType) counts[auditType] = (counts[auditType] || 0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!sorted.length || sorted[0][1] < 5) return null;
+  const [type, count] = sorted[0];
+  const labels = {
+    pantry: "Pantry Audit", beauty: "Beauty Audit", home: "Home Audit",
+    closet: "Closet Audit", nursery: "Nursery Audit",
+  };
+  return { type, count, label: labels[type] };
+};
+
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
@@ -7281,6 +7305,49 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* Behavioral audit suggestion — surfaces when 5+ scans in a category */}
+          {(() => {
+            const suggestion = getSuggestedAudit(history);
+            if (!suggestion) return null;
+            return (
+              <div style={{maxWidth:520, margin:"0 auto", padding:"0 20px 32px"}}>
+                <div style={{
+                  background: isDark ? "#1a2a1a" : "#f0fdf4",
+                  borderRadius: 16, padding: "16px 20px",
+                  border: `1.5px solid ${isDark ? "#1e3a1e" : "#bbf7d0"}`,
+                }}>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
+                    textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
+                    Ready for your next step
+                  </div>
+                  <div style={{fontSize:15, fontWeight:700,
+                    color: isDark ? "#f1f5f9" : "#111", marginBottom:6}}>
+                    Start your {suggestion.label}
+                  </div>
+                  <div style={{fontSize:13, color: isDark ? "#94a3b8" : "#555",
+                    marginBottom:14, lineHeight:1.5}}>
+                    Based on {suggestion.count} {
+                      suggestion.type === "pantry" ? "food and pantry" :
+                      suggestion.type === "beauty" ? "personal care" :
+                      suggestion.type === "home" ? "home and cleaning" :
+                      suggestion.type
+                    } scans
+                  </div>
+                  <button
+                    onClick={() => setPage("lists")}
+                    style={{
+                      padding:"10px 20px", borderRadius:10, background:"#16a34a",
+                      color:"#fff", border:"none", fontWeight:700,
+                      fontSize:14, cursor:"pointer",
+                      fontFamily:"'Outfit',sans-serif",
+                    }}>
+                    Start {suggestion.label} →
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
           </>
           )}
 
