@@ -5612,8 +5612,8 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
-  const [childMode,     setChildMode]  = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_child_mode_default")||"false");}catch{return false;}});
-  const [pregnancyMode, setPregnancyMode] = useState(()=>{try{return !!JSON.parse(localStorage.getItem("ps_pregnancy_mode")||"false");}catch{return false;}});
+  const [childMode,     setChildMode]  = useState(()=>localStorage.getItem("partiqule_child_mode")==="1");
+  const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
   const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
@@ -6040,7 +6040,7 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery(""); setChildMode(false);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery("");};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -6315,14 +6315,14 @@ function App() {
 
             {showLimitModal === "account" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've been busy.</div>
-              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, kids mode, and clean alternatives for $4.99/month.</div>
+              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, child and pregnancy scoring, and clean alternatives for $4.99/month.</div>
               <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create account</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
             </>)}
 
             {showLimitModal === "paywall" && (<>
               <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
-              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, kids mode, and clean alternatives for $4.99/month. Cancel anytime.</div>
+              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, child and pregnancy scoring, and clean alternatives for $4.99/month. Cancel anytime.</div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
                 {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
               </button>
@@ -6409,7 +6409,7 @@ function App() {
                       <div style={{fontSize:15, fontWeight:700, color:text}}>You're subscribed</div>
                     </div>
                     <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
-                      Thanks for supporting Partiqule. You have unlimited scans, kids mode, pregnancy mode, and full access to all alternatives.
+                      Thanks for supporting Partiqule. You have unlimited scans, child and pregnancy scoring, and full access to all alternatives.
                     </div>
                     {IS_NATIVE && (
                       <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
@@ -6423,13 +6423,13 @@ function App() {
                       Unlock unlimited scans
                     </div>
                     <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
-                      Unlimited scans, kids mode, pregnancy safety scores, and full access to clean alternatives.
+                      Unlimited scans, child and pregnancy scoring, and full access to clean alternatives.
                     </div>
                     <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:16}}>
                       {[
                         "Unlimited product scans",
-                        "Kids mode — child-specific safety scores",
-                        "Pregnancy safety mode",
+                        "Scoring for a child — stricter thresholds",
+                        "Scoring for pregnancy — flags key concerns",
                         "Full clean-product database + alternatives",
                       ].map((feature,i)=>(
                         <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:text}}>
@@ -6501,13 +6501,13 @@ function App() {
               </div>
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
                 <div>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Always show child safety score</div>
-                  <div style={{fontSize:13, color:muted}}>Auto-enable child mode on every scan result</div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Scoring for a child</div>
+                  <div style={{fontSize:13, color:muted}}>Applies stricter thresholds and kids-specific daily values</div>
                 </div>
                 <button onClick={()=>{
                   const next = !childMode;
                   setChildMode(next);
-                  try { localStorage.setItem("ps_child_mode_default", next); } catch {}
+                  try { if(next) localStorage.setItem("partiqule_child_mode","1"); else localStorage.removeItem("partiqule_child_mode"); } catch {}
                 }} style={{
                   width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
                   background: childMode ? "#16a34a" : "#d1d5db",
@@ -6523,13 +6523,13 @@ function App() {
               <div style={{height:1, background:border, margin:"0 20px"}}/>
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
                 <div>
-                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Pregnancy safety mode</div>
-                  <div style={{fontSize:13, color:muted}}>Show pregnancy-adjusted scores — flags retinoids, mercury, alcohol, and other pregnancy concerns</div>
+                  <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>Scoring for pregnancy</div>
+                  <div style={{fontSize:13, color:muted}}>Flags ingredients of concern during pregnancy and TTC</div>
                 </div>
                 <button onClick={()=>{
                   const next = !pregnancyMode;
                   setPregnancyMode(next);
-                  try { localStorage.setItem("ps_pregnancy_mode", next); } catch {}
+                  try { if(next) localStorage.setItem("partiqule_pregnancy_mode","1"); else localStorage.removeItem("partiqule_pregnancy_mode"); } catch {}
                 }} style={{
                   width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
                   background: pregnancyMode ? "#9333ea" : "#d1d5db",
@@ -7371,7 +7371,7 @@ function App() {
                         }}>
                           <span style={{fontSize:13, fontWeight:700, color:"#f9a8d4"}}>PREG</span>
                           <span style={{fontSize:12, fontWeight:700, color:"#f9a8d4", letterSpacing:"0.03em"}}>
-                            Viewing pregnancy safety score
+                            Scoring for pregnancy
                           </span>
                         </div>
                         {result.pregnancy_score !== (result.overall_score || result.score) && (
@@ -7397,7 +7397,7 @@ function App() {
                     {!pregnancyMode && (
                     <div style={{marginTop:14, marginBottom:4}}>
                       <button
-                        onClick={() => { const next = !childMode; setChildMode(next); track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
+                        onClick={() => { const next = !childMode; setChildMode(next); try{if(next)localStorage.setItem("partiqule_child_mode","1");else localStorage.removeItem("partiqule_child_mode");}catch{} track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
                         style={{
                           display:"flex", alignItems:"center", gap:8, margin:"0 auto",
                           padding:"7px 16px", borderRadius:20,
@@ -7409,7 +7409,7 @@ function App() {
                           color: childMode ? "#4ade80" : muted,
                           letterSpacing:"0.03em",
                         }}>
-                          {childMode ? "Viewing child safety score" : "Score for a child?"}
+                          {childMode ? "Scoring for a child" : "Score for a child?"}
                         </span>
                         {/* Toggle pill */}
                         <div style={{
@@ -7447,7 +7447,7 @@ function App() {
                       {result.is_child_product && !childMode && (
                         <div style={{marginTop:10}}>
                           <button
-                            onClick={() => setChildMode(true)}
+                            onClick={() => { setChildMode(true); try{localStorage.setItem("partiqule_child_mode","1");}catch{} }}
                             style={{
                               width:"100%", padding:"8px 14px", borderRadius:10,
                               background:isDark?"#1a2a1a":"#f0fdf4",
