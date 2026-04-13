@@ -4009,7 +4009,7 @@ const AddToListButton = ({result, lists, createShoppingList, addItemToList, mute
 };
 
 const ListsPage = ({lists, saveLists, createShoppingList, addItemToList, toggleListItem, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
-  const [tab, setTab] = useState("shopping");
+  const [tab, setTab] = useState("grocery");
   const [newListName, setNewListName] = useState("");
   const [activeListId, setActiveListId] = useState(null);
   const [newItemText, setNewItemText] = useState("");
@@ -4023,7 +4023,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, addItemToList, toggleL
         <p style={{fontSize:14, color:muted, margin:0}}>Shopping lists, grocery planning, and your routine</p>
       </div>
       <div style={{display:"flex", gap:8, marginBottom:28, borderBottom:`1px solid ${border}`, paddingBottom:0}}>
-        {[{id:"shopping",label:"Shopping Lists"},{id:"grocery",label:"Grocery Lists"},{id:"routine",label:"My Routine"}].map(t=>(
+        {[{id:"grocery",label:"Grocery Lists"},{id:"shopping",label:"Shopping Lists"},{id:"routine",label:"My Routine"}].map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 16px", background:"none", border:"none", borderBottom:tab===t.id?"2px solid #16a34a":"2px solid transparent", color:tab===t.id?"#16a34a":muted, fontWeight:tab===t.id?700:400, fontSize:14, cursor:"pointer", marginBottom:-1}}>{t.label}</button>
         ))}
       </div>
