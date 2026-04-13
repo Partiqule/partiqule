@@ -4170,12 +4170,34 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           )}
         </div>
 
+        {/* Add item */}
+        <div style={{display:"flex", gap:8, marginBottom:16}}>
+          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItem.trim()){addGroceryItem(current.id,newItem.trim());setNewItem("");}}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+          <button onClick={()=>{if(!newItem.trim())return;addGroceryItem(current.id,newItem.trim());setNewItem("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
+        </div>
+
         {/* Recommendations — show before 3 items added */}
         {items.length < 3 && (() => {
           const { needsSwap, goodChoices } = getGroceryRecommendations(history);
           if (!needsSwap.length && !goodChoices.length) return null;
+          const addFromHistory = (h) => {
+            addItemToList(current.id, {text:h.product_name, score:h.overall_score||h.score||null, category:h.category||null, summary:h.summary||null, checked:false, scoring:false, scoreError:false, addedAt:new Date().toISOString()});
+          };
           return (
             <div style={{marginBottom:20}}>
+              {goodChoices.length > 0 && (
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Good choices you buy</div>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+                    {goodChoices.map((item, i) => (
+                      <button key={i} onClick={()=>addFromHistory(item)} style={{padding:"6px 14px", borderRadius:20, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, color:"#16a34a", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:6}}>
+                        <span>{item.product_name}</span>
+                        <span style={{fontSize:11, opacity:0.7, background:"rgba(22,163,74,0.15)", borderRadius:10, padding:"1px 6px"}}>{(item.overall_score||item.score||0).toFixed(1)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {needsSwap.length > 0 && (
                 <div style={{marginBottom:16}}>
                   <div style={{fontSize:11, color:"#d97706", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Consider swapping</div>
@@ -4186,34 +4208,15 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
                         <div style={{fontSize:14, fontWeight:600, color:text}}>{item.product_name}</div>
                         <div style={{fontSize:11, color:"#d97706", marginTop:2}}>Scored {(item.overall_score||item.score||0).toFixed(1)} — better options exist</div>
                       </div>
-                      <button onClick={()=>addGroceryItem(current.id, item.product_name)} style={{padding:"6px 14px", borderRadius:8, background:"#d97706", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0, marginLeft:12}}>Add</button>
+                      <button onClick={()=>addFromHistory(item)} style={{padding:"6px 14px", borderRadius:8, background:"#d97706", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0, marginLeft:12}}>Add</button>
                     </div>
                   ))}
-                </div>
-              )}
-              {goodChoices.length > 0 && (
-                <div>
-                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Good choices you buy</div>
-                  <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
-                    {goodChoices.map((item, i) => (
-                      <button key={i} onClick={()=>addGroceryItem(current.id, item.product_name)} style={{padding:"6px 14px", borderRadius:20, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, color:"#16a34a", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:6}}>
-                        <span>{item.product_name}</span>
-                        <span style={{fontSize:11, opacity:0.7, background:"rgba(22,163,74,0.15)", borderRadius:10, padding:"1px 6px"}}>{(item.overall_score||item.score||0).toFixed(1)}</span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
               <div style={{borderTop:`1px solid ${border}`, margin:"16px 0 0"}}/>
             </div>
           );
         })()}
-
-        {/* Add item */}
-        <div style={{display:"flex", gap:8, marginBottom:16}}>
-          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItem.trim()){addGroceryItem(current.id,newItem.trim());setNewItem("");}}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-          <button onClick={()=>{if(!newItem.trim())return;addGroceryItem(current.id,newItem.trim());setNewItem("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
-        </div>
 
         {/* Items */}
         {items.length===0 ? (
