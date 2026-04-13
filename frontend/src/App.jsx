@@ -958,6 +958,35 @@ const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
 
+const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
+  if (score == null) return null;
+  const num = parseFloat(score);
+  const color = num <= 3 ? "#16a34a" : num <= 5 ? "#d97706" : "#dc2626";
+  const bg    = num <= 3 ? "#f0fdf4" : num <= 5 ? "#fffbeb" : "#fef2f2";
+  const sizes = {
+    xs: { font: 13, pad: "1px 7px",  radius: 8,  weight: 700 },
+    sm: { font: 15, pad: "2px 10px", radius: 10, weight: 700 },
+    md: { font: 22, pad: "4px 14px", radius: 12, weight: 800 },
+    lg: { font: 32, pad: "6px 20px", radius: 14, weight: 800 },
+  };
+  const s = sizes[size] || sizes.md;
+  return (
+    <span style={{
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: s.font,
+      fontWeight: s.weight,
+      color,
+      background: bg,
+      padding: s.pad,
+      borderRadius: s.radius,
+      display: "inline-block",
+      lineHeight: 1.2,
+    }}>
+      {num.toFixed(1)}{showLabel && <span style={{fontSize: s.font * 0.55, opacity: 0.6, marginLeft: 2}}>/10</span>}
+    </span>
+  );
+};
+
 const categoryMeta = {
   clothing:      {label:"Clothing",      color:"#6366f1",bg:"#eef2ff"},
   food_beverage: {label:"Food & Drink",  color:"#0891b2",bg:"#ecfeff"},
@@ -1679,9 +1708,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                         background: isPurchased ? (isDark?"#0f2a18":"#fff") : (isDark?"#080f0a":"#f8fafb"),
                         opacity: isPurchased ? 1 : 0.5,
                       }}>
-                        <div style={{width:28, height:28, borderRadius:6, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                          <span style={{fontSize:11, fontWeight:800, color:scoreColor(s)}}>{s}</span>
-                        </div>
+                        <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
                         <div style={{flex:1, minWidth:0}}>
                           <div style={{fontSize:12, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
                           {!isPurchased && <div style={{fontSize:10, color:muted}}>Not in my home</div>}
@@ -1720,7 +1747,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                     Active routine score ({activeProducts.length} products)
                   </div>
                   <div style={{display:"flex", alignItems:"center", gap:12}}>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:scoreColor(Math.round(routineScore)), lineHeight:1}}>{routineScore}</div>
+                    <ScoreBadge score={routineScore} size="lg" />
                     <div style={{flex:1}}>
                       <div style={{fontSize:12, fontWeight:700, color:scoreColor(Math.round(routineScore)), marginBottom:4}}>{scoreLabel(Math.round(routineScore))}</div>
                       <div style={{height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
@@ -2175,7 +2202,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
         <div style={{display:"flex", alignItems:"center", gap:8}}>
           <span style={{display:"flex", alignItems:"center", opacity: isHigh ? 1 : 0.85}}>{icon}</span>
           <span style={{fontSize:12, color, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>{label}</span>
-          <span style={{fontSize:13, fontWeight:800, color, fontFamily:"'Outfit',sans-serif"}}>{score}/10</span>
+          <ScoreBadge score={score} size="xs" showLabel />
           {isHigh && <span style={{fontSize:11, color:"#dc2626", fontWeight:600, background:"#fef2f2", padding:"2px 8px", borderRadius:10}}>{scoreLabel(score)}</span>}
         </div>
         <span style={{fontSize:12, color, transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
@@ -2332,7 +2359,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
                       <div style={{flex:1, height:6, background:isDark?"#0f2a18":"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
                         <div style={{width:`${s*10}%`, height:"100%", background:c, borderRadius:3}}/>
                       </div>
-                      <div style={{flex:"0 0 36px", fontWeight:700, color:c, textAlign:"right"}}>{s}/10</div>
+                      <div style={{flex:"0 0 44px", textAlign:"right"}}><ScoreBadge score={s} size="xs" showLabel /></div>
                     </div>
                   );
                 })}
@@ -2540,7 +2567,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
             <div style={{fontSize:15, fontWeight:700, color:isDark?"#f0fdf4":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
-            <div style={{background:scoreBg(childMode && product.child_score != null ? product.child_score : product.score), color:scoreColor(childMode && product.child_score != null ? product.child_score : product.score), fontSize:11, fontWeight:700, padding:"3px 9px", borderRadius:20}}>{childMode && product.child_score != null ? product.child_score : product.score}/10</div>
+            <ScoreBadge score={childMode && product.child_score != null ? product.child_score : product.score} size="xs" showLabel />
             <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
           </div>
         </div>
@@ -3578,12 +3605,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                     <div style={{fontSize:15, fontWeight:700, color:text}}>{testResult.product_name}</div>
                     <div style={{fontSize:12, color:muted, marginTop:2}}>category: {testResult.category} · confidence: {testResult.confidence}</div>
                   </div>
-                  <div style={{
-                    fontSize:26, fontWeight:800, color: testResult.overall_score <= 3 ? "#16a34a" : testResult.overall_score <= 5 ? "#d97706" : "#dc2626",
-                    fontFamily:"'Outfit',sans-serif"
-                  }}>
-                    {testResult.overall_score || testResult.score}/10
-                  </div>
+                  <ScoreBadge score={testResult.overall_score || testResult.score} size="md" showLabel />
                 </div>
                 {testResult.summary && <div style={{fontSize:12, color:muted, lineHeight:1.6, marginBottom:10}}>{testResult.summary}</div>}
                 {testResult.concerns?.slice(0,3).map((c,i) => (
@@ -3613,14 +3635,13 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
           <div style={{display:"flex", flexDirection:"column", gap:6}}>
             {history.slice(0,12).map((h,i) => {
               const score = h.score || h.overall_score || 0;
-              const scoreColor = score <= 3 ? "#16a34a" : score <= 5 ? "#d97706" : "#dc2626";
               return (
                 <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:isDark?"#0f2a18":"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
                   <div style={{flex:1}}>
                     <span style={{fontSize:13, fontWeight:600, color:text}}>{h.product_name}</span>
                     <span style={{fontSize:11, color:muted, marginLeft:8}}>{h.category}</span>
                   </div>
-                  <div style={{fontSize:15, fontWeight:800, color:scoreColor, marginLeft:12, flexShrink:0}}>{score}/10</div>
+                  <div style={{marginLeft:12, flexShrink:0}}><ScoreBadge score={score} size="sm" showLabel /></div>
                 </div>
               );
             })}
@@ -3863,7 +3884,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
         {routineAvg !== null && (
           <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, marginBottom:16, display:"flex", alignItems:"center", gap:16}}>
             <div style={{textAlign:"center", flexShrink:0}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:40, color:scoreColor(Math.round(routineAvg)), lineHeight:1}}>{routineAvg}</div>
+              <ScoreBadge score={routineAvg} size="lg" />
               <div style={{fontSize:11, color:muted, marginTop:2}}>avg score</div>
             </div>
             <div style={{flex:1}}>
@@ -3932,9 +3953,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
             const s = item.overall_score||item.score||5;
             return (
               <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`}}>
-                <div style={{width:36, height:36, borderRadius:8, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
-                </div>
+                <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
                   <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{item.category}</div>
@@ -3956,9 +3975,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
               const s = item.overall_score||item.score||5;
               return (
                 <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`, opacity:0.5}}>
-                  <div style={{width:36, height:36, borderRadius:8, background:`${scoreColor(s)}18`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    <span style={{fontSize:12, fontWeight:800, color:scoreColor(s)}}>{s}</span>
-                  </div>
+                  <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
                     <div style={{fontSize:11, color:muted}}>Not using</div>
@@ -4076,8 +4093,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
               <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Avg Safety Score</div>
               <div style={{display:"flex", alignItems:"flex-end", gap:8, marginBottom:10}}>
-                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:48, color:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", lineHeight:1}}>{avg}</span>
-                <span style={{fontSize:14, color:muted, marginBottom:8}}>/10</span>
+                <ScoreBadge score={avg} size="lg" showLabel />
               </div>
               <div style={{height:6, borderRadius:99, background:"#e5e7eb", overflow:"hidden"}}>
                 <div style={{height:"100%", width:`${(avg/10)*100}%`, background:avg<=3?"#16a34a":avg<=6?"#d97706":"#dc2626", borderRadius:99, transition:"width 1s ease"}}/>
@@ -4088,8 +4104,9 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
               <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
                 <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Highest Risk Found</div>
                 <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:6, lineHeight:1.3}}>{highest.product_name}</div>
-                <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"#fee2e2", color:"#dc2626", padding:"4px 12px", borderRadius:20, fontSize:13, fontWeight:700}}>
-                  {highest.score}/10 — {highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk
+                <div style={{display:"inline-flex", alignItems:"center", gap:6}}>
+                  <ScoreBadge score={highest.score} size="sm" showLabel />
+                  <span style={{fontSize:13, fontWeight:700, color:highest.score<=3?"#16a34a":highest.score<=5?"#d97706":"#dc2626"}}>{highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk</span>
                 </div>
                 <div style={{fontSize:12, color:"#16a34a", fontWeight:600, marginTop:10, cursor:"pointer"}} onClick={()=>onSelect(highest)}>
                   View result →
@@ -4110,7 +4127,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                   </div>
                   {thisMonthAvg !== null && (
                     <div style={{fontSize:13, color:muted}}>
-                      Average score: <strong style={{color: thisMonthAvg<=3?"#16a34a":thisMonthAvg<=6?"#d97706":"#dc2626"}}>{thisMonthAvg}/10</strong>
+                      Average score: <ScoreBadge score={thisMonthAvg} size="xs" showLabel />
                       {monthDelta !== null && (
                         <span style={{marginLeft:10, fontSize:12, color: monthDelta < 0 ? "#16a34a" : monthDelta > 0 ? "#dc2626" : muted, fontWeight:600}}>
                           {monthDelta < 0 ? "↓" : monthDelta > 0 ? "↑" : "="} {Math.abs(monthDelta)} vs last month
@@ -4205,7 +4222,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                             return (
                               <button key={i} onClick={()=>onSelect(item)} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:surface, borderRadius:10, border:`1px solid ${border}`, cursor:"pointer", textAlign:"left"}}>
                                 <span style={{fontSize:13, color:text, fontWeight:600, flex:1, marginRight:8}}>{item.product_name}</span>
-                                <span style={{fontSize:12, fontWeight:700, padding:"2px 10px", borderRadius:20, background:s>=7?"#fef2f2":s>=5?"#fffbeb":"#f0fdf4", color:s>=7?"#dc2626":s>=5?"#d97706":"#16a34a", whiteSpace:"nowrap"}}>{s}/10 — {scoreLabel(s)}</span>
+                                <span style={{whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:4}}><ScoreBadge score={s} size="xs" showLabel /></span>
                               </button>
                             );
                           })}
@@ -4344,7 +4361,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                             <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"…":""}</div>
                           </div>
                           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
-                            <div style={{background:item.score<=3?"#f0fdf4":item.score<=6?"#fffbeb":"#fef2f2", color:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", fontWeight:800, fontSize:16, padding:"4px 12px", borderRadius:20, fontFamily:"'Outfit',sans-serif"}}>{item.score}/10</div>
+                            <ScoreBadge score={item.score} size="sm" showLabel />
                             <div style={{fontSize:11, color:muted}}>{formatDate(item.scannedAt)}</div>
                           </div>
                         </div>
@@ -7165,8 +7182,8 @@ function App() {
                         onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=border;}}>
                         {/* Score circle */}
-                        <div style={{width:40, height:40, borderRadius:"50%", background:scoreBg(item.score), display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10}}>
-                          <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:16, color:scoreColor(item.score)}}>{item.score}</span>
+                        <div style={{marginBottom:10}}>
+                          <ScoreBadge score={item.score} size="sm" />
                         </div>
                         <div style={{fontSize:13, fontWeight:600, color:text, lineHeight:1.3, marginBottom:4, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                           {item.product_name}
@@ -7994,7 +8011,7 @@ function App() {
                       <div key={i} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
-                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.score}/10</div>
+                          <div style={{flexShrink:0}}><ScoreBadge score={alt.score} size="xs" showLabel /></div>
                         </div>
                         {alt.material && <div style={{fontSize:12, color:muted, marginBottom:6, lineHeight:1.4}}>{alt.material}</div>}
                         {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
@@ -8016,7 +8033,7 @@ function App() {
                       <div key={`ai-${i}`} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
-                          <div style={{fontSize:13, fontWeight:800, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 10px", borderRadius:10, flexShrink:0, border:"1px solid #bbf7d0"}}>{alt.estimated_score}/10</div>
+                          <div style={{flexShrink:0}}><ScoreBadge score={alt.estimated_score} size="xs" showLabel /></div>
                         </div>
                         {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
                         <a href={shopUrl} target="_blank" rel="noopener noreferrer"
@@ -8089,7 +8106,7 @@ function App() {
                 {result.product_name?.length > 50 ? result.product_name.slice(0,47)+"…" : result.product_name}
               </h2>
               <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", borderRadius:20, padding:"4px 14px"}}>
-                <span style={{fontSize:13, color:"#4ade80", fontWeight:700}}>{result.overall_score||result.score}/10</span>
+                <ScoreBadge score={result.overall_score||result.score} size="xs" showLabel />
                 <span style={{fontSize:12, color:"rgba(255,255,255,0.6)"}}>→ switch to score 1-3</span>
               </div>
             </div>
@@ -8142,7 +8159,7 @@ function App() {
                     <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
                         <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                        <div style={{background:`${scoreColor(score)}18`, color:scoreColor(score), fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:20, flexShrink:0}}>{score}/10</div>
+                        <div style={{flexShrink:0}}><ScoreBadge score={score} size="xs" showLabel /></div>
                       </div>
                       {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
                       {reason && <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{reason}</div>}
