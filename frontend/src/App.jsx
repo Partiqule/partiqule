@@ -3443,7 +3443,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 
   const fetchCacheStatus = async () => {
     try {
-      const r = await fetch(`${API_BASE}/cache-status`);
+      const r = await fetch(`${API_BASE}/cache-status?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
       if (r.ok) setCacheStatus(await r.json());
     } catch { setCacheStatus({error:"unreachable"}) }
   };
@@ -3457,7 +3457,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
       const params = new URLSearchParams({ limit: 50, offset });
       if (cat)    params.set("category", cat);
       if (search) params.set("search", search);
-      const r = await fetch(`${API_BASE}/recent-scans?${params}&key=RowenaRavenclaw2024!`);
+      const r = await fetch(`${API_BASE}/recent-scans?${params}&key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
       if (r.ok) {
         const data = await r.json();
         setRecentScans(offset > 0 ? prev => [...prev, ...data] : data);
@@ -3470,7 +3470,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
   const clearCache = async () => {
     setClearing(true);
     try {
-      await fetch(`${API_BASE}/cache-clear?key=RowenaRavenclaw2024!`);
+      await fetch(`${API_BASE}/cache-clear?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
       await fetchCacheStatus();
     } finally { setClearing(false); }
   };
