@@ -6915,6 +6915,48 @@ function App() {
                     );
                   })()}
 
+                  {/* Behavioral audit suggestion — surfaces when 5+ scans in a category */}
+                  {(() => {
+                    const suggestion = getSuggestedAudit(history);
+                    if (!suggestion) return null;
+                    return (
+                      <div style={{
+                        background: "rgba(34,197,94,0.06)",
+                        borderRadius: 16, padding: "16px 20px",
+                        border: "1.5px solid rgba(34,197,94,0.15)",
+                        marginBottom: 20,
+                      }}>
+                        <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
+                          textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
+                          Ready for your next step
+                        </div>
+                        <div style={{fontSize:15, fontWeight:700,
+                          color:"#f0fdf4", marginBottom:6, fontFamily:"'Outfit',sans-serif"}}>
+                          Start your {suggestion.label}
+                        </div>
+                        <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7,
+                          marginBottom:14, lineHeight:1.5}}>
+                          Based on {suggestion.count} {
+                            suggestion.type === "pantry" ? "food and pantry" :
+                            suggestion.type === "beauty" ? "personal care" :
+                            suggestion.type === "home" ? "home and cleaning" :
+                            suggestion.type
+                          } scans
+                        </div>
+                        <button
+                          onClick={() => setPage("lists")}
+                          style={{
+                            padding:"10px 20px", borderRadius:10, background:"#16a34a",
+                            color:"#fff", border:"none", fontWeight:700,
+                            fontSize:14, cursor:"pointer",
+                            fontFamily:"'Outfit',sans-serif",
+                          }}>
+                          Start {suggestion.label} →
+                        </button>
+                      </div>
+                    );
+                  })()}
+
                   {/* Today's Comparison */}
                   <div style={{marginBottom:24}}>
                     <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
@@ -7306,48 +7348,6 @@ function App() {
             </div>
           )}
 
-          {/* Behavioral audit suggestion — surfaces when 5+ scans in a category */}
-          {(() => {
-            const suggestion = getSuggestedAudit(history);
-            if (!suggestion) return null;
-            return (
-              <div style={{maxWidth:520, margin:"0 auto", padding:"0 20px 32px"}}>
-                <div style={{
-                  background: isDark ? "#1a2a1a" : "#f0fdf4",
-                  borderRadius: 16, padding: "16px 20px",
-                  border: `1.5px solid ${isDark ? "#1e3a1e" : "#bbf7d0"}`,
-                }}>
-                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
-                    textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
-                    Ready for your next step
-                  </div>
-                  <div style={{fontSize:15, fontWeight:700,
-                    color: isDark ? "#f1f5f9" : "#111", marginBottom:6}}>
-                    Start your {suggestion.label}
-                  </div>
-                  <div style={{fontSize:13, color: isDark ? "#94a3b8" : "#555",
-                    marginBottom:14, lineHeight:1.5}}>
-                    Based on {suggestion.count} {
-                      suggestion.type === "pantry" ? "food and pantry" :
-                      suggestion.type === "beauty" ? "personal care" :
-                      suggestion.type === "home" ? "home and cleaning" :
-                      suggestion.type
-                    } scans
-                  </div>
-                  <button
-                    onClick={() => setPage("lists")}
-                    style={{
-                      padding:"10px 20px", borderRadius:10, background:"#16a34a",
-                      color:"#fff", border:"none", fontWeight:700,
-                      fontSize:14, cursor:"pointer",
-                      fontFamily:"'Outfit',sans-serif",
-                    }}>
-                    Start {suggestion.label} →
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
           </>
           )}
 
