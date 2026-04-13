@@ -416,6 +416,29 @@ function extractProductFromUrl(input) {
   return "Scanned product";
 }
 
+// ── CATEGORY SCORE CONTEXT ────────────────────────────────────
+// One-line reference range shown below the score on the result card.
+// Helps users interpret whether their product is typical for its category.
+const CATEGORY_CONTEXT = {
+  food:             "Most food products score 3-7",
+  food_beverage:    "Most food and drink products score 3-7",
+  beverage:         "Most beverages score 3-6",
+  snack:            "Most snack products score 4-7",
+  supplement:       "Most supplements score 3-6",
+  restaurant:       "Most restaurant items score 5-8",
+  personal_care:    "Most personal care products score 4-7",
+  skincare:         "Most skincare products score 3-7",
+  cleaning:         "Most cleaning products score 4-7",
+  home:             "Most home products score 4-7",
+  clothing:         "Most clothing scores 3-6",
+  baby:             "Most baby products score 3-6",
+  toy:              "Most toys score 2-5",
+  home_furnishing:  "Most home furnishing products score 4-7",
+  kitchen:          "Most kitchen products score 3-6",
+  accessory:        "Most accessories score 3-6",
+  other:            "Scores range from 1 (safest) to 10 (highest concern)",
+};
+
 // ── SUBSTANCE REGISTRY ────────────────────────────────────────
 // Ingredient-triggered score floors — only activate when AI confirms
 // the substance in concerns. Overrides formula output for materials score.
@@ -4241,6 +4264,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           alternatives: imgFuzzyAlts, ai_alternatives: [],
           nutrition: entry.nutrition || p1.nutrition || p1.product_analysis?.nutrition || null,
           ingredient_list: p1.ingredient_list || [],
+          category_score_context: CATEGORY_CONTEXT[imgFuzzyCat] || CATEGORY_CONTEXT.other,
         });
         cacheSet(imgKey, fuzzyResult);
         console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
@@ -4386,6 +4410,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         })),
         nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
         ingredient_list: p1.ingredient_list || [],
+        category_score_context: CATEGORY_CONTEXT[imgCategory] || CATEGORY_CONTEXT.other,
       };
 
       const calibratedResult = applyProductCalibration(result);
@@ -4480,6 +4505,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       summary: entry.reason || "",
       nutrition: entry.nutrition || null,
       alternatives: fuzzyAlts, ai_alternatives: [],
+      category_score_context: CATEGORY_CONTEXT[fuzzyCat] || CATEGORY_CONTEXT.other,
     });
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
@@ -4716,6 +4742,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // ── Nutrition — pull from top-level or product_analysis ──
       nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
       ingredient_list: p1.ingredient_list || [],
+      category_score_context: CATEGORY_CONTEXT[finalCategory || category] || CATEGORY_CONTEXT.other,
     };
 
     // ── Calibration registry — deterministic floor/ceiling enforcement ──
@@ -6096,6 +6123,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
       ai_alternatives:     [],
       scan_next:           buildScanNextFallback(productName, cat, alternatives),
       cached:              false,
+      category_score_context: CATEGORY_CONTEXT[cat] || CATEGORY_CONTEXT.other,
     };
 
     const calibrated = applyProductCalibration(result);

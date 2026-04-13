@@ -7320,6 +7320,17 @@ function App() {
                       <ScoreArc score={displayScore}/>
                     </div>
 
+                    {result.category_score_context && (
+                      <div style={{
+                        fontSize: 12,
+                        color: isDark ? "#64748b" : "#94a3b8",
+                        marginTop: 4,
+                        letterSpacing: "0.02em"
+                      }}>
+                        {result.category_score_context}
+                      </div>
+                    )}
+
                     {/* Dual scoring explanation — one line, always visible */}
                     {(() => {
                       const foodCats = ["food_beverage","beverage","restaurant","baby"];
