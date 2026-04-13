@@ -3994,6 +3994,169 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 };
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
+const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, isDark, surface, border, text, muted, isMobile}) => {
+  const groceryLists = lists.filter(l=>l.type==="grocery");
+  const activeList = groceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || groceryLists[0];
+  const [view, setView] = useState(activeList ? "list" : "setup");
+  const [activeId, setActiveId] = useState(activeList?.id || null);
+  const [store, setStore] = useState("");
+  const [budget, setBudget] = useState("");
+  const [newItem, setNewItem] = useState("");
+  const [expandedIdx, setExpandedIdx] = useState(null);
+  const [showPrev, setShowPrev] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
+
+  const current = lists.find(l=>l.id===activeId);
+  const items = current?.items || [];
+  const scored = items.filter(i=>i.score!=null);
+  const avgScore = scored.length ? Math.round(scored.reduce((s,i)=>s+i.score,0)/scored.length*10)/10 : null;
+  const stores = ["Whole Foods","Target","Trader Joe's","Walmart","Kroger","Sprouts","Costco","Other"];
+  const presets = [50,80,120];
+
+  const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); };
+
+  if (view === "setup") return (
+    <div>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Where are you shopping?</div>
+        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+          {stores.map(s=>(
+            <button key={s} onClick={()=>setStore(s)} style={{padding:"8px 16px", borderRadius:20, border:`1.5px solid ${store===s?"#16a34a":border}`, background:store===s?(isDark?"#0f2a18":"#f0fdf4"):"none", color:store===s?"#16a34a":muted, fontSize:13, fontWeight:store===s?700:400, cursor:"pointer"}}>{s}</button>
+          ))}
+        </div>
+      </div>
+      {store && (
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Your budget for this shop</div>
+          <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
+            {presets.map(p=>(
+              <button key={p} onClick={()=>setBudget(String(p))} style={{padding:"8px 16px", borderRadius:20, border:`1.5px solid ${budget===String(p)?"#16a34a":border}`, background:budget===String(p)?(isDark?"#0f2a18":"#f0fdf4"):"none", color:budget===String(p)?"#16a34a":muted, fontSize:13, fontWeight:budget===String(p)?700:400, cursor:"pointer"}}>${p}</button>
+            ))}
+            <div style={{display:"flex", alignItems:"center", gap:4}}>
+              <span style={{fontSize:14, color:muted}}>$</span>
+              <input value={budget} onChange={e=>setBudget(e.target.value.replace(/[^0-9.]/g,""))} placeholder="___" style={{width:60, padding:"8px 10px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none", textAlign:"center"}}/>
+            </div>
+          </div>
+        </div>
+      )}
+      <button onClick={()=>{
+        if(!store||!budget)return;
+        const id=createGroceryList(store, budget);
+        setActiveId(id); setView("list");
+      }} disabled={!store||!budget} style={{
+        width:"100%", padding:"14px", borderRadius:12,
+        background:store&&budget?"#16a34a":(isDark?"#1e2433":"#e2e8f0"),
+        color:store&&budget?"#fff":(isDark?"#475569":"#94a3b8"),
+        border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+        cursor:store&&budget?"pointer":"default",
+      }}>Build my list</button>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* New list / confirm */}
+      <div style={{display:"flex", justifyContent:"flex-end", marginBottom:12}}>
+        {confirmNew ? (
+          <div style={{display:"flex", gap:8, alignItems:"center"}}>
+            <span style={{fontSize:12, color:muted}}>Start a new list? Current list will be saved.</span>
+            <button onClick={()=>setConfirmNew(false)} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer"}}>Keep current</button>
+            <button onClick={startNew} style={{fontSize:12, color:"#fff", background:"#16a34a", border:"none", borderRadius:8, padding:"4px 12px", fontWeight:600, cursor:"pointer"}}>New list</button>
+          </div>
+        ) : (
+          <button onClick={()=>{if(current)setConfirmNew(true);else startNew();}} style={{fontSize:12, color:"#16a34a", background:"none", border:`1px solid #16a34a`, borderRadius:8, padding:"4px 12px", fontWeight:600, cursor:"pointer"}}>New list</button>
+        )}
+      </div>
+
+      {current && (<>
+        {/* Header */}
+        <div style={{background:surface, borderRadius:14, padding:"14px 18px", border:`1.5px solid ${border}`, marginBottom:16}}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
+            <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif"}}>{current.name}</div>
+            {avgScore!=null && (
+              <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
+                <ScoreBadge score={avgScore} size="sm"/>
+                <span style={{fontSize:10, color:muted, marginTop:2}}>avg score</span>
+              </div>
+            )}
+            <div style={{fontSize:12, color:muted, textAlign:"right"}}>
+              <div>spent $0 of ${current.budget||0}</div>
+            </div>
+          </div>
+          <div style={{height:4, borderRadius:2, background:isDark?"#1e2433":"#f1f5f9", marginTop:10, overflow:"hidden"}}>
+            <div style={{height:"100%", width:"0%", background:"#16a34a", borderRadius:2}}/>
+          </div>
+        </div>
+
+        {/* Add item */}
+        <div style={{display:"flex", gap:8, marginBottom:16}}>
+          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItem.trim()){addGroceryItem(current.id,newItem.trim());setNewItem("");}}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+          <button onClick={()=>{if(!newItem.trim())return;addGroceryItem(current.id,newItem.trim());setNewItem("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
+        </div>
+
+        {/* Items */}
+        {items.length===0 ? (
+          <div style={{textAlign:"center", padding:"40px 0", color:muted, fontSize:14}}>Start adding products above. Each one gets scored automatically.</div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:8}}>
+            {items.map((item,i)=>(
+              <div key={i} style={{borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${item.score>6?"#d9770633":border}`, opacity:item.checked?0.6:1}}>
+                <div onClick={()=>toggleListItem(current.id,i)} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", cursor:"pointer"}}>
+                  <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                    {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </div>
+                  <div style={{flex:1, minWidth:0}} onClick={e=>{e.stopPropagation();setExpandedIdx(expandedIdx===i?null:i);}}>
+                    <div style={{fontSize:14, color:text, textDecoration:item.checked?"line-through":"none", fontWeight:500}}>{item.text}</div>
+                    {item.category && <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{(item.category||"").replace(/_/g," ")}</div>}
+                  </div>
+                  <div style={{flexShrink:0, display:"flex", alignItems:"center", gap:4}}>
+                    {item.scoring && <span style={{fontSize:11, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f1f5f9"}}>scoring...</span>}
+                    {item.scoreError && (
+                      <button onClick={e=>{e.stopPropagation();addGroceryItem(current.id,item.text);}} style={{fontSize:11, color:"#dc2626", background:"none", border:"none", cursor:"pointer", fontWeight:600}}>? Retry</button>
+                    )}
+                    {item.score!=null && (<>
+                      {item.score>6 && <div style={{width:6, height:6, borderRadius:3, background:"#d97706", flexShrink:0}}/>}
+                      <ScoreBadge score={item.score} size="xs"/>
+                    </>)}
+                  </div>
+                </div>
+                {expandedIdx===i && item.summary && (
+                  <div style={{padding:"0 16px 12px 48px", fontSize:12, color:muted, lineHeight:1.5}}>
+                    {item.summary.length>180 ? item.summary.slice(0,180)+"..." : item.summary}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </>)}
+
+      {/* Previous lists */}
+      {groceryLists.length>1 && (
+        <div style={{marginTop:24}}>
+          <button onClick={()=>setShowPrev(!showPrev)} style={{fontSize:13, color:muted, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:4}}>
+            <span style={{transform:showPrev?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s", display:"inline-block"}}>&#9654;</span>
+            Previous lists ({groceryLists.length-1})
+          </button>
+          {showPrev && (
+            <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
+              {groceryLists.filter(l=>l.id!==activeId).map(l=>(
+                <div key={l.id} onClick={()=>{setActiveId(l.id);setView("list");}} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderRadius:10, background:surface, border:`1px solid ${border}`, cursor:"pointer"}}>
+                  <div>
+                    <div style={{fontSize:14, fontWeight:600, color:text}}>{l.name}</div>
+                    <div style={{fontSize:12, color:muted}}>{(l.items||[]).length} items</div>
+                  </div>
+                  <span style={{color:"#16a34a", fontSize:14}}>&rarr;</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AddToListButton = ({result, lists, createShoppingList, addItemToList, muted}) => {
   const [added, setAdded] = useState(false);
   return (
@@ -4008,7 +4171,7 @@ const AddToListButton = ({result, lists, createShoppingList, addItemToList, mute
   );
 };
 
-const ListsPage = ({lists, saveLists, createShoppingList, addItemToList, toggleListItem, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
+const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
   const [tab, setTab] = useState("grocery");
   const [newListName, setNewListName] = useState("");
   const [activeListId, setActiveListId] = useState(null);
@@ -4085,10 +4248,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, addItemToList, toggleL
       </>)}
 
       {tab==="grocery" && (
-        <div style={{textAlign:"center", padding:"40px 20px"}}>
-          <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>Scored grocery lists — coming soon</div>
-          <div style={{fontSize:14, color:muted, lineHeight:1.6, maxWidth:380, margin:"0 auto"}}>Tell us what you are making and your budget. We will build a scored grocery list before you leave the house. Every item already rated.</div>
-        </div>
+        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
       )}
 
       {tab==="routine" && (
@@ -5928,6 +6088,38 @@ function App() {
   };
   const addItemToList = (listId, item) => { saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),item],lastOpenedAt:new Date().toISOString()}:l)); };
   const toggleListItem = (listId, itemIndex) => { saveLists(lists.map(l=>l.id===listId?{...l,items:l.items.map((item,i)=>i===itemIndex?{...item,checked:!item.checked}:item)}:l)); };
+  const createGroceryList = (store, budget) => {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const newList = {id:Date.now().toString(), name:`${store} — ${dateStr}`, type:"grocery", store, budget:parseFloat(budget)||0, items:[], createdAt:now.toISOString(), lastOpenedAt:now.toISOString()};
+    const updated = [newList,...lists]; saveLists(updated); return newList.id;
+  };
+  const addGroceryItem = async (listId, productName) => {
+    if (!productName.trim()) return;
+    const tempItem = {text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
+    saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
+    try {
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim()})});
+      const data = await res.json();
+      saveLists(lists.map(l=>{
+        if(l.id!==listId)return l;
+        const items=[...(l.items||[])];
+        const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
+        if(idx===undefined)return l;
+        items[idx]={...items[idx],score:data.overall_score||data.score,category:data.category,summary:data.summary,scoring:false,scoreError:false};
+        return {...l,items};
+      }));
+    } catch {
+      saveLists(lists.map(l=>{
+        if(l.id!==listId)return l;
+        const items=[...(l.items||[])];
+        const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
+        if(idx===undefined)return l;
+        items[idx]={...items[idx],scoring:false,scoreError:true};
+        return {...l,items};
+      }));
+    }
+  };
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -6711,6 +6903,7 @@ function App() {
       ) : page === "lists" ? (
         <ListsPage
           lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
+          createGroceryList={createGroceryList} addGroceryItem={addGroceryItem}
           addItemToList={addItemToList} toggleListItem={toggleListItem}
           history={history} isDark={isDark} surface={surface} border={border}
           text={text} muted={muted} isMobile={isMobile} user={user}
@@ -7299,6 +7492,35 @@ function App() {
                       <div style={{fontSize:13, color:muted, lineHeight:1.5}}>Add items as you scan so you always know what to buy and what to skip.</div>
                     </div>
                   )}
+
+                  {/* Grocery list For You card */}
+                  {(() => {
+                    const day = new Date().getDay();
+                    const isShoppingDay = day===4||day===5;
+                    const hasGroceryList = lists.some(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
+                    const noGroceryListEver = !lists.some(l=>l.type==="grocery");
+                    if (hasGroceryList) {
+                      const al = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
+                      const rem = (al.items||[]).filter(i=>!i.checked).length;
+                      return (
+                        <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
+                          <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Grocery list</div>
+                          <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>{al.name} — {rem} item{rem!==1?"s":""} left</div>
+                          <div style={{fontSize:13, color:muted}}>Tap to open your list</div>
+                        </div>
+                      );
+                    }
+                    if (isShoppingDay && noGroceryListEver) {
+                      return (
+                        <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
+                          <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Plan your shop</div>
+                          <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>Build a scored grocery list</div>
+                          <div style={{fontSize:13, color:muted, lineHeight:1.5}}>Pick a store, set your budget, add products. Every item scored before you leave the house.</div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
                   {/* Trending Scans */}
                   <div style={{marginBottom:24}}>
