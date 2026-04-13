@@ -7894,44 +7894,62 @@ function App() {
                   />
                 )}
 
-                {/* ADD TO ROUTINE CTA — Goal-Gradient Effect: feels like completing something */}
+                {/* CTA HIERARCHY — primary/secondary/tertiary */}
                 {(() => {
                   const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                  const addToRoutine = () => {
+                    if (!alreadyInRoutine) {
+                      const entry = {...result, scannedAt: new Date().toISOString()};
+                      const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                      setHistory(next);
+                      try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                    } else {
+                      setPage("routine"); setResult(null);
+                    }
+                  };
+                  const shareResult = async () => {
+                    const text = `I scanned ${result.product_name} and it scored ${displayScore}/10 on Partiqule. Check what is in your products at partiqule.com`;
+                    if (navigator.share) { try { await navigator.share({title:`${result.product_name} — ${displayScore}/10`, text}); return; } catch {} }
+                    try { await navigator.clipboard.writeText(text); } catch {}
+                  };
                   return (
-                    <div
-                      onClick={() => {
-                        if (!alreadyInRoutine) {
-                          const entry = {...result, scannedAt: new Date().toISOString()};
-                          const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
-                          setHistory(next);
-                          try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
-                        } else {
-                          setPage("routine"); setResult(null);
+                    <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:16}}>
+                      {/* Primary CTA */}
+                      <button
+                        onClick={displayScore > 5
+                          ? () => { setShowAlts(true); }
+                          : () => { setShowAlts(false); reset(); }
                         }
-                      }}
-                      style={{
-                        marginTop:16, padding:"14px 18px",
-                        background:"rgba(34,197,94,0.06)",
-                        border:"1.5px dashed rgba(34,197,94,0.35)",
-                        borderRadius:14, display:"flex", alignItems:"center", gap:14,
-                        cursor:"pointer", transition:"background 0.2s",
-                      }}
-                    >
-                      <div style={{width:38, height:38, borderRadius:"50%", background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                        {alreadyInRoutine
-                          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        }
+                        style={{
+                          width:"100%", padding:"14px", borderRadius:12,
+                          background:"#16a34a", color:"#fff", border:"none",
+                          fontFamily:"'Outfit',sans-serif", fontWeight:700,
+                          fontSize:15, cursor:"pointer",
+                        }}>
+                        {displayScore > 5 ? "See safer alternatives" : "Scan another product"}
+                      </button>
+
+                      {/* Secondary CTA */}
+                      <button
+                        onClick={displayScore > 5 ? () => { setShowAlts(false); reset(); } : addToRoutine}
+                        style={{
+                          width:"100%", padding:"12px", borderRadius:12,
+                          background:"none", color:"#16a34a",
+                          border:"1.5px solid #16a34a",
+                          fontFamily:"'Outfit',sans-serif", fontWeight:600,
+                          fontSize:14, cursor:"pointer",
+                        }}>
+                        {displayScore > 5
+                          ? "Scan another product"
+                          : alreadyInRoutine ? "View My Routine" : "Add to My Routine"}
+                      </button>
+
+                      {/* Tertiary — icon row */}
+                      <div style={{display:"flex", justifyContent:"center", gap:12, marginTop:4}}>
+                        <button onClick={shareResult} style={{width:36, height:36, borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}} title="Share">
+                          <IconShare size={16} color={isDark?"#6ee7b7":"#6b7280"}/>
+                        </button>
                       </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>
-                          {alreadyInRoutine ? "In My Routine — view breakdown" : "Add to My Routine"}
-                        </div>
-                        <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>
-                          {alreadyInRoutine ? "See cumulative exposure and your overall score" : "Track cumulative exposure across all your products"}
-                        </div>
-                      </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" style={{opacity:0.5}}><polyline points="9 18 15 12 9 6"/></svg>
                     </div>
                   );
                 })()}
