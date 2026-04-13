@@ -8218,6 +8218,27 @@ function App() {
                         </div>
                       </div>
                     )}
+                    {/* Compare & Share — desktop panel */}
+                    {(() => {
+                      const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
+                      const scored = allAlts.filter(a => (a.score ?? a.estimated_score) != null);
+                      if (!scored.length) return null;
+                      const best = scored.reduce((a, b) => ((a.score ?? a.estimated_score) <= (b.score ?? b.estimated_score) ? a : b));
+                      const bestScore = best.score ?? best.estimated_score;
+                      const productScore = result.overall_score || result.score;
+                      if ((productScore - bestScore) < 2) return null;
+                      return (
+                        <button onClick={() => setCompareAlt(best)} style={{
+                          width:"100%", padding:"12px", borderRadius:10,
+                          background:"none", border:"1.5px solid #16a34a",
+                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13,
+                          color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                          marginTop:4,
+                        }}>
+                          <IconShare size={14} color="#16a34a"/> Compare & Share
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -8370,12 +8391,14 @@ function App() {
               {/* Compare & Share — only when best alt is 2+ points lower */}
               {(() => {
                 const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
-                const scored = allAlts.filter(a => (a.score || a.estimated_score) != null);
-                if (!scored.length) return null;
-                const best = scored.reduce((a, b) => ((a.score || a.estimated_score) <= (b.score || b.estimated_score) ? a : b));
-                const bestScore = best.score || best.estimated_score;
+                const scored = allAlts.filter(a => (a.score ?? a.estimated_score) != null);
+                if (!scored.length) { console.log("[CompareShare] No scored alternatives found, total:", allAlts.length); return null; }
+                const best = scored.reduce((a, b) => ((a.score ?? a.estimated_score) <= (b.score ?? b.estimated_score) ? a : b));
+                const bestScore = best.score ?? best.estimated_score;
                 const productScore = result.overall_score || result.score;
-                if ((productScore - bestScore) < 2) return null;
+                const gap = productScore - bestScore;
+                console.log("[CompareShare] product:", productScore, "bestAlt:", bestScore, "delta:", gap, "best:", best.name);
+                if (gap < 2) return null;
                 return (
                   <button onClick={() => setCompareAlt(best)} style={{
                     width:"100%", padding:"14px", borderRadius:12,
