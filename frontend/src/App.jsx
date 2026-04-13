@@ -1099,6 +1099,24 @@ const GlobeLoading = ({isMobile}) => {
 
 
 const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
+const getHomeCoverage = (history) => {
+  const ROOM_MAP = {
+    cleaning: "Kitchen", home: "Home", personal_care: "Bathroom",
+    skincare: "Bathroom", food: "Pantry", food_beverage: "Pantry",
+    beverage: "Pantry", snack: "Pantry", clothing: "Closet",
+    baby: "Nursery", toy: "Nursery",
+  };
+  const counts = {};
+  history.forEach(h => {
+    const room = ROOM_MAP[h.category];
+    if (!room) return;
+    counts[room] = (counts[room] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .map(([room, count]) => ({ room, count }))
+    .sort((a, b) => b.count - a.count);
+};
+
 const getSuggestedAudit = (history) => {
   if (!history || history.length < 5) return null;
   const AUDIT_MAP = {
@@ -6966,7 +6984,94 @@ function App() {
                     return <AuditCard/>;
                   })()}
 
-                  {/* Today's Comparison */}
+                  {/* Home audit coverage card */}
+                  {history.length >= 3 && (() => {
+                    const coverage = getHomeCoverage(history);
+                    if (!coverage.length) return null;
+                    const readyRooms = coverage.filter(r => r.count >= 3);
+                    return (
+                      <div style={{
+                        background: isDark ? "#1a2433" : "#f8faff",
+                        borderRadius: 16, padding: "16px 20px",
+                        border: `1.5px solid ${isDark ? "#1e2a3e" : "#c7d7f0"}`,
+                        marginBottom: 20,
+                      }}>
+                        <div style={{
+                          display:"flex", alignItems:"center",
+                          justifyContent:"space-between", marginBottom:12,
+                        }}>
+                          <div>
+                            <div style={{
+                              fontSize:11, color:"#2563eb", fontWeight:700,
+                              textTransform:"uppercase", letterSpacing:"0.07em",
+                              marginBottom:3,
+                            }}>
+                              Your home
+                            </div>
+                            <div style={{fontSize:15, fontWeight:700, color:text}}>
+                              {readyRooms.length >= 2
+                                ? `${readyRooms.length} areas ready to audit`
+                                : coverage.length === 1
+                                  ? `${coverage[0].count} ${coverage[0].room} scans`
+                                  : "Keep scanning to build your home audit"
+                              }
+                            </div>
+                          </div>
+                          {readyRooms.length >= 1 && (
+                            <button
+                              onClick={() => setPage("lists")}
+                              style={{
+                                padding:"8px 14px", borderRadius:10,
+                                background:"#2563eb", color:"#fff",
+                                border:"none", fontWeight:700,
+                                fontSize:13, cursor:"pointer",
+                              }}>
+                              Start audit
+                            </button>
+                          )}
+                        </div>
+                        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                          {coverage.slice(0,5).map((r, i) => (
+                            <div key={i} style={{
+                              display:"flex", alignItems:"center", gap:6,
+                              background: r.count >= 3
+                                ? (isDark ? "#1e3a5f" : "#dbeafe")
+                                : (isDark ? "#1e2433" : "#f1f5f9"),
+                              border: `1px solid ${r.count >= 3
+                                ? "#3b82f6"
+                                : (isDark ? "#2a3347" : "#e2e8f0")}`,
+                              borderRadius:20, padding:"4px 12px",
+                              fontSize:12,
+                              color: r.count >= 3 ? "#2563eb" : muted,
+                              fontWeight: r.count >= 3 ? 600 : 400,
+                            }}>
+                              <span>{r.room}</span>
+                              <span style={{
+                                fontSize:10, opacity:0.7,
+                                background: r.count >= 3
+                                  ? "rgba(37,99,235,0.15)"
+                                  : "rgba(0,0,0,0.08)",
+                                borderRadius:10, padding:"1px 6px",
+                              }}>
+                                {r.count}
+                              </span>
+                            </div>
+                          ))}
+                          {coverage.length < 3 && (
+                            <div style={{
+                              fontSize:12, color:muted,
+                              padding:"4px 2px", fontStyle:"italic",
+                            }}>
+                              Scan home, cleaning, or pantry products to build your audit
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Today's Comparison — new users only */}
+                  {history.length === 0 && (
                   <div style={{marginBottom:24}}>
                     <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
                       <div style={{fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
@@ -6996,6 +7101,7 @@ function App() {
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* Trending Scans */}
                   <div style={{marginBottom:24}}>
@@ -7363,31 +7469,6 @@ function App() {
           {history.length === 0 && (
           <div style={{paddingTop: isMobile?32:56}}>
 
-            {/* Trust strip — moved up, first thing below hero */}
-            <div style={{maxWidth:860, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)", gap:isMobile?16:24}}>
-                {[
-                  {icon:"score",    title:"Science-backed",      body:"Every score grounded in peer-reviewed research from NEJM, Nature Medicine and The Lancet"},
-                  {icon:"safety",   title:"No brand influence",   body:"No brand can pay to change a score. Affiliate links are always clearly disclosed"},
-                  {icon:"verified", title:"Two-pass verified",    body:"Every scan runs two independent AI passes to check and audit the score"},
-                  {icon:"scan",     title:"Free to start",          body:"No account needed to get started. Create a free account to save your scan history across devices"},
-                ].map((item,i) => (
-                  <div key={i} style={{
-                    background:isDark?"#0f2a18":"#fff",
-                    borderRadius:16, padding:"24px 20px", textAlign:"center",
-                    border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#f0fdf4"}`,
-                    display:"flex", flexDirection:"column", alignItems:"center", gap:12,
-                  }}>
-                    <div style={{width:64, height:64, borderRadius:"50%", background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                      {item.icon==="score"&&<IcoScore size={36}/>}{item.icon==="safety"&&<IcoSafety size={36}/>}{item.icon==="verified"&&<IcoVerified size={36}/>}{item.icon==="scan"&&<IcoScan size={36}/>}
-                    </div>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:isDark?"#f0fdf4":"#111"}}>{item.title}</div>
-                    <div style={{fontSize:13, color:isDark?"#6ee7b7":"#888", lineHeight:1.6}}>{item.body}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* RECENTLY VIEWED CAROUSEL */}
             {history.length > 0 && (
               <div style={{maxWidth:1100, margin:"0 auto 40px", padding:`0 ${isMobile?"16px":"40px"}`}}>
@@ -7398,16 +7479,16 @@ function App() {
                 <div style={{display:"flex", gap:12, overflowX:"auto", paddingBottom:8, scrollbarWidth:"none", msOverflowStyle:"none"}}>
                   <style>{`.carousel::-webkit-scrollbar{display:none}`}</style>
                   <div className="carousel" style={{display:"flex", gap:12, overflowX:"auto", paddingBottom:8, width:"100%"}}>
-                    {history.slice(0,8).map((item,i)=>(
+                    {history.slice(0,6).map((item,i)=>(
                       <button key={i} onClick={()=>setResult(item)}
-                        style={{flexShrink:0, width:isMobile?140:160, background:surface, borderRadius:12, padding:"14px", border:`1.5px solid ${border}`, cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
+                        style={{flexShrink:0, width:isMobile?120:130, background:surface, borderRadius:12, padding:"12px", border:`1.5px solid ${border}`, cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
                         onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a";}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=border;}}>
                         {/* Score circle */}
-                        <div style={{marginBottom:10}}>
-                          <ScoreBadge score={item.score} size="sm" />
+                        <div style={{width:32, height:32, borderRadius:"50%", background:scoreBg(item.score), display:"flex", alignItems:"center", justifyContent:"center", marginBottom:8}}>
+                          <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, color:scoreColor(item.score)}}>{item.score}</span>
                         </div>
-                        <div style={{fontSize:13, fontWeight:600, color:text, lineHeight:1.3, marginBottom:4, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
+                        <div style={{fontSize:12, fontWeight:600, color:text, lineHeight:1.3, marginBottom:4, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                           {item.product_name}
                         </div>
                         <div style={{fontSize:11, color:scoreColor(item.score), fontWeight:600}}>{scoreLabel(item.score)}</div>
@@ -7417,82 +7498,6 @@ function App() {
                 </div>
               </div>
             )}
-            {/* Impact stats box */}
-            <div style={{maxWidth:960, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-              <div style={{background:isDark?"#0f2a18":"#f4f7f4", borderRadius:20, padding:isMobile?"32px 24px":"48px 56px", position:"relative", overflow:"hidden", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#d1e8d1"}`}}>
-                {/* Floating particles */}
-                {[
-                  {s:8, x:"5%",  y:"20%", a:0.25, shape:"circle"},
-                  {s:5, x:"92%", y:"15%", a:0.2,  shape:"diamond"},
-                  {s:12,x:"88%", y:"70%", a:0.18, shape:"circle"},
-                  {s:6, x:"8%",  y:"75%", a:0.22, shape:"diamond"},
-                  {s:9, x:"50%", y:"8%",  a:0.15, shape:"circle"},
-                  {s:4, x:"70%", y:"90%", a:0.2,  shape:"circle"},
-                  {s:7, x:"25%", y:"85%", a:0.15, shape:"diamond"},
-                  {s:5, x:"78%", y:"45%", a:0.2,  shape:"circle"},
-                ].map((p,i)=>(
-                  <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:p.shape==="circle"?"50%":"2px", transform:p.shape==="diamond"?"rotate(45deg)":undefined, background:"#16a34a", opacity:p.a, pointerEvents:"none"}}/>
-                ))}
-
-                <div style={{position:"relative", zIndex:1}}>
-                  <div style={{fontSize:isMobile?13:14, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8, textAlign:"center"}}>Why it matters</div>
-                  <p style={{fontSize:isMobile?14:16, color:isDark?"#6ee7b7":"#555", lineHeight:1.7, maxWidth:560, margin:"0 auto 40px", textAlign:"center"}}>
-                    The products around you affect more than you realize. Here is what the research says.
-                  </p>
-
-                  {/* Three spheres */}
-                  {[
-                    {
-                      label: "Your Health",
-                      color: "#16a34a",
-                      stats: [
-                        {number:"100%", label:"of human blood samples tested contained microplastics", sub:"Leslie et al. 2022"},
-                        {number:"58%",  label:"of arterial plaques studied contained polypropylene plastic", sub:"Marfella et al. NEJM 2024"},
-                        {number:"2024", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic dyes", sub:"FDA announcement"},
-                      ]
-                    },
-                    {
-                      label: "Your Home",
-                      color: "#16a34a",
-                      stats: [
-                        {number:"PVA",   label:"film in dishwasher and laundry pods enters waterways as microplastic after dissolving", sub:"peer-reviewed lifecycle analysis"},
-                        {number:"1,000+",label:"chemicals in everyday home products are known or suspected endocrine disruptors", sub:"Environmental Working Group"},
-                        {number:"10x",   label:"higher microplastic concentrations found in infants compared to adults", sub:"multiple peer-reviewed studies"},
-                      ]
-                    },
-                    {
-                      label: "The Planet",
-                      color: "#16a34a",
-                      stats: [
-                        {number:"8M",    label:"tonnes of plastic enter the world's oceans every single year", sub:"UNEP estimate"},
-                        {number:"700K",  label:"microfibers released per wash from a single synthetic fleece jacket", sub:"Environment International"},
-                        {number:"500yr", label:"the time it takes a standard plastic bag to break down in landfill", sub:"environmental science consensus"},
-                      ]
-                    },
-                  ].map((sphere, si) => (
-                    <div key={si} style={{marginBottom: si < 2 ? (isMobile?36:40) : 0}}>
-                      <div style={{fontSize:12, fontWeight:700, color:sphere.color, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16, textAlign:isMobile?"center":"left"}}>{sphere.label}</div>
-                      <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)", gap:isMobile?16:24}}>
-                        {sphere.stats.map((s,i)=>(
-                          <div key={i} style={{textAlign:isMobile?"center":"left"}}>
-                            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:isMobile?26:32, color:sphere.color, lineHeight:1, marginBottom:8}}>{s.number}</div>
-                            <div style={{fontSize:12, color:isDark?"#6ee7b7":"#444", lineHeight:1.5, marginBottom:4}}>{s.label}</div>
-                            <div style={{fontSize:10, color:isDark?"#475569":"#999", fontStyle:"italic"}}>{s.sub}</div>
-                          </div>
-                        ))}
-                      </div>
-                      {si < 2 && <div style={{borderTop:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1e8d1"}`, marginTop:isMobile?28:32}}/>}
-                    </div>
-                  ))}
-
-                  <div style={{fontSize:isMobile?14:16, color:isDark?"#6ee7b7":"#555", lineHeight:1.7, maxWidth:520, margin:"36px auto 0", textAlign:"center"}}>
-                    Most products carry no warning. No label. No guidance on what to do instead.
-                    <span style={{color:"#16a34a", fontWeight:700}}> That is why Partiqule exists.</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Suggest a product — users can request new products for scoring */}
             <SuggestionBox isDark={isDark} isMobile={isMobile} surface={surface} border={border} text={text} muted={muted} user={user}/>
 
