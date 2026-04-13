@@ -6919,42 +6919,51 @@ function App() {
                   {(() => {
                     const suggestion = getSuggestedAudit(history);
                     if (!suggestion) return null;
-                    return (
-                      <div style={{
-                        background: "rgba(34,197,94,0.06)",
-                        borderRadius: 16, padding: "16px 20px",
-                        border: "1.5px solid rgba(34,197,94,0.15)",
-                        marginBottom: 20,
-                      }}>
-                        <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
-                          textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
-                          Ready for your next step
+                    const AuditCard = () => {
+                      const [showComingSoon, setShowComingSoon] = useState(false);
+                      return (
+                        <div style={{
+                          background: "rgba(34,197,94,0.06)",
+                          borderRadius: 16, padding: "16px 20px",
+                          border: "1.5px solid rgba(34,197,94,0.15)",
+                          marginBottom: 20,
+                        }}>
+                          <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
+                            textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
+                            Ready for your next step
+                          </div>
+                          <div style={{fontSize:15, fontWeight:700,
+                            color:"#f0fdf4", marginBottom:6, fontFamily:"'Outfit',sans-serif"}}>
+                            Start your {suggestion.label}
+                          </div>
+                          <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7,
+                            marginBottom:14, lineHeight:1.5}}>
+                            Based on {suggestion.count} {
+                              suggestion.type === "pantry" ? "food and pantry" :
+                              suggestion.type === "beauty" ? "personal care" :
+                              suggestion.type === "home" ? "home and cleaning" :
+                              suggestion.type
+                            } scans
+                          </div>
+                          <button
+                            onClick={() => setShowComingSoon(true)}
+                            style={{
+                              padding:"10px 20px", borderRadius:10, background:"#16a34a",
+                              color:"#fff", border:"none", fontWeight:700,
+                              fontSize:14, cursor:"pointer",
+                              fontFamily:"'Outfit',sans-serif",
+                            }}>
+                            Start {suggestion.label} →
+                          </button>
+                          {showComingSoon && (
+                            <div style={{fontSize:12, color:"#16a34a", marginTop:8}}>
+                              Audit feature coming soon — you're building your history now ✓
+                            </div>
+                          )}
                         </div>
-                        <div style={{fontSize:15, fontWeight:700,
-                          color:"#f0fdf4", marginBottom:6, fontFamily:"'Outfit',sans-serif"}}>
-                          Start your {suggestion.label}
-                        </div>
-                        <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7,
-                          marginBottom:14, lineHeight:1.5}}>
-                          Based on {suggestion.count} {
-                            suggestion.type === "pantry" ? "food and pantry" :
-                            suggestion.type === "beauty" ? "personal care" :
-                            suggestion.type === "home" ? "home and cleaning" :
-                            suggestion.type
-                          } scans
-                        </div>
-                        <button
-                          onClick={() => setPage("lists")}
-                          style={{
-                            padding:"10px 20px", borderRadius:10, background:"#16a34a",
-                            color:"#fff", border:"none", fontWeight:700,
-                            fontSize:14, cursor:"pointer",
-                            fontFamily:"'Outfit',sans-serif",
-                          }}>
-                          Start {suggestion.label} →
-                        </button>
-                      </div>
-                    );
+                      );
+                    };
+                    return <AuditCard/>;
                   })()}
 
                   {/* Today's Comparison */}
