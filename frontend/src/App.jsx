@@ -451,6 +451,151 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   );
 };
 
+const ShareCompareCard = ({result, alternative, onClose}) => {
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("idle");
+  const productScore = result.overall_score || result.score;
+  const altScore = alternative.score || alternative.estimated_score || 3;
+  const delta = (productScore - altScore).toFixed(1);
+  const productName = result.product_name || "Scanned product";
+  const altName = alternative.name || "Alternative";
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = 1080, H = 1080;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const sc = (s) => s <= 3 ? "#16a34a" : s <= 5 ? "#d97706" : "#dc2626";
+
+    // Background
+    ctx.fillStyle = "#f0fdf4"; ctx.fillRect(0, 0, W, H);
+
+    // Top bar
+    ctx.fillStyle = "#052e16"; ctx.fillRect(0, 0, W, 100);
+    ctx.fillStyle = "#4ade80"; ctx.font = "800 30px 'Outfit',system-ui,sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("PARTIQULE", 48, 50);
+    ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
+    ctx.textAlign = "right"; ctx.fillText("Product Safety Comparison", W - 48, 50);
+
+    // Two card areas
+    const cardY = 160, cardH = 540, gap = 40, cardW = (W - 48 * 2 - gap) / 2;
+    const leftX = 48, rightX = 48 + cardW + gap;
+
+    // Helper: draw card
+    const drawCard = (x, name, score, isAlt) => {
+      const borderColor = isAlt ? "#16a34a" : "#d1d5db";
+      ctx.beginPath(); ctx.roundRect(x, cardY, cardW, cardH, 24);
+      ctx.fillStyle = "#ffffff"; ctx.fill();
+      ctx.strokeStyle = borderColor; ctx.lineWidth = isAlt ? 4 : 2; ctx.stroke();
+
+      // "Better" label for alt
+      if (isAlt) {
+        const labelW = 130, labelH = 38, labelX = x + cardW / 2 - labelW / 2, labelY = cardY - 19;
+        ctx.beginPath(); ctx.roundRect(labelX, labelY, labelW, labelH, 19);
+        ctx.fillStyle = "#16a34a"; ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "700 20px 'Outfit',system-ui,sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("Better", labelX + labelW / 2, labelY + labelH / 2);
+      }
+
+      // Product name (2 lines max)
+      ctx.fillStyle = "#111"; ctx.font = "700 32px 'Outfit',system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      const words = name.split(" "); let line = "", lines = [];
+      for (const w of words) {
+        const test = line ? line + " " + w : w;
+        if (ctx.measureText(test).width > cardW - 60 && line) { lines.push(line); line = w; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      lines = lines.slice(0, 2);
+      if (lines.length < name.split(" ").length && lines.length === 2) {
+        lines[1] = lines[1].slice(0, -1) + "\u2026";
+      }
+      const nameY = cardY + 80;
+      lines.forEach((l, i) => ctx.fillText(l, x + cardW / 2, nameY + i * 42));
+
+      // Score circle
+      const circR = 80, circX = x + cardW / 2, circY = cardY + cardH / 2 + 40;
+      ctx.beginPath(); ctx.arc(circX, circY, circR, 0, Math.PI * 2);
+      ctx.fillStyle = sc(score) + "18"; ctx.fill();
+      ctx.strokeStyle = sc(score); ctx.lineWidth = 5; ctx.stroke();
+      ctx.fillStyle = sc(score); ctx.font = "900 72px 'Outfit',system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(parseFloat(score).toFixed(1), circX, circY);
+
+      // /10 label
+      ctx.fillStyle = "#94a3b8"; ctx.font = "600 24px 'Outfit',system-ui,sans-serif";
+      ctx.fillText("/10 score", circX, circY + circR + 40);
+    };
+
+    drawCard(leftX, productName, productScore, false);
+    drawCard(rightX, altName, altScore, true);
+
+    // Delta line
+    const deltaY = cardY + cardH + 70;
+    ctx.fillStyle = "#16a34a"; ctx.font = "800 36px 'Outfit',system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("\u2193 " + delta + " points safer in the same category", W / 2, deltaY);
+
+    // Footer
+    ctx.fillStyle = "#94a3b8"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("partiqule.com \u2014 Know what\u2019s in your products", W / 2, H - 48);
+  }, [result, alternative]);
+
+  const share = async () => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    setStatus("copying");
+    try {
+      const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+      if (navigator.share && navigator.canShare?.({files: [new File([blob], "partiqule-compare.png", {type: "image/png"})]})) {
+        await navigator.share({title: `${productName} vs ${altName}`, text: `I swapped ${productName} (${productScore}/10) for ${altName} (${altScore}/10) — ${delta} points safer. partiqule.com`, files: [new File([blob], "partiqule-compare.png", {type: "image/png"})]});
+      } else {
+        await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+      }
+      setStatus("copied");
+    } catch {
+      const url = URL.createObjectURL(await new Promise(r => canvas.toBlob(r, "image/png")));
+      const a = document.createElement("a"); a.href = url;
+      a.download = "partiqule-compare.png"; a.click(); URL.revokeObjectURL(url);
+      setStatus("copied");
+    }
+    setTimeout(() => setStatus("idle"), 3000);
+  };
+
+  return (
+    <div style={{position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}} onClick={onClose}>
+      <div style={{background:"#fff", borderRadius:20, padding:20, maxWidth:480, width:"100%", maxHeight:"90vh", overflow:"auto"}} onClick={e => e.stopPropagation()}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+          <span style={{fontFamily:"'Outfit',sans-serif", fontSize:16, fontWeight:700, color:"#111"}}>Compare & Share</span>
+          <button onClick={onClose} style={{background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#999", padding:0, lineHeight:1}}>x</button>
+        </div>
+        <div style={{borderRadius:12, overflow:"hidden", border:"1px solid #e2e8f0"}}>
+          <canvas ref={canvasRef} style={{display:"block", width:"100%"}}/>
+        </div>
+        <div style={{display:"flex", gap:8, marginTop:12}}>
+          <button onClick={share} disabled={status === "copying"} style={{
+            flex:1, padding:"13px 16px", borderRadius:12,
+            background: status === "copied" ? "#16a34a" : "linear-gradient(135deg,#22c55e,#16a34a)",
+            border:"none", color:"#fff",
+            fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800,
+            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+          }}>
+            <IconShare size={16} color="#fff"/>
+            {status === "copying" ? "Preparing..." : status === "copied" ? "Shared!" : "Share comparison"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
@@ -5616,6 +5761,7 @@ function App() {
   const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
   const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
+  const [compareAlt,  setCompareAlt] = useState(null);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
@@ -8221,6 +8367,27 @@ function App() {
                 );
               })()}
 
+              {/* Compare & Share — only when best alt is 2+ points lower */}
+              {(() => {
+                const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
+                const scored = allAlts.filter(a => (a.score || a.estimated_score) != null);
+                if (!scored.length) return null;
+                const best = scored.reduce((a, b) => ((a.score || a.estimated_score) <= (b.score || b.estimated_score) ? a : b));
+                const bestScore = best.score || best.estimated_score;
+                const productScore = result.overall_score || result.score;
+                if ((productScore - bestScore) < 2) return null;
+                return (
+                  <button onClick={() => setCompareAlt(best)} style={{
+                    width:"100%", padding:"14px", borderRadius:12,
+                    background:"none", border:"1.5px solid #16a34a",
+                    fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14,
+                    color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  }}>
+                    <IconShare size={16} color="#16a34a"/> Compare & Share
+                  </button>
+                );
+              })()}
+
               {/* Bundle */}
               <BundleCard category={result.category} isDark={isDark}/>
 
@@ -8264,6 +8431,11 @@ function App() {
           </div>
         )}
         </>
+      )}
+
+      {/* Compare share card modal */}
+      {compareAlt && result && (
+        <ShareCompareCard result={result} alternative={compareAlt} onClose={() => setCompareAlt(null)}/>
       )}
 
       {/* ── PERSISTENT MOBILE BOTTOM NAV + FLOATING SCAN ── */}
