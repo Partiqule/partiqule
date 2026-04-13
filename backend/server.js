@@ -5335,6 +5335,40 @@ app.get("/api/price-lookup", async (req, res) => {
   }
 });
 
+// ── RECIPE INGREDIENTS — AI-powered ingredient expansion ──
+app.post("/api/recipe-ingredients", async (req, res) => {
+  const { dish, servings } = req.body;
+  if (!dish || !dish.trim()) return res.status(400).json({ error: "dish is required" });
+  try {
+    const system = `You are a culinary expert and nutritionist. Return raw JSON only, no markdown, no explanation.`;
+    const userPrompt = `The user wants to make: "${dish.trim()}"
+Servings: ${servings || 4}
+
+Return a JSON object with this exact shape:
+{
+  "dish": "Clean formatted dish name",
+  "servings": ${servings || 4},
+  "ingredients": [
+    { "name": "specific product to buy at grocery store", "quantity": "amount with unit", "category": "food", "notes": "optional brand suggestion" }
+  ]
+}
+
+Rules:
+- List only ingredients the user needs to BUY — not pantry staples like salt, pepper, olive oil unless special version required
+- Use specific scannable product names e.g. "chicken breast" not "protein"
+- Include brand suggestions in notes when a cleaner option exists
+- Maximum 15 ingredients, minimum 3
+- category must be one of: food, food_beverage, beverage, cleaning, personal_care, baby, supplement, other`;
+
+    const parsed = await callClaude(system, userPrompt, 1000, 2);
+    if (!parsed.ingredients || !Array.isArray(parsed.ingredients)) throw new Error("Invalid ingredient list shape");
+    return res.json(parsed);
+  } catch (e) {
+    console.error("Recipe ingredients error:", e.message);
+    return res.status(500).json({ error: "Could not generate ingredient list", details: e.message });
+  }
+});
+
 app.get("/health", (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured - using static database",

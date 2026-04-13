@@ -4019,6 +4019,12 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const [expandedId, setExpandedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [recipeQuery, setRecipeQuery] = useState("");
+  const [recipeLoading, setRecipeLoading] = useState(false);
+  const [recipeError, setRecipeError] = useState(null);
+  const [recipePreview, setRecipePreview] = useState(null);
+  const [servings, setServings] = useState(4);
+  const [lastRecipeAdded, setLastRecipeAdded] = useState(null);
   const [showPrev, setShowPrev] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -4095,6 +4101,28 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   };
 
   const displayItems = [...items.filter(i=>!i.checked), ...items.filter(i=>i.checked)];
+
+  const fetchRecipeIngredients = async () => {
+    if(!recipeQuery.trim()||recipeLoading)return;
+    setRecipeLoading(true); setRecipeError(null); setRecipePreview(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/recipe-ingredients`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dish:recipeQuery.trim(),servings})});
+      if(!res.ok){const err=await res.json();throw new Error(err.error||"Failed to get ingredients");}
+      const data = await res.json();
+      if(!data.ingredients||data.ingredients.length===0)throw new Error("No ingredients found for that dish");
+      setRecipePreview(data);
+    } catch(e){setRecipeError(e.message||"Could not get ingredients");} finally{setRecipeLoading(false);}
+  };
+
+  const addAllIngredients = async (recipe) => {
+    setRecipePreview(null); setRecipeQuery("");
+    const existingNames = items.map(i=>i.text.toLowerCase().trim());
+    const toAdd = recipe.ingredients.filter(ing=>{const n=ing.name.toLowerCase().trim();return !existingNames.some(e=>e===n||e.includes(n)||n.includes(e));});
+    const skipped = recipe.ingredients.length - toAdd.length;
+    for(let i=0;i<toAdd.length;i++){if(i>0)await new Promise(r=>setTimeout(r,300));addGroceryItem(activeId,toAdd[i].name);}
+    setLastRecipeAdded(recipe.dish); setTimeout(()=>setLastRecipeAdded(null),4000);
+    if(skipped>0){setRecipeError(`${skipped} ingredient${skipped!==1?"s":""} already on your list — skipped`);setTimeout(()=>setRecipeError(null),3000);}
+  };
 
   const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); setSummaryDismissed(false); setShowSummary(false); };
 
@@ -4195,6 +4223,51 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
               )}
             </div>
           )}
+        </div>
+
+        {/* Recipe input */}
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Add by recipe</div>
+          <div style={{display:"flex", gap:8, marginBottom:8}}>
+            <input value={recipeQuery} onChange={e=>{setRecipeQuery(e.target.value);setRecipeError(null);setRecipePreview(null);}} onKeyDown={e=>{if(e.key==="Enter"&&recipeQuery.trim()&&!recipeLoading)fetchRecipeIngredients();}} placeholder="e.g. chicken tacos, pasta carbonara..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+            <button onClick={fetchRecipeIngredients} disabled={!recipeQuery.trim()||recipeLoading} style={{padding:"10px 16px", borderRadius:10, border:"none", background:!recipeQuery.trim()||recipeLoading?(isDark?"#1e2433":"#f1f5f9"):"#16a34a", color:!recipeQuery.trim()||recipeLoading?muted:"#fff", fontWeight:700, fontSize:14, cursor:!recipeQuery.trim()||recipeLoading?"not-allowed":"pointer", whiteSpace:"nowrap"}}>{recipeLoading?"Loading...":"Get ingredients"}</button>
+          </div>
+          <div style={{display:"flex", alignItems:"center", gap:8, fontSize:12, color:muted}}>
+            <span>Servings:</span>
+            {[2,4,6,8].map(n=><button key={n} onClick={()=>setServings(n)} style={{width:28,height:28,borderRadius:6,border:`1px solid ${servings===n?"#16a34a":border}`,background:servings===n?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:servings===n?"#16a34a":muted,fontSize:12,fontWeight:servings===n?700:400,cursor:"pointer"}}>{n}</button>)}
+          </div>
+          {recipeError && <div style={{marginTop:8, fontSize:12, color:"#dc2626", fontWeight:600}}>{recipeError}</div>}
+          {lastRecipeAdded && <div style={{marginTop:8, fontSize:12, color:"#16a34a", fontWeight:600}}>{lastRecipeAdded} ingredients added — scoring in background. Add another dish or shop from the list below.</div>}
+          {recipePreview && (
+            <div style={{marginTop:12, borderRadius:12, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden"}}>
+              <div style={{padding:"12px 16px", background:isDark?"#1a2a1a":"#f0fdf4", borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:14, fontWeight:700, color:text}}>{recipePreview.dish}</div>
+                  <div style={{fontSize:12, color:muted, marginTop:2}}>{recipePreview.ingredients.length} ingredients for {recipePreview.servings} servings</div>
+                </div>
+                <div style={{display:"flex", gap:8}}>
+                  <button onClick={()=>{setRecipePreview(null);setRecipeQuery("");}} style={{padding:"6px 12px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, cursor:"pointer"}}>Cancel</button>
+                  <button onClick={()=>addAllIngredients(recipePreview)} style={{padding:"6px 14px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer"}}>Add all to list</button>
+                </div>
+              </div>
+              <div style={{maxHeight:280, overflowY:"auto"}}>
+                {recipePreview.ingredients.map((ing,i)=>(
+                  <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", borderBottom:i<recipePreview.ingredients.length-1?`1px solid ${border}`:"none", background:i%2===0?"none":(isDark?"#0f1116":"#fafafa")}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14, fontWeight:600, color:text}}>{ing.name}</div>
+                      <div style={{fontSize:12, color:muted, marginTop:2}}>{ing.quantity}{ing.notes&&<span style={{marginLeft:6,color:"#16a34a",fontStyle:"italic"}}> — {ing.notes}</span>}</div>
+                    </div>
+                    <button onClick={()=>setRecipePreview(prev=>({...prev,ingredients:prev.ingredients.filter((_,idx)=>idx!==i)}))} style={{background:"none",border:"none",color:muted,cursor:"pointer",fontSize:16,padding:"0 4px",opacity:0.5,marginLeft:8}}>x</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{display:"flex", alignItems:"center", gap:10, margin:"16px 0 0"}}>
+            <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+            <span style={{fontSize:11, color:muted}}>or add manually</span>
+            <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+          </div>
         </div>
 
         {/* Add item */}
