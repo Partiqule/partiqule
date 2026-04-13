@@ -3994,6 +3994,110 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 };
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
+const AddToListButton = ({result, lists, createShoppingList, addItemToList, muted}) => {
+  const [added, setAdded] = useState(false);
+  return (
+    <button onClick={()=>{
+      const existing = lists.find(l=>l.type==="shopping");
+      const targetId = existing ? existing.id : createShoppingList("My List");
+      addItemToList(targetId, {text:result.product_name, checked:false, score:result.overall_score||result.score, category:result.category, addedAt:new Date().toISOString()});
+      setAdded(true); setTimeout(()=>setAdded(false),2000);
+    }} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",background:"none",color:added?"#16a34a":muted,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontWeight:added?600:400}}>
+      {added ? "Added to list" : "+ Add to shopping list"}
+    </button>
+  );
+};
+
+const ListsPage = ({lists, saveLists, createShoppingList, addItemToList, toggleListItem, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
+  const [tab, setTab] = useState("shopping");
+  const [newListName, setNewListName] = useState("");
+  const [activeListId, setActiveListId] = useState(null);
+  const [newItemText, setNewItemText] = useState("");
+  const shoppingLists = lists.filter(l=>l.type==="shopping");
+  const activeList = lists.find(l=>l.id===activeListId);
+
+  return (
+    <div style={{maxWidth:700, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+      <div style={{marginBottom:24}}>
+        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 4px"}}>Lists</h1>
+        <p style={{fontSize:14, color:muted, margin:0}}>Shopping lists, grocery planning, and your routine</p>
+      </div>
+      <div style={{display:"flex", gap:8, marginBottom:28, borderBottom:`1px solid ${border}`, paddingBottom:0}}>
+        {[{id:"shopping",label:"Shopping Lists"},{id:"grocery",label:"Grocery Lists"},{id:"routine",label:"My Routine"}].map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 16px", background:"none", border:"none", borderBottom:tab===t.id?"2px solid #16a34a":"2px solid transparent", color:tab===t.id?"#16a34a":muted, fontWeight:tab===t.id?700:400, fontSize:14, cursor:"pointer", marginBottom:-1}}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab==="shopping" && (<>
+        {activeList ? (<>
+          <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:20}}>
+            <button onClick={()=>setActiveListId(null)} style={{background:"none", border:"none", color:muted, cursor:"pointer", fontSize:14, padding:0}}>Back</button>
+            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:20, color:text, margin:0, flex:1}}>{activeList.name}</h2>
+            <span style={{fontSize:12, color:muted}}>{(activeList.items||[]).filter(i=>!i.checked).length} remaining</span>
+          </div>
+          <div style={{display:"flex", gap:8, marginBottom:20}}>
+            <input value={newItemText} onChange={e=>setNewItemText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItemText.trim()){addItemToList(activeList.id,{text:newItemText.trim(),checked:false,score:null,addedAt:new Date().toISOString()});setNewItemText("");}}} placeholder="Add an item..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+            <button onClick={()=>{if(!newItemText.trim())return;addItemToList(activeList.id,{text:newItemText.trim(),checked:false,score:null,addedAt:new Date().toISOString()});setNewItemText("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
+          </div>
+          {(activeList.items||[]).length===0 ? (
+            <div style={{textAlign:"center", padding:"40px 0", color:muted, fontSize:14}}>Add your first item above</div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:8}}>
+              {activeList.items.map((item,i)=>(
+                <div key={i} onClick={()=>toggleListItem(activeList.id,i)} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${border}`, cursor:"pointer", opacity:item.checked?0.6:1}}>
+                  <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                    {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </div>
+                  <span style={{flex:1, fontSize:14, color:text, textDecoration:item.checked?"line-through":"none"}}>{item.text}</span>
+                  {item.score!=null && <ScoreBadge score={item.score} size="xs"/>}
+                </div>
+              ))}
+            </div>
+          )}
+        </>) : (<>
+          {shoppingLists.length===0 ? (
+            <div style={{textAlign:"center", padding:"40px 20px"}}>
+              <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>No shopping lists yet</div>
+              <div style={{fontSize:14, color:muted, marginBottom:20, lineHeight:1.6}}>Create a list for your next shop. Add anything — scored items from your scans or everyday staples.</div>
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:20}}>
+              {shoppingLists.map(l=>{
+                const remaining=(l.items||[]).filter(i=>!i.checked).length;
+                const total=(l.items||[]).length;
+                return (
+                  <div key={l.id} onClick={()=>{setActiveListId(l.id);saveLists(lists.map(x=>x.id===l.id?{...x,lastOpenedAt:new Date().toISOString()}:x));}} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderRadius:14, background:surface, border:`1.5px solid ${border}`, cursor:"pointer"}}>
+                    <div>
+                      <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>{l.name}</div>
+                      <div style={{fontSize:12, color:muted}}>{remaining} of {total} items remaining</div>
+                    </div>
+                    <span style={{color:"#16a34a", fontSize:18, fontWeight:700}}>&rarr;</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <div style={{display:"flex", gap:8}}>
+            <input value={newListName} onChange={e=>setNewListName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newListName.trim()){const id=createShoppingList(newListName.trim());setNewListName("");setActiveListId(id);}}} placeholder="New list name..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+            <button onClick={()=>{if(!newListName.trim())return;const id=createShoppingList(newListName.trim());setNewListName("");setActiveListId(id);}} style={{padding:"10px 20px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Create</button>
+          </div>
+        </>)}
+      </>)}
+
+      {tab==="grocery" && (
+        <div style={{textAlign:"center", padding:"40px 20px"}}>
+          <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>Scored grocery lists — coming soon</div>
+          <div style={{fontSize:14, color:muted, lineHeight:1.6, maxWidth:380, margin:"0 auto"}}>Tell us what you are making and your budget. We will build a scored grocery list before you leave the house. Every item already rated.</div>
+        </div>
+      )}
+
+      {tab==="routine" && (
+        <RoutinePage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} user={user} onSelect={onSelect} onSearch={onSearch}/>
+      )}
+    </div>
+  );
+};
+
 const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
   const [timeFilter,   setTimeFilter]   = useState("all");
   const [notPurchased, setNotPurchased] = useState(new Set());
@@ -5773,6 +5877,14 @@ function App() {
   };
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
+  const [lists,       setLists]     = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_lists")||"[]");}catch{return [];}});
+  const saveLists = (updated) => { setLists(updated); try{localStorage.setItem("ps_lists",JSON.stringify(updated));}catch{} };
+  const createShoppingList = (name) => {
+    const newList = {id:Date.now().toString(), name:name||"Shopping List", type:"shopping", items:[], createdAt:new Date().toISOString(), lastOpenedAt:new Date().toISOString()};
+    const updated = [newList,...lists]; saveLists(updated); return newList.id;
+  };
+  const addItemToList = (listId, item) => { saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),item],lastOpenedAt:new Date().toISOString()}:l)); };
+  const toggleListItem = (listId, itemIndex) => { saveLists(lists.map(l=>l.id===listId?{...l,items:l.items.map((item,i)=>i===itemIndex?{...item,checked:!item.checked}:item)}:l)); };
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -6076,8 +6188,9 @@ function App() {
     if (path === "/terms") { setPage("terms"); return; }
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
+    if (path === "/lists") { setPage("lists"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -6398,7 +6511,7 @@ function App() {
                 {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
                 {label:"Guides",     action:()=>navigateTo("guides"),                      active:page==="guides"||page==="guide"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
-                {label:"My Routine", action:()=>{setPage("routine"); setResult(null);},    active:page==="routine"},
+                {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active:page==="lists"},
                 {label:"My Scans",   action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
@@ -6407,7 +6520,7 @@ function App() {
                   cursor:"pointer", padding:"6px 12px", borderRadius:8,
                   background:item.active?"rgba(34,197,94,0.1)":"transparent",
                   transition:"all 0.15s",
-                }}>{item.label}{item.label==="My Scans"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
+                }}>{item.label}{item.label==="My Scans"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}{item.label==="Lists"&&(()=>{try{const ct=lists.reduce((s,l)=>s+(l.items||[]).filter(x=>!x.checked).length,0);if(ct>0)return <span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{ct}</span>;}catch{}return null;})()}</span>
               ))}
               {isAdminUser(user) && (
                 <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'Outfit',sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
@@ -6549,6 +6662,15 @@ function App() {
             Go to Partiqule →
           </button>
         </div>
+      ) : page === "lists" ? (
+        <ListsPage
+          lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
+          addItemToList={addItemToList} toggleListItem={toggleListItem}
+          history={history} isDark={isDark} surface={surface} border={border}
+          text={text} muted={muted} isMobile={isMobile} user={user}
+          onSelect={(item)=>{setResult(item); setPage("home");}}
+          onSearch={(q)=>{setPage("home"); setQuery(q); analyze(q);}}
+        />
       ) : page === "routine" ? (
         <RoutinePage
           history={history}
@@ -7101,6 +7223,35 @@ function App() {
                       </div>
                     </div>
                   </div>
+                  )}
+
+                  {/* Active list reminder */}
+                  {(() => {
+                    const activeLists = lists.filter(l => {
+                      const lastOpened = l.lastOpenedAt ? new Date(l.lastOpenedAt) : null;
+                      const daysSince = lastOpened ? (Date.now() - lastOpened.getTime()) / (1000*60*60*24) : 999;
+                      return (l.items||[]).filter(i=>!i.checked).length > 0 && daysSince > 7;
+                    });
+                    if (!activeLists.length) return null;
+                    const list = activeLists[0];
+                    const remaining = (list.items||[]).filter(i=>!i.checked).length;
+                    const daysSince = Math.floor((Date.now()-new Date(list.lastOpenedAt).getTime())/(1000*60*60*24));
+                    return (
+                      <div onClick={()=>setPage("lists")} style={{background:"rgba(34,197,94,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(34,197,94,0.15)", marginBottom:16, cursor:"pointer"}}>
+                        <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Your list</div>
+                        <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>{list.name} — {remaining} item{remaining!==1?"s":""} remaining</div>
+                        <div style={{fontSize:13, color:muted}}>Last opened {daysSince} day{daysSince!==1?"s":""} ago</div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Start first list prompt */}
+                  {lists.length === 0 && history.length >= 3 && (
+                    <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
+                      <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Plan your next shop</div>
+                      <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>Start a shopping list</div>
+                      <div style={{fontSize:13, color:muted, lineHeight:1.5}}>Add items as you scan so you always know what to buy and what to skip.</div>
+                    </div>
                   )}
 
                   {/* Trending Scans */}
@@ -8177,6 +8328,11 @@ function App() {
                           <IconShare size={16} color={isDark?"#6ee7b7":"#6b7280"}/>
                         </button>
                       </div>
+
+                      {/* Add to shopping list — home-relevant categories */}
+                      {["food","food_beverage","beverage","snack","supplement","cleaning","home","personal_care","baby"].includes(result?.category) && (
+                        <AddToListButton result={result} lists={lists} createShoppingList={createShoppingList} addItemToList={addItemToList} muted={muted}/>
+                      )}
                     </div>
                   );
                 })()}
@@ -8625,7 +8781,7 @@ function App() {
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"My Scans",icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Scan",    icon:null, action:()=>{setShowScanModal(o=>!o); setModalQuery("");}, active:false, isScan:true },
-              { label:"Routine", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>, action:()=>{setPage("routine"); setResult(null);}, active: page==="routine" },
+              { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
               item.isScan ? (
