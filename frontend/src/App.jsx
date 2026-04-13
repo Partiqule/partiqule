@@ -4005,7 +4005,7 @@ const getGroceryRecommendations = (history) => {
   };
 };
 
-const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, findSwapSuggestion, history, isDark, surface, border, text, muted, isMobile}) => {
+const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, findSwapSuggestion, childMode, history, isDark, surface, border, text, muted, isMobile}) => {
   const groceryLists = lists.filter(l=>l.type==="grocery");
   const activeList = groceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || groceryLists[0];
   const [view, setView] = useState(activeList ? "list" : "setup");
@@ -4242,7 +4242,7 @@ const AddToListButton = ({result, lists, createShoppingList, addItemToList, mute
   );
 };
 
-const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, findSwapSuggestion, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
+const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, findSwapSuggestion, childMode, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
   const [tab, setTab] = useState("grocery");
   const [newListName, setNewListName] = useState("");
   const [activeListId, setActiveListId] = useState(null);
@@ -4319,7 +4319,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, add
       </>)}
 
       {tab==="grocery" && (
-        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} findSwapSuggestion={findSwapSuggestion} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
+        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} findSwapSuggestion={findSwapSuggestion} childMode={childMode} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
       )}
 
       {tab==="routine" && (
@@ -6170,15 +6170,15 @@ function App() {
     const tempItem = {text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
     saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
     try {
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim()})});
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim(),childMode:childMode||false})});
       const data = await res.json();
       saveLists(lists.map(l=>{
         if(l.id!==listId)return l;
         const items=[...(l.items||[])];
         const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
         if(idx===undefined)return l;
-        const finalScore = data.overall_score||data.score;
-        items[idx]={...items[idx],score:finalScore,category:data.category,summary:data.summary,scoring:false,scoreError:false};
+        const finalScore = childMode ? (data.child_score||data.overall_score||data.score) : (data.overall_score||data.score);
+        items[idx]={...items[idx],score:finalScore,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false};
         if (finalScore >= 5.5) findSwapSuggestion(listId, idx, productName.trim(), data.category, finalScore);
         return {...l,items};
       }));
@@ -6995,7 +6995,7 @@ function App() {
           lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
           createGroceryList={createGroceryList} addGroceryItem={addGroceryItem}
           addItemToList={addItemToList} toggleListItem={toggleListItem}
-          findSwapSuggestion={findSwapSuggestion}
+          findSwapSuggestion={findSwapSuggestion} childMode={childMode}
           history={history} isDark={isDark} surface={surface} border={border}
           text={text} muted={muted} isMobile={isMobile} user={user}
           onSelect={(item)=>{setResult(item); setPage("home");}}
