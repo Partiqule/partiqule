@@ -4019,6 +4019,8 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const [expandedIdx, setExpandedIdx] = useState(null);
   const [showPrev, setShowPrev] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryDismissed, setSummaryDismissed] = useState(false);
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const current = lists.find(l=>l.id===activeId);
@@ -4033,10 +4035,41 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const CATEGORY_LABELS = {food:"Food",food_beverage:"Food and Drink",beverage:"Drinks",snack:"Snacks",supplement:"Supplements",cleaning:"Cleaning",personal_care:"Personal Care",skincare:"Skincare",baby:"Baby",home:"Home",clothing:"Clothing",other:"Other"};
   const categorySpend = uncheckedItems.reduce((acc,item)=>{const cat=item.category||"other";const price=item.estimatedPrice||estimateItemPrice(item.category);const qty=item.quantity||1;acc[cat]=(acc[cat]||0)+(price*qty);return acc;},{});
   const categoryEntries = Object.entries(categorySpend).sort((a,b)=>b[1]-a[1]);
+  const checkedItems = items.filter(i=>i.checked);
+  const shopComplete = items.length>=3 && uncheckedItems.length===0;
+  useEffect(()=>{if(shopComplete&&!summaryDismissed&&items.length>=3)setTimeout(()=>setShowSummary(true),400);},[shopComplete]);
+
+  const generateShopShareCard = (list, cardItems) => {
+    const canvas = document.createElement("canvas"); canvas.width=1080; canvas.height=1080;
+    const ctx = canvas.getContext("2d");
+    const si = cardItems.filter(i=>i.score!=null);
+    const avg = si.length ? si.reduce((s,i)=>s+(i.score||0),0)/si.length : 0;
+    const sw = cardItems.filter(i=>i.swappedFrom);
+    const bgt = list.budget||0;
+    const est = cardItems.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category))*(i.quantity||1)),0);
+    const sc = avg<=3?"#16a34a":avg<=5?"#d97706":"#dc2626";
+    const sb = avg<=3?"#f0fdf4":avg<=5?"#fffbeb":"#fef2f2";
+    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,1080,1080);
+    ctx.fillStyle=sc; ctx.fillRect(0,0,1080,10);
+    ctx.font="600 26px Arial"; ctx.fillStyle="#999999"; ctx.textAlign="center"; ctx.fillText("PARTIQULE",540,90);
+    const sn=list.name.length>30?list.name.slice(0,30)+"...":list.name;
+    ctx.font="600 30px Arial"; ctx.fillStyle="#333333"; ctx.fillText(sn,540,148);
+    ctx.beginPath(); ctx.arc(540,360,150,0,Math.PI*2); ctx.fillStyle=sb; ctx.fill();
+    ctx.font="800 110px Arial"; ctx.fillStyle=sc; ctx.fillText(avg.toFixed(1),540,400);
+    ctx.font="500 26px Arial"; ctx.fillStyle="#999999"; ctx.fillText("avg. score",540,450);
+    const stats=[`${cardItems.length} items`,`${sw.length} swap${sw.length!==1?"s":""}`,bgt>0?`$${est.toFixed(0)} of $${bgt}`:null].filter(Boolean);
+    const pw=stats.length===3?300:360, ph=58, pg=16, tw=stats.length*pw+(stats.length-1)*pg, sx=(1080-tw)/2;
+    stats.forEach((st,i)=>{const x=sx+i*(pw+pg);ctx.fillStyle="#f1f5f9";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,550,pw,ph,12);else ctx.rect(x,550,pw,ph);ctx.fill();ctx.font="600 22px Arial";ctx.fillStyle="#333333";ctx.textAlign="center";ctx.fillText(st,x+pw/2,584);});
+    const bs=sw.length>0?sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a):null;
+    if(bs&&((bs.swappedFromScore||0)-(bs.score||0))>0){const imp=((bs.swappedFromScore||0)-(bs.score||0)).toFixed(1);const nm=bs.text.length>28?bs.text.slice(0,28)+"...":bs.text;ctx.font="500 22px Arial";ctx.fillStyle="#16a34a";ctx.textAlign="center";ctx.fillText(`Best swap: ${nm} — ${imp} pts better`,540,700);}
+    ctx.font="400 22px Arial"; ctx.fillStyle="#bbbbbb"; ctx.textAlign="center"; ctx.fillText("partiqule.com",540,1030);
+    canvas.toBlob(blob=>{if(!blob)return;if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],"partiqule-shop.png",{type:"image/png"})]})){navigator.share({files:[new File([blob],"partiqule-shop.png",{type:"image/png"})],title:"My Partiqule Grocery Score"}).catch(()=>{});}else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="partiqule-shop.png";a.click();}},"image/png");
+  };
+
   const stores = ["Whole Foods","Target","Trader Joe's","Walmart","Kroger","Sprouts","Costco","Other"];
   const presets = [50,80,120];
 
-  const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); };
+  const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); setSummaryDismissed(false); setShowSummary(false); };
 
   if (view === "setup") return (
     <div>
@@ -4267,6 +4300,40 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Post-shop summary overlay */}
+      {showSummary && current && (
+        <div style={{position:"fixed", inset:0, zIndex:1000, background:isDark?"#0f1116":"#ffffff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px", overflowY:"auto"}}>
+          <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Shop complete</div>
+          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, marginBottom:20, textAlign:"center"}}>{current.name}</div>
+          {(() => {const si=items.filter(i=>i.score!=null);if(!si.length)return null;const avg=si.reduce((s,i)=>s+(i.score||0),0)/si.length;return (<div style={{textAlign:"center",marginBottom:8}}><ScoreBadge score={avg} size="lg"/><div style={{fontSize:13,color:muted,marginTop:6}}>average score across {si.length} item{si.length!==1?"s":""}</div></div>);})()}
+          {(() => {
+            const sw=items.filter(i=>i.swappedFrom); const bgt=current.budget||0;
+            const est=items.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category))*(i.quantity||1)),0);
+            return (
+              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", maxWidth:300, margin:"20px 0"}}>
+                <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
+                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:text}}>{items.length}</div>
+                  <div style={{fontSize:12, color:muted, marginTop:2}}>item{items.length!==1?"s":""}</div>
+                </div>
+                <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
+                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:sw.length>0?"#16a34a":text}}>{sw.length}</div>
+                  <div style={{fontSize:12, color:muted, marginTop:2}}>swap{sw.length!==1?"s":""} made</div>
+                </div>
+                {bgt>0 && (<div style={{gridColumn:"1 / -1", background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
+                  <div style={{fontSize:20, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:text}}>Est. ${est.toFixed(0)} of ${bgt.toFixed(0)}</div>
+                  <div style={{fontSize:12, color:muted, marginTop:2}}>budget used</div>
+                </div>)}
+              </div>
+            );
+          })()}
+          {(() => {const sw=items.filter(i=>i.swappedFrom&&i.swappedFromScore&&i.score!=null);if(!sw.length)return null;const best=sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a);const imp=((best.swappedFromScore||0)-(best.score||0)).toFixed(1);if(parseFloat(imp)<=0)return null;return (<div style={{width:"100%",maxWidth:300,background:isDark?"#1a2a1a":"#f0fdf4",borderRadius:12,padding:"14px 16px",marginBottom:20}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}}>Best swap</div><div style={{fontSize:14,fontWeight:600,color:text}}>{best.text}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{imp} points better than {best.swappedFrom}</div></div>);})()}
+          <div style={{display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:300}}>
+            <button onClick={()=>generateShopShareCard(current,items)} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
+            <button onClick={()=>{setShowSummary(false);setSummaryDismissed(true);}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1.5px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
+          </div>
         </div>
       )}
     </div>
