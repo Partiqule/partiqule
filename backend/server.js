@@ -5319,6 +5319,22 @@ app.post("/apple-webhook", async (req, res) => {
 });
 
 
+// ── PRICE LOOKUP — lightweight product price search ──
+app.get("/api/price-lookup", async (req, res) => {
+  const { query } = req.query;
+  if (!query) return res.json({ price: null });
+  try {
+    if (!isPaApiConfigured()) return res.json({ price: null, source: "unavailable" });
+    const results = await getAmazonAlternatives(query, "other", []);
+    if (!results || results.length === 0) return res.json({ price: null, source: "amazon" });
+    const item = results[0];
+    const price = item.price || item.lowestPrice || null;
+    return res.json({ price: price ? parseFloat(price) : null, source: "amazon", asin: item.asin || null, title: item.title || null });
+  } catch (e) {
+    return res.json({ price: null, source: "error" });
+  }
+});
+
 app.get("/health", (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured - using static database",

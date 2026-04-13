@@ -3994,6 +3994,9 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 };
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
+const CATEGORY_PRICE_ESTIMATES = {food:6,food_beverage:5.5,beverage:4,snack:4.5,supplement:25,cleaning:8,personal_care:12,skincare:18,baby:15,clothing:35,home:14,other:10};
+const estimateItemPrice = (category) => CATEGORY_PRICE_ESTIMATES[category] || 10;
+
 const getGroceryRecommendations = (history) => {
   if (!history || history.length === 0) return { needsSwap: [], goodChoices: [] };
   const GROCERY_CATS = ["food","food_beverage","beverage","snack","supplement","cleaning","personal_care","baby"];
@@ -4017,10 +4020,19 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const [showPrev, setShowPrev] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
 
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const current = lists.find(l=>l.id===activeId);
   const items = current?.items || [];
   const scored = items.filter(i=>i.score!=null);
   const avgScore = scored.length ? Math.round(scored.reduce((s,i)=>s+i.score,0)/scored.length*10)/10 : null;
+  const uncheckedItems = items.filter(i=>!i.checked);
+  const estimatedSpend = uncheckedItems.reduce((sum,item)=>{const qty=item.quantity||1;const price=item.estimatedPrice||estimateItemPrice(item.category);return sum+(price*qty);},0);
+  const listBudget = current?.budget||0;
+  const budgetPct = listBudget>0?Math.min(100,(estimatedSpend/listBudget)*100):0;
+  const overBudget = listBudget>0&&estimatedSpend>listBudget;
+  const CATEGORY_LABELS = {food:"Food",food_beverage:"Food and Drink",beverage:"Drinks",snack:"Snacks",supplement:"Supplements",cleaning:"Cleaning",personal_care:"Personal Care",skincare:"Skincare",baby:"Baby",home:"Home",clothing:"Clothing",other:"Other"};
+  const categorySpend = uncheckedItems.reduce((acc,item)=>{const cat=item.category||"other";const price=item.estimatedPrice||estimateItemPrice(item.category);const qty=item.quantity||1;acc[cat]=(acc[cat]||0)+(price*qty);return acc;},{});
+  const categoryEntries = Object.entries(categorySpend).sort((a,b)=>b[1]-a[1]);
   const stores = ["Whole Foods","Target","Trader Joe's","Walmart","Kroger","Sprouts","Costco","Other"];
   const presets = [50,80,120];
 
@@ -4090,13 +4102,39 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
                 <span style={{fontSize:10, color:muted, marginTop:2}}>avg score</span>
               </div>
             )}
-            <div style={{fontSize:12, color:muted, textAlign:"right"}}>
-              <div>spent $0 of ${current.budget||0}</div>
+          </div>
+          {listBudget > 0 && (
+            <div style={{marginTop:8}}>
+              <div style={{height:4, borderRadius:4, background:isDark?"#1e2433":"#f1f5f9", overflow:"hidden", marginBottom:6}}>
+                <div style={{height:"100%", width:`${budgetPct}%`, borderRadius:4, background:overBudget?"#dc2626":budgetPct>=80?"#d97706":"#16a34a", transition:"width 0.4s ease"}}/>
+              </div>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:12, color:overBudget?"#dc2626":muted}}>
+                <span>Est. ${estimatedSpend.toFixed(0)} of ${listBudget.toFixed(0)}{items.some(i=>i.priceSource==="amazon")&&<span style={{fontSize:10,color:muted,marginLeft:4}}>(some prices from Amazon)</span>}</span>
+                <span style={{fontWeight:overBudget?700:400}}>{overBudget?`$${(estimatedSpend-listBudget).toFixed(0)} over`:`$${(listBudget-estimatedSpend).toFixed(0)} remaining`}</span>
+              </div>
+              {overBudget && <div style={{marginTop:6, fontSize:12, color:"#dc2626", fontWeight:600}}>Over budget — remove items or adjust quantities</div>}
+              {!overBudget && budgetPct>=90 && <div style={{marginTop:6, fontSize:12, color:"#d97706", fontWeight:600}}>Approaching your budget</div>}
+              {categoryEntries.length>=2 && (
+                <div style={{marginTop:6}}>
+                  <button onClick={()=>setShowBreakdown(v=>!v)} style={{fontSize:11, color:muted, background:"none", border:"none", cursor:"pointer", padding:0, textDecoration:"underline"}}>{showBreakdown?"Hide breakdown":"Show breakdown"}</button>
+                  {showBreakdown && (
+                    <div style={{marginTop:8, display:"flex", flexDirection:"column", gap:4}}>
+                      {categoryEntries.map(([cat,amount])=>(
+                        <div key={cat} style={{display:"flex", justifyContent:"space-between", fontSize:12, color:muted}}>
+                          <span>{CATEGORY_LABELS[cat]||cat}</span>
+                          <span>~${amount.toFixed(0)}</span>
+                        </div>
+                      ))}
+                      <div style={{display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, color:text, borderTop:`1px solid ${border}`, paddingTop:4, marginTop:2}}>
+                        <span>Total estimated</span>
+                        <span>~${estimatedSpend.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-          <div style={{height:4, borderRadius:2, background:isDark?"#1e2433":"#f1f5f9", marginTop:10, overflow:"hidden"}}>
-            <div style={{height:"100%", width:"0%", background:"#16a34a", borderRadius:2}}/>
-          </div>
+          )}
         </div>
 
         {/* Recommendations — show before 3 items added */}
@@ -4159,6 +4197,13 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
                     <div style={{fontSize:14, color:text, textDecoration:item.checked?"line-through":"none", fontWeight:500}}>{item.text}</div>
                     {item.category && <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{(item.category||"").replace(/_/g," ")}</div>}
                   </div>
+                  {!item.checked && (
+                    <div style={{display:"flex", alignItems:"center", gap:4, marginLeft:8, flexShrink:0}}>
+                      <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;if(c<=1)return;saveLists(lists.map(l=>{if(l.id!==current.id)return l;const its=[...(l.items||[])];its[i]={...its[i],quantity:c-1};return{...l,items:its};}));}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:(item.quantity||1)<=1?0.3:1}}>-</button>
+                      <span style={{fontSize:13, fontWeight:600, color:text, minWidth:16, textAlign:"center"}}>{item.quantity||1}</span>
+                      <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;saveLists(lists.map(l=>{if(l.id!==current.id)return l;const its=[...(l.items||[])];its[i]={...its[i],quantity:c+1};return{...l,items:its};}));}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                    </div>
+                  )}
                   <div style={{flexShrink:0, display:"flex", alignItems:"center", gap:4}}>
                     {item.scoring && <span style={{fontSize:11, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f1f5f9"}}>scoring...</span>}
                     {item.scoreError && (
@@ -6182,6 +6227,10 @@ function App() {
         if (finalScore >= 5.5) findSwapSuggestion(listId, idx, productName.trim(), data.category, finalScore);
         return {...l,items};
       }));
+      // Background price lookup
+      fetch(`${API_BASE}/api/price-lookup?query=${encodeURIComponent(productName.trim())}`).then(r=>r.json()).then(pd=>{
+        if(pd.price)saveLists(lists.map(l=>{if(l.id!==listId)return l;const its=[...(l.items||[])];const pi=its.findIndex(it=>it.text===productName.trim()&&!it.scoring);if(pi===-1)return l;its[pi]={...its[pi],estimatedPrice:pd.price,priceSource:"amazon",asin:pd.asin||null};return{...l,items:its};}));
+      }).catch(()=>{});
     } catch {
       saveLists(lists.map(l=>{
         if(l.id!==listId)return l;
