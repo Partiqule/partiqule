@@ -4211,7 +4211,8 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           const { needsSwap, goodChoices } = getGroceryRecommendations(history);
           if (!needsSwap.length && !goodChoices.length) return null;
           const addFromHistory = (h) => {
-            addItemToList(current.id, {text:h.product_name, score:h.overall_score||h.score||null, category:h.category||null, summary:h.summary||null, checked:false, scoring:false, scoreError:false, addedAt:new Date().toISOString()});
+            const newItem = {id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`, text:h.product_name, score:h.overall_score||h.score||null, category:h.category||null, summary:h.summary||null, checked:false, scoring:false, scoreError:false, addedAt:new Date().toISOString()};
+            saveLists(lists.map(l=>l.id===current.id?{...l,items:[...(l.items||[]),newItem],lastOpenedAt:new Date().toISOString()}:l));
           };
           return (
             <div style={{marginBottom:20}}>
