@@ -4016,7 +4016,9 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const [store, setStore] = useState("");
   const [budget, setBudget] = useState("");
   const [newItem, setNewItem] = useState("");
-  const [expandedIdx, setExpandedIdx] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [showPrev, setShowPrev] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -4068,6 +4070,31 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
 
   const stores = ["Whole Foods","Target","Trader Joe's","Walmart","Kroger","Sprouts","Costco","Other"];
   const presets = [50,80,120];
+
+  // Ensure legacy items without ids get one
+  useEffect(()=>{
+    if(!current)return;
+    const needsIds = (current.items||[]).some(it=>!it.id);
+    if(needsIds) saveLists(lists.map(l=>l.id!==current.id?l:{...l,items:(l.items||[]).map(it=>it.id?it:{...it,id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`})}));
+  },[current?.id]);
+
+  const updateItemById = (itemId, updates) => {
+    saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,...updates}:it)}));
+  };
+
+  const isDuplicate = (name) => {
+    const n = name.toLowerCase().trim();
+    return (items||[]).some(it=>{const e=it.text.toLowerCase().trim();return e===n||e.includes(n)||n.includes(e);});
+  };
+
+  const handleAddItem = () => {
+    const name = newItem.trim();
+    if(!name)return;
+    if(isDuplicate(name)){setDuplicateWarning(name);setTimeout(()=>setDuplicateWarning(null),3000);return;}
+    setNewItem(""); addGroceryItem(activeId, name);
+  };
+
+  const displayItems = [...items.filter(i=>!i.checked), ...items.filter(i=>i.checked)];
 
   const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); setSummaryDismissed(false); setShowSummary(false); };
 
@@ -4171,9 +4198,12 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
         </div>
 
         {/* Add item */}
-        <div style={{display:"flex", gap:8, marginBottom:16}}>
-          <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItem.trim()){addGroceryItem(current.id,newItem.trim());setNewItem("");}}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-          <button onClick={()=>{if(!newItem.trim())return;addGroceryItem(current.id,newItem.trim());setNewItem("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
+        <div style={{marginBottom:16}}>
+          <div style={{display:"flex", gap:8}}>
+            <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")handleAddItem();}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
+            <button onClick={handleAddItem} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
+          </div>
+          {duplicateWarning && <div style={{fontSize:12, color:"#d97706", fontWeight:600, marginTop:4}}>"{duplicateWarning}" is already on your list</div>}
         </div>
 
         {/* Recommendations — show before 3 items added */}
@@ -4223,62 +4253,66 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           <div style={{textAlign:"center", padding:"40px 0", color:muted, fontSize:14}}>Start adding products above. Each one gets scored automatically.</div>
         ) : (
           <div style={{display:"flex", flexDirection:"column", gap:8}}>
-            {items.map((item,i)=>(
-              <div key={i} style={{borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${item.score>6?"#d9770633":border}`, opacity:item.checked?0.6:1}}>
-                <div onClick={()=>toggleListItem(current.id,i)} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", cursor:"pointer"}}>
-                  <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
-                    {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+            {displayItems.map((item)=>{
+              const itemId = item.id || item.text;
+              const origIdx = items.findIndex(it=>(it.id||it.text)===itemId);
+              return (
+              <React.Fragment key={itemId}>
+                {item.checked && displayItems.filter(x=>x.checked)[0]===item && (
+                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0 6px", borderTop:`1px solid ${border}`, marginTop:8}}>
+                    <span style={{fontSize:12, color:muted}}>{displayItems.filter(x=>x.checked).length} in cart</span>
+                    <button onClick={()=>saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).filter(it=>!it.checked)}))} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline", padding:0}}>Clear cart</button>
                   </div>
-                  <div style={{flex:1, minWidth:0}} onClick={e=>{e.stopPropagation();setExpandedIdx(expandedIdx===i?null:i);}}>
-                    <div style={{fontSize:14, color:text, textDecoration:item.checked?"line-through":"none", fontWeight:500}}>{item.text}</div>
-                    {item.category && <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{(item.category||"").replace(/_/g," ")}</div>}
+                )}
+                <div style={{borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${item.score>6?"#d9770633":border}`, opacity:item.checked?0.6:1}}>
+                  <div onClick={()=>{if(origIdx!==-1)toggleListItem(current.id,origIdx);}} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", cursor:"pointer"}}>
+                    <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                      {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
+                    </div>
+                    <div style={{flex:1, minWidth:0}}>
+                      {editingId===itemId ? (
+                        <input autoFocus defaultValue={item.text} onClick={e=>e.stopPropagation()} onBlur={e=>{const n=e.target.value.trim();setEditingId(null);if(!n||n===item.text)return;updateItemById(itemId,{text:n,score:null,baseScore:null,childScore:null,summary:null,scoring:true,scoreError:false,swapSuggestion:null});fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:n,childMode:childMode||false})}).then(r=>r.json()).then(data=>{updateItemById(itemId,{score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false});}).catch(()=>{updateItemById(itemId,{scoring:false,scoreError:true});});}} onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEditingId(null);}} style={{flex:1,fontSize:14,fontWeight:600,color:text,background:"none",border:"1px solid #16a34a",borderRadius:6,padding:"2px 8px",outline:"none",minWidth:0,width:"100%"}}/>
+                      ) : (
+                        <div onClick={e=>{e.stopPropagation();setEditingId(itemId);}} style={{cursor:"text"}}>
+                          <div style={{fontSize:14, color:text, textDecoration:item.checked?"line-through":"none", fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.text}</div>
+                          {item.category && <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{(item.category||"").replace(/_/g," ")}</div>}
+                        </div>
+                      )}
+                    </div>
+                    {!item.checked && (
+                      <div style={{display:"flex", alignItems:"center", gap:4, marginLeft:8, flexShrink:0}}>
+                        <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;if(c<=1)return;updateItemById(itemId,{quantity:c-1});}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:(item.quantity||1)<=1?0.3:1}}>-</button>
+                        <span style={{fontSize:13, fontWeight:600, color:text, minWidth:16, textAlign:"center"}}>{item.quantity||1}</span>
+                        <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;updateItemById(itemId,{quantity:c+1});}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                      </div>
+                    )}
+                    <div style={{flexShrink:0, display:"flex", alignItems:"center", gap:4}}>
+                      {item.scoring && <span style={{fontSize:11, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f1f5f9"}}>scoring...</span>}
+                      {item.scoreError && <button onClick={e=>{e.stopPropagation();addGroceryItem(current.id,item.text);}} style={{fontSize:11, color:"#dc2626", background:"none", border:"none", cursor:"pointer", fontWeight:600}}>? Retry</button>}
+                      {item.score!=null && (<>{item.score>6 && <div style={{width:6, height:6, borderRadius:3, background:"#d97706", flexShrink:0}}/>}<ScoreBadge score={item.score} size="xs"/></>)}
+                    </div>
+                    {!item.scoring && <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).filter(it=>(it.id||it.text)!==itemId)}));}} style={{background:"none",border:"none",color:muted,cursor:"pointer",fontSize:18,lineHeight:1,padding:"0 4px",flexShrink:0,marginLeft:6,opacity:0.5}}>x</button>}
                   </div>
-                  {!item.checked && (
-                    <div style={{display:"flex", alignItems:"center", gap:4, marginLeft:8, flexShrink:0}}>
-                      <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;if(c<=1)return;saveLists(lists.map(l=>{if(l.id!==current.id)return l;const its=[...(l.items||[])];its[i]={...its[i],quantity:c-1};return{...l,items:its};}));}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:(item.quantity||1)<=1?0.3:1}}>-</button>
-                      <span style={{fontSize:13, fontWeight:600, color:text, minWidth:16, textAlign:"center"}}>{item.quantity||1}</span>
-                      <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;saveLists(lists.map(l=>{if(l.id!==current.id)return l;const its=[...(l.items||[])];its[i]={...its[i],quantity:c+1};return{...l,items:its};}));}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                  {expandedId===itemId && item.summary && (
+                    <div style={{padding:"0 16px 12px 48px", fontSize:12, color:muted, lineHeight:1.5}}>
+                      {item.summary.length>180 ? item.summary.slice(0,180)+"..." : item.summary}
                     </div>
                   )}
-                  <div style={{flexShrink:0, display:"flex", alignItems:"center", gap:4}}>
-                    {item.scoring && <span style={{fontSize:11, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f1f5f9"}}>scoring...</span>}
-                    {item.scoreError && (
-                      <button onClick={e=>{e.stopPropagation();addGroceryItem(current.id,item.text);}} style={{fontSize:11, color:"#dc2626", background:"none", border:"none", cursor:"pointer", fontWeight:600}}>? Retry</button>
-                    )}
-                    {item.score!=null && (<>
-                      {item.score>6 && <div style={{width:6, height:6, borderRadius:3, background:"#d97706", flexShrink:0}}/>}
-                      <ScoreBadge score={item.score} size="xs"/>
-                    </>)}
-                  </div>
-                </div>
-                {expandedIdx===i && item.summary && (
-                  <div style={{padding:"0 16px 12px 48px", fontSize:12, color:muted, lineHeight:1.5}}>
-                    {item.summary.length>180 ? item.summary.slice(0,180)+"..." : item.summary}
-                  </div>
-                )}
-                {item.swapSuggestion && (
-                  <div style={{margin:"0 16px 12px 48px", padding:"8px 12px", borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:12, color:"#16a34a", fontWeight:700, marginBottom:2}}>Better option found</div>
-                      <div style={{fontSize:13, color:text}}>{item.swapSuggestion.name}</div>
-                      <div style={{fontSize:11, color:muted}}>Scores {item.swapSuggestion.score.toFixed(1)} vs your {item.score.toFixed(1)}</div>
+                  {item.swapSuggestion && (
+                    <div style={{margin:"0 16px 12px 48px", padding:"8px 12px", borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12, color:"#16a34a", fontWeight:700, marginBottom:2}}>Better option found</div>
+                        <div style={{fontSize:13, color:text}}>{item.swapSuggestion.name}</div>
+                        <div style={{fontSize:11, color:muted}}>Scores {item.swapSuggestion.score.toFixed(1)} vs your {item.score.toFixed(1)}</div>
+                      </div>
+                      <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{text:item.swapSuggestion.name,score:item.swapSuggestion.score,summary:item.swapSuggestion.summary,swapSuggestion:null,swappedFrom:item.text,swappedFromScore:item.score});}} style={{padding:"6px 12px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0}}>Swap</button>
+                      <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{swapSuggestion:null});}} style={{padding:"6px 8px", borderRadius:8, background:"none", color:muted, border:"none", fontSize:12, cursor:"pointer", flexShrink:0}}>Dismiss</button>
                     </div>
-                    <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>{
-                      if(l.id!==current.id)return l;
-                      const items=[...(l.items||[])]; if(!items[i])return l;
-                      items[i]={...items[i],text:item.swapSuggestion.name,score:item.swapSuggestion.score,summary:item.swapSuggestion.summary,swapSuggestion:null,swappedFrom:item.text,swappedFromScore:item.score};
-                      return {...l,items};
-                    }));}} style={{padding:"6px 12px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0}}>Swap</button>
-                    <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>{
-                      if(l.id!==current.id)return l;
-                      const items=[...(l.items||[])]; if(!items[i])return l;
-                      items[i]={...items[i],swapSuggestion:null};
-                      return {...l,items};
-                    }));}} style={{padding:"6px 8px", borderRadius:8, background:"none", color:muted, border:"none", fontSize:12, cursor:"pointer", flexShrink:0}}>Dismiss</button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              </React.Fragment>
+              );
+            })}
           </div>
         )}
       </>)}
@@ -6272,7 +6306,7 @@ function App() {
     const newList = {id:Date.now().toString(), name:name||"Shopping List", type:"shopping", items:[], createdAt:new Date().toISOString(), lastOpenedAt:new Date().toISOString()};
     const updated = [newList,...lists]; saveLists(updated); return newList.id;
   };
-  const addItemToList = (listId, item) => { saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),item],lastOpenedAt:new Date().toISOString()}:l)); };
+  const addItemToList = (listId, item) => { const withId = item.id ? item : {...item, id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`}; saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),withId],lastOpenedAt:new Date().toISOString()}:l)); };
   const toggleListItem = (listId, itemIndex) => { saveLists(lists.map(l=>l.id===listId?{...l,items:l.items.map((item,i)=>i===itemIndex?{...item,checked:!item.checked}:item)}:l)); };
   const createGroceryList = (store, budget) => {
     const now = new Date();
@@ -6282,7 +6316,7 @@ function App() {
   };
   const addGroceryItem = async (listId, productName) => {
     if (!productName.trim()) return;
-    const tempItem = {text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
+    const tempItem = {id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`, text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
     saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
     try {
       const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim(),childMode:childMode||false})});
