@@ -3994,7 +3994,18 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 };
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
-const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, isDark, surface, border, text, muted, isMobile}) => {
+const getGroceryRecommendations = (history) => {
+  if (!history || history.length === 0) return { needsSwap: [], goodChoices: [] };
+  const GROCERY_CATS = ["food","food_beverage","beverage","snack","supplement","cleaning","personal_care","baby"];
+  const seen = new Set();
+  const candidates = history.filter(h=>GROCERY_CATS.includes(h.category)).filter(h=>{if(seen.has(h.product_name))return false;seen.add(h.product_name);return true;}).slice(0,20);
+  return {
+    needsSwap: candidates.filter(h=>(h.overall_score||h.score||0)>=5.5).slice(0,5),
+    goodChoices: candidates.filter(h=>(h.overall_score||h.score||0)<5.5).slice(0,8),
+  };
+};
+
+const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, findSwapSuggestion, history, isDark, surface, border, text, muted, isMobile}) => {
   const groceryLists = lists.filter(l=>l.type==="grocery");
   const activeList = groceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || groceryLists[0];
   const [view, setView] = useState(activeList ? "list" : "setup");
@@ -4088,6 +4099,45 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           </div>
         </div>
 
+        {/* Recommendations — show before 3 items added */}
+        {items.length < 3 && (() => {
+          const { needsSwap, goodChoices } = getGroceryRecommendations(history);
+          if (!needsSwap.length && !goodChoices.length) return null;
+          return (
+            <div style={{marginBottom:20}}>
+              {needsSwap.length > 0 && (
+                <div style={{marginBottom:16}}>
+                  <div style={{fontSize:11, color:"#d97706", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Consider swapping</div>
+                  <div style={{fontSize:12, color:muted, marginBottom:10, lineHeight:1.5}}>These are in your scan history and score above 5.5. Add them to find better alternatives.</div>
+                  {needsSwap.map((item, i) => (
+                    <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:12, marginBottom:6, background:isDark?"#2a1a00":"#fffbeb", border:`1px solid ${isDark?"#3a2a00":"#fde68a"}`}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14, fontWeight:600, color:text}}>{item.product_name}</div>
+                        <div style={{fontSize:11, color:"#d97706", marginTop:2}}>Scored {(item.overall_score||item.score||0).toFixed(1)} — better options exist</div>
+                      </div>
+                      <button onClick={()=>addGroceryItem(current.id, item.product_name)} style={{padding:"6px 14px", borderRadius:8, background:"#d97706", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0, marginLeft:12}}>Add</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {goodChoices.length > 0 && (
+                <div>
+                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Good choices you buy</div>
+                  <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+                    {goodChoices.map((item, i) => (
+                      <button key={i} onClick={()=>addGroceryItem(current.id, item.product_name)} style={{padding:"6px 14px", borderRadius:20, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, color:"#16a34a", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:6}}>
+                        <span>{item.product_name}</span>
+                        <span style={{fontSize:11, opacity:0.7, background:"rgba(22,163,74,0.15)", borderRadius:10, padding:"1px 6px"}}>{(item.overall_score||item.score||0).toFixed(1)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{borderTop:`1px solid ${border}`, margin:"16px 0 0"}}/>
+            </div>
+          );
+        })()}
+
         {/* Add item */}
         <div style={{display:"flex", gap:8, marginBottom:16}}>
           <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItem.trim()){addGroceryItem(current.id,newItem.trim());setNewItem("");}}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
@@ -4123,6 +4173,27 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
                 {expandedIdx===i && item.summary && (
                   <div style={{padding:"0 16px 12px 48px", fontSize:12, color:muted, lineHeight:1.5}}>
                     {item.summary.length>180 ? item.summary.slice(0,180)+"..." : item.summary}
+                  </div>
+                )}
+                {item.swapSuggestion && (
+                  <div style={{margin:"0 16px 12px 48px", padding:"8px 12px", borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12, color:"#16a34a", fontWeight:700, marginBottom:2}}>Better option found</div>
+                      <div style={{fontSize:13, color:text}}>{item.swapSuggestion.name}</div>
+                      <div style={{fontSize:11, color:muted}}>Scores {item.swapSuggestion.score.toFixed(1)} vs your {item.score.toFixed(1)}</div>
+                    </div>
+                    <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>{
+                      if(l.id!==current.id)return l;
+                      const items=[...(l.items||[])]; if(!items[i])return l;
+                      items[i]={...items[i],text:item.swapSuggestion.name,score:item.swapSuggestion.score,summary:item.swapSuggestion.summary,swapSuggestion:null,swappedFrom:item.text,swappedFromScore:item.score};
+                      return {...l,items};
+                    }));}} style={{padding:"6px 12px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0}}>Swap</button>
+                    <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>{
+                      if(l.id!==current.id)return l;
+                      const items=[...(l.items||[])]; if(!items[i])return l;
+                      items[i]={...items[i],swapSuggestion:null};
+                      return {...l,items};
+                    }));}} style={{padding:"6px 8px", borderRadius:8, background:"none", color:muted, border:"none", fontSize:12, cursor:"pointer", flexShrink:0}}>Dismiss</button>
                   </div>
                 )}
               </div>
@@ -4171,7 +4242,7 @@ const AddToListButton = ({result, lists, createShoppingList, addItemToList, mute
   );
 };
 
-const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
+const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, findSwapSuggestion, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
   const [tab, setTab] = useState("grocery");
   const [newListName, setNewListName] = useState("");
   const [activeListId, setActiveListId] = useState(null);
@@ -4248,7 +4319,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, add
       </>)}
 
       {tab==="grocery" && (
-        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
+        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} findSwapSuggestion={findSwapSuggestion} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
       )}
 
       {tab==="routine" && (
@@ -6106,7 +6177,9 @@ function App() {
         const items=[...(l.items||[])];
         const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
         if(idx===undefined)return l;
-        items[idx]={...items[idx],score:data.overall_score||data.score,category:data.category,summary:data.summary,scoring:false,scoreError:false};
+        const finalScore = data.overall_score||data.score;
+        items[idx]={...items[idx],score:finalScore,category:data.category,summary:data.summary,scoring:false,scoreError:false};
+        if (finalScore >= 5.5) findSwapSuggestion(listId, idx, productName.trim(), data.category, finalScore);
         return {...l,items};
       }));
     } catch {
@@ -6119,6 +6192,23 @@ function App() {
         return {...l,items};
       }));
     }
+  };
+  const findSwapSuggestion = async (listId, itemIndex, productName, category, origScore) => {
+    const FOOD_CATS = ["food","food_beverage","beverage","snack"];
+    const swapQuery = FOOD_CATS.includes(category) ? `organic ${productName}` : `natural alternative to ${productName}`;
+    try {
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:swapQuery})});
+      const data = await res.json();
+      const swapScore = data.overall_score || data.score;
+      if (swapScore && origScore && (origScore - swapScore) >= 1.5) {
+        saveLists(lists.map(l=>{
+          if(l.id!==listId)return l;
+          const items=[...(l.items||[])];
+          if(items[itemIndex]) items[itemIndex]={...items[itemIndex], swapSuggestion:{name:data.product_name, score:swapScore, summary:data.summary}};
+          return {...l,items};
+        }));
+      }
+    } catch {}
   };
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
@@ -6905,6 +6995,7 @@ function App() {
           lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
           createGroceryList={createGroceryList} addGroceryItem={addGroceryItem}
           addItemToList={addItemToList} toggleListItem={toggleListItem}
+          findSwapSuggestion={findSwapSuggestion}
           history={history} isDark={isDark} surface={surface} border={border}
           text={text} muted={muted} isMobile={isMobile} user={user}
           onSelect={(item)=>{setResult(item); setPage("home");}}
