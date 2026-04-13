@@ -4291,6 +4291,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
   const [priceFilter, setPriceFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("date");
   const avg = history.length ? Math.round(history.reduce((a,h)=>a+h.score,0)/history.length*10)/10 : 0;
   const highest = history.length ? history.reduce((a,h)=>h.score>a.score?h:a, history[0]) : null;
 
@@ -4363,11 +4364,52 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
     return acc;
   }, {});
 
+  const CATEGORY_TO_ROOM = {cleaning:"Kitchen / Cleaning",home:"Home",personal_care:"Bathroom",skincare:"Bathroom",food:"Pantry",food_beverage:"Pantry",beverage:"Pantry",snack:"Pantry",clothing:"Closet",baby:"Nursery",toy:"Nursery",supplement:"Supplement",restaurant:"Restaurant"};
+  const groupedByRoom = history.reduce((acc, item) => {
+    const room = item.room || CATEGORY_TO_ROOM[item.category] || "Other";
+    if (!acc[room]) acc[room] = [];
+    acc[room].push(item);
+    return acc;
+  }, {});
+
+  const renderHistoryItem = (item, i) => (
+    <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}} onClick={()=>onSelect(item)}>
+      <div style={{position:"absolute", left:-24, top:16, width:12, height:12, borderRadius:"50%", background:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", border:`2px solid ${surface}`, zIndex:1}}/>
+      <div style={{background:surface, borderRadius:12, padding:"16px 20px", border:`1.5px solid ${border}`, transition:"all 0.15s"}}
+        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateX(3px)";}}
+        onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
+            <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"...":""}</div>
+          </div>
+          <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
+            <ScoreBadge score={item.score} size="sm" showLabel />
+            <div style={{fontSize:11, color:muted}}>{formatDate(item.scannedAt)}</div>
+          </div>
+        </div>
+        {item.category && (
+          <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
+            {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#7c3aed",bg:"#f5f3ff"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
+            <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scans</h1>
-        <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
+          <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
+          <div style={{display:"flex", gap:4, background:isDark?"#1e2433":"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
+            {[["date","By date"],["room","By room"]].map(([mode,label])=>(
+              <button key={mode} onClick={()=>setViewMode(mode)} style={{padding:"5px 12px", borderRadius:8, border:"none", background:viewMode===mode?(isDark?"#2a3347":"#fff"):"none", color:viewMode===mode?text:muted, fontSize:12, fontWeight:viewMode===mode?600:400, cursor:"pointer"}}>{label}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {history.length === 0 ? (
@@ -4632,7 +4674,8 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
           {/* Timeline */}
           <div style={{marginBottom:8}}>
             <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 24px"}}>Scan History</h2>
-            {Object.entries(grouped).map(([date, items]) => (
+
+            {viewMode === "date" && Object.entries(grouped).map(([date, items]) => (
               <div key={date} style={{marginBottom:36}}>
                 <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:16}}>
                   <div style={{fontSize:12, fontWeight:600, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", whiteSpace:"nowrap"}}>{date}</div>
@@ -4640,34 +4683,34 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                 </div>
                 <div style={{position:"relative", paddingLeft:28}}>
                   <div style={{position:"absolute", left:9, top:8, bottom:8, width:2, background:border, borderRadius:2}}/>
-                  {items.map((item, i) => (
-                    <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}} onClick={()=>onSelect(item)}>
-                      <div style={{position:"absolute", left:-24, top:16, width:12, height:12, borderRadius:"50%", background:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", border:`2px solid ${surface}`, zIndex:1}}/>
-                      <div style={{background:surface, borderRadius:12, padding:"16px 20px", border:`1.5px solid ${border}`, transition:"all 0.15s"}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateX(3px)";}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
-                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
-                          <div style={{flex:1, minWidth:0}}>
-                            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
-                            <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"…":""}</div>
-                          </div>
-                          <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
-                            <ScoreBadge score={item.score} size="sm" showLabel />
-                            <div style={{fontSize:11, color:muted}}>{formatDate(item.scannedAt)}</div>
-                          </div>
-                        </div>
-                        {item.category && (
-                          <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
-                            {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#7c3aed",bg:"#f5f3ff"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
-                            <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result →</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {items.map((item, i) => renderHistoryItem(item, i))}
                 </div>
               </div>
             ))}
+
+            {viewMode === "room" && Object.entries(groupedByRoom)
+              .sort((a, b) => b[1].length - a[1].length)
+              .map(([room, items]) => {
+                const avg = Math.round(items.reduce((s, i) => s + (i.score || i.overall_score || 0), 0) / items.length * 10) / 10;
+                return (
+                  <div key={room} style={{marginBottom:28}}>
+                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10}}>
+                      <div>
+                        <span style={{fontSize:14, fontWeight:700, color:text}}>{room}</span>
+                        <span style={{fontSize:12, color:muted, marginLeft:8}}>{items.length} scan{items.length !== 1 ? "s" : ""} · avg {avg}/10</span>
+                      </div>
+                      {items.length >= 3 && (
+                        <button onClick={()=>{}} style={{padding:"6px 12px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontSize:12, fontWeight:700, cursor:"pointer"}}>Audit</button>
+                      )}
+                    </div>
+                    <div style={{position:"relative", paddingLeft:28}}>
+                      <div style={{position:"absolute", left:9, top:8, bottom:8, width:2, background:border, borderRadius:2}}/>
+                      {items.map((item, i) => renderHistoryItem(item, i))}
+                    </div>
+                  </div>
+                );
+              })
+            }
           </div>
 
           {/* Clear button */}
@@ -6255,6 +6298,7 @@ function App() {
       if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
       const data = await res.json();
       setResult(data); saveToHistory(data);
+      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
       track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
       // ── Scan counter — increment and check limits ──
       if (!isSubscribed) {
@@ -6341,7 +6385,8 @@ function App() {
     window.scrollTo(0,0);
   };
 
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery("");};
+  const [pendingRoomTag, setPendingRoomTag] = useState(null);
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -6388,6 +6433,7 @@ function App() {
       setQuery(data.product_name);
       setResult(data);
       saveToHistory(data);
+      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
       // ── Increment scan counter ──
       if (!isSubscribed) {
         const newCount = scanCount + 1;
@@ -7841,6 +7887,32 @@ function App() {
                     </div>
                     )}
                   </>);
+                })()}
+
+                {/* Room tag prompt */}
+                {pendingRoomTag === result?.product_name && (() => {
+                  const ROOM_OPTIONS = {
+                    food:["Pantry","Kitchen"], food_beverage:["Pantry","Kitchen"], beverage:["Pantry","Kitchen"], snack:["Pantry","Kitchen"],
+                    personal_care:["Bathroom","Bedroom"], skincare:["Bathroom","Bedroom"],
+                    cleaning:["Kitchen","Bathroom","Laundry","Living Room"], home:["Kitchen","Living Room","Bedroom","Laundry"],
+                    clothing:["Closet","Kids Room"], baby:["Nursery","Kids Room","Bathroom"], toy:["Kids Room","Nursery"],
+                  };
+                  const options = ROOM_OPTIONS[result.category] || [];
+                  if (!options.length) return null;
+                  return (
+                    <div style={{background:isDark?"#1a2030":"#f8faff", borderRadius:12, padding:"10px 14px", border:`1px solid ${isDark?"#1e2a3e":"#c7d7f0"}`, marginBottom:12, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
+                      <span style={{fontSize:12, color:muted, whiteSpace:"nowrap"}}>Which room?</span>
+                      {options.map(room=>(
+                        <button key={room} onClick={()=>{
+                          const updated=history.map((h,i)=>i===0&&h.product_name===result.product_name?{...h,room}:h);
+                          setHistory(updated); try{localStorage.setItem("ps_history",JSON.stringify(updated));}catch{} setPendingRoomTag(null);
+                        }} style={{padding:"4px 12px", borderRadius:20, border:`1px solid ${isDark?"#2a3a5e":"#bfdbfe"}`, background:isDark?"#1e3a5f":"#dbeafe", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer"}}>
+                          {room}
+                        </button>
+                      ))}
+                      <button onClick={()=>setPendingRoomTag(null)} style={{marginLeft:"auto", background:"none", border:"none", color:muted, fontSize:13, cursor:"pointer", padding:"0 4px"}}>Skip</button>
+                    </div>
+                  );
                 })()}
 
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
