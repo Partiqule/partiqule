@@ -6791,6 +6791,60 @@ const computeLifestyleScore = (history) => {
   return {current,previous:prev,trend,delta,productCount:sample.length,worstCategory:worst?{label:CL[worst.cat]||worst.cat,avg:worst.avg}:null};
 };
 
+const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border, text, muted, isMobile, setPage, setResult, setQuery, analyze}) => {
+  const [filter, setFilter] = useState("all");
+  const allCards = [
+    ...(liveIntelCards||[]).map(card=>{
+      const uc=history?.length?history.flatMap(h=>[...(h.harmful_chemicals||[]),...(h.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),h.summary||""]).join(" ").toLowerCase():"";
+      const cats=new Set((history||[]).map(h=>h.category));
+      const im=(card.ingredient_triggers||[]).some(t=>uc.includes(t.toLowerCase().trim()));
+      const cm=(card.category_triggers||[]).some(c=>cats.has(c));
+      const ap=history?.filter(h=>{const t=[...(h.harmful_chemicals||[]),...(h.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),h.summary||""].join(" ").toLowerCase();return(card.ingredient_triggers||[]).some(tr=>t.includes(tr.toLowerCase()));}).map(h=>h.product_name).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3)||[];
+      return {...card,cardType:"live",isPersonal:im||cm,affectedProducts:ap};
+    }),
+    ...(staticCards||[]).filter(c=>["eu_banned","pattern","iarc","high_concern","swap_pending"].includes(c.type)).map(card=>({...card,cardType:"insight",isPersonal:true,affectedProducts:[],source_name:"Your scan history"})),
+  ].sort((a,b)=>{if(a.isPersonal&&!b.isPersonal)return -1;if(!a.isPersonal&&b.isPersonal)return 1;return(b.priority||5)-(a.priority||5);});
+  const FILTERS=[{id:"all",label:"All"},{id:"yours",label:"Affects you"},{id:"food",label:"Food"},{id:"personal_care",label:"Beauty"},{id:"clothing",label:"Clothing"},{id:"home",label:"Home"},{id:"recall",label:"Recalls"}];
+  const filtered=allCards.filter(card=>{if(filter==="all")return true;if(filter==="yours")return card.isPersonal;if(filter==="recall")return card.label?.toLowerCase().includes("recall");return(card.category_triggers||[]).includes(filter)||(card.type||"").includes(filter);});
+  const handleCardTap=(card)=>{if(card.cardType==="live"&&card.action_url)window.open(card.action_url,"_blank");else if(card.actionPage==="history")setPage("history");else if(card.actionPage==="result"&&card.productName){const hi=history?.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}};
+  const sc=(s)=>!s?muted:s<=3?"#16a34a":s<=5?"#d97706":"#dc2626";
+  return (
+    <div style={{maxWidth:700,margin:"0 auto",padding:isMobile?"24px 0 80px":"48px 0 80px"}}>
+      <div style={{padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20}}>
+        <div style={{fontSize:11,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Health intelligence</div>
+        <h1 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:isMobile?26:32,color:text,margin:"0 0 4px"}}>Your Feed</h1>
+        <p style={{fontSize:14,color:muted,margin:0}}>Safety findings, regulatory alerts, and insights from your scan history</p>
+      </div>
+      <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20,paddingBottom:4}}>
+        {FILTERS.map(f=>(
+          <button key={f.id} onClick={()=>setFilter(f.id)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1px solid ${filter===f.id?"#16a34a":(isDark?"#2a3347":"#e5e7eb")}`,background:filter===f.id?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:filter===f.id?"#16a34a":muted,fontWeight:filter===f.id?700:400,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"}}>
+            {f.label}{f.id==="yours"&&<span style={{marginLeft:4,fontSize:11,background:filter==="yours"?"#16a34a":(isDark?"#2a3347":"#e5e7eb"),color:filter==="yours"?"#fff":muted,borderRadius:10,padding:"1px 6px"}}>{allCards.filter(c=>c.isPersonal).length}</span>}
+          </button>
+        ))}
+      </div>
+      {filtered.length===0?(
+        <div style={{textAlign:"center",padding:"60px 20px",color:muted}}><div style={{fontSize:16,fontWeight:600,color:text,marginBottom:8}}>{filter==="yours"?"No findings match your scanned products yet":"No cards in this category yet"}</div><div style={{fontSize:13,lineHeight:1.6}}>{filter==="yours"?"Scan more products and findings will appear here when they match something you own.":"Check back soon — the feed updates automatically."}</div></div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:0}}>
+          {filtered.map((card,i)=>(
+            <div key={card.id||i} onClick={()=>handleCardTap(card)} style={{padding:`16px ${isMobile?"16px":"40px"}`,borderBottom:`1px solid ${isDark?"#1e2433":"#f1f5f9"}`,cursor:card.action_url||card.actionPage||card.productName?"pointer":"default",background:card.isPersonal?(isDark?"#0f1a14":"#fafff9"):"transparent"}}>
+              {card.isPersonal&&<div style={{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,display:"flex",alignItems:"center",gap:6}}><div style={{width:6,height:6,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>Affects your products{card.affectedProducts?.length>0&&<span style={{color:muted,fontWeight:400,textTransform:"none",letterSpacing:0}}> — {card.affectedProducts.slice(0,2).join(", ")}{card.affectedProducts.length>2?` +${card.affectedProducts.length-2} more`:""}</span>}</div>}
+              <div style={{display:"inline-block",fontSize:10,fontWeight:700,color:card.label_color||card.labelColor||"#d97706",background:`${card.label_color||card.labelColor||"#d97706"}18`,borderRadius:20,padding:"2px 8px",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>{card.label}</div>
+              <div style={{fontSize:15,fontWeight:700,color:text,marginBottom:4,lineHeight:1.4}}>{card.headline}</div>
+              <div style={{fontSize:13,color:muted,lineHeight:1.5,marginBottom:8}}>{card.body}</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                <div style={{fontSize:11,color:muted,display:"flex",alignItems:"center",gap:6}}>{card.source_name&&<span>{card.source_name}</span>}{card.created_at&&<><span style={{opacity:0.4}}>·</span><span>{(()=>{const d=new Date(card.created_at);const dd=Math.floor((Date.now()-d)/(1000*60*60*24));return dd===0?"Today":dd===1?"Yesterday":`${dd} days ago`;})()}</span></>}</div>
+                {(card.action_url||card.action_text||card.action||card.actionPage)&&<span style={{fontSize:12,fontWeight:700,color:card.label_color||card.labelColor||"#16a34a",whiteSpace:"nowrap",flexShrink:0}}>{card.action_text||card.action||"Learn more"} →</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {filtered.length>0&&<div style={{textAlign:"center",padding:"32px 20px 0",fontSize:12,color:muted}}>Feed updates automatically from trusted health and regulatory sources worldwide.</div>}
+    </div>
+  );
+};
+
 const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPage}) => {
   if(!score)return null;
   const sc=score.current<=3?"#16a34a":score.current<=5?"#d97706":"#dc2626";
@@ -7384,9 +7438,10 @@ function App() {
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
     if (path === "/lists") { setPage("lists"); return; }
+    if (path === "/feed") { setPage("feed"); return; }
     if (path === "/account") { setPage("settings"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists", "/account"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists", "/account", "/feed"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -7746,7 +7801,7 @@ function App() {
             <nav style={{display:"flex", gap:4, alignItems:"center"}}>
               {[
                 {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
-                {label:"Guides",     action:()=>navigateTo("guides"),                      active:page==="guides"||page==="guide"},
+                {label:"Feed",       action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active:page==="feed"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
                 {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active:page==="lists"},
                 {label:"Audit",      action:()=>setShowAuditSelector(true),                   active:false},
@@ -7909,6 +7964,8 @@ function App() {
             Go to Partiqule →
           </button>
         </div>
+      ) : page === "feed" ? (
+        <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, lists, childMode)} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
       ) : page === "audit-complete" && completedAuditSession ? (
         <AuditCompleteScreen session={completedAuditSession} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} saveAuditSession={saveAuditSession} setResult={setResult} setQuery={setQuery} analyze={analyze} generateShareCard={generateAuditShareCard}/>
       ) : page === "lists" ? (
@@ -8262,6 +8319,13 @@ function App() {
 
                   {/* Lifestyle score */}
                   {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} isDark={isDark} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
+
+                  {/* Feed link */}
+                  {liveIntelCards?.length>0&&(
+                    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+                      <span onClick={()=>{setPage("feed");try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}} style={{fontSize:12,color:"#16a34a",fontWeight:600,cursor:"pointer"}}>{liveIntelCards.length} finding{liveIntelCards.length!==1?"s":""} in your feed →</span>
+                    </div>
+                  )}
 
                   {/* For You intelligence carousel — static + live cards merged */}
                   {(() => {
@@ -9754,7 +9818,7 @@ function App() {
           }}>
             {[
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
-              { label:"My Scans",icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
+              { label:"Feed",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active: page==="feed" },
               { label:"Scan",    icon:null, action:()=>{setScanSheetOpen(o=>!o); setModalQuery("");}, active:false, isScan:true },
               { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
