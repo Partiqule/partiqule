@@ -6193,11 +6193,13 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
 // ── PRIVACY PAGE ──────────────────────────────────────────────
 // ── AUTH MODAL ────────────────────────────────────────────────
-const AuthModal = ({isDark, onClose, onAuth}) => {
+const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
   const [mode,     setMode]     = useState("signin"); // signin | signup | reset
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
+  const [nameStep, setNameStep] = useState(false);
+  const [nameInput, setNameInput] = useState("");
   const [error,    setError]    = useState(null);
   const [success,  setSuccess]  = useState(null);
 
@@ -6216,8 +6218,7 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
       if (mode === "signup") {
         const { error: e } = await supabase.auth.signUp({ email, password });
         if (e) throw e;
-        setSuccess("Check your email to confirm your account, then sign in.");
-        setMode("signin");
+        setNameStep(true); setLoading(false); return;
       } else if (mode === "signin") {
         const { data, error: e } = await supabase.auth.signInWithPassword({ email, password });
         if (e) throw e;
@@ -6244,6 +6245,16 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
 
         {/* Close */}
         <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:20, color:muted, lineHeight:1}}>×</button>
+
+        {nameStep ? (<>
+          <div style={{textAlign:"center", padding:"8px 0"}}>
+            <div style={{fontSize:18, fontWeight:700, color:text, marginBottom:8}}>What should we call you?</div>
+            <div style={{fontSize:13, color:muted, marginBottom:20, lineHeight:1.5}}>A first name or nickname — just for your experience</div>
+            <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}}} placeholder="e.g. Sarah, Mom, Coach..." autoFocus style={{width:"100%", padding:"12px 14px", borderRadius:10, fontSize:15, border:`1.5px solid ${border}`, background:surface, color:text, outline:"none", marginBottom:12, boxSizing:"border-box"}}/>
+            <button onClick={()=>{const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}} style={{width:"100%", padding:"13px", borderRadius:10, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:15, cursor:"pointer", marginBottom:8}}>{nameInput.trim()?`Continue as ${nameInput.trim()}`:"Skip"}</button>
+            <div style={{fontSize:12, color:muted, marginTop:4}}>Check your email to confirm your account.</div>
+          </div>
+        </>) : (<>
 
         {/* Logo */}
         <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:24}}>
@@ -6292,6 +6303,7 @@ const AuthModal = ({isDark, onClose, onAuth}) => {
             <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
           </>}
         </div>
+        </>)}
       </div>
     </div>
   );
@@ -6358,6 +6370,46 @@ const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
 };
 
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
+const selectForYouCard = ({history, lists, suggestion, coverage}) => {
+  const activeGrocery = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
+  if (activeGrocery) { const remaining=(activeGrocery.items||[]).filter(i=>!i.checked).length; return {type:"active_grocery",list:activeGrocery,remaining}; }
+  if (suggestion && suggestion.count >= 8) return {type:"audit_suggestion",suggestion};
+  const readyRooms = coverage.filter(r=>r.count>=3);
+  if (readyRooms.length >= 2) return {type:"home_coverage",coverage,readyRooms};
+  if (suggestion && suggestion.count >= 5) return {type:"audit_suggestion",suggestion};
+  const day = new Date().getDay();
+  if ((day===4||day===5) && !lists.some(l=>l.type==="grocery") && history.length>=5) return {type:"grocery_prompt"};
+  const staleList = lists.find(l=>{const lo=l.lastOpenedAt?new Date(l.lastOpenedAt):null;const ds=lo?(Date.now()-lo.getTime())/(1000*60*60*24):999;return(l.items||[]).filter(i=>!i.checked).length>0&&ds>7;});
+  if (staleList) return {type:"stale_list",list:staleList};
+  return null;
+};
+
+const ForYouCard = ({card, isDark, text, muted, setPage}) => {
+  if (!card) return null;
+  const cs = {borderRadius:16, padding:"16px 20px", marginBottom:16, cursor:"pointer"};
+  if (card.type==="active_grocery") {
+    const scored=(card.list.items||[]).filter(i=>i.score!=null&&!i.checked);
+    const avg=scored.length?(scored.reduce((s,i)=>s+i.score,0)/scored.length).toFixed(1):null;
+    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your grocery list</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>{card.list.name}</div><div style={{fontSize:13,color:muted}}>{card.remaining} item{card.remaining!==1?"s":""} remaining{avg&&` · avg score ${avg}`}</div></div>);
+  }
+  if (card.type==="audit_suggestion") {
+    const cl=card.suggestion.type==="pantry"?"food and pantry":card.suggestion.type==="beauty"?"personal care":card.suggestion.type==="home"?"home and cleaning":card.suggestion.type;
+    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Ready for you</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>Start your {card.suggestion.label}</div><div style={{fontSize:13,color:muted}}>Based on {card.suggestion.count} {cl} scans</div></div>);
+  }
+  if (card.type==="home_coverage") {
+    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your home</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:6}}>{card.readyRooms.length} area{card.readyRooms.length!==1?"s":""} ready to audit</div><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{card.readyRooms.slice(0,4).map((r,i)=><span key={i} style={{fontSize:12,fontWeight:600,color:"#2563eb",background:isDark?"#1e3a5f":"#dbeafe",border:"1px solid #3b82f6",borderRadius:20,padding:"3px 10px"}}>{r.room} {r.count}</span>)}</div></div>);
+  }
+  if (card.type==="grocery_prompt") {
+    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Plan your shop</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>Build a scored grocery list</div><div style={{fontSize:13,color:muted}}>Pick a store, set your budget, add products. Every item scored before you leave the house.</div></div>);
+  }
+  if (card.type==="stale_list") {
+    const rem=(card.list.items||[]).filter(i=>!i.checked).length;
+    const ds=Math.floor((Date.now()-new Date(card.list.lastOpenedAt).getTime())/(1000*60*60*24));
+    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your list</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>{card.list.name}</div><div style={{fontSize:13,color:muted}}>{rem} item{rem!==1?"s":""} remaining · last opened {ds} day{ds!==1?"s":""} ago</div></div>);
+  }
+  return null;
+};
+
 function useWindowWidth() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
   useEffect(() => {
@@ -6459,6 +6511,7 @@ function App() {
       }
     } catch {}
   };
+  const [displayName, setDisplayName] = useState(()=>{try{return localStorage.getItem("partiqule_display_name")||"";}catch{return "";}});
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -7112,7 +7165,7 @@ function App() {
           {(isMobile || isTablet) ? (
             /* Mobile/tablet — icon row + hamburger */
             <div style={{display:"flex", alignItems:"center", gap:8}}>
-              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#4ade80",fontWeight:700,fontSize:11}}>{user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
+              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#4ade80",fontWeight:700,fontSize:11}}>{displayName?displayName[0].toUpperCase():user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
@@ -7204,7 +7257,7 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}}/>}
+      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
 
       {/* ── Delete account confirmation modal ── */}
       {/* Account deleted toast */}
@@ -7415,6 +7468,10 @@ function App() {
                       <div style={{fontSize:13, color:"#16a34a", fontWeight:600}}>Signed in</div>
                     </div>
                   </div>
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:12, color:muted, fontWeight:600, marginBottom:6}}>Display name</div>
+                    <input value={displayName} onChange={e=>setDisplayName(e.target.value)} onBlur={e=>{try{localStorage.setItem("partiqule_display_name",e.target.value.trim());}catch{}}} placeholder="Add a name or nickname" style={{width:"100%", padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none", boxSizing:"border-box"}}/>
+                  </div>
                   <button onClick={signOut} style={{width:"100%", padding:"12px", borderRadius:10, border:`1.5px solid ${border}`, background:"none", color:muted, fontSize:14, fontWeight:600, cursor:"pointer"}}>
                     Sign out
                   </button>
@@ -7529,8 +7586,8 @@ function App() {
             const routineScore = Math.round(history.slice(0,20).reduce((a,h)=>a+(h.overall_score||h.score||5),0)/Math.min(history.length,20)*10)/10;
             const highRisk = history.filter(h=>(h.overall_score||h.score||0)>=7).slice(0,2);
             const swapList = history.filter(h=>(h.overall_score||h.score||0)>=5).slice(0,2);
-            const firstName = user?.email ? user.email.split("@")[0].split(".")[0] : null;
-            const greet = firstName ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${firstName.charAt(0).toUpperCase()+firstName.slice(1)}` : "Welcome back";
+            const nameForGreet = displayName || (user?.email ? user.email.split("@")[0].split(".")[0] : null);
+            const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
 
             // ── Streak counter (Serial Position Effect: anchors the greeting) ──
             const streak = (() => {
@@ -7687,141 +7744,12 @@ function App() {
                     );
                   })()}
 
-                  {/* Behavioral audit suggestion — surfaces when 5+ scans in a category */}
+                  {/* Single For You card — highest priority only */}
                   {(() => {
                     const suggestion = getSuggestedAudit(history);
-                    if (!suggestion) return null;
-                    const AuditCard = () => {
-                      const [showComingSoon, setShowComingSoon] = useState(false);
-                      return (
-                        <div style={{
-                          background: "rgba(34,197,94,0.06)",
-                          borderRadius: 16, padding: "16px 20px",
-                          border: "1.5px solid rgba(34,197,94,0.15)",
-                          marginBottom: 20,
-                        }}>
-                          <div style={{fontSize:11, color:"#16a34a", fontWeight:700,
-                            textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
-                            Ready for your next step
-                          </div>
-                          <div style={{fontSize:15, fontWeight:700,
-                            color:"#f0fdf4", marginBottom:6, fontFamily:"'Outfit',sans-serif"}}>
-                            Start your {suggestion.label}
-                          </div>
-                          <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7,
-                            marginBottom:14, lineHeight:1.5}}>
-                            Based on {suggestion.count} {
-                              suggestion.type === "pantry" ? "food and pantry" :
-                              suggestion.type === "beauty" ? "personal care" :
-                              suggestion.type === "home" ? "home and cleaning" :
-                              suggestion.type
-                            } scans
-                          </div>
-                          <button
-                            onClick={() => setShowComingSoon(true)}
-                            style={{
-                              padding:"10px 20px", borderRadius:10, background:"#16a34a",
-                              color:"#fff", border:"none", fontWeight:700,
-                              fontSize:14, cursor:"pointer",
-                              fontFamily:"'Outfit',sans-serif",
-                            }}>
-                            Start {suggestion.label} →
-                          </button>
-                          {showComingSoon && (
-                            <div style={{fontSize:12, color:"#16a34a", marginTop:8}}>
-                              Audit feature coming soon — you're building your history now ✓
-                            </div>
-                          )}
-                        </div>
-                      );
-                    };
-                    return <AuditCard/>;
-                  })()}
-
-                  {/* Home audit coverage card */}
-                  {history.length >= 3 && (() => {
                     const coverage = getHomeCoverage(history);
-                    if (!coverage.length) return null;
-                    const readyRooms = coverage.filter(r => r.count >= 3);
-                    return (
-                      <div style={{
-                        background: isDark ? "#1a2433" : "#f8faff",
-                        borderRadius: 16, padding: "16px 20px",
-                        border: `1.5px solid ${isDark ? "#1e2a3e" : "#c7d7f0"}`,
-                        marginBottom: 20,
-                      }}>
-                        <div style={{
-                          display:"flex", alignItems:"center",
-                          justifyContent:"space-between", marginBottom:12,
-                        }}>
-                          <div>
-                            <div style={{
-                              fontSize:11, color:"#2563eb", fontWeight:700,
-                              textTransform:"uppercase", letterSpacing:"0.07em",
-                              marginBottom:3,
-                            }}>
-                              Your home
-                            </div>
-                            <div style={{fontSize:15, fontWeight:700, color:text}}>
-                              {readyRooms.length >= 2
-                                ? `${readyRooms.length} areas ready to audit`
-                                : coverage.length === 1
-                                  ? `${coverage[0].count} ${coverage[0].room} scans`
-                                  : "Keep scanning to build your home audit"
-                              }
-                            </div>
-                          </div>
-                          {readyRooms.length >= 1 && (
-                            <button
-                              onClick={() => setPage("lists")}
-                              style={{
-                                padding:"8px 14px", borderRadius:10,
-                                background:"#2563eb", color:"#fff",
-                                border:"none", fontWeight:700,
-                                fontSize:13, cursor:"pointer",
-                              }}>
-                              Start audit
-                            </button>
-                          )}
-                        </div>
-                        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                          {coverage.slice(0,5).map((r, i) => (
-                            <div key={i} style={{
-                              display:"flex", alignItems:"center", gap:6,
-                              background: r.count >= 3
-                                ? (isDark ? "#1e3a5f" : "#dbeafe")
-                                : (isDark ? "#1e2433" : "#f1f5f9"),
-                              border: `1px solid ${r.count >= 3
-                                ? "#3b82f6"
-                                : (isDark ? "#2a3347" : "#e2e8f0")}`,
-                              borderRadius:20, padding:"4px 12px",
-                              fontSize:12,
-                              color: r.count >= 3 ? "#2563eb" : muted,
-                              fontWeight: r.count >= 3 ? 600 : 400,
-                            }}>
-                              <span>{r.room}</span>
-                              <span style={{
-                                fontSize:10, opacity:0.7,
-                                background: r.count >= 3
-                                  ? "rgba(37,99,235,0.15)"
-                                  : "rgba(0,0,0,0.08)",
-                                borderRadius:10, padding:"1px 6px",
-                              }}>
-                                {r.count}
-                              </span>
-                            </div>
-                          ))}
-                          {coverage.length < 3 && (
-                            <div style={{
-                              fontSize:12, color:muted,
-                              padding:"4px 2px", fontStyle:"italic",
-                            }}>
-                              Scan home, cleaning, or pantry products to build your audit
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
+                    const card = selectForYouCard({history, lists, suggestion, coverage});
+                    return <ForYouCard card={card} isDark={isDark} text={text} muted={muted} setPage={setPage}/>;
                   })()}
 
                   {/* Today's Comparison — new users only */}
@@ -7857,63 +7785,6 @@ function App() {
                   </div>
                   )}
 
-                  {/* Active list reminder */}
-                  {(() => {
-                    const activeLists = lists.filter(l => {
-                      const lastOpened = l.lastOpenedAt ? new Date(l.lastOpenedAt) : null;
-                      const daysSince = lastOpened ? (Date.now() - lastOpened.getTime()) / (1000*60*60*24) : 999;
-                      return (l.items||[]).filter(i=>!i.checked).length > 0 && daysSince > 7;
-                    });
-                    if (!activeLists.length) return null;
-                    const list = activeLists[0];
-                    const remaining = (list.items||[]).filter(i=>!i.checked).length;
-                    const daysSince = Math.floor((Date.now()-new Date(list.lastOpenedAt).getTime())/(1000*60*60*24));
-                    return (
-                      <div onClick={()=>setPage("lists")} style={{background:"rgba(34,197,94,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(34,197,94,0.15)", marginBottom:16, cursor:"pointer"}}>
-                        <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Your list</div>
-                        <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>{list.name} — {remaining} item{remaining!==1?"s":""} remaining</div>
-                        <div style={{fontSize:13, color:muted}}>Last opened {daysSince} day{daysSince!==1?"s":""} ago</div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Start first list prompt */}
-                  {lists.length === 0 && history.length >= 3 && (
-                    <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
-                      <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Plan your next shop</div>
-                      <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>Start a shopping list</div>
-                      <div style={{fontSize:13, color:muted, lineHeight:1.5}}>Add items as you scan so you always know what to buy and what to skip.</div>
-                    </div>
-                  )}
-
-                  {/* Grocery list For You card */}
-                  {(() => {
-                    const day = new Date().getDay();
-                    const isShoppingDay = day===4||day===5;
-                    const hasGroceryList = lists.some(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
-                    const noGroceryListEver = !lists.some(l=>l.type==="grocery");
-                    if (hasGroceryList) {
-                      const al = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
-                      const rem = (al.items||[]).filter(i=>!i.checked).length;
-                      return (
-                        <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
-                          <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Grocery list</div>
-                          <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>{al.name} — {rem} item{rem!==1?"s":""} left</div>
-                          <div style={{fontSize:13, color:muted}}>Tap to open your list</div>
-                        </div>
-                      );
-                    }
-                    if (isShoppingDay && noGroceryListEver) {
-                      return (
-                        <div onClick={()=>setPage("lists")} style={{background:"rgba(37,99,235,0.06)", borderRadius:16, padding:"16px 20px", border:"1.5px solid rgba(37,99,235,0.15)", marginBottom:16, cursor:"pointer"}}>
-                          <div style={{fontSize:11, color:"#2563eb", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Plan your shop</div>
-                          <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4}}>Build a scored grocery list</div>
-                          <div style={{fontSize:13, color:muted, lineHeight:1.5}}>Pick a store, set your budget, add products. Every item scored before you leave the house.</div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
 
                   {/* Trending Scans */}
                   <div style={{marginBottom:24}}>
