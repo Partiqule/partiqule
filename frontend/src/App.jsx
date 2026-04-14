@@ -6525,6 +6525,7 @@ function App() {
     } catch(e) { alert("Error: " + e.message); }
   };
   const [checkingOut,  setCheckingOut]  = useState(false);
+  const [iapTimedOut,  setIapTimedOut]  = useState(false);
   const FREE_LIMIT = 10;
   const PAID_LIMIT = 20;
   // ── Accessibility: font scale ────────────────────────────────
@@ -6541,6 +6542,7 @@ function App() {
 
   const width   = useWindowWidth();
   const isMobile = width < 768;
+  const isTablet = width >= 768 && width <= 1024;
 
   // ── Auth listener ────────────────────────────────────────────
   const checkSubscription = async (userId) => {
@@ -6615,35 +6617,40 @@ function App() {
     if (IS_NATIVE) {
       // iOS — purchase via StoreKit through @capgo/native-purchases
       setCheckingOut(true);
+      const iapTimeout = setTimeout(() => {
+        setCheckingOut(false);
+        setIapTimedOut(true);
+      }, 12000);
       try {
         const np = await loadNativePurchases();
         if (!np) {
+          clearTimeout(iapTimeout);
           setCheckingOut(false);
-          alert("In-app purchases are unavailable on this device. Please try again later.");
+          setIapTimedOut(true);
           return;
         }
         const { transaction } = await np.purchaseProduct({
           productIdentifier: IAP_PRODUCT_ID,
           productType: PURCHASE_TYPE.SUBS,
         });
+        clearTimeout(iapTimeout);
         if (transaction) {
-          // Mark subscribed locally — server validation can happen in background
           setIsSubscribed(true);
           setScanCount(0);
           try { localStorage.setItem("ps_scan_count", "0"); } catch {}
           setShowLimitModal(null);
-          // Notify backend to record the subscription
           try {
             await fetch(`${API_BASE}/apple-iap-confirm`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
             });
-          } catch {} // non-critical — local state already updated
+          } catch {}
         }
       } catch (e) {
+        clearTimeout(iapTimeout);
         if (!e.message?.includes("cancelled")) {
-          alert("Purchase could not be completed. Please try again.");
+          setIapTimedOut(true);
         }
       }
       setCheckingOut(false);
@@ -6764,8 +6771,9 @@ function App() {
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
     if (path === "/lists") { setPage("lists"); return; }
+    if (path === "/account") { setPage("settings"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists", "/account"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -7101,9 +7109,10 @@ function App() {
             <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:800, fontSize:isMobile?18:22, color:"#f0fdf4", letterSpacing:"-0.5px"}}>Partiqule</span>
           </div>
 
-          {isMobile ? (
-            /* Mobile — icon row */
+          {(isMobile || isTablet) ? (
+            /* Mobile/tablet — icon row + hamburger */
             <div style={{display:"flex", alignItems:"center", gap:8}}>
+              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#4ade80",fontWeight:700,fontSize:11}}>{user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
@@ -7242,7 +7251,14 @@ function App() {
                   Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
                 </div>
               )}
-              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              {iapTimedOut && (
+                <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
+                  <div style={{fontSize:14, color:muted, marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
+                  <button onClick={()=>{const url="https://partiqule.com?subscribe=1";if(window.Capacitor?.isNativePlatform?.())window.open(url,"_system");else window.open(url,"_blank");}} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:10}}>Subscribe on partiqule.com</button>
+                  <button onClick={()=>{setIapTimedOut(false);setCheckingOut(false);}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontSize:14,cursor:"pointer"}}>Try again</button>
+                </div>
+              )}
             </>)}
 
           </div>
@@ -7402,9 +7418,13 @@ function App() {
                   <button onClick={signOut} style={{width:"100%", padding:"12px", borderRadius:10, border:`1.5px solid ${border}`, background:"none", color:muted, fontSize:14, fontWeight:600, cursor:"pointer"}}>
                     Sign out
                   </button>
-                  <button onClick={()=>setShowDeleteConfirm(true)} style={{width:"100%", padding:"12px", borderRadius:10, border:"1.5px solid #fee2e2", background:"none", color:"#dc2626", fontSize:14, fontWeight:600, cursor:"pointer", marginTop:8}}>
-                    Delete account
-                  </button>
+                  <div style={{marginTop:16, padding:"16px 20px", borderTop:`1px solid ${border}`}}>
+                    <div style={{fontSize:12, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Danger zone</div>
+                    <div style={{fontSize:13, color:muted, marginBottom:12, lineHeight:1.5}}>Permanently deletes your account, scan history, and cancels any active subscription. This cannot be undone.</div>
+                    <button onClick={()=>setShowDeleteConfirm(true)} style={{width:"100%", padding:"14px", borderRadius:10, border:"2px solid #dc2626", background:isDark?"#2a1010":"#fef2f2", color:"#dc2626", fontSize:15, fontWeight:700, cursor:"pointer"}}>
+                      Delete My Account
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{padding:"16px 20px"}}>
