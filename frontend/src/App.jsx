@@ -3373,9 +3373,16 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
   const [form, setForm] = useState({headline:"",body:"",label:"EWG Alert",label_color:"#d97706",action_text:"Learn more",action_url:"",action_page:"",ingredient_triggers:"",category_triggers:[],source_name:"",source_url:"",priority:5,active:true});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [feedRunning, setFeedRunning] = useState(false);
+  const [feedResult, setFeedResult] = useState(null);
 
-  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence-cards`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
+  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence-cards?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
   useEffect(()=>{fetchCards();},[]);
+
+  const runFeedNow = async()=>{setFeedRunning(true);setFeedResult(null);try{const r=await fetch(`${API_BASE}/api/intelligence/run?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"POST",headers:{"Content-Type":"application/json"}});setFeedResult(await r.json());}catch(e){setFeedResult({error:e.message});}setFeedRunning(false);fetchCards();};
+
+  const draftCards = cards.filter(c=>!c.active);
+  const liveCards = cards.filter(c=>c.active);
 
   const save = async()=>{
     if(!form.headline.trim()||!form.body.trim()){setMsg("Headline and body are required");return;}
@@ -3405,15 +3412,56 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
     <div>
       <h3 style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700,color:text,margin:"0 0 16px"}}>Intelligence Cards</h3>
 
-      {/* Existing cards */}
-      {loading ? <div style={{color:muted,fontSize:14}}>Loading...</div> : cards.length===0 ? <div style={{color:muted,fontSize:14,marginBottom:20}}>No cards yet</div> : (
+      {/* Feed runner */}
+      <div style={{marginBottom:20}}>
+        <button onClick={runFeedNow} disabled={feedRunning} style={{padding:"10px 20px",borderRadius:10,background:feedRunning?muted:"#16a34a",color:"#fff",border:"none",fontWeight:700,fontSize:14,cursor:feedRunning?"not-allowed":"pointer"}}>{feedRunning?"Running...":"Run feed now"}</button>
+        {feedResult&&(
+          <div style={{marginTop:12,padding:"12px 16px",borderRadius:10,fontSize:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${border}`,color:text}}>
+            <div style={{fontWeight:700,marginBottom:6}}>Feed run complete</div>
+            <div style={{color:muted}}>Feeds checked: {feedResult.feeds_checked}</div>
+            <div style={{color:muted}}>Articles found: {feedResult.articles_found}</div>
+            <div style={{color:"#16a34a",fontWeight:600}}>Draft cards saved: {feedResult.cards_saved}</div>
+            {feedResult.errors?.length>0&&<div style={{color:"#dc2626",marginTop:4}}>{feedResult.errors.length} feed error{feedResult.errors.length!==1?"s":""}</div>}
+          </div>
+        )}
+      </div>
+
+      {/* Draft cards — awaiting approval */}
+      {draftCards.length>0&&(
+        <div style={{marginBottom:24}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#d97706",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}}>Drafts — awaiting approval ({draftCards.length})</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {draftCards.map(c=>(
+              <div key={c.id} style={{padding:"12px 16px",borderRadius:12,background:isDark?"#2a1a00":"#fffbeb",border:"1px solid #fde68a"}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                      <span style={{fontSize:10,fontWeight:700,color:c.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${c.label_color||"#d97706"}18`,borderRadius:20,padding:"2px 8px"}}>{c.label}</span>
+                      {c.source_name&&<span style={{fontSize:10,color:muted}}>{c.source_name}</span>}
+                    </div>
+                    <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
+                    <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body}</div>
+                    {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
+                  </div>
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    <button onClick={()=>toggleActive(c.id,false)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"none",background:"#16a34a",color:"#fff",cursor:"pointer",fontWeight:600}}>Approve</button>
+                    <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Live cards */}
+      {loading ? <div style={{color:muted,fontSize:14}}>Loading...</div> : liveCards.length===0 ? <div style={{color:muted,fontSize:14,marginBottom:20}}>No live cards</div> : (
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-          {cards.map(c=>(
+          {liveCards.map(c=>(
             <div key={c.id} style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,padding:"12px 16px",borderRadius:12,background:surface,border:`1px solid ${border}`}}>
               <div style={{flex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <span style={{fontSize:10,fontWeight:700,color:c.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${c.label_color||"#d97706"}18`,borderRadius:20,padding:"2px 8px"}}>{c.label}</span>
-                  {!c.active&&<span style={{fontSize:10,color:muted,fontStyle:"italic"}}>inactive</span>}
                 </div>
                 <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
                 <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body?.slice(0,100)}</div>

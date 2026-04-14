@@ -5354,13 +5354,10 @@ app.get("/api/intelligence-cards", async (req, res) => {
   try {
     if (!supabaseAdmin) return res.json({ cards: [] });
     const now = new Date().toISOString();
-    const { data, error } = await supabaseAdmin
-      .from("intelligence_cards")
-      .select("*")
-      .eq("active", true)
-      .or(`expires_at.is.null,expires_at.gt.${now}`)
-      .order("priority", { ascending: false })
-      .limit(20);
+    const isAdmin = req.query.key === ADMIN_KEY || req.headers["x-admin-key"] === ADMIN_KEY;
+    let query = supabaseAdmin.from("intelligence_cards").select("*");
+    if (!isAdmin) query = query.eq("active", true).or(`expires_at.is.null,expires_at.gt.${now}`);
+    const { data, error } = await query.order("priority", { ascending: false }).limit(50);
     if (error) throw error;
     return res.json({ cards: data || [] });
   } catch (e) {
@@ -5430,6 +5427,97 @@ Rules:
   }
 });
 
+// ── INTELLIGENCE FEED — automated RSS → Claude → Supabase ──
+const INTELLIGENCE_RSS_FEEDS = [
+  {name:"EFSA",url:"https://www.efsa.europa.eu/en/rss/rss.xml",jurisdiction:"EU",credibility:"regulatory"},
+  {name:"ECHA",url:"https://echa.europa.eu/rss/home",jurisdiction:"EU",credibility:"regulatory"},
+  {name:"CHEM Trust",url:"https://chemtrust.org/feed/",jurisdiction:"EU",credibility:"research"},
+  {name:"Environmental Health News",url:"https://www.ehn.org/feed",jurisdiction:"International",credibility:"research"},
+  {name:"EWG",url:"https://www.ewg.org/news-insights/rss.xml",jurisdiction:"US",credibility:"advocacy"},
+  {name:"FDA Recalls",url:"https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml",jurisdiction:"US",credibility:"regulatory"},
+];
+
+const INTELLIGENCE_KEYWORDS = ["PFAS","forever chemicals","perfluoroalkyl","PFOA","PFOS","DWR coating","Red 40","titanium dioxide","BHT","BHA","TBHQ","sodium nitrite","aspartame","artificial dye","food coloring","glyphosate","pesticide","chlorpyrifos","atrazine","Dirty Dozen","BPA","phthalate","microplastic","microfiber","endocrine disruptor","paraben","oxybenzone","triclosan","formaldehyde","lead","cadmium","arsenic","mercury","carcinogen","IARC","banned","recall","hormone disruptor"];
+
+async function fetchRSSFeed(feed) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(feed.url, {signal:controller.signal, headers:{"User-Agent":"Partiqule/1.0","Accept":"application/rss+xml, application/xml, text/xml"}});
+    clearTimeout(timeout);
+    if (!res.ok) return [];
+    const text = await res.text();
+    const items = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+    while ((match = itemRegex.exec(text)) !== null) {
+      const item = match[1];
+      const getTag = (tag) => {const m = item.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`)) || item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`)); return m ? m[1].trim().replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/<[^>]+>/g,"").trim() : "";};
+      const title = getTag("title");
+      const description = getTag("description");
+      const link = getTag("link");
+      const pubDate = getTag("pubDate");
+      if (!title) continue;
+      const content = `${title} ${description}`.toLowerCase();
+      const matchedKeywords = INTELLIGENCE_KEYWORDS.filter(kw => content.includes(kw.toLowerCase()));
+      if (matchedKeywords.length === 0) continue;
+      if (pubDate) { const pub = new Date(pubDate); if (Date.now() - pub.getTime() > 7*24*60*60*1000) continue; }
+      items.push({title, description:description.slice(0,500), link, pubDate, source:feed.name, jurisdiction:feed.jurisdiction, credibility:feed.credibility, matchedKeywords});
+    }
+    return items;
+  } catch (e) { console.warn(`[Intel] RSS fetch failed for ${feed.name}:`, e.message); return []; }
+}
+
+async function writeIntelligenceCard(article) {
+  const jn = article.jurisdiction==="EU"?"This is an EU regulatory action. Use language like 'banned in the EU' or 'EFSA has determined'.":article.jurisdiction==="International"?"This is peer-reviewed international research. Use language like 'research published in [journal] found'.":"This is a US source. Use factual language about what was found or announced.";
+  try {
+    const card = await callClaude(
+      `You are writing a short consumer safety alert card for the Partiqule app. Our audience: health-conscious parents and families. Our tone: honest, specific, never alarmist. We name compounds. We give regulatory context. Return ONLY valid JSON.`,
+      `${jn}\nSource: ${article.source} (${article.jurisdiction})\nHeadline: ${article.title}\nSummary: ${article.description}\nKeywords: ${article.matchedKeywords.join(", ")}\n\nWrite a card as JSON: {"headline":"max 60 chars","body":"max 120 chars","label":"max 20 chars","label_color":"#d97706 or #dc2626 or #2563eb","action_text":"max 20 chars","action_url":"${article.link}","ingredient_triggers":["compounds"],"category_triggers":["food","clothing","personal_care","cleaning","baby"],"priority":7,"source_name":"${article.source}","source_url":"${article.link}"}`,
+      600, 2
+    );
+    if (!card || !card.headline || !card.body) return null;
+    return card;
+  } catch (e) { console.warn("[Intel] Card write failed:", e.message); return null; }
+}
+
+app.post("/api/intelligence/run", requireAdmin, async (req, res) => {
+  console.log("[Intel] Starting intelligence feed run...");
+  if (!supabaseAdmin) return res.status(503).json({error:"Supabase not configured"});
+  const results = {feeds_checked:0, articles_found:0, cards_written:0, cards_saved:0, errors:[]};
+  try {
+    const feedResults = await Promise.allSettled(INTELLIGENCE_RSS_FEEDS.map(f=>fetchRSSFeed(f)));
+    const allArticles = [];
+    feedResults.forEach((r,i)=>{results.feeds_checked++;if(r.status==="fulfilled")allArticles.push(...r.value);else results.errors.push(`${INTELLIGENCE_RSS_FEEDS[i].name}: ${r.reason?.message}`);});
+    results.articles_found = allArticles.length;
+    console.log(`[Intel] Found ${allArticles.length} relevant articles`);
+    if (allArticles.length === 0) return res.json({...results, message:"No relevant articles found today"});
+
+    const {data:existing} = await supabaseAdmin.from("intelligence_cards").select("source_url,headline").gte("created_at",new Date(Date.now()-7*24*60*60*1000).toISOString());
+    const existingUrls = new Set((existing||[]).map(c=>c.source_url));
+    const existingHeadlines = new Set((existing||[]).map(c=>c.headline?.toLowerCase().slice(0,30)));
+    const newArticles = allArticles.filter(a=>!existingUrls.has(a.link)&&!existingHeadlines.has(a.title?.toLowerCase().slice(0,30)));
+    console.log(`[Intel] ${newArticles.length} new articles after dedup`);
+
+    const prioritized = newArticles.sort((a,b)=>b.matchedKeywords.length-a.matchedKeywords.length).slice(0,5);
+    for (const article of prioritized) {
+      await new Promise(r=>setTimeout(r,1000));
+      const card = await writeIntelligenceCard(article);
+      results.cards_written++;
+      if (!card) continue;
+      const {error} = await supabaseAdmin.from("intelligence_cards").insert({...card, active:false, expires_at:new Date(Date.now()+14*24*60*60*1000).toISOString()});
+      if (!error) { results.cards_saved++; console.log(`[Intel] Saved draft: ${card.headline}`); }
+      else results.errors.push(`Save failed: ${error.message}`);
+    }
+
+    if (results.cards_saved > 0 && process.env.LOOPS_API_KEY) {
+      try { await fetch("https://app.loops.so/api/v1/transactional",{method:"POST",headers:{"Authorization":`Bearer ${process.env.LOOPS_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({transactionalId:"intelligence_digest",email:"paul@partiqule.com",dataVariables:{cards_saved:results.cards_saved,articles_found:results.articles_found,date:new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}})}); } catch {}
+    }
+    console.log("[Intel] Run complete:", results);
+    return res.json(results);
+  } catch (e) { console.error("[Intel] Run failed:", e.message); return res.status(500).json({...results, error:e.message}); }
+});
+
 app.get("/health", (req, res) => res.json({
   status: "ok",
   paApi: isPaApiConfigured() ? "active" : "not configured - using static database",
@@ -5464,6 +5552,22 @@ app.listen(PORT, () => {
   console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
   console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
   console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
+
+  // Daily intelligence feed scheduler — 7am UTC
+  if (supabaseAdmin) {
+    const scheduleIntelFeed = () => {
+      const now=new Date();const next=new Date();next.setUTCHours(7,0,0,0);
+      if(next<=now)next.setUTCDate(next.getUTCDate()+1);
+      const ms=next.getTime()-now.getTime();
+      console.log(`[Intel] Next feed run in ${Math.round(ms/1000/60)} minutes`);
+      setTimeout(async()=>{
+        console.log("[Intel] Running scheduled daily feed...");
+        try{const r=await fetch(`http://localhost:${PORT}/api/intelligence/run`,{method:"POST",headers:{"Content-Type":"application/json","x-admin-key":ADMIN_KEY}});const d=await r.json();console.log("[Intel] Scheduled run complete:",d);}catch(e){console.error("[Intel] Scheduled run failed:",e.message);}
+        scheduleIntelFeed();
+      },ms);
+    };
+    scheduleIntelFeed();
+  }
 
   // Pre-warm cache with top in-store products after a short delay
   // Runs in background — never blocks requests
