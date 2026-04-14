@@ -6488,9 +6488,153 @@ const useAutoScroll = (ref, intervalMs, itemWidth, itemCount) => {
 };
 
 // ── FOR YOU INTELLIGENCE CARDS ────────────────────────────────
+// ── AUDIT SESSION ─────────────────────────────────────────────
+const AUDIT_TYPES = {
+  pantry:{label:"Pantry Audit",description:"Score everything in your pantry and kitchen",categories:["food","food_beverage","beverage","snack","supplement"],icon:"P",color:"#16a34a"},
+  beauty:{label:"Beauty Audit",description:"Score your personal care and skincare routine",categories:["personal_care","skincare"],icon:"B",color:"#9333ea"},
+  home:{label:"Home Audit",description:"Score your cleaning and home products",categories:["cleaning","home"],icon:"H",color:"#2563eb"},
+  closet:{label:"Closet Audit",description:"Score the clothing and textiles in your home",categories:["clothing"],icon:"C",color:"#d97706"},
+  nursery:{label:"Nursery Audit",description:"Score baby products, toys, and kids items",categories:["baby","toy"],icon:"N",color:"#dc2626"},
+};
+
+const AuditTypeSelector = ({isDark, border, text, muted, onSelect, onClose}) => (
+  <div style={{position:"fixed",inset:0,zIndex:9500,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end"}}>
+    <div style={{width:"100%",background:isDark?"#1e2433":"#ffffff",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px"}}>
+      <div style={{width:40,height:4,borderRadius:2,background:isDark?"#2a3347":"#e5e7eb",margin:"0 auto 20px"}}/>
+      <div style={{fontSize:18,fontWeight:700,color:text,marginBottom:6}}>Start an audit</div>
+      <div style={{fontSize:13,color:muted,marginBottom:20}}>Scan everything in one area to get a complete picture</div>
+      {Object.entries(AUDIT_TYPES).map(([type,config])=>(
+        <button key={type} onClick={()=>{onSelect(type);onClose();}} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,border:`1px solid ${border}`,background:"none",cursor:"pointer",marginBottom:8,textAlign:"left"}}>
+          <div style={{width:40,height:40,borderRadius:10,background:`${config.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:16,fontWeight:700,color:config.color}}>{config.icon}</div>
+          <div><div style={{fontSize:15,fontWeight:700,color:text}}>{config.label}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{config.description}</div></div>
+        </button>
+      ))}
+      <button onClick={onClose} style={{width:"100%",padding:"13px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer",marginTop:8}}>Cancel</button>
+    </div>
+  </div>
+);
+
+const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMobile, childMode, onFinish, onPause}) => {
+  const [localItems, setLocalItems] = useState(session.items||[]);
+  const [queryText, setQueryText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+  const [showLastResult, setShowLastResult] = useState(false);
+  const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+  const tilesRef = useRef(null);
+  const avgScore = localItems.length?(localItems.reduce((s,i)=>s+(i.score||0),0)/localItems.length).toFixed(1):null;
+  const flaggedCount = localItems.filter(i=>(i.score||0)>=6).length;
+  const sc = (s)=>!s?muted:s<=3?"#16a34a":s<=5?"#d97706":"#dc2626";
+
+  const scanProduct = async(name)=>{
+    if(!name.trim()||loading)return;
+    setLoading(true);setQueryText("");
+    try{
+      const res=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:name.trim(),childMode:childMode||false})});
+      const data=await res.json();
+      const item={id:`${Date.now()}-${Math.random().toString(36).slice(2,6)}`,product_name:data.product_name||name.trim(),score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),category:data.category,summary:data.summary,scannedAt:new Date().toISOString()};
+      const updated=[...localItems,item];setLocalItems(updated);setLastResult(item);setShowLastResult(true);
+      saveAuditSession({...session,items:updated});
+      setTimeout(()=>{setShowLastResult(false);setLoading(false);if(tilesRef.current)tilesRef.current.scrollTo({left:tilesRef.current.scrollWidth,behavior:"smooth"});},2000);
+    }catch{setLoading(false);}
+  };
+
+  const scanImage = async(file)=>{
+    if(!file)return;setLoading(true);
+    try{
+      const base64=await new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const c=document.createElement("canvas");const MAX=512;const r=Math.min(MAX/img.width,MAX/img.height,1);c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.80).split(",")[1]);};img.onerror=rej;img.src=url;});
+      const idRes=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:base64,mediaType:"image/jpeg",childMode:childMode||false})});
+      const data=await idRes.json();
+      if(data.product_name){
+        const item={id:`${Date.now()}-${Math.random().toString(36).slice(2,6)}`,product_name:data.product_name,score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),category:data.category,summary:data.summary,scannedAt:new Date().toISOString()};
+        const updated=[...localItems,item];setLocalItems(updated);setLastResult(item);setShowLastResult(true);
+        saveAuditSession({...session,items:updated});
+        setTimeout(()=>{setShowLastResult(false);setLoading(false);},2000);
+      }else setLoading(false);
+    }catch{setLoading(false);}
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark?"#0f1116":"#ffffff",display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"16px 20px",borderBottom:`1px solid ${isDark?"#1e2433":"#e5e7eb"}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:11,fontWeight:700,color:session.color,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>{session.label}</div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            {avgScore?<span style={{fontSize:22,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(parseFloat(avgScore))}}>{avgScore}</span>:<span style={{fontSize:14,color:muted}}>Scan your first item</span>}
+            {localItems.length>0&&<span style={{fontSize:12,color:muted}}>{localItems.length} item{localItems.length!==1?"s":""}{flaggedCount>0&&<span style={{color:"#dc2626",fontWeight:700,marginLeft:6}}>{flaggedCount} flagged</span>}</span>}
+          </div>
+        </div>
+        <button onClick={()=>setShowPauseConfirm(true)} style={{padding:"8px 14px",borderRadius:10,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",color:muted,fontSize:13,fontWeight:600,cursor:"pointer"}}>Pause</button>
+      </div>
+
+      {showLastResult&&lastResult&&(
+        <div style={{margin:"12px 20px",padding:"12px 16px",borderRadius:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div><div style={{fontSize:14,fontWeight:700,color:text}}>{lastResult.product_name}</div>{lastResult.summary&&<div style={{fontSize:12,color:muted,marginTop:2,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{lastResult.summary}</div>}</div>
+          <div style={{fontSize:24,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(lastResult.score),marginLeft:16,flexShrink:0}}>{lastResult.score}</div>
+        </div>
+      )}
+
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+        {loading?(
+          <div style={{textAlign:"center"}}><div style={{fontSize:16,color:muted,marginBottom:8}}>Scoring...</div></div>
+        ):(
+          <>
+            <div style={{fontSize:15,fontWeight:600,color:text,marginBottom:16,textAlign:"center"}}>{localItems.length===0?"Scan or type your first product":"Scan next product"}</div>
+            <div style={{width:"100%",display:"flex",gap:8,marginBottom:16}}>
+              <input value={queryText} onChange={e=>setQueryText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&queryText.trim())scanProduct(queryText.trim());}} placeholder="Type product name..." autoComplete="off" style={{flex:1,padding:"14px 16px",borderRadius:12,fontSize:16,border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:isDark?"#1e2433":"#f9fafb",color:text,outline:"none"}}/>
+              <button onClick={()=>{if(queryText.trim())scanProduct(queryText.trim());}} disabled={!queryText.trim()} style={{padding:"14px 20px",borderRadius:12,border:"none",background:queryText.trim()?"#16a34a":(isDark?"#1e2433":"#f1f5f9"),color:queryText.trim()?"#fff":muted,fontWeight:700,fontSize:15,cursor:queryText.trim()?"pointer":"not-allowed"}}>Scan</button>
+            </div>
+            <label style={{display:"flex",alignItems:"center",gap:8,padding:"12px 20px",borderRadius:12,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",cursor:"pointer",color:muted,fontSize:14}}>
+              <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){e.target.value="";scanImage(f);}}}/>
+              Take a photo of the label
+            </label>
+          </>
+        )}
+      </div>
+
+      {localItems.length>0&&(
+        <div style={{borderTop:`1px solid ${isDark?"#1e2433":"#e5e7eb"}`,padding:"12px 0"}}>
+          <div ref={tilesRef} style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:"0 20px"}}>
+            {localItems.map((item,i)=>(
+              <div key={item.id||i} style={{flexShrink:0,width:72,height:80,borderRadius:10,padding:"8px 6px",background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(item.score),lineHeight:1}}>{item.score}</div>
+                <div style={{fontSize:9,color:muted,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.product_name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {localItems.length>=1&&(
+        <div style={{padding:"12px 20px 32px"}}>
+          <button onClick={()=>onFinish({...session,items:localItems,status:"completed",completedAt:new Date().toISOString()})} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:session.color,color:"#fff",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:16,cursor:"pointer"}}>Finish {session.label}<span style={{fontSize:13,opacity:0.8,marginLeft:8}}>{localItems.length} item{localItems.length!==1?"s":""}</span></button>
+        </div>
+      )}
+
+      {showPauseConfirm&&(
+        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{background:isDark?"#1e2433":"#fff",borderRadius:16,padding:"24px",width:"100%",maxWidth:320}}>
+            <div style={{fontSize:17,fontWeight:700,color:text,marginBottom:8}}>Pause this audit?</div>
+            <div style={{fontSize:13,color:muted,marginBottom:20,lineHeight:1.5}}>Your {localItems.length} item{localItems.length!==1?"s":""} will be saved. You can resume from the home screen.</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setShowPauseConfirm(false)} style={{flex:1,padding:"12px",borderRadius:10,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",color:muted,fontWeight:600,cursor:"pointer"}}>Keep scanning</button>
+              <button onClick={()=>{setShowPauseConfirm(false);onPause();}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",background:session.color,color:"#fff",fontWeight:700,cursor:"pointer"}}>Pause</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const generateForYouCards = (history, lists, childMode) => {
   if(!history||history.length===0)return [];
   const cards=[];
+  // Active audit resume card — always first
+  try{const saved=localStorage.getItem("ps_audit_session");if(saved){const s=JSON.parse(saved);if(s?.status==="active"){const avg=s.items?.length?(s.items.reduce((a,i)=>a+(i.score||0),0)/s.items.length).toFixed(1):null;cards.push({type:"active_audit",priority:10,headline:`${s.label} in progress`,body:s.items?.length?`${s.items.length} items scanned${avg?` · avg ${avg}`:""}`:"You started an audit — tap to continue.",label:"Resume audit",labelColor:s.color||"#16a34a",action:"Continue scanning",actionType:"resume_audit"});}}}catch{}
+  // Audit suggestion from scan history
+  const suggestion = getSuggestedAudit(history);
+  if(suggestion){const cl=suggestion.type==="pantry"?"food and pantry":suggestion.type==="beauty"?"personal care":suggestion.type==="home"?"home and cleaning":suggestion.type;cards.push({type:"audit_suggestion",priority:suggestion.count>=8?8:6,headline:`Start your ${suggestion.label}`,body:`Based on ${suggestion.count} ${cl} scans`,label:"Ready for you",labelColor:AUDIT_TYPES[suggestion.type]?.color||"#16a34a",action:`Start ${suggestion.label}`,actionType:"start_audit",auditType:suggestion.type});}
   const EU_BANNED=[{compound:"titanium dioxide",reason:"banned as a food additive in the EU since 2022",label:"EU banned food additive"},{compound:"Red 40",reason:"under restriction in the EU — requires warning label",label:"EU warning label required"},{compound:"Yellow 5",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"Yellow 6",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"BHT",reason:"banned in several EU countries as a food preservative",label:"EU restricted preservative"},{compound:"BHA",reason:"classified as possible carcinogen, restricted in EU",label:"EU restricted preservative"},{compound:"propyl paraben",reason:"banned in EU cosmetics as endocrine disruptor",label:"EU banned in cosmetics"},{compound:"triclosan",reason:"banned in EU personal care products",label:"EU banned compound"},{compound:"oxybenzone",reason:"banned in EU reef-protection zones, under review",label:"EU under restriction"},{compound:"PFAS",reason:"comprehensive EU restriction effective 2025",label:"EU restricted PFAS"},{compound:"PFOA",reason:"banned globally under Stockholm Convention",label:"Globally banned"}];
   const euFindings=[];
   history.forEach(item=>{const ac=[...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),...(item.harmful_chemicals||[]),item.summary||""].join(" ").toLowerCase();EU_BANNED.forEach(b=>{if(ac.includes(b.compound.toLowerCase()))euFindings.push({product:item.product_name,compound:b.compound,reason:b.reason,label:b.label,score:item.overall_score||item.score});});});
@@ -6512,12 +6656,14 @@ const generateForYouCards = (history, lists, childMode) => {
   return cards.sort((a,b)=>b.priority-a.priority).slice(0,6);
 };
 
-const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
+const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history, onStartAudit, onResumeAudit}) => {
   const scrollRef = useRef(null);
   const CW = isMobile ? 280 : 320;
   const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
   if(!cards||cards.length===0)return null;
   const handleAction=(card)=>{
+    if(card.actionType==="resume_audit"){if(onResumeAudit)onResumeAudit();return;}
+    if(card.actionType==="start_audit"&&card.auditType){if(onStartAudit)onStartAudit(card.auditType);return;}
     if(card.type==="live_intel"){if(card.actionUrl)window.open(card.actionUrl,"_blank");else if(card.actionPage)setPage(card.actionPage);return;}
     if(card.actionPage==="lists")setPage("lists");
     else if(card.actionPage==="history")setPage("history");
@@ -6740,6 +6886,11 @@ function App() {
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
   const [scanSheetOpen, setScanSheetOpen] = useState(false);
+  const [auditSession, setAuditSession] = useState(null);
+  const [auditSessionVisible, setAuditSessionVisible] = useState(false);
+  const [showAuditSelector, setShowAuditSelector] = useState(false);
+  const saveAuditSession = (s)=>{setAuditSession(s);try{if(s)localStorage.setItem("ps_audit_session",JSON.stringify(s));else localStorage.removeItem("ps_audit_session");}catch{}};
+  const startAuditSession = (type)=>{const config=AUDIT_TYPES[type];if(!config)return;const session={id:`local-${Date.now()}`,type,label:config.label,color:config.color,categories:config.categories,items:[],startedAt:new Date().toISOString(),status:"active"};saveAuditSession(session);setAuditSessionVisible(true);setResult(null);setPage("home");};
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
@@ -7039,6 +7190,8 @@ function App() {
 
   // Fetch live intelligence cards on mount
   useEffect(()=>{fetch(`${API_BASE}/api/intelligence-cards`).then(r=>r.json()).then(d=>setLiveIntelCards(d.cards||[])).catch(()=>{});},[]);
+  // Restore active audit session on mount
+  useEffect(()=>{try{const s=JSON.parse(localStorage.getItem("ps_audit_session")||"null");if(s?.status==="active")setAuditSession(s);}catch{}},[]);
 
   // Scroll to top on every page change and every result load
   useEffect(() => {
@@ -7892,7 +8045,7 @@ function App() {
                     const relevantLive = filterLiveCards(liveIntelCards, history).map(c=>({type:"live_intel",priority:c.priority||8,headline:c.headline,body:c.body,label:c.label||"News",labelColor:c.label_color||"#d97706",action:c.action_text||"Learn more",actionUrl:c.action_url||null,actionPage:c.action_page||null,sourceName:c.source_name,sourceUrl:c.source_url}));
                     const allCards = [...relevantLive,...staticCards].sort((a,b)=>b.priority-a.priority).slice(0,8);
                     if (!allCards.length) return null;
-                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
+                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history} onStartAudit={startAuditSession} onResumeAudit={()=>setAuditSessionVisible(true)}/>;
                   })()}
 
                   {/* Today's Comparison — new users only */}
@@ -9291,6 +9444,17 @@ function App() {
         )}
         </>
       )}
+
+      {/* Audit session overlay */}
+      {auditSessionVisible && auditSession && (
+        <AuditSessionView session={auditSession} saveAuditSession={saveAuditSession} isDark={isDark} text={text} muted={muted} isMobile={isMobile} childMode={childMode}
+          onFinish={(completed)=>{saveAuditSession(null);setAuditSessionVisible(false);}}
+          onPause={()=>setAuditSessionVisible(false)}
+        />
+      )}
+
+      {/* Audit type selector */}
+      {showAuditSelector && <AuditTypeSelector isDark={isDark} border={border} text={text} muted={muted} onSelect={startAuditSession} onClose={()=>setShowAuditSelector(false)}/>}
 
       {/* Compare share card modal */}
       {compareAlt && result && (
