@@ -6719,6 +6719,57 @@ const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMob
   );
 };
 
+// ── LIFESTYLE SCORE ───────────────────────────────────────────
+const computeLifestyleScore = (history) => {
+  if(!history||history.length<3)return null;
+  const seen=new Set();const unique=[];
+  [...history].sort((a,b)=>new Date(b.scannedAt)-new Date(a.scannedAt)).forEach(h=>{if(!seen.has(h.product_name)){seen.add(h.product_name);unique.push(h);}});
+  const sample=unique.slice(0,50);
+  const avg=sample.reduce((s,h)=>s+(h.overall_score||h.score||0),0)/sample.length;
+  const previous=unique.length>8?(()=>{const older=unique.slice(5,50);return older.reduce((s,h)=>s+(h.overall_score||h.score||0),0)/older.length;})():null;
+  const current=parseFloat(avg.toFixed(1));const prev=previous?parseFloat(previous.toFixed(1)):null;
+  const trend=prev?current<prev?"improving":current>prev?"declining":"stable":"stable";
+  const delta=prev?parseFloat(Math.abs(current-prev).toFixed(1)):null;
+  const catScores={};const catCounts={};
+  sample.forEach(h=>{const c=h.category||"other";if(!catScores[c]){catScores[c]=0;catCounts[c]=0;}catScores[c]+=(h.overall_score||h.score||0);catCounts[c]++;});
+  const catAvgs=Object.entries(catScores).map(([cat,total])=>({cat,avg:parseFloat((total/catCounts[cat]).toFixed(1)),count:catCounts[cat]})).filter(c=>c.count>=2).sort((a,b)=>b.avg-a.avg);
+  const worst=catAvgs[0]||null;
+  const CL={food:"Pantry",food_beverage:"Pantry",beverage:"Pantry",snack:"Pantry",personal_care:"Bathroom",skincare:"Bathroom",cleaning:"Cleaning",home:"Home",clothing:"Closet",baby:"Nursery",toy:"Nursery",supplement:"Supplements",restaurant:"Dining"};
+  return {current,previous:prev,trend,delta,productCount:sample.length,worstCategory:worst?{label:CL[worst.cat]||worst.cat,avg:worst.avg}:null};
+};
+
+const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPage}) => {
+  if(!score)return null;
+  const sc=score.current<=3?"#16a34a":score.current<=5?"#d97706":"#dc2626";
+  const tc=score.trend==="improving"?"#16a34a":score.trend==="declining"?"#dc2626":muted;
+  const ta=score.trend==="improving"?"↓":score.trend==="declining"?"↑":"→";
+  const tl=score.trend==="improving"?`${score.delta} better than before`:score.trend==="declining"?`${score.delta} higher than before`:"holding steady";
+  return (
+    <div style={{marginBottom:20}}>
+      <div onClick={()=>setPage("history")} style={{background:isDark?"#1e2433":"#ffffff",borderRadius:16,padding:"16px 20px",border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",width:64,height:64,borderRadius:"50%",background:`${sc}15`,border:`2px solid ${sc}40`,flexShrink:0}}>
+            <span style={{fontSize:24,fontWeight:900,fontFamily:"'Outfit',sans-serif",color:sc,lineHeight:1}}>{score.current}</span>
+            <span style={{fontSize:9,color:sc,opacity:0.7,marginTop:1}}>/10</span>
+          </div>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>Routine score</div>
+            <div style={{fontSize:12,color:muted,marginBottom:2}}>{score.productCount} product{score.productCount!==1?"s":""} scored</div>
+            {score.previous&&<div style={{fontSize:12,color:tc,fontWeight:600,display:"flex",alignItems:"center",gap:3}}><span>{ta}</span><span>{tl}</span></div>}
+          </div>
+        </div>
+        <div style={{textAlign:"right",flexShrink:0}}>
+          {score.worstCategory&&(<>
+            <div style={{fontSize:11,color:muted,marginBottom:2}}>Biggest opportunity</div>
+            <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>{score.worstCategory.label}</div>
+            <div style={{fontSize:11,color:muted}}>avg {score.worstCategory.avg}/10</div>
+          </>)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const generateForYouCards = (history, lists, childMode) => {
   if(!history||history.length===0)return [];
   const cards=[];
@@ -6726,6 +6777,9 @@ const generateForYouCards = (history, lists, childMode) => {
   try{const saved=localStorage.getItem("ps_audit_session");if(saved){const s=JSON.parse(saved);if(s?.status==="active"){const avg=s.items?.length?(s.items.reduce((a,i)=>a+(i.score||0),0)/s.items.length).toFixed(1):null;cards.push({type:"active_audit",priority:10,headline:`${s.label} in progress`,body:s.items?.length?`${s.items.length} items scanned${avg?` · avg ${avg}`:""}`:"You started an audit — tap to continue.",label:"Resume audit",labelColor:s.color||"#16a34a",action:"Continue scanning",actionType:"resume_audit"});}}}catch{}
   // Recently completed audit (within 7 days)
   try{const saved=localStorage.getItem("ps_last_audit");if(saved){const a=JSON.parse(saved);const da=(Date.now()-new Date(a.completedAt).getTime())/(1000*60*60*24);if(da<=7&&a.grade)cards.push({type:"completed_audit",priority:6,headline:`${a.label} — Grade ${a.grade}`,body:`${a.itemCount} products scored · avg ${a.avg}. ${a.flaggedCount>0?`${a.flaggedCount} items to swap.`:"Looking good."}`,label:"Completed",labelColor:"#16a34a",action:"View results",actionPage:"history"});}}catch{}
+  // Lifestyle score card
+  const lifestyleScore = computeLifestyleScore(history);
+  if(lifestyleScore&&lifestyleScore.productCount>=10){const at=lifestyleScore.trend==="improving"?`Down ${lifestyleScore.delta} — keep going`:lifestyleScore.worstCategory?`${lifestyleScore.worstCategory.label} pulling score up`:"See what is moving your score";cards.push({type:"lifestyle_score",priority:7,headline:`Your routine scores ${lifestyleScore.current}`,body:at,label:lifestyleScore.trend==="improving"?"Improving":"Your routine",labelColor:lifestyleScore.trend==="improving"?"#16a34a":"#d97706",action:"See breakdown",actionPage:"history"});}
   // Audit suggestion from scan history
   const suggestion = getSuggestedAudit(history);
   if(suggestion){const cl=suggestion.type==="pantry"?"food and pantry":suggestion.type==="beauty"?"personal care":suggestion.type==="home"?"home and cleaning":suggestion.type;cards.push({type:"audit_suggestion",priority:suggestion.count>=8?8:6,headline:`Start your ${suggestion.label}`,body:`Based on ${suggestion.count} ${cl} scans`,label:"Ready for you",labelColor:AUDIT_TYPES[suggestion.type]?.color||"#16a34a",action:`Start ${suggestion.label}`,actionType:"start_audit",auditType:suggestion.type});}
@@ -8152,6 +8206,9 @@ function App() {
                         <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day streak</span>
                       </div>
                     )}</div>
+
+                  {/* Lifestyle score */}
+                  {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} isDark={isDark} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
 
                   {/* For You intelligence carousel — static + live cards merged */}
                   {(() => {
