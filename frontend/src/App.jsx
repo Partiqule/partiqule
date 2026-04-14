@@ -4126,7 +4126,9 @@ const getGroceryRecommendations = (history) => {
 
 const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, findSwapSuggestion, childMode, history, isDark, surface, border, text, muted, isMobile}) => {
   const groceryLists = lists.filter(l=>l.type==="grocery");
-  const activeList = groceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || groceryLists[0];
+  const activeGroceryLists = groceryLists.filter(l=>l.status!=="completed");
+  const completedGroceryLists = groceryLists.filter(l=>l.status==="completed");
+  const activeList = activeGroceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || activeGroceryLists[0];
   const [view, setView] = useState(activeList ? "list" : "setup");
   const [activeId, setActiveId] = useState(activeList?.id || null);
   const [store, setStore] = useState("");
@@ -4525,15 +4527,15 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
       </>)}
 
       {/* Previous lists */}
-      {groceryLists.length>1 && (
+      {activeGroceryLists.filter(l=>l.id!==activeId).length>0 && (
         <div style={{marginTop:24}}>
           <button onClick={()=>setShowPrev(!showPrev)} style={{fontSize:13, color:muted, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:4}}>
             <span style={{transform:showPrev?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s", display:"inline-block"}}>&#9654;</span>
-            Previous lists ({groceryLists.length-1})
+            Previous lists ({activeGroceryLists.filter(l=>l.id!==activeId).length})
           </button>
           {showPrev && (
             <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
-              {groceryLists.filter(l=>l.id!==activeId).map(l=>(
+              {activeGroceryLists.filter(l=>l.id!==activeId).map(l=>(
                 <div key={l.id} onClick={()=>{setActiveId(l.id);setView("list");}} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderRadius:10, background:surface, border:`1px solid ${border}`, cursor:"pointer"}}>
                   <div>
                     <div style={{fontSize:14, fontWeight:600, color:text}}>{l.name}</div>
@@ -4544,6 +4546,27 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Completed grocery lists */}
+      {completedGroceryLists.length>0 && (
+        <div style={{marginTop:20}}>
+          <div style={{fontSize:11,color:muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}}>Completed</div>
+          {completedGroceryLists.map(l=>{
+            const total=(l.items||[]).length;
+            const scored=(l.items||[]).filter(i=>i.score!=null);
+            const avg=scored.length?(scored.reduce((s,i)=>s+i.score,0)/scored.length).toFixed(1):null;
+            return (
+              <div key={l.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${border}`,marginBottom:8,opacity:0.7}}>
+                <div>
+                  <div style={{fontSize:14,fontWeight:600,color:text}}>{l.name}</div>
+                  <div style={{fontSize:12,color:muted,marginTop:2}}>{total} items{avg&&` · avg score ${avg}`}{l.completedAt&&` · ${new Date(l.completedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"})}`}</div>
+                </div>
+                <div style={{fontSize:11,color:"#16a34a",fontWeight:700}}>Done</div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -4576,7 +4599,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           {(() => {const sw=items.filter(i=>i.swappedFrom&&i.swappedFromScore&&i.score!=null);if(!sw.length)return null;const best=sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a);const imp=((best.swappedFromScore||0)-(best.score||0)).toFixed(1);if(parseFloat(imp)<=0)return null;return (<div style={{width:"100%",maxWidth:300,background:isDark?"#1a2a1a":"#f0fdf4",borderRadius:12,padding:"14px 16px",marginBottom:20}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}}>Best swap</div><div style={{fontSize:14,fontWeight:600,color:text}}>{best.text}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{imp} points better than {best.swappedFrom}</div></div>);})()}
           <div style={{display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:300}}>
             <button onClick={()=>generateShopShareCard(current,items)} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
-            <button onClick={()=>{setShowSummary(false);setSummaryDismissed(true);}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1.5px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
+            <button onClick={()=>{saveLists(prev=>prev.map(l=>l.id===activeId?{...l,status:"completed",completedAt:new Date().toISOString()}:l));setActiveId(null);setShowSummary(false);setSummaryDismissed(false);setView("setup");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1.5px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
           </div>
         </div>
       )}
@@ -7619,6 +7642,7 @@ function App() {
                 {label:"Guides",     action:()=>navigateTo("guides"),                      active:page==="guides"||page==="guide"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
                 {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active:page==="lists"},
+                {label:"Audit",      action:()=>setShowAuditSelector(true),                   active:false},
                 {label:"My Scans",   action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
@@ -7657,10 +7681,12 @@ function App() {
               {label:"Guides",       pg:"guides"},
               {label:"My Routine",   pg:"routine"},
               {label:"My Scans",     pg:"history"},
+              {label:"Start Audit",  pg:"_audit"},
               {label:"Settings",     pg:"settings"},
               ...(isAdminUser(user) ? [{label:"Admin", pg:"admin"}] : []),
             ].map(item=>(
               <button key={item.pg} onClick={()=>{
+                if(item.pg==="_audit"){setShowAuditSelector(true);setMenuOpen(false);return;}
                 if(item.pg==="guides") navigateTo("guides");
                 else { setPage(item.pg); setResult(null); }
                 setMenuOpen(false);
@@ -9627,6 +9653,10 @@ function App() {
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
                   <div onClick={()=>{isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();}}
+                    onContextMenu={e=>{e.preventDefault();setShowAuditSelector(true);}}
+                    onTouchStart={()=>{window._lpt=setTimeout(()=>setShowAuditSelector(true),500);}}
+                    onTouchEnd={()=>clearTimeout(window._lpt)}
+                    onTouchMove={()=>clearTimeout(window._lpt)}
                     style={{width:52, height:52, borderRadius:"50%", background:"linear-gradient(135deg,#22c55e,#16a34a)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.1)", marginTop:-14, animation:"pulseScan 2.5s ease-in-out infinite"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
