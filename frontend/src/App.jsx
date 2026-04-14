@@ -3367,6 +3367,106 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 };
 
 // ── ADMIN PAGE ────────────────────────────────────────────────
+const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({headline:"",body:"",label:"EWG Alert",label_color:"#d97706",action_text:"Learn more",action_url:"",action_page:"",ingredient_triggers:"",category_triggers:[],source_name:"",source_url:"",priority:5,active:true});
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence-cards`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
+  useEffect(()=>{fetchCards();},[]);
+
+  const save = async()=>{
+    if(!form.headline.trim()||!form.body.trim()){setMsg("Headline and body are required");return;}
+    setSaving(true);setMsg(null);
+    const payload={...form,ingredient_triggers:form.ingredient_triggers?form.ingredient_triggers.split(",").map(s=>s.trim()).filter(Boolean):[],category_triggers:form.category_triggers.length?form.category_triggers:null};
+    try{
+      const r=await fetch(`${API_BASE}/api/intelligence-cards?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      if(!r.ok)throw new Error("Save failed");
+      setMsg("Card created");setForm({headline:"",body:"",label:"",label_color:"#d97706",action_text:"Learn more",action_url:"",action_page:"",ingredient_triggers:"",category_triggers:[],source_name:"",source_url:"",priority:5,active:true});
+      fetchCards();
+    }catch(e){setMsg(e.message);}
+    setSaving(false);
+  };
+
+  const toggleActive = async(id, active)=>{
+    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({active:!active})});fetchCards();}catch{}
+  };
+
+  const deleteCard = async(id)=>{
+    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"DELETE"});fetchCards();}catch{}
+  };
+
+  const colorPresets = [["#d97706","Amber"],["#dc2626","Red"],["#2563eb","Blue"],["#16a34a","Green"],["#7c3aed","Purple"]];
+  const catOptions = ["food","food_beverage","beverage","snack","personal_care","skincare","cleaning","home","baby","clothing","supplement"];
+
+  return (
+    <div>
+      <h3 style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700,color:text,margin:"0 0 16px"}}>Intelligence Cards</h3>
+
+      {/* Existing cards */}
+      {loading ? <div style={{color:muted,fontSize:14}}>Loading...</div> : cards.length===0 ? <div style={{color:muted,fontSize:14,marginBottom:20}}>No cards yet</div> : (
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+          {cards.map(c=>(
+            <div key={c.id} style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,padding:"12px 16px",borderRadius:12,background:surface,border:`1px solid ${border}`}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{fontSize:10,fontWeight:700,color:c.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${c.label_color||"#d97706"}18`,borderRadius:20,padding:"2px 8px"}}>{c.label}</span>
+                  {!c.active&&<span style={{fontSize:10,color:muted,fontStyle:"italic"}}>inactive</span>}
+                </div>
+                <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
+                <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body?.slice(0,100)}</div>
+                {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
+              </div>
+              <div style={{display:"flex",gap:6,flexShrink:0}}>
+                <button onClick={()=>toggleActive(c.id,c.active)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>
+                <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create form */}
+      <div style={{background:surface,borderRadius:14,border:`1.5px solid ${border}`,padding:"20px"}}>
+        <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:16}}>Create new card</div>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <input value={form.headline} onChange={e=>setForm(f=>({...f,headline:e.target.value}))} placeholder="Headline" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          <textarea value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))} placeholder="Body text" rows={3} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none",resize:"vertical"}}/>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <input value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))} placeholder="Label (e.g. EWG Alert)" style={{flex:1,minWidth:150,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <div style={{display:"flex",gap:4,alignItems:"center"}}>
+              {colorPresets.map(([c,n])=><button key={c} onClick={()=>setForm(f=>({...f,label_color:c}))} title={n} style={{width:24,height:24,borderRadius:6,background:c,border:form.label_color===c?"2px solid #fff":"2px solid transparent",cursor:"pointer"}}/>)}
+            </div>
+          </div>
+          <input value={form.ingredient_triggers} onChange={e=>setForm(f=>({...f,ingredient_triggers:e.target.value}))} placeholder="Ingredient triggers (comma-separated, e.g. Red 40, BHT)" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          <div>
+            <div style={{fontSize:12,color:muted,marginBottom:6}}>Category triggers</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {catOptions.map(cat=><button key={cat} onClick={()=>setForm(f=>({...f,category_triggers:f.category_triggers.includes(cat)?f.category_triggers.filter(c=>c!==cat):[...f.category_triggers,cat]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${form.category_triggers.includes(cat)?"#16a34a":border}`,background:form.category_triggers.includes(cat)?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:form.category_triggers.includes(cat)?"#16a34a":muted,cursor:"pointer"}}>{cat}</button>)}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={form.action_text} onChange={e=>setForm(f=>({...f,action_text:e.target.value}))} placeholder="Action text" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.action_url} onChange={e=>setForm(f=>({...f,action_url:e.target.value}))} placeholder="Action URL (optional)" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={form.source_name} onChange={e=>setForm(f=>({...f,source_name:e.target.value}))} placeholder="Source name" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.source_url} onChange={e=>setForm(f=>({...f,source_url:e.target.value}))} placeholder="Source URL" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:12,color:muted}}>Priority: {form.priority}</span>
+            <input type="range" min={1} max={10} value={form.priority} onChange={e=>setForm(f=>({...f,priority:parseInt(e.target.value)}))} style={{flex:1}}/>
+          </div>
+          {msg&&<div style={{fontSize:12,color:msg==="Card created"?"#16a34a":"#dc2626",fontWeight:600}}>{msg}</div>}
+          <button onClick={save} disabled={saving} style={{padding:"12px",borderRadius:10,background:"#16a34a",color:"#fff",border:"none",fontWeight:700,fontSize:14,cursor:"pointer",opacity:saving?0.7:1}}>{saving?"Saving...":"Create Card"}</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminPage = ({isDark, surface, border, text, muted, history: historyProp = []}) => {
   const [adminTab, setAdminTab] = useState("dashboard"); // dashboard | guides
   const [cacheStatus, setCacheStatus]   = useState(null);
@@ -3570,7 +3670,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
         {/* Tab bar */}
         <div style={{display:"flex", gap:8, borderBottom:`2px solid ${border}`, paddingBottom:0}}>
-          {[["dashboard","Dashboard"],["scores","Score Review"],["guides","Guides"]].map(([t,l])=>(
+          {[["dashboard","Dashboard"],["scores","Score Review"],["guides","Guides"],["intel","Intel Cards"]].map(([t,l])=>(
             <button key={t} onClick={()=>setAdminTab(t)} style={{
               padding:"8px 20px", border:"none", background:"none", cursor:"pointer",
               fontSize:14, fontWeight:600,
@@ -3582,7 +3682,9 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         </div>
       </div>
 
-      {adminTab==="guides" ? (
+      {adminTab==="intel" ? (
+        <IntelAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border}/>
+      ) : adminTab==="guides" ? (
         <GuideAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={false}/>
       ) : adminTab==="scores" ? (
         <div>
@@ -6416,6 +6518,7 @@ const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResul
   const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
   if(!cards||cards.length===0)return null;
   const handleAction=(card)=>{
+    if(card.type==="live_intel"){if(card.actionUrl)window.open(card.actionUrl,"_blank");else if(card.actionPage)setPage(card.actionPage);return;}
     if(card.actionPage==="lists")setPage("lists");
     else if(card.actionPage==="history")setPage("history");
     else if(card.actionPage==="result"&&card.productName){const hi=history.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}
@@ -6447,6 +6550,18 @@ const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResul
 };
 
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
+const filterLiveCards = (liveCards, history) => {
+  if(!liveCards?.length||!history?.length)return [];
+  return liveCards.filter(card=>{
+    const hasIng=card.ingredient_triggers?.length>0;
+    const hasCat=card.category_triggers?.length>0;
+    if(!hasIng&&!hasCat)return true;
+    if(hasIng){const uc=history.flatMap(h=>[...(h.harmful_chemicals||[]),...(h.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),h.summary||""]).join(" ").toLowerCase();if(card.ingredient_triggers.some(t=>uc.includes(t.toLowerCase().trim())))return true;}
+    if(hasCat){const cats=new Set(history.map(h=>h.category));if(card.category_triggers.some(c=>cats.has(c)))return true;}
+    return false;
+  });
+};
+
 const selectForYouCard = ({history, lists, suggestion, coverage}) => {
   const activeGrocery = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
   if (activeGrocery) { const remaining=(activeGrocery.items||[]).filter(i=>!i.checked).length; return {type:"active_grocery",list:activeGrocery,remaining}; }
@@ -6589,6 +6704,7 @@ function App() {
     } catch {}
   };
   const [displayName, setDisplayName] = useState(()=>{try{return localStorage.getItem("partiqule_display_name")||"";}catch{return "";}});
+  const [liveIntelCards, setLiveIntelCards] = useState([]);
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -6920,6 +7036,9 @@ function App() {
       document.title = "Partiqule — Know What's In Your Products";
     }
   }, [result]);
+
+  // Fetch live intelligence cards on mount
+  useEffect(()=>{fetch(`${API_BASE}/api/intelligence-cards`).then(r=>r.json()).then(d=>setLiveIntelCards(d.cards||[])).catch(()=>{});},[]);
 
   // Scroll to top on every page change and every result load
   useEffect(() => {
@@ -7767,11 +7886,13 @@ function App() {
                       </div>
                     )}</div>
 
-                  {/* For You intelligence carousel */}
+                  {/* For You intelligence carousel — static + live cards merged */}
                   {(() => {
-                    const cards = generateForYouCards(history, lists, childMode);
-                    if (!cards.length) return null;
-                    return <ForYouCarousel cards={cards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
+                    const staticCards = generateForYouCards(history, lists, childMode);
+                    const relevantLive = filterLiveCards(liveIntelCards, history).map(c=>({type:"live_intel",priority:c.priority||8,headline:c.headline,body:c.body,label:c.label||"News",labelColor:c.label_color||"#d97706",action:c.action_text||"Learn more",actionUrl:c.action_url||null,actionPage:c.action_page||null,sourceName:c.source_name,sourceUrl:c.source_url}));
+                    const allCards = [...relevantLive,...staticCards].sort((a,b)=>b.priority-a.priority).slice(0,8);
+                    if (!allCards.length) return null;
+                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
                   })()}
 
                   {/* Today's Comparison — new users only */}

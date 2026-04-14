@@ -5335,6 +5335,53 @@ app.get("/api/price-lookup", async (req, res) => {
   }
 });
 
+// ── INTELLIGENCE CARDS — admin-curated live cards ──
+app.get("/api/intelligence-cards", async (req, res) => {
+  try {
+    if (!supabaseAdmin) return res.json({ cards: [] });
+    const now = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("intelligence_cards")
+      .select("*")
+      .eq("active", true)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order("priority", { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    return res.json({ cards: data || [] });
+  } catch (e) {
+    console.error("Intelligence cards error:", e.message);
+    return res.json({ cards: [] });
+  }
+});
+
+app.post("/api/intelligence-cards", requireAdmin, async (req, res) => {
+  try {
+    if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
+    const { data, error } = await supabaseAdmin.from("intelligence_cards").insert([req.body]).select();
+    if (error) throw error;
+    return res.json({ ok: true, card: data?.[0] });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
+
+app.patch("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
+  try {
+    if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
+    const { data, error } = await supabaseAdmin.from("intelligence_cards").update(req.body).eq("id", req.params.id).select();
+    if (error) throw error;
+    return res.json({ ok: true, card: data?.[0] });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
+
+app.delete("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
+  try {
+    if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
+    const { error } = await supabaseAdmin.from("intelligence_cards").delete().eq("id", req.params.id);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+});
+
 // ── RECIPE INGREDIENTS — AI-powered ingredient expansion ──
 app.post("/api/recipe-ingredients", async (req, res) => {
   const { dish, servings } = req.body;
