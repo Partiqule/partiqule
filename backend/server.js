@@ -1499,8 +1499,9 @@ BABY tier labels: clean_safe|conventional|concern_flagged|high_risk_infants
 FOOD HIGH concerns: Red 40, Red 3 (banned 2025), Yellow 5/6, Blue 1/2, Titanium dioxide, BHA/BHT, Sodium nitrate, Trans fats, HFCS
 PERSONAL CARE HIGH concerns: Oxybenzone/octinoxate (endocrine disruptors, EU restricted), Parabens (endocrine disruption), Formaldehyde releasers (DMDM hydantoin, quaternium-15, diazolidinyl urea — carcinogens), Triclosan (thyroid disruption, banned EU), Phthalates (reproductive toxicity), PFAS in cosmetics (bioaccumulation), Coal tar dyes (carcinogens, EU banned), 1,4-dioxane contamination in SLES/PEG ingredients (probable carcinogen), Methylisothiazolinone/MIT (contact allergen, neurotoxin — EU banned in leave-on products), Lead acetate (neurotoxin — banned EU), Hydroquinone (carcinogen — banned EU leave-on), Resorcinol (thyroid disruptor — EU restricted)
 PERSONAL CARE MEDIUM concerns: SLS/SLES (skin irritant, 1,4-dioxane contamination risk), PEG compounds (1,4-dioxane contamination risk), Phenoxyethanol (CNS depression concern at high doses), Synthetic fragrance (undisclosed phthalates/VOCs), BHT in cosmetics (possible endocrine disruptor), Benzophenone (possible carcinogen), Retinyl palmitate (tumor promoter on sun-exposed skin), Talc without asbestos-free certification (IARC Group 2B)
-CLOTHING HIGH concerns: PFAS/DWR coating (bioaccumulative endocrine disruptors), Formaldehyde finish (carcinogen — EU textile standard EN ISO 14184), Flame retardants PBDE/TCEP/TDCPP (neurotoxins), Carcinogenic azo dyes (EU Directive 2002/61/EC bans 22 azo colorants in textiles), Heavy metal dyes (lead, chromium, cadmium in conventional dyes)
-CLOTHING MEDIUM concerns: Conventional synthetic dyes (contact sensitizers), Optical brighteners (skin sensitizer, UV reactive), Nonylphenol ethoxylates (NPE — endocrine disruptor, EU banned in textiles), Chlorine bleaching residues
+CLOTHING HIGH concerns: PFAS-based DWR coating (perfluoroalkyl compounds — bioaccumulative endocrine disruptors, EU REACH restricted 2023), Formaldehyde finish (carcinogen — EU textile standard EN ISO 14184), Flame retardants PBDE/TCEP/TDCPP (neurotoxins), Carcinogenic azo dyes (EU Directive 2002/61/EC bans 22 azo colorants in textiles), Heavy metal dyes (lead, chromium, cadmium in conventional dyes), Silverescent antimicrobial (silver nanoparticles — EU under regulatory review)
+CLOTHING MEDIUM concerns: Conventional synthetic dyes (contact sensitizers), Optical brighteners (skin sensitizer, UV reactive), Nonylphenol ethoxylates (NPE — endocrine disruptor, EU banned in textiles), Chlorine bleaching residues, Synthetic microfiber shedding (700K fibers per wash — Browne 2011)
+CLOTHING USAGE: Always populate usage_exposure for clothing. Synthetic activewear with PFAS DWR + antimicrobial = usage 6-7. Include: skin contact duration, microfiber shedding, heat activation of chemical finishes. Never return empty usage concerns for clothing.
 HOME HIGH concerns: Paraffin wax combustion VOCs (benzene, toluene — carcinogens), PTFE/PFAS coating (bioaccumulative), BPA/BPS (endocrine disruptors), Quaternary ammonium compounds (reproductive toxicity), Chlorine bleach (respiratory irritant, dioxin byproducts), Synthetic fragrance VOCs (phthalates, toluene), PVC off-gassing (phthalates), Formaldehyde off-gassing (pressed wood, carpet — IARC Group 1 carcinogen)
 HOME MEDIUM concerns: Petroleum-based candle wax (VOC combustion byproducts), Synthetic fragrance in candles (VOC release during burning), Lead wicks — banned 2003 but still found in imports
 BABY HIGH concerns: Any synthetic fragrance, Talc without asbestos-free certification, Phenoxyethanol (CNS concern — EU limits in baby products), Parabens (endocrine disruption), Phthalates (reproductive toxicity), Formaldehyde releasers, PFAS, Oxybenzone in baby sunscreen
@@ -1669,6 +1670,19 @@ USAGE AND EXPOSURE (how using this product affects health):
 - VEHICLES: score 3-5 — interior plastic is not food contact. No daily-use penalty.
 - EVs score 1-2 points lower than gas equivalents (Rivian/Tesla/Lucid: 2-3, older EVs: 3-4).
 - CHEWING GUM: polyvinyl acetate and polyethylene = direct plastic ingestion. Score 7-8.
+
+CLOTHING USAGE AND EXPOSURE — always populate for clothing category, never leave empty:
+- Skin contact duration: activewear sits directly against skin for hours during exercise. Flag if synthetic microfibers or chemical finishes are present: "Direct skin contact during exercise — heat and sweat increase absorption of chemical finishes through skin"
+- Microfiber shedding: synthetic fabrics (nylon, polyester, spandex/elastane) shed microplastic fibers during wear and washing. Always flag for synthetics: "Synthetic microfiber shedding — nylon and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle (Browne 2011)"
+- Heat activation: chemical treatments on activewear are more readily absorbed during exercise when skin is warm and pores are open: "Heat and perspiration activate chemical absorption — workout conditions increase dermal uptake of fabric treatments compared to casual wear"
+- Antimicrobial treatments: Silverescent and similar silver-based antimicrobial treatments raise specific concerns: "Silverescent antimicrobial (silver nanoparticles) — releases silver ions through skin contact and into waterways during washing. EU under regulatory review."
+- PFAS in clothing: NEVER write "PFAS" alone for clothing. Always specify: "PFAS-based DWR (durable water repellent) coating — perfluoroalkyl compounds persist in the body and environment, linked to thyroid disruption and immune suppression. EU REACH restriction 2023."
+CLOTHING USAGE SCORE GUIDANCE:
+- Natural fibers with no treatments: usage 1-2
+- Synthetic with no special treatments: usage 3-4
+- Synthetic with moisture-wicking chemical finishes: usage 5-6
+- Synthetic with PFAS DWR + antimicrobial treatments: usage 6-7
+- Direct skin contact activewear with multiple treatments: usage 6-8
 
 DUAL SCORING FORMULA — the server applies these category-specific weights. Score each dimension accurately — the formula is applied server-side, you cannot game it.
 FOOD: Ingredients 90% · Packaging 10% — ingredients are the entire story. Organic food in plastic still scores 2 on materials; flag packaging separately.
@@ -3866,7 +3880,7 @@ Always name the SPECIFIC chemical, not a generic category. These rules apply to 
 - NEVER write "phthalates" alone → write "DEHP", "DBP", or "diethyl phthalate" if you know which type
 - NEVER write "heavy metals" → write "lead", "cadmium", or "arsenic" if known
 - NEVER write "flame retardants" → write "PBDE", "TCEP", "TDCPP", or "TPhP" if known
-- NEVER write "PFAS" alone without specifying → "PFAS (PFOA class)", "PTFE coating", "perfluoroalkyl DWR"
+- NEVER write "PFAS" alone without specifying → "PFAS (PFOA class)", "PTFE coating", "perfluoroalkyl DWR". For clothing: "PFAS-based DWR (durable water repellent) — perfluoroalkyl compounds, EU REACH restricted 2023"
 - NEVER write "binding agents", "emulsifiers", "natural flavors", "processing aids" as concerns — these are ingredients, not harmful substances
 - NEVER write concerns about "concentration levels" or "coating types" without naming the specific chemical
 - If you know a product contains a specific harmful substance (e.g. Altoids contains BHT, Chick-fil-A uses TBHQ), NAME IT explicitly in the concerns
