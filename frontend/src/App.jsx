@@ -8883,6 +8883,23 @@ function App() {
                   );
                 })()}
 
+                {/* Intelligence cards — regulatory findings relevant to this product */}
+                {result.intelligence_cards?.length > 0 && (
+                  <div style={{marginBottom:16}}>
+                    {result.intelligence_cards.map((card,i)=>(
+                      <div key={card.id||i} onClick={()=>{if(card.action_url)window.open(card.action_url,"_blank");}} style={{marginBottom:8,padding:"12px 16px",borderRadius:12,background:isDark?"#1a1a10":"#fffbeb",border:`1.5px solid ${isDark?"#3a2a00":"#fde68a"}`,cursor:card.action_url?"pointer":"default"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                          <div style={{fontSize:10,fontWeight:700,color:card.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${card.label_color||"#d97706"}20`,borderRadius:20,padding:"2px 8px",display:"inline-block"}}>{card.label}</div>
+                          {card.source_name&&<div style={{fontSize:10,color:muted}}>{card.source_name}</div>}
+                        </div>
+                        <div style={{fontSize:13,fontWeight:700,color:text,marginBottom:4,lineHeight:1.4}}>{card.headline}</div>
+                        <div style={{fontSize:12,color:muted,lineHeight:1.5}}>{card.body}</div>
+                        {card.action_url&&<div style={{fontSize:11,fontWeight:700,color:card.label_color||"#d97706",marginTop:6}}>{card.action_text||"Learn more"} →</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
                 {(() => {
                   // Generic food/processing terms that are NOT harmful substances

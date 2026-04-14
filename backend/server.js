@@ -4191,6 +4191,25 @@ async function safePass2(productName, pass1Result) {
 }
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
+// ── INTEL CARD ATTACHMENT — enrich scan results with relevant intelligence ──
+async function attachIntelCards(result) {
+  if (!supabaseAdmin) return result;
+  try {
+    const now = new Date().toISOString();
+    const { data: cards } = await supabaseAdmin.from("intelligence_cards").select("id,headline,body,label,label_color,action_text,action_url,ingredient_triggers,category_triggers,source_name,priority").eq("active", true).or(`expires_at.is.null,expires_at.gt.${now}`).order("priority", { ascending: false }).limit(20);
+    if (!cards || !cards.length) return result;
+    const txt = [result.product_name || "", ...(result.harmful_chemicals || []), ...(result.concerns || []).map(c => typeof c === "string" ? c : c.concern || ""), result.summary || ""].join(" ").toLowerCase();
+    const cat = result.category || "";
+    const matching = cards.filter(c => {
+      const im = (c.ingredient_triggers || []).some(t => txt.includes(t.toLowerCase().trim()));
+      const cm = (c.category_triggers || []).includes(cat);
+      return im || cm;
+    }).slice(0, 3);
+    if (matching.length > 0) result.intelligence_cards = matching;
+  } catch (e) { console.warn("[Intel] Card attachment failed:", e.message); }
+  return result;
+}
+
 app.post("/analyze", rateLimit, async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
@@ -4431,6 +4450,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // Cache the result so next camera scan of same product is instant
       cacheSet(imgKey, calibratedResult);
       console.log(`[CACHED] Vision "${productName}" → score ${calibratedResult.score}`);
+      await attachIntelCards(calibratedResult);
       return res.json(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
@@ -4772,6 +4792,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
     cacheSet(key, calibrated);
     console.log(`[CACHED] ${key} (score: ${calibrated.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
+    await attachIntelCards(calibrated);
     res.json(calibrated);
 
   } catch (err) {
@@ -6388,6 +6409,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     cacheSet(nameKey,    calibrated);
 
     console.log(`[BARCODE] Scored "${productName}" -> ${calibrated.overall_score}/10 (${ingredientList.length} ingredients)`);
+    await attachIntelCards(calibrated);
     res.json(calibrated);
 
   } catch(err) {
