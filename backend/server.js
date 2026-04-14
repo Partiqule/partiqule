@@ -5435,9 +5435,21 @@ const INTELLIGENCE_RSS_FEEDS = [
   {name:"Environmental Health News",url:"https://www.ehn.org/feed",jurisdiction:"International",credibility:"research"},
   {name:"EWG",url:"https://www.ewg.org/news-insights/rss.xml",jurisdiction:"US",credibility:"advocacy"},
   {name:"FDA Recalls",url:"https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls/rss.xml",jurisdiction:"US",credibility:"regulatory"},
+  {name:"Consumer Reports",url:"https://www.consumerreports.org/feed/",jurisdiction:"US",credibility:"consumer"},
+  {name:"Campaign for Safe Cosmetics",url:"https://www.safecosmetics.org/feed/",jurisdiction:"US",credibility:"advocacy"},
+  {name:"Mamavation",url:"https://www.mamavation.com/feed",jurisdiction:"US",credibility:"consumer"},
+  {name:"Scientific American",url:"https://www.scientificamerican.com/feed/",jurisdiction:"International",credibility:"peer-reviewed"},
+  {name:"The Guardian Environment",url:"https://www.theguardian.com/environment/rss",jurisdiction:"International",credibility:"journalism"},
+  {name:"Health and Environment Alliance",url:"https://www.env-health.org/feed/",jurisdiction:"EU",credibility:"advocacy"},
+  {name:"PAN Europe",url:"https://www.pan-europe.info/feed",jurisdiction:"EU",credibility:"advocacy"},
+  {name:"Environmental Defence",url:"https://environmentaldefence.ca/feed/",jurisdiction:"International",credibility:"advocacy"},
+  {name:"Breast Cancer Prevention Partners",url:"https://www.bcpp.org/feed/",jurisdiction:"US",credibility:"advocacy"},
+  {name:"Toxic-Free Future",url:"https://toxicfreefuture.org/feed/",jurisdiction:"US",credibility:"advocacy"},
+  {name:"Food Safety News",url:"https://www.foodsafetynews.com/feed/",jurisdiction:"US",credibility:"journalism"},
+  {name:"Pesticide Action Network",url:"https://www.panna.org/feed",jurisdiction:"US",credibility:"advocacy"},
 ];
 
-const INTELLIGENCE_KEYWORDS = ["PFAS","forever chemicals","perfluoroalkyl","PFOA","PFOS","DWR coating","Red 40","titanium dioxide","BHT","BHA","TBHQ","sodium nitrite","aspartame","artificial dye","food coloring","glyphosate","pesticide","chlorpyrifos","atrazine","Dirty Dozen","BPA","phthalate","microplastic","microfiber","endocrine disruptor","paraben","oxybenzone","triclosan","formaldehyde","lead","cadmium","arsenic","mercury","carcinogen","IARC","banned","recall","hormone disruptor"];
+const INTELLIGENCE_KEYWORDS = ["PFAS","forever chemicals","forever chemical","perfluoroalkyl","PFOA","PFOS","DWR coating","Red 40","titanium dioxide","BHT","BHA","TBHQ","sodium nitrite","aspartame","artificial dye","food coloring","glyphosate","pesticide","chlorpyrifos","atrazine","Dirty Dozen","BPA","BPS","bisphenol","phthalate","DBP","DEHP","DEP","microplastic","nanoplastic","microfiber","endocrine disruptor","endocrine disrupting","paraben","oxybenzone","octinoxate","avobenzone","homosalate","benzophenone","triclosan","formaldehyde","lead","cadmium","arsenic","mercury","carcinogen","carcinogenic","IARC","banned","recall","hormone disruptor","hormone disrupting","toxic chemical","neurotoxin","neurotoxic","reproductive toxin","developmental toxin","obesogen","food recall","food safety","food additive","ultra-processed","ultraprocessed","added sugar","high fructose","HFCS","nitrate","nitrite","acrylamide","potassium bromate","azodicarbonamide","BVO","brominated vegetable oil","organophosphate","neonicotinoid","fungicide","chlormequat","1,4-dioxane","coal tar","hydroquinone","nanoparticle","PVC","styrene","vinyl chloride","polycarbonate","food packaging","food contact material","non-stick coating","Teflon","PTFE","VOC","volatile organic","flame retardant","PBDE","benzene in","cleaning product safety","synthetic fragrance","air freshener","children chemical","baby product chemical","infant exposure","prenatal exposure","toy chemical","banned substance","restricted substance","SVHC","REACH restriction","EU restriction","California Prop 65","product recall","consumer alert","safety warning"];
 
 async function fetchRSSFeed(feed) {
   try {
@@ -5461,7 +5473,7 @@ async function fetchRSSFeed(feed) {
       const content = `${title} ${description}`.toLowerCase();
       const matchedKeywords = INTELLIGENCE_KEYWORDS.filter(kw => content.includes(kw.toLowerCase()));
       if (matchedKeywords.length === 0) continue;
-      if (pubDate) { const pub = new Date(pubDate); if (Date.now() - pub.getTime() > 7*24*60*60*1000) continue; }
+      if (pubDate) { const pub = new Date(pubDate); if (Date.now() - pub.getTime() > 14*24*60*60*1000) continue; }
       items.push({title, description:description.slice(0,500), link, pubDate, source:feed.name, jurisdiction:feed.jurisdiction, credibility:feed.credibility, matchedKeywords});
     }
     return items;
@@ -5470,10 +5482,11 @@ async function fetchRSSFeed(feed) {
 
 async function writeIntelligenceCard(article) {
   const jn = article.jurisdiction==="EU"?"This is an EU regulatory action. Use language like 'banned in the EU' or 'EFSA has determined'.":article.jurisdiction==="International"?"This is peer-reviewed international research. Use language like 'research published in [journal] found'.":"This is a US source. Use factual language about what was found or announced.";
+  const cn = article.credibility==="peer-reviewed"?"This comes from peer-reviewed research. Use 'researchers found' or 'a study published in [journal] found'.":article.credibility==="regulatory"?"This is an official regulatory action. Use definitive language — 'banned', 'restricted', 'classified as unsafe'.":article.credibility==="consumer"?"This is consumer research or testing. Use 'testing found' or 'lab analysis revealed'.":article.credibility==="journalism"?"This is investigative journalism. Use 'an investigation found' or 'reporting revealed'.":"This is from an advocacy organization. Use 'according to [source]' to attribute appropriately.";
   try {
     const card = await callClaude(
       `You are writing a short consumer safety alert card for the Partiqule app. Our audience: health-conscious parents and families. Our tone: honest, specific, never alarmist. We name compounds. We give regulatory context. Return ONLY valid JSON.`,
-      `${jn}\nSource: ${article.source} (${article.jurisdiction})\nHeadline: ${article.title}\nSummary: ${article.description}\nKeywords: ${article.matchedKeywords.join(", ")}\n\nWrite a card as JSON: {"headline":"max 60 chars","body":"max 120 chars","label":"max 20 chars","label_color":"#d97706 or #dc2626 or #2563eb","action_text":"max 20 chars","action_url":"${article.link}","ingredient_triggers":["compounds"],"category_triggers":["food","clothing","personal_care","cleaning","baby"],"priority":7,"source_name":"${article.source}","source_url":"${article.link}"}`,
+      `${jn}\n${cn}\nSource: ${article.source} (${article.jurisdiction}, ${article.credibility})\nHeadline: ${article.title}\nSummary: ${article.description}\nKeywords: ${article.matchedKeywords.join(", ")}\n\nWrite a card as JSON: {"headline":"max 60 chars","body":"max 120 chars","label":"max 20 chars","label_color":"#d97706 or #dc2626 or #2563eb","action_text":"max 20 chars","action_url":"${article.link}","ingredient_triggers":["compounds"],"category_triggers":["food","clothing","personal_care","cleaning","baby"],"priority":7,"source_name":"${article.source}","source_url":"${article.link}"}`,
       600, 2
     );
     if (!card || !card.headline || !card.body) return null;
@@ -5520,15 +5533,15 @@ app.post("/api/intelligence/run", requireAdmin, async (req, res) => {
     console.log(`[Intel] Found ${allArticles.length} relevant articles`);
     if (allArticles.length === 0) return res.json({...results, message:"No relevant articles found today"});
 
-    const {data:existing} = await supabaseAdmin.from("intelligence_cards").select("source_url,headline").gte("created_at",new Date(Date.now()-7*24*60*60*1000).toISOString());
+    const {data:existing} = await supabaseAdmin.from("intelligence_cards").select("source_url,headline").gte("created_at",new Date(Date.now()-14*24*60*60*1000).toISOString());
     const existingUrls = new Set((existing||[]).map(c=>c.source_url));
     const existingHeadlines = new Set((existing||[]).map(c=>c.headline?.toLowerCase().slice(0,30)));
     const newArticles = allArticles.filter(a=>!existingUrls.has(a.link)&&!existingHeadlines.has(a.title?.toLowerCase().slice(0,30)));
     console.log(`[Intel] ${newArticles.length} new articles after dedup`);
 
-    const prioritized = newArticles.sort((a,b)=>b.matchedKeywords.length-a.matchedKeywords.length).slice(0,5);
+    const prioritized = newArticles.sort((a,b)=>b.matchedKeywords.length-a.matchedKeywords.length).slice(0,10);
     for (const article of prioritized) {
-      await new Promise(r=>setTimeout(r,1000));
+      await new Promise(r=>setTimeout(r,1500));
       const card = await writeIntelligenceCard(article);
       results.cards_written++;
       if (!card) continue;
