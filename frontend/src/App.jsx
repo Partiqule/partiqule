@@ -3994,8 +3994,22 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 };
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
-const CATEGORY_PRICE_ESTIMATES = {food:6,food_beverage:5.5,beverage:4,snack:4.5,supplement:25,cleaning:8,personal_care:12,skincare:18,baby:15,clothing:35,home:14,other:10};
-const estimateItemPrice = (category) => CATEGORY_PRICE_ESTIMATES[category] || 10;
+const CATEGORY_PRICE_ESTIMATES = {food:5,food_beverage:5.5,beverage:4.5,snack:4,supplement:22,restaurant:12,cleaning:7,home:12,personal_care:11,skincare:16,baby:14,clothing:32,home_furnishing:45,toy:18,dairy:4.5,meat:9,produce:3.5,bakery:4,frozen:5.5,condiment:4,spice:3.5,grain:4,legume:3,nut:7,oil:6,other:8};
+const estimateItemPrice = (category, productName) => {
+  if (category && category !== "food" && category !== "other" && CATEGORY_PRICE_ESTIMATES[category]) return CATEGORY_PRICE_ESTIMATES[category];
+  if (productName) {
+    const n = productName.toLowerCase();
+    if (/chicken|beef|salmon|shrimp|turkey|pork|lamb|tuna/.test(n)) return 9;
+    if (/milk|yogurt|cream|butter|egg/.test(n)) return 5;
+    if (/tomato|lettuce|onion|garlic|pepper|lemon|lime|cilantro|spinach|broccoli|carrot|potato|avocado/.test(n)) return 3.5;
+    if (/tortilla|pasta|rice|bread|flour|oat/.test(n)) return 4;
+    if (/can|jar|sauce|salsa|bean|stock|broth/.test(n)) return 3.5;
+    if (/oil|vinegar|soy sauce|hot sauce|ketchup|mustard/.test(n)) return 5;
+    if (/mozzarella|parmesan|cheddar|feta|gouda|cheese/.test(n)) return 6;
+    if (/basil|oregano|thyme|rosemary|cumin|paprika|turmeric/.test(n)) return 3;
+  }
+  return CATEGORY_PRICE_ESTIMATES[category] || 5;
+};
 
 const getGroceryRecommendations = (history) => {
   if (!history || history.length === 0) return { needsSwap: [], goodChoices: [] };
@@ -4036,12 +4050,12 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
   const scored = items.filter(i=>i.score!=null);
   const avgScore = scored.length ? Math.round(scored.reduce((s,i)=>s+i.score,0)/scored.length*10)/10 : null;
   const uncheckedItems = items.filter(i=>!i.checked);
-  const estimatedSpend = uncheckedItems.reduce((sum,item)=>{const qty=item.quantity||1;const price=item.estimatedPrice||estimateItemPrice(item.category);return sum+(price*qty);},0);
+  const estimatedSpend = uncheckedItems.reduce((sum,item)=>{const qty=item.quantity||1;const price=item.estimatedPrice||estimateItemPrice(item.category,item.text);return sum+(price*qty);},0);
   const listBudget = current?.budget||0;
   const budgetPct = listBudget>0?Math.min(100,(estimatedSpend/listBudget)*100):0;
   const overBudget = listBudget>0&&estimatedSpend>listBudget;
   const CATEGORY_LABELS = {food:"Food",food_beverage:"Food and Drink",beverage:"Drinks",snack:"Snacks",supplement:"Supplements",cleaning:"Cleaning",personal_care:"Personal Care",skincare:"Skincare",baby:"Baby",home:"Home",clothing:"Clothing",other:"Other"};
-  const categorySpend = uncheckedItems.reduce((acc,item)=>{const cat=item.category||"other";const price=item.estimatedPrice||estimateItemPrice(item.category);const qty=item.quantity||1;acc[cat]=(acc[cat]||0)+(price*qty);return acc;},{});
+  const categorySpend = uncheckedItems.reduce((acc,item)=>{const cat=item.category||"other";const price=item.estimatedPrice||estimateItemPrice(item.category,item.text);const qty=item.quantity||1;acc[cat]=(acc[cat]||0)+(price*qty);return acc;},{});
   const categoryEntries = Object.entries(categorySpend).sort((a,b)=>b[1]-a[1]);
   const checkedItems = items.filter(i=>i.checked);
   const shopComplete = items.length>=3 && uncheckedItems.length===0;
@@ -4054,7 +4068,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
     const avg = si.length ? si.reduce((s,i)=>s+(i.score||0),0)/si.length : 0;
     const sw = cardItems.filter(i=>i.swappedFrom);
     const bgt = list.budget||0;
-    const est = cardItems.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category))*(i.quantity||1)),0);
+    const est = cardItems.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category,i.text))*(i.quantity||1)),0);
     const sc = avg<=3?"#16a34a":avg<=5?"#d97706":"#dc2626";
     const sb = avg<=3?"#f0fdf4":avg<=5?"#fffbeb":"#fef2f2";
     ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,1080,1080);
@@ -4439,7 +4453,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           {(() => {const si=items.filter(i=>i.score!=null);if(!si.length)return null;const avg=si.reduce((s,i)=>s+(i.score||0),0)/si.length;return (<div style={{textAlign:"center",marginBottom:8}}><ScoreBadge score={avg} size="lg"/><div style={{fontSize:13,color:muted,marginTop:6}}>average score across {si.length} item{si.length!==1?"s":""}</div></div>);})()}
           {(() => {
             const sw=items.filter(i=>i.swappedFrom); const bgt=current.budget||0;
-            const est=items.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category))*(i.quantity||1)),0);
+            const est=items.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category,i.text))*(i.quantity||1)),0);
             return (
               <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", maxWidth:300, margin:"20px 0"}}>
                 <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
