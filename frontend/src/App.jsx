@@ -3376,10 +3376,11 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
   const [feedRunning, setFeedRunning] = useState(false);
   const [feedResult, setFeedResult] = useState(null);
 
-  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence-cards?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
+  const AK = encodeURIComponent("RowenaRavenclaw2024!");
+  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence/all?key=${AK}`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
   useEffect(()=>{fetchCards();},[]);
 
-  const runFeedNow = async()=>{setFeedRunning(true);setFeedResult(null);try{const r=await fetch(`${API_BASE}/api/intelligence/run?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"POST",headers:{"Content-Type":"application/json"}});setFeedResult(await r.json());}catch(e){setFeedResult({error:e.message});}setFeedRunning(false);fetchCards();};
+  const runFeedNow = async()=>{setFeedRunning(true);setFeedResult(null);try{const r=await fetch(`${API_BASE}/api/intelligence/run?key=${AK}`,{method:"POST",headers:{"Content-Type":"application/json"}});setFeedResult(await r.json());}catch(e){setFeedResult({error:e.message});}setFeedRunning(false);fetchCards();};
 
   const draftCards = cards.filter(c=>!c.active);
   const liveCards = cards.filter(c=>c.active);
@@ -3397,12 +3398,16 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
     setSaving(false);
   };
 
-  const toggleActive = async(id, active)=>{
-    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({active:!active})});fetchCards();}catch{}
+  const approveCard = async(id)=>{
+    try{const r=await fetch(`${API_BASE}/api/intelligence/approve/${id}?key=${AK}`,{method:"POST"});if(r.ok)setCards(prev=>prev.map(c=>c.id===id?{...c,active:true}:c));}catch(e){console.error("Approve failed:",e.message);}
+  };
+
+  const deactivateCard = async(id)=>{
+    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${AK}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({active:false})});setCards(prev=>prev.map(c=>c.id===id?{...c,active:false}:c));}catch{}
   };
 
   const deleteCard = async(id)=>{
-    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"DELETE"});fetchCards();}catch{}
+    try{const r=await fetch(`${API_BASE}/api/intelligence/dismiss/${id}?key=${AK}`,{method:"DELETE"});if(r.ok)setCards(prev=>prev.filter(c=>c.id!==id));}catch(e){console.error("Delete failed:",e.message);}
   };
 
   const colorPresets = [["#d97706","Amber"],["#dc2626","Red"],["#2563eb","Blue"],["#16a34a","Green"],["#7c3aed","Purple"]];
@@ -3444,7 +3449,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
                     {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
                   </div>
                   <div style={{display:"flex",gap:6,flexShrink:0}}>
-                    <button onClick={()=>toggleActive(c.id,false)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"none",background:"#16a34a",color:"#fff",cursor:"pointer",fontWeight:600}}>Approve</button>
+                    <button onClick={()=>approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"none",background:"#16a34a",color:"#fff",cursor:"pointer",fontWeight:600}}>Approve</button>
                     <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Dismiss</button>
                   </div>
                 </div>
@@ -3468,7 +3473,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
                 {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}}>
-                <button onClick={()=>toggleActive(c.id,c.active)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>
+                <button onClick={()=>c.active?deactivateCard(c.id):approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>
                 <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Delete</button>
               </div>
             </div>

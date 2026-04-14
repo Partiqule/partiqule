@@ -5481,6 +5481,33 @@ async function writeIntelligenceCard(article) {
   } catch (e) { console.warn("[Intel] Card write failed:", e.message); return null; }
 }
 
+app.get("/api/intelligence/all", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({cards:[]});
+  try {
+    const {data,error} = await supabaseAdmin.from("intelligence_cards").select("*").order("created_at",{ascending:false}).limit(50);
+    if (error) throw error;
+    return res.json({cards:data||[]});
+  } catch(e) { return res.status(500).json({error:e.message}); }
+});
+
+app.post("/api/intelligence/approve/:id", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({error:"Supabase not configured"});
+  try {
+    const {error} = await supabaseAdmin.from("intelligence_cards").update({active:true}).eq("id",req.params.id);
+    if (error) throw error;
+    return res.json({success:true});
+  } catch(e) { return res.status(500).json({error:e.message}); }
+});
+
+app.delete("/api/intelligence/dismiss/:id", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({error:"Supabase not configured"});
+  try {
+    const {error} = await supabaseAdmin.from("intelligence_cards").delete().eq("id",req.params.id);
+    if (error) throw error;
+    return res.json({success:true});
+  } catch(e) { return res.status(500).json({error:e.message}); }
+});
+
 app.post("/api/intelligence/run", requireAdmin, async (req, res) => {
   console.log("[Intel] Starting intelligence feed run...");
   if (!supabaseAdmin) return res.status(503).json({error:"Supabase not configured"});
