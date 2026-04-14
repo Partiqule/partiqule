@@ -4114,14 +4114,31 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
     } catch(e){setRecipeError(e.message||"Could not get ingredients");} finally{setRecipeLoading(false);}
   };
 
-  const addAllIngredients = async (recipe) => {
+  const addAllIngredients = (recipe) => {
     setRecipePreview(null); setRecipeQuery("");
     const existingNames = items.map(i=>i.text.toLowerCase().trim());
     const toAdd = recipe.ingredients.filter(ing=>{const n=ing.name.toLowerCase().trim();return !existingNames.some(e=>e===n||e.includes(n)||n.includes(e));});
     const skipped = recipe.ingredients.length - toAdd.length;
-    for(let i=0;i<toAdd.length;i++){if(i>0)await new Promise(r=>setTimeout(r,300));addGroceryItem(activeId,toAdd[i].name);}
+    // Batch-create all temp items in one atomic update
+    const tempItems = toAdd.map(ing=>({id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,text:ing.name,score:null,baseScore:null,childScore:null,category:ing.category||"food",summary:null,checked:false,scoring:true,scoreError:false,quantity:1,addedAt:new Date().toISOString()}));
+    saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:[...(l.items||[]),...tempItems],lastOpenedAt:new Date().toISOString()}));
+    // Fire scoring for each item independently with staggered delays
+    toAdd.forEach((ing,i)=>{
+      const tid=tempItems[i].id;
+      setTimeout(async()=>{
+        try{
+          const res=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:ing.name,childMode:childMode||false})});
+          const data=await res.json();
+          const sc=childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score);
+          saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===tid?{...it,score:sc,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category||ing.category,summary:data.summary,scoring:false,scoreError:false}:it)}));
+          if(sc&&sc>=5.5)findSwapSuggestion(activeId,tid,ing.name,data.category,sc);
+        }catch{
+          saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===tid?{...it,scoring:false,scoreError:true}:it)}));
+        }
+      },i*400);
+    });
     setLastRecipeAdded(recipe.dish); setTimeout(()=>setLastRecipeAdded(null),4000);
-    if(skipped>0){setRecipeError(`${skipped} ingredient${skipped!==1?"s":""} already on your list — skipped`);setTimeout(()=>setRecipeError(null),3000);}
+    if(skipped>0){setRecipeError(`${skipped} ingredient${skipped!==1?"s":""} already on list — skipped`);setTimeout(()=>setRecipeError(null),3000);}
   };
 
   const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); setSummaryDismissed(false); setShowSummary(false); };
@@ -6375,7 +6392,7 @@ function App() {
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
   const [lists,       setLists]     = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_lists")||"[]");}catch{return [];}});
-  const saveLists = (updated) => { setLists(updated); try{localStorage.setItem("ps_lists",JSON.stringify(updated));}catch{} };
+  const saveLists = (updatedOrFn) => { setLists(prev => { const next = typeof updatedOrFn === "function" ? updatedOrFn(prev) : updatedOrFn; try{localStorage.setItem("ps_lists",JSON.stringify(next));}catch{} return next; }); };
   const createShoppingList = (name) => {
     const newList = {id:Date.now().toString(), name:name||"Shopping List", type:"shopping", items:[], createdAt:new Date().toISOString(), lastOpenedAt:new Date().toISOString()};
     const updated = [newList,...lists]; saveLists(updated); return newList.id;
@@ -6390,37 +6407,30 @@ function App() {
   };
   const addGroceryItem = async (listId, productName) => {
     if (!productName.trim()) return;
-    const tempItem = {id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`, text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
-    saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
+    const itemId = `${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const tempItem = {id:itemId, text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
+    saveLists(prev=>prev.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
     try {
       const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim(),childMode:childMode||false})});
       const data = await res.json();
-      saveLists(lists.map(l=>{
+      const finalScore = childMode ? (data.child_score||data.overall_score||data.score) : (data.overall_score||data.score);
+      saveLists(prev=>prev.map(l=>{
         if(l.id!==listId)return l;
-        const items=[...(l.items||[])];
-        const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
-        if(idx===undefined)return l;
-        const finalScore = childMode ? (data.child_score||data.overall_score||data.score) : (data.overall_score||data.score);
-        items[idx]={...items[idx],score:finalScore,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false};
-        if (finalScore >= 5.5) findSwapSuggestion(listId, idx, productName.trim(), data.category, finalScore);
-        return {...l,items};
+        return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,score:finalScore,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false}:it)};
       }));
+      if (finalScore >= 5.5) findSwapSuggestion(listId, itemId, productName.trim(), data.category, finalScore);
       // Background price lookup
       fetch(`${API_BASE}/api/price-lookup?query=${encodeURIComponent(productName.trim())}`).then(r=>r.json()).then(pd=>{
-        if(pd.price)saveLists(lists.map(l=>{if(l.id!==listId)return l;const its=[...(l.items||[])];const pi=its.findIndex(it=>it.text===productName.trim()&&!it.scoring);if(pi===-1)return l;its[pi]={...its[pi],estimatedPrice:pd.price,priceSource:"amazon",asin:pd.asin||null};return{...l,items:its};}));
+        if(pd.price)saveLists(prev=>prev.map(l=>{if(l.id!==listId)return l;return{...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,estimatedPrice:pd.price,priceSource:"amazon",asin:pd.asin||null}:it)};}));
       }).catch(()=>{});
     } catch {
-      saveLists(lists.map(l=>{
+      saveLists(prev=>prev.map(l=>{
         if(l.id!==listId)return l;
-        const items=[...(l.items||[])];
-        const idx=items.map((it,i)=>({it,i})).reverse().find(({it})=>it.text===productName.trim()&&it.scoring)?.i;
-        if(idx===undefined)return l;
-        items[idx]={...items[idx],scoring:false,scoreError:true};
-        return {...l,items};
+        return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,scoring:false,scoreError:true}:it)};
       }));
     }
   };
-  const findSwapSuggestion = async (listId, itemIndex, productName, category, origScore) => {
+  const findSwapSuggestion = async (listId, itemId, productName, category, origScore) => {
     const FOOD_CATS = ["food","food_beverage","beverage","snack"];
     const swapQuery = FOOD_CATS.includes(category) ? `organic ${productName}` : `natural alternative to ${productName}`;
     try {
@@ -6428,11 +6438,9 @@ function App() {
       const data = await res.json();
       const swapScore = data.overall_score || data.score;
       if (swapScore && origScore && (origScore - swapScore) >= 1.5) {
-        saveLists(lists.map(l=>{
+        saveLists(prev=>prev.map(l=>{
           if(l.id!==listId)return l;
-          const items=[...(l.items||[])];
-          if(items[itemIndex]) items[itemIndex]={...items[itemIndex], swapSuggestion:{name:data.product_name, score:swapScore, summary:data.summary}};
-          return {...l,items};
+          return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,swapSuggestion:{name:data.product_name, score:swapScore, summary:data.summary}}:it)};
         }));
       }
     } catch {}
