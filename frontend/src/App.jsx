@@ -6488,6 +6488,75 @@ const useAutoScroll = (ref, intervalMs, itemWidth, itemCount) => {
 };
 
 // ── FOR YOU INTELLIGENCE CARDS ────────────────────────────────
+// ── AUDIT GRADE + COMPLETION ──────────────────────────────────
+const calculateAuditGrade = (items) => {
+  if(!items||items.length===0)return null;
+  const avg=items.reduce((s,i)=>s+(i.score||0),0)/items.length;
+  const grade=avg<=2?{letter:"A+",label:"Outstanding",color:"#16a34a"}:avg<=3?{letter:"A",label:"Excellent",color:"#16a34a"}:avg<=4?{letter:"B",label:"Good",color:"#16a34a"}:avg<=5?{letter:"C",label:"Fair",color:"#d97706"}:avg<=6?{letter:"D",label:"Poor",color:"#d97706"}:{letter:"F",label:"Needs work",color:"#dc2626"};
+  const flagged=items.filter(i=>(i.score||0)>=6);const clean=items.filter(i=>(i.score||0)<=3);
+  const worstItems=[...items].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,3);
+  return {avg:parseFloat(avg.toFixed(1)),grade,flaggedCount:flagged.length,cleanCount:clean.length,worstItems,itemCount:items.length};
+};
+
+const AuditCompleteScreen = ({session, isDark, surface, border, text, muted, isMobile, setPage, saveAuditSession, setResult, setQuery, analyze, generateShareCard}) => {
+  const result = calculateAuditGrade(session.items||[]);
+  if(!result)return null;
+  const bestSwap=(()=>{for(const item of result.worstItems){const alt=item.alternatives?.[0]||item.ai_alternatives?.[0];if(alt){const as=alt.score||alt.estimated_score||null;if(as&&as<(item.score||0)-1)return{from:item,alt,altScore:as};}}return null;})();
+
+  return (
+    <div style={{maxWidth:600,margin:"0 auto",padding:isMobile?"40px 20px 80px":"60px 40px 80px"}}>
+      <div style={{fontSize:11,fontWeight:700,color:result.grade.color,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,textAlign:"center"}}>{session.label} complete</div>
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <div style={{fontSize:96,fontWeight:900,fontFamily:"'Outfit',sans-serif",color:result.grade.color,lineHeight:1,marginBottom:8}}>{result.grade.letter}</div>
+        <div style={{fontSize:18,fontWeight:600,color:result.grade.color,marginBottom:4}}>{result.grade.label}</div>
+        <div style={{fontSize:14,color:muted}}>Average score {result.avg}/10 across {result.itemCount} product{result.itemCount!==1?"s":""}</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:28}}>
+        {[{value:result.itemCount,label:"scanned",color:text},{value:result.flaggedCount,label:"flagged",color:result.flaggedCount>0?"#dc2626":"#16a34a"},{value:result.cleanCount,label:"clean",color:"#16a34a"}].map((stat,i)=>(
+          <div key={i} style={{background:isDark?"#1e2433":"#f8faff",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:stat.color}}>{stat.value}</div>
+            <div style={{fontSize:11,color:muted,marginTop:2}}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
+      {result.worstItems.length>0&&(
+        <div style={{marginBottom:28}}>
+          <div style={{fontSize:12,fontWeight:700,color:muted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:12}}>{result.flaggedCount>0?"Highest concern items":"Items to watch"}</div>
+          {result.worstItems.map((item,i)=>{
+            const alt=item.alternatives?.[0]||item.ai_alternatives?.[0];
+            const as=alt?.score||alt?.estimated_score||null;
+            return (
+              <div key={i} style={{marginBottom:8,padding:"14px 16px",borderRadius:12,background:isDark?"#1e2433":"#ffffff",border:`1px solid ${(item.score||0)>=7?"#fecaca":(isDark?"#2a3347":"#e5e7eb")}`}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:alt&&as&&as<(item.score||0)?10:0}}>
+                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:text}}>{item.product_name}</div>{item.summary&&<div style={{fontSize:12,color:muted,marginTop:2,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{item.summary}</div>}</div>
+                  <ScoreBadge score={item.score} size="sm"/>
+                </div>
+                {alt&&as&&as<(item.score||0)&&(
+                  <button onClick={()=>{setQuery(alt.name);analyze(alt.name);setPage("home");}} style={{width:"100%",padding:"8px 12px",borderRadius:8,background:isDark?"#1a2a1a":"#f0fdf4",border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",textAlign:"left"}}>
+                    <div><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>Safer swap</div><div style={{fontSize:13,color:text,fontWeight:600}}>{alt.name}</div></div>
+                    <ScoreBadge score={as} size="xs"/>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {bestSwap&&(
+        <div style={{padding:"14px 16px",borderRadius:12,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`,marginBottom:28}}>
+          <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Biggest opportunity</div>
+          <div style={{fontSize:14,color:text,fontWeight:600}}>Swap {bestSwap.from.product_name} for {bestSwap.alt.name}</div>
+          <div style={{fontSize:12,color:muted,marginTop:2}}>Save {((bestSwap.from.score||0)-bestSwap.altScore).toFixed(1)} points</div>
+        </div>
+      )}
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <button onClick={()=>generateShareCard(session,result)} style={{width:"100%",padding:"14px",borderRadius:12,background:result.grade.color,color:"#fff",border:"none",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
+        <button onClick={()=>{saveAuditSession(null);setPage("home");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
+      </div>
+    </div>
+  );
+};
+
 // ── AUDIT SESSION ─────────────────────────────────────────────
 const AUDIT_TYPES = {
   pantry:{label:"Pantry Audit",description:"Score everything in your pantry and kitchen",categories:["food","food_beverage","beverage","snack","supplement"],icon:"P",color:"#16a34a"},
@@ -6632,6 +6701,8 @@ const generateForYouCards = (history, lists, childMode) => {
   const cards=[];
   // Active audit resume card — always first
   try{const saved=localStorage.getItem("ps_audit_session");if(saved){const s=JSON.parse(saved);if(s?.status==="active"){const avg=s.items?.length?(s.items.reduce((a,i)=>a+(i.score||0),0)/s.items.length).toFixed(1):null;cards.push({type:"active_audit",priority:10,headline:`${s.label} in progress`,body:s.items?.length?`${s.items.length} items scanned${avg?` · avg ${avg}`:""}`:"You started an audit — tap to continue.",label:"Resume audit",labelColor:s.color||"#16a34a",action:"Continue scanning",actionType:"resume_audit"});}}}catch{}
+  // Recently completed audit (within 7 days)
+  try{const saved=localStorage.getItem("ps_last_audit");if(saved){const a=JSON.parse(saved);const da=(Date.now()-new Date(a.completedAt).getTime())/(1000*60*60*24);if(da<=7&&a.grade)cards.push({type:"completed_audit",priority:6,headline:`${a.label} — Grade ${a.grade}`,body:`${a.itemCount} products scored · avg ${a.avg}. ${a.flaggedCount>0?`${a.flaggedCount} items to swap.`:"Looking good."}`,label:"Completed",labelColor:"#16a34a",action:"View results",actionPage:"history"});}}catch{}
   // Audit suggestion from scan history
   const suggestion = getSuggestedAudit(history);
   if(suggestion){const cl=suggestion.type==="pantry"?"food and pantry":suggestion.type==="beauty"?"personal care":suggestion.type==="home"?"home and cleaning":suggestion.type;cards.push({type:"audit_suggestion",priority:suggestion.count>=8?8:6,headline:`Start your ${suggestion.label}`,body:`Based on ${suggestion.count} ${cl} scans`,label:"Ready for you",labelColor:AUDIT_TYPES[suggestion.type]?.color||"#16a34a",action:`Start ${suggestion.label}`,actionType:"start_audit",auditType:suggestion.type});}
@@ -6889,6 +6960,21 @@ function App() {
   const [auditSession, setAuditSession] = useState(null);
   const [auditSessionVisible, setAuditSessionVisible] = useState(false);
   const [showAuditSelector, setShowAuditSelector] = useState(false);
+  const [completedAuditSession, setCompletedAuditSession] = useState(null);
+  const generateAuditShareCard = (session, result) => {
+    const c=document.createElement("canvas");c.width=1080;c.height=1080;const ctx=c.getContext("2d");
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,1080,1080);
+    ctx.fillStyle=result.grade.color;ctx.fillRect(0,0,1080,12);
+    ctx.font="600 28px Arial";ctx.fillStyle="#999999";ctx.textAlign="center";ctx.fillText("PARTIQULE",540,100);
+    ctx.font="600 32px Arial";ctx.fillStyle="#333333";ctx.fillText(session.label,540,155);
+    ctx.font="900 220px Arial";ctx.fillStyle=result.grade.color;ctx.fillText(result.grade.letter,540,480);
+    ctx.font="600 36px Arial";ctx.fillText(result.grade.label,540,540);
+    ctx.font="500 28px Arial";ctx.fillStyle="#999999";ctx.fillText(`Score ${result.avg}/10 · ${result.itemCount} products`,540,590);
+    const stats=[`${result.flaggedCount} flagged`,`${result.cleanCount} clean`];const pw=240,ph=58,tw=stats.length*pw+(stats.length-1)*16,sx=(1080-tw)/2;
+    stats.forEach((st,i)=>{const x=sx+i*(pw+16);ctx.fillStyle="#f1f5f9";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,640,pw,ph,12);else ctx.rect(x,640,pw,ph);ctx.fill();ctx.font="600 22px Arial";ctx.fillStyle="#333333";ctx.textAlign="center";ctx.fillText(st,x+pw/2,676);});
+    ctx.font="400 22px Arial";ctx.fillStyle="#bbbbbb";ctx.textAlign="center";ctx.fillText("partiqule.com",540,1030);
+    c.toBlob(blob=>{if(!blob)return;if(navigator.share&&navigator.canShare?.({files:[new File([blob],"partiqule-audit.png",{type:"image/png"})]}))navigator.share({files:[new File([blob],"partiqule-audit.png",{type:"image/png"})],title:`My ${session.label} Results`}).catch(()=>{});else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="partiqule-audit.png";a.click();}},"image/png");
+  };
   const saveAuditSession = (s)=>{setAuditSession(s);try{if(s)localStorage.setItem("ps_audit_session",JSON.stringify(s));else localStorage.removeItem("ps_audit_session");}catch{}};
   const startAuditSession = (type)=>{const config=AUDIT_TYPES[type];if(!config)return;const session={id:`local-${Date.now()}`,type,label:config.label,color:config.color,categories:config.categories,items:[],startedAt:new Date().toISOString(),status:"active"};saveAuditSession(session);setAuditSessionVisible(true);setResult(null);setPage("home");};
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
@@ -7690,6 +7776,8 @@ function App() {
             Go to Partiqule →
           </button>
         </div>
+      ) : page === "audit-complete" && completedAuditSession ? (
+        <AuditCompleteScreen session={completedAuditSession} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} saveAuditSession={saveAuditSession} setResult={setResult} setQuery={setQuery} analyze={analyze} generateShareCard={generateAuditShareCard}/>
       ) : page === "lists" ? (
         <ListsPage
           lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
@@ -9448,7 +9536,11 @@ function App() {
       {/* Audit session overlay */}
       {auditSessionVisible && auditSession && (
         <AuditSessionView session={auditSession} saveAuditSession={saveAuditSession} isDark={isDark} text={text} muted={muted} isMobile={isMobile} childMode={childMode}
-          onFinish={(completed)=>{saveAuditSession(null);setAuditSessionVisible(false);}}
+          onFinish={(completed)=>{
+            setAuditSessionVisible(false);setCompletedAuditSession(completed);saveAuditSession(null);setPage("audit-complete");
+            const grade=calculateAuditGrade(completed.items);
+            try{localStorage.setItem("ps_last_audit",JSON.stringify({label:completed.label,type:completed.type,grade:grade?.grade?.letter,avg:grade?.avg,itemCount:grade?.itemCount,flaggedCount:grade?.flaggedCount,completedAt:new Date().toISOString()}));}catch{}
+          }}
           onPause={()=>setAuditSessionVisible(false)}
         />
       )}
