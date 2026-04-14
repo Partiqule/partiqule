@@ -6493,6 +6493,7 @@ function App() {
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
+  const [scanSheetOpen, setScanSheetOpen] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
@@ -6917,7 +6918,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -6928,28 +6929,60 @@ function App() {
       else setShowLimitModal("paywall");
       return;
     }
-    setShowScanModal(false);
+    setShowScanModal(false); setScanSheetOpen(false);
     setResult(null); setError(null); setPage("home");
-    setLoading(true); setQuery("Reading label…"); setRevealDone(false); setResult(null);
+    setLoading(true); setQuery("Reading label..."); setRevealDone(false); setResult(null);
     try {
+      // Step 1: Try barcode detection from image (instant, no server)
+      let barcodeValue = null;
+      if ("BarcodeDetector" in window) {
+        try {
+          const detector = new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"]});
+          const bitmap = await createImageBitmap(file);
+          const barcodes = await detector.detect(bitmap);
+          if (barcodes.length > 0) { barcodeValue = barcodes[0].rawValue; console.log("[BARCODE] Detected from image:", barcodeValue); }
+        } catch { console.log("[BARCODE] Detection unavailable, using vision"); }
+      }
+
+      // Step 2a: Barcode found — use /barcode endpoint (fast path)
+      if (barcodeValue) {
+        setQuery("Barcode found — looking up product...");
+        try {
+          const barcodeRes = await fetch(`${API_BASE}/barcode`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({barcode:barcodeValue,userId:user?.id||null})});
+          if (barcodeRes.ok) {
+            const barcodeData = await barcodeRes.json();
+            if (barcodeData && !barcodeData.error) {
+              setResult(barcodeData); saveToHistory(barcodeData); setLoading(false); setQuery(barcodeData.product_name||"");
+              if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(barcodeData.category)) setPendingRoomTag(barcodeData.product_name); else setPendingRoomTag(null);
+              track("Barcode Scan from Image",{barcode:barcodeValue,product:barcodeData.product_name});
+              if (onDone) onDone();
+              return;
+            }
+          }
+          console.log("[BARCODE] Lookup failed, falling back to vision");
+        } catch { console.log("[BARCODE] Endpoint error, falling back to vision"); }
+      }
+
+      // Step 2b: No barcode or lookup failed — use vision
+      setQuery("Analyzing label...");
       const base64 = await new Promise((res, rej) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX = 1200;
+          const MAX = 512;
           const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
           canvas.width  = Math.round(img.width  * ratio);
           canvas.height = Math.round(img.height * ratio);
           canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
-          res(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+          res(canvas.toDataURL("image/jpeg", 0.80).split(",")[1]);
         };
         img.onerror = rej;
         img.src = url;
       });
       const imgController = new AbortController();
-      const imgTimeout = setTimeout(() => imgController.abort(), 75000);
+      const imgTimeout = setTimeout(() => imgController.abort(), 45000);
       const idResp = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -9335,58 +9368,42 @@ function App() {
       {/* ── PERSISTENT MOBILE BOTTOM NAV + FLOATING SCAN ── */}
       {isMobile && (
         <>
-          {/* Scan modal backdrop */}
-          {showScanModal && (
-            <div onClick={()=>setShowScanModal(false)} style={{position:"fixed", inset:0, zIndex:8998, background:"rgba(0,0,0,0.6)"}}/>
-          )}
-
-          {/* Scan input popover */}
-          {showScanModal && (
-            <div style={{position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)", zIndex:8999, width:"calc(100% - 32px)", maxWidth:360, background:"#0f2a18", border:"1px solid rgba(34,197,94,0.2)", borderRadius:20, padding:"16px 16px", boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.6, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10}}>Scan a product</div>
-              <div style={{display:"flex", gap:8, marginBottom:10}}>
-                <input
-                  autoFocus
-                  value={modalQuery}
-                  onChange={e=>setModalQuery(e.target.value)}
-                  onKeyDown={e=>{ if (e.key==="Enter" && modalQuery.trim()) { setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery); }}}
-                  placeholder="Type a product name..."
-                  style={{flex:1, padding:"10px 14px", borderRadius:12, border:"1px solid rgba(34,197,94,0.2)", background:"#080f0a", color:"#f0fdf4", fontSize:14, outline:"none", fontFamily:"'DM Sans',sans-serif"}}/>
-                <button
-                  onClick={()=>{ if (modalQuery.trim()) { setShowScanModal(false); setQuery(modalQuery); analyze(modalQuery); }}}
-                  style={{padding:"10px 16px", borderRadius:12, background:"#22c55e", color:"#052e16", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:14, cursor:"pointer"}}>Go</button>
-              </div>
-              {/* Camera option */}
-              {isMobile ? (
-                <div onClick={()=>{setShowScanModal(false); setShowBarcodeScanner(true);}}
-                  style={{display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:12, cursor:"pointer"}}>
-                  <div style={{width:32, height:32, borderRadius:8, background:"rgba(34,197,94,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  </div>
-                  <div>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4"}}>Scan barcode or photo</div>
-                    <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>Point camera at a product</div>
-                  </div>
+          {/* Scan bottom sheet — mobile */}
+          {scanSheetOpen && (<>
+            <div onClick={()=>setScanSheetOpen(false)} style={{position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.5)"}}/>
+            <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:isDark?"#1e2433":"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
+              <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 20px"}}/>
+              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center"}}>Scan a product</div>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
+                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{const f=e.target.files?.[0];if(!f){setScanSheetOpen(false);return;}e.target.value="";setScanSheetOpen(false);await handleImageScan(f);}}/>
+                <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
-              ) : (
-                <label style={{display:"flex", alignItems:"center", gap:12, padding:"10px 14px", background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:12, cursor:"pointer"}}>
-                  <input type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{ const file=e.target.files?.[0]; if(!file)return; e.target.value=""; setShowScanModal(false); await handleImageScan(file);}}/>
-                  <div style={{width:32, height:32, borderRadius:8, background:"rgba(34,197,94,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  </div>
-                  <div>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4"}}>Upload photo</div>
-                    <div style={{fontSize:11, color:"#6ee7b7", opacity:0.7}}>Scan a label image</div>
-                  </div>
-                </label>
-              )}
+                <div><div style={{fontSize:15, fontWeight:700, color:text}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label or barcode</div></div>
+              </label>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+                <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{const f=e.target.files?.[0];if(!f){setScanSheetOpen(false);return;}e.target.value="";setScanSheetOpen(false);await handleImageScan(f);}}/>
+                <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text}}>Choose from library</div><div style={{fontSize:12, color:muted, marginTop:2}}>Upload an existing photo</div></div>
+              </label>
+              <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
+                <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+                <span style={{fontSize:11, color:muted}}>or type a product name</span>
+                <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+              </div>
+              <div style={{display:"flex", gap:8}}>
+                <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Tide Pods..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+                <button onClick={()=>{if(modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} style={{padding:"10px 16px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:14, cursor:"pointer"}}>Search</button>
+              </div>
             </div>
-          )}
+          </>)}
 
           {/* Floating Scan Another pill — only visible on results page */}
           {result && (
             <div
-              onClick={()=>{setShowScanModal(true); setModalQuery(""); setFabOpen(false);}}
+              onClick={()=>{setScanSheetOpen(true); setModalQuery(""); setFabOpen(false);}}
               style={{
                 position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)",
                 zIndex:8997,
@@ -9414,14 +9431,14 @@ function App() {
             {[
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"My Scans",icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
-              { label:"Scan",    icon:null, action:()=>{setShowScanModal(o=>!o); setModalQuery("");}, active:false, isScan:true },
+              { label:"Scan",    icon:null, action:()=>{setScanSheetOpen(o=>!o); setModalQuery("");}, active:false, isScan:true },
               { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
               item.isScan ? (
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
-                  <div onClick={()=>{isMobile?setShowBarcodeScanner(true):document.getElementById("nav-file-input").click();}}
+                  <div onClick={()=>{isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();}}
                     style={{width:52, height:52, borderRadius:"50%", background:"linear-gradient(135deg,#22c55e,#16a34a)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.1)", marginTop:-14, animation:"pulseScan 2.5s ease-in-out infinite"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
