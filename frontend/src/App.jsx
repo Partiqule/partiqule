@@ -6369,6 +6369,83 @@ const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
   );
 };
 
+// ── AUTO-SCROLL HOOK ──────────────────────────────────────────
+const useAutoScroll = (ref, intervalMs, itemWidth, itemCount) => {
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef(null);
+  const indexRef = useRef(0);
+  useEffect(()=>{
+    if(paused||itemCount<=1)return;
+    timerRef.current=setInterval(()=>{
+      indexRef.current=(indexRef.current+1)%itemCount;
+      if(ref.current)ref.current.scrollTo({left:indexRef.current*itemWidth,behavior:"smooth"});
+    },intervalMs);
+    return()=>clearInterval(timerRef.current);
+  },[paused,itemCount,intervalMs,itemWidth]);
+  return {pause:()=>setPaused(true),resume:()=>setPaused(false)};
+};
+
+// ── FOR YOU INTELLIGENCE CARDS ────────────────────────────────
+const generateForYouCards = (history, lists, childMode) => {
+  if(!history||history.length===0)return [];
+  const cards=[];
+  const EU_BANNED=[{compound:"titanium dioxide",reason:"banned as a food additive in the EU since 2022",label:"EU banned food additive"},{compound:"Red 40",reason:"under restriction in the EU — requires warning label",label:"EU warning label required"},{compound:"Yellow 5",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"Yellow 6",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"BHT",reason:"banned in several EU countries as a food preservative",label:"EU restricted preservative"},{compound:"BHA",reason:"classified as possible carcinogen, restricted in EU",label:"EU restricted preservative"},{compound:"propyl paraben",reason:"banned in EU cosmetics as endocrine disruptor",label:"EU banned in cosmetics"},{compound:"triclosan",reason:"banned in EU personal care products",label:"EU banned compound"},{compound:"oxybenzone",reason:"banned in EU reef-protection zones, under review",label:"EU under restriction"},{compound:"PFAS",reason:"comprehensive EU restriction effective 2025",label:"EU restricted PFAS"},{compound:"PFOA",reason:"banned globally under Stockholm Convention",label:"Globally banned"}];
+  const euFindings=[];
+  history.forEach(item=>{const ac=[...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),...(item.harmful_chemicals||[]),item.summary||""].join(" ").toLowerCase();EU_BANNED.forEach(b=>{if(ac.includes(b.compound.toLowerCase()))euFindings.push({product:item.product_name,compound:b.compound,reason:b.reason,label:b.label,score:item.overall_score||item.score});});});
+  if(euFindings.length>0){const f=euFindings[0];cards.push({type:"eu_banned",priority:9,headline:`${f.compound} in your ${f.product}`,body:`This ingredient is ${f.reason}. It remains legal in the US.`,label:f.label,labelColor:"#d97706",score:f.score,action:"See alternatives",actionPage:"result",productName:f.product});}
+  const compoundMap={};
+  history.forEach(item=>{[...(item.harmful_chemicals||[]),...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||"").filter(c=>c.length>0)].forEach(chem=>{const k=chem.toLowerCase().slice(0,30);if(!compoundMap[k])compoundMap[k]={name:chem,products:[],count:0};if(!compoundMap[k].products.includes(item.product_name)){compoundMap[k].products.push(item.product_name);compoundMap[k].count++;}});});
+  const patterns=Object.values(compoundMap).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count);
+  if(patterns.length>0){const t=patterns[0];cards.push({type:"pattern",priority:8,headline:`${t.name} appears in ${t.count} of your products`,body:`Found in ${t.products.slice(0,3).join(", ")}${t.products.length>3?` and ${t.products.length-3} more`:""}. Cumulative exposure compounds over time.`,label:"Exposure pattern",labelColor:"#dc2626",action:"View my scans",actionPage:"history"});}
+  const highConcern=[...history].filter(h=>(h.overall_score||h.score||0)>=7).sort((a,b)=>(b.overall_score||b.score||0)-(a.overall_score||a.score||0))[0];
+  if(highConcern){const tc=highConcern.concerns?.[0];const ct=tc?(typeof tc==="string"?tc:tc.concern||""):highConcern.summary||"";cards.push({type:"high_concern",priority:6,headline:`${highConcern.product_name} scores ${highConcern.overall_score||highConcern.score}`,body:ct?ct.slice(0,100)+(ct.length>100?"...":""):"One of the highest-concern products in your routine.",label:"High concern",labelColor:"#dc2626",score:highConcern.overall_score||highConcern.score,action:"Find safer alternatives",actionPage:"result",productName:highConcern.product_name});}
+  const cleanWin=[...history].filter(h=>(h.overall_score||h.score||0)<=2).sort((a,b)=>new Date(b.scannedAt)-new Date(a.scannedAt))[0];
+  if(cleanWin)cards.push({type:"clean_win",priority:4,headline:`${cleanWin.product_name} scores ${cleanWin.overall_score||cleanWin.score}`,body:"One of the cleanest products in your routine. Worth keeping.",label:"Clean choice",labelColor:"#16a34a",score:cleanWin.overall_score||cleanWin.score,action:"View result",actionPage:"result",productName:cleanWin.product_name});
+  const swapPending=[...history].filter(h=>{const s=h.overall_score||h.score||0;const ha=(h.alternatives||[]).length>0||(h.ai_alternatives||[]).length>0;const da=h.scannedAt?(Date.now()-new Date(h.scannedAt).getTime())/(1000*60*60*24):999;return s>=6&&ha&&da<=30;}).sort((a,b)=>(b.overall_score||b.score||0)-(a.overall_score||a.score||0))[0];
+  if(swapPending){const alt=swapPending.alternatives?.[0]||swapPending.ai_alternatives?.[0];cards.push({type:"swap_pending",priority:5,headline:`Have you swapped ${swapPending.product_name} yet?`,body:alt?`${alt.name} scores ${alt.score||alt.estimated_score||"lower"} — a meaningful improvement.`:"A cleaner alternative is available in the same category.",label:"Swap available",labelColor:"#d97706",score:swapPending.overall_score||swapPending.score,action:"See swap",actionPage:"result",productName:swapPending.product_name});}
+  const now=new Date(),hour=now.getHours(),day=now.getDay(),month=now.getMonth();
+  if((day===4||day===5)&&!lists.some(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked))){const fs=history.filter(h=>["food","food_beverage","snack","beverage"].includes(h.category)).length;if(fs>=3)cards.push({type:"contextual_grocery",priority:7,headline:"Planning your weekend shop?",body:`You have ${fs} food products scanned. Build a scored list before you leave.`,label:"Shopping day",labelColor:"#2563eb",action:"Build grocery list",actionPage:"lists"});}
+  if(hour>=6&&hour<=9){const pc=history.filter(h=>["personal_care","skincare"].includes(h.category)&&(h.overall_score||h.score||0)>=5);if(pc.length>=2)cards.push({type:"contextual_morning",priority:5,headline:"Your morning routine has room to improve",body:`${pc.length} personal care products score 5 or above. Small swaps add up.`,label:"Morning insight",labelColor:"#d97706",action:"View personal care",actionPage:"history"});}
+  if(childMode){const kh=history.filter(h=>(h.child_score||h.overall_score||h.score||0)>=6).length;if(kh>=1)cards.push({type:"contextual_kids",priority:8,headline:`${kh} product${kh!==1?"s":""} score higher for children`,body:"Children are more sensitive to certain compounds. These items warrant attention.",label:"Kids mode insight",labelColor:"#2563eb",action:"View flagged items",actionPage:"history"});}
+  return cards.sort((a,b)=>b.priority-a.priority).slice(0,6);
+};
+
+const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
+  const scrollRef = useRef(null);
+  const CW = isMobile ? 280 : 320;
+  const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
+  if(!cards||cards.length===0)return null;
+  const handleAction=(card)=>{
+    if(card.actionPage==="lists")setPage("lists");
+    else if(card.actionPage==="history")setPage("history");
+    else if(card.actionPage==="result"&&card.productName){const hi=history.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}
+    else setPage("home");
+  };
+  const sc=(s)=>!s?muted:s<=3?"#16a34a":s<=5?"#d97706":"#dc2626";
+  return (
+    <div style={{marginBottom:24}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:12,maxWidth:1100,margin:"0 auto 12px"}}>
+        <div style={{fontSize:13,fontWeight:700,color:text}}>For You</div>
+        <div style={{display:"flex",gap:4}}>{cards.map((_,i)=><div key={i} style={{width:5,height:5,borderRadius:"50%",background:isDark?"#2a3347":"#e5e7eb"}}/>)}</div>
+      </div>
+      <div ref={scrollRef} onMouseEnter={pause} onMouseLeave={resume} onTouchStart={pause} onTouchEnd={()=>setTimeout(resume,3000)} style={{display:"flex",gap:12,overflowX:"auto",scrollbarWidth:"none",msOverflowStyle:"none",padding:`0 ${isMobile?"16px":"40px"}`,scrollBehavior:"smooth",WebkitOverflowScrolling:"touch"}}>
+        <style>{`.foryou-scroll::-webkit-scrollbar{display:none}`}</style>
+        {cards.map((card,i)=>(
+          <div key={i} onClick={()=>handleAction(card)} style={{flexShrink:0,width:CW,borderRadius:16,padding:"16px 18px",cursor:"pointer",background:card.type==="clean_win"?(isDark?"#1a2a1a":"#f0fdf4"):card.type.startsWith("contextual")?(isDark?"#1a2433":"#f8faff"):(isDark?"#1e2433":"#fff"),border:`1.5px solid ${card.type==="clean_win"?(isDark?"#1e3a1e":"#bbf7d0"):card.type.startsWith("contextual")?(isDark?"#1e2a3e":"#c7d7f0"):(isDark?"#2a3347":"#e5e7eb")}`,boxShadow:isDark?"none":"0 1px 8px rgba(0,0,0,0.06)",display:"flex",flexDirection:"column",gap:8,minHeight:130}}>
+            <div style={{fontSize:10,fontWeight:700,color:card.labelColor,textTransform:"uppercase",letterSpacing:"0.08em",background:`${card.labelColor}18`,borderRadius:20,padding:"2px 8px",display:"inline-block",alignSelf:"flex-start"}}>{card.label}</div>
+            <div style={{fontSize:14,fontWeight:700,color:text,lineHeight:1.4,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{card.headline}</div>
+            <div style={{fontSize:12,color:muted,lineHeight:1.5,flex:1,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{card.body}</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
+              <span style={{fontSize:12,fontWeight:700,color:card.labelColor}}>{card.action} →</span>
+              {card.score!=null&&<span style={{fontSize:13,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(card.score)}}>{card.score}/10</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
 const selectForYouCard = ({history, lists, suggestion, coverage}) => {
   const activeGrocery = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
@@ -7690,12 +7767,11 @@ function App() {
                       </div>
                     )}</div>
 
-                  {/* Single For You card — highest priority only */}
+                  {/* For You intelligence carousel */}
                   {(() => {
-                    const suggestion = getSuggestedAudit(history);
-                    const coverage = getHomeCoverage(history);
-                    const card = selectForYouCard({history, lists, suggestion, coverage});
-                    return <ForYouCard card={card} isDark={isDark} text={text} muted={muted} setPage={setPage}/>;
+                    const cards = generateForYouCards(history, lists, childMode);
+                    if (!cards.length) return null;
+                    return <ForYouCarousel cards={cards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
                   })()}
 
                   {/* Today's Comparison — new users only */}
