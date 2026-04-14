@@ -7408,8 +7408,8 @@ function App() {
           )}
         </div>
 
-        {/* Mobile dropdown menu */}
-        {isMobile && menuOpen && (
+        {/* Mobile/tablet dropdown menu */}
+        {(isMobile || isTablet) && menuOpen && (
           <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2}}>
             {[
               {label:"About",        pg:"about"},
