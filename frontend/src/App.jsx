@@ -3471,6 +3471,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
                 <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
                 <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body?.slice(0,100)}</div>
                 {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
+                {c.regulatory_flags?.length>0&&<div style={{fontSize:11,color:"#16a34a",marginTop:2}}>{c.regulatory_flags.length} scoring flag{c.regulatory_flags.length!==1?"s":""}: {c.regulatory_flags.map(f=>f.compound_name).join(", ")}</div>}
               </div>
               <div style={{display:"flex",gap:6,flexShrink:0}}>
                 <button onClick={()=>c.active?deactivateCard(c.id):approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>

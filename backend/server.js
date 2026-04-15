@@ -1586,6 +1586,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
   const categorySection = categoryHint
     ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category. Populate the product_analysis field fully using the category-specific concern types.${categoryHint === "restaurant" ? " This is a restaurant menu item — you MUST populate the product_analysis field including nutrition using the chain's official published nutrition data. Set nutrition_verified: true only if you are confident in the exact values, false if estimating." : ""}\n`
     : "";
+  const regulatorySection = buildRegulatoryContext(categoryHint || "general");
 
   return callClaude(
     `You are a senior research scientist specializing in polymer chemistry, toxicology, consumer product safety, and environmental impact. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
@@ -1633,7 +1634,7 @@ Neurotoxic concerns warrant higher scores because neurological damage is often i
 PACKAGING-ONLY PLASTIC: If a product is genuinely plastic-free but has incidental packaging (film pouch, wrapper, cap) that is discarded during use, the packaging score should be 2-4. Do NOT let discarded packaging dominate the materials score. Example: Blueland tablet in film pouch = materials score 1, packaging score 3.`,
 
     `Analyze "${productName}" across 5 dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing.
-${contextSection}${categorySection}
+${contextSection}${categorySection}${regulatorySection}
 If this is a barcode, identify the most likely consumer product and analyze that.
 If real product data is provided above, use it as ground truth. Do not assume plastic if confirmed natural.
 
@@ -5037,6 +5038,26 @@ const supabaseAdmin = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_
   ? createSupabaseClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
   : null;
 
+// ── REGULATORY FLAGS — loaded from Supabase, injected into AI prompt ──
+let REGULATORY_FLAGS_CACHE = [];
+async function loadRegulatoryFlags() {
+  if (!supabaseAdmin) return;
+  try {
+    const {data}=await supabaseAdmin.from("regulatory_flags").select("*").eq("active",true);
+    if(data){REGULATORY_FLAGS_CACHE=data;console.log(`[Flags] Loaded ${data.length} regulatory flags`);}
+  } catch(e){console.warn("[Flags] Load failed:",e.message);}
+}
+loadRegulatoryFlags();
+setInterval(loadRegulatoryFlags,6*60*60*1000);
+
+function buildRegulatoryContext(category) {
+  if(!REGULATORY_FLAGS_CACHE.length)return "";
+  const relevant=REGULATORY_FLAGS_CACHE.filter(f=>!f.applies_to_categories?.length||f.applies_to_categories.includes(category)||f.applies_to_categories.includes("general"));
+  if(!relevant.length)return "";
+  const lines=relevant.slice(0,15).map(f=>`- ${f.compound_name} (${f.jurisdiction}): ${f.action_type.replace(/_/g," ")} by ${f.regulatory_body}. ${f.scoring_context}`).join("\n");
+  return `\nREGULATORY CONTEXT — apply these verified findings when relevant:\n${lines}\n`;
+}
+
 // Create Stripe checkout session
 app.post("/create-checkout", async (req, res) => {
   if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
@@ -5518,7 +5539,7 @@ async function writeIntelligenceCard(article) {
 app.get("/api/intelligence/all", requireAdmin, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({cards:[]});
   try {
-    const {data,error} = await supabaseAdmin.from("intelligence_cards").select("*").order("created_at",{ascending:false}).limit(50);
+    const {data,error} = await supabaseAdmin.from("intelligence_cards").select("*,regulatory_flags(id,compound_name,action_type,jurisdiction)").order("created_at",{ascending:false}).limit(50);
     if (error) throw error;
     return res.json({cards:data||[]});
   } catch(e) { return res.status(500).json({error:e.message}); }
@@ -5526,9 +5547,30 @@ app.get("/api/intelligence/all", requireAdmin, async (req, res) => {
 
 app.post("/api/intelligence/approve/:id", requireAdmin, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({error:"Supabase not configured"});
+  const {id}=req.params;
   try {
-    const {error} = await supabaseAdmin.from("intelligence_cards").update({active:true}).eq("id",req.params.id);
-    if (error) throw error;
+    const {data:card,error:fe}=await supabaseAdmin.from("intelligence_cards").select("*").eq("id",id).single();
+    if(fe||!card)throw new Error("Card not found");
+    const {error:ue}=await supabaseAdmin.from("intelligence_cards").update({active:true}).eq("id",id);
+    if(ue)throw ue;
+    // Extract regulatory flags via Claude
+    if(card.ingredient_triggers?.length>0){
+      try{
+        const flags=await callClaude(
+          `Extract regulatory flag data from this intelligence card. Return a JSON array of flags. If no clear regulatory action exists, return [].`,
+          `Headline: ${card.headline}\nBody: ${card.body}\nLabel: ${card.label}\nSource: ${card.source_name}\nIngredients: ${card.ingredient_triggers.join(", ")}\nCategories: ${card.category_triggers?.join(", ")||"general"}\n\nFor each ingredient with a clear regulatory action, return:\n[{"compound_name":"name","regulatory_body":"EFSA|FDA|EPA|ECHA","action_type":"banned|restricted|under_review|linked_to_harm|recall|warning_label_required","jurisdiction":"EU|US|International","health_concern":"max 10 words","applies_to_categories":["food"],"scoring_context":"one factual sentence for AI prompt, max 30 words"}]\nReturn raw JSON only.`,
+          800,2
+        );
+        if(Array.isArray(flags)&&flags.length>0){
+          for(const f of flags){
+            await supabaseAdmin.from("regulatory_flags").insert({intelligence_card_id:id,compound_name:f.compound_name,regulatory_body:f.regulatory_body,action_type:f.action_type,jurisdiction:f.jurisdiction,effective_date:f.effective_date||null,health_concern:f.health_concern,applies_to_categories:f.applies_to_categories||[],scoring_context:f.scoring_context,active:true,created_by:"auto-approved"});
+          }
+          console.log(`[Intel] Created ${flags.length} regulatory flags for card ${id}`);
+          await loadRegulatoryFlags();
+        }
+      }catch(e){console.warn("[Intel] Flag extraction failed:",e.message);}
+    }
+    global.intelCardsUpdatedAt=Date.now();
     return res.json({success:true});
   } catch(e) { return res.status(500).json({error:e.message}); }
 });
