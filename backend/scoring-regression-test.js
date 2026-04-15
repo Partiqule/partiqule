@@ -38,6 +38,39 @@ const TESTS = [
   { name: "red bull",                 expectMin: 6, expectMax: 9, cat: "beverage" },
   { name: "diet coke",                expectMin: 5, expectMax: 8, cat: "beverage" },
   { name: "liquid death",             expectMin: 1, expectMax: 3, cat: "beverage" },
+
+  // Personal care — high concern
+  { name: "neutrogena ultra sheer",   expectMin: 6, expectMax: 8, cat: "personal_care", note: "Oxybenzone + octinoxate" },
+  // Personal care — clean
+  { name: "badger",                   expectMin: 1, expectMax: 2, cat: "personal_care", note: "Zinc oxide only, organic" },
+  { name: "think sport sunscreen",    expectMin: 1, expectMax: 3, cat: "personal_care", note: "Mineral only" },
+
+  // Clothing — high concern
+  { name: "shein",                    expectMin: 6, expectMax: 8, cat: "clothing", note: "Polyester + PFAS" },
+  { name: "thinx",                    expectMin: 7, expectMax: 9, cat: "clothing", note: "PFAS class action" },
+  // Clothing — clean
+  { name: "pact organic",             expectMin: 1, expectMax: 3, cat: "clothing", note: "GOTS organic cotton" },
+
+  // Home — high concern
+  { name: "lysol disinfectant spray", expectMin: 6, expectMax: 8, cat: "home", note: "Quats + synthetic fragrance" },
+  // Home — clean
+  { name: "blueland",                 expectMin: 1, expectMax: 3, cat: "home", note: "EWG A-rated, B Corp" },
+  { name: "seventh generation free clear", expectMin: 1, expectMax: 3, cat: "home", note: "Plant-based, EPA Safer Choice" },
+
+  // Supplements — high concern
+  { name: "centrum silver",           expectMin: 6, expectMax: 8, cat: "supplement", note: "Blue 1 + talc + TiO2" },
+  { name: "flintstones complete",     expectMin: 7, expectMax: 9, cat: "supplement", note: "3 petroleum dyes + talc" },
+  // Supplements — clean
+  { name: "ritual multivitamin",      expectMin: 1, expectMax: 3, cat: "supplement", note: "No synthetic dyes" },
+  { name: "garden of life raw",       expectMin: 1, expectMax: 3, cat: "supplement", note: "USDA Organic" },
+
+  // Toys
+  { name: "plan toys",                expectMin: 1, expectMax: 1, cat: "toy", note: "Rubberwood, water-based dyes" },
+  { name: "hot wheels",               expectMin: 4, expectMax: 6, cat: "toy", note: "Die-cast + ABS/PVC" },
+
+  // Cereal — verify grape-nuts fix
+  { name: "grape-nuts",               expectMin: 3, expectMax: 4, cat: "food_beverage", note: "Conventional grain, no BHT" },
+  { name: "grape nuts",               expectMin: 3, expectMax: 4, cat: "food_beverage", note: "Alternate spelling" },
 ];
 
 // ── Assertions ────────────────────────────────────────────────

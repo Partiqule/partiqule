@@ -4622,9 +4622,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
   }
 
   if (!query?.trim()) return res.status(400).json({ error: "Query is required" });
+  if (typeof query !== "string" || query.length > 500) return res.status(400).json({ error: "Invalid query" });
 
   const extracted    = extractProductFromUrl(query.trim());
-  const productName  = extracted || query.trim();
+  const productName  = (extracted || query.trim()).slice(0, 300).replace(/[\x00-\x1f]/g, "");
 
   // Detect category FIRST so it's included in the cache key
   const category = detectCategory(productName);
@@ -5568,22 +5569,36 @@ app.get("/api/intelligence-cards", async (req, res) => {
   }
 });
 
+const INTEL_CARD_FIELDS = ["title","summary","source","source_url","action_url","action_label","category","tags","severity","active","jurisdiction","compound","image_url"];
+function sanitizeIntelCard(body) {
+  const clean = {};
+  for (const key of INTEL_CARD_FIELDS) {
+    if (body[key] !== undefined) {
+      clean[key] = typeof body[key] === "string" ? body[key].slice(0, 2000) : body[key];
+    }
+  }
+  return clean;
+}
+
 app.post("/api/intelligence-cards", requireAdmin, async (req, res) => {
   try {
     if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
-    const { data, error } = await supabaseAdmin.from("intelligence_cards").insert([req.body]).select();
+    const card = sanitizeIntelCard(req.body);
+    if (!card.title) return res.status(400).json({ error: "title is required" });
+    const { data, error } = await supabaseAdmin.from("intelligence_cards").insert([card]).select();
     if (error) throw error;
     return res.json({ ok: true, card: data?.[0] });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
+  } catch (e) { return res.status(500).json({ error: "Failed to create card" }); }
 });
 
 app.patch("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
   try {
     if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
-    const { data, error } = await supabaseAdmin.from("intelligence_cards").update(req.body).eq("id", req.params.id).select();
+    const card = sanitizeIntelCard(req.body);
+    const { data, error } = await supabaseAdmin.from("intelligence_cards").update(card).eq("id", req.params.id).select();
     if (error) throw error;
     return res.json({ ok: true, card: data?.[0] });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
+  } catch (e) { return res.status(500).json({ error: "Failed to update card" }); }
 });
 
 app.delete("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
