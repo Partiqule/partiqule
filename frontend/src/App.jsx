@@ -9803,14 +9803,14 @@ function App() {
               <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 20px"}}/>
               <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center"}}>Scan a product</div>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
-                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{const f=e.target.files?.[0];if(!f){setScanSheetOpen(false);return;}e.target.value="";setScanSheetOpen(false);await handleImageScan(f);}}/>
+                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:700, color:text}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label or barcode</div></div>
               </label>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
-                <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{const f=e.target.files?.[0];if(!f){setScanSheetOpen(false);return;}e.target.value="";setScanSheetOpen(false);await handleImageScan(f);}}/>
+                <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
