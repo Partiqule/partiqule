@@ -42,17 +42,19 @@ const ENTRIES = [
   // FOOD — CEREALS AND GRAINS
   // ══════════════════════════════════════════════════════════════
   // ── KEY SODAS AND DRINKS (calibration entries with nutrition baked in) ───
-  ["gatorade",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","artificial color","34g sugar per 20oz"], reason:"Gatorade — 34g sugar per 20oz = 68% adult DV, 136% children's DV. Artificial colors in some flavors. Sugar floor fires on beverage thresholds.", confidence:"high", category:"beverage" }],
-  ["gatorade thirst quencher",    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["34g sugar","artificial color"], reason:"Gatorade Thirst Quencher — 34g sugar per 20oz.", confidence:"high", category:"beverage" }],
+  ["gatorade",                    { floor:5, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","artificial color","34g sugar per 20oz"], reason:"Gatorade — 34g sugar per 20oz = 68% adult DV, 136% children's DV. Artificial colors in some flavors. Sugar floor fires on beverage thresholds.", confidence:"high", category:"beverage" }],
+  ["gatorade thirst quencher",    { floor:5, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["34g sugar","artificial color"], reason:"Gatorade Thirst Quencher — 34g sugar per 20oz.", confidence:"high", category:"beverage" }],
   ["coke",                        { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:39, sodium_mg:45, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","caramel color","phosphoric acid","39g sugar"], reason:"Coca-Cola — 39g sugar per 12oz can = 78% adult DV, 156% kids DV. Caramel color Class IV (4-MeI). Ultra-processed beverage.", confidence:"high", category:"beverage" }],
   ["pepsi",                       { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:41, sodium_mg:30, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","41g sugar"], reason:"Pepsi — 41g sugar per 12oz = 82% adult DV, 164% kids DV. Caramel color. Ultra-processed.", confidence:"high", category:"beverage" }],
+  ["pepsi cola",                   { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["HFCS or sucrose","caramel color","41g sugar"], reason:"Pepsi Cola — same as Pepsi. 41g sugar per 12oz.", confidence:"high", category:"beverage" }],
   ["dr pepper",                   { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:40, sodium_mg:55, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","40g sugar"], reason:"Dr Pepper — 40g sugar per 12oz = 80% adult DV. Caramel color.", confidence:"high", category:"beverage" }],
   ["sprite",                      { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:38, sodium_mg:65, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","38g sugar"], reason:"Sprite — 38g sugar per 12oz = 76% adult DV, 152% kids DV.", confidence:"high", category:"beverage" }],
-  ["powerade",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:150, sat_fat_g:0, calories:130}, substances:["34g sugar","HFCS"], reason:"Powerade — 34g sugar per 20oz. HFCS. Similar concern to Gatorade.", confidence:"high", category:"beverage" }],
+  ["powerade",                    { floor:5, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:150, sat_fat_g:0, calories:130}, substances:["34g sugar","HFCS"], reason:"Powerade — 34g sugar per 20oz. HFCS. Similar concern to Gatorade.", confidence:"high", category:"beverage" }],
   ["chocolate milk",              { floor:3, ceiling:5, kidsFloor:5, kidsCeiling:7, nutrition:{sugar_g:25, sodium_mg:180, sat_fat_g:2.5, calories:200, protein_g:8}, substances:["25g sugar","HFCS in some","artificial flavor"], reason:"Chocolate milk — 25g sugar per 8oz (including added sugar). Protein positive. 100% kids DV sugar in one cup.", confidence:"medium", category:"beverage" }],
   ["lemonade",                    { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:28, sodium_mg:15, sat_fat_g:0, calories:120}, substances:["28g sugar","HFCS or corn syrup"], reason:"Commercial lemonade — 28g sugar per 8oz. Most commercial versions use HFCS.", confidence:"medium", category:"beverage" }],
   ["honey nut cheerios",           { floor:6, ceiling:8, substances:["glyphosate","added sugar"], reason:"Primary conventional oat with EWG-confirmed glyphosate above child threshold + 12g added sugar", confidence:"high", category:"food_beverage" }],
   ["cheerios honey nut",           { floor:6, ceiling:8, substances:["glyphosate","added sugar"], reason:"Primary conventional oat — EWG confirmed glyphosate above child threshold", confidence:"high", category:"food_beverage" }],
+  ["cheerios",                      { floor:6, ceiling:8, substances:["glyphosate"], reason:"Cheerios — conventional oat with EWG-confirmed glyphosate above child threshold. Variants with honey/sugar score higher.", confidence:"high", category:"food_beverage" }],
   ["original cheerios",            { floor:6, ceiling:8, substances:["glyphosate"], reason:"Primary conventional oat — EWG confirmed glyphosate above child threshold", confidence:"high", category:"food_beverage" }],
   ["cheerios original",            { floor:6, ceiling:8, substances:["glyphosate"], reason:"Primary conventional oat — EWG confirmed", confidence:"high", category:"food_beverage" }],
   ["quaker oats",                  { floor:5, ceiling:7, substances:["glyphosate"], reason:"Primary conventional oat — EWG confirmed glyphosate residue", confidence:"high", category:"food_beverage" }],
@@ -139,15 +141,9 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // BEVERAGES — SODAS
   // ══════════════════════════════════════════════════════════════
-  ["coca-cola",                    { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
-  ["coke classic",                  { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
-  ["diet coke",                     { sugar_g:0,  sodium_mg:40,  sat_fat_g:0,   calories:0,               kidsFloor:5, kidsCeiling:7 }],
-  ["gatorade zero",                 { sugar_g:0,  sodium_mg:270, sat_fat_g:0,   calories:10,              kidsFloor:4, kidsCeiling:6 }],
-  ["gatorade endurance",            { sugar_g:36, sodium_mg:460, sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
-  ["mcflurry",                      { sugar_g:66, sodium_mg:170, sat_fat_g:9,   calories:510,             kidsFloor:8, kidsCeiling:9 }],
-  ["coca-cola",                    { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV (4-MEI IARC 2B) + phosphoric acid", confidence:"high", category:"beverage" }],
-  ["coke classic",                 { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV", confidence:"high", category:"beverage" }],
-  ["diet coke",                    { floor:4, ceiling:6, substances:["aspartame","caramel color IV"], reason:"Aspartame IARC 2B 2023 + caramel color IV — aluminum can does NOT lower below 5", confidence:"high", category:"beverage" }],
+  ["coca-cola",                    { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["caramel color IV","HFCS"], reason:"Coca-Cola — HFCS + caramel color IV (4-MEI IARC 2B) + phosphoric acid. 39g sugar per 12oz.", confidence:"high", category:"beverage" }],
+  ["coke classic",                 { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["caramel color IV","HFCS"], reason:"Coke Classic — HFCS + caramel color IV. Same as Coca-Cola.", confidence:"high", category:"beverage" }],
+  ["diet coke",                    { floor:5, ceiling:7, kidsFloor:5, kidsCeiling:7, substances:["aspartame","caramel color IV"], reason:"Diet Coke — aspartame IARC 2B (2023) + caramel color IV. Zero sugar but artificial sweetener concern.", confidence:"high", category:"beverage" }],
   ["mountain dew",                 { floor:6, ceiling:8, substances:["Yellow 5","HFCS"], reason:"Yellow 5 petroleum dye + HFCS — dye floor fires", confidence:"high", category:"beverage" }],
   ["zevia",                        { floor:1, ceiling:3, substances:[], reason:"Stevia only — no artificial dyes, no HFCS, no aspartame", confidence:"high", category:"beverage" }],
   ["olipop",                       { floor:2, ceiling:4, substances:[], reason:"Plant fiber + prebiotics + natural flavors — no HFCS, no artificial dyes", confidence:"high", category:"beverage" }],
@@ -335,6 +331,7 @@ const ENTRIES = [
   // HOME — CLEANING PRODUCTS
   // ══════════════════════════════════════════════════════════════
   ["tide original",                { floor:5, ceiling:7, substances:["PVA","synthetic fragrance","optical brighteners"], reason:"PVA pod film enters waterways as microplastic + synthetic fragrance + 1,4-dioxane", confidence:"high", category:"home" }],
+  ["tide",                         { floor:5, ceiling:7, substances:["synthetic fragrance","optical brighteners","1,4-dioxane"], reason:"Tide — synthetic fragrance + optical brighteners + 1,4-dioxane trace. Conventional laundry detergent concern tier.", confidence:"high", category:"home" }],
   ["tide pods",                    { floor:5, ceiling:7, substances:["PVA","synthetic fragrance"], reason:"PVA film + optical brighteners + synthetic fragrance + 1,4-dioxane", confidence:"high", category:"home" }],
   ["tide free and gentle",         { floor:3, ceiling:5, substances:["PVA"], reason:"No fragrance/dyes but still PVA pod film — significantly cleaner than original Tide", confidence:"high", category:"home" }],
   ["gain laundry",                 { floor:5, ceiling:7, substances:["synthetic fragrance","optical brighteners","PVA"], reason:"Synthetic fragrance + optical brighteners + PVA pod film", confidence:"high", category:"home" }],
@@ -539,7 +536,7 @@ const ENTRIES = [
   ["sausage biscuit mcdonald",       { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite in sausage — floor fires", confidence:"high", category:"restaurant" }],
   ["egg mcmuffin",                   { floor:6, ceiling:7, substances:["sodium nitrite"], reason:"Canadian bacon (lower nitrite) + processed egg — cleaner than sausage versions", confidence:"high", category:"restaurant" }],
   ["mcdonald's french fries",        { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ in frying oil + natural beef flavor (unlabeled wheat/milk) + dextrose coating", confidence:"high", category:"restaurant" }],
-  ["mcflurry",                       { floor:5, ceiling:7, substances:["HFCS","corn syrup"], reason:"HFCS + corn syrup + artificial flavors. M&M version = 7 (petroleum dyes).", confidence:"high", category:"restaurant" }],
+  ["mcflurry",                       { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["HFCS","corn syrup"], reason:"HFCS + corn syrup + artificial flavors. M&M version = 7 (petroleum dyes).", confidence:"high", category:"restaurant" }],
   ["mcdonald's apple pie",           { floor:6, ceiling:8, substances:["TBHQ","BHA","HFCS"], reason:"TBHQ + BHA in oil + HFCS — BHA floor fires (mFloor:6)", confidence:"high", category:"restaurant" }],
   ["mcdonald's oatmeal",             { floor:3, ceiling:5, substances:[], reason:"Genuine oats + brown sugar + cream — cleanest McDonald's option", confidence:"high", category:"restaurant" }],
 
@@ -716,7 +713,7 @@ const ENTRIES = [
   ["gt's synergy",                  { floor:1, ceiling:3, substances:[], reason:"Raw kombucha — live cultures, USDA Organic, 4g sugar. Benchmark clean kombucha.", confidence:"high", category:"beverage" }],
   ["health-ade kombucha",           { floor:1, ceiling:3, substances:[], reason:"Raw, live cultures, clean ingredients", confidence:"high", category:"beverage" }],
   ["kevita sparkling probiotic",    { floor:3, ceiling:5, substances:["stevia","citric acid"], reason:"Pasteurized — live culture benefit contested. Not equivalent to raw kombucha.", confidence:"high", category:"beverage" }],
-  ["gatorade zero",                 { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium","artificial dyes"], reason:"Two artificial sweeteners + petroleum dyes — sucralose + acesulfame-K + dye floors all fire. Not clean hydration.", confidence:"high", category:"beverage" }],
+  ["gatorade zero",                 { floor:5, ceiling:7, kidsFloor:4, kidsCeiling:6, substances:["sucralose","acesulfame potassium","artificial dyes"], reason:"Two artificial sweeteners + petroleum dyes — sucralose + acesulfame-K + dye floors all fire. Not clean hydration.", confidence:"high", category:"beverage" }],
   ["powerade zero",                 { floor:5, ceiling:7, substances:["sucralose","Blue 1"], reason:"Sucralose floor + Blue 1 dye floor — both fire. Not clean hydration.", confidence:"high", category:"beverage" }],
   ["prime hydration",               { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — sucralose floor fires despite coconut water base", confidence:"high", category:"beverage" }],
   ["electrolit",                    { floor:2, ceiling:4, substances:[], reason:"Electrolytes + sucrose + fructose — no sucralose, no artificial dyes. Cleaner sports drink.", confidence:"high", category:"beverage" }],
@@ -1510,7 +1507,7 @@ const ENTRIES = [
   // ── ELECTROLYTES ─────────────────────────────────────────────
   ["nuun",                          { floor:2, ceiling:4, substances:["stevia","sorbitol"], reason:"Nuun electrolyte tablets — stevia sweetened (no sucralose), but sorbitol may cause GI distress at high use. Cleaner than Gatorade.", confidence:"high", category:"supplement" }],
   ["dripdrop",                      { floor:2, ceiling:4, substances:[], reason:"DripDrop ORS — glucose-based medically developed electrolyte formula, no sucralose. Cleaner than Pedialyte Sport.", confidence:"high", category:"supplement" }],
-  ["gatorade endurance",            { floor:4, ceiling:6, substances:["citric acid","artificial flavor"], reason:"Gatorade Endurance — no sucralose unlike Gatorade Zero, but still artificial flavors + potential dye. Not clean but better than Gatorade Zero.", confidence:"high", category:"supplement" }],
+  ["gatorade endurance",            { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, substances:["citric acid","artificial flavor"], reason:"Gatorade Endurance — no sucralose unlike Gatorade Zero, but still artificial flavors + potential dye. Not clean but better than Gatorade Zero.", confidence:"high", category:"supplement" }],
   ["precision hydration",           { floor:1, ceiling:3, substances:[], reason:"Precision Hydration — electrolytes + sucrose, no artificial sweeteners or colors. Used by elite athletes. Clean electrolyte brand.", confidence:"high", category:"supplement" }],
   ["skratch labs",                  { floor:1, ceiling:3, substances:[], reason:"Skratch Labs — real fruit + cane sugar + electrolytes, no artificial sweeteners or colors. Benchmark clean sports drink mix.", confidence:"high", category:"supplement" }],
   ["tailwind",                      { floor:1, ceiling:3, substances:[], reason:"Tailwind Nutrition — sucrose + glucose + electrolytes, no artificial sweeteners or dyes. Clean endurance fuel.", confidence:"high", category:"supplement" }],
@@ -1650,6 +1647,7 @@ const ENTRIES = [
 
   // ── DISH SOAP: CONVENTIONAL ───────────────────────────────────
   ["dawn original",                 { floor:4, ceiling:6, substances:["methylisothiazolinone","synthetic fragrance","PEG"], reason:"Dawn Original — methylisothiazolinone (MI) preservative (skin sensitizer, EU restricted) + synthetic fragrance + PEG surfactants. EWG D. Better to hand-wash with plant-based soap.", confidence:"high", category:"home" }],
+  ["dawn dish soap",               { floor:4, ceiling:6, substances:["methylisothiazolinone","synthetic fragrance","PEG"], reason:"Dawn dish soap — same as Dawn Original. MI preservative + synthetic fragrance.", confidence:"high", category:"home" }],
   ["dawn free and clear dish",      { floor:3, ceiling:5, substances:["methylisothiazolinone","cocamidopropyl betaine"], reason:"Dawn Free and Clear — removes fragrance and dye but still contains methylisothiazolinone (MI) preservative. EWG C. Better than regular Dawn.", confidence:"high", category:"home" }],
   ["palmolive",           { floor:4, ceiling:5, substances:["synthetic fragrance","methylisothiazolinone"], reason:"Palmolive — synthetic fragrance + MI preservative. Standard concern for conventional dish soap.", confidence:"high", category:"home" }],
   ["joy dish soap",                 { floor:4, ceiling:6, substances:["synthetic fragrance","artificial color","methylisothiazolinone"], reason:"Joy — synthetic fragrance + artificial color + MI. Budget dish soap with multiple additive concerns.", confidence:"high", category:"home" }],
@@ -3850,36 +3848,10 @@ const NUTRITION_LOOKUP = new Map([
   // ── SNACKS & CHIPS ─────────────────────────────────────────────────────────
 
   // ── BEVERAGES ──────────────────────────────────────────────────────────────
-  ["kool-aid",                     { sugar_g:25, sodium_mg:35,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
-  ["arizona sweet tea",            { sugar_g:23, sodium_mg:10,  sat_fat_g:0,   calories:90,              kidsFloor:6, kidsCeiling:8 }],
-  ["bolthouse farms green",        { sugar_g:30, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["bolthouse farms protein",      { sugar_g:20, sodium_mg:260, sat_fat_g:2,   calories:320,             kidsFloor:6, kidsCeiling:8 }],
-  ["snickers bar",                 { sugar_g:27, sodium_mg:120, sat_fat_g:4,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
-  ["snickers king size",           { sugar_g:54, sodium_mg:240, sat_fat_g:8,   calories:500,             kidsFloor:9, kidsCeiling:9 }],
-  ["jamba",                        { sugar_g:55, sodium_mg:55,  sat_fat_g:0,   calories:280,             kidsFloor:9, kidsCeiling:9 }],
-  ["v8 splash",                    { sugar_g:16, sodium_mg:70,  sat_fat_g:0,   calories:70,              kidsFloor:5, kidsCeiling:7 }],
-  ["v8 vegetable juice",           { sugar_g:7,  sodium_mg:640, sat_fat_g:0,   calories:50,              kidsFloor:5, kidsCeiling:7 }],
-  ["v8 fusion",                    { sugar_g:26, sodium_mg:70,  sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["suja juice",                   { sugar_g:24, sodium_mg:20,  sat_fat_g:0,   calories:130,             kidsFloor:6, kidsCeiling:8 }],
-  ["root beer",                    { sugar_g:39, sodium_mg:50,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
-  ["tropical smoothie cafe",       { sugar_g:55, sodium_mg:130, sat_fat_g:1,   calories:400,             kidsFloor:9, kidsCeiling:9 }],
-  ["tropical smoothie",            { sugar_g:55, sodium_mg:130, sat_fat_g:1,   calories:400,             kidsFloor:9, kidsCeiling:9 }],
-  ["planet smoothie",              { sugar_g:52, sodium_mg:100, sat_fat_g:1,   calories:380,             kidsFloor:9, kidsCeiling:9 }],
-  ["daily harvest smoothie",       { sugar_g:18, sodium_mg:90,  sat_fat_g:1,   calories:250,             kidsFloor:6, kidsCeiling:8 }],
-  ["daily harvest",                { sugar_g:18, sodium_mg:90,  sat_fat_g:1,   calories:250,             kidsFloor:6, kidsCeiling:8 }],
-  ["snickers almond",              { sugar_g:25, sodium_mg:110, sat_fat_g:3,   calories:240,             kidsFloor:7, kidsCeiling:9 }],
-  ["snickers peanut butter",       { sugar_g:28, sodium_mg:150, sat_fat_g:5,   calories:280,             kidsFloor:7, kidsCeiling:9 }],
-  ["reeses peanut butter cups",    { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["reeses",                       { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["3 musketeers",                 { sugar_g:40, sodium_mg:90,  sat_fat_g:5,   calories:260,             kidsFloor:8, kidsCeiling:9 }],
 
   // ── BREAKFAST ──────────────────────────────────────────────────────────────
-  ["pancake mix",                  { sugar_g:4,  sodium_mg:580, sat_fat_g:0.5, calories:200,             kidsFloor:5, kidsCeiling:7 }],
 
   // ── FAST FOOD & RESTAURANT ─────────────────────────────────────────────────
-  ["wendy's chili",                { sugar_g:8,  sodium_mg:980, sat_fat_g:2.5, calories:250, protein_g:17,fiber_g:6, kidsFloor:6, kidsCeiling:8 }],
-  ["chipotle burrito bowl",        { sugar_g:3,  sodium_mg:890, sat_fat_g:4,   calories:560, protein_g:40,fiber_g:8, kidsFloor:6, kidsCeiling:8 }],
-  ["culvers butterburger",         { sugar_g:8,  sodium_mg:700, sat_fat_g:8,   calories:440, protein_g:28,kidsFloor:6, kidsCeiling:8 }],
 
   // ── CONDIMENTS ─────────────────────────────────────────────────────────────
 
@@ -3902,21 +3874,12 @@ const NUTRITION_LOOKUP = new Map([
   // ── PEANUT BUTTER & SPREADS ────────────────────────────────────────────────
 
   // ── SOUPS & CANNED ─────────────────────────────────────────────────────────
-  ["ramen",                        { sugar_g:2,  sodium_mg:1540,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
 
   // ── PASTA & GRAINS ─────────────────────────────────────────────────────────
 
   // ── KIDS FOOD ──────────────────────────────────────────────────────────────
 
   // ── SODAS AND SUGARY DRINKS ───────────────────────────────────
-  ["coca cola classic",       { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["pepsi cola",              { sugar_g:41, sodium_mg:30,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
-  ["diet pepsi",              { sugar_g:0,  sodium_mg:35,  sat_fat_g:0, calories:0 }],
-  ["fanta orange",            { sugar_g:44, sodium_mg:55,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
-  ["root beer",               { sugar_g:43, sodium_mg:45,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
-  ["schweppes",               { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
-  ["ginger ale",              { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
-  ["tonic water",             { sugar_g:22, sodium_mg:30,  sat_fat_g:0, calories:90,  kidsFloor:6, kidsCeiling:8 }],
 
   // ── ENERGY DRINKS ─────────────────────────────────────────────
 
@@ -3951,7 +3914,6 @@ const NUTRITION_LOOKUP = new Map([
   // ── FAST FOOD — CHICK-FIL-A ──────────────────────────────────
 
   // ── FAST FOOD — KFC / POPEYES ─────────────────────────────────
-  ["culvers butterburger",    { sugar_g:8,  sodium_mg:810,  sat_fat_g:10, calories:510 }],
 
   // ── FAST FOOD — PIZZA ─────────────────────────────────────────
 
@@ -3968,58 +3930,24 @@ const NUTRITION_LOOKUP = new Map([
   // ── PANDA EXPRESS ─────────────────────────────────────────────
 
   // ── WENDYS ───────────────────────────────────────────────────
-  ["wendys frosty",           { sugar_g:47, sodium_mg:200,  sat_fat_g:8,  calories:340, kidsFloor:8, kidsCeiling:9 }],
-  ["sweetgreen harvest bowl", { sugar_g:12, sodium_mg:680,  sat_fat_g:5,  calories:600, protein_g:27, fiber_g:8 }],
 
   // ── SUBWAY ────────────────────────────────────────────────────
-  ["subway turkey sandwich",  { sugar_g:7,  sodium_mg:960,  sat_fat_g:2,  calories:320, protein_g:24 }],
-  ["subway chicken teriyaki", { sugar_g:12, sodium_mg:960,  sat_fat_g:2,  calories:370, protein_g:26 }],
-  ["subway tuna",             { sugar_g:5,  sodium_mg:760,  sat_fat_g:5,  calories:480, protein_g:23 }],
-  ["subway meatball",         { sugar_g:11, sodium_mg:1270, sat_fat_g:11, calories:480, protein_g:25 }],
 
   // ── DOMINOS ───────────────────────────────────────────────────
-  ["dominos pepperoni pizza", { sugar_g:3,  sodium_mg:640,  sat_fat_g:7,  calories:290 }],
-  ["dominos cheese pizza",    { sugar_g:3,  sodium_mg:500,  sat_fat_g:5,  calories:250 }],
-  ["dominos thin crust",      { sugar_g:2,  sodium_mg:540,  sat_fat_g:5,  calories:220 }],
-  ["dominos",                 { sugar_g:3,  sodium_mg:580,  sat_fat_g:6,  calories:270 }],
 
   // ── PIZZA HUT ─────────────────────────────────────────────────
-  ["pizza hut cheese",        { sugar_g:3,  sodium_mg:560,  sat_fat_g:5,  calories:260 }],
-  ["pizza hut",               { sugar_g:3,  sodium_mg:630,  sat_fat_g:6,  calories:280 }],
 
   // ── FIVE GUYS ─────────────────────────────────────────────────
-  ["five guys little burger",  { sugar_g:7, sodium_mg:640,  sat_fat_g:13, calories:440, protein_g:24 }],
-  ["five guys",               { sugar_g:8,  sodium_mg:1050, sat_fat_g:23, calories:700 }],
 
   // ── IN-N-OUT ──────────────────────────────────────────────────
-  ["in-n-out hamburger",      { sugar_g:10, sodium_mg:650,  sat_fat_g:9,  calories:390, protein_g:16 }],
-  ["in-n-out cheeseburger",   { sugar_g:10, sodium_mg:1000, sat_fat_g:13, calories:480, protein_g:22 }],
-  ["in-n-out animal fries",   { sugar_g:5,  sodium_mg:1400, sat_fat_g:12, calories:750 }],
-  ["in-n-out fries",          { sugar_g:0,  sodium_mg:245,  sat_fat_g:3,  calories:395 }],
 
   // ── PAPA JOHNS ────────────────────────────────────────────────
-  ["papa johns pepperoni",    { sugar_g:4,  sodium_mg:720,  sat_fat_g:7,  calories:310 }],
-  ["papa johns",              { sugar_g:4,  sodium_mg:660,  sat_fat_g:6,  calories:290 }],
 
   // ── TACO BELL ─────────────────────────────────────────────────
-  ["taco bell taco",          { sugar_g:2,  sodium_mg:310,  sat_fat_g:4,  calories:170, protein_g:8 }],
-  ["taco bell burrito",       { sugar_g:4,  sodium_mg:1060, sat_fat_g:7,  calories:430, protein_g:18 }],
-  ["taco bell quesadilla",    { sugar_g:2,  sodium_mg:1030, sat_fat_g:12, calories:470, protein_g:25 }],
-  ["taco bell nachos",        { sugar_g:4,  sodium_mg:870,  sat_fat_g:9,  calories:430 }],
 
   // ── APPLEBEES / CHEESECAKE FACTORY / RED ROBIN ────────────────
-  ["applebees",               { sugar_g:10, sodium_mg:1800, sat_fat_g:12, calories:750 }],
-  ["cheesecake factory",      { sugar_g:12, sodium_mg:2200, sat_fat_g:15, calories:1100 }],
-  ["red robin burger",        { sugar_g:9,  sodium_mg:1200, sat_fat_g:16, calories:760, protein_g:40 }],
-  ["red robin",               { sugar_g:9,  sodium_mg:1200, sat_fat_g:16, calories:760 }],
 
   // ── MCDONALDS EXPANDED ────────────────────────────────────────
-  ["mcdonalds quarter pounder",{ sugar_g:10, sodium_mg:1110, sat_fat_g:13, calories:520, protein_g:30 }],
-  ["mcdonalds chicken sandwich",{ sugar_g:5, sodium_mg:1110, sat_fat_g:4,  calories:470, protein_g:26 }],
-  ["mcdonalds egg mcmuffin",   { sugar_g:3,  sodium_mg:760,  sat_fat_g:7,  calories:310, protein_g:17 }],
-  ["mcdonalds fries large",    { sugar_g:0,  sodium_mg:400,  sat_fat_g:3,  calories:490 }],
-  ["mcdonalds fries medium",   { sugar_g:0,  sodium_mg:270,  sat_fat_g:2,  calories:320 }],
-  ["mcdonalds happy meal",     { sugar_g:5,  sodium_mg:620,  sat_fat_g:4,  calories:470, kidsFloor:6, kidsCeiling:8 }],
 
   // ── REMAINING 126 ENTRIES ─────────────────────────────────────
 
@@ -4032,7 +3960,6 @@ const NUTRITION_LOOKUP = new Map([
   // Plant milks
 
   // Sports / hydration
-  ["liquid i.v.",             { sugar_g:11, sodium_mg:500, sat_fat_g:0, calories:45 }],
 
   // Coffee creamers / syrups
 
@@ -4057,10 +3984,6 @@ const NUTRITION_LOOKUP = new Map([
   // Misc
 
   // Remaining food items (non-pet-food)
-  ["snapple",                 { sugar_g:37, sodium_mg:10,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["chilis awesome blossom",  { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
-  ["starbucks psl",           { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
-  ["pumpkin spice latte",     { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
 ]);
 
 // ─── APPLY NUTRITION LOOKUP TO CALIBRATION ENTRIES ───────────────────────────
