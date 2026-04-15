@@ -7791,10 +7791,10 @@ function App() {
                 <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
               </span>
-              <button onClick={()=>setMenuOpen(o=>!o)} style={{width:36, height:36, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer"}}>
-                <div style={{width:16, height:2, background:text, borderRadius:2}}/>
-                <div style={{width:16, height:2, background:text, borderRadius:2}}/>
-                <div style={{width:16, height:2, background:text, borderRadius:2}}/>
+              <button onClick={()=>setMenuOpen(o=>!o)} style={{width:44, height:44, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer", WebkitTapHighlightColor:"transparent", touchAction:"manipulation"}}>
+                <div style={{width:18, height:2, background:text, borderRadius:2}}/>
+                <div style={{width:18, height:2, background:text, borderRadius:2}}/>
+                <div style={{width:18, height:2, background:text, borderRadius:2}}/>
               </button>
             </div>
           ) : (
@@ -7836,7 +7836,7 @@ function App() {
 
         {/* Mobile/tablet dropdown menu */}
         {(isMobile || isTablet) && menuOpen && (
-          <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2}}>
+          <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2, position:"relative", zIndex:200}}>
             {[
               {label:"About",        pg:"about"},
               {label:"The Science",  pg:"science"},
