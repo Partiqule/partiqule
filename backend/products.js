@@ -5023,6 +5023,10 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "cleanser":  ["cleanser","face wash","face cleanser","body wash","clean beauty"],
     "retinol":   ["retinol","face cream","moisturizer","serum","anti-aging","skin care"],
     "serum":     ["serum","face cream","moisturizer","skin care","clean beauty"],
+    "blender":   ["beauty blender","makeup","sponge","cosmetics","applicator"],
+    "sponge":    ["sponge","makeup","beauty blender","applicator"],
+    "powder":    ["powder","face powder","makeup","cosmetics","setting powder"],
+    "perfume":   ["perfume","fragrance","cologne","scent","eau de toilette"],
     "pad":       ["pad","pads","menstrual","period","feminine","sanitary","menstrual pad"],
     "pads":      ["pads","pad","menstrual","period","feminine","sanitary","menstrual pad"],
     "tampon":    ["tampon","tampons","menstrual","period","feminine","sanitary"],
@@ -5198,9 +5202,14 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       }
       // Gender mismatch penalty — deprioritize men's products unless query is explicitly masculine
       const pTags = (p.tags || []).join(" ").toLowerCase();
+      const pName = p.name.toLowerCase();
       const isMensProduct = /\bmens?\b|men'?s|male grooming/.test(pTags);
       const isMensQuery = /\bmen\b|\bmens\b|\bmen'?s\b|old spice|axe |gillett|every man jack|duke cannon|baxter|harry'?s razor|dollar shave/i.test(queryJoined);
       if (isMensProduct && !isMensQuery && category === "personal_care") score = Math.max(0, score - 15);
+      // Age mismatch filter — exclude kids products for adult queries in clothing/personal_care
+      const isKidsProduct = /\bkids?\b|children|baby|infant|toddler|newborn/.test(pTags + " " + pName);
+      const isKidsQuery = /\bkids?\b|\bchildren\b|\bbaby\b|\btoddler\b|\binfant\b|\bnewborn\b|\bjunior\b/.test(queryJoined);
+      if (isKidsProduct && !isKidsQuery && (category === "clothing" || category === "personal_care")) score = 0;
       return { ...p, relevanceScore: score };
     })
     .filter(p => p.relevanceScore >= minScore)
