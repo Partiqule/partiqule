@@ -7943,6 +7943,8 @@ function App() {
                 <a href="https://partiqule.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("privacy");}}}>Privacy Policy</a>
                 <span style={{margin:"0 6px",opacity:0.4}}>·</span>
                 <a href="https://partiqule.com/terms" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("terms");}}}>Terms of Service</a>
+                <span style={{margin:"0 6px",opacity:0.4}}>·</span>
+                <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}}>Apple EULA</a>
               </div>
               {iapTimedOut && (
                 <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
