@@ -46,7 +46,6 @@ const ENTRIES = [
   ["gatorade thirst quencher",    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:270, sat_fat_g:0, calories:140}, substances:["34g sugar","artificial color"], reason:"Gatorade Thirst Quencher — 34g sugar per 20oz.", confidence:"high", category:"beverage" }],
   ["coke",                        { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:39, sodium_mg:45, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","caramel color","phosphoric acid","39g sugar"], reason:"Coca-Cola — 39g sugar per 12oz can = 78% adult DV, 156% kids DV. Caramel color Class IV (4-MeI). Ultra-processed beverage.", confidence:"high", category:"beverage" }],
   ["pepsi",                       { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:41, sodium_mg:30, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","41g sugar"], reason:"Pepsi — 41g sugar per 12oz = 82% adult DV, 164% kids DV. Caramel color. Ultra-processed.", confidence:"high", category:"beverage" }],
-  ["mountain dew",                { floor:5, ceiling:7, kidsFloor:9, kidsCeiling:9, nutrition:{sugar_g:46, sodium_mg:65, sat_fat_g:0, calories:170}, substances:["HFCS","Yellow 5","BVO","46g sugar"], reason:"Mountain Dew — 46g sugar per 12oz = 92% adult DV. Yellow 5 petroleum dye. BVO (brominated vegetable oil) in some formulations. One of the most concerning mainstream sodas.", confidence:"high", category:"beverage" }],
   ["dr pepper",                   { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:40, sodium_mg:55, sat_fat_g:0, calories:150}, substances:["HFCS or sucrose","caramel color","40g sugar"], reason:"Dr Pepper — 40g sugar per 12oz = 80% adult DV. Caramel color.", confidence:"high", category:"beverage" }],
   ["sprite",                      { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, nutrition:{sugar_g:38, sodium_mg:65, sat_fat_g:0, calories:140}, substances:["HFCS or sucrose","38g sugar"], reason:"Sprite — 38g sugar per 12oz = 76% adult DV, 152% kids DV.", confidence:"high", category:"beverage" }],
   ["powerade",                    { floor:4, ceiling:6, kidsFloor:7, kidsCeiling:9, nutrition:{sugar_g:34, sodium_mg:150, sat_fat_g:0, calories:130}, substances:["34g sugar","HFCS"], reason:"Powerade — 34g sugar per 20oz. HFCS. Similar concern to Gatorade.", confidence:"high", category:"beverage" }],
@@ -90,7 +89,6 @@ const ENTRIES = [
   ["nutella",                      { floor:5, ceiling:7, substances:["palm oil","added sugar"], reason:"57% sugar by weight + palm oil + NOVA 4 — primarily a sugar product not a nut product", confidence:"high", category:"food_beverage" }],
   ["oreo",                         { floor:5, ceiling:7, substances:["HFCS","palm oil"], reason:"HFCS + palm oil + artificial flavors + NOVA 4", confidence:"high", category:"food_beverage" }],
   ["pop-tarts",                    { floor:6, ceiling:8, substances:["HFCS","TBHQ","artificial dyes"], reason:"HFCS + TBHQ preservative + artificial dyes — TBHQ floor fires", confidence:"high", category:"food_beverage" }],
-  ["hostess twinkies",             { floor:5, ceiling:7, substances:["HFCS","polysorbate 60","sorbic acid"], reason:"HFCS + 27 industrial ingredients + polysorbate 60 + sorbic acid", confidence:"high", category:"food_beverage" }],
   ["twinkies",                     { floor:5, ceiling:7, substances:["HFCS","polysorbate 60"], reason:"HFCS + 27 industrial ingredients", confidence:"high", category:"food_beverage" }],
   ["little debbie swiss rolls",    { floor:5, ceiling:7, substances:["HFCS","corn syrup"], reason:"HFCS + corn syrup + 20+ additives + NOVA 4", confidence:"high", category:"food_beverage" }],
   ["cosmic brownies",              { floor:6, ceiling:8, substances:["HFCS","artificial dyes"], reason:"HFCS + petroleum dyes in candy coating", confidence:"high", category:"food_beverage" }],
@@ -101,9 +99,6 @@ const ENTRIES = [
   ["cheez-its",                    { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ preservative confirmed — TBHQ floor fires (mFloor:6)", confidence:"high", category:"food_beverage" }],
   ["cheez it",                     { floor:5, ceiling:7, substances:["TBHQ"], reason:"TBHQ preservative — floor fires", confidence:"high", category:"food_beverage" }],
   ["wheat thins",                  { floor:4, ceiling:6, substances:["HFCS","BHT"], reason:"HFCS + BHT preservative — BHT floor fires", confidence:"high", category:"food_beverage" }],
-  ["cheetos",                      { floor:5, ceiling:7, substances:["artificial dyes","MSG"], reason:"Petroleum dyes in most flavors + MSG + enriched flour + palm oil", confidence:"high", category:"food_beverage" }],
-  ["doritos",                      { floor:5, ceiling:7, substances:["artificial dyes","MSG"], reason:"Petroleum dyes + MSG + enriched flour", confidence:"high", category:"food_beverage" }],
-  ["pringles",                     { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ in frying oil of some flavors + enriched corn flour", confidence:"medium", category:"food_beverage" }],
   ["ritz",                { floor:5, ceiling:7, substances:["partially hydrogenated oil","HFCS","BHT"], reason:"Ritz — partially hydrogenated oil (trans fat floor fires) + HFCS + BHT. One of the most widely eaten crackers with a serious concern profile.", confidence:"high", category:"food_beverage" }],
   ["goldfish",            { floor:4, ceiling:5, substances:["enriched flour","artificial flavor"], reason:"Goldfish — enriched flour + artificial flavor in some varieties. Common child snack with moderate concern.", confidence:"high", category:"food_beverage" }],
   ["triscuit",                     { floor:1, ceiling:3, substances:[], reason:"Whole grain wheat + oil + salt — 3 clean ingredients", confidence:"high", category:"food_beverage" }],
@@ -147,7 +142,6 @@ const ENTRIES = [
   ["coca-cola",                    { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
   ["coke classic",                  { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
   ["diet coke",                     { sugar_g:0,  sodium_mg:40,  sat_fat_g:0,   calories:0,               kidsFloor:5, kidsCeiling:7 }],
-  ["sprite",                        { sugar_g:38, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
   ["gatorade zero",                 { sugar_g:0,  sodium_mg:270, sat_fat_g:0,   calories:10,              kidsFloor:4, kidsCeiling:6 }],
   ["gatorade endurance",            { sugar_g:36, sodium_mg:460, sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
   ["mcflurry",                      { sugar_g:66, sodium_mg:170, sat_fat_g:9,   calories:510,             kidsFloor:8, kidsCeiling:9 }],
@@ -155,8 +149,6 @@ const ENTRIES = [
   ["coke classic",                 { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV", confidence:"high", category:"beverage" }],
   ["diet coke",                    { floor:4, ceiling:6, substances:["aspartame","caramel color IV"], reason:"Aspartame IARC 2B 2023 + caramel color IV — aluminum can does NOT lower below 5", confidence:"high", category:"beverage" }],
   ["mountain dew",                 { floor:6, ceiling:8, substances:["Yellow 5","HFCS"], reason:"Yellow 5 petroleum dye + HFCS — dye floor fires", confidence:"high", category:"beverage" }],
-  ["dr pepper",                    { floor:4, ceiling:6, substances:["caramel color IV","HFCS"], reason:"HFCS + caramel color IV", confidence:"high", category:"beverage" }],
-  ["sprite",                       { floor:3, ceiling:5, substances:[], reason:"No artificial dyes — HFCS + citric acid + natural flavors only", confidence:"high", category:"beverage" }],
   ["zevia",                        { floor:1, ceiling:3, substances:[], reason:"Stevia only — no artificial dyes, no HFCS, no aspartame", confidence:"high", category:"beverage" }],
   ["olipop",                       { floor:2, ceiling:4, substances:[], reason:"Plant fiber + prebiotics + natural flavors — no HFCS, no artificial dyes", confidence:"high", category:"beverage" }],
   ["poppi",                        { floor:2, ceiling:4, substances:[], reason:"Apple cider vinegar + fruit juice + stevia — no artificial dyes, no HFCS", confidence:"high", category:"beverage" }],
@@ -178,7 +170,6 @@ const ENTRIES = [
   ["hawaiian punch",               { floor:6, ceiling:8, substances:["Red 40","HFCS"], reason:"HFCS + Red 40 — child daily drink — petroleum dye floor fires", confidence:"high", category:"beverage" }],
   ["kool-aid jammers",             { floor:6, ceiling:8, substances:["HFCS","artificial dyes"], reason:"HFCS + multiple petroleum dyes — child daily drink — child vulnerability", confidence:"high", category:"beverage" }],
   ["capri sun",                    { floor:4, ceiling:6, substances:["HFCS","16g sugar"], reason:"HFCS in original flavors — 16g sugar per pouch = 64% kids DV. Heavily marketed to children.", confidence:"medium", kidsFloor:5, category:"beverage" }],
-  ["ocean spray cranberry",{ floor:4, ceiling:6, substances:["HFCS"], reason:"28% juice + HFCS + water — NOT same as 100% cranberry juice", confidence:"high", category:"beverage" }],
   ["snapple peach tea",            { floor:5, ceiling:6, substances:["HFCS","37g sugar"], reason:"HFCS + 37g sugar (74% adult daily limit, 148% kids daily limit)", confidence:"high", kidsFloor:6, category:"beverage" }],
   ["arizona iced tea",             { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS — most flavors", confidence:"high", category:"beverage" }],
   ["lipton brisk",                 { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS sweetened", confidence:"high", category:"beverage" }],
@@ -242,7 +233,6 @@ const ENTRIES = [
   // FOOD — BREAKFAST
   // ══════════════════════════════════════════════════════════════
   ["eggo",                         { floor:5, ceiling:7, substances:["TBHQ","HFCS","artificial flavor"], reason:"Eggo Waffles — TBHQ preservative + HFCS + artificial flavor. Common children's breakfast. TBHQ floor fires.", confidence:"high", category:"food_beverage" }],
-  ["eggo",                 { floor:5, ceiling:7, substances:["TBHQ","HFCS","artificial flavor"], reason:"Eggo Waffles — TBHQ + HFCS + artificial flavor. Child breakfast concern. TBHQ floor fires.", confidence:"high", category:"food_beverage" }],
   ["log cabin",              { floor:5, ceiling:7, substances:["HFCS","caramel color","artificial flavor"], reason:"Log Cabin — HFCS + caramel color IV + artificial maple flavor. Contains no real maple syrup.", confidence:"high", category:"food_beverage" }],
   ["aunt jemima",                  { floor:4, ceiling:6, substances:["HFCS","caramel color"], reason:"HFCS + artificial maple flavor — now Pearl Milling Company", confidence:"high", category:"food_beverage" }],
   ["pearl milling",                { floor:4, ceiling:6, substances:["HFCS"], reason:"HFCS + artificial maple flavor", confidence:"high", category:"food_beverage" }],
@@ -272,7 +262,6 @@ const ENTRIES = [
   // PERSONAL CARE — DEODORANT
   // ══════════════════════════════════════════════════════════════
   ["native",             { floor:1, ceiling:3, substances:[], reason:"Aluminum-free, coconut oil, shea butter, baking soda, no synthetic fragrance", confidence:"high", category:"personal_care" }],
-  ["schmidt's deodorant",          { floor:1, ceiling:3, substances:[], reason:"Plant-based, no aluminum, no synthetic fragrance", confidence:"high", category:"personal_care" }],
   ["certain dri",                  { floor:5, ceiling:7, substances:["aluminum chloride"], reason:"20%+ aluminum chloride — highest aluminum concentration in OTC antiperspirant", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -290,7 +279,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["cetaphil",                     { floor:4, ceiling:6, substances:["parabens","propylene glycol","synthetic fragrance"], reason:"Parabens + propylene glycol + synthetic fragrance — 'dermatologist recommended' is not a safety signal", confidence:"high", category:"personal_care" }],
   ["vanicream",                    { floor:1, ceiling:3, substances:[], reason:"No dyes, no fragrance, no parabens, no formaldehyde releasers — genuinely clean", confidence:"high", category:"personal_care" }],
-  ["cerave moisturizing cream",    { floor:2, ceiling:4, substances:[], reason:"Current formula: no parabens, no synthetic fragrance — relatively clean for drugstore", confidence:"medium", category:"personal_care" }],
   ["aveeno daily moisturizing",    { floor:3, ceiling:5, substances:["synthetic fragrance"], reason:"Synthetic fragrance + dimethicone + benzalkonium chloride in some", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -311,7 +299,6 @@ const ENTRIES = [
   ["dr. bronner's",                { floor:1, ceiling:2, substances:[], reason:"Saponified organic oils + essential oils — organic, fair trade, benchmark clean", confidence:"high", category:"personal_care" }],
   ["dr bronner's",                 { floor:1, ceiling:2, substances:[], reason:"Saponified organic oils — benchmark clean soap", confidence:"high", category:"personal_care" }],
   ["dial complete antibacterial",  { floor:5, ceiling:7, substances:["benzalkonium chloride","synthetic fragrance"], reason:"Benzalkonium chloride is an EPA-registered pesticide — disrupts skin microbiome", confidence:"high", category:"personal_care" }],
-  ["native body wash",             { floor:1, ceiling:3, substances:[], reason:"SLS-free, no parabens, clean fragrance", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
   // SUPPLEMENTS — VITAMINS
@@ -376,7 +363,6 @@ const ENTRIES = [
   ["lodge",              { floor:1, ceiling:2, substances:[], reason:"Bare cast iron + seasoning only — no coating, inert", confidence:"high", category:"kitchen" }],
   ["le creuset",                   { floor:1, ceiling:2, substances:[], reason:"Enamel ceramic coating — no PTFE, no PFAS", confidence:"high", category:"kitchen" }],
   ["caraway",             { floor:1, ceiling:3, substances:[], reason:"Ceramic coating — no PTFE, no PFAS confirmed", confidence:"high", category:"kitchen" }],
-  ["greenpan",                     { floor:1, ceiling:3, substances:[], reason:"Thermolon ceramic — no PTFE, no PFAS", confidence:"high", category:"kitchen" }],
   ["pyrex glass",                  { floor:1, ceiling:2, substances:[], reason:"Borosilicate glass — inert at all temperatures, benchmark clean food storage", confidence:"high", category:"kitchen" }],
   ["scotch-brite",                { floor:5, ceiling:7, substances:["synthetic microfibers"], reason:"Nylon/polyester synthetic sponge — sheds microplastics into water with every use", confidence:"high", category:"home" }],
   ["scotch brite",                 { floor:5, ceiling:7, substances:["synthetic microfibers"], reason:"Synthetic fiber sponge — microplastic shedding concern", confidence:"high", category:"home" }],
@@ -386,12 +372,10 @@ const ENTRIES = [
   // CLOTHING — KEY BRANDS
   // ══════════════════════════════════════════════════════════════
   ["lululemon align",              { floor:5, ceiling:7, substances:["nylon","elastane"], reason:"87% nylon / 13% Lycra elastane — daily intimate skin contact with synthetic microfiber shedding", confidence:"high", category:"clothing" }],
-  ["shein",                        { floor:6, ceiling:8, substances:["polyester","unknown dyes","PFAS"], reason:"100% polyester common, unknown chemical dyes, PFAS above EU limits found in testing, extreme fast fashion", confidence:"high", category:"clothing" }],
   ["pact organic",                 { floor:1, ceiling:3, substances:[], reason:"GOTS certified organic cotton — gold standard clothing certification", confidence:"high", category:"clothing" }],
   ["pact clothing",                { floor:1, ceiling:3, substances:[], reason:"Pact — GOTS certified organic cotton, Fair Trade. Benchmark clean clothing brand across all product lines.", confidence:"high", category:"clothing" }],
   ["pact men",                     { floor:1, ceiling:3, substances:[], reason:"Pact men's clothing — GOTS certified organic cotton, Fair Trade. Benchmark clean.", confidence:"high", category:"clothing" }],
   ["pact women",                   { floor:1, ceiling:3, substances:[], reason:"Pact women's clothing — GOTS certified organic cotton, Fair Trade. Benchmark clean.", confidence:"high", category:"clothing" }],
-  ["allbirds",                     { floor:1, ceiling:3, substances:[], reason:"ZQ Merino wool certified — transparent supply chain, low chemical treatment", confidence:"high", category:"clothing" }],
 
   // ══════════════════════════════════════════════════════════════
   // RESTAURANT — CHAINS
@@ -400,7 +384,6 @@ const ENTRIES = [
   ["chick-fil-a grilled",          { floor:3, ceiling:5, substances:["sodium"], reason:"Cleaner marinade — no TBHQ or dimethylpolysiloxane but still high sodium processed bun", confidence:"high", category:"restaurant" }],
   ["sweetgreen",                   { floor:2, ceiling:5, substances:[], reason:"Fresh whole ingredients — simple bowls 3-4, loaded sauces/croutons 4-5", confidence:"medium", category:"restaurant" }],
   ["crumbl cookie",                { floor:5, ceiling:7, substances:["artificial dyes","refined flour"], reason:"Refined flour + 40-80g sugar per cookie + artificial dyes in frosting on many flavors", confidence:"high", category:"restaurant" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // CHILDREN'S MEDICINE — CRITICAL (dyes in daily sick-child use)
@@ -466,7 +449,6 @@ const ENTRIES = [
   ["hartz flea collar",             { floor:7, ceiling:9, substances:["tetrachlorvinphos"], reason:"Tetrachlorvinphos organophosphate — NRDC petitioned EPA for ban, carcinogenicity in rodent studies, children exposed by petting animal", confidence:"high", category:"other" }],
   ["hartz ultraguard",              { floor:7, ceiling:9, substances:["tetrachlorvinphos"], reason:"Tetrachlorvinphos — organophosphate carcinogen concern", confidence:"high", category:"other" }],
   ["seresto flea collar",           { floor:6, ceiling:8, substances:["flumethrin","imidacloprid"], reason:"1,698 pet deaths and 75,000 incident reports in EPA 2021 data", confidence:"high", category:"other" }],
-  ["wondercide",                     { floor:1, ceiling:3, substances:[], reason:"Cedar oil + plant-based — OMRI listed, genuinely clean flea control", confidence:"high", category:"other" }],
 
   // ══════════════════════════════════════════════════════════════
   // PET FOOD DYES
@@ -495,7 +477,6 @@ const ENTRIES = [
   ["starbucks k-cup",              { floor:6, ceiling:8, substances:["polypropylene"], reason:"Polypropylene pod — heated PP microplastic release", confidence:"high", category:"food_beverage" }],
   ["green mountain k-cup",         { floor:6, ceiling:8, substances:["polypropylene"], reason:"PP pod — heated plastic microplastic release", confidence:"high", category:"food_beverage" }],
   ["dunkin k-cup",                  { floor:6, ceiling:8, substances:["polypropylene"], reason:"PP pod — heated plastic concern", confidence:"high", category:"food_beverage" }],
-  ["nespresso",                     { floor:1, ceiling:3, substances:[], reason:"Aluminum capsule — no plastic in water path, inert at brewing temperatures", confidence:"high", category:"food_beverage" }],
   ["lipton pyramid tea bag",        { floor:6, ceiling:8, substances:["nylon","microplastics"], reason:"Nylon mesh confirmed — 11.6 billion microplastic particles per cup at steeping temperature (Hernandez 2019)", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -512,7 +493,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["jack link's",                   { floor:6, ceiling:8, substances:["sodium nitrite","HFCS"], reason:"Sodium nitrite IARC Group 1 + HFCS — nitrite floor fires (mFloor:8)", confidence:"high", category:"food_beverage" }],
   ["jack links",                    { floor:6, ceiling:8, substances:["sodium nitrite","HFCS"], reason:"Sodium nitrite + HFCS — nitrite floor fires", confidence:"high", category:"food_beverage" }],
-  ["slim jim",                       { floor:6, ceiling:8, substances:["sodium nitrite"], reason:"Sodium nitrite + mechanically separated chicken + corn syrup — nitrite floor fires", confidence:"high", category:"food_beverage" }],
   ["epic bar",                       { floor:1, ceiling:3, substances:[], reason:"Whole prey ingredients, no nitrites, no celery powder, no artificial additives", confidence:"high", category:"food_beverage" }],
   ["chomps",                         { floor:1, ceiling:3, substances:[], reason:"No sodium nitrite, no celery powder, no artificial dyes — benchmark clean meat snack", confidence:"high", category:"food_beverage" }],
 
@@ -540,9 +520,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["the ordinary retinol",          { floor:1, ceiling:3, substances:[], reason:"Retinol + squalane — no synthetic fragrance, no parabens, minimal formula", confidence:"high", category:"personal_care" }],
   ["paula's choice bha",            { floor:1, ceiling:3, substances:[], reason:"Salicylic acid, fragrance-free, no dyes — EWG top-rated", confidence:"high", category:"personal_care" }],
-  ["drunk elephant",                { floor:1, ceiling:3, substances:[], reason:"No synthetic fragrance, no essential oils, no silicones, no parabens — clean skincare benchmark", confidence:"high", category:"personal_care" }],
   ["elta md uv",                    { floor:1, ceiling:3, substances:[], reason:"Zinc oxide mineral UV filter + niacinamide — EWG Verified, no synthetic fragrance", confidence:"high", category:"personal_care" }],
-  ["tatcha",                         { floor:1, ceiling:3, substances:[], reason:"No synthetic fragrance, Japanese botanical ingredients, no parabens", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
   // SELF-TANNER
@@ -699,11 +677,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // GROCERY — BREAKFAST CEREALS
   // ══════════════════════════════════════════════════════════════
-  ["lucky charms",                  { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Yellow 6","Blue 1","Blue 2"], reason:"FIVE petroleum dyes FDA is phasing out — highest dye count of any mainstream cereal. Always list all five by name.", confidence:"high", category:"food_beverage" }],
-  ["froot loops",                   { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Three petroleum dyes + HFCS — dye floors fire", confidence:"high", category:"food_beverage" }],
   ["trix cereal",                   { floor:6, ceiling:8, substances:["Red 40","Yellow 6","Blue 1"], reason:"Three petroleum dyes — floors fire", confidence:"high", category:"food_beverage" }],
   ["cocoa puffs",                   { floor:5, ceiling:7, substances:["caramel color","HFCS"], reason:"HFCS + caramel color IV (4-MEI) + enriched corn flour", confidence:"high", category:"food_beverage" }],
-  ["frosted flakes",                { floor:4, ceiling:6, substances:["BHT","HFCS"], reason:"BHT floor fires + HFCS", confidence:"high", category:"food_beverage" }],
   ["honey bunches of oats",         { floor:3, ceiling:5, substances:["BHT"], reason:"BHT preservative — floor fires. No petroleum dyes.", confidence:"high", category:"food_beverage" }],
   ["nature's path organic granola",  { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no BHT, no petroleum dyes — benchmark clean granola", confidence:"high", category:"food_beverage" }],
 
@@ -714,7 +689,6 @@ const ENTRIES = [
   ["nutri grain",               { floor:5, ceiling:7, substances:["Red 40","Blue 1","HFCS"], reason:"Red 40 + Blue 1 petroleum dyes in filling + HFCS — two dye floors fire", confidence:"high", category:"food_beverage" }],
   ["nutrigrain bar",                { floor:5, ceiling:7, substances:["Red 40","Blue 1","HFCS"], reason:"Petroleum dyes + HFCS — floors fire", confidence:"high", category:"food_beverage" }],
   ["yoplait light",                 { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium","Red 40"], reason:"Two artificial sweeteners + petroleum dye — sucralose + acesulfame-K + Red 40 floors all fire", confidence:"high", category:"food_beverage" }],
-  ["yoplait original",              { floor:3, ceiling:5, substances:["HFCS"], reason:"HFCS in most flavors + modified starch", confidence:"medium", category:"food_beverage" }],
   ["stonyfield organic plain",      { floor:1, ceiling:2, substances:[], reason:"USDA Organic milk + live cultures — 2 ingredients. Benchmark clean yogurt.", confidence:"high", category:"food_beverage" }],
   ["siggi's plain",                 { floor:1, ceiling:3, substances:[], reason:"Pasteurized skim milk + cultures — minimal formula, Icelandic skyr style", confidence:"high", category:"food_beverage" }],
   ["dannon activia",                { floor:3, ceiling:5, substances:["modified starch"], reason:"Added sugar + modified starch + natural flavors — conventional flavored yogurt", confidence:"high", category:"food_beverage" }],
@@ -722,7 +696,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // GROCERY — PACKAGED SNACKS
   // ══════════════════════════════════════════════════════════════
-  ["fritos original",               { floor:1, ceiling:3, substances:[], reason:"Whole corn + corn oil + salt — 3 clean ingredients. One of the cleanest mainstream chips.", confidence:"high", category:"food_beverage" }],
   ["fritos corn chips",             { floor:1, ceiling:3, substances:[], reason:"3 clean ingredients", confidence:"high", category:"food_beverage" }],
   ["pirates booty",                 { floor:1, ceiling:3, substances:[], reason:"Whole corn + aged white cheddar — no TBHQ, no petroleum dyes", confidence:"high", category:"food_beverage" }],
   ["annie's organic bunny crackers", { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no petroleum dyes, no TBHQ", confidence:"high", category:"food_beverage" }],
@@ -732,14 +705,12 @@ const ENTRIES = [
   ["lays bbq",                      { floor:5, ceiling:7, substances:["HFCS","Red 40"], reason:"HFCS + Red 40 dye floor fires", confidence:"high", category:"food_beverage" }],
   ["pringles original",             { floor:4, ceiling:6, substances:["TBHQ"], reason:"TBHQ floor fires + enriched corn flour + modified starch", confidence:"high", category:"food_beverage" }],
   ["chips ahoy",                    { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated"], reason:"HFCS + partially hydrogenated soybean oil (trans fat) + enriched flour — multiple floors fire", confidence:"high", category:"food_beverage" }],
-  ["simple mills",                  { floor:1, ceiling:3, substances:[], reason:"Almond flour + coconut sugar + clean ingredients — benchmark clean cookie", confidence:"high", category:"food_beverage" }],
   ["siete grain-free",              { floor:1, ceiling:3, substances:[], reason:"Cassava + coconut + clean sweeteners — grain-free clean snack", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // GROCERY — BEVERAGES
   // ══════════════════════════════════════════════════════════════
   ["malk unsweetened",              { floor:1, ceiling:2, substances:[], reason:"Oats + water — minimal ingredients. Benchmark clean oat milk.", confidence:"high", category:"beverage" }],
-  ["elmhurst unsweetened",          { floor:1, ceiling:2, substances:[], reason:"Nuts/oats + water — 2 ingredients", confidence:"high", category:"beverage" }],
   ["oatly oat milk",                { floor:3, ceiling:5, substances:["rapeseed oil","dipotassium phosphate"], reason:"Rapeseed oil + dipotassium phosphate + 10+ additives — significantly more processed than branding implies", confidence:"high", category:"beverage" }],
   ["califia farms oat",             { floor:3, ceiling:5, substances:["rapeseed oil","dipotassium phosphate"], reason:"Rapeseed oil + dipotassium phosphate + multiple additives — not the same as 2-ingredient oat milk", confidence:"high", category:"beverage" }],
   ["gt's synergy",                  { floor:1, ceiling:3, substances:[], reason:"Raw kombucha — live cultures, USDA Organic, 4g sugar. Benchmark clean kombucha.", confidence:"high", category:"beverage" }],
@@ -864,7 +835,6 @@ const ENTRIES = [
   ["naked whey",                    { floor:1, ceiling:2, substances:[], reason:"Just whey protein concentrate — 1 ingredient. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
   ["naked mass",                    { floor:1, ceiling:3, substances:[], reason:"Whey + casein + maltodextrin — clean gainer, no artificial sweeteners", confidence:"high", category:"supplement" }],
   ["garden of life sport",          { floor:1, ceiling:3, substances:[], reason:"USDA Organic + NSF Certified for Sport — benchmark clean protein", confidence:"high", category:"supplement" }],
-  ["momentous protein",             { floor:1, ceiling:3, substances:[], reason:"NSF Certified for Sport + Informed Sport — no artificial sweeteners or dyes", confidence:"high", category:"supplement" }],
   ["truvani protein",               { floor:1, ceiling:3, substances:[], reason:"USDA Organic, 4 ingredients, stevia sweetened — no sucralose", confidence:"high", category:"supplement" }],
   ["vega sport protein",            { floor:2, ceiling:4, substances:[], reason:"Pea protein + stevia — no sucralose, no artificial dyes", confidence:"high", category:"supplement" }],
   ["orgain organic protein",        { floor:2, ceiling:4, substances:[], reason:"USDA Organic in most lines — check for stevia vs sucralose in specific SKU", confidence:"medium", category:"supplement" }],
@@ -876,10 +846,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // PANTRY — PASTA AND BREAD
   // ══════════════════════════════════════════════════════════════
-  ["nature's own",                  { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + calcium propionate — floor fires", confidence:"high", category:"food_beverage" }],
   ["sara lee white bread",          { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + calcium propionate — floor fires", confidence:"high", category:"food_beverage" }],
   ["dave's killer bread organic",   { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole grains, no HFCS", confidence:"high", category:"food_beverage" }],
-  ["dave's killer bread",           { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — cleaner than Wonder Bread", confidence:"high", category:"food_beverage" }],
   ["banza",                        { floor:1, ceiling:3, substances:[], reason:"Chickpea flour + tapioca — clean alternative pasta", confidence:"high", category:"food_beverage" }],
   ["banza pasta",                   { floor:1, ceiling:3, substances:[], reason:"Chickpea flour + tapioca + pea protein — clean alternative pasta", confidence:"high", category:"food_beverage" }],
   ["jovial",                       { floor:1, ceiling:2, substances:[], reason:"USDA Organic — benchmark clean pasta brand", confidence:"high", category:"food_beverage" }],
@@ -893,8 +861,6 @@ const ENTRIES = [
   ["mott's",                       { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes in daily children's snack — floor fires", confidence:"high", category:"food_beverage" }],
   ["mott's fruit snacks",           { floor:5, ceiling:7, substances:["HFCS","artificial dyes"], reason:"HFCS + artificial dyes in daily children's snack — child vulnerability", confidence:"high", category:"food_beverage" }],
   ["annie's organic fruit snacks",  { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no HFCS, no artificial dyes — benchmark clean kids fruit snack", confidence:"high", category:"food_beverage" }],
-  ["gogo squeez",                   { floor:1, ceiling:2, substances:[], reason:"100% fruit, no additives, BPA-free pouch — cleanest mainstream kids snack", confidence:"high", category:"food_beverage" }],
-  ["once upon a farm",              { floor:1, ceiling:2, substances:[], reason:"USDA Organic, cold-pressed, minimal ingredients", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // DAIRY CASE
@@ -908,7 +874,6 @@ const ENTRIES = [
   ["vital farms butter",            { floor:1, ceiling:2, substances:[], reason:"Pastured cream + salt — clean butter", confidence:"high", category:"food_beverage" }],
   ["pete and gerry's organic",      { floor:1, ceiling:2, substances:[], reason:"USDA Organic cage-free eggs — clean", confidence:"high", category:"food_beverage" }],
   ["laughing cow",                  { floor:3, ceiling:5, substances:["sodium citrate","sorbic acid"], reason:"Processed cheese spread — sodium citrate + sorbic acid + not real cheese", confidence:"high", category:"food_beverage" }],
-  ["velveeta",                      { floor:5, ceiling:7, substances:["sodium phosphate","sodium alginate"], reason:"Pasteurized prepared cheese product — sodium phosphate + alginate + artificial color. Not cheese.", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // HOT DOGS AND FRANKFURTERS
@@ -928,11 +893,8 @@ const ENTRIES = [
   ["jimmy dean sausage",            { floor:6, ceiling:8, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite in sausage + enriched flour + DATEM — nitrite floor fires. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
   ["hot pockets",                   { floor:6, ceiling:8, substances:["sodium nitrite","TBHQ","DATEM"], reason:"Sodium nitrite + TBHQ + DATEM — multiple floors fire simultaneously. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
   ["lean pockets",                  { floor:5, ceiling:7, substances:["sodium nitrite","DATEM"], reason:"Sodium nitrite in meat filling + DATEM — floor fires", confidence:"high", category:"food_beverage" }],
-  ["eggo waffles",                  { floor:4, ceiling:6, substances:["HFCS","DATEM"], reason:"HFCS + DATEM + sodium aluminum phosphate + enriched flour — floors fire", confidence:"high", category:"food_beverage" }],
-  ["kashi",                        { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — cleaner option", confidence:"high", category:"food_beverage" }],
   ["kashi waffles",                 { floor:2, ceiling:4, substances:[], reason:"Whole grain, no HFCS — meaningfully cleaner than Eggo", confidence:"high", category:"food_beverage" }],
   ["van's",                       { floor:1, ceiling:3, substances:[], reason:"Whole grain gluten-free, clean — benchmark clean waffle", confidence:"high", category:"food_beverage" }],
-  ["van's waffles",                 { floor:1, ceiling:3, substances:[], reason:"Whole grain gluten-free, no dyes, no HFCS — cleanest mainstream waffle", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // RETAIL CHICKEN NUGGETS
@@ -967,12 +929,8 @@ const ENTRIES = [
   // COFFEE AND TEA
   // ══════════════════════════════════════════════════════════════
   ["kicking horse",                { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade coffee — benchmark clean", confidence:"high", category:"food_beverage" }],
-  ["kicking horse coffee",          { floor:1, ceiling:2, substances:[], reason:"USDA Organic + Fair Trade — benchmark clean grocery coffee", confidence:"high", category:"food_beverage" }],
-  ["traditional medicinals",        { floor:1, ceiling:2, substances:[], reason:"USDA Organic + paper bags + medicinal herbs — benchmark clean tea", confidence:"high", category:"food_beverage" }],
   ["bigelow",              { floor:4, ceiling:5, substances:["conventional tea","pesticide residue"], reason:"Bigelow — conventional non-organic tea. Better bag chemistry than Lipton but pesticide concern remains.", confidence:"medium", category:"food_beverage" }],
-  ["celestial seasonings",          { floor:1, ceiling:3, substances:[], reason:"Paper bags, no string/tag — clean. Staple-free.", confidence:"high", category:"food_beverage" }],
   ["four sigmatic",                 { floor:1, ceiling:3, substances:[], reason:"Organic adaptogens + organic coffee — clean formula", confidence:"high", category:"food_beverage" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // PRODUCE — DIRTY DOZEN AND CLEAN FIFTEEN
@@ -1042,11 +1000,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // SALAD DRESSINGS
   // ══════════════════════════════════════════════════════════════
-  ["primal kitchen dressing",       { floor:1, ceiling:2, substances:[], reason:"Avocado oil base, no EDTA, no canola, no soybean oil — benchmark clean dressing", confidence:"high", category:"food_beverage" }],
   ["primal kitchen caesar",         { floor:1, ceiling:2, substances:[], reason:"Avocado oil, no EDTA — clean", confidence:"high", category:"food_beverage" }],
   ["annie's organic ranch",         { floor:1, ceiling:3, substances:[], reason:"USDA Organic, no EDTA, no artificial flavors", confidence:"high", category:"food_beverage" }],
-  ["bolthouse farms",               { floor:2, ceiling:4, substances:[], reason:"Yogurt or avocado base, no EDTA — cleaner oil profile than conventional dressings", confidence:"high", category:"food_beverage" }],
-  ["ken's steakhouse",              { floor:4, ceiling:6, substances:["EDTA","soybean oil"], reason:"Soybean oil + EDTA + high sodium — conventional dressing concern", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // STORE BRANDS
@@ -1120,10 +1075,8 @@ const ENTRIES = [
 
   // ── ASIAN AISLE: SOY SAUCE & ALTERNATIVES ────────────────────
   ["san-j tamari",                  { floor:1, ceiling:2, substances:[], reason:"Certified gluten-free tamari — soy + water + salt, USDA Organic available. Cleaner than standard soy sauce.", confidence:"high", category:"food_beverage" }],
-  ["bragg liquid aminos",           { floor:1, ceiling:2, substances:[], reason:"Soy-based amino acids, no added salt, no HFCS — clean condiment", confidence:"high", category:"food_beverage" }],
   ["coconut aminos bragg",          { floor:1, ceiling:2, substances:[], reason:"Coconut tree sap + sea salt — benchmark clean soy sauce alternative, no soy, no HFCS", confidence:"high", category:"food_beverage" }],
   ["coconut secret coconut aminos", { floor:1, ceiling:2, substances:[], reason:"Organic coconut tree sap — cleanest soy sauce alternative available", confidence:"high", category:"food_beverage" }],
-  ["coconut aminos",                { floor:1, ceiling:2, substances:[], reason:"Coconut sap + sea salt — clean soy-free, gluten-free soy sauce alternative regardless of brand", confidence:"high", category:"food_beverage" }],
 
   // ── ASIAN AISLE: TERIYAKI, HOISIN, OYSTER SAUCE ──────────────
   ["kikkoman teriyaki",             { floor:4, ceiling:6, substances:["HFCS","caramel color"], reason:"Kikkoman teriyaki contains HFCS as a primary sweetener — very different from plain Kikkoman soy sauce which is clean. HFCS floor concern.", confidence:"high", category:"food_beverage" }],
@@ -1240,16 +1193,13 @@ const ENTRIES = [
   ["klaire labs",                   { floor:1, ceiling:2, substances:[], reason:"Hypoallergenic practitioner brand — no artificial colors, no fillers. Often used for sensitive patients.", confidence:"high", category:"supplement" }],
 
   // ── QUALITY RETAIL SUPPLEMENT BRANDS ─────────────────────────
-  ["natural calm magnesium",        { floor:1, ceiling:2, substances:[], reason:"Magnesium citrate/carbonate + citric acid — minimal ingredients, no synthetic dyes or fillers. Benchmark clean magnesium supplement.", confidence:"high", category:"supplement" }],
   ["natural calm",                  { floor:1, ceiling:3, substances:[], reason:"Peter Gillham's Natural Calm — magnesium powder, clean. Flavored versions add organic stevia, still clean.", confidence:"high", category:"supplement" }],
   ["jarrow formulas",               { floor:1, ceiling:3, substances:[], reason:"Jarrow brand — generally clean, no synthetic dyes. Some products have magnesium stearate (minimal concern). Better than mass-market supplements.", confidence:"high", category:"supplement" }],
   ["solgar",                        { floor:1, ceiling:3, substances:[], reason:"Solgar brand — established quality brand, no synthetic petroleum dyes. Some products use titanium dioxide for coating — check individual products.", confidence:"medium", category:"supplement" }],
   ["life extension",                { floor:1, ceiling:3, substances:[], reason:"Science-based supplement brand — extensive third-party testing, no petroleum dyes in most products. High quality sourcing.", confidence:"high", category:"supplement" }],
   ["now foods",                     { floor:1, ceiling:3, substances:[], reason:"NOW Foods brand — affordable quality, GMP certified. Single-ingredient products (magnesium, fish oil) score 1-2. Some coated tablets may have TiO2 — check.", confidence:"medium", category:"supplement" }],
-  ["gaia herbs",                    { floor:1, ceiling:2, substances:[], reason:"USDA Organic herbal extracts — Soil Association certified farm, liquid phyto-caps with no synthetic fillers. Clean herbal supplement brand.", confidence:"high", category:"supplement" }],
   ["host defense",                  { floor:1, ceiling:2, substances:[], reason:"Paul Stamets mushroom supplements — organic mycelium + fruiting body, no synthetic additives. Benchmark clean mushroom supplement.", confidence:"high", category:"supplement" }],
   ["garden of life vitamin code",   { floor:1, ceiling:3, substances:[], reason:"Whole-food fermented multivitamin — USDA Organic, no synthetic dyes, live cultures added. Cleaner than standard multivitamins.", confidence:"high", category:"supplement" }],
-  ["carlson fish oil",              { floor:1, ceiling:2, substances:[], reason:"IFOS tested Norwegian fish oil — no artificial colors, natural lemon flavor only. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
   ["carlson",                       { floor:1, ceiling:2, substances:[], reason:"Carlson Labs — IFOS tested, clean supplement formulations, no artificial colors. Benchmark clean fish oil brand.", confidence:"high", category:"supplement" }],
   ["nordic naturals fish oil",      { floor:1, ceiling:2, substances:[], reason:"IFOS 5-star tested, Friend of the Sea certified — no artificial colors or flavors. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
 
@@ -1267,7 +1217,6 @@ const ENTRIES = [
   ["siete tortilla chip",           { floor:1, ceiling:2, substances:[], reason:"Siete avocado oil chips — clean across all flavors", confidence:"high", category:"food_beverage" }],
   ["lesser evil",                   { floor:1, ceiling:2, substances:[], reason:"Organic coconut oil + himalayan salt — no seed oils, no artificial additives. Benchmark clean popcorn.", confidence:"high", category:"food_beverage" }],
   ["quinn popcorn",                 { floor:1, ceiling:2, substances:[], reason:"USDA Organic popcorn — clean ingredients, non-GMO, no artificial flavors. Clean popcorn brand.", confidence:"high", category:"food_beverage" }],
-  ["mary's gone crackers",          { floor:1, ceiling:2, substances:[], reason:"Organic whole grain seeds + rice — gluten-free, no artificial additives. Benchmark clean cracker.", confidence:"high", category:"food_beverage" }],
   ["mary gone crackers",            { floor:1, ceiling:2, substances:[], reason:"Organic seed + rice cracker — clean. Same as Mary's Gone.", confidence:"high", category:"food_beverage" }],
   ["hu crackers",                   { floor:1, ceiling:2, substances:[], reason:"Hu brand crackers — almond flour + cassava, no industrial seed oils, no artificial additives. Same clean standard as Hu chocolate.", confidence:"high", category:"food_beverage" }],
   ["hu grain free",                 { floor:1, ceiling:2, substances:[], reason:"Hu grain-free crackers — clean almond flour base", confidence:"high", category:"food_beverage" }],
@@ -1364,7 +1313,6 @@ const ENTRIES = [
   // ── PEST CONTROL ─────────────────────────────────────────────
   ["raid",                          { floor:6, ceiling:8, substances:["permethrin","cypermethrin","pyrethroids"], reason:"Pyrethroid pesticides — permethrin/cypermethrin are IARC 3 (possible carcinogens), endocrine disruptors, highly toxic to aquatic life and cats. Do not use around cats. Child exposure concern.", confidence:"high", category:"home" }],
   ["hot shot roach",                { floor:6, ceiling:8, substances:["pyrethroids","imiprothrin"], reason:"Pyrethroid insecticide — same class as Raid. Endocrine disruption concern, toxic to cats and aquatic life. Not for use where children or pets spend time.", confidence:"high", category:"home" }],
-  ["ortho home defense",            { floor:6, ceiling:8, substances:["bifenthrin","pyrethroid"], reason:"Bifenthrin pyrethroid — persistent indoor residual pesticide. Endocrine disruptor, IARC 3. Creates long-lasting indoor contamination. Especially concerning near children's play areas.", confidence:"high", category:"home" }],
   ["terro",                         { floor:4, ceiling:6, substances:["borax","boric acid"], reason:"Terro borax bait — enclosed bait station format limits exposure significantly vs spray pyrethroids. Borax is mild reproductive toxin at high doses. Much safer option.", confidence:"high", category:"home" }],
   ["victor",                        { floor:1, ceiling:3, substances:[], reason:"Victor mechanical pest traps — no chemicals, no pesticides. Benchmark clean pest control method.", confidence:"high", category:"home" }],
   ["ecosmart",                      { floor:2, ceiling:4, substances:["rosemary oil","clove oil"], reason:"EcoSmart essential oil insecticide — USDA organic exempt, rosemary + clove. Low mammalian toxicity vs pyrethroids. Still a skin irritant at full concentration.", confidence:"high", category:"home" }],
@@ -1406,7 +1354,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── DIAPERS: CONVENTIONAL ─────────────────────────────────────
-  ["luvs",                  { floor:4, ceiling:6, substances:["chlorine bleaching","fragrance","SAP"], reason:"Budget-tier diaper — chlorine-bleached pulp (dioxin residue concern), SAP gel, synthetic fragrance against infant skin 24/7. Lowest quality mainstream diaper.", confidence:"high", category:"baby" }],
   ["kirkland diapers",              { floor:3, ceiling:5, substances:["chlorine bleaching","SAP"], reason:"Costco Kirkland — made by Huggies manufacturer, similar profile. Chlorine-bleached pulp + SAP absorbent. No fragrance advantage vs Pampers.", confidence:"medium", category:"baby" }],
   ["earth and eden diapers",        { floor:3, ceiling:5, substances:[], reason:"Amazon store-brand — chlorine-free pulp, fragrance-free. Cleaner than Pampers/Luvs but not certified organic or fully plant-based SAP.", confidence:"medium", category:"baby" }],
 
@@ -1420,11 +1367,9 @@ const ENTRIES = [
   // ── DIAPERS: PREMIUM CLEAN ────────────────────────────────────
   ["coterie",               { floor:1, ceiling:3, substances:[], reason:"OEKO-TEX Standard 100 certified — tested for 100+ harmful substances, no chlorine, no fragrance, no latex, plant-based. Premium benchmark.", confidence:"high", category:"baby" }],
   ["dyper",                 { floor:1, ceiling:3, substances:[], reason:"Bamboo viscose, USDA Certified Biobased, no chlorine, no fragrance, no latex. Among cleanest mainstream diapers. Compostable program available.", confidence:"high", category:"baby" }],
-  ["andy pandy diapers",            { floor:1, ceiling:3, substances:[], reason:"Bamboo-based, no chlorine, no fragrance, no latex, no TBT. Clean premium tier diaper.", confidence:"high", category:"baby" }],
   ["parasol diapers",               { floor:1, ceiling:3, substances:[], reason:"OEKO-TEX certified, no dyes, no fragrance, no latex, ultra-clean materials. Premium clean benchmark.", confidence:"high", category:"baby" }],
 
   // ── WIPES ─────────────────────────────────────────────────────
-  ["waterwipes",                    { floor:1, ceiling:2, substances:[], reason:"99.9% water + 0.1% grapefruit seed extract — benchmark cleanest baby wipe. No preservatives, no fragrance, no surfactants. Pediatrician recommended for newborn skin.", confidence:"high", category:"baby" }],
   ["natracare baby wipes",          { floor:1, ceiling:2, substances:[], reason:"USDA Organic certified wipes — organic cotton, no synthetic preservatives. Benchmark clean alongside WaterWipes.", confidence:"high", category:"baby" }],
   ["honest company wipes",          { floor:2, ceiling:3, substances:[], reason:"Plant-based, no parabens, no alcohol, no synthetic fragrance. Cleaner than Pampers/Huggies wipes. Not as minimal as WaterWipes.", confidence:"high", category:"baby" }],
   ["seventh generation wipes",      { floor:2, ceiling:3, substances:[], reason:"Fragrance-free, no parabens, no chlorine. Cleaner than conventional wipes.", confidence:"high", category:"baby" }],
@@ -1680,11 +1625,9 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── LAUNDRY: CONVENTIONAL CONCERN ────────────────────────────
-  ["tide free and gentle",          { floor:3, ceiling:5, substances:["1,4-dioxane","ethoxylated alcohols"], reason:"Tide Free and Gentle — no fragrance or dye, but ethoxylated alcohol surfactants carry 1,4-dioxane contamination risk (IARC 2B). Better than regular Tide but not a clean product.", confidence:"high", category:"home" }],
   ["gain",                { floor:5, ceiling:7, substances:["synthetic fragrance","optical brighteners","quats"], reason:"Gain — heavy synthetic fragrance load (undisclosed cocktail) + optical brighteners + quaternary ammonium compounds. One of the highest-fragrance mainstream detergents.", confidence:"high", category:"home" }],
   ["gain dryer sheets",             { floor:6, ceiling:8, substances:["synthetic fragrance","quats","optical brighteners"], reason:"Gain Dryer Sheets — same heavy fragrance load as detergent + quats deposited directly on clothing against skin. Dryer sheet format concentrates exposure.", confidence:"high", category:"home" }],
   ["arm and hammer",        { floor:3, ceiling:5, substances:["synthetic fragrance","1,4-dioxane"], reason:"Arm and Hammer — sodium carbonate base (clean) but synthetic fragrance + ethoxylated surfactants (1,4-dioxane risk). Better than Tide/Gain but not clean.", confidence:"high", category:"home" }],
-  ["all free clear",                { floor:3, ceiling:4, substances:["1,4-dioxane","ethoxylated alcohols"], reason:"All Free Clear — fragrance-free and dye-free, good for sensitive skin, but ethoxylated alcohol surfactants still carry 1,4-dioxane risk. EWG grade C.", confidence:"high", category:"home" }],
   ["persil proclean",               { floor:4, ceiling:6, substances:["synthetic fragrance","optical brighteners","enzymes"], reason:"Persil ProClean — synthetic fragrance + optical brighteners. Enzyme-based cleaning is effective but the fragrance and brightener load is high.", confidence:"high", category:"home" }],
 
   // ── LAUNDRY: DRYER SHEETS HIGH CONCERN ───────────────────────
@@ -1694,12 +1637,9 @@ const ENTRIES = [
 
   // ── LAUNDRY: CLEAN TIER ───────────────────────────────────────
   ["seventh generation laundry",    { floor:2, ceiling:4, substances:[], reason:"Seventh Generation laundry — plant-based surfactants, no optical brighteners. EWG A-B on fragrance-free formulas. Fragrance versions have undisclosed fragrance concern.", confidence:"high", category:"home" }],
-  ["method laundry",                { floor:2, ceiling:4, substances:["fragrance"], reason:"Method Laundry — plant-based, biodegradable, but fragrance in most formulas is not fully disclosed. Fragrance-free version is cleanest.", confidence:"high", category:"home" }],
   ["dropps laundry",                { floor:2, ceiling:3, substances:[], reason:"Dropps — concentrated pods, no dyes, no chlorine, fragrance-free option. EWG A-rated fragrance-free formula. Clean tier.", confidence:"high", category:"home" }],
   ["molly suds",                    { floor:1, ceiling:3, substances:[], reason:"Molly Suds — no SLS, no optical brighteners, no synthetic fragrance, no 1,4-dioxane. EWG A. Benchmark clean laundry powder.", confidence:"high", category:"home" }],
   ["branch basics laundry",         { floor:1, ceiling:2, substances:[], reason:"Branch Basics — EWG A rated concentrate, plant-based, no synthetic fragrance, no dyes, no optical brighteners. Benchmark cleanest mainstream laundry option.", confidence:"high", category:"home" }],
-  ["branch basics",                 { floor:1, ceiling:2, substances:[], reason:"Branch Basics brand — EWG A rated across entire line, one concentrate for all cleaning tasks. Benchmark clean household cleaning brand.", confidence:"high", category:"home" }],
-  ["biokleen laundry",              { floor:1, ceiling:3, substances:[], reason:"BioKleen — plant-based, no synthetic fragrance, no chlorine, no petroleum solvents. Clean laundry brand.", confidence:"high", category:"home" }],
   ["ecos laundry",                  { floor:2, ceiling:3, substances:[], reason:"ECOS laundry — plant-based, EPA Safer Choice certified, no optical brighteners. EWG B. Clean tier.", confidence:"high", category:"home" }],
   ["tru earth",                     { floor:1, ceiling:3, substances:[], reason:"Tru Earth laundry strips — zero-waste plastic-free format, no 1,4-dioxane, fragrance-free option. Clean and lowest packaging concern.", confidence:"high", category:"home" }],
 
@@ -1732,7 +1672,6 @@ const ENTRIES = [
   ["cascade",                       { floor:4, ceiling:6, substances:["chlorine bleach","synthetic fragrance"], reason:"Cascade brand — chlorine + synthetic fragrance across line. EWG D. Switch to plant-based dishwasher tabs.", confidence:"medium", category:"home" }],
   ["finish quantum",                { floor:4, ceiling:6, substances:["chlorine bleach","synthetic fragrance","optical brighteners"], reason:"Finish Quantum — chlorine + synthetic fragrance + optical brighteners deposited on dishes. EWG D.", confidence:"high", category:"home" }],
   ["seventh generation dishwasher", { floor:2, ceiling:3, substances:[], reason:"Seventh Generation dishwasher — no chlorine, no synthetic fragrance, plant-based. EWG A. Clean dishwasher option.", confidence:"high", category:"home" }],
-  ["ecover dishwasher",             { floor:1, ceiling:3, substances:[], reason:"Ecover dishwasher tablets — plant-based, no chlorine, no synthetic fragrance, biodegradable. Clean European standard.", confidence:"high", category:"home" }],
   ["dropps dishwasher",             { floor:1, ceiling:3, substances:[], reason:"Dropps dishwasher pods — no dyes, no chlorine, EWG A. Clean concentrated format.", confidence:"high", category:"home" }],
 
   // ── ALL-PURPOSE CLEANERS: CONCERN ────────────────────────────
@@ -1750,7 +1689,6 @@ const ENTRIES = [
   ["lysol toilet bowl",             { floor:5, ceiling:7, substances:["hydrochloric acid","quats"], reason:"Lysol Toilet Bowl Cleaner — hydrochloric acid + quats. Corrosive to skin and respiratory tract. EWG D-F depending on formula.", confidence:"high", category:"home" }],
 
   // ── ALL-PURPOSE CLEANERS: CLEAN TIER ─────────────────────────
-  ["method all purpose",            { floor:2, ceiling:3, substances:[], reason:"Method All Purpose — plant-based, no quats, EWG B. Biodegradable surfactants. Clean tier multi-surface cleaner.", confidence:"high", category:"home" }],
   ["seventh generation",    { floor:2, ceiling:3, substances:[], reason:"Seventh Generation all-purpose — plant-based, no quats, EWG A-B. Clean tier cleaner.", confidence:"high", category:"home" }],
   ["force of nature",               { floor:1, ceiling:2, substances:[], reason:"Force of Nature — hypochlorous acid generated from salt + water + vinegar. EPA approved sanitizer, no synthetic chemicals, EWG A. Benchmark clean disinfectant that actually works.", confidence:"high", category:"home" }],
   ["better life",           { floor:1, ceiling:2, substances:[], reason:"Better Life All Purpose — EWG A, plant-based, no quats, no synthetic fragrance. Benchmark clean multi-surface cleaner.", confidence:"high", category:"home" }],
@@ -1792,7 +1730,6 @@ const ENTRIES = [
   ["edge shaving gel",              { floor:4, ceiling:6, substances:["isobutane","synthetic fragrance","PPG"], reason:"Edge Shaving Gel — isobutane aerosol + synthetic fragrance + polypropylene glycol. Standard concern for conventional shave gel.", confidence:"high", category:"personal_care" }],
   ["gillette shaving cream",        { floor:4, ceiling:5, substances:["synthetic fragrance","triethanolamine"], reason:"Gillette shaving cream — synthetic fragrance + triethanolamine. Better than aerosol but still conventional concern ingredients.", confidence:"high", category:"personal_care" }],
   ["proraso shaving cream",         { floor:2, ceiling:4, substances:[], reason:"Proraso — eucalyptus oil + menthol, Italian heritage formula. No synthetic fragrance in classic formulas. Cleaner than Barbasol/Edge but not EWG verified.", confidence:"high", category:"personal_care" }],
-  ["pacific shaving",               { floor:1, ceiling:3, substances:[], reason:"Pacific Shaving Co — plant-based, EWG verified, no synthetic fragrance, no triethanolamine. Benchmark clean shave brand.", confidence:"high", category:"personal_care" }],
   ["every man jack shave",          { floor:2, ceiling:4, substances:[], reason:"Every Man Jack shave — plant-based surfactants, no parabens. Cleaner than conventional but fragrance in some products.", confidence:"high", category:"personal_care" }],
   ["cremo shaving cream",           { floor:3, ceiling:5, substances:["synthetic fragrance"], reason:"Cremo — effective formula but synthetic fragrance. EWG C. Better than Barbasol, not as clean as Pacific Shaving.", confidence:"medium", category:"personal_care" }],
 
@@ -1814,7 +1751,6 @@ const ENTRIES = [
   ["axe",                           { floor:6, ceiling:8, substances:["synthetic fragrance","artificial color"], reason:"Axe brand — EWG F rated, maximum synthetic fragrance load. Not for daily skin or underarm use.", confidence:"high", category:"personal_care" }],
   ["old spice body wash_REMOVED",           { floor:5, ceiling:7, substances:["synthetic fragrance","sulfates","artificial color"], reason:"Old Spice body wash — heavy synthetic fragrance + SLS + artificial color. EWG D-F depending on formula.", confidence:"high", category:"personal_care" }],
   ["irish spring",                  { floor:5, ceiling:6, substances:["synthetic fragrance","artificial color"], reason:"Irish Spring — synthetic fragrance + artificial color (the green). EWG D. Classic but not a clean product.", confidence:"high", category:"personal_care" }],
-  ["dove men body wash",            { floor:4, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Dove Men+Care body wash — dimethicone + synthetic fragrance. EWG C-D. Better than Axe/Old Spice but not clean.", confidence:"high", category:"personal_care" }],
   ["dr. squatch",                   { floor:2, ceiling:4, substances:["fragrance"], reason:"Dr. Squatch — natural soap base, no SLS, no parabens, but fragrance from natural sources (essential oils) is not always fully disclosed. EWG B. Clean tier men's soap.", confidence:"high", category:"personal_care" }],
   ["dr squatch",                    { floor:2, ceiling:4, substances:["fragrance"], reason:"Dr. Squatch — natural soap, no SLS, no parabens. EWG B. Clean tier.", confidence:"high", category:"personal_care" }],
   ["duke cannon",                   { floor:4, ceiling:6, substances:["synthetic fragrance","artificial color"], reason:"Duke Cannon — most products use synthetic fragrance + artificial colors. Military branding, conventional formula. Better packaging, same concern as Irish Spring.", confidence:"high", category:"personal_care" }],
@@ -1830,12 +1766,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── CEREAL: HIGH CONCERN ──────────────────────────────────────
-  ["froot loops",                   { floor:7, ceiling:9, substances:["Red 40","Yellow 5","Blue 1","TBHQ"], reason:"Froot Loops — Red 40 + Yellow 5 + Blue 1 (three petroleum dyes, all FDA phasing out) + TBHQ preservative. Multiple floors fire simultaneously. Daily children's breakfast. Avoid.", confidence:"high", category:"food_beverage" }],
-  ["cap'n crunch",                  { floor:5, ceiling:7, substances:["TBHQ","Yellow 5","Yellow 6"], reason:"Cap'n Crunch — TBHQ preservative + Yellow 5 and Yellow 6 petroleum dyes. TBHQ floor fires. Child vulnerability applies.", confidence:"high", category:"food_beverage" }],
   ["capn crunch",                   { floor:5, ceiling:7, substances:["TBHQ","Yellow 5","Yellow 6"], reason:"Cap'n Crunch — TBHQ + petroleum dyes. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
   ["cinnamon toast crunch",         { floor:5, ceiling:7, substances:["BHT","TBHQ","conventional wheat"], reason:"Cinnamon Toast Crunch — BHT + TBHQ (both IARC 2B) + conventional wheat (glyphosate concern). Two preservative floors fire.", confidence:"high", category:"food_beverage" }],
-  ["cocoa puffs",                   { floor:4, ceiling:6, substances:["BHT","conventional corn","sugar"], reason:"Cocoa Puffs — BHT preservative + conventional corn (glyphosate) + high sugar first ingredient. BHT floor concern.", confidence:"high", category:"food_beverage" }],
-  ["frosted flakes",                { floor:5, ceiling:7, substances:["BHT","TBHQ","conventional corn"], reason:"Frosted Flakes — BHT + TBHQ preservatives + conventional corn (glyphosate risk). Two preservative floors fire. Sugar as second ingredient.", confidence:"high", category:"food_beverage" }],
 
   // ── CEREAL: MODERATE CONCERN ──────────────────────────────────
   ["special k",                     { floor:4, ceiling:5, substances:["BHT","conventional wheat","natural flavor"], reason:"Special K — BHT preservative + conventional wheat/rice + vague 'natural flavor'. BHT floor fires.", confidence:"high", category:"food_beverage" }],
@@ -1851,7 +1783,6 @@ const ENTRIES = [
   ["uncle sam",              { floor:1, ceiling:3, substances:[], reason:"Uncle Sam — whole wheat + flaxseed, no artificial additives, no BHT/TBHQ. Simple clean ingredient list. Benchmark clean mainstream cereal.", confidence:"high", category:"food_beverage" }],
   ["barbara's puffins",             { floor:2, ceiling:4, substances:[], reason:"Barbara's Puffins — minimal ingredients, no BHT/TBHQ, no artificial colors. Cleaner than most conventional cereals.", confidence:"high", category:"food_beverage" }],
   ["three wishes",           { floor:1, ceiling:3, substances:[], reason:"Three Wishes — chickpea-based, no sugar, no grain, minimal clean ingredients. Benchmark clean cereal.", confidence:"high", category:"food_beverage" }],
-  ["magic spoon cereal",            { floor:2, ceiling:4, substances:["allulose","monk fruit"], reason:"Magic Spoon — no petroleum dyes, no BHT/TBHQ. Allulose + monk fruit sweeteners (no sucralose). Cleaner than conventional but novel sweeteners have limited long-term data.", confidence:"medium", category:"food_beverage" }],
   ["kashi cereal",                  { floor:2, ceiling:4, substances:[], reason:"Kashi — whole grain, plant-based, no BHT/TBHQ. Organic options available. Clean tier vs conventional cereals.", confidence:"high", category:"food_beverage" }],
   ["nature's path",          { floor:1, ceiling:3, substances:[], reason:"Nature's Path — USDA Organic, no BHT/TBHQ, no artificial colors or flavors. Benchmark clean cereal brand.", confidence:"high", category:"food_beverage" }],
   ["natures path",                  { floor:1, ceiling:3, substances:[], reason:"Nature's Path — USDA Organic across the line, no artificial additives. Benchmark clean cereal and granola brand.", confidence:"high", category:"food_beverage" }],
@@ -1868,10 +1799,8 @@ const ENTRIES = [
   ["nature's harvest bread",        { floor:4, ceiling:6, substances:["calcium propionate","soybean oil","HFCS"], reason:"Nature's Harvest — calcium propionate mold inhibitor + soybean oil + some formulas have HFCS. Same gut microbiome concern as Mission tortillas.", confidence:"high", category:"food_beverage" }],
   ["pepperidge farm bread",         { floor:4, ceiling:5, substances:["calcium propionate","soybean oil"], reason:"Pepperidge Farm — calcium propionate + soybean oil. Better than Wonder but same preservative concern.", confidence:"high", category:"food_beverage" }],
   ["dave's killer bread",           { floor:3, ceiling:4, substances:["conventional wheat","organic"], reason:"Dave's Killer Bread — organic sprouted grain versions are cleaner (1-3); conventional varieties still have glyphosate concern on non-organic wheat. Verify organic vs conventional.", confidence:"medium", category:"food_beverage" }],
-  ["ezekiel",                 { floor:1, ceiling:3, substances:[], reason:"Ezekiel Bread — sprouted certified organic grains + legumes, no flour, no preservatives, no added sugar. Benchmark cleanest commercial bread.", confidence:"high", category:"food_beverage" }],
 
   // ── EGGS ──────────────────────────────────────────────────────
-  ["vital farms eggs",              { floor:1, ceiling:2, substances:[], reason:"Vital Farms — pasture-raised (108 sq ft per bird) + certified humane + Non-GMO. Benchmark clean eggs. The production standard matters for nutritional quality.", confidence:"high", category:"food_beverage" }],
   ["pete and gerry's",              { floor:1, ceiling:3, substances:[], reason:"Pete and Gerry's — USDA Organic, certified humane, free range. Clean organic egg benchmark.", confidence:"high", category:"food_beverage" }],
   ["happy egg",                     { floor:2, ceiling:3, substances:[], reason:"Happy Egg Co — free range, higher welfare than conventional. Not organic but meaningful step up from caged eggs.", confidence:"high", category:"food_beverage" }],
   ["eggland's best",                { floor:3, ceiling:4, substances:["conventional feed","synthetic supplements"], reason:"Eggland's Best — cage-free claim (varies by farm) + proprietary feed with synthetic supplements. Better than conventional but not organic or pasture-raised.", confidence:"medium", category:"food_beverage" }],
@@ -1885,13 +1814,11 @@ const ENTRIES = [
   // ── JUICE ─────────────────────────────────────────────────────
   ["tropicana orange juice",        { floor:4, ceiling:6, substances:["flavor packs","pasteurized"], reason:"Tropicana OJ — pasteurized (destroys enzymes), then de-oxygenated for storage (strips flavor), then flavor packs added from orange essence/oils (not disclosed on label). Not fresh-squeezed despite branding.", confidence:"high", category:"food_beverage" }],
   ["tropicana",                     { floor:4, ceiling:6, substances:["flavor packs","pasteurized"], reason:"Tropicana — flavor packs added after de-aeration storage. Not as natural as label implies.", confidence:"medium", category:"food_beverage" }],
-  ["simply orange",                 { floor:3, ceiling:5, substances:["flavor packs","pasteurized"], reason:"Simply Orange (Coca-Cola) — same flavor pack process as Tropicana, pasteurized. Slightly more transparent about processing than Tropicana.", confidence:"high", category:"food_beverage" }],
   ["florida natural oj",            { floor:3, ceiling:5, substances:["pasteurized","flavor packs"], reason:"Florida Natural — pasteurized with flavor pack concern. Similar profile to Simply Orange.", confidence:"medium", category:"food_beverage" }],
   ["odwalla juice",                 { floor:4, ceiling:5, substances:["pasteurized","added sugar"], reason:"Odwalla — HPP or pasteurized, some blends have added sugars and natural flavor. Less clean than cold-pressed.", confidence:"medium", category:"food_beverage" }],
   ["suja",                    { floor:1, ceiling:3, substances:[], reason:"Suja — cold-pressed, USDA Organic, HPP preserved (not heat pasteurized). Benchmark clean juice brand.", confidence:"high", category:"food_beverage" }],
 
   // ── YOGURT ────────────────────────────────────────────────────
-  ["yoplait original",              { floor:4, ceiling:6, substances:["HFCS","modified corn starch","artificial flavor"], reason:"Yoplait Original — HFCS + modified corn starch + artificial flavor. The classic yogurt most Americans grew up with is not a clean food.", confidence:"high", category:"food_beverage" }],
   ["yoplait",                       { floor:4, ceiling:6, substances:["HFCS","modified starch","artificial flavor"], reason:"Yoplait brand — HFCS + modified corn starch + artificial flavors in most original formulas. Go-Gurt and Trix yogurt worse (added dyes).", confidence:"medium", category:"food_beverage" }],
   ["chobani plain",                 { floor:1, ceiling:2, substances:[], reason:"Chobani Plain Greek Yogurt — milk + cultures, two ingredients. Benchmark clean yogurt. Flavored versions vary.", confidence:"high", category:"food_beverage" }],
   ["chobani",                       { floor:1, ceiling:3, substances:[], reason:"Chobani — plain varieties are benchmark clean (1-2). Flavored varieties may have added sugar and natural flavor. Always choose plain.", confidence:"medium", category:"food_beverage" }],
@@ -1909,9 +1836,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── LAUNDRY: CONCERN TIER ─────────────────────────────────────
-  ["gain laundry",                  { floor:5, ceiling:7, substances:["synthetic fragrance","1,4-dioxane","optical brighteners"], reason:"Gain — heavy synthetic fragrance + 1,4-dioxane from ethoxylated surfactants (IARC 2B) + optical brighteners. One of the most fragrance-loaded mainstream detergents.", confidence:"high", category:"home" }],
-  ["persil proclean",               { floor:4, ceiling:6, substances:["synthetic fragrance","1,4-dioxane"], reason:"Persil — ethoxylated surfactants (1,4-dioxane concern) + synthetic fragrance. Similar profile to Tide.", confidence:"high", category:"home" }],
-  ["tide free and gentle",          { floor:3, ceiling:5, substances:["1,4-dioxane","ethoxylated surfactants"], reason:"Tide Free and Gentle — removes fragrance and dyes but ethoxylated surfactants remain with 1,4-dioxane risk. Better than Tide Original, not a clean product.", confidence:"high", category:"home" }],
   ["all free clear",                { floor:3, ceiling:5, substances:["ethoxylated surfactants","1,4-dioxane"], reason:"All Free Clear — fragrance-free and dye-free but ethoxylated surfactants remain. Better for sensitive skin but not clean-formulated.", confidence:"high", category:"home" }],
   ["arm and hammer laundry",        { floor:3, ceiling:5, substances:["synthetic fragrance","surfactants"], reason:"Arm and Hammer laundry — baking soda base + surfactants + synthetic fragrance in most formulas. Better than Gain but not clean-label.", confidence:"high", category:"home" }],
   ["mrs. meyer's laundry",          { floor:3, ceiling:5, substances:["synthetic fragrance","methylisothiazolinone"], reason:"Mrs. Meyer's laundry — plant-derived surfactants but MIT (EU-banned in rinse-off products) + synthetic fragrance. Cleaner branding than formulation.", confidence:"high", category:"home" }],
@@ -1919,21 +1843,14 @@ const ENTRIES = [
   ["method laundry",                { floor:3, ceiling:5, substances:["synthetic fragrance","ethoxylated surfactants"], reason:"Method laundry — plant-based surfactants but synthetic fragrance. Better than Tide/Gain, not as clean as Seventh Generation.", confidence:"high", category:"home" }],
 
   // ── LAUNDRY: CLEAN TIER ───────────────────────────────────────
-  ["seventh generation laundry",    { floor:2, ceiling:3, substances:[], reason:"Seventh Generation laundry — EPA Safer Choice, plant-based, no optical brighteners, fragrance-free options. Benchmark mainstream clean laundry detergent.", confidence:"high", category:"home" }],
-  ["ecos laundry",                  { floor:2, ceiling:3, substances:[], reason:"ECOS Laundry — EPA Safer Choice, plant-based, hypoallergenic, no 1,4-dioxane or optical brighteners. Clean mainstream option.", confidence:"high", category:"home" }],
   ["biokleen laundry",              { floor:2, ceiling:3, substances:[], reason:"Biokleen laundry — plant-based, no synthetic fragrance, no optical brighteners. EWG A/B rated. Clean option.", confidence:"high", category:"home" }],
-  ["molly suds",                    { floor:1, ceiling:3, substances:[], reason:"Molly Suds — no 1,4-dioxane, no synthetic fragrance, EWG A rated, palm-oil free. Benchmark clean laundry brand.", confidence:"high", category:"home" }],
-  ["branch basics",                 { floor:1, ceiling:2, substances:[], reason:"Branch Basics — concentrated plant-based, zero synthetic fragrance, EWG A, no 1,4-dioxane. One of the cleanest household cleaning products available. Benchmark clean across laundry, dish, and all-purpose.", confidence:"high", category:"home" }],
   ["dropps",                        { floor:1, ceiling:3, substances:[], reason:"Dropps — EWG Verified, plant-based, no 1,4-dioxane, no synthetic fragrance, plastic-free packaging. Benchmark clean laundry and dish pods.", confidence:"high", category:"home" }],
-  ["tru earth",                     { floor:1, ceiling:3, substances:[], reason:"Tru Earth laundry strips — zero plastic packaging, plant-based, no parabens, no 1,4-dioxane. Benchmark clean and lowest-waste laundry format.", confidence:"high", category:"home" }],
   ["meliora",                       { floor:1, ceiling:2, substances:[], reason:"Meliora — EWG Verified, soap-based powder, no synthetic surfactants, no 1,4-dioxane. Cleanest powdered laundry option.", confidence:"high", category:"home" }],
   ["charlie soap",                  { floor:1, ceiling:2, substances:[], reason:"Charlie Soap — simple soap-based laundry powder, no synthetic surfactants or fragrance. Very clean minimal formula.", confidence:"high", category:"home" }],
 
   // ── DRYER SHEETS / FABRIC SOFTENER ───────────────────────────
   ["snuggle",                       { floor:5, ceiling:7, substances:["synthetic fragrance","quaternary ammonium","artificial dyes"], reason:"Snuggle — synthetic fragrance + quaternary ammonium compounds (quats, respiratory sensitizer) + artificial dyes. One of the most chemical-heavy laundry products.", confidence:"high", category:"home" }],
-  ["seventh generation dryer",      { floor:2, ceiling:4, substances:[], reason:"Seventh Generation dryer sheets — plant-based, no synthetic fragrance, no quaternary ammonium. Much cleaner than Bounce/Snuggle.", confidence:"high", category:"home" }],
   ["method dryer",                  { floor:2, ceiling:4, substances:["synthetic fragrance"], reason:"Method dryer sheets — plant-based but synthetic fragrance. Better than Bounce, not as clean as Seventh Generation.", confidence:"high", category:"home" }],
-  ["wool dryer balls",              { floor:1, ceiling:2, substances:[], reason:"Wool dryer balls — zero chemicals, 100% wool, reusable. Benchmark cleanest dryer alternative. Eliminates all dryer sheet chemical exposure.", confidence:"high", category:"home" }],
   ["friendsheep",                   { floor:1, ceiling:2, substances:[], reason:"Friendsheep wool dryer balls — GOTS certified organic wool, zero chemicals. Benchmark clean.", confidence:"high", category:"home" }],
 
   // ── DISH SOAP: CONCERN TIER ───────────────────────────────────
@@ -1941,46 +1858,34 @@ const ENTRIES = [
   ["palmolive dish",                { floor:4, ceiling:6, substances:["SLS","synthetic fragrance","artificial color"], reason:"Palmolive — SLS + synthetic fragrance + artificial color. Standard conventional dish soap concern profile.", confidence:"high", category:"home" }],
   ["joy dish",                      { floor:4, ceiling:6, substances:["SLS","synthetic fragrance","artificial color"], reason:"Joy — SLS + synthetic fragrance + artificial color. Same conventional concern as Palmolive.", confidence:"high", category:"home" }],
   ["ajax dish",                     { floor:4, ceiling:6, substances:["SLS","synthetic fragrance"], reason:"Ajax dish soap — SLS + synthetic fragrance. Budget tier conventional concern.", confidence:"high", category:"home" }],
-  ["mrs. meyer's dish",             { floor:3, ceiling:5, substances:["synthetic fragrance","MIT"], reason:"Mrs. Meyer's dish — plant-derived surfactants but MIT + synthetic fragrance components. Better than Dawn, not clean.", confidence:"high", category:"home" }],
-  ["mrs meyers dish",               { floor:3, ceiling:5, substances:["synthetic fragrance","MIT"], reason:"Mrs. Meyer's dish soap — MIT + synthetic fragrance. Cleaner branding than formulation.", confidence:"high", category:"home" }],
   ["method dish",                   { floor:3, ceiling:4, substances:["synthetic fragrance"], reason:"Method dish soap — plant-based surfactants, biodegradable, but synthetic fragrance. Better than Dawn, not as clean as Seventh Generation.", confidence:"high", category:"home" }],
 
   // ── DISH SOAP: CLEAN TIER ─────────────────────────────────────
-  ["seventh generation dish",       { floor:2, ceiling:3, substances:[], reason:"Seventh Generation dish — EPA Safer Choice, plant-based, no synthetic fragrance, no MIT. Benchmark mainstream clean dish soap.", confidence:"high", category:"home" }],
   ["honest company dish",           { floor:2, ceiling:3, substances:[], reason:"Honest Company dish — EWG certified, plant-based, no MIT. Cleaner than Dawn.", confidence:"high", category:"home" }],
   ["ecos dish",                     { floor:2, ceiling:3, substances:[], reason:"ECOS dish soap — EPA Safer Choice, plant-based, hypoallergenic, no MIT. Clean tier.", confidence:"high", category:"home" }],
   ["puracy dish",                   { floor:2, ceiling:3, substances:[], reason:"Puracy dish soap — plant-based, EWG A rated, no synthetic fragrance, no MIT.", confidence:"high", category:"home" }],
   ["biokleen dish",                 { floor:2, ceiling:3, substances:[], reason:"Biokleen dish liquid — plant-based, no synthetic fragrance, no artificial color. Clean tier.", confidence:"high", category:"home" }],
-  ["better life dish",              { floor:1, ceiling:2, substances:[], reason:"Better Life dish soap — EWG A rated, no SLS, no MIT, no synthetic fragrance. Benchmark cleanest dish soap.", confidence:"high", category:"home" }],
 
   // ── DISHWASHER ────────────────────────────────────────────────
   ["cascade dishwasher",            { floor:4, ceiling:6, substances:["quaternary ammonium","optical brighteners","synthetic fragrance"], reason:"Cascade — quats + optical brighteners + synthetic fragrance. Residue left on dishes that contact food. Not a clean product.", confidence:"high", category:"home" }],
   ["finish",             { floor:4, ceiling:6, substances:["quaternary ammonium","optical brighteners"], reason:"Finish — quats + optical brighteners. Same concern profile as Cascade.", confidence:"high", category:"home" }],
-  ["seventh generation dishwasher", { floor:2, ceiling:3, substances:[], reason:"Seventh Generation dishwasher — EPA Safer Choice, plant-based, no optical brighteners or synthetic fragrance. Benchmark clean dishwasher detergent.", confidence:"high", category:"home" }],
-  ["dropps dishwasher",             { floor:1, ceiling:3, substances:[], reason:"Dropps dishwasher — EWG Verified, plant-based, no synthetic fragrance, plastic-free. Benchmark clean.", confidence:"high", category:"home" }],
   ["ecover dishwasher",             { floor:2, ceiling:3, substances:[], reason:"Ecover — plant-based, no phosphates, no synthetic fragrance. European clean standard dishwasher option.", confidence:"high", category:"home" }],
 
   // ── ALL PURPOSE: CONCERN TIER ─────────────────────────────────
   ["lysol all purpose",             { floor:5, ceiling:7, substances:["quaternary ammonium","synthetic fragrance","glycol ether"], reason:"Lysol APC — quats (respiratory sensitizer) + synthetic fragrance + glycol ethers. Not for food prep surfaces without rinsing.", confidence:"high", category:"home" }],
-  ["lysol disinfectant spray",      { floor:6, ceiling:8, substances:["quaternary ammonium","ethanol","propellant","synthetic fragrance"], reason:"Lysol Disinfectant Spray — aerosolized quats + ethanol + synthetic fragrance propellant. High inhalation risk. Not for use around children or pets during application.", confidence:"high", category:"home" }],
   ["clorox clean-up",               { floor:5, ceiling:7, substances:["sodium hypochlorite","synthetic fragrance"], reason:"Clorox Clean-Up — bleach + synthetic fragrance. Never mix with ammonia products (chloramine gas risk). Respiratory and skin irritant.", confidence:"high", category:"home" }],
-  ["clorox disinfecting wipes",     { floor:5, ceiling:7, substances:["quaternary ammonium","synthetic fragrance"], reason:"Clorox wipes — quats + synthetic fragrance. Residue remains on food-prep surfaces after use.", confidence:"high", category:"home" }],
   ["fantastik",                     { floor:5, ceiling:7, substances:["quaternary ammonium","synthetic fragrance","glycol ether"], reason:"Fantastik — quats + synthetic fragrance + glycol ethers. Standard conventional APC concern.", confidence:"high", category:"home" }],
   ["formula 409",                   { floor:5, ceiling:7, substances:["quaternary ammonium","synthetic fragrance"], reason:"Formula 409 — quats + synthetic fragrance. EPA-registered disinfectant, not a clean household cleaner.", confidence:"high", category:"home" }],
   ["microban 24",                   { floor:6, ceiling:8, substances:["benzalkonium chloride","quaternary ammonium"], reason:"Microban 24 — benzalkonium chloride designed to persist 24 hours on surfaces. Persistent quat exposure concern for daily household use around children.", confidence:"high", category:"home" }],
-  ["scrubbing bubbles",             { floor:5, ceiling:7, substances:["quaternary ammonium","synthetic fragrance","sodium hypochlorite"], reason:"Scrubbing Bubbles — quats + synthetic fragrance + bleach in some formulas. Bathroom chemical exposure concern.", confidence:"high", category:"home" }],
   ["tilex mold",                    { floor:6, ceiling:8, substances:["sodium hypochlorite","chlorine gas risk"], reason:"Tilex Mold and Mildew — high bleach concentration in enclosed bathrooms = serious chlorine gas inhalation risk. Maximum ventilation required. Never mix with other cleaners.", confidence:"high", category:"home" }],
 
   // ── ALL PURPOSE: CLEAN TIER ───────────────────────────────────
   ["method all purpose",            { floor:3, ceiling:4, substances:["synthetic fragrance"], reason:"Method APC — plant-based surfactants, biodegradable, but synthetic fragrance. Better than Lysol, not as clean as Seventh Generation.", confidence:"high", category:"home" }],
   ["seventh generation all purpose", { floor:2, ceiling:3, substances:[], reason:"Seventh Generation APC — EPA Safer Choice, plant-based, no synthetic fragrance, no quats. Benchmark mainstream clean all-purpose cleaner.", confidence:"high", category:"home" }],
-  ["better life",                   { floor:1, ceiling:2, substances:[], reason:"Better Life — EWG A rated across entire line, plant-based, no synthetic fragrance, no quats. Benchmark clean cleaning brand.", confidence:"high", category:"home" }],
   ["puracy",                        { floor:2, ceiling:3, substances:[], reason:"Puracy — plant-based, EWG A rated, no synthetic fragrance. Clean tier cleaning products.", confidence:"high", category:"home" }],
   ["grove collaborative",           { floor:2, ceiling:4, substances:[], reason:"Grove Collaborative — plant-based concentrates, EWG certified on most products. Clean tier, varies by product.", confidence:"medium", category:"home" }],
   ["thieves cleaner",               { floor:2, ceiling:4, substances:["essential oils"], reason:"Thieves Household Cleaner — plant-derived, essential oil based, no quats. Cleaner than Lysol. Young Living MLM brand.", confidence:"medium", category:"home" }],
-  ["force of nature",               { floor:1, ceiling:2, substances:[], reason:"Force of Nature — electrolyzed salt water producing hypochlorous acid. EPA-registered disinfectant, zero synthetic chemicals. HOCl breaks down to salt water. Benchmark cleanest disinfectant available.", confidence:"high", category:"home" }],
   ["method bathroom",               { floor:3, ceiling:4, substances:["synthetic fragrance"], reason:"Method bathroom cleaner — plant-based surfactants but synthetic fragrance. Better than Scrubbing Bubbles, not as clean as Better Life.", confidence:"high", category:"home" }],
-  ["better life bathroom",          { floor:1, ceiling:2, substances:[], reason:"Better Life bathroom cleaner — EWG A rated, no quats, no synthetic fragrance, no bleach. Benchmark clean bathroom cleaner.", confidence:"high", category:"home" }],
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 29 — MEN'S PERSONAL CARE
@@ -1990,13 +1895,11 @@ const ENTRIES = [
   ["old spice antiperspirant",      { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance"], reason:"Old Spice antiperspirant — aluminum zirconium tetrachlorohydrex (endocrine concern, breast tissue accumulation, Alzheimer's link debated) + heavy synthetic fragrance. Antiperspirant vs deodorant is a meaningful distinction.", confidence:"high", category:"personal_care" }],
   ["degree men antiperspirant",     { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","PEG"], reason:"Degree Men antiperspirant — aluminum + synthetic fragrance + PEG compounds. Standard antiperspirant concern profile.", confidence:"high", category:"personal_care" }],
   ["degree antiperspirant",         { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance"], reason:"Degree antiperspirant — aluminum + synthetic fragrance. Antiperspirant concern tier.", confidence:"high", category:"personal_care" }],
-  ["dove men antiperspirant",       { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","dimethicone"], reason:"Dove Men antiperspirant — aluminum + synthetic fragrance + dimethicone. Marketed as gentle but still antiperspirant concern tier.", confidence:"high", category:"personal_care" }],
   ["secret antiperspirant",         { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","parabens"], reason:"Secret antiperspirant — aluminum + synthetic fragrance + parabens in some formulas. Standard antiperspirant concern.", confidence:"high", category:"personal_care" }],
   ["speed stick",                   { floor:4, ceiling:6, substances:["aluminum","synthetic fragrance"], reason:"Speed Stick — aluminum in antiperspirant versions + synthetic fragrance. Budget tier antiperspirant concern.", confidence:"high", category:"personal_care" }],
   ["right guard",                   { floor:4, ceiling:6, substances:["aluminum","synthetic fragrance"], reason:"Right Guard — aluminum + synthetic fragrance. Standard antiperspirant concern.", confidence:"high", category:"personal_care" }],
 
   // ── DEODORANT (NO ALUMINUM): MID ─────────────────────────────
-  ["old spice deodorant",           { floor:4, ceiling:6, substances:["synthetic fragrance","propylene glycol","BHT"], reason:"Old Spice deodorant — no aluminum but very heavy synthetic fragrance + propylene glycol + BHT preservative. High fragrance load is the primary concern.", confidence:"high", category:"personal_care" }],
   ["native deodorant",              { floor:3, ceiling:5, substances:["baking soda","synthetic fragrance"], reason:"Native — no aluminum but baking soda can cause skin irritation for sensitive skin. Scented versions contain synthetic fragrance. Better than antiperspirant but not a clean product.", confidence:"high", category:"personal_care" }],
   ["schmidt naturals deodorant",    { floor:3, ceiling:5, substances:["baking soda","synthetic fragrance"], reason:"Schmidt's — no aluminum, baking soda base (irritation concern for some), synthetic fragrance in scented versions. Mid-tier clean deodorant.", confidence:"high", category:"personal_care" }],
   ["lume deodorant",                { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Lume — no aluminum, whole body deodorant. Synthetic fragrance + dimethicone in some formulas. Better than antiperspirant, not as clean as Necessaire.", confidence:"medium", category:"personal_care" }],
@@ -2004,7 +1907,6 @@ const ENTRIES = [
   // ── DEODORANT: CLEAN TIER ─────────────────────────────────────
   ["necessaire deodorant",          { floor:1, ceiling:3, substances:[], reason:"Necessaire deodorant — EWG Verified, no aluminum, no synthetic fragrance, no baking soda irritation. Benchmark clean deodorant.", confidence:"high", category:"personal_care" }],
   ["ursa major deodorant",          { floor:1, ceiling:3, substances:[], reason:"Ursa Major deodorant — no aluminum, plant-based, EWG-friendly. Clean men's deodorant benchmark.", confidence:"high", category:"personal_care" }],
-  ["each and every deodorant",      { floor:1, ceiling:3, substances:[], reason:"Each and Every — EWG Verified, no aluminum, coconut oil base, essential oil fragrance only. Clean benchmark.", confidence:"high", category:"personal_care" }],
   ["humble brands",                 { floor:2, ceiling:3, substances:[], reason:"Humble Brands deodorant — no aluminum, plant-based, baking soda-free options. Clean deodorant.", confidence:"high", category:"personal_care" }],
   ["piperwai",                      { floor:1, ceiling:3, substances:[], reason:"PiperWai — activated charcoal + magnesium, no aluminum, no baking soda irritation. EWG-friendly clean deodorant.", confidence:"high", category:"personal_care" }],
   ["magsol",              { floor:1, ceiling:2, substances:[], reason:"Magsol — magnesium hydroxide base, no aluminum, no baking soda, no synthetic fragrance. One of the cleanest deodorant formulas available.", confidence:"high", category:"personal_care" }],
@@ -2012,11 +1914,9 @@ const ENTRIES = [
   // ── SHAVING ───────────────────────────────────────────────────
   ["gillette fusion hydra",        { floor:4, ceiling:6, substances:["synthetic fragrance","triethanolamine"], reason:"Gillette Fusion Hydra Gel — TEA + synthetic fragrance + propylene glycol aerosol. Shave gel chemical concern.", confidence:"high", category:"personal_care" }],
   ["gillette",                { floor:4, ceiling:6, substances:["synthetic fragrance","triethanolamine","propylene glycol"], reason:"Gillette shave gel — synthetic fragrance + TEA (pH adjuster, nitrosamine concern) + propylene glycol + aerosol propellant. Standard conventional shave product concern.", confidence:"high", category:"personal_care" }],
-  ["barbasol",                      { floor:4, ceiling:6, substances:["synthetic fragrance","triethanolamine","mineral oil"], reason:"Barbasol — mineral oil + synthetic fragrance + TEA. Classic shave cream, not a clean formula.", confidence:"high", category:"personal_care" }],
   ["edge shave",                    { floor:4, ceiling:6, substances:["synthetic fragrance","triethanolamine","isobutane"], reason:"Edge shave gel — aerosol + synthetic fragrance + TEA. Same conventional concern as Gillette/Barbasol.", confidence:"high", category:"personal_care" }],
   ["cremo shave",                   { floor:3, ceiling:5, substances:["synthetic fragrance","carbomer"], reason:"Cremo — plant-derived base but synthetic fragrance in most scents. Better than aerosol options, not a clean product.", confidence:"high", category:"personal_care" }],
   ["proraso",                       { floor:2, ceiling:3, substances:[], reason:"Proraso shave cream — eucalyptus oil + glycerin + menthol, Italian formula with minimal synthetic additives. Clean tier shave cream benchmark.", confidence:"high", category:"personal_care" }],
-  ["every man jack shave",          { floor:2, ceiling:3, substances:[], reason:"Every Man Jack shave gel — plant-derived, no parabens, no synthetic fragrance in fragrance-free version. Clean shave option.", confidence:"high", category:"personal_care" }],
   ["pacific shaving",               { floor:2, ceiling:3, substances:[], reason:"Pacific Shaving Company — plant-derived actives, no synthetic fragrance, EWG-friendly. Clean shave brand.", confidence:"high", category:"personal_care" }],
   ["the art of shaving",            { floor:2, ceiling:3, substances:[], reason:"The Art of Shaving cream — essential oil fragranced, shea butter base, no synthetic fragrance. Clean premium shave cream.", confidence:"high", category:"personal_care" }],
 
@@ -2033,15 +1933,12 @@ const ENTRIES = [
   ["necessaire body wash",          { floor:1, ceiling:2, substances:[], reason:"Necessaire body wash — EWG Verified, no synthetic fragrance, niacinamide + AHA. Benchmark cleanest body wash.", confidence:"high", category:"personal_care" }],
 
   // ── HAIR CARE: CONCERN TIER ───────────────────────────────────
-  ["head and shoulders",            { floor:4, ceiling:6, substances:["zinc pyrithione","SLES","synthetic fragrance","dimethicone"], reason:"Head and Shoulders — zinc pyrithione antifungal (safe) + SLES + heavy synthetic fragrance + dimethicone silicone buildup. Effective for dandruff but not a clean formula.", confidence:"high", category:"personal_care" }],
   ["pantene men",                   { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","silicones","dimethicone"], reason:"Pantene Men — SLES + heavy silicone loading (dimethicone buildup) + synthetic fragrance. Conventional concern profile.", confidence:"high", category:"personal_care" }],
   ["suave men shampoo",             { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","parabens","artificial color"], reason:"Suave Men — SLES + parabens + synthetic fragrance + artificial color. Budget tier, multiple concern ingredients.", confidence:"high", category:"personal_care" }],
-  ["dove men shampoo",              { floor:4, ceiling:5, substances:["SLES","synthetic fragrance","dimethicone"], reason:"Dove Men shampoo — SLES + synthetic fragrance + dimethicone. Better than Suave but still conventional.", confidence:"high", category:"personal_care" }],
   ["nizoral",                       { floor:5, ceiling:7, substances:["ketoconazole","SLES","synthetic fragrance"], reason:"Nizoral — contains ketoconazole (antifungal medication). Effective for seborrheic dermatitis but a pharmaceutical-grade antifungal in a shampoo for daily use raises chronic exposure concern. Not for routine non-medical use.", confidence:"high", category:"personal_care" }],
   ["hims shampoo",                  { floor:3, ceiling:5, substances:["synthetic fragrance","SLES"], reason:"Hims shampoo — conventional surfactants + synthetic fragrance. DTC marketing but conventional formulation.", confidence:"medium", category:"personal_care" }],
 
   // ── HAIR CARE: CLEAN TIER ─────────────────────────────────────
-  ["every man jack shampoo",        { floor:2, ceiling:3, substances:[], reason:"Every Man Jack shampoo — plant-derived surfactants, no parabens, no synthetic fragrance in unfragranced versions. Clean tier men's shampoo.", confidence:"high", category:"personal_care" }],
   ["brickell men shampoo",          { floor:2, ceiling:3, substances:[], reason:"Brickell Men shampoo — natural ingredients, plant-derived, no parabens or synthetic fragrance. Clean men's shampoo.", confidence:"high", category:"personal_care" }],
   ["ursa major shampoo",            { floor:1, ceiling:3, substances:[], reason:"Ursa Major shampoo — plant-based, EWG-friendly, no synthetic fragrance. Clean benchmark men's shampoo.", confidence:"high", category:"personal_care" }],
   ["avalon organics",               { floor:2, ceiling:3, substances:[], reason:"Avalon Organics — USDA Organic certified haircare, plant-based surfactants, no parabens. Clean tier.", confidence:"high", category:"personal_care" }],
@@ -2055,9 +1952,7 @@ const ENTRIES = [
 
   // ── MEN'S FACE CARE ──────────────────────────────────────────
   ["kiehl's",                       { floor:3, ceiling:5, substances:["synthetic fragrance","phenoxyethanol","PEG"], reason:"Kiehl's — plant extracts but phenoxyethanol + synthetic fragrance + PEG compounds in most formulas. Upscale marketing doesn't match clean formulation.", confidence:"high", category:"personal_care" }],
-  ["jack black face",               { floor:2, ceiling:4, substances:[], reason:"Jack Black face wash — plant-based actives, no parabens, minimal synthetic fragrance. Clean-leaning men's face wash.", confidence:"high", category:"personal_care" }],
   ["bulldog",              { floor:2, ceiling:3, substances:[], reason:"Bulldog Skincare — EWG-friendly, no parabens, no synthetic fragrance, plant-based. Clean men's skincare brand.", confidence:"high", category:"personal_care" }],
-  ["brickell men",                  { floor:1, ceiling:3, substances:[], reason:"Brickell Men's Products — natural and organic certified ingredients, no synthetic fragrance or parabens. Benchmark clean men's skincare brand.", confidence:"high", category:"personal_care" }],
   ["tiege hanley",                  { floor:3, ceiling:5, substances:["synthetic fragrance","phenoxyethanol"], reason:"Tiege Hanley — subscription men's skincare, synthetic fragrance + phenoxyethanol in most products. Better than drugstore but not clean.", confidence:"medium", category:"personal_care" }],
   ["lumin skincare",                { floor:2, ceiling:4, substances:[], reason:"Lumin — DTC men's skincare, plant-based formulations, no parabens. Clean-leaning brand.", confidence:"medium", category:"personal_care" }],
   ["geologie",                      { floor:2, ceiling:4, substances:[], reason:"Geologie — dermatologist-developed clean men's skincare, no synthetic fragrance in most formulas. Clean-leaning DTC brand.", confidence:"medium", category:"personal_care" }],
@@ -2074,28 +1969,20 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── CEREAL: CONCERN TIER ──────────────────────────────────────
-  ["frosted flakes",                { floor:4, ceiling:6, substances:["BHT","sugar","artificial flavor"], reason:"Frosted Flakes — sugar-coated corn + BHT preservative (IARC 2B) + artificial flavor. No petroleum dyes unlike Froot Loops but still a processed sugary cereal.", confidence:"high", category:"food_beverage" }],
-  ["cocoa puffs",                   { floor:4, ceiling:6, substances:["BHT","sugar","artificial flavor"], reason:"Cocoa Puffs — whole grain claim but sugar + BHT + artificial flavor. Not as bad as Froot Loops (no dyes) but still processed concern.", confidence:"high", category:"food_beverage" }],
-  ["cap'n crunch",                  { floor:5, ceiling:7, substances:["Red 40","Blue 1","Yellow 5","BHT"], reason:"Cap'n Crunch Oops All Berries — multiple petroleum dyes + BHT. Original Cap'n Crunch has BHT + oat flour (glyphosate concern). Dye-containing varieties floor at 5-7.", confidence:"high", category:"food_beverage" }],
   ["cap n crunch",                  { floor:5, ceiling:7, substances:["Red 40","Blue 1","Yellow 5","BHT"], reason:"Cap'n Crunch — petroleum dyes in flavored varieties + BHT. Multiple floors fire on colored varieties.", confidence:"high", category:"food_beverage" }],
-  ["cinnamon toast crunch",         { floor:4, ceiling:6, substances:["BHT","sugar","natural flavor"], reason:"Cinnamon Toast Crunch — BHT preservative + sugar as second ingredient + natural flavor (vague). Widely eaten daily by children, child vulnerability applies.", confidence:"high", category:"food_beverage" }],
-  ["raisin bran",                   { floor:4, ceiling:5, substances:["BHT","sugar-coated raisins"], reason:"Raisin Bran — raisins pre-coated with sugar + BHT preservative. High sugar load despite healthy appearance. Conventional wheat glyphosate concern.", confidence:"high", category:"food_beverage" }],
   ["special k cereal",              { floor:3, ceiling:5, substances:["BHT","artificial flavor"], reason:"Special K — rice + wheat + BHT + artificial flavor. Marketed as diet food but processed grain with BHT.", confidence:"high", category:"food_beverage" }],
   ["rice krispies",                 { floor:3, ceiling:5, substances:["BHT","sugar","artificial flavor"], reason:"Rice Krispies — enriched rice + BHT + sugar + artificial flavor. Plain version is lower concern than flavored; still has BHT.", confidence:"high", category:"food_beverage" }],
-  ["life cereal",                   { floor:3, ceiling:5, substances:["BHT","oat flour","conventional grain"], reason:"Life Cereal — oat flour + BHT + conventional grain (glyphosate concern). Better than Lucky Charms but still processed with BHT.", confidence:"high", category:"food_beverage" }],
 
   // ── CEREAL: MID / CLEANER TIER ───────────────────────────────
   ["kashi go lean",                 { floor:3, ceiling:5, substances:["conventional oats","natural flavor"], reason:"Kashi GOLEAN — soy protein + conventional oats (glyphosate concern). Some varieties contain sucralose. Natural flavor is vague. Better than Lucky Charms, not a clean product.", confidence:"medium", category:"food_beverage" }],
   ["kashi honey toasted",           { floor:2, ceiling:4, substances:["conventional oats"], reason:"Kashi Honey Toasted Oat — whole grain oats + honey, no artificial preservatives or colors. Cleaner than most cereals but conventional oats have glyphosate concern.", confidence:"high", category:"food_beverage" }],
   ["kashi",                         { floor:2, ceiling:5, substances:["conventional oats"], reason:"Kashi brand — ranges widely. Whole grain cereals with no artificial additives score 2-4; varieties with sucralose or high sugar score 4-5.", confidence:"medium", category:"food_beverage" }],
   ["nature valley granola",         { floor:3, ceiling:5, substances:["canola oil","conventional oats","sugar"], reason:"Nature Valley Granola — canola oil + conventional oats (glyphosate concern) + sugar. Widely marketed as healthy but conventional processed granola.", confidence:"high", category:"food_beverage" }],
-  ["bear naked granola",            { floor:2, ceiling:4, substances:["canola oil","conventional oats"], reason:"Bear Naked Granola — no artificial preservatives or colors, but canola oil + conventional oats. Cleaner than Nature Valley.", confidence:"high", category:"food_beverage" }],
   ["magic spoon cereal",            { floor:3, ceiling:5, substances:["sucralose","monk fruit","casein protein"], reason:"Magic Spoon — monk fruit + sucralose blend in some flavors. Sucralose floor fires. No petroleum dyes, but artificial sweetener concern.", confidence:"high", category:"food_beverage" }],
   ["quaker maple brown sugar",      { floor:4, ceiling:6, substances:["artificial maple flavor","sugar","caramel color"], reason:"Quaker Maple Brown Sugar oatmeal — artificial maple flavor + caramel color + high sugar. Very different from plain Quaker oats. Flavored packet concern.", confidence:"high", category:"food_beverage" }],
 
   // ── CEREAL: CLEAN TIER ───────────────────────────────────────
   ["purely elizabeth granola",      { floor:1, ceiling:3, substances:[], reason:"Purely Elizabeth granola — ancient grains + coconut oil + coconut sugar, no artificial additives, USDA Organic. Benchmark clean granola.", confidence:"high", category:"food_beverage" }],
-  ["purely elizabeth",              { floor:1, ceiling:3, substances:[], reason:"Purely Elizabeth brand — ancient grain + coconut sugar base, no artificial additives. Benchmark clean breakfast food.", confidence:"high", category:"food_beverage" }],
   ["three wishes cereal",           { floor:1, ceiling:3, substances:[], reason:"Three Wishes — grain-free, low sugar, chickpea protein base, no artificial additives. Benchmark clean cereal alternative.", confidence:"high", category:"food_beverage" }],
   ["catalina crunch",               { floor:2, ceiling:4, substances:["monk fruit"], reason:"Catalina Crunch — monk fruit sweetened, grain-free, no sucralose, no petroleum dyes. Clean keto cereal option.", confidence:"high", category:"food_beverage" }],
 
@@ -2110,41 +1997,28 @@ const ENTRIES = [
   ["kodiak cakes",                  { floor:2, ceiling:4, substances:[], reason:"Kodiak Cakes brand — whole grain + protein, no artificial additives across most products. Clean mainstream brand for pancake mix, oatmeal, and bars.", confidence:"high", category:"food_beverage" }],
 
   // ── YOGURT ────────────────────────────────────────────────────
-  ["chobani plain",                 { floor:1, ceiling:2, substances:[], reason:"Chobani Plain Greek Yogurt — milk + live cultures, nothing else. Benchmark cleanest mainstream yogurt.", confidence:"high", category:"food_beverage" }],
   ["chobani flip",                  { floor:3, ceiling:5, substances:["sugar","mix-ins"], reason:"Chobani Flip — clean base yogurt but mix-in compartments often have candy/chocolate/granola with added sugar. Better than Yoplait but not as clean as plain.", confidence:"high", category:"food_beverage" }],
-  ["fage total",                    { floor:1, ceiling:2, substances:[], reason:"FAGE Total Greek Yogurt — milk + live cultures, ultra-filtered. Benchmark clean alongside Chobani plain.", confidence:"high", category:"food_beverage" }],
-  ["fage",                          { floor:1, ceiling:2, substances:[], reason:"FAGE yogurt — plain version is just milk + cultures. One of the cleanest mainstream yogurts available.", confidence:"high", category:"food_beverage" }],
   ["siggi's yogurt",                { floor:1, ceiling:2, substances:[], reason:"Siggi's skyr — Icelandic-style, minimal sugar, simple ingredients. No artificial sweeteners or flavors. Benchmark clean yogurt.", confidence:"high", category:"food_beverage" }],
   ["siggi",                         { floor:1, ceiling:2, substances:[], reason:"Siggi's — skyr with minimal sugar, simple clean ingredients. Benchmark clean.", confidence:"high", category:"food_beverage" }],
   ["stonyfield organic yogurt",     { floor:1, ceiling:3, substances:[], reason:"Stonyfield Organic — USDA Organic, no artificial additives. Clean certified organic yogurt.", confidence:"high", category:"food_beverage" }],
-  ["stonyfield",                    { floor:1, ceiling:3, substances:[], reason:"Stonyfield brand — USDA Organic across the line, no artificial additives. Clean organic dairy.", confidence:"high", category:"food_beverage" }],
-  ["yoplait original",              { floor:4, ceiling:6, substances:["artificial flavor","HFCS","modified starch"], reason:"Yoplait Original — HFCS in older formulas, artificial flavor, modified corn starch. High sugar, not a clean yogurt.", confidence:"high", category:"food_beverage" }],
   ["yoplait go-gurt",               { floor:5, ceiling:7, substances:["artificial color","HFCS","artificial flavor"], reason:"Yoplait Go-Gurt — artificial colors + HFCS + artificial flavors in a kids tube marketed daily. Child vulnerability applies. Multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
   ["yoplait gogurt",                { floor:5, ceiling:7, substances:["artificial color","HFCS","artificial flavor"], reason:"Yoplait Go-Gurt — same as Go-Gurt. Artificial colors + HFCS in kids daily product.", confidence:"high", category:"food_beverage" }],
   ["dannon light and fit",          { floor:5, ceiling:7, substances:["sucralose","aspartame","artificial flavor"], reason:"Dannon Light and Fit — sucralose + aspartame double artificial sweetener stack. Both substance floors fire. Not a clean product despite low-calorie marketing.", confidence:"high", category:"food_beverage" }],
   ["maple hill yogurt",             { floor:1, ceiling:2, substances:[], reason:"Maple Hill Creamery — 100% grass-fed organic, no artificial additives. Benchmark clean premium yogurt.", confidence:"high", category:"food_beverage" }],
   ["maple hill",                    { floor:1, ceiling:2, substances:[], reason:"Maple Hill — grass-fed organic dairy, clean. Benchmark clean.", confidence:"high", category:"food_beverage" }],
   ["nancy's yogurt",                { floor:1, ceiling:2, substances:[], reason:"Nancy's — USDA Organic, probiotic-rich, simple clean ingredients. Benchmark clean yogurt brand.", confidence:"high", category:"food_beverage" }],
-  ["oui by yoplait",                { floor:2, ceiling:3, substances:[], reason:"Oui by Yoplait — glass pot, whole milk yogurt, simple ingredients. Much cleaner than regular Yoplait despite same parent brand.", confidence:"high", category:"food_beverage" }],
 
   // ── EGGS ──────────────────────────────────────────────────────
-  ["vital farms eggs",              { floor:1, ceiling:2, substances:[], reason:"Vital Farms — pasture-raised, USDA Organic, hens on 108 sq ft per bird. Benchmark cleanest commercially available eggs.", confidence:"high", category:"food_beverage" }],
-  ["vital farms",                   { floor:1, ceiling:2, substances:[], reason:"Vital Farms — pasture-raised organic across all egg products. Benchmark clean.", confidence:"high", category:"food_beverage" }],
-  ["pete and gerry's",              { floor:1, ceiling:3, substances:[], reason:"Pete and Gerry's — USDA Organic, Certified Humane, no antibiotics. Clean premium eggs.", confidence:"high", category:"food_beverage" }],
   ["pete and gerrys",               { floor:1, ceiling:3, substances:[], reason:"Pete and Gerry's — USDA Organic, Certified Humane. Clean tier eggs.", confidence:"high", category:"food_beverage" }],
-  ["happy egg",                     { floor:2, ceiling:3, substances:[], reason:"The Happy Egg Co — free range, at least 8 sq ft outdoor access. Not organic but free range with space standards.", confidence:"high", category:"food_beverage" }],
   ["nellie's eggs",                 { floor:1, ceiling:3, substances:[], reason:"Nellie's Free Range Eggs — Certified Humane, free range. Some organic varieties. Clean tier eggs.", confidence:"high", category:"food_beverage" }],
-  ["eggland's best",                { floor:2, ceiling:4, substances:["conventional feed"], reason:"Eggland's Best — vitamin-enriched feed eggs, not organic, conventional cage-free. Better than standard CAFO eggs but not pasture-raised or organic.", confidence:"medium", category:"food_beverage" }],
   ["conventional eggs",             { floor:3, ceiling:5, substances:["CAFO","conventional feed","antibiotics"], reason:"Conventional store-brand eggs — standard CAFO production, no labeling standards for feed or conditions. No antibiotic-free guarantee.", confidence:"high", category:"food_beverage" }],
 
   // ── OJ / JUICE ────────────────────────────────────────────────
   ["florida's natural",             { floor:3, ceiling:4, substances:["flavor pack"], reason:"Florida's Natural OJ — not from concentrate, but uses manufacturer-approved flavor packs to standardize taste (deaerated, then re-flavored). Marketed as pure but processed.", confidence:"high", category:"food_beverage" }],
-  ["florida natural oj",            { floor:3, ceiling:4, substances:["flavor pack"], reason:"Florida's Natural — flavor packs used in processing despite 'not from concentrate' label. Misleading pure marketing.", confidence:"high", category:"food_beverage" }],
   ["minute maid oj",                { floor:3, ceiling:5, substances:["from concentrate","flavor pack"], reason:"Minute Maid OJ — from concentrate with flavor packs in most varieties. More processed than marketed.", confidence:"high", category:"food_beverage" }],
   ["minute maid",                   { floor:3, ceiling:5, substances:["HFCS","artificial flavor"], reason:"Minute Maid brand — OJ varieties use concentrate + flavor packs; lemonade and other varieties often have HFCS + artificial flavor.", confidence:"medium", category:"food_beverage" }],
   ["welch's",           { floor:5, ceiling:7, substances:["HFCS","sugar","Red 40"], reason:"Welch's brand — HFCS across juice + petroleum dyes in fruit snacks. Floor 5 across the brand.", confidence:"medium", category:"food_beverage" }],
   ["welch",                 { floor:5, ceiling:7, substances:["HFCS","added sugar","Red 40"], reason:"Welch brand — HFCS + petroleum dyes in fruit snacks. Floor 5 across the brand.", confidence:"medium", category:"food_beverage" }],
-  ["naked juice",                   { floor:3, ceiling:5, substances:["high sugar","natural flavor"], reason:"Naked Juice — cold-pressed but very high sugar from fruit concentration + natural flavor. PepsiCo-owned. Healthier than soda but not a clean product by Partiqule standards.", confidence:"high", category:"food_beverage" }],
   ["bolthouse farms juice",         { floor:2, ceiling:4, substances:[], reason:"Bolthouse Farms juices — mostly vegetables + fruits, less fruit-sugar concentrated than Naked. Campbell's owned but cleaner ingredient profile.", confidence:"medium", category:"food_beverage" }],
   ["lakewood",        { floor:1, ceiling:3, substances:[], reason:"Lakewood Organic — USDA Organic cold-pressed, no additives, glass bottle. Benchmark clean juice brand.", confidence:"high", category:"food_beverage" }],
   ["evolution fresh",               { floor:1, ceiling:3, substances:[], reason:"Evolution Fresh — HPP cold-pressed, minimal ingredients, no artificial additives. Starbucks-owned but clean formula.", confidence:"high", category:"food_beverage" }],
@@ -2183,7 +2057,6 @@ const ENTRIES = [
 
   // ── POTATO CHIPS: CONCERN TIER ───────────────────────────────
   ["lays baked",                    { floor:4, ceiling:6, substances:["TBHQ","modified starch","artificial flavor"], reason:"Lays Baked — TBHQ preservative (floor fires) + modified corn starch + artificial flavor. Marketed as healthier but chemical concern exceeds regular Lays.", confidence:"high", category:"food_beverage" }],
-  ["pringles original",             { floor:4, ceiling:6, substances:["TBHQ","dehydrated potato","soy protein"], reason:"Pringles — TBHQ preservative + dehydrated processed potato paste (not real potato slices) + soy protein isolate. Significantly more processed than traditional chips.", confidence:"high", category:"food_beverage" }],
   ["pringles",                      { floor:4, ceiling:7, substances:["TBHQ","artificial flavor","MSG"], reason:"Pringles brand — TBHQ across most flavors + artificial flavor + MSG in flavored varieties. Sour Cream/Cheddar flavors may have artificial color.", confidence:"high", category:"food_beverage" }],
   ["ruffles",                       { floor:4, ceiling:6, substances:["artificial flavor","MSG","artificial color"], reason:"Ruffles flavored varieties — artificial flavor + MSG + artificial color in Cheddar/BBQ versions. Original Ruffles is slightly cleaner.", confidence:"high", category:"food_beverage" }],
   ["veggie straws",                 { floor:4, ceiling:6, substances:["TBHQ","potato starch","artificial color"], reason:"Veggie Straws — mostly potato and corn starch, not actual vegetables. Contains TBHQ + artificial color (Red 40 in some). Marketing far exceeds nutritional reality.", confidence:"high", category:"food_beverage" }],
@@ -2222,7 +2095,6 @@ const ENTRIES = [
   // ── CRACKERS: CONCERN TIER ────────────────────────────────────
   ["ritz crackers",                 { floor:5, ceiling:7, substances:["partially hydrogenated oil","HFCS","BHT"], reason:"Ritz Crackers — partially hydrogenated oil (trans fat, floor fires) + HFCS + BHT. One of the most widely eaten crackers with a serious concern profile.", confidence:"high", category:"food_beverage" }],
   ["club crackers",                 { floor:5, ceiling:7, substances:["partially hydrogenated oil","HFCS","artificial flavor"], reason:"Club Crackers — partially hydrogenated oil (trans fat floor fires) + HFCS + artificial flavor. Same concern as Ritz.", confidence:"high", category:"food_beverage" }],
-  ["wheat thins",                   { floor:4, ceiling:6, substances:["TBHQ","BHT","soy"], reason:"Wheat Thins — TBHQ + BHT preservatives (both floors fire) + soy lecithin. Whole grain but multiple preservative concerns.", confidence:"high", category:"food_beverage" }],
   ["goldfish crackers",             { floor:4, ceiling:5, substances:["enriched flour","artificial flavor","cheddar coloring"], reason:"Goldfish — enriched flour + artificial color in some flavors + artificial flavor. Common children's daily snack with moderate concern.", confidence:"high", category:"food_beverage" }],
   ["pepperidge farm",               { floor:4, ceiling:6, substances:["enriched flour","HFCS","artificial flavor"], reason:"Pepperidge Farm crackers and cookies — enriched flour + HFCS in some products + artificial flavor. Premium branding with conventional ingredients.", confidence:"medium", category:"food_beverage" }],
   ["triscuits",                     { floor:2, ceiling:4, substances:["soybean oil"], reason:"Triscuits — whole grain wheat + soybean oil + salt. Three ingredients, no TBHQ, no HFCS. One of the cleaner mainstream crackers. Original only — flavored versions have more additives.", confidence:"high", category:"food_beverage" }],
@@ -2239,7 +2111,6 @@ const ENTRIES = [
   ["pirate's booty",                { floor:2, ceiling:3, substances:[], reason:"Pirate's Booty — corn + rice + real aged cheddar, no artificial colors or flavors. Benchmark clean cheese puff alternative to Cheetos.", confidence:"high", category:"food_beverage" }],
   ["pirate booty",                  { floor:2, ceiling:3, substances:[], reason:"Pirate's Booty — real cheese, no artificial colors. Benchmark clean cheese snack.", confidence:"high", category:"food_beverage" }],
   ["whisps",          { floor:1, ceiling:2, substances:[], reason:"Whisps — 100% real cheese baked into crisps, one ingredient. Benchmark cleanest cheese snack. No artificial additives.", confidence:"high", category:"food_beverage" }],
-  ["smartfood popcorn",             { floor:3, ceiling:5, substances:["cheddar","sunflower oil","natural flavor"], reason:"Smartfood Popcorn — popcorn + real cheddar + sunflower oil + natural flavor (vague). Better than Cheetos but natural flavor is undisclosed.", confidence:"high", category:"food_beverage" }],
   ["smartfood",                     { floor:3, ceiling:5, substances:["sunflower oil","natural flavor"], reason:"Smartfood brand — no artificial colors or flavors claimed, but natural flavor is vague. Mid-tier clean snack.", confidence:"high", category:"food_beverage" }],
 
   // ── MICROWAVE POPCORN: CONCERN ────────────────────────────────
@@ -2248,7 +2119,6 @@ const ENTRIES = [
   ["act ii",                        { floor:5, ceiling:7, substances:["PFAS-lined bag","artificial butter flavor"], reason:"Act II — PFAS microwave bag + artificial butter flavor. One of the higher-concern microwave popcorn brands.", confidence:"high", category:"food_beverage" }],
 
   // ── POPCORN: CLEAN TIER ───────────────────────────────────────
-  ["skinny pop",                    { floor:1, ceiling:3, substances:[], reason:"SkinnyPop — popcorn + sunflower oil + salt. Three ingredients, no PFAS bag, no artificial additives. Benchmark clean pre-popped popcorn.", confidence:"high", category:"food_beverage" }],
   ["boom chicka pop",               { floor:1, ceiling:3, substances:[], reason:"Boom Chicka Pop — non-GMO popcorn + sunflower oil + sea salt. No artificial additives. Benchmark clean pre-popped popcorn alongside SkinnyPop.", confidence:"high", category:"food_beverage" }],
 
   // ── NUTS ─────────────────────────────────────────────────────
@@ -2267,8 +2137,6 @@ const ENTRIES = [
   ["lorissa's kitchen",             { floor:3, ceiling:5, substances:["soy sauce","sugar"], reason:"Lorissa's Kitchen — no nitrites, but some varieties use soy + sugar. Better than conventional jerky, not as clean as Chomps.", confidence:"medium", category:"food_beverage" }],
 
   // ── COOKIES ───────────────────────────────────────────────────
-  ["oreo",                          { floor:5, ceiling:7, substances:["HFCS","vanillin","palm oil"], reason:"Oreos — HFCS + vanillin (artificial vanilla) + palm oil. High sugar, artificial flavor, deforestation-linked palm oil. Standard cookie concern profile.", confidence:"high", category:"food_beverage" }],
-  ["chips ahoy",                    { floor:5, ceiling:7, substances:["HFCS","TBHQ","artificial flavor"], reason:"Chips Ahoy — HFCS + TBHQ preservative (floor fires) + artificial flavor. Common children's snack with multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
   ["nutter butter",                 { floor:5, ceiling:7, substances:["HFCS","TBHQ","artificial flavor"], reason:"Nutter Butter — HFCS + TBHQ + artificial flavor. Same concern profile as Chips Ahoy.", confidence:"high", category:"food_beverage" }],
   ["nilla wafers",                  { floor:4, ceiling:6, substances:["HFCS","artificial flavor"], reason:"Nilla Wafers — HFCS + artificial vanilla flavor. Lower concern than Chips Ahoy (no TBHQ) but still HFCS-based.", confidence:"high", category:"food_beverage" }],
   ["fig newtons",                   { floor:4, ceiling:6, substances:["HFCS","artificial flavor","enriched flour"], reason:"Fig Newtons — HFCS + artificial flavor + enriched flour. Marketed as a healthier cookie but HFCS concern is real.", confidence:"high", category:"food_beverage" }],
@@ -2276,7 +2144,6 @@ const ENTRIES = [
   // ── CLEAN SWEET SNACKS ────────────────────────────────────────
   ["medjool dates",                 { floor:1, ceiling:2, substances:[], reason:"Medjool dates — whole fruit, one ingredient. Natural sugar but benchmark clean whole food snack. No processing, no additives.", confidence:"high", category:"food_beverage" }],
   ["dates",                         { floor:1, ceiling:2, substances:[], reason:"Dates — whole fruit, naturally sweet, no additives. Benchmark clean single-ingredient snack.", confidence:"high", category:"food_beverage" }],
-  ["lily's chocolate",              { floor:2, ceiling:4, substances:["erythritol","stevia"], reason:"Lily's — erythritol + stevia sweetened, no sucralose, no artificial colors. Cleaner than Hershey's but fermented sugar alcohol GI concern at high intake.", confidence:"high", category:"food_beverage" }],
   ["lily's",                        { floor:2, ceiling:4, substances:["erythritol","stevia"], reason:"Lily's brand — erythritol + stevia sweetened chocolate. No sucralose. Cleaner alternative to conventional chocolate but not as clean as Hu or Alter Eco.", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -2304,7 +2171,6 @@ const ENTRIES = [
   ["lagunitas",                     { floor:2, ceiling:3, substances:[], reason:"Lagunitas IPA — craft brewing, hops + water + barley + yeast, no artificial additives.", confidence:"high", category:"beverage" }],
   ["new belgium",                   { floor:2, ceiling:3, substances:[], reason:"New Belgium — B Corp certified, employee-owned, no artificial additives. Clean craft brewing standard.", confidence:"high", category:"beverage" }],
   ["dogfish head",                  { floor:2, ceiling:3, substances:[], reason:"Dogfish Head — independent craft brewery, creative ingredients but no artificial additives. Clean craft standard.", confidence:"high", category:"beverage" }],
-  ["athletic brewing",              { floor:1, ceiling:3, substances:[], reason:"Athletic Brewing — non-alcoholic craft beer, clean brewing process, no artificial additives. Benchmark clean non-alcoholic beer.", confidence:"high", category:"beverage" }],
 
   // ── WINE: CONCERN TIER ───────────────────────────────────────
   ["barefoot",                 { floor:4, ceiling:6, substances:["mega-purple","added sulfites","added sugar"], reason:"Barefoot — mass-market wine suspected of mega-purple (concentrated grape color) + added sugars + high sulfites. E.J. Gallo production with minimal transparency.", confidence:"medium", category:"beverage" }],
@@ -2336,7 +2202,6 @@ const ENTRIES = [
   ["patron",                { floor:1, ceiling:2, substances:[], reason:"Patrón — 100% Weber blue agave, no additives, Hacienda production. Benchmark clean premium tequila.", confidence:"high", category:"beverage" }],
   ["casamigos tequila",             { floor:1, ceiling:2, substances:[], reason:"Casamigos — 100% blue agave, no additives. Clean ultra-premium tequila.", confidence:"high", category:"beverage" }],
   ["maker's mark",                  { floor:2, ceiling:3, substances:[], reason:"Maker's Mark — soft red winter wheat, no artificial additives, natural caramel coloring only. Benchmark clean bourbon.", confidence:"high", category:"beverage" }],
-  ["makers mark",                   { floor:2, ceiling:3, substances:[], reason:"Maker's Mark — wheat-forward bourbon, no artificial additives. Clean bourbon benchmark.", confidence:"high", category:"beverage" }],
   ["bulleit bourbon",               { floor:2, ceiling:3, substances:[], reason:"Bulleit — high-rye bourbon, no artificial additives, traditional production. Clean mainstream bourbon.", confidence:"high", category:"beverage" }],
   ["wild turkey",                   { floor:2, ceiling:3, substances:[], reason:"Wild Turkey — Kentucky straight bourbon, no artificial additives, high proof traditional. Clean bourbon.", confidence:"high", category:"beverage" }],
   ["hendrick",                { floor:2, ceiling:3, substances:[], reason:"Hendrick's — Scottish gin with unusual botanicals (cucumber, rose), no artificial additives. Clean premium gin.", confidence:"high", category:"beverage" }],
@@ -2394,11 +2259,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── TIER 1: FRUIT DRINKS / COCKTAILS (5-7) ───────────────────
-  ["sunny d",                       { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Sunny D — mostly water + HFCS + artificial flavor + artificial color. Less than 2% actual juice. Not juice.", confidence:"high", category:"beverage" }],
   ["hi-c",                          { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Hi-C — HFCS + artificial color + artificial flavor marketed to children. Not juice.", confidence:"high", category:"beverage" }],
-  ["kool-aid jammers",              { floor:5, ceiling:7, substances:["HFCS","artificial color","artificial flavor"], reason:"Kool-Aid Jammers — HFCS + artificial color + artificial flavor in child-targeted pouch.", confidence:"high", category:"beverage" }],
   ["kool aid jammers",              { floor:5, ceiling:7, substances:["HFCS","artificial color"], reason:"Kool-Aid Jammers — HFCS + dyes. Not juice.", confidence:"high", category:"beverage" }],
-  ["hawaiian punch",                { floor:5, ceiling:7, substances:["HFCS","Red 40","artificial flavor"], reason:"Hawaiian Punch — HFCS + Red 40 petroleum dye + artificial flavor. Very little actual juice.", confidence:"high", category:"beverage" }],
   ["ocean spray cranberry cocktail", { floor:5, ceiling:6, substances:["HFCS","added sugar"], reason:"Ocean Spray Cranberry Cocktail — HFCS + added sugar, only ~27% actual juice. Cocktail label means it is not 100% juice.", confidence:"high", category:"beverage" }],
 
   // ── TIER 2: 100% JUICE, FLAVOR-PACKED (4-5) ──────────────────
@@ -2415,8 +2277,6 @@ const ENTRIES = [
   ["r.w. knudsen",                  { floor:1, ceiling:3, substances:[], reason:"R.W. Knudsen — organic juice, no artificial additives, many varieties not-from-concentrate. Clean juice brand.", confidence:"high", category:"beverage" }],
 
   // ── TIER 5: COLD-PRESSED / HPP / ORGANIC (1-3) ───────────────
-  ["pressed juicery",               { floor:1, ceiling:2, substances:[], reason:"Pressed Juicery — cold-pressed HPP, no preservatives, no concentrate, refrigerated. Benchmark clean juice.", confidence:"high", category:"beverage" }],
-  ["suja",                          { floor:1, ceiling:3, substances:[], reason:"Suja — USDA Organic cold-pressed HPP, no preservatives, no concentrate. Benchmark clean juice.", confidence:"high", category:"beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 33 — KIDS SNACKS
@@ -2430,9 +2290,7 @@ const ENTRIES = [
   ["fruit roll-ups",                { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","TBHQ","modified starch"], reason:"Fruit Roll-Ups — Red 40 + Yellow 5 + Blue 1 petroleum dyes + TBHQ preservative. Multiple floors fire. Zero actual fruit. Daily child snack with one of the worst additive profiles in the category.", confidence:"high", category:"food_beverage" }],
   ["fruit by the foot",             { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Blue 1","TBHQ"], reason:"Fruit by the Foot — same petroleum dye + TBHQ concern as Fruit Roll-Ups. General Mills same line. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
   ["gushers",                       { floor:6, ceiling:8, substances:["Red 40","Blue 1","TBHQ","artificial flavor"], reason:"Gushers — Red 40 + Blue 1 petroleum dyes + TBHQ + artificial flavor. Liquid center increases dye delivery. Child daily snack. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
-  ["welch's fruit snacks",          { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Welch's Fruit Snacks — Red 40 + Yellow 5 petroleum dyes + HFCS. Marketed as real fruit but petroleum dye floors fire. Child daily snack concern.", confidence:"high", category:"food_beverage" }],
   ["welch fruit",            { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Welch's Fruit Snacks — petroleum dyes + HFCS. Dye floors fire.", confidence:"high", category:"food_beverage" }],
-  ["mott's fruit snacks",           { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS","modified starch"], reason:"Mott's Fruit Snacks — Red 40 + Yellow 5 petroleum dyes + HFCS. Same concern as Welch's. Dye floors fire.", confidence:"high", category:"food_beverage" }],
   ["motts fruit snacks",            { floor:5, ceiling:7, substances:["Red 40","Yellow 5","HFCS"], reason:"Mott's Fruit Snacks — petroleum dyes + HFCS. Dye floors fire on child daily snack.", confidence:"high", category:"food_beverage" }],
 
   // ── FRUIT SNACKS: CLEAN TIER ──────────────────────────────────
@@ -2443,7 +2301,6 @@ const ENTRIES = [
   ["surf sweets",                   { floor:1, ceiling:3, substances:[], reason:"Surf Sweets — organic, fruit juice colored, no artificial dyes or flavors. Benchmark clean gummy candy for kids.", confidence:"high", category:"food_beverage" }],
 
   // ── GUMMY CANDY ───────────────────────────────────────────────
-  ["starburst",                     { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Yellow 6","Blue 1","artificial flavor"], reason:"Starbursts — Red 40 + Yellow 5 + Yellow 6 + Blue 1 all in one product. Four petroleum dye floors fire simultaneously. One of the highest dye loads of any kids candy. Child vulnerability critical.", confidence:"high", category:"food_beverage" }],
   ["starbursts",                    { floor:6, ceiling:8, substances:["Red 40","Yellow 5","Yellow 6","Blue 1"], reason:"Starbursts — four petroleum dyes fire simultaneously. Maximum dye concern for child daily candy.", confidence:"high", category:"food_beverage" }],
   ["ring pop",                      { floor:5, ceiling:7, substances:["Red 40","Blue 1","artificial flavor","HFCS"], reason:"Ring Pops — HFCS + petroleum dyes + artificial flavor in a candy children lick repeatedly. Direct oral mucosal exposure amplifies concern.", confidence:"high", category:"food_beverage" }],
   ["haribo gummy bears",            { floor:4, ceiling:6, substances:["artificial flavor","carnauba wax","HFCS"], reason:"Haribo US formula — HFCS + artificial flavor + carnauba wax coating. Note: European Haribo uses beet sugar and is cleaner. US formula is different.", confidence:"high", category:"food_beverage" }],
@@ -2509,21 +2366,11 @@ const ENTRIES = [
   ["pepperidge farm goldfish",      { floor:3, ceiling:5, kidsFloor:4, kidsCeiling:6, substances:["enriched flour","conventional cheddar"], reason:"Pepperidge Farm Goldfish — same as Goldfish Original. No artificial dyes in base cracker. Enriched flour + sodium main concerns.", confidence:"high", category:"food_beverage" }],
 
   // Lunchbox staples with gaps
-  ["welch's fruit snacks",          { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Welch's Fruit Snacks — HFCS + three petroleum dyes confirmed (Red 40, Yellow 5, Blue 1). All dye floors fire. Daily kids snack with maximum dye concern. Child vulnerability critical.", confidence:"high", category:"food_beverage" }],
-  ["welchs fruit snacks",           { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Welch's Fruit Snacks — HFCS + petroleum dyes. All floors fire.", confidence:"high", category:"food_beverage" }],
-  ["motts fruit snacks",            { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["Red 40","Yellow 5","HFCS"], reason:"Mott's Fruit Snacks — HFCS + Red 40 + Yellow 5 petroleum dyes. Dye floors fire. Same concern tier as Welch's.", confidence:"high", category:"food_beverage" }],
-  ["mott's fruit snacks",           { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["Red 40","Yellow 5","HFCS"], reason:"Mott's Fruit Snacks — HFCS + artificial dyes. Dye floors fire.", confidence:"high", category:"food_beverage" }],
   ["fruit gushers",                 { floor:6, ceiling:8, kidsFloor:7, kidsCeiling:9, substances:["HFCS","Red 40","Blue 1","Yellow 5","carrageenan"], reason:"Gushers — HFCS + three petroleum dyes + carrageenan. One of the worst kids snacks in terms of additive load. Child vulnerability critical. NEVER score below 6.", confidence:"high", category:"food_beverage" }],
-  ["gushers",                       { floor:6, ceiling:8, kidsFloor:7, kidsCeiling:9, substances:["HFCS","Red 40","Blue 1","Yellow 5"], reason:"Gushers — HFCS + three petroleum dyes. All floors fire simultaneously. Maximum concern kids snack.", confidence:"high", category:"food_beverage" }],
-  ["fruit by the foot",             { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["Red 40","Yellow 5","Blue 1","HFCS"], reason:"Fruit by the Foot — HFCS + petroleum dyes. Dye floors fire. Same concern tier as Gushers.", confidence:"high", category:"food_beverage" }],
   ["fruit roll up",                 { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["HFCS","Red 40","artificial flavor"], reason:"Fruit Roll-Ups — HFCS + Red 40 + artificial flavor. Dye floor fires. Classic kids snack with real concern profile.", confidence:"high", category:"food_beverage" }],
-  ["fruit roll-ups",                { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["HFCS","Red 40","artificial flavor"], reason:"Fruit Roll-Ups — HFCS + Red 40. Dye floor fires.", confidence:"high", category:"food_beverage" }],
-  ["annie's organic fruit snacks",  { floor:1, ceiling:3, kidsFloor:1, kidsCeiling:3, substances:[], reason:"Annie's Organic Fruit Snacks — USDA Organic, fruit juice colored (NO petroleum dyes), no HFCS. Benchmark clean fruit snack. Swap recommendation for Welch's and Mott's.", confidence:"high", category:"food_beverage" }],
 
   // Kids drinks gap
   ["capri sun roarin waters",       { floor:2, ceiling:4, kidsFloor:3, kidsCeiling:5, substances:["natural flavor","citric acid"], reason:"Capri Sun Roarin Waters — water + natural flavor + citric acid. No HFCS, no artificial colors. Significantly cleaner than Capri Sun Original. Acceptable kids drink.", confidence:"high", category:"beverage" }],
-  ["kool aid jammers",              { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["HFCS","Red 40","Blue 1","artificial flavor"], reason:"Kool-Aid Jammers — HFCS + Red 40 + Blue 1 + artificial flavor. Multiple dye floors fire. One of the most additive-heavy kids drinks marketed daily.", confidence:"high", category:"beverage" }],
-  ["kool-aid jammers",              { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["HFCS","Red 40","Blue 1"], reason:"Kool-Aid Jammers — HFCS + petroleum dyes. All floors fire.", confidence:"high", category:"beverage" }],
   ["squeezit",                      { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["HFCS","Red 40","Blue 1","Yellow 5"], reason:"Squeez-It — HFCS + three petroleum dyes. One of the most dye-heavy kids drinks. Maximum child concern.", confidence:"high", category:"beverage" }],
   // KEY STORY: Azodicarbonamide (ADA) — the "yoga mat chemical"
   // Used as flour bleacher and dough conditioner in US bread.
@@ -2543,7 +2390,6 @@ const ENTRIES = [
   ["martin's potato",          { floor:4, ceiling:6, substances:["DATEM","calcium propionate"], reason:"Martin's Potato Bread — DATEM + calcium propionate. Conventional additive profile.", confidence:"medium", category:"food_beverage" }],
 
   // ── SANDWICH BREAD: CLEAN TIER ────────────────────────────────
-  ["dave's killer bread",           { floor:2, ceiling:4, substances:["calcium propionate"], reason:"Dave's Killer Bread — organic whole grain, no ADA, but calcium propionate preservative present in most varieties. Best mainstream sandwich bread available. No EU-banned additives.", confidence:"high", category:"food_beverage" }],
   ["daves killer bread",            { floor:2, ceiling:4, substances:["calcium propionate"], reason:"Dave's Killer Bread — organic whole grain, no ADA, calcium propionate in most. Benchmark cleanest mainstream sandwich bread.", confidence:"high", category:"food_beverage" }],
   ["silver hills",                  { floor:1, ceiling:3, substances:[], reason:"Silver Hills Sprouted Bakery — USDA Organic sprouted grain, no ADA, no calcium propionate, no artificial additives. Benchmark clean sprouted bread.", confidence:"high", category:"food_beverage" }],
   ["ezekiel bread",                 { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 (Food for Life) — organic sprouted grain + legumes, no preservatives, no artificial additives, no ADA. Benchmark cleanest commercially available bread. Refrigerated = no preservatives needed.", confidence:"high", category:"food_beverage" }],
@@ -2568,7 +2414,6 @@ const ENTRIES = [
   ["old el paso",         { floor:4, ceiling:6, substances:["calcium propionate","artificial flavor","DATEM"], reason:"Old El Paso Tortillas — calcium propionate + artificial flavor + DATEM. More additives than Mission, same ballpark concern.", confidence:"high", category:"food_beverage" }],
   ["la banderita",                  { floor:4, ceiling:6, substances:["calcium propionate","DATEM","sorbic acid"], reason:"La Banderita — calcium propionate + DATEM + sorbic acid preservative. Conventional flour tortilla concern.", confidence:"high", category:"food_beverage" }],
   ["siete tortillas",               { floor:1, ceiling:3, substances:[], reason:"Siete tortillas — grain-free (almond flour, cassava, coconut), no artificial preservatives, no ADA. Benchmark clean tortilla.", confidence:"high", category:"food_beverage" }],
-  ["siete",                         { floor:1, ceiling:3, substances:[], reason:"Siete Foods — grain-free, no artificial additives across the line. Benchmark clean tortilla and chip brand.", confidence:"high", category:"food_beverage" }],
 
   // ── BAKED GOODS: HIGH CONCERN ─────────────────────────────────
   ["little debbie",                 { floor:6, ceiling:8, substances:["partially hydrogenated oil","TBHQ","artificial flavor","Red 40"], reason:"Little Debbie snack cakes — partially hydrogenated oil (trans fat floor) + TBHQ + artificial flavor + artificial color. Multiple floors fire. Budget snack cake with maximum additive concern.", confidence:"high", category:"food_beverage" }],
@@ -2581,7 +2426,6 @@ const ENTRIES = [
   ["otis spunkmeyer",               { floor:5, ceiling:7, substances:["partially hydrogenated oil","TBHQ","artificial flavor"], reason:"Otis Spunkmeyer muffins — partially hydrogenated oil + TBHQ + artificial flavor. Foodservice muffins with trans fat concern.", confidence:"high", category:"food_beverage" }],
 
   // ── GLUTEN FREE BREAD ─────────────────────────────────────────
-  ["canyon bakehouse",              { floor:2, ceiling:4, substances:[], reason:"Canyon Bakehouse — rice flour + tapioca starch base, no ADA, no artificial preservatives in most varieties. Benchmark clean gluten-free bread.", confidence:"high", category:"food_beverage" }],
   ["udi's gluten free",             { floor:3, ceiling:5, substances:["modified starch","xanthan gum","soy lecithin"], reason:"Udi's — modified tapioca starch + xanthan gum + soy lecithin. More additives than Canyon Bakehouse. Mid-tier GF bread.", confidence:"high", category:"food_beverage" }],
   ["udis",                          { floor:3, ceiling:5, substances:["modified starch","xanthan gum"], reason:"Udi's GF bread — multiple modified starches + gums. Mid-tier clean for gluten-free.", confidence:"medium", category:"food_beverage" }],
   ["schar bread",                   { floor:3, ceiling:5, substances:["modified starch","dextrose","preservatives"], reason:"Schär — European GF brand, some preservatives and modified starches. Better than US GF brands on average.", confidence:"medium", category:"food_beverage" }],
@@ -2600,11 +2444,9 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── SANDWICH BREAD: CONCERN TIER ─────────────────────────────
-  ["nature's own",                  { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Nature's Own — azodicarbonamide (EU-banned dough conditioner) + calcium propionate antimold + HFCS. Honey wheat marketing obscures a conventional additive-heavy bread.", confidence:"high", category:"food_beverage" }],
   ["natures own",                   { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Nature's Own — ADA + calcium propionate + HFCS. Standard commercial bread concern.", confidence:"high", category:"food_beverage" }],
   ["sara lee bread",                { floor:4, ceiling:6, substances:["azodicarbonamide","calcium propionate","HFCS"], reason:"Sara Lee — azodicarbonamide + calcium propionate + HFCS. Same concern profile as Wonder and Nature's Own.", confidence:"high", category:"food_beverage" }],
   ["arnold bread",                  { floor:4, ceiling:5, substances:["calcium propionate","HFCS","azodicarbonamide"], reason:"Arnold — calcium propionate + HFCS + ADA in most varieties. Slightly cleaner than Wonder but still conventional concern.", confidence:"high", category:"food_beverage" }],
-  ["king's hawaiian",               { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","soybean oil","calcium propionate"], reason:"King's Hawaiian — ADA + HFCS + soybean oil + calcium propionate. The beloved sweet roll is a processed product with multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
   ["king hawaiian",                 { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"King's Hawaiian rolls — ADA + HFCS + calcium propionate. Multiple concern ingredients.", confidence:"high", category:"food_beverage" }],
   ["martin's potato rolls",         { floor:4, ceiling:5, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Martin's Potato Rolls — ADA + HFCS + calcium propionate. Classic American bun with conventional additive profile.", confidence:"high", category:"food_beverage" }],
   ["martins potato",                { floor:4, ceiling:5, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Martin's Potato Rolls — ADA + HFCS + calcium propionate.", confidence:"high", category:"food_beverage" }],
@@ -2615,33 +2457,22 @@ const ENTRIES = [
   ["wonder hamburger buns",         { floor:4, ceiling:6, substances:["azodicarbonamide","HFCS","calcium propionate"], reason:"Wonder Hamburger Buns — same ADA + HFCS + calcium propionate as Wonder Bread. Same formulation, different shape.", confidence:"high", category:"food_beverage" }],
 
   // ── PASTRIES: HIGH CONCERN ────────────────────────────────────
-  ["pop-tarts",                     { floor:6, ceiling:8, substances:["HFCS","TBHQ","Red 40","artificial flavor","enriched flour"], reason:"Pop-Tarts — HFCS + TBHQ (floor fires) + Red 40 petroleum dye + artificial flavor. Common children's breakfast with multiple simultaneous floors firing.", confidence:"high", category:"food_beverage" }],
   ["pop tarts",                     { floor:6, ceiling:8, substances:["HFCS","TBHQ","Red 40","artificial flavor"], reason:"Pop Tarts — TBHQ + Red 40 + HFCS. Multiple floors fire.", confidence:"high", category:"food_beverage" }],
   ["pillsbury crescent",            { floor:4, ceiling:6, substances:["partially hydrogenated oil","DATEM","azodicarbonamide"], reason:"Pillsbury Crescent Rolls — partially hydrogenated oil (trans fat floor may fire) + DATEM + ADA.", confidence:"high", category:"food_beverage" }],
   ["pillsbury cinnamon rolls",      { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial flavor","DATEM"], reason:"Pillsbury Cinnamon Rolls — HFCS + partially hydrogenated oil + artificial flavor. Frosting packet adds more HFCS + artificial color.", confidence:"high", category:"food_beverage" }],
-  ["otis spunkmeyer",               { floor:5, ceiling:7, substances:["HFCS","artificial flavor","artificial color","enriched flour"], reason:"Otis Spunkmeyer — HFCS + artificial flavor + artificial color + enriched flour. Commercial bakery muffin with full conventional additive profile.", confidence:"high", category:"food_beverage" }],
-  ["entenmann's",                   { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial color","artificial flavor"], reason:"Entenmann's — HFCS + partially hydrogenated oil + artificial color. Classic American bakery with high concern profile.", confidence:"high", category:"food_beverage" }],
-  ["entenmanns",                    { floor:5, ceiling:7, substances:["HFCS","partially hydrogenated oil","artificial color"], reason:"Entenmann's — HFCS + partially hydrogenated oil + artificial color.", confidence:"high", category:"food_beverage" }],
 
   // ── BREAD: CLEAN TIER ─────────────────────────────────────────
-  ["dave's killer bread",           { floor:2, ceiling:4, substances:[], reason:"Dave's Killer Bread — USDA Organic, no ADA, no HFCS, no calcium propionate. Benchmark clean mainstream sandwich bread.", confidence:"high", category:"food_beverage" }],
-  ["daves killer bread",            { floor:2, ceiling:4, substances:[], reason:"Dave's Killer Bread — organic, no ADA or calcium propionate. Benchmark clean.", confidence:"high", category:"food_beverage" }],
   ["dave's killer",                 { floor:2, ceiling:4, substances:[], reason:"Dave's Killer — organic whole grain, no conventional dough additives. Clean bread and bagel brand.", confidence:"high", category:"food_beverage" }],
-  ["ezekiel bread",                 { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 — sprouted whole grain, flourless, no preservatives, no ADA, USDA Organic. Benchmark cleanest commercially available bread.", confidence:"high", category:"food_beverage" }],
   ["ezekiel 4",                     { floor:1, ceiling:2, substances:[], reason:"Ezekiel 4:9 sprouted bread — flourless, no additives. Cleanest benchmark.", confidence:"high", category:"food_beverage" }],
-  ["alvarado street",               { floor:1, ceiling:3, substances:[], reason:"Alvarado Street Bakery — sprouted whole grain, no ADA, USDA Organic. Benchmark clean bread.", confidence:"high", category:"food_beverage" }],
-  ["silver hills",                  { floor:1, ceiling:3, substances:[], reason:"Silver Hills — sprouted grain, no ADA, no HFCS, no preservatives. Benchmark clean sprouted bread.", confidence:"high", category:"food_beverage" }],
   ["vermont bread",                 { floor:1, ceiling:3, substances:[], reason:"Vermont Bread Company — USDA Organic, no ADA, no HFCS. Clean organic bread.", confidence:"high", category:"food_beverage" }],
   ["franz organic",                 { floor:2, ceiling:4, substances:[], reason:"Franz Organic — USDA Organic, no artificial additives. Cleaner than conventional Franz varieties.", confidence:"high", category:"food_beverage" }],
 
   // ── TORTILLAS: CLEAN TIER ─────────────────────────────────────
-  ["siete",                         { floor:1, ceiling:3, substances:[], reason:"Siete Foods — grain-free (almond, cassava flour), no ADA, no calcium propionate. Benchmark clean tortilla and chip brand.", confidence:"high", category:"food_beverage" }],
   ["la tortilla factory",           { floor:3, ceiling:5, substances:["enriched flour","calcium propionate"], reason:"La Tortilla Factory — enriched flour + calcium propionate in most varieties. Cleaner than Mission but still processed.", confidence:"medium", category:"food_beverage" }],
   ["maria and ricardos",            { floor:3, ceiling:4, substances:["enriched flour"], reason:"Maria and Ricardo's — enriched flour, simpler formula than Mission. No ADA in most varieties.", confidence:"medium", category:"food_beverage" }],
 
   // ── GLUTEN FREE ───────────────────────────────────────────────
   ["canyon bakehouse",              { floor:3, ceiling:5, substances:["tapioca starch","xanthan gum","modified starch"], reason:"Canyon Bakehouse — rice flour + tapioca starch + xanthan gum. No ADA (inherently GF) but more processed than sprouted bread.", confidence:"high", category:"food_beverage" }],
-  ["schar bread",                   { floor:3, ceiling:5, substances:["modified tapioca starch","xanthan gum"], reason:"Schar GF — modified starches + xanthan gum for GF texture. No ADA but highly processed GF formulation.", confidence:"high", category:"food_beverage" }],
 
   // ── PITA AND OTHER ────────────────────────────────────────────
   ["stacy's pita",                  { floor:3, ceiling:5, substances:["enriched flour","sunflower oil"], reason:"Stacy's Pita Chips — enriched flour + sunflower oil. Mid-tier. No ADA but enriched flour concern.", confidence:"medium", category:"food_beverage" }],
@@ -2664,9 +2495,7 @@ const ENTRIES = [
   ["nars foundation",               { floor:4, ceiling:5, substances:["synthetic fragrance","talc","parabens"], reason:"NARS Sheer Glow — synthetic fragrance + talc + parabens. Premium price, conventional concern.", confidence:"medium", category:"personal_care" }],
   ["fenty beauty",                  { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Fenty Beauty — no parabens, no talc in liquid foundation, but synthetic fragrance + dimethicone. Better than drugstore, not clean-label.", confidence:"medium", category:"personal_care" }],
   // FOUNDATION CLEAN
-  ["ilia beauty",                   { floor:1, ceiling:3, substances:[], reason:"ILIA Beauty — EWG Verified, no synthetic fragrance, no parabens, no talc. Benchmark clean makeup brand.", confidence:"high", category:"personal_care" }],
   ["ilia",                          { floor:1, ceiling:3, substances:[], reason:"ILIA — EWG Verified clean cosmetics. Benchmark across foundation, mascara, and lip products.", confidence:"high", category:"personal_care" }],
-  ["rms beauty",                    { floor:1, ceiling:3, substances:[], reason:"RMS Beauty — certified organic, no synthetic fragrance, no parabens. Benchmark clean luxury makeup.", confidence:"high", category:"personal_care" }],
   ["kosas",                         { floor:1, ceiling:3, substances:[], reason:"Kosas — EWG Verified, no synthetic fragrance, no parabens. Benchmark clean makeup.", confidence:"high", category:"personal_care" }],
   ["saie beauty",                   { floor:1, ceiling:3, substances:[], reason:"Saie — EWG Verified, clean ingredients, no synthetic fragrance. Benchmark clean makeup.", confidence:"high", category:"personal_care" }],
   ["axiology",                      { floor:1, ceiling:2, substances:[], reason:"Axiology — vegan, EWG Verified, palm oil free. Benchmark cleanest lipstick available.", confidence:"high", category:"personal_care" }],
@@ -2701,7 +2530,6 @@ const ENTRIES = [
   ["la roche posay sunscreen",      { floor:4, ceiling:6, substances:["avobenzone","homosalate"], reason:"La Roche-Posay — chemical UV filters in most formulas. Their Mineral line is cleaner.", confidence:"medium", category:"personal_care" }],
   // SUNSCREEN CLEAN
   ["blue lizard",                   { floor:1, ceiling:3, substances:[], reason:"Blue Lizard — zinc oxide or titanium dioxide mineral UV filters, no chemical UV filters. Benchmark clean sunscreen.", confidence:"high", category:"personal_care" }],
-  ["badger",              { floor:1, ceiling:2, substances:[], reason:"Badger Balm — zinc oxide only, organic ingredients, no chemical UV filters. Benchmark cleanest sunscreen.", confidence:"high", category:"personal_care" }],
   // HAIRCARE CONCERN
   ["herbal essences",               { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","dimethicone","parabens"], reason:"Herbal Essences — SLES + heavy synthetic fragrance + dimethicone + parabens. 'Natural' branding doesn't match formula.", confidence:"high", category:"personal_care" }],
   ["loreal elvive",                 { floor:4, ceiling:5, substances:["SLES","synthetic fragrance","dimethicone"], reason:"L'Oréal Elvive — SLES + synthetic fragrance + dimethicone. Standard drugstore haircare concern.", confidence:"high", category:"personal_care" }],
@@ -2709,7 +2537,6 @@ const ENTRIES = [
   ["ogx",                           { floor:4, ceiling:6, substances:["SLES","synthetic fragrance","cocamide DEA"], reason:"OGX — cocamide DEA (California Prop 65 listed) + SLES + synthetic fragrance. Higher-concern drugstore haircare.", confidence:"high", category:"personal_care" }],
   // HAIRCARE CLEAN
   ["olaplex",                       { floor:2, ceiling:4, substances:[], reason:"Olaplex — bond-building technology, no synthetic fragrance or parabens. Cleaner than most professional haircare.", confidence:"high", category:"personal_care" }],
-  ["briogeo",                       { floor:1, ceiling:3, substances:[], reason:"Briogeo — EWG-friendly, no synthetic fragrance or parabens, clean plant-based surfactants. Benchmark clean haircare.", confidence:"high", category:"personal_care" }],
   ["innersense",                    { floor:1, ceiling:2, substances:[], reason:"Innersense Organic Beauty — USDA Organic certified, no synthetic fragrance or parabens. Benchmark cleanest haircare.", confidence:"high", category:"personal_care" }],
   // HAIR COLOR
   ["loreal excellence hair",        { floor:6, ceiling:8, substances:["PPD","resorcinol","ammonia"], reason:"L'Oréal Excellence — PPD (p-phenylenediamine, IARC Group 2A, linked to bladder cancer) + resorcinol + ammonia. Permanent hair color critical concern.", confidence:"high", category:"personal_care" }],
@@ -2731,7 +2558,6 @@ const ENTRIES = [
   ["dove women antiperspirant",     { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance"], reason:"Dove Women Antiperspirant — aluminum + synthetic fragrance. Same concern tier as Dove Men antiperspirant.", confidence:"high", category:"personal_care" }],
   ["almay deodorant",               { floor:4, ceiling:6, substances:["aluminum","synthetic fragrance"], reason:"Almay Sensitive Skin — aluminum antiperspirant + synthetic fragrance. 'Sensitive' branding doesn't remove aluminum concern.", confidence:"medium", category:"personal_care" }],
   ["kopari",                        { floor:1, ceiling:3, substances:[], reason:"Kopari — coconut oil base, no aluminum, no synthetic fragrance. Clean aluminum-free deodorant.", confidence:"high", category:"personal_care" }],
-  ["crystal deodorant",             { floor:2, ceiling:4, substances:["potassium alum"], reason:"Crystal Mineral — potassium alum (natural mineral salt). Different from aluminum chlorohydrate in antiperspirants. Lower concern than standard antiperspirants.", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 36 — MEN'S AND WOMEN'S UNDERWEAR
@@ -2763,7 +2589,6 @@ const ENTRIES = [
 
   // ── MEN'S: CLEAN TIER ────────────────────────────────────────
   ["pact underwear",                { floor:1, ceiling:3, substances:[], reason:"Pact — GOTS certified organic cotton across the entire line. Fair Trade certified. Benchmark cleanest mainstream underwear brand for men and women.", confidence:"high", category:"clothing" }],
-  ["pact organic",                  { floor:1, ceiling:3, substances:[], reason:"Pact Organic — GOTS certified, Fair Trade. Benchmark clean underwear brand.", confidence:"high", category:"clothing" }],
   ["organic basics",                { floor:1, ceiling:3, substances:[], reason:"Organic Basics — GOTS certified organic cotton + OEKO-TEX certified. Certified B Corp. Benchmark clean underwear brand alongside Pact.", confidence:"high", category:"clothing" }],
   ["wama hemp",                     { floor:1, ceiling:3, substances:[], reason:"Wama Underwear — hemp/organic cotton blend. Hemp is naturally pest-resistant requiring minimal pesticide. OEKO-TEX certified. Benchmark clean underwear.", confidence:"high", category:"clothing" }],
   ["boody",                         { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody — OEKO-TEX certified bamboo/spandex blend. Bamboo processing is chemical-intensive (viscose process) but OEKO-TEX certification means tested for harmful substances. Clean-leaning, not fully organic.", confidence:"high", category:"clothing" }],
@@ -2792,7 +2617,6 @@ const ENTRIES = [
   ["raven and lily",                { floor:1, ceiling:3, substances:[], reason:"Raven + Lily — GOTS certified organic cotton, Fair Trade artisan made. Benchmark clean women's underwear.", confidence:"high", category:"clothing" }],
   ["boody bra",                     { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody bra — OEKO-TEX certified bamboo/spandex. Cleaner than conventional synthetic bras but bamboo viscose process is chemical-intensive.", confidence:"high", category:"clothing" }],
 
-
   // ══════════════════════════════════════════════════════════════
   // AUDIT 37 — VITAMINS AND SUPPLEMENTS
   // KEY STORY: Centrum Adults has FD&C Red 40, FD&C Blue 2,
@@ -2813,7 +2637,6 @@ const ENTRIES = [
   ["nature made multi",            { floor:4, ceiling:6, substances:["titanium dioxide","BHT","polyethylene glycol"], reason:"Nature Made Multivitamin — titanium dioxide + BHT preservative + PEG coating. No petroleum dyes in tablet version but still multiple synthetic additives in a daily supplement.", confidence:"high", category:"supplement" }],
   ["nature made gummies",          { floor:4, ceiling:6, substances:["artificial color","sucralose","carnauba wax"], reason:"Nature Made Adult Gummies — artificial color + sucralose + carnauba wax. Gummy format adds sweetener and dye concern to an otherwise decent brand.", confidence:"high", category:"supplement" }],
   ["smartypants",                  { floor:3, ceiling:5, substances:["palm oil","natural color","fish oil"], reason:"SmartyPants — natural colors (no petroleum dyes), omega-3 included, but palm oil + some synthetic vitamin forms. Better than Centrum, not as clean as Garden of Life.", confidence:"medium", category:"supplement" }],
-  ["olly gummies",                 { floor:3, ceiling:5, substances:["natural color","sugar","carnauba wax"], reason:"Olly — natural colors no petroleum dyes, but sugar + carnauba wax + synthetic vitamin forms. Mid-tier supplement gummy.", confidence:"high", category:"supplement" }],
   ["olly sleep",                   { floor:3, ceiling:5, substances:["natural color","sugar","carnauba wax"], reason:"Olly Sleep gummies — natural colors, melatonin + L-theanine, but sugar + carnauba wax. Mid-tier.", confidence:"high", category:"supplement" }],
   ["vitafusion gummies",           { floor:4, ceiling:6, substances:["artificial color","sucralose","corn syrup"], reason:"Vitafusion — artificial color + sucralose + corn syrup. Common adult gummy vitamin with real concern profile despite mainstream appeal.", confidence:"high", category:"supplement" }],
   ["airborne vitamin",             { floor:5, ceiling:6, substances:["sucralose","artificial color","acesulfame-K"], reason:"Airborne Gummies — sucralose + acesulfame-K double sweetener + artificial color. Multiple sweetener floors fire in a vitamin supplement.", confidence:"high", category:"supplement" }],
@@ -2832,21 +2655,17 @@ const ENTRIES = [
   ["megafood multi",               { floor:1, ceiling:3, substances:[], reason:"MegaFood Multi — whole food vitamins, no artificial additives, Non-GMO verified. Benchmark clean multivitamin alongside Garden of Life.", confidence:"high", category:"supplement" }],
   ["ritual vitamins",              { floor:2, ceiling:4, substances:[], reason:"Ritual — traceable ingredients, no artificial dyes or synthetic fillers, delayed-release capsule. Transparent supply chain. Clean DTC vitamin brand.", confidence:"high", category:"supplement" }],
   ["thorne basic nutrients",       { floor:1, ceiling:2, substances:[], reason:"Thorne Basic Nutrients — clinical-grade, no artificial additives, no synthetic dyes, NSF Certified for Sport. Benchmark cleanest mainstream multivitamin.", confidence:"high", category:"supplement" }],
-  ["pure encapsulations",          { floor:1, ceiling:2, substances:[], reason:"Pure Encapsulations — hypoallergenic, no artificial additives, no titanium dioxide, NSF Certified. Benchmark cleanest supplement brand across the entire line.", confidence:"high", category:"supplement" }],
 
   // ── VITAMIN D3 ────────────────────────────────────────────────
   ["nature made vitamin d3",       { floor:2, ceiling:4, substances:["soybean oil","gelatin"], reason:"Nature Made D3 — softgel with soybean oil + gelatin. Minimal additives. No petroleum dyes. Mid-clean vitamin D supplement.", confidence:"high", category:"supplement" }],
   ["now foods vitamin d3",         { floor:1, ceiling:3, substances:[], reason:"NOW Foods D3 — minimal clean ingredients, no artificial additives. Affordable benchmark clean vitamin D.", confidence:"high", category:"supplement" }],
-  ["now foods",                    { floor:1, ceiling:3, substances:[], reason:"NOW Foods brand — minimal ingredients across the line, no artificial dyes or synthetic sweeteners. Benchmark clean affordable supplement brand.", confidence:"high", category:"supplement" }],
   ["kirkland vitamin d3",          { floor:1, ceiling:3, substances:[], reason:"Kirkland Signature D3 — minimal ingredients, USP verified. Clean budget vitamin D.", confidence:"high", category:"supplement" }],
   ["life extension vitamin d",     { floor:1, ceiling:3, substances:[], reason:"Life Extension D3 — minimal ingredients, no artificial additives. Clean clinical supplement brand.", confidence:"high", category:"supplement" }],
-  ["life extension",               { floor:1, ceiling:3, substances:[], reason:"Life Extension brand — science-based formulations, no artificial additives across most products. Clean clinical supplement brand.", confidence:"high", category:"supplement" }],
   ["sports research vitamin d",    { floor:1, ceiling:2, substances:[], reason:"Sports Research D3+K2 — organic coconut MCT oil base, non-GMO softgel, no artificial additives. Benchmark cleanest D3 supplement.", confidence:"high", category:"supplement" }],
   ["sports research",              { floor:1, ceiling:3, substances:[], reason:"Sports Research — clean ingredient focus, organic bases where possible. Clean supplement brand.", confidence:"high", category:"supplement" }],
 
   // ── OMEGA-3 / FISH OIL ────────────────────────────────────────
   ["nature made fish oil",         { floor:2, ceiling:4, substances:["gelatin","glycerin","enteric coating"], reason:"Nature Made Fish Oil — enteric coating + gelatin + glycerin. No artificial dyes but synthetic coating on a widely-used daily supplement.", confidence:"high", category:"supplement" }],
-  ["nordic naturals omega",        { floor:1, ceiling:3, substances:[], reason:"Nordic Naturals — IFOS 5-star certified, no artificial additives, third-party purity tested. Benchmark clean fish oil brand.", confidence:"high", category:"supplement" }],
   ["nordic naturals",              { floor:1, ceiling:3, substances:[], reason:"Nordic Naturals — IFOS certified, clean across the omega-3 line. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
   ["carlson fish oil",             { floor:1, ceiling:3, substances:[], reason:"Carlson Fish Oil — IFOS certified, no artificial additives, third-party tested for purity and potency. Benchmark clean fish oil.", confidence:"high", category:"supplement" }],
   ["kirkland fish oil",            { floor:2, ceiling:4, substances:["enteric coating"], reason:"Kirkland Fish Oil — enteric coated softgels, USP verified. Coating adds mild synthetic concern but otherwise clean.", confidence:"high", category:"supplement" }],
@@ -2869,13 +2688,11 @@ const ENTRIES = [
   ["seed synbiotic",               { floor:1, ceiling:3, substances:[], reason:"Seed — clean synbiotic formulation, no artificial additives. Benchmark clean probiotic brand.", confidence:"high", category:"supplement" }],
 
   // ── COLLAGEN ─────────────────────────────────────────────────
-  ["vital proteins collagen",      { floor:1, ceiling:3, substances:[], reason:"Vital Proteins Collagen Peptides — grass-fed bovine collagen, minimal ingredients in unflavored version. Benchmark clean collagen supplement.", confidence:"high", category:"supplement" }],
   ["vital proteins",               { floor:1, ceiling:3, substances:[], reason:"Vital Proteins — grass-fed sourced, minimal ingredients. Clean collagen brand.", confidence:"high", category:"supplement" }],
   ["ancient nutrition collagen",   { floor:1, ceiling:3, substances:[], reason:"Ancient Nutrition Collagen — multi-type collagen from organic sources, no artificial additives. Clean collagen.", confidence:"high", category:"supplement" }],
   ["sports research collagen",     { floor:1, ceiling:3, substances:[], reason:"Sports Research Collagen Peptides — grass-fed, minimal ingredients, no artificial additives. Clean collagen.", confidence:"high", category:"supplement" }],
 
   // ── PROTEIN POWDERS ───────────────────────────────────────────
-  ["orgain organic protein",       { floor:1, ceiling:3, substances:[], reason:"Orgain Organic — USDA Organic certified, stevia sweetened, no artificial additives. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
   ["orgain",                       { floor:1, ceiling:3, substances:[], reason:"Orgain — USDA Organic protein, clean ingredients. Benchmark clean protein brand.", confidence:"high", category:"supplement" }],
   ["garden of life sport protein", { floor:1, ceiling:3, substances:[], reason:"Garden of Life Sport — USDA Organic, NSF Certified for Sport, no artificial additives. Benchmark clean protein powder.", confidence:"high", category:"supplement" }],
   ["naked whey protein",           { floor:1, ceiling:2, substances:[], reason:"Naked Whey — one ingredient: whey protein concentrate from US grass-fed cows. Benchmark cleanest protein powder.", confidence:"high", category:"supplement" }],
@@ -2893,8 +2710,6 @@ const ENTRIES = [
   // ── IRON AND B12 ─────────────────────────────────────────────
   ["nature made b12",              { floor:2, ceiling:3, substances:["silicon dioxide"], reason:"Nature Made B12 — methylcobalamin form, minimal ingredients, silicon dioxide filler. Clean-leaning B12.", confidence:"high", category:"supplement" }],
   ["jarrow b12",                   { floor:1, ceiling:3, substances:[], reason:"Jarrow B12 — methylcobalamin sublingual, minimal clean ingredients. Benchmark clean B12.", confidence:"high", category:"supplement" }],
-  ["jarrow formulas",              { floor:1, ceiling:3, substances:[], reason:"Jarrow Formulas — science-based formulations, no artificial dyes, minimal excipients. Clean supplement brand.", confidence:"high", category:"supplement" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 38 — KITCHEN AND COOKWARE
@@ -2927,7 +2742,6 @@ const ENTRIES = [
 
   // ── CAST IRON: BENCHMARK CLEAN ───────────────────────────────
   ["lodge cast iron",               { floor:1, ceiling:2, substances:[], reason:"Lodge Cast Iron — bare iron, no chemical coating, pre-seasoned with vegetable oil. Iron leaches minimally into food (beneficial for iron-deficient). Benchmark cleanest cookware material. Lasts generations.", confidence:"high", category:"kitchen" }],
-  ["le creuset",                    { floor:1, ceiling:2, substances:[], reason:"Le Creuset — enamel-coated cast iron or stoneware. Enamel is glass-based and completely inert. No PFAS, no leaching. Premium benchmark clean cookware.", confidence:"high", category:"kitchen" }],
   ["staub",                         { floor:1, ceiling:2, substances:[], reason:"Staub — enamel-coated cast iron, black matte interior enamel is inert. No PFAS, no leaching. Benchmark clean cookware alongside Le Creuset.", confidence:"high", category:"kitchen" }],
 
   // ── STAINLESS STEEL ───────────────────────────────────────────
@@ -2939,11 +2753,9 @@ const ENTRIES = [
   ["de buyer",                      { floor:1, ceiling:2, substances:[], reason:"de Buyer — French carbon steel cookware, no coating, mineral bee wax seasoning. Benchmark clean alongside Lodge cast iron.", confidence:"high", category:"kitchen" }],
 
   // ── GLASS AND CERAMIC ─────────────────────────────────────────
-  ["pyrex glass",                   { floor:1, ceiling:2, substances:[], reason:"Pyrex glass — borosilicate or soda-lime glass, completely inert food contact surface. No leaching, no PFAS. Benchmark cleanest food storage and bakeware material.", confidence:"high", category:"kitchen" }],
   ["pyrex",                         { floor:1, ceiling:2, substances:[], reason:"Pyrex — glass bakeware and containers. Inert surface, benchmark clean. NEVER score above 3.", confidence:"high", category:"kitchen" }],
   ["anchor hocking",                { floor:1, ceiling:2, substances:[], reason:"Anchor Hocking — soda-lime glass, completely inert. Benchmark clean glass storage and bakeware.", confidence:"high", category:"kitchen" }],
   ["weck jars",                     { floor:1, ceiling:2, substances:[], reason:"Weck — German glass jars with rubber gasket seal. Glass is inert, rubber gasket is food-grade. Benchmark clean food storage.", confidence:"high", category:"kitchen" }],
-  ["stasher bag",                   { floor:1, ceiling:2, substances:[], reason:"Stasher — platinum food-grade silicone, LFGB certified (stricter than FDA), no PFAS, no BPA. Benchmark cleanest reusable bag.", confidence:"high", category:"kitchen" }],
   ["stasher",                       { floor:1, ceiling:2, substances:[], reason:"Stasher silicone bags — platinum silicone, LFGB certified, PFAS-free. Benchmark clean.", confidence:"high", category:"kitchen" }],
 
   // ── PLASTIC FOOD STORAGE: CONCERN ─────────────────────────────
@@ -3005,7 +2817,6 @@ const ENTRIES = [
   ["melamine dishes",               { floor:6, ceiling:8, substances:["melamine","formaldehyde"], reason:"Melamine dishes — melamine and formaldehyde migrate into food at elevated temperatures, with hot liquids, and with acidic foods. FDA limits exist but concern remains especially for children eating hot food from melamine plates. NEVER use for hot food.", confidence:"high", category:"kitchen" }],
   ["melamine",                      { floor:6, ceiling:8, substances:["melamine","formaldehyde"], reason:"Melamine — formaldehyde migration into hot or acidic food is documented. Floor fires at 6+. Avoid for hot food contact.", confidence:"high", category:"kitchen" }],
 
-
   // ══════════════════════════════════════════════════════════════
   // AUDIT 39 — COFFEE, TEA AND CREAMERS
   // KEY STORIES:
@@ -3023,7 +2834,6 @@ const ENTRIES = [
   ["k-cup",                        { floor:5, ceiling:7, substances:["polypropylene","microplastics"], reason:"K-Cup pods — polypropylene #5 plastic heated with near-boiling water releases billions of microplastic particles per cup (2023 Spanish study). Applies to all K-cup format coffee pods.", confidence:"high", category:"food_beverage" }],
   ["folgers k-cup",                 { floor:5, ceiling:7, substances:["polypropylene","microplastics","conventional coffee"], reason:"Folgers K-Cup — polypropylene #5 plastic pod heated with near-boiling water releases billions of microplastic particles per cup (2023 study). Conventional coffee adds pesticide concern.", confidence:"high", category:"food_beverage" }],
   ["death wish coffee k",           { floor:5, ceiling:7, substances:["polypropylene","microplastics"], reason:"Death Wish Coffee K-Cup — polypropylene pod microplastic concern. Coffee is USDA Organic (lower pesticide concern than Folgers K-Cups).", confidence:"high", category:"food_beverage" }],
-  ["death wish",              { floor:4, ceiling:6, substances:["polypropylene","microplastics"], reason:"Death Wish K-Cup — polypropylene microplastic concern from pod + hot water. Coffee is USDA Organic which reduces pesticide concern versus Folgers.", confidence:"high", category:"food_beverage" }],
   ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum"], reason:"Nespresso Original — aluminum pod, no plastic contact with hot coffee. Aluminum trace concern is minimal. Significantly cleaner than polypropylene K-cups.", confidence:"high", category:"food_beverage" }],
 
   // ── GROUND COFFEE: CONVENTIONAL ──────────────────────────────
@@ -3059,7 +2869,6 @@ const ENTRIES = [
 
   // ── TEA: CLEAN TIER ──────────────────────────────────────────
   ["yogi tea",                      { floor:2, ceiling:4, substances:[], reason:"Yogi Tea — organic certified blends, no bleached bags, no staples or plastic. Better than Bigelow or Twinings. Some non-organic herbs in blends.", confidence:"high", category:"food_beverage" }],
-  ["republic of tea",               { floor:2, ceiling:4, substances:[], reason:"Republic of Tea — premium tea brand, organic options, no staples, cleaner sourcing than mass-market brands.", confidence:"medium", category:"food_beverage" }],
   ["traditional medicinals",        { floor:1, ceiling:3, substances:[], reason:"Traditional Medicinals — USDA Organic certified, non-GMO, unbleached bags, no staples. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
   ["numi organic",              { floor:1, ceiling:3, substances:[], reason:"Numi Organic Tea — USDA Organic, non-GMO, compostable tea bags, no plastic. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
   ["numi tea",                      { floor:1, ceiling:3, substances:[], reason:"Numi — USDA Organic, compostable bags. Benchmark clean.", confidence:"high", category:"food_beverage" }],
@@ -3077,13 +2886,11 @@ const ENTRIES = [
   ["coffee mate liquid",            { floor:5, ceiling:7, substances:["carrageenan","artificial flavor","mono diglycerides","dipotassium phosphate"], reason:"Coffee Mate Liquid — carrageenan + artificial flavor + mono and diglycerides + dipotassium phosphate. Marketed as a creamer but contains no dairy and multiple synthetic additives.", confidence:"high", category:"food_beverage" }],
   ["coffee mate french vanilla",    { floor:5, ceiling:7, substances:["carrageenan","artificial flavor","HFCS"], reason:"Coffee Mate French Vanilla — HFCS + carrageenan + artificial flavor. HFCS floor fires on a daily morning beverage addition.", confidence:"high", category:"food_beverage" }],
   ["coffee mate",                   { floor:7, ceiling:9, substances:["partially hydrogenated oil","artificial flavor","carrageenan"], reason:"Coffee Mate brand — powder version is critical (trans fat + petroleum dyes, floor 7-9), liquid version is high concern (carrageenan + artificial flavor, floor 5-7). One of the most additive-laden products in the daily kitchen.", confidence:"high", category:"food_beverage" }],
-  ["international delight", { floor:5, ceiling:7, substances:["HFCS","carrageenan","artificial flavor","mono diglycerides"], reason:"International Delight — HFCS + carrageenan + artificial flavor + mono diglycerides. HFCS floor fires. Very similar concern profile to Coffee Mate liquid.", confidence:"high", category:"food_beverage" }],
   ["starbucks coffee creamer",      { floor:4, ceiling:6, substances:["carrageenan","natural flavor","dipotassium phosphate"], reason:"Starbucks Creamer — carrageenan + dipotassium phosphate + natural flavor. Better than Coffee Mate but still not clean.", confidence:"high", category:"food_beverage" }],
 
   // ── CREAMERS: CLEAN ───────────────────────────────────────────
   ["nutpods creamer",               { floor:1, ceiling:3, substances:[], reason:"Nutpods — unsweetened almond and coconut milk creamer, no artificial additives, no carrageenan. Benchmark cleanest mainstream coffee creamer.", confidence:"high", category:"food_beverage" }],
   ["nutpods",                       { floor:1, ceiling:3, substances:[], reason:"Nutpods — almond/coconut base, no carrageenan, no artificial flavor. Benchmark clean creamer.", confidence:"high", category:"food_beverage" }],
-  ["califia farms creamer",         { floor:3, ceiling:4, substances:["sunflower oil","dipotassium phosphate"], reason:"Califia Farms Creamer — plant-based but dipotassium phosphate + sunflower oil + some natural flavor. Cleaner than Coffee Mate but not as clean as Nutpods.", confidence:"high", category:"food_beverage" }],
   ["silk oat creamer",              { floor:3, ceiling:4, substances:["dipotassium phosphate","sunflower oil","natural flavor"], reason:"Silk Oat Milk Creamer — dipotassium phosphate + sunflower oil + natural flavor. Mid-tier plant creamer.", confidence:"high", category:"food_beverage" }],
   ["elmhurst barista",              { floor:2, ceiling:3, substances:[], reason:"Elmhurst Barista — minimal ingredients, no dipotassium phosphate, no carrageenan, just oat/nut base. Cleaner than Silk or Califia.", confidence:"high", category:"food_beverage" }],
   ["coconut cloud creamer",         { floor:2, ceiling:3, substances:[], reason:"Coconut Cloud — coconut milk powder base, no artificial additives, no carrageenan. Clean powdered creamer alternative.", confidence:"high", category:"food_beverage" }],
@@ -3094,7 +2901,6 @@ const ENTRIES = [
   ["monin syrup",                   { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Monin — cane sugar (not HFCS) + natural flavor + potassium sorbate. Better than Torani but potassium sorbate preservative present.", confidence:"high", category:"food_beverage" }],
   ["jordan's skinny",           { floor:5, ceiling:7, substances:["sucralose","artificial flavor","acesulfame-K"], reason:"Jordan's Skinny Syrups — sucralose + acesulfame-K double sweetener stack + artificial flavor. Multiple sweetener floors fire. Widely used in 'healthier' coffee drinks.", confidence:"high", category:"food_beverage" }],
   ["starbucks syrup",               { floor:3, ceiling:5, substances:["cane sugar","natural flavor","potassium sorbate"], reason:"Starbucks Vanilla Syrup and similar — cane sugar + natural flavor + potassium sorbate. Same concern profile as Monin.", confidence:"medium", category:"food_beverage" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 39 — COFFEE, TEA AND CREAMERS
@@ -3107,10 +2913,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── GROUND COFFEE: CONVENTIONAL ──────────────────────────────
-  ["folgers coffee",                { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Folgers — conventional coffee, heavily processed blend from multiple regions, no pesticide testing transparency. Coffee is one of the most pesticide-sprayed crops worldwide.", confidence:"high", category:"food_beverage" }],
   ["folgers",                       { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Folgers — conventional blend, no organic certification or pesticide testing claim.", confidence:"high", category:"food_beverage" }],
-  ["maxwell house",                 { floor:3, ceiling:5, substances:["conventional coffee","pesticide residues"], reason:"Maxwell House — conventional coffee blend, no organic certification. Same pesticide concern as Folgers.", confidence:"high", category:"food_beverage" }],
-  ["dunkin coffee",                 { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Dunkin ground coffee — conventional blend, no organic certification. Mid-tier coffee concern.", confidence:"medium", category:"food_beverage" }],
   ["peet's coffee",                 { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Peet's — conventional coffee, some single origins with better sourcing but no blanket organic certification.", confidence:"medium", category:"food_beverage" }],
   ["lavazza",                       { floor:3, ceiling:4, substances:["conventional coffee"], reason:"Lavazza — Italian conventional coffee blend, no organic certification. Standard conventional concern.", confidence:"medium", category:"food_beverage" }],
   ["cafe bustelo",                  { floor:3, ceiling:5, substances:["conventional coffee","fine grind"], reason:"Cafe Bustelo — conventional espresso blend, highly processed fine grind. No organic certification.", confidence:"medium", category:"food_beverage" }],
@@ -3119,22 +2922,16 @@ const ENTRIES = [
 
   // ── K-CUPS: PLASTIC POD CONCERN ───────────────────────────────
   ["death wish",              { floor:5, ceiling:7, substances:["polypropylene pod","LDPE foil","microplastics"], reason:"Death Wish K-Cup — polypropylene plastic pod + LDPE foil lid + 92C water = documented microplastic migration into coffee. Plastic pod concern applies regardless of coffee quality inside.", confidence:"high", category:"food_beverage" }],
-  ["k-cup",                         { floor:5, ceiling:7, substances:["polypropylene","LDPE","microplastics","hot water contact"], reason:"K-Cup format — polypropylene pod + aluminum/LDPE foil lid with boiling water forced through. University of Victoria 2023 study found billions of nano/microplastics released per cup. The pod IS the concern regardless of coffee brand inside.", confidence:"high", category:"food_beverage" }],
 
   // ── GROUND COFFEE: CLEAN TIER ────────────────────────────────
   ["bulletproof coffee",            { floor:2, ceiling:3, substances:[], reason:"Bulletproof — mycotoxin-tested, single origin, mold-free claim with third-party lab verification. Cleaner than standard conventional coffee.", confidence:"high", category:"food_beverage" }],
   ["kicking horse coffee",          { floor:1, ceiling:3, substances:[], reason:"Kicking Horse — USDA Organic certified, fair trade, B Corp. Benchmark clean mainstream coffee brand.", confidence:"high", category:"food_beverage" }],
-  ["mount hagen",                   { floor:1, ceiling:3, substances:[], reason:"Mount Hagen — USDA Organic certified instant coffee, fair trade. Benchmark cleanest instant coffee available.", confidence:"high", category:"food_beverage" }],
 
   // ── COFFEE CREAMERS: HIGH CONCERN ────────────────────────────
-  ["coffee mate french vanilla",    { floor:5, ceiling:7, substances:["corn syrup","carrageenan","sodium stearoyl lactylate","artificial flavor"], reason:"Coffee Mate French Vanilla — corn syrup + carrageenan + sodium stearoyl lactylate (WF banned) + artificial flavor. Multiple floors fire. Heavily processed daily morning creamer.", confidence:"high", category:"food_beverage" }],
-  ["coffee mate",                   { floor:5, ceiling:7, substances:["corn syrup","carrageenan","sodium stearoyl lactylate","artificial flavor"], reason:"Coffee Mate — corn syrup + carrageenan + SSL (WF banned) + artificial flavor across most flavors. One of the most additive-loaded daily kitchen products.", confidence:"high", category:"food_beverage" }],
   ["international delight",         { floor:6, ceiling:8, substances:["HFCS","carrageenan","artificial flavor","artificial color"], reason:"International Delight — HFCS + carrageenan + artificial flavor + artificial color. Multiple floors fire. HFCS + dye concern on a daily morning creamer.", confidence:"high", category:"food_beverage" }],
 
   // ── COFFEE CREAMERS: CLEAN TIER ──────────────────────────────
   ["califia farms creamer",         { floor:3, ceiling:5, substances:["sunflower oil","pea protein","oats"], reason:"Califia Farms — oat or almond base, no carrageenan in most formulas, but sunflower oil + pea protein. Cleaner than Coffee Mate, not clean-label.", confidence:"medium", category:"food_beverage" }],
-  ["nutpods creamer",               { floor:1, ceiling:3, substances:[], reason:"Nutpods — coconut cream + almonds, no artificial flavors or sweeteners, no carrageenan. Benchmark clean dairy-free creamer.", confidence:"high", category:"food_beverage" }],
-  ["nutpods",                       { floor:1, ceiling:3, substances:[], reason:"Nutpods — clean dairy-free creamer, no carrageenan or artificial additives. Benchmark.", confidence:"high", category:"food_beverage" }],
   ["elmhurst creamer",              { floor:1, ceiling:3, substances:[], reason:"Elmhurst — minimal ingredients (oats or nuts + water), no gums, no carrageenan, no artificial additives. Benchmark cleanest oat creamer.", confidence:"high", category:"food_beverage" }],
   ["elmhurst",                      { floor:1, ceiling:3, substances:[], reason:"Elmhurst — minimal ingredient dairy-free milks and creamers, no gums or additives. Benchmark clean.", confidence:"high", category:"food_beverage" }],
   ["laird superfood creamer",       { floor:1, ceiling:3, substances:[], reason:"Laird Superfood — coconut milk powder + functional mushrooms or superfoods, no artificial additives. Clean performance creamer.", confidence:"high", category:"food_beverage" }],
@@ -3146,10 +2943,8 @@ const ENTRIES = [
 
   // ── TEA: CLEAN TIER ──────────────────────────────────────────
   ["celestial seasonings",          { floor:2, ceiling:4, substances:["conventional herbs"], reason:"Celestial Seasonings — no staples, no strings, no tags, no bleach, no epichlorohydrin. Cleaner bag format than most. Conventional herbs still have pesticide concern.", confidence:"high", category:"food_beverage" }],
-  ["yogi tea",                      { floor:2, ceiling:4, substances:["conventional herbs"], reason:"Yogi Tea — unbleached tea bags, no staples, some organic blends. Better bag format, some conventional herb sourcing.", confidence:"medium", category:"food_beverage" }],
   ["numi organic tea",              { floor:1, ceiling:3, substances:[], reason:"Numi — USDA Organic certified, non-GMO, plant-based tea bags (no nylon), fair trade. Benchmark clean tea brand.", confidence:"high", category:"food_beverage" }],
   ["numi",                          { floor:1, ceiling:3, substances:[], reason:"Numi Organic — USDA Organic, plant-based bags. Benchmark clean.", confidence:"high", category:"food_beverage" }],
-  ["traditional medicinals",        { floor:1, ceiling:3, substances:[], reason:"Traditional Medicinals — certified organic herbs, non-GMO, compostable tea bags, no pesticides. Benchmark cleanest herbal tea brand.", confidence:"high", category:"food_beverage" }],
 
   // ── MATCHA ────────────────────────────────────────────────────
   ["jade leaf",              { floor:1, ceiling:3, substances:[], reason:"Jade Leaf — USDA Organic matcha, ceremonial and culinary grades, no additives. Benchmark clean matcha brand.", confidence:"high", category:"food_beverage" }],
@@ -3157,9 +2952,7 @@ const ENTRIES = [
   ["golde matcha",                  { floor:2, ceiling:4, substances:[], reason:"Golde — matcha + coconut milk + functional ingredients, clean sourcing, no artificial additives. Clean wellness matcha blend.", confidence:"high", category:"food_beverage" }],
 
   // ── NESPRESSO PODS ────────────────────────────────────────────
-  ["nespresso original",            { floor:2, ceiling:4, substances:["aluminum pod","coffee"], reason:"Nespresso Original — aluminum capsule, better than plastic K-Cups for migration concern, but aluminum production is resource-intensive. Coffee contact surface is aluminum not plastic.", confidence:"high", category:"food_beverage" }],
   ["nespresso",                     { floor:2, ceiling:4, substances:["aluminum pod"], reason:"Nespresso — aluminum pod format significantly cleaner than plastic K-Cups. No plastic food contact surface.", confidence:"high", category:"food_beverage" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 40 — CLOTHING (ATHLETIC, OUTERWEAR, BASICS, DENIM,
@@ -3208,8 +3001,6 @@ const ENTRIES = [
   ["under armour rival",             { floor:3, ceiling:5, substances:["cotton","polyester","synthetic dyes"], reason:"Under Armour Rival — cotton/poly fleece. No DWR treatment. No PFAS concern on fleece. Mid-tier concern from conventional cotton blend.", confidence:"high", category:"clothing" }],
   ["under armour",                   { floor:3, ceiling:5, substances:["polyester","synthetic dyes","microplastics"], reason:"Under Armour brand — Mamavation zero fluorine detection. PFAS phase-out commitment by 2024. Predominantly synthetic polyester. Score by product: HeatGear 3-4, Storm waterproof 4-6, fleece/cotton 3-5.", confidence:"high", category:"clothing" }],
   ["adidas",                        { floor:4, ceiling:5, substances:["recycled polyester","synthetic dyes","PFAS finish"], reason:"Adidas — recycled polyester in many products (positive) but PFAS-treated finishes on performance lines and synthetic dyes. OEKO-TEX on some products.", confidence:"medium", category:"clothing" }],
-  ["athleta",                       { floor:3, ceiling:5, substances:["recycled nylon","spandex","PFAS-free claim"], reason:"Athleta — claims PFAS-free since 2022, bluesign certified fabrics, Fair Trade some products. Better than Nike/Lululemon but still synthetic construction with microplastic concern.", confidence:"medium", category:"clothing" }],
-  ["vuori",                         { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Vuori — recycled materials, bluesign certified on some fabrics, no explicit PFAS-free claim across full line. Mid-tier clean activewear.", confidence:"medium", category:"clothing" }],
   ["outdoor voices",                { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Outdoor Voices — recycled polyester construction, no explicit PFAS-free certification across the line. Mid-tier clean activewear.", confidence:"medium", category:"clothing" }],
 
   // ── ATHLETIC: CLEAN TIER ─────────────────────────────────────
@@ -3236,7 +3027,6 @@ const ENTRIES = [
   ["columbia omni-heat",             { floor:3, ceiling:5, substances:["polyester","reflective lining","synthetic dyes"], reason:"Columbia Omni-Heat — thermal reflective insulation technology, no DWR on insulation products. PFAS-free as of 2024 Columbia commitment. Polyester construction with synthetic dyes.", confidence:"high", category:"clothing" }],
     ["columbia steens",               { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia Steens Mountain Fleece — polyester fleece, no DWR treatment, no PFAS concern. Microplastic shedding concern.", confidence:"high", category:"clothing" }],
   ["columbia benton springs",       { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia Benton Springs Fleece — same profile as Steens. Polyester fleece, no PFAS.", confidence:"high", category:"clothing" }],
-  ["columbia fleece",                { floor:3, ceiling:4, substances:["polyester fleece","synthetic dyes","microplastics"], reason:"Columbia fleece — polyester fleece, no DWR treatment, no PFAS concern. Microplastic shedding from fleece is a documented concern (fleece sheds more than woven synthetics). No bluesign certification since Columbia ended partnership in 2023.", confidence:"high", category:"clothing" }],
   ["columbia pfg",                   { floor:3, ceiling:5, substances:["polyester","UPF treatment","synthetic dyes"], reason:"Columbia PFG fishing apparel — Omni-Shade UPF and Omni-Wick technology, no DWR on most PFG. PFAS-free per 2024 commitment. Mid-tier synthetic concern.", confidence:"medium", category:"clothing" }],
   ["columbia",                       { floor:3, ceiling:5, substances:["polyester","PFAS-free DWR","synthetic dyes"], reason:"Columbia Sportswear — confirmed PFAS-free across all products as of January 2025 per Better Trail independent verification. Significant score correction from historical 5-7. Still synthetic polyester construction. OutDry Extreme 2-3, fleece 3-4, waterproof 3-5.", confidence:"high", category:"clothing" }],
   ["arc'teryx beta ar",               { floor:3, ceiling:4, substances:["recycled nylon","FC0 DWR PFAS-free","microplastics"], reason:"Arc'teryx Beta AR (2025) — Gore-Tex PRO ePE membrane and FC0 DWR are both PFAS-free per Better Trail independent verification and Arc'teryx product page. Major 2025 redesign. Entire jacket free of intentionally added PFAS. Best-in-class sustainability for waterproof shells.", confidence:"high", category:"clothing" }],
@@ -3252,7 +3042,6 @@ const ENTRIES = [
 
   // ── OUTERWEAR: CLEANER TIER ───────────────────────────────────
 
-  ["patagonia",                     { floor:2, ceiling:4, substances:["recycled materials","Fair Trade"], reason:"Patagonia — Fair Trade certified, recycled materials, bluesign certified, PFAS-free DWR commitment. Benchmark cleanest mainstream outdoor brand for chemical concern.", confidence:"high", category:"clothing" }],
   ["cotopaxi",                      { floor:2, ceiling:4, substances:["repurposed materials","recycled"], reason:"Cotopaxi — repurposed and recycled materials, bluesign certified fabrics, B Corp. Cleaner outdoor brand with transparent sourcing.", confidence:"high", category:"clothing" }],
 
   // ── EVERYDAY BASICS: CONCERN ─────────────────────────────────
@@ -3284,7 +3073,6 @@ const ENTRIES = [
   // ── KIDS CLOTHING: CLEAN TIER ────────────────────────────────
   ["primary kids",              { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Primary kids clothing — OEKO-TEX Standard 100 certified, no FR chemicals, no synthetic fragrances. Better than Cat & Jack, not fully organic.", confidence:"high", category:"clothing" }],
   ["primary clothing",              { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Primary — OEKO-TEX Standard 100 certified, no FR chemicals, no synthetic fragrances, tested for harmful substances. Better than Carter's, not fully organic.", confidence:"high", category:"clothing" }],
-  ["burt's bees baby",              { floor:1, ceiling:3, substances:[], reason:"Burt's Bees Baby — GOTS certified organic cotton, no FR treatments, no synthetic dyes. Benchmark clean baby clothing.", confidence:"high", category:"clothing" }],
   ["burts bees baby",               { floor:1, ceiling:3, substances:[], reason:"Burt's Bees Baby — GOTS certified organic cotton. Benchmark clean.", confidence:"high", category:"clothing" }],
   ["little planet",                 { floor:1, ceiling:3, substances:[], reason:"Little Planet (Carter's organic line) — GOTS certified organic cotton, no FR chemical treatments, no synthetic dyes. Benchmark clean despite being owned by Carter's.", confidence:"high", category:"clothing" }],
   ["hanna andersson",               { floor:2, ceiling:4, substances:["OEKO-TEX","conventional cotton"], reason:"Hanna Andersson — OEKO-TEX Standard 100 certified, snug-fit sleepwear avoids FR chemical treatments, tested for harmful substances. Swedish heritage brand with strong safety standards.", confidence:"high", category:"clothing" }],
@@ -3297,7 +3085,6 @@ const ENTRIES = [
   ["stance socks",                  { floor:3, ceiling:5, substances:["conventional cotton","nylon","synthetic dyes"], reason:"Stance — conventional cotton/nylon + synthetic dyes, no OEKO-TEX or GOTS certification.", confidence:"medium", category:"clothing" }],
   ["swiftwick socks",               { floor:3, ceiling:4, substances:["nylon","Olefin","synthetic dyes"], reason:"Swiftwick — Olefin (polypropylene) fiber + nylon synthetic construction. No OEKO-TEX certification but no antimicrobial treatment.", confidence:"medium", category:"clothing" }],
   ["balega socks",                  { floor:2, ceiling:4, substances:["mohair","nylon","conventional"], reason:"Balega — mohair/nylon blend, South African made, no antimicrobial treatment. Cleaner than pure synthetic socks.", confidence:"medium", category:"clothing" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // AUDIT 41 — APPAREL: FAST FASHION, WORKWEAR, SHOES,
@@ -3366,7 +3153,6 @@ const ENTRIES = [
     ["patagonia nanogrip",            { floor:1, ceiling:3, substances:[], reason:"Patagonia Nanogrip swimsuit — made without PFAS per Patagonia explicit claim. Benchmark clean swimwear.", confidence:"high", category:"clothing" }],
   ["patagonia swimsuit",            { floor:1, ceiling:3, substances:[], reason:"Patagonia swimsuit — PFAS-free commitment across swimwear line. Benchmark clean.", confidence:"high", category:"clothing" }],
   ["patagonia one piece",           { floor:1, ceiling:3, substances:[], reason:"Patagonia one piece swimwear — PFAS-free. Benchmark clean.", confidence:"high", category:"clothing" }],
-  ["patagonia nanogrip",            { floor:1, ceiling:3, substances:[], reason:"Patagonia Nanogrip swimsuit — made without PFAS per Patagonia explicit claim. Benchmark clean swimwear.", confidence:"high", category:"clothing" }],
   ["patagonia swimwear",             { floor:1, ceiling:3, substances:[], reason:"Patagonia swimwear — PFAS-free across swim line. Benchmark clean.", confidence:"high", category:"clothing" }],
   ["patagonia womens swimsuit",      { floor:1, ceiling:3, substances:[], reason:"Patagonia swimsuit — PFAS-free. Benchmark clean.", confidence:"high", category:"clothing" }],
   ["patagonia womens swim",          { floor:1, ceiling:3, substances:[], reason:"Patagonia womens swim — PFAS-free.", confidence:"high", category:"clothing" }],
@@ -3384,7 +3170,6 @@ const ENTRIES = [
   ["suit supply",                    { floor:4, ceiling:6, substances:["wool blend","formaldehyde","synthetic lining"], reason:"Suit Supply — same conventional concern as above.", confidence:"medium", category:"clothing" }],
   ["indochino",                      { floor:4, ceiling:6, substances:["wool blend","polyester","formaldehyde finish","synthetic dyes"], reason:"Indochino — made-to-measure suits with conventional wool/polyester + formaldehyde wrinkle treatments + synthetic linings. Custom fit but conventional chemical profile.", confidence:"medium", category:"clothing" }],
 
-
   // ══════════════════════════════════════════════════════════════
   // AUDIT 42 — RETAIL BRANDS (TARGET, WALMART, NORDSTROM,
   //            MACYS) + VIRAL BRANDS + INTIMATES
@@ -3398,7 +3183,6 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── TARGET OWNED BRANDS ───────────────────────────────────────
-  ["all in motion",                  { floor:4, ceiling:6, substances:["polyester","spandex","PFAS moisture-wicking","synthetic dyes"], reason:"All in Motion (Target) — polyester/spandex activewear with moisture-wicking PFAS treatments. No OEKO-TEX or bluesign certification. Target house brand with no chemical transparency.", confidence:"medium", category:"clothing" }],
   ["wild fable",                     { floor:5, ceiling:7, substances:["conventional cotton","polyester","azo dyes","PFAS finish"], reason:"Wild Fable (Target) — fast fashion Target brand, conventional cotton + azo dyes + PFAS on water-resistant items. No supply chain transparency or chemical certifications.", confidence:"medium", category:"clothing" }],
   ["universal thread",               { floor:4, ceiling:6, substances:["conventional cotton","synthetic dyes","formaldehyde finish"], reason:"Universal Thread (Target) — conventional denim + formaldehyde wrinkle treatments + synthetic dyes. Target denim house brand, no sustainability certifications.", confidence:"medium", category:"clothing" }],
   ["a new day",                      { floor:4, ceiling:6, substances:["conventional cotton","polyester","synthetic dyes","azo dyes"], reason:"A New Day (Target) — fast fashion house brand, conventional cotton/polyester + azo synthetic dyes. No chemical certifications.", confidence:"medium", category:"clothing" }],
@@ -3453,7 +3237,6 @@ const ENTRIES = [
   ["chantelle bra",                  { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Chantelle — French brand, nylon/spandex + synthetic dyes. Better quality construction but no chemical certifications.", confidence:"medium", category:"clothing" }],
   ["wacoal bra",                     { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Wacoal — Japanese brand, nylon/spandex + synthetic dyes. OEKO-TEX on some products. Mid-tier intimate apparel.", confidence:"medium", category:"clothing" }],
 
-
   // ══════════════════════════════════════════════════════════════
   // AUDIT 43 — PREMIUM ACTIVEWEAR, CASUAL, OUTERWEAR,
   //            ON RUNNING, FOOTWEAR, LUXURY
@@ -3472,7 +3255,6 @@ const ENTRIES = [
   ["vuori ripstop",                  { floor:5, ceiling:7, substances:["DWR PFAS","nylon","elastane"], reason:"Vuori Ripstop — DWR water-repellent finish confirmed on product page. DWR treatments are the primary PFAS concern in activewear. Fabric-level PFAS concern.", confidence:"high", category:"clothing" }],
   ["vuori ponto",                    { floor:3, ceiling:4, substances:["recycled polyester","elastane","synthetic dyes"], reason:"Vuori Ponto Pants — 89% recycled polyester, 11% elastane, no DWR treatment, moisture-wicking through fabric structure not chemical finish. Mamavation lab testing found 23ppm fluorine in Vuori leggings (PFAS indicator) but this may reflect manufacturing contamination not intentional treatment. Bluesign certified on 63% of Vuori products.", confidence:"medium", category:"clothing" }],
   ["vuori performance jogger",       { floor:2, ceiling:3, substances:["recycled polyester","elastane"], reason:"Vuori Performance Jogger — 89% recycled polyester, 11% elastane, no DWR, bluesign certified. Clean activewear.", confidence:"high", category:"clothing" }],
-  ["vuori ponto",                    { floor:2, ceiling:3, substances:["recycled polyester","elastane"], reason:"Vuori Ponto — recycled polyester, no DWR coating, bluesign certified. Clean studio pant.", confidence:"high", category:"clothing" }],
   ["vuori",                          { floor:3, ceiling:6, substances:["recycled polyester","DWR on some","synthetic dyes"], reason:"Vuori brand — varies significantly by product. Soft studio pants (Ponto, Jogger) score 3-4, DWR water-resistant products (Ripstop) score 5-7. 63% bluesign certified. Mamavation found 23ppm fluorine in leggings tested.", confidence:"medium", category:"clothing" }],
   ["alo airbrush",                   { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Alo Yoga Airbrush leggings — Mamavation EPA-certified lab testing found ZERO detectable organic fluorine (below 10ppm). No PFAS detected in the specific Alo Yoga High-Waist Alosoft Flow Legging tested. Still nylon/spandex synthetic with no OEKO-TEX certification but PFAS concern not confirmed by lab testing.", confidence:"high", category:"clothing" }],
   ["alo yoga",                       { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Alo Yoga — nylon/spandex construction, no OEKO-TEX or bluesign certification. Mamavation lab testing found NO detectable PFAS in Alo leggings tested — unlike Lululemon which tested positive at 32ppm. Still synthetic petroleum-derived fabrics but PFAS concern not lab-confirmed. Score lower than Lululemon.", confidence:"medium", category:"clothing" }],
@@ -3516,7 +3298,6 @@ const ENTRIES = [
     ["on running active",             { floor:4, ceiling:6, substances:["recycled polyester","moisture-wicking finish","synthetic dyes"], reason:"On Running active apparel — recycled polyester with moisture-wicking treatment. No bluesign certification on apparel line. Less transparent than their footwear PFAS-free commitment.", confidence:"medium", category:"clothing" }],
   ["on running tee",                { floor:4, ceiling:6, substances:["recycled polyester","moisture-wicking","synthetic dyes"], reason:"On Running t-shirt — recycled polyester, moisture-wicking finish. No PFAS-free claim on apparel.", confidence:"medium", category:"clothing" }],
   ["on running shirt",             { floor:4, ceiling:6, substances:["recycled polyester","PFAS moisture treatment","synthetic dyes"], reason:"On Running apparel — recycled polyester performance fabric with moisture-wicking PFAS finish. No bluesign certification. Apparel line less transparent than shoe line.", confidence:"medium", category:"clothing" }],
-  ["on running",                     { floor:3, ceiling:5, substances:["Helion foam","synthetic materials","adhesives"], reason:"On Running footwear — synthetic foam + TPU + adhesives. No PFAS DWR on shoes. Better than Nike equivalent, not as clean as Veja or Allbirds.", confidence:"medium", category:"clothing" }],
 
   // ── PREMIUM FOOTWEAR ──────────────────────────────────────────
   ["golden goose",                   { floor:5, ceiling:7, substances:["synthetic leather","chemical distressing","adhesives","azo dyes"], reason:"Golden Goose — pre-distressed synthetic leather + chemical distressing treatments + azo synthetic dyes + chemical adhesives. 00 sneaker where the distressed aesthetic requires chemical treatments. No chemical certifications.", confidence:"medium", category:"clothing" }],
@@ -3533,7 +3314,6 @@ const ENTRIES = [
   ["brunello cucinelli",             { floor:2, ceiling:4, substances:["cashmere","natural fibers","low-impact dyes"], reason:"Brunello Cucinelli — cashmere and natural fiber focus, ethical manufacturing in Solomeo Italy, low-impact processing. Cleaner luxury brand with strong sustainability ethos.", confidence:"medium", category:"clothing" }],
   ["zegna",                          { floor:4, ceiling:6, substances:["wool","conventional processing","synthetic lining","formaldehyde finish"], reason:"Ermenegildo Zegna — premium wool suits, conventional processing, synthetic lining + formaldehyde wrinkle treatments. Luxury positioning but conventional suit chemistry.", confidence:"medium", category:"clothing" }],
 
-
   // ── ON RUNNING PRODUCT-SPECIFIC (lab/report verified) ────────
   ["on running cloud 5",                    { floor:3, ceiling:4, substances:["Helion foam","recycled mesh upper","adhesives"], reason:"On Running Cloud 5 — Helion superfoam midsole, engineered mesh upper, no DWR treatment on non-waterproof model. Better Trail verified: 100% of On waterproof footwear PFAS-free as of 2025. Standard Cloud 5 has no waterproof treatment at all. Cleaner than Nike equivalent.", confidence:"high", category:"clothing" }],
   ["on running cloudmonster",              { floor:3, ceiling:4, substances:["Helion foam","recycled mesh","TPU","adhesives"], reason:"On Cloudmonster — dual density Helion superfoam, 92% recycled content upper, no DWR. No waterproof treatment means no PFAS treatment concern on this specific model. Cleaner than most major running shoe brands.", confidence:"high", category:"clothing" }],
@@ -3549,8 +3329,6 @@ const ENTRIES = [
   ["rhone commuter pant",          { floor:4, ceiling:5, substances:["polyester","wrinkle-resistant finish","moisture-wicking","synthetic dyes"], reason:"Rhone Commuter Pant — proprietary Flex-Knit fabric is stretch polyester blend with wrinkle-resistant treatment + moisture-wicking finish. Wrinkle-resistance in performance pants commonly uses chemical finishes. No PFAS-free claim, no bluesign certification. Worn against skin all day in work setting.", confidence:"high", category:"clothing" }],
   ["rhone reign short",            { floor:4, ceiling:5, substances:["polyester","moisture-wicking","synthetic dyes"], reason:"Rhone Reign Short — polyester moisture-wicking construction, same Flex-Knit technology as Commuter. No PFAS-free claim, no bluesign. Mid-tier concern for men's premium activewear.", confidence:"medium", category:"clothing" }],
   ["rhone swift short",            { floor:4, ceiling:5, substances:["polyester","moisture-wicking","synthetic dyes"], reason:"Rhone Swift Short — polyester + moisture-wicking finish. Same concern profile as Reign Short. No certifications.", confidence:"medium", category:"clothing" }],
-  ["rhone",                        { floor:4, ceiling:6, substances:["polyester","wrinkle-resistant","moisture-wicking","synthetic dyes"], reason:"Rhone — proprietary Flex-Knit polyester blend with chemical wrinkle-resistant and moisture-wicking finishes. No PFAS-free claim across the line, no bluesign or OEKO-TEX certification. Premium DTC men's brand with conventional performance chemistry.", confidence:"medium", category:"clothing" }],
-
 
   // ══════════════════════════════════════════════════════════════
   // DIAPER AND KIDS CLOTHING DEEP AUDIT
@@ -3562,7 +3340,6 @@ const ENTRIES = [
   ["huggies snug and dry",           { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching","synthetic colorants"], reason:"Huggies Snug and Dry — specific class action lawsuit documents Ahcovel chemical formulation causing chemical burns and blistering. Multiple years of consumer complaints. Hypoallergenic marketing disputed by litigation. Floor 7.", confidence:"high", category:"baby" }],
   ["huggies snug dry",               { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching"], reason:"Huggies Snug and Dry — Ahcovel chemical burn class action documented.", confidence:"high", category:"baby" }],
   ["huggies little movers",          { floor:7, ceiling:9, substances:["Ahcovel skin irritant","ECF bleaching","blue dye colorant","undisclosed formula change"], reason:"Huggies Little Movers — 2024 class action: company secretly changed formula without disclosure. Reports of rashes within 3 days of new batch. Blue blowout blocker dye linked to skin reactions. Ahcovel concern across Huggies line. Floor 7.", confidence:"high", category:"baby" }],
-  ["huggies little snugglers",       { floor:6, ceiling:8, substances:["Ahcovel skin irritant","ECF bleaching","polyethylene","polyurethane"], reason:"Huggies Little Snugglers — newborn/infant Huggies. Ahcovel class action concern applies across all Huggies lines. ECF bleaching. No fragrance or lotion but undisclosed irritant concern documented by litigation.", confidence:"high", category:"baby" }],
   ["huggies skin essentials",        { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Huggies Skin Essentials — newer 2024 line. Free of fragrance, parabens, phthalates, lotions, latex per Huggies. ECF bleaching (not TCF). Still petroleum-based synthetic materials. Cleaner than base Huggies but not clean-label. Dermatologist approved.", confidence:"high", category:"baby" }],
   ["pull-ups skin essentials",       { floor:4, ceiling:6, substances:["ECF bleaching","polypropylene","synthetic colorants"], reason:"Pull-Ups Skin Essentials — fragrance-free, phthalate-free, paraben-free, no lotion. ECF bleaching. Cleaner than standard Pull-Ups Night-Time but still ECF bleached synthetic construction.", confidence:"high", category:"baby" }],
   ["huggies special delivery",       { floor:4, ceiling:6, substances:["ECF bleaching","plant-based materials","polypropylene"], reason:"Huggies Special Delivery — ECF bleaching (not TCF), fragrance-free, hypoallergenic, plant-based outer cover. Better than standard Huggies but ECF concern remains. Cleaner than Little Movers/Snug & Dry.", confidence:"high", category:"baby" }],
@@ -3643,7 +3420,6 @@ const ENTRIES = [
   ["cat and jack oeko",          { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Cat & Jack OEKO-TEX certified.", confidence:"high", category:"clothing" }],
   ["cat & jack oeko",               { floor:2, ceiling:4, substances:["conventional cotton","OEKO-TEX"], reason:"Cat & Jack OEKO-TEX — OEKO-TEX Standard 100 certified items tested for harmful substances. No FR on OEKO-TEX items, no heavy metals, no restricted dyes. Benchmark clean for Target kids brand.", confidence:"high", category:"clothing" }],
 
-
   // ── PREMIUM BAMBOO KIDS PAJAMA BRANDS ────────────────────────
   // Framework: bamboo viscose is chemically processed (sodium hydroxide +
   // carbon disulfide) so not truly natural — but snug-fit = no FR chemicals,
@@ -3721,7 +3497,6 @@ const ENTRIES = [
   ["bali underwear",                 { floor:3, ceiling:5, substances:["nylon","spandex","cotton","synthetic dyes"], reason:"Bali underwear — nylon/cotton/spandex blend. Hanesbrands construction. No certifications.", confidence:"medium", category:"clothing" }],
   ["warners bra",                    { floor:3, ceiling:5, substances:["nylon","spandex","polyester","synthetic dyes"], reason:"Warners (PVH brand) — nylon/spandex construction, no OEKO-TEX certification. Mass-market bra with standard synthetic concern.", confidence:"medium", category:"clothing" }],
   ["warners",                        { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Warners — PVH brand, conventional nylon/spandex. No certifications.", confidence:"medium", category:"clothing" }],
-  ["soma bra",                       { floor:3, ceiling:5, substances:["nylon","spandex","polyester foam","synthetic dyes"], reason:"Soma bras — nylon/spandex, polyester foam cups, synthetic dyes. Chico's FAS brand. No OEKO-TEX or PFAS-free claim. Mid-tier synthetic concern for intimates worn against skin daily.", confidence:"medium", category:"clothing" }],
   ["soma",                           { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"Soma — Chico's brand, nylon/spandex construction. No certifications. Standard concern.", confidence:"medium", category:"clothing" }],
   ["natori bra",                     { floor:3, ceiling:5, substances:["nylon","spandex","lace","synthetic dyes"], reason:"Natori — luxury nylon/spandex with lace. No OEKO-TEX certification. Premium price but conventional synthetic construction. Lace may contain disperse dyes (skin sensitizer concern).", confidence:"medium", category:"clothing" }],
   ["cosabella",                      { floor:3, ceiling:5, substances:["nylon","spandex","microfiber","synthetic dyes"], reason:"Cosabella — Italian luxury intimates, nylon/spandex, OEKO-TEX certified on some lines since 2021. Better transparency than most luxury brands. Synthetic construction with microplastic concern.", confidence:"medium", category:"clothing" }],
@@ -3732,12 +3507,9 @@ const ENTRIES = [
   // ── CLEAN DTC UNDERWEAR BRANDS ────────────────────────────────
   ["negative underwear",             { floor:2, ceiling:4, substances:["recycled nylon","spandex","OEKO-TEX certified"], reason:"Negative Underwear — OEKO-TEX Standard 100 certified, recycled nylon construction. No intentionally added PFAS. One of the cleaner DTC bra and underwear brands. Still synthetic with microplastic concern.", confidence:"medium", category:"clothing" }],
   ["tomboyx",                        { floor:2, ceiling:4, substances:["TENCEL","cotton","spandex","OEKO-TEX certified"], reason:"TomboyX — OEKO-TEX certified fabric, TENCEL and organic cotton options. Third-party tested free from PFOS and PFOA. Gender-inclusive sizing. Cleaner material approach than most mass-market underwear.", confidence:"medium", category:"clothing" }],
-  ["meundies",                       { floor:2, ceiling:4, substances:["MicroModal","spandex"], reason:"MeUndies — MicroModal (beech tree derived) + spandex. No FR treatment, no PFAS-based performance finish. OEKO-TEX certified fabric. Chemical processing of Modal is cleaner than bamboo viscose (closed-loop process). One of the better mainstream synthetic alternatives.", confidence:"high", category:"clothing" }],
   ["kindred bravely",                { floor:2, ceiling:4, substances:["nylon","spandex","OEKO-TEX certified"], reason:"Kindred Bravely — maternity and nursing intimates, OEKO-TEX Standard 100 certified. No harmful substances in tested categories. Better certification than most nursing bra brands.", confidence:"medium", category:"clothing" }],
-  ["boody",                          { floor:2, ceiling:4, substances:["bamboo viscose","spandex"], reason:"Boody — bamboo viscose + spandex. OEKO-TEX certified. No FR chemicals, no PFAS claim. Bamboo viscose is chemically processed but OEKO-TEX verified clean. Cleaner than conventional nylon underwear.", confidence:"high", category:"clothing" }],
 
   // ── MEN'S UNDERWEAR ADDITIONS ─────────────────────────────────
-  ["pair of thieves",                { floor:3, ceiling:5, substances:["recycled polyester","spandex","synthetic dyes"], reason:"Pair of Thieves (Target men's) — recycled polyester/spandex blends. No OEKO-TEX certification. No PFAS-free claim. Mid-tier recycled synthetic. Recycled content is a modest positive.", confidence:"medium", category:"clothing" }],
   ["saxx underwear",                 { floor:3, ceiling:5, substances:["nylon","polyester","spandex","synthetic dyes"], reason:"SAXX — nylon/polyester/spandex construction with BallPark Pouch mesh. No OEKO-TEX certification, no PFAS-free claim. Standard performance synthetic concern. Moisture-wicking through fiber structure not chemical coating.", confidence:"medium", category:"clothing" }],
   ["saxx briefs",                    { floor:3, ceiling:5, substances:["nylon","spandex","synthetic dyes"], reason:"SAXX — same profile as above.", confidence:"medium", category:"clothing" }],
   ["mack weldon underwear",          { floor:3, ceiling:5, substances:["Mack Weldon Silver","nylon","spandex","synthetic dyes"], reason:"Mack Weldon — silver-ion antimicrobial treatment on 18-Hour Jersey line + nylon/spandex construction. Silver nanoparticles are endocrine disruptors and leach into waterways. No OEKO-TEX certification.", confidence:"high", category:"clothing" }],
@@ -3774,7 +3546,6 @@ const ENTRIES = [
   // ── STEAK SAUCE AND SPECIALTY ─────────────────────────────────
   ["a1 original",               { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 Original Steak Sauce — corn syrup, caramel color (Class IV), potassium sorbate, tomato puree. Same as a1 steak sauce entry.", confidence:"high", category:"food_beverage" }],
   ["a.1. sauce",                 { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 Original — corn syrup, caramel color (Class IV, 4-MeI concern), potassium sorbate, tomato puree, vinegar. No HFCS in original but corn syrup is present. Caramel color is the primary concern — same class as used in Coke.", confidence:"high", category:"food_beverage" }],
-  ["a.1. sauce",                     { floor:4, ceiling:6, substances:["corn syrup","caramel color","potassium sorbate"], reason:"A1 sauce — same concern as above.", confidence:"high", category:"food_beverage" }],
   ["lea and perrins",                { floor:3, ceiling:5, substances:["molasses","corn syrup","caramel color","anchovies"], reason:"Lea & Perrins Worcestershire — corn syrup, molasses, caramel color, tamarind extract, anchovies, salt. Natural profile but corn syrup and caramel color are concerns. Concentrated use limits exposure.", confidence:"high", category:"food_beverage" }],
 
   // ── MUSTARD ───────────────────────────────────────────────────
@@ -3785,8 +3556,6 @@ const ENTRIES = [
   // ── PASTA SAUCE ───────────────────────────────────────────────
   ["classico",           { floor:2, ceiling:4, substances:["tomatoes","olive oil","garlic","citric acid"], reason:"Classico — tomato puree, crushed tomatoes, olive oil, onions, garlic, basil, salt, citric acid. No HFCS, no added sugar in most varieties, no artificial flavors. Better than Ragu or Newman's Own pasta sauce. Citric acid is the only additive concern.", confidence:"high", category:"food_beverage" }],
   ["newman's own marinara",          { floor:2, ceiling:4, substances:["tomatoes","olive oil","onions","garlic"], reason:"Newman's Own Marinara — tomatoes, olive oil, onions, garlic, salt, citric acid. Simple ingredients, no HFCS, no artificial flavors. Similar to Classico. Profits to charity.", confidence:"high", category:"food_beverage" }],
-  ["prego traditional",              { floor:3, ceiling:5, substances:["tomato puree","soybean oil","sugar","citric acid"], reason:"Prego Traditional — tomato puree, soybean oil, sugar, onions, salt, citric acid. Added sugar and soybean oil are concerns vs. Rao's or Classico. Standard mass-market pasta sauce.", confidence:"high", category:"food_beverage" }],
-  ["ragu traditional",               { floor:3, ceiling:5, substances:["tomato puree","soybean oil","sugar","citric acid"], reason:"Ragu Traditional — tomato puree, soybean oil, sugar, added olive oil, salt. Similar to Prego. Soybean oil and added sugar are the main concerns vs cleaner alternatives.", confidence:"high", category:"food_beverage" }],
 
   // ── SPICES AND SEASONINGS ──────────────────────────────────────
   ["mccormick garlic",              { floor:1, ceiling:2, substances:["garlic"], reason:"McCormick pure garlic powder — single ingredient.", confidence:"high", category:"food_beverage" }],
@@ -3818,7 +3587,6 @@ const ENTRIES = [
   ["birds eye protein",              { floor:2, ceiling:4, substances:["vegetables","protein","sauce"], reason:"Birds Eye Protein Bowls — vegetables, chicken or other protein, simple sauces. Cleaner than Lean Cuisine but still processed sauces with natural flavors.", confidence:"medium", category:"food_beverage" }],
   ["green giant veggie bowl",        { floor:2, ceiling:4, substances:["vegetables","whole grains","natural flavor"], reason:"Green Giant Veggie Bowls — primarily vegetables and whole grains, simple ingredient lists, no artificial colors. Cleaner than most frozen meals.", confidence:"medium", category:"food_beverage" }],
   ["jimmy dean frozen",              { floor:5, ceiling:7, substances:["pork","sodium nitrite","BHT","modified starch"], reason:"Jimmy Dean frozen breakfast items — sodium nitrite in sausage, BHT preservative, modified starch, high sodium. Standard processed breakfast meat concern.", confidence:"high", category:"food_beverage" }],
-  ["hot pockets",                    { floor:5, ceiling:7, substances:["enriched flour","TBHQ","sodium","artificial flavor"], reason:"Hot Pockets — enriched white flour, TBHQ preservative, high sodium (600-800mg), modified starch, artificial flavor. Classic ultra-processed frozen snack.", confidence:"high", category:"food_beverage" }],
   ["el monterey",                    { floor:5, ceiling:7, substances:["enriched flour","soybean oil","sodium","artificial flavor"], reason:"El Monterey frozen burritos — enriched flour, soybean oil, high sodium, modified starch, artificial flavors. Budget frozen Mexican with standard UPF concerns.", confidence:"medium", category:"food_beverage" }],
   ["red baron pizza",                { floor:5, ceiling:7, substances:["enriched flour","soybean oil","modified starch","artificial flavor"], reason:"Red Baron frozen pizza — enriched white flour, soybean oil, modified food starch, artificial flavor, high sodium. Classic ultra-processed frozen pizza.", confidence:"high", category:"food_beverage" }],
   ["california pizza kitchen frozen", { floor:4, ceiling:6, substances:["enriched flour","soybean oil","natural flavor","sodium"], reason:"California Pizza Kitchen frozen — slightly cleaner than Red Baron (no artificial flavor in some), enriched flour, soybean oil, still high sodium. Mid-tier frozen pizza.", confidence:"medium", category:"food_beverage" }],
@@ -3884,12 +3652,9 @@ const ENTRIES = [
   ["hims hair loss",                 { floor:3, ceiling:5, substances:["minoxidil","alcohol","propylene glycol"], reason:"Hims Minoxidil — minoxidil (FDA-approved drug), propylene glycol, alcohol. Pharmaceutical active ingredient with known skin sensitization from propylene glycol. Score reflects drug actives in personal care context.", confidence:"high", category:"personal_care" }],
   ["native body wash",               { floor:2, ceiling:4, substances:["sodium cocoyl isethionate","glycerin","fragrance"], reason:"Native Body Wash — coconut oil-derived cleansers, glycerin, no sulfates, no parabens, no phthalates. Synthetic fragrance remains a concern on scented varieties. Fragrance-free versions score lower.", confidence:"high", category:"personal_care" }],
   ["dollar shave club",              { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","SLS","parabens on some"], reason:"Dollar Shave Club shave products — standard drugstore concern profile: synthetic fragrance, propylene glycol, SLS in shave creams, some parabens in older formulations. Mid-tier men's grooming.", confidence:"medium", category:"personal_care" }],
-  ["old spice deodorant",            { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","BHT"], reason:"Old Spice deodorant — synthetic fragrance, propylene glycol, BHT antioxidant. No aluminum (deodorant, not antiperspirant). Standard mass-market deodorant without aluminum but with fragrance concern.", confidence:"high", category:"personal_care" }],
-  ["old spice antiperspirant",       { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","propylene glycol","BHT"], reason:"Old Spice Antiperspirant — aluminum zirconium (endocrine disruption concern, breast tissue proximity), synthetic fragrance, BHT, propylene glycol. Floor fires on aluminum antiperspirant.", confidence:"high", category:"personal_care" }],
   ["gillette body wash",             { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","SLS"], reason:"Gillette Body Wash — SLS, synthetic fragrance, propylene glycol. Standard mass-market body wash concern. No parabens in current formulation.", confidence:"medium", category:"personal_care" }],
   ["pantene shampoo",                { floor:4, ceiling:6, substances:["silicones","DMDM hydantoin","synthetic fragrance","SLES"], reason:"Pantene — SLES, synthetic fragrance, silicones (dimethicone), DMDM hydantoin (formaldehyde releaser). EWG rates Pantene products 4-7 due to formaldehyde-releasing preservative and synthetic fragrance.", confidence:"high", category:"personal_care" }],
   ["tresemme shampoo",               { floor:4, ceiling:6, substances:["DMDM hydantoin","SLES","silicones","synthetic fragrance"], reason:"TRESemmé — DMDM hydantoin (formaldehyde releaser), SLES, synthetic fragrance, silicones. Class action settled 2021 over DMDM hydantoin causing hair loss. Similar concern to Pantene.", confidence:"high", category:"personal_care" }],
-  ["head and shoulders",             { floor:4, ceiling:6, substances:["zinc pyrithione","SLES","synthetic fragrance","dimethicone"], reason:"Head & Shoulders — zinc pyrithione (antifungal active), SLES, synthetic fragrance, dimethicone silicone. Active ingredient is effective for dandruff but zinc pyrithione accumulates in aquatic environments.", confidence:"high", category:"personal_care" }],
 
   // ── SPECIFIC HIGH-SUGAR JUICES (nutrition baked in as fallback) ──
   ["natures nectar white grape",   { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:38, sodium_mg:25, calories:140}, substances:["38g natural sugar per 8oz"], reason:"Nature's Nectar White Grape Juice — 38g sugar per 8oz = 76% adult daily sugar limit, 152% of children's daily limit. Natural sugar has identical glycemic impact to added sugar.", confidence:"high", category:"beverage" }],
@@ -3902,7 +3667,6 @@ const ENTRIES = [
   ["ocean spray cranberry",          { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:30, sodium_mg:35, calories:120}, substances:["30g sugar per 8oz","HFCS"], reason:"Ocean Spray Cranberry Cocktail — primarily sugar water with minimal real juice. 30g sugar, often HFCS.", confidence:"high", category:"beverage" }],
   ["simply lemonade",                { floor:5, ceiling:6, kidsFloor:7, kidsCeiling:8, nutrition:{sugar_g:28, sodium_mg:10, calories:120}, substances:["28g sugar per 8oz"], reason:"Simply Lemonade — 28g sugar per 8oz. Clean ingredients but very high natural + added sugar.", confidence:"high", category:"beverage" }],
   ["minute maid orange juice",       { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:24, sodium_mg:5, calories:110}, substances:["24g natural sugar per 8oz"], reason:"Minute Maid OJ — 24g sugar per 8oz = 48% adult DV, 96% children's DV.", confidence:"high", category:"beverage" }],
-  ["tropicana orange juice",         { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, nutrition:{sugar_g:22, sodium_mg:0, calories:110}, substances:["22g natural sugar per 8oz"], reason:"Tropicana OJ — 22g sugar per 8oz = 44% adult DV, 88% children's DV. 'Flavor packs' added after pasteurization.", confidence:"high", category:"beverage" }],
   ["simply orange",                  { floor:4, ceiling:5, kidsFloor:6, kidsCeiling:7, nutrition:{sugar_g:22, sodium_mg:0, calories:110}, substances:["22g natural sugar per 8oz"], reason:"Simply Orange — 22g sugar per 8oz. No flavor packs claimed. Mid-tier OJ.", confidence:"high", category:"beverage" }],
   // ══════════════════════════════════════════════════════════════
   // COOKING OILS
@@ -3944,17 +3708,14 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
 
   ["modelo especial",                 { floor:2, ceiling:4, substances:["water","barley malt","corn","hops"], reason:"Modelo Especial — water, barley malt, non-malted cereals (corn), hops. Standard Mexican lager. Simple ingredients, no artificial additives, no added sugars. Moderate beer concern: alcohol, glyphosate residue on barley.", confidence:"high", category:"beverage" }],
-  ["michelob ultra",                  { floor:2, ceiling:4, substances:["water","barley malt","rice","hops"], reason:"Michelob Ultra — water, barley malt, rice, hops. Simple light beer ingredients. No artificial colors, no HFCS. Lower alcohol and calorie content. Same concern as standard beer: alcohol, possible glyphosate on grain.", confidence:"high", category:"beverage" }],
   ["stella artois beer",              { floor:2, ceiling:4, substances:["water","barley malt","corn","hops"], reason:"Stella Artois — water, barley malt, corn, hops, yeast. Standard European lager. Simple ingredients. Same baseline beer concern.", confidence:"high", category:"beverage" }],
   ["patron tequila",                  { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Patron — 100% blue agave tequila, no additives permitted under tequila regulations for 100% agave. Cleanest spirit category. Primary concern is alcohol itself.", confidence:"high", category:"beverage" }],
   ["don julio tequila",               { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Don Julio — 100% blue agave, estate-grown, no additives. Same clean profile as Patron for 100% agave tequila.", confidence:"high", category:"beverage" }],
   ["espolon tequila",                 { floor:1, ceiling:3, substances:["100% blue agave"], reason:"Espolon — 100% blue agave, certified. Clean tequila profile.", confidence:"high", category:"beverage" }],
-  ["jack daniels",                    { floor:2, ceiling:4, substances:["corn","rye","barley malt","iron-free spring water","charcoal filtered"], reason:"Jack Daniel's — corn, rye, malted barley, Tennessee spring water, Lincoln County Process charcoal filtration. No additives, relatively simple American whiskey. Charcoal mellowing is a clean process.", confidence:"high", category:"beverage" }],
   ["makers mark",                     { floor:2, ceiling:4, substances:["corn","red winter wheat","malted barley","water"], reason:"Maker's Mark — corn, soft red winter wheat, malted barley, limestone spring water. No rye, distinctive wheated bourbon profile. Simple clean whiskey ingredients.", confidence:"high", category:"beverage" }],
   ["crown royal",                     { floor:2, ceiling:4, substances:["corn","rye","malted barley","water"], reason:"Crown Royal — Canadian whisky blend, corn/rye/barley malt, no artificial additives. Standard clean whisky profile.", confidence:"high", category:"beverage" }],
   ["evan williams bourbon",           { floor:2, ceiling:4, substances:["corn","rye","barley malt"], reason:"Evan Williams — corn, rye, malted barley. Budget bourbon with same clean distilled spirit profile. No additives.", confidence:"high", category:"beverage" }],
   ["fireball",                 { floor:4, ceiling:6, substances:["whisky","cinnamon flavoring","sweeteners","propylene glycol"], reason:"Fireball Cinnamon Whisky — whisky + natural cinnamon flavoring + sweeteners + propylene glycol (used as carrier). Propylene glycol is FDA-approved but a synthetic additive in an alcoholic beverage. Flavored whisky, not straight whisky.", confidence:"high", category:"beverage" }],
-  ["captain morgan",                  { floor:3, ceiling:5, substances:["rum","natural flavors","caramel color"], reason:"Captain Morgan Original Spiced — rum, natural flavors, caramel color (added color). Spiced rum with flavor additives. Caramel color is a mild concern. Higher concern than unflavored spirits.", confidence:"high", category:"beverage" }],
   ["malibu rum",                      { floor:4, ceiling:6, substances:["coconut rum","sugar","natural flavors","artificial flavor"], reason:"Malibu — rum, sugar, coconut flavoring (natural and artificial). Artificial flavoring and added sugar make this a higher concern than unflavored spirits. Liqueur-style product.", confidence:"high", category:"beverage" }],
   ["grey goose vodka",                { floor:1, ceiling:3, substances:["French wheat","spring water"], reason:"Grey Goose — soft winter wheat from Picardy, France + Gensac spring water. No additives, no flavoring in original. Premium unflavored vodka with simple clean ingredients.", confidence:"high", category:"beverage" }],
   ["hendricks gin",                   { floor:2, ceiling:4, substances:["grain spirits","11 botanicals","rose","cucumber"], reason:"Hendrick's Gin — grain spirit with 11 botanicals including rose and cucumber. Natural botanicals only. No artificial flavors or colors. Standard clean gin profile.", confidence:"high", category:"beverage" }],
@@ -3974,7 +3735,6 @@ const ENTRIES = [
   ["mcdonald's quarter pounder",      { floor:5, ceiling:7, substances:["beef","enriched bun","sodium","DATEM","natural flavor"], reason:"McDonald's Quarter Pounder — 100% beef, enriched white bun, DATEM, high sodium (1110mg), natural flavors. Fresh never-frozen beef since 2018 is a mild positive. Still enriched bun and high sodium.", confidence:"high", category:"restaurant" }],
   ["mcdonald's grilled chicken",      { floor:4, ceiling:6, substances:["chicken","sodium","natural flavor","enriched bun"], reason:"McDonald's Grilled Chicken Sandwich — grilled chicken breast, enriched bun, high sodium (820mg), natural flavors. Cleaner than McChicken (no frying) but still processed bun and sodium.", confidence:"medium", category:"restaurant" }],
   ["starbucks egg white bites",       { floor:3, ceiling:5, substances:["egg whites","cottage cheese","gruyere","sodium"], reason:"Starbucks Egg White Bites — egg whites, cottage cheese, gruyere, red pepper. Relatively clean protein option. Cooked sous vide. Primary concern: high sodium (440mg) and commercial preparation.", confidence:"high", category:"restaurant" }],
-  ["chipotle carnitas",               { floor:2, ceiling:4, substances:["pork","juniper berries","bay leaves","thyme"], reason:"Chipotle Carnitas — pork shoulder braised with juniper berries, bay leaves, thyme, black pepper. Exceptionally simple restaurant ingredients. One of cleanest fast-casual proteins.", confidence:"high", category:"restaurant" }],
 
   // ══════════════════════════════════════════════════════════════
   // PERSONAL CARE ADDITIONS
@@ -3984,7 +3744,6 @@ const ENTRIES = [
   ["dove original",              { floor:3, ceiling:5, substances:["sodium lauroyl isethionate","synthetic fragrance","BHT"], reason:"Dove Original — sodium lauroyl isethionate, synthetic fragrance, BHT.", confidence:"high", category:"personal_care" }],
   ["dove deep",              { floor:3, ceiling:5, substances:["sodium lauryl sulfate","synthetic fragrance","dimethicone"], reason:"Dove Deep Moisture — SLS, synthetic fragrance, dimethicone. Same as dove body wash profile.", confidence:"high", category:"personal_care" }],
   ["dove body",                  { floor:3, ceiling:5, substances:["sodium lauryl sulfate","synthetic fragrance","dimethicone","DMDM hydantoin"], reason:"Dove Body Wash — sodium lauryl sulfate, synthetic fragrance, dimethicone silicone, DMDM hydantoin (formaldehyde releaser) in some formulations. Positioned as moisturizing but standard mass-market synthetic concern.", confidence:"high", category:"personal_care" }],
-  ["dove soap",                   { floor:3, ceiling:5, substances:["sodium lauroyl isethionate","synthetic fragrance","BHT"], reason:"Dove Bar — sodium lauroyl isethionate (synthetic sulfactant), synthetic fragrance, BHT, stearic acid. Gentler than SLS but still synthetic fragrance and BHT antioxidant concern.", confidence:"high", category:"personal_care" }],
   ["dove deodorant",                  { floor:3, ceiling:5, substances:["synthetic fragrance","propylene glycol","dimethicone"], reason:"Dove Deodorant — synthetic fragrance, propylene glycol, dimethicone. No aluminum (deodorant version). Standard mass-market deodorant without aluminum concern.", confidence:"high", category:"personal_care" }],
   ["dove antiperspirant",             { floor:5, ceiling:7, substances:["aluminum zirconium","synthetic fragrance","propylene glycol","dimethicone"], reason:"Dove Antiperspirant — aluminum zirconium tetrachlorohydrex (endocrine concern, breast proximity), synthetic fragrance, propylene glycol. Floor fires on aluminum antiperspirant.", confidence:"high", category:"personal_care" }],
   ["aveeno body wash",                { floor:3, ceiling:5, substances:["colloidal oatmeal","phenoxyethanol","synthetic fragrance","SLS"], reason:"Aveeno Daily Moisturizing Body Wash — colloidal oatmeal (positive), SLS in some variants, phenoxyethanol, synthetic fragrance or 'fragrance-free' versions. Oat positioning is marketing-driven; formulation has standard concerns.", confidence:"high", category:"personal_care" }],
@@ -4085,159 +3844,24 @@ const WF_BANNED = new Set([
 
 const NUTRITION_LOOKUP = new Map([
   // ── CEREALS ────────────────────────────────────────────────────────────────
-  ["honey nut cheerios",           { sugar_g:12, sodium_mg:190, sat_fat_g:0.5, calories:140, fiber_g:2,  kidsFloor:6, kidsCeiling:9 }],
-  ["cheerios honey nut",           { sugar_g:12, sodium_mg:190, sat_fat_g:0.5, calories:140, fiber_g:2,  kidsFloor:6, kidsCeiling:9 }],
-  ["original cheerios",            { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:100, fiber_g:3,  kidsFloor:6, kidsCeiling:8 }],
-  ["cheerios original",            { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:100, fiber_g:3,  kidsFloor:6, kidsCeiling:8 }],
-  ["frosted flakes",               { sugar_g:11, sodium_mg:190, sat_fat_g:0,   calories:140,             kidsFloor:5, kidsCeiling:8 }],
-  ["froot loops",                  { sugar_g:12, sodium_mg:135, sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
-  ["lucky charms",                 { sugar_g:13, sodium_mg:200, sat_fat_g:0.5, calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["cap'n crunch",                 { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
-  ["capn crunch",                  { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
-  ["captain crunch",               { sugar_g:12, sodium_mg:200, sat_fat_g:0.5, calories:150,             kidsFloor:6, kidsCeiling:8 }],
-  ["cocoa puffs",                  { sugar_g:12, sodium_mg:160, sat_fat_g:0.5, calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["cinnamon toast crunch",        { sugar_g:12, sodium_mg:210, sat_fat_g:0.5, calories:170,             kidsFloor:7, kidsCeiling:9 }],
-  ["special k",                    { sugar_g:4,  sodium_mg:190, sat_fat_g:0,   calories:120, fiber_g:0,  kidsFloor:5, kidsCeiling:7 }],
-  ["rice krispies",                { sugar_g:4,  sodium_mg:190, sat_fat_g:0,   calories:130, fiber_g:0,  kidsFloor:5, kidsCeiling:7 }],
-  ["corn flakes",                  { sugar_g:3,  sodium_mg:200, sat_fat_g:0,   calories:100, fiber_g:1,  kidsFloor:5, kidsCeiling:7 }],
-  ["raisin bran",                  { sugar_g:18, sodium_mg:210, sat_fat_g:0,   calories:190, fiber_g:7,  kidsFloor:5, kidsCeiling:7 }],
-  ["honey bunches of oats",        { sugar_g:8,  sodium_mg:150, sat_fat_g:0.5, calories:160, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
-  ["wheaties",                     { sugar_g:5,  sodium_mg:180, sat_fat_g:0,   calories:130, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
-  ["life cereal",                  { sugar_g:8,  sodium_mg:160, sat_fat_g:0,   calories:160, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
-  ["trix cereal",                  { sugar_g:12, sodium_mg:180, sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["kashi go",                     { sugar_g:9,  sodium_mg:125, sat_fat_g:0.5, calories:180, fiber_g:8, protein_g:9, kidsFloor:3, kidsCeiling:6 }],
-  ["quaker oats",                  { sugar_g:1,  sodium_mg:0,   sat_fat_g:0.5, calories:150, fiber_g:4, protein_g:5, kidsFloor:4, kidsCeiling:6 }],
-  ["quaker instant oatmeal",       { sugar_g:1,  sodium_mg:75,  sat_fat_g:0.5, calories:100, fiber_g:3, protein_g:4, kidsFloor:4, kidsCeiling:6 }],
-  ["quaker maple brown sugar",     { sugar_g:15, sodium_mg:260, sat_fat_g:0.5, calories:160, fiber_g:3,  kidsFloor:5, kidsCeiling:7 }],
-  ["three wishes cereal",          { sugar_g:3,  sodium_mg:135, sat_fat_g:0,   calories:90,  fiber_g:2, protein_g:8, kidsFloor:2, kidsCeiling:5 }],
-  ["magic spoon cereal",           { sugar_g:3,  sodium_mg:200, sat_fat_g:0,   calories:130, fiber_g:0, protein_g:13,kidsFloor:3, kidsCeiling:5 }],
-  ["purely elizabeth granola",     { sugar_g:8,  sodium_mg:85,  sat_fat_g:1,   calories:200, fiber_g:3, protein_g:5, kidsFloor:3, kidsCeiling:5 }],
-  ["nature's path organic granola", { sugar_g:7, sodium_mg:90,  sat_fat_g:1,   calories:190, fiber_g:3, protein_g:4, kidsFloor:3, kidsCeiling:5 }],
 
   // ── CANDY & CHOCOLATE ──────────────────────────────────────────────────────
-  ["skittles",                     { sugar_g:47, sodium_mg:10,  sat_fat_g:0,   calories:230,             kidsFloor:9, kidsCeiling:9 }],
-  ["starburst",                    { sugar_g:34, sodium_mg:55,  sat_fat_g:1,   calories:240,             kidsFloor:8, kidsCeiling:9 }],
-  ["starbursts",                   { sugar_g:34, sodium_mg:55,  sat_fat_g:1,   calories:240,             kidsFloor:8, kidsCeiling:9 }],
-  ["sour patch kids",              { sugar_g:35, sodium_mg:40,  sat_fat_g:0,   calories:210,             kidsFloor:8, kidsCeiling:9 }],
-  ["jolly rancher",                { sugar_g:27, sodium_mg:10,  sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
-  ["airheads",                     { sugar_g:28, sodium_mg:40,  sat_fat_g:0,   calories:150,             kidsFloor:7, kidsCeiling:9 }],
-  ["swedish fish",                 { sugar_g:31, sodium_mg:40,  sat_fat_g:0,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
-  ["haribo gummy bears",           { sugar_g:22, sodium_mg:55,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["haribo",                       { sugar_g:22, sodium_mg:55,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["snickers",                     { sugar_g:27, sodium_mg:120, sat_fat_g:4,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
-  ["twix",                         { sugar_g:24, sodium_mg:110, sat_fat_g:5,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
-  ["kit kat",                      { sugar_g:22, sodium_mg:25,  sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["milky way",                    { sugar_g:35, sodium_mg:95,  sat_fat_g:5,   calories:260,             kidsFloor:8, kidsCeiling:9 }],
-  ["reese's",                      { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["reese's peanut butter cup",    { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["hershey's milk chocolate",     { sugar_g:24, sodium_mg:35,  sat_fat_g:8,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["hershey's kisses",             { sugar_g:22, sodium_mg:25,  sat_fat_g:7,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
-  ["hershey's special dark",       { sugar_g:18, sodium_mg:5,   sat_fat_g:5,   calories:180,             kidsFloor:6, kidsCeiling:8 }],
-  ["nutella",                      { sugar_g:22, sodium_mg:15,  sat_fat_g:4,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
-  ["lindt milk chocolate",         { sugar_g:24, sodium_mg:35,  sat_fat_g:9,   calories:230,             kidsFloor:7, kidsCeiling:8 }],
-  ["gushers",                      { sugar_g:14, sodium_mg:60,  sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
-  ["fruit roll-ups",               { sugar_g:12, sodium_mg:55,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
-  ["fruit by the foot",            { sugar_g:13, sodium_mg:50,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
 
   // ── SNACKS & CHIPS ─────────────────────────────────────────────────────────
-  ["doritos",                      { sugar_g:1,  sodium_mg:180, sat_fat_g:1.5, calories:140,             kidsFloor:5, kidsCeiling:8 }],
-  ["doritos cool ranch",           { sugar_g:2,  sodium_mg:190, sat_fat_g:1.5, calories:150,             kidsFloor:5, kidsCeiling:8 }],
-  ["doritos nacho",                { sugar_g:1,  sodium_mg:210, sat_fat_g:1.5, calories:140,             kidsFloor:5, kidsCeiling:8 }],
-  ["cheetos",                      { sugar_g:1,  sodium_mg:250, sat_fat_g:2,   calories:160,             kidsFloor:5, kidsCeiling:8 }],
-  ["cheetos flamin hot",           { sugar_g:1,  sodium_mg:300, sat_fat_g:2,   calories:170,             kidsFloor:5, kidsCeiling:8 }],
-  ["lays",                         { sugar_g:0,  sodium_mg:170, sat_fat_g:1.5, calories:160,             kidsFloor:4, kidsCeiling:7 }],
-  ["lays classic",                 { sugar_g:0,  sodium_mg:170, sat_fat_g:1.5, calories:160,             kidsFloor:4, kidsCeiling:7 }],
-  ["lays bbq",                     { sugar_g:2,  sodium_mg:210, sat_fat_g:1.5, calories:160,             kidsFloor:5, kidsCeiling:7 }],
-  ["pringles",                     { sugar_g:1,  sodium_mg:150, sat_fat_g:2,   calories:150,             kidsFloor:5, kidsCeiling:8 }],
-  ["ruffles",                      { sugar_g:1,  sodium_mg:160, sat_fat_g:2,   calories:160,             kidsFloor:4, kidsCeiling:7 }],
-  ["cheez it",                     { sugar_g:0,  sodium_mg:230, sat_fat_g:3,   calories:150,             kidsFloor:5, kidsCeiling:7 }],
-  ["cheez-its",                    { sugar_g:0,  sodium_mg:230, sat_fat_g:3,   calories:150,             kidsFloor:5, kidsCeiling:7 }],
-  ["goldfish",                     { sugar_g:0,  sodium_mg:230, sat_fat_g:2,   calories:140,             kidsFloor:4, kidsCeiling:7 }],
-  ["goldfish crackers",            { sugar_g:0,  sodium_mg:230, sat_fat_g:2,   calories:140,             kidsFloor:4, kidsCeiling:7 }],
-  ["ritz crackers",                { sugar_g:2,  sodium_mg:135, sat_fat_g:1.5, calories:80,              kidsFloor:4, kidsCeiling:7 }],
-  ["ritz",                         { sugar_g:2,  sodium_mg:135, sat_fat_g:1.5, calories:80,              kidsFloor:4, kidsCeiling:7 }],
-  ["oreo",                         { sugar_g:14, sodium_mg:135, sat_fat_g:2,   calories:160,             kidsFloor:6, kidsCeiling:8 }],
-  ["chips ahoy",                   { sugar_g:11, sodium_mg:135, sat_fat_g:2.5, calories:160,             kidsFloor:6, kidsCeiling:8 }],
-  ["nutter butter",                { sugar_g:11, sodium_mg:135, sat_fat_g:2,   calories:170,             kidsFloor:6, kidsCeiling:8 }],
-  ["pop tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
-  ["pop-tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
-  ["little debbie",                { sugar_g:19, sodium_mg:190, sat_fat_g:3,   calories:270,             kidsFloor:7, kidsCeiling:9 }],
-  ["cosmic brownies",              { sugar_g:25, sodium_mg:150, sat_fat_g:4,   calories:280,             kidsFloor:7, kidsCeiling:9 }],
-  ["skinny pop",                   { sugar_g:0,  sodium_mg:75,  sat_fat_g:0.5, calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
-  ["skinnypop",                    { sugar_g:0,  sodium_mg:75,  sat_fat_g:0.5, calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
-  ["boom chicka pop",              { sugar_g:2,  sodium_mg:95,  sat_fat_g:1,   calories:130, fiber_g:2,  kidsFloor:3, kidsCeiling:5 }],
-  ["veggie straws",                { sugar_g:1,  sodium_mg:290, sat_fat_g:0.5, calories:130,             kidsFloor:4, kidsCeiling:7 }],
-  ["pirate's booty",               { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:80,              kidsFloor:3, kidsCeiling:5 }],
-  ["pirates booty",                { sugar_g:1,  sodium_mg:140, sat_fat_g:0.5, calories:80,              kidsFloor:3, kidsCeiling:5 }],
-  ["clif bar",                     { sugar_g:21, sodium_mg:160, sat_fat_g:1,   calories:250, fiber_g:5, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
-  ["kind bar",                     { sugar_g:8,  sodium_mg:60,  sat_fat_g:3,   calories:200, fiber_g:3, protein_g:6, kidsFloor:4, kidsCeiling:6 }],
-  ["rxbar",                        { sugar_g:13, sodium_mg:200, sat_fat_g:2,   calories:210, fiber_g:5, protein_g:12,kidsFloor:4, kidsCeiling:6 }],
-  ["rx bar",                       { sugar_g:13, sodium_mg:200, sat_fat_g:2,   calories:210, fiber_g:5, protein_g:12,kidsFloor:4, kidsCeiling:6 }],
-  ["nature valley granola bar",    { sugar_g:12, sodium_mg:160, sat_fat_g:1,   calories:190, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
-  ["nature valley bar",            { sugar_g:12, sodium_mg:160, sat_fat_g:1,   calories:190, fiber_g:2,  kidsFloor:5, kidsCeiling:7 }],
-  ["nutri-grain bar",              { sugar_g:12, sodium_mg:150, sat_fat_g:1,   calories:130,             kidsFloor:5, kidsCeiling:7 }],
-  ["nutri grain bar",              { sugar_g:12, sodium_mg:150, sat_fat_g:1,   calories:130,             kidsFloor:5, kidsCeiling:7 }],
-  ["lunchables",                   { sugar_g:8,  sodium_mg:730, sat_fat_g:5,   calories:350,             kidsFloor:7, kidsCeiling:9 }],
-  ["lunchables pizza",             { sugar_g:11, sodium_mg:790, sat_fat_g:6,   calories:380,             kidsFloor:7, kidsCeiling:9 }],
-  ["lunchables turkey",            { sugar_g:5,  sodium_mg:800, sat_fat_g:4,   calories:320,             kidsFloor:7, kidsCeiling:9 }],
 
   // ── BEVERAGES ──────────────────────────────────────────────────────────────
-  ["red bull",                     { sugar_g:27, sodium_mg:105, sat_fat_g:0,   calories:110,             kidsFloor:8, kidsCeiling:9 }],
-  ["monster energy",               { sugar_g:27, sodium_mg:370, sat_fat_g:0,   calories:210,             kidsFloor:8, kidsCeiling:9 }],
-  ["bang energy",                  { sugar_g:0,  sodium_mg:40,  sat_fat_g:0,   calories:0,               kidsFloor:6, kidsCeiling:8 }],
-  ["celsius energy",               { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
-  ["alani nu energy",              { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
-  ["alani nu",                     { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
-  ["reign",                        { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:10,              kidsFloor:6, kidsCeiling:8 }],
-  ["c4 original",                  { sugar_g:0,  sodium_mg:200, sat_fat_g:0,   calories:0,               kidsFloor:6, kidsCeiling:8 }],
-  ["prime hydration",              { sugar_g:2,  sodium_mg:10,  sat_fat_g:0,   calories:25,              kidsFloor:5, kidsCeiling:7 }],
-  ["gatorade",                     { sugar_g:34, sodium_mg:270, sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["powerade",                     { sugar_g:34, sodium_mg:150, sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
-  ["tropicana orange juice",       { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["tropicana",                    { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["simply orange",                { sugar_g:23, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["florida's natural",            { sugar_g:22, sodium_mg:0,   sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["minute maid",                  { sugar_g:24, sodium_mg:15,  sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["minute maid lemonade",         { sugar_g:28, sodium_mg:15,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
-  ["capri sun",                    { sugar_g:16, sodium_mg:30,  sat_fat_g:0,   calories:60,              kidsFloor:5, kidsCeiling:8 }],
-  ["hi-c fruit punch",             { sugar_g:28, sodium_mg:10,  sat_fat_g:0,   calories:130,             kidsFloor:7, kidsCeiling:9 }],
   ["kool-aid",                     { sugar_g:25, sodium_mg:35,  sat_fat_g:0,   calories:100,             kidsFloor:7, kidsCeiling:9 }],
-  ["snapple peach tea",            { sugar_g:37, sodium_mg:10,  sat_fat_g:0,   calories:160,             kidsFloor:7, kidsCeiling:9 }],
   ["arizona sweet tea",            { sugar_g:23, sodium_mg:10,  sat_fat_g:0,   calories:90,              kidsFloor:6, kidsCeiling:8 }],
-  ["lipton",                       { sugar_g:20, sodium_mg:10,  sat_fat_g:0,   calories:80,              kidsFloor:6, kidsCeiling:8 }],
-  ["honest tea",                   { sugar_g:10, sodium_mg:10,  sat_fat_g:0,   calories:45,              kidsFloor:4, kidsCeiling:6 }],
-  ["naked juice",                  { sugar_g:53, sodium_mg:10,  sat_fat_g:0,   calories:270,             kidsFloor:9, kidsCeiling:9 }],
-  ["odwalla",                      { sugar_g:42, sodium_mg:20,  sat_fat_g:0,   calories:220,             kidsFloor:8, kidsCeiling:9 }],
-  ["bolthouse farms juice",        { sugar_g:28, sodium_mg:40,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
   ["bolthouse farms green",        { sugar_g:30, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
   ["bolthouse farms protein",      { sugar_g:20, sodium_mg:260, sat_fat_g:2,   calories:320,             kidsFloor:6, kidsCeiling:8 }],
-  ["bolthouse farms",              { sugar_g:28, sodium_mg:50,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["snickers",                     { sugar_g:27, sodium_mg:120, sat_fat_g:4,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
   ["snickers bar",                 { sugar_g:27, sodium_mg:120, sat_fat_g:4,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
   ["snickers king size",           { sugar_g:54, sodium_mg:240, sat_fat_g:8,   calories:500,             kidsFloor:9, kidsCeiling:9 }],
-  ["jamba juice",                  { sugar_g:55, sodium_mg:55,  sat_fat_g:0,   calories:280,             kidsFloor:9, kidsCeiling:9 }],
   ["jamba",                        { sugar_g:55, sodium_mg:55,  sat_fat_g:0,   calories:280,             kidsFloor:9, kidsCeiling:9 }],
   ["v8 splash",                    { sugar_g:16, sodium_mg:70,  sat_fat_g:0,   calories:70,              kidsFloor:5, kidsCeiling:7 }],
   ["v8 vegetable juice",           { sugar_g:7,  sodium_mg:640, sat_fat_g:0,   calories:50,              kidsFloor:5, kidsCeiling:7 }],
   ["v8 fusion",                    { sugar_g:26, sodium_mg:70,  sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
   ["suja juice",                   { sugar_g:24, sodium_mg:20,  sat_fat_g:0,   calories:130,             kidsFloor:6, kidsCeiling:8 }],
-  ["pressed juicery",              { sugar_g:30, sodium_mg:15,  sat_fat_g:0,   calories:140,             kidsFloor:7, kidsCeiling:9 }],
-  ["evolution fresh",              { sugar_g:22, sodium_mg:10,  sat_fat_g:0,   calories:110,             kidsFloor:6, kidsCeiling:8 }],
-  ["ocean spray cranberry",        { sugar_g:28, sodium_mg:35,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
-  ["coca-cola",                    { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
-  ["coke",                         { sugar_g:39, sodium_mg:45,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
-  ["pepsi",                        { sugar_g:41, sodium_mg:30,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
-  ["mountain dew",                 { sugar_g:46, sodium_mg:65,  sat_fat_g:0,   calories:170,             kidsFloor:9, kidsCeiling:9 }],
-  ["sprite",                       { sugar_g:38, sodium_mg:65,  sat_fat_g:0,   calories:140,             kidsFloor:8, kidsCeiling:9 }],
-  ["dr pepper",                    { sugar_g:40, sodium_mg:55,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
   ["root beer",                    { sugar_g:39, sodium_mg:50,  sat_fat_g:0,   calories:150,             kidsFloor:8, kidsCeiling:9 }],
-  ["lemonade",                     { sugar_g:28, sodium_mg:15,  sat_fat_g:0,   calories:120,             kidsFloor:7, kidsCeiling:8 }],
-  ["chocolate milk",               { sugar_g:25, sodium_mg:180, sat_fat_g:2.5, calories:200, protein_g:8, kidsFloor:6, kidsCeiling:8 }],
-  ["starbucks frappuccino",        { sugar_g:46, sodium_mg:90,  sat_fat_g:3,   calories:290,             kidsFloor:8, kidsCeiling:9 }],
-  ["starbucks pumpkin spice latte",{ sugar_g:50, sodium_mg:240, sat_fat_g:5,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
-  ["dutch bros",                   { sugar_g:40, sodium_mg:110, sat_fat_g:4,   calories:320,             kidsFloor:8, kidsCeiling:9 }],
-  ["smoothie king",                { sugar_g:60, sodium_mg:120, sat_fat_g:2,   calories:450,             kidsFloor:9, kidsCeiling:9 }],
-  ["jamba juice",                  { sugar_g:60, sodium_mg:90,  sat_fat_g:1,   calories:380,             kidsFloor:9, kidsCeiling:9 }],
   ["tropical smoothie cafe",       { sugar_g:55, sodium_mg:130, sat_fat_g:1,   calories:400,             kidsFloor:9, kidsCeiling:9 }],
   ["tropical smoothie",            { sugar_g:55, sodium_mg:130, sat_fat_g:1,   calories:400,             kidsFloor:9, kidsCeiling:9 }],
   ["planet smoothie",              { sugar_g:52, sodium_mg:100, sat_fat_g:1,   calories:380,             kidsFloor:9, kidsCeiling:9 }],
@@ -4245,79 +3869,19 @@ const NUTRITION_LOOKUP = new Map([
   ["daily harvest",                { sugar_g:18, sodium_mg:90,  sat_fat_g:1,   calories:250,             kidsFloor:6, kidsCeiling:8 }],
   ["snickers almond",              { sugar_g:25, sodium_mg:110, sat_fat_g:3,   calories:240,             kidsFloor:7, kidsCeiling:9 }],
   ["snickers peanut butter",       { sugar_g:28, sodium_mg:150, sat_fat_g:5,   calories:280,             kidsFloor:7, kidsCeiling:9 }],
-  ["kit kat",                      { sugar_g:22, sodium_mg:35,  sat_fat_g:5,   calories:220,             kidsFloor:7, kidsCeiling:9 }],
   ["reeses peanut butter cups",    { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
   ["reeses",                       { sugar_g:21, sodium_mg:150, sat_fat_g:5,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["skittles",                     { sugar_g:45, sodium_mg:75,  sat_fat_g:0,   calories:250,             kidsFloor:8, kidsCeiling:9 }],
-  ["starburst",                    { sugar_g:34, sodium_mg:55,  sat_fat_g:0,   calories:240,             kidsFloor:8, kidsCeiling:9 }],
-  ["twix",                         { sugar_g:24, sodium_mg:95,  sat_fat_g:5,   calories:250,             kidsFloor:7, kidsCeiling:9 }],
-  ["milky way",                    { sugar_g:35, sodium_mg:95,  sat_fat_g:5,   calories:260,             kidsFloor:8, kidsCeiling:9 }],
   ["3 musketeers",                 { sugar_g:40, sodium_mg:90,  sat_fat_g:5,   calories:260,             kidsFloor:8, kidsCeiling:9 }],
-  ["white claw",                   { sugar_g:2,  sodium_mg:10,  sat_fat_g:0,   calories:100,             kidsFloor:4, kidsCeiling:6 }],
-  ["truly hard seltzer",           { sugar_g:1,  sodium_mg:10,  sat_fat_g:0,   calories:100,             kidsFloor:4, kidsCeiling:6 }],
-  ["bud light",                    { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:110,             kidsFloor:3, kidsCeiling:5 }],
-  ["budweiser",                    { sugar_g:0,  sodium_mg:10,  sat_fat_g:0,   calories:145,             kidsFloor:3, kidsCeiling:5 }],
-  ["coors light",                  { sugar_g:1,  sodium_mg:10,  sat_fat_g:0,   calories:102,             kidsFloor:3, kidsCeiling:5 }],
 
   // ── BREAKFAST ──────────────────────────────────────────────────────────────
-  ["eggo waffles",                 { sugar_g:6,  sodium_mg:370, sat_fat_g:1.5, calories:280,             kidsFloor:6, kidsCeiling:8 }],
-  ["eggo",                         { sugar_g:6,  sodium_mg:370, sat_fat_g:1.5, calories:280,             kidsFloor:6, kidsCeiling:8 }],
   ["pancake mix",                  { sugar_g:4,  sodium_mg:580, sat_fat_g:0.5, calories:200,             kidsFloor:5, kidsCeiling:7 }],
-  ["bisquick",                     { sugar_g:4,  sodium_mg:580, sat_fat_g:0.5, calories:160,             kidsFloor:5, kidsCeiling:7 }],
-  ["aunt jemima pancake",          { sugar_g:4,  sodium_mg:680, sat_fat_g:0.5, calories:200,             kidsFloor:5, kidsCeiling:7 }],
-  ["aunt jemima syrup",            { sugar_g:32, sodium_mg:110, sat_fat_g:0,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["mrs butterworth",              { sugar_g:32, sodium_mg:85,  sat_fat_g:0,   calories:210,             kidsFloor:7, kidsCeiling:9 }],
-  ["log cabin syrup",              { sugar_g:30, sodium_mg:75,  sat_fat_g:0,   calories:200,             kidsFloor:7, kidsCeiling:9 }],
-  ["pop tarts",                    { sugar_g:17, sodium_mg:190, sat_fat_g:2,   calories:200,             kidsFloor:6, kidsCeiling:8 }],
-  ["pillsbury cinnamon rolls",     { sugar_g:13, sodium_mg:340, sat_fat_g:4,   calories:280,             kidsFloor:6, kidsCeiling:8 }],
 
   // ── FAST FOOD & RESTAURANT ─────────────────────────────────────────────────
-  ["big mac",                      { sugar_g:9,  sodium_mg:1010,sat_fat_g:11,  calories:550, protein_g:25,kidsFloor:7, kidsCeiling:9 }],
-  ["mcdonald's french fries",      { sugar_g:0,  sodium_mg:400, sat_fat_g:2,   calories:320, fiber_g:3,   kidsFloor:6, kidsCeiling:8 }],
-  ["mcdonald's quarter pounder",   { sugar_g:9,  sodium_mg:1110,sat_fat_g:14,  calories:520, protein_g:30,kidsFloor:7, kidsCeiling:9 }],
-  ["chicken mcnuggets",            { sugar_g:0,  sodium_mg:470, sat_fat_g:2.5, calories:190, protein_g:14,kidsFloor:7, kidsCeiling:9 }],
-  ["mcflurry",                     { sugar_g:66, sodium_mg:170, sat_fat_g:9,   calories:510,             kidsFloor:9, kidsCeiling:9 }],
-  ["mcdonald's hotcakes",          { sugar_g:45, sodium_mg:580, sat_fat_g:5,   calories:590,             kidsFloor:8, kidsCeiling:9 }],
-  ["sausage mcmuffin",             { sugar_g:3,  sodium_mg:770, sat_fat_g:9,   calories:400, protein_g:21,kidsFloor:7, kidsCeiling:9 }],
-  ["egg mcmuffin",                 { sugar_g:3,  sodium_mg:750, sat_fat_g:5,   calories:310, protein_g:17,kidsFloor:7, kidsCeiling:9 }],
-  ["whopper",                      { sugar_g:11, sodium_mg:1120,sat_fat_g:13,  calories:660, protein_g:28,kidsFloor:7, kidsCeiling:9 }],
-  ["baconator",                    { sugar_g:9,  sodium_mg:1330,sat_fat_g:22,  calories:940, protein_g:57,kidsFloor:8, kidsCeiling:9 }],
-  ["wendy's frosty",               { sugar_g:47, sodium_mg:230, sat_fat_g:5,   calories:350,             kidsFloor:8, kidsCeiling:9 }],
   ["wendy's chili",                { sugar_g:8,  sodium_mg:980, sat_fat_g:2.5, calories:250, protein_g:17,fiber_g:6, kidsFloor:6, kidsCeiling:8 }],
-  ["chick-fil-a crispy",           { sugar_g:6,  sodium_mg:1350,sat_fat_g:4,   calories:470, protein_g:27,kidsFloor:7, kidsCeiling:9 }],
-  ["chick-fil-a grilled",          { sugar_g:4,  sodium_mg:910, sat_fat_g:1,   calories:320, protein_g:40,kidsFloor:6, kidsCeiling:8 }],
-  ["popeyes chicken sandwich",     { sugar_g:5,  sodium_mg:1440,sat_fat_g:7,   calories:700, protein_g:28,kidsFloor:7, kidsCeiling:9 }],
-  ["kfc original recipe",          { sugar_g:0,  sodium_mg:1160,sat_fat_g:5,   calories:400, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
-  ["panda express orange chicken", { sugar_g:19, sodium_mg:820, sat_fat_g:5,   calories:490, protein_g:19,kidsFloor:7, kidsCeiling:9 }],
-  ["panda express fried rice",     { sugar_g:3,  sodium_mg:900, sat_fat_g:1.5, calories:530, fiber_g:3,   kidsFloor:7, kidsCeiling:9 }],
   ["chipotle burrito bowl",        { sugar_g:3,  sodium_mg:890, sat_fat_g:4,   calories:560, protein_g:40,fiber_g:8, kidsFloor:6, kidsCeiling:8 }],
-  ["chipotle bowl",                { sugar_g:3,  sodium_mg:890, sat_fat_g:4,   calories:560, protein_g:40,fiber_g:8, kidsFloor:6, kidsCeiling:8 }],
-  ["taco bell chalupa",            { sugar_g:5,  sodium_mg:710, sat_fat_g:7,   calories:370, protein_g:17,kidsFloor:6, kidsCeiling:8 }],
-  ["taco bell crunchwrap",         { sugar_g:5,  sodium_mg:1170,sat_fat_g:8,   calories:530, protein_g:17,kidsFloor:7, kidsCeiling:9 }],
-  ["olive garden fettuccine alfredo",{ sugar_g:4,sodium_mg:1080,sat_fat_g:29,  calories:1220,protein_g:36,kidsFloor:8, kidsCeiling:9 }],
-  ["olive garden breadsticks",     { sugar_g:2,  sodium_mg:460, sat_fat_g:2,   calories:140,             kidsFloor:6, kidsCeiling:8 }],
-  ["panera broccoli cheddar soup", { sugar_g:8,  sodium_mg:950, sat_fat_g:10,  calories:360, protein_g:14,kidsFloor:6, kidsCeiling:8 }],
-  ["panera mac and cheese",        { sugar_g:7,  sodium_mg:1110,sat_fat_g:18,  calories:800, protein_g:30,kidsFloor:7, kidsCeiling:9 }],
-  ["domino's pepperoni pizza",     { sugar_g:4,  sodium_mg:820, sat_fat_g:7,   calories:380, protein_g:16,kidsFloor:6, kidsCeiling:8 }],
-  ["crumbl cookie",                { sugar_g:55, sodium_mg:320, sat_fat_g:15,  calories:700,             kidsFloor:9, kidsCeiling:9 }],
-  ["dairy queen blizzard",         { sugar_g:74, sodium_mg:280, sat_fat_g:14,  calories:690,             kidsFloor:9, kidsCeiling:9 }],
-  ["sonic cherry limeade",         { sugar_g:65, sodium_mg:45,  sat_fat_g:0,   calories:270,             kidsFloor:9, kidsCeiling:9 }],
-  ["raising cane's chicken tenders",{ sugar_g:1, sodium_mg:470, sat_fat_g:3,   calories:400, protein_g:39,kidsFloor:6, kidsCeiling:8 }],
   ["culvers butterburger",         { sugar_g:8,  sodium_mg:700, sat_fat_g:8,   calories:440, protein_g:28,kidsFloor:6, kidsCeiling:8 }],
-  ["arbys roast beef",             { sugar_g:5,  sodium_mg:970, sat_fat_g:4,   calories:360, protein_g:23,kidsFloor:7, kidsCeiling:8 }],
-  ["wingstop wings",               { sugar_g:2,  sodium_mg:1260,sat_fat_g:7,   calories:520, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
-  ["wingstop",                     { sugar_g:2,  sodium_mg:1260,sat_fat_g:7,   calories:520, protein_g:38,kidsFloor:7, kidsCeiling:9 }],
-  ["buffalo wild wings",           { sugar_g:3,  sodium_mg:1560,sat_fat_g:7,   calories:620, protein_g:40,kidsFloor:7, kidsCeiling:9 }],
-  ["ihop buttermilk pancakes",     { sugar_g:8,  sodium_mg:1760,sat_fat_g:5,   calories:490,             kidsFloor:7, kidsCeiling:9 }],
 
   // ── CONDIMENTS ─────────────────────────────────────────────────────────────
-  ["heinz ketchup",                { sugar_g:4,  sodium_mg:160, sat_fat_g:0,   calories:20,              kidsFloor:3, kidsCeiling:6 }],
-  ["sweet baby ray's",             { sugar_g:16, sodium_mg:290, sat_fat_g:0,   calories:70,              kidsFloor:5, kidsCeiling:7 }],
-  ["stubbs bbq",                   { sugar_g:9,  sodium_mg:280, sat_fat_g:0,   calories:50,              kidsFloor:3, kidsCeiling:5 }],
-  ["a1 original",                  { sugar_g:3,  sodium_mg:280, sat_fat_g:0,   calories:15,              kidsFloor:4, kidsCeiling:6 }],
-  ["hidden valley ranch",          { sugar_g:1,  sodium_mg:260, sat_fat_g:2.5, calories:130,             kidsFloor:4, kidsCeiling:6 }],
-  ["hellmanns real",               { sugar_g:0,  sodium_mg:90,  sat_fat_g:1.5, calories:90,              kidsFloor:3, kidsCeiling:5 }],
-  ["miracle whip",                 { sugar_g:3,  sodium_mg:130, sat_fat_g:0.5, calories:35,              kidsFloor:4, kidsCeiling:6 }],
 
   // ── DAIRY ──────────────────────────────────────────────────────────────────
   // Mascarpone: cream + citric/tartaric acid — 2 ingredients, no additives
@@ -4330,471 +3894,87 @@ const NUTRITION_LOOKUP = new Map([
   ["burrata",                       { floor:1, ceiling:2, substances:[], reason:"Burrata — fresh mozzarella + cream. Two ingredients, no additives.", confidence:"high", category:"food_beverage" }],
   ["ricotta",                       { floor:1, ceiling:3, substances:[], reason:"Ricotta — whey + cream or milk + acid. Simple ingredients, low concern unless additives present.", confidence:"high", category:"food_beverage" }],
   ["cottage cheese",                { floor:2, ceiling:4, substances:[], reason:"Cottage cheese — milk + cultures + salt, sometimes gum thickeners. Clean base; some brands add carrageenan which bumps score.", confidence:"medium", category:"food_beverage" }],
-  ["yoplait",                      { sugar_g:19, sodium_mg:95,  sat_fat_g:1,   calories:150, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
-  ["chobani flip",                 { sugar_g:22, sodium_mg:75,  sat_fat_g:3,   calories:190, protein_g:12,kidsFloor:6, kidsCeiling:7 }],
-  ["dannon activia",               { sugar_g:16, sodium_mg:75,  sat_fat_g:1,   calories:120, protein_g:5, kidsFloor:5, kidsCeiling:7 }],
-  ["yoplait go-gurt",              { sugar_g:10, sodium_mg:80,  sat_fat_g:0.5, calories:80,  protein_g:3, kidsFloor:4, kidsCeiling:7 }],
-  ["yoplait gogurt",               { sugar_g:10, sodium_mg:80,  sat_fat_g:0.5, calories:80,  protein_g:3, kidsFloor:4, kidsCeiling:7 }],
-  ["kraft singles",                { sugar_g:1,  sodium_mg:250, sat_fat_g:2.5, calories:60,  protein_g:4, kidsFloor:4, kidsCeiling:6 }],
-  ["velveeta",                     { sugar_g:2,  sodium_mg:410, sat_fat_g:4,   calories:80,  protein_g:5, kidsFloor:5, kidsCeiling:7 }],
 
   // ── FROZEN ─────────────────────────────────────────────────────────────────
-  ["hot pockets",                  { sugar_g:3,  sodium_mg:680, sat_fat_g:5,   calories:300,             kidsFloor:7, kidsCeiling:8 }],
-  ["lean cuisine",                 { sugar_g:4,  sodium_mg:820, sat_fat_g:3,   calories:280, protein_g:17,kidsFloor:6, kidsCeiling:8 }],
-  ["stouffers",                    { sugar_g:5,  sodium_mg:980, sat_fat_g:7,   calories:380, protein_g:18,kidsFloor:7, kidsCeiling:8 }],
-  ["marie callender",              { sugar_g:5,  sodium_mg:900, sat_fat_g:7,   calories:420,             kidsFloor:7, kidsCeiling:8 }],
-  ["digiorno pepperoni",           { sugar_g:5,  sodium_mg:820, sat_fat_g:9,   calories:380, protein_g:16,kidsFloor:6, kidsCeiling:8 }],
-  ["red baron pepperoni",          { sugar_g:4,  sodium_mg:790, sat_fat_g:8,   calories:360, protein_g:15,kidsFloor:6, kidsCeiling:8 }],
-  ["totino's pizza rolls",         { sugar_g:2,  sodium_mg:420, sat_fat_g:2.5, calories:210,             kidsFloor:6, kidsCeiling:8 }],
-  ["el monterey",                  { sugar_g:2,  sodium_mg:560, sat_fat_g:4,   calories:280,             kidsFloor:6, kidsCeiling:7 }],
 
   // ── BREAD & BAKERY ─────────────────────────────────────────────────────────
-  ["wonder bread",                 { sugar_g:3,  sodium_mg:160, sat_fat_g:0.5, calories:80,              kidsFloor:4, kidsCeiling:6 }],
-  ["dave's killer bread",          { sugar_g:5,  sodium_mg:160, sat_fat_g:0,   calories:100, fiber_g:3, protein_g:5, kidsFloor:3, kidsCeiling:5 }],
-  ["thomas english muffins",       { sugar_g:1,  sodium_mg:200, sat_fat_g:0.5, calories:130, protein_g:4, kidsFloor:4, kidsCeiling:6 }],
-  ["king's hawaiian",              { sugar_g:10, sodium_mg:170, sat_fat_g:3,   calories:200,             kidsFloor:5, kidsCeiling:7 }],
-  ["pepperidge farm bread",        { sugar_g:4,  sodium_mg:150, sat_fat_g:0.5, calories:130,             kidsFloor:4, kidsCeiling:6 }],
-  ["mission flour tortillas",      { sugar_g:1,  sodium_mg:440, sat_fat_g:1,   calories:140,             kidsFloor:5, kidsCeiling:7 }],
 
   // ── PEANUT BUTTER & SPREADS ────────────────────────────────────────────────
-  ["jif peanut butter",            { sugar_g:3,  sodium_mg:135, sat_fat_g:3,   calories:190, protein_g:7, fiber_g:1, kidsFloor:4, kidsCeiling:6 }],
-  ["skippy peanut butter",         { sugar_g:3,  sodium_mg:150, sat_fat_g:3,   calories:190, protein_g:7, kidsFloor:4, kidsCeiling:6 }],
-  ["uncrustables",                 { sugar_g:11, sodium_mg:170, sat_fat_g:2.5, calories:210,             kidsFloor:5, kidsCeiling:7 }],
 
   // ── SOUPS & CANNED ─────────────────────────────────────────────────────────
-  ["campbell's chunky",            { sugar_g:4,  sodium_mg:870, sat_fat_g:2,   calories:190, protein_g:14,kidsFloor:6, kidsCeiling:8 }],
-  ["progresso soup",               { sugar_g:3,  sodium_mg:790, sat_fat_g:2,   calories:180, protein_g:11,kidsFloor:6, kidsCeiling:8 }],
   ["ramen",                        { sugar_g:2,  sodium_mg:1540,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
-  ["maruchan ramen",               { sugar_g:2,  sodium_mg:1540,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
-  ["top ramen",                    { sugar_g:1,  sodium_mg:1850,sat_fat_g:4,   calories:380,             kidsFloor:8, kidsCeiling:9 }],
 
   // ── PASTA & GRAINS ─────────────────────────────────────────────────────────
-  ["kraft mac",                    { sugar_g:5,  sodium_mg:580, sat_fat_g:2.5, calories:250, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
-  ["kraft macaroni",               { sugar_g:5,  sodium_mg:580, sat_fat_g:2.5, calories:250, protein_g:9, kidsFloor:6, kidsCeiling:8 }],
-  ["stouffer's mac",               { sugar_g:5,  sodium_mg:930, sat_fat_g:8,   calories:360, protein_g:14,kidsFloor:7, kidsCeiling:8 }],
 
   // ── KIDS FOOD ──────────────────────────────────────────────────────────────
-  ["gogo squeez",                  { sugar_g:12, sodium_mg:0,   sat_fat_g:0,   calories:60,  fiber_g:1,   kidsFloor:4, kidsCeiling:6 }],
-  ["plum organics kids",           { sugar_g:10, sodium_mg:20,  sat_fat_g:0,   calories:70,  fiber_g:2,   kidsFloor:3, kidsCeiling:5 }],
-  ["annie's organic mac",          { sugar_g:3,  sodium_mg:530, sat_fat_g:2,   calories:190, protein_g:8, kidsFloor:4, kidsCeiling:6 }],
-  ["mott's applesauce",            { sugar_g:11, sodium_mg:0,   sat_fat_g:0,   calories:50,  fiber_g:1,   kidsFloor:4, kidsCeiling:6 }],
-  ["welch's fruit snacks",         { sugar_g:19, sodium_mg:15,  sat_fat_g:0,   calories:80,              kidsFloor:7, kidsCeiling:9 }],
-  ["welchs fruit snacks",          { sugar_g:19, sodium_mg:15,  sat_fat_g:0,   calories:80,              kidsFloor:7, kidsCeiling:9 }],
-  ["yumearth fruit snacks",        { sugar_g:11, sodium_mg:10,  sat_fat_g:0,   calories:60,              kidsFloor:4, kidsCeiling:6 }],
-  ["clif kids zbar",               { sugar_g:11, sodium_mg:105, sat_fat_g:1,   calories:130, fiber_g:3, protein_g:3, kidsFloor:4, kidsCeiling:6 }],
-  ["rxbar kids",                   { sugar_g:9,  sodium_mg:160, sat_fat_g:1,   calories:130, fiber_g:3, protein_g:6, kidsFloor:3, kidsCeiling:5 }],
 
   // ── SODAS AND SUGARY DRINKS ───────────────────────────────────
-  ["coke classic",            { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
   ["coca cola classic",       { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["coca-cola",               { sugar_g:39, sodium_mg:45,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
   ["pepsi cola",              { sugar_g:41, sodium_mg:30,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
-  ["pepsi",                   { sugar_g:41, sodium_mg:30,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
-  ["diet coke",               { sugar_g:0,  sodium_mg:40,  sat_fat_g:0, calories:0 }],
   ["diet pepsi",              { sugar_g:0,  sodium_mg:35,  sat_fat_g:0, calories:0 }],
-  ["sprite",                  { sugar_g:38, sodium_mg:65,  sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["mountain dew",            { sugar_g:46, sodium_mg:60,  sat_fat_g:0, calories:170, kidsFloor:7, kidsCeiling:9 }],
-  ["dr pepper",               { sugar_g:40, sodium_mg:55,  sat_fat_g:0, calories:150, kidsFloor:7, kidsCeiling:9 }],
   ["fanta orange",            { sugar_g:44, sodium_mg:55,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
   ["root beer",               { sugar_g:43, sodium_mg:45,  sat_fat_g:0, calories:160, kidsFloor:7, kidsCeiling:9 }],
-  ["canada dry",              { sugar_g:35, sodium_mg:35,  sat_fat_g:0, calories:130, kidsFloor:7, kidsCeiling:9 }],
   ["schweppes",               { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
   ["ginger ale",              { sugar_g:33, sodium_mg:40,  sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
   ["tonic water",             { sugar_g:22, sodium_mg:30,  sat_fat_g:0, calories:90,  kidsFloor:6, kidsCeiling:8 }],
-  ["hi-c",                    { sugar_g:26, sodium_mg:10,  sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["kool aid jammers",        { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
-  ["kool-aid jammers",        { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
-  ["capri sun original",      { sugar_g:16, sodium_mg:30,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
-  ["hawaiian punch",          { sugar_g:15, sodium_mg:35,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
-  ["sunny d",                 { sugar_g:14, sodium_mg:40,  sat_fat_g:0, calories:60,  kidsFloor:5, kidsCeiling:7 }],
-  ["arizona iced tea",        { sugar_g:24, sodium_mg:10,  sat_fat_g:0, calories:90,  kidsFloor:6, kidsCeiling:8 }],
-  ["lipton brisk",            { sugar_g:22, sodium_mg:10,  sat_fat_g:0, calories:80,  kidsFloor:6, kidsCeiling:8 }],
-  ["vitaminwater",            { sugar_g:13, sodium_mg:0,   sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
-  ["vitamin water",           { sugar_g:13, sodium_mg:0,   sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
-  ["powerade",                { sugar_g:21, sodium_mg:150, sat_fat_g:0, calories:80,  kidsFloor:6, kidsCeiling:8 }],
-  ["powerade zero",           { sugar_g:0,  sodium_mg:150, sat_fat_g:0, calories:0 }],
-  ["gatorade zero",           { sugar_g:0,  sodium_mg:270, sat_fat_g:0, calories:0 }],
-  ["ocean spray cranberry cocktail", { sugar_g:25, sodium_mg:35, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["great value fruit punch", { sugar_g:28, sodium_mg:35,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["great value juice drink", { sugar_g:28, sodium_mg:35,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["pedialyte",               { sugar_g:9,  sodium_mg:370, sat_fat_g:0, calories:45 }],
 
   // ── ENERGY DRINKS ─────────────────────────────────────────────
-  ["red bull",                { sugar_g:27, sodium_mg:105, sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["monster energy",          { sugar_g:27, sodium_mg:370, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["bang energy",             { sugar_g:0,  sodium_mg:40,  sat_fat_g:0, calories:0 }],
-  ["celsius energy",          { sugar_g:0,  sodium_mg:10,  sat_fat_g:0, calories:10 }],
-  ["prime hydration",         { sugar_g:2,  sodium_mg:10,  sat_fat_g:0, calories:25 }],
-  ["alani nu",                { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:10 }],
-  ["reign",                   { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:10 }],
-  ["rockstar",                { sugar_g:24, sodium_mg:160, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["5 hour energy",           { sugar_g:0,  sodium_mg:18,  sat_fat_g:0, calories:4 }],
-  ["ghost energy drink",      { sugar_g:0,  sodium_mg:70,  sat_fat_g:0, calories:5 }],
-  ["nos energy",              { sugar_g:27, sodium_mg:55,  sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["c4",                      { sugar_g:0,  sodium_mg:200, sat_fat_g:0, calories:0 }],
 
   // ── ALCOHOL ───────────────────────────────────────────────────
-  ["barefoot",                { sugar_g:6,  sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["yellow tail wine",        { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["franzia",                 { sugar_g:5,  sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["apothic red",             { sugar_g:8,  sodium_mg:10, sat_fat_g:0, calories:130 }],
-  ["dark horse wine",         { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["jose cuervo gold",        { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:97 }],
-  ["fireball",                { sugar_g:11, sodium_mg:0,  sat_fat_g:0, calories:108 }],
-  ["malibu rum",              { sugar_g:14, sodium_mg:0,  sat_fat_g:0, calories:140 }],
-  ["captain morgan",          { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:86 }],
-  ["margarita mix",           { sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
-  ["jose cuervo margarita mix",{ sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
-  ["margaritaville",          { sugar_g:26, sodium_mg:60, sat_fat_g:0, calories:100 }],
-  ["master of mixes",         { sugar_g:29, sodium_mg:80, sat_fat_g:0, calories:110 }],
-  ["bud light",               { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:110 }],
-  ["budweiser",               { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:145 }],
-  ["coors light",             { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:102 }],
-  ["miller lite",             { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:96 }],
-  ["corona extra",            { sugar_g:0,  sodium_mg:10, sat_fat_g:0, calories:148 }],
-  ["white claw",              { sugar_g:2,  sodium_mg:10, sat_fat_g:0, calories:100 }],
-  ["truly hard seltzer",      { sugar_g:1,  sodium_mg:10, sat_fat_g:0, calories:100 }],
-  ["high noon seltzer",       { sugar_g:4,  sodium_mg:10, sat_fat_g:0, calories:100 }],
 
   // ── CANDY ─────────────────────────────────────────────────────
-  ["skittles",                { sugar_g:47, sodium_mg:10,  sat_fat_g:0,  calories:230, kidsFloor:9, kidsCeiling:9 }],
-  ["starburst",               { sugar_g:34, sodium_mg:55,  sat_fat_g:2,  calories:160, kidsFloor:8, kidsCeiling:9 }],
-  ["starbursts",              { sugar_g:34, sodium_mg:55,  sat_fat_g:2,  calories:160, kidsFloor:8, kidsCeiling:9 }],
-  ["snickers",                { sugar_g:27, sodium_mg:120, sat_fat_g:4,  calories:250, kidsFloor:8, kidsCeiling:9 }],
-  ["milky way",               { sugar_g:35, sodium_mg:95,  sat_fat_g:5,  calories:260, kidsFloor:8, kidsCeiling:9 }],
-  ["kit kat",                 { sugar_g:22, sodium_mg:30,  sat_fat_g:5,  calories:210, kidsFloor:7, kidsCeiling:9 }],
-  ["twix",                    { sugar_g:25, sodium_mg:95,  sat_fat_g:8,  calories:250, kidsFloor:8, kidsCeiling:9 }],
-  ["hershey's milk chocolate",{ sugar_g:24, sodium_mg:35,  sat_fat_g:8,  calories:210, kidsFloor:7, kidsCeiling:9 }],
-  ["hershey's kisses",        { sugar_g:22, sodium_mg:30,  sat_fat_g:7,  calories:190, kidsFloor:7, kidsCeiling:9 }],
-  ["hershey's special dark",  { sugar_g:21, sodium_mg:0,   sat_fat_g:6,  calories:180, kidsFloor:7, kidsCeiling:9 }],
-  ["airheads",                { sugar_g:16, sodium_mg:10,  sat_fat_g:0,  calories:60,  kidsFloor:5, kidsCeiling:8 }],
-  ["jolly rancher",           { sugar_g:17, sodium_mg:10,  sat_fat_g:0,  calories:70,  kidsFloor:5, kidsCeiling:8 }],
-  ["swedish fish",            { sugar_g:26, sodium_mg:35,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["haribo gummy bears",      { sugar_g:22, sodium_mg:20,  sat_fat_g:0,  calories:110, kidsFloor:6, kidsCeiling:9 }],
-  ["haribo",                  { sugar_g:22, sodium_mg:20,  sat_fat_g:0,  calories:110, kidsFloor:6, kidsCeiling:9 }],
-  ["sour patch kids",         { sugar_g:25, sodium_mg:55,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["ring pop",                { sugar_g:13, sodium_mg:0,   sat_fat_g:0,  calories:60,  kidsFloor:4, kidsCeiling:7 }],
-  ["black forest gummy",      { sugar_g:21, sodium_mg:5,   sat_fat_g:0,  calories:100, kidsFloor:6, kidsCeiling:8 }],
-  ["fruit roll-ups",          { sugar_g:10, sodium_mg:55,  sat_fat_g:0,  calories:50,  kidsFloor:4, kidsCeiling:7 }],
-  ["fruit by the foot",       { sugar_g:12, sodium_mg:50,  sat_fat_g:0,  calories:80,  kidsFloor:4, kidsCeiling:7 }],
-  ["gushers",                 { sugar_g:14, sodium_mg:45,  sat_fat_g:0,  calories:90,  kidsFloor:5, kidsCeiling:7 }],
-  ["stretch island",          { sugar_g:11, sodium_mg:0,   sat_fat_g:0,  calories:45,  kidsFloor:4, kidsCeiling:6 }],
-  ["nutella",                 { sugar_g:21, sodium_mg:15,  sat_fat_g:3,  calories:200, kidsFloor:7, kidsCeiling:9 }],
-  ["cosmic brownies",         { sugar_g:24, sodium_mg:150, sat_fat_g:4,  calories:270, kidsFloor:7, kidsCeiling:9 }],
-  ["little debbie swiss rolls",{ sugar_g:24, sodium_mg:150, sat_fat_g:5, calories:270, kidsFloor:7, kidsCeiling:9 }],
-  ["hostess twinkies",        { sugar_g:18, sodium_mg:190, sat_fat_g:4,  calories:270, kidsFloor:6, kidsCeiling:9 }],
-  ["hostess ding dongs",      { sugar_g:22, sodium_mg:160, sat_fat_g:8,  calories:360, kidsFloor:7, kidsCeiling:9 }],
-  ["hostess",                 { sugar_g:20, sodium_mg:175, sat_fat_g:6,  calories:310, kidsFloor:7, kidsCeiling:9 }],
-  ["entenmann's",             { sugar_g:18, sodium_mg:150, sat_fat_g:5,  calories:250, kidsFloor:6, kidsCeiling:8 }],
-  ["entenmanns",              { sugar_g:18, sodium_mg:150, sat_fat_g:5,  calories:250, kidsFloor:6, kidsCeiling:8 }],
-  ["krispy kreme",            { sugar_g:10, sodium_mg:95,  sat_fat_g:3,  calories:190, kidsFloor:5, kidsCeiling:7 }],
-  ["otis spunkmeyer",         { sugar_g:14, sodium_mg:210, sat_fat_g:4,  calories:250, kidsFloor:5, kidsCeiling:7 }],
-  ["pop tarts",               { sugar_g:17, sodium_mg:170, sat_fat_g:2,  calories:200, kidsFloor:6, kidsCeiling:8 }],
-  ["pop-tarts",               { sugar_g:17, sodium_mg:170, sat_fat_g:2,  calories:200, kidsFloor:6, kidsCeiling:8 }],
-  ["chips ahoy",              { sugar_g:11, sodium_mg:130, sat_fat_g:3,  calories:160, kidsFloor:5, kidsCeiling:7 }],
-  ["oreo",                    { sugar_g:14, sodium_mg:160, sat_fat_g:2,  calories:160, kidsFloor:5, kidsCeiling:7 }],
-  ["nutter butter",           { sugar_g:13, sodium_mg:110, sat_fat_g:2,  calories:170, kidsFloor:5, kidsCeiling:7 }],
-  ["nilla wafers",            { sugar_g:11, sodium_mg:90,  sat_fat_g:2,  calories:140, kidsFloor:4, kidsCeiling:7 }],
-  ["fig newtons",             { sugar_g:12, sodium_mg:95,  sat_fat_g:0,  calories:110, kidsFloor:4, kidsCeiling:6 }],
-  ["teddy grahams",           { sugar_g:8,  sodium_mg:95,  sat_fat_g:1,  calories:130, kidsFloor:4, kidsCeiling:6 }],
-  ["great value cookies",     { sugar_g:13, sodium_mg:140, sat_fat_g:3,  calories:160, kidsFloor:5, kidsCeiling:7 }],
 
   // ── CEREALS (additions) ───────────────────────────────────────
-  ["cap n crunch",            { sugar_g:12, sodium_mg:200, sat_fat_g:1, calories:150, fiber_g:1, kidsFloor:6, kidsCeiling:8 }],
-  ["cocoa puffs",             { sugar_g:13, sodium_mg:160, sat_fat_g:0, calories:140, fiber_g:1, kidsFloor:5, kidsCeiling:8 }],
-  ["trix cereal",             { sugar_g:12, sodium_mg:180, sat_fat_g:0, calories:140, fiber_g:2, kidsFloor:5, kidsCeiling:8 }],
-  ["corn flakes",             { sugar_g:4,  sodium_mg:200, sat_fat_g:0, calories:100, fiber_g:1 }],
-  ["rice krispies",           { sugar_g:4,  sodium_mg:190, sat_fat_g:0, calories:130, fiber_g:0 }],
-  ["total cereal",            { sugar_g:5,  sodium_mg:190, sat_fat_g:0, calories:140, fiber_g:3 }],
-  ["nutri-grain",             { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
-  ["nutri grain",             { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
-  ["nutrigrain bar",          { sugar_g:12, sodium_mg:160, sat_fat_g:1, calories:130, fiber_g:3, kidsFloor:5, kidsCeiling:7 }],
-  ["fiber one",               { sugar_g:0,  sodium_mg:140, sat_fat_g:0, calories:90,  fiber_g:9 }],
-  ["special k bar",           { sugar_g:12, sodium_mg:85,  sat_fat_g:1, calories:90,  fiber_g:1, kidsFloor:5, kidsCeiling:7 }],
 
   // ── SNACK CHIPS ───────────────────────────────────────────────
-  ["pringles original",       { sugar_g:1,  sodium_mg:150, sat_fat_g:3, calories:150 }],
-  ["lay's bbq",               { sugar_g:2,  sodium_mg:160, sat_fat_g:1, calories:160 }],
-  ["lays baked",              { sugar_g:2,  sodium_mg:130, sat_fat_g:0, calories:130 }],
-  ["fritos chili cheese",     { sugar_g:1,  sodium_mg:260, sat_fat_g:2, calories:160 }],
-  ["club crackers",           { sugar_g:3,  sodium_mg:230, sat_fat_g:3, calories:160 }],
-  ["pepperidge farm",         { sugar_g:4,  sodium_mg:170, sat_fat_g:2, calories:140 }],
-  ["cheetos original",        { sugar_g:0,  sodium_mg:250, sat_fat_g:2, calories:160 }],
-  ["orville redenbacher",     { sugar_g:0,  sodium_mg:310, sat_fat_g:3, calories:160 }],
-  ["act ii popcorn",          { sugar_g:0,  sodium_mg:300, sat_fat_g:3, calories:170 }],
-  ["act ii",                  { sugar_g:0,  sodium_mg:300, sat_fat_g:3, calories:170 }],
 
   // ── BREAKFAST ITEMS ───────────────────────────────────────────
-  ["aunt jemima syrup",       { sugar_g:32, sodium_mg:120, sat_fat_g:0, calories:210, kidsFloor:7, kidsCeiling:9 }],
-  ["log cabin",               { sugar_g:31, sodium_mg:120, sat_fat_g:0, calories:200, kidsFloor:7, kidsCeiling:9 }],
-  ["mrs. butterworth",        { sugar_g:31, sodium_mg:125, sat_fat_g:0, calories:200, kidsFloor:7, kidsCeiling:9 }],
-  ["pearl milling",           { sugar_g:32, sodium_mg:120, sat_fat_g:0, calories:210, kidsFloor:7, kidsCeiling:9 }],
-  ["pearl milling pancake",   { sugar_g:8,  sodium_mg:530, sat_fat_g:1, calories:240 }],
-  ["aunt jemima pancake",     { sugar_g:8,  sodium_mg:530, sat_fat_g:1, calories:240 }],
-  ["pillsbury cinnamon rolls", { sugar_g:15, sodium_mg:530, sat_fat_g:4, calories:310, kidsFloor:6, kidsCeiling:8 }],
-  ["pillsbury crescent",      { sugar_g:4,  sodium_mg:530, sat_fat_g:5, calories:230 }],
-  ["danimals",                { sugar_g:10, sodium_mg:75,  sat_fat_g:0, calories:80,  kidsFloor:4, kidsCeiling:6 }],
-  ["yoplait light",           { sugar_g:14, sodium_mg:85,  sat_fat_g:0, calories:90,  kidsFloor:5, kidsCeiling:7 }],
-  ["dannon light and fit",    { sugar_g:9,  sodium_mg:65,  sat_fat_g:0, calories:80,  kidsFloor:4, kidsCeiling:6 }],
 
   // ── BREAD AND BAKED GOODS ─────────────────────────────────────
-  ["wonder bread",            { sugar_g:3,  sodium_mg:125, sat_fat_g:1, calories:130 }],
-  ["wonder hamburger buns",   { sugar_g:5,  sodium_mg:200, sat_fat_g:1, calories:180 }],
-  ["wonder",                  { sugar_g:3,  sodium_mg:125, sat_fat_g:1, calories:130 }],
-  ["nature's own",            { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["natures own",             { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["natures own bread",       { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["sara lee bread",          { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
-  ["sara lee white bread",    { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
-  ["sara lee",                { sugar_g:3,  sodium_mg:130, sat_fat_g:1, calories:130 }],
-  ["arnold bread",            { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["arnold",                  { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["oroweat",                 { sugar_g:3,  sodium_mg:140, sat_fat_g:0, calories:110 }],
-  ["nature's harvest bread",  { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:120 }],
-  ["great value white bread", { sugar_g:3,  sodium_mg:140, sat_fat_g:0, calories:120 }],
-  ["thomas bagels",           { sugar_g:6,  sodium_mg:430, sat_fat_g:0, calories:270 }],
-  ["thomas english muffins",  { sugar_g:1,  sodium_mg:230, sat_fat_g:0, calories:120 }],
-  ["thomas",                  { sugar_g:4,  sodium_mg:330, sat_fat_g:0, calories:195 }],
-  ["einstein bagels",         { sugar_g:6,  sodium_mg:430, sat_fat_g:1, calories:280 }],
-  ["einstein",                { sugar_g:6,  sodium_mg:430, sat_fat_g:1, calories:280 }],
-  ["kings hawaiian",          { sugar_g:8,  sodium_mg:160, sat_fat_g:2, calories:200, kidsFloor:4, kidsCeiling:6 }],
-  ["king hawaiian",           { sugar_g:8,  sodium_mg:160, sat_fat_g:2, calories:200, kidsFloor:4, kidsCeiling:6 }],
-  ["martin's potato bread",   { sugar_g:2,  sodium_mg:140, sat_fat_g:0, calories:120 }],
-  ["martin's potato rolls",   { sugar_g:4,  sodium_mg:180, sat_fat_g:1, calories:150 }],
-  ["martins potato rolls",    { sugar_g:4,  sodium_mg:180, sat_fat_g:1, calories:150 }],
-  ["franz bread",             { sugar_g:3,  sodium_mg:160, sat_fat_g:0, calories:120 }],
-  ["mission flour tortillas", { sugar_g:1,  sodium_mg:360, sat_fat_g:1, calories:140 }],
-  ["mission flour",           { sugar_g:1,  sodium_mg:360, sat_fat_g:1, calories:140 }],
-  ["guerrero flour tortillas",{ sugar_g:1,  sodium_mg:350, sat_fat_g:1, calories:140 }],
-  ["guerrero tortillas",      { sugar_g:1,  sodium_mg:350, sat_fat_g:1, calories:140 }],
-  ["la banderita",            { sugar_g:1,  sodium_mg:340, sat_fat_g:1, calories:130 }],
-  ["old el paso tortillas",   { sugar_g:1,  sodium_mg:310, sat_fat_g:1, calories:120 }],
-  ["old el paso",             { sugar_g:2,  sodium_mg:310, sat_fat_g:1, calories:130 }],
 
   // ── DELI MEAT AND PROCESSED MEAT ─────────────────────────────
-  ["oscar mayer wieners",     { sugar_g:2,  sodium_mg:500, sat_fat_g:6,  calories:180 }],
-  ["oscar mayer classic",     { sugar_g:2,  sodium_mg:500, sat_fat_g:6,  calories:180 }],
-  ["oscar mayer deli fresh",  { sugar_g:1,  sodium_mg:530, sat_fat_g:1,  calories:50 }],
-  ["oscar mayer bacon",       { sugar_g:0,  sodium_mg:380, sat_fat_g:4,  calories:110 }],
-  ["oscar mayer p3",          { sugar_g:1,  sodium_mg:500, sat_fat_g:4,  calories:180 }],
-  ["ball park franks",        { sugar_g:2,  sodium_mg:480, sat_fat_g:7,  calories:170 }],
-  ["ball park beef franks",   { sugar_g:2,  sodium_mg:480, sat_fat_g:7,  calories:170 }],
-  ["hebrew national",         { sugar_g:0,  sodium_mg:460, sat_fat_g:5,  calories:150 }],
-  ["eckrich",                 { sugar_g:2,  sodium_mg:490, sat_fat_g:6,  calories:170 }],
-  ["eckrich sausage",         { sugar_g:2,  sodium_mg:490, sat_fat_g:6,  calories:170 }],
-  ["jimmy dean sausage",      { sugar_g:1,  sodium_mg:400, sat_fat_g:9,  calories:220 }],
-  ["jimmy dean frozen",       { sugar_g:2,  sodium_mg:580, sat_fat_g:11, calories:360 }],
-  ["hillshire farm turkey",   { sugar_g:1,  sodium_mg:480, sat_fat_g:1,  calories:60 }],
-  ["jack link's",             { sugar_g:5,  sodium_mg:590, sat_fat_g:1,  calories:80 }],
-  ["jack links",              { sugar_g:5,  sodium_mg:590, sat_fat_g:1,  calories:80 }],
-  ["slim jim",                { sugar_g:1,  sodium_mg:430, sat_fat_g:4,  calories:110 }],
-  ["old wisconsin",           { sugar_g:0,  sodium_mg:510, sat_fat_g:5,  calories:170 }],
-  ["good & gather sliced turkey",{ sugar_g:1, sodium_mg:460, sat_fat_g:0, calories:50 }],
-  ["good & gather deli",      { sugar_g:1,  sodium_mg:460, sat_fat_g:0,  calories:50 }],
-  ["applegate naturals turkey",{ sugar_g:0,  sodium_mg:390, sat_fat_g:0, calories:50 }],
-  ["applegate hot dogs",      { sugar_g:1,  sodium_mg:370, sat_fat_g:3,  calories:100 }],
 
   // ── FROZEN FOOD ───────────────────────────────────────────────
-  ["lean cuisine",            { sugar_g:5,  sodium_mg:820,  sat_fat_g:3,  calories:280, kidsFloor:6, kidsCeiling:8 }],
-  ["healthy choice",          { sugar_g:6,  sodium_mg:600,  sat_fat_g:3,  calories:300, kidsFloor:5, kidsCeiling:7 }],
-  ["stouffers",               { sugar_g:7,  sodium_mg:1100, sat_fat_g:9,  calories:440, kidsFloor:7, kidsCeiling:9 }],
-  ["marie callender's frozen",{ sugar_g:8,  sodium_mg:950,  sat_fat_g:7,  calories:420, kidsFloor:7, kidsCeiling:9 }],
-  ["hot pockets",             { sugar_g:5,  sodium_mg:700,  sat_fat_g:6,  calories:290, kidsFloor:6, kidsCeiling:8 }],
-  ["lean pockets",            { sugar_g:4,  sodium_mg:600,  sat_fat_g:4,  calories:240, kidsFloor:5, kidsCeiling:7 }],
-  ["el monterey",             { sugar_g:2,  sodium_mg:560,  sat_fat_g:6,  calories:310, kidsFloor:6, kidsCeiling:8 }],
-  ["red baron pizza",         { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:390, kidsFloor:7, kidsCeiling:9 }],
-  ["california pizza kitchen frozen",{ sugar_g:4, sodium_mg:690, sat_fat_g:6, calories:330, kidsFloor:6, kidsCeiling:8 }],
-  ["digiorno pepperoni",      { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:380, kidsFloor:7, kidsCeiling:9 }],
-  ["tyson chicken nuggets",   { sugar_g:0,  sodium_mg:390,  sat_fat_g:2,  calories:170 }],
-  ["perdue chicken nuggets",  { sugar_g:1,  sodium_mg:330,  sat_fat_g:2,  calories:160 }],
-  ["trader joe's mandarin orange chicken",{ sugar_g:15, sodium_mg:420, sat_fat_g:3, calories:310, kidsFloor:5, kidsCeiling:7 }],
-  ["morning star farms",      { sugar_g:1,  sodium_mg:350,  sat_fat_g:1,  calories:110, protein_g:12 }],
-  ["boca burger",             { sugar_g:2,  sodium_mg:380,  sat_fat_g:1,  calories:110, protein_g:13 }],
 
   // ── COFFEE CREAMERS AND SYRUPS ────────────────────────────────
-  ["coffee mate powder",      { sugar_g:5,  sodium_mg:0,  sat_fat_g:2, calories:60 }],
-  ["coffee mate liquid",      { sugar_g:5,  sodium_mg:30, sat_fat_g:1, calories:35 }],
-  ["coffee mate french vanilla",{ sugar_g:5, sodium_mg:30, sat_fat_g:1, calories:35 }],
-  ["coffee mate",             { sugar_g:5,  sodium_mg:30, sat_fat_g:1, calories:35 }],
-  ["international delight",   { sugar_g:6,  sodium_mg:35, sat_fat_g:1, calories:45 }],
-  ["starbucks coffee creamer",{ sugar_g:5,  sodium_mg:40, sat_fat_g:1, calories:35 }],
-  ["torani",                  { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
-  ["jordan's skinny",         { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
-  ["monin syrup",             { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
 
   // ── CONDIMENTS ────────────────────────────────────────────────
-  ["kikkoman teriyaki",       { sugar_g:6,  sodium_mg:960, sat_fat_g:0, calories:40 }],
-  ["sweet baby ray's",        { sugar_g:16, sodium_mg:290, sat_fat_g:0, calories:70 }],
-  ["sweet baby rays",         { sugar_g:16, sodium_mg:290, sat_fat_g:0, calories:70 }],
-  ["heinz bbq sauce",         { sugar_g:13, sodium_mg:300, sat_fat_g:0, calories:60 }],
-  ["smucker's strawberry jam",{ sugar_g:12, sodium_mg:0,   sat_fat_g:0, calories:50 }],
-  ["smucker's jam",           { sugar_g:12, sodium_mg:0,   sat_fat_g:0, calories:50 }],
-  ["tostitos queso dip",      { sugar_g:2,  sodium_mg:280, sat_fat_g:1, calories:40 }],
-  ["panda express sauce",     { sugar_g:9,  sodium_mg:360, sat_fat_g:0, calories:50 }],
-  ["wishbone italian",        { sugar_g:2,  sodium_mg:290, sat_fat_g:0, calories:70 }],
-  ["kraft italian dressing",  { sugar_g:3,  sodium_mg:310, sat_fat_g:0, calories:80 }],
-  ["a.1. sauce",              { sugar_g:4,  sodium_mg:280, sat_fat_g:0, calories:25 }],
-  ["a1 original",             { sugar_g:4,  sodium_mg:280, sat_fat_g:0, calories:25 }],
 
   // ── LUNCHABLES ────────────────────────────────────────────────
-  ["lunchables nachos",       { sugar_g:2,  sodium_mg:820, sat_fat_g:5,  calories:440, kidsFloor:7, kidsCeiling:9 }],
-  ["lunchables pizza",        { sugar_g:5,  sodium_mg:760, sat_fat_g:5,  calories:360, kidsFloor:6, kidsCeiling:8 }],
-  ["lunchables turkey",       { sugar_g:5,  sodium_mg:830, sat_fat_g:4,  calories:330, kidsFloor:6, kidsCeiling:8 }],
-  ["lunchables with smoothie",{ sugar_g:22, sodium_mg:760, sat_fat_g:5,  calories:450, kidsFloor:8, kidsCeiling:9 }],
 
   // ── PROTEIN BARS ─────────────────────────────────────────────
-  ["quest bar",               { sugar_g:1,  sodium_mg:220, sat_fat_g:3, calories:190, protein_g:21, fiber_g:14 }],
-  ["one bar",                 { sugar_g:1,  sodium_mg:160, sat_fat_g:3, calories:220, protein_g:20, fiber_g:10 }],
-  ["built bar",               { sugar_g:5,  sodium_mg:150, sat_fat_g:2, calories:150, protein_g:17, fiber_g:6 }],
-  ["rxbar",                   { sugar_g:13, sodium_mg:200, sat_fat_g:2, calories:210, protein_g:12, fiber_g:5 }],
-  ["rx bar",                  { sugar_g:13, sodium_mg:200, sat_fat_g:2, calories:210, protein_g:12, fiber_g:5 }],
-  ["power bar",               { sugar_g:20, sodium_mg:200, sat_fat_g:2, calories:240, protein_g:8,  fiber_g:2, kidsFloor:6, kidsCeiling:8 }],
-  ["barebells",               { sugar_g:2,  sodium_mg:220, sat_fat_g:3, calories:210, protein_g:20, fiber_g:2 }],
-  ["legendary foods",         { sugar_g:1,  sodium_mg:230, sat_fat_g:2, calories:180, protein_g:20, fiber_g:7 }],
-  ["halo top",                { sugar_g:6,  sodium_mg:95,  sat_fat_g:1, calories:80,  protein_g:6 }],
-  ["arctic zero",             { sugar_g:4,  sodium_mg:60,  sat_fat_g:0, calories:40,  protein_g:3 }],
-  ["rebel keto ice cream",    { sugar_g:1,  sodium_mg:75,  sat_fat_g:7, calories:170, protein_g:3 }],
 
   // ── FAST FOOD — MCDONALD'S ────────────────────────────────────
-  ["big mac",                 { sugar_g:9,  sodium_mg:1010, sat_fat_g:11, calories:550 }],
-  ["mcchicken",               { sugar_g:5,  sodium_mg:670,  sat_fat_g:4,  calories:400 }],
-  ["chicken mcnuggets",       { sugar_g:0,  sodium_mg:940,  sat_fat_g:5,  calories:420 }],
-  ["sausage mcmuffin",        { sugar_g:2,  sodium_mg:790,  sat_fat_g:9,  calories:400 }],
-  ["sausage biscuit mcdonald",{ sugar_g:3,  sodium_mg:1040, sat_fat_g:11, calories:460 }],
-  ["mcdonald's french fries", { sugar_g:0,  sodium_mg:400,  sat_fat_g:2,  calories:490 }],
-  ["mcdonald's hotcakes",     { sugar_g:14, sodium_mg:590,  sat_fat_g:6,  calories:590 }],
-  ["mcdonald's apple pie",    { sugar_g:13, sodium_mg:85,   sat_fat_g:4,  calories:240 }],
-  ["mcflurry",                { sugar_g:64, sodium_mg:190,  sat_fat_g:7,  calories:510, kidsFloor:9, kidsCeiling:9 }],
-  ["mcdonald's quarter pounder",{ sugar_g:9, sodium_mg:1110, sat_fat_g:12, calories:520 }],
-  ["mcdonald's grilled chicken",{ sugar_g:6, sodium_mg:820, sat_fat_g:2,  calories:380 }],
-  ["egg mcmuffin",            { sugar_g:3,  sodium_mg:760,  sat_fat_g:5,  calories:310 }],
-  ["mcdonald's oatmeal",      { sugar_g:18, sodium_mg:150,  sat_fat_g:1,  calories:290, fiber_g:5 }],
 
   // ── FAST FOOD — BURGER KING ───────────────────────────────────
-  ["whopper",                 { sugar_g:11, sodium_mg:980,  sat_fat_g:13, calories:660 }],
-  ["impossible whopper",      { sugar_g:12, sodium_mg:1080, sat_fat_g:8,  calories:630 }],
-  ["bk chicken fries",        { sugar_g:1,  sodium_mg:630,  sat_fat_g:4,  calories:280 }],
-  ["bk croissanwich",         { sugar_g:6,  sodium_mg:1010, sat_fat_g:14, calories:500 }],
-  ["baconator",               { sugar_g:9,  sodium_mg:1330, sat_fat_g:22, calories:950 }],
-  ["dave's single",           { sugar_g:8,  sodium_mg:1060, sat_fat_g:16, calories:590 }],
-  ["son of baconator",        { sugar_g:7,  sodium_mg:1080, sat_fat_g:16, calories:660 }],
-  ["burger king crispy chicken",{ sugar_g:6, sodium_mg:1100, sat_fat_g:9, calories:660 }],
 
   // ── FAST FOOD — CHICK-FIL-A ──────────────────────────────────
-  ["chick-fil-a crispy",      { sugar_g:5,  sodium_mg:1350, sat_fat_g:4,  calories:440 }],
-  ["chick-fil-a grilled",     { sugar_g:4,  sodium_mg:900,  sat_fat_g:1,  calories:310, protein_g:28 }],
-  ["chick-fil-a chicken biscuit",{ sugar_g:7, sodium_mg:1310, sat_fat_g:8, calories:490 }],
-  ["chick-fil-a nuggets",     { sugar_g:2,  sodium_mg:940,  sat_fat_g:3,  calories:280 }],
 
   // ── FAST FOOD — KFC / POPEYES ─────────────────────────────────
-  ["kfc original recipe",     { sugar_g:0,  sodium_mg:1030, sat_fat_g:7,  calories:400 }],
-  ["kfc extra crispy",        { sugar_g:0,  sodium_mg:970,  sat_fat_g:8,  calories:470 }],
-  ["kfc grilled chicken",     { sugar_g:0,  sodium_mg:730,  sat_fat_g:2,  calories:210, protein_g:29 }],
-  ["kfc famous bowl",         { sugar_g:4,  sodium_mg:1360, sat_fat_g:6,  calories:720 }],
-  ["popeyes chicken sandwich",{ sugar_g:5,  sodium_mg:1445, sat_fat_g:9,  calories:700 }],
-  ["popeyes original chicken",{ sugar_g:0,  sodium_mg:420,  sat_fat_g:4,  calories:260, protein_g:17 }],
-  ["popeyes spicy chicken",   { sugar_g:0,  sodium_mg:460,  sat_fat_g:4,  calories:260, protein_g:17 }],
-  ["raising cane's chicken tenders",{ sugar_g:0, sodium_mg:660, sat_fat_g:3, calories:340, protein_g:24 }],
-  ["raising cane's sauce",    { sugar_g:2,  sodium_mg:300,  sat_fat_g:3,  calories:190 }],
-  ["whataburger",             { sugar_g:8,  sodium_mg:890,  sat_fat_g:11, calories:590 }],
-  ["five guys burger",        { sugar_g:8,  sodium_mg:670,  sat_fat_g:18, calories:700 }],
-  ["five guys fries",         { sugar_g:0,  sodium_mg:770,  sat_fat_g:5,  calories:530 }],
-  ["in-n-out double double",  { sugar_g:10, sodium_mg:1160, sat_fat_g:17, calories:670 }],
-  ["in-n-out double-double",  { sugar_g:10, sodium_mg:1160, sat_fat_g:17, calories:670 }],
-  ["in-n-out burger",         { sugar_g:7,  sodium_mg:650,  sat_fat_g:9,  calories:400 }],
-  ["in-n-out animal style",   { sugar_g:12, sodium_mg:1440, sat_fat_g:18, calories:750 }],
-  ["jack in the box tacos",   { sugar_g:3,  sodium_mg:310,  sat_fat_g:4,  calories:170 }],
-  ["jack in the box sourdough jack",{ sugar_g:8, sodium_mg:1160, sat_fat_g:20, calories:730 }],
-  ["sonic cherry limeade",    { sugar_g:60, sodium_mg:35,   sat_fat_g:0,  calories:230, kidsFloor:9, kidsCeiling:9 }],
-  ["sonic footlong coney",    { sugar_g:6,  sodium_mg:1280, sat_fat_g:15, calories:640 }],
-  ["dq chicken strip",        { sugar_g:2,  sodium_mg:1190, sat_fat_g:3,  calories:400 }],
-  ["dairy queen blizzard",    { sugar_g:65, sodium_mg:310,  sat_fat_g:14, calories:690, kidsFloor:9, kidsCeiling:9 }],
-  ["wingstop",                { sugar_g:0,  sodium_mg:820,  sat_fat_g:6,  calories:500 }],
-  ["buffalo wild wings",      { sugar_g:0,  sodium_mg:1490, sat_fat_g:9,  calories:720 }],
-  ["zaxby's chicken fingers", { sugar_g:1,  sodium_mg:820,  sat_fat_g:4,  calories:420 }],
-  ["el pollo loco chicken",   { sugar_g:1,  sodium_mg:380,  sat_fat_g:1,  calories:190, protein_g:28 }],
-  ["carl's jr thickburger",   { sugar_g:8,  sodium_mg:1200, sat_fat_g:22, calories:850 }],
-  ["del taco crunchy tacos",  { sugar_g:2,  sodium_mg:630,  sat_fat_g:9,  calories:450 }],
-  ["culvers",                 { sugar_g:8,  sodium_mg:810,  sat_fat_g:10, calories:510 }],
   ["culvers butterburger",    { sugar_g:8,  sodium_mg:810,  sat_fat_g:10, calories:510 }],
-  ["culvers cheese curds",    { sugar_g:1,  sodium_mg:640,  sat_fat_g:16, calories:590 }],
-  ["culvers frozen custard",  { sugar_g:27, sodium_mg:160,  sat_fat_g:9,  calories:310, kidsFloor:7, kidsCeiling:9 }],
-  ["arbys roast beef",        { sugar_g:5,  sodium_mg:970,  sat_fat_g:5,  calories:360 }],
-  ["arbys curly fries",       { sugar_g:1,  sodium_mg:1300, sat_fat_g:5,  calories:550 }],
-  ["texas roadhouse rolls",   { sugar_g:7,  sodium_mg:460,  sat_fat_g:3,  calories:340, kidsFloor:5, kidsCeiling:7 }],
-  ["texas roadhouse sirloin", { sugar_g:0,  sodium_mg:480,  sat_fat_g:3,  calories:260, protein_g:36 }],
 
   // ── FAST FOOD — PIZZA ─────────────────────────────────────────
-  ["dominos pepperoni",       { sugar_g:4,  sodium_mg:820,  sat_fat_g:8,  calories:380 }],
-  ["domino's pepperoni pizza",{ sugar_g:4,  sodium_mg:820,  sat_fat_g:8,  calories:380 }],
-  ["pizza hut pepperoni",     { sugar_g:5,  sodium_mg:870,  sat_fat_g:8,  calories:380 }],
-  ["little caesars pepperoni",{ sugar_g:4,  sodium_mg:730,  sat_fat_g:7,  calories:360 }],
 
   // ── FAST FOOD — SUBWAY / SANDWICHES ──────────────────────────
-  ["subway italian bmt",      { sugar_g:6,  sodium_mg:1590, sat_fat_g:7,  calories:480 }],
-  ["subway meatball marinara",{ sugar_g:12, sodium_mg:1380, sat_fat_g:9,  calories:580 }],
-  ["jersey mike's italian",   { sugar_g:4,  sodium_mg:1770, sat_fat_g:11, calories:720 }],
 
   // ── FAST FOOD — BREAKFAST ─────────────────────────────────────
-  ["dunkin bacon egg",        { sugar_g:3,  sodium_mg:870,  sat_fat_g:10, calories:500 }],
-  ["dunkin' bacon egg",       { sugar_g:3,  sodium_mg:870,  sat_fat_g:10, calories:500 }],
-  ["ihop buttermilk pancakes",{ sugar_g:16, sodium_mg:1310, sat_fat_g:5,  calories:680, kidsFloor:7, kidsCeiling:9 }],
-  ["denny's grand slam",      { sugar_g:10, sodium_mg:2090, sat_fat_g:14, calories:790 }],
-  ["cracker barrel pancakes", { sugar_g:12, sodium_mg:980,  sat_fat_g:4,  calories:520, kidsFloor:5, kidsCeiling:7 }],
 
   // ── SIT-DOWN RESTAURANTS ─────────────────────────────────────
-  ["applebee's riblets",      { sugar_g:18, sodium_mg:3540, sat_fat_g:18, calories:1270 }],
-  ["chili's awesome blossom", { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
-  ["cheesecake factory pasta",{ sugar_g:8,  sodium_mg:1400, sat_fat_g:18, calories:1580 }],
-  ["olive garden fettuccine alfredo",{ sugar_g:6, sodium_mg:1080, sat_fat_g:47, calories:1220 }],
-  ["olive garden breadsticks",{ sugar_g:2,  sodium_mg:460,  sat_fat_g:1,  calories:140 }],
 
   // ── TACO BELL / CHIPOTLE ──────────────────────────────────────
-  ["taco bell crunchwrap",    { sugar_g:4,  sodium_mg:1210, sat_fat_g:10, calories:530 }],
-  ["taco bell chalupa",       { sugar_g:4,  sodium_mg:680,  sat_fat_g:7,  calories:350 }],
-  ["taco bell bean burrito",  { sugar_g:3,  sodium_mg:1000, sat_fat_g:4,  calories:350 }],
-  ["taco bell power bowl",    { sugar_g:4,  sodium_mg:950,  sat_fat_g:7,  calories:430, protein_g:25 }],
-  ["chipotle burrito",        { sugar_g:4,  sodium_mg:1745, sat_fat_g:20, calories:975, protein_g:36, fiber_g:15 }],
-  ["chipotle bowl",           { sugar_g:4,  sodium_mg:1620, sat_fat_g:16, calories:800, protein_g:34, fiber_g:15 }],
-  ["chipotle carnitas",       { sugar_g:0,  sodium_mg:580,  sat_fat_g:6,  calories:220, protein_g:21 }],
-  ["chipotle sofritas",       { sugar_g:1,  sodium_mg:420,  sat_fat_g:2,  calories:145, protein_g:9, fiber_g:4 }],
-  ["in-n-out protein style",  { sugar_g:8,  sodium_mg:730,  sat_fat_g:9,  calories:330, protein_g:25 }],
 
   // ── PANERA / STARBUCKS / OTHER CHAINS ────────────────────────
-  ["panera broccoli cheddar soup",{ sugar_g:6, sodium_mg:950, sat_fat_g:8, calories:290 }],
-  ["panera mac and cheese",   { sugar_g:5,  sodium_mg:1100, sat_fat_g:10, calories:530 }],
-  ["panera chicken sandwich", { sugar_g:8,  sodium_mg:910,  sat_fat_g:4,  calories:480 }],
-  ["starbucks pumpkin spice latte",{ sugar_g:50, sodium_mg:240, sat_fat_g:7, calories:380, kidsFloor:9, kidsCeiling:9 }],
-  ["starbucks frappuccino",   { sugar_g:56, sodium_mg:230,  sat_fat_g:7,  calories:420, kidsFloor:9, kidsCeiling:9 }],
-  ["starbucks egg bites",     { sugar_g:3,  sodium_mg:440,  sat_fat_g:9,  calories:260, protein_g:19 }],
-  ["smoothie king",           { sugar_g:52, sodium_mg:90,   sat_fat_g:0,  calories:290, kidsFloor:9, kidsCeiling:9 }],
-  ["jamba juice",             { sugar_g:48, sodium_mg:60,   sat_fat_g:0,  calories:290, kidsFloor:9, kidsCeiling:9 }],
-  ["dutch bros",              { sugar_g:44, sodium_mg:200,  sat_fat_g:5,  calories:360, kidsFloor:9, kidsCeiling:9 }],
-  ["crumbl cookie",           { sugar_g:55, sodium_mg:310,  sat_fat_g:12, calories:680, kidsFloor:9, kidsCeiling:9 }],
 
   // ── PANDA EXPRESS ─────────────────────────────────────────────
-  ["panda express orange chicken",{ sugar_g:19, sodium_mg:820, sat_fat_g:5, calories:490 }],
-  ["panda express fried rice",{ sugar_g:0,  sodium_mg:900,  sat_fat_g:4,  calories:590, fiber_g:3 }],
-  ["panda express string bean chicken",{ sugar_g:4, sodium_mg:730, sat_fat_g:2, calories:190, protein_g:18 }],
-  ["panda express teriyaki chicken",{ sugar_g:9, sodium_mg:930, sat_fat_g:1, calories:280, protein_g:36 }],
 
   // ── WENDYS ───────────────────────────────────────────────────
-  ["wendys crispy",           { sugar_g:5,  sodium_mg:1300, sat_fat_g:8,  calories:600 }],
-  ["wendys chili",            { sugar_g:6,  sodium_mg:1100, sat_fat_g:3,  calories:240, protein_g:21, fiber_g:6 }],
-  ["wendys baked",            { sugar_g:3,  sodium_mg:40,   sat_fat_g:0,  calories:270, fiber_g:7 }],
   ["wendys frosty",           { sugar_g:47, sodium_mg:200,  sat_fat_g:8,  calories:340, kidsFloor:8, kidsCeiling:9 }],
-  ["shake shack shackburger", { sugar_g:8,  sodium_mg:810,  sat_fat_g:15, calories:520 }],
-  ["shake shack burger",      { sugar_g:8,  sodium_mg:810,  sat_fat_g:15, calories:520 }],
-  ["shake shack fries",       { sugar_g:0,  sodium_mg:470,  sat_fat_g:4,  calories:490 }],
-  ["blaze pizza",             { sugar_g:4,  sodium_mg:780,  sat_fat_g:9,  calories:560 }],
-  ["mod pizza",               { sugar_g:4,  sodium_mg:790,  sat_fat_g:9,  calories:570 }],
   ["sweetgreen harvest bowl", { sugar_g:12, sodium_mg:680,  sat_fat_g:5,  calories:600, protein_g:27, fiber_g:8 }],
 
   // ── SUBWAY ────────────────────────────────────────────────────
   ["subway turkey sandwich",  { sugar_g:7,  sodium_mg:960,  sat_fat_g:2,  calories:320, protein_g:24 }],
   ["subway chicken teriyaki", { sugar_g:12, sodium_mg:960,  sat_fat_g:2,  calories:370, protein_g:26 }],
   ["subway tuna",             { sugar_g:5,  sodium_mg:760,  sat_fat_g:5,  calories:480, protein_g:23 }],
-  ["subway italian bmt",      { sugar_g:6,  sodium_mg:1470, sat_fat_g:8,  calories:390, protein_g:22 }],
   ["subway meatball",         { sugar_g:11, sodium_mg:1270, sat_fat_g:11, calories:480, protein_g:25 }],
 
   // ── DOMINOS ───────────────────────────────────────────────────
@@ -4804,18 +3984,14 @@ const NUTRITION_LOOKUP = new Map([
   ["dominos",                 { sugar_g:3,  sodium_mg:580,  sat_fat_g:6,  calories:270 }],
 
   // ── PIZZA HUT ─────────────────────────────────────────────────
-  ["pizza hut pepperoni",     { sugar_g:3,  sodium_mg:700,  sat_fat_g:7,  calories:300 }],
   ["pizza hut cheese",        { sugar_g:3,  sodium_mg:560,  sat_fat_g:5,  calories:260 }],
   ["pizza hut",               { sugar_g:3,  sodium_mg:630,  sat_fat_g:6,  calories:280 }],
 
   // ── FIVE GUYS ─────────────────────────────────────────────────
-  ["five guys burger",        { sugar_g:8,  sodium_mg:1050, sat_fat_g:23, calories:700, protein_g:40 }],
   ["five guys little burger",  { sugar_g:7, sodium_mg:640,  sat_fat_g:13, calories:440, protein_g:24 }],
-  ["five guys fries",         { sugar_g:1,  sodium_mg:1000, sat_fat_g:5,  calories:526 }],
   ["five guys",               { sugar_g:8,  sodium_mg:1050, sat_fat_g:23, calories:700 }],
 
   // ── IN-N-OUT ──────────────────────────────────────────────────
-  ["in-n-out double double",  { sugar_g:10, sodium_mg:1440, sat_fat_g:18, calories:670, protein_g:37 }],
   ["in-n-out hamburger",      { sugar_g:10, sodium_mg:650,  sat_fat_g:9,  calories:390, protein_g:16 }],
   ["in-n-out cheeseburger",   { sugar_g:10, sodium_mg:1000, sat_fat_g:13, calories:480, protein_g:22 }],
   ["in-n-out animal fries",   { sugar_g:5,  sodium_mg:1400, sat_fat_g:12, calories:750 }],
@@ -4844,200 +4020,45 @@ const NUTRITION_LOOKUP = new Map([
   ["mcdonalds fries large",    { sugar_g:0,  sodium_mg:400,  sat_fat_g:3,  calories:490 }],
   ["mcdonalds fries medium",   { sugar_g:0,  sodium_mg:270,  sat_fat_g:2,  calories:320 }],
   ["mcdonalds happy meal",     { sugar_g:5,  sodium_mg:620,  sat_fat_g:4,  calories:470, kidsFloor:6, kidsCeiling:8 }],
-  ["k-cup",                   { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["keurig k-cup",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["starbucks k-cup",         { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["folgers k-cup",           { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["green mountain k-cup",    { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["dunkin k-cup",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
-  ["death wish coffee k",     { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:2 }],
 
   // ── REMAINING 126 ENTRIES ─────────────────────────────────────
 
   // Fruit snacks / kid beverages
-  ["mott's fruit snacks",     { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
-  ["motts fruit snacks",      { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
-  ["welch fruit",             { sugar_g:11, sodium_mg:15, sat_fat_g:0, calories:80, kidsFloor:5, kidsCeiling:8 }],
-  ["favorite day cookies",    { sugar_g:14, sodium_mg:130, sat_fat_g:3, calories:160, kidsFloor:5, kidsCeiling:7 }],
-  ["favorite day",            { sugar_g:10, sodium_mg:100, sat_fat_g:2, calories:130 }],
-  ["kirkland signature trail mix", { sugar_g:12, sodium_mg:65, sat_fat_g:2, calories:160, protein_g:4, fiber_g:2 }],
 
   // Sweeteners
-  ["splenda",                 { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["equal",                   { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["equal packet",            { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["equal sweetener",         { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["sweet n low",             { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["sweet'n low",             { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["truvia",                  { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["swerve sweetener",        { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
-  ["lakanto monk fruit",      { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:0 }],
 
   // Juices and juice drinks (not yet covered)
-  ["nature's nectar",         { sugar_g:38, sodium_mg:25, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["juicy juice",             { sugar_g:24, sodium_mg:15, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["tree top",                { sugar_g:26, sodium_mg:10, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["apple and eve",           { sugar_g:24, sodium_mg:15, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["ocean spray 100",         { sugar_g:24, sodium_mg:35, sat_fat_g:0, calories:100, kidsFloor:7, kidsCeiling:9 }],
-  ["florida natural oj",      { sugar_g:22, sodium_mg:0,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
-  ["motts applesauce",        { sugar_g:13, sodium_mg:0,  sat_fat_g:0, calories:50,  kidsFloor:5, kidsCeiling:7 }],
-  ["evolution fresh",         { sugar_g:28, sodium_mg:10, sat_fat_g:0, calories:120, kidsFloor:7, kidsCeiling:9 }],
-  ["lakewood",                { sugar_g:26, sodium_mg:10, sat_fat_g:0, calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["odwalla juice",           { sugar_g:32, sodium_mg:20, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["welch's",                 { sugar_g:36, sodium_mg:15, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["welch",                   { sugar_g:36, sodium_mg:15, sat_fat_g:0, calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["naked juice",             { sugar_g:53, sodium_mg:10, sat_fat_g:0, calories:270, kidsFloor:9, kidsCeiling:9 }],
-  ["minute maid oj",          { sugar_g:24, sodium_mg:5,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
-  ["simply orange",           { sugar_g:22, sodium_mg:0,  sat_fat_g:0, calories:110, kidsFloor:6, kidsCeiling:8 }],
-  ["honest kids",             { sugar_g:8,  sodium_mg:5,  sat_fat_g:0, calories:40,  kidsFloor:4, kidsCeiling:6 }],
 
   // Plant milks
-  ["oatly original",          { sugar_g:7,  sodium_mg:100, sat_fat_g:0.5, calories:120 }],
-  ["oatly oat milk",          { sugar_g:7,  sodium_mg:100, sat_fat_g:0.5, calories:120 }],
-  ["oatly barista",           { sugar_g:8,  sodium_mg:100, sat_fat_g:1,   calories:130 }],
-  ["silk almond",             { sugar_g:7,  sodium_mg:170, sat_fat_g:0,   calories:60 }],
-  ["califia farms oat",       { sugar_g:6,  sodium_mg:120, sat_fat_g:0,   calories:100 }],
-  ["ripple",                  { sugar_g:0,  sodium_mg:130, sat_fat_g:0,   calories:70, protein_g:8 }],
-  ["fairlife",                { sugar_g:6,  sodium_mg:130, sat_fat_g:3,   calories:120, protein_g:13 }],
 
   // Sports / hydration
-  ["liquid iv",               { sugar_g:11, sodium_mg:500, sat_fat_g:0, calories:45 }],
   ["liquid i.v.",             { sugar_g:11, sodium_mg:500, sat_fat_g:0, calories:45 }],
-  ["electrolit",              { sugar_g:8,  sodium_mg:250, sat_fat_g:0, calories:35 }],
-  ["rowdy energy",            { sugar_g:0,  sodium_mg:180, sat_fat_g:0, calories:0 }],
-  ["kevita sparkling probiotic",{ sugar_g:4, sodium_mg:15, sat_fat_g:0, calories:15 }],
 
   // Coffee creamers / syrups
-  ["califia farms creamer",   { sugar_g:4,  sodium_mg:30, sat_fat_g:0, calories:35 }],
-  ["silk oat creamer",        { sugar_g:6,  sodium_mg:65, sat_fat_g:0, calories:45 }],
-  ["starbucks syrup",         { sugar_g:20, sodium_mg:0,  sat_fat_g:0, calories:80 }],
-  ["starbucks via",           { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
-  ["nescafe instant",         { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:5 }],
-  ["nescafe instant coffee",  { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:5 }],
-  ["folgers crystals",        { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
-  ["maxwell house",           { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
-  ["stok cold brew",          { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
-  ["cafe bustelo",            { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
-  ["lavazza",                 { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:5 }],
-  ["bigelow tea",             { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:0 }],
-  ["bigelow",                 { sugar_g:0,  sodium_mg:5,  sat_fat_g:0, calories:0 }],
-  ["twinings",                { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:0 }],
 
   // Condiments / sauces
-  ["hellmanns mayo",          { sugar_g:0,  sodium_mg:90,  sat_fat_g:2, calories:90 }],
-  ["duke's mayo",             { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
-  ["dukes mayo",              { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
-  ["best foods mayo",         { sugar_g:0,  sodium_mg:90,  sat_fat_g:2, calories:90 }],
-  ["kraft mayo",              { sugar_g:0,  sodium_mg:95,  sat_fat_g:2, calories:90 }],
-  ["kraft italian dressing",  { sugar_g:3,  sodium_mg:310, sat_fat_g:0, calories:80 }],
-  ["newman's own dressing",   { sugar_g:2,  sodium_mg:280, sat_fat_g:1, calories:90 }],
-  ["ken's steakhouse",        { sugar_g:2,  sodium_mg:300, sat_fat_g:2, calories:130 }],
-  ["lea and perrins",         { sugar_g:3,  sodium_mg:160, sat_fat_g:0, calories:15 }],
-  ["lawry's seasoned salt",   { sugar_g:0,  sodium_mg:380, sat_fat_g:0, calories:0 }],
-  ["lawry's marinade",        { sugar_g:5,  sodium_mg:370, sat_fat_g:0, calories:30 }],
-  ["mae ploy sweet chili sauce",{ sugar_g:9, sodium_mg:220, sat_fat_g:0, calories:40 }],
-  ["kewpie mayonnaise",       { sugar_g:0,  sodium_mg:100, sat_fat_g:2, calories:100 }],
-  ["la choy soy sauce",       { sugar_g:1,  sodium_mg:920, sat_fat_g:0, calories:10 }],
-  ["hoisin sauce",            { sugar_g:7,  sodium_mg:260, sat_fat_g:0, calories:35 }],
-  ["lee kum kee hoisin",      { sugar_g:7,  sodium_mg:260, sat_fat_g:0, calories:35 }],
-  ["lee kum kee oyster sauce",{ sugar_g:4,  sodium_mg:490, sat_fat_g:0, calories:20 }],
-  ["kikkoman mirin",          { sugar_g:8,  sodium_mg:310, sat_fat_g:0, calories:40 }],
-  ["aji mirin",               { sugar_g:8,  sodium_mg:310, sat_fat_g:0, calories:40 }],
-  ["maggi seasoning",         { sugar_g:1,  sodium_mg:610, sat_fat_g:0, calories:5 }],
-  ["knorr liquid seasoning",  { sugar_g:1,  sodium_mg:590, sat_fat_g:0, calories:5 }],
-  ["prego traditional",       { sugar_g:8,  sodium_mg:430, sat_fat_g:1, calories:70 }],
-  ["ragu traditional",        { sugar_g:7,  sodium_mg:380, sat_fat_g:1, calories:70 }],
-  ["swanson chicken broth",   { sugar_g:0,  sodium_mg:860, sat_fat_g:0, calories:15 }],
-  ["campbell's cream of mushroom",{ sugar_g:1, sodium_mg:870, sat_fat_g:2, calories:100 }],
-  ["mccormick taco seasoning",{ sugar_g:1,  sodium_mg:350, sat_fat_g:0, calories:20 }],
 
   // Snacks and crackers
-  ["wheat thins",             { sugar_g:4,  sodium_mg:200, sat_fat_g:1, calories:140, fiber_g:2 }],
-  ["smartfood popcorn",       { sugar_g:1,  sodium_mg:300, sat_fat_g:3, calories:160 }],
-  ["smartfood",               { sugar_g:1,  sodium_mg:300, sat_fat_g:3, calories:160 }],
-  ["planters",                { sugar_g:2,  sodium_mg:115, sat_fat_g:2, calories:170, protein_g:7 }],
-  ["planters dry roasted peanuts",{ sugar_g:2, sodium_mg:115, sat_fat_g:2, calories:170, protein_g:7 }],
-  ["stacy's pita",            { sugar_g:1,  sodium_mg:200, sat_fat_g:1, calories:130 }],
-  ["popchips",                { sugar_g:1,  sodium_mg:200, sat_fat_g:0, calories:120 }],
-  ["krave jerky",             { sugar_g:7,  sodium_mg:450, sat_fat_g:1, calories:80,  protein_g:10 }],
-  ["lorissa's kitchen",       { sugar_g:4,  sodium_mg:380, sat_fat_g:1, calories:70,  protein_g:11 }],
 
   // Dairy / eggs
-  ["laughing cow",            { sugar_g:0,  sodium_mg:200, sat_fat_g:2, calories:35 }],
-  ["two good greek yogurt",   { sugar_g:2,  sodium_mg:65,  sat_fat_g:0, calories:90,  protein_g:12 }],
-  ["quaker old fashioned oats",{ sugar_g:1, sodium_mg:0,   sat_fat_g:0.5, calories:150, fiber_g:4, protein_g:5 }],
-  ["maple grove farms",       { sugar_g:29, sodium_mg:0,   sat_fat_g:0, calories:110 }],
 
   // Bread / gluten-free
-  ["canyon bakehouse",        { sugar_g:3,  sodium_mg:130, sat_fat_g:0, calories:100, fiber_g:3 }],
-  ["udi's gluten free",       { sugar_g:3,  sodium_mg:160, sat_fat_g:1, calories:130 }],
-  ["udis",                    { sugar_g:3,  sodium_mg:160, sat_fat_g:1, calories:130 }],
-  ["schar bread",             { sugar_g:2,  sodium_mg:220, sat_fat_g:0, calories:110, fiber_g:3 }],
-  ["la tortilla factory",     { sugar_g:0,  sodium_mg:290, sat_fat_g:0, calories:45,  fiber_g:10 }],
-  ["maria and ricardos",      { sugar_g:0,  sodium_mg:170, sat_fat_g:0, calories:100 }],
 
   // Rice / pantry staples
-  ["minute rice",             { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
-  ["minute rice cup",         { sugar_g:0,  sodium_mg:400, sat_fat_g:0, calories:190, protein_g:4 }],
-  ["success boil",            { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
-  ["success boil in bag",     { sugar_g:0,  sodium_mg:0,  sat_fat_g:0, calories:190, protein_g:4 }],
-  ["maseca masa harina",      { sugar_g:0,  sodium_mg:3,  sat_fat_g:0.5, calories:110, fiber_g:4 }],
-  ["bush's baked beans",      { sugar_g:12, sodium_mg:550, sat_fat_g:0, calories:150, protein_g:7, fiber_g:5 }],
-  ["bush's best",             { sugar_g:12, sodium_mg:550, sat_fat_g:0, calories:150, protein_g:7, fiber_g:5 }],
 
   // Alcohol (remaining)
-  ["smirnoff vodka",          { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
-  ["jim beam",                { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
-  ["johnnie walker",          { sugar_g:0, sodium_mg:0, sat_fat_g:0, calories:97 }],
-  ["vizzy hard seltzer",      { sugar_g:1, sodium_mg:10, sat_fat_g:0, calories:100 }],
-  ["heineken beer",           { sugar_g:0, sodium_mg:10, sat_fat_g:0, calories:142 }],
-  ["bota box",                { sugar_g:4, sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["josh cellars",            { sugar_g:3, sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["kim crawford",            { sugar_g:2, sodium_mg:10, sat_fat_g:0, calories:120 }],
-  ["meiomi pinot noir",       { sugar_g:7, sodium_mg:10, sat_fat_g:0, calories:130 }],
-  ["la marca prosecco",       { sugar_g:3, sodium_mg:10, sat_fat_g:0, calories:110 }],
 
   // Indian / international
-  ["mtr ready meals",         { sugar_g:4,  sodium_mg:680, sat_fat_g:5, calories:230 }],
-  ["kitchens of india",       { sugar_g:5,  sodium_mg:620, sat_fat_g:4, calories:210 }],
-  ["patak's",                 { sugar_g:5,  sodium_mg:580, sat_fat_g:4, calories:200 }],
-  ["pataks",                  { sugar_g:5,  sodium_mg:580, sat_fat_g:4, calories:200 }],
-  ["jones dairy sausage",     { sugar_g:1,  sodium_mg:350, sat_fat_g:8, calories:180 }],
 
   // Restaurant missing
-  ["panera caesar salad",     { sugar_g:4,  sodium_mg:640, sat_fat_g:5, calories:350, protein_g:12 }],
-  ["olive garden salad",      { sugar_g:4,  sodium_mg:540, sat_fat_g:3, calories:150 }],
-  ["starbucks egg white bites",{ sugar_g:3, sodium_mg:440, sat_fat_g:9, calories:260, protein_g:19 }],
 
   // Frozen / trader joe's
-  ["trader joe's frozen",     { sugar_g:4,  sodium_mg:620, sat_fat_g:4, calories:300 }],
 
   // Misc
-  ["smart balance",           { sugar_g:0,  sodium_mg:85,  sat_fat_g:2, calories:80 }],
-  ["i can't believe it's not butter",{ sugar_g:0, sodium_mg:90, sat_fat_g:2, calories:70 }],
-  ["no cow",                  { sugar_g:1,  sodium_mg:240, sat_fat_g:1, calories:180, protein_g:21, fiber_g:16 }],
-  ["olipop",                  { sugar_g:3,  sodium_mg:35,  sat_fat_g:0, calories:35,  fiber_g:9 }],
-  ["poppi",                   { sugar_g:5,  sodium_mg:0,   sat_fat_g:0, calories:25 }],
 
   // Remaining food items (non-pet-food)
-  ["crisco shortening",       { sugar_g:0,  sodium_mg:0,   sat_fat_g:3,  calories:110 }],
-  ["crisco",                  { sugar_g:0,  sodium_mg:0,   sat_fat_g:3,  calories:110 }],
-  ["twinkies",                { sugar_g:18, sodium_mg:190, sat_fat_g:4,  calories:270, kidsFloor:6, kidsCeiling:8 }],
-  ["mott's",                  { sugar_g:22, sodium_mg:15,  sat_fat_g:0,  calories:90,  kidsFloor:6, kidsCeiling:8 }],
-  ["welch's",                 { sugar_g:36, sodium_mg:15,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["mdh",                     { sugar_g:0,  sodium_mg:580, sat_fat_g:0,  calories:25 }],
-  ["everest",                 { sugar_g:0,  sodium_mg:580, sat_fat_g:0,  calories:25 }],
-  ["ol roy",                  { sugar_g:5,  sodium_mg:330, sat_fat_g:4,  calories:350 }],
-  ["milk-bone",               { sugar_g:1,  sodium_mg:65,  sat_fat_g:0,  calories:40 }],
-  ["milk bone",               { sugar_g:1,  sodium_mg:65,  sat_fat_g:0,  calories:40 }],
-  ["beggin strips",           { sugar_g:4,  sodium_mg:120, sat_fat_g:1,  calories:50 }],
-  ["pup-peroni",              { sugar_g:4,  sodium_mg:190, sat_fat_g:1,  calories:60 }],
-  ["minute maid",             { sugar_g:28, sodium_mg:15,  sat_fat_g:0,  calories:110, kidsFloor:7, kidsCeiling:9 }],
-  ["snapple peach tea",       { sugar_g:37, sodium_mg:10,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
   ["snapple",                 { sugar_g:37, sodium_mg:10,  sat_fat_g:0,  calories:140, kidsFloor:7, kidsCeiling:9 }],
-  ["margarita mix",           { sugar_g:29, sodium_mg:80,  sat_fat_g:0,  calories:110 }],
   ["chilis awesome blossom",  { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
-  ["chili's awesome blossom", { sugar_g:14, sodium_mg:6540, sat_fat_g:45, calories:2250 }],
   ["starbucks psl",           { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
   ["pumpkin spice latte",     { sugar_g:50, sodium_mg:240, sat_fat_g:7,  calories:380, kidsFloor:9, kidsCeiling:9 }],
 ]);
