@@ -4075,16 +4075,17 @@ function filterAiAlternatives(alternatives, category, productName) {
 }
 
 
-async function pass2(productName, pass1Result) {
+async function pass2(productName, pass1Result, materialContext) {
   const p = pass1Result;
   const scores = `materials:${p.materials?.score} usage:${p.usage_exposure?.score} packaging:${p.packaging?.score} sustainability:${p.sustainability?.score}`;
   const plastics = (p.identified_plastics || []).join(", ") || "none";
+  const searchSection = materialContext ? `\nVerified product data: ${materialContext.slice(0, 500)}` : "";
 
   return callClaude(
     `You are a scientific auditor reviewing a 4-dimension product risk score. Respond with valid JSON only — no markdown, no backticks, no trailing commas. Keep all string values under 20 words.`,
     `Audit the 4-dimension scores for "${productName}":
 ${scores}
-category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.frequency} type:${p.usage_exposure?.type}
+category:${p.category} plastics:${plastics} frequency:${p.usage_exposure?.frequency} type:${p.usage_exposure?.type}${searchSection}
 
 AUDIT RULES:
 MATERIALS: Only score plastic/chemical risk from materials user is exposed to during use. Discarded packaging must not drive materials above 3 for otherwise plastic-free products. BUT: PVA pod film (Cascade, Tide, Finish) = materials 6-7 because PVA enters waterways. Synthetic fragrances and optical brighteners in cleaning products = materials 6-7. Synthetic textiles (polyester, nylon, spandex) with daily skin contact = materials 5-7. ORGANIC CLOTHING: confirmed organic cotton, linen, wool, hemp, bamboo = materials 1-2 regardless of daily use. Known organic kids brands (Little Rad Things, Pact Kids, Hanna Andersson, Burt's Bees Baby) = final score 1-3.
@@ -4228,9 +4229,9 @@ Return ONLY valid JSON:
 }
 
 // ── SAFE PASS2 WRAPPER ────────────────────────────────────────
-async function safePass2(productName, pass1Result) {
+async function safePass2(productName, pass1Result, materialContext) {
   try {
-    return await pass2(productName, pass1Result);
+    return await pass2(productName, pass1Result, materialContext);
   } catch (err) {
     console.error("Pass2 failed, using pass1 fallback:", err.message);
     return null;
@@ -4388,12 +4389,31 @@ function enrichFuzzyDimensions(substances, category, midScore) {
   return { mScore, uScore, sScore, pkScore, usageConcerns, sustainConcerns };
 }
 
-async function attachIntelCards(result) {
-  if (!supabaseAdmin) return result;
+// ── Intelligence card cache (avoids Supabase query on every scan) ──
+let intelCardsCache = null;
+let intelCardsCacheAt = 0;
+const INTEL_CARDS_TTL = 120000; // 2 minutes
+
+async function getActiveIntelCards() {
+  const now = Date.now();
+  if (intelCardsCache && now - intelCardsCacheAt < INTEL_CARDS_TTL) return intelCardsCache;
+  if (!supabaseAdmin) return [];
   try {
-    const now = new Date().toISOString();
-    const { data: cards } = await supabaseAdmin.from("intelligence_cards").select("id,headline,body,label,label_color,action_text,action_url,ingredient_triggers,category_triggers,source_name,priority").eq("active", true).or(`expires_at.is.null,expires_at.gt.${now}`).order("priority", { ascending: false }).limit(20);
-    if (!cards || !cards.length) return result;
+    const isoNow = new Date().toISOString();
+    const { data: cards } = await supabaseAdmin.from("intelligence_cards").select("id,headline,body,label,label_color,action_text,action_url,ingredient_triggers,category_triggers,source_name,priority").eq("active", true).or(`expires_at.is.null,expires_at.gt.${isoNow}`).order("priority", { ascending: false }).limit(20);
+    intelCardsCache = cards || [];
+    intelCardsCacheAt = now;
+    return intelCardsCache;
+  } catch (e) {
+    console.warn("[Intel] Card fetch failed:", e.message);
+    return intelCardsCache || [];
+  }
+}
+
+async function attachIntelCards(result) {
+  try {
+    const cards = await getActiveIntelCards();
+    if (!cards.length) return result;
     const txt = [result.product_name || "", ...(result.harmful_chemicals || []), ...(result.concerns || []).map(c => typeof c === "string" ? c : c.concern || ""), result.summary || ""].join(" ").toLowerCase();
     const cat = result.category || "";
     const matching = cards.filter(c => {
@@ -4412,13 +4432,15 @@ app.post("/analyze", rateLimit, async (req, res) => {
   res.set("Pragma", "no-cache");
   let { query, image, mediaType, userId } = req.body;
 
-  // Increment server-side scan count for logged-in users
+  // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
   if (userId && supabaseAdmin) {
-    try {
-      const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
-      const newCount = (profile?.scan_count || 0) + 1;
-      await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
-    } catch(e) { console.warn("scan_count increment failed:", e.message); }
+    (async () => {
+      try {
+        const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
+        const newCount = (profile?.scan_count || 0) + 1;
+        await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
+      } catch(e) { console.warn("scan_count increment failed:", e.message); }
+    })();
   }
 
   // If image provided, use vision to identify + analyze in one pass
@@ -4749,33 +4771,35 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
   try {
 
-    // ── Search for real product material data if needed ──
+    // ── Run search and pass1 in parallel ──
+    // Search for material data runs concurrently with pass1 (instead of blocking it).
+    // If search returns data, it feeds into pass2 for refinement.
     let materialContext = null;
-    if (needsSearch(productName)) {
-      console.log(`Searching product details: ${productName}`);
-      try {
-        // Timeout search after 8 seconds to avoid blocking the whole request
-        materialContext = await Promise.race([
+    const doSearch = needsSearch(productName);
+    if (doSearch) console.log(`Searching product details: ${productName}`);
+    console.log(`Analyzing: ${productName}`);
+
+    const searchPromise = doSearch
+      ? Promise.race([
           searchProductDetails(productName),
           new Promise((_, rej) => setTimeout(() => rej(new Error("Search timeout")), 8000))
-        ]);
-        if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
-      } catch (err) {
-        console.warn("Search failed, continuing without:", err.message);
-      }
-    }
+        ]).catch(err => { console.warn("Search failed, continuing without:", err.message); return null; })
+      : Promise.resolve(null);
 
-    // ── Pass 1 then Pass 2 sequentially (not parallel — pass2 needs pass1 output) ──
-    console.log(`Analyzing: ${productName}`);
-    const p1 = await pass1(productName, materialContext, category);
+    const [p1, searchResult] = await Promise.all([
+      pass1(productName, null, category),
+      searchPromise,
+    ]);
+    materialContext = searchResult;
+    if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
 
     // Skip pass2 when pass1 is high confidence AND has real dimension scores
     // (not flat 5s). Saves ~20s latency and 1 API call per scan.
     const p1HasRealScores = p1.materials?.score != null &&
       !(p1.materials?.score === 5 && p1.usage_exposure?.score === 5 &&
         p1.packaging?.score === 5 && p1.sustainability?.score === 5);
-    const skipPass2 = p1.confidence === "high" && p1HasRealScores;
-    const p2 = skipPass2 ? null : await safePass2(productName, p1);
+    const skipPass2 = p1.confidence === "high" && p1HasRealScores && !materialContext;
+    const p2 = skipPass2 ? null : await safePass2(productName, p1, materialContext);
     if (skipPass2) console.log(`[PASS2 SKIP] ${productName} — pass1 confidence high, real scores`);
 
     // Merge pass1 + pass2 results
@@ -6468,24 +6492,29 @@ app.post("/barcode", rateLimit, async (req, res) => {
     { name: "product", url: `https://world.openproductsfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
   ];
 
+  // Fire all barcode sources in parallel — take the first valid hit
   let offProduct = null;
   let sourceName = null;
-  for (const src of BARCODE_SOURCES) {
-    try {
+  const barcodeResults = await Promise.allSettled(
+    BARCODE_SOURCES.map(async (src) => {
       const offRes = await fetch(src.url, {
         headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
         signal: AbortSignal.timeout(6000),
       });
-      if (offRes.ok) {
-        const offJson = await offRes.json();
-        if (offJson.status === 1 && offJson.product) {
-          offProduct = offJson.product;
-          sourceName = src.name;
-          console.log(`[BARCODE] ${barcode} found in ${src.name} database`);
-          break;
-        }
-      }
-    } catch(e) { console.warn(`[BARCODE] ${src.name} lookup failed:`, e.message); }
+      if (!offRes.ok) return null;
+      const offJson = await offRes.json();
+      if (offJson.status === 1 && offJson.product) return { product: offJson.product, name: src.name };
+      return null;
+    })
+  );
+  // Prefer food > beauty > product (same order as BARCODE_SOURCES)
+  for (const r of barcodeResults) {
+    if (r.status === "fulfilled" && r.value) {
+      offProduct = r.value.product;
+      sourceName = r.value.name;
+      console.log(`[BARCODE] ${barcode} found in ${sourceName} database`);
+      break;
+    }
   }
 
   if (!offProduct) {
