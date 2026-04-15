@@ -7173,14 +7173,14 @@ function App() {
   const [showAccountDeleted, setShowAccountDeleted] = useState(false);
 
   const deleteAccount = async () => {
-    if (!user) { alert("Not signed in."); return; }
+    if (!user) { setError("Not signed in."); setTimeout(()=>setError(null),3000); return; }
     try {
       const r = await fetch(`${API_BASE}/delete-account`, {
         method:"POST", headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ userId: user.id }),
       });
       const d = await r.json();
-      if (!r.ok) { alert("Delete failed: " + (d.error || r.status)); return; }
+      if (!r.ok) { setShowDeleteConfirm(false); setError("Delete failed. Please try again."); setTimeout(()=>setError(null),4000); return; }
       await supabase.auth.signOut().catch(()=>{});
       setUser(null);
       setShowDeleteConfirm(false);
@@ -7190,7 +7190,7 @@ function App() {
       setResult(null);
       setShowAccountDeleted(true);
       setTimeout(() => setShowAccountDeleted(false), 4000);
-    } catch(e) { alert("Error: " + e.message); }
+    } catch(e) { setShowDeleteConfirm(false); setError("Something went wrong. Please try again."); setTimeout(()=>setError(null),4000); }
   };
   const [checkingOut,  setCheckingOut]  = useState(false);
   const [iapTimedOut,  setIapTimedOut]  = useState(false);
@@ -7335,7 +7335,7 @@ function App() {
       });
       const d = await r.json();
       if (d.url) { window.location.href = d.url; }
-    } catch { alert("Something went wrong. Please try again."); }
+    } catch { setError("Something went wrong. Please try again."); setTimeout(()=>setError(null),4000); }
     setCheckingOut(false);
   };
 
@@ -7928,7 +7928,7 @@ function App() {
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
-              {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch{}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
+              {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch(e){if(!e.message?.includes("cancelled")){setShowLimitModal(null);setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
               <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:12}}>
                 <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setShowLimitModal(null);setPage("privacy");}}>Privacy Policy</span>
                 <span style={{margin:"0 6px",opacity:0.4}}>·</span>
@@ -8040,7 +8040,7 @@ function App() {
                         <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
                           Manage subscription
                         </button>
-                        <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}}catch(e){if(!e.message?.includes("cancelled"))console.warn("Restore failed:",e.message);}}} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                        <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}}catch(e){if(!e.message?.includes("cancelled")){setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
                           Restore purchases
                         </button>
                       </div>
