@@ -140,6 +140,109 @@ function checkIntegrity() {
   return { missingFloor, floorAboveCeiling };
 }
 
+// ── Substance floor tests ─────────────────────────────────────
+// Reads the SUBSTANCE_FLOORS array from server.js source to verify
+// regex patterns fire correctly without starting the server.
+const fs = require("fs");
+const serverSrc = fs.readFileSync(__dirname + "/server.js", "utf8");
+
+// Extract SUBSTANCE_FLOORS array via regex — find all match patterns and floors
+const FLOOR_TESTS = [
+  // Substance name, expected mFloor, note
+  { text: "contains Red 40 dye",              expectMinFloor: 6, note: "Petroleum dye" },
+  { text: "contains BPA liner",               expectMinFloor: 7, note: "IARC + endocrine" },
+  { text: "PFAS coating detected",            expectMinFloor: 8, note: "Forever chemicals" },
+  { text: "contains aspartame sweetener",      expectMinFloor: 5, note: "IARC 2B" },
+  { text: "formaldehyde releasing",            expectMinFloor: 7, note: "IARC Group 1" },
+  { text: "contains TBHQ preservative",        expectMinFloor: 6, note: "Immunotoxin" },
+  { text: "contains BHT preservative",         expectMinFloor: 5, note: "Animal carcinogen" },
+  { text: "contains MSG flavoring",            expectMinFloor: 4, note: "Excitotoxin" },
+  { text: "contains monosodium glutamate",     expectMinFloor: 4, note: "MSG full name" },
+  { text: "sodium nitrite preservative",       expectMinFloor: 8, note: "IARC Group 1" },
+  { text: "contains sodium benzoate",          expectMinFloor: 4, note: "Benzene risk" },
+  { text: "sodium benzoate and ascorbic acid", expectMinFloor: 6, note: "Benzene formation combo" },
+  { text: "contains potassium bromate",        expectMinFloor: 7, note: "IARC 2B, banned EU" },
+  { text: "mercury compounds detected",        expectMinFloor: 9, note: "Neurotoxin" },
+  { text: "contains phthalate plasticizers",     expectMinFloor: 6, note: "Endocrine disruptor class" },
+  { text: "contains DEHP phthalate",            expectMinFloor: 7, note: "DEHP specific — IARC 2B" },
+  { text: "contains triclosan antibacterial",   expectMinFloor: 6, note: "FDA banned soaps, thyroid" },
+];
+
+// Parse SUBSTANCE_FLOORS from source code to build a simplified test runner
+// Extract the array between "const SUBSTANCE_FLOORS = [" and the next "];"
+const floorsMatch = serverSrc.match(/const SUBSTANCE_FLOORS\s*=\s*\[([\s\S]*?)\];\s*\n/);
+let substanceFloorsParsed = [];
+if (floorsMatch) {
+  // Extract each { match: /pattern/i, mFloor: N } entry
+  const entryRegex = /match:\s*(\/.+?\/[gimsuy]*)\s*,\s*mFloor:\s*(\d+)/g;
+  let m;
+  while ((m = entryRegex.exec(floorsMatch[1])) !== null) {
+    try {
+      const pattern = eval(m[1]); // Convert regex string to RegExp
+      substanceFloorsParsed.push({ pattern, mFloor: parseInt(m[2]) });
+    } catch {}
+  }
+}
+
+let floorTestsPassed = 0, floorTestsFailed = 0;
+function runFloorTest(test) {
+  // Find highest matching floor for this text
+  let maxFloor = 0;
+  for (const entry of substanceFloorsParsed) {
+    if (entry.pattern.test(test.text)) {
+      maxFloor = Math.max(maxFloor, entry.mFloor);
+    }
+  }
+  if (maxFloor >= test.expectMinFloor) {
+    floorTestsPassed++;
+  } else {
+    floorTestsFailed++;
+    failures.push(`FLOOR: "${test.text}" triggered floor ${maxFloor}, expected >= ${test.expectMinFloor} (${test.note})`);
+  }
+}
+
+// ── Child/pregnancy detection tests ──────────────────────────
+const CHILD_DETECT_TESTS = [
+  // Products that SHOULD be detected as child products
+  { name: "huggies little movers", cat: "baby",         expectChild: true,  note: "Baby category" },
+  { name: "lego classic set",     cat: "toy",           expectChild: true,  note: "Toy category" },
+  { name: "kids shampoo",         cat: "personal_care", expectChild: true,  note: "Kids keyword" },
+  { name: "froot loops",          cat: "food_beverage",  expectChild: true,  note: "Child food brand" },
+  { name: "lunchables",           cat: "food_beverage",  expectChild: true,  note: "Child food brand" },
+  { name: "go-gurt",              cat: "food_beverage",  expectChild: true,  note: "Child food brand" },
+  // Products that should NOT be flagged as child products
+  { name: "gatorade",             cat: "beverage",       expectChild: false, note: "Adult beverage" },
+  { name: "tide pods",            cat: "home",           expectChild: false, note: "Household cleaner" },
+  { name: "neutrogena ultra sheer",cat:"personal_care",  expectChild: false, note: "Adult sunscreen" },
+  { name: "lodge cast iron",      cat: "kitchen",        expectChild: false, note: "Cookware" },
+];
+
+// Parse detectChildProduct patterns from server.js
+const childPatternsMatch = serverSrc.match(/const CHILD_PRODUCT_PATTERNS\s*=\s*(\/.+?\/[gimsuy]*)/);
+const childBrandsMatch = serverSrc.match(/const CHILD_FOOD_BRANDS\s*=\s*(\/.+?\/[gimsuy]*)/);
+let CHILD_PRODUCT_PATTERNS, CHILD_FOOD_BRANDS;
+try { CHILD_PRODUCT_PATTERNS = eval(childPatternsMatch[1]); } catch { CHILD_PRODUCT_PATTERNS = /(?!)/; }
+try { CHILD_FOOD_BRANDS = eval(childBrandsMatch[1]); } catch { CHILD_FOOD_BRANDS = /(?!)/; }
+
+function testDetectChild(name, category) {
+  if (category === "baby" || category === "toy") return true;
+  const lower = (name || "").toLowerCase();
+  if (CHILD_PRODUCT_PATTERNS.test(lower)) return true;
+  if (CHILD_FOOD_BRANDS.test(lower)) return true;
+  return false;
+}
+
+let childTestsPassed = 0, childTestsFailed = 0;
+function runChildTest(test) {
+  const result = testDetectChild(test.name, test.cat);
+  if (result === test.expectChild) {
+    childTestsPassed++;
+  } else {
+    childTestsFailed++;
+    failures.push(`CHILD: "${test.name}" (${test.cat}) detected=${result}, expected=${test.expectChild} (${test.note})`);
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────
 console.log("Partiqule scoring regression tests");
 console.log("==================================\n");
@@ -149,23 +252,37 @@ const integrity = checkIntegrity();
 console.log(`\nRunning ${TESTS.length} scoring assertions...\n`);
 TESTS.forEach(runTest);
 
+console.log(`Running ${FLOOR_TESTS.length} substance floor assertions...\n`);
+FLOOR_TESTS.forEach(runFloorTest);
+
+console.log(`Running ${CHILD_DETECT_TESTS.length} child detection assertions...\n`);
+CHILD_DETECT_TESTS.forEach(runChildTest);
+
+const totalTests = TESTS.length + FLOOR_TESTS.length + CHILD_DETECT_TESTS.length;
+const totalPassed = passed + floorTestsPassed + childTestsPassed;
+const totalFailed = failed + floorTestsFailed + childTestsFailed;
+
 if (failures.length) {
   console.log("FAILURES:");
   failures.forEach(f => console.log("  " + f));
 }
 
-console.log(`\n${passed}/${TESTS.length} tests passed`);
+console.log(`\n${totalPassed}/${totalTests} tests passed`);
+console.log(`  Calibration: ${passed}/${TESTS.length}`);
+console.log(`  Substance floors: ${floorTestsPassed}/${FLOOR_TESTS.length}`);
+console.log(`  Child detection: ${childTestsPassed}/${CHILD_DETECT_TESTS.length}`);
+if (substanceFloorsParsed.length > 0) {
+  console.log(`  (${substanceFloorsParsed.length} substance floor patterns parsed from server.js)`);
+}
 
-// Only fail on test assertions or floor > ceiling (which is a real bug).
-// Missing floor/ceiling is a warning — some entries are intentionally partial.
-const exitCode = (failed > 0 || integrity.floorAboveCeiling > 0) ? 1 : 0;
+const exitCode = (totalFailed > 0 || integrity.floorAboveCeiling > 0) ? 1 : 0;
 if (exitCode === 0) {
   console.log("All tests passed ✓");
   if (integrity.missingFloor > 0) {
     console.log(`(Warning: ${integrity.missingFloor} calibration entries missing floor/ceiling — not a failure)`);
   }
 } else {
-  console.log(`FAILED — ${failed} test failures${integrity.floorAboveCeiling > 0 ? `, ${integrity.floorAboveCeiling} inverted floor/ceiling` : ""}`);
+  console.log(`FAILED — ${totalFailed} test failures${integrity.floorAboveCeiling > 0 ? `, ${integrity.floorAboveCeiling} inverted floor/ceiling` : ""}`);
 }
 
 process.exit(exitCode);

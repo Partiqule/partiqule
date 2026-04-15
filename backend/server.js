@@ -603,8 +603,9 @@ const SUBSTANCE_FLOORS = [
   { match: /saccharin/i,                                                mFloor:4, uFloor:3, reason:"Saccharin — historically IARC 2B (downgraded), gut microbiome" },
   { match: /acesulfame.?k|acesulfame potassium/i,                      mFloor:4, uFloor:3, reason:"Acesulfame-K — animal carcinogen studies, gut disruption" },
   { match: /\bcarrageenan\b/i,                                          mFloor:5, uFloor:4, reason:"Carrageenan — intestinal inflammation, WHO concern (food grade)" },
-  { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate/i,     mFloor:6, uFloor:5, reason:"Sodium benzoate + vitamin C = benzene formation (IARC Group 1)" },
-  { match: /\bmonosodium glutamate\b|\bMSG\b/i,                         mFloor:3, uFloor:3, reason:"MSG — excitotoxin concerns, FDA GRAS but contested" },
+  { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate|sodium benzoate.*vitamin.c|vitamin.c.*sodium benzoate/i, mFloor:6, uFloor:5, reason:"Sodium benzoate + vitamin C = benzene formation (IARC Group 1)" },
+  { match: /\bsodium benzoate\b/i,                                      mFloor:4, uFloor:3, reason:"Sodium benzoate — preservative, benzene risk when combined with vitamin C or citric acid" },
+  { match: /\bmonosodium glutamate\b|\bMSG\b/i,                         mFloor:4, uFloor:3, reason:"MSG — excitotoxin concerns, FDA GRAS but contested, headache/sensitivity triggers" },
   { match: /brominated vegetable oil|\bBVO\b/i,                         mFloor:6, uFloor:5, reason:"BVO — FDA proposed ban 2023, iodine displacement, organ buildup" },
 
   // ══════════════════════════════════════════════════════════
@@ -4544,18 +4545,17 @@ app.post("/analyze", rateLimit, async (req, res) => {
         overall_score: finalScore,
         summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
-        // ── Child + pregnancy vulnerability ──
+        // ── Child + pregnancy vulnerability (via shared helper) ──
         ...(() => {
-          const isChild = detectChildProduct(productName, imgCategory);
-          const imgConcernsText = JSON.stringify([
-            ...(p1.product_analysis?.concerns || []),
-            ...(p1.materials?.concerns || []),
-            ...(p2?.refined_concerns || []),
-            ...(p1.raw_concerns || []),
-          ]).toLowerCase();
-          const { childScore, childBumps } = computeChildScore(finalScore, imgConcernsText, imgCategory, productName, isChild);
-          const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, imgConcernsText, imgCategory, productName);
-          return { is_child_product: isChild, child_score: childScore, child_bumps: childBumps, pregnancy_score: pregnancyScore, pregnancy_bumps: pregnancyBumps };
+          const safety = computeSafetyScores(finalScore, imgCategory, productName, p1,
+            [], (p2?.refined_concerns || []).join(" "));
+          return {
+            is_child_product:  safety.isChild,
+            child_score:       safety.childScore,
+            child_bumps:       safety.childBumps,
+            pregnancy_score:   safety.pregnancyScore,
+            pregnancy_bumps:   safety.pregnancyBumps,
+          };
         })(),
         identified_plastics: p1.identified_plastics || [],
         harmful_chemicals:   p1.harmful_chemicals   || [],
@@ -4861,23 +4861,16 @@ app.post("/analyze", rateLimit, async (req, res) => {
       summary:          p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
       concerns:         p2?.refined_concerns || p1.raw_concerns || [],
       category:         finalCategory,
-      // ── Child vulnerability ──
+      // ── Child + pregnancy vulnerability (via shared helper) ──
       ...(() => {
-        const isChild = detectChildProduct(p1.product_name || productName, finalCategory);
-        const concernsText = JSON.stringify([
-          ...(p1.product_analysis?.concerns || []),
-          ...(p1.materials?.concerns || []),
-          ...(p2?.refined_concerns || []),
-          ...(p1.raw_concerns || []),
-        ]).toLowerCase();
-        const { childScore, childBumps } = computeChildScore(finalScore, concernsText, finalCategory, p1.product_name || productName, isChild);
-        const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, concernsText, finalCategory, p1.product_name || productName);
+        const safety = computeSafetyScores(finalScore, finalCategory, p1.product_name || productName, p1,
+          [], (p2?.refined_concerns || []).join(" "));
         return {
-          is_child_product:  isChild,
-          child_score:       childScore,
-          child_bumps:       childBumps,
-          pregnancy_score:   pregnancyScore,
-          pregnancy_bumps:   pregnancyBumps,
+          is_child_product:  safety.isChild,
+          child_score:       safety.childScore,
+          child_bumps:       safety.childBumps,
+          pregnancy_score:   safety.pregnancyScore,
+          pregnancy_bumps:   safety.pregnancyBumps,
         };
       })(),
       // ── 5 dimensions ──
@@ -5618,7 +5611,7 @@ app.delete("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
     const { error } = await supabaseAdmin.from("intelligence_cards").delete().eq("id", req.params.id);
     if (error) throw error;
     return res.json({ ok: true });
-  } catch (e) { return res.status(500).json({ error: e.message }); }
+  } catch (e) { return res.status(500).json({ error: "Failed to delete card" }); }
 });
 
 // ── RECIPE INGREDIENTS — AI-powered ingredient expansion ──
