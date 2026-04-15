@@ -4020,7 +4020,10 @@ function filterDbAlternatives(alternatives, category, productName, productScore 
     // Category fidelity: for specific non-food categories, only allow same category OR "other"
     // Prevents cross-category bleeding when a category has sparse DB coverage
     const STRICT_CATEGORIES = new Set(["home","toy","accessory","supplement","beverage","personal_care","clothing","baby","kitchen"]);
-    if (STRICT_CATEGORIES.has(category) && alt.category !== category && alt.category !== "other") {
+    // For supplement/personal_care/baby: block "other" too (prevents garden tools for supplements, etc)
+    const BLOCK_OTHER = new Set(["supplement","personal_care","baby"]);
+    const allowOther = !BLOCK_OTHER.has(category);
+    if (STRICT_CATEGORIES.has(category) && alt.category !== category && (alt.category !== "other" || !allowOther)) {
       // Allow kitchen ↔ home since they share formula weights
       const kitchenHomeSwap = (category === "home" && alt.category === "kitchen") ||
                                (category === "kitchen" && alt.category === "home");

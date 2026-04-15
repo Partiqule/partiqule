@@ -264,7 +264,10 @@ const ENTRIES = [
   // PERSONAL CARE — TOOTHPASTE
   // ══════════════════════════════════════════════════════════════
   ["colgate total",                { floor:4, ceiling:6, substances:["SLS","titanium dioxide","saccharin"], reason:"SLS + titanium dioxide IARC 2B + saccharin + artificial flavor", confidence:"high", category:"personal_care" }],
+  ["crest",                        { floor:4, ceiling:6, substances:["SLS","titanium dioxide","synthetic dyes"], reason:"Crest — SLS + titanium dioxide (IARC 2B) + Blue 1 dye in many varieties. Switch to Bite, RiseWell, or Burt's Bees for clean toothpaste.", confidence:"high", category:"personal_care" }],
+  ["crest 3d white",               { floor:4, ceiling:6, substances:["SLS","titanium dioxide","hydrogen peroxide","Blue 1"], reason:"Crest 3D White — SLS + titanium dioxide + hydrogen peroxide + Blue 1 petroleum dye. Whitening chemicals + colorants.", confidence:"high", category:"personal_care" }],
   ["crest whitening",              { floor:4, ceiling:6, substances:["SLS","titanium dioxide"], reason:"SLS + titanium dioxide IARC 2B + saccharin", confidence:"high", category:"personal_care" }],
+  ["victoria secret pink",         { floor:5, ceiling:7, substances:["nylon","spandex","synthetic fragrance","synthetic dyes","formaldehyde"], reason:"VS Pink — same materials as Victoria's Secret. Younger-targeted but identical formaldehyde + synthetic fragrance concerns.", confidence:"high", category:"clothing" }],
   ["sensodyne",                    { floor:2, ceiling:4, substances:[], reason:"SLS-free in most formulas — simpler, cleaner than Colgate", confidence:"high", category:"personal_care" }],
   ["hello toothpaste",             { floor:1, ceiling:3, substances:[], reason:"SLS-free, no artificial sweeteners, no titanium dioxide", confidence:"high", category:"personal_care" }],
   ["bite toothpaste",              { floor:1, ceiling:2, substances:[], reason:"Tablet format, no SLS, minimal ingredients — cleanest mainstream option", confidence:"high", category:"personal_care" }],
@@ -309,6 +312,8 @@ const ENTRIES = [
   ["olly gummies",                 { floor:4, ceiling:6, substances:["synthetic colors"], reason:"Synthetic colorants in most flavors", confidence:"high", category:"supplement" }],
   ["smartypants kids",             { floor:2, ceiling:4, substances:[], reason:"No petroleum dyes — natural colors from turmeric and spirulina", confidence:"high", category:"supplement" }],
   ["ritual multivitamin",          { floor:1, ceiling:3, substances:[], reason:"No synthetic dyes, third-party tested, clean formulation", confidence:"high", category:"supplement" }],
+  ["ritual prenatal",              { floor:1, ceiling:3, substances:[], reason:"Ritual Prenatal — no synthetic dyes, vegan, third-party tested, delayed-release capsule. Benchmark clean prenatal vitamin.", confidence:"high", category:"supplement" }],
+  ["ritual",                       { floor:1, ceiling:3, substances:[], reason:"Ritual brand — transparent formulation, no synthetic dyes, third-party tested. Clean supplement benchmark.", confidence:"high", category:"supplement" }],
   ["garden of life raw",           { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole-food derived, no synthetic dyes", confidence:"high", category:"supplement" }],
   ["nordic naturals omega",        { floor:1, ceiling:3, substances:[], reason:"NSF tested, no artificial colors or flavors, Friend of the Sea certified", confidence:"high", category:"supplement" }],
   ["momentous protein",            { floor:1, ceiling:3, substances:[], reason:"NSF Certified for Sport + Informed Sport — no dyes, no artificial sweeteners", confidence:"high", category:"supplement" }],
@@ -2492,6 +2497,8 @@ const ENTRIES = [
   ["nyx foundation",                { floor:4, ceiling:5, substances:["synthetic fragrance","talc","parabens"], reason:"NYX Foundation — synthetic fragrance + talc + parabens. Budget makeup concern.", confidence:"high", category:"personal_care" }],
   ["nars foundation",               { floor:4, ceiling:5, substances:["synthetic fragrance","talc","parabens"], reason:"NARS Sheer Glow — synthetic fragrance + talc + parabens. Premium price, conventional concern.", confidence:"medium", category:"personal_care" }],
   ["fenty beauty",                  { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Fenty Beauty — no parabens, no talc in liquid foundation, but synthetic fragrance + dimethicone. Better than drugstore, not clean-label.", confidence:"medium", category:"personal_care" }],
+  ["fenty gloss bomb",              { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Fenty Gloss Bomb — synthetic fragrance + dimethicone. Same concern tier as Fenty Beauty. Lip application with ingestion risk.", confidence:"high", category:"personal_care" }],
+  ["fenty skin",                    { floor:3, ceiling:5, substances:["synthetic fragrance","dimethicone"], reason:"Fenty Skin — same brand positioning. Synthetic fragrance + dimethicone. Better than drugstore but not clean.", confidence:"medium", category:"personal_care" }],
   // FOUNDATION CLEAN
   ["ilia",                          { floor:1, ceiling:3, substances:[], reason:"ILIA — EWG Verified clean cosmetics. Benchmark across foundation, mascara, and lip products.", confidence:"high", category:"personal_care" }],
   ["kosas",                         { floor:1, ceiling:3, substances:[], reason:"Kosas — EWG Verified, no synthetic fragrance, no parabens. Benchmark clean makeup.", confidence:"high", category:"personal_care" }],

@@ -5102,6 +5102,21 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     },
     {
       categories: ["personal_care"],
+      brands: ["secret","degree","dove","old spice","native","schmidt","arm & hammer","arm and hammer"],
+      inject: ["deodorant","antiperspirant"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["olaplex","moroccan oil","moroccanoil","chi","redken","bumble","living proof","oribe","devacurl","ouai","joico"],
+      inject: ["shampoo","conditioner","hair care","hair treatment"],
+    },
+    {
+      categories: ["supplement"],
+      brands: ["garden of life","ritual","megafood","thorne","nordic naturals","now foods","nature made","nature's bounty","centrum","olly","smarty pants"],
+      inject: ["vitamin","supplement","multivitamin"],
+    },
+    {
+      categories: ["personal_care"],
       brands: ["listerine","scope","act"],
       inject: ["mouthwash","oral care","dental"],
     },
