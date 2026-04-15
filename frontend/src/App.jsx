@@ -5364,7 +5364,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                         <span style={{fontSize:12, color:muted, marginLeft:8}}>{items.length} scan{items.length !== 1 ? "s" : ""} · avg {avg}/10</span>
                       </div>
                       {items.length >= 3 && (
-                        <button onClick={()=>{}} style={{padding:"6px 12px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontSize:12, fontWeight:700, cursor:"pointer"}}>Audit</button>
+                        <button onClick={()=>onSearch("")} style={{padding:"6px 12px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontSize:12, fontWeight:700, cursor:"pointer"}}>View</button>
                       )}
                     </div>
                     <div style={{position:"relative", paddingLeft:28}}>
@@ -7622,8 +7622,8 @@ function App() {
           const detector = new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"]});
           const bitmap = await createImageBitmap(file);
           const barcodes = await detector.detect(bitmap);
-          if (barcodes.length > 0) { barcodeValue = barcodes[0].rawValue; console.log("[BARCODE] Detected from image:", barcodeValue); }
-        } catch { console.log("[BARCODE] Detection unavailable, using vision"); }
+          if (barcodes.length > 0) { barcodeValue = barcodes[0].rawValue; }
+        } catch { /* barcode detection unavailable */ }
       }
 
       // Step 2a: Barcode found — use /barcode endpoint (fast path)
@@ -7641,8 +7641,7 @@ function App() {
               return;
             }
           }
-          console.log("[BARCODE] Lookup failed, falling back to vision");
-        } catch { console.log("[BARCODE] Endpoint error, falling back to vision"); }
+        } catch { /* barcode endpoint error, fall back to vision */ }
       }
 
       // Step 2b: No barcode or lookup failed — use vision
@@ -7929,6 +7928,7 @@ function App() {
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch{}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
               {iapTimedOut && (
                 <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
                   <div style={{fontSize:14, color:muted, marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
@@ -8031,9 +8031,14 @@ function App() {
                       Thanks for supporting Partiqule. You have unlimited scans, child and pregnancy scoring, and full access to all alternatives.
                     </div>
                     {IS_NATIVE && (
-                      <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
-                        Manage subscription
-                      </button>
+                      <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                        <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                          Manage subscription
+                        </button>
+                        <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}}catch(e){if(!e.message?.includes("cancelled"))console.warn("Restore failed:",e.message);}}} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                          Restore purchases
+                        </button>
+                      </div>
                     )}
                   </>
                 ) : (
@@ -9687,12 +9692,12 @@ function App() {
               {(() => {
                 const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
                 const scored = allAlts.filter(a => (a.score ?? a.estimated_score) != null);
-                if (!scored.length) { console.log("[CompareShare] No scored alternatives found, total:", allAlts.length); return null; }
+                if (!scored.length) { return null; }
                 const best = scored.reduce((a, b) => ((a.score ?? a.estimated_score) <= (b.score ?? b.estimated_score) ? a : b));
                 const bestScore = best.score ?? best.estimated_score;
                 const productScore = result.overall_score || result.score;
                 const gap = productScore - bestScore;
-                console.log("[CompareShare] product:", productScore, "bestAlt:", bestScore, "delta:", gap, "best:", best.name);
+                // console.log("[CompareShare] product:", productScore, "bestAlt:", bestScore, "delta:", gap, "best:", best.name);
                 if (gap < 2) return null;
                 return (
                   <button onClick={() => setCompareAlt(best)} style={{
@@ -9828,7 +9833,7 @@ function App() {
 
           {/* Bottom Nav — always visible */}
           <div style={{
-            position:"fixed", bottom:0, left:0, right:0, height:72,
+            position:"fixed", bottom:0, left:0, right:0, paddingBottom:"env(safe-area-inset-bottom, 0px)", minHeight:72,
             background:"rgba(5,46,22,0.97)", backdropFilter:"blur(16px)",
             borderTop:"1px solid rgba(34,197,94,0.15)",
             display:"flex", alignItems:"flex-start", paddingTop:10,
