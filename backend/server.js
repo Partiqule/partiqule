@@ -229,10 +229,11 @@ const log = {
 };
 
 // ── ADMIN KEY ─────────────────────────────────────────────────
-const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
+const ADMIN_KEY = process.env.ADMIN_KEY;
+if (!ADMIN_KEY) console.warn("[SECURITY] ADMIN_KEY env var not set — admin endpoints will reject all requests");
 const requireAdmin = (req, res, next) => {
-  const key = req.query.key || req.headers["x-admin-key"];
-  if (key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
+  const key = req.headers["x-admin-key"] || req.query.key;
+  if (!ADMIN_KEY || key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
   next();
 };
 
@@ -246,8 +247,8 @@ const RATE_LIMIT_USER = 40;   // signed-in free user (per userId)
 const RATE_LIMIT_PAID = 120;  // signed-in paid user (per userId)
 const rateLimit = async (req, res, next) => {
   // Admin key bypasses rate limiting
-  const adminKey = req.query.key || req.headers["x-admin-key"];
-  if (adminKey === ADMIN_KEY) return next();
+  const adminKey = req.headers["x-admin-key"] || req.query.key;
+  if (ADMIN_KEY && adminKey === ADMIN_KEY) return next();
 
   // Prefer userId (from body or header) over IP — gives per-user limits
   const userId = req.body?.userId || req.headers["x-user-id"] || null;
@@ -600,10 +601,8 @@ const SUBSTANCE_FLOORS = [
   { match: /saccharin/i,                                                mFloor:4, uFloor:3, reason:"Saccharin — historically IARC 2B (downgraded), gut microbiome" },
   { match: /acesulfame.?k|acesulfame potassium/i,                      mFloor:4, uFloor:3, reason:"Acesulfame-K — animal carcinogen studies, gut disruption" },
   { match: /\bcarrageenan\b/i,                                          mFloor:5, uFloor:4, reason:"Carrageenan — intestinal inflammation, WHO concern (food grade)" },
-  { match: /propyl gallate/i,                                           mFloor:5, uFloor:4, reason:"Propyl gallate — endocrine disruption, NTP listed" },
   { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate/i,     mFloor:6, uFloor:5, reason:"Sodium benzoate + vitamin C = benzene formation (IARC Group 1)" },
   { match: /\bmonosodium glutamate\b|\bMSG\b/i,                         mFloor:3, uFloor:3, reason:"MSG — excitotoxin concerns, FDA GRAS but contested" },
-  { match: /potassium bromate/i,                                        mFloor:7, uFloor:6, reason:"Potassium bromate — IARC 2B, banned EU/Canada, used in flour" },
   { match: /brominated vegetable oil|\bBVO\b/i,                         mFloor:6, uFloor:5, reason:"BVO — FDA proposed ban 2023, iodine displacement, organ buildup" },
 
   // ══════════════════════════════════════════════════════════
@@ -759,6 +758,7 @@ function serializeAlternatives(rawAlts, category) {
 // raw ingredient text) so we catch concerns regardless of which path we're in.
 function computeSafetyScores(finalScore, category, productName, p1, substanceTriggers = [], extraText = "") {
   const isChild = detectChildProduct(productName, category);
+  const computeChild = shouldComputeChildScore(productName, category);
   const flagText = [
     ...(p1?.flagged_substances || []),
     ...(p1?.materials?.concerns || []),
@@ -766,7 +766,9 @@ function computeSafetyScores(finalScore, category, productName, p1, substanceTri
     ...substanceTriggers,
     extraText || "",
   ].filter(Boolean).join(" ");
-  const { childScore, childBumps } = computeChildScore(finalScore, flagText, category, productName, isChild);
+  const { childScore, childBumps } = computeChild
+    ? computeChildScore(finalScore, flagText, category, productName, isChild)
+    : { childScore: null, childBumps: [] };
   const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, category, productName);
   return { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild };
 }
@@ -1075,13 +1077,19 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
 }
 
 function detectChildProduct(productName, category) {
-  if (category === "baby") return true;
-  // Extended to all categories where children have meaningful exposure
-  if (["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","toy","kitchen"].includes(category)) return true;
+  if (category === "baby" || category === "toy") return true;
   const name = (productName || "").toLowerCase();
   if (CHILD_PRODUCT_PATTERNS.test(name)) return true;
   if (CHILD_FOOD_BRANDS.test(name)) return true;
   return false;
+}
+
+// Separate check: should we compute child scores even if not a "child product"?
+// Yes — children are exposed to all household products. But only flag is_child_product
+// for products specifically targeted at children.
+function shouldComputeChildScore(productName, category) {
+  if (detectChildProduct(productName, category)) return true;
+  return ["food","food_beverage","beverage","restaurant","supplement","personal_care","clothing","home","home_furnishing","kitchen","baby","toy"].includes(category);
 }
 
 // ── PREGNANCY SCORING ─────────────────────────────────────────
@@ -4534,7 +4542,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         overall_score: finalScore,
         summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
-        // ── Child vulnerability ──
+        // ── Child + pregnancy vulnerability ──
         ...(() => {
           const isChild = detectChildProduct(productName, imgCategory);
           const imgConcernsText = JSON.stringify([
@@ -4544,7 +4552,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
             ...(p1.raw_concerns || []),
           ]).toLowerCase();
           const { childScore, childBumps } = computeChildScore(finalScore, imgConcernsText, imgCategory, productName, isChild);
-          return { is_child_product: isChild, child_score: childScore, child_bumps: childBumps };
+          const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, imgConcernsText, imgCategory, productName);
+          return { is_child_product: isChild, child_score: childScore, child_bumps: childBumps, pregnancy_score: pregnancyScore, pregnancy_bumps: pregnancyBumps };
         })(),
         identified_plastics: p1.identified_plastics || [],
         harmful_chemicals:   p1.harmful_chemicals   || [],
@@ -5587,18 +5596,20 @@ app.delete("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
 });
 
 // ── RECIPE INGREDIENTS — AI-powered ingredient expansion ──
-app.post("/api/recipe-ingredients", async (req, res) => {
+app.post("/api/recipe-ingredients", rateLimit, async (req, res) => {
   const { dish, servings } = req.body;
   if (!dish || !dish.trim()) return res.status(400).json({ error: "dish is required" });
+  const cleanDish = dish.trim().slice(0, 200).replace(/["\\\n\r]/g, " ");
+  const cleanServings = Math.max(1, Math.min(100, parseInt(servings) || 4));
   try {
     const system = `You are a culinary expert and nutritionist. Return raw JSON only, no markdown, no explanation.`;
-    const userPrompt = `The user wants to make: "${dish.trim()}"
-Servings: ${servings || 4}
+    const userPrompt = `The user wants to make: "${cleanDish}"
+Servings: ${cleanServings}
 
 Return a JSON object with this exact shape:
 {
   "dish": "Clean formatted dish name",
-  "servings": ${servings || 4},
+  "servings": ${cleanServings},
   "ingredients": [
     { "name": "specific product to buy at grocery store", "quantity": "amount with unit", "category": "food", "notes": "optional brand suggestion" }
   ]
@@ -5616,7 +5627,7 @@ Rules:
     return res.json(parsed);
   } catch (e) {
     console.error("Recipe ingredients error:", e.message);
-    return res.status(500).json({ error: "Could not generate ingredient list", details: e.message });
+    return res.status(500).json({ error: "Could not generate ingredient list" });
   }
 });
 
@@ -6244,6 +6255,14 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
           let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
           let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
 
+          // ── Substance-triggered floors ──
+          const reloadSubstance = applySubstanceFloors(mScore, uScore, p1, p2);
+          mScore = reloadSubstance.mScore;
+          uScore = reloadSubstance.uScore;
+          if (reloadSubstance.triggered.length > 0) {
+            console.log(`[RELOAD] Substance floors for ${productName}: ${reloadSubstance.triggered.join(", ")}`);
+          }
+
           let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);
           ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
             mScore, uScore, pkScore, sScore, finalScore, p1, p2, cat, productName
@@ -6354,6 +6373,9 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
 app.post("/barcode", rateLimit, async (req, res) => {
   const { barcode, userId } = req.body || {};
   if (!barcode) return res.status(400).json({ error: "barcode required" });
+  if (typeof barcode !== "string" || !/^\d{4,14}$/.test(barcode.trim())) {
+    return res.status(400).json({ error: "Invalid barcode format" });
+  }
 
   const barcodeKey = `barcode:${barcode}`;
 
