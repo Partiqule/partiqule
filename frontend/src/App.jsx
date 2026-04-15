@@ -1146,7 +1146,7 @@ const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#
 const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
 
 const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
-  if (score == null) return null;
+  if (score == null || isNaN(parseFloat(score))) return null;
   const num = parseFloat(score);
   const color = num <= 3 ? "#16a34a" : num <= 5 ? "#d97706" : "#dc2626";
   const bg    = num <= 3 ? "#f0fdf4" : num <= 5 ? "#fffbeb" : "#fef2f2";
@@ -4566,7 +4566,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
                       <div style={{flex:1}}>
                         <div style={{fontSize:12, color:"#16a34a", fontWeight:700, marginBottom:2}}>Better option found</div>
                         <div style={{fontSize:13, color:text}}>{item.swapSuggestion.name}</div>
-                        <div style={{fontSize:11, color:muted}}>Scores {item.swapSuggestion.score.toFixed(1)} vs your {item.score.toFixed(1)}</div>
+                        <div style={{fontSize:11, color:muted}}>Scores {(item.swapSuggestion.score||0).toFixed(1)} vs your {(item.score||0).toFixed(1)}</div>
                       </div>
                       <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{text:item.swapSuggestion.name,score:item.swapSuggestion.score,summary:item.swapSuggestion.summary,swapSuggestion:null,swappedFrom:item.text,swappedFromScore:item.score});}} style={{padding:"6px 12px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0}}>Swap</button>
                       <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{swapSuggestion:null});}} style={{padding:"6px 8px", borderRadius:8, background:"none", color:muted, border:"none", fontSize:12, cursor:"pointer", flexShrink:0}}>Dismiss</button>
@@ -7929,6 +7929,11 @@ function App() {
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
               {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch{}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
+              <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:12}}>
+                <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setShowLimitModal(null);setPage("privacy");}}>Privacy Policy</span>
+                <span style={{margin:"0 6px",opacity:0.4}}>·</span>
+                <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setShowLimitModal(null);setPage("terms");}}>Terms of Service</span>
+              </div>
               {iapTimedOut && (
                 <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
                   <div style={{fontSize:14, color:muted, marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
@@ -8219,7 +8224,7 @@ function App() {
             const routineScore = Math.round(history.slice(0,20).reduce((a,h)=>a+(h.overall_score||h.score||5),0)/Math.min(history.length,20)*10)/10;
             const highRisk = history.filter(h=>(h.overall_score||h.score||0)>=7).slice(0,2);
             const swapList = history.filter(h=>(h.overall_score||h.score||0)>=5).slice(0,2);
-            const nameForGreet = displayName || (user?.email ? user.email.split("@")[0].split(".")[0] : null);
+            const nameForGreet = displayName || (user?.email ? (user.email.split("@")[0] || "").split(".")[0] : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
 
             // ── Streak counter (Serial Position Effect: anchors the greeting) ──
