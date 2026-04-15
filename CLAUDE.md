@@ -60,7 +60,7 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
 5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
 6. Regulatory flags from Supabase injected into AI prompt for approved findings
-7. Calibration registry (`backend/calibration.js`, 2460+ known products) overrides AI entirely
+7. Calibration registry (`backend/calibration.js`, 3000+ known products) overrides AI entirely
 8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
 9. Pregnancy scores via `computeSafetyScores()` helper -- computed on ALL paths including image/camera
 10. Consistency checks (`applyConsistencyChecks`) catch AI hallucinations (label contradictions, inert material ceilings, confidence-linked caps)
@@ -122,8 +122,8 @@ Score color thresholds (consistent everywhere, never change):
 - `frontend/public/sw.js` -- Service worker (cache name `partiqule-v2`)
 - `frontend/scripts/generate-product-pages.js` -- Generates 2,400+ static SEO pages at build time
 - `backend/server.js` -- All API endpoints, scoring logic, substance registry, intelligence feed, caching
-- `backend/calibration.js` -- 2460+ known product scores (source of truth for known products)
-- `backend/products.js` -- 220+ affiliate alternative products across 6 categories
+- `backend/calibration.js` -- 3000+ known product scores (source of truth for known products)
+- `backend/products.js` -- 420+ affiliate alternative products across 6 categories with synonym expansion, brand injection, and gender/age matching
 - `backend/amazon-api.js` -- Amazon Creators API integration (tag: partiqule-20)
 - `backend/scoring-regression-test.js` -- 95 assertion tests (calibration, substance floors, child detection, category detection)
 
@@ -289,6 +289,14 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 - `detectCategory()` routes products before scoring. Order matters -- baby personal care ("baby shampoo") routes to personal_care, baby supplements ("kids vitamins") route to supplement, before the baby catch-all
 - 13 categories: other, restaurant, toy, accessory, baby, clothing, supplement, home_furnishing, kitchen, home, personal_care, beverage, food
 - Null return (unrecognized) falls back to "other" category weights
+
+### Alternatives matching (`findAlternatives` in products.js)
+- Synonym expansion maps product terms to related keywords (e.g. "pad" -> menstrual/period/feminine, "blouse" -> top/shirt/women)
+- Brand-keyword injection adds product-type keywords when query contains a known brand (e.g. "Always" injects "menstrual, pads, feminine care")
+- Gender matching: men's-tagged products deprioritized (-15 points) for non-masculine queries
+- Age matching: kids-tagged products excluded (score=0) for adult clothing/personal_care queries
+- Category filter: "other" category blocked from supplement/personal_care/baby queries (prevents garden tools for Garden of Life)
+- Calibration dedup: nutrition-only entries must NOT appear after full entries in calibration.js (Map.set overwrites -- last entry wins)
 
 ### Security conventions
 - `ADMIN_KEY` must be set via env var -- no hardcoded fallback
