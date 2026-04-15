@@ -243,6 +243,65 @@ function runChildTest(test) {
   }
 }
 
+// ── Category detection tests ──────────────────────────────────
+// Extract detectCategory from server.js source
+// Find the function body by tracking brace depth
+let detectCategory = () => null;
+const catFuncStart = serverSrc.indexOf("function detectCategory(q)");
+if (catFuncStart !== -1) {
+  let braceDepth = 0, started = false, bodyStart = 0, bodyEnd = 0;
+  for (let i = catFuncStart; i < serverSrc.length; i++) {
+    if (serverSrc[i] === "{") { if (!started) { started = true; bodyStart = i + 1; } braceDepth++; }
+    if (serverSrc[i] === "}") { braceDepth--; if (started && braceDepth === 0) { bodyEnd = i; break; } }
+  }
+  try {
+    detectCategory = new Function("q", serverSrc.slice(bodyStart, bodyEnd));
+  } catch (e) {
+    console.warn("Could not parse detectCategory:", e.message);
+  }
+}
+
+const CATEGORY_TESTS = [
+  // Ambiguous products that were previously miscategorized
+  { query: "baby shampoo",               expect: "personal_care", note: "Baby product but personal care type" },
+  { query: "baby lotion",                expect: "personal_care", note: "Baby product but personal care type" },
+  { query: "baby sunscreen",             expect: "personal_care", note: "Baby product but personal care type" },
+  { query: "baby vitamins",              expect: "supplement",    note: "Baby product but supplement type" },
+  { query: "kids multivitamin",          expect: "supplement",    note: "Kids product but supplement type" },
+  { query: "children's tylenol",         expect: "supplement",    note: "Kids medicine" },
+  // Products that should still be baby
+  { query: "huggies diapers",            expect: "baby",          note: "Core baby product" },
+  { query: "enfamil formula",            expect: "baby",          note: "Baby formula brand" },
+  { query: "baby stroller",              expect: "baby",          note: "Baby gear" },
+  // Clear-cut categories
+  { query: "tide pods",                  expect: "home",          note: "Cleaning product" },
+  { query: "dish soap",                  expect: "home",          note: "Home, not personal care" },
+  { query: "dove soap",                  expect: "personal_care", note: "Personal care soap" },
+  { query: "teflon pan",                 expect: "kitchen",       note: "Cookware" },
+  { query: "lodge cast iron skillet",    expect: "kitchen",       note: "Cookware" },
+  { query: "lego classic",              expect: "toy",            note: "Toy" },
+  { query: "shein dress",               expect: "clothing",       note: "Clothing" },
+  { query: "protein powder",            expect: "supplement",     note: "Supplement" },
+  { query: "red bull energy drink",     expect: "beverage",       note: "Beverage" },
+  { query: "cheerios cereal",           expect: "food",           note: "Food" },
+  { query: "mcdonalds big mac",         expect: "restaurant",     note: "Restaurant" },
+  { query: "lysol spray",              expect: "home",            note: "Cleaning product" },
+  { query: "neutrogena sunscreen",      expect: "personal_care",  note: "Sunscreen" },
+  { query: "casper mattress",           expect: "home_furnishing", note: "Furniture" },
+  { query: "stanley tumbler",           expect: "kitchen",         note: "Drinkware" },
+];
+
+let catTestsPassed = 0, catTestsFailed = 0;
+function runCategoryTest(test) {
+  const result = detectCategory(test.query);
+  if (result === test.expect) {
+    catTestsPassed++;
+  } else {
+    catTestsFailed++;
+    failures.push(`CAT_DETECT: "${test.query}" -> "${result}", expected "${test.expect}" (${test.note})`);
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────────
 console.log("Partiqule scoring regression tests");
 console.log("==================================\n");
@@ -258,9 +317,12 @@ FLOOR_TESTS.forEach(runFloorTest);
 console.log(`Running ${CHILD_DETECT_TESTS.length} child detection assertions...\n`);
 CHILD_DETECT_TESTS.forEach(runChildTest);
 
-const totalTests = TESTS.length + FLOOR_TESTS.length + CHILD_DETECT_TESTS.length;
-const totalPassed = passed + floorTestsPassed + childTestsPassed;
-const totalFailed = failed + floorTestsFailed + childTestsFailed;
+console.log(`Running ${CATEGORY_TESTS.length} category detection assertions...\n`);
+CATEGORY_TESTS.forEach(runCategoryTest);
+
+const totalTests = TESTS.length + FLOOR_TESTS.length + CHILD_DETECT_TESTS.length + CATEGORY_TESTS.length;
+const totalPassed = passed + floorTestsPassed + childTestsPassed + catTestsPassed;
+const totalFailed = failed + floorTestsFailed + childTestsFailed + catTestsFailed;
 
 if (failures.length) {
   console.log("FAILURES:");
@@ -271,6 +333,7 @@ console.log(`\n${totalPassed}/${totalTests} tests passed`);
 console.log(`  Calibration: ${passed}/${TESTS.length}`);
 console.log(`  Substance floors: ${floorTestsPassed}/${FLOOR_TESTS.length}`);
 console.log(`  Child detection: ${childTestsPassed}/${CHILD_DETECT_TESTS.length}`);
+console.log(`  Category detection: ${catTestsPassed}/${CATEGORY_TESTS.length}`);
 if (substanceFloorsParsed.length > 0) {
   console.log(`  (${substanceFloorsParsed.length} substance floor patterns parsed from server.js)`);
 }

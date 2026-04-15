@@ -45,6 +45,7 @@ const loadCalibrationOverrides = async () => {
       calibrationOverrideKeys.add(key);
       loaded++;
     }
+    if (typeof buildCalibrationIndex === "function") buildCalibrationIndex();
     console.log(`[CALIBRATION] Loaded ${loaded} overrides from Supabase`);
     return { count: loaded };
   } catch (e) {
@@ -299,6 +300,31 @@ function cacheKey(q, category) {
 
 // Fuzzy calibration lookup — handles name variations and apostrophes
 // "Matt's bakery" matches "matts bakery", "Seventh Generation soap" matches "seventh generation dish"
+
+// ── Prefix index for fast fuzzy lookups ──
+// Groups calibration keys by their first 4 characters to avoid full iteration.
+// Built once at startup, rebuilt when calibration overrides reload.
+let calibrationPrefixIndex = new Map(); // prefix(4) -> [{key, keyNoApos, entry}]
+let calibrationAllEntries = [];         // flat list for substring search (phase 4)
+function buildCalibrationIndex() {
+  calibrationPrefixIndex = new Map();
+  calibrationAllEntries = [];
+  for (const [k, v] of CALIBRATION.entries()) {
+    const kn = k.replace(/'/g, "");
+    const entry = { key: k, keyNoApos: kn, entry: v };
+    calibrationAllEntries.push(entry);
+    // Index by first 4 chars of both key and no-apostrophe key
+    for (const str of [k, kn]) {
+      if (str.length >= 4) {
+        const prefix = str.slice(0, 4);
+        if (!calibrationPrefixIndex.has(prefix)) calibrationPrefixIndex.set(prefix, []);
+        calibrationPrefixIndex.get(prefix).push(entry);
+      }
+    }
+  }
+}
+buildCalibrationIndex();
+
 function fuzzyCalibrationLookup(productName) {
   const norm        = normalise(productName);
   const normNoApos  = norm.replace(/'/g, "");
@@ -307,27 +333,32 @@ function fuzzyCalibrationLookup(productName) {
   const exact = CALIBRATION.get(norm) || CALIBRATION.get(normNoApos);
   if (exact) return { key: norm, entry: exact };
 
-  // 2. Query starts with a calibration key
-  for (const [k, v] of CALIBRATION.entries()) {
-    const kn = k.replace(/'/g, "");
-    if (k.length >= 4 && (norm.startsWith(k) || normNoApos.startsWith(kn))) {
-      return { key: k, entry: v };
+  // 2. Query starts with a calibration key — use prefix index
+  const queryPrefix = norm.slice(0, 4);
+  const queryPrefixNoApos = normNoApos.slice(0, 4);
+  const candidates = new Set([
+    ...(calibrationPrefixIndex.get(queryPrefix) || []),
+    ...(calibrationPrefixIndex.get(queryPrefixNoApos) || []),
+  ]);
+  for (const c of candidates) {
+    if (c.key.length >= 4 && (norm.startsWith(c.key) || normNoApos.startsWith(c.keyNoApos))) {
+      return { key: c.key, entry: c.entry };
     }
   }
 
-  // 3. Calibration key starts with query
-  for (const [k, v] of CALIBRATION.entries()) {
-    const kn = k.replace(/'/g, "");
-    if (norm.length >= 4 && (k.startsWith(norm) || kn.startsWith(normNoApos))) {
-      return { key: k, entry: v };
+  // 3. Calibration key starts with query — use prefix index on query prefix
+  if (norm.length >= 4) {
+    for (const c of candidates) {
+      if (c.key.startsWith(norm) || c.keyNoApos.startsWith(normNoApos)) {
+        return { key: c.key, entry: c.entry };
+      }
     }
   }
 
-  // 4. Query contains calibration key as a phrase
-  for (const [k, v] of CALIBRATION.entries()) {
-    const kn = k.replace(/'/g, "");
-    if (k.length >= 6 && (norm.includes(k) || normNoApos.includes(kn))) {
-      return { key: k, entry: v };
+  // 4. Query contains calibration key as a phrase — full scan (only for long keys)
+  for (const c of calibrationAllEntries) {
+    if (c.key.length >= 6 && (norm.includes(c.key) || normNoApos.includes(c.keyNoApos))) {
+      return { key: c.key, entry: c.entry };
     }
   }
 
@@ -359,6 +390,10 @@ function detectCategory(q) {
   if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|ring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
 
   // ── BABY — before clothing to catch training pants ──
+  // Products like "baby shampoo" or "baby lotion" should be personal_care, not baby.
+  // Products like "baby vitamins" should be supplement. Route those first.
+  if (/\b(baby|infant|toddler|newborn)\s+(shampoo|conditioner|lotion|soap|body wash|sunscreen|moisturizer|oil|cream|powder|deodorant|toothpaste|face wash)/.test(s)) return "personal_care";
+  if (/\b(baby|infant|toddler|kids?|children.?s?)\s+(vitamin|supplement|probiotic|multivitamin|gummy vitamin|tylenol|ibuprofen|acetaminophen|medicine|drops)/.test(s)) return "supplement";
   if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet|training pants|pull.?up.*diaper|potty training|enfamil|similac|waterwipes|desitin/.test(s)) return "baby";
 
   // ── CLOTHING ──
@@ -4733,7 +4768,15 @@ app.post("/analyze", rateLimit, async (req, res) => {
     // ── Pass 1 then Pass 2 sequentially (not parallel — pass2 needs pass1 output) ──
     console.log(`Analyzing: ${productName}`);
     const p1 = await pass1(productName, materialContext, category);
-    const p2 = await safePass2(productName, p1);
+
+    // Skip pass2 when pass1 is high confidence AND has real dimension scores
+    // (not flat 5s). Saves ~20s latency and 1 API call per scan.
+    const p1HasRealScores = p1.materials?.score != null &&
+      !(p1.materials?.score === 5 && p1.usage_exposure?.score === 5 &&
+        p1.packaging?.score === 5 && p1.sustainability?.score === 5);
+    const skipPass2 = p1.confidence === "high" && p1HasRealScores;
+    const p2 = skipPass2 ? null : await safePass2(productName, p1);
+    if (skipPass2) console.log(`[PASS2 SKIP] ${productName} — pass1 confidence high, real scores`);
 
     // Merge pass1 + pass2 results
     const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
