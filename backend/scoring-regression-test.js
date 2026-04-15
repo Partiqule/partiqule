@@ -66,7 +66,7 @@ const TESTS = [
 
   // Toys
   { name: "plan toys",                expectMin: 1, expectMax: 1, cat: "toy", note: "Rubberwood, water-based dyes" },
-  { name: "hot wheels",               expectMin: 4, expectMax: 6, cat: "toy", note: "Die-cast + ABS/PVC" },
+  { name: "hot wheels",               expectMin: 6, expectMax: 8, cat: "toy", note: "Die-cast + ABS/PVC + lead risk" },
 
   // Cereal — verify grape-nuts fix
   { name: "grape-nuts",               expectMin: 3, expectMax: 4, cat: "food_beverage", note: "Conventional grain, no BHT" },
