@@ -21,7 +21,7 @@ cd backend && npm install && node server.js
 # Frontend (port 3000, proxies API to backend)
 cd frontend && npm install && npm run dev
 
-# Production build (frontend) -- also generates 2,300+ SEO pages via prebuild
+# Production build (frontend) -- also generates 2,400+ SEO pages via prebuild
 cd frontend && npm run build
 
 # Regression tests (zero API cost -- runs against calibration data only)
@@ -38,8 +38,10 @@ Backend requires `backend/.env` with at minimum `ANTHROPIC_API_KEY`. See `backen
 
 After ANY backend/server.js or backend/calibration.js change, clear the cache:
 ```bash
-curl "https://partiqule-production.up.railway.app/cache-clear?key=RowenaRavenclaw2024!"
+curl "https://partiqule-production.up.railway.app/cache-clear" -H "x-admin-key: $ADMIN_KEY"
 ```
+
+The `ADMIN_KEY` env var must be set in Railway. There is no hardcoded fallback. Query param `?key=` also works but header is preferred (avoids key leaking in logs).
 
 Commit messages: plain English only, no special characters, no em dashes (they break terminal quote parsing).
 
@@ -49,18 +51,21 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 
 **Frontend:** React 18 + Vite. The entire UI lives in a single monolithic component (`frontend/src/App.jsx`, ~10,000 lines) with inline styles throughout -- no CSS files or framework. State is managed with `useState` hooks only. Capacitor wraps the app for iOS (StoreKit IAP via `@capgo/native-purchases` loaded dynamically).
 
-**Backend:** Express API (`backend/server.js`, ~6,500 lines). Single-file server with all endpoints, scoring logic, caching, and intelligence feed pipeline.
+**Backend:** Express API (`backend/server.js`, ~6,700 lines). Single-file server with all endpoints, scoring logic, caching, and intelligence feed pipeline.
 
-**Scoring pipeline (two-pass):**
+**Scoring pipeline (two-pass with smart skip):**
 1. Pass 1: Claude Haiku analyzes product across 5 dimensions (materials, usage, packaging, sustainability, manufacturing)
-2. Pass 2: Independent Claude call verifies Pass 1, then code-level enforcement applies
-3. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
-4. Substance floors (100+ hardcoded chemicals) override AI scores
-5. Regulatory flags from Supabase injected into AI prompt for approved findings
-6. Calibration registry (`backend/calibration.js`, 2400+ known products) overrides AI entirely
-7. Child scores computed via `computeChildScore()` with category-specific bumps
-8. Pregnancy scores computed via `computePregnancyScore()` with substance-specific bumps
-9. Intelligence cards attached to results when ingredient/category triggers match
+2. Pass 2: Independent Claude call verifies Pass 1 -- SKIPPED when pass1 returns high confidence with real dimension scores (not flat 5s) and no web search context, saving ~20s and 1 API call
+3. Web search runs IN PARALLEL with pass1 (not blocking). If search returns data, it feeds into pass2
+4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
+5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
+6. Regulatory flags from Supabase injected into AI prompt for approved findings
+7. Calibration registry (`backend/calibration.js`, 2460+ known products) overrides AI entirely
+8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
+9. Pregnancy scores via `computeSafetyScores()` helper -- computed on ALL paths including image/camera
+10. Consistency checks (`applyConsistencyChecks`) catch AI hallucinations (label contradictions, inert material ceilings, confidence-linked caps)
+11. Positive ceilings (`applyPositiveCeilings`) prevent over-penalizing USDA Organic and Non-GMO verified products
+12. Intelligence cards attached via in-memory cache (2-min TTL, avoids Supabase query per scan)
 
 **Category scoring weights:**
 - Food/beverage: Materials 90% + Packaging 10%
@@ -115,12 +120,12 @@ Score color thresholds (consistent everywhere, never change):
 - `frontend/src/App.jsx` -- Entire React UI (~10,000 lines, all components defined as const functions)
 - `frontend/vite.config.js` -- Build target is `safari15` for iOS WKWebView compatibility
 - `frontend/public/sw.js` -- Service worker (cache name `partiqule-v2`)
-- `frontend/scripts/generate-product-pages.js` -- Generates 2,300+ static SEO pages at build time
+- `frontend/scripts/generate-product-pages.js` -- Generates 2,400+ static SEO pages at build time
 - `backend/server.js` -- All API endpoints, scoring logic, substance registry, intelligence feed, caching
-- `backend/calibration.js` -- 2400+ known product scores (source of truth for known products)
+- `backend/calibration.js` -- 2460+ known product scores (source of truth for known products)
 - `backend/products.js` -- 220+ affiliate alternative products across 6 categories
 - `backend/amazon-api.js` -- Amazon Creators API integration (tag: partiqule-20)
-- `backend/scoring-regression-test.js` -- 19 assertion tests against calibration data
+- `backend/scoring-regression-test.js` -- 95 assertion tests (calibration, substance floors, child detection, category detection)
 
 ---
 
@@ -273,8 +278,28 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 ### Scoring pipeline consistency
 - There are 6 code paths that produce a scored result (text, vision, text-fuzzy, vision-fuzzy, barcode, admin-reload). All must use `serializeAlternatives()` and `computeSafetyScores()`.
 - All 6 paths must include `category_score_context` field
+- All 6 paths must enforce substance floors via `applySubstanceFloors()`
 - All 3 fresh-result paths (text, vision, barcode) call `attachIntelCards()` before `res.json()`
+- Child scores use `shouldComputeChildScore()` (all household categories), not just `detectChildProduct()` (baby/toy/kid-branded only)
+- Pregnancy scores computed on ALL paths (including image/camera -- was previously missing)
 - Regulatory flags are loaded into `REGULATORY_FLAGS_CACHE` on startup and injected into pass1 via `buildRegulatoryContext()`
+- Fuzzy calibration uses a prefix index (rebuilt on calibration override reload) for fast lookups
+
+### Category detection
+- `detectCategory()` routes products before scoring. Order matters -- baby personal care ("baby shampoo") routes to personal_care, baby supplements ("kids vitamins") route to supplement, before the baby catch-all
+- 13 categories: other, restaurant, toy, accessory, baby, clothing, supplement, home_furnishing, kitchen, home, personal_care, beverage, food
+- Null return (unrecognized) falls back to "other" category weights
+
+### Security conventions
+- `ADMIN_KEY` must be set via env var -- no hardcoded fallback
+- Admin auth prefers `x-admin-key` header; query param `?key=` also accepted (needed for curl)
+- All admin requests are audit-logged with IP, path, method
+- User input to `/analyze` is sanitized (length cap 300, control chars stripped)
+- Barcode input validated as 4-14 digit string
+- Recipe ingredients input sanitized (length cap 200, quote stripping, servings 1-100)
+- Intelligence card mutations validated against field allowlist
+- Internal error details never exposed to client responses
+- Cache-clear rate-limited to once per 60 seconds
 
 ### Frontend styling
 100% inline JavaScript styles (camelCase). No CSS files. Dark mode via `isDark` boolean (currently always true). Color system: green (safe) -> yellow (caution) -> orange (warn) -> red (danger). Mobile breakpoint: `isMobile = width < 768`. Tablet breakpoint: `isTablet = width >= 768 && width <= 1024`.
@@ -292,13 +317,16 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 
 **Restore Purchases:** Available in paywall modal ("Restore previous purchase") and Settings > Subscription section ("Restore purchases"). Both call `loadNativePurchases().restorePurchases()`.
 
-**Subscription terms (all 6 required by Apple adjacent to subscribe button):**
-1. Price: $4.99/month
-2. "Payment will be charged to your Apple ID"
-3. Auto-renewal disclosure
-4. Cancellation instructions
-5. Privacy Policy link
-6. Terms of Service link
+**Subscription terms (all required by Apple, adjacent to subscribe button):**
+1. Subscription title: "Partiqule Premium"
+2. Length: "monthly"
+3. Price: dynamic from StoreKit (fallback "$4.99/month")
+4. "Payment will be charged to your Apple ID at confirmation of purchase"
+5. Auto-renewal disclosure with specific cancellation path (Settings > Apple ID > Subscriptions)
+6. Functional URL links: Privacy Policy (partiqule.com/privacy), Terms of Service (partiqule.com/terms), Apple EULA (apple.com standard EULA)
+7. Standard Apple EULA link also in App Store description
+
+**IAP error handling:** StoreKit failures show immediate toast error + web subscription fallback. No silent failures.
 
 **iPad:** isTablet breakpoint covers 768-1024px. Hamburger menu 44x44px touch target with z-index 200.
 
