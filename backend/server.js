@@ -4798,6 +4798,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
     const p1HasRealScores = p1.materials?.score != null &&
       !(p1.materials?.score === 5 && p1.usage_exposure?.score === 5 &&
         p1.packaging?.score === 5 && p1.sustainability?.score === 5);
+    // Detect flat-5s from pass1 ("lazy Haiku") — force pass2 to audit
+    if (!p1HasRealScores) {
+      console.log(`[FLAT 5s] ${productName} — pass1 returned all dimensions 5, forcing pass2 audit`);
+    }
     const skipPass2 = p1.confidence === "high" && p1HasRealScores && !materialContext;
     const p2 = skipPass2 ? null : await safePass2(productName, p1, materialContext);
     if (skipPass2) console.log(`[PASS2 SKIP] ${productName} — pass1 confidence high, real scores`);

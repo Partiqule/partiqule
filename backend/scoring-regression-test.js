@@ -71,6 +71,18 @@ const TESTS = [
   // Cereal — verify grape-nuts fix
   { name: "grape-nuts",               expectMin: 3, expectMax: 4, cat: "food_beverage", note: "Conventional grain, no BHT" },
   { name: "grape nuts",               expectMin: 3, expectMax: 4, cat: "food_beverage", note: "Alternate spelling" },
+
+  // Coverage gap fills — new calibration entries
+  { name: "dove soap",                expectMin: 4, expectMax: 5, cat: "personal_care", note: "Conventional bar soap" },
+  { name: "method",                   expectMin: 3, expectMax: 5, cat: "home", note: "Plant-derived, synthetic fragrance" },
+  { name: "impossible burger",        expectMin: 4, expectMax: 6, cat: "food", note: "NOVA 4 ultra-processed" },
+  { name: "beyond meat",              expectMin: 4, expectMax: 6, cat: "food", note: "NOVA 4 ultra-processed" },
+
+  // High-volume products — verify existing calibration
+  { name: "head and shoulders",       expectMin: 5, expectMax: 8, cat: "personal_care", note: "Zinc pyrithione + synthetic fragrance" },
+  { name: "dawn original dish",       expectMin: 3, expectMax: 5, cat: "home", note: "Surfactants + synthetic fragrance" },
+  { name: "fairlife",                  expectMin: 2, expectMax: 4, cat: "beverage", note: "Ultra-filtered, higher protein" },
+  { name: "prime hydration",          expectMin: 4, expectMax: 7, cat: "beverage", note: "Sucralose + artificial dyes" },
 ];
 
 // ── Assertions ────────────────────────────────────────────────
