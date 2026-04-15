@@ -4994,7 +4994,17 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "pjs":       ["pajamas","pjs","sleepwear","nightwear"],
     "sunscreen": ["sunscreen","spf","sun protection","mineral sunscreen"],
     "shampoo":   ["shampoo","hair wash","hair care"],
-    "moisturizer":["moisturizer","lotion","cream","face cream"],
+    "conditioner":["conditioner","hair care","detangler"],
+    "moisturizer":["moisturizer","lotion","cream","face cream","body cream"],
+    "lotion":    ["lotion","moisturizer","cream","body lotion","body cream"],
+    "cream":     ["cream","moisturizer","lotion","balm"],
+    "lipstick":  ["lipstick","lip","lip color","lip balm","lip tint"],
+    "mascara":   ["mascara","eye makeup","lashes"],
+    "foundation":["foundation","face makeup","tinted","concealer"],
+    "deodorant": ["deodorant","antiperspirant","body odor"],
+    "body wash": ["body wash","soap","shower","cleanser"],
+    "nail":      ["nail","nail care","manicure"],
+    "polish":    ["nail polish","nail care","manicure"],
     "pad":       ["pad","pads","menstrual","period","feminine","sanitary","menstrual pad"],
     "pads":      ["pads","pad","menstrual","period","feminine","sanitary","menstrual pad"],
     "tampon":    ["tampon","tampons","menstrual","period","feminine","sanitary"],
@@ -5005,6 +5015,7 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "pot":       ["pot","cookware","saucepan"],
     "bottle":    ["bottle","water bottle","drink bottle"],
     "diaper":    ["diaper","nappy","diaper alternative"],
+    "desitin":   ["diaper cream","rash cream","baby cream","baby skin"],
     "formula":   ["baby formula","infant formula","formula"],
   };
 
@@ -5035,6 +5046,26 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       categories: ["personal_care"],
       brands: ["always","tampax","kotex","stayfree","playtex","carefree","u by kotex","ob tampon","l."],
       inject: ["menstrual","period","pads","tampons","feminine care"],
+    },
+    {
+      categories: ["baby"],
+      brands: ["desitin","aquaphor","johnson","aveeno baby","mustela","pipette","babyganics","burt's bees baby","cetaphil baby","eucerin baby"],
+      inject: ["baby lotion","baby cream","diaper cream","baby skin","rash cream","infant"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["summer's eve","summers eve","vagisil","monistat"],
+      inject: ["feminine wash","intimate","body wash"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["maybelline","revlon","covergirl","l'oreal","loreal","nyx","elf","e.l.f.","mac cosmetics"],
+      inject: ["makeup","cosmetics","beauty"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["opi","essie","sally hansen","orly"],
+      inject: ["nail polish","nail care","manicure"],
     },
   ];
   const queryJoined = queries.join(" ");
