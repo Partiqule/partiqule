@@ -4193,6 +4193,90 @@ async function safePass2(productName, pass1Result) {
 
 // ── ANALYZE ENDPOINT ──────────────────────────────────────────
 // ── INTEL CARD ATTACHMENT — enrich scan results with relevant intelligence ──
+// ── FUZZY DIMENSION ENRICHMENT — populate real scores from calibration substances ──
+function enrichFuzzyDimensions(substances, category, midScore) {
+  const subs = substances || [];
+  const text = subs.join(" ").toLowerCase();
+  // Detect substance classes
+  const hasPFAS = subs.some(s => /pfas|pfoa|pfos|dwr(?!.*free)|perfluor|fluoropoly/i.test(s)) && !subs.some(s => /pfas.free|free.*pfas/i.test(s));
+  const hasSynthetic = subs.some(s => /\bnylon\b|polyester|spandex|elastane|lycra|acrylic|rayon|microfiber/i.test(s));
+  const hasAntimicrobial = subs.some(s => /silverescent|antimicrobial|silver.*nano/i.test(s));
+  const hasFormaldehyde = subs.some(s => /formaldehyde|wrinkle.free|wrinkle.resistant/i.test(s));
+  const hasAzoDyes = subs.some(s => /azo dye/i.test(s));
+  const hasLead = subs.some(s => /\blead\b/i.test(s));
+  const hasPVC = subs.some(s => /\bpvc\b|vinyl chloride/i.test(s));
+  const hasFlameRetardant = subs.some(s => /flame retardant/i.test(s));
+  const hasOrganic = subs.some(s => /organic cotton|gots|oeko.tex/i.test(s));
+  const hasNatural = subs.some(s => /merino wool|cashmere|cotton|linen|hemp|bamboo/i.test(s)) && !hasSynthetic;
+  const hasChemTreatment = subs.some(s => /chemical|chrome tanning|stone washing|distress/i.test(s));
+  const hasMoisture = subs.some(s => /moisture.wicking/i.test(s));
+  const hasGoreTex = subs.some(s => /gore.tex|ePE membrane/i.test(s));
+
+  // Materials score
+  let mScore = 5;
+  if (hasLead) mScore = 9;
+  else if (hasPVC) mScore = 8;
+  else if (hasPFAS) mScore = 7;
+  else if (hasFlameRetardant || hasFormaldehyde) mScore = 7;
+  else if (hasAzoDyes) mScore = 7;
+  else if (hasSynthetic && hasChemTreatment) mScore = 6;
+  else if (hasSynthetic) mScore = 6;
+  else if (hasNatural && !hasOrganic) mScore = 3;
+  else if (hasOrganic) mScore = 2;
+  mScore = Math.max(mScore, Math.min(midScore, 5));
+
+  // Usage score (clothing-specific)
+  let uScore = 5;
+  if (category === "clothing") {
+    if (hasLead || hasPVC) uScore = 8;
+    else if (hasPFAS && hasAntimicrobial) uScore = 7;
+    else if (hasPFAS || hasAntimicrobial || hasFlameRetardant) uScore = 6;
+    else if (hasFormaldehyde) uScore = 6;
+    else if (hasSynthetic && hasMoisture) uScore = 5;
+    else if (hasSynthetic) uScore = 5;
+    else if (hasNatural) uScore = 2;
+    else if (hasOrganic) uScore = 1;
+  }
+
+  // Sustainability score
+  let sScore = 5;
+  if (category === "clothing") {
+    if (hasSynthetic) sScore = 6;
+    if (hasOrganic) sScore = 2;
+    else if (hasNatural && !hasSynthetic) sScore = 3;
+  }
+
+  // Packaging (clothing is typically low)
+  const pkScore = 3;
+
+  // Build usage concerns
+  const usageConcerns = [];
+  if (category === "clothing") {
+    if (hasSynthetic) usageConcerns.push("Synthetic microfiber shedding — nylon, polyester, and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle (Browne 2011)");
+    if (hasPFAS) usageConcerns.push("PFAS-based DWR (durable water repellent) coating — perfluoroalkyl compounds persist in the body and environment, linked to thyroid disruption and immune suppression. EU REACH restriction 2023");
+    if (hasAntimicrobial) usageConcerns.push("Silver nanoparticle antimicrobial treatment — releases silver ions through skin contact and into waterways during washing. EU under regulatory review");
+    if (hasFormaldehyde) usageConcerns.push("Formaldehyde-based wrinkle-resistant finish — IARC Group 1 carcinogen, contact allergen. EU textile standard EN ISO 14184 limits at 75ppm for skin contact");
+    if (hasFlameRetardant) usageConcerns.push("Flame retardant chemical treatment — PBDE/TCEP/TDCPP class neurotoxins, banned in EU for children's sleepwear");
+    if (hasLead) usageConcerns.push("Lead detected — neurotoxin with no safe threshold. Transfers via skin contact and hand-to-mouth pathway");
+    if (hasPVC) usageConcerns.push("PVC (polyvinyl chloride) — contains phthalate plasticizers that leach through skin contact and off-gas VOCs");
+    if (hasAzoDyes) usageConcerns.push("Azo dyes — can release carcinogenic aromatic amines through skin contact. EU Directive 2002/61/EC bans 22 azo colorants in skin-contact textiles");
+    if (hasGoreTex) usageConcerns.push("Gore-Tex membrane — ePTFE membrane with DWR treatment. Historically PFAS-based, transitioning to PFAS-free in some lines");
+    if (hasMoisture && !hasPFAS) usageConcerns.push("Moisture-wicking chemical finish — increases dermal absorption during exercise when skin is warm and pores are open");
+    if (hasSynthetic) usageConcerns.push("Direct skin contact with synthetic fabric — heat and perspiration increase absorption of chemical finishes");
+    if (hasChemTreatment) usageConcerns.push("Chemical processing treatments — stone washing, distressing, or chrome tanning chemicals may leave residues on fabric");
+  }
+
+  // Sustainability concerns
+  const sustainConcerns = [];
+  if (category === "clothing") {
+    if (hasSynthetic) sustainConcerns.push("Synthetic petroleum-derived fabric — microfiber pollution in waterways with every wash cycle, non-biodegradable");
+    if (hasPFAS) sustainConcerns.push("PFAS forever chemicals — do not break down in the environment, bioaccumulate in wildlife and water systems");
+    if (hasChemTreatment) sustainConcerns.push("Chemical processing — industrial textile treatments contribute to water pollution in manufacturing regions");
+  }
+
+  return { mScore, uScore, sScore, pkScore, usageConcerns, sustainConcerns };
+}
+
 async function attachIntelCards(result) {
   if (!supabaseAdmin) return result;
   try {
@@ -4277,20 +4361,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ),
           imgFuzzyCat
         );
-        const imgFuzzySubstances = entry.substances || [];
-        const imgFuzzyHasPFAS = imgFuzzySubstances.some(s => /pfas|pfoa|pfos|dwr|perfluor/i.test(s));
-        const imgFuzzyHasSynthetic = imgFuzzySubstances.some(s => /nylon|polyester|spandex|elastane|lycra|acrylic/i.test(s));
-        const imgFuzzyHasAntimicrobial = imgFuzzySubstances.some(s => /silverescent|antimicrobial|silver/i.test(s));
-        const imgFuzzyMScore = Math.min(10, Math.max(midScore, imgFuzzyHasPFAS ? 7 : imgFuzzyHasSynthetic ? 6 : 5));
-        const imgFuzzyUScore = imgFuzzyCat === "clothing" ? (imgFuzzyHasPFAS && imgFuzzyHasAntimicrobial ? 7 : imgFuzzyHasPFAS || imgFuzzyHasAntimicrobial ? 6 : imgFuzzyHasSynthetic ? 5 : 4) : 5;
-        const imgFuzzySScore = imgFuzzyCat === "clothing" && imgFuzzyHasSynthetic ? 6 : 5;
-        const imgFuzzyUsageConcerns = [];
-        if (imgFuzzyCat === "clothing") {
-          if (imgFuzzyHasSynthetic) imgFuzzyUsageConcerns.push("Synthetic microfiber shedding — estimated 700,000 fibers per wash cycle");
-          if (imgFuzzyHasPFAS) imgFuzzyUsageConcerns.push("PFAS-based DWR coating — perfluoroalkyl compounds, EU REACH restricted 2023");
-          if (imgFuzzyHasAntimicrobial) imgFuzzyUsageConcerns.push("Silverescent antimicrobial — silver nanoparticles, EU under regulatory review");
-          if (imgFuzzyHasSynthetic) imgFuzzyUsageConcerns.push("Direct skin contact — heat and sweat increase dermal absorption of fabric treatments");
-        }
+        const ifd = enrichFuzzyDimensions(entry.substances || [], imgFuzzyCat, midScore);
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: imgFuzzyCat,
@@ -4301,10 +4372,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
           pregnancy_score: imgSafety.pregnancyScore,
           pregnancy_bumps: imgSafety.pregnancyBumps || [],
           dimensions: {
-            materials:      { score: imgFuzzyMScore, concerns: imgFuzzySubstances },
-            usage_exposure: { score: imgFuzzyUScore, concerns: imgFuzzyUsageConcerns },
-            packaging:      { score: 3, concerns: [] },
-            sustainability: { score: imgFuzzySScore, concerns: imgFuzzyHasSynthetic ? ["Synthetic petroleum-derived fabric — microfiber pollution"] : [] },
+            materials:      { score: ifd.mScore, concerns: entry.substances || [] },
+            usage_exposure: { score: ifd.uScore, concerns: ifd.usageConcerns },
+            packaging:      { score: ifd.pkScore, concerns: [] },
+            sustainability: { score: ifd.sScore, concerns: ifd.sustainConcerns },
           },
           concerns: entry.substances || [],
           flagged_substances: entry.substances || [],
@@ -4533,21 +4604,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ),
       fuzzyCat
     );
-    // Estimate dimension scores from calibration data instead of flat 5s
-    const fuzzySubstances = entry.substances || [];
-    const fuzzyHasPFAS = fuzzySubstances.some(s => /pfas|pfoa|pfos|dwr|perfluor/i.test(s));
-    const fuzzyHasSynthetic = fuzzySubstances.some(s => /nylon|polyester|spandex|elastane|lycra|acrylic/i.test(s));
-    const fuzzyHasAntimicrobial = fuzzySubstances.some(s => /silverescent|antimicrobial|silver/i.test(s));
-    const fuzzyMScore = Math.min(10, Math.max(midScore, fuzzyHasPFAS ? 7 : fuzzyHasSynthetic ? 6 : 5));
-    const fuzzyUScore = fuzzyCat === "clothing" ? (fuzzyHasPFAS && fuzzyHasAntimicrobial ? 7 : fuzzyHasPFAS || fuzzyHasAntimicrobial ? 6 : fuzzyHasSynthetic ? 5 : 4) : 5;
-    const fuzzySScore = fuzzyCat === "clothing" && fuzzyHasSynthetic ? 6 : 5;
-    const fuzzyUsageConcerns = [];
-    if (fuzzyCat === "clothing") {
-      if (fuzzyHasSynthetic) fuzzyUsageConcerns.push("Synthetic microfiber shedding — nylon and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle");
-      if (fuzzyHasPFAS) fuzzyUsageConcerns.push("PFAS-based DWR coating — perfluoroalkyl compounds persist in the body and environment, linked to thyroid disruption and immune suppression. EU REACH restriction 2023");
-      if (fuzzyHasAntimicrobial) fuzzyUsageConcerns.push("Silverescent antimicrobial (silver nanoparticles) — releases silver ions through skin contact and into waterways during washing. EU under regulatory review");
-      if (fuzzyHasSynthetic) fuzzyUsageConcerns.push("Direct skin contact — heat and sweat increase absorption of chemical finishes through skin during wear");
-    }
+    const fd = enrichFuzzyDimensions(entry.substances || [], fuzzyCat, midScore);
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
@@ -4559,10 +4616,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
       pregnancy_score: fuzzySafety.pregnancyScore,
       pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
       dimensions: {
-        materials:      { score: fuzzyMScore, concerns: fuzzySubstances },
-        usage_exposure: { score: fuzzyUScore, concerns: fuzzyUsageConcerns },
-        packaging:      { score: 3, concerns: [] },
-        sustainability: { score: fuzzySScore, concerns: fuzzyHasSynthetic ? ["Synthetic petroleum-derived fabric — microfiber pollution in waterways with every wash cycle"] : [] },
+        materials:      { score: fd.mScore, concerns: entry.substances || [] },
+        usage_exposure: { score: fd.uScore, concerns: fd.usageConcerns },
+        packaging:      { score: fd.pkScore, concerns: [] },
+        sustainability: { score: fd.sScore, concerns: fd.sustainConcerns },
       },
       concerns: entry.substances || [],
       flagged_substances: entry.substances || [],
