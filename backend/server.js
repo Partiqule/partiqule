@@ -4277,6 +4277,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ),
           imgFuzzyCat
         );
+        const imgFuzzySubstances = entry.substances || [];
+        const imgFuzzyHasPFAS = imgFuzzySubstances.some(s => /pfas|pfoa|pfos|dwr|perfluor/i.test(s));
+        const imgFuzzyHasSynthetic = imgFuzzySubstances.some(s => /nylon|polyester|spandex|elastane|lycra|acrylic/i.test(s));
+        const imgFuzzyHasAntimicrobial = imgFuzzySubstances.some(s => /silverescent|antimicrobial|silver/i.test(s));
+        const imgFuzzyMScore = Math.min(10, Math.max(midScore, imgFuzzyHasPFAS ? 7 : imgFuzzyHasSynthetic ? 6 : 5));
+        const imgFuzzyUScore = imgFuzzyCat === "clothing" ? (imgFuzzyHasPFAS && imgFuzzyHasAntimicrobial ? 7 : imgFuzzyHasPFAS || imgFuzzyHasAntimicrobial ? 6 : imgFuzzyHasSynthetic ? 5 : 4) : 5;
+        const imgFuzzySScore = imgFuzzyCat === "clothing" && imgFuzzyHasSynthetic ? 6 : 5;
+        const imgFuzzyUsageConcerns = [];
+        if (imgFuzzyCat === "clothing") {
+          if (imgFuzzyHasSynthetic) imgFuzzyUsageConcerns.push("Synthetic microfiber shedding — estimated 700,000 fibers per wash cycle");
+          if (imgFuzzyHasPFAS) imgFuzzyUsageConcerns.push("PFAS-based DWR coating — perfluoroalkyl compounds, EU REACH restricted 2023");
+          if (imgFuzzyHasAntimicrobial) imgFuzzyUsageConcerns.push("Silverescent antimicrobial — silver nanoparticles, EU under regulatory review");
+          if (imgFuzzyHasSynthetic) imgFuzzyUsageConcerns.push("Direct skin contact — heat and sweat increase dermal absorption of fabric treatments");
+        }
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: imgFuzzyCat,
@@ -4287,10 +4301,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
           pregnancy_score: imgSafety.pregnancyScore,
           pregnancy_bumps: imgSafety.pregnancyBumps || [],
           dimensions: {
-            materials:      { score: 5, concerns: entry.substances || [] },
-            usage_exposure: { score: 5, concerns: [] },
-            packaging:      { score: 5, concerns: [] },
-            sustainability: { score: 5, concerns: [] },
+            materials:      { score: imgFuzzyMScore, concerns: imgFuzzySubstances },
+            usage_exposure: { score: imgFuzzyUScore, concerns: imgFuzzyUsageConcerns },
+            packaging:      { score: 3, concerns: [] },
+            sustainability: { score: imgFuzzySScore, concerns: imgFuzzyHasSynthetic ? ["Synthetic petroleum-derived fabric — microfiber pollution"] : [] },
           },
           concerns: entry.substances || [],
           flagged_substances: entry.substances || [],
@@ -4519,6 +4533,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ),
       fuzzyCat
     );
+    // Estimate dimension scores from calibration data instead of flat 5s
+    const fuzzySubstances = entry.substances || [];
+    const fuzzyHasPFAS = fuzzySubstances.some(s => /pfas|pfoa|pfos|dwr|perfluor/i.test(s));
+    const fuzzyHasSynthetic = fuzzySubstances.some(s => /nylon|polyester|spandex|elastane|lycra|acrylic/i.test(s));
+    const fuzzyHasAntimicrobial = fuzzySubstances.some(s => /silverescent|antimicrobial|silver/i.test(s));
+    const fuzzyMScore = Math.min(10, Math.max(midScore, fuzzyHasPFAS ? 7 : fuzzyHasSynthetic ? 6 : 5));
+    const fuzzyUScore = fuzzyCat === "clothing" ? (fuzzyHasPFAS && fuzzyHasAntimicrobial ? 7 : fuzzyHasPFAS || fuzzyHasAntimicrobial ? 6 : fuzzyHasSynthetic ? 5 : 4) : 5;
+    const fuzzySScore = fuzzyCat === "clothing" && fuzzyHasSynthetic ? 6 : 5;
+    const fuzzyUsageConcerns = [];
+    if (fuzzyCat === "clothing") {
+      if (fuzzyHasSynthetic) fuzzyUsageConcerns.push("Synthetic microfiber shedding — nylon and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle");
+      if (fuzzyHasPFAS) fuzzyUsageConcerns.push("PFAS-based DWR coating — perfluoroalkyl compounds persist in the body and environment, linked to thyroid disruption and immune suppression. EU REACH restriction 2023");
+      if (fuzzyHasAntimicrobial) fuzzyUsageConcerns.push("Silverescent antimicrobial (silver nanoparticles) — releases silver ions through skin contact and into waterways during washing. EU under regulatory review");
+      if (fuzzyHasSynthetic) fuzzyUsageConcerns.push("Direct skin contact — heat and sweat increase absorption of chemical finishes through skin during wear");
+    }
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
@@ -4530,10 +4559,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
       pregnancy_score: fuzzySafety.pregnancyScore,
       pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
       dimensions: {
-        materials:      { score: 5, concerns: entry.substances || [] },
-        usage_exposure: { score: 5, concerns: [] },
-        packaging:      { score: 5, concerns: [] },
-        sustainability: { score: 5, concerns: [] },
+        materials:      { score: fuzzyMScore, concerns: fuzzySubstances },
+        usage_exposure: { score: fuzzyUScore, concerns: fuzzyUsageConcerns },
+        packaging:      { score: 3, concerns: [] },
+        sustainability: { score: fuzzySScore, concerns: fuzzyHasSynthetic ? ["Synthetic petroleum-derived fabric — microfiber pollution in waterways with every wash cycle"] : [] },
       },
       concerns: entry.substances || [],
       flagged_substances: entry.substances || [],
