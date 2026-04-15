@@ -7285,6 +7285,7 @@ function App() {
     if (IS_NATIVE) {
       // iOS — purchase via StoreKit through @capgo/native-purchases
       setCheckingOut(true);
+      setIapTimedOut(false);
       const iapTimeout = setTimeout(() => {
         setCheckingOut(false);
         setIapTimedOut(true);
@@ -7295,6 +7296,8 @@ function App() {
           clearTimeout(iapTimeout);
           setCheckingOut(false);
           setIapTimedOut(true);
+          setError("Unable to connect to the App Store. Try again or subscribe on our website.");
+          setTimeout(() => setError(null), 5000);
           return;
         }
         const { transaction } = await np.purchaseProduct({
@@ -7314,11 +7317,18 @@ function App() {
               body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
             });
           } catch {}
+        } else {
+          // StoreKit returned no transaction — show fallback
+          clearTimeout(iapTimeout);
+          setIapTimedOut(true);
         }
       } catch (e) {
         clearTimeout(iapTimeout);
-        if (!e.message?.includes("cancelled")) {
+        const msg = e.message || "";
+        if (!msg.includes("cancelled") && !msg.includes("cancel")) {
           setIapTimedOut(true);
+          setError("Purchase could not be completed. Try again or subscribe on our website.");
+          setTimeout(() => setError(null), 5000);
         }
       }
       setCheckingOut(false);
@@ -7924,15 +7934,15 @@ function App() {
               </button>
               {IS_NATIVE && (
                 <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:8,lineHeight:1.5}}>
-                  Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
+                  Partiqule Premium is a monthly subscription at {iapPrice}. Payment will be charged to your Apple ID at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings &gt; Apple ID &gt; Subscriptions.
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
               {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch(e){if(!e.message?.includes("cancelled")){setShowLimitModal(null);setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
               <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:12}}>
-                <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setShowLimitModal(null);setPage("privacy");}}>Privacy Policy</span>
+                <a href="https://partiqule.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("privacy");}}}>Privacy Policy</a>
                 <span style={{margin:"0 6px",opacity:0.4}}>·</span>
-                <span style={{cursor:"pointer",textDecoration:"underline"}} onClick={()=>{setShowLimitModal(null);setPage("terms");}}>Terms of Service</span>
+                <a href="https://partiqule.com/terms" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("terms");}}}>Terms of Service</a>
               </div>
               {iapTimedOut && (
                 <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
