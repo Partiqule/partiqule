@@ -374,7 +374,7 @@ function detectCategory(q) {
   if (/laundry|detergent|cleaner|sponge|dish soap|broom|mop|scrub|brush|vacuum|bleach|disinfect|all.purpose|spray cleaner|floor cleaner|toilet|bathroom|tide pod|dishwasher|washing machine|dryer|air freshener|candle|wax melt|towel|clorox|lysol|ziploc|swiffer|febreze|glad\b|reynolds wrap|saran wrap|trash bag|garbage bag|aluminum foil|tupperware|paper towel|wax paper|parchment|glade|yankee candle|bath and body works candle/.test(s)) return "home";
 
   // ── BEAUTY / PERSONAL CARE ──
-  if (/shampoo|conditioner|lotion|(?<!dish )soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf|crest|colgate|oral.?b|sensodyne/.test(s)) return "personal_care";
+  if (/shampoo|conditioner|lotion|(?<!dish )soap|deodorant|toothpaste|makeup|lipstick|foundation|sunscreen|moisturizer|moisturizing cream|face cream|body cream|night cream|day cream|skin cream|cleanser|face wash|body wash|skincare|cotton round|toner|serum|perfume|cologne|mascara|eyeliner|blush|concealer|primer|lip balm|chapstick|nail polish|razor|shave|aftershave|hair dye|hair color|dry shampoo|hair mask|face mask|eye cream|retinol|spf|crest|colgate|oral.?b|sensodyne|cerave|cetaphil|eucerin|aquaphor|aveeno|neutrogena|olay|garnier/.test(s)) return "personal_care";
 
   // ── BEVERAGE — drinkable consumption ──
   if (
@@ -4196,63 +4196,125 @@ async function safePass2(productName, pass1Result) {
 // ── FUZZY DIMENSION ENRICHMENT — populate real scores from calibration substances ──
 function enrichFuzzyDimensions(substances, category, midScore) {
   const subs = substances || [];
-  const text = subs.join(" ").toLowerCase();
-  // Detect substance classes
+  if (!subs.length) return { mScore: Math.min(midScore, 5), uScore: Math.min(midScore, 4), sScore: 4, pkScore: 3, usageConcerns: [], sustainConcerns: [] };
+
+  // ── Detect substance classes (shared across all categories) ──
   const hasPFAS = subs.some(s => /pfas|pfoa|pfos|dwr(?!.*free)|perfluor|fluoropoly/i.test(s)) && !subs.some(s => /pfas.free|free.*pfas/i.test(s));
-  const hasSynthetic = subs.some(s => /\bnylon\b|polyester|spandex|elastane|lycra|acrylic|rayon|microfiber/i.test(s));
+  const hasSynthFiber = subs.some(s => /\bnylon\b|polyester|spandex|elastane|lycra|acrylic|rayon|microfiber/i.test(s));
   const hasAntimicrobial = subs.some(s => /silverescent|antimicrobial|silver.*nano/i.test(s));
-  const hasFormaldehyde = subs.some(s => /formaldehyde|wrinkle.free|wrinkle.resistant/i.test(s));
+  const hasFormaldehyde = subs.some(s => /formaldehyde|wrinkle.free|wrinkle.resistant|DMDM hydantoin|quaternium.15|diazolidinyl/i.test(s));
   const hasAzoDyes = subs.some(s => /azo dye/i.test(s));
   const hasLead = subs.some(s => /\blead\b/i.test(s));
   const hasPVC = subs.some(s => /\bpvc\b|vinyl chloride/i.test(s));
   const hasFlameRetardant = subs.some(s => /flame retardant/i.test(s));
   const hasOrganic = subs.some(s => /organic cotton|gots|oeko.tex/i.test(s));
-  const hasNatural = subs.some(s => /merino wool|cashmere|cotton|linen|hemp|bamboo/i.test(s)) && !hasSynthetic;
+  const hasNatural = subs.some(s => /merino wool|cashmere|\bcotton\b|linen|hemp|bamboo/i.test(s)) && !hasSynthFiber;
   const hasChemTreatment = subs.some(s => /chemical|chrome tanning|stone washing|distress/i.test(s));
   const hasMoisture = subs.some(s => /moisture.wicking/i.test(s));
   const hasGoreTex = subs.some(s => /gore.tex|ePE membrane/i.test(s));
+  // Personal care specific detectors
+  const hasOxybenzone = subs.some(s => /oxybenzone|benzophenone.3/i.test(s));
+  const hasOctinoxate = subs.some(s => /octinoxate|octyl methoxycinn/i.test(s));
+  const hasChemSunscreen = subs.some(s => /avobenzone|homosalate|octisalate|octocrylene/i.test(s));
+  const hasSynthFragrance = subs.some(s => /synthetic fragrance|fragrance(?!.free)|parfum/i.test(s)) && !subs.some(s => /fragrance.free|no fragrance|unscented/i.test(s));
+  const hasParabens = subs.some(s => /paraben|propylparaben|methylparaben|butylparaben/i.test(s));
+  const hasSLS = subs.some(s => /\bSLS\b|sodium lauryl sulfate|sodium laureth|SLES/i.test(s));
+  const hasAluminum = subs.some(s => /aluminum(?! foil)/i.test(s));
+  const hasPhthalates = subs.some(s => /phthalate|DEHP|DBP|DEP/i.test(s));
+  const hasPhenoxy = subs.some(s => /phenoxyethanol/i.test(s));
+  const hasPetrolatum = subs.some(s => /petrolatum|petroleum|mineral oil/i.test(s));
+  const hasDimethicone = subs.some(s => /dimethicone|silicone/i.test(s));
+  const hasTiO2 = subs.some(s => /titanium dioxide/i.test(s));
+  const hasPEG = subs.some(s => /\bPEG\b|PEG compound/i.test(s));
+  const hasHydroquinone = subs.some(s => /hydroquinone/i.test(s));
+  const hasTriclosan = subs.some(s => /triclosan/i.test(s));
+  const hasPropyleneGlycol = subs.some(s => /propylene glycol/i.test(s));
+  const isPC = category === "personal_care" || category === "skincare";
+  const isBaby = category === "baby";
+  const isClothing = category === "clothing";
+  const isHome = category === "home" || category === "cleaning";
 
-  // Materials score
+  // ── Materials score ──
   let mScore = 5;
-  if (hasLead) mScore = 9;
+  if (hasLead || hasHydroquinone) mScore = 9;
   else if (hasPVC) mScore = 8;
-  else if (hasPFAS) mScore = 7;
+  else if (hasOxybenzone) mScore = 8;
+  else if (hasPFAS || hasTriclosan) mScore = 7;
   else if (hasFlameRetardant || hasFormaldehyde) mScore = 7;
-  else if (hasAzoDyes) mScore = 7;
-  else if (hasSynthetic && hasChemTreatment) mScore = 6;
-  else if (hasSynthetic) mScore = 6;
+  else if (hasAzoDyes || hasPhthalates) mScore = 7;
+  else if (hasOctinoxate || hasChemSunscreen) mScore = 6;
+  else if (hasParabens && hasSynthFragrance) mScore = 6;
+  else if (hasSynthFiber && hasChemTreatment) mScore = 6;
+  else if (hasSynthFiber || hasSynthFragrance) mScore = 5;
+  else if (hasSLS) mScore = 4;
+  else if (hasPhenoxy) mScore = 4;
   else if (hasNatural && !hasOrganic) mScore = 3;
   else if (hasOrganic) mScore = 2;
+  else if (!subs.length) mScore = 4;
   mScore = Math.max(mScore, Math.min(midScore, 5));
 
-  // Usage score (clothing-specific)
+  // ── Usage score ──
   let uScore = 5;
-  if (category === "clothing") {
+  if (isPC || isBaby) {
+    if (hasOxybenzone) uScore = 8;
+    else if (hasHydroquinone || hasTriclosan) uScore = 7;
+    else if (hasFormaldehyde || hasPhthalates) uScore = 7;
+    else if (hasOctinoxate || hasChemSunscreen) uScore = 6;
+    else if (hasParabens || hasAluminum) uScore = 6;
+    else if (hasSynthFragrance && hasSLS) uScore = 6;
+    else if (hasSynthFragrance) uScore = 5;
+    else if (hasSLS) uScore = 4;
+    else if (hasPhenoxy || hasPetrolatum) uScore = 4;
+    else if (hasDimethicone) uScore = 3;
+    else uScore = 3;
+  } else if (isClothing) {
     if (hasLead || hasPVC) uScore = 8;
     else if (hasPFAS && hasAntimicrobial) uScore = 7;
     else if (hasPFAS || hasAntimicrobial || hasFlameRetardant) uScore = 6;
     else if (hasFormaldehyde) uScore = 6;
-    else if (hasSynthetic && hasMoisture) uScore = 5;
-    else if (hasSynthetic) uScore = 5;
+    else if (hasSynthFiber && hasMoisture) uScore = 5;
+    else if (hasSynthFiber) uScore = 5;
     else if (hasNatural) uScore = 2;
     else if (hasOrganic) uScore = 1;
+  } else if (isHome) {
+    if (hasSynthFragrance) uScore = 6;
+    else uScore = 4;
   }
 
-  // Sustainability score
-  let sScore = 5;
-  if (category === "clothing") {
-    if (hasSynthetic) sScore = 6;
+  // ── Sustainability score ──
+  let sScore = 4;
+  if (isClothing) {
+    if (hasSynthFiber) sScore = 6;
     if (hasOrganic) sScore = 2;
-    else if (hasNatural && !hasSynthetic) sScore = 3;
+    else if (hasNatural && !hasSynthFiber) sScore = 3;
   }
 
-  // Packaging (clothing is typically low)
   const pkScore = 3;
 
-  // Build usage concerns
+  // ── Build usage concerns ──
   const usageConcerns = [];
-  if (category === "clothing") {
-    if (hasSynthetic) usageConcerns.push("Synthetic microfiber shedding — nylon, polyester, and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle (Browne 2011)");
+
+  if (isPC || isBaby) {
+    if (hasOxybenzone) usageConcerns.push("Oxybenzone (benzophenone-3) — detected in bloodstream after single application (Matta JAMA 2019). Endocrine disruptor, coral reef toxin. Banned in Hawaii and Key West");
+    if (hasOctinoxate) usageConcerns.push("Octinoxate (octyl methoxycinnamate) — FDA systemic absorption confirmed. Endocrine disruption concern, coral reef harm. EU under review");
+    if (hasChemSunscreen && !hasOxybenzone && !hasOctinoxate) usageConcerns.push("Chemical UV filters (avobenzone, homosalate, octisalate) — FDA found systemic absorption above safety threshold. Further safety data requested 2019");
+    if (hasSynthFragrance) usageConcerns.push("Synthetic fragrance — contains undisclosed phthalates and VOCs (Steinemann 2017: 156 VOCs identified in 25 scented products). Absorbed through skin during daily use");
+    if (hasFormaldehyde) usageConcerns.push("Formaldehyde-releasing preservative — IARC Group 1 carcinogen. DMDM hydantoin and quaternium-15 release formaldehyde over time. Contact allergen");
+    if (hasParabens) usageConcerns.push("Parabens — endocrine disruptors that mimic estrogen. Detected in breast tissue (Darbre 2004). EU banned long-chain parabens (propyl, butyl) in cosmetics");
+    if (hasAluminum) usageConcerns.push("Aluminum compounds — applied directly to skin near breast tissue daily. Dermal absorption confirmed. Debate on breast cancer link ongoing (Darbre 2005)");
+    if (hasSLS) usageConcerns.push("Sodium lauryl sulfate (SLS) — skin barrier disruptor, known irritant. EWG moderate concern. Strips natural oils from skin and scalp");
+    if (hasPhthalates) usageConcerns.push("Phthalates — anti-androgenic endocrine disruptors. Prenatal exposure linked to altered genital development (Swan 2005). Often hidden in 'fragrance'");
+    if (hasPhenoxy) usageConcerns.push("Phenoxyethanol — preservative with CNS depression concern at high doses. EU limits concentration in baby products. FDA warned against use in nursing mothers");
+    if (hasPetrolatum) usageConcerns.push("Petrolatum/mineral oil — petroleum-derived occlusive. EU requires PAH purity certification. Creates barrier on skin that may trap other chemicals");
+    if (hasPEG) usageConcerns.push("PEG compounds — ethoxylated ingredients with potential 1,4-dioxane contamination (probable carcinogen). Enhances skin penetration of other ingredients");
+    if (hasTiO2) usageConcerns.push("Titanium dioxide — IARC Group 2B possible carcinogen. EU banned as food additive (E171) in 2022. Inhalation concern in powder/spray products");
+    if (hasTriclosan) usageConcerns.push("Triclosan — thyroid disruptor, banned in EU personal care products. Contributes to antibiotic resistance. FDA banned in antibacterial hand soap 2016");
+    if (hasHydroquinone) usageConcerns.push("Hydroquinone — FDA proposed ban 2006. EU banned in leave-on cosmetics. DNA damage in cell studies, possible carcinogen. 35-45% systemic absorption");
+    if (hasPropyleneGlycol) usageConcerns.push("Propylene glycol — penetration enhancer that increases skin absorption of other ingredients. Contact dermatitis in sensitive individuals");
+    if (hasDimethicone && !usageConcerns.length) usageConcerns.push("Dimethicone (silicone) — creates film on skin/hair. Low toxicity but may trap other chemicals and impede skin breathing");
+    if (isBaby && usageConcerns.length > 0) usageConcerns.push("Baby/child vulnerability — developing skin barrier is 5x more permeable than adult skin, increasing absorption of all topical chemicals");
+  } else if (isClothing) {
+    if (hasSynthFiber) usageConcerns.push("Synthetic microfiber shedding — nylon, polyester, and spandex shed microplastic fibers into water supply during washing, estimated 700,000 fibers per wash cycle (Browne 2011)");
     if (hasPFAS) usageConcerns.push("PFAS-based DWR (durable water repellent) coating — perfluoroalkyl compounds persist in the body and environment, linked to thyroid disruption and immune suppression. EU REACH restriction 2023");
     if (hasAntimicrobial) usageConcerns.push("Silver nanoparticle antimicrobial treatment — releases silver ions through skin contact and into waterways during washing. EU under regulatory review");
     if (hasFormaldehyde) usageConcerns.push("Formaldehyde-based wrinkle-resistant finish — IARC Group 1 carcinogen, contact allergen. EU textile standard EN ISO 14184 limits at 75ppm for skin contact");
@@ -4262,14 +4324,17 @@ function enrichFuzzyDimensions(substances, category, midScore) {
     if (hasAzoDyes) usageConcerns.push("Azo dyes — can release carcinogenic aromatic amines through skin contact. EU Directive 2002/61/EC bans 22 azo colorants in skin-contact textiles");
     if (hasGoreTex) usageConcerns.push("Gore-Tex membrane — ePTFE membrane with DWR treatment. Historically PFAS-based, transitioning to PFAS-free in some lines");
     if (hasMoisture && !hasPFAS) usageConcerns.push("Moisture-wicking chemical finish — increases dermal absorption during exercise when skin is warm and pores are open");
-    if (hasSynthetic) usageConcerns.push("Direct skin contact with synthetic fabric — heat and perspiration increase absorption of chemical finishes");
+    if (hasSynthFiber) usageConcerns.push("Direct skin contact with synthetic fabric — heat and perspiration increase absorption of chemical finishes");
     if (hasChemTreatment) usageConcerns.push("Chemical processing treatments — stone washing, distressing, or chrome tanning chemicals may leave residues on fabric");
+  } else if (isHome) {
+    if (hasSynthFragrance) usageConcerns.push("Synthetic fragrance VOCs — phthalates and toluene released during use. Inhalation exposure in enclosed spaces");
+    if (hasFormaldehyde) usageConcerns.push("Formaldehyde off-gassing — IARC Group 1 carcinogen. Released from pressed wood, carpet, and cleaning products");
   }
 
-  // Sustainability concerns
+  // ── Sustainability concerns ──
   const sustainConcerns = [];
-  if (category === "clothing") {
-    if (hasSynthetic) sustainConcerns.push("Synthetic petroleum-derived fabric — microfiber pollution in waterways with every wash cycle, non-biodegradable");
+  if (isClothing) {
+    if (hasSynthFiber) sustainConcerns.push("Synthetic petroleum-derived fabric — microfiber pollution in waterways with every wash cycle, non-biodegradable");
     if (hasPFAS) sustainConcerns.push("PFAS forever chemicals — do not break down in the environment, bioaccumulate in wildlife and water systems");
     if (hasChemTreatment) sustainConcerns.push("Chemical processing — industrial textile treatments contribute to water pollution in manufacturing regions");
   }
