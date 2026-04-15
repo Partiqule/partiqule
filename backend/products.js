@@ -4995,6 +4995,12 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "sunscreen": ["sunscreen","spf","sun protection","mineral sunscreen"],
     "shampoo":   ["shampoo","hair wash","hair care"],
     "moisturizer":["moisturizer","lotion","cream","face cream"],
+    "pad":       ["pad","pads","menstrual","period","feminine","sanitary","menstrual pad"],
+    "pads":      ["pads","pad","menstrual","period","feminine","sanitary","menstrual pad"],
+    "tampon":    ["tampon","tampons","menstrual","period","feminine","sanitary"],
+    "tampons":   ["tampons","tampon","menstrual","period","feminine","sanitary"],
+    "menstrual": ["menstrual","period","feminine","pad","pads","tampon","cup"],
+    "period":    ["period","menstrual","feminine","pad","pads","tampon","cup"],
     "pan":       ["pan","skillet","frying pan","cookware"],
     "pot":       ["pot","cookware","saucepan"],
     "bottle":    ["bottle","water bottle","drink bottle"],
@@ -5024,6 +5030,11 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       categories: ["home"],
       brands: ["dawn","palmolive","finish","cascade","seventh generation"],
       inject: ["dish soap","dishwashing","dish detergent"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["always","tampax","kotex","stayfree","playtex","carefree","u by kotex","ob tampon","l."],
+      inject: ["menstrual","period","pads","tampons","feminine care"],
     },
   ];
   const queryJoined = queries.join(" ");
