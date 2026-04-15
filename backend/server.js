@@ -76,7 +76,7 @@ app.use(cors({
     callback(new Error(`CORS blocked: ${origin}`));
   },
   methods: ["GET","POST","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
+  allowedHeaders: ["Content-Type","Authorization","x-admin-key"],
   credentials: true,
 }));
 app.options("*", cors()); // handle preflight for all routes
@@ -234,6 +234,8 @@ if (!ADMIN_KEY) console.warn("[SECURITY] ADMIN_KEY env var not set — admin end
 const requireAdmin = (req, res, next) => {
   const key = req.headers["x-admin-key"] || req.query.key;
   if (!ADMIN_KEY || key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+  log.info("admin_access", { path: req.path, method: req.method, ip });
   next();
 };
 
@@ -5343,7 +5345,14 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
 
 app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
 app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
-app.get("/cache-clear",  requireAdmin, (req, res) => { scoreCache.clear(); res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" }); });
+let lastCacheClear = 0;
+app.get("/cache-clear",  requireAdmin, (req, res) => {
+  const now = Date.now();
+  if (now - lastCacheClear < 60000) return res.status(429).json({ error: "Cache was cleared less than 60 seconds ago. Please wait." });
+  lastCacheClear = now;
+  scoreCache.clear();
+  res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" });
+});
 
 // ── CALIBRATION OVERRIDE ADMIN ────────────────────────────────
 // List all overrides (admin UI)
@@ -5357,7 +5366,8 @@ app.get("/admin/calibration", requireAdmin, async (req, res) => {
     if (error) throw error;
     res.json(data || []);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[CALIBRATION] list error:", e.message);
+    res.status(500).json({ error: "Failed to load calibration overrides" });
   }
 });
 
@@ -5386,7 +5396,7 @@ app.post("/admin/calibration", requireAdmin, async (req, res) => {
         kids_ceiling: kids_ceiling ? Math.max(1, Math.min(10, kids_ceiling)) : null,
         category:     category || "other",
         substances:   substances || [],
-        reason:       reason || "",
+        reason:       (reason || "").slice(0, 500),
         confidence:   confidence || "high",
         updated_by:   updated_by || "admin",
         updated_at:   new Date().toISOString(),
@@ -5414,7 +5424,7 @@ app.post("/admin/calibration", requireAdmin, async (req, res) => {
     res.json({ success: true, name: key });
   } catch (e) {
     log.error("calibration_override_error", {error: e.message});
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: "Failed to save calibration override" });
   }
 });
 
@@ -5433,7 +5443,8 @@ app.delete("/admin/calibration", requireAdmin, async (req, res) => {
     await loadCalibrationOverrides();
     res.json({ success: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[CALIBRATION] delete error:", e.message);
+    res.status(500).json({ error: "Failed to delete calibration override" });
   }
 });
 
@@ -5461,7 +5472,7 @@ app.get("/recent-scans", requireAdmin, async (req, res) => {
     try {
       let query = supabaseAdmin
         .from("scans")
-        .select("product_name, category, score, result_json, scanned_at, user_id")
+        .select("product_name, category, score, result_json, scanned_at")
         .order("scanned_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
