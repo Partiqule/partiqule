@@ -4998,13 +4998,23 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "moisturizer":["moisturizer","lotion","cream","face cream","body cream"],
     "lotion":    ["lotion","moisturizer","cream","body lotion","body cream"],
     "cream":     ["cream","moisturizer","lotion","balm"],
-    "lipstick":  ["lipstick","lip","lip color","lip balm","lip tint"],
-    "mascara":   ["mascara","eye makeup","lashes"],
-    "foundation":["foundation","face makeup","tinted","concealer"],
+    "lipstick":  ["lipstick","lip","lip color","lip balm","lip tint","makeup","cosmetics","clean beauty"],
+    "mascara":   ["mascara","eye makeup","lashes","makeup","cosmetics","clean beauty"],
+    "foundation":["foundation","face makeup","tinted","concealer","makeup","cosmetics","clean beauty"],
+    "concealer": ["concealer","foundation","face makeup","tinted","makeup","cosmetics","clean beauty"],
+    "blush":     ["blush","cheek","lip","makeup","cosmetics","clean beauty"],
+    "eyeliner":  ["eyeliner","eye makeup","mascara","makeup","cosmetics","clean beauty"],
+    "eyeshadow": ["eyeshadow","eye makeup","makeup","cosmetics","clean beauty"],
+    "primer":    ["primer","face makeup","foundation","makeup","cosmetics","clean beauty"],
     "deodorant": ["deodorant","antiperspirant","body odor"],
     "body wash": ["body wash","soap","shower","cleanser"],
+    "scrub":     ["scrub","exfoliant","face wash","cleanser","body wash"],
+    "mouthwash": ["mouthwash","oral care","dental","mouth rinse"],
     "nail":      ["nail","nail care","manicure"],
     "polish":    ["nail polish","nail care","manicure"],
+    "cleanser":  ["cleanser","face wash","face cleanser","body wash","clean beauty"],
+    "retinol":   ["retinol","face cream","moisturizer","serum","anti-aging","skin care"],
+    "serum":     ["serum","face cream","moisturizer","skin care","clean beauty"],
     "pad":       ["pad","pads","menstrual","period","feminine","sanitary","menstrual pad"],
     "pads":      ["pads","pad","menstrual","period","feminine","sanitary","menstrual pad"],
     "tampon":    ["tampon","tampons","menstrual","period","feminine","sanitary"],
@@ -5066,6 +5076,26 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       categories: ["personal_care"],
       brands: ["opi","essie","sally hansen","orly"],
       inject: ["nail polish","nail care","manicure"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["garnier","herbal essences","tresemme","suave","aussie","pantene","head & shoulders","head and shoulders"],
+      inject: ["shampoo","conditioner","hair care"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["st ives","st. ives","neutrogena","clearasil","proactiv","clean & clear","clean and clear","cetaphil","cerave"],
+      inject: ["face wash","cleanser","skin care","clean beauty"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["bath and body works","bath & body works","jergens","nivea","vaseline","aveeno","eucerin"],
+      inject: ["lotion","moisturizer","body cream","body lotion"],
+    },
+    {
+      categories: ["personal_care"],
+      brands: ["listerine","scope","act"],
+      inject: ["mouthwash","oral care","dental"],
     },
   ];
   const queryJoined = queries.join(" ");
@@ -5143,6 +5173,11 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       if (["food", "food_beverage", "beverage"].includes(category) && meaningfulTagMatches === 0) {
         score = 0; // exclude — only category matched, no actual product relevance
       }
+      // Gender mismatch penalty — deprioritize men's products unless query is explicitly masculine
+      const pTags = (p.tags || []).join(" ").toLowerCase();
+      const isMensProduct = /\bmens?\b|men'?s|male grooming/.test(pTags);
+      const isMensQuery = /\bmen\b|\bmens\b|\bmen'?s\b|old spice|axe |gillett|every man jack|duke cannon|baxter|harry'?s razor|dollar shave/i.test(queryJoined);
+      if (isMensProduct && !isMensQuery && category === "personal_care") score = Math.max(0, score - 15);
       return { ...p, relevanceScore: score };
     })
     .filter(p => p.relevanceScore >= minScore)
