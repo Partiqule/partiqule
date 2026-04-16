@@ -1,4 +1,4 @@
-const CACHE_NAME = 'partiqule-v1';
+const CACHE_NAME = 'partiqule-v2';
 
 // Assets to cache on install — the app shell
 const PRECACHE_ASSETS = [
@@ -29,14 +29,23 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch strategy:
-// - API calls (/analyze, /cache-clear) → network only, never cache
+// - API calls → network only, never cache
 // - Google Fonts → cache first
-// - Everything else → network first, fall back to cache
+// - Navigation → network first, fall back to cached app shell
+// - Other assets → network first, fall back to cache
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache API calls
-  if (url.pathname.startsWith('/analyze') || url.pathname.startsWith('/cache-clear')) {
+  // Never cache API calls or admin endpoints
+  if (
+    url.pathname.startsWith('/analyze') ||
+    url.pathname.startsWith('/barcode') ||
+    url.pathname.startsWith('/cache-clear') ||
+    url.pathname.startsWith('/cache-status') ||
+    url.pathname.startsWith('/admin') ||
+    url.pathname.startsWith('/subscribe') ||
+    url.pathname.startsWith('/health')
+  ) {
     return; // let browser handle normally
   }
 
@@ -55,26 +64,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for everything else
+  // Navigation requests — network first, fall back to app shell
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request)
+            .then((cached) => cached || caches.match('/'))
+            .then((fallback) => fallback || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } }))
+        )
+    );
+    return;
+  }
+
+  // Other assets — network first, fall back to cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful GET responses
         if (event.request.method === 'GET' && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
       })
-      .catch(() => {
-        // Offline fallback — serve from cache if available
-        return caches.match(event.request).then((cached) => {
-          if (cached) return cached;
-          // For navigation requests, serve the app shell
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-        });
-      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => cached || new Response('', { status: 504 }))
+      )
   );
 });
