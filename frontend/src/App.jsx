@@ -913,13 +913,28 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
 
   useEffect(() => {
     if (!isOpen || !canvasRef.current) return;
+    let cancelled = false;
+
+    const draw = async () => {
+      await document.fonts.ready;
+      try {
+        await Promise.all([
+          document.fonts.load("800 48px Outfit"),
+          document.fonts.load("700 32px Outfit"),
+          document.fonts.load("500 24px Outfit"),
+        ]);
+      } catch(e) { /* continue with fallback */ }
+      if (cancelled || !canvasRef.current) return;
+      drawCard();
+    };
+
     const drawCard = () => {
       const canvas = canvasRef.current; if (!canvas) return;
       const W = 1080, H = 1920;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = W * dpr; canvas.height = H * dpr;
-      canvas.style.width = "1080px";
-      canvas.style.height = "1920px";
+      canvas.style.width = "100%";
+      canvas.style.height = "auto";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
@@ -1122,12 +1137,8 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
       ctx.fillText("Scan yours free \u2192", W - 52, 1870);
     };
 
-    // Ensure Outfit is available in canvas before drawing
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(drawCard);
-    } else {
-      drawCard();
-    }
+    draw();
+    return () => { cancelled = true; };
   }, [isOpen, result, displayScore]);
 
   if (!isOpen || !result) return null;
@@ -1180,8 +1191,10 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
           <canvas
             ref={canvasRef}
             style={{
-              display: "block", width: "100%", height: "auto",
-              borderRadius: 12,
+              display: "block",
+              width: "100%",
+              height: "auto",
+              borderRadius: 8,
             }}
           />
         </div>
@@ -1209,13 +1222,28 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
 
   useEffect(() => {
     if (!isOpen || !canvasRef.current || !sessionScans?.length) return;
+    let cancelled = false;
+
+    const draw = async () => {
+      await document.fonts.ready;
+      try {
+        await Promise.all([
+          document.fonts.load("800 48px Outfit"),
+          document.fonts.load("700 32px Outfit"),
+          document.fonts.load("500 24px Outfit"),
+        ]);
+      } catch(e) { /* continue with fallback */ }
+      if (cancelled || !canvasRef.current) return;
+      drawCard();
+    };
+
     const drawCard = () => {
       const canvas = canvasRef.current; if (!canvas) return;
       const W = 1080, H = 1920;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = W * dpr; canvas.height = H * dpr;
-      canvas.style.width = "1080px";
-      canvas.style.height = "1920px";
+      canvas.style.width = "100%";
+      canvas.style.height = "auto";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
@@ -1349,11 +1377,8 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
       ctx.fillText("Tap to scan yours \u2192", W - 52, 1870);
     };
 
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(drawCard);
-    } else {
-      drawCard();
-    }
+    draw();
+    return () => { cancelled = true; };
   }, [isOpen, sessionScans, avg, n]);
 
   if (!isOpen || !sessionScans?.length) return null;
@@ -1404,8 +1429,10 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
           <canvas
             ref={canvasRef}
             style={{
-              display: "block", width: "100%", height: "auto",
-              borderRadius: 12,
+              display: "block",
+              width: "100%",
+              height: "auto",
+              borderRadius: 8,
             }}
           />
         </div>
@@ -9388,10 +9415,25 @@ function App() {
             return (
             <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
               <div className="score-reveal" style={{background:isDark?"#0f2a18":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
-                {/* Header row — badges left/center, share icon far right */}
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10, gap:8}}>
-                  {/* Inner group: existing badges centered */}
-                  <div style={{display:"flex", alignItems:"center", flexWrap:"wrap", gap:8, flex:1, justifyContent:"center"}}>
+                {/* Header row — centered badges with share button absolutely positioned at right */}
+                <div style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 10,
+                  minHeight: 32,
+                }}>
+
+                  {/* Badges — centered independently */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                    gap: 8,
+                    paddingRight: 60, /* reserves space so long badge text doesn't collide with share button */
+                  }}>
                     <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
                       <><IcoRating size={14}/> Product Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = highest concern)</span>
                     </div>
@@ -9410,7 +9452,8 @@ function App() {
                       </div>
                     )}
                   </div>
-                  {/* Far right: share icon — only when valid scan data exists */}
+
+                  {/* Share button — absolutely positioned, never affects centering */}
                   {result.product_name &&
                    result.overall_score >= 1 &&
                    result.overall_score <= 10 && (
@@ -9418,6 +9461,10 @@ function App() {
                       onClick={() => setShareModalOpen(true)}
                       title="Share result"
                       style={{
+                        position: "absolute",
+                        right: 0,
+                        top: "50%",
+                        transform: "translateY(-50%)",
                         background: "none",
                         border: "none",
                         cursor: "pointer",
@@ -9428,11 +9475,10 @@ function App() {
                         color: "#4ade80",
                         fontSize: 12,
                         fontWeight: 700,
-                        flexShrink: 0,
                         whiteSpace: "nowrap",
                       }}
                     >
-                      <IconShare size={15} color="#4ade80" /> Share
+                      <IconShare size={14} color="#4ade80" /> Share
                     </button>
                   )}
                 </div>
