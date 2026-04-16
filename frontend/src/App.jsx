@@ -694,252 +694,332 @@ const ShareActionRow = ({ onShare, onSave, onCopy }) => {
   );
 };
 
-// ── ShareCard — single product, 1080x1920 portrait ──
-const ShareCard = ({ result, displayScore }) => {
-  const canvasRef = useRef(null);
-  const score    = Math.round(displayScore || result.overall_score || result.score || 0);
-  const color    = shareScoreColor(score);
-  const label    = shareScoreLabel(score);
-  const name     = result.product_name || "Scanned product";
+// ── Dramatic share card palette ──
+// Vivid colors for TikTok / Stories share — built to stop the scroll
+const alarmingScoreColor = (s) => s <= 3 ? "#22c55e" : s <= 6 ? "#f59e0b" : "#ef4444";
+const alarmingBannerText = (s) => s <= 3 ? "\u2713  CLEAN PRODUCT" : s <= 6 ? "\u26A0  USE WITH CAUTION" : "\u2715  HIGH CONCERN \u2014 AVOID";
+
+// ── Data completeness gate for the single-product share button ──
+function canShareResult(result) {
+  if (!result) return false;
+  if (!result.product_name || typeof result.product_name !== "string" || !result.product_name.trim()) return false;
+  const score = result.overall_score ?? result.score;
+  if (typeof score !== "number" || !(score >= 1 && score <= 10)) return false;
+  const hasDims = result.dimensions && Object.keys(result.dimensions).length > 0;
+  const hasFlags = Array.isArray(result.flagged_substances) && result.flagged_substances.length > 0;
+  if (!hasDims && !hasFlags) return false;
+  return true;
+}
+
+// ── Draws the single-product 1080x1920 card onto the given canvas ──
+function renderShareCardCanvas(canvas, { result, displayScore }) {
+  if (!canvas) return;
+  const score = Math.round(displayScore || result.overall_score || result.score || 0);
+  const color = alarmingScoreColor(score);
+  const banner = alarmingBannerText(score);
+  const name = result.product_name || "Scanned product";
   const category = (result.category || "").toUpperCase().replace(/_/g, " ");
   const flags = [
     ...(result.flagged_substances || []),
     ...(result.dimensions?.materials?.concerns || []),
-  ].filter(Boolean).filter((c, i, a) => a.indexOf(c) === i).slice(0, 6);
+  ].filter(Boolean).filter((c, i, a) => a.indexOf(c) === i).slice(0, 3);
   const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
   const dims = result.dimensions || {};
 
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const W = 1080, H = 1920;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = "100%"; canvas.style.height = "auto";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = 1080, H = 1920;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = "100%"; canvas.style.height = "auto";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
 
-    // Background cream
-    ctx.fillStyle = "#F5F0E8";
-    ctx.fillRect(0, 0, W, H);
+  // Near-black background with green undertone
+  ctx.fillStyle = "#080f08";
+  ctx.fillRect(0, 0, W, H);
 
-    // Header bar — 100px tall, moss green
-    ctx.fillStyle = "#2d5a27";
-    ctx.fillRect(0, 0, W, 100);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 40px Georgia,serif";
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("PARTIQULE", 52, 50);
-    if (category) {
-      ctx.fillStyle = "#a3c4a0";
-      ctx.font = "20px Georgia,serif";
-      ctx.textAlign = "right";
-      ctx.fillText(category, W - 52, 50);
-    }
-
-    // Product name — Y ~200, bold 64px, centered, wrap to 2 lines
-    ctx.fillStyle = "#1a1a1a";
-    ctx.font = "bold 64px Georgia,serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    const words = name.split(" ");
-    let curLine = "", nameLines = [];
-    for (const w of words) {
-      const test = curLine ? curLine + " " + w : w;
-      if (ctx.measureText(test).width > 960 && curLine) {
-        nameLines.push(curLine); curLine = w;
-      } else curLine = test;
-    }
-    if (curLine) nameLines.push(curLine);
-    nameLines = nameLines.slice(0, 2);
-    if (nameLines.length === 2 && words.length > nameLines.join(" ").split(" ").length) {
-      // truncate second line if we dropped words
-      const last = nameLines[1];
-      while (ctx.measureText(last + "...").width > 960 && nameLines[1].length > 4) {
-        nameLines[1] = nameLines[1].slice(0, -1);
-      }
-      nameLines[1] = nameLines[1] + "...";
-    }
-    const nameStartY = nameLines.length === 2 ? 210 : 250;
-    nameLines.forEach((l, i) => ctx.fillText(l, W / 2, nameStartY + i * 76));
-
-    // Score accent rule — 6px, width 320px, centered, Y ~340
-    ctx.fillStyle = color;
-    ctx.fillRect(W / 2 - 160, 340, 320, 6);
-
-    // Big score number — Y center ~560
-    const scoreY = 560;
-    ctx.font = "900 360px Georgia,serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = color;
-    // Measure score digit width to position /10
-    const scoreText = String(score);
-    const scoreWidth = ctx.measureText(scoreText).width;
-    ctx.fillText(scoreText, W / 2, scoreY);
-    // /10 label
-    ctx.font = "56px Georgia,serif";
-    ctx.fillStyle = "#999";
-    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-    ctx.fillText("/10", W / 2 + scoreWidth / 2 + 20, scoreY + 60);
-
-    // Score label pill — Y ~780
-    const pillText = label;
-    ctx.font = "bold 32px Georgia,serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    const pillTextWidth = ctx.measureText(pillText).width;
-    const pillPadX = 24, pillPadY = 14;
-    const pillW = pillTextWidth + pillPadX * 2;
-    const pillH = 32 + pillPadY * 2;
-    const pillX = W / 2 - pillW / 2;
-    const pillY = 780;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
-    else ctx.rect(pillX, pillY, pillW, pillH);
-    ctx.fillStyle = color; ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(pillText, W / 2, pillY + pillH / 2);
-
-    // Dimension bars — Y ~880
-    const dimKeys = ["materials", "usage_exposure", "packaging", "sustainability"];
-    const dimLabels = {
-      materials: "Materials",
-      usage_exposure: "Usage",
-      packaging: "Packaging",
-      sustainability: "Sustainability",
-    };
-    const dimsPresent = dimKeys.filter(k => dims[k] && typeof dims[k].score === "number").slice(0, 4);
-    if (dimsPresent.length > 0) {
-      ctx.fillStyle = "#888";
-      ctx.font = "18px Georgia,serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-      ctx.fillText("HOW IT SCORED", 60, 880);
-
-      const barStartY = 930;
-      const rowH = 52;
-      const labelW = 260;
-      const barW = 600;
-      const barH = 18;
-      const barX = W - 60 - barW;
-
-      dimsPresent.forEach((k, i) => {
-        const y = barStartY + i * rowH;
-        // Label
-        ctx.fillStyle = "#555";
-        ctx.font = "22px Georgia,serif";
-        ctx.textAlign = "left"; ctx.textBaseline = "middle";
-        ctx.fillText(dimLabels[k], 60, y + barH / 2);
-        // Track
-        ctx.fillStyle = "#e0d9cc";
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(barX, y, barW, barH, barH / 2);
-        else ctx.rect(barX, y, barW, barH);
-        ctx.fill();
-        // Fill
-        const dimScore = Math.max(0, Math.min(10, dims[k].score || 0));
-        const fillW = (dimScore / 10) * barW;
-        if (fillW > 0) {
-          ctx.fillStyle = shareScoreColor(dimScore);
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(barX, y, fillW, barH, barH / 2);
-          else ctx.rect(barX, y, fillW, barH);
-          ctx.fill();
-        }
-      });
-    }
-
-    // Flagged ingredients — Y ~1200
-    if (flags.length > 0) {
-      ctx.fillStyle = "#888";
-      ctx.font = "18px Georgia,serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-      ctx.fillText("FLAGGED", 60, 1200);
-
-      const flagStartY = 1230;
-      const flagPadX = 20, flagPadY = 12;
-      ctx.font = "20px Georgia,serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      let fx = 60, fy = flagStartY;
-      const rowGap = 52;
-      const maxRowWidth = W - 120;
-      for (const flag of flags.slice(0, 6)) {
-        const flagStr = typeof flag === "string" ? flag : (flag.concern || flag.name || "");
-        if (!flagStr) continue;
-        const display = flagStr.length > 28 ? flagStr.slice(0, 26) + "..." : flagStr;
-        const tw = ctx.measureText(display).width;
-        const pillWidth = tw + flagPadX * 2;
-        const pillHeight = 20 + flagPadY * 2;
-        // Wrap to next row if needed
-        if (fx + pillWidth > 60 + maxRowWidth && fx > 60) {
-          fx = 60; fy += rowGap;
-          if (fy > flagStartY + rowGap * 2) break; // max 3 rows
-        }
-        // Pill
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(fx, fy, pillWidth, pillHeight, pillHeight / 2);
-        else ctx.rect(fx, fy, pillWidth, pillHeight);
-        ctx.fillStyle = "#F5F0E8";
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = color;
-        ctx.stroke();
-        // Text
-        ctx.fillStyle = color;
-        ctx.fillText(display, fx + flagPadX, fy + pillHeight / 2);
-        fx += pillWidth + 12;
-      }
-    }
-
-    // Better option teaser — Y ~1450
-    if (alt && score > 3) {
-      const stripY = 1450, stripH = 80;
-      ctx.fillStyle = "#2d5a27";
-      ctx.fillRect(0, stripY, W, stripH);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "22px Georgia,serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText("Better option found \u2192", 52, stripY + 28);
-      ctx.fillStyle = "#a3c4a0";
-      const altName = alt.name || alt.brand || "See alternatives";
-      const altTrunc = altName.length > 50 ? altName.slice(0, 48) + "..." : altName;
-      ctx.fillText(altTrunc, 52, stripY + 58);
-    }
-
-    // Footer — pinned Y=1820-1920, background #1a1a1a
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 1820, W, 100);
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "22px Georgia,serif";
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("partiqule.com", 52, 1870);
-    ctx.fillStyle = "#a3c4a0";
-    ctx.font = "20px Georgia,serif";
+  // Header — 110px, #0f1f0f
+  ctx.fillStyle = "#0f1f0f";
+  ctx.fillRect(0, 0, W, 110);
+  ctx.fillStyle = "#22c55e";
+  ctx.font = "bold 38px Georgia,serif";
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText("PARTIQULE", 52, 55);
+  if (category) {
+    ctx.fillStyle = "#4a7c59";
+    ctx.font = "20px system-ui,-apple-system,sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("Scan yours", W - 52, 1870);
-  }, [score, result]);
+    ctx.fillText(category, W - 52, 55);
+  }
+
+  // Product name — Y ~170
+  ctx.fillStyle = "#f5f5f5";
+  ctx.font = "bold 58px Georgia,serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  const words = name.split(" ");
+  let curLine = "", nameLines = [];
+  for (const w of words) {
+    const test = curLine ? curLine + " " + w : w;
+    if (ctx.measureText(test).width > 960 && curLine) {
+      nameLines.push(curLine); curLine = w;
+    } else curLine = test;
+  }
+  if (curLine) nameLines.push(curLine);
+  const usedWordCount = nameLines.join(" ").split(" ").filter(Boolean).length;
+  const totalWords = words.filter(Boolean).length;
+  nameLines = nameLines.slice(0, 2);
+  if (nameLines.length === 2 && usedWordCount < totalWords) {
+    // Truncate line 2 if words were dropped
+    while (ctx.measureText(nameLines[1] + "...").width > 960 && nameLines[1].length > 4) {
+      nameLines[1] = nameLines[1].slice(0, -1);
+    }
+    nameLines[1] = nameLines[1] + "...";
+  }
+  if (nameLines.length === 2) {
+    ctx.fillText(nameLines[0], W / 2, 150);
+    ctx.fillText(nameLines[1], W / 2, 150 + 70);
+  } else {
+    ctx.fillText(nameLines[0] || "", W / 2, 195);
+  }
+
+  // Warning banner — Y ~320, 80px tall, full width
+  const bannerY = 320, bannerH = 80;
+  // Background: score color at 15% opacity — hex + alpha
+  ctx.fillStyle = color + "26"; // ~15%
+  ctx.fillRect(0, bannerY, W, bannerH);
+  // Top + bottom borders
+  ctx.fillStyle = color;
+  ctx.fillRect(0, bannerY, W, 1);
+  ctx.fillRect(0, bannerY + bannerH - 1, W, 1);
+  // Centered text
+  ctx.fillStyle = color;
+  ctx.font = "bold 28px Georgia,serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(banner, W / 2, bannerY + bannerH / 2);
+
+  // Score — hero, centered at Y 620
+  const scoreY = 620;
+  ctx.save();
+  ctx.font = "900 480px Georgia,serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 80;
+  ctx.fillStyle = color;
+  const scoreText = String(score);
+  ctx.fillText(scoreText, W / 2, scoreY);
+  ctx.restore();
+
+  // /10 label baseline-aligned bottom-right of score
+  ctx.save();
+  ctx.font = "900 480px Georgia,serif";
+  const scoreWidth = ctx.measureText(scoreText).width;
+  ctx.restore();
+  ctx.font = "52px Georgia,serif";
+  ctx.fillStyle = "#666";
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.fillText("/10", W / 2 + scoreWidth / 2 + 16, scoreY + 160);
+
+  // Divider — Y 840, 1px
+  ctx.fillStyle = "#1e2e1e";
+  ctx.fillRect(0, 840, W, 1);
+
+  // Flagged section — Y 880
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#4a7c59";
+  ctx.font = "18px system-ui,-apple-system,sans-serif";
+  // Letter-spacing simulated by drawing each char — but simple header is fine
+  if (flags.length > 0) {
+    ctx.fillText("F L A G G E D   I N G R E D I E N T S", W / 2, 880);
+    ctx.fillStyle = color;
+    ctx.font = "bold 26px Georgia,serif";
+    ctx.textBaseline = "alphabetic";
+    const flagList = flags.slice(0, 3);
+    flagList.forEach((f, i) => {
+      const s = typeof f === "string" ? f : (f.concern || f.name || "");
+      if (!s) return;
+      let display = s.length > 42 ? s.slice(0, 40) + "..." : s;
+      ctx.fillText(display, W / 2, 920 + i * 44);
+    });
+  } else {
+    ctx.fillStyle = "#22c55e";
+    ctx.font = "24px Georgia,serif";
+    ctx.fillText("\u2713 No flagged ingredients", W / 2, 920);
+  }
+  ctx.restore();
+
+  // Dimension bars — Y 1120
+  const dimKeys = ["materials", "usage_exposure", "packaging", "sustainability"];
+  const dimLabels = {
+    materials: "Materials",
+    usage_exposure: "Usage",
+    packaging: "Packaging",
+    sustainability: "Sustainability",
+  };
+  const dimsPresent = dimKeys.filter(k => dims[k] && typeof dims[k].score === "number").slice(0, 4);
+  if (dimsPresent.length > 0) {
+    ctx.fillStyle = "#333";
+    ctx.font = "16px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillText("HOW IT SCORED", 52, 1120);
+
+    const barStartY = 1160;
+    const rowH = 50;
+    const barW = 560;
+    const barH = 14;
+    const barX = 300;
+
+    dimsPresent.forEach((k, i) => {
+      const y = barStartY + i * rowH;
+      // Label
+      ctx.fillStyle = "#888";
+      ctx.font = "20px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(dimLabels[k], 52, y + barH / 2);
+      // Track — dark
+      ctx.fillStyle = "#1a1a1a";
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(barX, y, barW, barH, barH / 2);
+      else ctx.rect(barX, y, barW, barH);
+      ctx.fill();
+      // Fill
+      const dimScore = Math.max(0, Math.min(10, dims[k].score || 0));
+      const fillW = (dimScore / 10) * barW;
+      if (fillW > 0) {
+        ctx.fillStyle = alarmingScoreColor(dimScore);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(barX, y, fillW, barH, barH / 2);
+        else ctx.rect(barX, y, fillW, barH);
+        ctx.fill();
+      }
+      // Score value right of bar
+      ctx.fillStyle = alarmingScoreColor(dimScore);
+      ctx.font = "20px Georgia,serif";
+      ctx.textAlign = "left";
+      ctx.fillText(String(dimScore), 875, y + barH / 2);
+    });
+  }
+
+  // Better option strip — Y 1520, only if alt exists and score > 3
+  if (alt && score > 3) {
+    const stripY = 1520, stripH = 100;
+    ctx.fillStyle = "#0f1f0f";
+    ctx.fillRect(0, stripY, W, stripH);
+    ctx.fillStyle = "#1e2e1e";
+    ctx.fillRect(0, stripY, W, 1);
+
+    ctx.fillStyle = "#4a7c59";
+    ctx.font = "16px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillText("BETTER OPTION", 52, 1548);
+
+    ctx.fillStyle = "#f5f5f5";
+    ctx.font = "bold 24px Georgia,serif";
+    const altName = alt.name || alt.brand || "See alternatives";
+    let altTrunc = altName;
+    const maxAltWidth = W - 52 - 200; // leave space for badge
+    while (ctx.measureText(altTrunc + "...").width > maxAltWidth && altTrunc.length > 4) {
+      altTrunc = altTrunc.slice(0, -1);
+    }
+    if (altTrunc !== altName) altTrunc = altTrunc + "...";
+    ctx.fillText(altTrunc, 52, 1578);
+
+    // Alt score badge right
+    const altScoreRaw = alt.score ?? alt.estimated_score;
+    if (typeof altScoreRaw === "number") {
+      const altScore = Math.round(altScoreRaw);
+      const altColor = alarmingScoreColor(altScore);
+      ctx.font = "bold 22px Georgia,serif";
+      const badgeText = `${altScore}/10`;
+      const tw = ctx.measureText(badgeText).width;
+      const padX = 18, padY = 10;
+      const bw = tw + padX * 2;
+      const bh = 22 + padY * 2;
+      const bx = W - 52 - bw;
+      const by = stripY + stripH / 2 - bh / 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 12);
+      else ctx.rect(bx, by, bw, bh);
+      ctx.fillStyle = altColor; ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(badgeText, bx + bw / 2, by + bh / 2);
+    }
+  }
+
+  // Footer — Y 1840-1920, #000
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 1840, W, 80);
+  ctx.fillStyle = "#4a7c59";
+  ctx.font = "22px Georgia,serif";
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.fillText("partiqule.com", 52, 1880);
+  ctx.fillStyle = "#2d5a27";
+  ctx.font = "20px Georgia,serif";
+  ctx.textAlign = "right";
+  ctx.fillText("Scan yours free", W - 52, 1880);
+}
+
+// ── ShareCard modal — canvas only renders when isOpen becomes true ──
+const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
+  const canvasRef = useRef(null);
+  const score = Math.round(displayScore || result?.overall_score || result?.score || 0);
+  const name = result?.product_name || "Scanned product";
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Defer to next frame so canvas is mounted
+    const t = requestAnimationFrame(() => {
+      renderShareCardCanvas(canvasRef.current, { result, displayScore });
+    });
+    return () => cancelAnimationFrame(t);
+  }, [isOpen, result, displayScore]);
+
+  if (!isOpen || !result) return null;
 
   const filename = `partiqule-${slugifyProductName(name)}-${score}.png`;
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <div style={{ borderRadius: 16, overflow: "hidden", border: "1.5px solid rgba(45,90,39,0.2)", background: "#F5F0E8" }}>
-        <canvas ref={canvasRef} style={{ display: "block", width: "100%" }}/>
+    <div
+      onClick={onClose}
+      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ background:"#fff", borderRadius:20, padding:20, maxWidth:480, width:"100%", maxHeight:"90vh", overflow:"auto" }}
+      >
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, gap:12 }}>
+          <span style={{ fontFamily:"Georgia,serif", fontSize:18, fontWeight:700, color:"#1a1a1a", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            Share {name}
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background:"none", border:"none", fontSize:24, cursor:"pointer", color:"#999", padding:0, lineHeight:1, width:32, height:32, flexShrink:0 }}
+          >×</button>
+        </div>
+        <div style={{ borderRadius: 16, overflow: "hidden", border: "1.5px solid rgba(0,0,0,0.08)", background: "#080f08" }}>
+          <canvas ref={canvasRef} style={{ display: "block", width: "100%" }}/>
+        </div>
+        <ShareActionRow
+          onShare={async () => {
+            const c = canvasRef.current; if (!c) return;
+            await shareCanvas(c, {
+              title: `${name} scored ${score}/10`,
+              text: "Scanned on Partiqule \u2014 partiqule.com",
+              filename,
+            });
+          }}
+          onSave={async () => {
+            const c = canvasRef.current; if (!c) return;
+            await downloadCanvas(c, filename);
+          }}
+          onCopy={async () => {
+            const c = canvasRef.current; if (!c) return;
+            await copyCanvasToClipboard(c);
+          }}
+        />
       </div>
-      <ShareActionRow
-        onShare={async () => {
-          const c = canvasRef.current; if (!c) return;
-          await shareCanvas(c, {
-            title: `${name} scored ${score}/10`,
-            text: "Scanned on Partiqule \u2014 partiqule.com",
-            filename,
-          });
-        }}
-        onSave={async () => {
-          const c = canvasRef.current; if (!c) return;
-          await downloadCanvas(c, filename);
-        }}
-        onCopy={async () => {
-          const c = canvasRef.current; if (!c) return;
-          await copyCanvasToClipboard(c);
-        }}
-      />
     </div>
   );
 };
@@ -7485,6 +7565,7 @@ function App() {
   // multiple products in one store visit.
   const [sessionScans, setSessionScans] = useState([]);
   const [showSessionRecap, setShowSessionRecap] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const appendSessionScan = (item) => {
     if (!item || !item.product_name) return;
     setSessionScans(prev => {
@@ -9721,11 +9802,6 @@ function App() {
                       setPage("routine"); setResult(null);
                     }
                   };
-                  const shareResult = async () => {
-                    const text = `I scanned ${result.product_name} and it scored ${displayScore}/10 on Partiqule. Check what is in your products at partiqule.com`;
-                    if (navigator.share) { try { await navigator.share({title:`${result.product_name} — ${displayScore}/10`, text}); return; } catch {} }
-                    try { await navigator.clipboard.writeText(text); } catch {}
-                  };
                   return (
                     <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:16}}>
                       {/* Primary CTA */}
@@ -9758,23 +9834,29 @@ function App() {
                           : alreadyInRoutine ? "View My Routine" : "Add to My Routine"}
                       </button>
 
-                      {/* Tertiary — icon row */}
-                      <div style={{display:"flex", justifyContent:"center", gap:12, marginTop:4}}>
-                        <button onClick={shareResult} style={{width:36, height:36, borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, background:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}} title="Share">
-                          <IconShare size={16} color={isDark?"#6ee7b7":"#6b7280"}/>
-                        </button>
-                      </div>
-
                       {/* Add to shopping list — home-relevant categories */}
                       {["food","food_beverage","beverage","snack","supplement","cleaning","home","personal_care","baby"].includes(result?.category) && (
                         <AddToListButton result={result} lists={lists} createShoppingList={createShoppingList} addItemToList={addItemToList} muted={muted}/>
                       )}
+
+                      {/* ── Share Result — only when data is complete ── */}
+                      {canShareResult(result) && (
+                        <button
+                          onClick={() => setShowShareModal(true)}
+                          style={{
+                            width:"100%", height:52, borderRadius:12,
+                            background:"#2d5a27", color:"#fff", border:"none",
+                            fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+                            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:10,
+                            marginTop:4,
+                          }}>
+                          <IconShare size={16} color="#fff"/>
+                          Share Result
+                        </button>
+                      )}
                     </div>
                   );
                 })()}
-
-                {/* ── Share card (single product) — creator share flow ── */}
-                <ShareCard result={result} displayScore={displayScore}/>
 
               </div>
 
@@ -10150,6 +10232,16 @@ function App() {
       {/* Compare share card modal */}
       {compareAlt && result && (
         <ShareCompareCard result={result} alternative={compareAlt} onClose={() => setCompareAlt(null)}/>
+      )}
+
+      {/* Share result modal — single product ShareCard */}
+      {result && (
+        <ShareCard
+          result={result}
+          displayScore={childMode && result.child_score ? result.child_score : (result.overall_score || result.score)}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
       )}
 
       {/* Session Recap floating pill — visible when 2+ scans in session, hidden during active scan */}
