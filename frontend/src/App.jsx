@@ -600,88 +600,188 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
 // ── SHARE SYSTEM ─────────────────────────────────────────────
 // ═════════════════════════════════════════════════════════════
 
-// Score color helper — vivid palette for TikTok/Stories share cards
-const sc = (score) => score <= 3 ? "#22c55e" : score <= 6 ? "#f59e0b" : "#ef4444";
+// 5-tier score color — matches the app's scoreColor() exactly
+const shareScoreColor = (s) =>
+  s <= 2 ? "#16a34a" :
+  s <= 4 ? "#65a30d" :
+  s <= 6 ? "#ca8a04" :
+  s <= 8 ? "#ea580c" : "#dc2626";
 
-// Share text builder — one line per score tier
+// Score pill text matching RiskBar copy
+function shareScorePill(s) {
+  if (s <= 2) return "Safe \u2014 no significant concerns";
+  if (s <= 4) return "Good \u2014 mostly clean, use with awareness";
+  if (s <= 6) return "Caution \u2014 real concerns, consider alternatives";
+  if (s <= 8) return "Switch \u2014 real concerns, time to swap";
+  return "Avoid \u2014 known harmful substances";
+}
+
+// Share text per score tier
 function buildShareText(name, score) {
   if (score <= 3) return name + " scored " + score + "/10 \u2014 one of the cleaner options out there. Scanned on Partiqule \u00b7 partiqule.com";
   if (score <= 6) return name + " scored " + score + "/10. Worth checking the alternatives. Scanned on Partiqule \u00b7 partiqule.com";
   return name + " scored " + score + "/10 \u2014 I\u2019d avoid this one. Scanned on Partiqule \u00b7 partiqule.com";
 }
 
-// 18 floating particles that sit behind card content
-const SHARE_PARTICLES = [
-  { x: 130,  y: 154,  r: 12,  op: 0.18 },
-  { x: 842,  y: 269,  r: 7,   op: 0.12 },
-  { x: 950,  y: 672,  r: 14,  op: 0.15 },
-  { x: 65,   y: 806,  r: 8,   op: 0.10 },
-  { x: 994,  y: 1152, r: 10,  op: 0.13 },
-  { x: 194,  y: 1306, r: 7,   op: 0.09 },
-  { x: 886,  y: 1498, r: 15,  op: 0.16 },
-  { x: 108,  y: 1574, r: 10,  op: 0.11 },
-  { x: 756,  y: 1690, r: 8,   op: 0.14 },
-  { x: 324,  y: 1766, r: 12,  op: 0.10 },
-  { x: 594,  y: 346,  r: 7,   op: 0.12 },
-  { x: 454,  y: 1805, r: 13,  op: 0.08 },
-  { x: 1026, y: 1690, r: 8,   op: 0.13 },
-  { x: 43,   y: 422,  r: 10,  op: 0.09 },
-  { x: 691,  y: 115,  r: 7,   op: 0.11 },
-  { x: 238,  y: 960,  r: 5,   op: 0.08 },
-  { x: 810,  y: 998,  r: 7,   op: 0.10 },
-  { x: 518,  y: 1498, r: 5,   op: 0.09 },
-];
-
-function drawShareParticles(ctx) {
-  for (const p of SHARE_PARTICLES) {
-    ctx.globalAlpha = p.op;
-    ctx.fillStyle = "#22c55e";
+// 18 floating particles sit behind card content — green dots on forest bg
+function drawParticles(ctx) {
+  const pts = [
+    [130,154,12,.18],[842,269,7,.12],[950,672,14,.15],
+    [65,806,8,.10],[994,1152,10,.13],[194,1306,7,.09],
+    [886,1498,15,.16],[108,1574,10,.11],[756,1690,8,.14],
+    [324,1766,12,.10],[594,346,7,.12],[454,1805,13,.08],
+    [1026,1690,8,.13],[43,422,10,.09],[691,115,7,.11],
+    [238,960,5,.08],[810,998,7,.10],[518,1498,5,.09],
+  ];
+  pts.forEach(([x, y, r, op]) => {
+    ctx.globalAlpha = op;
+    ctx.fillStyle = "#4ade80";
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
-  }
+  });
   ctx.globalAlpha = 1;
 }
 
-// Draws the Partiqule tree icon + wordmark at the top-left of a share card
-function drawPartiquleBrand(ctx) {
+// Partiqule nav bar — matches the app header exactly. Right label is configurable
+// so the recap card can show "STORE HAUL" while the product card shows "partiqule.com".
+function drawNavBar(ctx, W, H_bar, rightLabel = "partiqule.com", rightColor = "#1a4a2a") {
+  // Background
+  ctx.fillStyle = "#052e16";
+  ctx.fillRect(0, 0, W, H_bar);
+
   // Icon background
-  ctx.fillStyle = "#1a3a1a";
+  ctx.fillStyle = "#0a4a20";
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(52, 57, 94, 62, 14);
-  else ctx.rect(52, 57, 94, 62);
+  if (ctx.roundRect) ctx.roundRect(52, H_bar / 2 - 32, 64, 64, 14);
+  else ctx.rect(52, H_bar / 2 - 32, 64, 64);
   ctx.fill();
-  // Canopy
-  ctx.fillStyle = "#22c55e";
-  ctx.beginPath(); ctx.arc(99, 79, 22, 0, Math.PI * 2); ctx.fill();
-  // Trunk
+
+  // Tree canopy
+  ctx.fillStyle = "#4ade80";
+  ctx.beginPath(); ctx.arc(84, H_bar / 2 - 6, 20, 0, Math.PI * 2); ctx.fill();
+
+  // Tree trunk
   ctx.fillStyle = "#16a34a";
   ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(93, 98, 12, 18, 4);
-  else ctx.rect(93, 98, 12, 18);
+  if (ctx.roundRect) ctx.roundRect(79, H_bar / 2 + 14, 10, 16, 4);
+  else ctx.rect(79, H_bar / 2 + 14, 10, 16);
   ctx.fill();
-  // Dot 1
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = "#4ade80";
-  ctx.beginPath(); ctx.arc(74, 65, 5, 0, Math.PI * 2); ctx.fill();
-  // Dot 2
-  ctx.globalAlpha = 0.5;
-  ctx.beginPath(); ctx.arc(122, 62, 4, 0, Math.PI * 2); ctx.fill();
-  // Dot 3
-  ctx.globalAlpha = 0.4;
-  ctx.beginPath(); ctx.arc(120, 92, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  // Accent dots
+  [[68, H_bar / 2 - 20, 4, 0.7], [100, H_bar / 2 - 24, 3.5, 0.6], [99, H_bar / 2 + 10, 3, 0.4]]
+    .forEach(([x, y, r, a]) => {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "#86efac";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    });
   ctx.globalAlpha = 1;
 
   // Wordmark
-  ctx.font = "bold 50px Georgia, serif";
-  ctx.fillStyle = "#22c55e";
+  ctx.font = "800 48px 'Outfit', system-ui, sans-serif";
+  ctx.fillStyle = "#4ade80";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("Partiqule", 162, 87);
+  ctx.fillText("Partiqule", 132, H_bar / 2);
+
+  // Right label
+  ctx.font = "600 24px system-ui, sans-serif";
+  ctx.fillStyle = rightColor;
+  ctx.textAlign = "right";
+  ctx.fillText(rightLabel, W - 52, H_bar / 2);
+}
+
+// Upper-semicircle score arc — replicates the ScoreArc component in canvas
+function drawScoreArc(ctx, cx, cy, r, score, strokeW) {
+  const color = shareScoreColor(score);
+
+  // Background arc (upper semicircle, anti-clockwise from Math.PI to 0)
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, Math.PI, 0, true);
+  ctx.strokeStyle = "#0a3a1a";
+  ctx.lineWidth = strokeW;
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  // Filled arc — score/10 of the semicircle
+  if (score > 0) {
+    const endAngle = Math.PI * (1 - score / 10);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, endAngle, true);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeW;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  // Score digit inside the arc
+  ctx.font = "800 " + Math.round(r * 0.58) + "px 'Outfit', system-ui, sans-serif";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(score), cx, cy - r * 0.12);
+
+  // "out of 10" below digit
+  ctx.font = "500 " + Math.round(r * 0.16) + "px 'Outfit', system-ui, sans-serif";
+  ctx.fillStyle = "#1e4a2e";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("out of 10", cx, cy + r * 0.12);
+}
+
+// Word wrap — max 2 lines
+function wrapText(ctx, text, maxWidth) {
+  const words = (text || "").split(" ");
+  let lines = [], line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line); line = w;
+    } else line = test;
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 2);
+}
+
+// Risk bar — gradient track with a dot marker and SAFER / RISKIER labels
+function drawRiskBar(ctx, W, y, score) {
+  const color = shareScoreColor(score);
+  const barX = 52, barW = W - 104, barH = 16, barY = y;
+
+  // Gradient track
+  const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+  grad.addColorStop(0,    "#16a34a");
+  grad.addColorStop(0.3,  "#65a30d");
+  grad.addColorStop(0.55, "#d97706");
+  grad.addColorStop(0.8,  "#dc2626");
+  grad.addColorStop(1,    "#991b1b");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(barX, barY, barW, barH, 8);
+  else ctx.rect(barX, barY, barW, barH);
+  ctx.fill();
+
+  // Marker dot
+  const dotX = barX + (score / 10) * barW;
+  ctx.beginPath();
+  ctx.arc(dotX, barY + barH / 2, 18, 0, Math.PI * 2);
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // Labels
+  ctx.font = "500 22px system-ui, sans-serif";
+  ctx.fillStyle = "#1a3a2a";
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.fillText("SAFER", barX, barY + barH + 36);
+  ctx.textAlign = "right";
+  ctx.fillText("RISKIER", barX + barW, barY + barH + 36);
 }
 
 // Shared Share / Save / Copy action row used by both cards
-const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession }) => {
+const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession, sessionMeta }) => {
   const [copyState, setCopyState] = useState("idle");
   const [shareState, setShareState] = useState("idle");
   const [saveState, setSaveState] = useState("idle");
@@ -696,7 +796,7 @@ const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession }) => 
     : "partiqule-" + toSlug(productName || "result") + "-" + displayScore + ".png";
 
   const shareText = isSession
-    ? "I scanned a bunch of products today. Scanned on Partiqule \u00b7 partiqule.com"
+    ? ("I scanned " + sessionMeta.n + " products. Session average: " + sessionMeta.avg + "/10. See what\u2019s in your products at partiqule.com")
     : buildShareText(productName || "Product", displayScore);
 
   const handleShare = async () => {
@@ -706,7 +806,7 @@ const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession }) => 
       const file = new File([blob], filename, { type: "image/png" });
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
-          title: isSession ? "Session Recap" : ((productName || "Product") + " scored " + displayScore + "/10"),
+          title: isSession ? "Partiqule Session Recap" : ((productName || "Product") + " scored " + displayScore + "/10"),
           text: shareText,
           files: [file],
         });
@@ -728,7 +828,8 @@ const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession }) => 
     try {
       const blob = await getBlob(); if (!blob) throw new Error("no blob");
       if (IS_NATIVE) {
-        // iOS: Web Share API with file only lets user tap "Save Image" to save to Photos
+        // iOS: anchor downloads save to Files, NOT Photos. Web Share API surfaces
+        // "Save Image" which saves to the Photos library — that's the only way.
         const file = new File([blob], filename, { type: "image/png" });
         if (navigator.share && navigator.canShare?.({ files: [file] })) {
           await navigator.share({ files: [file] });
@@ -766,37 +867,40 @@ const ShareButtonRow = ({ canvasRef, productName, displayScore, isSession }) => 
         disabled={shareState === "busy"}
         style={{
           width: "100%", padding: "14px", borderRadius: 12,
-          background: "#2d5a27", color: "#fff", border: "none",
+          background: "#052e16", color: "#4ade80", border: "1px solid #0a4a20",
           fontSize: 16, fontWeight: 700, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           marginBottom: 10,
+          fontFamily: "'Outfit', system-ui, sans-serif",
         }}
       >
-        <IconShare size={16} color="#fff" />
+        <IconShare size={16} color="#4ade80" />
         {shareState === "done" ? "Shared!" : shareState === "busy" ? "Preparing..." : "Share"}
       </button>
-      {/* Secondary row — Save + Copy */}
+      {/* Secondary row — Save to Photos + Copy Image */}
       <div style={{ display: "flex", gap: 10 }}>
         <button
           onClick={handleSave}
           disabled={saveState === "busy"}
           style={{
             flex: 1, padding: "11px", borderRadius: 10,
-            background: "transparent", border: "1.5px solid #2d5a27",
+            background: "transparent", border: "1.5px solid #0a4a20",
             color: "#4ade80", fontSize: 14, fontWeight: 600, cursor: "pointer",
+            fontFamily: "'Outfit', system-ui, sans-serif",
           }}
         >
-          {saveState === "done" ? "Saved!" : saveState === "busy" ? "..." : "Save"}
+          {saveState === "done" ? "Saved!" : saveState === "busy" ? "..." : "Save to Photos"}
         </button>
         <button
           onClick={handleCopy}
           style={{
             flex: 1, padding: "11px", borderRadius: 10,
-            background: "transparent", border: "1.5px solid #2d5a27",
+            background: "transparent", border: "1.5px solid #0a4a20",
             color: "#4ade80", fontSize: 14, fontWeight: 600, cursor: "pointer",
+            fontFamily: "'Outfit', system-ui, sans-serif",
           }}
         >
-          {copyState === "copied" ? "Copied!" : "Copy"}
+          {copyState === "copied" ? "Copied!" : "Copy Image"}
         </button>
       </div>
     </div>
@@ -814,277 +918,216 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
       const W = 1080, H = 1920;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = "1080px";
+      canvas.style.height = "1920px";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
 
-      const scoreColor = sc(displayScore);
+      const scoreColor = shareScoreColor(displayScore);
 
-      // Background
-      ctx.fillStyle = "#060d06";
+      // [BACKGROUND]
+      ctx.fillStyle = "#052e16";
       ctx.fillRect(0, 0, W, H);
 
-      // Floating particles
-      drawShareParticles(ctx);
+      // [PARTICLES]
+      drawParticles(ctx);
 
-      // ── HEADER — Y=0 to Y=175
-      ctx.fillStyle = "#0d1f0d";
-      ctx.fillRect(0, 0, W, 175);
+      // [NAV BAR] — Y=0 H=160
+      drawNavBar(ctx, W, 160);
 
-      // Partiqule icon + wordmark
-      drawPartiquleBrand(ctx);
-
-      // Category label — right
-      const catLabel = (result.category || "PRODUCT").toUpperCase().replace(/_/g, " ");
-      ctx.font = "600 28px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillText(catLabel, W - 52, 87);
-
-      // ── WARNING BANNER — Y=175 to Y=283
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = scoreColor;
-      ctx.fillRect(0, 175, W, 108);
-      ctx.globalAlpha = 1;
-
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = scoreColor;
-      ctx.fillRect(0, 175, W, 3);
-      ctx.fillRect(0, 280, W, 3);
-      ctx.globalAlpha = 1;
-
-      const warnText =
-        displayScore <= 3 ? "\u2713  CLEAN PRODUCT" :
-        displayScore <= 6 ? "\u26a0  USE WITH CAUTION" :
-                            "\u2715  HIGH CONCERN \u2014 AVOID";
-
-      ctx.font = "700 30px system-ui, sans-serif";
-      ctx.fillStyle = scoreColor;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(warnText, W / 2, 229);
-
-      // ── PRODUCT NAME — Georgia bold, max 2 lines
-      ctx.font = "bold 58px Georgia, serif";
-      ctx.fillStyle = "#e8e8e6";
+      // [PRODUCT HEALTH SCORE LABEL] — Y=222
+      ctx.font = "700 24px system-ui, sans-serif";
+      ctx.fillStyle = "#1e4a2e";
       ctx.textAlign = "center";
       ctx.textBaseline = "alphabetic";
+      ctx.fillText("\u2605  PRODUCT HEALTH SCORE  (10 = HIGHEST CONCERN)", W / 2, 222);
 
-      const words = (result.product_name || "").split(" ");
-      let lines = [], current = "";
-      for (const word of words) {
-        const test = current ? current + " " + word : word;
-        if (ctx.measureText(test).width > 900 && current) {
-          lines.push(current); current = word;
-        } else { current = test; }
-      }
-      if (current) lines.push(current);
-      lines = lines.slice(0, 2);
-
-      if (lines.length === 1) { ctx.fillText(lines[0], W / 2, 380); }
-      else if (lines.length === 2) {
-        ctx.fillText(lines[0], W / 2, 345);
-        ctx.fillText(lines[1], W / 2, 415);
-      }
-
-      // ── SCORE ACCENT RULE — Y=460
-      ctx.fillStyle = scoreColor;
+      // [CONFIDENCE BADGE] — Y=238
+      const conf = result.confidence || "high";
+      const confText = conf === "high" ? "High confidence" :
+                       conf === "medium" ? "Medium confidence" : "Low confidence";
+      const confColor = conf === "high" ? "#16a34a" :
+                        conf === "medium" ? "#ca8a04" : "#ea580c";
+      ctx.font = "600 20px system-ui, sans-serif";
+      const cw = ctx.measureText(confText).width + 32;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(W / 2 - 160, 460, 320, 7, 3);
-      else ctx.rect(W / 2 - 160, 460, 320, 7);
-      ctx.fill();
+      if (ctx.roundRect) ctx.roundRect(W / 2 - cw / 2, 238, cw, 38, 19);
+      else ctx.rect(W / 2 - cw / 2, 238, cw, 38);
+      ctx.fillStyle = confColor + "22"; ctx.fill();
+      ctx.strokeStyle = confColor + "55"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = confColor;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(confText, W / 2, 257);
 
-      // ── SCORE NUMBER — hero
-      ctx.font = "900 480px Georgia, serif";
-      ctx.shadowColor = scoreColor;
-      ctx.shadowBlur = 80;
-      ctx.fillStyle = scoreColor;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(displayScore), W / 2 - 40, 730);
-      ctx.shadowBlur = 0;
+      // [PRODUCT NAME] — Y~310, Outfit bold (matches app headings)
+      ctx.font = "800 58px 'Outfit', system-ui, sans-serif";
+      ctx.fillStyle = "#f0f0ee";
+      ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+      const nameLines = wrapText(ctx, result.product_name || "", 940);
+      if (nameLines.length === 1) {
+        ctx.fillText(nameLines[0], W / 2, 355);
+      } else if (nameLines.length === 2) {
+        ctx.fillText(nameLines[0], W / 2, 325);
+        ctx.fillText(nameLines[1], W / 2, 395);
+      }
 
-      // "/10" right of score digit
-      const digitW = ctx.measureText(String(displayScore)).width;
-      ctx.font = "400 56px Georgia, serif";
-      ctx.fillStyle = "#444444";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText("/10", W / 2 - 40 + digitW / 2 + 16, 800);
+      // [SCORE ARC] — center (540, 680), r=260, stroke=52
+      drawScoreArc(ctx, 540, 680, 260, displayScore, 52);
 
-      // ── SCORE LABEL PILL — Y=955
-      const labelText = displayScore <= 3 ? "SAFE" :
-                        displayScore <= 6 ? "MODERATE" : "HIGH CONCERN";
-      ctx.font = "700 32px system-ui, sans-serif";
-      const pillTW = ctx.measureText(labelText).width;
-      const pillW = pillTW + 80, pillH = 64;
-      const pillX = W / 2 - pillW / 2;
+      // [SCORE PILL] — Y=980
+      const pillText = shareScorePill(displayScore);
+      ctx.font = "700 28px 'Outfit', system-ui, sans-serif";
+      const ptw = ctx.measureText(pillText).width;
+      const pw = ptw + 60, ph = 58;
+      const px = W / 2 - pw / 2, py = 980;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(pillX, 955, pillW, pillH, 32);
-      else ctx.rect(pillX, 955, pillW, pillH);
+      if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 29);
+      else ctx.rect(px, py, pw, ph);
+      ctx.fillStyle = scoreColor + "22"; ctx.fill();
+      ctx.strokeStyle = scoreColor + "55"; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = scoreColor;
-      ctx.fill();
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(labelText, W / 2, 955 + pillH / 2);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(pillText, W / 2, py + ph / 2);
 
-      // ── DIVIDER — Y=1060
-      ctx.fillStyle = "#1a2e1a";
-      ctx.fillRect(0, 1060, W, 2);
+      // [RISK BAR] — Y=1080
+      drawRiskBar(ctx, W, 1080, displayScore);
 
-      // ── FLAGGED CHEMICALS — Y=1080
-      // Section label
-      ctx.font = "700 22px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillText("FLAGGED CHEMICALS", 52, 1115);
+      // [DIVIDER] — Y=1175
+      ctx.fillStyle = "#0a2a12";
+      ctx.fillRect(0, 1175, W, 2);
 
+      // [FLAGGED SUBSTANCES] — Y=1200
       const flags = (result.harmful_chemicals || []).slice(0, 3);
+      const hasFlags = flags.length > 0;
 
-      if (flags.length === 0) {
-        ctx.font = "500 26px system-ui, sans-serif";
-        ctx.fillStyle = "#1e4a1e";
-        ctx.textAlign = "center";
-        ctx.fillText("\u2713 No harmful chemicals detected", W / 2, 1175);
-      } else {
-        let px = 52, py = 1140;
-        for (const flag of flags) {
-          ctx.font = "600 24px system-ui, sans-serif";
+      ctx.font = "800 26px system-ui, sans-serif";
+      ctx.fillStyle = hasFlags ? "#ea580c" : "#16a34a";
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText(
+        hasFlags
+          ? "\u26a0  FLAGGED SUBSTANCES  \u2022  " + flags.length
+          : "\u2705  NO HARMFUL SUBSTANCES DETECTED",
+        52, 1242
+      );
+
+      if (hasFlags) {
+        let fy = 1262;
+        flags.forEach(flag => {
+          ctx.font = "600 26px system-ui, sans-serif";
           const fw = ctx.measureText(flag).width;
-          const pw = fw + 40, ph = 52;
-          if (px + pw > W - 52) { px = 52; py += 70; }
-          // Pill background 10% opacity
-          ctx.globalAlpha = 0.10;
-          ctx.fillStyle = scoreColor;
+          const fpw = fw + 44, fph = 54;
           ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 26);
-          else ctx.rect(px, py, pw, ph);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          // Border
-          ctx.strokeStyle = scoreColor;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 26);
-          else ctx.rect(px, py, pw, ph);
-          ctx.stroke();
-          // Text
-          ctx.fillStyle = scoreColor;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(flag, px + pw / 2, py + ph / 2);
-          px += pw + 16;
-        }
+          if (ctx.roundRect) ctx.roundRect(52, fy, fpw, fph, 27);
+          else ctx.rect(52, fy, fpw, fph);
+          ctx.fillStyle = "#0a2a12"; ctx.fill();
+          ctx.strokeStyle = "#1a4a2a"; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = "#c8e8c8";
+          ctx.textAlign = "left"; ctx.textBaseline = "middle";
+          ctx.fillText(flag, 52 + 22, fy + fph / 2);
+          fy += 68;
+        });
       }
 
-      // ── DIVIDER — Y=1275
-      ctx.fillStyle = "#1a2e1a";
-      ctx.fillRect(0, 1275, W, 2);
+      // [DIVIDER] — Y=1440
+      ctx.fillStyle = "#0a2a12";
+      ctx.fillRect(0, 1440, W, 2);
 
-      // ── DIMENSION BARS — Y=1295
+      // [DIMENSION BARS] — Y=1460
       ctx.font = "700 22px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillText("HOW IT SCORED", 52, 1330);
+      ctx.fillStyle = "#1e3a2e";
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("HOW IT SCORED", 52, 1492);
 
-      const dims = [
+      [
         { key: "materials",      label: "Materials" },
         { key: "usage_exposure", label: "Usage" },
         { key: "packaging",      label: "Packaging" },
         { key: "sustainability", label: "Sustainability" },
-      ];
-      const rowYs = [1390, 1470, 1550, 1630];
-      dims.forEach(({ key, label }, i) => {
+      ].forEach(({ key, label }, i) => {
         const dimScore = result.dimensions?.[key]?.score;
         if (!dimScore) return;
-        const rowY = rowYs[i];
-        const dimColor = sc(dimScore);
+        const dc = shareScoreColor(dimScore);
+        const ry = 1530 + i * 80;
 
-        // Label
         ctx.font = "500 26px system-ui, sans-serif";
-        ctx.fillStyle = "#4a6a4a";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(label, 52, rowY);
+        ctx.fillStyle = "#2a5a3a";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(label, 52, ry);
 
-        // Track
-        ctx.fillStyle = "#111e11";
+        ctx.fillStyle = "#0a2a12";
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(300, rowY - 10, 660, 20, 10);
-        else ctx.rect(300, rowY - 10, 660, 20);
+        if (ctx.roundRect) ctx.roundRect(280, ry - 10, 640, 20, 10);
+        else ctx.rect(280, ry - 10, 640, 20);
         ctx.fill();
 
-        // Fill
-        ctx.fillStyle = dimColor;
+        ctx.fillStyle = dc;
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(300, rowY - 10, 660 * (dimScore / 10), 20, 10);
-        else ctx.rect(300, rowY - 10, 660 * (dimScore / 10), 20);
+        if (ctx.roundRect) ctx.roundRect(280, ry - 10, 640 * (dimScore / 10), 20, 10);
+        else ctx.rect(280, ry - 10, 640 * (dimScore / 10), 20);
         ctx.fill();
 
-        // Score value right of bar
         ctx.font = "700 24px system-ui, sans-serif";
-        ctx.fillStyle = dimColor;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(String(dimScore), 980, rowY);
+        ctx.fillStyle = dc; ctx.textAlign = "left";
+        ctx.fillText(String(dimScore), 940, ry);
       });
 
-      // ── BETTER OPTION STRIP — Y=1700 (if alt exists AND displayScore > 3)
+      // [BETTER OPTION STRIP] — Y=1770 (if alt exists AND displayScore > 3)
       const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
       const altScore = topAlt?.score ?? topAlt?.estimated_score;
       if (topAlt && displayScore > 3) {
-        ctx.fillStyle = "#0d1f0d";
-        ctx.fillRect(0, 1700, W, 150);
-        ctx.fillStyle = "#1a2e1a";
-        ctx.fillRect(0, 1700, W, 2);
+        const sy = 1770;
+        ctx.fillStyle = "#041a0e";
+        ctx.fillRect(0, sy, W, 100);
+        ctx.fillStyle = "#0a2a12";
+        ctx.fillRect(0, sy, W, 2);
 
         ctx.font = "700 22px system-ui, sans-serif";
-        ctx.fillStyle = "#3a5c3a";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillText("BETTER OPTION FOUND", 52, 1742);
+        ctx.fillStyle = "#1e4a2e";
+        ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+        ctx.fillText("BETTER OPTION", 52, sy + 36);
 
-        const altName = (topAlt.name || "").slice(0, 38);
-        ctx.font = "600 30px system-ui, sans-serif";
+        ctx.font = "600 28px system-ui, sans-serif";
         ctx.fillStyle = "#c8e8c8";
-        ctx.fillText(altName, 52, 1782);
+        ctx.fillText((topAlt.name || "").slice(0, 38), 52, sy + 72);
 
         if (typeof altScore === "number") {
-          const altColor = sc(altScore);
-          const badgeText = altScore + "/10";
-          ctx.font = "700 28px system-ui, sans-serif";
-          const bw = ctx.measureText(badgeText).width + 48;
-          const bh = 60, bx = W - 52 - bw, by = 1730;
+          const ac = shareScoreColor(altScore);
+          const bt = altScore + "/10";
+          ctx.font = "700 26px system-ui, sans-serif";
+          const bw = ctx.measureText(bt).width + 40;
+          const bh = 52;
+          const bx = W - 52 - bw, by = sy + 22;
           ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 30);
+          if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 26);
           else ctx.rect(bx, by, bw, bh);
-          ctx.fillStyle = altColor; ctx.fill();
+          ctx.fillStyle = ac; ctx.fill();
           ctx.fillStyle = "#fff";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(badgeText, bx + bw / 2, by + bh / 2);
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(bt, bx + bw / 2, by + bh / 2);
         }
       }
 
-      // ── FOOTER — Y=1820 to Y=1920
-      ctx.fillStyle = "#020602";
+      // [FOOTER] — Y=1820 to Y=1920
+      ctx.fillStyle = "#020d04";
       ctx.fillRect(0, 1820, W, 100);
 
       ctx.font = "600 26px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#1a3a2a";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
       ctx.fillText("partiqule.com", 52, 1870);
 
-      ctx.fillStyle = "#1e3e1e";
+      ctx.fillStyle = "#0f2a1a";
       ctx.textAlign = "right";
       ctx.fillText("Scan yours free \u2192", W - 52, 1870);
     };
-    drawCard();
+
+    // Ensure Outfit is available in canvas before drawing
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(drawCard);
+    } else {
+      drawCard();
+    }
   }, [isOpen, result, displayScore]);
 
   if (!isOpen || !result) return null;
@@ -1104,21 +1147,21 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#0d1a0d", borderRadius: 20,
-          width: "100%", maxWidth: 400,
-          border: "1px solid #1a3a1a", position: "relative",
-          marginTop: 20, marginBottom: 40,
+          background: "#052e16", borderRadius: 20,
+          width: "100%", maxWidth: 420,
+          border: "1px solid #0a4a20", position: "relative",
+          marginTop: 20, marginBottom: 40, overflowY: "auto",
         }}
       >
         {/* Title bar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "16px 20px",
-          borderBottom: "1px solid #1a3a1a",
+          borderBottom: "1px solid #0a2a12",
         }}>
           <span style={{
             fontSize: 15, fontWeight: 700, color: "#e8e8e6",
-            fontFamily: "Georgia, serif",
+            fontFamily: "'Outfit', system-ui, sans-serif",
           }}>
             Share {titleName}
           </span>
@@ -1127,7 +1170,7 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
             aria-label="Close"
             style={{
               background: "none", border: "none", cursor: "pointer",
-              fontSize: 20, color: "#3a5c3a", lineHeight: 1,
+              fontSize: 20, color: "#2d5a27", lineHeight: 1,
             }}
           >×</button>
         </div>
@@ -1158,6 +1201,11 @@ const ShareCard = ({ result, displayScore, isOpen, onClose }) => {
 // ── SessionRecapCard — multi-product recap, 1080x1920 portrait ──
 const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
   const canvasRef = useRef(null);
+  // Component-body derived values (cheap; also used by the share text)
+  const n = sessionScans?.length || 0;
+  const avg = n > 0
+    ? parseFloat((sessionScans.reduce((s, r) => s + (r.overall_score || r.score || 0), 0) / n).toFixed(1))
+    : 0;
 
   useEffect(() => {
     if (!isOpen || !canvasRef.current || !sessionScans?.length) return;
@@ -1166,201 +1214,147 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
       const W = 1080, H = 1920;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = "1080px";
+      canvas.style.height = "1920px";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
 
-      // Precomputed values
-      const avg = parseFloat(
-        (sessionScans.reduce((s, r) => s + (r.overall_score || r.score || 0), 0) / sessionScans.length).toFixed(1)
-      );
-      const avgColor = avg <= 3 ? "#22c55e" : avg <= 6 ? "#f59e0b" : "#ef4444";
-      const n = sessionScans.length;
-      const flaggedCount = sessionScans.filter(r => (r.harmful_chemicals || []).length > 0).length;
       const sorted = [...sessionScans].sort((a, b) => (a.overall_score || a.score) - (b.overall_score || b.score));
+      const flaggedCount = sessionScans.filter(r => (r.harmful_chemicals || []).length > 0).length;
+      const avgInt = Math.round(avg);
+      const avgColor = shareScoreColor(avgInt);
 
-      // ── BACKGROUND + PARTICLES
-      ctx.fillStyle = "#060d06";
+      // [BACKGROUND]
+      ctx.fillStyle = "#052e16";
       ctx.fillRect(0, 0, W, H);
-      drawShareParticles(ctx);
 
-      // ── HEADER — Y=0 H=175 #0d1f0d
-      ctx.fillStyle = "#0d1f0d";
-      ctx.fillRect(0, 0, W, 175);
-      drawPartiquleBrand(ctx);
-      // Right: STORE HAUL
-      ctx.font = "600 28px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "right";
-      ctx.textBaseline = "middle";
-      ctx.fillText("STORE HAUL", W - 52, 87);
+      // [PARTICLES]
+      drawParticles(ctx);
 
-      // ── WARNING BANNER — Y=175, H=108, driven by avg
-      ctx.globalAlpha = 0.10;
-      ctx.fillStyle = avgColor;
-      ctx.fillRect(0, 175, W, 108);
-      ctx.globalAlpha = 1;
+      // [NAV BAR] — Y=0 H=160 with STORE HAUL on right
+      drawNavBar(ctx, W, 160, "STORE HAUL", "#1e4a2e");
 
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = avgColor;
-      ctx.fillRect(0, 175, W, 3);
-      ctx.fillRect(0, 280, W, 3);
-      ctx.globalAlpha = 1;
-
-      const warnText =
-        avg <= 3 ? "\u2713  CLEAN HAUL" :
-        avg <= 6 ? "\u26a0  MIXED RESULTS" :
-                   "\u2715  HIGH CONCERN OVERALL";
-
-      ctx.font = "700 30px system-ui, sans-serif";
-      ctx.fillStyle = avgColor;
+      // [SUBHEADER] — Y=175 H=110
+      ctx.font = "italic 36px 'Outfit', system-ui, sans-serif";
+      ctx.fillStyle = "#1e4a2e";
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(warnText, W / 2, 229);
-
-      // ── SUBHEADER — Y=283, H=100
-      ctx.font = "italic 34px Georgia, serif";
-      ctx.fillStyle = "#555";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("I scanned " + n + " product" + (n === 1 ? "" : "s"), W / 2, 320);
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText("I scanned " + n + " product" + (n === 1 ? "" : "s"), W / 2, 228);
 
       const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-      ctx.font = "500 22px system-ui, sans-serif";
-      ctx.fillStyle = "#333";
-      ctx.fillText(dateStr, W / 2, 358);
+      ctx.font = "500 24px system-ui, sans-serif";
+      ctx.fillStyle = "#0f2a1a";
+      ctx.fillText(dateStr, W / 2, 270);
 
-      // ── AVERAGE SCORE — hero, Y center ~580
-      ctx.font = "900 380px Georgia, serif";
-      ctx.shadowColor = avgColor;
-      ctx.shadowBlur = 80;
-      ctx.fillStyle = avgColor;
+      // [SCORE ARC] — center (540, 600), r=220, stroke=46 (smaller than single card)
+      drawScoreArc(ctx, 540, 600, 220, avgInt, 46);
+
+      // Session average text below the arc
+      ctx.font = "600 26px system-ui, sans-serif";
+      ctx.fillStyle = "#1e4a2e";
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(String(avg), W / 2 - 30, 580);
-      ctx.shadowBlur = 0;
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText("Session average: " + avg + "/10", W / 2, 862);
 
-      // "/10" right of digit
-      const digitW = ctx.measureText(String(avg)).width;
-      ctx.font = "400 48px Georgia, serif";
-      ctx.fillStyle = "#444";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText("/10", W / 2 - 30 + digitW / 2 + 14, 650);
-
-      // ── SCORE LABEL PILL — Y=800
-      const labelText = avg <= 3 ? "CLEAN HAUL" :
-                        avg <= 6 ? "MIXED RESULTS" : "HIGH CONCERN";
-      ctx.font = "700 30px system-ui, sans-serif";
-      const pillTW = ctx.measureText(labelText).width;
-      const pillW = pillTW + 80, pillH = 60;
+      // [SCORE PILL] — Y=886
+      const pillText = shareScorePill(avgInt);
+      ctx.font = "700 26px 'Outfit', system-ui, sans-serif";
+      const ptw = ctx.measureText(pillText).width;
+      const pw = ptw + 60, ph = 56;
+      const px = W / 2 - pw / 2, py = 886;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(W / 2 - pillW / 2, 800, pillW, pillH, 30);
-      else ctx.rect(W / 2 - pillW / 2, 800, pillW, pillH);
+      if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 28);
+      else ctx.rect(px, py, pw, ph);
+      ctx.fillStyle = avgColor + "22"; ctx.fill();
+      ctx.strokeStyle = avgColor + "55"; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = avgColor;
-      ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(labelText, W / 2, 830);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(pillText, W / 2, py + ph / 2);
 
-      // ── FLAGGED COUNT STRIP — Y=900, H=80 (only if flaggedCount > 0)
+      // [FLAGGED COUNT] — Y=984 border, only drawn if flaggedCount > 0
+      ctx.fillStyle = "#0a2a12";
+      ctx.fillRect(0, 984, W, 2);
       if (flaggedCount > 0) {
-        ctx.fillStyle = "#0d1f0d";
-        ctx.fillRect(0, 900, W, 80);
-        ctx.fillStyle = "#1a2e1a";
-        ctx.fillRect(0, 900, W, 2);
-
+        ctx.fillStyle = "#052e16";
+        ctx.fillRect(0, 986, W, 72);
         ctx.font = "600 26px system-ui, sans-serif";
-        ctx.fillStyle = "#f59e0b";
+        ctx.fillStyle = "#ea580c";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(
-          flaggedCount + " of " + n + " products had flagged chemicals",
-          W / 2, 940
-        );
+        ctx.fillText(flaggedCount + " of " + n + " products had flagged chemicals", W / 2, 1022);
       }
 
-      // ── DIVIDER — Y=980
-      ctx.fillStyle = "#1a2e1a";
-      ctx.fillRect(0, 980, W, 2);
+      // [DIVIDER] — Y=1058
+      ctx.fillStyle = "#0a2a12";
+      ctx.fillRect(0, 1058, W, 2);
 
-      // ── PRODUCT ROWS — starting Y=990, H=146, max 8
-      const showItems = sorted.slice(0, 8);
-      showItems.forEach((scan, i) => {
-        const rowY = 990 + i * 146;
-        const rowScore = scan.overall_score || scan.score;
-        const rowColor = rowScore <= 3 ? "#22c55e" :
-                         rowScore <= 6 ? "#f59e0b" : "#ef4444";
+      // [PRODUCT ROWS] — Y=1060, rowH=116, max 8
+      sorted.slice(0, 8).forEach((scan, i) => {
+        const rowY = 1060 + i * 116;
+        const rs = scan.overall_score || scan.score;
+        const rc = shareScoreColor(rs);
 
-        // Row background
-        ctx.fillStyle = i % 2 === 0 ? "#0d130d" : "#060d06";
-        ctx.fillRect(0, rowY, W, 146);
+        ctx.fillStyle = i % 2 === 0 ? "#062012" : "#052e16";
+        ctx.fillRect(0, rowY, W, 116);
 
-        // Left color stripe
-        ctx.fillStyle = rowColor;
-        ctx.fillRect(0, rowY, 14, 146);
+        ctx.fillStyle = rc;
+        ctx.fillRect(0, rowY, 14, 116);
 
-        // Product name
-        ctx.font = "bold 28px Georgia, serif";
+        ctx.font = "bold 28px 'Outfit', system-ui, sans-serif";
         ctx.fillStyle = "#e8e8e6";
         ctx.textAlign = "left";
         ctx.textBaseline = "alphabetic";
-        ctx.fillText((scan.product_name || "").slice(0, 34), 80, rowY + 56);
+        ctx.fillText((scan.product_name || "").slice(0, 34), 80, rowY + 52);
 
-        // Category
         ctx.font = "500 20px system-ui, sans-serif";
-        ctx.fillStyle = "#3a5c3a";
-        ctx.fillText(
-          (scan.category || "").toUpperCase().replace(/_/g, " "),
-          80, rowY + 86
-        );
+        ctx.fillStyle = "#1e4a2e";
+        ctx.fillText((scan.category || "").toUpperCase().replace(/_/g, " "), 80, rowY + 82);
 
-        // Score badge
-        const badgeText = rowScore + "/10";
+        const bt = rs + "/10";
         ctx.font = "700 24px system-ui, sans-serif";
-        const bw = ctx.measureText(badgeText).width + 40;
-        const bh = 50, bx = W - 52 - bw, by = rowY + 46;
+        const bw = ctx.measureText(bt).width + 40;
+        const bh = 48, bx = W - 52 - bw, by = rowY + 34;
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 25);
+        if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 24);
         else ctx.rect(bx, by, bw, bh);
-        ctx.fillStyle = rowColor;
-        ctx.fill();
+        ctx.fillStyle = rc; ctx.fill();
         ctx.fillStyle = "#fff";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(badgeText, bx + bw / 2, by + bh / 2);
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(bt, bx + bw / 2, by + bh / 2);
       });
 
-      // "+ N more" strip (if > 8)
+      // "+ N more"
       if (sessionScans.length > 8) {
         const extra = sessionScans.length - 8;
-        const moreY = 990 + 8 * 146;
-        ctx.fillStyle = "#0d130d";
-        ctx.fillRect(0, moreY, W, 80);
-        ctx.font = "italic 26px Georgia, serif";
-        ctx.fillStyle = "#3a5c3a";
+        const my = 1060 + 8 * 116;
+        ctx.fillStyle = "#052e16";
+        ctx.fillRect(0, my, W, 72);
+        ctx.font = "italic 26px 'Outfit', system-ui, sans-serif";
+        ctx.fillStyle = "#1e4a2e";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("+ " + extra + " more", W / 2, moreY + 40);
+        ctx.fillText("+ " + extra + " more", W / 2, my + 36);
       }
 
-      // ── FOOTER — Y=1820, H=100 (identical structure to single card)
-      ctx.fillStyle = "#020602";
+      // [FOOTER] — Y=1820
+      ctx.fillStyle = "#020d04";
       ctx.fillRect(0, 1820, W, 100);
-
       ctx.font = "600 26px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#1a3a2a";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
       ctx.fillText("partiqule.com", 52, 1870);
-
-      ctx.fillStyle = "#1e3e1e";
+      ctx.fillStyle = "#0f2a1a";
       ctx.textAlign = "right";
       ctx.fillText("Tap to scan yours \u2192", W - 52, 1870);
     };
-    drawCard();
-  }, [isOpen, sessionScans]);
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(drawCard);
+    } else {
+      drawCard();
+    }
+  }, [isOpen, sessionScans, avg, n]);
 
   if (!isOpen || !sessionScans?.length) return null;
 
@@ -1377,21 +1371,21 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#0d1a0d", borderRadius: 20,
-          width: "100%", maxWidth: 400,
-          border: "1px solid #1a3a1a", position: "relative",
-          marginTop: 20, marginBottom: 40,
+          background: "#052e16", borderRadius: 20,
+          width: "100%", maxWidth: 420,
+          border: "1px solid #0a4a20", position: "relative",
+          marginTop: 20, marginBottom: 40, overflowY: "auto",
         }}
       >
         {/* Title bar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "16px 20px",
-          borderBottom: "1px solid #1a3a1a",
+          borderBottom: "1px solid #0a2a12",
         }}>
           <span style={{
             fontSize: 15, fontWeight: 700, color: "#e8e8e6",
-            fontFamily: "Georgia, serif",
+            fontFamily: "'Outfit', system-ui, sans-serif",
           }}>
             Session Recap
           </span>
@@ -1400,7 +1394,7 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
             aria-label="Close"
             style={{
               background: "none", border: "none", cursor: "pointer",
-              fontSize: 20, color: "#3a5c3a", lineHeight: 1,
+              fontSize: 20, color: "#2d5a27", lineHeight: 1,
             }}
           >×</button>
         </div>
@@ -1420,8 +1414,9 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
         <ShareButtonRow
           canvasRef={canvasRef}
           productName="session"
-          displayScore={null}
+          displayScore={Math.round(avg)}
           isSession={true}
+          sessionMeta={{ n, avg }}
         />
       </div>
     </div>
@@ -9417,7 +9412,6 @@ function App() {
                   </div>
                   {/* Far right: share icon — only when valid scan data exists */}
                   {result.product_name &&
-                   typeof result.overall_score === "number" &&
                    result.overall_score >= 1 &&
                    result.overall_score <= 10 && (
                     <button
@@ -9431,14 +9425,14 @@ function App() {
                         display: "flex",
                         alignItems: "center",
                         gap: 4,
-                        color: "#16a34a",
+                        color: "#4ade80",
                         fontSize: 12,
-                        fontWeight: 600,
+                        fontWeight: 700,
                         flexShrink: 0,
                         whiteSpace: "nowrap",
                       }}
                     >
-                      <IconShare size={15} color="#16a34a" /> Share
+                      <IconShare size={15} color="#4ade80" /> Share
                     </button>
                   )}
                 </div>
@@ -10104,7 +10098,6 @@ function App() {
 
                       {/* ── Share Result — only when valid scan data exists ── */}
                       {result.product_name &&
-                       typeof result.overall_score === "number" &&
                        result.overall_score >= 1 &&
                        result.overall_score <= 10 && (
                         <button
@@ -10113,9 +10106,9 @@ function App() {
                             width: "100%",
                             padding: "14px",
                             borderRadius: 12,
-                            background: "#2d5a27",
-                            border: "none",
-                            color: "#fff",
+                            background: "#052e16",
+                            border: "1px solid #0a4a20",
+                            color: "#4ade80",
                             fontSize: 16,
                             fontWeight: 700,
                             cursor: "pointer",
@@ -10126,7 +10119,7 @@ function App() {
                             marginBottom: 12,
                           }}
                         >
-                          <IconShare size={16} color="#fff" /> Share Result
+                          <IconShare size={16} color="#4ade80" /> Share Result
                         </button>
                       )}
                     </div>
@@ -10535,13 +10528,14 @@ function App() {
             bottom: 88,
             left: "50%",
             transform: "translateX(-50%)",
-            background: "#2d5a27",
-            color: "#fff",
+            background: "#052e16",
+            border: "1px solid #0a4a20",
+            color: "#4ade80",
             padding: "12px 20px",
             borderRadius: 999,
             fontSize: 14,
             fontWeight: 700,
-            fontFamily: "Georgia, serif",
+            fontFamily: "'Outfit', system-ui, sans-serif",
             boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
             cursor: "pointer",
             zIndex: 999,
@@ -10551,7 +10545,7 @@ function App() {
             whiteSpace: "nowrap",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="8" y1="6" x2="21" y2="6"/>
             <line x1="8" y1="12" x2="21" y2="12"/>
             <line x1="8" y1="18" x2="21" y2="18"/>
@@ -10564,7 +10558,7 @@ function App() {
       )}
 
       {/* Session Recap modal */}
-      {recapModalOpen && (
+      {recapModalOpen && sessionScans.length >= 2 && (
         <SessionRecapCard
           isOpen={recapModalOpen}
           onClose={() => setRecapModalOpen(false)}
