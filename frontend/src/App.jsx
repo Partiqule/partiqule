@@ -1170,14 +1170,23 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
 
-      // Background + particles (same as ShareCard)
+      // Precomputed values
+      const avg = parseFloat(
+        (sessionScans.reduce((s, r) => s + (r.overall_score || r.score || 0), 0) / sessionScans.length).toFixed(1)
+      );
+      const avgColor = avg <= 3 ? "#22c55e" : avg <= 6 ? "#f59e0b" : "#ef4444";
+      const n = sessionScans.length;
+      const flaggedCount = sessionScans.filter(r => (r.harmful_chemicals || []).length > 0).length;
+      const sorted = [...sessionScans].sort((a, b) => (a.overall_score || a.score) - (b.overall_score || b.score));
+
+      // ── BACKGROUND + PARTICLES
       ctx.fillStyle = "#060d06";
       ctx.fillRect(0, 0, W, H);
       drawShareParticles(ctx);
 
-      // ── HEADER — Y=0 to Y=200
+      // ── HEADER — Y=0 H=175 #0d1f0d
       ctx.fillStyle = "#0d1f0d";
-      ctx.fillRect(0, 0, W, 200);
+      ctx.fillRect(0, 0, W, 175);
       drawPartiquleBrand(ctx);
       // Right: STORE HAUL
       ctx.font = "600 28px system-ui, sans-serif";
@@ -1186,106 +1195,157 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
       ctx.textBaseline = "middle";
       ctx.fillText("STORE HAUL", W - 52, 87);
 
-      // ── SUBHEADER — Y=200 to Y=320
-      const n = sessionScans.length;
-      ctx.font = "italic 36px Georgia, serif";
-      ctx.fillStyle = "#555";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillText("I scanned " + n + " product" + (n === 1 ? "" : "s"), W / 2, 255);
+      // ── WARNING BANNER — Y=175, H=108, driven by avg
+      ctx.globalAlpha = 0.10;
+      ctx.fillStyle = avgColor;
+      ctx.fillRect(0, 175, W, 108);
+      ctx.globalAlpha = 1;
 
-      const today = new Date();
-      const dateStr = today.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-      ctx.font = "24px system-ui, sans-serif";
-      ctx.fillStyle = "#333";
-      ctx.fillText(dateStr, W / 2, 295);
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = avgColor;
+      ctx.fillRect(0, 175, W, 3);
+      ctx.fillRect(0, 280, W, 3);
+      ctx.globalAlpha = 1;
 
-      // ── SUMMARY STRIP — Y=320, H=110
-      ctx.fillStyle = "#0d1f0d";
-      ctx.fillRect(0, 320, W, 110);
+      const warnText =
+        avg <= 3 ? "\u2713  CLEAN HAUL" :
+        avg <= 6 ? "\u26a0  MIXED RESULTS" :
+                   "\u2715  HIGH CONCERN OVERALL";
 
-      const avg = (sessionScans.reduce((s, r) => s + (r.overall_score || r.score || 0), 0) / sessionScans.length).toFixed(1);
-      const avgColor = sc(parseFloat(avg));
-      const flaggedCount = sessionScans.filter(r => (r.harmful_chemicals || []).length > 0).length;
-
-      // Left: Avg Score label
-      ctx.font = "500 24px system-ui, sans-serif";
-      ctx.fillStyle = "#3a5c3a";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText("Avg Score", 52, 375);
-
-      // Center: avg value
-      ctx.font = "bold 48px Georgia, serif";
+      ctx.font = "700 30px system-ui, sans-serif";
       ctx.fillStyle = avgColor;
       ctx.textAlign = "center";
-      ctx.fillText(avg, W / 2, 375);
+      ctx.textBaseline = "middle";
+      ctx.fillText(warnText, W / 2, 229);
 
-      // Right: flagged count (if any)
+      // ── SUBHEADER — Y=283, H=100
+      ctx.font = "italic 34px Georgia, serif";
+      ctx.fillStyle = "#555";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("I scanned " + n + " product" + (n === 1 ? "" : "s"), W / 2, 320);
+
+      const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      ctx.font = "500 22px system-ui, sans-serif";
+      ctx.fillStyle = "#333";
+      ctx.fillText(dateStr, W / 2, 358);
+
+      // ── AVERAGE SCORE — hero, Y center ~580
+      ctx.font = "900 380px Georgia, serif";
+      ctx.shadowColor = avgColor;
+      ctx.shadowBlur = 80;
+      ctx.fillStyle = avgColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(avg), W / 2 - 30, 580);
+      ctx.shadowBlur = 0;
+
+      // "/10" right of digit
+      const digitW = ctx.measureText(String(avg)).width;
+      ctx.font = "400 48px Georgia, serif";
+      ctx.fillStyle = "#444";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("/10", W / 2 - 30 + digitW / 2 + 14, 650);
+
+      // ── SCORE LABEL PILL — Y=800
+      const labelText = avg <= 3 ? "CLEAN HAUL" :
+                        avg <= 6 ? "MIXED RESULTS" : "HIGH CONCERN";
+      ctx.font = "700 30px system-ui, sans-serif";
+      const pillTW = ctx.measureText(labelText).width;
+      const pillW = pillTW + 80, pillH = 60;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(W / 2 - pillW / 2, 800, pillW, pillH, 30);
+      else ctx.rect(W / 2 - pillW / 2, 800, pillW, pillH);
+      ctx.fillStyle = avgColor;
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(labelText, W / 2, 830);
+
+      // ── FLAGGED COUNT STRIP — Y=900, H=80 (only if flaggedCount > 0)
       if (flaggedCount > 0) {
-        ctx.font = "22px system-ui, sans-serif";
+        ctx.fillStyle = "#0d1f0d";
+        ctx.fillRect(0, 900, W, 80);
+        ctx.fillStyle = "#1a2e1a";
+        ctx.fillRect(0, 900, W, 2);
+
+        ctx.font = "600 26px system-ui, sans-serif";
         ctx.fillStyle = "#f59e0b";
-        ctx.textAlign = "right";
-        ctx.fillText(flaggedCount + " flagged", W - 52, 375);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          flaggedCount + " of " + n + " products had flagged chemicals",
+          W / 2, 940
+        );
       }
 
-      // ── PRODUCT ROWS — starting Y=430, row height 160
-      const sorted = [...sessionScans].sort((a, b) => (a.overall_score || a.score) - (b.overall_score || b.score));
+      // ── DIVIDER — Y=980
+      ctx.fillStyle = "#1a2e1a";
+      ctx.fillRect(0, 980, W, 2);
+
+      // ── PRODUCT ROWS — starting Y=990, H=146, max 8
       const showItems = sorted.slice(0, 8);
-
       showItems.forEach((scan, i) => {
-        const rowY = 430 + i * 160;
-        // Alternating row background
-        ctx.fillStyle = i % 2 === 0 ? "#0d130d" : "#060d06";
-        ctx.fillRect(0, rowY, W, 160);
-
+        const rowY = 990 + i * 146;
         const rowScore = scan.overall_score || scan.score;
-        const rowColor = sc(rowScore);
+        const rowColor = rowScore <= 3 ? "#22c55e" :
+                         rowScore <= 6 ? "#f59e0b" : "#ef4444";
 
-        // Left stripe
+        // Row background
+        ctx.fillStyle = i % 2 === 0 ? "#0d130d" : "#060d06";
+        ctx.fillRect(0, rowY, W, 146);
+
+        // Left color stripe
         ctx.fillStyle = rowColor;
-        ctx.fillRect(0, rowY, 14, 160);
+        ctx.fillRect(0, rowY, 14, 146);
 
         // Product name
-        ctx.font = "bold 30px Georgia, serif";
+        ctx.font = "bold 28px Georgia, serif";
         ctx.fillStyle = "#e8e8e6";
         ctx.textAlign = "left";
         ctx.textBaseline = "alphabetic";
-        const pName = (scan.product_name || "").slice(0, 36);
-        ctx.fillText(pName, 80, rowY + 60);
+        ctx.fillText((scan.product_name || "").slice(0, 34), 80, rowY + 56);
 
         // Category
-        ctx.font = "500 22px system-ui, sans-serif";
+        ctx.font = "500 20px system-ui, sans-serif";
         ctx.fillStyle = "#3a5c3a";
-        ctx.fillText((scan.category || "").toUpperCase().replace(/_/g, " "), 80, rowY + 92);
+        ctx.fillText(
+          (scan.category || "").toUpperCase().replace(/_/g, " "),
+          80, rowY + 86
+        );
 
         // Score badge
         const badgeText = rowScore + "/10";
-        ctx.font = "700 26px system-ui, sans-serif";
-        const bw = ctx.measureText(badgeText).width + 44;
-        const bh = 54, bx = W - 52 - bw, by = rowY + 52;
+        ctx.font = "700 24px system-ui, sans-serif";
+        const bw = ctx.measureText(badgeText).width + 40;
+        const bh = 50, bx = W - 52 - bw, by = rowY + 46;
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 27);
+        if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 25);
         else ctx.rect(bx, by, bw, bh);
-        ctx.fillStyle = rowColor; ctx.fill();
+        ctx.fillStyle = rowColor;
+        ctx.fill();
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(badgeText, bx + bw / 2, by + bh / 2);
       });
 
-      // "+ N more" row
+      // "+ N more" strip (if > 8)
       if (sessionScans.length > 8) {
         const extra = sessionScans.length - 8;
-        const moreY = 430 + 8 * 160;
-        ctx.font = "italic 28px Georgia, serif";
+        const moreY = 990 + 8 * 146;
+        ctx.fillStyle = "#0d130d";
+        ctx.fillRect(0, moreY, W, 80);
+        ctx.font = "italic 26px Georgia, serif";
         ctx.fillStyle = "#3a5c3a";
         ctx.textAlign = "center";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillText("+ " + extra + " more", W / 2, moreY + 80);
+        ctx.textBaseline = "middle";
+        ctx.fillText("+ " + extra + " more", W / 2, moreY + 40);
       }
 
-      // ── FOOTER — Y=1820 to Y=1920 (same as ShareCard)
+      // ── FOOTER — Y=1820, H=100 (identical structure to single card)
       ctx.fillStyle = "#020602";
       ctx.fillRect(0, 1820, W, 100);
 
@@ -1297,7 +1357,7 @@ const SessionRecapCard = ({ isOpen, onClose, sessionScans }) => {
 
       ctx.fillStyle = "#1e3e1e";
       ctx.textAlign = "right";
-      ctx.fillText("Scan yours free \u2192", W - 52, 1870);
+      ctx.fillText("Tap to scan yours \u2192", W - 52, 1870);
     };
     drawCard();
   }, [isOpen, sessionScans]);
