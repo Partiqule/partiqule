@@ -8980,12 +8980,14 @@ function App() {
                         <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
                       )}
                     </div>
-                    {/* Camera button */}
-                    <div onClick={()=>isMobile?setShowBarcodeScanner(true):document.getElementById("home-file-input").click()}
-                      style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    </div>
-                    {!isMobile && <input id="home-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>}
+                    {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
+                    {!isMobile && (<>
+                      <div onClick={()=>document.getElementById("home-file-input").click()}
+                        style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      </div>
+                      <input id="home-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
+                    </>)}
                   </div>
                 </div>
 
@@ -9091,11 +9093,14 @@ function App() {
                   <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
                 )}
               </div>
-              <div onClick={()=>isMobile?setShowBarcodeScanner(true):document.getElementById("hero-file-input").click()}
-                style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
-              {!isMobile && <input id="hero-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>}
+              {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
+              {!isMobile && (<>
+                <div onClick={()=>document.getElementById("hero-file-input").click()}
+                  style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <input id="hero-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
+              </>)}
             </div>
           </div>
 
