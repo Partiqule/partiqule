@@ -4389,7 +4389,188 @@ function enrichFuzzyDimensions(substances, category, midScore) {
     if (hasChemTreatment) sustainConcerns.push("Chemical processing — industrial textile treatments contribute to water pollution in manufacturing regions");
   }
 
-  return { mScore, uScore, sScore, pkScore, usageConcerns, sustainConcerns };
+  return { mScore, uScore, sScore, pkScore, usageConcerns, sustainConcerns, hasOrganic, hasNatural, hasSynthFiber, hasSynthFragrance };
+}
+
+// ── Build per-dimension labels + metadata for fuzzy calibration results ──
+// The frontend DimensionDropdown shows label, frequency/type badges, packaging
+// primary/end_of_life, sustainability circularity, etc. When calibration hits,
+// these fields must be populated so users don't see empty dropdowns.
+function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
+  const isFood = ["food","food_beverage","beverage","restaurant","supplement","snack"].includes(category);
+  const isFoodNotBev = ["food","food_beverage","restaurant","supplement","snack"].includes(category);
+  const isBev = category === "beverage";
+  const isPC = ["personal_care","skincare"].includes(category);
+  const isBaby = category === "baby";
+  const isClothing = category === "clothing";
+  const isHome = ["home","cleaning"].includes(category);
+  const isKitchen = category === "kitchen";
+  const isToy = category === "toy";
+  const isAccessory = category === "accessory";
+  const isHomeFurnishing = category === "home_furnishing";
+
+  const hasOrganic = fd.hasOrganic || /\borganic\b/i.test(substances.join(" ")) && !/conventional/i.test(substances.join(" "));
+  const hasNatural = fd.hasNatural;
+  const hasSynthFiber = fd.hasSynthFiber;
+  const hasSynthFragrance = fd.hasSynthFragrance;
+
+  // ── Materials label: prefer calibration reason, fall back to category template ──
+  let materialsLabel = "";
+  if (entryReason && entryReason.trim().length > 0) {
+    // Trim to first sentence or 180 chars for a concise label
+    const first = entryReason.split(/(?<=\.)\s+/)[0] || entryReason;
+    materialsLabel = first.length > 180 ? first.slice(0, 177) + "..." : first;
+  } else if (substances.length > 0) {
+    materialsLabel = "Contains: " + substances.slice(0, 4).join(", ");
+  } else {
+    if (isFood) materialsLabel = "Ingredient profile per calibration data.";
+    else if (isPC || isBaby) materialsLabel = "Formulation per calibration data.";
+    else if (isClothing) materialsLabel = "Fabric and construction per calibration data.";
+    else materialsLabel = "Material profile per calibration data.";
+  }
+
+  // ── Usage & Exposure meta ──
+  let usageLabel = "", usageFreq = "daily", usageType = "ingestion", usageIntensity = null, vulnerable = false;
+  if (isFoodNotBev) {
+    usageLabel = "Ingested during consumption. Direct contact with digestive system.";
+    usageFreq = "daily"; usageType = "ingestion";
+  } else if (isBev) {
+    usageLabel = "Ingested as a beverage. Frequent daily consumption common.";
+    usageFreq = "daily"; usageType = "ingestion";
+  } else if (isBaby) {
+    usageLabel = "Applied to or used by an infant. Developing skin is more permeable than adult skin.";
+    usageFreq = "daily"; usageType = "skin_contact"; usageIntensity = "leave-on"; vulnerable = true;
+  } else if (isPC) {
+    usageLabel = "Applied to skin or hair. Daily exposure across large body surface is common.";
+    usageFreq = "daily"; usageType = "skin_contact"; usageIntensity = "leave-on";
+  } else if (isClothing) {
+    usageLabel = "Worn against skin. Heat and perspiration increase absorption of fabric chemicals.";
+    usageFreq = "weekly"; usageType = "skin_contact"; usageIntensity = "leave-on";
+  } else if (isHome) {
+    usageLabel = "Used for cleaning. Inhalation and residue on surfaces are the main exposure routes.";
+    usageFreq = "weekly"; usageType = "inhalation";
+  } else if (isKitchen) {
+    usageLabel = "Direct food contact during cooking or storage. Heat can accelerate leaching.";
+    usageFreq = "daily"; usageType = "ingestion";
+  } else if (isToy) {
+    usageLabel = "Handled daily by children. Mouthing and skin contact are common.";
+    usageFreq = "daily"; usageType = "skin_contact"; vulnerable = true;
+  } else if (isAccessory) {
+    usageLabel = "Worn or carried in close contact with skin.";
+    usageFreq = "daily"; usageType = "skin_contact";
+  } else if (isHomeFurnishing) {
+    usageLabel = "Indoor environment exposure from off-gassing and dust.";
+    usageFreq = "daily"; usageType = "inhalation";
+  } else {
+    usageLabel = "Typical use exposure for this category.";
+  }
+
+  // ── Packaging meta ──
+  let packagingLabel = "", pkgPrimary = "", pkgEndOfLife = "", pkgRefillable = false;
+  if (isBev) {
+    packagingLabel = "Drink container — typically plastic, aluminum, or glass.";
+    pkgPrimary = "Bottle or can"; pkgEndOfLife = "recyclable";
+  } else if (isFoodNotBev) {
+    packagingLabel = "Food packaging — typically plastic film, paperboard, or a combination.";
+    pkgPrimary = "Plastic or paperboard"; pkgEndOfLife = "mostly recyclable";
+  } else if (isPC) {
+    packagingLabel = "Cosmetic packaging — typically plastic bottle, tube, or jar.";
+    pkgPrimary = "Plastic bottle or tube"; pkgEndOfLife = "often not recyclable";
+  } else if (isBaby) {
+    packagingLabel = "Baby product packaging — typically plastic film or bottle.";
+    pkgPrimary = "Plastic"; pkgEndOfLife = "landfill in most regions";
+  } else if (isHome) {
+    packagingLabel = "Household packaging — typically plastic bottle or spray.";
+    pkgPrimary = "Plastic bottle"; pkgEndOfLife = "recyclable";
+  } else if (isKitchen) {
+    packagingLabel = "Retail packaging — usually minimal for durable goods.";
+    pkgPrimary = "Cardboard + plastic"; pkgEndOfLife = "mostly recyclable";
+  } else if (isClothing) {
+    packagingLabel = "Retail packaging — tag and thin polybag typical for clothing.";
+    pkgPrimary = "Tag + polybag"; pkgEndOfLife = "limited recycling";
+  } else if (isToy) {
+    packagingLabel = "Toy retail packaging — often heavy plastic and cardboard.";
+    pkgPrimary = "Plastic + cardboard"; pkgEndOfLife = "cardboard recyclable";
+  } else {
+    packagingLabel = "Retail packaging per category norms.";
+    pkgPrimary = "Standard retail";
+  }
+
+  // ── Sustainability meta ──
+  let sustainabilityLabel = "", circularity = "", reusable = false, replacesSingleUse = false;
+  if (isClothing) {
+    if (hasOrganic) { sustainabilityLabel = "Organic fiber with lower lifecycle impact than conventional."; circularity = "biodegradable fiber"; }
+    else if (hasSynthFiber) { sustainabilityLabel = "Synthetic fiber sheds microplastics and is petroleum-derived."; circularity = "microfiber shedding"; }
+    else if (hasNatural) { sustainabilityLabel = "Natural fiber — lower environmental impact than synthetics."; circularity = "biodegradable fiber"; }
+    else sustainabilityLabel = "Standard textile lifecycle impact.";
+  } else if (isBev || isFoodNotBev) {
+    sustainabilityLabel = "Single-use food packaging. Recycle the container when possible.";
+    circularity = "single-use";
+  } else if (isPC || isBaby) {
+    sustainabilityLabel = "Typical personal care packaging is single-use and often not recyclable in practice.";
+    circularity = "single-use";
+  } else if (isHome) {
+    if (hasSynthFragrance) { sustainabilityLabel = "Synthetic fragrance VOCs persist in indoor air and waterways."; circularity = "single-use"; }
+    else { sustainabilityLabel = "Household cleaning product — refillable versions are more sustainable."; circularity = "refillable options exist"; }
+  } else if (isKitchen) {
+    sustainabilityLabel = "Durable kitchen good — designed for long-term use.";
+    circularity = "long lifespan"; reusable = true;
+  } else if (isToy) {
+    sustainabilityLabel = "Plastic toys have limited recyclability. Wooden and fabric toys are more sustainable.";
+    circularity = "limited recyclability";
+  } else if (isHomeFurnishing) {
+    sustainabilityLabel = "Furniture lifecycle impact depends on materials and longevity.";
+    circularity = "long lifespan"; reusable = true;
+  } else {
+    sustainabilityLabel = "Standard lifecycle impact for this category.";
+  }
+
+  return {
+    materials:      { label: materialsLabel },
+    usage_exposure: { label: usageLabel, frequency: usageFreq, type: usageType, intensity: usageIntensity, vulnerable },
+    packaging:      { label: packagingLabel, primary: pkgPrimary, end_of_life: pkgEndOfLife, refillable: pkgRefillable },
+    sustainability: { label: sustainabilityLabel, circularity, reusable, replaces_single_use: replacesSingleUse },
+  };
+}
+
+// Build the full dimensions object for a fuzzy calibration hit.
+// Always returns label + meta for each dimension — no more blank dropdowns.
+function buildFuzzyDimensions(entry, category, midScore) {
+  const substances = entry.substances || [];
+  const fd = enrichFuzzyDimensions(substances, category, midScore);
+  const meta = buildFuzzyDimensionMeta(category, substances, entry.reason || "", fd);
+  return {
+    materials: {
+      score: fd.mScore,
+      concerns: substances,
+      label: meta.materials.label,
+    },
+    usage_exposure: {
+      score: fd.uScore,
+      concerns: fd.usageConcerns,
+      label: meta.usage_exposure.label,
+      frequency: meta.usage_exposure.frequency,
+      type: meta.usage_exposure.type,
+      intensity: meta.usage_exposure.intensity,
+      vulnerable: meta.usage_exposure.vulnerable,
+    },
+    packaging: {
+      score: fd.pkScore,
+      concerns: [],
+      label: meta.packaging.label,
+      primary: meta.packaging.primary,
+      end_of_life: meta.packaging.end_of_life,
+      refillable: meta.packaging.refillable,
+    },
+    sustainability: {
+      score: fd.sScore,
+      concerns: fd.sustainConcerns,
+      label: meta.sustainability.label,
+      circularity: meta.sustainability.circularity,
+      reusable: meta.sustainability.reusable,
+      replaces_single_use: meta.sustainability.replaces_single_use,
+    },
+  };
 }
 
 // ── Intelligence card cache (avoids Supabase query on every scan) ──
@@ -4497,7 +4678,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ),
           imgFuzzyCat
         );
-        const ifd = enrichFuzzyDimensions(entry.substances || [], imgFuzzyCat, midScore);
         const fuzzyResult = applyProductCalibration({
           product_name: productName, score: midScore, overall_score: midScore,
           category: imgFuzzyCat,
@@ -4507,12 +4687,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           child_bumps: imgSafety.childBumps || [],
           pregnancy_score: imgSafety.pregnancyScore,
           pregnancy_bumps: imgSafety.pregnancyBumps || [],
-          dimensions: {
-            materials:      { score: ifd.mScore, concerns: entry.substances || [] },
-            usage_exposure: { score: ifd.uScore, concerns: ifd.usageConcerns },
-            packaging:      { score: ifd.pkScore, concerns: [] },
-            sustainability: { score: ifd.sScore, concerns: ifd.sustainConcerns },
-          },
+          dimensions: buildFuzzyDimensions(entry, imgFuzzyCat, midScore),
           concerns: entry.substances || [],
           flagged_substances: entry.substances || [],
           summary: entry.reason || "",
@@ -4741,7 +4916,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ),
       fuzzyCat
     );
-    const fd = enrichFuzzyDimensions(entry.substances || [], fuzzyCat, midScore);
     const fuzzyResult = applyProductCalibration({
       product_name: productName,
       score: midScore, overall_score: midScore,
@@ -4752,12 +4926,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       child_bumps: fuzzySafety.childBumps || [],
       pregnancy_score: fuzzySafety.pregnancyScore,
       pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
-      dimensions: {
-        materials:      { score: fd.mScore, concerns: entry.substances || [] },
-        usage_exposure: { score: fd.uScore, concerns: fd.usageConcerns },
-        packaging:      { score: fd.pkScore, concerns: [] },
-        sustainability: { score: fd.sScore, concerns: fd.sustainConcerns },
-      },
+      dimensions: buildFuzzyDimensions(entry, fuzzyCat, midScore),
       concerns: entry.substances || [],
       flagged_substances: entry.substances || [],
       summary: entry.reason || "",
@@ -6074,7 +6243,7 @@ async function warmCache() {
           overall_score: Math.round((calHit.floor + calHit.ceiling) / 2),
           category,
           confidence: calHit.confidence || "high",
-          dimensions: { materials:{score:5,concerns:calHit.substances||[]}, usage_exposure:{score:5,concerns:[]}, packaging:{score:5,concerns:[]}, sustainability:{score:5,concerns:[]} },
+          dimensions: buildFuzzyDimensions(calHit, category || calHit.category || "other", Math.round((calHit.floor + calHit.ceiling) / 2)),
           concerns: calHit.substances || [],
           summary: calHit.reason || "",
           alternatives: [],
@@ -6154,7 +6323,7 @@ const autoWarmFromSupabase = async () => {
             overall_score: Math.round((calHit.floor + calHit.ceiling) / 2),
             category: calHit.category || detectCategory(name),
             confidence: calHit.confidence || "high",
-            dimensions: { materials:{score:5,concerns:calHit.substances||[]}, usage_exposure:{score:5,concerns:[]}, packaging:{score:5,concerns:[]}, sustainability:{score:5,concerns:[]} },
+            dimensions: buildFuzzyDimensions(calHit, calHit.category || detectCategory(name) || "other", Math.round((calHit.floor + calHit.ceiling) / 2)),
             concerns: calHit.substances || [], summary: calHit.reason || "",
             alternatives: [], ai_alternatives: [], _warmCache: true,
           });
