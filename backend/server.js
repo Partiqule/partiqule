@@ -4456,13 +4456,15 @@ function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
     usageLabel = "Handled daily by children. Mouthing and skin contact are common.";
     usageFreq = "daily"; usageType = "skin_contact"; vulnerable = true;
   } else if (isAccessory) {
-    usageLabel = "Worn or carried in close contact with skin.";
+    usageLabel = "Worn or carried in close contact with skin. Prolonged daily contact increases exposure to any leaching chemicals.";
     usageFreq = "daily"; usageType = "skin_contact";
   } else if (isHomeFurnishing) {
-    usageLabel = "Indoor environment exposure from off-gassing and dust.";
+    usageLabel = "Indoor environment exposure from off-gassing and dust. Exposure accumulates over years of use.";
     usageFreq = "daily"; usageType = "inhalation";
   } else {
-    usageLabel = "Typical use exposure for this category.";
+    // Generic fallback covering "other" category and anything unclassified
+    usageLabel = "Typical consumer use — exposure routes depend on product type.";
+    usageFreq = "weekly"; usageType = "skin_contact";
   }
 
   // ── Packaging meta ──
@@ -4491,9 +4493,15 @@ function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
   } else if (isToy) {
     packagingLabel = "Toy retail packaging — often heavy plastic and cardboard.";
     pkgPrimary = "Plastic + cardboard"; pkgEndOfLife = "cardboard recyclable";
+  } else if (isAccessory) {
+    packagingLabel = "Accessory packaging — typically small box or pouch.";
+    pkgPrimary = "Cardboard box"; pkgEndOfLife = "recyclable";
+  } else if (isHomeFurnishing) {
+    packagingLabel = "Furniture packaging — typically cardboard and protective foam.";
+    pkgPrimary = "Cardboard + foam"; pkgEndOfLife = "cardboard recyclable";
   } else {
-    packagingLabel = "Retail packaging per category norms.";
-    pkgPrimary = "Standard retail";
+    packagingLabel = "Retail packaging — cardboard and plastic typical.";
+    pkgPrimary = "Cardboard + plastic"; pkgEndOfLife = "partially recyclable";
   }
 
   // ── Sustainability meta ──
@@ -4521,8 +4529,12 @@ function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
   } else if (isHomeFurnishing) {
     sustainabilityLabel = "Furniture lifecycle impact depends on materials and longevity.";
     circularity = "long lifespan"; reusable = true;
+  } else if (isAccessory) {
+    sustainabilityLabel = "Accessory lifecycle depends on materials — metal lasts generations, plastic degrades quickly.";
+    circularity = "varies by material";
   } else {
-    sustainabilityLabel = "Standard lifecycle impact for this category.";
+    sustainabilityLabel = "Lifecycle impact varies with product design and use.";
+    circularity = "standard lifecycle";
   }
 
   return {
