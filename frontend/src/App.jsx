@@ -596,186 +596,528 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
   );
 };
 
-const _ShareCardRemoved = ({result, displayScore, isMobile, isDark}) => {
-  const canvasRef = useRef(null);
-  const [status, setStatus] = useState("idle");
-  const score    = displayScore || result.overall_score || result.score;
-  const label    = scoreLabel(score);
-  const color    = scoreColor(score);
-  const name     = result.product_name || "";
-  const category = (result.category || "").toUpperCase().replace(/_/g, " ");
-  const childScore = result.child_score;
-  const hasKids  = childScore && childScore !== score;
-  const isClean  = score <= 3;
-  const flags = [
-    ...(result.flagged_substances||[]),
-    ...(result.dimensions?.materials?.concerns||[]),
-  ].filter(Boolean).filter((c,i,a)=>a.indexOf(c)===i).slice(0,3);
-  const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
+// ── Share card color palette ──
+// 1-3 green, 4-6 amber, 7-10 red
+const shareScoreColor = (s) => s <= 3 ? "#2d5a27" : s <= 6 ? "#c8781a" : "#b91c1c";
+const shareScoreLabel = (s) => s <= 3 ? "SAFE" : s <= 6 ? "MODERATE" : "HIGH CONCERN";
 
-  useEffect(()=>{
-    const canvas = canvasRef.current; if(!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio||1,2);
-    const W = 1080, H = 1080;
-    canvas.width = W*dpr; canvas.height = H*dpr;
-    canvas.style.width = "100%"; canvas.style.height = "auto";
-    const ctx = canvas.getContext("2d");
-    ctx.scale(dpr,dpr);
+// ── Shared helpers for share cards ──
+const slugifyProductName = (name) => (name || "score").toString().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
-    // Deep green background
-    const bgGrad = ctx.createLinearGradient(0,0,W,H);
-    bgGrad.addColorStop(0, "#031a09");
-    bgGrad.addColorStop(0.5, "#052e16");
-    bgGrad.addColorStop(1, "#071f0c");
-    ctx.fillStyle = bgGrad; ctx.fillRect(0,0,W,H);
+async function canvasToBlob(canvas) {
+  return new Promise(r => canvas.toBlob(r, "image/png"));
+}
 
-    // Glow radial
-    const glow = ctx.createRadialGradient(W*0.75,H*0.2,0,W*0.75,H*0.2,W*0.6);
-    glow.addColorStop(0, `${color}18`); glow.addColorStop(1, "transparent");
-    ctx.fillStyle = glow; ctx.fillRect(0,0,W,H);
+async function shareCanvas(canvas, { title, text, filename }) {
+  const blob = await canvasToBlob(canvas);
+  const file = new File([blob], filename, { type: "image/png" });
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ title, text, files: [file] });
+    return "shared";
+  }
+  // Fallback: download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  return "downloaded";
+}
 
-    // Logo row
-    ctx.fillStyle = "rgba(34,197,94,0.4)";
-    ctx.font = "800 32px 'Outfit',system-ui,sans-serif";
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("PARTIQULE", 60, 60);
-    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
-    ctx.textAlign = "right"; ctx.fillText("partiqule.com", W-60, 60);
+async function downloadCanvas(canvas, filename) {
+  const blob = await canvasToBlob(canvas);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
-    // Horizontal rule
-    ctx.fillStyle = "rgba(34,197,94,0.12)"; ctx.fillRect(60,88,W-120,1);
+async function copyCanvasToClipboard(canvas) {
+  const blob = await canvasToBlob(canvas);
+  if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    return true;
+  }
+  throw new Error("Clipboard API unavailable");
+}
 
-    // Product name
-    ctx.fillStyle = "#f0fdf4"; ctx.font = "800 58px 'Outfit',system-ui,sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    const words = name.split(" "); let line = "", nameLines = [];
-    for(const w of words){ const test = line ? line+" "+w : w; if(ctx.measureText(test).width > 900 && line){ nameLines.push(line); line=w; } else line=test; }
-    if(line) nameLines.push(line);
-    nameLines = nameLines.slice(0,2);
-    const nameY = nameLines.length === 2 ? 178 : 196;
-    nameLines.forEach((l,i) => ctx.fillText(l, W/2, nameY + i*70));
+// ── Reusable three-button action row for share cards ──
+const ShareActionRow = ({ onShare, onSave, onCopy }) => {
+  const [shareState, setShareState] = useState("idle");
+  const [saveState, setSaveState]   = useState("idle");
+  const [copyState, setCopyState]   = useState("idle");
 
-    // BIG SCORE NUMBER
-    const scoreY = 600;
-    ctx.save();
-    ctx.font = "900 480px 'Outfit',system-ui,sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.shadowColor = color; ctx.shadowBlur = 80;
-    ctx.fillStyle = color; ctx.globalAlpha = 0.1;
-    ctx.fillText(String(score), W/2, scoreY);
-    ctx.globalAlpha = 1; ctx.shadowBlur = 40;
-    ctx.fillStyle = color;
-    ctx.fillText(String(score), W/2, scoreY);
-    ctx.restore();
-
-    // /10 label
-    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.font = "600 28px 'Outfit',system-ui,sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("OUT OF 10", W/2, scoreY + 260);
-
-    // Verdict pill
-    const pillW = 260, pillH = 60, pillX = W/2-pillW/2, pillY = scoreY+300;
-    ctx.beginPath(); ctx.roundRect(pillX,pillY,pillW,pillH,30);
-    ctx.fillStyle = `${color}22`; ctx.fill();
-    ctx.strokeStyle = `${color}55`; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = color; ctx.font = "800 26px 'Outfit',system-ui,sans-serif";
-    ctx.textBaseline = "middle"; ctx.fillText(label.toUpperCase(), W/2, pillY+pillH/2);
-
-    // Bottom section
-    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(0,H-192,W,192);
-    ctx.fillStyle = "rgba(34,197,94,0.15)"; ctx.fillRect(0,H-192,W,1);
-
-    if(isClean){
-      ctx.fillStyle = "#22c55e"; ctx.font = "700 28px 'Outfit',system-ui,sans-serif";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("No harmful substances detected — clean all the way through", W/2, H-140);
-      ctx.fillStyle = "rgba(34,197,94,0.5)"; ctx.font = "700 22px 'Outfit',system-ui,sans-serif";
-      ctx.fillText("VERIFIED CLEAN", W/2, H-88);
-    } else if(flags.length > 0){
-      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = "700 20px 'Outfit',system-ui,sans-serif";
-      ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("FLAGGED", 60, H-148);
-      let px = 200;
-      flags.forEach(flag => {
-        const ft = flag.length > 20 ? flag.slice(0,18)+"…" : flag;
-        ctx.font = "600 22px 'DM Sans',system-ui,sans-serif";
-        const fw = ctx.measureText(ft).width + 36, fh = 44, fy = H-170;
-        ctx.beginPath(); ctx.roundRect(px,fy,fw,fh,22);
-        ctx.fillStyle = `${color}20`; ctx.fill();
-        ctx.strokeStyle = `${color}44`; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = color; ctx.textAlign="center"; ctx.textBaseline="middle";
-        ctx.fillText(ft, px+fw/2, fy+fh/2);
-        px += fw+10; if(px>W-200) return;
-      });
-      if(alt && score > 3){
-        ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "600 20px 'DM Sans',system-ui,sans-serif";
-        ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("TRY INSTEAD", 60, H-92);
-        ctx.fillStyle = "#f0fdf4"; ctx.font = "700 22px 'Outfit',system-ui,sans-serif";
-        const altName = (alt.name||"").slice(0,40);
-        const altScore = alt.score || alt.estimated_score || "";
-        ctx.fillText(altName + (altScore ? `  —  ${altScore}/10` : ""), 220, H-92);
-      }
-    }
-    ctx.fillStyle = "rgba(255,255,255,0.15)"; ctx.font = "500 20px 'DM Sans',system-ui,sans-serif";
-    ctx.textAlign = "right"; ctx.textBaseline = "middle";
-    ctx.fillText("Know what is in your products", W-60, H-44);
-  },[score, result]);
-
-  const share = async () => {
-    const canvas = canvasRef.current; if(!canvas) return;
-    setStatus("copying");
-    try {
-      const blob = await new Promise(r=>canvas.toBlob(r,"image/png"));
-      if(navigator.share && navigator.canShare?.({files:[new File([blob],"partiqule.png",{type:"image/png"})]})){
-        await navigator.share({ title:`${name} scored ${score}/10 on Partiqule`, text:`I scanned ${name} and it scored ${score}/10. Check what is in your products at partiqule.com`, files:[new File([blob],"partiqule.png",{type:"image/png"})] });
-      } else { await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); }
-      setStatus("copied");
-    } catch {
-      const url = URL.createObjectURL(await new Promise(r=>canvas.toBlob(r,"image/png")));
-      const a = document.createElement("a"); a.href=url;
-      a.download=`partiqule-${(name||"score").replace(/\s+/g,"-").toLowerCase()}.png`;
-      a.click(); URL.revokeObjectURL(url); setStatus("copied");
-    }
-    setTimeout(()=>setStatus("idle"),3000);
+  const handleShare = async () => {
+    setShareState("busy");
+    try { await onShare(); setShareState("done"); }
+    catch { setShareState("idle"); return; }
+    setTimeout(() => setShareState("idle"), 2000);
+  };
+  const handleSave = async () => {
+    setSaveState("busy");
+    try { await onSave(); setSaveState("done"); }
+    catch { setSaveState("idle"); return; }
+    setTimeout(() => setSaveState("idle"), 2000);
+  };
+  const handleCopy = async () => {
+    setCopyState("busy");
+    try { await onCopy(); setCopyState("done"); }
+    catch { setCopyState("idle"); return; }
+    setTimeout(() => setCopyState("idle"), 2000);
   };
 
+  const btn = (label, state, onClick, icon) => (
+    <button onClick={onClick} disabled={state === "busy"} style={{
+      flex: 1, padding: "14px 10px", borderRadius: 12,
+      background: state === "done" ? "#2d5a27" : "#052e16",
+      border: "none", color: "#fff",
+      fontFamily: "'Outfit',sans-serif", fontSize: 13, fontWeight: 700,
+      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+      transition: "all 0.2s",
+    }}>
+      {icon}
+      {state === "done" ? (label === "Share" ? "Shared!" : label === "Save" ? "Saved!" : "Copied!") : state === "busy" ? "..." : label}
+    </button>
+  );
+
   return (
-    <div style={{marginTop:24}}>
-      {/* Card preview */}
-      <div style={{position:"relative", borderRadius:16, overflow:"hidden", border:"1.5px solid rgba(34,197,94,0.2)", cursor:"pointer"}} onClick={share}>
-        <canvas ref={canvasRef} style={{display:"block", width:"100%"}}/>
-        <div style={{position:"absolute", inset:0, background:"rgba(0,0,0,0)", display:"flex", alignItems:"center", justifyContent:"center", opacity:0, transition:"opacity 0.2s"}}
-          onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,0,0,0.35)"; e.currentTarget.style.opacity=1;}}
-          onMouseLeave={e=>{e.currentTarget.style.background="rgba(0,0,0,0)"; e.currentTarget.style.opacity=0;}}>
-          <span style={{fontFamily:"'Outfit',sans-serif", fontSize:16, fontWeight:800, color:"white"}}>Tap to share</span>
-        </div>
+    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+      {btn("Share", shareState, handleShare,
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M18 8a3 3 0 100-6 3 3 0 000 6zM6 15a3 3 0 100-6 3 3 0 000 6zM18 22a3 3 0 100-6 3 3 0 000 6z"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+      )}
+      {btn("Save", saveState, handleSave,
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      )}
+      {btn("Copy", copyState, handleCopy,
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      )}
+    </div>
+  );
+};
+
+// ── ShareCard — single product, 1080x1920 portrait ──
+const ShareCard = ({ result, displayScore }) => {
+  const canvasRef = useRef(null);
+  const score    = Math.round(displayScore || result.overall_score || result.score || 0);
+  const color    = shareScoreColor(score);
+  const label    = shareScoreLabel(score);
+  const name     = result.product_name || "Scanned product";
+  const category = (result.category || "").toUpperCase().replace(/_/g, " ");
+  const flags = [
+    ...(result.flagged_substances || []),
+    ...(result.dimensions?.materials?.concerns || []),
+  ].filter(Boolean).filter((c, i, a) => a.indexOf(c) === i).slice(0, 6);
+  const alt = result.alternatives?.[0] || result.ai_alternatives?.[0];
+  const dims = result.dimensions || {};
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = 1080, H = 1920;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    // Background cream
+    ctx.fillStyle = "#F5F0E8";
+    ctx.fillRect(0, 0, W, H);
+
+    // Header bar — 100px tall, moss green
+    ctx.fillStyle = "#2d5a27";
+    ctx.fillRect(0, 0, W, 100);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 40px Georgia,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("PARTIQULE", 52, 50);
+    if (category) {
+      ctx.fillStyle = "#a3c4a0";
+      ctx.font = "20px Georgia,serif";
+      ctx.textAlign = "right";
+      ctx.fillText(category, W - 52, 50);
+    }
+
+    // Product name — Y ~200, bold 64px, centered, wrap to 2 lines
+    ctx.fillStyle = "#1a1a1a";
+    ctx.font = "bold 64px Georgia,serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    const words = name.split(" ");
+    let curLine = "", nameLines = [];
+    for (const w of words) {
+      const test = curLine ? curLine + " " + w : w;
+      if (ctx.measureText(test).width > 960 && curLine) {
+        nameLines.push(curLine); curLine = w;
+      } else curLine = test;
+    }
+    if (curLine) nameLines.push(curLine);
+    nameLines = nameLines.slice(0, 2);
+    if (nameLines.length === 2 && words.length > nameLines.join(" ").split(" ").length) {
+      // truncate second line if we dropped words
+      const last = nameLines[1];
+      while (ctx.measureText(last + "...").width > 960 && nameLines[1].length > 4) {
+        nameLines[1] = nameLines[1].slice(0, -1);
+      }
+      nameLines[1] = nameLines[1] + "...";
+    }
+    const nameStartY = nameLines.length === 2 ? 210 : 250;
+    nameLines.forEach((l, i) => ctx.fillText(l, W / 2, nameStartY + i * 76));
+
+    // Score accent rule — 6px, width 320px, centered, Y ~340
+    ctx.fillStyle = color;
+    ctx.fillRect(W / 2 - 160, 340, 320, 6);
+
+    // Big score number — Y center ~560
+    const scoreY = 560;
+    ctx.font = "900 360px Georgia,serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = color;
+    // Measure score digit width to position /10
+    const scoreText = String(score);
+    const scoreWidth = ctx.measureText(scoreText).width;
+    ctx.fillText(scoreText, W / 2, scoreY);
+    // /10 label
+    ctx.font = "56px Georgia,serif";
+    ctx.fillStyle = "#999";
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillText("/10", W / 2 + scoreWidth / 2 + 20, scoreY + 60);
+
+    // Score label pill — Y ~780
+    const pillText = label;
+    ctx.font = "bold 32px Georgia,serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const pillTextWidth = ctx.measureText(pillText).width;
+    const pillPadX = 24, pillPadY = 14;
+    const pillW = pillTextWidth + pillPadX * 2;
+    const pillH = 32 + pillPadY * 2;
+    const pillX = W / 2 - pillW / 2;
+    const pillY = 780;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    else ctx.rect(pillX, pillY, pillW, pillH);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(pillText, W / 2, pillY + pillH / 2);
+
+    // Dimension bars — Y ~880
+    const dimKeys = ["materials", "usage_exposure", "packaging", "sustainability"];
+    const dimLabels = {
+      materials: "Materials",
+      usage_exposure: "Usage",
+      packaging: "Packaging",
+      sustainability: "Sustainability",
+    };
+    const dimsPresent = dimKeys.filter(k => dims[k] && typeof dims[k].score === "number").slice(0, 4);
+    if (dimsPresent.length > 0) {
+      ctx.fillStyle = "#888";
+      ctx.font = "18px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("HOW IT SCORED", 60, 880);
+
+      const barStartY = 930;
+      const rowH = 52;
+      const labelW = 260;
+      const barW = 600;
+      const barH = 18;
+      const barX = W - 60 - barW;
+
+      dimsPresent.forEach((k, i) => {
+        const y = barStartY + i * rowH;
+        // Label
+        ctx.fillStyle = "#555";
+        ctx.font = "22px Georgia,serif";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(dimLabels[k], 60, y + barH / 2);
+        // Track
+        ctx.fillStyle = "#e0d9cc";
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(barX, y, barW, barH, barH / 2);
+        else ctx.rect(barX, y, barW, barH);
+        ctx.fill();
+        // Fill
+        const dimScore = Math.max(0, Math.min(10, dims[k].score || 0));
+        const fillW = (dimScore / 10) * barW;
+        if (fillW > 0) {
+          ctx.fillStyle = shareScoreColor(dimScore);
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(barX, y, fillW, barH, barH / 2);
+          else ctx.rect(barX, y, fillW, barH);
+          ctx.fill();
+        }
+      });
+    }
+
+    // Flagged ingredients — Y ~1200
+    if (flags.length > 0) {
+      ctx.fillStyle = "#888";
+      ctx.font = "18px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.fillText("FLAGGED", 60, 1200);
+
+      const flagStartY = 1230;
+      const flagPadX = 20, flagPadY = 12;
+      ctx.font = "20px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      let fx = 60, fy = flagStartY;
+      const rowGap = 52;
+      const maxRowWidth = W - 120;
+      for (const flag of flags.slice(0, 6)) {
+        const flagStr = typeof flag === "string" ? flag : (flag.concern || flag.name || "");
+        if (!flagStr) continue;
+        const display = flagStr.length > 28 ? flagStr.slice(0, 26) + "..." : flagStr;
+        const tw = ctx.measureText(display).width;
+        const pillWidth = tw + flagPadX * 2;
+        const pillHeight = 20 + flagPadY * 2;
+        // Wrap to next row if needed
+        if (fx + pillWidth > 60 + maxRowWidth && fx > 60) {
+          fx = 60; fy += rowGap;
+          if (fy > flagStartY + rowGap * 2) break; // max 3 rows
+        }
+        // Pill
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(fx, fy, pillWidth, pillHeight, pillHeight / 2);
+        else ctx.rect(fx, fy, pillWidth, pillHeight);
+        ctx.fillStyle = "#F5F0E8";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        // Text
+        ctx.fillStyle = color;
+        ctx.fillText(display, fx + flagPadX, fy + pillHeight / 2);
+        fx += pillWidth + 12;
+      }
+    }
+
+    // Better option teaser — Y ~1450
+    if (alt && score > 3) {
+      const stripY = 1450, stripH = 80;
+      ctx.fillStyle = "#2d5a27";
+      ctx.fillRect(0, stripY, W, stripH);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "22px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText("Better option found \u2192", 52, stripY + 28);
+      ctx.fillStyle = "#a3c4a0";
+      const altName = alt.name || alt.brand || "See alternatives";
+      const altTrunc = altName.length > 50 ? altName.slice(0, 48) + "..." : altName;
+      ctx.fillText(altTrunc, 52, stripY + 58);
+    }
+
+    // Footer — pinned Y=1820-1920, background #1a1a1a
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 1820, W, 100);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "22px Georgia,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("partiqule.com", 52, 1870);
+    ctx.fillStyle = "#a3c4a0";
+    ctx.font = "20px Georgia,serif";
+    ctx.textAlign = "right";
+    ctx.fillText("Scan yours", W - 52, 1870);
+  }, [score, result]);
+
+  const filename = `partiqule-${slugifyProductName(name)}-${score}.png`;
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <div style={{ borderRadius: 16, overflow: "hidden", border: "1.5px solid rgba(45,90,39,0.2)", background: "#F5F0E8" }}>
+        <canvas ref={canvasRef} style={{ display: "block", width: "100%" }}/>
       </div>
-      {/* Button row */}
-      <div style={{display:"flex", gap:8, marginTop:10}}>
-        <button onClick={share} disabled={status==="copying"} style={{
-          flex:1, padding:"13px 16px", borderRadius:12,
-          background: status==="copied" ? "#16a34a" : "linear-gradient(135deg,#22c55e,#16a34a)",
-          border:"none", color:"#fff",
-          fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800,
-          cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-          boxShadow:"0 4px 16px rgba(34,197,94,0.3)", transition:"all 0.2s",
-        }}>
-          <IconShare size={16} color="#fff"/>
-          {status==="copying" ? "Preparing…" : status==="copied" ? "Shared!" : "Share this result"}
-        </button>
-        <button onClick={async()=>{
-          try {
-            const url = `${window.location.origin}?q=${encodeURIComponent(name)}`;
-            await navigator.clipboard.writeText(url);
-            setStatus("copied"); setTimeout(()=>setStatus("idle"),2000);
-          } catch {}
-        }} style={{
-          width:46, height:46, borderRadius:12, flexShrink:0,
-          background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)",
-          display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        </button>
+      <ShareActionRow
+        onShare={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await shareCanvas(c, {
+            title: `${name} scored ${score}/10`,
+            text: "Scanned on Partiqule \u2014 partiqule.com",
+            filename,
+          });
+        }}
+        onSave={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await downloadCanvas(c, filename);
+        }}
+        onCopy={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await copyCanvasToClipboard(c);
+        }}
+      />
+    </div>
+  );
+};
+
+// ── SessionRecapCard — multi-product recap, 1080x1920 portrait ──
+const SessionRecapCard = ({ scans }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = 1080, H = 1920;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = "100%"; canvas.style.height = "auto";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    // Background cream
+    ctx.fillStyle = "#F5F0E8";
+    ctx.fillRect(0, 0, W, H);
+
+    // Header — 120px
+    ctx.fillStyle = "#2d5a27";
+    ctx.fillRect(0, 0, W, 120);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 40px Georgia,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("PARTIQULE", 52, 60);
+    ctx.fillStyle = "#a3c4a0";
+    ctx.font = "24px Georgia,serif";
+    ctx.textAlign = "right";
+    ctx.fillText("STORE HAUL", W - 52, 60);
+
+    // Subheader — Y ~160
+    const n = scans.length;
+    ctx.fillStyle = "#555";
+    ctx.font = "italic 32px Georgia,serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    ctx.fillText(`I scanned ${n} product${n === 1 ? "" : "s"}`, W / 2, 200);
+
+    // Date
+    const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    ctx.fillStyle = "#888";
+    ctx.font = "22px Georgia,serif";
+    ctx.fillText(dateStr, W / 2, 240);
+
+    // Score summary strip — Y ~280, 80px tall, #1a1a1a
+    const stripY = 280, stripH = 80;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, stripY, W, stripH);
+
+    const avg = n > 0 ? scans.reduce((sum, s) => sum + (s.overall_score || s.score || 0), 0) / n : 0;
+    const avgRounded = Math.round(avg * 10) / 10;
+    const flaggedCount = scans.filter(s => (s.overall_score || s.score || 0) > 5).length;
+    const avgColor = shareScoreColor(avgRounded);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "22px Georgia,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("Avg Score", 52, stripY + stripH / 2);
+
+    ctx.fillStyle = avgColor;
+    ctx.font = "bold 36px Georgia,serif";
+    ctx.textAlign = "center";
+    ctx.fillText(avgRounded.toFixed(1), W / 2, stripY + stripH / 2);
+
+    if (flaggedCount > 0) {
+      ctx.fillStyle = shareScoreColor(7);
+      ctx.font = "22px Georgia,serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${flaggedCount} flagged`, W - 52, stripY + stripH / 2);
+    }
+
+    // Product rows — starting Y ~380, sorted lowest score first
+    const sorted = [...scans].sort((a, b) => (a.overall_score || a.score || 0) - (b.overall_score || b.score || 0));
+    const showItems = sorted.slice(0, 8);
+    const rowStartY = 380;
+    const rowH = 140;
+
+    showItems.forEach((item, i) => {
+      const y = rowStartY + i * rowH;
+      // Alternating row background
+      ctx.fillStyle = i % 2 === 0 ? "#F5F0E8" : "#EDE8DF";
+      ctx.fillRect(0, y, W, rowH);
+
+      const itemScore = Math.round(item.overall_score || item.score || 0);
+      const itemColor = shareScoreColor(itemScore);
+
+      // Left colored stripe 12px
+      ctx.fillStyle = itemColor;
+      ctx.fillRect(0, y, 12, rowH);
+
+      // Product name
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "bold 28px Georgia,serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      const rawName = item.product_name || "Unknown product";
+      let truncName = rawName;
+      const maxNameWidth = W - 80 - 200; // leave room for score badge
+      while (ctx.measureText(truncName + "...").width > maxNameWidth && truncName.length > 4) {
+        truncName = truncName.slice(0, -1);
+      }
+      if (truncName !== rawName) truncName = truncName + "...";
+      ctx.fillText(truncName, 80, y + 58);
+
+      // Category
+      const cat = (item.category || "").replace(/_/g, " ");
+      ctx.fillStyle = "#888";
+      ctx.font = "20px Georgia,serif";
+      ctx.fillText(cat, 80, y + 92);
+
+      // Score badge right side
+      const badgeText = `${itemScore}/10`;
+      ctx.font = "bold 26px Georgia,serif";
+      const badgeTW = ctx.measureText(badgeText).width;
+      const badgePadX = 18, badgePadY = 10;
+      const badgeW = badgeTW + badgePadX * 2;
+      const badgeH = 26 + badgePadY * 2;
+      const badgeX = W - 52 - badgeW;
+      const badgeY = y + rowH / 2 - badgeH / 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+      else ctx.rect(badgeX, badgeY, badgeW, badgeH);
+      ctx.fillStyle = itemColor; ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+    });
+
+    // "+ N more" row if more than 8
+    if (sorted.length > 8) {
+      const y = rowStartY + 8 * rowH;
+      ctx.fillStyle = "#F5F0E8";
+      ctx.fillRect(0, y, W, rowH);
+      ctx.fillStyle = "#555";
+      ctx.font = "italic 28px Georgia,serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(`+ ${sorted.length - 8} more`, W / 2, y + rowH / 2);
+    }
+
+    // Footer — Y=1820-1920
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 1820, W, 100);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "22px Georgia,serif";
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("partiqule.com", 52, 1870);
+    ctx.fillStyle = "#a3c4a0";
+    ctx.font = "20px Georgia,serif";
+    ctx.textAlign = "right";
+    ctx.fillText("Tap to scan yours", W - 52, 1870);
+  }, [scans]);
+
+  const filename = `partiqule-haul-${new Date().toISOString().slice(0, 10)}.png`;
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ borderRadius: 16, overflow: "hidden", border: "1.5px solid rgba(45,90,39,0.2)", background: "#F5F0E8" }}>
+        <canvas ref={canvasRef} style={{ display: "block", width: "100%" }}/>
       </div>
+      <ShareActionRow
+        onShare={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await shareCanvas(c, {
+            title: `I scanned ${scans.length} products`,
+            text: "Store haul scanned on Partiqule \u2014 partiqule.com",
+            filename,
+          });
+        }}
+        onSave={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await downloadCanvas(c, filename);
+        }}
+        onCopy={async () => {
+          const c = canvasRef.current; if (!c) return;
+          await copyCanvasToClipboard(c);
+        }}
+      />
     </div>
   );
 };
@@ -7138,6 +7480,19 @@ function App() {
   const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
   const [compareAlt,  setCompareAlt] = useState(null);
+  // ── Session scans — in-memory only, cleared on page reload ──
+  // Drives the floating Session Recap pill and modal for creators scanning
+  // multiple products in one store visit.
+  const [sessionScans, setSessionScans] = useState([]);
+  const [showSessionRecap, setShowSessionRecap] = useState(false);
+  const appendSessionScan = (item) => {
+    if (!item || !item.product_name) return;
+    setSessionScans(prev => {
+      // Dedupe by product name (latest scan wins)
+      const filtered = prev.filter(s => s.product_name !== item.product_name);
+      return [...filtered, item].slice(-10);
+    });
+  };
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
@@ -7521,7 +7876,7 @@ function App() {
       clearTimeout(timeout);
       if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
       const data = await res.json();
-      setResult(data); saveToHistory(data);
+      setResult(data); saveToHistory(data); appendSessionScan(data);
       if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
       track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
       // ── Scan counter — increment and check limits ──
@@ -7644,7 +7999,7 @@ function App() {
           if (barcodeRes.ok) {
             const barcodeData = await barcodeRes.json();
             if (barcodeData && !barcodeData.error) {
-              setResult(barcodeData); saveToHistory(barcodeData); setLoading(false); setQuery(barcodeData.product_name||"");
+              setResult(barcodeData); saveToHistory(barcodeData); appendSessionScan(barcodeData); setLoading(false); setQuery(barcodeData.product_name||"");
               if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(barcodeData.category)) setPendingRoomTag(barcodeData.product_name); else setPendingRoomTag(null);
               track("Barcode Scan from Image",{barcode:barcodeValue,product:barcodeData.product_name});
               if (onDone) onDone();
@@ -7688,6 +8043,7 @@ function App() {
       setQuery(data.product_name);
       setResult(data);
       saveToHistory(data);
+      appendSessionScan(data);
       if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
       // ── Increment scan counter ──
       if (!isSubscribed) {
@@ -9417,6 +9773,9 @@ function App() {
                   );
                 })()}
 
+                {/* ── Share card (single product) — creator share flow ── */}
+                <ShareCard result={result} displayScore={displayScore}/>
+
               </div>
 
               {/* ACCOUNT / EMAIL CAPTURE — after 1st scan */}
@@ -9791,6 +10150,60 @@ function App() {
       {/* Compare share card modal */}
       {compareAlt && result && (
         <ShareCompareCard result={result} alternative={compareAlt} onClose={() => setCompareAlt(null)}/>
+      )}
+
+      {/* Session Recap floating pill — visible when 2+ scans in session, hidden during active scan */}
+      {sessionScans.length >= 2 && !loading && (
+        <div
+          onClick={() => setShowSessionRecap(true)}
+          style={{
+            position:"fixed",
+            bottom: isMobile ? 160 : 24,
+            right: 20,
+            zIndex: 8998,
+            background: "#2d5a27",
+            borderRadius: 999,
+            padding: "12px 20px",
+            display: "flex", alignItems: "center", gap: 10,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.25), 0 0 0 3px rgba(45,90,39,0.15)",
+            cursor: "pointer", whiteSpace: "nowrap",
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <span style={{ fontFamily:"Georgia,serif", fontSize:16, fontWeight:700, color:"#fff" }}>
+            Session Recap &middot; {sessionScans.length} scans
+          </span>
+        </div>
+      )}
+
+      {/* Session Recap modal */}
+      {showSessionRecap && sessionScans.length > 0 && (
+        <div
+          onClick={() => setShowSessionRecap(false)}
+          style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background:"#fff", borderRadius:20, padding:20, maxWidth:480, width:"100%", maxHeight:"90vh", overflow:"auto", position:"relative" }}
+          >
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <span style={{ fontFamily:"Georgia,serif", fontSize:18, fontWeight:700, color:"#1a1a1a" }}>Session Recap</span>
+              <button
+                onClick={() => setShowSessionRecap(false)}
+                aria-label="Close"
+                style={{ background:"none", border:"none", fontSize:24, cursor:"pointer", color:"#999", padding:0, lineHeight:1, width:32, height:32 }}
+              >×</button>
+            </div>
+            <SessionRecapCard scans={sessionScans}/>
+          </div>
+        </div>
       )}
 
       {/* ── PERSISTENT MOBILE BOTTOM NAV + FLOATING SCAN ── */}
