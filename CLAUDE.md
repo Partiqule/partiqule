@@ -49,9 +49,9 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 
 ## Architecture
 
-**Frontend:** React 18 + Vite. The entire UI lives in a single monolithic component (`frontend/src/App.jsx`, ~10,000 lines) with inline styles throughout -- no CSS files or framework. State is managed with `useState` hooks only. Capacitor wraps the app for iOS (StoreKit IAP via `@capgo/native-purchases` loaded dynamically).
+**Frontend:** React 18 + Vite. The entire UI lives in a single monolithic component (`frontend/src/App.jsx`, ~9,800 lines) with inline styles throughout -- no CSS files or framework. State is managed with `useState` hooks only. Capacitor wraps the app for iOS (StoreKit IAP via `@capgo/native-purchases` loaded dynamically).
 
-**Backend:** Express API (`backend/server.js`, ~6,700 lines). Single-file server with all endpoints, scoring logic, caching, and intelligence feed pipeline.
+**Backend:** Express API (`backend/server.js`, ~6,900 lines). Single-file server with all endpoints, scoring logic, caching, and intelligence feed pipeline.
 
 **Scoring pipeline (two-pass with smart skip):**
 1. Pass 1: Claude Haiku analyzes product across 5 dimensions (materials, usage, packaging, sustainability, manufacturing)
@@ -60,7 +60,7 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
 5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
 6. Regulatory flags from Supabase injected into AI prompt for approved findings
-7. Calibration registry (`backend/calibration.js`, 3000+ known products) overrides AI entirely
+7. Calibration registry (`backend/calibration.js`, 3,039 known products) overrides AI entirely
 8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
 9. Pregnancy scores via `computeSafetyScores()` helper -- computed on ALL paths including image/camera
 10. Consistency checks (`applyConsistencyChecks`) catch AI hallucinations (label contradictions, inert material ceilings, confidence-linked caps)
@@ -117,12 +117,12 @@ Score color thresholds (consistent everywhere, never change):
 
 ## Key Files
 
-- `frontend/src/App.jsx` -- Entire React UI (~10,000 lines, all components defined as const functions)
+- `frontend/src/App.jsx` -- Entire React UI (~9,800 lines, all components defined as const functions)
 - `frontend/vite.config.js` -- Build target is `safari15` for iOS WKWebView compatibility
 - `frontend/public/sw.js` -- Service worker (cache name `partiqule-v2`)
 - `frontend/scripts/generate-product-pages.js` -- Generates 2,400+ static SEO pages at build time
 - `backend/server.js` -- All API endpoints, scoring logic, substance registry, intelligence feed, caching
-- `backend/calibration.js` -- 3000+ known product scores (source of truth for known products)
+- `backend/calibration.js` -- 3,039 known product scores with product-level entries for major activewear brands (Lululemon, Vuori, Alo Yoga)
 - `backend/products.js` -- 420+ affiliate alternative products across 6 categories with synonym expansion, brand injection, and gender/age matching
 - `backend/amazon-api.js` -- Amazon Creators API integration (tag: partiqule-20)
 - `backend/scoring-regression-test.js` -- 95 assertion tests (calibration, substance floors, child detection, category detection)
@@ -223,7 +223,7 @@ pq_foryou                   -- For You carousel seen state by date
 - ScoreBadge shared component for all score rendering
 - Score context line (`category_score_context` on scan response)
 - CTA hierarchy on scan result: primary = See Alternatives or Scan Another, secondary contextual
-- Share card (ShareCompareCard) for product comparison sharing
+- ShareCompareCard for alternatives comparison sharing (scan-result share card removed April 2026)
 - Room tagging on scan result ("Which room?" prompt for home-relevant categories)
 - My Routine (RoutinePage), scan history (HistoryPage) with "By date / By room" toggle
 - Home coverage card on hero page (getHomeCoverage)
@@ -297,6 +297,7 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 - Age matching: kids-tagged products excluded (score=0) for adult clothing/personal_care queries
 - Category filter: "other" category blocked from supplement/personal_care/baby queries (prevents garden tools for Garden of Life)
 - Calibration dedup: nutrition-only entries must NOT appear after full entries in calibration.js (Map.set overwrites -- last entry wins)
+- PFAS brand auditing: when a brand claims PFAS phase-out, verify against independent lab testing and regulatory actions before lowering floors. Split brands by product type -- DWR-finished items stay at floor:5 until independent lab verification; cotton/fleece/lounge items with no chemical finish can score lower. Insert specific product entries BEFORE the brand default in calibration.js (Map iteration order determines which `startsWith` match wins). Cite investigations with dates in reason strings.
 
 ### Security conventions
 - `ADMIN_KEY` must be set via env var -- no hardcoded fallback
@@ -313,7 +314,6 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 100% inline JavaScript styles (camelCase). No CSS files. Dark mode via `isDark` boolean (currently always true). Color system: green (safe) -> yellow (caution) -> orange (warn) -> red (danger). Mobile breakpoint: `isMobile = width < 768`. Tablet breakpoint: `isTablet = width >= 768 && width <= 1024`.
 
 ### Session rules
-- One feature per Claude Code session. Multi-feature sessions cause tangled diffs.
 - Always read CLAUDE.md before writing any code in a session.
 - Test on 390px viewport after any UI change.
 
