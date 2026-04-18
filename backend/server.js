@@ -9,6 +9,7 @@ const {
   validateAIResponse: validateDeterministicFlags,
   mergeFlags: mergeDeterministicFlags,
 } = require("./flagDetection");
+const { resolveIngredients } = require("./pass0");
 
 // ── FLAG DETECTION FEATURE FLAG ────────────────────────────────
 // Toggles the flagDetection integration off without a redeploy. Set
@@ -6846,38 +6847,15 @@ app.post("/barcode", rateLimit, async (req, res) => {
     scoreCache.delete(barcodeKey);
   }
 
-  // ── Multi-source barcode lookup ──
-  // Try Open Food Facts first (food/beverage), then Open Beauty Facts (personal care),
-  // then Open Products Facts (everything else). All share the same schema.
-  const BARCODE_SOURCES = [
-    { name: "food",    url: `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-    { name: "beauty",  url: `https://world.openbeautyfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-    { name: "product", url: `https://world.openproductsfacts.org/api/v0/product/${encodeURIComponent(barcode)}.json` },
-  ];
-
-  // Fire all barcode sources in parallel — take the first valid hit
-  let offProduct = null;
-  let sourceName = null;
-  const barcodeResults = await Promise.allSettled(
-    BARCODE_SOURCES.map(async (src) => {
-      const offRes = await fetch(src.url, {
-        headers: { "User-Agent": "Partiqule/1.0 (paul@partiqule.com)" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!offRes.ok) return null;
-      const offJson = await offRes.json();
-      if (offJson.status === 1 && offJson.product) return { product: offJson.product, name: src.name };
-      return null;
-    })
-  );
-  // Prefer food > beauty > product (same order as BARCODE_SOURCES)
-  for (const r of barcodeResults) {
-    if (r.status === "fulfilled" && r.value) {
-      offProduct = r.value.product;
-      sourceName = r.value.name;
-      console.log(`[BARCODE] ${barcode} found in ${sourceName} database`);
-      break;
-    }
+  // ── Pass 0: resolve ingredients from Open Food / Beauty / Products Facts ──
+  // Pass 0 returns the raw product object for downstream nutrition extraction
+  // plus source metadata (ingredient_source, confidence, verifiedAt) that we
+  // store on the result and inject into the Pass 1 prompt.
+  const pass0 = await resolveIngredients({ barcode, supabase: supabaseAdmin });
+  const offProduct = pass0.rawProduct;
+  const sourceName = pass0.source; // "open_food_facts" | "open_beauty_facts" | "open_products_facts" | "none"
+  if (offProduct) {
+    console.log(`[BARCODE] ${barcode} found in ${sourceName} (confidence: ${pass0.confidence})`);
   }
 
   if (!offProduct) {
@@ -6949,9 +6927,13 @@ app.post("/barcode", rateLimit, async (req, res) => {
   }
 
   // ── Build rich context from OFF data for pass1 ──
+  const ingredientSourceNote = pass0.source && pass0.source !== "none"
+    ? `INGREDIENT SOURCE: ${pass0.source} (confidence: ${pass0.confidence})\nVerified: ${pass0.verifiedAt}\nThese ingredients come from ${pass0.source}. Score based on these ingredients, not on your training priors. If the ingredient list contradicts what you know about this product, trust the ingredient list provided.`
+    : null;
   const offContext = [
     `EXACT PRODUCT: ${productName}${brand ? ` by ${brand}` : ""}`,
     `BARCODE: ${barcode} (use this as ground truth — do not guess the product)`,
+    ingredientSourceNote,
     ingredText ? `FULL INGREDIENT LIST: ${ingredText}` : null,
     novaGroup  ? `NOVA GROUP: ${novaGroup}${novaGroup === 4 ? " (ultra-processed)" : novaGroup === 3 ? " (processed)" : " (minimally processed)"}` : null,
     sugar_g    != null ? `SUGAR PER SERVING: ${sugar_g}g` : null,
@@ -7061,7 +7043,11 @@ app.post("/barcode", rateLimit, async (req, res) => {
       concerns:            p1.concerns || [],
       summary:             p1.summary || "",
       peer_comparison:     peerComparison,
-      data_source:         sourceName === "food" ? "open_food_facts" : sourceName === "beauty" ? "open_beauty_facts" : "open_products_facts",
+      data_source:         sourceName,
+      ingredient_source:         pass0.source,
+      ingredient_confidence:     pass0.confidence,
+      ingredient_verified_at:    pass0.verifiedAt,
+      ingredient_source_url:     pass0.sourceUrl,
       dimensions: {
         materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
         usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },

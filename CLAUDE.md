@@ -408,6 +408,42 @@ Frontend UX pattern (implemented in `App.jsx` `analyze()` and home view):
 
 ---
 
+## Pass 0 Ingredient Resolution
+
+Pass 0 (`backend/pass0.js`) resolves a verified ingredient list BEFORE Pass 1 scoring runs. It exists so the AI never has to invent ingredients from training priors — the text-path fabrication bug was the motivating incident.
+
+`resolveIngredients({ productName, barcode, image, category, supabase })` returns:
+```
+{ ingredients, source, confidence, sourceUrl, verifiedAt, rawProduct }
+```
+
+`source` is one of: `open_food_facts`, `open_beauty_facts`, `open_products_facts`, `supabase_scans`, `vision_ocr`, `none`. `rawProduct` is the source-specific opaque object callers can mine for additional fields (barcode paths extract nutrition/NOVA/brand/serving from it).
+
+Resolution order:
+1. If `barcode` provided: Open Food Facts v2 → Open Beauty Facts v2 → Open Products Facts v2 (parallel fetch, preference by order). Product found with ingredient text → `confidence: "high"`. Product found without ingredient text → `confidence: "medium"` (we know identity, not materials).
+2. If `productName` provided and no barcode hit: Supabase `scans` table, JSONB lookup via `result_json->ingredient_list`, case-insensitive match on `product_name`, within last 12 months, most recent first. `confidence: "medium"`.
+3. If `image` provided and nothing else hit: **stub — returns `source: "none"`**. A future session will refactor `callClaudeVision` to populate Pass 0 via an OCR-only pass.
+4. Nothing hits → `source: "none", confidence: "none"`.
+
+Integration: `/barcode` calls Pass 0 as its first step (replaces the previous inline OFF/OBF/OPF fetch). `/analyze` text path remains gated behind `ALLOW_TEXT_PATH_SCORING` — re-enabling is a separate decision that should only be made after Pass 0 hit rates on text queries are proven non-trivial. `/analyze` image path is unchanged for now.
+
+Pass 1 receives the source metadata as an `INGREDIENT SOURCE:` line in its context block, instructing it to trust the provided ingredient list over its training priors.
+
+Result record fields persisted to `scans.result_json`:
+- `ingredient_source` — which database the ingredient list came from
+- `ingredient_confidence` — `high` / `medium` / `low` / `none`
+- `ingredient_verified_at` — ISO timestamp of the Pass 0 resolution
+- `ingredient_source_url` — browsable verification URL (OFF page), null for Supabase cache
+
+Monitoring hit rate:
+```bash
+# In Railway logs:
+grep pass0_resolution | jq -r '.source' | sort | uniq -c
+```
+Every resolution emits a structured log: `[pass0_resolution] {"productName":..., "barcode":..., "source":..., "confidence":..., "duration_ms":...}`.
+
+---
+
 ## Brand Partnerships
 
 - **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links
