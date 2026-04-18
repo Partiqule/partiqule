@@ -313,6 +313,24 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 ### Frontend styling
 100% inline JavaScript styles (camelCase). No CSS files. Dark mode via `isDark` boolean (currently always true). Color system: green (safe) -> yellow (caution) -> orange (warn) -> red (danger). Mobile breakpoint: `isMobile = width < 768`. Tablet breakpoint: `isTablet = width >= 768 && width <= 1024`.
 
+### Ingredient data sources per scoring path
+
+Pass 1 does not have a single ingredient source — it varies by entry point:
+
+- **Text path** (`/analyze` with `query`): `pass1(productName, null, category)` — no ingredient data. AI fabricates `ingredient_list` from training priors. **KNOWN BUG**: reformulated products (e.g. Danimals dropped artificial dyes ~2022) still produce old-formulation ingredient lists. Fix is out of scope for calibration-only hotfixes — needs a Pass 0 ingredient lookup or a prompt change that forbids fabrication when no ground truth is available.
+- **Vision path** (`/analyze` with `image`): `callClaudeVision` reads the label from pixels. LABEL TRUTH RULE in the vision system prompt tries to prevent AI priors from overriding visible text, but the risk is not eliminated.
+- **Barcode path** (`/barcode`): Open Food Facts `ingredients_text_en` is injected into pass1 as ground truth via `offContext`. Safest path; only works for products OFF indexes.
+
+Calibration entries and flagDetection both treat AI-returned `ingredient_list` as input. If the text path fabricates, flagDetection will dutifully "confirm" fabricated substances. Integrity of the ingredient list is a prerequisite, not something the scoring layer can repair.
+
+### Calibration entry integrity
+
+Calibration entries must reflect the CURRENT product formulation. Brands reformulate frequently (Danimals, Mott's, Kraft Mac and Cheese, Kellogg, General Mills have all removed artificial dyes in recent years). Before adding or editing a calibration entry:
+
+- Verify ingredients against the current package label, manufacturer website, or a recent Open Food Facts entry — not from memory or historical reputation.
+- Include a `Ingredients verified <MM YYYY>` note in the `reason` field when the substance list was checked against a real product.
+- An entry listing substances the product no longer contains is a defamation risk, not a scoring error.
+
 ### Session rules
 - Always read CLAUDE.md before writing any code in a session.
 - Test on 390px viewport after any UI change.
@@ -357,7 +375,7 @@ Deterministic substance detection is integrated into Pass 1 scoring. The AI cann
 
 - Pre-AI: when ingredient text is available (barcode via OFF), `detectFlags` runs before pass1 and confirmed substances are injected into the prompt as `DETERMINISTIC FLAGS DETECTED`.
 - Post-AI: `detectFlags` runs again on the AI-captured `ingredient_list`. `validateAIResponse` compares AI-claimed substances to the deterministic set. `mergeFlags` merges deterministic findings into `p1.harmful_chemicals` and appends any AI-missed findings to `p1.raw_concerns` so `applySubstanceFloors` picks them up.
-- Disagreements are logged with structured data under `[flag_detection_override]` for audit.
+- Disagreements are logged with structured data under `[flag_detection_override]` for audit. The log fires only when `missingFromAI` has entries (deterministic caught something the AI missed). `extraInAI` alone does not log, since AI narrative concerns often cannot be matched by the deterministic layer.
 
 Feature flag: `FLAG_DETECTION_ENABLED` (Railway env var).
 - Default: enabled.
