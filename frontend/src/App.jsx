@@ -451,6 +451,97 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   );
 };
 
+// Branded loading screen shown between barcode detection and result display.
+// Minimum 2000ms display time. Timeout at 5000ms surfaces the error phase.
+const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (phase !== "loading") return;
+    const start = Date.now();
+    const id = setInterval(() => setElapsed(Date.now() - start), 120);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  const statusText = elapsed < 700
+    ? "Reading barcode..."
+    : elapsed < 1400
+    ? "Finding product..."
+    : "Checking ingredients...";
+
+  return (
+    <div style={{position:"fixed", inset:0, zIndex:9998, background:"#052e16",
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+      padding:"24px", animation:"barcodeLoadingFade 0.25s ease forwards"}}>
+      <style>{`
+        @keyframes barcodeLoadingFade { from{opacity:0} to{opacity:1} }
+        @keyframes barcodeLoadingPulse {
+          0%,100% { transform: scale(1);    opacity: 1;    filter: drop-shadow(0 0 0 rgba(74,222,128,0)); }
+          50%     { transform: scale(1.06); opacity: 0.92; filter: drop-shadow(0 0 18px rgba(74,222,128,0.35)); }
+        }
+        @keyframes barcodeLoadingStatus { from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:translateY(0)} }
+      `}</style>
+
+      <div style={{animation: phase === "loading" ? "barcodeLoadingPulse 1.6s ease-in-out infinite" : "none",
+                   marginBottom: 28}}>
+        <svg width="96" height="96" viewBox="0 0 44 44">
+          <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
+          <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
+          <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
+          <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
+          <circle cx="37" cy="8"  r="2.5" fill="#4ade80" opacity="0.8"/>
+          <circle cx="39" cy="24" r="1.8" fill="#4ade80" opacity="0.5"/>
+          <circle cx="5"  cy="14" r="2"   fill="#86efac" opacity="0.6"/>
+          <circle cx="4"  cy="28" r="1.5" fill="#4ade80" opacity="0.45"/>
+          <circle cx="28" cy="4"  r="1.8" fill="#86efac" opacity="0.55"/>
+        </svg>
+      </div>
+
+      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22,
+                   color:"#f0fdf4", letterSpacing:"-0.3px", marginBottom:12}}>
+        Partiqule
+      </div>
+
+      {phase === "loading" ? (
+        <div key={statusText}
+             style={{fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:15,
+                     color:"#6ee7b7", opacity:0.9, letterSpacing:"0.01em",
+                     animation:"barcodeLoadingStatus 0.3s ease forwards"}}>
+          {statusText}
+        </div>
+      ) : (
+        <div style={{maxWidth:340, textAlign:"center"}}>
+          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:17,
+                       color:"#f0fdf4", marginBottom:8}}>
+            We couldn't find this product
+          </div>
+          <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#6ee7b7",
+                       opacity:0.75, marginBottom:24, lineHeight:1.5}}>
+            The barcode didn't match any of our ingredient sources.
+          </div>
+          <button onClick={onRetry}
+            style={{width:"100%", padding:"14px 16px",
+                    background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
+                    border:"none", borderRadius:12, fontFamily:"'Outfit',sans-serif",
+                    fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10,
+                    boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
+            Try scanning again
+          </button>
+          <label style={{display:"block", width:"100%", cursor:"pointer"}}>
+            <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+              onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; onPhoto(f);}}/>
+            <div style={{width:"100%", padding:"12px 16px", background:"transparent",
+                         color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)",
+                         borderRadius:12, fontFamily:"'Outfit',sans-serif",
+                         fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box"}}>
+              Take a photo instead
+            </div>
+          </label>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ShareCompareCard = ({result, alternative, onClose}) => {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("idle");
@@ -6977,6 +7068,8 @@ function App() {
   const saveAuditSession = (s)=>{setAuditSession(s);try{if(s)localStorage.setItem("ps_audit_session",JSON.stringify(s));else localStorage.removeItem("ps_audit_session");}catch{}};
   const startAuditSession = (type)=>{const config=AUDIT_TYPES[type];if(!config)return;const session={id:`local-${Date.now()}`,type,label:config.label,color:config.color,categories:config.categories,items:[],startedAt:new Date().toISOString(),status:"active"};saveAuditSession(session);setAuditSessionVisible(true);setResult(null);setPage("home");};
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  // Branded loading phase between barcode detection and result. null | "loading" | "error".
+  const [barcodeLoadingPhase, setBarcodeLoadingPhase] = useState(null);
   const [textOnlyBlocked, setTextOnlyBlocked] = useState(false); // backend 422 cannot_score_from_text_only — prompt user to scan
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
@@ -7436,7 +7529,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
+  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -9802,14 +9895,17 @@ function App() {
           onClose={() => setShowBarcodeScanner(false)}
           onBarcode={async (barcode) => {
             setShowBarcodeScanner(false);
-            setLoading(true);
+            setBarcodeLoadingPhase("loading");
             setTextOnlyBlocked(false);
             setQuery("Scanning barcode…");
             setRevealDone(false);
             setResult(null);
+            const started = Date.now();
+            const MIN_DISPLAY_MS = 2000;
+            const TIMEOUT_MS = 5000;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
             try {
-              const controller = new AbortController();
-              const timeout = setTimeout(() => controller.abort(), 30000);
               const resp = await fetch(`${API_BASE}/barcode`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -9819,14 +9915,18 @@ function App() {
               clearTimeout(timeout);
               if (!resp.ok) throw new Error(`Server error ${resp.status}`);
               const data = await resp.json();
-              // Graceful fallback — barcode not in any product database
+              // Graceful fallback — barcode not in any product database. Stay in the loading overlay and surface the error phase.
               if (data.fallback_required) {
-                setLoading(false);
+                const elapsed = Date.now() - started;
+                if (elapsed < MIN_DISPLAY_MS) await new Promise(r => setTimeout(r, MIN_DISPLAY_MS - elapsed));
+                setBarcodeLoadingPhase("error");
                 setQuery("");
-                setError("Barcode not recognised. Tap the camera button to photograph the label, or type the product name.");
                 try { track("Barcode Fallback", {barcode, origin: data.origin_country || "unknown"}); } catch {}
                 return;
               }
+              const elapsed = Date.now() - started;
+              if (elapsed < MIN_DISPLAY_MS) await new Promise(r => setTimeout(r, MIN_DISPLAY_MS - elapsed));
+              setBarcodeLoadingPhase(null);
               setQuery(data.product_name || barcode);
               setResult(data);
               saveToHistory(data);
@@ -9840,17 +9940,25 @@ function App() {
                 }
               }
             } catch(err) {
-              setError(err.name === "AbortError"
-                ? "Scan timed out. Please try again."
-                : "Barcode lookup failed. Try typing the product name instead.");
-            } finally {
-              setLoading(false);
+              clearTimeout(timeout);
+              const elapsed = Date.now() - started;
+              if (elapsed < MIN_DISPLAY_MS) await new Promise(r => setTimeout(r, MIN_DISPLAY_MS - elapsed));
+              setBarcodeLoadingPhase("error");
             }
           }}
           onPhoto={async (file) => {
             setShowBarcodeScanner(false);
             await handleImageScan(file);
           }}
+        />
+      )}
+
+      {/* BARCODE LOADING / ERROR overlay — 2s minimum display, 5s timeout */}
+      {barcodeLoadingPhase && (
+        <BarcodeLoadingView
+          phase={barcodeLoadingPhase}
+          onRetry={() => { setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
+          onPhoto={async (file) => { setBarcodeLoadingPhase(null); await handleImageScan(file); }}
         />
       )}
 

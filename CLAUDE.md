@@ -480,6 +480,30 @@ Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the 
 
 ---
 
+## Barcode Loading Screen
+
+Between barcode detection and result render, the app shows a dedicated branded overlay (`BarcodeLoadingView` in `App.jsx`) instead of the generic GlobeLoading overlay. This replaces the jarring transition from scan view → result with an intentional branded moment.
+
+State: `barcodeLoadingPhase` — `null` (hidden) | `"loading"` | `"error"`.
+
+Timing contract (enforced inside the `onBarcode` handler, not inside the component):
+- **Minimum display: 2000ms.** If the `/barcode` API returns sooner, the handler awaits `MIN_DISPLAY_MS - elapsed` before clearing the phase and rendering the result.
+- **Timeout: 5000ms.** `AbortController.abort()` fires at 5s; the catch block surfaces the error phase (after the 2s minimum).
+- If the API returns after 2s but before 5s, the result renders immediately.
+
+Status text phases (cycle based on elapsed time inside the component):
+- `0–700ms` → "Reading barcode..."
+- `700–1400ms` → "Finding product..."
+- `1400ms+` → "Checking ingredients..."
+
+Error phase is triggered by: (1) fetch timeout via AbortError, (2) non-2xx response, (3) `fallback_required: true` in the response body (barcode not in any Pass 0 source). Error shows "We couldn't find this product" with two buttons: "Try scanning again" (reopens `BarcodeScannerView`) and "Take a photo instead" (hidden `<input type="file" capture="environment">` routing into `handleImageScan`). No generic red error banner — the overlay owns the entire error UX.
+
+Visuals: forest green `#052e16` background (matches Score color system), Partiqule leaf logo (same SVG used in scan header / footer) at 96×96 with a 1.6s `barcodeLoadingPulse` scale+drop-shadow animation, Outfit font throughout, no emoji. Z-index 9998 (under `BarcodeScannerView` at 9999 so a retry can layer on top).
+
+Not applied to text-query path or image-scan path — those continue to use `GlobeLoading` via the existing `loading` / `showOverlay` effect (see `App.jsx` ~6842). The barcode path is self-contained and does not touch `setLoading`.
+
+---
+
 ## Brand Partnerships
 
 - **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links
