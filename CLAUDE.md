@@ -351,6 +351,20 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 
 ---
 
+## flagDetection Integration
+
+Deterministic substance detection is integrated into Pass 1 scoring. The AI cannot contradict findings from `backend/flagDetection.js`.
+
+- Pre-AI: when ingredient text is available (barcode via OFF), `detectFlags` runs before pass1 and confirmed substances are injected into the prompt as `DETERMINISTIC FLAGS DETECTED`.
+- Post-AI: `detectFlags` runs again on the AI-captured `ingredient_list`. `validateAIResponse` compares AI-claimed substances to the deterministic set. `mergeFlags` merges deterministic findings into `p1.harmful_chemicals` and appends any AI-missed findings to `p1.raw_concerns` so `applySubstanceFloors` picks them up.
+- Disagreements are logged with structured data under `[flag_detection_override]` for audit.
+
+Feature flag: `FLAG_DETECTION_ENABLED` (Railway env var).
+- Default: enabled.
+- To disable: set `FLAG_DETECTION_ENABLED=false` in Railway.
+
+Diff endpoint: `POST /admin/flag-detection-diff` with `{ productName }` in body. Returns `oldScore`, `newScore`, `oldConcerns`, `newConcerns`, `deterministicFlags`, `aiInconsistencies`. Use to sanity-check behavior on known products before trusting the pipeline at scale.
+
 ## Brand Partnerships
 
 - **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links

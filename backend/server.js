@@ -4,6 +4,16 @@ const cors    = require("cors");
 const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 const { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP } = require("./calibration");
+const {
+  detectFlags: detectDeterministicFlags,
+  validateAIResponse: validateDeterministicFlags,
+  mergeFlags: mergeDeterministicFlags,
+} = require("./flagDetection");
+
+// ── FLAG DETECTION FEATURE FLAG ────────────────────────────────
+// Toggles the flagDetection integration off without a redeploy. Set
+// FLAG_DETECTION_ENABLED=false in Railway to fall back to AI-only behavior.
+const FLAG_DETECTION_ENABLED = process.env.FLAG_DETECTION_ENABLED !== "false";
 
 // ── CALIBRATION OVERRIDES ─────────────────────────────────────
 // Admin can add/edit calibration entries via Supabase without a code deploy.
@@ -719,6 +729,63 @@ const NEGATION_PHRASES = [
 // Food category sets — used by substance floors, positive ceilings, and alternative filters
 const FOOD_CATEGORIES_SET = new Set(["food", "beverage", "restaurant", "supplement", "food_beverage"]);
 const NON_FOOD_CATEGORIES_SET = new Set(["clothing", "personal_care", "toy", "accessory", "home", "baby", "kitchen", "home_furnishing", "other"]);
+
+// ── DETERMINISTIC FLAG DETECTION HELPERS ──────────────────────
+// Build the prompt section that hands deterministic findings to the AI. The AI
+// cannot claim a listed substance is absent — scoring must incorporate them.
+function buildDeterministicFlagSection(flags) {
+  if (!FLAG_DETECTION_ENABLED) return "";
+  if (!flags || !flags.summary || flags.summary.length === 0) return "";
+  return `\nDETERMINISTIC FLAGS DETECTED: ${flags.summary.join(", ")}\nThese substances are confirmed present in the ingredient list. Your scoring must incorporate these findings. You cannot claim the product is free of any substance listed above.\n`;
+}
+
+// Runs deterministic detection against AI-returned ingredients plus any pre-AI
+// ingredient text (OFF barcode, web search). Validates AI substance claims,
+// logs divergence, and merges deterministic findings into p1 so downstream
+// scoring (applySubstanceFloors, result shaping) sees them.
+function applyFlagDetectionToP1(p1, preIngredientText, category, ctx) {
+  if (!FLAG_DETECTION_ENABLED || !p1) return null;
+
+  const aiIngredientText = Array.isArray(p1.ingredient_list) ? p1.ingredient_list.join(", ") : "";
+  const combinedText = [preIngredientText || "", aiIngredientText].filter(Boolean).join("\n");
+  if (!combinedText.trim()) return null;
+
+  const effectiveCategory = p1.category || category || null;
+  const deterministic = detectDeterministicFlags(combinedText, effectiveCategory);
+
+  const aiSubstances = [
+    ...(Array.isArray(p1.harmful_chemicals) ? p1.harmful_chemicals : []),
+    ...(Array.isArray(p1.materials?.concerns) ? p1.materials.concerns : []),
+  ];
+  const validation = validateDeterministicFlags(aiSubstances, deterministic);
+
+  if (!validation.consistent) {
+    console.log("[flag_detection_override]", JSON.stringify({
+      context: ctx || "scan",
+      product: p1.product_name || null,
+      category: effectiveCategory,
+      ai_claimed: aiSubstances,
+      deterministic_found: deterministic.summary,
+      missing_from_ai: validation.missingFromAI,
+      extra_in_ai: validation.extraInAI,
+    }));
+  }
+
+  const merged = mergeDeterministicFlags(aiSubstances, deterministic);
+  p1.harmful_chemicals = merged;
+
+  // Append any deterministic findings the AI didn't mention to raw_concerns so
+  // applySubstanceFloors picks them up. Floor triggers read raw_concerns text.
+  if (validation.missingFromAI.length > 0) {
+    const rawConcerns = Array.isArray(p1.raw_concerns) ? [...p1.raw_concerns] : [];
+    for (const missing of validation.missingFromAI) {
+      rawConcerns.push(`${missing} (deterministic detection)`);
+    }
+    p1.raw_concerns = rawConcerns;
+  }
+
+  return { deterministic, validation, merged };
+}
 
 // Apply substance floors directly to a raw ingredient text string (e.g. from Open Food Facts).
 // Used by the barcode endpoint BEFORE the AI runs, so code-enforced floors are honored
@@ -1625,7 +1692,7 @@ SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a g
   }
 }
 
-async function pass1(productName, materialContext = null, categoryHint = null) {
+async function pass1(productName, materialContext = null, categoryHint = null, deterministicFlags = null) {
   const contextSection = materialContext
     ? `\nREAL PRODUCT DATA FROM WEB SEARCH (use this as ground truth for materials):\n${materialContext}\n`
     : "";
@@ -1633,6 +1700,7 @@ async function pass1(productName, materialContext = null, categoryHint = null) {
     ? `\nCATEGORY HINT: This product has been pre-classified as "${categoryHint}". Use this as your category. Populate the product_analysis field fully using the category-specific concern types.${categoryHint === "restaurant" ? " This is a restaurant menu item — you MUST populate the product_analysis field including nutrition using the chain's official published nutrition data. Set nutrition_verified: true only if you are confident in the exact values, false if estimating." : ""}\n`
     : "";
   const regulatorySection = buildRegulatoryContext(categoryHint || "general");
+  const deterministicSection = buildDeterministicFlagSection(deterministicFlags);
 
   return callClaude(
     `You are a senior research scientist specializing in polymer chemistry, toxicology, consumer product safety, and environmental impact. Your scores are grounded in peer-reviewed science. Always respond with raw JSON only — no markdown, no preamble. CRITICAL: Never use apostrophes or single quotes inside JSON string values. Use plain text without contractions.
@@ -1680,7 +1748,7 @@ Neurotoxic concerns warrant higher scores because neurological damage is often i
 PACKAGING-ONLY PLASTIC: If a product is genuinely plastic-free but has incidental packaging (film pouch, wrapper, cap) that is discarded during use, the packaging score should be 2-4. Do NOT let discarded packaging dominate the materials score. Example: Blueland tablet in film pouch = materials score 1, packaging score 3.`,
 
     `Analyze "${productName}" across 5 dimensions: Materials, Usage and Exposure, Packaging, Sustainability, and Manufacturing.
-${contextSection}${categorySection}${regulatorySection}
+${contextSection}${categorySection}${regulatorySection}${deterministicSection}
 If this is a barcode, identify the most likely consumer product and analyze that.
 If real product data is provided above, use it as ground truth. Do not assume plastic if confirmed natural.
 
@@ -4648,6 +4716,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const productName = p1.product_name || "Scanned product";
       const category = p1.category || "other";
 
+      // ── Deterministic flag detection on vision-captured ingredients ──
+      // Vision has no pre-AI ingredient text — the AI extracts it from the label.
+      applyFlagDetectionToP1(p1, "", category, "vision");
+
       // ── Check cache AFTER vision identifies product name ──
       // Camera scan of Goldfish = text scan of "Goldfish crackers" — same result
       const imgKey = cacheKey(productName, category);
@@ -4977,6 +5049,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
     ]);
     materialContext = searchResult;
     if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
+
+    // ── Deterministic flag detection on AI-captured ingredients (post-AI) ──
+    // No pre-AI ingredient text in the text path — AI is what produces the list.
+    applyFlagDetectionToP1(p1, materialContext || "", category, "text");
 
     // Skip pass2 when pass1 is high confidence AND has real dimension scores
     // (not flat 5s). Saves ~20s latency and 1 API call per scan.
@@ -5694,6 +5770,81 @@ app.delete("/admin/calibration", requireAdmin, async (req, res) => {
   } catch (e) {
     console.error("[CALIBRATION] delete error:", e.message);
     res.status(500).json({ error: "Failed to delete calibration override" });
+  }
+});
+
+// ── Flag detection diff — compare AI-only vs AI+deterministic for a product ──
+// POST with { productName } — runs pass1 once, computes scores with and
+// without the flagDetection overlay. Use to sanity-check behavior on known
+// products before trusting the integration at scale.
+app.post("/admin/flag-detection-diff", requireAdmin, async (req, res) => {
+  const productName = req.body?.productName;
+  if (!productName || typeof productName !== "string" || productName.length > 300) {
+    return res.status(400).json({ error: "productName (string) required" });
+  }
+
+  try {
+    const category = detectCategory(productName) || "other";
+
+    // Run pass1 ONCE without deterministic flags — this is the "old" behavior.
+    const p1 = await pass1(productName, null, category, null);
+    const aiSubstances = [
+      ...(Array.isArray(p1.harmful_chemicals) ? p1.harmful_chemicals : []),
+      ...(Array.isArray(p1.materials?.concerns) ? p1.materials.concerns : []),
+    ];
+
+    // Old scores: apply existing substance floors against AI-only output.
+    let mOld  = p1.materials?.score      ?? 5;
+    let uOld  = p1.usage_exposure?.score ?? 5;
+    const pkOld = p1.packaging?.score    ?? 5;
+    const sOld  = p1.sustainability?.score ?? 5;
+    const oldFloors = applySubstanceFloors(mOld, uOld, p1, null);
+    mOld = oldFloors.mScore;
+    uOld = oldFloors.uScore;
+    const oldScore = computeScore(mOld, uOld, pkOld, sOld, p1.category || category);
+
+    // Run deterministic detection on AI-captured ingredient_list.
+    const ingredientText = Array.isArray(p1.ingredient_list) ? p1.ingredient_list.join(", ") : "";
+    const deterministic = detectDeterministicFlags(ingredientText, p1.category || category);
+    const validation = validateDeterministicFlags(aiSubstances, deterministic);
+    const merged = mergeDeterministicFlags(aiSubstances, deterministic);
+
+    // New scores: append missing deterministic findings to raw_concerns so the
+    // floor matcher picks them up, then recompute.
+    const p1Augmented = { ...p1, harmful_chemicals: merged };
+    if (validation.missingFromAI.length > 0) {
+      const raw = Array.isArray(p1.raw_concerns) ? [...p1.raw_concerns] : [];
+      for (const m of validation.missingFromAI) raw.push(`${m} (deterministic detection)`);
+      p1Augmented.raw_concerns = raw;
+    }
+    let mNew = p1.materials?.score      ?? 5;
+    let uNew = p1.usage_exposure?.score ?? 5;
+    const newFloors = applySubstanceFloors(mNew, uNew, p1Augmented, null);
+    mNew = newFloors.mScore;
+    uNew = newFloors.uScore;
+    const newScore = computeScore(mNew, uNew, pkOld, sOld, p1.category || category);
+
+    res.json({
+      productName,
+      category: p1.category || category,
+      oldScore,
+      oldConcerns: aiSubstances,
+      newScore,
+      newConcerns: merged,
+      changed: oldScore !== newScore || JSON.stringify(aiSubstances) !== JSON.stringify(merged),
+      deterministicFlags: deterministic.summary,
+      aiInconsistencies: {
+        consistent: validation.consistent,
+        missingFromAI: validation.missingFromAI,
+        extraInAI: validation.extraInAI,
+      },
+      oldFloorsTriggered: oldFloors.triggered,
+      newFloorsTriggered: newFloors.triggered,
+      flagDetectionEnabled: FLAG_DETECTION_ENABLED,
+    });
+  } catch (e) {
+    console.error("[flag-detection-diff] error:", e.message);
+    res.status(500).json({ error: "diff failed" });
   }
 });
 
@@ -6797,8 +6948,17 @@ app.post("/barcode", rateLimit, async (req, res) => {
   console.log(`[BARCODE] "${productName}" — running AI with OFF ingredient context`);
 
   try {
+    // ── Pre-AI deterministic flag detection (barcode has exact ingredients from OFF) ──
+    const preDetected = FLAG_DETECTION_ENABLED && ingredText
+      ? detectDeterministicFlags(ingredText, cat)
+      : null;
+
     // ── Full AI pipeline — same as text scan but with exact ingredients ──
-    const p1 = await pass1(productName, offContext, cat);
+    const p1 = await pass1(productName, offContext, cat, preDetected);
+
+    // ── Post-AI validation + merge ──
+    applyFlagDetectionToP1(p1, ingredText, cat, "barcode");
+
     let p2 = null;
     try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[BARCODE] pass2 failed:", e.message); }
 
