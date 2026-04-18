@@ -399,6 +399,13 @@ Barcode path (`/barcode`) and image path (`/analyze` with image) continue to wor
 
 Client-side handling: frontend should treat HTTP 422 with `error: "cannot_score_from_text_only"` as a prompt to show the camera / barcode scanner. The `userAction: "show_camera_prompt"` field is the contract.
 
+Frontend UX pattern (implemented in `App.jsx` `analyze()` and home view):
+- On 422 with `error: "cannot_score_from_text_only"`, `analyze()` sets the `textOnlyBlocked` flag, forces `page="home"`, and exits without setting `error`. This suppresses the generic red error banner.
+- The home view renders a forest-green scan prompt card (`#052e16`, Outfit font) titled "Let's see the label" with subtitle "To give you an accurate score, we need to read the actual ingredients on the package."
+- Primary button "Scan barcode" opens the full-screen `BarcodeScannerView` (native ML Kit on Capacitor, `BarcodeDetector`/ZXing on web).
+- Secondary button "Take a photo" is a hidden `<input type="file" capture="environment">` wrapped in a label, routing into the same `handleImageScan` flow used by the scan sheet.
+- `textOnlyBlocked` is cleared by `reset()`, at the start of `analyze()`, at the start of `handleImageScan()`, and in the barcode `onBarcode` handler — any fresh scan intent dismisses the prompt.
+
 ---
 
 ## Brand Partnerships

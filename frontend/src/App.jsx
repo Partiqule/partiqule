@@ -6977,6 +6977,7 @@ function App() {
   const saveAuditSession = (s)=>{setAuditSession(s);try{if(s)localStorage.setItem("ps_audit_session",JSON.stringify(s));else localStorage.removeItem("ps_audit_session");}catch{}};
   const startAuditSession = (type)=>{const config=AUDIT_TYPES[type];if(!config)return;const session={id:`local-${Date.now()}`,type,label:config.label,color:config.color,categories:config.categories,items:[],startedAt:new Date().toISOString(),status:"active"};saveAuditSession(session);setAuditSessionVisible(true);setResult(null);setPage("home");};
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [textOnlyBlocked, setTextOnlyBlocked] = useState(false); // backend 422 cannot_score_from_text_only — prompt user to scan
   const [modalQuery,  setModalQuery] = useState("");
   // ── Scan counter + subscription ───────────────────────────────
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
@@ -7326,14 +7327,24 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setResult(null); setRevealDone(false);
+    setLoading(true); setError(null); setTextOnlyBlocked(false); setResult(null); setRevealDone(false);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
       const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim(), userId: user?.id || null}),signal:controller.signal});
       clearTimeout(timeout);
-      if (!res.ok){const e=await res.json(); throw new Error(e.error||`Error ${res.status}`);}
+      if (!res.ok){
+        const e = await res.json().catch(() => ({}));
+        if (res.status === 422 && e.error === "cannot_score_from_text_only") {
+          setTextOnlyBlocked(true);
+          setPage("home");
+          setLoading(false);
+          track("Text Only Blocked", { product: q.trim() });
+          return;
+        }
+        throw new Error(e.error || `Error ${res.status}`);
+      }
       const data = await res.json();
       setResult(data); saveToHistory(data);
       if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
@@ -7424,7 +7435,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
+  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setModalQuery(""); setPendingRoomTag(null);};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -7436,7 +7447,7 @@ function App() {
       return;
     }
     setShowScanModal(false); setScanSheetOpen(false);
-    setResult(null); setError(null); setPage("home");
+    setResult(null); setError(null); setTextOnlyBlocked(false); setPage("home");
     setLoading(true); setQuery("Reading label..."); setRevealDone(false); setResult(null);
     try {
       // Step 1: Try barcode detection from image (instant, no server)
@@ -8045,6 +8056,32 @@ function App() {
             </div>
           )}
 
+          {/* Scan prompt — backend returned 422 cannot_score_from_text_only. Text queries alone can't be scored because they let the AI fabricate ingredients. */}
+          {textOnlyBlocked && (
+            <div style={{maxWidth:520, margin:`${isMobile?"96px":"112px"} auto 24px`, padding:"0 20px"}}>
+              <div style={{background:"#052e16", border:"1px solid rgba(34,197,94,0.25)", borderRadius:16, padding:"24px 20px", boxShadow:"0 4px 20px rgba(0,0,0,0.25)"}}>
+                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:20, fontWeight:800, color:"#f0fdf4", marginBottom:8, textAlign:"center", letterSpacing:"-0.2px"}}>Let's see the label</div>
+                <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:14, color:"#6ee7b7", opacity:0.85, marginBottom:20, textAlign:"center", lineHeight:1.5}}>To give you an accurate score, we need to read the actual ingredients on the package.</div>
+                <button
+                  onClick={()=>{setTextOnlyBlocked(false); setShowBarcodeScanner(true);}}
+                  style={{width:"100%", padding:"14px 16px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:12, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10, boxShadow:"0 2px 10px rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
+                  Scan barcode
+                </button>
+                <label style={{display:"block", width:"100%", cursor:"pointer"}}>
+                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                    onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; setTextOnlyBlocked(false); handleImageScan(f);}}/>
+                  <div style={{width:"100%", padding:"12px 16px", background:"transparent", color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)", borderRadius:12, fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Take a photo
+                  </div>
+                </label>
+                <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:11, color:"#6ee7b7", opacity:0.55, marginTop:16, textAlign:"center", lineHeight:1.5}}>Product names alone can't tell us the full story since formulas change over time.</div>
+              </div>
+            </div>
+          )}
+
           {/* ── RETURNING USER: compact scan bar + discovery feed ── */}
           {history.length > 0 ? (() => {
             const routineScore = Math.round(history.slice(0,20).reduce((a,h)=>a+(h.overall_score||h.score||5),0)/Math.min(history.length,20)*10)/10;
@@ -8450,7 +8487,7 @@ function App() {
             })()}
           </div>
 
-          {error&&<div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 20px"}}><div style={{padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div></div>}
+          {error&&!textOnlyBlocked&&<div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 20px"}}><div style={{padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div></div>}
 
           {/* Homepage email capture */}
           {!emailDismissed && !user && (
@@ -9703,6 +9740,7 @@ function App() {
           onBarcode={async (barcode) => {
             setShowBarcodeScanner(false);
             setLoading(true);
+            setTextOnlyBlocked(false);
             setQuery("Scanning barcode…");
             setRevealDone(false);
             setResult(null);
