@@ -759,7 +759,9 @@ function applyFlagDetectionToP1(p1, preIngredientText, category, ctx) {
   ];
   const validation = validateDeterministicFlags(aiSubstances, deterministic);
 
-  if (!validation.consistent) {
+  // Only log when deterministic found something AI missed. extraInAI is
+  // typically AI narrative concerns the deterministic layer cannot evaluate.
+  if (validation.missingFromAI.length > 0) {
     console.log("[flag_detection_override]", JSON.stringify({
       context: ctx || "scan",
       product: p1.product_name || null,
