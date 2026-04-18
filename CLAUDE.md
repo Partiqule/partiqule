@@ -488,13 +488,14 @@ State: `barcodeLoadingPhase` — `null` (hidden) | `"loading"` | `"error"`.
 
 Timing contract (enforced inside the `onBarcode` handler, not inside the component):
 - **Minimum display: 2000ms.** If the `/barcode` API returns sooner, the handler awaits `MIN_DISPLAY_MS - elapsed` before clearing the phase and rendering the result.
-- **Timeout: 5000ms.** `AbortController.abort()` fires at 5s; the catch block surfaces the error phase (after the 2s minimum).
-- If the API returns after 2s but before 5s, the result renders immediately.
+- **Timeout: 60000ms.** `AbortController.abort()` fires at 60s; the catch block surfaces the error phase (after the 2s minimum). Full pipeline (Pass 0 OFF fetch + Pass 1 + Pass 2 + floors/consistency) realistically takes 10–30s on cache-miss, so anything under ~45s is expected latency, not failure. 5s was the original value and caused every cache-miss to land in the error phase; do not lower this without confirming real pipeline latency.
+- If the API returns after 2s but before 60s, the result renders immediately.
 
 Status text phases (cycle based on elapsed time inside the component):
-- `0–700ms` → "Reading barcode..."
-- `700–1400ms` → "Finding product..."
-- `1400ms+` → "Checking ingredients..."
+- `0–1500ms` → "Reading barcode..."
+- `1500–4000ms` → "Finding product..."
+- `4000–10000ms` → "Analyzing ingredients..."
+- `10000ms+` → "Almost there..."
 
 Error phase is triggered by: (1) fetch timeout via AbortError, (2) non-2xx response, (3) `fallback_required: true` in the response body (barcode not in any Pass 0 source). Error shows "We couldn't find this product" with two buttons: "Try scanning again" (reopens `BarcodeScannerView`) and "Take a photo instead" (hidden `<input type="file" capture="environment">` routing into `handleImageScan`). No generic red error banner — the overlay owns the entire error UX.
 

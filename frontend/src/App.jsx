@@ -462,11 +462,13 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
     return () => clearInterval(id);
   }, [phase]);
 
-  const statusText = elapsed < 700
+  const statusText = elapsed < 1500
     ? "Reading barcode..."
-    : elapsed < 1400
+    : elapsed < 4000
     ? "Finding product..."
-    : "Checking ingredients...";
+    : elapsed < 10000
+    ? "Analyzing ingredients..."
+    : "Almost there...";
 
   return (
     <div style={{position:"fixed", inset:0, zIndex:9998, background:"#052e16",
@@ -9902,7 +9904,7 @@ function App() {
             setResult(null);
             const started = Date.now();
             const MIN_DISPLAY_MS = 2000;
-            const TIMEOUT_MS = 5000;
+            const TIMEOUT_MS = 60000;
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
             try {
