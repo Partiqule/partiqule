@@ -317,7 +317,7 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 
 Pass 1 does not have a single ingredient source — it varies by entry point:
 
-- **Text path** (`/analyze` with `query`): `pass1(productName, null, category)` — no ingredient data. AI fabricates `ingredient_list` from training priors. **KNOWN BUG**: reformulated products (e.g. Danimals dropped artificial dyes ~2022) still produce old-formulation ingredient lists. Fix is out of scope for calibration-only hotfixes — needs a Pass 0 ingredient lookup or a prompt change that forbids fabrication when no ground truth is available.
+- **Text path** (`/analyze` with `query`): DISABLED as of 2026-04-18. Returns `cannot_score_from_text_only` error. Cache and fuzzy-calibration hits still return (pre-verified scores), but the AI fallback (`pass1(productName, null, category)`) is gated behind `ALLOW_TEXT_PATH_SCORING` because it fabricated ingredient lists from training priors. See "Text Path Scoring Disabled" section below.
 - **Vision path** (`/analyze` with `image`): `callClaudeVision` reads the label from pixels. LABEL TRUTH RULE in the vision system prompt tries to prevent AI priors from overriding visible text, but the risk is not eliminated.
 - **Barcode path** (`/barcode`): Open Food Facts `ingredients_text_en` is injected into pass1 as ground truth via `offContext`. Safest path; only works for products OFF indexes.
 
@@ -382,6 +382,24 @@ Feature flag: `FLAG_DETECTION_ENABLED` (Railway env var).
 - To disable: set `FLAG_DETECTION_ENABLED=false` in Railway.
 
 Diff endpoint: `POST /admin/flag-detection-diff` with `{ productName }` in body. Returns `oldScore`, `newScore`, `oldConcerns`, `newConcerns`, `deterministicFlags`, `aiInconsistencies`. Use to sanity-check behavior on known products before trusting the pipeline at scale.
+
+---
+
+## Text Path Scoring Disabled
+
+Text-only queries (product name without image or barcode) are currently disabled to prevent AI ingredient fabrication. The `/analyze` endpoint returns `cannot_score_from_text_only` error when called without image data or barcode.
+
+Feature flag: `ALLOW_TEXT_PATH_SCORING` (Railway env var)
+- Default: false (disabled)
+- Only re-enable after Pass 0 ingredient resolution layer is built and provides reliable ingredient ground truth.
+
+This was disabled on 2026-04-18 after discovering the text path was producing fabricated ingredients for products like Danimals Strawberry Smoothie. The AI was inventing ingredient lists from training priors rather than reading real data.
+
+Barcode path (`/barcode`) and image path (`/analyze` with image) continue to work normally. Only the text-only query path is affected. Cache hits and fuzzy-calibration hits on text queries still return (those are pre-verified scores, not AI-fabricated).
+
+Client-side handling: frontend should treat HTTP 422 with `error: "cannot_score_from_text_only"` as a prompt to show the camera / barcode scanner. The `userAction: "show_camera_prompt"` field is the contract.
+
+---
 
 ## Brand Partnerships
 

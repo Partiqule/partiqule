@@ -15,6 +15,13 @@ const {
 // FLAG_DETECTION_ENABLED=false in Railway to fall back to AI-only behavior.
 const FLAG_DETECTION_ENABLED = process.env.FLAG_DETECTION_ENABLED !== "false";
 
+// ── TEXT PATH SCORING FEATURE FLAG ─────────────────────────────
+// Text-only queries (product name without image or barcode) ask Pass 1 to
+// analyze a product it cannot see, which fabricates ingredient lists from
+// training priors. Disabled by default until a Pass 0 ingredient resolution
+// layer is built. Set ALLOW_TEXT_PATH_SCORING=true in Railway to re-enable.
+const ALLOW_TEXT_PATH_SCORING = process.env.ALLOW_TEXT_PATH_SCORING === "true";
+
 // ── CALIBRATION OVERRIDES ─────────────────────────────────────
 // Admin can add/edit calibration entries via Supabase without a code deploy.
 // Overrides are merged into the in-memory CALIBRATION Map at boot and after
@@ -5027,6 +5034,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
   }
 
   console.log(`[CACHE MISS] ${key} — running AI pass`);
+
+  // ── Text-path scoring gate ──
+  // Pass 1 without image data fabricates ingredient lists from training priors.
+  // Block the AI pass until a Pass 0 ingredient resolution layer is built.
+  // Cache and fuzzy-calibration paths above remain live — only the AI fallback is gated.
+  if (!ALLOW_TEXT_PATH_SCORING) {
+    log.info("text_path_blocked", { productName, userId });
+    return res.status(422).json({
+      success: false,
+      error: "cannot_score_from_text_only",
+      message: "We need to see the ingredient label to score this product accurately. Please scan the barcode or take a photo of the ingredient list.",
+      userAction: "show_camera_prompt",
+    });
+  }
 
   try {
 
