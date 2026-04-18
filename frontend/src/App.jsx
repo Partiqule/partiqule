@@ -9702,13 +9702,20 @@ function App() {
             <div onClick={()=>setScanSheetOpen(false)} style={{position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.5)"}}/>
             <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:isDark?"#1e2433":"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
               <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 20px"}}/>
-              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center"}}>Scan a product</div>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
-                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
+              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'Outfit',sans-serif"}}>Scan a product</div>
+              <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
+                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
                 <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                 </div>
-                <div><div style={{fontSize:15, fontWeight:700, color:text}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label or barcode</div></div>
+                <div><div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
+              </div>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
+                <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'Outfit',sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
               </label>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>

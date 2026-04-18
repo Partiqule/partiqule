@@ -406,6 +406,8 @@ Frontend UX pattern (implemented in `App.jsx` `analyze()` and home view):
 - Secondary button "Take a photo" is a hidden `<input type="file" capture="environment">` wrapped in a label, routing into the same `handleImageScan` flow used by the scan sheet.
 - `textOnlyBlocked` is cleared by `reset()`, at the start of `analyze()`, at the start of `handleImageScan()`, and in the barcode `onBarcode` handler — any fresh scan intent dismisses the prompt.
 
+Scan bottom sheet (the FAB-triggered sheet at `scanSheetOpen`) also exposes "Scan barcode" as its primary option, so users who open the sheet without first hitting a `textOnlyBlocked` state can still reach `BarcodeScannerView` directly. Order in the sheet: Scan barcode (primary, green), Take a photo (secondary), Choose from library (secondary), then the type-name input. Barcode scanning itself is unchanged — the sheet just wires a new entry point to the existing `setShowBarcodeScanner(true)` trigger, which branches internally between ML Kit (Capacitor) and `BarcodeDetector` / `@zxing/browser` (web).
+
 ---
 
 ## Pass 0 Ingredient Resolution
