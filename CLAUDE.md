@@ -444,6 +444,40 @@ Every resolution emits a structured log: `[pass0_resolution] {"productName":...,
 
 ---
 
+## Ingredient Source Display
+
+Every scan result surfaces a small "credibility" line below the Full ingredient list and above the dimension dropdowns (where flagged substances appear). It tells the user where the ingredient list came from so the score is auditable rather than opaque.
+
+Source → copy mapping (from `result.ingredient_source`):
+- `open_food_facts` → "Verified via Open Food Facts"
+- `open_beauty_facts` → "Verified via Open Beauty Facts"
+- `open_products_facts` → "Verified via Open Products Facts"
+- `supabase_scans` → "From a previous Partiqule scan"
+- `vision_ocr` → "Read from your photo"
+- `none` → "Ingredients unverified"
+
+Confidence styling (from `result.ingredient_confidence`):
+- `high` → forest green text (`#052e16` light, `#6ee7b7` dark)
+- `medium` → neutral gray (`#6b7280` light, `#9ca3af` dark)
+- `low` / `none` / unknown → subtle amber (`#b45309` light, `#fbbf24` dark)
+
+Timestamp formatting (from `result.ingredient_verified_at`, appended after `·`):
+- < 24h → "just now"
+- < 7d → "1 day ago" / "N days ago"
+- otherwise → "Apr 15, 2026" (`Intl` "short, numeric, numeric")
+- null/invalid → omit the `· timeAgo` suffix entirely
+
+Tappable source: when `result.ingredient_source_url` is set, the source label becomes a `target="_blank" rel="noopener noreferrer"` anchor opening the verification URL (typically the OFF/OBF/OPF product page). When null (e.g. `supabase_scans`), it renders as plain text.
+
+Edge cases:
+- `result.ingredient_source` missing entirely (older cached scans pre-Pass 0): the entire source line is hidden — no fallback, no broken row.
+- Source key not in the mapping above: the line is hidden rather than rendering "undefined".
+- Empty `ingredient_list` does not suppress the source line — "Ingredients unverified" is still meaningful when nothing was resolved.
+
+Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the ingredient list card. Inline implementation in `App.jsx` immediately after the `INGREDIENT LIST` block.
+
+---
+
 ## Brand Partnerships
 
 - **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links

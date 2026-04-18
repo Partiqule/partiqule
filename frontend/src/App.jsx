@@ -9016,6 +9016,61 @@ function App() {
                   </div>
                 )}
 
+                {/* ── INGREDIENT SOURCE / CREDIBILITY ── */}
+                {(() => {
+                  if (!result.ingredient_source) return null;
+                  const SOURCE_LABELS = {
+                    open_food_facts:     "Verified via Open Food Facts",
+                    open_beauty_facts:   "Verified via Open Beauty Facts",
+                    open_products_facts: "Verified via Open Products Facts",
+                    supabase_scans:      "From a previous Partiqule scan",
+                    vision_ocr:          "Read from your photo",
+                    none:                "Ingredients unverified",
+                  };
+                  const label = SOURCE_LABELS[result.ingredient_source];
+                  if (!label) return null;
+                  const conf = result.ingredient_confidence;
+                  const color = conf === "high"
+                    ? (isDark ? "#6ee7b7" : "#052e16")
+                    : conf === "medium"
+                    ? (isDark ? "#9ca3af" : "#6b7280")
+                    : (isDark ? "#fbbf24" : "#b45309");
+                  let timeAgo = "";
+                  if (result.ingredient_verified_at) {
+                    const t = new Date(result.ingredient_verified_at).getTime();
+                    if (!isNaN(t)) {
+                      const diff = Date.now() - t;
+                      const day = 24 * 60 * 60 * 1000;
+                      if (diff < day) {
+                        timeAgo = "just now";
+                      } else if (diff < 7 * day) {
+                        const days = Math.floor(diff / day);
+                        timeAgo = days === 1 ? "1 day ago" : `${days} days ago`;
+                      } else {
+                        timeAgo = new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                      }
+                    }
+                  }
+                  const url = result.ingredient_source_url;
+                  return (
+                    <div style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: 12,
+                      color,
+                      marginTop: -4,
+                      marginBottom: 16,
+                      lineHeight: 1.6,
+                    }}>
+                      {url ? (
+                        <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration: "underline", cursor: "pointer"}}>
+                          {label}
+                        </a>
+                      ) : label}
+                      {timeAgo ? ` · ${timeAgo}` : ""}
+                    </div>
+                  );
+                })()}
+
                 {/* ── 5 DIMENSION DROPDOWNS ── */}
                 <div style={isMobile ? {margin:"0 -14px"} : {}}>
                 {result.dimensions ? (() => {
