@@ -7318,6 +7318,7 @@ function App() {
 
   const analyze = async (q=query) => {
     if (!q.trim()) return Promise.resolve();
+    try { document.activeElement?.blur?.(); } catch {}
     setShowScanModal(false); // always close the modal when a scan kicks off
     // ── Scan limit gate ──
     if (!isSubscribed) {
