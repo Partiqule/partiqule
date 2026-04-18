@@ -5451,24 +5451,13 @@ const supabaseAdmin = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_
   : null;
 
 // ── REGULATORY FLAGS — loaded from Supabase, injected into AI prompt ──
+// DISABLED 2026-04-18: regulatory_flags table schema collision.
+// PFAS data moved here from calibration.js. Intel cards feature
+// was relying on old schema. Will be re-enabled after rename to
+// product_safety_findings and intel cards table recreation.
 let REGULATORY_FLAGS_CACHE = [];
-async function loadRegulatoryFlags() {
-  if (!supabaseAdmin) return;
-  try {
-    const {data}=await supabaseAdmin.from("regulatory_flags").select("*").eq("active",true);
-    if(data){REGULATORY_FLAGS_CACHE=data;console.log(`[Flags] Loaded ${data.length} regulatory flags`);}
-  } catch(e){console.warn("[Flags] Load failed:",e.message);}
-}
-loadRegulatoryFlags();
-setInterval(loadRegulatoryFlags,6*60*60*1000);
-
-function buildRegulatoryContext(category) {
-  if(!REGULATORY_FLAGS_CACHE.length)return "";
-  const relevant=REGULATORY_FLAGS_CACHE.filter(f=>!f.applies_to_categories?.length||f.applies_to_categories.includes(category)||f.applies_to_categories.includes("general"));
-  if(!relevant.length)return "";
-  const lines=relevant.slice(0,15).map(f=>`- ${f.compound_name} (${f.jurisdiction}): ${f.action_type.replace(/_/g," ")} by ${f.regulatory_body}. ${f.scoring_context}`).join("\n");
-  return `\nREGULATORY CONTEXT — apply these verified findings when relevant:\n${lines}\n`;
-}
+async function loadRegulatoryFlags() { return; }
+function buildRegulatoryContext(category) { return ""; }
 
 // Create Stripe checkout session
 app.post("/create-checkout", async (req, res) => {
