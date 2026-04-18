@@ -6839,7 +6839,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
       bCached.dimensions.usage_exposure?.score === 5 &&
       bCached.dimensions.packaging?.score      === 5 &&
       bCached.dimensions.sustainability?.score === 5;
-    const bStale = !bCached.dimensions || bCached._preloaded || (noIng && noFlag && allFive);
+    const bStale = !bCached.dimensions || bCached._preloaded || bCached._warmCache || (noIng && noFlag && allFive);
     if (!bStale) {
       console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
       return res.json({ ...bCached, cached: true });
