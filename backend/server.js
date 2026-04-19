@@ -6346,7 +6346,9 @@ app.post("/api/intelligence/run", requireAdmin, async (req, res) => {
     console.log(`[Intel] Found ${allArticles.length} relevant articles`);
     if (allArticles.length === 0) return res.json({...results, message:"No relevant articles found today"});
 
-    const {data:existing} = await supabaseAdmin.from("intelligence_cards").select("source_url,headline").gte("created_at",new Date(Date.now()-14*24*60*60*1000).toISOString());
+    // Dedup only against currently-active cards so that soft-deleted and
+    // dismissed drafts do not block regeneration of their source articles.
+    const {data:existing} = await supabaseAdmin.from("intelligence_cards").select("source_url,headline").gte("created_at",new Date(Date.now()-14*24*60*60*1000).toISOString()).eq("active", true);
     const existingUrls = new Set((existing||[]).map(c=>c.source_url));
     const existingHeadlines = new Set((existing||[]).map(c=>c.headline?.toLowerCase().slice(0,30)));
     const newArticles = allArticles.filter(a=>!existingUrls.has(a.link)&&!existingHeadlines.has(a.title?.toLowerCase().slice(0,30)));
