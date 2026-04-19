@@ -209,6 +209,33 @@ const cacheSet = (key, value) => {
   saveCacheToDisk();    // async-ish file write
 };
 
+// Delete from memory + Redis. Redis del is fire-and-forget.
+const cacheDelete = (key) => {
+  scoreCache.delete(key);
+  if (hasRedis) {
+    fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    }).catch(() => {});
+  }
+};
+
+// Evict cached results that predate Pass 0 ingredient resolution.
+// These entries lack ingredient_source metadata and may contain
+// AI-fabricated ingredients (e.g. D5 flagged on a current Armani
+// Luminous Silk formula that no longer contains it). Returns true
+// if evicted so callers can fall through to fresh scoring.
+const evictIfPrePass0 = (cached, key) => {
+  if (!cached || cached.ingredient_source) return false;
+  log.info("prepass0_cache_eviction", {
+    cache_key: key,
+    product_name: cached.product_name || null,
+    created_at_if_available: cached.ingredient_verified_at || cached.scanned_at || cached.created_at || null,
+  });
+  cacheDelete(key);
+  return true;
+};
+
 // Boot sequence — load disk cache, then sync from Redis if available
 const initCache = async () => {
   loadCacheFromDisk();
@@ -4735,7 +4762,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const imgKey = cacheKey(productName, category);
       const imgCached = await cacheGet(imgKey);
       let imgSkipFuzzy = false;
-      if (imgCached) {
+      if (imgCached && evictIfPrePass0(imgCached, imgKey)) {
+        imgSkipFuzzy = true;
+      } else if (imgCached) {
         const imgNoIng  = !imgCached.ingredient_list || imgCached.ingredient_list.length === 0;
         const imgNoFlag = !imgCached.flagged_substances || imgCached.flagged_substances.length === 0;
         const imgAllFive = imgCached.dimensions &&
@@ -4970,7 +4999,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
   let skipFuzzyCalibration = false;
 
   const cached = await cacheGet(key);
-  if (cached) {
+  if (cached && evictIfPrePass0(cached, key)) {
+    skipFuzzyCalibration = true;
+  } else if (cached) {
     // Staleness check — evict entries that predate the full schema or were
     // bulk-preloaded with placeholder data (all dimensions = 5, no ingredients).
     const noIngredients = !cached.ingredient_list || cached.ingredient_list.length === 0;
@@ -6831,7 +6862,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
 
   // ── Cache check (same staleness logic as /analyze) ──
   const bCached = await cacheGet(barcodeKey);
-  if (bCached) {
+  if (bCached && evictIfPrePass0(bCached, barcodeKey)) {
+    // fall through to fresh Pass 0 + scoring
+  } else if (bCached) {
     const noIng   = !bCached.ingredient_list   || bCached.ingredient_list.length === 0;
     const noFlag  = !bCached.flagged_substances || bCached.flagged_substances.length === 0;
     const allFive = bCached.dimensions &&
@@ -6911,7 +6944,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
   const cat     = detectCategory(productName);
   const nameKey = cacheKey(productName, cat);
   const nCached = await cacheGet(nameKey);
-  if (nCached) {
+  if (nCached && evictIfPrePass0(nCached, nameKey)) {
+    // fall through to fresh scoring
+  } else if (nCached) {
     const ni = !nCached.ingredient_list   || nCached.ingredient_list.length === 0;
     const nf = !nCached.flagged_substances || nCached.flagged_substances.length === 0;
     const na = nCached.dimensions &&

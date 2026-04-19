@@ -444,6 +444,19 @@ grep pass0_resolution | jq -r '.source' | sort | uniq -c
 ```
 Every resolution emits a structured log: `[pass0_resolution] {"productName":..., "barcode":..., "source":..., "confidence":..., "duration_ms":...}`.
 
+### Pre-Pass 0 cache eviction
+
+Cached scan results that predate Pass 0 lack the `ingredient_source` field and may contain AI-fabricated ingredients from the pre-Pass-0 pipeline (motivating incident: an Armani Luminous Silk Foundation scan flagged cyclopentasiloxane, which the current formula does not contain).
+
+On every cache hit in `/analyze` (text and image) and `/barcode` (both barcode-key and name-key lookups), `evictIfPrePass0` checks whether `cached.ingredient_source` is populated. If it is falsy (null, undefined, or empty string), the entry is evicted from both memory and Redis, and the request falls through to the normal scoring pipeline. Entries with any non-empty value (`open_food_facts`, `open_beauty_facts`, `open_products_facts`, `supabase_scans`, `vision_ocr`, `none`, etc.) are served normally.
+
+Each eviction emits `log.info("prepass0_cache_eviction", { cache_key, product_name, created_at_if_available })` so prevalence can be measured in Railway logs:
+```bash
+grep prepass0_cache_eviction | wc -l
+```
+
+Consequence for the image path: fresh image-path scoring does not currently write `ingredient_source`, so image results are effectively uncached until Pass 0 gains an OCR step. This is an intentional trade — fabrication risk outweighs cache benefit. Barcode scans that land in OFF/OBF/OPF cache normally with `ingredient_source` populated.
+
 ---
 
 ## Ingredient Source Display
