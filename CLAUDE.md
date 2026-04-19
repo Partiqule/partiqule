@@ -230,7 +230,7 @@ pq_foryou                   -- For You carousel seen state by date
 - Lifestyle score card (computeLifestyleScore) -- permanent fixture between greeting and For You
 - For You intelligence carousel (generateForYouCards + ForYouCarousel) with auto-scroll
 - Live intelligence cards from RSS feed merged into For You carousel
-- Intelligence cards surfaced on relevant scan results
+- Intelligence cards surfaced on relevant scan results via product-family matching, specific-SKU fuzzy match, and (for authenticated users) 30-day scan history intersection — see "Intel Card Relevance"
 - Feed page (/feed) -- dedicated scrollable inbox of all intelligence cards with filters
 - Audit session flow (AuditSessionView) with pause/resume and completion ceremony (AuditCompleteScreen)
 - Audit type selector (5 types: pantry, beauty, home, closet, nursery)
@@ -238,7 +238,7 @@ pq_foryou                   -- For You carousel seen state by date
 - Grocery list builder with recipe ingredient expansion, swap suggestions, budget tracker, quantity controls, post-shop summary and share card
 - Shopping lists with add/check/delete items
 - Subscription: Stripe (web) + Apple IAP with Restore Purchases
-- Guides platform, admin panel with Intel Cards tab
+- Guides platform, admin panel with Intel Cards tab (per-card Retag editor for product_families, specific_products, ingredient_triggers; over-broad drafts block Approve with inline warning)
 - Bottom sheet scan modal (mobile) with camera/library/text options
 - Client-side barcode detection (BarcodeDetector API) before vision fallback
 - Service worker v2 with proper navigation fallback
