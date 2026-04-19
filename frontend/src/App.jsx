@@ -382,18 +382,8 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:20,
         padding:`${SAFE_TOP+16}px 20px 16px`,
         display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <svg width="28" height="28" viewBox="0 0 44 44">
-            <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-            <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-            <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-            <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-            <circle cx="37" cy="8" r="2.5" fill="#4ade80" opacity="0.8"/>
-            <circle cx="5" cy="14" r="2" fill="#86efac" opacity="0.6"/>
-          </svg>
-          <span style={{color:"#fff",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:18,letterSpacing:"-0.3px"}}>
-            Partiqule
-          </span>
+        <div style={{display:"flex",alignItems:"center"}}>
+          <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:26, width:"auto", objectFit:"contain", display:"block"}}/>
         </div>
         <button onClick={() => { cleanup(); onClose(); }}
           style={{width:38,height:38,borderRadius:"50%",
@@ -484,23 +474,8 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
       `}</style>
 
       <div style={{animation: phase === "loading" ? "barcodeLoadingPulse 1.6s ease-in-out infinite" : "none",
-                   marginBottom: 28}}>
-        <svg width="96" height="96" viewBox="0 0 44 44">
-          <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-          <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-          <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-          <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-          <circle cx="37" cy="8"  r="2.5" fill="#4ade80" opacity="0.8"/>
-          <circle cx="39" cy="24" r="1.8" fill="#4ade80" opacity="0.5"/>
-          <circle cx="5"  cy="14" r="2"   fill="#86efac" opacity="0.6"/>
-          <circle cx="4"  cy="28" r="1.5" fill="#4ade80" opacity="0.45"/>
-          <circle cx="28" cy="4"  r="1.8" fill="#86efac" opacity="0.55"/>
-        </svg>
-      </div>
-
-      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22,
-                   color:"#f0fdf4", letterSpacing:"-0.3px", marginBottom:12}}>
-        Partiqule
+                   marginBottom: 20}}>
+        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:60, width:"auto", display:"block"}}/>
       </div>
 
       {phase === "loading" ? (
@@ -564,16 +539,32 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
 
     const sc = (s) => s <= 3 ? "#16a34a" : s <= 5 ? "#d97706" : "#dc2626";
 
+    const renderTopBar = (logo) => {
+      ctx.fillStyle = "#052e16"; ctx.fillRect(0, 0, W, 100);
+      if (logo && logo.complete && logo.naturalWidth) {
+        const targetH = 56;
+        const aspect = logo.naturalWidth / logo.naturalHeight;
+        ctx.drawImage(logo, 48, (100 - targetH) / 2, targetH * aspect, targetH);
+      } else {
+        ctx.fillStyle = "#4ade80"; ctx.font = "800 30px 'Outfit',system-ui,sans-serif";
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText("PARTIQULE", 48, 50);
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      ctx.fillText("Product Safety Comparison", W - 48, 50);
+    };
+
     // Background
     ctx.fillStyle = "#f0fdf4"; ctx.fillRect(0, 0, W, H);
 
-    // Top bar
-    ctx.fillStyle = "#052e16"; ctx.fillRect(0, 0, W, 100);
-    ctx.fillStyle = "#4ade80"; ctx.font = "800 30px 'Outfit',system-ui,sans-serif";
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("PARTIQULE", 48, 50);
-    ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "500 22px 'DM Sans',system-ui,sans-serif";
-    ctx.textAlign = "right"; ctx.fillText("Product Safety Comparison", W - 48, 50);
+    // Top bar — text fallback drawn immediately; upgraded to wordmark image on load.
+    // Using the cached browser image on repeat opens means the upgrade is synchronous.
+    renderTopBar(null);
+    const logoImg = new Image();
+    logoImg.onload = () => renderTopBar(logoImg);
+    logoImg.onerror = () => { /* keep text fallback */ };
+    logoImg.src = "/partiqule-wordmark-1080.png";
 
     // Two card areas
     const cardY = 160, cardH = 540, gap = 40, cardW = (W - 48 * 2 - gap) / 2;
@@ -7810,9 +7801,8 @@ function App() {
       {/* HEADER */}
       <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:44, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div style={{display:"flex", alignItems:"center", gap:8, cursor:"pointer"}} onClick={reset}>
-            <img src="/logo.png" alt="Partiqule" style={{height:32, width:"auto", objectFit:"contain"}}/>
-            <span style={{fontFamily:"'Outfit', sans-serif", fontWeight:800, fontSize:isMobile?18:22, color:"#f0fdf4", letterSpacing:"-0.5px"}}>Partiqule</span>
+          <div style={{display:"flex", alignItems:"center", cursor:"pointer"}} onClick={reset}>
+            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 28 : 32, width:"auto", objectFit:"contain", display:"block"}}/>
           </div>
 
           {(isMobile || isTablet) ? (

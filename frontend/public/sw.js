@@ -1,11 +1,13 @@
-const CACHE_NAME = 'partiqule-v2';
+const CACHE_NAME = 'partiqule-v3';
 
 // Assets to cache on install — the app shell
 const PRECACHE_ASSETS = [
   '/',
+  '/favicon.ico',
   '/favicon-32.png',
   '/favicon-192.png',
   '/favicon-512.png',
+  '/partiqule-wordmark.svg',
 ];
 
 // Install — cache the app shell

@@ -171,8 +171,8 @@ ${JSON.stringify(structuredData, null, 2)}
   /* ── NAV BAR — matches main app ── */
   .nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:rgba(255,255,255,0.95)}
   .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
-  .brand{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-weight:700;font-size:22px;color:var(--text);letter-spacing:-0.3px}
-  .brand svg{width:32px;height:32px;flex-shrink:0}
+  .brand{display:flex;align-items:center;color:var(--text)}
+  .brand img{height:30px;width:auto;display:block;flex-shrink:0}
   .nav-links{display:flex;align-items:center;gap:28px}
   .nav-links a{font-size:14px;color:var(--muted);font-weight:500}
   .nav-links a:hover{color:var(--text)}
@@ -229,8 +229,8 @@ ${JSON.stringify(structuredData, null, 2)}
 
   /* ── FOOTER ── */
   footer{background:#0a0a0a;color:rgba(255,255,255,0.55);padding:48px 0 60px;text-align:center;font-size:13px}
-  footer .footer-brand{color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:20px;margin-bottom:16px;display:inline-flex;align-items:center;gap:8px;letter-spacing:-0.3px}
-  footer .footer-brand svg{width:28px;height:28px}
+  footer .footer-brand{color:#fff;margin-bottom:16px;display:inline-flex;align-items:center}
+  footer .footer-brand img{height:24px;width:auto;display:block}
   footer .footer-links{margin-bottom:20px}
   footer .footer-links a{color:rgba(255,255,255,0.55);margin:0 14px}
   footer .footer-links a:hover{color:#fff}
@@ -255,19 +255,7 @@ ${JSON.stringify(structuredData, null, 2)}
 <nav class="nav">
   <div class="container nav-inner">
     <a href="https://partiqule.com" class="brand">
-      <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-        <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-        <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-        <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-        <circle cx="37" cy="8"  r="2.5" fill="#4ade80" fill-opacity="0.8"/>
-        <circle cx="39" cy="24" r="1.8" fill="#4ade80" fill-opacity="0.5"/>
-        <circle cx="5"  cy="14" r="2"   fill="#86efac" fill-opacity="0.6"/>
-        <circle cx="4"  cy="28" r="1.5" fill="#4ade80" fill-opacity="0.45"/>
-        <circle cx="28" cy="4"  r="1.8" fill="#86efac" fill-opacity="0.55"/>
-        <circle cx="12" cy="4"  r="1.5" fill="#4ade80" fill-opacity="0.4"/>
-      </svg>
-      Partiqule
+      <img src="/partiqule-wordmark-light.svg" alt="Partiqule">
     </a>
     <div class="nav-links">
       <a href="https://partiqule.com/methodology">How it works</a>
@@ -355,19 +343,7 @@ ${substances.length ? `<section class="section">
 <footer>
   <div class="container">
     <div class="footer-brand">
-      <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-        <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-        <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-        <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-        <circle cx="37" cy="8"  r="2.5" fill="#4ade80" fill-opacity="0.8"/>
-        <circle cx="39" cy="24" r="1.8" fill="#4ade80" fill-opacity="0.5"/>
-        <circle cx="5"  cy="14" r="2"   fill="#86efac" fill-opacity="0.6"/>
-        <circle cx="4"  cy="28" r="1.5" fill="#4ade80" fill-opacity="0.45"/>
-        <circle cx="28" cy="4"  r="1.8" fill="#86efac" fill-opacity="0.55"/>
-        <circle cx="12" cy="4"  r="1.5" fill="#4ade80" fill-opacity="0.4"/>
-      </svg>
-      Partiqule
+      <img src="/partiqule-wordmark.svg" alt="Partiqule">
     </div>
     <div class="footer-links">
       <a href="https://partiqule.com">Home</a>

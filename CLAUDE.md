@@ -555,6 +555,71 @@ Not applied to text-query path or image-scan path — those continue to use `Glo
 
 ---
 
+## Brand Logo
+
+The Partiqule wordmark was introduced 2026-04-19, replacing the older leaf/Q icon + "Partiqule" text lockup. The wordmark spells out "partiqule" in a cream serif with a large decorative green Q as the 6th letter. Two wordmark variants exist because both dark-chrome (app headers) and light-chrome (SEO pages) contexts need legible rendering.
+
+**Asset files** (all in `frontend/public/`):
+
+| File | When to use |
+|---|---|
+| `partiqule-wordmark.svg` | Primary, cream letters — dark backgrounds (main app nav, barcode scanner overlay, SEO page footer, Barcode loading screen) |
+| `partiqule-wordmark-light.svg` | Dark letters on transparent — light backgrounds (SEO page nav at `background:#fff`) |
+| `partiqule-stacked.svg` | Vertical Q-above-text lockup — reserved for future use (about page, stories, etc.) |
+| `partiqule-q.svg` | Q-only, green `#2d6a32` on transparent — favicon source and anywhere a full wordmark won't fit |
+| `partiqule-wordmark-{360,720,1080}.png` | PNG exports of the primary wordmark — for canvas rendering (share cards) and any context where SVG is awkward |
+
+**Favicons** — generated from `partiqule-q.svg` via `rsvg-convert`:
+
+- `favicon.ico` — multi-size ICO (16, 32, 48 px) — primary entry point via `<link rel="icon" href="/favicon.ico">`
+- `favicon-16x16.png`, `favicon-32.png`, `favicon-192.png`, `favicon-512.png`
+- `apple-touch-icon.png` (180×180) — also symlinked as `apple-touch-icon-180x180.png`
+
+**Regenerating** — when the source SVG changes, regenerate PNGs + favicon.ico:
+
+```bash
+# Requires librsvg (brew install librsvg)
+cd frontend/public
+rsvg-convert -w 360 partiqule-wordmark.svg -o partiqule-wordmark-360.png
+rsvg-convert -w 720 partiqule-wordmark.svg -o partiqule-wordmark-720.png
+rsvg-convert -w 1080 partiqule-wordmark.svg -o partiqule-wordmark-1080.png
+rsvg-convert -w 16 -h 16 partiqule-q.svg -o favicon-16x16.png
+rsvg-convert -w 32 -h 32 partiqule-q.svg -o favicon-32.png
+rsvg-convert -w 192 -h 192 partiqule-q.svg -o favicon-192.png
+rsvg-convert -w 512 -h 512 partiqule-q.svg -o favicon-512.png
+rsvg-convert -w 180 -h 180 partiqule-q.svg -o apple-touch-icon.png
+# favicon.ico needs Python — see scripts/pack-ico.py (or regenerate inline with the snippet in the 2026-04-19 commit history)
+```
+
+**Context inventory** — every surface that renders the logo and which variant it uses:
+
+- Main app header (`App.jsx` main nav) — `partiqule-wordmark.svg`, height 28 mobile / 32 desktop
+- Barcode scanner top bar overlay — `partiqule-wordmark.svg`, height 26 (dark camera background)
+- Barcode loading screen (`BarcodeLoadingView`) — `partiqule-wordmark.svg`, height 60, pulse-animated
+- SEO product pages nav (generated in `scripts/generate-product-pages.js`) — `partiqule-wordmark-light.svg`, height 30 (white nav background)
+- SEO product pages footer — `partiqule-wordmark.svg`, height 24 (near-black footer background)
+- Share card canvas (`ShareCompareCard`) — `partiqule-wordmark-1080.png` rasterized, drawn via `Image` onload into the top bar. Falls back to canvas text "PARTIQULE" if the image fails to load or if share is triggered before onload fires (cache-miss first use).
+- Favicon / browser tab — `favicon.ico` multi-size + PNG links in `index.html`
+- PWA manifest — `favicon-192.png` and `favicon-512.png`
+- Service worker precache (`sw.js`) — `favicon.ico`, all favicon PNGs, `partiqule-wordmark.svg`. `CACHE_NAME` was bumped `partiqule-v2` → `partiqule-v3` during the wordmark migration so clients refetch.
+
+**Not updated in the wordmark migration:**
+
+- `frontend/public/og-image.png` (1200×630 social preview) — still contains the old leaf icon + "Partiqule" text. Composed image with decorative elements (radar graphic, floating particles) — not cleanly swappable via code. Regenerate in a design tool when convenient.
+- iOS app icon — flows through Xcode / Capacitor config, not from this repo. Update in `frontend/ios/App/App/Assets.xcassets/` when next submitting to App Store.
+- Loops email templates — live in the Loops dashboard, not in this repo.
+- `frontend/public/logo.png` (old leaf logo) — kept in place because removing it could break cached clients. Safe to delete after a week of the wordmark being live.
+- `partiqule-icon.svg` and `partiqule-banner.svg` — legacy old-design SVGs, kept for reference. Nothing in current code references them. Safe to delete.
+
+**Color tokens** (for any new logo variant):
+- Cream: `#f3ede2`
+- Primary green Q: `#2d6a32`
+- App chrome dark: `#052e16`
+
+**Sizing** — wordmark aspect ratio is ~2.87:1. At 32px height, width ~92px. When a bigger presence is desired, prefer wider containers or the stacked variant over stretching.
+
+---
+
 ## Brand Partnerships
 
 - **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links
