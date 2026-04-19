@@ -10,6 +10,8 @@ const {
   mergeFlags: mergeDeterministicFlags,
 } = require("./flagDetection");
 const { resolveIngredients } = require("./pass0");
+const { classifyProductFamily, CANONICAL_FAMILIES } = require("./productFamilies");
+const { filterRelevantCards, isOverBroadCard } = require("./intelMatch");
 
 // ── FLAG DETECTION FEATURE FLAG ────────────────────────────────
 // Toggles the flagDetection integration off without a redeploy. Set
@@ -4702,7 +4704,7 @@ async function getActiveIntelCards() {
   if (!supabaseAdmin) return [];
   try {
     const isoNow = new Date().toISOString();
-    const { data: cards } = await supabaseAdmin.from("intelligence_cards").select("id,headline,body,label,label_color,action_text,action_url,ingredient_triggers,category_triggers,source_name,priority").eq("active", true).or(`expires_at.is.null,expires_at.gt.${isoNow}`).order("priority", { ascending: false }).limit(20);
+    const { data: cards } = await supabaseAdmin.from("intelligence_cards").select("id,headline,body,label,label_color,action_text,action_url,ingredient_triggers,category_triggers,product_families,specific_products,source_name,priority").eq("active", true).or(`expires_at.is.null,expires_at.gt.${isoNow}`).order("priority", { ascending: false }).limit(20);
     intelCardsCache = cards || [];
     intelCardsCacheAt = now;
     return intelCardsCache;
@@ -4712,17 +4714,54 @@ async function getActiveIntelCards() {
   }
 }
 
-async function attachIntelCards(result) {
+// ── User scan-history cache (60s TTL per userId) ──
+// Keyed by userId. Path C of intel card matching intersects the user's
+// distinct product_families from the last 30 days with each card's
+// product_families. Cached briefly so a user scanning multiple products in
+// succession doesn't trigger a Supabase roundtrip per scan.
+const USER_HISTORY_TTL = 60 * 1000;
+const USER_HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const userHistoryCache = new Map();
+
+async function getUserRecentFamilies(userId) {
+  if (!userId || !supabaseAdmin) return null;
+  const now = Date.now();
+  const cached = userHistoryCache.get(userId);
+  if (cached && now - cached.at < USER_HISTORY_TTL) return cached.families;
+  try {
+    const cutoff = new Date(now - USER_HISTORY_WINDOW_MS).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("scans")
+      .select("result_json")
+      .eq("user_id", userId)
+      .gte("created_at", cutoff)
+      .limit(500);
+    if (error) throw error;
+    const families = new Set();
+    for (const row of data || []) {
+      const fam = row?.result_json?.product_family;
+      if (typeof fam === "string" && fam) families.add(fam);
+    }
+    userHistoryCache.set(userId, { families, at: now });
+    return families;
+  } catch (e) {
+    console.warn("[Intel] User history lookup failed:", e.message);
+    return null;
+  }
+}
+
+async function attachIntelCards(result, userId) {
   try {
     const cards = await getActiveIntelCards();
     if (!cards.length) return result;
-    const txt = [result.product_name || "", ...(result.harmful_chemicals || []), ...(result.concerns || []).map(c => typeof c === "string" ? c : c.concern || ""), result.summary || ""].join(" ").toLowerCase();
-    const cat = result.category || "";
-    const matching = cards.filter(c => {
-      const im = (c.ingredient_triggers || []).some(t => txt.includes(t.toLowerCase().trim()));
-      const cm = (c.category_triggers || []).includes(cat);
-      return im || cm;
-    }).slice(0, 3);
+    const userFamilies = await getUserRecentFamilies(userId);
+    const matching = filterRelevantCards(cards, {
+      productFamily: result.product_family || null,
+      productName:   result.product_name   || "",
+      ingredientList: Array.isArray(result.ingredient_list) ? result.ingredient_list : [],
+      userFamilies,
+      limit: 3,
+    });
     if (matching.length > 0) result.intelligence_cards = matching;
   } catch (e) { console.warn("[Intel] Card attachment failed:", e.message); }
   return result;
@@ -4818,6 +4857,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           alternatives: imgFuzzyAlts, ai_alternatives: [],
           nutrition: entry.nutrition || p1.nutrition || p1.product_analysis?.nutrition || null,
           ingredient_list: p1.ingredient_list || [],
+          product_family: classifyProductFamily(productName, p1.ingredient_list, imgFuzzyCat),
           category_score_context: CATEGORY_CONTEXT[imgFuzzyCat] || CATEGORY_CONTEXT.other,
         });
         cacheSet(imgKey, fuzzyResult);
@@ -4964,6 +5004,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         })),
         nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
         ingredient_list: p1.ingredient_list || [],
+        product_family: classifyProductFamily(productName, p1.ingredient_list, imgCategory),
         category_score_context: CATEGORY_CONTEXT[imgCategory] || CATEGORY_CONTEXT.other,
       };
 
@@ -4971,7 +5012,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // Cache the result so next camera scan of same product is instant
       cacheSet(imgKey, calibratedResult);
       console.log(`[CACHED] Vision "${productName}" → score ${calibratedResult.score}`);
-      await attachIntelCards(calibratedResult);
+      await attachIntelCards(calibratedResult, userId);
       return res.json(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
@@ -5058,6 +5099,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       summary: entry.reason || "",
       nutrition: entry.nutrition || null,
       alternatives: fuzzyAlts, ai_alternatives: [],
+      product_family: classifyProductFamily(productName, entry.substances || [], fuzzyCat),
       category_score_context: CATEGORY_CONTEXT[fuzzyCat] || CATEGORY_CONTEXT.other,
     });
     cacheSet(key, fuzzyResult);
@@ -5320,6 +5362,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // ── Nutrition — pull from top-level or product_analysis ──
       nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
       ingredient_list: p1.ingredient_list || [],
+      product_family: classifyProductFamily(productName, p1.ingredient_list, finalCategory || category),
       category_score_context: CATEGORY_CONTEXT[finalCategory || category] || CATEGORY_CONTEXT.other,
     };
 
@@ -5336,7 +5379,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
     cacheSet(key, calibrated);
     console.log(`[CACHED] ${key} (score: ${calibrated.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
-    await attachIntelCards(calibrated);
+    await attachIntelCards(calibrated, userId);
     res.json(calibrated);
 
   } catch (err) {
@@ -6035,7 +6078,12 @@ app.get("/api/intelligence-cards", async (req, res) => {
   }
 });
 
-const INTEL_CARD_FIELDS = ["title","summary","source","source_url","action_url","action_label","category","tags","severity","active","jurisdiction","compound","image_url"];
+const INTEL_CARD_FIELDS = [
+  "headline","body","label","label_color","action_text",
+  "action_url","action_page","ingredient_triggers",
+  "category_triggers","product_families","specific_products",
+  "source_name","source_url","priority","active","expires_at",
+];
 function sanitizeIntelCard(body) {
   const clean = {};
   for (const key of INTEL_CARD_FIELDS) {
@@ -6050,7 +6098,7 @@ app.post("/api/intelligence-cards", requireAdmin, async (req, res) => {
   try {
     if (!supabaseAdmin) return res.status(500).json({ error: "Supabase not configured" });
     const card = sanitizeIntelCard(req.body);
-    if (!card.title) return res.status(400).json({ error: "title is required" });
+    if (!card.headline) return res.status(400).json({ error: "headline is required" });
     const { data, error } = await supabaseAdmin.from("intelligence_cards").insert([card]).select();
     if (error) throw error;
     return res.json({ ok: true, card: data?.[0] });
@@ -6168,13 +6216,68 @@ async function fetchRSSFeed(feed) {
 async function writeIntelligenceCard(article) {
   const jn = article.jurisdiction==="EU"?"This is an EU regulatory action. Use language like 'banned in the EU' or 'EFSA has determined'.":article.jurisdiction==="International"?"This is peer-reviewed international research. Use language like 'research published in [journal] found'.":"This is a US source. Use factual language about what was found or announced.";
   const cn = article.credibility==="peer-reviewed"?"This comes from peer-reviewed research. Use 'researchers found' or 'a study published in [journal] found'.":article.credibility==="regulatory"?"This is an official regulatory action. Use definitive language — 'banned', 'restricted', 'classified as unsafe'.":article.credibility==="consumer"?"This is consumer research or testing. Use 'testing found' or 'lab analysis revealed'.":article.credibility==="journalism"?"This is investigative journalism. Use 'an investigation found' or 'reporting revealed'.":"This is from an advocacy organization. Use 'according to [source]' to attribute appropriately.";
+
+  const userPrompt = `${jn}
+${cn}
+Source: ${article.source} (${article.jurisdiction}, ${article.credibility})
+Headline: ${article.title}
+Summary: ${article.description}
+Keywords: ${article.matchedKeywords.join(", ")}
+
+Return a card as raw JSON with exactly these fields:
+{
+  "headline": "max 60 chars",
+  "body": "max 120 chars",
+  "label": "max 20 chars",
+  "label_color": "#d97706 or #dc2626 or #2563eb",
+  "action_text": "max 20 chars",
+  "action_url": "${article.link}",
+  "product_families": ["one to three values from the canonical list, or empty"],
+  "specific_products": ["specific product SKU names, or empty"],
+  "ingredient_triggers": ["specific compound names, or empty"],
+  "category_triggers": ["personal_care, baby, food, cleaning, clothing — derived from topic"],
+  "priority": 7,
+  "source_name": "${article.source}",
+  "source_url": "${article.link}"
+}
+
+CANONICAL product_families list — use these exact strings, no others:
+${CANONICAL_FAMILIES.join(", ")}
+
+FIELD RULES — be strict:
+- product_families: if the article concerns personal-care product(s), pick 1 to 3 families from the canonical list. Match the NARROWEST family — a nail polish remover recall is ["nail_polish_remover"], not ["nail_polish","nail_polish_remover"]. If the article concerns food, cleaning, clothing, home, or any non-personal-care topic, leave this as []. The canonical list is the only allowed vocabulary; invented values will be dropped. If product_families would be empty because the card is about a non-personal-care category, you MUST populate either specific_products or ingredient_triggers to give the card a matching anchor. A card with all three targeting fields empty will be REJECTED and not saved.
+- specific_products: populate ONLY when the article names a specific product SKU that is being recalled or flagged (e.g., ["Blaine Labs Wound Care Gel"]). Leave [] for ingredient-level or class-level concerns. Do not include brand names alone unless the brand is the SKU (e.g., "Carmex", "ChapStick Classic").
+- ingredient_triggers: populate ONLY when the concern is a specific chemical compound present in products (e.g., ["cyclopentasiloxane","methylparaben","Red 40"]). Leave [] when the concern is a manufacturing process, supply-chain issue, or product class with no named compound.
+- category_triggers: broad-bucket labels for backward compatibility with legacy matching. Derive from product_families (any baby_* family → "baby", any other personal-care family → "personal_care") or from the article topic for non-personal-care cards (food articles → "food", cleaning → "cleaning").
+
+Tone: honest, specific, never alarmist. Name compounds. Give regulatory context. Return raw JSON only — no markdown, no preamble.`;
+
   try {
     const card = await callClaude(
-      `You are writing a short consumer safety alert card for the Partiqule app. Our audience: health-conscious parents and families. Our tone: honest, specific, never alarmist. We name compounds. We give regulatory context. Return ONLY valid JSON.`,
-      `${jn}\n${cn}\nSource: ${article.source} (${article.jurisdiction}, ${article.credibility})\nHeadline: ${article.title}\nSummary: ${article.description}\nKeywords: ${article.matchedKeywords.join(", ")}\n\nWrite a card as JSON: {"headline":"max 60 chars","body":"max 120 chars","label":"max 20 chars","label_color":"#d97706 or #dc2626 or #2563eb","action_text":"max 20 chars","action_url":"${article.link}","ingredient_triggers":["compounds"],"category_triggers":["food","clothing","personal_care","cleaning","baby"],"priority":7,"source_name":"${article.source}","source_url":"${article.link}"}`,
-      600, 2
+      `You are writing a short consumer safety alert card for the Partiqule app. Our audience: health-conscious parents and families. We name compounds, give regulatory context, and never exaggerate. Return ONLY valid JSON.`,
+      userPrompt,
+      700, 2
     );
     if (!card || !card.headline || !card.body) return null;
+
+    // Normalize array fields and enforce canonical vocabulary on product_families
+    const canon = new Set(CANONICAL_FAMILIES);
+    const rawFamilies = Array.isArray(card.product_families) ? card.product_families : [];
+    card.product_families = rawFamilies.filter(f => canon.has(f));
+    const dropped = rawFamilies.filter(f => !canon.has(f));
+    if (dropped.length > 0) {
+      console.warn(`[Intel] Dropped non-canonical product_families from "${card.headline}": ${dropped.join(", ")}`);
+    }
+    card.specific_products = Array.isArray(card.specific_products) ? card.specific_products.filter(s => typeof s === "string" && s.trim()) : [];
+    card.ingredient_triggers = Array.isArray(card.ingredient_triggers) ? card.ingredient_triggers : [];
+    card.category_triggers = Array.isArray(card.category_triggers) ? card.category_triggers : [];
+
+    // Guard against cards with no targeting anchor. Such a card would fire
+    // on every scan globally — almost never the intent.
+    if (isOverBroadCard(card)) {
+      console.warn(`[Intel] Rejecting over-broad card (no targeting fields): "${card.headline}"`);
+      return null;
+    }
     return card;
   } catch (e) { console.warn("[Intel] Card write failed:", e.message); return null; }
 }
@@ -6194,6 +6297,10 @@ app.post("/api/intelligence/approve/:id", requireAdmin, async (req, res) => {
   try {
     const {data:card,error:fe}=await supabaseAdmin.from("intelligence_cards").select("*").eq("id",id).single();
     if(fe||!card)throw new Error("Card not found");
+    if (isOverBroadCard(card)) {
+      console.warn(`[Intel] Rejecting over-broad approval (no targeting fields): "${card.headline}" (${id})`);
+      return res.status(400).json({error:"Card has no targeting fields (product_families, specific_products, ingredient_triggers all empty). Add at least one before approving."});
+    }
     const {error:ue}=await supabaseAdmin.from("intelligence_cards").update({active:true}).eq("id",id);
     if(ue)throw ue;
     // Extract regulatory flags via Claude
@@ -6792,6 +6899,7 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
             natural_materials:   p1.natural_materials   || [],
             nutrition:           p1.nutrition || p1.product_analysis?.nutrition || current.nutrition || null,
             ingredient_list:     p1.ingredient_list || [],
+            product_family:      classifyProductFamily(productName, p1.ingredient_list, cat),
             alternatives,
             ai_alternatives:     [],
             scan_next:           buildScanNextFallback(productName, cat, alternatives),
@@ -7094,6 +7202,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
       natural_materials:   p1.natural_materials   || [],
       nutrition,
       ingredient_list:     ingredientList.length ? ingredientList : (p1.ingredient_list || []),
+      product_family:      classifyProductFamily(productName, ingredientList.length ? ingredientList : (p1.ingredient_list || []), cat),
       alternatives,
       ai_alternatives:     [],
       scan_next:           buildScanNextFallback(productName, cat, alternatives),
@@ -7108,7 +7217,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     cacheSet(nameKey,    calibrated);
 
     console.log(`[BARCODE] Scored "${productName}" -> ${calibrated.overall_score}/10 (${ingredientList.length} ingredients)`);
-    await attachIntelCards(calibrated);
+    await attachIntelCards(calibrated, userId);
     res.json(calibrated);
 
   } catch(err) {

@@ -3274,6 +3274,23 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 };
 
 // ── ADMIN PAGE ────────────────────────────────────────────────
+// KEEP IN SYNC with backend/productFamilies.js CANONICAL_FAMILIES
+// (updated 2026-04-19 when list changes)
+const CANONICAL_FAMILIES = [
+  "foundation","concealer","lipstick","lip_balm","mascara","eyeshadow","blush",
+  "nail_polish","nail_polish_remover",
+  "skincare_face","skincare_eye","skincare_body","sunscreen",
+  "hair_shampoo","hair_conditioner","hair_styling",
+  "body_wash","bar_soap","deodorant","fragrance",
+  "oral_toothpaste","oral_mouthwash",
+  "baby_wipe","baby_lotion","baby_shampoo","baby_diaper_cream",
+  "wound_care","shaving_cream","razor",
+];
+const isOverBroadCard = (c) =>
+  !(Array.isArray(c.product_families) && c.product_families.length) &&
+  !(Array.isArray(c.specific_products) && c.specific_products.length) &&
+  !(Array.isArray(c.ingredient_triggers) && c.ingredient_triggers.length);
+
 const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3282,6 +3299,10 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
   const [msg, setMsg] = useState(null);
   const [feedRunning, setFeedRunning] = useState(false);
   const [feedResult, setFeedResult] = useState(null);
+  const [retagId, setRetagId] = useState(null);
+  const [retagForm, setRetagForm] = useState({product_families:[], specific_products:"", ingredient_triggers:""});
+  const [retagSaving, setRetagSaving] = useState(false);
+  const [retagMsg, setRetagMsg] = useState(null);
 
   const AK = encodeURIComponent("RowenaRavenclaw2024!");
   const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence/all?key=${AK}`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
@@ -3317,8 +3338,75 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
     try{const r=await fetch(`${API_BASE}/api/intelligence/dismiss/${id}?key=${AK}`,{method:"DELETE"});if(r.ok)setCards(prev=>prev.filter(c=>c.id!==id));}catch(e){console.error("Delete failed:",e.message);}
   };
 
+  const openRetag = (c) => {
+    setRetagId(c.id);
+    setRetagMsg(null);
+    setRetagForm({
+      product_families: Array.isArray(c.product_families) ? [...c.product_families] : [],
+      specific_products: Array.isArray(c.specific_products) ? c.specific_products.join(", ") : "",
+      ingredient_triggers: Array.isArray(c.ingredient_triggers) ? c.ingredient_triggers.join(", ") : "",
+    });
+  };
+  const cancelRetag = () => { setRetagId(null); setRetagMsg(null); };
+  const toRetagArr = (s) => s.split(",").map(t=>t.trim()).filter(Boolean);
+  const saveRetag = async() => {
+    if (!retagId) return;
+    setRetagSaving(true); setRetagMsg(null);
+    const payload = {
+      product_families: retagForm.product_families,
+      specific_products: toRetagArr(retagForm.specific_products),
+      ingredient_triggers: toRetagArr(retagForm.ingredient_triggers),
+    };
+    try {
+      const r = await fetch(`${API_BASE}/api/intelligence-cards/${retagId}?key=${AK}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error(`Save failed (${r.status})`);
+      setCards(prev => prev.map(c => c.id === retagId ? { ...c, ...payload } : c));
+      setRetagMsg("Saved");
+      setTimeout(() => { setRetagId(null); setRetagMsg(null); }, 600);
+    } catch (e) {
+      setRetagMsg(e.message);
+    }
+    setRetagSaving(false);
+  };
+
   const colorPresets = [["#d97706","Amber"],["#dc2626","Red"],["#2563eb","Blue"],["#16a34a","Green"],["#7c3aed","Purple"]];
   const catOptions = ["food","food_beverage","beverage","snack","personal_care","skincare","cleaning","home","baby","clothing","supplement"];
+
+  const renderRetagPanel = (c) => {
+    if (retagId !== c.id) return null;
+    const inputStyle = {width:"100%",padding:"8px 12px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#0d1220":"#fff",color:text,fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
+    return (
+      <div style={{marginTop:10,padding:"14px 16px",borderRadius:10,background:isDark?"#131929":"#f9fafb",border:`1px solid ${border}`}}>
+        <div style={{fontSize:12,fontWeight:700,color:text,marginBottom:10}}>Retag targeting fields</div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:muted,marginBottom:6}}>product_families ({retagForm.product_families.length} selected)</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {CANONICAL_FAMILIES.map(fam=>{
+              const on = retagForm.product_families.includes(fam);
+              return <button key={fam} onClick={()=>setRetagForm(f=>({...f,product_families: on ? f.product_families.filter(x=>x!==fam) : [...f.product_families,fam]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${on?"#16a34a":border}`,background:on?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:on?"#16a34a":muted,cursor:"pointer",fontFamily:"inherit"}}>{fam}</button>;
+            })}
+          </div>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:muted,marginBottom:6}}>specific_products (comma-separated, SKU names only)</div>
+          <input value={retagForm.specific_products} onChange={e=>setRetagForm(f=>({...f,specific_products:e.target.value}))} placeholder="e.g. Blaine Labs Wound Care Gel, Tide Pods" style={inputStyle}/>
+        </div>
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:11,color:muted,marginBottom:6}}>ingredient_triggers (comma-separated compound names)</div>
+          <input value={retagForm.ingredient_triggers} onChange={e=>setRetagForm(f=>({...f,ingredient_triggers:e.target.value}))} placeholder="e.g. Red 40, BHT, methylparaben" style={inputStyle}/>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={saveRetag} disabled={retagSaving} style={{fontSize:12,padding:"6px 14px",borderRadius:8,border:"none",background:"#16a34a",color:"#fff",cursor:retagSaving?"not-allowed":"pointer",fontWeight:700,opacity:retagSaving?0.7:1}}>{retagSaving?"Saving...":"Save"}</button>
+          <button onClick={cancelRetag} style={{fontSize:12,padding:"6px 14px",borderRadius:8,border:`1px solid ${border}`,background:"none",color:muted,cursor:"pointer",fontWeight:600}}>Cancel</button>
+          {retagMsg && <span style={{fontSize:11,color:retagMsg==="Saved"?"#16a34a":"#dc2626",fontWeight:600}}>{retagMsg}</span>}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -3343,7 +3431,9 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
         <div style={{marginBottom:24}}>
           <div style={{fontSize:12,fontWeight:700,color:"#d97706",textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}}>Drafts — awaiting approval ({draftCards.length})</div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {draftCards.map(c=>(
+            {draftCards.map(c=>{
+              const overBroad = isOverBroadCard(c);
+              return (
               <div key={c.id} style={{padding:"12px 16px",borderRadius:12,background:isDark?"#2a1a00":"#fffbeb",border:"1px solid #fde68a"}}>
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
                   <div style={{flex:1}}>
@@ -3353,15 +3443,21 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
                     </div>
                     <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
                     <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body}</div>
+                    {c.product_families?.length>0&&<div style={{fontSize:11,color:muted}}>Families: {c.product_families.join(", ")}</div>}
+                    {c.specific_products?.length>0&&<div style={{fontSize:11,color:muted}}>Specific: {c.specific_products.join(", ")}</div>}
                     {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
+                    {overBroad&&<div style={{fontSize:11,color:"#dc2626",marginTop:4,fontWeight:600}}>No targeting fields. Retag to add product_families, specific_products, or ingredient_triggers before approving.</div>}
                   </div>
                   <div style={{display:"flex",gap:6,flexShrink:0}}>
-                    <button onClick={()=>approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"none",background:"#16a34a",color:"#fff",cursor:"pointer",fontWeight:600}}>Approve</button>
+                    <button onClick={()=>approveCard(c.id)} disabled={overBroad} title={overBroad?"Add targeting fields before approving":""} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"none",background:"#16a34a",color:"#fff",cursor:overBroad?"not-allowed":"pointer",fontWeight:600,opacity:overBroad?0.45:1}}>Approve</button>
+                    <button onClick={()=>retagId===c.id?cancelRetag():openRetag(c)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:text,cursor:"pointer",fontWeight:600}}>{retagId===c.id?"Close":"Retag"}</button>
                     <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Dismiss</button>
                   </div>
                 </div>
+                {renderRetagPanel(c)}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -3370,20 +3466,26 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
       {loading ? <div style={{color:muted,fontSize:14}}>Loading...</div> : liveCards.length===0 ? <div style={{color:muted,fontSize:14,marginBottom:20}}>No live cards</div> : (
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
           {liveCards.map(c=>(
-            <div key={c.id} style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,padding:"12px 16px",borderRadius:12,background:surface,border:`1px solid ${border}`}}>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <span style={{fontSize:10,fontWeight:700,color:c.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${c.label_color||"#d97706"}18`,borderRadius:20,padding:"2px 8px"}}>{c.label}</span>
+            <div key={c.id} style={{padding:"12px 16px",borderRadius:12,background:surface,border:`1px solid ${border}`}}>
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                    <span style={{fontSize:10,fontWeight:700,color:c.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${c.label_color||"#d97706"}18`,borderRadius:20,padding:"2px 8px"}}>{c.label}</span>
+                  </div>
+                  <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
+                  <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body?.slice(0,100)}</div>
+                  {c.product_families?.length>0&&<div style={{fontSize:11,color:muted}}>Families: {c.product_families.join(", ")}</div>}
+                  {c.specific_products?.length>0&&<div style={{fontSize:11,color:muted}}>Specific: {c.specific_products.join(", ")}</div>}
+                  {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
+                  {c.regulatory_flags?.length>0&&<div style={{fontSize:11,color:"#16a34a",marginTop:2}}>{c.regulatory_flags.length} scoring flag{c.regulatory_flags.length!==1?"s":""}: {c.regulatory_flags.map(f=>f.compound_name).join(", ")}</div>}
                 </div>
-                <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>{c.headline}</div>
-                <div style={{fontSize:12,color:muted,marginBottom:4}}>{c.body?.slice(0,100)}</div>
-                {c.ingredient_triggers?.length>0&&<div style={{fontSize:11,color:muted}}>Triggers: {c.ingredient_triggers.join(", ")}</div>}
-                {c.regulatory_flags?.length>0&&<div style={{fontSize:11,color:"#16a34a",marginTop:2}}>{c.regulatory_flags.length} scoring flag{c.regulatory_flags.length!==1?"s":""}: {c.regulatory_flags.map(f=>f.compound_name).join(", ")}</div>}
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  <button onClick={()=>c.active?deactivateCard(c.id):approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>
+                  <button onClick={()=>retagId===c.id?cancelRetag():openRetag(c)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:text,cursor:"pointer",fontWeight:600}}>{retagId===c.id?"Close":"Retag"}</button>
+                  <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Delete</button>
+                </div>
               </div>
-              <div style={{display:"flex",gap:6,flexShrink:0}}>
-                <button onClick={()=>c.active?deactivateCard(c.id):approveCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"none",color:c.active?"#16a34a":"#d97706",cursor:"pointer",fontWeight:600}}>{c.active?"Deactivate":"Activate"}</button>
-                <button onClick={()=>deleteCard(c.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fee2e2",background:"none",color:"#dc2626",cursor:"pointer",fontWeight:600}}>Delete</button>
-              </div>
+              {renderRetagPanel(c)}
             </div>
           ))}
         </div>

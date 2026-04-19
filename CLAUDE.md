@@ -495,6 +495,41 @@ Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the 
 
 ---
 
+## Intel Card Relevance
+
+Intel cards surface on scan results only when they are directly relevant to the scanned product or to something in the user's recent history. The old category-based matching (`category_triggers` only) surfaced irrelevant cards across category siblings — e.g., a nail polish remover recall on a foundation scan. This was replaced 2026-04-19.
+
+**Product family classification** — every scan computes `product_family` via `backend/productFamilies.js` (`classifyProductFamily(productName, ingredients, category)`). The classifier returns one of 29 canonical strings (foundation, lip_balm, nail_polish_remover, sunscreen, hair_shampoo, wound_care, etc.) or `null` if no rule matches. `CANONICAL_FAMILIES` in that file is the single source of truth; the AI intel-card prompt (`writeIntelligenceCard` in `server.js`) reads the same constant. Keep `frontend/src/App.jsx` `CANONICAL_FAMILIES` in sync when the list changes — there's a `// KEEP IN SYNC` comment above it. All 6 scoring paths populate `result_json.product_family` at scan time.
+
+**Matching rule** — a card fires when both of these pass, evaluated by `filterRelevantCards` in `backend/intelMatch.js`:
+
+1. Relevance gate — AT LEAST ONE of:
+   - A) `card.product_families` includes the scan's `product_family`
+   - B) `card.specific_products` matches the scan's `product_name` (fuzzy; see below)
+   - C) `card.product_families` intersects the user's distinct 30-day scan history (authenticated users only)
+   - Broad-advisory: when both `product_families` and `specific_products` are empty, the gate passes automatically
+
+2. Ingredient trigger gate — when `card.ingredient_triggers` is populated, at least one trigger must word-boundary match an entry in `result.ingredient_list` (structured array, not narrative text). Empty triggers skip this gate.
+
+`category_triggers` is still stored in the schema for backward compatibility but is no longer consulted by the matcher.
+
+**Fuzzy name matching** — `specificProductMatches` normalizes both sides (lowercase, strip apostrophes, collapse non-alphanumerics to single spaces). Entries < 10 chars require word-boundary token match (`Tide` matches `Tide Pods`, not `Riptide Beverage`). Entries ≥ 10 chars allow bidirectional substring (`Armani Luminous Silk` matches `Armani Luminous Silk Foundation` forward and `Armani Luminous Silk` if an even longer entry is targeted).
+
+**User history cache** — `getUserRecentFamilies(userId)` queries `scans WHERE user_id = ? AND created_at > NOW() - INTERVAL '30 days'`, extracts distinct `result_json.product_family`, and caches per user for 60s. Returns `null` for anonymous users — path C is skipped structurally. Only fires once per user per minute to avoid Supabase roundtrips on rapid successive scans.
+
+**Over-broad guard** — `isOverBroadCard(card)` is true when `product_families`, `specific_products`, and `ingredient_triggers` are all empty. Such a card would fire on every scan globally. Guarded in two places:
+
+- `writeIntelligenceCard` rejects over-broad AI-drafted cards post-parse with `[Intel] Rejecting over-broad card (no targeting fields)` and returns `null` (never saved).
+- `/api/intelligence/approve/:id` returns `400` if the admin tries to activate an over-broad card. Admin UI in `IntelAdminPage` mirrors this by disabling the `Approve` button on drafts that are over-broad and showing an inline red warning.
+
+**AI prompt vocabulary** — `writeIntelligenceCard` embeds `CANONICAL_FAMILIES.join(", ")` in the prompt so the AI can only emit known family strings. Post-parse validation filters out any value not in the canonical set (`[Intel] Dropped non-canonical product_families from "<headline>": ...`). The prompt explicitly instructs: food/cleaning/clothing articles must populate either `specific_products` or `ingredient_triggers` to give the card an anchor, or be rejected.
+
+**Admin retag flow** — `IntelAdminPage` has a per-card `Retag` button that opens an inline editor for the three targeting fields only (product_families chips, specific_products and ingredient_triggers as comma-separated inputs). Saves via `PATCH /api/intelligence-cards/:id`. The `INTEL_CARD_FIELDS` allowlist in `server.js` was corrected in the same session — previously it listed fields that didn't exist on the schema and silently dropped every PATCH payload.
+
+**Pre-Pass-0-style stale eviction** — not added to intel cards. The 2-min in-memory cache (`intelCardsCache`) refreshes on its own TTL and picks up schema/field changes on the next fetch.
+
+---
+
 ## Barcode Loading Screen
 
 Between barcode detection and result render, the app shows a dedicated branded overlay (`BarcodeLoadingView` in `App.jsx`) instead of the generic GlobeLoading overlay. This replaces the jarring transition from scan view → result with an intentional branded moment.
