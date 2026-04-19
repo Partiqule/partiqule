@@ -377,6 +377,8 @@ Deterministic substance detection is integrated into Pass 1 scoring. The AI cann
 - Post-AI: `detectFlags` runs again on the AI-captured `ingredient_list`. `validateAIResponse` compares AI-claimed substances to the deterministic set. `mergeFlags` merges deterministic findings into `p1.harmful_chemicals` and appends any AI-missed findings to `p1.raw_concerns` so `applySubstanceFloors` picks them up.
 - Disagreements are logged with structured data under `[flag_detection_override]` for audit. The log fires only when `missingFromAI` has entries (deterministic caught something the AI missed). `extraInAI` alone does not log, since AI narrative concerns often cannot be matched by the deterministic layer.
 
+Pattern-level validation in `mergeFlags` / `aiContradictsDeterministic`: when the AI claims a substance, validation operates per-pattern, not per-bucket. For each AI claim, every `FLAG_DEFS` pattern whose regex matches the claim is checked against the deterministic `matches` array for that bucket. If the specific pattern label is present in `matches` → confirmed, the claim is kept. If not → contradicted, the claim is dropped. This prevents an AI fabrication for one substance (e.g. cyclopentasiloxane) from surviving merge just because a sibling in the same bucket was confirmed (e.g. dimethicone made `siloxanes.present === true`). Out-of-bucket claims (no `detFlags.flags[flagName]` entry because the category bucket was skipped) are still preserved as before.
+
 Feature flag: `FLAG_DETECTION_ENABLED` (Railway env var).
 - Default: enabled.
 - To disable: set `FLAG_DETECTION_ENABLED=false` in Railway.

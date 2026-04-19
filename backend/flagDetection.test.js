@@ -598,6 +598,48 @@ test("mergeFlags: deduplication (AI and deterministic both mention same substanc
 });
 
 // ────────────────────────────────────────────────────────────────
+// 31. Pattern-level validation — siblings in a "present" bucket
+//     Regression tests for the Armani Luminous Silk Foundation bug:
+//     dimethicone in ingredients made siloxanes.present=true, and the
+//     old bucket-level contradict check let AI-fabricated cyclopentasiloxane
+//     through. Validation must now be pattern-level.
+// ────────────────────────────────────────────────────────────────
+test("mergeFlags: real dimethicone, AI claims cyclopentasiloxane — D5 dropped", () => {
+  const armani = "AQUA, DIMETHICONE, CETYL PEG/PPG-10/1 DIMETHICONE, DIMETHICONOL, PEG/PPG-18/18 DIMETHICONE, PHENOXYETHANOL";
+  const det = detectFlags(armani, "personal_care");
+  const merged = mergeFlags(["cyclopentasiloxane", "dimethicone"], det);
+  assert(merged.includes("dimethicone"), "dimethicone must survive");
+  assert(!merged.includes("cyclopentasiloxane"), "AI-fabricated cyclopentasiloxane must be dropped");
+});
+
+test("mergeFlags: real methylparaben, AI claims propylparaben — propylparaben dropped", () => {
+  const det = detectFlags("water, methylparaben, glycerin", "personal_care");
+  const merged = mergeFlags(["propylparaben", "methylparaben"], det);
+  assert(merged.includes("methylparaben"), "methylparaben must survive");
+  assert(!merged.includes("propylparaben"), "AI-fabricated propylparaben must be dropped");
+});
+
+test("mergeFlags: real Red 40, AI claims Yellow 5 — Yellow 5 dropped", () => {
+  const det = detectFlags("Sugar, corn syrup, Red 40, citric acid", "food");
+  const merged = mergeFlags(["Yellow 5", "Red 40"], det);
+  assert(merged.some(m => m.toLowerCase().includes("red 40")), "Red 40 must survive");
+  assert(!merged.some(m => m.toLowerCase().includes("yellow 5")), "AI-fabricated Yellow 5 must be dropped");
+});
+
+test("mergeFlags: real dimethicone AND cyclopentasiloxane, AI claims both — both kept", () => {
+  const det = detectFlags("AQUA, DIMETHICONE, CYCLOPENTASILOXANE, GLYCERIN", "personal_care");
+  const merged = mergeFlags(["cyclopentasiloxane", "dimethicone"], det);
+  assert(merged.includes("dimethicone"), "dimethicone must survive");
+  assert(merged.includes("cyclopentasiloxane"), "real cyclopentasiloxane must survive");
+});
+
+test("mergeFlags: no siloxanes in real ingredients, AI claims cyclopentasiloxane — dropped", () => {
+  const det = detectFlags("water, glycerin, phenoxyethanol, sodium hyaluronate", "personal_care");
+  const merged = mergeFlags(["cyclopentasiloxane"], det);
+  assert(!merged.includes("cyclopentasiloxane"), "AI-fabricated cyclopentasiloxane must be dropped when no siloxanes in real list");
+});
+
+// ────────────────────────────────────────────────────────────────
 // Summary output
 // ────────────────────────────────────────────────────────────────
 const total = passed + failed;

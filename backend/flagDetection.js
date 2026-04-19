@@ -482,19 +482,26 @@ function deterministicContainsSubstance(detFlags, substance) {
   return false;
 }
 
-// AI contradicts deterministic when its claim matches a flag pattern that the
-// deterministic layer actively evaluated (flag present in output) and marked
-// absent. Flags not evaluated (category bucket mismatch) don't trigger this.
+// AI contradicts deterministic when its claim matches a specific pattern in a
+// bucket the deterministic layer actively evaluated, but that pattern's label
+// is not in the bucket's matches array. Bucket-level presence is not enough —
+// a siloxanes bucket marked present because dimethicone matched must still
+// drop an AI claim for cyclopentasiloxane if D5 is not in the real ingredient
+// list. Flags not evaluated (category bucket mismatch) don't contradict.
 function aiContradictsDeterministic(aiSubstance, detFlags) {
   if (!detFlags || !detFlags.flags) return false;
+  let contradicted = false;
   for (const [flagName, def] of Object.entries(FLAG_DEFS)) {
     const f = detFlags.flags[flagName];
-    if (!f || f.present) continue;
+    if (!f) continue;
+    const detMatches = Array.isArray(f.matches) ? f.matches : [];
     for (const pat of def.patterns) {
-      if (pat.regex.test(aiSubstance)) return true;
+      if (!pat.regex.test(aiSubstance)) continue;
+      if (detMatches.includes(pat.label)) return false;
+      contradicted = true;
     }
   }
-  return false;
+  return contradicted;
 }
 
 module.exports = {
