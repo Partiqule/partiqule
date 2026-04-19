@@ -1,0 +1,949 @@
+{
+    "cards": [
+        {
+            "id": "93ad91a7-27de-4300-afdc-6eedd02d81c6",
+            "created_at": "2026-04-18T07:00:24.929526+00:00",
+            "headline": "Gorgonzola Recall: Listeria Contamination",
+            "body": "Auricchio brand Gorgonzola D.O.P. Piccante recalled in Canada due to Listeria monocytogenes. No illnesses reported. Check your refrigerator.",
+            "label": "Food Recall",
+            "label_color": "#dc2626",
+            "action_text": "Learn More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/gorgonzola-under-recall-because-of-listeria-contamination/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Listeria monocytogenes"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:24.862+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/gorgonzola-under-recall-because-of-listeria-contamination/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "ed9d7005-33a6-4a41-adc5-15616a3860eb",
+            "created_at": "2026-04-18T07:00:21.584037+00:00",
+            "headline": "Loard's Ice Cream Recall: Undeclared Allergens",
+            "body": "Silver Moon LP recalled all Loard's Ice Cream retail packages due to missing ingredient labels. Products contain undeclared milk, eggs, sulfites, and added colors.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "Read Details",
+            "action_url": "https://www.foodsafetynews.com/2026/04/ice-cream-recalled-because-of-undeclared-allergens-colors/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "milk",
+                "eggs",
+                "sulfites",
+                "artificial colors"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:21.465+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/ice-cream-recalled-because-of-undeclared-allergens-colors/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "c149683e-e4de-403d-a3f9-538afcac7e3d",
+            "created_at": "2026-04-18T07:00:17.539137+00:00",
+            "headline": "Coral Reefs at Critical Risk from Global Warming",
+            "body": "Reporting reveals up to 90% of coral reefs could be lost at 1.5\u00b0C warming. Ocean ecosystems that feed families and protect coastlines face extinction without urgent action.",
+            "label": "Environmental",
+            "label_color": "#dc2626",
+            "action_text": "Read more",
+            "action_url": "https://www.theguardian.com/commentisfree/2026/apr/17/coral-reefs-extinction-global-warming-jason-momoa",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:17.384+00:00",
+            "priority": 7,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/commentisfree/2026/apr/17/coral-reefs-extinction-global-warming-jason-momoa",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "68848e66-d3bc-4ffc-94e8-b63f17d734c6",
+            "created_at": "2026-04-18T07:00:14.060045+00:00",
+            "headline": "Content Curation Alert",
+            "body": "This Guardian article is a weekend reading roundup without specific product safety information relevant to families.",
+            "label": "Not Applicable",
+            "label_color": "#2563eb",
+            "action_text": "View Source",
+            "action_url": "https://www.theguardian.com/news/2026/apr/18/six-great-reads-iran-social-media-memes-abandoned-department-store-cherry-blossoms",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:13.927+00:00",
+            "priority": 1,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/news/2026/apr/18/six-great-reads-iran-social-media-memes-abandoned-department-store-cherry-blossoms",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "a3676012-d433-4090-8f73-83a979c31dde",
+            "created_at": "2026-04-18T07:00:10.716291+00:00",
+            "headline": "Canine Milk Replacers Recalled for Vitamin D Levels",
+            "body": "Revival Animal Health recalls Breeder's Edge\u00ae Foster Care\u00ae and Shelter's Choice\u00ae Canine Milk Replacers due to variable vitamin D content\u2014some batches contain elevated levels.",
+            "label": "Pet Product Recall",
+            "label_color": "#dc2626",
+            "action_text": "View Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/revival-animal-health-llc-voluntarily-recalls-canine-milk-replacers-due-elevated-levels-vitamin-d",
+            "action_page": null,
+            "ingredient_triggers": [
+                "vitamin D"
+            ],
+            "category_triggers": [
+                "baby"
+            ],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:10.589+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/revival-animal-health-llc-voluntarily-recalls-canine-milk-replacers-due-elevated-levels-vitamin-d",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "9f9e4932-5237-481c-8112-9b0eeeb12d0b",
+            "created_at": "2026-04-18T07:00:07.219862+00:00",
+            "headline": "Washington Shellfish Recall: Norovirus Risk",
+            "body": "Washington State Department of Health recalled oysters and clams from Gomez Shellfish LLC harvested March 22\u2013April 9 due to norovirus-like illnesses linked to raw consumption.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "Read full alert",
+            "action_url": "https://www.foodsafetynews.com/2026/04/oysters-clams-from-certain-washington-harvest-areas-recalled-because-of-norovirus/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "oysters",
+                "clams",
+                "shellfish"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-02T07:00:07.083+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/oysters-clams-from-certain-washington-harvest-areas-recalled-because-of-norovirus/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "b25bb6de-1e78-4dba-8104-3c8091a85380",
+            "created_at": "2026-04-17T07:00:14.173034+00:00",
+            "headline": "FDA Increases Import Enforcement for Seafood, Cantaloupe, Canned Foods",
+            "body": "The FDA has modified import alerts for seafood, cantaloupe, and canned foods from certain countries. Review FDA's updated enforcement list for specific origins and products.",
+            "label": "Import Safety",
+            "label_color": "#2563eb",
+            "action_text": "View FDA Alerts",
+            "action_url": "https://www.foodsafetynews.com/2026/04/seafood-cantaloupe-canned-foods-subject-to-increased-import-enforcement/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-01T07:00:14.026+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/seafood-cantaloupe-canned-foods-subject-to-increased-import-enforcement/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "1798a201-c5a7-466a-86b1-446d320b9919",
+            "created_at": "2026-04-17T07:00:10.700298+00:00",
+            "headline": "Loard's Ice Cream Recall: Undeclared Allergens",
+            "body": "Silver Moon LP (Loard's Ice Cream) recalled all retail ice cream products due to missing ingredient labels. Products contain undeclared milk, eggs, tree nuts, peanuts, soy, wheat, sulfites, and food color additives.",
+            "label": "Allergen Alert",
+            "label_color": "#dc2626",
+            "action_text": "View Recall Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/silver-moon-lp-dba-loards-ice-cream-issues-allergy-alert-undeclared-milk-eggs-tree-nuts-peanuts-soy",
+            "action_page": null,
+            "ingredient_triggers": [
+                "milk",
+                "eggs",
+                "tree nuts",
+                "peanuts",
+                "soy",
+                "wheat",
+                "sulfites",
+                "food color additives"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-01T07:00:10.515+00:00",
+            "priority": 9,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/silver-moon-lp-dba-loards-ice-cream-issues-allergy-alert-undeclared-milk-eggs-tree-nuts-peanuts-soy",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "071c32d4-7ca9-4e80-9dcf-f625dbde5c3b",
+            "created_at": "2026-04-17T07:00:06.529171+00:00",
+            "headline": "California Proposes Ban on Food Packaging Chemicals",
+            "body": "According to Breast Cancer Prevention Partners, California's Safer Food Packaging Act of 2025 would ban bisphenols and phthalates in food packaging.",
+            "label": "Policy Update",
+            "label_color": "#2563eb",
+            "action_text": "Learn More",
+            "action_url": "https://www.bcpp.org/banning-toxic-chemicals-in-food-is-possible/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "bisphenol A",
+                "bisphenol S",
+                "bisphenol F",
+                "phthalates",
+                "PFAS",
+                "perfluorooctanoic acid"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-05-01T07:00:06.395+00:00",
+            "priority": 7,
+            "source_name": "Breast Cancer Prevention Partners",
+            "source_url": "https://www.bcpp.org/banning-toxic-chemicals-in-food-is-possible/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "c264ee10-5b20-45ff-ab01-1f31bfc29080",
+            "created_at": "2026-04-16T07:00:11.288035+00:00",
+            "headline": "Auricchio Taleggio Cheese Recalled for Listeria",
+            "body": "Auricchio brand Taleggio D.O.P. cheese recalled in Canada due to Listeria monocytogenes contamination. No illnesses reported. Check your refrigerator.",
+            "label": "Food Recall",
+            "label_color": "#dc2626",
+            "action_text": "Learn More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/cheese-recalled-because-of-listeria/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Listeria monocytogenes"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-30T07:00:11.062+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/cheese-recalled-because-of-listeria/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "1852f4bf-ed63-4134-85a5-33e3f687fbbc",
+            "created_at": "2026-04-16T07:00:07.790973+00:00",
+            "headline": "Food Recall System Gaps: What You Should Know",
+            "body": "An investigation found that food recalls often lack mandatory consumer notification. Stores and restaurants aren't required to alert customers about safety issues.",
+            "label": "Food Safety",
+            "label_color": "#d97706",
+            "action_text": "Read Full Report",
+            "action_url": "https://www.foodsafetynews.com/2026/04/report-shows-shortcomings-in-recall-system/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-30T07:00:07.656+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/report-shows-shortcomings-in-recall-system/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "32d92546-072a-4d29-afe1-f1d084c8c2cd",
+            "created_at": "2026-04-15T21:45:04.097141+00:00",
+            "headline": "Travel-Related Infection Risks Higher on All-Inclusive Trips",
+            "body": "An analysis found gastrointestinal illness risks increase when visiting non-European destinations on all-inclusive packages. Pre-travel planning matters.",
+            "label": "Travel Health",
+            "label_color": "#2563eb",
+            "action_text": "Read Full Report",
+            "action_url": "https://www.foodsafetynews.com/2026/04/scientists-flag-travel-related-infection-risks/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T21:45:04.06+00:00",
+            "priority": 5,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/scientists-flag-travel-related-infection-risks/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "f6b7f16d-6a16-4b1e-9a00-b445a7fc48e0",
+            "created_at": "2026-04-15T21:45:00.700544+00:00",
+            "headline": "Oil Price Surge Amid Geopolitical Conflict",
+            "body": "Reporting revealed major oil and gas companies earned estimated $23bn in windfall profits as conflict pushed crude to $100/barrel in March.",
+            "label": "Energy Markets",
+            "label_color": "#2563eb",
+            "action_text": "Read Analysis",
+            "action_url": "https://www.theguardian.com/news/video/2026/apr/15/how-big-oil-is-cashing-in-on-iran-war-the-latest",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-04-29T21:45:00.62+00:00",
+            "priority": 3,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/news/video/2026/apr/15/how-big-oil-is-cashing-in-on-iran-war-the-latest",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "c3979c17-f6aa-49da-b129-10674ee88951",
+            "created_at": "2026-04-15T21:44:57.125796+00:00",
+            "headline": "EU Cosmetics Rule: Carcinogen Protections Upheld",
+            "body": "According to Health and Environment Alliance, EU Parliament rejected exemptions for carcinogenic substances in cosmetics. Some harmful chemicals remain permitted longer than health advocates recommend.",
+            "label": "Regulatory Update",
+            "label_color": "#2563eb",
+            "action_text": "Learn more",
+            "action_url": "https://www.env-health.org/eu-parliament-committees-vote-limits-some-harmful-changes-to-cosmetics-law-but-health-concerns-remain/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "personal_care"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T21:44:57.041+00:00",
+            "priority": 5,
+            "source_name": "Health and Environment Alliance",
+            "source_url": "https://www.env-health.org/eu-parliament-committees-vote-limits-some-harmful-changes-to-cosmetics-law-but-health-concerns-remain/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "a08eea0f-b02c-485b-bf3d-b368cd97f2f6",
+            "created_at": "2026-04-15T21:44:53.505057+00:00",
+            "headline": "UK May Restrict Over-the-Counter Pet Flea Treatments",
+            "body": "Reporting revealed the UK government is considering limiting pesticide-based flea treatments to veterinarians and pharmacists only, citing water contamination concerns.",
+            "label": "Regulatory Change",
+            "label_color": "#2563eb",
+            "action_text": "Read more",
+            "action_url": "https://www.theguardian.com/environment/2026/apr/15/over-the-counter-pet-flea-treatments-could-be-banned-under-new-uk-rules",
+            "action_page": null,
+            "ingredient_triggers": [
+                "pyrethroids",
+                "neonicotinoids",
+                "fipronil",
+                "imidacloprid",
+                "permethrin"
+            ],
+            "category_triggers": [
+                "pet_care"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T21:44:53.397+00:00",
+            "priority": 7,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/environment/2026/apr/15/over-the-counter-pet-flea-treatments-could-be-banned-under-new-uk-rules",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "96572a6a-cd16-48b7-b303-34bc3b08680a",
+            "created_at": "2026-04-15T07:00:37.469138+00:00",
+            "headline": "Soo Brand Jerky Recalled for Mold",
+            "body": "An investigation revealed mold contamination on Soo brand Mala Spicy Flavoured Beef and Pork Jerky distributed in Alberta and British Columbia, Canada.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "Learn More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/beef-and-pork-jerky-under-recall-in-canada/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "mold"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:37.429+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/beef-and-pork-jerky-under-recall-in-canada/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "2fd65fb6-7393-40db-a080-7549b9fe57c9",
+            "created_at": "2026-04-15T07:00:34.440017+00:00",
+            "headline": "Good Brain Tonic Liquid Supplement Recalled",
+            "body": "Liquid Blenz Corp. recalls all codes of Good Brain Tonic due to potential Clostridium botulinum contamination. Distributed nationwide in 16oz and 32oz amber bottles.",
+            "label": "Botulism Risk",
+            "label_color": "#dc2626",
+            "action_text": "View Recall Details",
+            "action_url": "https://www.foodsafetynews.com/2026/04/liquid-supplement-recalled-because-of-botulism-risk/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Clostridium botulinum"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:34.398+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/liquid-supplement-recalled-because-of-botulism-risk/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "840ec4d9-7dda-497a-b172-9398c2779391",
+            "created_at": "2026-04-15T07:00:31.178166+00:00",
+            "headline": "7-Eleven Sandwiches Recalled for Listeria",
+            "body": "7-Eleven brand sandwiches, subs, and wraps distributed in Alberta, British Columbia, and Saskatchewan are recalled due to Listeria monocytogenes contamination.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "Learn More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/7-eleven-sandwiches-wraps-recalled-because-of-listeria/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Listeria monocytogenes"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:31.146+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/7-eleven-sandwiches-wraps-recalled-because-of-listeria/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "4305e499-d6ae-493a-a04b-30048e8098b0",
+            "created_at": "2026-04-15T07:00:27.946719+00:00",
+            "headline": "UK Study: Home Food Safety Habits Unchanged",
+            "body": "Analysis found little change in consumer food safety practices over 5 years. Review handwashing, cross-contamination, and proper chilling routines.",
+            "label": "Food Safety",
+            "label_color": "#2563eb",
+            "action_text": "Read Full Report",
+            "action_url": "https://www.foodsafetynews.com/2026/04/uk-analysis-reveals-little-change-in-consumer-food-safety-behavior/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:27.91+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/uk-analysis-reveals-little-change-in-consumer-food-safety-behavior/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "5aacc948-cc1e-41ec-993d-80179f46dbba",
+            "created_at": "2026-04-15T07:00:24.046632+00:00",
+            "headline": "Pesticide Cancer Warning Case at Supreme Court",
+            "body": "According to Breast Cancer Prevention Partners, nonprofits urged the U.S. Supreme Court to reject pesticide company immunity from cancer warnings.",
+            "label": "Legal Action",
+            "label_color": "#2563eb",
+            "action_text": "Learn More",
+            "action_url": "https://www.bcpp.org/broad-array-of-nonprofits-tell-u-s-supreme-court-not-to-grant-pesticide-companies-immunity-from-cancer-warnings/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "pesticides",
+                "glyphosate",
+                "paraquat",
+                "atrazine"
+            ],
+            "category_triggers": [
+                "food",
+                "baby"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:23.996+00:00",
+            "priority": 7,
+            "source_name": "Breast Cancer Prevention Partners",
+            "source_url": "https://www.bcpp.org/broad-array-of-nonprofits-tell-u-s-supreme-court-not-to-grant-pesticide-companies-immunity-from-cancer-warnings/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "f2932ece-ccc3-4aa5-8530-f3264768b0ad",
+            "created_at": "2026-04-15T07:00:20.498458+00:00",
+            "headline": "Ontario Bill 98 May Limit Municipal Housing Standards",
+            "body": "According to Environmental Defence, Bill 98 could reduce local tools for enforcing energy-efficient building codes and environmental protections in new housing.",
+            "label": "Policy Alert",
+            "label_color": "#2563eb",
+            "action_text": "Learn More",
+            "action_url": "https://environmentaldefence.ca/2026/04/01/bill-98-ignored-obstacles-to-efficient-housing-deprives-municipalities-of-key-tools/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:20.448+00:00",
+            "priority": 5,
+            "source_name": "Environmental Defence",
+            "source_url": "https://environmentaldefence.ca/2026/04/01/bill-98-ignored-obstacles-to-efficient-housing-deprives-municipalities-of-key-tools/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "2fa18d8c-80e0-4cae-9d92-dda8b0c1235a",
+            "created_at": "2026-04-15T07:00:16.937901+00:00",
+            "headline": "Spain's Coastal Towns Prepare for Tsunami Risk",
+            "body": "An investigation found that while Spanish holiday destinations downplay tsunami risks, neighboring C\u00e1diz is becoming the country's first tsunami-ready town.",
+            "label": "Natural Hazard",
+            "label_color": "#2563eb",
+            "action_text": "Read more",
+            "action_url": "https://www.theguardian.com/environment/2026/apr/02/how-spain-coastal-towns-preparing-for-tsunamis",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:16.829+00:00",
+            "priority": 5,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/environment/2026/apr/02/how-spain-coastal-towns-preparing-for-tsunamis",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "d199501a-b4bf-4c95-ab1d-40bd113b343d",
+            "created_at": "2026-04-15T07:00:13.633384+00:00",
+            "headline": "Lagos Lagoon Dredging Threatens Food Chain",
+            "body": "An investigation found sand dredging for construction damages lagoon ecosystems, affecting fish populations and coastal fishing communities' food security.",
+            "label": "Environmental",
+            "label_color": "#dc2626",
+            "action_text": "Read more",
+            "action_url": "https://www.theguardian.com/environment/2026/apr/08/dredging-is-pushing-lagos-lagoon-towards-ecosystem-collapse-photo-essay",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:13.474+00:00",
+            "priority": 7,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/environment/2026/apr/08/dredging-is-pushing-lagos-lagoon-towards-ecosystem-collapse-photo-essay",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "6b7ab675-3d93-41f6-a631-498efe13a309",
+            "created_at": "2026-04-15T07:00:10.334741+00:00",
+            "headline": "Green Jobs Promise vs. Reality on England's Coast",
+            "body": "An investigation found young workers in areas with major windfarm development report limited job opportunities despite government 'green revolution' messaging.",
+            "label": "Employment",
+            "label_color": "#2563eb",
+            "action_text": "Read full report",
+            "action_url": "https://www.theguardian.com/environment/2026/apr/14/windfarm-reality-green-jobs-boom-englands-east-coast-unemployment",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:10.211+00:00",
+            "priority": 3,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/environment/2026/apr/14/windfarm-reality-green-jobs-boom-englands-east-coast-unemployment",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "089a49c7-155f-4c6b-9ff3-71dd8d58b6f8",
+            "created_at": "2026-04-15T07:00:06.675096+00:00",
+            "headline": "Giant Echidnas Discovered in Victoria Fossils",
+            "body": "Reporting revealed a skull fragment hidden in museum storage for over a century shows giant echidnas (Megalibgwilia owenii) once lived in Victoria during the Pleistocene epoch.",
+            "label": "Paleontology",
+            "label_color": "#2563eb",
+            "action_text": "Read full story",
+            "action_url": "https://www.theguardian.com/environment/2026/apr/14/owens-giant-echidna-fossil-victoria",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [],
+            "active": false,
+            "expires_at": "2026-04-29T07:00:06.614+00:00",
+            "priority": 1,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/environment/2026/apr/14/owens-giant-echidna-fossil-victoria",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "706e9d71-36dd-4264-a021-b2255862a864",
+            "created_at": "2026-04-14T23:36:40.49372+00:00",
+            "headline": "Peeled Garlic Recall: Botulism Risk",
+            "body": "Tops Markets recalls Christopher Ranch and Garland peeled garlic due to potential Clostridium botulinum contamination from improper storage temperatures.",
+            "label": "RECALL",
+            "label_color": "#dc2626",
+            "action_text": "View Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/tops-issues-recall-christopher-ranch-peeled-garlic-garland-fresh-peeled-garlic-because-possible",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Clostridium botulinum"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:40.456+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/tops-issues-recall-christopher-ranch-peeled-garlic-garland-fresh-peeled-garlic-because-possible",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "643aab2d-ac8e-430e-8059-f8e795df7c77",
+            "created_at": "2026-04-14T23:36:37.054721+00:00",
+            "headline": "Raw Farm Cheese Voluntary Recall",
+            "body": "Raw Farm is recalling cheese batches at FDA request. Check product labels for batch numbers and dates. Contact Raw Farm or FDA with questions.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "View Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/voluntary-recall",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:37.018+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/voluntary-recall",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "1c8d1b34-783f-4612-a852-ac991fdd194e",
+            "created_at": "2026-04-14T23:36:33.898019+00:00",
+            "headline": "Karns Foods Recalls Mini Dark Chocolate Raspberry Cups",
+            "body": "8-oz packages may contain undeclared peanuts. Risk of serious allergic reaction for those with peanut allergies. Check your pantry.",
+            "label": "Allergen Alert",
+            "label_color": "#dc2626",
+            "action_text": "View Recall Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/karns-foods-issues-voluntary-recall-mini-dark-chocolate-raspberry-cups-due-undeclared-peanuts",
+            "action_page": null,
+            "ingredient_triggers": [
+                "peanuts"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-28T23:36:33.867+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/karns-foods-issues-voluntary-recall-mini-dark-chocolate-raspberry-cups-due-undeclared-peanuts",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "53d2ad7c-0f16-4e2f-93a4-25cd8a9c005c",
+            "created_at": "2026-04-14T23:36:30.731832+00:00",
+            "headline": "Liquid Blenz Good Brain Tonic Recalled",
+            "body": "All codes recalled due to botulism risk. Symptoms include weakness, dizziness, vision changes, and difficulty speaking or swallowing. Stop use immediately.",
+            "label": "Health Risk",
+            "label_color": "#dc2626",
+            "action_text": "View Recall",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/liquid-blenz-corp-recalls-product-due-possible-health-risk",
+            "action_page": null,
+            "ingredient_triggers": [
+                "botulism"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:30.701+00:00",
+            "priority": 9,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/liquid-blenz-corp-recalls-product-due-possible-health-risk",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "3dbfd7df-ec91-4330-b418-ee74625c4c70",
+            "created_at": "2026-04-14T23:36:27.224461+00:00",
+            "headline": "DTF Sexual Chocolate Recalled for Undisclosed Drugs",
+            "body": "Nalpac recalls DTF Sexual Chocolate nationwide. Products contain sildenafil and tadalafil\u2014prescription medications not listed on packaging.",
+            "label": "Drug Contamination",
+            "label_color": "#dc2626",
+            "action_text": "View Recall",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/nalpac-issues-voluntary-nationwide-recall-dtf-sexual-chocolate-due-presence-pharmaceutical",
+            "action_page": null,
+            "ingredient_triggers": [
+                "sildenafil",
+                "tadalafil"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": false,
+            "expires_at": "2026-04-28T23:36:27.19+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/nalpac-issues-voluntary-nationwide-recall-dtf-sexual-chocolate-due-presence-pharmaceutical",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "e7b66ef4-fbb0-4369-8a75-90263145e0bd",
+            "created_at": "2026-04-14T23:36:23.824537+00:00",
+            "headline": "Oregon State Launches Food Safety Training",
+            "body": "Oregon State University now offers online food safety and quality training for food industry professionals through its Department of Food Science and Technology.",
+            "label": "Education",
+            "label_color": "#2563eb",
+            "action_text": "Learn More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/oregon-state-launches-online-food-safety-training-series/",
+            "action_page": null,
+            "ingredient_triggers": [],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:23.792+00:00",
+            "priority": 3,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/oregon-state-launches-online-food-safety-training-series/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "c00ed91c-a5a6-4cdb-883c-aebf5962fe8a",
+            "created_at": "2026-04-14T23:36:20.749551+00:00",
+            "headline": "US Industrial Pollution Affecting Mexican Communities",
+            "body": "Reporting revealed lax oversight allows pesticides, lead, and industrial waste to accumulate in Mexican border regions, exposing families to toxic exposure.",
+            "label": "Environmental Health",
+            "label_color": "#dc2626",
+            "action_text": "Read Full Report",
+            "action_url": "https://www.theguardian.com/world/2026/apr/07/mexico-us-toxic-waste-un-special-rapporteur",
+            "action_page": null,
+            "ingredient_triggers": [
+                "pesticide",
+                "lead"
+            ],
+            "category_triggers": [
+                "food",
+                "personal_care",
+                "baby"
+            ],
+            "active": false,
+            "expires_at": "2026-04-28T23:36:20.716+00:00",
+            "priority": 7,
+            "source_name": "The Guardian Environment",
+            "source_url": "https://www.theguardian.com/world/2026/apr/07/mexico-us-toxic-waste-un-special-rapporteur",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "d050d0b6-1d27-4bfd-b318-514f5c758dba",
+            "created_at": "2026-04-14T23:36:17.256136+00:00",
+            "headline": "Wawa Iced Tea & Lemonade Recall: Undeclared Milk",
+            "body": "Wawa recalled 16-oz beverages (Iced Tea Lemon, Diet Lemon, Diet Lemonade, Fruit Punch) due to undeclared milk allergen. Affects PA, DE, MD, NJ, VA stores.",
+            "label": "Allergen Alert",
+            "label_color": "#dc2626",
+            "action_text": "View Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/wawa-issues-product-recall-16-oz-wawa-brand-iced-tea-lemon-iced-tea-diet-lemon-diet-lemonade-and",
+            "action_page": null,
+            "ingredient_triggers": [
+                "milk"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:17.22+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/wawa-issues-product-recall-16-oz-wawa-brand-iced-tea-lemon-iced-tea-diet-lemon-diet-lemonade-and",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "35856dbd-ccc0-4150-bb17-ad4dd851b78b",
+            "created_at": "2026-04-14T23:36:13.630244+00:00",
+            "headline": "California Proposes New Food Safety Standards",
+            "body": "Proposed bills address pesticide residues on produce, heavy metals in supplements, and ultra-processed food labeling to protect families.",
+            "label": "Policy Update",
+            "label_color": "#2563eb",
+            "action_text": "Read More",
+            "action_url": "https://www.foodsafetynews.com/2026/04/california-considering-food-safety-bills/",
+            "action_page": null,
+            "ingredient_triggers": [
+                "pesticides",
+                "heavy metals",
+                "lead",
+                "cadmium",
+                "arsenic"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:13.599+00:00",
+            "priority": 7,
+            "source_name": "Food Safety News",
+            "source_url": "https://www.foodsafetynews.com/2026/04/california-considering-food-safety-bills/",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "4520905b-04a3-444a-9d37-bc3220498935",
+            "created_at": "2026-04-14T23:36:10.330042+00:00",
+            "headline": "Long Grain Rice Tested for Arsenic & Lead",
+            "body": "Lab analysis of donated rice samples revealed arsenic, lead, cadmium & mercury levels. See which products tested lowest for these contaminants.",
+            "label": "Testing Results",
+            "label_color": "#d97706",
+            "action_text": "View Results",
+            "action_url": "https://mamavation.com/food/long-grain-rice-arsenic.html",
+            "action_page": null,
+            "ingredient_triggers": [
+                "arsenic",
+                "lead",
+                "cadmium",
+                "mercury"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:36:10.292+00:00",
+            "priority": 7,
+            "source_name": "Mamavation",
+            "source_url": "https://mamavation.com/food/long-grain-rice-arsenic.html",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "a5b61300-fc17-42af-afa1-bf653a55c574",
+            "created_at": "2026-04-14T23:04:30.562608+00:00",
+            "headline": "Blaine Labs Wound Care Gel Recalled",
+            "body": "Blaine Labs voluntarily recalled Wound Care Gel (0.1% Benzalkonium Chloride) due to microbial contamination. Affected: specific lot numbers in 1 oz & 3 oz sizes.",
+            "label": "Recall",
+            "label_color": "#dc2626",
+            "action_text": "View Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/blaine-labs-inc-issues-voluntary-nationwide-recall-wound-care-gel-products-due-microbial",
+            "action_page": null,
+            "ingredient_triggers": [
+                "Benzalkonium Chloride"
+            ],
+            "category_triggers": [
+                "personal_care"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:04:30.529+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/blaine-labs-inc-issues-voluntary-nationwide-recall-wound-care-gel-products-due-microbial",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "b0c3765b-bb52-4e58-8fc1-a64f5f59ee9f",
+            "created_at": "2026-04-14T23:04:27.653338+00:00",
+            "headline": "Nail Polish Remover Recall: Banned Chemicals Found",
+            "body": "FDA recalled nail polish remover containing methylene chloride and chloroform\u2014both prohibited in cosmetics. Check product labels and stop use immediately.",
+            "label": "Safety Alert",
+            "label_color": "#dc2626",
+            "action_text": "View Recall Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/product-recall",
+            "action_page": null,
+            "ingredient_triggers": [
+                "methylene chloride",
+                "chloroform"
+            ],
+            "category_triggers": [
+                "personal_care"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:04:27.619+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/product-recall",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        },
+        {
+            "id": "012c4151-9825-419e-835a-3d677e0369ec",
+            "created_at": "2026-04-14T23:04:24.713883+00:00",
+            "headline": "Vital Nutrients Aller-C: Undeclared Allergens",
+            "body": "Blueroot Health recalls Vital Nutrients Aller-C supplements for undeclared egg, hazelnut, and soy. Check lot numbers; contact manufacturer if unsure.",
+            "label": "Allergen Alert",
+            "label_color": "#dc2626",
+            "action_text": "View Recall Details",
+            "action_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/blueroot-health-expands-voluntary-allergy-alert-undeclared-egg-hazelnut-and-soy-vital-nutrients",
+            "action_page": null,
+            "ingredient_triggers": [
+                "egg",
+                "hazelnut",
+                "soy"
+            ],
+            "category_triggers": [
+                "food"
+            ],
+            "active": true,
+            "expires_at": "2026-04-28T23:04:24.641+00:00",
+            "priority": 7,
+            "source_name": "FDA Recalls",
+            "source_url": "http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/blueroot-health-expands-voluntary-allergy-alert-undeclared-egg-hazelnut-and-soy-vital-nutrients",
+            "product_families": [],
+            "specific_products": [],
+            "regulatory_flags": []
+        }
+    ]
+}
