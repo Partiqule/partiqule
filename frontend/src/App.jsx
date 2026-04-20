@@ -442,77 +442,228 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
 };
 
 // Branded loading screen shown between barcode detection and result display.
-// Minimum 2000ms display time. Timeout at 5000ms surfaces the error phase.
-const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
-  const [elapsed, setElapsed] = useState(0);
+// Minimum 2000ms display time. Timeout at 60000ms surfaces the error phase.
+// Revised design: typewriter messages + moss rule + 4 progress dots, no circular animations.
+// Product prop (optional): { brand, name } — shown when barcode lookup has returned partial
+// identity before scoring completes. Left null today; Pass 0 streaming can wire it later.
+const TYPEWRITER_STEPS = [
+  "Reading the label...",
+  "Checking what's inside...",
+  "Looking up what we know...",
+  "Scoring against the rest...",
+];
+const CHAR_MS = 40;
+const HOLD_MS = 800;
+const CLEAR_MS = 220;
+
+const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
+  const [stepIndex, setStepIndex] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [filled, setFilled] = useState([false, false, false, false]);
+  const [ruleFrac, setRuleFrac] = useState(0);
+
   useEffect(() => {
-    if (phase !== "loading") return;
-    const start = Date.now();
-    const id = setInterval(() => setElapsed(Date.now() - start), 120);
-    return () => clearInterval(id);
+    if (phase !== "loading") {
+      setStepIndex(0); setTyped(""); setFilled([false, false, false, false]); setRuleFrac(0);
+      return;
+    }
+    let cancelled = false;
+    let timers = [];
+    const schedule = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
+
+    const typeStep = (idx) => {
+      if (cancelled) return;
+      const msg = TYPEWRITER_STEPS[idx];
+      setTyped("");
+      setRuleFrac(0);
+      let i = 0;
+      const tick = () => {
+        if (cancelled) return;
+        i += 1;
+        setTyped(msg.slice(0, i));
+        setRuleFrac(i / msg.length);
+        if (i < msg.length) schedule(tick, CHAR_MS);
+        else {
+          // Step complete — fill dot, hold, then clear and advance
+          setFilled(prev => {
+            const next = [...prev];
+            next[idx] = true;
+            // If all four are filled, reset on the NEXT cycle so user sees the finish.
+            return next;
+          });
+          schedule(() => {
+            if (cancelled) return;
+            setTyped("");
+            schedule(() => {
+              if (cancelled) return;
+              const nextIdx = (idx + 1) % TYPEWRITER_STEPS.length;
+              // If we just completed the last step, reset dots for the new cycle.
+              if (nextIdx === 0) setFilled([false, false, false, false]);
+              setStepIndex(nextIdx);
+              typeStep(nextIdx);
+            }, CLEAR_MS);
+          }, HOLD_MS);
+        }
+      };
+      schedule(tick, CHAR_MS);
+    };
+    typeStep(0);
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, [phase]);
 
-  const statusText = elapsed < 1500
-    ? "Reading barcode..."
-    : elapsed < 4000
-    ? "Finding product..."
-    : elapsed < 10000
-    ? "Analyzing ingredients..."
-    : "Almost there...";
+  const brand = product?.brand ? String(product.brand).toUpperCase() : null;
+  const productName = product?.name || null;
 
   return (
-    <div style={{position:"fixed", inset:0, zIndex:9998, background:"#052e16",
-      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-      padding:"24px", animation:"barcodeLoadingFade 0.25s ease forwards"}}>
+    <div style={{
+      position:"fixed", inset:0, zIndex:9998,
+      background:"var(--cream)",
+      display:"flex", flexDirection:"column",
+      padding:"0",
+      animation:"barcodeLoadingFade 0.25s ease forwards",
+      fontFamily:"'DM Sans', system-ui, sans-serif",
+    }}>
       <style>{`
         @keyframes barcodeLoadingFade { from{opacity:0} to{opacity:1} }
-        @keyframes barcodeLoadingPulse {
-          0%,100% { transform: scale(1);    opacity: 1;    filter: drop-shadow(0 0 0 rgba(74,222,128,0)); }
-          50%     { transform: scale(1.06); opacity: 0.92; filter: drop-shadow(0 0 18px rgba(74,222,128,0.35)); }
-        }
-        @keyframes barcodeLoadingStatus { from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:translateY(0)} }
+        @keyframes typewriterCaret { 0%,100%{opacity:1} 50%{opacity:0} }
       `}</style>
 
-      <div style={{animation: phase === "loading" ? "barcodeLoadingPulse 1.6s ease-in-out infinite" : "none",
-                   marginBottom: 20}}>
-        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:60, width:"auto", display:"block"}}/>
+      {/* Top bar — wordmark left, profile/shelf right */}
+      <div style={{
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding: `${(SAFE_TOP || 0) + 18}px 24px 12px`,
+        borderBottom: "1px solid var(--rule)",
+        margin: "0 0",
+      }}>
+        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:24, width:"auto", display:"block"}}/>
+        <div style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:11, letterSpacing:"0.02em", color:"var(--ink-soft)", fontWeight:500,
+        }}>
+          JUST SCANNED
+        </div>
       </div>
 
-      {phase === "loading" ? (
-        <div key={statusText}
-             style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15,
-                     color:"#6ee7b7", opacity:0.9, letterSpacing:"0.01em",
-                     animation:"barcodeLoadingStatus 0.3s ease forwards"}}>
-          {statusText}
+      {/* Product identity or placeholder */}
+      <div style={{padding:"32px 24px 10px"}}>
+        <div style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:10, letterSpacing:"0.22em", color:"var(--ink-faint)",
+          textTransform:"uppercase", marginBottom:10, fontWeight:500,
+        }}>
+          {phase === "loading" ? "Just scanned · moment ago" : "Tried · moment ago"}
         </div>
-      ) : (
-        <div style={{maxWidth:340, textAlign:"center"}}>
-          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:17,
-                       color:"#f0fdf4", marginBottom:8}}>
-            We couldn't find this product
-          </div>
-          <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#6ee7b7",
-                       opacity:0.75, marginBottom:24, lineHeight:1.5}}>
-            The barcode didn't match any of our ingredient sources.
-          </div>
-          <button onClick={onRetry}
-            style={{width:"100%", padding:"14px 16px",
-                    background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
-                    border:"none", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif",
-                    fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10,
-                    boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
-            Try scanning again
-          </button>
-          <label style={{display:"block", width:"100%", cursor:"pointer"}}>
-            <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
-              onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; onPhoto(f);}}/>
-            <div style={{width:"100%", padding:"12px 16px", background:"transparent",
-                         color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)",
-                         borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif",
-                         fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box"}}>
-              Take a photo instead
+        {brand && (
+          <div style={{
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:11, letterSpacing:"0.22em", color:"var(--ink)",
+            textTransform:"uppercase", fontWeight:500, marginBottom:4,
+          }}>{brand}</div>
+        )}
+        <div style={{
+          fontFamily:"'Fraunces', Georgia, serif",
+          fontSize:30, lineHeight:1.06, color:"var(--ink)",
+          letterSpacing:"-0.01em", fontWeight:400,
+          opacity: productName ? 1 : 0.5,
+        }}>
+          {productName || "Reading the label..."}
+        </div>
+      </div>
+
+      {/* Center content: typewriter + rule + dots */}
+      <div style={{
+        flex:1, display:"flex", flexDirection:"column",
+        alignItems:"center", justifyContent:"center",
+        padding:"24px", gap:24,
+      }}>
+        {phase === "loading" ? (
+          <>
+            <div style={{
+              fontFamily:"'Fraunces', Georgia, serif",
+              fontSize:20, lineHeight:1.3, color:"var(--moss)",
+              fontWeight:400, textAlign:"center",
+              minHeight:28, letterSpacing:"-0.005em",
+            }}>
+              {typed}
+              <span style={{animation:"typewriterCaret 1s step-end infinite", opacity: typed ? 1 : 0.4}}>|</span>
             </div>
-          </label>
+            {/* Moss rule that fills left-to-right as each step types */}
+            <div style={{width:200, height:1, background:"var(--rule)", position:"relative"}}>
+              <div style={{
+                position:"absolute", left:0, top:0, bottom:0,
+                width: `${Math.round(ruleFrac * 100)}%`,
+                background:"var(--moss)",
+                transition:"width 40ms linear",
+              }}/>
+            </div>
+            {/* Four moss dots */}
+            <div style={{display:"flex", gap:16, alignItems:"center"}}>
+              {filled.map((on, i) => (
+                <div key={i} style={{
+                  width:6, height:6, borderRadius:"50%",
+                  background: on ? "var(--moss)" : "var(--ink-faint)",
+                  opacity: on ? 1 : 0.35,
+                  transition:"background 0.25s, opacity 0.25s",
+                }}/>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{maxWidth:320, textAlign:"center"}}>
+            <div style={{
+              fontFamily:"'Fraunces', Georgia, serif",
+              fontSize:24, lineHeight:1.15, color:"var(--ink)",
+              fontWeight:400, marginBottom:10,
+              letterSpacing:"-0.01em",
+            }}>
+              I couldn't find this one.
+            </div>
+            <div style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:13, color:"var(--ink-soft)",
+              lineHeight:1.55, marginBottom:24,
+            }}>
+              The barcode didn't land in any of our ingredient sources. Try again, or take a photo of the label.
+            </div>
+            <button onClick={onRetry} style={{
+              width:"100%", padding:"13px 16px",
+              background:"var(--moss)", color:"var(--ivory)",
+              border:"none",
+              borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:10,
+              letterSpacing:"0.005em",
+            }}>
+              Try scanning again
+            </button>
+            <label style={{display:"block", width:"100%", cursor:"pointer"}}>
+              <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; onPhoto(f);}}/>
+              <div style={{
+                width:"100%", padding:"12px 16px", background:"transparent",
+                color:"var(--ink)", border:"1px solid var(--rule-strong)",
+                borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontWeight:500, fontSize:14, textAlign:"center", boxSizing:"border-box",
+                letterSpacing:"0.005em",
+              }}>
+                Take a photo instead
+              </div>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom friend-voice line */}
+      {phase === "loading" && (
+        <div style={{
+          padding:"20px 24px 36px",
+          textAlign:"center",
+          fontFamily:"'Fraunces', Georgia, serif",
+          fontSize:15, lineHeight:1.4, color:"var(--ink-soft)",
+          fontWeight:400,
+        }}>
+          hang on, this takes a second
         </div>
       )}
     </div>
@@ -6847,31 +6998,214 @@ const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border
   );
 };
 
+// ── SHELF STRIP ────────────────────────────────────────────────
+// Placeholder hand-drawn illustrations by category.
+// Paul will swap these for proper illustrations later.
+const SHELF_TILE_SHAPES = [
+  "12px 14px 10px 15px / 14px 10px 15px 12px",
+  "14px 10px 15px 12px / 10px 15px 12px 14px",
+  "10px 15px 12px 14px / 15px 12px 14px 10px",
+  "15px 12px 14px 10px / 12px 14px 10px 15px",
+  "11px 13px 15px 12px / 13px 15px 12px 11px",
+  "13px 15px 11px 14px / 15px 11px 14px 13px",
+];
+
+const ShelfIllustration = ({ category }) => {
+  // Map category → one of six illustration types from the hero mockup.
+  const kind = (() => {
+    const c = (category || "").toLowerCase();
+    if (c === "clothing" || c === "accessory") return "brief";
+    if (c === "beverage" || c === "restaurant") return "can";
+    if (c === "personal_care" || c === "baby" || c === "supplement") return "bottle";
+    if (c === "home" || c === "home_furnishing" || c === "kitchen") return "pump";
+    if (c === "toy") return "shoe";
+    return "chocolate";
+  })();
+
+  const stroke = "var(--moss)";
+  const shared = {
+    stroke, strokeWidth: 1.5, fill: "none",
+    strokeLinecap: "round", strokeLinejoin: "round",
+    opacity: 0.82,
+  };
+
+  switch (kind) {
+    case "brief":
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <path d="M 14 18 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 18"/>
+          <path d="M 14 18 Q 17 14 20 14 L 28 14 Q 31 14 34 18"/>
+          <path d="M 20 14 Q 20 11 24 11 Q 28 11 28 14"/>
+          <path d="M 14 24 L 34 24" opacity="0.5"/>
+        </svg>
+      );
+    case "chocolate":
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <rect x="13" y="13" width="22" height="22" rx="1.5"/>
+          <line x1="19" y1="13" x2="19" y2="35" opacity="0.55"/>
+          <line x1="24" y1="13" x2="24" y2="35" opacity="0.55"/>
+          <line x1="29" y1="13" x2="29" y2="35" opacity="0.55"/>
+          <line x1="13" y1="20" x2="35" y2="20" opacity="0.55"/>
+          <line x1="13" y1="28" x2="35" y2="28" opacity="0.55"/>
+        </svg>
+      );
+    case "bottle":
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <path d="M 19 12 L 19 16 L 17 18 L 17 38 Q 17 39 18 39 L 30 39 Q 31 39 31 38 L 31 18 L 29 16 L 29 12 Z"/>
+          <line x1="19" y1="12" x2="29" y2="12" strokeWidth="1.8"/>
+          <rect x="19" y="22" width="10" height="10" opacity="0.55"/>
+          <line x1="21" y1="26" x2="27" y2="26" opacity="0.55"/>
+          <line x1="21" y1="28.5" x2="27" y2="28.5" opacity="0.55"/>
+        </svg>
+      );
+    case "shoe":
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <path d="M 10 30 Q 10 24 14 22 L 20 20 Q 22 17 26 16 Q 31 15 33 19 Q 35 22 37 24 Q 40 26 40 30 Q 40 33 37 33 L 13 33 Q 10 33 10 30 Z"/>
+          <path d="M 20 20 Q 21 23 22 25" opacity="0.55"/>
+          <path d="M 26 16 Q 27 19 27 22" opacity="0.55"/>
+          <line x1="12" y1="33" x2="38" y2="33" opacity="0.8"/>
+        </svg>
+      );
+    case "can":
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <rect x="17" y="11" width="14" height="26" rx="1.5"/>
+          <ellipse cx="24" cy="11" rx="7" ry="1.2" opacity="0.6"/>
+          <path d="M 21 11 Q 21 13 24 13 Q 27 13 27 11" opacity="0.6"/>
+          <line x1="17" y1="18" x2="31" y2="18" opacity="0.55"/>
+          <line x1="17" y1="30" x2="31" y2="30" opacity="0.55"/>
+          <path d="M 20 22 Q 22 24 24 22 Q 26 20 28 22" opacity="0.55"/>
+        </svg>
+      );
+    case "pump":
+    default:
+      return (
+        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
+          <path d="M 14 16 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 16"/>
+          <rect x="12" y="12" width="24" height="5" rx="1"/>
+          <ellipse cx="24" cy="14.5" rx="3" ry="0.8" opacity="0.55"/>
+          <line x1="19" y1="24" x2="29" y2="24" opacity="0.55"/>
+          <line x1="19" y1="28" x2="29" y2="28" opacity="0.55"/>
+          <line x1="19" y1="32" x2="29" y2="32" opacity="0.55"/>
+        </svg>
+      );
+  }
+};
+
+const ShelfStrip = ({ items, onSelect }) => {
+  if (!items || items.length === 0) return null;
+  const sc = (s) => s == null ? "var(--ink-faint)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+  return (
+    <>
+      <div style={{
+        display:"flex", gap:12,
+        overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
+        padding:"4px 0 12px",
+        margin:"0 -4px",
+      }}>
+        <style>{`.shelf-strip-scroll::-webkit-scrollbar{display:none}`}</style>
+        {items.map((item, i) => {
+          const score = item.overall_score || item.score;
+          const brand = (() => {
+            const m = (item.product_name || "").match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+/);
+            return m ? m[1] : "";
+          })();
+          const shortName = (() => {
+            const n = item.product_name || "";
+            const rest = brand ? n.slice(brand.length).trim() : n;
+            return rest.length > 18 ? rest.slice(0, 17) + "…" : rest;
+          })();
+          return (
+            <div key={i} onClick={() => onSelect && onSelect(item)} style={{flexShrink:0, width:92, cursor:"pointer"}}>
+              <div style={{
+                width:92, height:92,
+                background:"var(--cream-light)",
+                border:"1px solid var(--rule)",
+                borderRadius: SHELF_TILE_SHAPES[i % SHELF_TILE_SHAPES.length],
+                display:"flex", alignItems:"center", justifyContent:"center",
+                marginBottom:8, position:"relative",
+                transition:"transform 0.15s",
+              }}>
+                {score != null && (
+                  <div style={{
+                    position:"absolute", top:7, right:7,
+                    width:22, height:22,
+                    borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+                    background: sc(score),
+                    color:"var(--ivory)",
+                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontSize:13,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    lineHeight:1, fontWeight:400,
+                  }}>{Math.round(score)}</div>
+                )}
+                <ShelfIllustration category={item.category}/>
+              </div>
+              <div style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:11, color:"var(--ink)", lineHeight:1.25,
+                fontWeight:500, padding:"0 2px",
+              }}>{shortName || (item.product_name || "").slice(0, 18)}</div>
+              {brand && (
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:9, color:"var(--ink-faint)",
+                  marginTop:2, letterSpacing:"0.1em",
+                  padding:"0 2px", textTransform:"uppercase",
+                }}>{brand}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{height:1, background:"var(--rule-strong)", margin:"6px 0 0"}}/>
+    </>
+  );
+};
+
 const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPage}) => {
   if(!score)return null;
-  const sc=score.current<=3?"#16a34a":score.current<=5?"#d97706":"#dc2626";
-  const tc=score.trend==="improving"?"#16a34a":score.trend==="declining"?"#dc2626":muted;
-  const ta=score.trend==="improving"?"↓":score.trend==="declining"?"↑":"→";
-  const tl=score.trend==="improving"?`${score.delta} better than before`:score.trend==="declining"?`${score.delta} higher than before`:"holding steady";
+  const sc = score.current<=3 ? "var(--score-green)" : score.current<=5 ? "var(--score-amber)" : "var(--score-red)";
+  const scSoft = score.current<=3 ? "var(--score-green-soft)" : score.current<=5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
+  const tc = score.trend==="improving" ? "var(--moss)" : score.trend==="declining" ? "var(--score-red)" : "var(--ink-soft)";
+  const ta = score.trend==="improving" ? "↓" : score.trend==="declining" ? "↑" : "→";
+  const tl = score.trend==="improving" ? `${score.delta} better than before` : score.trend==="declining" ? `${score.delta} higher than before` : "holding steady";
   return (
     <div style={{marginBottom:20}}>
-      <div onClick={()=>setPage("history")} style={{background:isDark?"#1e2433":"#ffffff",borderRadius:16,padding:"16px 20px",border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
-        <div style={{display:"flex",alignItems:"center",gap:16}}>
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",width:64,height:64,borderRadius:"50%",background:`${sc}15`,border:`2px solid ${sc}40`,flexShrink:0}}>
-            <span style={{fontSize:24,fontWeight:900,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc,lineHeight:1}}>{score.current}</span>
-            <span style={{fontSize:9,color:sc,opacity:0.7,marginTop:1}}>/10</span>
+      <div onClick={()=>setPage("history")} style={{
+        background: "var(--cream-light)",
+        borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
+        padding:"18px 22px",
+        border: "1px solid var(--rule)",
+        cursor:"pointer",
+        display:"flex", alignItems:"center", justifyContent:"space-between", gap:16,
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:16}}>
+          <div style={{
+            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+            width:64, height:64,
+            borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+            background: scSoft,
+            border: `2px solid ${sc}`,
+            flexShrink:0,
+          }}>
+            <span style={{fontSize:26, fontWeight:400, fontFamily:"'Fraunces', Georgia, serif", color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{score.current}</span>
+            <span style={{fontSize:9, color:sc, opacity:0.7, marginTop:2, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
           </div>
           <div>
-            <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:2}}>Routine score</div>
-            <div style={{fontSize:12,color:muted,marginBottom:2}}>{score.productCount} product{score.productCount!==1?"s":""} scored</div>
-            {score.previous&&<div style={{fontSize:12,color:tc,fontWeight:600,display:"flex",alignItems:"center",gap:3}}><span>{ta}</span><span>{tl}</span></div>}
+            <div style={{fontSize:10, fontWeight:500, color:"var(--moss)", marginBottom:4, textTransform:"uppercase", letterSpacing:"0.22em", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Routine score</div>
+            <div style={{fontSize:13, color:"var(--ink-soft)", marginBottom:2, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{score.productCount} product{score.productCount!==1?"s":""} scored</div>
+            {score.previous && <div style={{fontSize:12, color:tc, fontWeight:500, display:"flex", alignItems:"center", gap:4, fontFamily:"'DM Sans', system-ui, sans-serif"}}><span>{ta}</span><span>{tl}</span></div>}
           </div>
         </div>
-        <div style={{textAlign:"right",flexShrink:0}}>
-          {score.worstCategory&&(<>
-            <div style={{fontSize:11,color:muted,marginBottom:2}}>Biggest opportunity</div>
-            <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>{score.worstCategory.label}</div>
-            <div style={{fontSize:11,color:muted}}>avg {score.worstCategory.avg}/10</div>
+        <div style={{textAlign:"right", flexShrink:0}}>
+          {score.worstCategory && (<>
+            <div style={{fontSize:10, color:"var(--ink-faint)", marginBottom:2, letterSpacing:"0.14em", textTransform:"uppercase", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500}}>Biggest pull</div>
+            <div style={{fontSize:14, fontWeight:400, color:"var(--ink)", fontFamily:"'Fraunces', Georgia, serif", letterSpacing:"-0.005em"}}>{score.worstCategory.label}</div>
+            <div style={{fontSize:11, color:"var(--ink-faint)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>avg {score.worstCategory.avg}/10</div>
           </>)}
         </div>
       </div>
@@ -6927,26 +7261,62 @@ const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResul
     else if(card.actionPage==="result"&&card.productName){const hi=history.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}
     else setPage("home");
   };
-  const sc=(s)=>!s?muted:s<=3?"#16a34a":s<=5?"#d97706":"#dc2626";
+  const sc=(s)=> s==null ? "var(--ink-soft)" : s<=3 ? "var(--score-green)" : s<=5 ? "var(--score-amber)" : "var(--score-red)";
+  const cardShapes = [
+    "16px 20px 14px 18px / 18px 14px 20px 16px",
+    "20px 14px 18px 16px / 14px 18px 16px 20px",
+    "14px 18px 16px 20px / 20px 16px 14px 18px",
+    "15px 16px 14px 18px / 16px 14px 18px 15px",
+  ];
   return (
-    <div style={{marginBottom:24}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:12,maxWidth:1100,margin:"0 auto 12px"}}>
-        <div style={{fontSize:13,fontWeight:700,color:text}}>For You</div>
-        <div style={{display:"flex",gap:4}}>{cards.map((_,i)=><div key={i} style={{width:5,height:5,borderRadius:"50%",background:isDark?"#2a3347":"#e5e7eb"}}/>)}</div>
+    <div style={{marginBottom:28}}>
+      <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", padding:`0 ${isMobile?"16px":"40px"}`, marginBottom:14, maxWidth:1100, margin:"0 auto 14px"}}>
+        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
+          Thought you'd <span style={{color:"var(--moss)"}}>want to know</span>
+        </div>
+        <div style={{display:"flex", gap:4}}>{cards.map((_,i)=><div key={i} style={{width:5, height:5, borderRadius:"50%", background:"var(--rule-strong)"}}/>)}</div>
       </div>
-      <div ref={scrollRef} onMouseEnter={pause} onMouseLeave={resume} onTouchStart={pause} onTouchEnd={()=>setTimeout(resume,3000)} style={{display:"flex",gap:12,overflowX:"auto",scrollbarWidth:"none",msOverflowStyle:"none",padding:`0 ${isMobile?"16px":"40px"}`,scrollBehavior:"smooth",WebkitOverflowScrolling:"touch"}}>
+      <div ref={scrollRef} onMouseEnter={pause} onMouseLeave={resume} onTouchStart={pause} onTouchEnd={()=>setTimeout(resume,3000)} style={{display:"flex", gap:12, overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none", padding:`4px ${isMobile?"16px":"40px"} 8px`, scrollBehavior:"smooth", WebkitOverflowScrolling:"touch"}}>
         <style>{`.foryou-scroll::-webkit-scrollbar{display:none}`}</style>
-        {cards.map((card,i)=>(
-          <div key={i} onClick={()=>handleAction(card)} style={{flexShrink:0,width:CW,borderRadius:16,padding:"16px 18px",cursor:"pointer",background:card.type==="clean_win"?(isDark?"#1a2a1a":"#f0fdf4"):card.type.startsWith("contextual")?(isDark?"#1a2433":"#f8faff"):(isDark?"#1e2433":"#fff"),border:`1.5px solid ${card.type==="clean_win"?(isDark?"#1e3a1e":"#bbf7d0"):card.type.startsWith("contextual")?(isDark?"#1e2a3e":"#c7d7f0"):(isDark?"#2a3347":"#e5e7eb")}`,boxShadow:isDark?"none":"0 1px 8px rgba(0,0,0,0.06)",display:"flex",flexDirection:"column",gap:8,minHeight:130}}>
-            <div style={{fontSize:10,fontWeight:700,color:card.labelColor,textTransform:"uppercase",letterSpacing:"0.08em",background:`${card.labelColor}18`,borderRadius:20,padding:"2px 8px",display:"inline-block",alignSelf:"flex-start"}}>{card.label}</div>
-            <div style={{fontSize:14,fontWeight:700,color:text,lineHeight:1.4,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{card.headline}</div>
-            <div style={{fontSize:12,color:muted,lineHeight:1.5,flex:1,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{card.body}</div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
-              <span style={{fontSize:12,fontWeight:700,color:card.labelColor}}>{card.action} →</span>
-              {card.score!=null&&<span style={{fontSize:13,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(card.score)}}>{card.score}/10</span>}
+        {cards.map((card,i)=>{
+          const shape = cardShapes[i % cardShapes.length];
+          return (
+            <div key={i} onClick={()=>handleAction(card)} style={{
+              flexShrink:0, width:CW,
+              borderRadius: shape,
+              padding:"18px 20px 20px",
+              cursor:"pointer",
+              background: "var(--cream-light)",
+              border: "1px solid var(--rule)",
+              display:"flex", flexDirection:"column", gap:10,
+              minHeight:140,
+              transition:"transform 0.15s, background 0.2s",
+            }}>
+              <div style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:10, fontWeight:500, color:"var(--moss)",
+                textTransform:"uppercase", letterSpacing:"0.22em",
+                display:"flex", alignItems:"center", gap:10,
+              }}>
+                <span style={{display:"inline-block", width:16, height:1, background:"var(--moss)", opacity:0.6}}/>
+                {card.label}
+              </div>
+              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:20, fontWeight:400, color:"var(--ink)", lineHeight:1.15, letterSpacing:"-0.005em", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.headline}</div>
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, flex:1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.body}</div>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, gap:8}}>
+                <span style={{
+                  fontFamily:"'Fraunces', Georgia, serif", fontSize:14, color:"var(--moss)",
+                  paddingBottom:1, borderBottom:"1px dotted var(--moss)",
+                }}>{card.action}</span>
+                {card.score!=null && (
+                  <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:sc(card.score), letterSpacing:"-0.01em"}}>
+                    {card.score}<span style={{fontSize:11, opacity:0.55, marginLeft:1, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -8415,34 +8785,34 @@ function App() {
             return (
               <div style={{paddingBottom: isMobile ? 160 : 60}}>
 
-                {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
+                {/* ── FIXED SCAN BAR — always visible, never scrolls away (cream refresh) ── */}
                 <div style={{
                   position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
-                  background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
-                  borderBottom:"1px solid rgba(34,197,94,0.15)",
+                  background:"var(--cream)",
+                  borderBottom:"1px solid var(--rule)",
                   padding: isMobile ? "10px 16px" : "12px 40px",
                 }}>
                   <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
-                    <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"rgba(15,42,24,0.9)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:14, padding:"10px 16px", cursor:"text"}}
+                    <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"10px 16px", cursor:"text"}}
                       onClick={()=>document.getElementById("home-search-input")?.focus()}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.55"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                       <input
                         id="home-search-input"
                         value={query}
                         onChange={e=>setQuery(e.target.value)}
                         onKeyDown={e=>e.key==="Enter"&&query.trim()&&analyze()}
                         placeholder="Search any product…"
-                        style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
+                        style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                       />
                       {query.trim() && (
-                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
                       )}
                     </div>
                     {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
                     {!isMobile && (<>
                       <div onClick={()=>document.getElementById("home-file-input").click()}
-                        style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        style={{width:44, height:44, borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                       </div>
                       <input id="home-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
                     </>)}
@@ -8503,30 +8873,93 @@ function App() {
                   })()}
                 </div>
 
-                {/* ── FEED CONTENT ── */}
-                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? `${44 + SAFE_TOP + 32}px 16px 24px` : "68px 40px 32px"}}>
+                {/* ── HOME CONTENT (cream refresh — partiqule-hero-v5 mockup) ── */}
+                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? `${44 + SAFE_TOP + 40}px 24px 24px` : "80px 40px 32px", background:"var(--cream)"}}>
 
-                  {/* Greeting + streak */}
-                  <div style={{marginBottom:20, display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
-                    <div>
-                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
-                      <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""} scanned</div>
+                  {/* Greeting block — Fraunces + DM Sans caps stamp */}
+                  <div style={{marginBottom:32}}>
+                    <div style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize: isMobile ? 34 : 38,
+                      color:"var(--ink)",
+                      letterSpacing:"-0.015em",
+                      lineHeight:1.02,
+                      fontWeight:400,
+                      marginBottom:12,
+                    }}>{greet}.</div>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10.5, letterSpacing:"0.2em",
+                      color:"var(--ink-faint)",
+                      textTransform:"uppercase",
+                      fontWeight:500,
+                    }}>
+                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} on your shelf
+                      {streak >= 2 && <> <span style={{color:"var(--ink-soft)"}}>·</span> {streak} day streak</>}
                     </div>
-                    {/* Streak — Zeigarnik: loss aversion keeps people coming back */}
-                    {streak >= 1 && (
-                      <div style={{display:"flex", alignItems:"center", gap:6, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)", borderRadius:20, padding:"6px 12px", flexShrink:0}}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day streak</span>
+                  </div>
+
+                  {/* Scan CTA card — moss-bordered cream, asymmetric */}
+                  <div
+                    onClick={()=>{ if(isMobile) setScanSheetOpen(true); else document.getElementById("home-search-input")?.focus(); }}
+                    style={{
+                      background:"var(--cream-light)",
+                      border:"1.5px solid var(--moss)",
+                      padding:"26px 24px 28px",
+                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                      cursor:"pointer",
+                      marginBottom:36,
+                      transition:"transform 0.2s, border-color 0.2s, background 0.2s",
+                    }}
+                  >
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.28em",
+                      color:"var(--moss)",
+                      textTransform:"uppercase",
+                      fontWeight:500,
+                      marginBottom:18,
+                    }}>Scan</div>
+                    <div style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize: isMobile ? 30 : 34,
+                      lineHeight:1.04,
+                      color:"var(--ink)",
+                      letterSpacing:"-0.015em",
+                      fontWeight:400,
+                      marginBottom:12,
+                      maxWidth:"92%",
+                    }}>What are you looking at?</div>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:13, lineHeight:1.5, color:"var(--ink-soft)",
+                    }}>Tap anywhere, point me at a label.</div>
+                  </div>
+
+                  {/* Your shelf — strip of placeholder illustrations from mockup */}
+                  {history.length > 0 && (
+                    <div style={{marginBottom:28}}>
+                      <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:14}}>
+                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
+                          Your <span style={{color:"var(--moss)"}}>shelf</span>
+                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.2em", color:"var(--ink-faint)", textTransform:"uppercase", fontWeight:500, marginLeft:10}}>{history.length} items</span>
+                        </div>
+                        <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--moss)", fontWeight:500, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer"}}>See all</span>
                       </div>
-                    )}</div>
+                      <ShelfStrip items={history.slice(0,6)} onSelect={setResult}/>
+                    </div>
+                  )}
 
                   {/* Lifestyle score */}
                   {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} isDark={isDark} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
 
                   {/* Feed link */}
-                  {liveIntelCards?.length>0&&(
-                    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
-                      <span onClick={()=>{setPage("feed");try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}} style={{fontSize:12,color:"#16a34a",fontWeight:600,cursor:"pointer"}}>{liveIntelCards.length} finding{liveIntelCards.length!==1?"s":""} in your feed →</span>
+                  {liveIntelCards?.length>0 && (
+                    <div style={{display:"flex", justifyContent:"flex-end", marginBottom:12}}>
+                      <span onClick={()=>{setPage("feed"); try{localStorage.setItem("ps_feed_last_visit", new Date().toISOString());}catch{}}}
+                        style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--moss)", fontWeight:500, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer"}}>
+                        {liveIntelCards.length} finding{liveIntelCards.length!==1?"s":""} in your feed →
+                      </span>
                     </div>
                   )}
 
@@ -8539,40 +8972,57 @@ function App() {
                     return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history} onStartAudit={startAuditSession} onResumeAudit={()=>setAuditSessionVisible(true)}/>;
                   })()}
 
-                  {/* Today's Comparison — new users only */}
-                  {history.length === 0 && (
-                  <div style={{marginBottom:24}}>
-                    <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
-                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
-                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:700, color:"#6ee7b7", opacity:0.8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:20, padding:"3px 10px"}}>{todayLabel}</div>
-                    </div>
-                    <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:16,overflow:"hidden",position:"relative"}}>
-                      <div style={{position:"absolute",top:10,left:10,background:"#a3e635",color:"#052e16",fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:"0.08em",textTransform:"uppercase"}}>Head to Head</div>
-                      <div style={{padding:"36px 20px 20px"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-                          {[todayComp.a, todayComp.b].map((prod,pi)=>(
-                            <React.Fragment key={pi}>
-                              {pi===1&&<div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:13,fontWeight:800,color:"#6ee7b7",opacity:0.5,flexShrink:0}}>VS</div>}
-                              <div onClick={()=>{setQuery(prod.name);analyze(prod.name);}}
-                                style={{flex:1,background:"rgba(0,0,0,0.2)",borderRadius:12,padding:"14px 10px",textAlign:"center",border:"1px solid rgba(34,197,94,0.1)",cursor:"pointer"}}>
-                                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:8,lineHeight:1.3}}>{prod.name}</div>
-                                <div style={{width:44,height:44,borderRadius:"50%",background:`${scoreCol(prod.score)}18`,border:`2px solid ${scoreCol(prod.score)}44`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px"}}>
-                                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:18,fontWeight:900,color:scoreCol(prod.score)}}>{prod.score}</span>
-                                </div>
-                                <div style={{fontSize:10,color:"#6ee7b7",opacity:0.6,lineHeight:1.4}}>{prod.flags}</div>
+                  {/* This Week recap — mockup pattern */}
+                  {history.length >= 3 && (() => {
+                    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+                    const recentScans = history.filter(h => {
+                      const t = h.scannedAt ? new Date(h.scannedAt).getTime() : 0;
+                      return t >= weekAgo;
+                    });
+                    const cleanWins = history.filter(h => (h.overall_score || h.score || 10) <= 3).length;
+                    const addedThisWeek = recentScans.length;
+                    const scannedThisWeek = recentScans.length;
+                    if (scannedThisWeek === 0 && cleanWins === 0) return null;
+                    const lines = [
+                      { n: scannedThisWeek, label: "products scanned", sub: scannedThisWeek >= 10 ? "a full week of scans" : scannedThisWeek >= 3 ? "a quiet week, honestly" : "just getting started" },
+                      { n: addedThisWeek, label: "added to your shelf", sub: history.length > 0 ? `${history.slice(0, 2).map(h => h.product_name?.split(" ")[0] || "item").join(", ")}${history.length > 2 ? ", and more" : ""}` : null },
+                      { n: cleanWins, label: "clean choices on your shelf", sub: cleanWins > 0 ? "nice work keeping these" : null },
+                    ].filter(l => l.n != null && l.n > 0);
+                    if (!lines.length) return null;
+                    return (
+                      <div style={{marginBottom:24}}>
+                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400, marginBottom:14}}>
+                          This <span style={{color:"var(--moss)"}}>week</span>
+                        </div>
+                        <div>
+                          {lines.map((l, i) => (
+                            <div key={i} style={{
+                              display:"flex", alignItems:"baseline", gap:16,
+                              padding:"14px 0",
+                              borderBottom: i < lines.length - 1 ? "1px solid var(--rule)" : "none",
+                            }}>
+                              <div style={{
+                                fontFamily:"'Fraunces', Georgia, serif",
+                                fontSize:30, color:"var(--moss)",
+                                letterSpacing:"-0.02em", lineHeight:1,
+                                minWidth:44, flexShrink:0, fontWeight:400,
+                              }}>{l.n}</div>
+                              <div style={{flex:1, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink)", lineHeight:1.35}}>
+                                {l.label}
+                                {l.sub && (
+                                  <div style={{
+                                    fontFamily:"'Fraunces', Georgia, serif",
+                                    color:"var(--ink-soft)", fontSize:13,
+                                    marginTop:3, fontWeight:400,
+                                  }}>{l.sub}</div>
+                                )}
                               </div>
-                            </React.Fragment>
+                            </div>
                           ))}
                         </div>
-                        <div style={{fontSize:12,color:"#6ee7b7",lineHeight:1.6,paddingTop:12,borderTop:"1px solid rgba(34,197,94,0.1)"}}>
-                          <span style={{color:"#22c55e",fontWeight:600}}>{todayComp.b.name}</span> is the cleaner choice. Tap either to scan the full breakdown.
-                        </div>
                       </div>
-                    </div>
-                  </div>
-                  )}
-
-
+                    );
+                  })()}
 
                 </div>
               </div>
