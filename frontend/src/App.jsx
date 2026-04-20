@@ -535,7 +535,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
         borderBottom: "1px solid var(--rule)",
         margin: "0 0",
       }}>
-        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:24, width:"auto", display:"block"}}/>
+        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:30, width:"auto", display:"block"}}/>
         <div style={{
           fontFamily:"'DM Sans', system-ui, sans-serif",
           fontSize:11, letterSpacing:"0.02em", color:"var(--ink-soft)", fontWeight:500,
@@ -888,7 +888,7 @@ const GlobeLoading = ({ isMobile }) => {
     <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:24, padding:"24px"}}>
       <style>{`@keyframes globeLoadingCaret { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
 
-      <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:28, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
+      <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:36, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
 
       <div style={{
         fontFamily:"'Fraunces', Georgia, serif",
@@ -6352,9 +6352,9 @@ function App() {
 
       {/* HEADER */}
       <header style={{background:"var(--cream)", borderBottom:"1px solid var(--rule)", position:"sticky", top:0, zIndex:100, paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:44, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, minHeight: isMobile ? 52 : 64, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", cursor:"pointer"}} onClick={reset}>
-            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 28 : 32, width:"auto", objectFit:"contain", display:"block"}}/>
+            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 30 : 38, width:"auto", objectFit:"contain", display:"block"}}/>
           </div>
 
           {(isMobile || isTablet) ? (
