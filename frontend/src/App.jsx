@@ -1228,9 +1228,9 @@ const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
 };
 
 const categoryMeta = {
-  clothing:      {label:"Clothing",      color:"#6366f1",bg:"#eef2ff"},
+  clothing:      {label:"Clothing",      color:"#2d5a27",bg:"#eef2ff"},
   food_beverage: {label:"Food & Drink",  color:"#0891b2",bg:"#ecfeff"},
-  personal_care: {label:"Personal Care", color:"#db2777",bg:"#fdf2f8"},
+  personal_care: {label:"Personal Care", color:"#c8781a",bg:"#fdf2f8"},
   kitchen:       {label:"Kitchen",       color:"#d97706",bg:"#fffbeb"},
   baby:          {label:"Baby & Kids",   color:"#c8781a",bg:"#fdf4e7"},
   other:         {label:"General",       color:"#6b7280",bg:"#f9fafb"},
@@ -1310,8 +1310,8 @@ const IconTrash      = ({size=15,color="#9ca3af"}) => <svg width={size} height={
 const IconMoon       = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>;
 const IconSun        = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-12.37-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0zM7.05 18.36l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0z"/></svg>;
 const IconFire       = ({size=14,color="#ef4444"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>;
-const IconBook       = ({size=20,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>;
-const IconLink       = ({size=14,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>;
+const IconBook       = ({size=20,color="#2d5a27"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>;
+const IconLink       = ({size=14,color="#2d5a27"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>;
 const IconBundle     = ({size=20,color="#c8781a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.05 15.96 0 13.36 0c-1.31 0-2.4.5-3.27 1.33L9 2.5 7.91 1.33C7.04.5 5.95 0 4.64 0 2.04 0 0 2.05 0 4.64c0 .48.11.92.18 1.36H0v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.64-4c.9 0 1.64.74 1.64 1.64 0 .97-.79 1.72-1.64 2.36C12.15 5.36 11.35 4.61 11.35 3.64 11.35 2.74 12.1 2 13.36 2zM4.64 2c1.26 0 2.01.74 2.01 1.64 0 .97-.8 1.72-2.01 2.36C3.43 5.36 2.64 4.61 2.64 3.64 2.64 2.74 3.38 2 4.64 2zM20 19H2v-2h18v2zm0-5H2V8h18v6z"/></svg>;
 
 // ── ANIMATED SCORE ────────────────────────────────────────────
@@ -1461,7 +1461,7 @@ const SourceCitations = ({category, isDark}) => {
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 24px", background:"none", border:"none", cursor:"pointer", textAlign:"left"}}>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
           <div style={{width:34, height:34, borderRadius:9, background:isDark?"#1e1f3a":"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center"}}>
-            <IconBook size={18} color="#6366f1"/>
+            <IconBook size={18} color="#2d5a27"/>
           </div>
           <div>
             <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text}}>Research & Sources</div>
@@ -1477,7 +1477,7 @@ const SourceCitations = ({category, isDark}) => {
             <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
               style={{display:"flex", alignItems:"flex-start", gap:10, padding:"10px 0", borderBottom:i<sources.length-1?`1px solid ${border}`:"none", textDecoration:"none"}}>
               <div style={{width:28, height:28, borderRadius:7, background:isDark?"#1e1f3a":"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1}}>
-                <IconLink size={13} color="#6366f1"/>
+                <IconLink size={13} color="#2d5a27"/>
               </div>
               <div>
                 <div style={{fontSize:13, fontWeight:600, color:isDark?"#a5b4fc":"#4f46e5", lineHeight:1.4}}>{s.title}</div>
@@ -2940,38 +2940,9 @@ const LoadingState = () => {
   );
 };
 
-const MostSearched = ({onSelect, isDark, isMobile}) => {
-  const surface = isDark?"#0f2a18":"#fff";
-  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
-  const text    = isDark?"#f0fdf4":"#111";
-  const muted   = isDark?"#6ee7b7":"#888";
-  const px      = isMobile?"16px":"40px";
-  return (
-    <section style={{maxWidth:1100, margin:"0 auto 48px", padding:`0 ${px}`}}>
-      <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?20:24, fontWeight:700, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>Most Searched Products</h2>
-      <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:24}}>See how common products score — some results may surprise you</p>
-      <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:12}}>
-        {MOST_SEARCHED.map(item=>{
-          const cat = categoryMeta[item.category]||categoryMeta.other;
-          return (
-            <button key={item.label} onClick={()=>onSelect(item.label)}
-              style={{background:surface, border:`1.5px solid ${border}`, borderRadius:12, padding:"16px", cursor:"pointer", textAlign:"left", transition:"all 0.15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 16px rgba(22,163,74,0.1)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"rgba(34,197,94,0.15)":"#eee"; e.currentTarget.style.boxShadow="none";}}>
-              {item.score>=7&&<div style={{display:"flex", alignItems:"center", gap:2, fontSize:11, color:"#ef4444", fontWeight:600, marginBottom:6}}><IconFire size={12} color="#ef4444"/>Trending</div>}
-              <div style={{fontSize:14, fontWeight:600, color:text, lineHeight:1.3, marginBottom:6}}>{item.label}</div>
-              <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20, display:"inline-block"}}>{cat.label}</div>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
-};
-
 // ── GUIDES SYSTEM ─────────────────────────────────────────────
 const GUIDE_CATEGORIES = ["general","food","beauty","home","baby","pregnancy"];
-const CATEGORY_COLORS  = {general:"#6366f1",food:"#16a34a",beauty:"#ec4899",home:"#0891b2",baby:"#f59e0b",pregnancy:"#9333ea"};
+const CATEGORY_COLORS  = {general:"#2d5a27",food:"#16a34a",beauty:"#c8781a",home:"#0891b2",baby:"#f59e0b",pregnancy:"#2d5a27"};
 
 // Simple markdown-like renderer for guide body HTML
 const GuideBody = ({html}) => (
@@ -3014,7 +2985,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>From the team</div>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:isMobile?30:42,fontWeight:800,color:text,margin:"0 0 12px",letterSpacing:"-0.5px",lineHeight:1.1}}>Product Safety Guides</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontSize:isMobile?34:46,fontWeight:400,color:text,margin:"0 0 12px",letterSpacing:"-0.015em",lineHeight:1.05}}>Product Safety <span style={{color:"var(--moss)"}}>guides</span></h1>
         <p style={{fontSize:17,color:muted,margin:"0 0 28px",lineHeight:1.6}}>Real research. Real opinions. No brand influence.</p>
 
         {/* Category filter */}
@@ -3059,7 +3030,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
               <div style={{padding:"20px 24px",flex:1,display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                    <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em"}}>{g.category}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#2d5a27",textTransform:"uppercase",letterSpacing:"0.08em"}}>{g.category}</span>
                     <span style={{fontSize:11,color:muted}}>{g.read_time_minutes} min read</span>
                   </div>
                   <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:20,fontWeight:700,color:text,marginBottom:8,lineHeight:1.3}}>{g.title}</div>
@@ -3146,12 +3117,12 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
       {/* Category + meta */}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#0f2a18":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
+        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#2d5a27",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#0f2a18":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
         <span style={{fontSize:13,color:muted}}>{guide.read_time_minutes} min read</span>
       </div>
 
       {/* Title */}
-      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:isMobile?28:40,fontWeight:800,color:text,margin:"0 0 16px",letterSpacing:"-0.5px",lineHeight:1.15}}>{guide.title}</h1>
+      <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontSize:isMobile?30:42,fontWeight:400,color:text,margin:"0 0 16px",letterSpacing:"-0.015em",lineHeight:1.05}}>{guide.title}</h1>
 
       {/* Excerpt */}
       <p style={{fontSize:18,color:muted,margin:"0 0 24px",lineHeight:1.6,fontStyle:"italic"}}>{guide.excerpt}</p>
@@ -3398,7 +3369,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
             <div key={g.id} style={{background:surface,borderRadius:12,border:`1px solid ${border}`,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                  <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#6366f1",textTransform:"uppercase"}}>{g.category}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#2d5a27",textTransform:"uppercase"}}>{g.category}</span>
                   <span style={{fontSize:11,padding:"2px 8px",borderRadius:10,background:g.published?"#f0fdf4":"#f1f5f9",color:g.published?"#16a34a":"#9ca3af",fontWeight:600}}>{g.published?"Live":"Draft"}</span>
                 </div>
                 <div style={{fontSize:15,fontWeight:600,color:text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.title}</div>
@@ -4838,7 +4809,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, add
   return (
     <div style={{maxWidth:700, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:24}}>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 4px"}}>Lists</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:36, color:text, margin:"0 0 4px", letterSpacing:"-0.015em"}}>Lists</h1>
         <p style={{fontSize:14, color:muted, margin:0}}>Shopping lists, grocery planning, and your routine</p>
       </div>
       <div style={{display:"flex", gap:8, marginBottom:28, borderBottom:`1px solid ${border}`, paddingBottom:0}}>
@@ -4962,7 +4933,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
       {/* Header */}
       <div style={{marginBottom:20}}>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?22:28, color:text, margin:"0 0 4px"}}>My Routine</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 4px", letterSpacing:"-0.015em"}}>My <span style={{color:"var(--moss)"}}>routine</span></h1>
         <p style={{fontSize:14, color:muted, margin:0}}>Track your real chemical exposure across everything in your home</p>
       </div>
 
@@ -5206,7 +5177,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
         </div>
         {item.category && (
           <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
-            {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#c8781a",bg:"#fdf4e7"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
+            {(() => { const cat = {clothing:{label:"Clothing",color:"#2d5a27",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#c8781a",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#c8781a",bg:"#fdf4e7"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
             <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result</span>
           </div>
         )}
@@ -5217,7 +5188,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scans</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>My <span style={{color:"var(--moss)"}}>scans</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:isDark?"#1e2433":"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -5551,9 +5522,12 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* Hero header */}
       <div style={{marginBottom:48}}>
-        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>About Partiqule</div>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 24px", letterSpacing:"-1px", lineHeight:1.15}}>
-          Know what's in your products.
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, fontWeight:500, color:"var(--moss)", textTransform:"uppercase", letterSpacing:"0.22em", marginBottom:16, display:"flex", alignItems:"center", gap:10}}>
+          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+          About Partiqule
+        </div>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?36:54, color:text, margin:"0 0 24px", letterSpacing:"-0.015em", lineHeight:1.04}}>
+          Know what's <span style={{color:"var(--moss)"}}>in your products.</span>
         </h1>
         <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
           The food you eat, the clothes you wear, the cookware you cook with, the cleaning products in your home. All of it has a measurable impact on your health, your family's health, and the health of the planet. Most of that impact is invisible. There's no label, no warning, no easy way to know what to trust.
@@ -5963,7 +5937,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?34:48, color:text, margin:"0 0 16px", letterSpacing:"-0.015em", lineHeight:1.05}}>How <span style={{color:"var(--moss)"}}>Partiqule</span> works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
           Every score on Partiqule reflects the chemical and environmental impact of a product — what it's made of, how it exposes you, what happens to it after use. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
@@ -6130,7 +6104,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             },
             {
               category: "Endocrine disruptors and hormonal chemicals",
-              color: "#9333ea",
+              color: "#2d5a27",
               refs: [
                 {citation:"Vandenberg et al. (2012)", title:"Hormones and endocrine-disrupting chemicals: low-dose effects and nonmonotonic dose responses", journal:"Endocrine Reviews — foundational review on EDC mechanisms"},
                 {citation:"Braun et al. (2021)", title:"Endocrine-disrupting chemicals: a scientific statement", journal:"Endocrine Society Scientific Statement — comprehensive review of BPA, phthalates, PFAS"},
@@ -6534,10 +6508,12 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
   const [error,    setError]    = useState(null);
   const [success,  setSuccess]  = useState(null);
 
-  const surface = isDark ? "#0f2a18" : "#fff";
-  const border  = isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
-  const text    = isDark ? "#f0fdf4" : "#111";
-  const muted   = isDark ? "#6ee7b7" : "#666";
+  // Phase 4 cream refresh. isDark preserved for Phase 5 deletion but light-side uses tokens.
+  const surface = isDark ? "#0f2a18" : "var(--cream)";
+  const fieldBg = isDark ? "#080f0a" : "var(--cream-light)";
+  const bd      = isDark ? "rgba(34,197,94,0.15)" : "var(--rule-strong)";
+  const tx      = isDark ? "#f0fdf4" : "var(--ink)";
+  const mt      = isDark ? "#6ee7b7" : "var(--ink-soft)";
 
   const submit = async () => {
     if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
@@ -6569,69 +6545,85 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
   };
 
   return (
-    <div style={{position:"fixed", inset:0, zIndex:9998, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}
+    <div style={{position:"fixed", inset:0, zIndex:9998, background:"rgba(26,31,21,0.55)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}
       onClick={onClose}>
-      <div style={{background:surface, borderRadius:20, padding:"32px 28px", width:"100%", maxWidth:400, border:`1.5px solid ${border}`, position:"relative"}}
-        onClick={e=>e.stopPropagation()}>
+      <div style={{
+        background: surface,
+        borderRadius: "22px 18px 24px 20px / 20px 24px 18px 22px",
+        padding:"32px 28px", width:"100%", maxWidth:400,
+        border: `1px solid ${isDark ? bd : "var(--rule)"}`,
+        position:"relative",
+        boxShadow: isDark ? "none" : "0 20px 40px rgba(26,31,21,0.18)",
+      }} onClick={e=>e.stopPropagation()}>
 
-        {/* Close */}
-        <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:20, color:muted, lineHeight:1}}>×</button>
+        <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:22, color:mt, lineHeight:1}}>×</button>
 
         {nameStep ? (<>
-          <div style={{textAlign:"center", padding:"8px 0"}}>
-            <div style={{fontSize:18, fontWeight:700, color:text, marginBottom:8}}>What should we call you?</div>
-            <div style={{fontSize:13, color:muted, marginBottom:20, lineHeight:1.5}}>A first name or nickname — just for your experience</div>
-            <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}}} placeholder="e.g. Sarah, Mom, Coach..." autoFocus style={{width:"100%", padding:"12px 14px", borderRadius:10, fontSize:15, border:`1.5px solid ${border}`, background:surface, color:text, outline:"none", marginBottom:12, boxSizing:"border-box"}}/>
-            <button onClick={()=>{const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}} style={{width:"100%", padding:"13px", borderRadius:10, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:15, cursor:"pointer", marginBottom:8}}>{nameInput.trim()?`Continue as ${nameInput.trim()}`:"Skip"}</button>
-            <div style={{fontSize:12, color:muted, marginTop:4}}>Check your email to confirm your account.</div>
+          <div style={{textAlign:"left", padding:"4px 0"}}>
+            <div style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:10, letterSpacing:"0.22em", color:isDark?"#6ee7b7":"var(--moss)",
+              textTransform:"uppercase", fontWeight:500, marginBottom:12,
+              display:"flex", alignItems:"center", gap:10,
+            }}>
+              <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+              Almost there
+            </div>
+            <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:26, fontWeight:400, color:tx, marginBottom:10, letterSpacing:"-0.015em", lineHeight:1.1}}>What should we call you?</div>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:mt, marginBottom:20, lineHeight:1.55}}>A first name or nickname — just for your experience.</div>
+            <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}}} placeholder="e.g. Sarah, Mom, Coach..." autoFocus style={{width:"100%", padding:"12px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontSize:15, fontFamily:"'DM Sans', system-ui, sans-serif", border:`1px solid ${bd}`, background:fieldBg, color:tx, outline:"none", marginBottom:12, boxSizing:"border-box"}}/>
+            <button onClick={()=>{const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>{nameInput.trim()?`Continue as ${nameInput.trim()}`:"Skip"}</button>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:mt, marginTop:4, lineHeight:1.5}}>Check your email to confirm your account.</div>
           </div>
         </>) : (<>
 
-        {/* Logo */}
-        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:24}}>
-          <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center"}}>
-            <span style={{color:"#4ade80", fontWeight:800, fontSize:16}}>P</span>
-          </div>
-          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:18, color:text}}>Partiqule</span>
+        <div style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:10, letterSpacing:"0.22em", color:isDark?"#6ee7b7":"var(--moss)",
+          textTransform:"uppercase", fontWeight:500, marginBottom:14,
+          display:"flex", alignItems:"center", gap:10,
+        }}>
+          <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+          Partiqule
         </div>
 
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:22, color:text, margin:"0 0 6px"}}>
-          {mode === "signup" ? "Create account" : mode === "reset" ? "Reset password" : "Welcome back"}
+        <h2 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:tx, margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.08}}>
+          {mode === "signup" ? "Make it yours." : mode === "reset" ? "Reset your password." : "Welcome back."}
         </h2>
-        <p style={{fontSize:14, color:muted, margin:"0 0 24px", lineHeight:1.5}}>
-          {mode === "signup" ? "Save your scan history and never lose it." : mode === "reset" ? "We will send you a reset link." : "Sign in to access your scan history."}
+        <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:mt, margin:"0 0 22px", lineHeight:1.55}}>
+          {mode === "signup" ? "Save your shelf and never lose it." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
         </p>
 
-        {error   && <div style={{background:"#fef2f2", border:"1px solid #fecaca", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#dc2626", marginBottom:16}}>{error}</div>}
-        {success && <div style={{background:"rgba(34,197,94,0.08)", border:"1px solid #bbf7d0", borderRadius:8, padding:"10px 14px", fontSize:13, color:"#16a34a", marginBottom:16}}>{success}</div>}
+        {error   && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{error}</div>}
+        {success && <div style={{background:"var(--score-green-soft)", border:"1px solid var(--score-green)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", marginBottom:14}}>{success}</div>}
 
         <div style={{display:"flex", flexDirection:"column", gap:12}}>
           <input type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&submit()}
-            style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#080f0a":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+            style={{padding:"11px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px solid ${bd}`, background:fieldBg, color:tx, fontSize:14, fontFamily:"'DM Sans', system-ui, sans-serif", outline:"none"}}/>
           {mode !== "reset" && (
             <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&submit()}
-              style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#080f0a":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+              style={{padding:"11px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px solid ${bd}`, background:fieldBg, color:tx, fontSize:14, fontFamily:"'DM Sans', system-ui, sans-serif", outline:"none"}}/>
           )}
           <button onClick={submit} disabled={loading}
-            style={{padding:"12px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, cursor:loading?"default":"pointer", opacity:loading?0.7:1}}>
+            style={{padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:loading?"default":"pointer", opacity:loading?0.7:1, letterSpacing:"0.005em"}}>
             {loading ? "Please wait..." : mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
           </button>
         </div>
 
-        <div style={{marginTop:20, textAlign:"center", fontSize:13, color:muted}}>
+        <div style={{marginTop:22, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:mt}}>
           {mode === "signin" && <>
-            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signup"); setError(null); setSuccess(null);}}>Create an account</span>
+            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signup"); setError(null); setSuccess(null);}}>Create an account</span>
             <span style={{margin:"0 10px", opacity:0.4}}>·</span>
-            <span style={{cursor:"pointer", color:muted}} onClick={()=>{setMode("reset"); setError(null); setSuccess(null);}}>Forgot password?</span>
+            <span style={{cursor:"pointer", color:mt}} onClick={()=>{setMode("reset"); setError(null); setSuccess(null);}}>Forgot password?</span>
           </>}
           {mode === "signup" && <>
             Already have an account?{" "}
-            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Sign in</span>
+            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Sign in</span>
           </>}
           {mode === "reset" && <>
-            <span style={{cursor:"pointer", color:"#16a34a"}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
+            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
           </>}
         </div>
         </>)}
@@ -6655,7 +6647,7 @@ const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Privacy Policy</h1>
+      <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Privacy Policy</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
@@ -6686,7 +6678,7 @@ const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Terms of Service</h1>
+      <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Terms of Service</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
@@ -6789,7 +6781,7 @@ const AuditCompleteScreen = ({session, isDark, surface, border, text, muted, isM
 // ── AUDIT SESSION ─────────────────────────────────────────────
 const AUDIT_TYPES = {
   pantry:{label:"Pantry Audit",description:"Score everything in your pantry and kitchen",categories:["food","food_beverage","beverage","snack","supplement"],icon:"P",color:"#16a34a"},
-  beauty:{label:"Beauty Audit",description:"Score your personal care and skincare routine",categories:["personal_care","skincare"],icon:"B",color:"#9333ea"},
+  beauty:{label:"Beauty Audit",description:"Score your personal care and skincare routine",categories:["personal_care","skincare"],icon:"B",color:"#2d5a27"},
   home:{label:"Home Audit",description:"Score your cleaning and home products",categories:["cleaning","home"],icon:"H",color:"#2563eb"},
   closet:{label:"Closet Audit",description:"Score the clothing and textiles in your home",categories:["clothing"],icon:"C",color:"#d97706"},
   nursery:{label:"Nursery Audit",description:"Score baby products, toys, and kids items",categories:["baby","toy"],icon:"N",color:"#dc2626"},
@@ -6965,7 +6957,7 @@ const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border
     <div style={{maxWidth:700,margin:"0 auto",padding:isMobile?"24px 0 80px":"48px 0 80px"}}>
       <div style={{padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20}}>
         <div style={{fontSize:11,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Health intelligence</div>
-        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:isMobile?26:32,color:text,margin:"0 0 4px"}}>Your Feed</h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontWeight:400,fontSize:isMobile?30:38,color:text,margin:"0 0 4px",letterSpacing:"-0.015em"}}>Your <span style={{color:"var(--moss)"}}>feed</span></h1>
         <p style={{fontSize:14,color:muted,margin:0}}>Safety findings, regulatory alerts, and insights from your scan history</p>
       </div>
       <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20,paddingBottom:4}}>
@@ -7333,46 +7325,6 @@ const filterLiveCards = (liveCards, history) => {
     if(hasCat){const cats=new Set(history.map(h=>h.category));if(card.category_triggers.some(c=>cats.has(c)))return true;}
     return false;
   });
-};
-
-const selectForYouCard = ({history, lists, suggestion, coverage}) => {
-  const activeGrocery = lists.find(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked));
-  if (activeGrocery) { const remaining=(activeGrocery.items||[]).filter(i=>!i.checked).length; return {type:"active_grocery",list:activeGrocery,remaining}; }
-  if (suggestion && suggestion.count >= 8) return {type:"audit_suggestion",suggestion};
-  const readyRooms = coverage.filter(r=>r.count>=3);
-  if (readyRooms.length >= 2) return {type:"home_coverage",coverage,readyRooms};
-  if (suggestion && suggestion.count >= 5) return {type:"audit_suggestion",suggestion};
-  const day = new Date().getDay();
-  if ((day===4||day===5) && !lists.some(l=>l.type==="grocery") && history.length>=5) return {type:"grocery_prompt"};
-  const staleList = lists.find(l=>{const lo=l.lastOpenedAt?new Date(l.lastOpenedAt):null;const ds=lo?(Date.now()-lo.getTime())/(1000*60*60*24):999;return(l.items||[]).filter(i=>!i.checked).length>0&&ds>7;});
-  if (staleList) return {type:"stale_list",list:staleList};
-  return null;
-};
-
-const ForYouCard = ({card, isDark, text, muted, setPage}) => {
-  if (!card) return null;
-  const cs = {borderRadius:16, padding:"16px 20px", marginBottom:16, cursor:"pointer"};
-  if (card.type==="active_grocery") {
-    const scored=(card.list.items||[]).filter(i=>i.score!=null&&!i.checked);
-    const avg=scored.length?(scored.reduce((s,i)=>s+i.score,0)/scored.length).toFixed(1):null;
-    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your grocery list</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>{card.list.name}</div><div style={{fontSize:13,color:muted}}>{card.remaining} item{card.remaining!==1?"s":""} remaining{avg&&` · avg score ${avg}`}</div></div>);
-  }
-  if (card.type==="audit_suggestion") {
-    const cl=card.suggestion.type==="pantry"?"food and pantry":card.suggestion.type==="beauty"?"personal care":card.suggestion.type==="home"?"home and cleaning":card.suggestion.type;
-    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Ready for you</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>Start your {card.suggestion.label}</div><div style={{fontSize:13,color:muted}}>Based on {card.suggestion.count} {cl} scans</div></div>);
-  }
-  if (card.type==="home_coverage") {
-    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your home</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:6}}>{card.readyRooms.length} area{card.readyRooms.length!==1?"s":""} ready to audit</div><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{card.readyRooms.slice(0,4).map((r,i)=><span key={i} style={{fontSize:12,fontWeight:600,color:"#2563eb",background:isDark?"#1e3a5f":"#dbeafe",border:"1px solid #3b82f6",borderRadius:20,padding:"3px 10px"}}>{r.room} {r.count}</span>)}</div></div>);
-  }
-  if (card.type==="grocery_prompt") {
-    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2433":"#f8faff",border:`1.5px solid ${isDark?"#1e2a3e":"#c7d7f0"}`}}><div style={{fontSize:11,color:"#2563eb",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Plan your shop</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>Build a scored grocery list</div><div style={{fontSize:13,color:muted}}>Pick a store, set your budget, add products. Every item scored before you leave the house.</div></div>);
-  }
-  if (card.type==="stale_list") {
-    const rem=(card.list.items||[]).filter(i=>!i.checked).length;
-    const ds=Math.floor((Date.now()-new Date(card.list.lastOpenedAt).getTime())/(1000*60*60*24));
-    return (<div onClick={()=>setPage("lists")} style={{...cs,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Your list</div><div style={{fontSize:15,fontWeight:700,color:text,marginBottom:2}}>{card.list.name}</div><div style={{fontSize:13,color:muted}}>{rem} item{rem!==1?"s":""} remaining · last opened {ds} day{ds!==1?"s":""} ago</div></div>);
-  }
-  return null;
 };
 
 function useWindowWidth() {
@@ -8382,43 +8334,70 @@ function App() {
         </div>
       )}
 
-      {/* ── Scan limit modals ── */}
+      {/* ── Scan limit modals (Phase 4 cream refresh) ── */}
       {showLimitModal && (
-        <div onClick={()=>setShowLimitModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:400,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+        <div onClick={()=>setShowLimitModal(null)} style={{position:"fixed", inset:0, background:"rgba(26,31,21,0.55)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px"}}>
+          <div onClick={e=>e.stopPropagation()} style={{
+            background:"var(--cream)",
+            borderRadius: "22px 18px 24px 20px / 20px 24px 18px 22px",
+            padding:"30px 26px 24px",
+            maxWidth:400, width:"100%",
+            boxShadow:"0 20px 40px rgba(26,31,21,0.18), 0 0 0 1px rgba(26,31,21,0.08)",
+          }}>
 
             {showLimitModal === "account" && (<>
-              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've been busy.</div>
-              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>You've used your {FREE_LIMIT} free scans. Create an account to keep going — unlimited scans, child and pregnancy scoring, and clean alternatives for $4.99/month.</div>
-              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Create account</button>
-              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
+              <div style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                textTransform:"uppercase", fontWeight:500, marginBottom:12,
+                display:"flex", alignItems:"center", gap:10,
+              }}>
+                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                Free scans used
+              </div>
+              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>That's your {FREE_LIMIT} free scans. Make a quick account to keep going — unlimited scans, child and pregnancy scoring, clean alternatives. $4.99 a month.</div>
+              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>Create account</button>
+              <button onClick={()=>setShowLimitModal(null)} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
             </>)}
 
             {showLimitModal === "paywall" && (<>
-              <div style={{fontSize:22,fontWeight:700,color:isDark?"#fff":"#1a1a18",marginBottom:8}}>You've found a lot to think about</div>
-              <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:20,lineHeight:1.5}}>Unlimited scans, child and pregnancy scoring, and clean alternatives for $4.99/month. Cancel anytime.</div>
-              <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%",padding:"13px",borderRadius:10,background:"#16a34a",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:12,opacity:checkingOut?0.7:1}}>
+              <div style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                textTransform:"uppercase", fontWeight:500, marginBottom:12,
+                display:"flex", alignItems:"center", gap:10,
+              }}>
+                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                Partiqule Premium
+              </div>
+              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've found a lot to think about.</div>
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>
+                Unlimited scans, child and pregnancy scoring, clean alternatives.
+                <span style={{display:"block", marginTop:8, fontFamily:"'Fraunces', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month. Cancel anytime.</span></span>
+              </div>
+              <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:12, letterSpacing:"0.005em", opacity:checkingOut?0.7:1}}>
                 {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
               </button>
               {IS_NATIVE && (
-                <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:8,lineHeight:1.5}}>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10.5, color:"var(--ink-soft)", textAlign:"center", marginTop:8, lineHeight:1.55}}>
                   Partiqule Premium is a monthly subscription at {iapPrice}. Payment will be charged to your Apple ID at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings &gt; Apple ID &gt; Subscriptions.
                 </div>
               )}
-              <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Maybe later</button>
-              {IS_NATIVE&&<button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch(e){if(!e.message?.includes("cancelled")){setShowLimitModal(null);setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%",padding:"10px",borderRadius:10,background:"none",border:"none",color:isDark?"#6ee7b7":"#9ca3af",fontSize:12,cursor:"pointer",marginTop:4}}>Restore previous purchase</button>}
-              <div style={{fontSize:11,color:isDark?"#6ee7b7":"#9ca3af",textAlign:"center",marginTop:12}}>
-                <a href="https://partiqule.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("privacy");}}}>Privacy Policy</a>
-                <span style={{margin:"0 6px",opacity:0.4}}>·</span>
-                <a href="https://partiqule.com/terms" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("terms");}}}>Terms of Service</a>
-                <span style={{margin:"0 6px",opacity:0.4}}>·</span>
-                <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer" style={{color:isDark?"#6ee7b7":"#9ca3af",textDecoration:"underline",cursor:"pointer"}}>Apple EULA</a>
+              <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
+              {IS_NATIVE && <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch(e){if(!e.message?.includes("cancelled")){setShowLimitModal(null);setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%", padding:"10px", borderRadius:10, background:"transparent", border:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, cursor:"pointer", marginTop:4, textDecoration:"underline", textUnderlineOffset:2}}>Restore previous purchase</button>}
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", textAlign:"center", marginTop:12}}>
+                <a href="https://partiqule.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:"var(--ink-soft)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("privacy");}}}>Privacy Policy</a>
+                <span style={{margin:"0 6px", opacity:0.4}}>·</span>
+                <a href="https://partiqule.com/terms" target="_blank" rel="noopener noreferrer" style={{color:"var(--ink-soft)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("terms");}}}>Terms of Service</a>
+                <span style={{margin:"0 6px", opacity:0.4}}>·</span>
+                <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer" style={{color:"var(--ink-soft)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}}>Apple EULA</a>
               </div>
               {iapTimedOut && (
-                <div style={{padding:"20px 0 0", textAlign:"center", borderTop:`1px solid ${border}`, marginTop:16}}>
-                  <div style={{fontSize:14, color:muted, marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
-                  <button onClick={()=>{const url="https://partiqule.com?subscribe=1";if(window.Capacitor?.isNativePlatform?.())window.open(url,"_system");else window.open(url,"_blank");}} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:10}}>Subscribe on partiqule.com</button>
-                  <button onClick={()=>{setIapTimedOut(false);setCheckingOut(false);}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontSize:14,cursor:"pointer"}}>Try again</button>
+                <div style={{padding:"20px 0 0", textAlign:"center", borderTop:"1px solid var(--rule)", marginTop:16}}>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
+                  <button onClick={()=>{const url="https://partiqule.com?subscribe=1";if(window.Capacitor?.isNativePlatform?.())window.open(url,"_system");else window.open(url,"_blank");}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:10}}>Subscribe on partiqule.com</button>
+                  <button onClick={()=>{setIapTimedOut(false);setCheckingOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Try again</button>
                 </div>
               )}
             </>)}
@@ -8444,7 +8423,7 @@ function App() {
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
-          <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:32, color:text, margin:"0 0 12px"}}>Page not found</h1>
+          <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:36, color:text, margin:"0 0 12px", letterSpacing:"-0.015em"}}>Page not found.</h1>
           <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
           <button onClick={reset} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
             Go to Partiqule →
@@ -8483,7 +8462,7 @@ function App() {
       ) : page === "science" ? (
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>The Science</h1>
+            <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>The <span style={{color:"var(--moss)"}}>science</span></h1>
             <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
           <EducationSection isDark={isDark} isMobile={isMobile}/>
@@ -8491,7 +8470,7 @@ function App() {
       ) : page === "settings" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:28, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>Settings</h1>
+            <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Settings</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
           </div>
 
@@ -8649,7 +8628,7 @@ function App() {
                   try { if(next) localStorage.setItem("partiqule_pregnancy_mode","1"); else localStorage.removeItem("partiqule_pregnancy_mode"); } catch {}
                 }} style={{
                   width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
-                  background: pregnancyMode ? "#9333ea" : "#d1d5db",
+                  background: pregnancyMode ? "#2d5a27" : "#d1d5db",
                   position:"relative", transition:"background 0.2s", flexShrink:0,
                 }}>
                   <div style={{
@@ -8826,46 +8805,46 @@ function App() {
                     const showLoading = searchLoading && searchMatches.length === 0;
                     const showEmpty   = hasSearched && !searchLoading && searchMatches.length === 0;
                     if (!showLoading && !showEmpty && searchMatches.length === 0) return null;
-                    const scoreCol = s => s==null ? "#6b7280" : s<=3 ? "#16a34a" : s<=5 ? "#d97706" : "#dc2626";
-                    const scoreBg  = s => s==null ? "rgba(107,114,128,0.12)" : s<=3 ? "rgba(22,163,74,0.12)" : s<=5 ? "rgba(217,119,6,0.12)" : "rgba(220,38,38,0.12)";
-                    const sourceColor = src => src === "calibration" ? "#4ade80" : src === "own_scan" ? "#6ee7b7" : "#9ca3af";
+                    const scoreCol = s => s==null ? "var(--ink-faint)" : s<=3 ? "var(--score-green)" : s<=5 ? "var(--score-amber)" : "var(--score-red)";
+                    const scoreBg  = s => s==null ? "rgba(107,114,128,0.10)" : s<=3 ? "var(--score-green-soft)" : s<=5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
+                    const sourceColor = src => src === "calibration" ? "var(--moss)" : src === "own_scan" ? "var(--moss)" : "var(--ink-soft)";
                     if (showLoading) {
                       return (
-                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"10px 14px", background:"rgba(15,42,24,0.95)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12, fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#9ca3af"}}>
+                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"10px 14px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)"}}>
                           Searching…
                         </div>
                       );
                     }
                     if (showEmpty) {
                       return (
-                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"14px 16px", background:"rgba(15,42,24,0.95)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12}}>
-                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"#f0fdf4", fontWeight:700, marginBottom:6}}>No verified matches</div>
-                          <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:12, color:"#9ca3af", marginBottom:12}}>We couldn't find this product in our verified data. Scan the barcode or label for an accurate score.</div>
-                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"10px 14px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
+                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"16px 18px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px"}}>
+                          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:6, letterSpacing:"-0.005em"}}>No verified matches yet.</div>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:14, lineHeight:1.5}}>Scan the barcode or label — formulas change, and we only score what we can verify.</div>
+                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"11px 14px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
                         </div>
                       );
                     }
                     return (
-                      <div style={{maxWidth:860, margin:"10px auto 0", background:"rgba(15,42,24,0.97)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12, overflow:"hidden", maxHeight:360, overflowY:"auto"}}>
+                      <div style={{maxWidth:860, margin:"10px auto 0", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", overflow:"hidden", maxHeight:360, overflowY:"auto"}}>
                         {searchMatches.map((m, i) => (
                           <div key={m.id+"-"+i}
                             onClick={()=>selectSearchMatch(m)}
-                            style={{display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderBottom: i<searchMatches.length-1 ? "1px solid rgba(34,197,94,0.1)" : "none", cursor:"pointer"}}>
+                            style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", borderBottom: i<searchMatches.length-1 ? "1px solid var(--rule-soft)" : "none", cursor:"pointer"}}>
                             <div style={{flex:1, minWidth:0}}>
-                              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{m.display_name}</div>
-                              <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:11, color:sourceColor(m.source), marginTop:2}}>
-                                {m.source_label}{m.match_type === "trigram" ? ` · close match` : ""}
+                              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", letterSpacing:"-0.005em"}}>{m.display_name}</div>
+                              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.14em", color:sourceColor(m.source), marginTop:3, textTransform:"uppercase", fontWeight:500}}>
+                                {m.source_label}{m.match_type === "trigram" ? " · CLOSE MATCH" : ""}
                               </div>
                             </div>
                             {m.score_preview != null && (
-                              <div style={{width:36, height:36, borderRadius:10, background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, flexShrink:0}}>
+                              <div style={{width:36, height:36, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:16, flexShrink:0, letterSpacing:"-0.01em"}}>
                                 {m.score_preview}
                               </div>
                             )}
                           </div>
                         ))}
                         <div onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}}
-                          style={{padding:"10px 14px", borderTop:"1px solid rgba(34,197,94,0.15)", background:"rgba(5,46,22,0.7)", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:"#6ee7b7", textAlign:"center", cursor:"pointer"}}>
+                          style={{padding:"11px 16px", borderTop:"1px solid var(--rule)", background:"var(--cream)", fontFamily:"'Fraunces', Georgia, serif", fontSize:14, color:"var(--moss)", textAlign:"center", cursor:"pointer"}}>
                           Can't find your product? Scan the barcode →
                         </div>
                       </div>
@@ -9354,88 +9333,131 @@ function App() {
             const displayScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
             return (
             <div style={{display:"flex", flexDirection:"column", gap:isMobile?12:20}}>
-              <div className="score-reveal" style={{background:isDark?"#0f2a18":scoreCardBg(result.overall_score||result.score), borderRadius:isMobile?16:20, padding:isMobile?"20px 14px":"40px 36px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":scoreBg(result.overall_score||result.score)}`, textAlign:"center"}}>
-                {/* Header row — centered badges */}
-                <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:10, flexWrap:"wrap"}}>
-                  <div style={{fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>
-                    <><IcoRating size={14}/> Product Health Score</> <span style={{fontSize:10, opacity:0.6}}>(10 = highest concern)</span>
-                  </div>
-                  {result.cached && <div style={{fontSize:10, fontWeight:600, color:"#16a34a", background:"rgba(34,197,94,0.08)", padding:"2px 8px", borderRadius:10}}><IcoVerified size={14}/> Verified</div>}
-                  {result.confidence && (
-                    <div style={{fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:10,
-                      background:result.confidence==="high"?"#f0fdf4":result.confidence==="medium"?"#fffbeb":"#fef2f2",
-                      color:result.confidence==="high"?"#16a34a":result.confidence==="medium"?"#d97706":"#dc2626"}}>
-                      {result.confidence==="high"?"High confidence":result.confidence==="medium"?"Medium confidence":"Low confidence"}
-                    </div>
-                  )}
-                  {/* Social proof — scanned by others */}
-                  {result.cached && (
-                    <div style={{fontSize:10, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#0f2a18":"#f9fafb", border:`1px solid ${border}`}}>
-                      Scanned by others ✓
-                    </div>
-                  )}
-                </div>
 
-                {/* Product header: brand small caps · product name serif · composition data line */}
-                {(() => {
-                  const fullName = result.product_name || "";
-                  const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
-                  const brand = brandMatch ? brandMatch[1] : null;
-                  const productBody = brandMatch ? brandMatch[2] : fullName;
-                  const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
-                  // Category-aware composition line (Phase 2 Addition)
-                  const cat = result.category || "";
-                  const compositionLine = (() => {
-                    if (cat === "clothing" && result.composition) {
-                      return String(result.composition).toUpperCase().replace(/\s*[,·]\s*/g, " · ");
-                    }
-                    if (Array.isArray(result.ingredient_list) && result.ingredient_list.length > 0) {
-                      return result.ingredient_list.slice(0, 3).map(x => String(x).trim().toUpperCase()).join(" · ");
-                    }
-                    return null;
-                  })();
-                  return (
-                    <div style={{margin:"0 0 18px"}}>
-                      {brand && (
-                        <div style={{
-                          fontFamily:"'DM Sans', system-ui, sans-serif",
-                          fontSize:11,
-                          letterSpacing:"0.22em",
-                          color:isDark?"#6ee7b7":"var(--ink)",
-                          textTransform:"uppercase",
-                          fontWeight:500,
-                          marginBottom:4,
-                        }}>{brand.toUpperCase()}</div>
+              {/* Product header — LIFTED OUTSIDE the score card (Phase 4 Part A restructure).
+                  Mockup puts stamp + brand + product name + composition ABOVE a thin rule,
+                  then a separate verdict block below. Stamp uses the existing cached/verified
+                  signals from the score card header but repositioned left. */}
+              {(() => {
+                const fullName = result.product_name || "";
+                const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
+                const brand = brandMatch ? brandMatch[1] : null;
+                const productBody = brandMatch ? brandMatch[2] : fullName;
+                const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
+                const cat = result.category || "";
+                const compositionLine = (() => {
+                  if (cat === "clothing" && result.composition) {
+                    return String(result.composition).toUpperCase().replace(/\s*[,·]\s*/g, " · ");
+                  }
+                  if (Array.isArray(result.ingredient_list) && result.ingredient_list.length > 0) {
+                    return result.ingredient_list.slice(0, 3).map(x => String(x).trim().toUpperCase()).join(" · ");
+                  }
+                  return null;
+                })();
+                return (
+                  <div style={{padding: isMobile ? "4px 4px 0" : "0", textAlign:"left"}}>
+                    {/* Stamp row — logged time + confidence signals, DM Sans caps */}
+                    <div style={{
+                      display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:isDark?"#8a9080":"var(--ink-faint)",
+                      textTransform:"uppercase", fontWeight:500,
+                      marginBottom:14,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.6}}/>
+                      <span>Logged · just now</span>
+                      {result.cached && (
+                        <span style={{color:isDark?"#6ee7b7":"var(--moss)"}}>· Verified</span>
                       )}
-                      <h2 style={{
-                        fontFamily:"'Fraunces', Georgia, serif",
-                        fontSize:isMobile?26:32,
-                        fontWeight:400,
-                        color:text,
-                        margin:"0 0 10px",
-                        letterSpacing:"-0.01em",
-                        lineHeight:1.06,
-                        wordBreak:"break-word",
-                      }}>{displayName}</h2>
-                      {compositionLine && (
-                        <div style={{
-                          fontFamily:"'DM Sans', system-ui, sans-serif",
-                          fontSize:10.5,
-                          letterSpacing:"0.14em",
-                          color:isDark?"#8a9080":"var(--ink-faint)",
-                          textTransform:"uppercase",
-                          paddingBottom:12,
-                          borderBottom:`1px solid ${isDark?"rgba(240,253,244,0.12)":"var(--rule)"}`,
-                          margin:"0 0 4px",
-                        }}>{compositionLine}</div>
+                      {result.confidence && (
+                        <span style={{color: result.confidence==="high" ? (isDark?"#6ee7b7":"var(--moss)") : result.confidence==="medium" ? (isDark?"#9ca3af":"var(--ink-soft)") : (isDark?"#fbbf24":"var(--amber)")}}>
+                          · {result.confidence} confidence
+                        </span>
                       )}
                     </div>
-                  );
-                })()}
+                    {brand && (
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:11, letterSpacing:"0.22em",
+                        color:isDark?"#f0fdf4":"var(--ink)",
+                        textTransform:"uppercase", fontWeight:500,
+                        marginBottom:4,
+                      }}>{brand.toUpperCase()}</div>
+                    )}
+                    <h2 style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize: isMobile ? 30 : 38,
+                      fontWeight:400,
+                      color:text,
+                      margin:"0 0 12px",
+                      letterSpacing:"-0.015em",
+                      lineHeight:1.02,
+                      wordBreak:"break-word",
+                    }}>{displayName}</h2>
+                    {compositionLine && (
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10.5, letterSpacing:"0.14em",
+                        color:isDark?"#8a9080":"var(--ink-soft)",
+                        textTransform:"uppercase",
+                        paddingBottom:14,
+                        borderBottom:`1px solid ${isDark?"rgba(240,253,244,0.12)":"var(--rule)"}`,
+                        marginBottom:4,
+                      }}>{compositionLine}</div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="score-reveal" style={{
+                background:isDark?"#0f2a18":scoreCardBg(result.overall_score||result.score),
+                borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
+                padding:isMobile?"22px 16px":"32px 32px",
+                border:`1px solid ${isDark?"rgba(34,197,94,0.15)":scoreBg(result.overall_score||result.score)}`,
+                textAlign:"center",
+              }}>
+                {/* Header row — "scanned by others" badge (other badges moved to stamp above) */}
+                {result.cached && (
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:14, flexWrap:"wrap"}}>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:isDark?"#6ee7b7":"var(--moss)",
+                      textTransform:"uppercase", fontWeight:500,
+                      display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+                      Scanned by others
+                    </div>
+                  </div>
+                )}
 
                 {/* Hero score — swaps to child score when childMode active */}
                 {(() => {
+                  // Kids mode treatment (Phase 4 Part G): when childMode active AND displayed
+                  // score is 6+, surface a terracotta "FOR A KID" eyebrow above the ring.
+                  // Color stays natural terracotta — words carry the weight, not saturation.
+                  const showKidLabel = childMode && displayScore != null && displayScore >= 6;
                   return (<>
+                    {showKidLabel && (
+                      <div style={{
+                        display:"flex", justifyContent:"center",
+                        marginBottom: 8,
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize: 10,
+                        letterSpacing: "0.22em",
+                        color: "var(--score-red)",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                      }}>
+                        <span style={{display:"inline-flex", alignItems:"center", gap:10}}>
+                          <span style={{display:"inline-block", width:22, height:1, background:"var(--score-red)", opacity:0.7}}/>
+                          For a kid · Score {Math.round(displayScore)} of 10
+                          <span style={{display:"inline-block", width:22, height:1, background:"var(--score-red)", opacity:0.7}}/>
+                        </span>
+                      </div>
+                    )}
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
                       <ScoreArc score={displayScore}/>
                     </div>
@@ -9480,7 +9502,7 @@ function App() {
                         {result.pregnancy_score !== (result.overall_score || result.score) && (
                           <div style={{
                             marginTop:12, background:isDark?"#2a1a2a":"#fdf4ff",
-                            border:"1.5px solid #a855f744", borderRadius:12,
+                            border:"1.5px solid #2d5a2744", borderRadius:12,
                             padding:"12px 16px", textAlign:"left",
                           }}>
                             <div style={{fontSize:12, fontWeight:700, color:"#7e22ce", marginBottom:6}}>
@@ -10066,18 +10088,37 @@ function App() {
 
                     {/* Sustainability and Packaging dropdowns render above */}
 
-                    {/* See Alternatives CTA — replaces mobile scroll button */}
-                    <button
-                      onClick={()=>setShowAlts(true)}
-                      style={{
-                        width:"100%", marginTop:8, padding:"14px 16px",
-                        background:"#052e16", color:"#4ade80",
-                        border:"none", borderRadius:12, cursor:"pointer",
-                        fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15,
-                        display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                      }}>
-                      See safer alternatives →
-                    </button>
+                    {/* Primary action row — mockup: moss primary "Show me cleaner" + outlined secondary */}
+                    <div style={{display:"flex", gap:10, marginTop:10, flexWrap:"wrap"}}>
+                      <button
+                        onClick={()=>setShowAlts(true)}
+                        style={{
+                          flex:"1.35 1 160px",
+                          padding:"14px 16px",
+                          background:"var(--moss)", color:"var(--ivory)",
+                          border:"none",
+                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                          cursor:"pointer",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                        }}>
+                        Show me cleaner
+                      </button>
+                      <button
+                        onClick={reset}
+                        style={{
+                          flex:"1 1 140px",
+                          padding:"14px 16px",
+                          background:"transparent", color:isDark?"#f0fdf4":"var(--ink)",
+                          border:`1px solid ${isDark?"rgba(34,197,94,0.3)":"var(--rule-strong)"}`,
+                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                          cursor:"pointer",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                        }}>
+                        Shelf it anyway
+                      </button>
+                    </div>
                   </>);
                 })() : (
                   <div style={{padding:"12px 16px", background:isDark?"#0f2a18":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
