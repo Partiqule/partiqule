@@ -12,18 +12,17 @@ const {
 const { resolveIngredients } = require("./pass0");
 const { classifyProductFamily, CANONICAL_FAMILIES } = require("./productFamilies");
 const { filterRelevantCards, isOverBroadCard } = require("./intelMatch");
+const {
+  tier3OpenFactsTextSearch,
+  tier4WebExtract,
+  tier5CategoryPrior,
+  dedupeInflight,
+} = require("./scoringCascade");
 
 // ── FLAG DETECTION FEATURE FLAG ────────────────────────────────
 // Toggles the flagDetection integration off without a redeploy. Set
 // FLAG_DETECTION_ENABLED=false in Railway to fall back to AI-only behavior.
 const FLAG_DETECTION_ENABLED = process.env.FLAG_DETECTION_ENABLED !== "false";
-
-// ── TEXT PATH SCORING FEATURE FLAG ─────────────────────────────
-// Text-only queries (product name without image or barcode) ask Pass 1 to
-// analyze a product it cannot see, which fabricates ingredient lists from
-// training priors. Disabled by default until a Pass 0 ingredient resolution
-// layer is built. Set ALLOW_TEXT_PATH_SCORING=true in Railway to re-enable.
-const ALLOW_TEXT_PATH_SCORING = process.env.ALLOW_TEXT_PATH_SCORING === "true";
 
 // ── CALIBRATION OVERRIDES ─────────────────────────────────────
 // Admin can add/edit calibration entries via Supabase without a code deploy.
@@ -4907,11 +4906,11 @@ async function attachIntelCards(result, userId) {
 }
 
 // ── Text search: verified-source match picker ─────────────────
-// The raw-text /analyze path is gated (ALLOW_TEXT_PATH_SCORING=false) because
-// Pass 1 without ingredient ground truth fabricates from training priors.
-// /search offers a safer alternative: the user types, we surface matches we
-// have verified data for (calibration entries, prior OFF-verified scans), and
-// a tap dispatches /analyze with a productId that bypasses the gate.
+// /search surfaces the highest-trust matches for a typed query so the user
+// can pick a known-verified product instead of waiting for the cascade. A tap
+// dispatches /analyze with a productId, which short-circuits straight to the
+// pre-verified data (calibration entries, prior OFF-verified scans) — no
+// cascade, no API spend.
 //
 // Sources:
 //   - calibration:<key>  → in-memory CALIBRATION Map (3,039+ known products)
@@ -5142,8 +5141,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
   }
 
   // ── productId bypass: /search match picks ──
-  // `calibration:<key>` and `scan:<uuid>` both carry pre-verified data, so they
-  // skip the ALLOW_TEXT_PATH_SCORING gate that blocks raw text queries.
+  // `calibration:<key>` and `scan:<uuid>` carry pre-verified data so they
+  // short-circuit straight to a result — no cascade, no API spend.
   if (typeof productId === "string" && productId.length > 0 && productId.length < 200) {
     try {
       if (productId.startsWith("calibration:")) {
@@ -5187,6 +5186,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ingredient_confidence: entry.confidence || "high",
           ingredient_verified_at: new Date().toISOString(),
           ingredient_source_url: null,
+          source: "calibration",
+          source_label: "Verified formula",
+          source_confidence: null,
         });
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "calibration", score: midScore });
@@ -5209,6 +5211,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
         result.ingredient_source = "previous_scan";
         result.ingredient_verified_at = data.scanned_at || result.ingredient_verified_at;
         result.ingredient_source_url = null;
+        result.source = "previous_scan";
+        result.source_label = "From a previous Partiqule scan";
+        result.source_confidence = null;
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "scan" });
         return res.json({ ...result, cached: false });
@@ -5296,6 +5301,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
           ingredient_list: p1.ingredient_list || [],
           product_family: classifyProductFamily(productName, p1.ingredient_list, imgFuzzyCat),
           category_score_context: CATEGORY_CONTEXT[imgFuzzyCat] || CATEGORY_CONTEXT.other,
+          source: "calibration",
+          source_label: "Verified formula",
+          source_confidence: null,
         });
         cacheSet(imgKey, fuzzyResult);
         console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
@@ -5445,6 +5453,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
         ingredient_list: p1.ingredient_list || [],
         product_family: classifyProductFamily(productName, p1.ingredient_list, imgCategory),
         category_score_context: CATEGORY_CONTEXT[imgCategory] || CATEGORY_CONTEXT.other,
+        // Source provenance — image path reads ingredients from pixels via vision OCR.
+        // ingredient_source intentionally NOT set here so evictIfPrePass0 keeps
+        // image-path results out of long-term cache (CLAUDE.md "Pre-Pass-0 cache eviction").
+        source: "vision_ocr",
+        source_label: "Read from your photo",
+        source_confidence: null,
       };
 
       const calibratedResult = applyProductCalibration(result);
@@ -5540,39 +5554,27 @@ app.post("/analyze", rateLimit, async (req, res) => {
       alternatives: fuzzyAlts, ai_alternatives: [],
       product_family: classifyProductFamily(productName, entry.substances || [], fuzzyCat),
       category_score_context: CATEGORY_CONTEXT[fuzzyCat] || CATEGORY_CONTEXT.other,
+      ingredient_source: "calibration",
+      ingredient_confidence: entry.confidence || "high",
+      ingredient_verified_at: new Date().toISOString(),
+      ingredient_source_url: null,
+      source: "calibration",
+      source_label: "Verified formula",
+      source_confidence: null,
     });
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
     return res.json({ ...fuzzyResult, cached: false });
   }
 
-  console.log(`[CACHE MISS] ${key} — running AI pass`);
+  console.log(`[CACHE MISS] ${key} — running cascade`);
 
-  // ── Text-path scoring gate ──
-  // Pass 1 without image data fabricates ingredient lists from training priors.
-  // Block the AI pass until a Pass 0 ingredient resolution layer is built.
-  // Cache and fuzzy-calibration paths above remain live — only the AI fallback is gated.
-  //
-  // Defensive guard: if productId is present the request should have already
-  // returned from the productId bypass block at line ~5013. The `!productId`
-  // check here is belt-and-suspenders — a request that somehow carries both a
-  // query and an unresolved productId should never 422. Instead, log it so we
-  // can diagnose how it got here. The `productId` variable is in the outer
-  // /analyze handler scope.
-  if (!ALLOW_TEXT_PATH_SCORING && !productId) {
-    log.info("text_path_blocked", { productName, userId, has_query: !!query, has_image: !!image, has_productId: false });
-    return res.status(422).json({
-      success: false,
-      error: "cannot_score_from_text_only",
-      message: "We need to see the ingredient label to score this product accurately. Please scan the barcode or take a photo of the ingredient list.",
-      userAction: "show_camera_prompt",
-    });
-  }
-  if (!ALLOW_TEXT_PATH_SCORING && productId) {
-    // A productId was attached but didn't resolve via the bypass block — either
-    // an unknown scheme or a malformed id. Return 400 so the client shows an
-    // actionable error instead of the scan-prompt overlay.
-    log.warn("text_path_blocked_with_productId", { productName, userId, productId_type: typeof productId, productId_len: String(productId).length, productId_prefix: String(productId).slice(0, 20) });
+  // ── Stray-productId guard ──
+  // The productId bypass block above (line ~5147) handles `calibration:` and
+  // `scan:` schemes. If a productId arrived here it didn't match a known scheme
+  // — surface a 400 instead of running the cascade with garbage.
+  if (productId) {
+    log.warn("unresolved_productId_in_cascade", { productName, userId, productId_type: typeof productId, productId_len: String(productId).length, productId_prefix: String(productId).slice(0, 20) });
     return res.status(400).json({
       success: false,
       error: "unresolved_productId",
@@ -5581,268 +5583,302 @@ app.post("/analyze", rateLimit, async (req, res) => {
   }
 
   try {
+    // ── Five-tier cascade — see CLAUDE.md "Five-Tier Scoring Cascade" ──
+    // Tiers 1 (CALIBRATION) and 2 (cache) are above. This block handles 3 → 4 → 5.
+    // dedupeInflight collapses concurrent identical queries into one execution
+    // so a multi-tab refresh or rapid retap doesn't fan out into N web searches.
+    const cascadeOutcome = await dedupeInflight(productName, category, async () => {
+      // ── Tier 3: Open Facts text search (strict) ──
+      let tier = null;
+      let ingredientText = null;
+      let ingredientArray = [];
+      let brandHint = "";
+      let resolvedCategory = category;
+      let sourceFields = null;
 
-    // ── Run search and pass1 in parallel ──
-    // Search for material data runs concurrently with pass1 (instead of blocking it).
-    // If search returns data, it feeds into pass2 for refinement.
-    let materialContext = null;
-    const doSearch = needsSearch(productName);
-    if (doSearch) console.log(`Searching product details: ${productName}`);
-    console.log(`Analyzing: ${productName}`);
-
-    const searchPromise = doSearch
-      ? Promise.race([
-          searchProductDetails(productName),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("Search timeout")), 8000))
-        ]).catch(err => { console.warn("Search failed, continuing without:", err.message); return null; })
-      : Promise.resolve(null);
-
-    const [p1, searchResult] = await Promise.all([
-      pass1(productName, null, category),
-      searchPromise,
-    ]);
-    materialContext = searchResult;
-    if (materialContext) console.log(`Search found: ${materialContext.slice(0,80)}...`);
-
-    // ── Deterministic flag detection on AI-captured ingredients (post-AI) ──
-    // No pre-AI ingredient text in the text path — AI is what produces the list.
-    applyFlagDetectionToP1(p1, materialContext || "", category, "text");
-
-    // Skip pass2 when pass1 is high confidence AND has real dimension scores
-    // (not flat 5s). Saves ~20s latency and 1 API call per scan.
-    const p1HasRealScores = p1.materials?.score != null &&
-      !(p1.materials?.score === 5 && p1.usage_exposure?.score === 5 &&
-        p1.packaging?.score === 5 && p1.sustainability?.score === 5);
-    // Detect flat-5s from pass1 ("lazy Haiku") — force pass2 to audit
-    if (!p1HasRealScores) {
-      console.log(`[FLAT 5s] ${productName} — pass1 returned all dimensions 5, forcing pass2 audit`);
-    }
-    const skipPass2 = p1.confidence === "high" && p1HasRealScores && !materialContext;
-    const p2 = skipPass2 ? null : await safePass2(productName, p1, materialContext);
-    if (skipPass2) console.log(`[PASS2 SKIP] ${productName} — pass1 confidence high, real scores`);
-
-    // Merge pass1 + pass2 results
-    const finalCategory = (p1.category !== "other" ? p1.category : category) || "other";
-    const catAvg        = CATEGORY_AVERAGES[finalCategory] || CATEGORY_AVERAGES.other;
-    // ── Compute weighted final score server-side as source of truth ──
-    let mScore  = p2?.materials_score     ?? p1.materials?.score     ?? 5;
-    let uScore  = p2?.usage_score         ?? p1.usage_exposure?.score ?? 5;
-    let pkScore = p2?.packaging_score     ?? p1.packaging?.score     ?? 5;
-    let sScore  = p2?.sustainability_score ?? p1.sustainability?.score ?? 5;
-
-    // ── Substance-triggered floors — only activate when AI confirms bad ingredient ──
-    const substanceResult = applySubstanceFloors(mScore, uScore, p1, p2);
-    mScore = substanceResult.mScore;
-    uScore = substanceResult.uScore;
-    if (substanceResult.triggered.length > 0) {
-      console.log(`Substance floors triggered: ${substanceResult.triggered.join(", ")}`);
-    }
-
-    // ── Restaurant dimension floors ──
-    if (finalCategory === "restaurant") {
-      const rname = (p1.product_name || productName).toLowerCase();
-      const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken|fried chicken/.test(rname);
-      const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(rname);
-      mScore  = Math.max(mScore,  (isFried || isChickenSandwich) ? 4 : 3);
-      uScore  = Math.max(uScore,  (isFried || isChickenSandwich) ? 4 : 3);
-      pkScore = Math.max(pkScore, 3);
-      sScore  = Math.max(sScore,  3);
-    }
-
-    let finalScore = computeScore(mScore, uScore, pkScore, sScore, finalCategory);
-
-    // ── Consistency checks — catch hallucinations before result ──
-    ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
-      mScore, uScore, pkScore, sScore, finalScore, p1, p2, finalCategory, productName
-    ));
-
-    // ── Positive ceilings — pull genuinely clean food products down ──
-    ({finalScore} = applyPositiveCeilings(finalScore, finalCategory, p1, p2, substanceResult.triggered));
-
-    // ── Fix 5: Restaurant confidence enforcement ──
-    // Restaurants don't disclose ingredients. We're guessing based on chain reputation.
-    // Confidence can never be high for a restaurant item — medium at best.
-    if (finalCategory === "restaurant") {
-      if (p1.confidence === "high") {
-        p1.confidence = "medium"; // downgrade — we can't truly know what's in the kitchen
-      }
-    }
-
-    // ── Fix 6: pass2 drift guard ──
-    // The auditor should refine scores, not erase substance floors.
-    // Cap how far pass2 can move a score DOWN from a floored value.
-    const pass1RawScore = computeScore(
-      substanceResult.mScore ?? mScore,
-      substanceResult.uScore ?? uScore,
-      pkScore, sScore, finalCategory
-    );
-    if (substanceResult.triggered.length > 0 && finalScore < pass1RawScore - 1) {
-      console.log(`Pass2 drift guard: score drifted from ${pass1RawScore} to ${finalScore} with substance floors active — holding at ${pass1RawScore - 1}`);
-      finalScore = pass1RawScore - 1; // allow max 1-point reduction from auditor when floors fired
-    }
-
-    // ── Final score safety net — catches clear misses only ──
-    if (finalCategory === "restaurant") {
-      const name = (p1.product_name || productName).toLowerCase();
-      const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(name);
-      const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(name);
-      const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
-      const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
-      if (isFried || isChickenSandwich) finalScore = Math.max(finalScore, 5);
-      else if (isBurger)                finalScore = Math.max(finalScore, 4);
-      else if (isTaco)                  finalScore = Math.max(finalScore, 3);
-      else                              finalScore = Math.max(finalScore, 3);
-    }
-
-    // Peer comparison
-    const peerComparison = finalScore <= 2
-      ? "Safe — no significant chemical or ingredient concerns"
-      : finalScore <= 4
-      ? "Good — mostly clean, use with awareness"
-      : finalScore <= 6
-      ? "Caution — real concerns, reduce use or find an alternative"
-      : finalScore <= 8
-      ? "Switch — real concerns, time to swap"
-      : "Avoid — known harmful substances";
-
-    const aiProductName = p1.product_name || productName;
-
-    // ── Alternatives: skip DB for restaurant items, use AI suggestions only ──
-    let finalAlternatives;
-    const isRestaurant = category === "restaurant" || finalCategory === "restaurant";
-    if (isRestaurant) {
-      // For restaurant items, AI alternatives suggest healthier homemade or better-quality versions
-      finalAlternatives = (filterAiAlternatives(p1.ai_alternatives, category, productName) || []).map(a => ({
-        id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 3,
-        material: a.material || "", description: a.reason || "", price: "",
-        affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
-        category: "food_beverage"
-      }));
-    } else if (isPaApiConfigured()) {
-      console.log("Using Amazon PA API for alternatives");
-      const amazonResults = await getAmazonAlternatives(
-        aiProductName, finalCategory, p1.identified_plastics || []
-      );
-      if (amazonResults && amazonResults.length > 0) {
-        finalAlternatives = amazonResults;
-        console.log(`PA API returned ${amazonResults.length} alternatives`);
+      const t3 = await tier3OpenFactsTextSearch(productName);
+      if (t3) {
+        tier = "tier3";
+        ingredientText = t3.ingredients;
+        ingredientArray = t3.ingredients
+          .split(/,(?![^(]*\))/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        brandHint = t3.brand;
+        sourceFields = {
+          source: t3.source,
+          source_label: t3.sourceLabel,
+          source_confidence: t3.sourceConfidence,
+          ingredient_source: t3.source,
+          ingredient_confidence: t3.sourceConfidence,
+          ingredient_verified_at: new Date().toISOString(),
+          ingredient_source_url: t3.sourceUrl,
+        };
       } else {
-        console.log("PA API returned no results — falling back to static DB");
+        // ── Tier 4: web_search_20250305 → JSON ingredient extraction ──
+        const t4 = await tier4WebExtract(productName, { checkApiBudget, incrementApiCount });
+        if (t4) {
+          tier = "tier4";
+          ingredientText = t4.ingredients;
+          ingredientArray = (t4.ingredientArray || []).map(s => String(s).trim()).filter(Boolean);
+          brandHint = t4.brand;
+          // Honor AI-detected category only when it's a known taxonomy member
+          if (t4.category && CATEGORY_AVERAGES[t4.category]) resolvedCategory = t4.category;
+          sourceFields = {
+            source: t4.source,
+            source_label: t4.sourceLabel,
+            source_confidence: t4.sourceConfidence,
+            ingredient_source: t4.source,
+            ingredient_confidence: t4.sourceConfidence,
+            ingredient_verified_at: new Date().toISOString(),
+            ingredient_source_url: t4.sourceUrl,
+          };
+        }
+      }
+
+      // ── Tier 5: synthetic category-prior best guess ──
+      // No AI call. No chemistry fields populated. summary names the limitation.
+      // _skipCache flag tells the caller not to persist this result.
+      if (!tier) {
+        const t5 = tier5CategoryPrior(productName, category, {
+          categoryAverages: CATEGORY_AVERAGES,
+          categoryContext: CATEGORY_CONTEXT,
+        });
+        const synth = t5.syntheticResult;
+        // Replace the placeholder safety scores with shared-helper output for
+        // consistency with other paths (uses category + product name only).
+        const safety = computeSafetyScores(synth.score, category, productName, {}, [], "");
+        synth.is_child_product = safety.isChild;
+        synth.child_score      = safety.childScore;
+        synth.child_bumps      = safety.childBumps || [];
+        synth.pregnancy_score  = safety.pregnancyScore;
+        synth.pregnancy_bumps  = safety.pregnancyBumps || [];
+        log.info("cascade_tier5", { productName, category, score: synth.score });
+        return { tier: "tier5", result: synth, skipCache: true };
+      }
+
+      // ── Tier 3 / 4: feed real ingredients into the standard scoring pipeline ──
+      // Mirrors the barcode path's contract: pre-AI deterministic detection,
+      // pass1 with verified ingredient context, pass2 audit, text+AI substance
+      // floors, consistency checks, positive ceilings, drift guard, calibration.
+      const ingredientSourceNote = `INGREDIENT SOURCE: ${sourceFields.source} (confidence: ${sourceFields.source_confidence})\nVerified: ${sourceFields.ingredient_verified_at}\nThese ingredients come from ${sourceFields.source}. Score based on these ingredients, not on your training priors. If the ingredient list contradicts what you know about this product, trust the ingredient list provided.`;
+      const cascadeContext = [
+        `EXACT PRODUCT: ${productName}${brandHint ? ` by ${brandHint}` : ""}`,
+        ingredientSourceNote,
+        `FULL INGREDIENT LIST: ${ingredientText}`,
+        /natural.*flavor|flavoring/i.test(ingredientText) && !/artificial/i.test(ingredientText)
+          ? "SCORING NOTE: Ingredient list confirms NATURAL flavoring only — do not penalize as synthetic."
+          : null,
+      ].filter(Boolean).join("\n");
+
+      const preDetected = FLAG_DETECTION_ENABLED && ingredientText
+        ? detectDeterministicFlags(ingredientText, resolvedCategory)
+        : null;
+
+      console.log(`[${tier}] running pass1 with verified ingredients (${ingredientArray.length} items)`);
+      const p1 = await pass1(productName, cascadeContext, resolvedCategory, preDetected);
+      applyFlagDetectionToP1(p1, ingredientText, resolvedCategory, tier);
+
+      let p2 = null;
+      try { p2 = await safePass2(productName, p1, ingredientText); }
+      catch(e) { console.warn(`[${tier}] pass2 failed:`, e.message); }
+
+      const finalCategory = (p1.category && p1.category !== "other" ? p1.category : resolvedCategory) || "other";
+
+      let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
+      let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+      let pkScore = p2?.packaging_score      ?? p1.packaging?.score      ?? 5;
+      let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+
+      // Substance floors — text-derived first (AI-immune), then AI-concern based
+      const textFloors = applySubstanceFloorsToText(ingredientText);
+      if (textFloors.mFloor > mScore) {
+        console.log(`[${tier}] Text substance floor raised materials ${mScore} → ${textFloors.mFloor} (${textFloors.triggered[0]})`);
+        mScore = textFloors.mFloor;
+      }
+      if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
+      const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
+      mScore = aiFloors.mScore;
+      uScore = aiFloors.uScore;
+      const allTriggered = [...textFloors.triggered, ...aiFloors.triggered];
+      if (allTriggered.length > 0) console.log(`[${tier}] Substance floors triggered: ${allTriggered.join(", ")}`);
+
+      // Restaurant dimension floors
+      if (finalCategory === "restaurant") {
+        const rname = (p1.product_name || productName).toLowerCase();
+        const isFried = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken|fried chicken/.test(rname);
+        const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(rname);
+        mScore  = Math.max(mScore,  (isFried || isChickenSandwich) ? 4 : 3);
+        uScore  = Math.max(uScore,  (isFried || isChickenSandwich) ? 4 : 3);
+        pkScore = Math.max(pkScore, 3);
+        sScore  = Math.max(sScore,  3);
+      }
+
+      let finalScore = computeScore(mScore, uScore, pkScore, sScore, finalCategory);
+      ({mScore, uScore, pkScore, sScore, finalScore} = applyConsistencyChecks(
+        mScore, uScore, pkScore, sScore, finalScore, p1, p2, finalCategory, productName
+      ));
+      ({finalScore} = applyPositiveCeilings(finalScore, finalCategory, p1, p2, allTriggered));
+
+      // Restaurant confidence enforcement
+      if (finalCategory === "restaurant" && p1.confidence === "high") {
+        p1.confidence = "medium";
+      }
+
+      // pass2 drift guard
+      const pass1RawScore = computeScore(aiFloors.mScore, aiFloors.uScore, pkScore, sScore, finalCategory);
+      if (allTriggered.length > 0 && finalScore < pass1RawScore - 1) {
+        console.log(`[${tier}] Pass2 drift guard: ${pass1RawScore} → ${finalScore} with floors active — holding at ${pass1RawScore - 1}`);
+        finalScore = pass1RawScore - 1;
+      }
+
+      // Restaurant safety net
+      if (finalCategory === "restaurant") {
+        const name = (p1.product_name || productName).toLowerCase();
+        const isFried  = /fried|nugget|crispy|wing|strip|tender|fry|fries|onion ring|popcorn chicken|crispy chicken/.test(name);
+        const isChickenSandwich = /chicken sandwich|chicken burger|chick.?fil/.test(name);
+        const isBurger = /burger|sandwich|wrap|hotdog|hot dog|sub|hero/.test(name);
+        const isTaco   = /taco|burrito|quesadilla|nacho|torta/.test(name);
+        if (isFried || isChickenSandwich) finalScore = Math.max(finalScore, 5);
+        else if (isBurger)                finalScore = Math.max(finalScore, 4);
+        else if (isTaco)                  finalScore = Math.max(finalScore, 3);
+        else                              finalScore = Math.max(finalScore, 3);
+      }
+
+      const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
+        : finalScore <= 4 ? "Good — mostly clean, use with awareness"
+        : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
+        : finalScore <= 8 ? "Switch — real concerns, time to swap"
+        : "Avoid — known harmful substances";
+
+      const aiProductName = p1.product_name || productName;
+
+      // Alternatives
+      let finalAlternatives;
+      const isRestaurant = finalCategory === "restaurant";
+      if (isRestaurant) {
+        finalAlternatives = (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
+          id: `ai-${Math.random()}`, name: a.name, brand: "", score: a.estimated_score ?? 3,
+          material: a.material || "", description: a.reason || "", price: "",
+          affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
+          category: "food_beverage"
+        }));
+      } else if (isPaApiConfigured()) {
+        const amazonResults = await getAmazonAlternatives(aiProductName, finalCategory, p1.identified_plastics || []);
+        if (amazonResults && amazonResults.length > 0) {
+          finalAlternatives = amazonResults;
+        } else {
+          finalAlternatives = filterDbAlternatives(
+            findAlternatives(aiProductName, finalCategory, 3, productName),
+            finalCategory, productName, finalScore
+          ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+        }
+      } else {
         finalAlternatives = filterDbAlternatives(
           findAlternatives(aiProductName, finalCategory, 3, productName),
           finalCategory, productName, finalScore
         ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
       }
+
+      const result = {
+        product_name:     cleanProductName(p1.product_name || productName),
+        score:            finalScore,
+        overall_score:    finalScore,
+        summary:          p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_short:    p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_long:     p1.summary_long || p1.summary || "",
+        concerns:         p2?.refined_concerns || p1.raw_concerns || [],
+        category:         finalCategory,
+        ...(() => {
+          const safety = computeSafetyScores(finalScore, finalCategory, p1.product_name || productName, p1, textFloors.triggered, (p2?.refined_concerns || []).join(" "));
+          return {
+            is_child_product:  safety.isChild,
+            child_score:       safety.childScore,
+            child_bumps:       safety.childBumps,
+            pregnancy_score:   safety.pregnancyScore,
+            pregnancy_bumps:   safety.pregnancyBumps,
+          };
+        })(),
+        dimensions: {
+          materials: { score: mScore, label: p1.materials?.label || "", concerns: p1.materials?.concerns || [] },
+          usage_exposure: {
+            score: uScore, label: p1.usage_exposure?.label || "",
+            frequency: p1.usage_exposure?.frequency || "unknown",
+            type: p1.usage_exposure?.type || "unknown",
+            intensity: p1.usage_exposure?.intensity || "unknown",
+            vulnerable: p1.usage_exposure?.vulnerable || false,
+            concerns: p1.usage_exposure?.concerns || [],
+          },
+          packaging: {
+            score: pkScore, label: p1.packaging?.label || "",
+            primary: p1.packaging?.primary || "unknown",
+            refillable: p1.packaging?.refillable || false,
+            end_of_life: p1.packaging?.end_of_life || "unknown",
+            concerns: p1.packaging?.concerns || [],
+          },
+          sustainability: {
+            score: sScore, label: p1.sustainability?.label || "",
+            reusable: p1.sustainability?.reusable || false,
+            replaces_single_use: p1.sustainability?.replaces_single_use || false,
+            replaces_count: p1.sustainability?.replaces_count || null,
+            circularity: p1.sustainability?.circularity || "unknown",
+            concerns: p1.sustainability?.concerns || [],
+          },
+        },
+        identified_plastics: p1.identified_plastics || [],
+        harmful_chemicals:   p1.harmful_chemicals   || [],
+        natural_materials:   p1.natural_materials   || [],
+        flagged_substances:  [...(p1.flagged_substances || []), ...textFloors.triggered],
+        exposure_frequency:  p1.usage_exposure?.frequency || "unknown",
+        exposure_type:       p1.usage_exposure?.type      || "unknown",
+        confidence:          p2?.confidence    || p1.confidence    || "medium",
+        confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
+        score_reasoning:     p2?.score_reasoning || "",
+        peer_comparison:     peerComparison,
+        scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory, finalAlternatives),
+        break_even:          p2?.break_even || null,
+        food_analysis:       p1.product_analysis || p1.food_analysis || null,
+        composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
+        cached:              false,
+        alternatives: serializeAlternatives(finalAlternatives, finalCategory),
+        ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
+          name: a.name || "", reason: a.reason || "",
+          material: a.material || "", estimated_score: a.estimated_score || 2, source: "ai",
+        })),
+        nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
+        ingredient_list: ingredientArray.length ? ingredientArray : (p1.ingredient_list || []),
+        product_family: classifyProductFamily(productName, ingredientArray.length ? ingredientArray : (p1.ingredient_list || []), finalCategory),
+        category_score_context: CATEGORY_CONTEXT[finalCategory] || CATEGORY_CONTEXT.other,
+        // Source provenance — see CLAUDE.md "Five-Tier Scoring Cascade"
+        source: sourceFields.source,
+        source_label: sourceFields.source_label,
+        source_confidence: sourceFields.source_confidence,
+        ingredient_source: sourceFields.ingredient_source,
+        ingredient_confidence: sourceFields.ingredient_confidence,
+        ingredient_verified_at: sourceFields.ingredient_verified_at,
+        ingredient_source_url: sourceFields.ingredient_source_url,
+      };
+
+      const calibrated = applyProductCalibration(result);
+      if (calibrated.child_score != null) {
+        const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
+        calibrated.child_score = kidsCalibrated.overall_score;
+      }
+
+      return { tier, result: calibrated, skipCache: false };
+    });
+
+    if (!cascadeOutcome.skipCache) {
+      cacheSet(key, cascadeOutcome.result);
+      console.log(`[CACHED] ${key} via ${cascadeOutcome.tier} (score: ${cascadeOutcome.result.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
     } else {
-      finalAlternatives = filterDbAlternatives(
-        findAlternatives(aiProductName, finalCategory, 3, productName),
-        finalCategory, productName, finalScore
-      ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
+      console.log(`[CASCADE ${cascadeOutcome.tier}] ${key} — score ${cascadeOutcome.result.score}, not cached`);
     }
-
-    const result = {
-      product_name:     cleanProductName(p1.product_name || productName),
-      score:            finalScore,
-      overall_score:    finalScore,
-      summary:          p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
-      summary_short:    p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
-      summary_long:     p1.summary_long || p1.summary || "",
-      concerns:         p2?.refined_concerns || p1.raw_concerns || [],
-      category:         finalCategory,
-      // ── Child + pregnancy vulnerability (via shared helper) ──
-      ...(() => {
-        const safety = computeSafetyScores(finalScore, finalCategory, p1.product_name || productName, p1,
-          [], (p2?.refined_concerns || []).join(" "));
-        return {
-          is_child_product:  safety.isChild,
-          child_score:       safety.childScore,
-          child_bumps:       safety.childBumps,
-          pregnancy_score:   safety.pregnancyScore,
-          pregnancy_bumps:   safety.pregnancyBumps,
-        };
-      })(),
-      // ── 5 dimensions ──
-      dimensions: {
-        materials: {
-          score:    mScore,
-          label:    p1.materials?.label    || "",
-          concerns: p1.materials?.concerns || [],
-        },
-        usage_exposure: {
-          score:     uScore,
-          label:     p1.usage_exposure?.label     || "",
-          frequency: p1.usage_exposure?.frequency || "unknown",
-          type:      p1.usage_exposure?.type      || "unknown",
-          intensity: p1.usage_exposure?.intensity || "unknown",
-          vulnerable: p1.usage_exposure?.vulnerable || false,
-          concerns:  p1.usage_exposure?.concerns  || [],
-        },
-        packaging: {
-          score:       pkScore,
-          label:       p1.packaging?.label       || "",
-          primary:     p1.packaging?.primary     || "unknown",
-          refillable:  p1.packaging?.refillable  || false,
-          end_of_life: p1.packaging?.end_of_life || "unknown",
-          concerns:    p1.packaging?.concerns    || [],
-        },
-        sustainability: {
-          score:            sScore,
-          label:            p1.sustainability?.label            || "",
-          reusable:         p1.sustainability?.reusable         || false,
-          replaces_single_use: p1.sustainability?.replaces_single_use || false,
-          replaces_count:   p1.sustainability?.replaces_count   || null,
-          circularity:      p1.sustainability?.circularity      || "unknown",
-          concerns:         p1.sustainability?.concerns         || [],
-        },
-      },
-      // ── legacy fields kept for backward compat with other parts of UI ──
-      identified_plastics: p1.identified_plastics || [],
-      harmful_chemicals:   p1.harmful_chemicals   || [],
-      natural_materials:   p1.natural_materials   || [],
-      exposure_frequency:  p1.usage_exposure?.frequency || "unknown",
-      exposure_type:       p1.usage_exposure?.type      || "unknown",
-      confidence:          p2?.confidence    || p1.confidence    || "medium",
-      confidence_note:     p2?.confidence_note || p1.confidence_reason || "",
-      score_reasoning:     p2?.score_reasoning || "",
-      peer_comparison:     peerComparison,
-      scan_next: p1.scan_next?.length ? p1.scan_next : buildScanNextFallback(aiProductName || productName, finalCategory || category, finalAlternatives),
-      break_even:          p2?.break_even || null,
-      food_analysis:       p1.product_analysis || p1.food_analysis || null,
-      composition_tier:    p1.product_analysis?.composition_tier ?? p1.composition_tier ?? null,
-      cached:              false,
-      alternatives: serializeAlternatives(finalAlternatives, finalCategory || category),
-      ai_alternatives: (filterAiAlternatives(p1.ai_alternatives, finalCategory, productName) || []).map(a => ({
-        name:            a.name || "",
-        reason:          a.reason || "",
-        material:        a.material || "",
-        estimated_score: a.estimated_score || 2,
-        source:          "ai",
-      })),
-      // ── Nutrition — pull from top-level or product_analysis ──
-      nutrition: p1.nutrition || p1.product_analysis?.nutrition || null,
-      ingredient_list: p1.ingredient_list || [],
-      product_family: classifyProductFamily(productName, p1.ingredient_list, finalCategory || category),
-      category_score_context: CATEGORY_CONTEXT[finalCategory || category] || CATEGORY_CONTEXT.other,
-    };
-
-    // ── Calibration registry — deterministic floor/ceiling enforcement ──
-    const calibrated = applyProductCalibration(result);
-
-    // ── Kids mode calibration — run second pass with kids_mode:true to get calibrated child score ──
-    if (calibrated.child_score != null) {
-      const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
-      // Use the higher of server-computed child_score and calibration-corrected child score
-      // but cap at kidsCeiling if calibration has one
-      calibrated.child_score = kidsCalibrated.overall_score;
-    }
-
-    cacheSet(key, calibrated);
-    console.log(`[CACHED] ${key} (score: ${calibrated.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
-    await attachIntelCards(calibrated, userId);
-    res.json(calibrated);
+    await attachIntelCards(cascadeOutcome.result, userId);
+    res.json(cascadeOutcome.result);
 
   } catch (err) {
-    console.error("Error:", err.message);
+    console.error("Cascade error:", err.message);
     const msg = err.message?.includes("529") || err.message?.includes("overload")
       ? "Partiqule is in high demand right now. Please try again in a few seconds."
       : err.message?.includes("429") || err.message?.includes("rate")
@@ -7656,6 +7692,16 @@ app.post("/barcode", rateLimit, async (req, res) => {
       ingredient_confidence:     pass0.confidence,
       ingredient_verified_at:    pass0.verifiedAt,
       ingredient_source_url:     pass0.sourceUrl,
+      // Source provenance — barcode path resolves via Open Facts. Treated as
+      // baseline-trust (source_confidence: null) because a barcode scan is the
+      // most precise identification we can make.
+      source: pass0.source,
+      source_label:
+        pass0.source === "open_food_facts"     ? "Sourced from Open Food Facts" :
+        pass0.source === "open_beauty_facts"   ? "Sourced from Open Beauty Facts" :
+        pass0.source === "open_products_facts" ? "Sourced from Open Products Facts" :
+        "Verified via barcode",
+      source_confidence: null,
       dimensions: {
         materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
         usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },

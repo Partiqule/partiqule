@@ -317,11 +317,11 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 
 Pass 1 does not have a single ingredient source — it varies by entry point:
 
-- **Text path** (`/analyze` with `query`): DISABLED as of 2026-04-18. Returns `cannot_score_from_text_only` error. Cache and fuzzy-calibration hits still return (pre-verified scores), but the AI fallback (`pass1(productName, null, category)`) is gated behind `ALLOW_TEXT_PATH_SCORING` because it fabricated ingredient lists from training priors. See "Text Path Scoring Disabled" section below.
+- **Text path** (`/analyze` with `query`): five-tier cascade — CALIBRATION map → cache → Open Facts text search → web_search extraction → category-prior best guess. Tiers 1-4 feed real ingredients into Pass 1; Tier 5 skips Pass 1 entirely and returns a synthetic category-typical estimate with empty chemistry fields. See "Five-Tier Scoring Cascade" section below.
 - **Vision path** (`/analyze` with `image`): `callClaudeVision` reads the label from pixels. LABEL TRUTH RULE in the vision system prompt tries to prevent AI priors from overriding visible text, but the risk is not eliminated.
-- **Barcode path** (`/barcode`): Open Food Facts `ingredients_text_en` is injected into pass1 as ground truth via `offContext`. Safest path; only works for products OFF indexes.
+- **Barcode path** (`/barcode`): Open Food Facts `ingredients_text_en` is injected into pass1 as ground truth via `offContext`. Safest path; only works for products in OFF indexes.
 
-Calibration entries and flagDetection both treat AI-returned `ingredient_list` as input. If the text path fabricates, flagDetection will dutifully "confirm" fabricated substances. Integrity of the ingredient list is a prerequisite, not something the scoring layer can repair.
+Calibration entries and flagDetection both treat AI-returned `ingredient_list` as input. The cascade's strict gating in Tiers 3 and 4 (≥0.7 trigram similarity, non-empty ingredients, OFF `complete` flag, AI extraction validates returned-name against query) is what keeps fabrications out of Pass 1; Tier 5 contains the remaining risk by skipping Pass 1 altogether.
 
 ### Calibration entry integrity
 
@@ -387,28 +387,63 @@ Diff endpoint: `POST /admin/flag-detection-diff` with `{ productName }` in body.
 
 ---
 
-## Text Path Scoring Disabled
+## Five-Tier Scoring Cascade
 
-Text-only queries (product name without image or barcode) are currently disabled to prevent AI ingredient fabrication. The `/analyze` endpoint returns `cannot_score_from_text_only` error when called without image data or barcode.
+Text-only `/analyze` queries (no `image`, no `productId`, no `barcode`) run through a five-tier cascade. First hit wins. Every tier returns a scored result — there is no dead-end path. Honest confidence labels surface to the user when the score depends on a non-baseline source.
 
-Feature flag: `ALLOW_TEXT_PATH_SCORING` (Railway env var)
-- Default: false (disabled)
-- Only re-enable after Pass 0 ingredient resolution layer is built and provides reliable ingredient ground truth.
+The cascade was added on 2026-04-20, replacing the prior `cannot_score_from_text_only` 422 gate (in place since 2026-04-18). The gate's "Let's see the label" prompt UI in the frontend was removed in the same change. `ALLOW_TEXT_PATH_SCORING` is no longer a flag.
 
-This was disabled on 2026-04-18 after discovering the text path was producing fabricated ingredients for products like Danimals Strawberry Smoothie. The AI was inventing ingredient lists from training priors rather than reading real data.
+### Tiers
 
-Barcode path (`/barcode`) and image path (`/analyze` with image) continue to work normally. Only the text-only query path is affected. Cache hits and fuzzy-calibration hits on text queries still return (those are pre-verified scores, not AI-fabricated).
+| # | Source | Implementation | source_confidence | source_label |
+|---|---|---|---|---|
+| 1 | `CALIBRATION` map | Exact / fuzzy match against `backend/calibration.js` (3,039+ entries) | `null` | `"Verified formula"` |
+| 2 | Cache | In-memory + Redis hit on `cacheKey(productName, category)` | inherited | inherited |
+| 3 | Open Facts text search | `tier3OpenFactsTextSearch` queries OFF / OBF / OPF in parallel via `cgi/search.pl?search_terms=...`. Strict acceptance: trigram sim ≥ 0.7, non-empty `ingredients_text`, `complete` flag truthy. Best match across all three sources wins. Pass 1 receives the verified ingredient list as `materialContext`. | `"medium"` | `"Sourced from Open Food Facts"` (or Beauty / Products Facts) |
+| 4 | Anthropic web_search | `tier4WebExtract` runs one Haiku call with the `web_search_20250305` tool, asking for strict JSON `{product_name, brand, ingredients[], category, source_domain, found}`. 12s timeout. Validates `found: true`, non-empty `ingredients`, and trigram sim ≥ 0.7 between query and returned `product_name` (rejects substituted "similar product" hits). Pass 1 receives the extracted list as `materialContext`. | `"medium"` | `"Sourced from <domain>"` (e.g. `amazon.com`) |
+| 5 | Category-prior best guess | `tier5CategoryPrior` — **does NOT call Pass 1**. Synthetic result built from `CATEGORY_AVERAGES[cat].avg`, all dimensions = midpoint, `flagged_substances: []`, `harmful_chemicals: []`, `ingredient_list: []`, substance floors bypassed. Honest summary names the limitation. `_skipCache: true` so the cascade re-runs on the next visit (OFF or web search may have data later). | `"low"` | `"Best guess from product name"` |
 
-Client-side handling: frontend should treat HTTP 422 with `error: "cannot_score_from_text_only"` as a prompt to show the camera / barcode scanner. The `userAction: "show_camera_prompt"` field is the contract.
+Tiers 1 and 2 live inline in `server.js` `/analyze`. Tiers 3, 4, 5 + the in-flight dedupe wrapper live in `backend/scoringCascade.js`. Server.js orchestrates: cascade is wrapped in `dedupeInflight(productName, category, fn)` so concurrent identical queries share one execution and don't fan out into N web searches.
 
-Frontend UX pattern (implemented in `App.jsx` `analyze()` and home view):
-- On 422 with `error: "cannot_score_from_text_only"`, `analyze()` sets the `textOnlyBlocked` flag, forces `page="home"`, and exits without setting `error`. This suppresses the generic red error banner.
-- The home view renders a forest-green scan prompt card (`#052e16`, Outfit font) titled "Let's see the label" with subtitle "To give you an accurate score, we need to read the actual ingredients on the package."
-- Primary button "Scan barcode" opens the full-screen `BarcodeScannerView` (native ML Kit on Capacitor, `BarcodeDetector`/ZXing on web).
-- Secondary button "Take a photo" is a hidden `<input type="file" capture="environment">` wrapped in a label, routing into the same `handleImageScan` flow used by the scan sheet.
-- `textOnlyBlocked` is cleared by `reset()`, at the start of `analyze()`, at the start of `handleImageScan()`, and in the barcode `onBarcode` handler — any fresh scan intent dismisses the prompt.
+### Why Tier 5 is "contained"
 
-Scan bottom sheet (the FAB-triggered sheet at `scanSheetOpen`) also exposes "Scan barcode" as its primary option, so users who open the sheet without first hitting a `textOnlyBlocked` state can still reach `BarcodeScannerView` directly. Order in the sheet: Scan barcode (primary, green), Take a photo (secondary), Choose from library (secondary), then the type-name input. Barcode scanning itself is unchanged — the sheet just wires a new entry point to the existing `setShowBarcodeScanner(true)` trigger, which branches internally between ML Kit (Capacitor) and `BarcodeDetector` / `@zxing/browser` (web).
+Calling `pass1(productName, null, category)` with no ingredient list is the failure mode that triggered the 2026-04-18 disable (Danimals Strawberry Smoothie returned a fabricated ingredient list with substances the product hadn't contained for years). The defamation risk is real.
+
+Tier 5 closes that path: no AI call, no fabricated chemistry. The user sees the typical-for-category score with `confidence: "low"`, an honest summary ("Without the ingredient list I'm guessing from the product type. Scan the barcode or label for a verified score."), and the amber `Best guess from product name` label below the product header. `_skipCache: true` prevents the synthetic result from being persisted — every next request re-tries the cascade.
+
+### Result schema additions
+
+Three new top-level fields, populated by every scoring path (cascade + calibration productId + scan productId + image vision + image fuzzy-cal + barcode):
+
+- `source` — machine-readable: `calibration` | `previous_scan` | `open_food_facts` | `open_beauty_facts` | `open_products_facts` | `web_search` | `vision_ocr` | `ai_text_only_estimate`
+- `source_label` — human-readable copy shown in the UI
+- `source_confidence` — `null` (baseline trust, no UI badge) | `"medium"` | `"low"`
+
+The existing `confidence` field continues to mean **AI scoring confidence** (high/medium/low). Don't conflate. The new field is `source_confidence` and lives separately.
+
+### In-flight deduplication
+
+`dedupeInflight(query, category, fn)` in `scoringCascade.js`. Map keyed on `${normalized}|${category}`. Same Promise is awaited by every concurrent caller. Slot is cleared 5 minutes after the Promise settles, so a follow-up visit gets a fresh cascade run. This protects against cost spikes when many users (or rapid retap) submit the same query simultaneously — without it, Tier 4 would fire N parallel web searches.
+
+### Frontend UX
+
+- Match picker (existing) still surfaces `/search` results as the user types — verified-source-only matches that bypass the cascade entirely via productId.
+- Result screen renders the `source_label` as a small DM Sans line below the product header **only when `source_confidence` is `"medium"` or `"low"`**. Color: `var(--ink-soft)` for medium, `var(--amber)` for low. Calibration / barcode / prior-scan paths set `source_confidence: null` and skip the badge entirely.
+- The existing "Ingredient Source Display" line below the ingredient list (keyed on `ingredient_source`, not `source`) is unchanged — it shows source provenance for the verified ingredient list, separately from the source confidence badge near the score.
+- TYPEWRITER_STEPS (used by both `BarcodeLoadingView` and `GlobeLoading`) gained a `"Searching the web..."` beat for the longer Tier 4 latency. Both components dynamically size their dot indicator from `TYPEWRITER_STEPS.length`.
+
+### Cost guardrails
+
+- Tier 4 increments the same `apiCallCounts` as `callClaude` (passed in via `{checkApiBudget, incrementApiCount}`). Same daily/monthly cap applies.
+- Tier 4 fires **only when Tier 3 misses**. Most popular products hit Tier 1 (calibration) or Tier 3 (OFF) and never reach Tier 4.
+- Dedupe collapses concurrent identical queries to one execution.
+- Tier 5 makes zero API calls.
+
+### Re-introduction risk
+
+If Tier 3's strictness is loosened (similarity threshold drops below 0.7, `complete` flag check is dropped, or `ingredients_text` empty is allowed), the Danimals failure mode comes back via OFF rather than via Pass 1. Same outcome. Don't loosen these without a written reason.
+
+If Tier 5 ever calls Pass 1 (someone "fixes" it to give richer narrative), fabrications return. The synthetic result is the contract.
 
 ---
 
@@ -429,7 +464,7 @@ Resolution order:
 3. If `image` provided and nothing else hit: **stub — returns `source: "none"`**. A future session will refactor `callClaudeVision` to populate Pass 0 via an OCR-only pass.
 4. Nothing hits → `source: "none", confidence: "none"`.
 
-Integration: `/barcode` calls Pass 0 as its first step (replaces the previous inline OFF/OBF/OPF fetch). `/analyze` text path remains gated behind `ALLOW_TEXT_PATH_SCORING` — re-enabling is a separate decision that should only be made after Pass 0 hit rates on text queries are proven non-trivial. `/analyze` image path is unchanged for now.
+Integration: `/barcode` calls Pass 0 as its first step (replaces the previous inline OFF/OBF/OPF fetch). `/analyze` text path no longer uses Pass 0 directly — it runs the five-tier cascade in `backend/scoringCascade.js` instead. `/analyze` image path is unchanged.
 
 Pass 1 receives the source metadata as an `INGREDIENT SOURCE:` line in its context block, instructing it to trust the provided ingredient list over its training priors.
 
@@ -469,9 +504,12 @@ Source → copy mapping (from `result.ingredient_source`):
 - `open_food_facts` → "Verified via Open Food Facts"
 - `open_beauty_facts` → "Verified via Open Beauty Facts"
 - `open_products_facts` → "Verified via Open Products Facts"
-- `supabase_scans` → "From a previous Partiqule scan"
+- `supabase_scans` / `previous_scan` → "From a previous Partiqule scan"
+- `calibration` → "Verified formula"
 - `vision_ocr` → "Read from your photo"
 - `none` → "Ingredients unverified"
+
+Distinct from this line: the **source confidence badge** (added 2026-04-20) renders below the product header on the result screen and reads `result.source_label` when `result.source_confidence` is `"medium"` or `"low"`. See "Five-Tier Scoring Cascade" → Frontend UX. Two different lines, two different fields, two different placements — don't conflate them.
 
 Confidence styling (from `result.ingredient_confidence`):
 - `high` → forest green text (`#052e16` light, `#6ee7b7` dark)
@@ -497,7 +535,7 @@ Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the 
 
 ## Text Search (Verified Sources Only)
 
-Raw-text /analyze remains gated (`ALLOW_TEXT_PATH_SCORING=false`) — Pass 1 without ingredient ground truth fabricates from training priors. To keep text input as a usable scan surface, `GET /search` returns a short list of matches the user can tap, dispatching `/analyze` with a `productId` that bypasses the gate because the referenced data is already verified.
+Raw-text /analyze runs the five-tier cascade (see "Five-Tier Scoring Cascade" above). `/search` is the lighter-weight companion: a `GET` endpoint that surfaces verified-source matches (calibration entries + prior OFF-verified scans) so users can tap a known-good match instead of waiting for the cascade to run. `/analyze` with a `productId` from `/search` short-circuits straight to that pre-verified data — no cascade, no API spend.
 
 **Endpoint** — `GET /search?q=<string>&userId=<uuid?>`
 - Validates `q` trimmed length in `[3, 100]`. Under 3 returns `{ matches: [], total_count: 0 }` without hitting any data source.

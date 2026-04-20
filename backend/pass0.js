@@ -3,7 +3,7 @@
 // a verified ingredient list from external databases before the AI ever sees
 // the product. If no verified ingredients can be found, Pass 0 returns
 // source: "none" and callers decide whether to proceed (barcode: fallback UI;
-// text: gated behind ALLOW_TEXT_PATH_SCORING; image: AI still scores from pixels).
+// text: cascade Tier 3/4/5 in scoringCascade.js; image: AI still scores from pixels).
 //
 // Resolution order:
 //   1. Barcode → Open Food Facts (v2)

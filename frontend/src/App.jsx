@@ -514,13 +514,14 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
 
 // Branded loading screen shown between barcode detection and result display.
 // Minimum 2000ms display time. Timeout at 60000ms surfaces the error phase.
-// Revised design: typewriter messages + moss rule + 4 progress dots, no circular animations.
+// Revised design: typewriter messages + moss rule + N progress dots (one per TYPEWRITER_STEPS entry), no circular animations.
 // Product prop (optional): { brand, name } — shown when barcode lookup has returned partial
 // identity before scoring completes. Left null today; Pass 0 streaming can wire it later.
 const TYPEWRITER_STEPS = [
   "Reading the label...",
   "Checking what's inside...",
   "Looking up what we know...",
+  "Searching the web...",
   "Scoring against the rest...",
 ];
 const CHAR_MS = 40;
@@ -530,12 +531,12 @@ const CLEAR_MS = 220;
 const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const [typed, setTyped] = useState("");
-  const [filled, setFilled] = useState([false, false, false, false]);
+  const [filled, setFilled] = useState(Array(TYPEWRITER_STEPS.length).fill(false));
   const [ruleFrac, setRuleFrac] = useState(0);
 
   useEffect(() => {
     if (phase !== "loading") {
-      setStepIndex(0); setTyped(""); setFilled([false, false, false, false]); setRuleFrac(0);
+      setStepIndex(0); setTyped(""); setFilled(Array(TYPEWRITER_STEPS.length).fill(false)); setRuleFrac(0);
       return;
     }
     let cancelled = false;
@@ -559,7 +560,8 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
           setFilled(prev => {
             const next = [...prev];
             next[idx] = true;
-            // If all four are filled, reset on the NEXT cycle so user sees the finish.
+            // When the last dot fills we keep it shown for one full hold then
+            // reset on the next cycle (see nextIdx === 0 branch below).
             return next;
           });
           schedule(() => {
@@ -569,7 +571,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
               if (cancelled) return;
               const nextIdx = (idx + 1) % TYPEWRITER_STEPS.length;
               // If we just completed the last step, reset dots for the new cycle.
-              if (nextIdx === 0) setFilled([false, false, false, false]);
+              if (nextIdx === 0) setFilled(Array(TYPEWRITER_STEPS.length).fill(false));
               setStepIndex(nextIdx);
               typeStep(nextIdx);
             }, CLEAR_MS);
@@ -907,12 +909,12 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
 
 
 // ── GLOBE LOADING — cream typewriter for text/image scan flows ─────
-// Mirrors BarcodeLoadingView's typewriter: four cycling status messages
-// with a filling moss rule + four progress dots. No globes, no particles.
+// Mirrors BarcodeLoadingView's typewriter: cycles through TYPEWRITER_STEPS
+// with a filling moss rule + one progress dot per step. No globes, no particles.
 // Renders inside a caller-provided full-screen cream container.
 const GlobeLoading = ({ isMobile }) => {
   const [typed, setTyped] = useState("");
-  const [filled, setFilled] = useState([false, false, false, false]);
+  const [filled, setFilled] = useState(Array(TYPEWRITER_STEPS.length).fill(false));
   const [ruleFrac, setRuleFrac] = useState(0);
 
   useEffect(() => {
@@ -943,7 +945,7 @@ const GlobeLoading = ({ isMobile }) => {
             schedule(() => {
               if (cancelled) return;
               const nextIdx = (idx + 1) % TYPEWRITER_STEPS.length;
-              if (nextIdx === 0) setFilled([false, false, false, false]);
+              if (nextIdx === 0) setFilled(Array(TYPEWRITER_STEPS.length).fill(false));
               typeStep(nextIdx);
             }, CLEAR_MS);
           }, HOLD_MS);
@@ -5746,7 +5748,6 @@ function App() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   // Branded loading phase between barcode detection and result. null | "loading" | "error".
   const [barcodeLoadingPhase, setBarcodeLoadingPhase] = useState(null);
-  const [textOnlyBlocked, setTextOnlyBlocked] = useState(false); // backend 422 cannot_score_from_text_only — prompt user to scan
   const [modalQuery,  setModalQuery] = useState("");
   // ── Text search match picker (verified-source only) ─────────────
   // Debounced /search call surfaces calibration + prior-scan matches so users
@@ -6103,7 +6104,7 @@ function App() {
         return;
       }
     }
-    setLoading(true); setError(null); setTextOnlyBlocked(false); setResult(null); setRevealDone(false);
+    setLoading(true); setError(null); setResult(null); setRevealDone(false);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
@@ -6112,13 +6113,6 @@ function App() {
       clearTimeout(timeout);
       if (!res.ok){
         const e = await res.json().catch(() => ({}));
-        if (res.status === 422 && e.error === "cannot_score_from_text_only") {
-          setTextOnlyBlocked(true);
-          setPage("home");
-          setLoading(false);
-          track("Text Only Blocked", { product: q.trim() });
-          return;
-        }
         throw new Error(e.error || `Error ${res.status}`);
       }
       const data = await res.json();
@@ -6154,7 +6148,7 @@ function App() {
       else setShowLimitModal("paywall");
       return;
     }
-    setLoading(true); setError(null); setTextOnlyBlocked(false); setResult(null); setRevealDone(false);
+    setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setSearchMatches([]); // collapse picker so result can render cleanly
     track("Search Match Select", { matchId: match.id, source: match.source, name: match.display_name });
     try {
@@ -6287,7 +6281,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setShowDetail(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null); setSearchMatches([]); setSearchedQuery("");};
+  const reset = () => {setResult(null); setError(null); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setShowDetail(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null); setSearchMatches([]); setSearchedQuery("");};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -6299,7 +6293,7 @@ function App() {
       return;
     }
     setShowScanModal(false); setScanSheetOpen(false);
-    setResult(null); setError(null); setTextOnlyBlocked(false); setPage("home");
+    setResult(null); setError(null); setPage("home");
     setLoading(true); setQuery("Reading label..."); setRevealDone(false); setResult(null);
     try {
       // Step 1: Try barcode detection from image (instant, no server)
@@ -6877,75 +6871,6 @@ function App() {
             </div>
           )}
 
-          {/* Scan prompt — backend returned 422 cannot_score_from_text_only. Text queries alone can't be scored because they let the AI fabricate ingredients. */}
-          {textOnlyBlocked && (
-            <div style={{maxWidth:520, margin:`${isMobile?"96px":"112px"} auto 24px`, padding:"0 20px"}}>
-              <div style={{
-                background:"var(--cream-light)",
-                border:"1px solid var(--rule)",
-                borderRadius:"16px 20px 14px 18px / 18px 14px 20px 16px",
-                padding:"26px 24px",
-              }}>
-                <div style={{
-                  fontFamily:"'DM Sans', system-ui, sans-serif",
-                  fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
-                  textTransform:"uppercase", fontWeight:500, marginBottom:14,
-                  display:"flex", alignItems:"center", gap:10,
-                }}>
-                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                  Just a sec
-                </div>
-                <div style={{
-                  fontFamily:"'Fraunces', Georgia, serif",
-                  fontSize:26, fontWeight:400, color:"var(--ink)",
-                  lineHeight:1.08, marginBottom:10, letterSpacing:"-0.015em",
-                }}>Let's see the label.</div>
-                <div style={{
-                  fontFamily:"'DM Sans', system-ui, sans-serif",
-                  fontSize:14, color:"var(--ink-soft)",
-                  marginBottom:22, lineHeight:1.55,
-                }}>To give you an accurate score, I need to read the actual ingredients on the package.</div>
-                <button
-                  onClick={()=>{setTextOnlyBlocked(false); setShowBarcodeScanner(true);}}
-                  style={{
-                    width:"100%", padding:"13px 16px",
-                    background:"var(--moss)", color:"var(--ivory)",
-                    border:"none",
-                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                    fontFamily:"'DM Sans', system-ui, sans-serif",
-                    fontWeight:500, fontSize:14, cursor:"pointer",
-                    marginBottom:10, letterSpacing:"0.005em",
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
-                  Scan barcode
-                </button>
-                <label style={{display:"block", width:"100%", cursor:"pointer"}}>
-                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
-                    onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; setTextOnlyBlocked(false); handleImageScan(f);}}/>
-                  <div style={{
-                    width:"100%", padding:"12px 16px",
-                    background:"transparent", color:"var(--ink)",
-                    border:"1px solid var(--rule-strong)",
-                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                    fontFamily:"'DM Sans', system-ui, sans-serif",
-                    fontWeight:500, fontSize:14, textAlign:"center",
-                    boxSizing:"border-box", letterSpacing:"0.005em",
-                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    Take a photo
-                  </div>
-                </label>
-                <div style={{
-                  fontFamily:"'Fraunces', Georgia, serif",
-                  fontSize:13, color:"var(--ink-faint)",
-                  marginTop:18, lineHeight:1.5, fontWeight:400,
-                }}>Product names alone can't tell the full story — formulas change over time.</div>
-              </div>
-            </div>
-          )}
-
           {/* ── RETURNING USER: compact scan bar + discovery feed ── */}
           {history.length > 0 ? (() => {
             // Greeting uses displayName only — never fall back to email username
@@ -7519,7 +7444,7 @@ function App() {
             })()}
           </div>
 
-          {error && !textOnlyBlocked && (
+          {error && (
             <div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 24px"}}>
               <div style={{
                 padding:"14px 20px",
@@ -7706,6 +7631,21 @@ function App() {
                         borderBottom:`1px solid ${"var(--rule)"}`,
                         marginBottom:4,
                       }}>{compositionLine}</div>
+                    )}
+                    {/* Source confidence — only renders when the cascade resolved to a
+                        non-baseline source (Tier 3 = open_facts / Tier 4 = web_search /
+                        Tier 5 = ai_text_only_estimate). Calibration / barcode / prior
+                        scan have source_confidence: null and skip this line. */}
+                    {(result.source_confidence === "medium" || result.source_confidence === "low") && result.source_label && (
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:11.5, fontWeight:400,
+                        color: result.source_confidence === "low" ? "var(--amber)" : "var(--ink-soft)",
+                        marginTop: compositionLine ? 8 : 4,
+                        marginBottom: 4,
+                        letterSpacing:"0.02em",
+                        lineHeight:1.4,
+                      }}>{result.source_label}</div>
                     )}
                   </div>
                 );
@@ -9309,7 +9249,6 @@ function App() {
           onBarcode={async (barcode) => {
             setShowBarcodeScanner(false);
             setBarcodeLoadingPhase("loading");
-            setTextOnlyBlocked(false);
             setQuery("Scanning barcode…");
             setRevealDone(false);
             setResult(null);
