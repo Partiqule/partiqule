@@ -2131,8 +2131,8 @@ const ProductCard = ({product, altSource="amazon", childMode=false}) => {
       rel="noopener noreferrer"
       onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
       style={cardStyle}
-      onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
-      onMouseLeave={e=>{e.currentTarget.style.borderColor="#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
+      onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--moss)"; e.currentTarget.style.transform="translateY(-1px)";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--rule)"; e.currentTarget.style.transform="translateY(0)";}}>
       {inner}
     </a>
   );
@@ -6367,7 +6367,7 @@ function App() {
         @keyframes slideInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.score-reveal{animation:slideInUp 0.5s ease forwards}
         @keyframes arcDraw{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}.arc-animate{animation:arcDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards}
         @keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
-        @keyframes pulseScan{0%,100%{box-shadow:0 4px 20px rgba(34,197,94,0.5),0 0 0 4px rgba(34,197,94,0.12)}50%{box-shadow:0 4px 28px rgba(34,197,94,0.7),0 0 0 6px rgba(34,197,94,0.18)}}
+        @keyframes pulseScan{0%,100%{box-shadow:var(--shadow-card)}50%{box-shadow:0 4px 16px rgba(26,31,21,0.10)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
         @keyframes gFloat1{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-22px) translateX(10px)}}
         @keyframes gFloat2{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(-12px)}}
@@ -6408,7 +6408,7 @@ function App() {
           width:p.s, height:p.s,
           borderRadius: p.shape==="circle" ? "50%" : "2px",
           transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
-          background:"#22c55e",
+          background:"var(--moss)",
           opacity:p.a,
           animation:`${p.anim} ${p.dur} ease-in-out infinite`,
           animationDelay:p.delay,
@@ -6509,7 +6509,7 @@ function App() {
                 Sign in / Create account
               </button>
             )}
-            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"13px 16px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:800, cursor:"pointer", marginTop:8, boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>
+            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"13px 16px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:500, cursor:"pointer", marginTop:8}}>
               New Scan
             </button>
           </div>
@@ -6662,8 +6662,8 @@ function App() {
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
             {/* ── PARTIQULE PREMIUM — always visible, discoverable purchase path ── */}
-            <div style={{background:"linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%)", borderRadius:16, border:`1.5px solid ${isSubscribed?"#16a34a":("#bbf7d0")}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "0 4px 20px rgba(34,197,94,0.15)"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${"#bbf7d0"}`, background:"rgba(22,163,74,0.08)"}}>
+            <div style={{background:"var(--cream-light)", borderRadius:"var(--card-shape-1)", border:`1px solid ${isSubscribed?"var(--moss)":"var(--rule)"}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "var(--shadow-card)"}}>
+              <div style={{padding:"14px 20px", borderBottom:"1px solid var(--rule-soft)", background:"var(--moss-soft)"}}>
                 <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", display:"flex", alignItems:"center", gap:6}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   Partiqule Premium
@@ -6715,14 +6715,13 @@ function App() {
                       if (!user) { setShowAuth(true); return; }
                       setShowLimitModal("paywall");
                     }} style={{
-                      width:"100%", padding:"14px", borderRadius:12, border:"none",
-                      background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
-                      fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
-                      boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
+                      width:"100%", padding:"14px", borderRadius:"var(--cta-shape)", border:"none",
+                      background:"var(--moss)", color:"var(--ivory)",
+                      fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer",
                       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     }}>
                       Subscribe — {iapPrice}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                     {IS_NATIVE && (
                       <div style={{fontSize:10, color:muted, textAlign:"center", marginTop:10, lineHeight:1.5}}>
@@ -6790,14 +6789,15 @@ function App() {
                   setChildMode(next);
                   try { if(next) localStorage.setItem("partiqule_child_mode","1"); else localStorage.removeItem("partiqule_child_mode"); } catch {}
                 }} style={{
-                  width:52, height:30, borderRadius:15, border:"none", cursor:"pointer",
-                  background: childMode ? "#16a34a" : "#d1d5db",
+                  width:52, height:30, borderRadius:15, border: childMode ? "none" : "1px solid var(--rule)", cursor:"pointer",
+                  background: childMode ? "var(--moss)" : "var(--cream-light)",
                   position:"relative", transition:"background 0.2s", flexShrink:0,
                 }}>
                   <div style={{
                     position:"absolute", top:3, left: childMode ? 24 : 3,
-                    width:24, height:24, borderRadius:"50%", background:"white",
-                    transition:"left 0.2s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)",
+                    width:24, height:24, borderRadius:"50%",
+                    background: childMode ? "var(--ivory)" : "var(--ink-faint)",
+                    transition:"left 0.2s",
                   }}/>
                 </button>
               </div>
@@ -7811,27 +7811,30 @@ function App() {
                         onClick={() => { const next = !childMode; setChildMode(next); try{if(next)localStorage.setItem("partiqule_child_mode","1");else localStorage.removeItem("partiqule_child_mode");}catch{} track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
                         style={{
                           display:"flex", alignItems:"center", gap:8, margin:"0 auto",
-                          padding:"7px 16px", borderRadius:20,
-                          background: childMode ? "#052e16" : "#f1f5f9",
-                          border: childMode ? "none" : `1px solid ${"#e2e8f0"}`,
+                          padding:"7px 16px", borderRadius:"var(--circle-shape)",
+                          background: childMode ? "var(--moss)" : "var(--cream-light)",
+                          border: childMode ? "none" : "1px solid var(--rule)",
                           cursor:"pointer", transition:"all 0.2s",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
                         }}>
-                        <span style={{fontSize:12, fontWeight:700,
-                          color: childMode ? "#4ade80" : muted,
+                        <span style={{fontSize:12, fontWeight:600,
+                          color: childMode ? "var(--ivory)" : "var(--ink-soft)",
                           letterSpacing:"0.03em",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
                         }}>
                           {childMode ? "Scoring for a child" : "Score for a child?"}
                         </span>
                         {/* Toggle pill */}
                         <div style={{
                           width:32, height:18, borderRadius:9,
-                          background: childMode ? "#16a34a" : "#d1d5db",
+                          background: childMode ? "var(--ivory)" : "var(--rule)",
                           position:"relative", transition:"background 0.2s", flexShrink:0,
                         }}>
                           <div style={{
                             position:"absolute", top:3, left: childMode ? 15 : 3,
-                            width:12, height:12, borderRadius:"50%", background:"white",
-                            transition:"left 0.2s", boxShadow:"0 1px 3px rgba(0,0,0,0.3)",
+                            width:12, height:12, borderRadius:"50%",
+                            background: childMode ? "var(--moss)" : "var(--ink-faint)",
+                            transition:"left 0.2s",
                           }}/>
                         </div>
                       </button>
@@ -7839,11 +7842,11 @@ function App() {
                       {/* Child score explanation card */}
                       {childMode && result.child_score && result.child_score !== (result.overall_score || result.score) && (
                         <div style={{
-                          marginTop:12, background:"#f0fdf4",
-                          border:"1.5px solid #16a34a44", borderRadius:12,
+                          marginTop:12, background:"var(--moss-soft)",
+                          border:"1px solid var(--rule)", borderRadius:"var(--card-shape-2)",
                           padding:"12px 16px", textAlign:"left",
                         }}>
-                          <div style={{fontSize:12, fontWeight:700, color:"#15803d", marginBottom:6}}>
+                          <div style={{fontSize:12, fontWeight:600, color:"var(--moss-deep)", marginBottom:6}}>
                             Child safety score: {result.child_score}/10 vs {result.overall_score || result.score}/10 for adults
                           </div>
                           {(result.child_bumps || []).slice(0,2).map((b,i) => (
@@ -8286,10 +8289,10 @@ function App() {
             {/* RIGHT — desktop alternatives sticky panel — only show if score > 3 */}
             {!isMobile && ((childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
-                <div style={{background:"#fff", borderRadius:20, border:`1.5px solid ${"#e2e8f0"}`, overflow:"hidden"}}>
-                  <div style={{background:"#052e16", padding:"20px 24px"}}>
-                    <div style={{fontSize:11, fontWeight:700, color:"#4ade80", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
-                    <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
+                <div style={{background:"var(--cream-light)", borderRadius:"var(--card-shape-1)", border:"1px solid var(--rule)", overflow:"hidden"}}>
+                  <div style={{background:"var(--moss)", padding:"20px 24px"}}>
+                    <div style={{fontSize:11, fontWeight:600, color:"var(--ivory)", opacity:0.75, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
+                    <div style={{fontSize:18, fontWeight:600, color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
                       {(result.alternatives?.length||0) + (result.ai_alternatives?.length||0) > 0
                         ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
                         : "Exploring alternatives"}
@@ -8297,7 +8300,7 @@ function App() {
                     {/* Source toggle */}
                     <div style={{display:"flex", gap:6, marginTop:10, flexWrap:"wrap"}}>
                       {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src,label]) => (
-                        <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, border:"none", cursor:"pointer", background: altSource===src ? "#4ade80" : "rgba(255,255,255,0.1)", color: altSource===src ? "#052e16" : "#86efac"}}>
+                        <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, border:"none", cursor:"pointer", background: altSource===src ? "var(--ivory)" : "rgba(249,245,234,0.12)", color: altSource===src ? "var(--moss)" : "var(--ivory)"}}>
                           {label}
                         </button>
                       ))}
@@ -8376,13 +8379,13 @@ function App() {
                       if ((productScore - bestScore) < 2) return null;
                       return (
                         <button onClick={() => setCompareAlt(best)} style={{
-                          width:"100%", padding:"12px", borderRadius:10,
-                          background:"none", border:"1.5px solid #16a34a",
-                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13,
-                          color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                          width:"100%", padding:"12px", borderRadius:"var(--cta-shape)",
+                          background:"none", border:"1px solid var(--moss)",
+                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13,
+                          color:"var(--moss)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                           marginTop:4,
                         }}>
-                          <IconShare size={14} color="#16a34a"/> Compare & Share
+                          <IconShare size={14} color="var(--moss)"/> Compare & Share
                         </button>
                       );
                     })()}
@@ -9241,16 +9244,15 @@ function App() {
               style={{
                 position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)",
                 zIndex:8997,
-                background:"linear-gradient(135deg,#22c55e,#16a34a)",
-                borderRadius:50, padding:"12px 24px",
+                background:"var(--moss)",
+                borderRadius:"var(--cta-shape)", padding:"12px 24px",
                 display:"flex", alignItems:"center", gap:10,
-                boxShadow:"0 4px 20px rgba(34,197,94,0.45), 0 0 0 3px rgba(34,197,94,0.12)",
+                boxShadow:"var(--shadow-card)",
                 cursor:"pointer", whiteSpace:"nowrap",
-                animation:"pulseScan 2.5s ease-in-out infinite",
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:800, color:"white", letterSpacing:"0.02em"}}>Scan Another</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:600, color:"var(--ivory)", letterSpacing:"0.02em"}}>Scan Another</span>
             </div>
           )}
 
