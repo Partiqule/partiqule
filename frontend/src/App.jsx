@@ -5010,10 +5010,9 @@ const MethodologyPage = ({text, muted, surface, border, isMobile}) => {
 const AuthModal = ({onClose, onAuth, onSetName}) => {
   const [mode,     setMode]     = useState("signin"); // signin | signup | reset
   const [email,    setEmail]    = useState("");
+  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
-  const [nameStep, setNameStep] = useState(false);
-  const [nameInput, setNameInput] = useState("");
   const [error,    setError]    = useState(null);
   const [success,  setSuccess]  = useState(null);
 
@@ -5023,17 +5022,31 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
   const tx      = "var(--ink)";
   const mt      = "var(--ink-soft)";
 
+  const validateNickname = (n) => {
+    const t = n.trim();
+    if (t.length < 2 || t.length > 30) return "Nickname must be 2-30 characters.";
+    if (t.includes("@")) return "Use a nickname, not your email.";
+    return null;
+  };
+
   const submit = async () => {
     if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
       setError(mode === "reset" ? "Enter a valid email." : "Enter a valid email and a password of at least 6 characters.");
       return;
     }
+    if (mode === "signup") {
+      const nickErr = validateNickname(nickname);
+      if (nickErr) { setError(nickErr); return; }
+    }
     setLoading(true); setError(null); setSuccess(null);
     try {
       if (mode === "signup") {
-        const { error: e } = await supabase.auth.signUp({ email, password });
+        const { data, error: e } = await supabase.auth.signUp({ email, password });
         if (e) throw e;
-        setNameStep(true); setLoading(false); return;
+        const nick = nickname.trim();
+        if (onSetName) onSetName(nick);
+        if (data?.user) onAuth(data.user);
+        onClose();
       } else if (mode === "signin") {
         const { data, error: e } = await supabase.auth.signInWithPassword({ email, password });
         if (e) throw e;
@@ -5066,25 +5079,6 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
 
         <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:22, color:mt, lineHeight:1}}>×</button>
 
-        {nameStep ? (<>
-          <div style={{textAlign:"left", padding:"4px 0"}}>
-            <div style={{
-              fontFamily:"'DM Sans', system-ui, sans-serif",
-              fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
-              textTransform:"uppercase", fontWeight:500, marginBottom:12,
-              display:"flex", alignItems:"center", gap:10,
-            }}>
-              <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-              Almost there
-            </div>
-            <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:26, fontWeight:400, color:tx, marginBottom:10, letterSpacing:"-0.015em", lineHeight:1.1}}>What should we call you?</div>
-            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:mt, marginBottom:20, lineHeight:1.55}}>A first name or nickname — just for your experience.</div>
-            <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}}} placeholder="e.g. Sarah, Mom, Coach..." autoFocus style={{width:"100%", padding:"12px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontSize:15, fontFamily:"'DM Sans', system-ui, sans-serif", border:`1px solid ${bd}`, background:fieldBg, color:tx, outline:"none", marginBottom:12, boxSizing:"border-box"}}/>
-            <button onClick={()=>{const n=nameInput.trim();if(n&&onSetName)onSetName(n);onClose();}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>{nameInput.trim()?`Continue as ${nameInput.trim()}`:"Skip"}</button>
-            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:mt, marginTop:4, lineHeight:1.5}}>Check your email to confirm your account.</div>
-          </div>
-        </>) : (<>
-
         <div style={{
           fontFamily:"'DM Sans', system-ui, sans-serif",
           fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
@@ -5109,6 +5103,11 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
           <input type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&submit()}
             style={{padding:"11px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px solid ${bd}`, background:fieldBg, color:tx, fontSize:14, fontFamily:"'DM Sans', system-ui, sans-serif", outline:"none"}}/>
+          {mode === "signup" && (
+            <input type="text" placeholder="Nickname (how I'll greet you)" value={nickname} onChange={e=>setNickname(e.target.value)} maxLength={30}
+              onKeyDown={e=>e.key==="Enter"&&submit()}
+              style={{padding:"11px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px solid ${bd}`, background:fieldBg, color:tx, fontSize:14, fontFamily:"'DM Sans', system-ui, sans-serif", outline:"none"}}/>
+          )}
           {mode !== "reset" && (
             <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}
               onKeyDown={e=>e.key==="Enter"&&submit()}
@@ -5134,7 +5133,48 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
             <span style={{cursor:"pointer", color:"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
           </>}
         </div>
-        </>)}
+      </div>
+    </div>
+  );
+};
+
+// NICKNAME PROMPT — shown to existing users on sign-in when displayName is missing.
+// No dismiss, no skip. Save is required before proceeding.
+const NicknamePromptModal = ({onSave}) => {
+  const [value, setValue] = useState("");
+  const [err, setErr] = useState(null);
+  const save = () => {
+    const t = value.trim();
+    if (t.length < 2 || t.length > 30) { setErr("Nickname must be 2-30 characters."); return; }
+    if (t.includes("@")) { setErr("Use a nickname, not your email."); return; }
+    onSave(t);
+  };
+  return (
+    <div style={{position:"fixed", inset:0, zIndex:9998, background:"rgba(26,31,21,0.55)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}>
+      <div style={{
+        background:"var(--cream)",
+        borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+        padding:"32px 28px", width:"100%", maxWidth:400,
+        border:"1px solid var(--rule)",
+        boxShadow:"0 20px 40px rgba(26,31,21,0.18)",
+      }}>
+        <div style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+          textTransform:"uppercase", fontWeight:500, marginBottom:14,
+          display:"flex", alignItems:"center", gap:10,
+        }}>
+          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+          One quick thing
+        </div>
+        <h2 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.1}}>What should I call you?</h2>
+        <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", margin:"0 0 22px", lineHeight:1.55}}>Pick something short. I'll use it when I greet you.</p>
+        {err && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{err}</div>}
+        <input type="text" autoFocus value={value} onChange={e=>{setValue(e.target.value); if(err) setErr(null);}} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="e.g. Sarah, Mom, Coach..." maxLength={30}
+          style={{width:"100%", padding:"12px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontSize:15, fontFamily:"'DM Sans', system-ui, sans-serif", border:"1px solid var(--rule-strong)", background:"var(--cream-light)", color:"var(--ink)", outline:"none", marginBottom:14, boxSizing:"border-box"}}/>
+        <button onClick={save} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", letterSpacing:"0.005em"}}>
+          Save
+        </button>
       </div>
     </div>
   );
@@ -5692,6 +5732,7 @@ function App() {
   const [emailDone,   setEmailDone]  = useState(false);
   const [user,        setUser]       = useState(null);
   const [showAuth,    setShowAuth]   = useState(false);
+  const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
   const [childMode,     setChildMode]  = useState(()=>localStorage.getItem("partiqule_child_mode")==="1");
   const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
   const [revealDone,    setRevealDone]  = useState(false);
@@ -6371,65 +6412,21 @@ function App() {
         @keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
         @keyframes pulseScan{0%,100%{box-shadow:var(--shadow-card)}50%{box-shadow:0 4px 16px rgba(26,31,21,0.10)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
-        @keyframes gFloat1{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-22px) translateX(10px)}}
-        @keyframes gFloat2{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(-12px)}}
-        @keyframes gFloat3{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-18px) translateX(8px)}}
-        @keyframes gFloat4{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-10px) translateX(-16px)}}
-        @keyframes gFloat5{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-20px) translateX(14px)}}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
       `}</style>
 
-      {/* ── GLOBAL FLOATING PARTICLES — fixed, full viewport, always present ── */}
-      {/* Low opacity so they read as ambient texture not foreground elements */}
-      {!result && [
-        {s:8, x:"6%",  y:"12%", a:0.09, anim:"gFloat1", dur:"7s",   delay:"0s",   shape:"circle"},
-        {s:5, x:"14%", y:"55%", a:0.07, anim:"gFloat2", dur:"9s",   delay:"1.2s", shape:"circle"},
-        {s:12,x:"22%", y:"80%", a:0.08, anim:"gFloat3", dur:"8s",   delay:"0.5s", shape:"diamond"},
-        {s:6, x:"35%", y:"20%", a:0.10, anim:"gFloat1", dur:"6.5s", delay:"2s",   shape:"circle"},
-        {s:4, x:"48%", y:"70%", a:0.07, anim:"gFloat4", dur:"10s",  delay:"0.8s", shape:"diamond"},
-        {s:9, x:"58%", y:"8%",  a:0.09, anim:"gFloat2", dur:"7.5s", delay:"3s",   shape:"circle"},
-        {s:5, x:"68%", y:"45%", a:0.08, anim:"gFloat5", dur:"8.5s", delay:"1.5s", shape:"circle"},
-        {s:11,x:"76%", y:"88%", a:0.07, anim:"gFloat3", dur:"11s",  delay:"0.3s", shape:"circle"},
-        {s:4, x:"84%", y:"30%", a:0.10, anim:"gFloat1", dur:"6s",   delay:"2.5s", shape:"diamond"},
-        {s:7, x:"92%", y:"65%", a:0.08, anim:"gFloat4", dur:"9.5s", delay:"1s",   shape:"circle"},
-        {s:5, x:"3%",  y:"40%", a:0.07, anim:"gFloat5", dur:"8s",   delay:"4s",   shape:"circle"},
-        {s:8, x:"28%", y:"92%", a:0.08, anim:"gFloat2", dur:"7s",   delay:"1.8s", shape:"diamond"},
-        {s:6, x:"44%", y:"35%", a:0.09, anim:"gFloat1", dur:"9s",   delay:"0.6s", shape:"circle"},
-        {s:4, x:"62%", y:"78%", a:0.07, anim:"gFloat3", dur:"6.5s", delay:"3.5s", shape:"circle"},
-        {s:10,x:"88%", y:"15%", a:0.08, anim:"gFloat5", dur:"10s",  delay:"2.2s", shape:"diamond"},
-        {s:5, x:"52%", y:"55%", a:0.06, anim:"gFloat4", dur:"12s",  delay:"0.9s", shape:"circle"},
-        {s:7, x:"18%", y:"25%", a:0.08, anim:"gFloat2", dur:"8s",   delay:"1.4s", shape:"circle"},
-        {s:4, x:"72%", y:"20%", a:0.07, anim:"gFloat1", dur:"7.5s", delay:"3.2s", shape:"diamond"},
-        {s:6, x:"96%", y:"50%", a:0.09, anim:"gFloat3", dur:"9s",   delay:"0.4s", shape:"circle"},
-        {s:8, x:"38%", y:"60%", a:0.06, anim:"gFloat5", dur:"11s",  delay:"2.8s", shape:"circle"},
-      ].map((p,i)=>(
-        <div key={`gp-${i}`} style={{
-          position:"fixed",
-          left:p.x, top:p.y,
-          width:p.s, height:p.s,
-          borderRadius: p.shape==="circle" ? "50%" : "2px",
-          transform: p.shape==="diamond" ? "rotate(45deg)" : undefined,
-          background:"var(--moss)",
-          opacity:p.a,
-          animation:`${p.anim} ${p.dur} ease-in-out infinite`,
-          animationDelay:p.delay,
-          pointerEvents:"none",
-          zIndex:0,
-        }}/>
-      ))}
-
       {/* HEADER */}
-      <header style={{background:"var(--cream)", borderBottom:"1px solid var(--rule)", position:"sticky", top:0, zIndex:100, paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, minHeight: isMobile ? 60 : 72, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-          <div style={{display:"flex", alignItems:"center", cursor:"pointer"}} onClick={reset}>
-            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 38 : 50, width:"auto", objectFit:"contain", display:"block"}}/>
+      <header style={{background:"var(--cream)", borderBottom:"1px solid var(--rule)", position:"sticky", top:0, zIndex:100, paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0, overflowX:"hidden"}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, minHeight: isMobile ? 60 : 72, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+          <div style={{display:"flex", alignItems:"center", cursor:"pointer", minWidth:0, flexShrink:1}} onClick={reset}>
+            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 32 : 50, width:"auto", objectFit:"contain", display:"block"}}/>
           </div>
 
           {(isMobile || isTablet) ? (
             /* Mobile/tablet — icon row + hamburger */
-            <div style={{display:"flex", alignItems:"center", gap:8}}>
-              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",background:"var(--moss)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"var(--ivory)",fontWeight:500,fontSize:11}}>{displayName?displayName[0].toUpperCase():user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
+            <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
+              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding: isMobile ? "4px 6px" : "6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}} aria-label="Account"><div style={{width:26,height:26,borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",background:"var(--moss)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{color:"var(--ivory)",fontWeight:500,fontSize:12}}>{displayName?displayName[0].toUpperCase():user.email?.[0]?.toUpperCase()}</span></div>{!isMobile && <span style={{fontSize:13,color:text,fontWeight:600}}>Account</span>}</button>}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
                 <IconHistory size={20} color={page==="history"?"var(--moss)":muted}/>
                 {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"var(--moss)"}}/>}
@@ -6518,7 +6515,21 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
+      {showAuth && <AuthModal onClose={()=>setShowAuth(false)} onAuth={u=>{
+        setUser(u);
+        // Missing nickname → prompt existing user before any other UI.
+        let storedName = "";
+        try { storedName = (localStorage.getItem("partiqule_display_name") || "").trim(); } catch {}
+        if (!storedName) setShowNicknamePrompt(true);
+        if (isAdminUser(u)) { setPage("admin"); setShowAuth(false); return; }
+        checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });
+      }} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
+
+      {showNicknamePrompt && <NicknamePromptModal onSave={name=>{
+        setDisplayName(name);
+        try { localStorage.setItem("partiqule_display_name", name); } catch {}
+        setShowNicknamePrompt(false);
+      }}/>}
 
       {/* ── Delete account confirmation modal ── */}
       {/* Account deleted toast */}
@@ -6937,7 +6948,8 @@ function App() {
 
           {/* ── RETURNING USER: compact scan bar + discovery feed ── */}
           {history.length > 0 ? (() => {
-            const nameForGreet = displayName || (user?.email ? (user.email.split("@")[0] || "").split(".")[0] : null);
+            // Greeting uses displayName only — never fall back to email username
+            const nameForGreet = (displayName && displayName.trim()) ? displayName.trim() : (user ? "there" : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
 
             // ── Streak counter (Serial Position Effect: anchors the greeting) ──
@@ -8293,17 +8305,20 @@ function App() {
             {!isMobile && ((childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
                 <div style={{background:"var(--cream-light)", borderRadius:"var(--card-shape-1)", border:"1px solid var(--rule)", overflow:"hidden"}}>
-                  <div style={{background:"var(--moss)", padding:"20px 24px"}}>
-                    <div style={{fontSize:11, fontWeight:600, color:"var(--ivory)", opacity:0.75, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
-                    <div style={{fontSize:18, fontWeight:600, color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
+                  <div style={{background:"var(--moss-soft)", padding:"20px 24px", borderBottom:"1px solid var(--rule)"}}>
+                    <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:6}}>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                      <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, fontWeight:500, color:"var(--moss)", textTransform:"uppercase", letterSpacing:"0.22em"}}>Safer alternatives</span>
+                    </div>
+                    <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.25}}>
                       {(result.alternatives?.length||0) + (result.ai_alternatives?.length||0) > 0
                         ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
                         : "Exploring alternatives"}
                     </div>
                     {/* Source toggle */}
-                    <div style={{display:"flex", gap:6, marginTop:10, flexWrap:"wrap"}}>
+                    <div style={{display:"inline-flex", gap:4, marginTop:12, flexWrap:"wrap", padding:4, background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"var(--cta-shape)"}}>
                       {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src,label]) => (
-                        <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, border:"none", cursor:"pointer", background: altSource===src ? "var(--ivory)" : "rgba(249,245,234,0.12)", color: altSource===src ? "var(--moss)" : "var(--ivory)"}}>
+                        <button key={src} onClick={()=>setAltSource(src)} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:500, padding:"5px 12px", borderRadius:"var(--cta-shape)", border:"none", cursor:"pointer", background: altSource===src ? "var(--moss)" : "transparent", color: altSource===src ? "var(--ivory)" : "var(--ink-soft)", transition:"all 0.15s"}}>
                           {label}
                         </button>
                       ))}
@@ -8315,17 +8330,17 @@ function App() {
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : alt.affiliateUrl;
                       return (
-                      <div key={i} style={{background:"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#e8f5e9"}`}}>
+                      <div key={i} style={{background:"var(--cream)", borderRadius:"var(--card-shape-2)", padding:"14px 16px", border:"1px solid var(--rule)"}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
                           <div style={{flexShrink:0}}><ScoreBadge score={alt.score} size="xs" showLabel /></div>
                         </div>
                         {alt.material && <div style={{fontSize:12, color:muted, marginBottom:6, lineHeight:1.4}}>{alt.material}</div>}
-                        {alt.price && <div style={{fontSize:11, color:"#16a34a", fontWeight:600, marginBottom:8}}>{alt.price}</div>}
+                        {alt.price && <div style={{fontSize:11, color:"var(--moss)", fontWeight:500, marginBottom:8}}>{alt.price}</div>}
                         {shopUrl && (
                           <a href={shopUrl} target="_blank" rel="noopener noreferrer"
                             onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel", source:altSource, category:result.category})}
-                            style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
+                            style={{display:"inline-block", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ivory)", background:"var(--moss)", padding:"6px 14px", borderRadius:"var(--cta-shape)", textDecoration:"none"}}>
                             {altSource === "brand" ? "Brand site →" : altSource === "bigbox" ? "Target →" : "Amazon →"}
                           </a>
                         )}
@@ -8345,7 +8360,7 @@ function App() {
                         {alt.reason && <div style={{fontSize:12, color:muted, lineHeight:1.4, marginBottom:6}}>{alt.reason}</div>}
                         <a href={shopUrl} target="_blank" rel="noopener noreferrer"
                           onClick={()=>track("Affiliate Click", {product:alt.name, placement:"desktop_panel_ai", source:altSource, category:result.category})}
-                          style={{display:"inline-block", fontSize:12, fontWeight:700, color:"#fff", background:"#16a34a", padding:"6px 14px", borderRadius:8, textDecoration:"none"}}>
+                          style={{display:"inline-block", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ivory)", background:"var(--moss)", padding:"6px 14px", borderRadius:"var(--cta-shape)", textDecoration:"none"}}>
                           {altSource === "brand" ? "Brand site →" : altSource === "bigbox" ? "Target →" : "Amazon →"}
                         </a>
                       </div>
