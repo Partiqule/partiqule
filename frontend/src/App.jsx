@@ -1169,29 +1169,6 @@ const getHomeCoverage = (history) => {
     .sort((a, b) => b.count - a.count);
 };
 
-const getSuggestedAudit = (history) => {
-  if (!history || history.length < 5) return null;
-  const AUDIT_MAP = {
-    food: "pantry", food_beverage: "pantry", beverage: "pantry", snack: "pantry",
-    personal_care: "beauty", skincare: "beauty",
-    cleaning: "home", home: "home",
-    clothing: "closet",
-    baby: "nursery", toy: "nursery",
-  };
-  const counts = {};
-  history.forEach(h => {
-    const auditType = AUDIT_MAP[h.category];
-    if (auditType) counts[auditType] = (counts[auditType] || 0) + 1;
-  });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  if (!sorted.length || sorted[0][1] < 5) return null;
-  const [type, count] = sorted[0];
-  const labels = {
-    pantry: "Pantry Audit", beauty: "Beauty Audit", home: "Home Audit",
-    closet: "Closet Audit", nursery: "Nursery Audit",
-  };
-  return { type, count, label: labels[type] };
-};
 
 const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
 const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
@@ -1677,535 +1654,6 @@ const CATEGORY_EXPOSURE = {
   },
 };
 
-const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]}) => {
-  const [tab,       setTab]     = useState("exposure");
-  const [freq,      setFreq]    = useState(() => {
-    const f = result.dimensions?.usage_exposure?.frequency || result.exposure_frequency;
-    if (f === "daily") return "daily";
-    if (f === "weekly") return "weekly";
-    if (f === "occasional") return "monthly";
-    return "daily";
-  });
-  const [adults,   setAdults]   = useState(2);
-  const [kids,     setKids]     = useState(0);
-  const [spend,    setSpend]    = useState(10);
-
-  const score    = result.overall_score || result.score;
-  const altScore = result.break_even?.uses ? Math.max(1, Math.round(score * 0.3)) : 2;
-  const freqData = FREQ_OPTIONS.find(f => f.value === freq) || FREQ_OPTIONS[0];
-  const cat      = result.category || "other";
-  const catConfig = CATEGORY_EXPOSURE[cat] || CATEGORY_EXPOSURE.other;
-  const hasKids  = kids > 0;
-
-  // Mirror SplitView's alt selection exactly:
-  // same-category DB alt → AI alt → any DB alt
-  // Price only comes from DB alts (AI alts have no price)
-  const sameCat   = result.alternatives?.find(a => a.category === result.category);
-  const anyStatic = result.alternatives?.[0];
-  const aiAlt     = result.ai_alternatives?.[0];
-  const splitAlt  = sameCat || (aiAlt ? null : anyStatic); // mirrors SplitView's `best`
-  const useAiAlt  = !sameCat && !!aiAlt;                   // mirrors SplitView's `useAi`
-
-  // Name: same product as SplitView shows
-  const altName = useAiAlt
-    ? (aiAlt?.name || "safer alternative")
-    : (splitAlt?.name || result.break_even?.alternative_name || "safer alternative");
-
-  // Price: only available from DB alts (AI alts have no price data)
-  const altPriceStr = splitAlt?.price || "";
-
-  // Named exposures — read from product_analysis (all categories) or food_analysis (legacy)
-  const exposureItems = (() => {
-    const analysis = result.food_analysis; // field name kept for compat
-    const items = [];
-    if (analysis?.concerns?.length) {
-      // New product_analysis schema uses "substance", old food_analysis uses "ingredient"
-      analysis.concerns
-        .filter(c => c.severity === "high" || c.severity === "medium")
-        .forEach(c => items.push({ name: c.substance || c.ingredient, severity: c.severity }));
-    }
-    // Always append identified plastics and harmful chemicals
-    (result.identified_plastics || []).forEach(p => {
-      if (!items.find(i => i.name === p))
-        items.push({ name: p, severity: "high" });
-    });
-    (result.harmful_chemicals || []).forEach(c => {
-      if (!items.find(i => i.name === c))
-        items.push({ name: c, severity: "medium" });
-    });
-    return items.slice(0, 6);
-  })();
-  const SEV_COLOR = { high:"#dc2626", medium:"#d97706", low:"#6b7280" };
-  const exposureNames = exposureItems.length > 0
-    ? exposureItems.slice(0,3).map(e=>e.name).join(", ")
-    : catConfig.chemical(result);
-
-  // Calculations
-  const perYear      = freqData.perYear;
-  const adultTotal   = perYear * adults;
-  const kidsTotal    = perYear * kids * 2.5; // children 2.5x more sensitive
-  const totalCurrent = adultTotal + kidsTotal;
-  const altTotal     = Math.round(totalCurrent * (altScore / score));
-  const reduction    = Math.round(totalCurrent - altTotal);
-  const reductionPct = Math.round((reduction / totalCurrent) * 100);
-
-  // Health cost estimate (Trasande et al. 2018) — spend input used only for this
-  const annualSpend  = spend * 12;
-  const healthSaved  = hasKids ? Math.round(494 * kids * (reductionPct / 100)) : 0;
-
-  const surface = isDark ? "#0f2a18" : "#fff";
-  const border  = isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
-
-  // Stepper component
-  const Stepper = ({label, value, setValue, min=0, max=10}) => (
-    <div>
-      <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>{label}</div>
-      <div style={{display:"flex", alignItems:"center", gap:6}}>
-        <button onClick={()=>setValue(v=>Math.max(min,v-1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>−</button>
-        <span style={{fontWeight:700,fontSize:15,color:text,minWidth:18,textAlign:"center"}}>{value}</span>
-        <button onClick={()=>setValue(v=>Math.min(max,v+1))} style={{width:28,height:28,borderRadius:6,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
-      </div>
-    </div>
-  );
-
-  const [open,     setOpen]     = useState(false);
-
-  // ── Cumulative routine analysis from scan history ─────────────
-  const [timeFilter, setTimeFilter] = useState("all"); // "30d" | "90d" | "all"
-  const [notPurchased, setNotPurchased] = useState(new Set()); // product names marked as "just researching"
-
-  const now = Date.now();
-  const TIME_CUTOFFS = { "7d": 7*24*60*60*1000, "30d": 30*24*60*60*1000, "90d": 90*24*60*60*1000, "1y": 365*24*60*60*1000, "all": Infinity };
-
-  const filteredHistory = history.filter(h => {
-    if (h.product_name === result.product_name) return false;
-    if (timeFilter !== "all" && h.scannedAt) {
-      const age = now - new Date(h.scannedAt).getTime();
-      if (age > TIME_CUTOFFS[timeFilter]) return false;
-    }
-    return true;
-  }).slice(0, 20);
-
-  const allProducts = [result, ...filteredHistory];
-  const activeProducts = allProducts.filter(h => !notPurchased.has(h.product_name));
-
-  // Build chemical frequency map — only counting active (purchased) products
-  const chemicalCount = {};
-  activeProducts.forEach(item => {
-    const chemicals = [
-      ...(item.harmful_chemicals || []),
-      ...(item.identified_plastics || []),
-      ...((item.food_analysis?.concerns || []).filter(c => c.severity === "high").map(c => c.substance || c.ingredient || "")),
-    ].filter(Boolean);
-    chemicals.forEach(chem => {
-      const key = chem.toLowerCase().trim();
-      if (!chemicalCount[key]) chemicalCount[key] = { name: chem, count: 0, products: [] };
-      if (!chemicalCount[key].products.includes(item.product_name)) {
-        chemicalCount[key].count++;
-        chemicalCount[key].products.push(item.product_name);
-      }
-    });
-  });
-
-  // Sort by frequency — chemicals in multiple products are most concerning
-  const repeatedChemicals = Object.values(chemicalCount)
-    .filter(c => c.count >= 2)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
-
-  const allChemicals = Object.values(chemicalCount)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
-
-  // Routine load score — only active products
-  const FREQ_MAP = {daily:365, weekly:52, monthly:18, occasional:18, rare:6};
-  const routineScore = activeProducts.length > 1
-    ? Math.round(activeProducts.reduce((sum, h) => sum + (h.overall_score || h.score || 5), 0) / activeProducts.length * 10) / 10
-    : null;
-
-  const tabs = [
-    {id:"exposure", label:"This product"},
-    {id:"routine",  label:`My routine${activeProducts.length > 1 ? ` (${activeProducts.length})` : ""}`},
-    {id:"overtime", label:"Over time"},
-  ];
-
-  return (
-    <div className="fade-up" style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden", marginTop:16, textAlign:"left"}}>
-
-      {/* Collapsed toggle header */}
-      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", padding:"12px 18px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
-        <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
-          <div style={{display:"flex", alignItems:"center", gap:6}}>
-            <IcoScore size={14} color="#16a34a"/>
-            <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>Exposure Calculator</span>
-          </div>
-          {!open && (
-            <span style={{fontSize:11, color:muted, fontWeight:500}}>
-              {freqData.label.toLowerCase()} · {adults} adult{adults!==1?"s":""}{kids>0?` · ${kids} child${kids!==1?"ren":""}`:""}
-              {exposureItems.length > 0 && <span style={{color:SEV_COLOR["high"], fontWeight:600}}> · {exposureItems.length} substance{exposureItems.length!==1?"s":""} flagged</span>}
-            </span>
-          )}
-        </div>
-        <span style={{fontSize:12, color:"#16a34a", transition:"transform 0.2s", display:"inline-block", transform:open?"rotate(180deg)":"rotate(0deg)", flexShrink:0}}>▾</span>
-      </button>
-
-      {/* Expanded content */}
-      {open && (<>
-      {/* Tabs */}
-      <div style={{padding:"0 12px", borderTop:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", gap:0}}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            flex:1, padding:"8px 4px", fontSize:11, fontWeight:700,
-            border:"none", background: tab===t.id ? (isDark?"#0f2a18":"#fff") : "transparent",
-            color: tab===t.id ? "#16a34a" : muted,
-            borderBottom: tab===t.id ? "2px solid #16a34a" : "2px solid transparent",
-            cursor:"pointer", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
-          }}>{t.label}</button>
-        ))}
-      </div>
-
-      <div style={{padding:"14px 14px"}}>
-
-        {/* Inputs row — stacked on mobile */}
-        <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:14}}>
-          <div>
-            <div style={{fontSize:11, color:muted, fontWeight:600, marginBottom:5}}>
-              {cat === "food_beverage" ? "How often do you eat this?" : "How often do you use this?"}
-            </div>
-            <select value={freq} onChange={e=>setFreq(e.target.value)} style={{
-              width:"100%", padding:"8px 10px", borderRadius:8, fontSize:13,
-              border:`1px solid ${border}`, background:surface, color:text, cursor:"pointer",
-            }}>
-              {FREQ_OPTIONS.map(f=><option key={f.value} value={f.value}>{f.label}</option>)}
-            </select>
-          </div>
-          <div style={{display:"flex", gap:20}}>
-            <Stepper label="Adults" value={adults} setValue={setAdults} min={1} max={8}/>
-            <Stepper label="Children" value={kids} setValue={setKids} min={0} max={8}/>
-          </div>
-        </div>
-
-        {/* What's in this product — chips */}
-        {exposureItems.length > 0 && (
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
-              What you're being exposed to
-            </div>
-            <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
-              {exposureItems.map((item,i) => (
-                <span key={i} style={{
-                  fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:16,
-                  background:isDark?"#1e1a2e":"#fef2f2",
-                  color:SEV_COLOR[item.severity]||"#6b7280",
-                  border:`1px solid ${SEV_COLOR[item.severity]||"#6b7280"}44`,
-                }}>{item.name}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── MY ROUTINE (cumulative across history) ── */}
-        {tab === "routine" && (
-          <div>
-            {/* Time filter */}
-            <div style={{display:"flex", gap:6, marginBottom:12, alignItems:"center"}}>
-              <span style={{fontSize:11, color:muted, fontWeight:600, whiteSpace:"nowrap"}}>Show:</span>
-              {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val, label]) => (
-                <button key={val} onClick={()=>setTimeFilter(val)} style={{
-                  fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:20, cursor:"pointer",
-                  border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"rgba(34,197,94,0.15)":"#e2e8f0")}`,
-                  background: timeFilter===val ? "#16a34a" : "transparent",
-                  color: timeFilter===val ? "#fff" : muted,
-                }}>{label}</button>
-              ))}
-            </div>
-
-            {filteredHistory.length === 0 && allProducts.length <= 1 ? (
-              <div style={{textAlign:"center", padding:"24px 16px", color:muted}}>
-                <div style={{marginBottom:8, display:"flex", justifyContent:"center"}}><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
-                <div style={{fontSize:14, fontWeight:600, color:text, marginBottom:6}}>Scan more products to see your routine</div>
-                <div style={{fontSize:12, lineHeight:1.6}}>Partiqule tracks chemicals across everything you scan and shows you which ones appear most often — that's where your real cumulative exposure comes from.</div>
-              </div>
-            ) : (<>
-
-              {/* Product list with purchased toggles */}
-              <div style={{marginBottom:12}}>
-                <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
-                  Your scanned products — toggle off what you don't actually use
-                </div>
-                <div style={{display:"flex", flexDirection:"column", gap:5}}>
-                  {allProducts.map((item, i) => {
-                    const s = item.overall_score || item.score || 5;
-                    const isPurchased = !notPurchased.has(item.product_name);
-                    const isCurrentProduct = item.product_name === result.product_name;
-                    return (
-                      <div key={i} style={{
-                        display:"flex", alignItems:"center", gap:10, padding:"8px 10px",
-                        borderRadius:8, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`,
-                        background: isPurchased ? (isDark?"#0f2a18":"#fff") : (isDark?"#080f0a":"#f8fafb"),
-                        opacity: isPurchased ? 1 : 0.5,
-                      }}>
-                        <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
-                        <div style={{flex:1, minWidth:0}}>
-                          <div style={{fontSize:12, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
-                          {!isPurchased && <div style={{fontSize:10, color:muted}}>Not in my home</div>}
-                        </div>
-                        {!isCurrentProduct && (
-                          <button onClick={()=>{
-                            setNotPurchased(prev => {
-                              const next = new Set(prev);
-                              if (next.has(item.product_name)) next.delete(item.product_name);
-                              else next.add(item.product_name);
-                              return next;
-                            });
-                          }} style={{
-                            fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:12, cursor:"pointer",
-                            border:`1px solid ${isPurchased ? "#16a34a" : (isDark?"#374151":"#d1d5db")}`,
-                            background: isPurchased ? "#f0fdf4" : "transparent",
-                            color: isPurchased ? "#16a34a" : muted,
-                            flexShrink:0,
-                          }}>
-                            {isPurchased ? "In my home" : "Not using"}
-                          </button>
-                        )}
-                        {isCurrentProduct && (
-                          <span style={{fontSize:10, color:"#16a34a", fontWeight:600, flexShrink:0}}>Current scan</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Routine score — only active products */}
-              {routineScore !== null && activeProducts.length > 1 && (
-                <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"12px 14px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`, marginBottom:12}}>
-                  <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>
-                    Active routine score ({activeProducts.length} products)
-                  </div>
-                  <div style={{display:"flex", alignItems:"center", gap:12}}>
-                    <ScoreBadge score={routineScore} size="lg" />
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:12, fontWeight:700, color:scoreColor(Math.round(routineScore)), marginBottom:4}}>{scoreLabel(Math.round(routineScore))}</div>
-                      <div style={{height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                        <div style={{height:"100%", width:`${Math.min(100,(routineScore/10)*100)}%`, background:scoreColor(Math.round(routineScore)), borderRadius:99}}/>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Repeated chemicals — the key insight */}
-              {repeatedChemicals.length > 0 && (
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:10, color:"#dc2626", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>
-                    ⚠ Chemicals in multiple active products
-                  </div>
-                  <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                    {repeatedChemicals.map((chem, i) => (
-                      <div key={i} style={{background:isDark?"#2a1a1a":"#fef2f2", borderRadius:8, padding:"8px 12px", border:"1px solid #fca5a533"}}>
-                        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:2}}>
-                          <span style={{fontSize:13, fontWeight:700, color:"#dc2626"}}>{chem.name}</span>
-                          <span style={{fontSize:11, fontWeight:700, color:"#dc2626", background:"#fef2f2", padding:"2px 8px", borderRadius:20, border:"1px solid #fca5a5"}}>{chem.count}× exposure</span>
-                        </div>
-                        <div style={{fontSize:11, color:muted}}>
-                          {chem.products.slice(0,3).join(", ")}{chem.products.length > 3 ? ` +${chem.products.length-3} more` : ""}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{fontSize:11, color:"#d97706", marginTop:8, lineHeight:1.5, padding:"8px 10px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
-                    Repeated exposure across multiple products is where your real risk accumulates — even low amounts from each source compound over time.
-                    {kids > 0 && <span style={{fontWeight:600}}> For children, cumulative exposure is 2-3x more impactful due to lower body weight.</span>}
-                  </div>
-                </div>
-              )}
-
-              {/* All chemicals */}
-              {allChemicals.length > 0 && (
-                <div>
-                  <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6}}>All flagged in active routine</div>
-                  <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
-                    {allChemicals.map((chem, i) => (
-                      <span key={i} style={{
-                        fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:16,
-                        background: chem.count >= 2 ? (isDark?"#2a1a1a":"#fef2f2") : (isDark?"#0f2a18":"#f8fafb"),
-                        color: chem.count >= 2 ? "#dc2626" : muted,
-                        border:`1px solid ${chem.count >= 2 ? "#fca5a533" : (isDark?"rgba(34,197,94,0.15)":"#e5e7eb")}`,
-                      }}>
-                        {chem.name}{chem.count >= 2 ? ` ×${chem.count}` : ""}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {notPurchased.size > 0 && (
-                <button onClick={()=>setNotPurchased(new Set())} style={{marginTop:10, fontSize:11, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline"}}>
-                  Reset — mark all as in my home
-                </button>
-              )}
-            </>)}
-          </div>
-        )}
-
-        {/* ── MY EXPOSURE ── */}
-        {tab === "exposure" && (
-          <div>
-            {/* Big impact statement */}
-            <div style={{background:isDark?"#2a1a1a":"#fef2f2", borderRadius:12, padding:"16px 18px", border:`2px solid ${scoreColor(score)}33`, marginBottom:12}}>
-              <div style={{fontSize:11, color:scoreColor(score), fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
-                Your household right now
-              </div>
-              <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
-                <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:42, color:scoreColor(score), lineHeight:1}}>
-                  {totalCurrent.toLocaleString()}
-                </span>
-                <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
-                  {catConfig.unit} per year containing {exposureNames}
-                </span>
-              </div>
-              {hasKids && (
-                <div style={{fontSize:12, color:"#d97706", fontWeight:600, display:"flex", alignItems:"center", gap:5, marginBottom:4}}>
-                  <IcoProfile size={13}/>
-                  Includes {kids} child{kids>1?"ren":""} — counted at 2.5x adult sensitivity
-                </div>
-              )}
-              <div style={{display:"flex", alignItems:"center", gap:8, marginTop:4}}>
-                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                  <div style={{height:"100%", width:`${Math.min(100,(score/10)*100)}%`, background:scoreColor(score), borderRadius:99}}/>
-                </div>
-                <span style={{fontSize:11, color:scoreColor(score), fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(score)} risk</span>
-              </div>
-            </div>
-
-            {/* Arrow + alternative */}
-            <div style={{textAlign:"center", fontSize:20, color:"#16a34a", margin:"4px 0"}}>↓</div>
-
-            <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:"2px solid #16a34a33", marginBottom:12}}>
-              <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>
-                If you switch to {altName}
-              </div>
-              <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
-                <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:42, color:"#16a34a", lineHeight:1}}>
-                  {altTotal.toLocaleString()}
-                </span>
-                <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
-                  {catConfig.unit} per year
-                </span>
-              </div>
-              <div style={{display:"flex", alignItems:"center", gap:8}}>
-                <div style={{flex:1, height:6, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                  <div style={{height:"100%", width:`${Math.min(100,(altScore/10)*100)}%`, background:"#16a34a", borderRadius:99}}/>
-                </div>
-                <span style={{fontSize:11, color:"#16a34a", fontWeight:700, whiteSpace:"nowrap"}}>{scoreLabel(altScore)} risk</span>
-              </div>
-            </div>
-
-            {/* The big why */}
-            <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1fae5"}`}}>
-              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:22, color:"#16a34a", marginBottom:4}}>
-                {reductionPct}% fewer exposures
-              </div>
-              <div style={{fontSize:13, color:isDark?"#6ee7b7":"#444", lineHeight:1.6}}>
-                That's <strong style={{color:text}}>{reduction.toLocaleString()} fewer {catConfig.unit}</strong> containing {exposureNames} for your household every year.
-                {hasKids && (
-                  <span style={{color:"#d97706"}}> For your {kids} child{kids>1?"ren":""}, whose developing systems are 2-3x more sensitive to these chemicals, this matters most.</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── OVER TIME ── */}
-        {tab === "overtime" && (
-          <div>
-            {/* Single cumulative view — cleaner than 3 separate cards */}
-            <div style={{fontSize:12, color:muted, lineHeight:1.6, marginBottom:14}}>
-              Cumulative {catConfig.unit} containing <strong style={{color:text}}>{exposureNames}</strong> for your household if you keep using this product vs switching now.
-            </div>
-
-            {[
-              {years:1,  label:"1 year"},
-              {years:5,  label:"5 years"},
-              {years:10, label:"10 years"},
-            ].map(({years, label}) => {
-              const curr   = totalCurrent * years;
-              const alt    = altTotal * years;
-              const saved  = curr - alt;
-              const pct    = Math.round((saved/curr)*100);
-              return (
-                <div key={years} style={{marginBottom:12}}>
-                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6}}>
-                    <span style={{fontSize:12, fontWeight:700, color:text}}>{label}</span>
-                    <span style={{fontSize:11, color:"#16a34a", fontWeight:700, background:isDark?"#1a2a1a":"#f0fdf4", padding:"2px 8px", borderRadius:20}}>
-                      {pct}% less by switching
-                    </span>
-                  </div>
-
-                  {/* Current */}
-                  <div style={{marginBottom:5}}>
-                    <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
-                      <span style={{fontSize:11, color:scoreColor(score), fontWeight:600}}>Current product</span>
-                      <span style={{fontSize:12, color:scoreColor(score), fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{curr.toLocaleString()}</span>
-                    </div>
-                    <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                      <div style={{height:"100%", width:"100%", background:scoreColor(score), borderRadius:99}}/>
-                    </div>
-                  </div>
-
-                  {/* Kids bar if applicable */}
-                  {hasKids && (() => {
-                    const kidsOnly = perYear * kids * 2.5 * years;
-                    const pctBar   = Math.min(100, Math.round((kidsOnly/curr)*100));
-                    return (
-                      <div style={{marginBottom:5}}>
-                        <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
-                          <span style={{fontSize:11, color:"#d97706", fontWeight:600}}>
-                            {kids} child{kids>1?"ren":""} (2.5x sensitivity)
-                          </span>
-                          <span style={{fontSize:12, color:"#d97706", fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{kidsOnly.toLocaleString()}</span>
-                        </div>
-                        <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                          <div style={{height:"100%", width:`${pctBar}%`, background:"#d97706", borderRadius:99}}/>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Alternative */}
-                  <div>
-                    <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
-                      <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>{altName}</span>
-                      <span style={{fontSize:12, color:"#16a34a", fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{alt.toLocaleString()}</span>
-                    </div>
-                    <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                      <div style={{height:"100%", width:`${Math.round((alt/curr)*100)}%`, background:"#16a34a", borderRadius:99}}/>
-                    </div>
-                  </div>
-
-                  {/* Plain-English saved */}
-                  <div style={{fontSize:12, color:muted, marginTop:6}}>
-                    Switching eliminates <strong style={{color:text}}>{saved.toLocaleString()} {catConfig.unit}</strong> containing {exposureNames} over {label}.
-                  </div>
-                  {years < 10 && <div style={{borderTop:`1px solid ${border}`, marginTop:12}}/>}
-                </div>
-              );
-            })}
-
-            {hasKids && (
-              <div style={{fontSize:11, color:"#d97706", marginTop:6, lineHeight:1.5, padding:"8px 12px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
-                Children's exposure is shown at 2.5x adult sensitivity — developing immune and hormonal systems are significantly more sensitive to {exposureNames} (Grandjean and Landrigan, The Lancet Neurology 2014).
-              </div>
-            )}
-          </div>
-        )}
-
-      </div>
-      </>)}
-    </div>
-  );
-};
 
 // ── PRODUCT INSIGHTS DROPDOWN — all categories ───────────────
 const TIER_CONFIG = {
@@ -4274,806 +3722,11 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
 
 // ── ROUTINE PAGE ──────────────────────────────────────────────
 const CATEGORY_PRICE_ESTIMATES = {food:5,food_beverage:5.5,beverage:4.5,snack:4,supplement:22,restaurant:12,cleaning:7,home:12,personal_care:11,skincare:16,baby:14,clothing:32,home_furnishing:45,toy:18,dairy:4.5,meat:9,produce:3.5,bakery:4,frozen:5.5,condiment:4,spice:3.5,grain:4,legume:3,nut:7,oil:6,other:8};
-const estimateItemPrice = (category, productName) => {
-  if (category && category !== "food" && category !== "other" && CATEGORY_PRICE_ESTIMATES[category]) return CATEGORY_PRICE_ESTIMATES[category];
-  if (productName) {
-    const n = productName.toLowerCase();
-    if (/chicken|beef|salmon|shrimp|turkey|pork|lamb|tuna/.test(n)) return 9;
-    if (/milk|yogurt|cream|butter|egg/.test(n)) return 5;
-    if (/tomato|lettuce|onion|garlic|pepper|lemon|lime|cilantro|spinach|broccoli|carrot|potato|avocado/.test(n)) return 3.5;
-    if (/tortilla|pasta|rice|bread|flour|oat/.test(n)) return 4;
-    if (/can|jar|sauce|salsa|bean|stock|broth/.test(n)) return 3.5;
-    if (/oil|vinegar|soy sauce|hot sauce|ketchup|mustard/.test(n)) return 5;
-    if (/mozzarella|parmesan|cheddar|feta|gouda|cheese/.test(n)) return 6;
-    if (/basil|oregano|thyme|rosemary|cumin|paprika|turmeric/.test(n)) return 3;
-  }
-  return CATEGORY_PRICE_ESTIMATES[category] || 5;
-};
 
-const getGroceryRecommendations = (history) => {
-  if (!history || history.length === 0) return { needsSwap: [], goodChoices: [] };
-  const GROCERY_CATS = ["food","food_beverage","beverage","snack","supplement","cleaning","personal_care","baby"];
-  const seen = new Set();
-  const candidates = history.filter(h=>GROCERY_CATS.includes(h.category)).filter(h=>{if(seen.has(h.product_name))return false;seen.add(h.product_name);return true;}).slice(0,20);
-  return {
-    needsSwap: candidates.filter(h=>(h.overall_score||h.score||0)>=5.5).slice(0,5),
-    goodChoices: candidates.filter(h=>(h.overall_score||h.score||0)<5.5).slice(0,8),
-  };
-};
 
-const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem, toggleListItem, findSwapSuggestion, childMode, history, isDark, surface, border, text, muted, isMobile}) => {
-  const groceryLists = lists.filter(l=>l.type==="grocery");
-  const activeGroceryLists = groceryLists.filter(l=>l.status!=="completed");
-  const completedGroceryLists = groceryLists.filter(l=>l.status==="completed");
-  const activeList = activeGroceryLists.find(l=>(l.items||[]).some(i=>!i.checked)) || activeGroceryLists[0];
-  const [view, setView] = useState(activeList ? "list" : "setup");
-  const [activeId, setActiveId] = useState(activeList?.id || null);
-  const [store, setStore] = useState("");
-  const [budget, setBudget] = useState("");
-  const [newItem, setNewItem] = useState("");
-  const [expandedId, setExpandedId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [duplicateWarning, setDuplicateWarning] = useState(null);
-  const [recipeQuery, setRecipeQuery] = useState("");
-  const [recipeLoading, setRecipeLoading] = useState(false);
-  const [recipeError, setRecipeError] = useState(null);
-  const [recipePreview, setRecipePreview] = useState(null);
-  const [servings, setServings] = useState(4);
-  const [lastRecipeAdded, setLastRecipeAdded] = useState(null);
-  const [showPrev, setShowPrev] = useState(false);
-  const [confirmNew, setConfirmNew] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [summaryDismissed, setSummaryDismissed] = useState(false);
 
-  const [showBreakdown, setShowBreakdown] = useState(false);
-  const current = lists.find(l=>l.id===activeId);
-  const items = current?.items || [];
-  const scored = items.filter(i=>i.score!=null);
-  const avgScore = scored.length ? Math.round(scored.reduce((s,i)=>s+i.score,0)/scored.length*10)/10 : null;
-  const uncheckedItems = items.filter(i=>!i.checked);
-  const estimatedSpend = uncheckedItems.reduce((sum,item)=>{const qty=item.quantity||1;const price=item.estimatedPrice||estimateItemPrice(item.category,item.text);return sum+(price*qty);},0);
-  const listBudget = current?.budget||0;
-  const budgetPct = listBudget>0?Math.min(100,(estimatedSpend/listBudget)*100):0;
-  const overBudget = listBudget>0&&estimatedSpend>listBudget;
-  const CATEGORY_LABELS = {food:"Food",food_beverage:"Food and Drink",beverage:"Drinks",snack:"Snacks",supplement:"Supplements",cleaning:"Cleaning",personal_care:"Personal Care",skincare:"Skincare",baby:"Baby",home:"Home",clothing:"Clothing",other:"Other"};
-  const categorySpend = uncheckedItems.reduce((acc,item)=>{const cat=item.category||"other";const price=item.estimatedPrice||estimateItemPrice(item.category,item.text);const qty=item.quantity||1;acc[cat]=(acc[cat]||0)+(price*qty);return acc;},{});
-  const categoryEntries = Object.entries(categorySpend).sort((a,b)=>b[1]-a[1]);
-  const checkedItems = items.filter(i=>i.checked);
-  const shopComplete = items.length>=3 && uncheckedItems.length===0;
-  useEffect(()=>{if(shopComplete&&!summaryDismissed&&items.length>=3)setTimeout(()=>setShowSummary(true),400);},[shopComplete]);
 
-  const generateShopShareCard = (list, cardItems) => {
-    const canvas = document.createElement("canvas"); canvas.width=1080; canvas.height=1080;
-    const ctx = canvas.getContext("2d");
-    const si = cardItems.filter(i=>i.score!=null);
-    const avg = si.length ? si.reduce((s,i)=>s+(i.score||0),0)/si.length : 0;
-    const sw = cardItems.filter(i=>i.swappedFrom);
-    const bgt = list.budget||0;
-    const est = cardItems.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category,i.text))*(i.quantity||1)),0);
-    const sc = avg<=3?"#16a34a":avg<=5?"#d97706":"#dc2626";
-    const sb = avg<=3?"#f0fdf4":avg<=5?"#fffbeb":"#fef2f2";
-    ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,1080,1080);
-    ctx.fillStyle=sc; ctx.fillRect(0,0,1080,10);
-    ctx.font="600 26px Arial"; ctx.fillStyle="#999999"; ctx.textAlign="center"; ctx.fillText("PARTIQULE",540,90);
-    const sn=list.name.length>30?list.name.slice(0,30)+"...":list.name;
-    ctx.font="600 30px Arial"; ctx.fillStyle="#333333"; ctx.fillText(sn,540,148);
-    ctx.beginPath(); ctx.arc(540,360,150,0,Math.PI*2); ctx.fillStyle=sb; ctx.fill();
-    ctx.font="800 110px Arial"; ctx.fillStyle=sc; ctx.fillText(avg.toFixed(1),540,400);
-    ctx.font="500 26px Arial"; ctx.fillStyle="#999999"; ctx.fillText("avg. score",540,450);
-    const stats=[`${cardItems.length} items`,`${sw.length} swap${sw.length!==1?"s":""}`,bgt>0?`$${est.toFixed(0)} of $${bgt}`:null].filter(Boolean);
-    const pw=stats.length===3?300:360, ph=58, pg=16, tw=stats.length*pw+(stats.length-1)*pg, sx=(1080-tw)/2;
-    stats.forEach((st,i)=>{const x=sx+i*(pw+pg);ctx.fillStyle="#f1f5f9";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,550,pw,ph,12);else ctx.rect(x,550,pw,ph);ctx.fill();ctx.font="600 22px Arial";ctx.fillStyle="#333333";ctx.textAlign="center";ctx.fillText(st,x+pw/2,584);});
-    const bs=sw.length>0?sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a):null;
-    if(bs&&((bs.swappedFromScore||0)-(bs.score||0))>0){const imp=((bs.swappedFromScore||0)-(bs.score||0)).toFixed(1);const nm=bs.text.length>28?bs.text.slice(0,28)+"...":bs.text;ctx.font="500 22px Arial";ctx.fillStyle="#16a34a";ctx.textAlign="center";ctx.fillText(`Best swap: ${nm} — ${imp} pts better`,540,700);}
-    ctx.font="400 22px Arial"; ctx.fillStyle="#bbbbbb"; ctx.textAlign="center"; ctx.fillText("partiqule.com",540,1030);
-    canvas.toBlob(blob=>{if(!blob)return;if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],"partiqule-shop.png",{type:"image/png"})]})){navigator.share({files:[new File([blob],"partiqule-shop.png",{type:"image/png"})],title:"My Partiqule Grocery Score"}).catch(()=>{});}else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="partiqule-shop.png";a.click();}},"image/png");
-  };
 
-  const stores = ["Whole Foods","Target","Trader Joe's","Walmart","Kroger","Sprouts","Costco","Other"];
-  const presets = [50,80,120];
-
-  // Ensure legacy items without ids get one
-  useEffect(()=>{
-    if(!current)return;
-    const needsIds = (current.items||[]).some(it=>!it.id);
-    if(needsIds) saveLists(lists.map(l=>l.id!==current.id?l:{...l,items:(l.items||[]).map(it=>it.id?it:{...it,id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`})}));
-  },[current?.id]);
-
-  const updateItemById = (itemId, updates) => {
-    saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,...updates}:it)}));
-  };
-
-  const isDuplicate = (name) => {
-    const n = name.toLowerCase().trim();
-    return (items||[]).some(it=>{const e=it.text.toLowerCase().trim();return e===n||e.includes(n)||n.includes(e);});
-  };
-
-  const handleAddItem = () => {
-    const name = newItem.trim();
-    if(!name)return;
-    if(isDuplicate(name)){setDuplicateWarning(name);setTimeout(()=>setDuplicateWarning(null),3000);return;}
-    setNewItem(""); addGroceryItem(activeId, name);
-  };
-
-  const displayItems = [...items.filter(i=>!i.checked), ...items.filter(i=>i.checked)];
-
-  const fetchRecipeIngredients = async () => {
-    if(!recipeQuery.trim()||recipeLoading)return;
-    setRecipeLoading(true); setRecipeError(null); setRecipePreview(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/recipe-ingredients`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dish:recipeQuery.trim(),servings})});
-      if(!res.ok){const err=await res.json();throw new Error(err.error||"Failed to get ingredients");}
-      const data = await res.json();
-      if(!data.ingredients||data.ingredients.length===0)throw new Error("No ingredients found for that dish");
-      setRecipePreview(data);
-    } catch(e){setRecipeError(e.message||"Could not get ingredients");} finally{setRecipeLoading(false);}
-  };
-
-  const addAllIngredients = (recipe) => {
-    setRecipePreview(null); setRecipeQuery("");
-    const existingNames = items.map(i=>i.text.toLowerCase().trim());
-    const toAdd = recipe.ingredients.filter(ing=>{const n=ing.name.toLowerCase().trim();return !existingNames.some(e=>e===n||e.includes(n)||n.includes(e));});
-    const skipped = recipe.ingredients.length - toAdd.length;
-    // Batch-create all temp items in one atomic update
-    const tempItems = toAdd.map(ing=>({id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,text:ing.name,score:null,baseScore:null,childScore:null,category:ing.category||"food",summary:null,checked:false,scoring:true,scoreError:false,quantity:1,addedAt:new Date().toISOString()}));
-    saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:[...(l.items||[]),...tempItems],lastOpenedAt:new Date().toISOString()}));
-    // Fire scoring for each item independently with staggered delays
-    toAdd.forEach((ing,i)=>{
-      const tid=tempItems[i].id;
-      setTimeout(async()=>{
-        try{
-          const res=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:ing.name,childMode:childMode||false})});
-          const data=await res.json();
-          const sc=childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score);
-          saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===tid?{...it,score:sc,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category||ing.category,summary:data.summary,scoring:false,scoreError:false}:it)}));
-          if(sc&&sc>=5.5)findSwapSuggestion(activeId,tid,ing.name,data.category,sc);
-        }catch{
-          saveLists(prev=>prev.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).map(it=>it.id===tid?{...it,scoring:false,scoreError:true}:it)}));
-        }
-      },i*400);
-    });
-    setLastRecipeAdded(recipe.dish); setTimeout(()=>setLastRecipeAdded(null),4000);
-    if(skipped>0){setRecipeError(`${skipped} ingredient${skipped!==1?"s":""} already on list — skipped`);setTimeout(()=>setRecipeError(null),3000);}
-  };
-
-  const startNew = () => { setStore(""); setBudget(""); setView("setup"); setActiveId(null); setConfirmNew(false); setSummaryDismissed(false); setShowSummary(false); };
-
-  if (view === "setup") return (
-    <div>
-      <div style={{marginBottom:24}}>
-        <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Where are you shopping?</div>
-        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-          {stores.map(s=>(
-            <button key={s} onClick={()=>setStore(s)} style={{padding:"8px 16px", borderRadius:20, border:`1.5px solid ${store===s?"#16a34a":border}`, background:store===s?(isDark?"#0f2a18":"#f0fdf4"):"none", color:store===s?"#16a34a":muted, fontSize:13, fontWeight:store===s?700:400, cursor:"pointer"}}>{s}</button>
-          ))}
-        </div>
-      </div>
-      {store && (
-        <div style={{marginBottom:28}}>
-          <div style={{fontSize:14, fontWeight:700, color:text, marginBottom:12}}>Your budget for this shop</div>
-          <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
-            {presets.map(p=>(
-              <button key={p} onClick={()=>setBudget(String(p))} style={{padding:"8px 16px", borderRadius:20, border:`1.5px solid ${budget===String(p)?"#16a34a":border}`, background:budget===String(p)?(isDark?"#0f2a18":"#f0fdf4"):"none", color:budget===String(p)?"#16a34a":muted, fontSize:13, fontWeight:budget===String(p)?700:400, cursor:"pointer"}}>${p}</button>
-            ))}
-            <div style={{display:"flex", alignItems:"center", gap:4}}>
-              <span style={{fontSize:14, color:muted}}>$</span>
-              <input value={budget} onChange={e=>setBudget(e.target.value.replace(/[^0-9.]/g,""))} placeholder="___" style={{width:60, padding:"8px 10px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none", textAlign:"center"}}/>
-            </div>
-          </div>
-        </div>
-      )}
-      <button onClick={()=>{
-        if(!store||!budget)return;
-        const id=createGroceryList(store, budget);
-        setActiveId(id); setView("list");
-      }} disabled={!store||!budget} style={{
-        width:"100%", padding:"14px", borderRadius:12,
-        background:store&&budget?"#16a34a":(isDark?"#1e2433":"#e2e8f0"),
-        color:store&&budget?"#fff":(isDark?"#475569":"#94a3b8"),
-        border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15,
-        cursor:store&&budget?"pointer":"default",
-      }}>Build my list</button>
-    </div>
-  );
-
-  return (
-    <div>
-      {/* New list / confirm */}
-      <div style={{display:"flex", justifyContent:"flex-end", marginBottom:12}}>
-        {confirmNew ? (
-          <div style={{display:"flex", gap:8, alignItems:"center"}}>
-            <span style={{fontSize:12, color:muted}}>Start a new list? Current list will be saved.</span>
-            <button onClick={()=>setConfirmNew(false)} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer"}}>Keep current</button>
-            <button onClick={startNew} style={{fontSize:12, color:"#fff", background:"#16a34a", border:"none", borderRadius:8, padding:"4px 12px", fontWeight:600, cursor:"pointer"}}>New list</button>
-          </div>
-        ) : (
-          <button onClick={()=>{if(current)setConfirmNew(true);else startNew();}} style={{fontSize:12, color:"#16a34a", background:"none", border:`1px solid #16a34a`, borderRadius:8, padding:"4px 12px", fontWeight:600, cursor:"pointer"}}>New list</button>
-        )}
-      </div>
-
-      {current && (<>
-        {/* Header */}
-        <div style={{background:surface, borderRadius:14, padding:"14px 18px", border:`1.5px solid ${border}`, marginBottom:16}}>
-          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
-            <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{current.name}</div>
-            {avgScore!=null && (
-              <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
-                <ScoreBadge score={avgScore} size="sm"/>
-                <span style={{fontSize:10, color:muted, marginTop:2}}>avg score</span>
-              </div>
-            )}
-          </div>
-          {listBudget > 0 && (
-            <div style={{marginTop:8}}>
-              <div style={{height:4, borderRadius:4, background:isDark?"#1e2433":"#f1f5f9", overflow:"hidden", marginBottom:6}}>
-                <div style={{height:"100%", width:`${budgetPct}%`, borderRadius:4, background:overBudget?"#dc2626":budgetPct>=80?"#d97706":"#16a34a", transition:"width 0.4s ease"}}/>
-              </div>
-              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:12, color:overBudget?"#dc2626":muted}}>
-                <span>Est. ${estimatedSpend.toFixed(0)} of ${listBudget.toFixed(0)}{items.some(i=>i.priceSource==="amazon")&&<span style={{fontSize:10,color:muted,marginLeft:4}}>(some prices from Amazon)</span>}</span>
-                <span style={{fontWeight:overBudget?700:400}}>{overBudget?`$${(estimatedSpend-listBudget).toFixed(0)} over`:`$${(listBudget-estimatedSpend).toFixed(0)} remaining`}</span>
-              </div>
-              {overBudget && <div style={{marginTop:6, fontSize:12, color:"#dc2626", fontWeight:600}}>Over budget — remove items or adjust quantities</div>}
-              {!overBudget && budgetPct>=90 && <div style={{marginTop:6, fontSize:12, color:"#d97706", fontWeight:600}}>Approaching your budget</div>}
-              {categoryEntries.length>=2 && (
-                <div style={{marginTop:6}}>
-                  <button onClick={()=>setShowBreakdown(v=>!v)} style={{fontSize:11, color:muted, background:"none", border:"none", cursor:"pointer", padding:0, textDecoration:"underline"}}>{showBreakdown?"Hide breakdown":"Show breakdown"}</button>
-                  {showBreakdown && (
-                    <div style={{marginTop:8, display:"flex", flexDirection:"column", gap:4}}>
-                      {categoryEntries.map(([cat,amount])=>(
-                        <div key={cat} style={{display:"flex", justifyContent:"space-between", fontSize:12, color:muted}}>
-                          <span>{CATEGORY_LABELS[cat]||cat}</span>
-                          <span>~${amount.toFixed(0)}</span>
-                        </div>
-                      ))}
-                      <div style={{display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:700, color:text, borderTop:`1px solid ${border}`, paddingTop:4, marginTop:2}}>
-                        <span>Total estimated</span>
-                        <span>~${estimatedSpend.toFixed(0)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Recipe input */}
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Add by recipe</div>
-          <div style={{display:"flex", gap:8, marginBottom:8}}>
-            <input value={recipeQuery} onChange={e=>{setRecipeQuery(e.target.value);setRecipeError(null);setRecipePreview(null);}} onKeyDown={e=>{if(e.key==="Enter"&&recipeQuery.trim()&&!recipeLoading)fetchRecipeIngredients();}} placeholder="e.g. chicken tacos, pasta carbonara..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-            <button onClick={fetchRecipeIngredients} disabled={!recipeQuery.trim()||recipeLoading} style={{padding:"10px 16px", borderRadius:10, border:"none", background:!recipeQuery.trim()||recipeLoading?(isDark?"#1e2433":"#f1f5f9"):"#16a34a", color:!recipeQuery.trim()||recipeLoading?muted:"#fff", fontWeight:700, fontSize:14, cursor:!recipeQuery.trim()||recipeLoading?"not-allowed":"pointer", whiteSpace:"nowrap"}}>{recipeLoading?"Loading...":"Get ingredients"}</button>
-          </div>
-          <div style={{display:"flex", alignItems:"center", gap:8, fontSize:12, color:muted}}>
-            <span>Servings:</span>
-            {[2,4,6,8].map(n=><button key={n} onClick={()=>setServings(n)} style={{width:28,height:28,borderRadius:6,border:`1px solid ${servings===n?"#16a34a":border}`,background:servings===n?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:servings===n?"#16a34a":muted,fontSize:12,fontWeight:servings===n?700:400,cursor:"pointer"}}>{n}</button>)}
-          </div>
-          {recipeError && <div style={{marginTop:8, fontSize:12, color:"#dc2626", fontWeight:600}}>{recipeError}</div>}
-          {lastRecipeAdded && <div style={{marginTop:8, fontSize:12, color:"#16a34a", fontWeight:600}}>{lastRecipeAdded} ingredients added — scoring in background. Add another dish or shop from the list below.</div>}
-          {recipePreview && (
-            <div style={{marginTop:12, borderRadius:12, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden"}}>
-              <div style={{padding:"12px 16px", background:isDark?"#1a2a1a":"#f0fdf4", borderBottom:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-                <div>
-                  <div style={{fontSize:14, fontWeight:700, color:text}}>{recipePreview.dish}</div>
-                  <div style={{fontSize:12, color:muted, marginTop:2}}>{recipePreview.ingredients.length} ingredients for {recipePreview.servings} servings</div>
-                </div>
-                <div style={{display:"flex", gap:8}}>
-                  <button onClick={()=>{setRecipePreview(null);setRecipeQuery("");}} style={{padding:"6px 12px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, cursor:"pointer"}}>Cancel</button>
-                  <button onClick={()=>addAllIngredients(recipePreview)} style={{padding:"6px 14px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer"}}>Add all to list</button>
-                </div>
-              </div>
-              <div style={{maxHeight:280, overflowY:"auto"}}>
-                {recipePreview.ingredients.map((ing,i)=>(
-                  <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", borderBottom:i<recipePreview.ingredients.length-1?`1px solid ${border}`:"none", background:i%2===0?"none":(isDark?"#0f1116":"#fafafa")}}>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:14, fontWeight:600, color:text}}>{ing.name}</div>
-                      <div style={{fontSize:12, color:muted, marginTop:2}}>{ing.quantity}{ing.notes&&<span style={{marginLeft:6,color:"#16a34a",fontStyle:"italic"}}> — {ing.notes}</span>}</div>
-                    </div>
-                    <button onClick={()=>setRecipePreview(prev=>({...prev,ingredients:prev.ingredients.filter((_,idx)=>idx!==i)}))} style={{background:"none",border:"none",color:muted,cursor:"pointer",fontSize:16,padding:"0 4px",opacity:0.5,marginLeft:8}}>x</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div style={{display:"flex", alignItems:"center", gap:10, margin:"16px 0 0"}}>
-            <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
-            <span style={{fontSize:11, color:muted}}>or add manually</span>
-            <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
-          </div>
-        </div>
-
-        {/* Add item */}
-        <div style={{marginBottom:16}}>
-          <div style={{display:"flex", gap:8}}>
-            <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")handleAddItem();}} placeholder="Add a product..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-            <button onClick={handleAddItem} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
-          </div>
-          {duplicateWarning && <div style={{fontSize:12, color:"#d97706", fontWeight:600, marginTop:4}}>"{duplicateWarning}" is already on your list</div>}
-        </div>
-
-        {/* Recommendations — show before 3 items added */}
-        {items.length < 3 && (() => {
-          const { needsSwap, goodChoices } = getGroceryRecommendations(history);
-          if (!needsSwap.length && !goodChoices.length) return null;
-          const addFromHistory = (h) => {
-            const newItem = {id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`, text:h.product_name, score:h.overall_score||h.score||null, category:h.category||null, summary:h.summary||null, checked:false, scoring:false, scoreError:false, addedAt:new Date().toISOString()};
-            saveLists(lists.map(l=>l.id===current.id?{...l,items:[...(l.items||[]),newItem],lastOpenedAt:new Date().toISOString()}:l));
-          };
-          return (
-            <div style={{marginBottom:20}}>
-              {goodChoices.length > 0 && (
-                <div style={{marginBottom:16}}>
-                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Good choices you buy</div>
-                  <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
-                    {goodChoices.map((item, i) => (
-                      <button key={i} onClick={()=>addFromHistory(item)} style={{padding:"6px 14px", borderRadius:20, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, color:"#16a34a", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:6}}>
-                        <span>{item.product_name}</span>
-                        <span style={{fontSize:11, opacity:0.7, background:"rgba(22,163,74,0.15)", borderRadius:10, padding:"1px 6px"}}>{(item.overall_score||item.score||0).toFixed(1)}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {needsSwap.length > 0 && (
-                <div style={{marginBottom:16}}>
-                  <div style={{fontSize:11, color:"#d97706", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Consider swapping</div>
-                  <div style={{fontSize:12, color:muted, marginBottom:10, lineHeight:1.5}}>These are in your scan history and score above 5.5. Add them to find better alternatives.</div>
-                  {needsSwap.map((item, i) => (
-                    <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:12, marginBottom:6, background:isDark?"#2a1a00":"#fffbeb", border:`1px solid ${isDark?"#3a2a00":"#fde68a"}`}}>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:14, fontWeight:600, color:text}}>{item.product_name}</div>
-                        <div style={{fontSize:11, color:"#d97706", marginTop:2}}>Scored {(item.overall_score||item.score||0).toFixed(1)} — better options exist</div>
-                      </div>
-                      <button onClick={()=>addFromHistory(item)} style={{padding:"6px 14px", borderRadius:8, background:"#d97706", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0, marginLeft:12}}>Add</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{borderTop:`1px solid ${border}`, margin:"16px 0 0"}}/>
-            </div>
-          );
-        })()}
-
-        {/* Items */}
-        {items.length===0 ? (
-          <div style={{textAlign:"center", padding:"40px 0", color:muted, fontSize:14}}>Start adding products above. Each one gets scored automatically.</div>
-        ) : (
-          <div style={{display:"flex", flexDirection:"column", gap:8}}>
-            {displayItems.map((item)=>{
-              const itemId = item.id || item.text;
-              const origIdx = items.findIndex(it=>(it.id||it.text)===itemId);
-              return (
-              <React.Fragment key={itemId}>
-                {item.checked && displayItems.filter(x=>x.checked)[0]===item && (
-                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0 6px", borderTop:`1px solid ${border}`, marginTop:8}}>
-                    <span style={{fontSize:12, color:muted}}>{displayItems.filter(x=>x.checked).length} in cart</span>
-                    <button onClick={()=>saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).filter(it=>!it.checked)}))} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline", padding:0}}>Clear cart</button>
-                  </div>
-                )}
-                <div style={{borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${item.score>6?"#d9770633":border}`, opacity:item.checked?0.6:1}}>
-                  <div onClick={()=>{if(origIdx!==-1)toggleListItem(current.id,origIdx);}} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", cursor:"pointer"}}>
-                    <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
-                      {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
-                    </div>
-                    <div style={{flex:1, minWidth:0}}>
-                      {editingId===itemId ? (
-                        <input autoFocus defaultValue={item.text} onClick={e=>e.stopPropagation()} onBlur={e=>{const n=e.target.value.trim();setEditingId(null);if(!n||n===item.text)return;updateItemById(itemId,{text:n,score:null,baseScore:null,childScore:null,summary:null,scoring:true,scoreError:false,swapSuggestion:null});fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:n,childMode:childMode||false})}).then(r=>r.json()).then(data=>{updateItemById(itemId,{score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false});}).catch(()=>{updateItemById(itemId,{scoring:false,scoreError:true});});}} onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEditingId(null);}} style={{flex:1,fontSize:14,fontWeight:600,color:text,background:"none",border:"1px solid #16a34a",borderRadius:6,padding:"2px 8px",outline:"none",minWidth:0,width:"100%"}}/>
-                      ) : (
-                        <div onClick={e=>{e.stopPropagation();setEditingId(itemId);}} style={{cursor:"text"}}>
-                          <div style={{fontSize:14, color:text, textDecoration:item.checked?"line-through":"none", fontWeight:500, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.text}</div>
-                          {item.category && <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{(item.category||"").replace(/_/g," ")}</div>}
-                        </div>
-                      )}
-                    </div>
-                    {!item.checked && (
-                      <div style={{display:"flex", alignItems:"center", gap:4, marginLeft:8, flexShrink:0}}>
-                        <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;if(c<=1)return;updateItemById(itemId,{quantity:c-1});}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:(item.quantity||1)<=1?0.3:1}}>-</button>
-                        <span style={{fontSize:13, fontWeight:600, color:text, minWidth:16, textAlign:"center"}}>{item.quantity||1}</span>
-                        <button onClick={e=>{e.stopPropagation();const c=item.quantity||1;updateItemById(itemId,{quantity:c+1});}} style={{width:22,height:22,borderRadius:6,border:`1px solid ${border}`,background:isDark?"#1e2433":"#f1f5f9",color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-                      </div>
-                    )}
-                    <div style={{flexShrink:0, display:"flex", alignItems:"center", gap:4}}>
-                      {item.scoring && <span style={{fontSize:11, color:muted, padding:"2px 8px", borderRadius:10, background:isDark?"#1e2433":"#f1f5f9"}}>scoring...</span>}
-                      {item.scoreError && <button onClick={e=>{e.stopPropagation();addGroceryItem(current.id,item.text);}} style={{fontSize:11, color:"#dc2626", background:"none", border:"none", cursor:"pointer", fontWeight:600}}>? Retry</button>}
-                      {item.score!=null && (<>{item.score>6 && <div style={{width:6, height:6, borderRadius:3, background:"#d97706", flexShrink:0}}/>}<ScoreBadge score={item.score} size="xs"/></>)}
-                    </div>
-                    {!item.scoring && <button onClick={e=>{e.stopPropagation();saveLists(lists.map(l=>l.id!==activeId?l:{...l,items:(l.items||[]).filter(it=>(it.id||it.text)!==itemId)}));}} style={{background:"none",border:"none",color:muted,cursor:"pointer",fontSize:18,lineHeight:1,padding:"0 4px",flexShrink:0,marginLeft:6,opacity:0.5}}>x</button>}
-                  </div>
-                  {expandedId===itemId && item.summary && (
-                    <div style={{padding:"0 16px 12px 48px", fontSize:12, color:muted, lineHeight:1.5}}>
-                      {item.summary.length>180 ? item.summary.slice(0,180)+"..." : item.summary}
-                    </div>
-                  )}
-                  {item.swapSuggestion && (
-                    <div style={{margin:"0 16px 12px 48px", padding:"8px 12px", borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:12, color:"#16a34a", fontWeight:700, marginBottom:2}}>Better option found</div>
-                        <div style={{fontSize:13, color:text}}>{item.swapSuggestion.name}</div>
-                        <div style={{fontSize:11, color:muted}}>Scores {(item.swapSuggestion.score||0).toFixed(1)} vs your {(item.score||0).toFixed(1)}</div>
-                      </div>
-                      <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{text:item.swapSuggestion.name,score:item.swapSuggestion.score,summary:item.swapSuggestion.summary,swapSuggestion:null,swappedFrom:item.text,swappedFromScore:item.score});}} style={{padding:"6px 12px", borderRadius:8, background:"#16a34a", color:"#fff", border:"none", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0}}>Swap</button>
-                      <button onClick={e=>{e.stopPropagation();updateItemById(itemId,{swapSuggestion:null});}} style={{padding:"6px 8px", borderRadius:8, background:"none", color:muted, border:"none", fontSize:12, cursor:"pointer", flexShrink:0}}>Dismiss</button>
-                    </div>
-                  )}
-                </div>
-              </React.Fragment>
-              );
-            })}
-          </div>
-        )}
-      </>)}
-
-      {/* Previous lists */}
-      {activeGroceryLists.filter(l=>l.id!==activeId).length>0 && (
-        <div style={{marginTop:24}}>
-          <button onClick={()=>setShowPrev(!showPrev)} style={{fontSize:13, color:muted, background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:4}}>
-            <span style={{transform:showPrev?"rotate(90deg)":"rotate(0deg)", transition:"transform 0.2s", display:"inline-block"}}>&#9654;</span>
-            Previous lists ({activeGroceryLists.filter(l=>l.id!==activeId).length})
-          </button>
-          {showPrev && (
-            <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:10}}>
-              {activeGroceryLists.filter(l=>l.id!==activeId).map(l=>(
-                <div key={l.id} onClick={()=>{setActiveId(l.id);setView("list");}} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", borderRadius:10, background:surface, border:`1px solid ${border}`, cursor:"pointer"}}>
-                  <div>
-                    <div style={{fontSize:14, fontWeight:600, color:text}}>{l.name}</div>
-                    <div style={{fontSize:12, color:muted}}>{(l.items||[]).length} items</div>
-                  </div>
-                  <span style={{color:"#16a34a", fontSize:14}}>&rarr;</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Completed grocery lists */}
-      {completedGroceryLists.length>0 && (
-        <div style={{marginTop:20}}>
-          <div style={{fontSize:11,color:muted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:10}}>Completed</div>
-          {completedGroceryLists.map(l=>{
-            const total=(l.items||[]).length;
-            const scored=(l.items||[]).filter(i=>i.score!=null);
-            const avg=scored.length?(scored.reduce((s,i)=>s+i.score,0)/scored.length).toFixed(1):null;
-            return (
-              <div key={l.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${border}`,marginBottom:8,opacity:0.7}}>
-                <div>
-                  <div style={{fontSize:14,fontWeight:600,color:text}}>{l.name}</div>
-                  <div style={{fontSize:12,color:muted,marginTop:2}}>{total} items{avg&&` · avg score ${avg}`}{l.completedAt&&` · ${new Date(l.completedAt).toLocaleDateString("en-US",{month:"short",day:"numeric"})}`}</div>
-                </div>
-                <div style={{fontSize:11,color:"#16a34a",fontWeight:700}}>Done</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Post-shop summary overlay */}
-      {showSummary && current && (
-        <div style={{position:"fixed", inset:0, zIndex:1000, background:isDark?"#0f1116":"#ffffff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px", overflowY:"auto"}}>
-          <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Shop complete</div>
-          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, marginBottom:20, textAlign:"center"}}>{current.name}</div>
-          {(() => {const si=items.filter(i=>i.score!=null);if(!si.length)return null;const avg=si.reduce((s,i)=>s+(i.score||0),0)/si.length;return (<div style={{textAlign:"center",marginBottom:8}}><ScoreBadge score={avg} size="lg"/><div style={{fontSize:13,color:muted,marginTop:6}}>average score across {si.length} item{si.length!==1?"s":""}</div></div>);})()}
-          {(() => {
-            const sw=items.filter(i=>i.swappedFrom); const bgt=current.budget||0;
-            const est=items.reduce((s,i)=>s+((i.estimatedPrice||estimateItemPrice(i.category,i.text))*(i.quantity||1)),0);
-            return (
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", maxWidth:300, margin:"20px 0"}}>
-                <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:text}}>{items.length}</div>
-                  <div style={{fontSize:12, color:muted, marginTop:2}}>item{items.length!==1?"s":""}</div>
-                </div>
-                <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:sw.length>0?"#16a34a":text}}>{sw.length}</div>
-                  <div style={{fontSize:12, color:muted, marginTop:2}}>swap{sw.length!==1?"s":""} made</div>
-                </div>
-                {bgt>0 && (<div style={{gridColumn:"1 / -1", background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:20, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:text}}>Est. ${est.toFixed(0)} of ${bgt.toFixed(0)}</div>
-                  <div style={{fontSize:12, color:muted, marginTop:2}}>budget used</div>
-                </div>)}
-              </div>
-            );
-          })()}
-          {(() => {const sw=items.filter(i=>i.swappedFrom&&i.swappedFromScore&&i.score!=null);if(!sw.length)return null;const best=sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a);const imp=((best.swappedFromScore||0)-(best.score||0)).toFixed(1);if(parseFloat(imp)<=0)return null;return (<div style={{width:"100%",maxWidth:300,background:isDark?"#1a2a1a":"#f0fdf4",borderRadius:12,padding:"14px 16px",marginBottom:20}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}}>Best swap</div><div style={{fontSize:14,fontWeight:600,color:text}}>{best.text}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{imp} points better than {best.swappedFrom}</div></div>);})()}
-          <div style={{display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:300}}>
-            <button onClick={()=>generateShopShareCard(current,items)} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
-            <button onClick={()=>{saveLists(prev=>prev.map(l=>l.id===activeId?{...l,status:"completed",completedAt:new Date().toISOString()}:l));setActiveId(null);setShowSummary(false);setSummaryDismissed(false);setView("setup");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1.5px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const AddToListButton = ({result, lists, createShoppingList, addItemToList, muted}) => {
-  const [added, setAdded] = useState(false);
-  return (
-    <button onClick={()=>{
-      const existing = lists.find(l=>l.type==="shopping");
-      const targetId = existing ? existing.id : createShoppingList("My List");
-      addItemToList(targetId, {text:result.product_name, checked:false, score:result.overall_score||result.score, category:result.category, addedAt:new Date().toISOString()});
-      setAdded(true); setTimeout(()=>setAdded(false),2000);
-    }} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",background:"none",color:added?"#16a34a":muted,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontWeight:added?600:400}}>
-      {added ? "Added to list" : "+ Add to shopping list"}
-    </button>
-  );
-};
-
-const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, addGroceryItem, addItemToList, toggleListItem, findSwapSuggestion, childMode, history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
-  const [tab, setTab] = useState("grocery");
-  const [newListName, setNewListName] = useState("");
-  const [activeListId, setActiveListId] = useState(null);
-  const [newItemText, setNewItemText] = useState("");
-  const shoppingLists = lists.filter(l=>l.type==="shopping");
-  const activeList = lists.find(l=>l.id===activeListId);
-
-  return (
-    <div style={{maxWidth:700, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <div style={{marginBottom:24}}>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:36, color:text, margin:"0 0 4px", letterSpacing:"-0.015em"}}>Lists</h1>
-        <p style={{fontSize:14, color:muted, margin:0}}>Shopping lists, grocery planning, and your routine</p>
-      </div>
-      <div style={{display:"flex", gap:8, marginBottom:28, borderBottom:`1px solid ${border}`, paddingBottom:0}}>
-        {[{id:"grocery",label:"Grocery Lists"},{id:"shopping",label:"Shopping Lists"},{id:"routine",label:"My Routine"}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 16px", background:"none", border:"none", borderBottom:tab===t.id?"2px solid #16a34a":"2px solid transparent", color:tab===t.id?"#16a34a":muted, fontWeight:tab===t.id?700:400, fontSize:14, cursor:"pointer", marginBottom:-1}}>{t.label}</button>
-        ))}
-      </div>
-
-      {tab==="shopping" && (<>
-        {activeList ? (<>
-          <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:20}}>
-            <button onClick={()=>setActiveListId(null)} style={{background:"none", border:"none", color:muted, cursor:"pointer", fontSize:14, padding:0}}>Back</button>
-            <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:20, color:text, margin:0, flex:1}}>{activeList.name}</h2>
-            <span style={{fontSize:12, color:muted}}>{(activeList.items||[]).filter(i=>!i.checked).length} remaining</span>
-          </div>
-          <div style={{display:"flex", gap:8, marginBottom:20}}>
-            <input value={newItemText} onChange={e=>setNewItemText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newItemText.trim()){addItemToList(activeList.id,{text:newItemText.trim(),checked:false,score:null,addedAt:new Date().toISOString()});setNewItemText("");}}} placeholder="Add an item..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-            <button onClick={()=>{if(!newItemText.trim())return;addItemToList(activeList.id,{text:newItemText.trim(),checked:false,score:null,addedAt:new Date().toISOString()});setNewItemText("");}} style={{padding:"10px 18px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Add</button>
-          </div>
-          {(activeList.items||[]).length===0 ? (
-            <div style={{textAlign:"center", padding:"40px 0", color:muted, fontSize:14}}>Add your first item above</div>
-          ) : (
-            <div style={{display:"flex", flexDirection:"column", gap:8}}>
-              {activeList.items.map((item,i)=>(
-                <div key={i} onClick={()=>toggleListItem(activeList.id,i)} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", borderRadius:12, background:item.checked?(isDark?"#0f1a0f":"#f0fdf4"):surface, border:`1px solid ${border}`, cursor:"pointer", opacity:item.checked?0.6:1}}>
-                  <div style={{width:20, height:20, borderRadius:6, flexShrink:0, background:item.checked?"#16a34a":"none", border:`2px solid ${item.checked?"#16a34a":border}`, display:"flex", alignItems:"center", justifyContent:"center"}}>
-                    {item.checked && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
-                  </div>
-                  <span style={{flex:1, fontSize:14, color:text, textDecoration:item.checked?"line-through":"none"}}>{item.text}</span>
-                  {item.score!=null && <ScoreBadge score={item.score} size="xs"/>}
-                </div>
-              ))}
-            </div>
-          )}
-        </>) : (<>
-          {shoppingLists.length===0 ? (
-            <div style={{textAlign:"center", padding:"40px 20px"}}>
-              <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>No shopping lists yet</div>
-              <div style={{fontSize:14, color:muted, marginBottom:20, lineHeight:1.6}}>Create a list for your next shop. Add anything — scored items from your scans or everyday staples.</div>
-            </div>
-          ) : (
-            <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:20}}>
-              {shoppingLists.map(l=>{
-                const remaining=(l.items||[]).filter(i=>!i.checked).length;
-                const total=(l.items||[]).length;
-                return (
-                  <div key={l.id} onClick={()=>{setActiveListId(l.id);saveLists(lists.map(x=>x.id===l.id?{...x,lastOpenedAt:new Date().toISOString()}:x));}} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderRadius:14, background:surface, border:`1.5px solid ${border}`, cursor:"pointer"}}>
-                    <div>
-                      <div style={{fontSize:15, fontWeight:600, color:text, marginBottom:2}}>{l.name}</div>
-                      <div style={{fontSize:12, color:muted}}>{remaining} of {total} items remaining</div>
-                    </div>
-                    <span style={{color:"#16a34a", fontSize:18, fontWeight:700}}>&rarr;</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <div style={{display:"flex", gap:8}}>
-            <input value={newListName} onChange={e=>setNewListName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&newListName.trim()){const id=createShoppingList(newListName.trim());setNewListName("");setActiveListId(id);}}} placeholder="New list name..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:surface, color:text, fontSize:14, outline:"none"}}/>
-            <button onClick={()=>{if(!newListName.trim())return;const id=createShoppingList(newListName.trim());setNewListName("");setActiveListId(id);}} style={{padding:"10px 20px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer"}}>Create</button>
-          </div>
-        </>)}
-      </>)}
-
-      {tab==="grocery" && (
-        <GroceryListBuilder lists={lists} saveLists={saveLists} createGroceryList={createGroceryList} addGroceryItem={addGroceryItem} toggleListItem={toggleListItem} findSwapSuggestion={findSwapSuggestion} childMode={childMode} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile}/>
-      )}
-
-      {tab==="routine" && (
-        <RoutinePage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} user={user} onSelect={onSelect} onSearch={onSearch}/>
-      )}
-    </div>
-  );
-};
-
-const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, user, onSelect, onSearch}) => {
-  const [timeFilter,   setTimeFilter]   = useState("all");
-  const [notPurchased, setNotPurchased] = useState(new Set());
-
-  const now = Date.now();
-  const TIME_CUTOFFS = {"7d":7*24*60*60*1000, "30d":30*24*60*60*1000, "90d":90*24*60*60*1000, "1y":365*24*60*60*1000, "all":Infinity};
-
-  const filtered = history.filter(h => {
-    if (timeFilter !== "all" && h.scannedAt) {
-      if (now - new Date(h.scannedAt).getTime() > TIME_CUTOFFS[timeFilter]) return false;
-    }
-    return true;
-  });
-
-  const active   = filtered.filter(h => !notPurchased.has(h.product_name));
-  const inactive = filtered.filter(h => notPurchased.has(h.product_name));
-
-  // Chemical overlap across active products
-  const chemMap = {};
-  active.forEach(item => {
-    const chems = [
-      ...(item.harmful_chemicals || []),
-      ...(item.identified_plastics || []),
-      ...((item.food_analysis?.concerns || []).filter(c=>c.severity==="high").map(c=>c.substance||c.ingredient||"")),
-    ].filter(Boolean);
-    chems.forEach(chem => {
-      const key = chem.toLowerCase().trim();
-      if (!chemMap[key]) chemMap[key] = {name:chem, count:0, products:[]};
-      if (!chemMap[key].products.includes(item.product_name)) {
-        chemMap[key].count++;
-        chemMap[key].products.push(item.product_name);
-      }
-    });
-  });
-
-  const repeated = Object.values(chemMap).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count).slice(0,10);
-  const allChems = Object.values(chemMap).sort((a,b)=>b.count-a.count).slice(0,16);
-  const routineAvg = active.length
-    ? Math.round(active.reduce((s,h)=>s+(h.overall_score||h.score||5),0)/active.length*10)/10
-    : null;
-
-  const bg = isDark?"#080f0a":"#fafafa";
-
-  return (
-    <div style={{maxWidth:680, margin:"0 auto", padding:isMobile?"16px 12px 80px":"32px 24px 80px"}}>
-
-      {/* Header */}
-      <div style={{marginBottom:20}}>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 4px", letterSpacing:"-0.015em"}}>My <span style={{color:"var(--moss)"}}>routine</span></h1>
-        <p style={{fontSize:14, color:muted, margin:0}}>Track your real chemical exposure across everything in your home</p>
-      </div>
-
-      {history.length === 0 ? (
-        <div style={{textAlign:"center", padding:"60px 20px", color:muted}}>
-          <div style={{marginBottom:12, display:"flex", justifyContent:"center"}}><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" opacity="0.4"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
-          <div style={{fontSize:16, fontWeight:600, color:text, marginBottom:8}}>No scans yet</div>
-          <div style={{fontSize:14, lineHeight:1.6}}>Scan products to build your routine and see which chemicals appear most often across your home.</div>
-        </div>
-      ) : (<>
-
-        {/* Time filter + stats row */}
-        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:16, flexWrap:"wrap"}}>
-          {[["7d","Last week"],["30d","30 days"],["90d","90 days"],["1y","Annual"],["all","Lifetime"]].map(([val,label])=>(
-            <button key={val} onClick={()=>setTimeFilter(val)} style={{
-              fontSize:12, fontWeight:600, padding:"5px 12px", borderRadius:20, cursor:"pointer",
-              border:`1px solid ${timeFilter===val?"#16a34a":(isDark?"rgba(34,197,94,0.15)":"#e2e8f0")}`,
-              background:timeFilter===val?"#16a34a":"transparent",
-              color:timeFilter===val?"#fff":muted,
-            }}>{label}</button>
-          ))}
-          <span style={{fontSize:12, color:muted, marginLeft:"auto"}}>{active.length} active · {inactive.length} not using</span>
-        </div>
-
-        {/* Routine score card */}
-        {routineAvg !== null && (
-          <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, marginBottom:16, display:"flex", alignItems:"center", gap:16}}>
-            <div style={{textAlign:"center", flexShrink:0}}>
-              <ScoreBadge score={routineAvg} size="lg" />
-              <div style={{fontSize:11, color:muted, marginTop:2}}>avg score</div>
-            </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:14, fontWeight:700, color:scoreColor(Math.round(routineAvg)), marginBottom:6}}>{scoreLabel(Math.round(routineAvg))} routine</div>
-              <div style={{height:8, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
-                <div style={{height:"100%", width:`${Math.min(100,(routineAvg/10)*100)}%`, background:scoreColor(Math.round(routineAvg)), borderRadius:99, transition:"width 0.4s"}}/>
-              </div>
-              <div style={{fontSize:11, color:muted, marginTop:4}}>{active.length} products marked as in your home</div>
-            </div>
-          </div>
-        )}
-
-        {/* Repeated chemicals */}
-        {repeated.length > 0 && (
-          <div style={{background:isDark?"#1e1a1a":"#fff9f9", borderRadius:16, padding:"16px 20px", border:`1.5px solid #fca5a533`, marginBottom:16}}>
-            <div style={{fontSize:11, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:12}}>⚠ Repeated exposure across products</div>
-            <div style={{display:"flex", flexDirection:"column", gap:8}}>
-              {repeated.map((c,i)=>(
-                <div key={i} style={{display:"flex", alignItems:"flex-start", gap:10}}>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:3}}>
-                      <span style={{fontSize:13, fontWeight:700, color:"#dc2626"}}>{c.name}</span>
-                      <span style={{fontSize:10, fontWeight:700, color:"#fff", background:"#dc2626", padding:"1px 7px", borderRadius:20}}>{c.count}×</span>
-                    </div>
-                    <div style={{height:4, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#fee2e2", overflow:"hidden", marginBottom:3}}>
-                      <div style={{height:"100%", width:`${Math.min(100,(c.count/active.length)*100)}%`, background:"#dc2626", borderRadius:99}}/>
-                    </div>
-                    <div style={{fontSize:11, color:muted}}>{c.products.slice(0,2).join(", ")}{c.products.length>2?` +${c.products.length-2} more`:""}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{fontSize:11, color:"#d97706", marginTop:12, lineHeight:1.5, padding:"8px 10px", background:isDark?"#2a1a00":"#fffbeb", borderRadius:8, border:"1px solid #fde68a"}}>
-              Chemicals repeated across multiple products represent your highest real-world exposure — small amounts from each source compound over time.
-            </div>
-          </div>
-        )}
-
-        {/* All chemicals bubble cloud */}
-        {allChems.length > 0 && (
-          <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, padding:"16px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, marginBottom:16}}>
-            <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>All flagged substances in active routine</div>
-            <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
-              {allChems.map((c,i)=>(
-                <span key={i} style={{
-                  fontSize:12, fontWeight:600, padding:"4px 11px", borderRadius:20,
-                  background:c.count>=2?(isDark?"#2a1a1a":"#fef2f2"):(isDark?"#080f0a":"#f8fafb"),
-                  color:c.count>=2?"#dc2626":muted,
-                  border:`1px solid ${c.count>=2?"#fca5a544":(isDark?"rgba(34,197,94,0.15)":"#e5e7eb")}`,
-                }}>
-                  {c.name}{c.count>=2?` ×${c.count}`:""}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Product list */}
-        <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:16, border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, overflow:"hidden", marginBottom:16}}>
-          <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#f0f0f0"}`}}>
-            <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Your products</div>
-          </div>
-
-          {/* Active products */}
-          {active.map((item,i)=>{
-            const s = item.overall_score||item.score||5;
-            return (
-              <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`}}>
-                <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
-                  <div style={{fontSize:11, color:muted, textTransform:"capitalize"}}>{item.category}</div>
-                </div>
-                <div style={{display:"flex", gap:6, flexShrink:0}}>
-                  <button onClick={()=>onSelect(item)} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, background:"transparent", color:muted, cursor:"pointer"}}>View</button>
-                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.add(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:"1px solid #16a34a", background:"rgba(34,197,94,0.08)", color:"#16a34a", cursor:"pointer"}}>In my home</button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Inactive products */}
-          {inactive.length > 0 && (<>
-            <div style={{padding:"8px 20px", background:isDark?"#080f0a":"#fafafa"}}>
-              <div style={{fontSize:10, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.07em"}}>Not in my home</div>
-            </div>
-            {inactive.map((item,i)=>{
-              const s = item.overall_score||item.score||5;
-              return (
-                <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 20px", borderBottom:`1px solid ${isDark?"#1e2533":"#f5f5f5"}`, opacity:0.5}}>
-                  <div style={{flexShrink:0}}><ScoreBadge score={s} size="xs" /></div>
-                  <div style={{flex:1, minWidth:0}}>
-                    <div style={{fontSize:13, fontWeight:600, color:text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.product_name}</div>
-                    <div style={{fontSize:11, color:muted}}>Not using</div>
-                  </div>
-                  <button onClick={()=>setNotPurchased(p=>{const n=new Set(p);n.delete(item.product_name);return n;})} style={{fontSize:11, fontWeight:600, padding:"4px 10px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1d5db"}`, background:"transparent", color:muted, cursor:"pointer", flexShrink:0}}>Mark active</button>
-                </div>
-              );
-            })}
-          </>)}
-        </div>
-
-        {notPurchased.size > 0 && (
-          <button onClick={()=>setNotPurchased(new Set())} style={{fontSize:12, color:muted, background:"none", border:"none", cursor:"pointer", textDecoration:"underline"}}>
-            Reset — mark all as in my home
-          </button>
-        )}
-      </>)}
-    </div>
-  );
-};
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
@@ -5188,7 +3841,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>My <span style={{color:"var(--moss)"}}>scans</span></h1>
+        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Your <span style={{color:"var(--moss)"}}>shelf</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:isDark?"#1e2433":"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -6710,212 +5363,10 @@ const useAutoScroll = (ref, intervalMs, itemWidth, itemCount) => {
 
 // ── FOR YOU INTELLIGENCE CARDS ────────────────────────────────
 // ── AUDIT GRADE + COMPLETION ──────────────────────────────────
-const calculateAuditGrade = (items) => {
-  if(!items||items.length===0)return null;
-  const avg=items.reduce((s,i)=>s+(i.score||0),0)/items.length;
-  const grade=avg<=2?{letter:"A+",label:"Outstanding",color:"#16a34a"}:avg<=3?{letter:"A",label:"Excellent",color:"#16a34a"}:avg<=4?{letter:"B",label:"Good",color:"#16a34a"}:avg<=5?{letter:"C",label:"Fair",color:"#d97706"}:avg<=6?{letter:"D",label:"Poor",color:"#d97706"}:{letter:"F",label:"Needs work",color:"#dc2626"};
-  const flagged=items.filter(i=>(i.score||0)>=6);const clean=items.filter(i=>(i.score||0)<=3);
-  const worstItems=[...items].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,3);
-  return {avg:parseFloat(avg.toFixed(1)),grade,flaggedCount:flagged.length,cleanCount:clean.length,worstItems,itemCount:items.length};
-};
 
-const AuditCompleteScreen = ({session, isDark, surface, border, text, muted, isMobile, setPage, saveAuditSession, setResult, setQuery, analyze, generateShareCard}) => {
-  const result = calculateAuditGrade(session.items||[]);
-  if(!result)return null;
-  const bestSwap=(()=>{for(const item of result.worstItems){const alt=item.alternatives?.[0]||item.ai_alternatives?.[0];if(alt){const as=alt.score||alt.estimated_score||null;if(as&&as<(item.score||0)-1)return{from:item,alt,altScore:as};}}return null;})();
-
-  return (
-    <div style={{maxWidth:600,margin:"0 auto",padding:isMobile?"40px 20px 80px":"60px 40px 80px"}}>
-      <div style={{fontSize:11,fontWeight:700,color:result.grade.color,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,textAlign:"center"}}>{session.label} complete</div>
-      <div style={{textAlign:"center",marginBottom:32}}>
-        <div style={{fontSize:96,fontWeight:900,fontFamily:"'DM Sans', system-ui, sans-serif",color:result.grade.color,lineHeight:1,marginBottom:8}}>{result.grade.letter}</div>
-        <div style={{fontSize:18,fontWeight:600,color:result.grade.color,marginBottom:4}}>{result.grade.label}</div>
-        <div style={{fontSize:14,color:muted}}>Average score {result.avg}/10 across {result.itemCount} product{result.itemCount!==1?"s":""}</div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:28}}>
-        {[{value:result.itemCount,label:"scanned",color:text},{value:result.flaggedCount,label:"flagged",color:result.flaggedCount>0?"#dc2626":"#16a34a"},{value:result.cleanCount,label:"clean",color:"#16a34a"}].map((stat,i)=>(
-          <div key={i} style={{background:isDark?"#1e2433":"#f8faff",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:stat.color}}>{stat.value}</div>
-            <div style={{fontSize:11,color:muted,marginTop:2}}>{stat.label}</div>
-          </div>
-        ))}
-      </div>
-      {result.worstItems.length>0&&(
-        <div style={{marginBottom:28}}>
-          <div style={{fontSize:12,fontWeight:700,color:muted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:12}}>{result.flaggedCount>0?"Highest concern items":"Items to watch"}</div>
-          {result.worstItems.map((item,i)=>{
-            const alt=item.alternatives?.[0]||item.ai_alternatives?.[0];
-            const as=alt?.score||alt?.estimated_score||null;
-            return (
-              <div key={i} style={{marginBottom:8,padding:"14px 16px",borderRadius:12,background:isDark?"#1e2433":"#ffffff",border:`1px solid ${(item.score||0)>=7?"#fecaca":(isDark?"#2a3347":"#e5e7eb")}`}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:alt&&as&&as<(item.score||0)?10:0}}>
-                  <div style={{flex:1}}><div style={{fontSize:14,fontWeight:700,color:text}}>{item.product_name}</div>{item.summary&&<div style={{fontSize:12,color:muted,marginTop:2,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{item.summary}</div>}</div>
-                  <ScoreBadge score={item.score} size="sm"/>
-                </div>
-                {alt&&as&&as<(item.score||0)&&(
-                  <button onClick={()=>{setQuery(alt.name);analyze(alt.name);setPage("home");}} style={{width:"100%",padding:"8px 12px",borderRadius:8,background:isDark?"#1a2a1a":"#f0fdf4",border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",textAlign:"left"}}>
-                    <div><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2}}>Safer swap</div><div style={{fontSize:13,color:text,fontWeight:600}}>{alt.name}</div></div>
-                    <ScoreBadge score={as} size="xs"/>
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {bestSwap&&(
-        <div style={{padding:"14px 16px",borderRadius:12,background:isDark?"#1a2a1a":"#f0fdf4",border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`,marginBottom:28}}>
-          <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:4}}>Biggest opportunity</div>
-          <div style={{fontSize:14,color:text,fontWeight:600}}>Swap {bestSwap.from.product_name} for {bestSwap.alt.name}</div>
-          <div style={{fontSize:12,color:muted,marginTop:2}}>Save {((bestSwap.from.score||0)-bestSwap.altScore).toFixed(1)} points</div>
-        </div>
-      )}
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <button onClick={()=>generateShareCard(session,result)} style={{width:"100%",padding:"14px",borderRadius:12,background:result.grade.color,color:"#fff",border:"none",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
-        <button onClick={()=>{saveAuditSession(null);setPage("home");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
-      </div>
-    </div>
-  );
-};
 
 // ── AUDIT SESSION ─────────────────────────────────────────────
-const AUDIT_TYPES = {
-  pantry:{label:"Pantry Audit",description:"Score everything in your pantry and kitchen",categories:["food","food_beverage","beverage","snack","supplement"],icon:"P",color:"#16a34a"},
-  beauty:{label:"Beauty Audit",description:"Score your personal care and skincare routine",categories:["personal_care","skincare"],icon:"B",color:"#2d5a27"},
-  home:{label:"Home Audit",description:"Score your cleaning and home products",categories:["cleaning","home"],icon:"H",color:"#2563eb"},
-  closet:{label:"Closet Audit",description:"Score the clothing and textiles in your home",categories:["clothing"],icon:"C",color:"#d97706"},
-  nursery:{label:"Nursery Audit",description:"Score baby products, toys, and kids items",categories:["baby","toy"],icon:"N",color:"#dc2626"},
-};
 
-const AuditTypeSelector = ({isDark, border, text, muted, onSelect, onClose}) => (
-  <div style={{position:"fixed",inset:0,zIndex:9500,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end"}}>
-    <div style={{width:"100%",background:isDark?"#1e2433":"#ffffff",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px"}}>
-      <div style={{width:40,height:4,borderRadius:2,background:isDark?"#2a3347":"#e5e7eb",margin:"0 auto 20px"}}/>
-      <div style={{fontSize:18,fontWeight:700,color:text,marginBottom:6}}>Start an audit</div>
-      <div style={{fontSize:13,color:muted,marginBottom:20}}>Scan everything in one area to get a complete picture</div>
-      {Object.entries(AUDIT_TYPES).map(([type,config])=>(
-        <button key={type} onClick={()=>{onSelect(type);onClose();}} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,border:`1px solid ${border}`,background:"none",cursor:"pointer",marginBottom:8,textAlign:"left"}}>
-          <div style={{width:40,height:40,borderRadius:10,background:`${config.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:16,fontWeight:700,color:config.color}}>{config.icon}</div>
-          <div><div style={{fontSize:15,fontWeight:700,color:text}}>{config.label}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{config.description}</div></div>
-        </button>
-      ))}
-      <button onClick={onClose} style={{width:"100%",padding:"13px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer",marginTop:8}}>Cancel</button>
-    </div>
-  </div>
-);
-
-const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMobile, childMode, onFinish, onPause}) => {
-  const [localItems, setLocalItems] = useState(session.items||[]);
-  const [queryText, setQueryText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [lastResult, setLastResult] = useState(null);
-  const [showLastResult, setShowLastResult] = useState(false);
-  const [showPauseConfirm, setShowPauseConfirm] = useState(false);
-  const tilesRef = useRef(null);
-  const avgScore = localItems.length?(localItems.reduce((s,i)=>s+(i.score||0),0)/localItems.length).toFixed(1):null;
-  const flaggedCount = localItems.filter(i=>(i.score||0)>=6).length;
-  const sc = (s)=>!s?muted:s<=3?"#16a34a":s<=5?"#d97706":"#dc2626";
-
-  const scanProduct = async(name)=>{
-    if(!name.trim()||loading)return;
-    setLoading(true);setQueryText("");
-    try{
-      const res=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:name.trim(),childMode:childMode||false})});
-      const data=await res.json();
-      const item={id:`${Date.now()}-${Math.random().toString(36).slice(2,6)}`,product_name:data.product_name||name.trim(),score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),category:data.category,summary:data.summary,scannedAt:new Date().toISOString()};
-      const updated=[...localItems,item];setLocalItems(updated);setLastResult(item);setShowLastResult(true);
-      saveAuditSession({...session,items:updated});
-      setTimeout(()=>{setShowLastResult(false);setLoading(false);if(tilesRef.current)tilesRef.current.scrollTo({left:tilesRef.current.scrollWidth,behavior:"smooth"});},2000);
-    }catch{setLoading(false);}
-  };
-
-  const scanImage = async(file)=>{
-    if(!file)return;setLoading(true);
-    try{
-      const base64=await new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);img.onload=()=>{const c=document.createElement("canvas");const MAX=512;const r=Math.min(MAX/img.width,MAX/img.height,1);c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",0.80).split(",")[1]);};img.onerror=rej;img.src=url;});
-      const idRes=await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:base64,mediaType:"image/jpeg",childMode:childMode||false})});
-      const data=await idRes.json();
-      if(data.product_name){
-        const item={id:`${Date.now()}-${Math.random().toString(36).slice(2,6)}`,product_name:data.product_name,score:childMode?(data.child_score||data.overall_score||data.score):(data.overall_score||data.score),category:data.category,summary:data.summary,scannedAt:new Date().toISOString()};
-        const updated=[...localItems,item];setLocalItems(updated);setLastResult(item);setShowLastResult(true);
-        saveAuditSession({...session,items:updated});
-        setTimeout(()=>{setShowLastResult(false);setLoading(false);},2000);
-      }else setLoading(false);
-    }catch{setLoading(false);}
-  };
-
-  return (
-    <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark?"#0f1116":"#ffffff",display:"flex",flexDirection:"column"}}>
-      <div style={{padding:"16px 20px",borderBottom:`1px solid ${isDark?"#1e2433":"#e5e7eb"}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:session.color,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>{session.label}</div>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {avgScore?<span style={{fontSize:22,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(parseFloat(avgScore))}}>{avgScore}</span>:<span style={{fontSize:14,color:muted}}>Scan your first item</span>}
-            {localItems.length>0&&<span style={{fontSize:12,color:muted}}>{localItems.length} item{localItems.length!==1?"s":""}{flaggedCount>0&&<span style={{color:"#dc2626",fontWeight:700,marginLeft:6}}>{flaggedCount} flagged</span>}</span>}
-          </div>
-        </div>
-        <button onClick={()=>setShowPauseConfirm(true)} style={{padding:"8px 14px",borderRadius:10,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",color:muted,fontSize:13,fontWeight:600,cursor:"pointer"}}>Pause</button>
-      </div>
-
-      {showLastResult&&lastResult&&(
-        <div style={{margin:"12px 20px",padding:"12px 16px",borderRadius:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div><div style={{fontSize:14,fontWeight:700,color:text}}>{lastResult.product_name}</div>{lastResult.summary&&<div style={{fontSize:12,color:muted,marginTop:2,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{lastResult.summary}</div>}</div>
-          <div style={{fontSize:24,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(lastResult.score),marginLeft:16,flexShrink:0}}>{lastResult.score}</div>
-        </div>
-      )}
-
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
-        {loading?(
-          <div style={{textAlign:"center"}}><div style={{fontSize:16,color:muted,marginBottom:8}}>Scoring...</div></div>
-        ):(
-          <>
-            <div style={{fontSize:15,fontWeight:600,color:text,marginBottom:16,textAlign:"center"}}>{localItems.length===0?"Scan or type your first product":"Scan next product"}</div>
-            <div style={{width:"100%",display:"flex",gap:8,marginBottom:16}}>
-              <input value={queryText} onChange={e=>setQueryText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&queryText.trim())scanProduct(queryText.trim());}} placeholder="Type product name..." autoComplete="off" style={{flex:1,padding:"14px 16px",borderRadius:12,fontSize:16,border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:isDark?"#1e2433":"#f9fafb",color:text,outline:"none"}}/>
-              <button onClick={()=>{if(queryText.trim())scanProduct(queryText.trim());}} disabled={!queryText.trim()} style={{padding:"14px 20px",borderRadius:12,border:"none",background:queryText.trim()?"#16a34a":(isDark?"#1e2433":"#f1f5f9"),color:queryText.trim()?"#fff":muted,fontWeight:700,fontSize:15,cursor:queryText.trim()?"pointer":"not-allowed"}}>Scan</button>
-            </div>
-            <label style={{display:"flex",alignItems:"center",gap:8,padding:"12px 20px",borderRadius:12,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",cursor:"pointer",color:muted,fontSize:14}}>
-              <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f){e.target.value="";scanImage(f);}}}/>
-              Take a photo of the label
-            </label>
-          </>
-        )}
-      </div>
-
-      {localItems.length>0&&(
-        <div style={{borderTop:`1px solid ${isDark?"#1e2433":"#e5e7eb"}`,padding:"12px 0"}}>
-          <div ref={tilesRef} style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:"0 20px"}}>
-            {localItems.map((item,i)=>(
-              <div key={item.id||i} style={{flexShrink:0,width:72,height:80,borderRadius:10,padding:"8px 6px",background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",textAlign:"center"}}>
-                <div style={{fontSize:18,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(item.score),lineHeight:1}}>{item.score}</div>
-                <div style={{fontSize:9,color:muted,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.product_name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {localItems.length>=1&&(
-        <div style={{padding:"12px 20px 32px"}}>
-          <button onClick={()=>onFinish({...session,items:localItems,status:"completed",completedAt:new Date().toISOString()})} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:session.color,color:"#fff",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:16,cursor:"pointer"}}>Finish {session.label}<span style={{fontSize:13,opacity:0.8,marginLeft:8}}>{localItems.length} item{localItems.length!==1?"s":""}</span></button>
-        </div>
-      )}
-
-      {showPauseConfirm&&(
-        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
-          <div style={{background:isDark?"#1e2433":"#fff",borderRadius:16,padding:"24px",width:"100%",maxWidth:320}}>
-            <div style={{fontSize:17,fontWeight:700,color:text,marginBottom:8}}>Pause this audit?</div>
-            <div style={{fontSize:13,color:muted,marginBottom:20,lineHeight:1.5}}>Your {localItems.length} item{localItems.length!==1?"s":""} will be saved. You can resume from the home screen.</div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setShowPauseConfirm(false)} style={{flex:1,padding:"12px",borderRadius:10,border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,background:"none",color:muted,fontWeight:600,cursor:"pointer"}}>Keep scanning</button>
-              <button onClick={()=>{setShowPauseConfirm(false);onPause();}} style={{flex:1,padding:"12px",borderRadius:10,border:"none",background:session.color,color:"#fff",fontWeight:700,cursor:"pointer"}}>Pause</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ── LIFESTYLE SCORE ───────────────────────────────────────────
 const computeLifestyleScore = (history) => {
@@ -7205,19 +5656,12 @@ const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPa
   );
 };
 
-const generateForYouCards = (history, lists, childMode) => {
+const generateForYouCards = (history, childMode) => {
   if(!history||history.length===0)return [];
   const cards=[];
-  // Active audit resume card — always first
-  try{const saved=localStorage.getItem("ps_audit_session");if(saved){const s=JSON.parse(saved);if(s?.status==="active"){const avg=s.items?.length?(s.items.reduce((a,i)=>a+(i.score||0),0)/s.items.length).toFixed(1):null;cards.push({type:"active_audit",priority:10,headline:`${s.label} in progress`,body:s.items?.length?`${s.items.length} items scanned${avg?` · avg ${avg}`:""}`:"You started an audit — tap to continue.",label:"Resume audit",labelColor:s.color||"#16a34a",action:"Continue scanning",actionType:"resume_audit"});}}}catch{}
-  // Recently completed audit (within 7 days)
-  try{const saved=localStorage.getItem("ps_last_audit");if(saved){const a=JSON.parse(saved);const da=(Date.now()-new Date(a.completedAt).getTime())/(1000*60*60*24);if(da<=7&&a.grade)cards.push({type:"completed_audit",priority:6,headline:`${a.label} — Grade ${a.grade}`,body:`${a.itemCount} products scored · avg ${a.avg}. ${a.flaggedCount>0?`${a.flaggedCount} items to swap.`:"Looking good."}`,label:"Completed",labelColor:"#16a34a",action:"View results",actionPage:"history"});}}catch{}
   // Lifestyle score card
   const lifestyleScore = computeLifestyleScore(history);
-  if(lifestyleScore&&lifestyleScore.productCount>=10){const at=lifestyleScore.trend==="improving"?`Down ${lifestyleScore.delta} — keep going`:lifestyleScore.worstCategory?`${lifestyleScore.worstCategory.label} pulling score up`:"See what is moving your score";cards.push({type:"lifestyle_score",priority:7,headline:`Your routine scores ${lifestyleScore.current}`,body:at,label:lifestyleScore.trend==="improving"?"Improving":"Your routine",labelColor:lifestyleScore.trend==="improving"?"#16a34a":"#d97706",action:"See breakdown",actionPage:"history"});}
-  // Audit suggestion from scan history
-  const suggestion = getSuggestedAudit(history);
-  if(suggestion){const cl=suggestion.type==="pantry"?"food and pantry":suggestion.type==="beauty"?"personal care":suggestion.type==="home"?"home and cleaning":suggestion.type;cards.push({type:"audit_suggestion",priority:suggestion.count>=8?8:6,headline:`Start your ${suggestion.label}`,body:`Based on ${suggestion.count} ${cl} scans`,label:"Ready for you",labelColor:AUDIT_TYPES[suggestion.type]?.color||"#16a34a",action:`Start ${suggestion.label}`,actionType:"start_audit",auditType:suggestion.type});}
+  if(lifestyleScore&&lifestyleScore.productCount>=10){const at=lifestyleScore.trend==="improving"?`Down ${lifestyleScore.delta} — keep going`:lifestyleScore.worstCategory?`${lifestyleScore.worstCategory.label} pulling score up`:"See what is moving your score";cards.push({type:"lifestyle_score",priority:7,headline:`Your shelf scores ${lifestyleScore.current}`,body:at,label:lifestyleScore.trend==="improving"?"Improving":"Your shelf",labelColor:lifestyleScore.trend==="improving"?"#16a34a":"#d97706",action:"See breakdown",actionPage:"history"});}
   const EU_BANNED=[{compound:"titanium dioxide",reason:"banned as a food additive in the EU since 2022",label:"EU banned food additive"},{compound:"Red 40",reason:"under restriction in the EU — requires warning label",label:"EU warning label required"},{compound:"Yellow 5",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"Yellow 6",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"BHT",reason:"banned in several EU countries as a food preservative",label:"EU restricted preservative"},{compound:"BHA",reason:"classified as possible carcinogen, restricted in EU",label:"EU restricted preservative"},{compound:"propyl paraben",reason:"banned in EU cosmetics as endocrine disruptor",label:"EU banned in cosmetics"},{compound:"triclosan",reason:"banned in EU personal care products",label:"EU banned compound"},{compound:"oxybenzone",reason:"banned in EU reef-protection zones, under review",label:"EU under restriction"},{compound:"PFAS",reason:"comprehensive EU restriction effective 2025",label:"EU restricted PFAS"},{compound:"PFOA",reason:"banned globally under Stockholm Convention",label:"Globally banned"}];
   const euFindings=[];
   history.forEach(item=>{const ac=[...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),...(item.harmful_chemicals||[]),item.summary||""].join(" ").toLowerCase();EU_BANNED.forEach(b=>{if(ac.includes(b.compound.toLowerCase()))euFindings.push({product:item.product_name,compound:b.compound,reason:b.reason,label:b.label,score:item.overall_score||item.score});});});
@@ -7225,7 +5669,7 @@ const generateForYouCards = (history, lists, childMode) => {
   const compoundMap={};
   history.forEach(item=>{[...(item.harmful_chemicals||[]),...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||"").filter(c=>c.length>0)].forEach(chem=>{const k=chem.toLowerCase().slice(0,30);if(!compoundMap[k])compoundMap[k]={name:chem,products:[],count:0};if(!compoundMap[k].products.includes(item.product_name)){compoundMap[k].products.push(item.product_name);compoundMap[k].count++;}});});
   const patterns=Object.values(compoundMap).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count);
-  if(patterns.length>0){const t=patterns[0];cards.push({type:"pattern",priority:8,headline:`${t.name} appears in ${t.count} of your products`,body:`Found in ${t.products.slice(0,3).join(", ")}${t.products.length>3?` and ${t.products.length-3} more`:""}. Cumulative exposure compounds over time.`,label:"Exposure pattern",labelColor:"#dc2626",action:"View my scans",actionPage:"history"});}
+  if(patterns.length>0){const t=patterns[0];cards.push({type:"pattern",priority:8,headline:`${t.name} appears in ${t.count} of your products`,body:`Found in ${t.products.slice(0,3).join(", ")}${t.products.length>3?` and ${t.products.length-3} more`:""}. Cumulative exposure compounds over time.`,label:"Exposure pattern",labelColor:"#dc2626",action:"View my shelf",actionPage:"history"});}
   const highConcern=[...history].filter(h=>(h.overall_score||h.score||0)>=7).sort((a,b)=>(b.overall_score||b.score||0)-(a.overall_score||a.score||0))[0];
   if(highConcern){const tc=highConcern.concerns?.[0];const ct=tc?(typeof tc==="string"?tc:tc.concern||""):highConcern.summary||"";cards.push({type:"high_concern",priority:6,headline:`${highConcern.product_name} scores ${highConcern.overall_score||highConcern.score}`,body:ct?ct.slice(0,100)+(ct.length>100?"...":""):"One of the highest-concern products in your routine.",label:"High concern",labelColor:"#dc2626",score:highConcern.overall_score||highConcern.score,action:"Find safer alternatives",actionPage:"result",productName:highConcern.product_name});}
   const cleanWin=[...history].filter(h=>(h.overall_score||h.score||0)<=2).sort((a,b)=>new Date(b.scannedAt)-new Date(a.scannedAt))[0];
@@ -7233,23 +5677,19 @@ const generateForYouCards = (history, lists, childMode) => {
   const swapPending=[...history].filter(h=>{const s=h.overall_score||h.score||0;const ha=(h.alternatives||[]).length>0||(h.ai_alternatives||[]).length>0;const da=h.scannedAt?(Date.now()-new Date(h.scannedAt).getTime())/(1000*60*60*24):999;return s>=6&&ha&&da<=30;}).sort((a,b)=>(b.overall_score||b.score||0)-(a.overall_score||a.score||0))[0];
   if(swapPending){const alt=swapPending.alternatives?.[0]||swapPending.ai_alternatives?.[0];cards.push({type:"swap_pending",priority:5,headline:`Have you swapped ${swapPending.product_name} yet?`,body:alt?`${alt.name} scores ${alt.score||alt.estimated_score||"lower"} — a meaningful improvement.`:"A cleaner alternative is available in the same category.",label:"Swap available",labelColor:"#d97706",score:swapPending.overall_score||swapPending.score,action:"See swap",actionPage:"result",productName:swapPending.product_name});}
   const now=new Date(),hour=now.getHours(),day=now.getDay(),month=now.getMonth();
-  if((day===4||day===5)&&!lists.some(l=>l.type==="grocery"&&(l.items||[]).some(i=>!i.checked))){const fs=history.filter(h=>["food","food_beverage","snack","beverage"].includes(h.category)).length;if(fs>=3)cards.push({type:"contextual_grocery",priority:7,headline:"Planning your weekend shop?",body:`You have ${fs} food products scanned. Build a scored list before you leave.`,label:"Shopping day",labelColor:"#2563eb",action:"Build grocery list",actionPage:"lists"});}
   if(hour>=6&&hour<=9){const pc=history.filter(h=>["personal_care","skincare"].includes(h.category)&&(h.overall_score||h.score||0)>=5);if(pc.length>=2)cards.push({type:"contextual_morning",priority:5,headline:"Your morning routine has room to improve",body:`${pc.length} personal care products score 5 or above. Small swaps add up.`,label:"Morning insight",labelColor:"#d97706",action:"View personal care",actionPage:"history"});}
   if(childMode){const kh=history.filter(h=>(h.child_score||h.overall_score||h.score||0)>=6).length;if(kh>=1)cards.push({type:"contextual_kids",priority:8,headline:`${kh} product${kh!==1?"s":""} score higher for children`,body:"Children are more sensitive to certain compounds. These items warrant attention.",label:"Kids mode insight",labelColor:"#2563eb",action:"View flagged items",actionPage:"history"});}
   return cards.sort((a,b)=>b.priority-a.priority).slice(0,6);
 };
 
-const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history, onStartAudit, onResumeAudit}) => {
+const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
   const scrollRef = useRef(null);
   const CW = isMobile ? 280 : 320;
   const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
   if(!cards||cards.length===0)return null;
   const handleAction=(card)=>{
-    if(card.actionType==="resume_audit"){if(onResumeAudit)onResumeAudit();return;}
-    if(card.actionType==="start_audit"&&card.auditType){if(onStartAudit)onStartAudit(card.auditType);return;}
     if(card.type==="live_intel"){if(card.actionUrl)window.open(card.actionUrl,"_blank");else if(card.actionPage)setPage(card.actionPage);return;}
-    if(card.actionPage==="lists")setPage("lists");
-    else if(card.actionPage==="history")setPage("history");
+    if(card.actionPage==="history")setPage("history");
     else if(card.actionPage==="result"&&card.productName){const hi=history.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}
     else setPage("home");
   };
@@ -7374,60 +5814,6 @@ function App() {
   };
   const [menuOpen,    setMenuOpen]   = useState(false);
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
-  const [lists,       setLists]     = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_lists")||"[]");}catch{return [];}});
-  const saveLists = (updatedOrFn) => { setLists(prev => { const next = typeof updatedOrFn === "function" ? updatedOrFn(prev) : updatedOrFn; try{localStorage.setItem("ps_lists",JSON.stringify(next));}catch{} return next; }); };
-  const createShoppingList = (name) => {
-    const newList = {id:Date.now().toString(), name:name||"Shopping List", type:"shopping", items:[], createdAt:new Date().toISOString(), lastOpenedAt:new Date().toISOString()};
-    const updated = [newList,...lists]; saveLists(updated); return newList.id;
-  };
-  const addItemToList = (listId, item) => { const withId = item.id ? item : {...item, id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`}; saveLists(lists.map(l=>l.id===listId?{...l,items:[...(l.items||[]),withId],lastOpenedAt:new Date().toISOString()}:l)); };
-  const toggleListItem = (listId, itemIndex) => { saveLists(lists.map(l=>l.id===listId?{...l,items:l.items.map((item,i)=>i===itemIndex?{...item,checked:!item.checked}:item)}:l)); };
-  const createGroceryList = (store, budget) => {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-US",{month:"short",day:"numeric"});
-    const newList = {id:Date.now().toString(), name:`${store} — ${dateStr}`, type:"grocery", store, budget:parseFloat(budget)||0, items:[], createdAt:now.toISOString(), lastOpenedAt:now.toISOString()};
-    const updated = [newList,...lists]; saveLists(updated); return newList.id;
-  };
-  const addGroceryItem = async (listId, productName) => {
-    if (!productName.trim()) return;
-    const itemId = `${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const tempItem = {id:itemId, text:productName.trim(), score:null, category:null, summary:null, checked:false, scoring:true, scoreError:false, addedAt:new Date().toISOString()};
-    saveLists(prev=>prev.map(l=>l.id===listId?{...l,items:[...(l.items||[]),tempItem]}:l));
-    try {
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:productName.trim(),childMode:childMode||false})});
-      const data = await res.json();
-      const finalScore = childMode ? (data.child_score||data.overall_score||data.score) : (data.overall_score||data.score);
-      saveLists(prev=>prev.map(l=>{
-        if(l.id!==listId)return l;
-        return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,score:finalScore,baseScore:data.overall_score||data.score,childScore:data.child_score||null,category:data.category,summary:data.summary,scoring:false,scoreError:false}:it)};
-      }));
-      if (finalScore >= 5.5) findSwapSuggestion(listId, itemId, productName.trim(), data.category, finalScore);
-      // Background price lookup
-      fetch(`${API_BASE}/api/price-lookup?query=${encodeURIComponent(productName.trim())}`).then(r=>r.json()).then(pd=>{
-        if(pd.price)saveLists(prev=>prev.map(l=>{if(l.id!==listId)return l;return{...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,estimatedPrice:pd.price,priceSource:"amazon",asin:pd.asin||null}:it)};}));
-      }).catch(()=>{});
-    } catch {
-      saveLists(prev=>prev.map(l=>{
-        if(l.id!==listId)return l;
-        return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,scoring:false,scoreError:true}:it)};
-      }));
-    }
-  };
-  const findSwapSuggestion = async (listId, itemId, productName, category, origScore) => {
-    const FOOD_CATS = ["food","food_beverage","beverage","snack"];
-    const swapQuery = FOOD_CATS.includes(category) ? `organic ${productName}` : `natural alternative to ${productName}`;
-    try {
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:swapQuery})});
-      const data = await res.json();
-      const swapScore = data.overall_score || data.score;
-      if (swapScore && origScore && (origScore - swapScore) >= 1.5) {
-        saveLists(prev=>prev.map(l=>{
-          if(l.id!==listId)return l;
-          return {...l,items:(l.items||[]).map(it=>it.id===itemId?{...it,swapSuggestion:{name:data.product_name, score:swapScore, summary:data.summary}}:it)};
-        }));
-      }
-    } catch {}
-  };
   const [displayName, setDisplayName] = useState(()=>{try{return localStorage.getItem("partiqule_display_name")||"";}catch{return "";}});
   const [liveIntelCards, setLiveIntelCards] = useState([]);
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
@@ -7465,26 +5851,6 @@ function App() {
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
   const [scanSheetOpen, setScanSheetOpen] = useState(false);
-  const [auditSession, setAuditSession] = useState(null);
-  const [auditSessionVisible, setAuditSessionVisible] = useState(false);
-  const [showAuditSelector, setShowAuditSelector] = useState(false);
-  const [completedAuditSession, setCompletedAuditSession] = useState(null);
-  const generateAuditShareCard = (session, result) => {
-    const c=document.createElement("canvas");c.width=1080;c.height=1080;const ctx=c.getContext("2d");
-    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,1080,1080);
-    ctx.fillStyle=result.grade.color;ctx.fillRect(0,0,1080,12);
-    ctx.font="600 28px Arial";ctx.fillStyle="#999999";ctx.textAlign="center";ctx.fillText("PARTIQULE",540,100);
-    ctx.font="600 32px Arial";ctx.fillStyle="#333333";ctx.fillText(session.label,540,155);
-    ctx.font="900 220px Arial";ctx.fillStyle=result.grade.color;ctx.fillText(result.grade.letter,540,480);
-    ctx.font="600 36px Arial";ctx.fillText(result.grade.label,540,540);
-    ctx.font="500 28px Arial";ctx.fillStyle="#999999";ctx.fillText(`Score ${result.avg}/10 · ${result.itemCount} products`,540,590);
-    const stats=[`${result.flaggedCount} flagged`,`${result.cleanCount} clean`];const pw=240,ph=58,tw=stats.length*pw+(stats.length-1)*16,sx=(1080-tw)/2;
-    stats.forEach((st,i)=>{const x=sx+i*(pw+16);ctx.fillStyle="#f1f5f9";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,640,pw,ph,12);else ctx.rect(x,640,pw,ph);ctx.fill();ctx.font="600 22px Arial";ctx.fillStyle="#333333";ctx.textAlign="center";ctx.fillText(st,x+pw/2,676);});
-    ctx.font="400 22px Arial";ctx.fillStyle="#bbbbbb";ctx.textAlign="center";ctx.fillText("partiqule.com",540,1030);
-    c.toBlob(blob=>{if(!blob)return;if(navigator.share&&navigator.canShare?.({files:[new File([blob],"partiqule-audit.png",{type:"image/png"})]}))navigator.share({files:[new File([blob],"partiqule-audit.png",{type:"image/png"})],title:`My ${session.label} Results`}).catch(()=>{});else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="partiqule-audit.png";a.click();}},"image/png");
-  };
-  const saveAuditSession = (s)=>{setAuditSession(s);try{if(s)localStorage.setItem("ps_audit_session",JSON.stringify(s));else localStorage.removeItem("ps_audit_session");}catch{}};
-  const startAuditSession = (type)=>{const config=AUDIT_TYPES[type];if(!config)return;const session={id:`local-${Date.now()}`,type,label:config.label,color:config.color,categories:config.categories,items:[],startedAt:new Date().toISOString(),status:"active"};saveAuditSession(session);setAuditSessionVisible(true);setResult(null);setPage("home");};
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   // Branded loading phase between barcode detection and result. null | "loading" | "error".
   const [barcodeLoadingPhase, setBarcodeLoadingPhase] = useState(null);
@@ -7783,11 +6149,10 @@ function App() {
     if (path === "/terms") { setPage("terms"); return; }
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
-    if (path === "/lists") { setPage("lists"); return; }
     if (path === "/feed") { setPage("feed"); return; }
     if (path === "/account") { setPage("settings"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/lists", "/account", "/feed"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -7807,8 +6172,6 @@ function App() {
 
   // Fetch live intelligence cards on mount
   useEffect(()=>{fetch(`${API_BASE}/api/intelligence-cards`).then(r=>r.json()).then(d=>setLiveIntelCards(d.cards||[])).catch(()=>{});},[]);
-  // Restore active audit session on mount
-  useEffect(()=>{try{const s=JSON.parse(localStorage.getItem("ps_audit_session")||"null");if(s?.status==="active")setAuditSession(s);}catch{}},[]);
 
   // Scroll to top on every page change and every result load
   useEffect(() => {
@@ -8233,9 +6596,7 @@ function App() {
                 {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
                 {label:"Feed",       action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active:page==="feed"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
-                {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active:page==="lists"},
-                {label:"Audit",      action:()=>setShowAuditSelector(true),                   active:false},
-                {label:"My Scans",   action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
+                {label:"Shelf",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
                   fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?700:500,
@@ -8243,7 +6604,7 @@ function App() {
                   cursor:"pointer", padding:"6px 12px", borderRadius:8,
                   background:item.active?"rgba(34,197,94,0.1)":"transparent",
                   transition:"all 0.15s",
-                }}>{item.label}{item.label==="My Scans"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}{item.label==="Lists"&&(()=>{try{const ct=lists.reduce((s,l)=>s+(l.items||[]).filter(x=>!x.checked).length,0);if(ct>0)return <span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{ct}</span>;}catch{}return null;})()}</span>
+                }}>{item.label}{item.label==="Shelf"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
               ))}
               {isAdminUser(user) && (
                 <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
@@ -8271,14 +6632,11 @@ function App() {
               {label:"The Science",  pg:"science"},
               {label:"How it Works", pg:"methodology"},
               {label:"Guides",       pg:"guides"},
-              {label:"My Routine",   pg:"routine"},
-              {label:"My Scans",     pg:"history"},
-              {label:"Start Audit",  pg:"_audit"},
+              {label:"Shelf",        pg:"history"},
               {label:"Settings",     pg:"settings"},
               ...(isAdminUser(user) ? [{label:"Admin", pg:"admin"}] : []),
             ].map(item=>(
               <button key={item.pg} onClick={()=>{
-                if(item.pg==="_audit"){setShowAuditSelector(true);setMenuOpen(false);return;}
                 if(item.pg==="guides") navigateTo("guides");
                 else { setPage(item.pg); setResult(null); }
                 setMenuOpen(false);
@@ -8430,28 +6788,7 @@ function App() {
           </button>
         </div>
       ) : page === "feed" ? (
-        <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, lists, childMode)} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
-      ) : page === "audit-complete" && completedAuditSession ? (
-        <AuditCompleteScreen session={completedAuditSession} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} saveAuditSession={saveAuditSession} setResult={setResult} setQuery={setQuery} analyze={analyze} generateShareCard={generateAuditShareCard}/>
-      ) : page === "lists" ? (
-        <ListsPage
-          lists={lists} saveLists={saveLists} createShoppingList={createShoppingList}
-          createGroceryList={createGroceryList} addGroceryItem={addGroceryItem}
-          addItemToList={addItemToList} toggleListItem={toggleListItem}
-          findSwapSuggestion={findSwapSuggestion} childMode={childMode}
-          history={history} isDark={isDark} surface={surface} border={border}
-          text={text} muted={muted} isMobile={isMobile} user={user}
-          onSelect={(item)=>{setResult(item); setPage("home");}}
-          onSearch={(q)=>{setPage("home"); setQuery(q); analyze(q);}}
-        />
-      ) : page === "routine" ? (
-        <RoutinePage
-          history={history}
-          isDark={isDark} surface={surface} border={border} text={text} muted={muted}
-          isMobile={isMobile} user={user}
-          onSelect={(item)=>{setResult(item); setPage("home");}}
-          onSearch={(q)=>{setPage("home"); setQuery(q); analyze(q);}}
-        />
+        <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
       ) : page === "history" ? (
         <HistoryPage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
@@ -8944,11 +7281,11 @@ function App() {
 
                   {/* For You intelligence carousel — static + live cards merged */}
                   {(() => {
-                    const staticCards = generateForYouCards(history, lists, childMode);
+                    const staticCards = generateForYouCards(history, childMode);
                     const relevantLive = filterLiveCards(liveIntelCards, history).map(c=>({type:"live_intel",priority:c.priority||8,headline:c.headline,body:c.body,label:c.label||"News",labelColor:c.label_color||"#d97706",action:c.action_text||"Learn more",actionUrl:c.action_url||null,actionPage:c.action_page||null,sourceName:c.source_name,sourceUrl:c.source_url}));
                     const allCards = [...relevantLive,...staticCards].sort((a,b)=>b.priority-a.priority).slice(0,8);
                     if (!allCards.length) return null;
-                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history} onStartAudit={startAuditSession} onResumeAudit={()=>setAuditSessionVisible(true)}/>;
+                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
                   })()}
 
                   {/* This Week recap — mockup pattern */}
@@ -10191,17 +8528,8 @@ function App() {
                   </button>
                 </div>
 
-                {/* Peer comparison, ScoreExplainer, food info, ExposureCalculator, and CTA
-                    HIERARCHY were previously rendered here. Their content is now replaced
-                    by THE WHY / BREAKING IT DOWN / WORTH KNOWING / primary action row above
-                    (Session 4.1 — details-alts mockup). Components remain defined for
-                    potential reuse on other surfaces. */}
-                {/* Add to shopping list — home-relevant categories (preserved utility) */}
-                {["food","food_beverage","beverage","snack","supplement","cleaning","home","personal_care","baby"].includes(result?.category) && (
-                  <div style={{marginTop:10}}>
-                    <AddToListButton result={result} lists={lists} createShoppingList={createShoppingList} addItemToList={addItemToList} muted={muted}/>
-                  </div>
-                )}
+                {/* THE WHY / BREAKING IT DOWN / WORTH KNOWING / primary action row above
+                    replace the prior dimension dropdowns and score explainer stack. */}
 
               </div>
 
@@ -10703,21 +9031,6 @@ function App() {
         </>
       )}
 
-      {/* Audit session overlay */}
-      {auditSessionVisible && auditSession && (
-        <AuditSessionView session={auditSession} saveAuditSession={saveAuditSession} isDark={isDark} text={text} muted={muted} isMobile={isMobile} childMode={childMode}
-          onFinish={(completed)=>{
-            setAuditSessionVisible(false);setCompletedAuditSession(completed);saveAuditSession(null);setPage("audit-complete");
-            const grade=calculateAuditGrade(completed.items);
-            try{localStorage.setItem("ps_last_audit",JSON.stringify({label:completed.label,type:completed.type,grade:grade?.grade?.letter,avg:grade?.avg,itemCount:grade?.itemCount,flaggedCount:grade?.flaggedCount,completedAt:new Date().toISOString()}));}catch{}
-          }}
-          onPause={()=>setAuditSessionVisible(false)}
-        />
-      )}
-
-      {/* Audit type selector */}
-      {showAuditSelector && <AuditTypeSelector isDark={isDark} border={border} text={text} muted={muted} onSelect={startAuditSession} onClose={()=>setShowAuditSelector(false)}/>}
-
       {/* Compare share card modal */}
       {compareAlt && result && (
         <ShareCompareCard result={result} alternative={compareAlt} onClose={() => setCompareAlt(null)}/>
@@ -10797,17 +9110,13 @@ function App() {
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"Feed",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active: page==="feed" },
               { label:"Scan",    icon:null, action:()=>{setScanSheetOpen(o=>!o); setModalQuery("");}, active:false, isScan:true },
-              { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 000 4h6a2 2 0 000-4M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12l2 2 4-4"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" },
+              { label:"Shelf",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
               item.isScan ? (
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
                   <div onClick={()=>{isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();}}
-                    onContextMenu={e=>{e.preventDefault();setShowAuditSelector(true);}}
-                    onTouchStart={()=>{window._lpt=setTimeout(()=>setShowAuditSelector(true),500);}}
-                    onTouchEnd={()=>clearTimeout(window._lpt)}
-                    onTouchMove={()=>clearTimeout(window._lpt)}
                     style={{width:52, height:52, borderRadius:"50%", background:"linear-gradient(135deg,#22c55e,#16a34a)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.1)", marginTop:-14, animation:"pulseScan 2.5s ease-in-out infinite"}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
@@ -10919,7 +9228,7 @@ function App() {
           {[
             {label:"About",           pg:"about",       path:"/about"},
             {label:"The Science",     pg:"science",     path:"/science"},
-            {label:"My Scans",        pg:"history",     path:"/history"},
+            {label:"Shelf",           pg:"history",     path:"/history"},
             {label:"How It Works",    pg:"methodology", path:"/methodology"},
             {label:"Privacy Policy",  pg:"privacy",     path:"/privacy"},
             {label:"Terms of Service",pg:"terms",       path:"/terms"},
