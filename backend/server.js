@@ -1687,7 +1687,8 @@ NUTRITION: For ANY food, beverage, supplement, or restaurant product — read th
     "confidence": "high|medium|low",
     "confidence_note": "max 10 words"
   },
-  "summary": "max 30 words",
+  "summary_short": "max 30 words, first-person friend voice, plain language, no regulatory jargon",
+  "summary_long": "60 to 100 words, research tone with specific regulatory details, lab testing references, brand progress, and historical context",
   "ingredient_list": ["ingredient 1", "ingredient 2"],
   "raw_concerns": ["concern 1"],
   "confidence": "high|medium|low",
@@ -1698,7 +1699,8 @@ NUTRITION: For ANY food, beverage, supplement, or restaurant product — read th
 NOTE: For ANY food, beverage, supplement, or restaurant product — populate nutrition with values you know or can reasonably confirm. This is non-negotiable for all food categories. Every packaged food sold in the US is required by FDA to display nutrition facts — this data is always publicly available. Populate at minimum sugar_g, sodium_mg, sat_fat_g, and calories for every food product. For restaurant items from major chains, use the chain's published nutrition data. Set nutrition_verified: false if estimating, true only if certain. Set individual fields to null if unknown — partial data is useful. Only set the entire nutrition object to null for non-food products like clothing or home goods.
 NOVA 4 NUTRITION RULE: For any NOVA 4 ultra-processed product, you MUST populate at minimum sugar_g, sodium_mg, and calories from the label — this data is publicly available on every packaged food sold in the US. If a NOVA 4 product has added sugars that exceed 20% of daily value (10g+), this must show as a nutrition concern. Nutrition badges showing % DV are a core part of the score for processed foods.
 INGREDIENT_LIST RULE: For ALL food, beverage, supplement, and personal care products, populate ingredient_list with the actual ingredients in order as they appear on the label. For food products, this is always publicly available via FDA-required labeling. Return each ingredient as a separate string in the array. If a product has sub-ingredients (e.g. "CHOCOLATE CHIPS (sugar, cocoa butter, chocolate)"), include the parent ingredient only. If you cannot find the ingredient list for a truly obscure product, return an empty array. Never return null for ingredient_list on food products.
-SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.` }
+SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.
+SUMMARY VOICE RULE (CRITICAL): summary_short and summary_long must both be honest about concerns, but differ in tone. They describe the SAME facts — just at different depth. summary_short is 2 to 3 sentences max, first-person friend voice ("I would swap if you can", "mostly the fabric"), plain language, no regulatory jargon, no lab measurements or ppm numbers, no brand-history details, no sentence longer than 18 words. summary_long is 60 to 100 words (3 to 5 sentences), research tone, includes regulatory details (EU restrictions, FDA rulings, state bans), lab testing references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes (phase-outs, certifications, formulation changes with dates), and historical context. Never soften summary_short to hide what summary_long says.` }
         ]
       }]
     })
@@ -4008,7 +4010,8 @@ Return ONLY this JSON:
     "confidence": "high|medium|low",
     "confidence_note": "max 10 words"
   },
-  "summary": "max 30 words covering the main risk or safety story",
+  "summary_short": "max 30 words, first-person friend voice, plain language, no regulatory jargon",
+  "summary_long": "60 to 100 words, research tone with specific regulatory details, lab testing references, brand progress, and historical context",
   "ingredient_list": ["ingredient 1", "ingredient 2", "ingredient 3"],
   "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
@@ -4026,6 +4029,11 @@ Use the category-specific tier labels and concern lists defined above.
 For restaurant category: populate composition_tier based on processing level, populate nutrition using the chain's official published values — this is non-negotiable for all food and restaurant categories. Set nutrition_verified: true only if you are confident in the exact values.
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
+
+SUMMARY VOICE RULE (CRITICAL): summary_short and summary_long must both be honest about concerns, but differ in tone. They describe the SAME facts — just at different depth.
+- summary_short: 2 to 3 sentences max. First-person friend voice ("I would swap if you can", "mostly the fabric", "not a crisis"). Plain language. No regulatory jargon. No lab measurements or ppm numbers. No brand-history details. No sentence longer than 18 words. This text appears on the simple result screen — it should read like a text from a knowledgeable friend.
+- summary_long: 60 to 100 words, 3 to 5 sentences. Research tone but still readable. Include specific regulatory details (EU restrictions, FDA rulings, state bans), lab testing references when relevant (Mamavation, NEJM, Nature Medicine citations), brand progress notes (phase-outs, certifications, formulation changes with dates), and historical context. This text appears on the full breakdown detail screen — it should read like a deeper brief.
+Both must be honest about the same concerns. Never soften summary_short to hide what summary_long says.
 
 SUBSTANCE NAMING RULES — critical for accurate scoring:
 Always name the SPECIFIC chemical, not a generic category. These rules apply to every concern you generate:
@@ -5240,7 +5248,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
         product_name: productName, category: imgCategory,
         score: finalScore,
         overall_score: finalScore,
-        summary: p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary:       p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_short: p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_long:  p1.summary_long || p1.summary || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
         // ── Child + pregnancy vulnerability (via shared helper) ──
         ...(() => {
@@ -5585,7 +5595,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
       product_name:     cleanProductName(p1.product_name || productName),
       score:            finalScore,
       overall_score:    finalScore,
-      summary:          p2?.summary || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+      summary:          p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+      summary_short:    p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+      summary_long:     p1.summary_long || p1.summary || "",
       concerns:         p2?.refined_concerns || p1.raw_concerns || [],
       category:         finalCategory,
       // ── Child + pregnancy vulnerability (via shared helper) ──
@@ -7186,7 +7198,9 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
             pregnancy_bumps:    safety.pregnancyBumps || [],
             flagged_substances: p1.flagged_substances || [],
             concerns:           p1.concerns           || [],
-            summary:            p1.summary            || "",
+            summary:            p1.summary_short || p1.summary || "",
+            summary_short:      p1.summary_short || p1.summary || "",
+            summary_long:       p1.summary_long || p1.summary || "",
             peer_comparison:    peerComparison,
             dimensions: {
               materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
@@ -7484,7 +7498,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
       pregnancy_bumps:     pregnancyBumps || [],
       flagged_substances:  [...(p1.flagged_substances || []), ...textFloors.triggered],
       concerns:            p1.concerns || [],
-      summary:             p1.summary || "",
+      summary:             p1.summary_short || p1.summary || "",
+      summary_short:       p1.summary_short || p1.summary || "",
+      summary_long:        p1.summary_long || p1.summary || "",
       peer_comparison:     peerComparison,
       data_source:         sourceName,
       ingredient_source:         pass0.source,

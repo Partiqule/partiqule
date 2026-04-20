@@ -5627,6 +5627,7 @@ function App() {
   const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
   const [revealDone,    setRevealDone]  = useState(false);
   const [showAlts,    setShowAlts]   = useState(false);
+  const [showDetail,  setShowDetail] = useState(false);
   const [compareAlt,  setCompareAlt] = useState(null);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
@@ -6176,7 +6177,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null); setSearchMatches([]); setSearchedQuery("");};
+  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setShowDetail(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null); setSearchMatches([]); setSearchedQuery("");};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -8058,130 +8059,14 @@ function App() {
                   );
                 })()}
 
-                {/* ── INGREDIENT LIST (category-aware per Addition 2) ── */}
-                {result.ingredient_list && result.ingredient_list.length > 0 && (() => {
-                  const cat = result.category || "";
-                  const labelMap = {
-                    food:          "WHAT'S INSIDE",
-                    food_beverage: "WHAT'S INSIDE",
-                    beverage:      "WHAT'S INSIDE",
-                    restaurant:    "WHAT'S INSIDE",
-                    supplement:    "WHAT'S INSIDE",
-                    personal_care: "INGREDIENTS",
-                    baby:          "INGREDIENTS",
-                    home:          "WHAT'S IN IT",
-                    clothing:      "MATERIALS",
-                  };
-                  const label = labelMap[cat] || "COMPOSITION";
-                  const flowingCats = ["food","food_beverage","beverage","restaurant","supplement","personal_care","baby","home"];
-                  const flowing = flowingCats.includes(cat);
-                  return (
-                    <div style={{marginBottom:18, textAlign:"left"}}>
-                      <div style={{
-                        fontFamily:"'DM Sans', system-ui, sans-serif",
-                        fontSize:10,
-                        letterSpacing:"0.22em",
-                        color:"var(--moss)",
-                        textTransform:"uppercase",
-                        fontWeight:500,
-                        marginBottom:12,
-                        display:"flex",
-                        alignItems:"center",
-                        gap:10,
-                      }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                        {label}
-                      </div>
-                      {flowing ? (
-                        <p style={{
-                          fontFamily:"'Fraunces', Georgia, serif",
-                          fontSize:15,
-                          lineHeight:1.55,
-                          color:"var(--ink)",
-                          margin:"0 0 6px",
-                          fontWeight:400,
-                        }}>
-                          {result.ingredient_list.join(", ")}
-                        </p>
-                      ) : (
-                        <div style={{background:"var(--cream-light)", borderRadius:"14px 18px 12px 16px / 16px 12px 18px 14px", padding:"12px 14px", border:`1px solid ${"var(--rule-soft)"}`}}>
-                          <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.7, margin:0}}>
-                            {result.ingredient_list.join(", ")}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                {/* ── SURFACE 1 — simple result view ──
+                    The dense sections (full ingredient list, INGREDIENT SOURCE,
+                    BREAKING IT DOWN, WORTH KNOWING) moved to the detail overlay.
+                    Surface 1 shows the short WHY, primary actions, and a link
+                    that opens the full breakdown. */}
 
-                {/* ── INGREDIENT SOURCE / CREDIBILITY ── */}
-                {(() => {
-                  if (!result.ingredient_source) return null;
-                  const SOURCE_LABELS = {
-                    open_food_facts:     "Verified via Open Food Facts",
-                    open_beauty_facts:   "Verified via Open Beauty Facts",
-                    open_products_facts: "Verified via Open Products Facts",
-                    supabase_scans:      "From a previous Partiqule scan",
-                    previous_scan:       "From a previous Partiqule scan",
-                    calibration:         "Verified formula",
-                    vision_ocr:          "Read from your photo",
-                    none:                "Ingredients unverified",
-                  };
-                  const label = SOURCE_LABELS[result.ingredient_source];
-                  if (!label) return null;
-                  const conf = result.ingredient_confidence;
-                  const color = conf === "high"
-                    ? ("var(--moss)")
-                    : conf === "medium"
-                    ? ("var(--ink-soft)")
-                    : ("var(--amber)");
-                  let timeAgo = "";
-                  if (result.ingredient_verified_at) {
-                    const t = new Date(result.ingredient_verified_at).getTime();
-                    if (!isNaN(t)) {
-                      const diff = Date.now() - t;
-                      const day = 24 * 60 * 60 * 1000;
-                      if (diff < day) {
-                        timeAgo = "just now";
-                      } else if (diff < 7 * day) {
-                        const days = Math.floor(diff / day);
-                        timeAgo = days === 1 ? "1 day ago" : `${days} days ago`;
-                      } else {
-                        timeAgo = new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-                      }
-                    }
-                  }
-                  const url = result.ingredient_source_url;
-                  return (
-                    <div style={{
-                      fontFamily: "'Fraunces', Georgia, serif",
-                      fontSize: 13,
-                      fontWeight: 400,
-                      color,
-                      marginTop: -2,
-                      marginBottom: 18,
-                      lineHeight: 1.5,
-                      textAlign: "left",
-                    }}>
-                      {url ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration: "underline", textUnderlineOffset: 2, cursor: "pointer"}}>
-                          {label}
-                        </a>
-                      ) : label}
-                      {timeAgo ? ` · ${timeAgo}` : ""}
-                    </div>
-                  );
-                })()}
-
-                {/* ── DETAIL VIEW SECTIONS (Session 4.1 — details-alts mockup) ─────────
-                   Replaces the old dimension-dropdown stack. Flat layout: THE WHY,
-                   BREAKING IT DOWN (from result.dimensions), WORTH KNOWING (from
-                   harmful_chemicals / identified_plastics / concerns), and the
-                   primary action row. Dimension dropdowns component is preserved
-                   in the codebase for other surfaces but not rendered here. */}
-
-                {/* THE WHY — conversational paragraph from result.summary */}
-                {result.summary && (
+                {/* THE WHY — short, friend voice (uses summary_short; falls back to summary for pre-split cached scans) */}
+                {(result.summary_short || result.summary) && (
                   <div style={{padding:"4px 0 4px", textAlign:"left"}}>
                     <div style={{
                       fontFamily:"'DM Sans', system-ui, sans-serif",
@@ -8199,161 +8084,15 @@ function App() {
                       color:"var(--ink)",
                       fontWeight:400, letterSpacing:"-0.005em",
                     }}>
-                      {String(result.summary).split(/\n\n+/).map((para, i) => (
+                      {String(result.summary_short || result.summary).split(/\n\n+/).map((para, i) => (
                         <p key={i} style={{margin:"0 0 12px"}}>{para}</p>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* BREAKING IT DOWN — flat rows per sub-dimension */}
-                {result.dimensions ? (() => {
-                  const d = result.dimensions;
-                  const childDimBump = pregnancyMode && result.pregnancy_score && result.overall_score
-                    ? Math.max(0, result.pregnancy_score - (result.overall_score || result.score))
-                    : (childMode && result.child_score && result.overall_score)
-                    ? Math.max(0, result.child_score - (result.overall_score || result.score))
-                    : 0;
-                  const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
-                  const rows = [
-                    { key:"materials",      label:"Materials",       score: Math.min(10, (d.materials?.score || result.score) + childDimBump),      note: d.materials?.label },
-                    { key:"usage_exposure", label:"Usage & exposure", score: Math.min(10, (d.usage_exposure?.score || 5) + childDimBump),           note: d.usage_exposure?.label },
-                    { key:"packaging",      label:"Packaging",       score: d.packaging?.score || 5,                                                 note: d.packaging?.label },
-                    { key:"sustainability", label:"Sustainability",  score: d.sustainability?.score || 5,                                            note: d.sustainability?.label },
-                  ];
-                  return (
-                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
-                      <div style={{
-                        fontFamily:"'DM Sans', system-ui, sans-serif",
-                        fontSize:10, letterSpacing:"0.22em",
-                        color:"var(--moss)",
-                        textTransform:"uppercase", fontWeight:500,
-                        marginBottom:12, display:"flex", alignItems:"center", gap:10,
-                      }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                        Breaking it down
-                      </div>
-                      {rows.map((row, i) => (
-                        <div key={row.key} style={{
-                          padding:"18px 0",
-                          borderBottom: i < rows.length - 1 ? "1px solid var(--rule-soft)" : "none",
-                          display:"grid",
-                          gridTemplateColumns:"1fr auto",
-                          gap:"6px 20px",
-                          alignItems:"baseline",
-                        }}>
-                          <div style={{
-                            fontFamily:"'DM Sans', system-ui, sans-serif",
-                            fontSize:10.5, letterSpacing:"0.22em",
-                            color:"var(--ink)",
-                            textTransform:"uppercase", fontWeight:500,
-                          }}>{row.label}</div>
-                          <div style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
-                            fontSize:30, lineHeight:1, letterSpacing:"-0.02em",
-                            gridRow:"span 2", alignSelf:"center", textAlign:"right",
-                            color: sc(row.score), fontWeight:400,
-                          }}>
-                            {Math.round(row.score)}
-                            <span style={{
-                              fontFamily:"'DM Sans', system-ui, sans-serif",
-                              fontSize:10, letterSpacing:"0.14em",
-                              textTransform:"uppercase",
-                              color:"var(--ink-faint)",
-                              marginLeft:4, verticalAlign:"middle", fontWeight:500,
-                            }}>/ 10</span>
-                          </div>
-                          {row.note && (
-                            <div style={{
-                              gridColumn:1,
-                              fontFamily:"'DM Sans', system-ui, sans-serif",
-                              fontSize:13, color:"var(--ink-soft)",
-                              lineHeight:1.45,
-                            }}>{row.note}</div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })() : (
-                  <div style={{padding:"12px 16px", background:"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px dashed ${"var(--rule)"}`, margin:"16px 0", textAlign:"left"}}>
-                    <div style={{fontSize:12, color:muted, lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
-                  </div>
-                )}
-
-                {/* WORTH KNOWING — editorial flags from harmful_chemicals / identified_plastics / concerns */}
-                {(() => {
-                  const flags = [];
-                  const conc = Array.isArray(result.concerns) ? result.concerns : [];
-                  // Prefer structured concerns first (have concern + explanation)
-                  conc.slice(0, 3).forEach((c) => {
-                    if (typeof c === "string") {
-                      flags.push({ headline: c, body: null, action: null });
-                    } else if (c && c.concern) {
-                      flags.push({ headline: c.concern, body: c.explanation || c.why || null, action: c.suggestion || null });
-                    }
-                  });
-                  // Fall back to harmful_chemicals / identified_plastics as compact flags
-                  if (flags.length < 3) {
-                    (result.harmful_chemicals || []).slice(0, 3 - flags.length).forEach((c) => {
-                      flags.push({ headline: c, body: "Common concern with this ingredient class.", action: null });
-                    });
-                  }
-                  if (flags.length < 3) {
-                    (result.identified_plastics || []).slice(0, 3 - flags.length).forEach((p) => {
-                      flags.push({ headline: p, body: "Plastic component identified on the label.", action: null });
-                    });
-                  }
-                  if (!flags.length) return null;
-                  return (
-                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
-                      <div style={{
-                        fontFamily:"'DM Sans', system-ui, sans-serif",
-                        fontSize:10, letterSpacing:"0.22em",
-                        color:"var(--moss)",
-                        textTransform:"uppercase", fontWeight:500,
-                        marginBottom:16, display:"flex", alignItems:"center", gap:10,
-                      }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                        Worth knowing
-                      </div>
-                      {flags.map((flag, i) => (
-                        <div key={i} style={{
-                          marginBottom: i < flags.length - 1 ? 20 : 0,
-                          paddingBottom: i < flags.length - 1 ? 20 : 0,
-                          borderBottom: i < flags.length - 1 ? "1px solid var(--rule-soft)" : "none",
-                        }}>
-                          <div style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
-                            fontSize:19, lineHeight:1.2,
-                            color:"var(--ink)",
-                            marginBottom:6, letterSpacing:"-0.005em", fontWeight:400,
-                          }}>{flag.headline}</div>
-                          {flag.body && (
-                            <div style={{
-                              fontFamily:"'DM Sans', system-ui, sans-serif",
-                              fontSize:13, color:"var(--ink-soft)",
-                              lineHeight:1.5, marginBottom: flag.action ? 8 : 0,
-                            }}>{flag.body}</div>
-                          )}
-                          {flag.action && (
-                            <span style={{
-                              fontFamily:"'Fraunces', Georgia, serif",
-                              fontSize:14, color:"var(--moss)",
-                              display:"inline-flex", alignItems:"center", gap:6, fontWeight:400,
-                            }}>
-                              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:300}}>→</span>
-                              {flag.action}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {/* Primary action row — mockup: moss primary "Show me cleaner" + outlined secondary */}
-                <div style={{display:"flex", gap:10, marginTop:24, flexWrap:"wrap"}}>
+                {/* Primary action row — moss primary "Show me cleaner" + outlined secondary */}
+                <div style={{display:"flex", gap:10, marginTop:18, flexWrap:"wrap"}}>
                   <button
                     onClick={()=>setShowAlts(true)}
                     style={{
@@ -8384,7 +8123,7 @@ function App() {
                       flex:"1 1 140px",
                       padding:"15px 18px",
                       background:"transparent", color:"var(--ink)",
-                      border:`1px solid ${"var(--rule-strong)"}`,
+                      border:"1px solid var(--rule-strong)",
                       borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
                       cursor:"pointer",
                       fontFamily:"'DM Sans', system-ui, sans-serif",
@@ -8394,8 +8133,18 @@ function App() {
                   </button>
                 </div>
 
-                {/* THE WHY / BREAKING IT DOWN / WORTH KNOWING / primary action row above
-                    replace the prior dimension dropdowns and score explainer stack. */}
+                {/* Tell me more — opens the detail overlay */}
+                <div style={{marginTop:18, textAlign:"center"}}>
+                  <button onClick={()=>setShowDetail(true)} style={{
+                    background:"none", border:"none", padding:"4px 0", cursor:"pointer",
+                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontSize:15, color:"var(--moss)", fontWeight:400,
+                    borderBottom:"1px dotted var(--moss)",
+                    letterSpacing:"-0.005em",
+                  }}>
+                    → See the full breakdown
+                  </button>
+                </div>
 
               </div>
 
@@ -8543,6 +8292,433 @@ function App() {
 
           </div>
         </div>
+
+        {/* ── DETAIL VIEW (Surface 2 — full breakdown overlay) ─────────
+            Slides up over the simple result (Surface 1). Contains THE WHY long
+            (summary_long with fallback to summary), BREAKING IT DOWN rows from
+            result.dimensions, the full ingredient list with source credibility,
+            WORTH KNOWING editorial flags, and the same primary actions as Surface 1.
+            Pre-split cached scans (no summary_long) fall back to summary and show
+            a "Rescan for the full briefing" hint. */}
+        {showDetail && result && (() => {
+          const detailShelfCount = (history || []).length;
+          const detailScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
+          const detailScoreColor = detailScore == null ? "var(--ink-soft)" : detailScore <= 3 ? "var(--score-green)" : detailScore <= 5 ? "var(--score-amber)" : "var(--score-red)";
+          const detailScoreSoft  = detailScore == null ? "rgba(107,114,128,0.10)" : detailScore <= 3 ? "var(--score-green-soft)" : detailScore <= 5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
+          const fullName = result.product_name || "";
+          const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
+          const brand = brandMatch ? brandMatch[1] : null;
+          const productBody = brandMatch ? brandMatch[2] : fullName;
+          const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
+          const cat = result.category || "";
+          const compositionLine = (() => {
+            if (cat === "clothing" && result.composition) return String(result.composition).toUpperCase().replace(/\s*[,·]\s*/g, " · ");
+            if (Array.isArray(result.ingredient_list) && result.ingredient_list.length > 0) {
+              return result.ingredient_list.slice(0, 3).map(x => String(x).trim().toUpperCase()).join(" · ");
+            }
+            return null;
+          })();
+          const longCopy = result.summary_long || result.summary_short || result.summary || "";
+          const hasLong = !!result.summary_long;
+          return (
+            <div style={{
+              position:"fixed", inset:0, zIndex:9991,
+              background:"var(--cream)", overflowY:"auto",
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              animation:"detailSlideUp 0.35s cubic-bezier(0.2,0,0,1) forwards",
+            }}>
+              <style>{`@keyframes detailSlideUp { from{opacity:0; transform:translateY(24px)} to{opacity:1; transform:translateY(0)} }`}</style>
+
+              {/* Top bar — back arrow + shelf badge */}
+              <div style={{
+                display:"flex", alignItems:"center", justifyContent:"space-between",
+                padding: `${(SAFE_TOP || 0) + 18}px 24px 12px`,
+                borderBottom:"1px solid var(--rule)",
+                background:"var(--cream)",
+                position:"sticky", top:0, zIndex:10,
+              }}>
+                <button onClick={()=>setShowDetail(false)} style={{
+                  display:"flex", alignItems:"center", gap:8,
+                  background:"transparent", border:"none", cursor:"pointer", padding:0,
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10.5, letterSpacing:"0.22em",
+                  color:"var(--ink-soft)", textTransform:"uppercase", fontWeight:500,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  Back
+                </button>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:11, color:"var(--ink-soft)", fontWeight:500,
+                }}>
+                  Shelf <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{detailShelfCount}</strong>
+                </div>
+              </div>
+
+              <div style={{maxWidth:640, margin:"0 auto", padding:"22px 24px 80px"}}>
+                {/* Stamp */}
+                <div style={{
+                  display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10, letterSpacing:"0.22em",
+                  color:"var(--ink-faint)", textTransform:"uppercase", fontWeight:500,
+                  marginBottom:14,
+                }}>
+                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.6}}/>
+                  <span>Logged · just now</span>
+                  {result.confidence && <span style={{color: result.confidence==="high" ? "var(--moss)" : result.confidence==="medium" ? "var(--ink-soft)" : "var(--amber)"}}>· {result.confidence} confidence</span>}
+                </div>
+
+                {/* Brand / name / composition */}
+                {brand && (
+                  <div style={{
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontSize:11, letterSpacing:"0.22em",
+                    color:"var(--ink)", textTransform:"uppercase", fontWeight:500,
+                    marginBottom:4,
+                  }}>{brand.toUpperCase()}</div>
+                )}
+                <h2 style={{
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize: isMobile ? 30 : 36,
+                  fontWeight:400, color:"var(--ink)",
+                  margin:"0 0 12px",
+                  letterSpacing:"-0.015em", lineHeight:1.04,
+                }}>{displayName}</h2>
+                {compositionLine && (
+                  <div style={{
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontSize:10.5, letterSpacing:"0.14em",
+                    color:"var(--ink-soft)", textTransform:"uppercase",
+                    paddingBottom:14,
+                    borderBottom:"1px solid var(--rule)",
+                    marginBottom:18,
+                  }}>{compositionLine}</div>
+                )}
+
+                {/* Verdict — smaller score ring + headline */}
+                <div style={{display:"flex", alignItems:"center", gap:18, marginBottom:22}}>
+                  <div style={{
+                    width:64, height:64, flexShrink:0,
+                    borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+                    background: detailScoreSoft,
+                    border: `2px solid ${detailScoreColor}`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                    <span style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize:34, color: detailScoreColor, lineHeight:1,
+                      fontWeight:400, letterSpacing:"-0.02em",
+                    }}>{typeof detailScore === "number" ? Math.round(detailScore * 10) / 10 : "?"}</span>
+                  </div>
+                  <div style={{flex:1, minWidth:0}}>
+                    {(result.summary_short || result.summary) && (
+                      <div style={{
+                        fontFamily:"'Fraunces', Georgia, serif",
+                        fontSize:18, lineHeight:1.25, color:"var(--ink)",
+                        fontWeight:400, letterSpacing:"-0.005em",
+                      }}>
+                        {String(result.summary_short || result.summary).split(/\n\n+/)[0]}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* THE WHY — long version */}
+                {longCopy && (
+                  <div style={{padding:"4px 0 4px", textAlign:"left", marginBottom:12}}>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:"var(--moss)", textTransform:"uppercase",
+                      fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                      The why
+                    </div>
+                    <div style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize:16, lineHeight:1.55, color:"var(--ink)",
+                      fontWeight:400, letterSpacing:"-0.005em",
+                    }}>
+                      {String(longCopy).split(/\n\n+/).map((para, i) => (
+                        <p key={i} style={{margin:"0 0 12px"}}>{para}</p>
+                      ))}
+                    </div>
+                    {!hasLong && (
+                      <div style={{
+                        marginTop:6, padding:"10px 14px",
+                        background:"var(--cream-light)",
+                        border:"1px dashed var(--rule)",
+                        borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px",
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:12, color:"var(--ink-soft)", lineHeight:1.55,
+                      }}>
+                        Rescan to see the full briefing — this result predates the detailed write-up.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* BREAKING IT DOWN */}
+                {result.dimensions ? (() => {
+                  const d = result.dimensions;
+                  const childDimBump = pregnancyMode && result.pregnancy_score && result.overall_score
+                    ? Math.max(0, result.pregnancy_score - (result.overall_score || result.score))
+                    : (childMode && result.child_score && result.overall_score)
+                    ? Math.max(0, result.child_score - (result.overall_score || result.score))
+                    : 0;
+                  const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+                  const rows = [
+                    { key:"materials",      label:"Materials",        score: Math.min(10, (d.materials?.score || result.score) + childDimBump), note: d.materials?.label },
+                    { key:"usage_exposure", label:"Usage & exposure", score: Math.min(10, (d.usage_exposure?.score || 5) + childDimBump),       note: d.usage_exposure?.label },
+                    { key:"packaging",      label:"Packaging",        score: d.packaging?.score || 5,                                             note: d.packaging?.label },
+                    { key:"sustainability", label:"Sustainability",   score: d.sustainability?.score || 5,                                        note: d.sustainability?.label },
+                  ];
+                  return (
+                    <div style={{padding:"18px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em",
+                        color:"var(--moss)", textTransform:"uppercase",
+                        fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                        Breaking it down
+                      </div>
+                      {rows.map((row, i) => (
+                        <div key={row.key} style={{
+                          padding:"18px 0",
+                          borderBottom: i < rows.length - 1 ? "1px solid var(--rule-soft)" : "none",
+                          display:"grid", gridTemplateColumns:"1fr auto",
+                          gap:"6px 20px", alignItems:"baseline",
+                        }}>
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10.5, letterSpacing:"0.22em",
+                            color:"var(--ink)", textTransform:"uppercase", fontWeight:500,
+                          }}>{row.label}</div>
+                          <div style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:30, lineHeight:1, letterSpacing:"-0.02em",
+                            gridRow:"span 2", alignSelf:"center", textAlign:"right",
+                            color: sc(row.score), fontWeight:400,
+                          }}>
+                            {Math.round(row.score)}
+                            <span style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:10, letterSpacing:"0.14em",
+                              textTransform:"uppercase",
+                              color:"var(--ink-faint)",
+                              marginLeft:4, verticalAlign:"middle", fontWeight:500,
+                            }}>/ 10</span>
+                          </div>
+                          {row.note && (
+                            <div style={{
+                              gridColumn:1,
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:13, color:"var(--ink-soft)",
+                              lineHeight:1.45,
+                            }}>{row.note}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })() : (
+                  <div style={{padding:"12px 16px", background:"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:"1px dashed var(--rule)", margin:"16px 0", textAlign:"left"}}>
+                    <div style={{fontSize:12, color:"var(--ink-soft)", lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
+                  </div>
+                )}
+
+                {/* WHAT'S IN IT — full ingredient list + source credibility */}
+                {result.ingredient_list && result.ingredient_list.length > 0 && (() => {
+                  const labelMap = {
+                    food:          "What's inside",
+                    food_beverage: "What's inside",
+                    beverage:      "What's inside",
+                    restaurant:    "What's inside",
+                    supplement:    "What's inside",
+                    personal_care: "Ingredients",
+                    baby:          "Ingredients",
+                    home:          "What's in it",
+                    clothing:      "The fabric",
+                  };
+                  const label = labelMap[cat] || "Composition";
+                  const flowingCats = ["food","food_beverage","beverage","restaurant","supplement","personal_care","baby","home"];
+                  const flowing = flowingCats.includes(cat);
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em",
+                        color:"var(--moss)", textTransform:"uppercase",
+                        fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                        {label}
+                      </div>
+                      {flowing ? (
+                        <p style={{
+                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontSize:15, lineHeight:1.55,
+                          color:"var(--ink)", margin:"0 0 6px", fontWeight:400,
+                        }}>{result.ingredient_list.join(", ")}</p>
+                      ) : (
+                        <div style={{background:"var(--cream-light)", borderRadius:"14px 18px 12px 16px / 16px 12px 18px 14px", padding:"12px 14px", border:"1px solid var(--rule-soft)"}}>
+                          <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.7, margin:0}}>
+                            {result.ingredient_list.join(", ")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* INGREDIENT SOURCE credibility line */}
+                {(() => {
+                  if (!result.ingredient_source) return null;
+                  const SOURCE_LABELS = {
+                    open_food_facts:     "Verified via Open Food Facts",
+                    open_beauty_facts:   "Verified via Open Beauty Facts",
+                    open_products_facts: "Verified via Open Products Facts",
+                    supabase_scans:      "From a previous Partiqule scan",
+                    previous_scan:       "From a previous Partiqule scan",
+                    calibration:         "Verified formula",
+                    vision_ocr:          "Read from your photo",
+                    none:                "Ingredients unverified",
+                  };
+                  const srcLabel = SOURCE_LABELS[result.ingredient_source];
+                  if (!srcLabel) return null;
+                  const conf = result.ingredient_confidence;
+                  const color = conf === "high" ? "var(--moss)" : conf === "medium" ? "var(--ink-soft)" : "var(--amber)";
+                  let timeAgo = "";
+                  if (result.ingredient_verified_at) {
+                    const t = new Date(result.ingredient_verified_at).getTime();
+                    if (!isNaN(t)) {
+                      const diff = Date.now() - t;
+                      const day = 24 * 60 * 60 * 1000;
+                      if (diff < day) timeAgo = "just now";
+                      else if (diff < 7 * day) { const days = Math.floor(diff / day); timeAgo = days === 1 ? "1 day ago" : `${days} days ago`; }
+                      else timeAgo = new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                    }
+                  }
+                  const url = result.ingredient_source_url;
+                  return (
+                    <div style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize:13, fontWeight:400, color,
+                      marginTop:-2, marginBottom:12, lineHeight:1.5, textAlign:"left",
+                    }}>
+                      {url ? (
+                        <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}}>{srcLabel}</a>
+                      ) : srcLabel}
+                      {timeAgo ? ` · ${timeAgo}` : ""}
+                    </div>
+                  );
+                })()}
+
+                {/* WORTH KNOWING — editorial flags */}
+                {(() => {
+                  const flags = [];
+                  const conc = Array.isArray(result.concerns) ? result.concerns : [];
+                  conc.slice(0, 3).forEach((c) => {
+                    if (typeof c === "string") flags.push({ headline: c, body: null, action: null });
+                    else if (c && c.concern) flags.push({ headline: c.concern, body: c.explanation || c.why || null, action: c.suggestion || null });
+                  });
+                  if (flags.length < 3) (result.harmful_chemicals || []).slice(0, 3 - flags.length).forEach((c) => flags.push({ headline: c, body: "Common concern with this ingredient class.", action: null }));
+                  if (flags.length < 3) (result.identified_plastics || []).slice(0, 3 - flags.length).forEach((p) => flags.push({ headline: p, body: "Plastic component identified on the label.", action: null }));
+                  if (!flags.length) return null;
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em",
+                        color:"var(--moss)", textTransform:"uppercase",
+                        fontWeight:500, marginBottom:16, display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                        Worth knowing
+                      </div>
+                      {flags.map((flag, i) => (
+                        <div key={i} style={{
+                          marginBottom: i < flags.length - 1 ? 20 : 0,
+                          paddingBottom: i < flags.length - 1 ? 20 : 0,
+                          borderBottom: i < flags.length - 1 ? "1px solid var(--rule-soft)" : "none",
+                        }}>
+                          <div style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:19, lineHeight:1.2, color:"var(--ink)",
+                            marginBottom:6, letterSpacing:"-0.005em", fontWeight:400,
+                          }}>{flag.headline}</div>
+                          {flag.body && (
+                            <div style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:13, color:"var(--ink-soft)",
+                              lineHeight:1.5, marginBottom: flag.action ? 8 : 0,
+                            }}>{flag.body}</div>
+                          )}
+                          {flag.action && (
+                            <span style={{
+                              fontFamily:"'Fraunces', Georgia, serif",
+                              fontSize:14, color:"var(--moss)",
+                              display:"inline-flex", alignItems:"center", gap:6, fontWeight:400,
+                            }}>
+                              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:300}}>→</span>
+                              {flag.action}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Primary action row — mirrors Surface 1 */}
+                <div style={{display:"flex", gap:10, marginTop:28, flexWrap:"wrap"}}>
+                  <button
+                    onClick={()=>{ setShowDetail(false); setShowAlts(true); }}
+                    style={{
+                      flex:"1.35 1 160px",
+                      padding:"15px 18px",
+                      background:"var(--moss)", color:"var(--ivory)",
+                      border:"none",
+                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                      cursor:"pointer",
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                    }}>
+                    Show me cleaner
+                  </button>
+                  <button
+                    onClick={()=>{
+                      const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                      if (!alreadyInRoutine) {
+                        const entry = {...result, scannedAt: new Date().toISOString()};
+                        const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                        setHistory(next);
+                        try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                      }
+                      setShowDetail(false);
+                      reset();
+                    }}
+                    style={{
+                      flex:"1 1 140px",
+                      padding:"15px 18px",
+                      background:"transparent", color:"var(--ink)",
+                      border:"1px solid var(--rule-strong)",
+                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                      cursor:"pointer",
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                    }}>
+                    Shelf anyway
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── ALTERNATIVES VIEW (Session 4.1 — partiqule-details-alts mockup) ── */}
         {showAlts && result && (() => {
