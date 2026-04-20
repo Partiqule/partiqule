@@ -7825,30 +7825,31 @@ function App() {
                       <button
                         onClick={() => { const next = !childMode; setChildMode(next); try{if(next)localStorage.setItem("partiqule_child_mode","1");else localStorage.removeItem("partiqule_child_mode");}catch{} track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
                         style={{
-                          display:"flex", alignItems:"center", gap:8, margin:"0 auto",
+                          display:"flex", alignItems:"center", gap:10, margin:"0 auto",
                           padding:"7px 16px", borderRadius:"var(--circle-shape)",
                           background: childMode ? "var(--moss)" : "var(--cream-light)",
                           border: childMode ? "none" : "1px solid var(--rule)",
                           cursor:"pointer", transition:"all 0.2s",
                           fontFamily:"'DM Sans', system-ui, sans-serif",
                         }}>
-                        <span style={{fontSize:12, fontWeight:600,
-                          color: childMode ? "var(--ivory)" : "var(--ink-soft)",
-                          letterSpacing:"0.03em",
+                        <span style={{
                           fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontSize:12, fontWeight:500,
+                          color: childMode ? "var(--ivory)" : "var(--ink-soft)",
+                          letterSpacing:"0.02em",
                         }}>
                           {childMode ? "Scoring for a child" : "Score for a child?"}
                         </span>
-                        {/* Toggle pill */}
+                        {/* Toggle pill — track color matches container so the knob reads */}
                         <div style={{
-                          width:32, height:18, borderRadius:9,
-                          background: childMode ? "var(--ivory)" : "var(--rule)",
+                          width:30, height:16, borderRadius:8,
+                          background: childMode ? "rgba(249,245,234,0.25)" : "var(--rule)",
                           position:"relative", transition:"background 0.2s", flexShrink:0,
                         }}>
                           <div style={{
                             position:"absolute", top:3, left: childMode ? 15 : 3,
-                            width:12, height:12, borderRadius:"50%",
-                            background: childMode ? "var(--moss)" : "var(--ink-faint)",
+                            width:10, height:10, borderRadius:"50%",
+                            background: childMode ? "var(--ivory)" : "var(--ink-faint)",
                             transition:"left 0.2s",
                           }}/>
                         </div>
@@ -7993,11 +7994,13 @@ function App() {
                     }
                   });
                   if (flagged.length === 0) return null;
+                  // Badge treatment: severity comes from background tint + border.
+                  // Text is always var(--ink) for legibility on cream UI.
                   const sStyle = (sev) => ({
-                    high:   {bg:"rgba(239,68,68,0.12)",   color:"#fca5a5", border:"1.5px solid rgba(239,68,68,0.3)"},
-                    medium: {bg:"rgba(245,158,11,0.12)",  color:"#fcd34d", border:"1.5px solid rgba(245,158,11,0.3)"},
-                    low:    {bg:"rgba(34,197,94,0.1)",    color:"#86efac", border:"1.5px solid rgba(34,197,94,0.25)"},
-                  })[sev] || {bg:"rgba(245,158,11,0.12)", color:"#fcd34d", border:"1.5px solid rgba(245,158,11,0.3)"};
+                    high:   {bg:"var(--score-red-soft)",   color:"var(--ink)", border:"1px solid var(--score-red)"},
+                    medium: {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"},
+                    low:    {bg:"var(--score-green-soft)", color:"var(--ink)", border:"1px solid var(--score-green)"},
+                  })[sev] || {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"};
                   return (
                     <div style={{marginTop:16, marginBottom:4, textAlign:"left"}}>
                       <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
@@ -8011,7 +8014,7 @@ function App() {
                           const displayName = cleanName(f.name);
                           if (!displayName || isGeneric(displayName)) return null;
                           return (
-                            <span key={i} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:700, padding:"5px 12px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
+                            <span key={i} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, padding:"5px 12px", borderRadius:"var(--tile-shape-1)", background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
                               {displayName}
                             </span>
                           );
