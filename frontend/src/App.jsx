@@ -832,322 +832,105 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
 };
 
 
-// ── GLOBE LOADING ─────────────────────────────────────────────
 
 
-// 200 points evenly distributed on a sphere (Fibonacci lattice)
-const SPHERE_POINTS = (() => {
-  const pts = [];
-  const golden = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < 200; i++) {
-    const y = 1 - (i / 199) * 2;
-    const r = Math.sqrt(1 - y * y);
-    const theta = golden * i;
-    pts.push({ x: Math.cos(theta) * r, y, z: Math.sin(theta) * r });
-  }
-  return pts;
-})();
 
-const HEALTH_FACTS = [
-  { stat: "100%",   text: "of human blood samples tested contain microplastics",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412022001258" },
-  { stat: "58%",    text: "of arterial plaques studied contained polypropylene — NEJM 2024",
-    url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2309822" },
-  { stat: "11B",    text: "microplastic particles per cup from nylon tea bags",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b02540" },
-  { stat: "2025",   text: "FDA banned Red 3 and began phasing out petroleum-based dyes",
-    url: "https://www.fda.gov/food/food-additives-petitions/color-additive-petitions" },
-  { stat: "700K",   text: "microfibers shed per wash from a single synthetic fleece jacket",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412019300503" },
-  { stat: "8M",     text: "tonnes of plastic enter the world\'s oceans every year",
-    url: "https://www.science.org/doi/10.1126/science.1260352" },
-  { stat: "PFAS",   text: "in non-stick cookware linked to thyroid disruption and infertility",
-    url: "https://ehp.niehs.nih.gov/doi/10.1289/ehp.0800084" },
-  { stat: "1,000+", text: "everyday chemicals are known or suspected endocrine disruptors",
-    url: "https://www.endocrine.org/advocacy/position-statements/endocrine-disrupting-chemicals" },
-  { stat: "10x",    text: "higher microplastic levels found in infants compared to adults",
-    url: "https://pubs.acs.org/doi/10.1021/acs.estlett.0c00193" },
-  { stat: "PVA",    text: "pod film dissolves but enters waterways as microplastic pollution",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.1c01498" },
-  { stat: "97%",    text: "of Americans tested have PFAS forever chemicals in their blood",
-    url: "https://www.cdc.gov/biomonitoring/PFAS_BiomonitoringSummary.html" },
-  { stat: "260C",   text: "the temperature at which PTFE non-stick coatings begin to break down",
-    url: "https://www.ewg.org/research/canaries-kitchen" },
-  { stat: "2024",   text: "Nature Medicine confirmed microplastics accumulating in human brain tissue",
-    url: "https://www.nature.com/articles/s41591-024-03453-1" },
-  { stat: "3,000",  text: "undisclosed chemicals can hide under the single word fragrance on a label",
-    url: "https://link.springer.com/article/10.1007/s11869-016-0442-z" },
-  { stat: "1M",     text: "plastic bottles are purchased around the world every single minute",
-    url: "https://www.theguardian.com/environment/2017/jun/28/a-million-a-minute-worlds-plastic-bottle-binge-as-dangerous-as-climate-change" },
-  { stat: "500yr",  text: "the time it takes a standard plastic bag to break down in landfill",
-    url: "https://www.scienceadvances.org/content/3/7/e1700782" },
-  { stat: "1B",     text: "plastic toothbrushes are discarded globally every year",
-    url: "https://www.ewg.org/research/over-1-billion-plastic-toothbrushes-trashed-annually" },
-  { stat: "BPA",    text: "replacements BPS and BPF show similar hormonal disruption to BPA",
-    url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4114051/" },
-  { stat: "74K",    text: "microplastic particles the average person consumes or inhales every year",
-    url: "https://pubs.acs.org/doi/10.1021/acs.est.9b01517" },
-  { stat: "2021",   text: "microplastics were confirmed in human placentas for the first time",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412020322297" },
-  { stat: "Glass",  text: "containers have zero leaching risk even when heated, frozen, or acidic",
-    url: "https://www.sciencedirect.com/science/article/pii/S0048969719355457" },
-  { stat: "4.4lb",  text: "of trash generated per person per day in the US — most of it packaging",
-    url: "https://www.epa.gov/facts-and-figures-about-materials-waste-and-recycling" },
-  { stat: "80%",    text: "of ocean plastic pollution originates from land-based sources",
-    url: "https://www.science.org/doi/10.1126/science.1260352" },
-  { stat: "Breast", text: "milk was found to contain microplastics in studies across multiple countries",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412022000460" },
-  { stat: "40%",    text: "of plastic produced is single-use — designed to be discarded within minutes",
-    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
-  { stat: "UPF",    text: "ultra-processed foods linked to cardiovascular disease and cognitive decline",
-    url: "https://www.thelancet.com/journals/lanhl/article/PIIS2666-7568(24)00007-2/fulltext" },
-  { stat: "50",     text: "uses to offset a stainless steel bottle vs single-use plastic",
-    url: "https://www.ellenmacarthurfoundation.org/the-new-plastics-economy-rethinking-the-future-of-plastics" },
-  { stat: "Nylon",  text: "and polyester shed microfibers during wear — not just during washing",
-    url: "https://www.sciencedirect.com/science/article/pii/S0160412018316350" },
-  { stat: "6.3B",   text: "tonnes of plastic waste generated since the 1950s — only 9% ever recycled",
-    url: "https://advances.sciencemag.org/content/3/7/e1700782" },
-  { stat: "Heated", text: "polypropylene baby bottles release millions of microplastic particles per litre",
-    url: "https://www.nature.com/articles/s43016-020-00171-y" },
-  { stat: "63%",   text: "of EWG Dirty Dozen produce samples contain PFAS forever chemical pesticides — 2026 report",
-    url: "https://www.ewg.org/foodnews/dirty-dozen.php" },
-  { stat: "96%",   text: "of Dirty Dozen produce tested positive for pesticide residues even after washing",
-    url: "https://www.ewg.org/news-insights/news-release/2026/03/ewgs-2026-shoppers-guide-pesticides-producetm-finds-widespread" },
-];
+// ── GLOBE LOADING — cream typewriter for text/image scan flows ─────
+// Mirrors BarcodeLoadingView's typewriter: four cycling status messages
+// with a filling moss rule + four progress dots. No globes, no particles.
+// Renders inside a caller-provided full-screen cream container.
+const GlobeLoading = ({ isMobile }) => {
+  const [typed, setTyped] = useState("");
+  const [filled, setFilled] = useState([false, false, false, false]);
+  const [ruleFrac, setRuleFrac] = useState(0);
 
-const STAGES = [
-  "Searching for product data...",
-  "Analysing materials and exposure...",
-  "Auditing the score...",
-  "Finding safer alternatives...",
-];
-
-const GlobeLoading = ({isMobile}) => {
-  const containerRef = useRef(null);
-  const angleRef     = useRef(0);
-  const frameRef     = useRef(null);
-  const glowRef      = useRef(Array.from({length:200}, () => 0));
-  const glowTimer    = useRef(Array.from({length:200}, () => Math.floor(Math.random() * 180)));
-  const shuffledFacts = useRef([...HEALTH_FACTS].sort(() => Math.random() - 0.5));
-  const [activeFacts, setActiveFacts] = useState([]);
-  const [stage, setStage] = useState(0);
-
-  // Layout — computed once
-  const mob = isMobile || (typeof window !== 'undefined' && window.innerWidth < 640);
-  const W   = mob ? Math.min(typeof window !== 'undefined' ? window.innerWidth - 24 : 340, 360) : 600;
-  const R   = mob ? 82  : 115;
-  const CX  = W / 2;
-  const CY  = mob ? 188 : 250;
-  const H   = CY + R + (mob ? 100 : 120);
-
-  // Slots: globe surface point (gx,gy) → line endpoint (lx,ly) → card (cx,cy,cw,ch)
-  const SLOTS = mob ? [
-    // Top — full-width card above globe
-    { gx:CX,         gy:CY-R,       lx:CX,       ly:68,       cx:8,        cy:8,        cw:W-16,        ch:58 },
-    // Bottom left
-    { gx:CX-R*.72,   gy:CY+R*.52,   lx:20,       ly:CY+R+18,  cx:8,        cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
-    // Bottom right
-    { gx:CX+R*.72,   gy:CY+R*.52,   lx:W-20,     ly:CY+R+18,  cx:(W+4)/2,  cy:CY+R+16,  cw:(W-20)/2,    ch:58 },
-  ] : [
-    { gx:CX,        gy:CY-R,       lx:CX,        ly:78,       cx:CX-88,    cy:10,       cw:176, ch:68 },
-    { gx:CX+R*.866, gy:CY-R*.5,    lx:CX+R+15,   ly:CY-96,    cx:CX+R+15,  cy:CY-128,   cw:158, ch:68 },
-    { gx:CX+R*.866, gy:CY+R*.5,    lx:CX+R+15,   ly:CY+42,    cx:CX+R+15,  cy:CY+8,     cw:158, ch:68 },
-    { gx:CX-R*.866, gy:CY+R*.5,    lx:CX-R-15,   ly:CY+42,    cx:0,        cy:CY+8,     cw:158, ch:68 },
-    { gx:CX-R*.866, gy:CY-R*.5,    lx:CX-R-15,   ly:CY-96,    cx:0,        cy:CY-128,   cw:158, ch:68 },
-  ];
-
-  // rAF: rotation + per-particle glow pulses
   useEffect(() => {
-    const animate = () => {
-      angleRef.current += 0.006;
-      if (containerRef.current) {
-        const els = containerRef.current.querySelectorAll("[data-pt]");
-        const cos = Math.cos(angleRef.current);
-        const sin = Math.sin(angleRef.current);
-        els.forEach((el, i) => {
-          const p = SPHERE_POINTS[i];
-          const rx = p.x * cos - p.z * sin;
-          const rz = p.x * sin + p.z * cos;
-          const persp = 2.6 / (2.6 + rz);
-          const sx = CX + rx * R * persp;
-          const sy = CY - p.y * R * persp;
-          const sz = Math.max(1.5, 1.5 + persp * 4.5).toFixed(1);
-          const baseOp = Math.max(0.05, Math.min(0.88, 0.08 + (rz + 1) * 0.40));
-
-          if (glowTimer.current[i] <= 0) {
-            glowTimer.current[i] = 50 + Math.floor(Math.random() * 220);
-            if (Math.random() < 0.28) glowRef.current[i] = 1.0;
-          } else {
-            glowTimer.current[i]--;
-          }
-          const g = glowRef.current[i];
-          if (g > 0) glowRef.current[i] = Math.max(0, g - 0.032);
-
-          el.style.transform = `translate(${(sx-2).toFixed(1)}px,${(sy-2).toFixed(1)}px)`;
-          el.style.opacity   = Math.min(1, baseOp + g * 0.82).toFixed(2);
-          el.style.width     = sz + "px";
-          el.style.height    = sz + "px";
-          el.style.background   = g > 0.4 ? "#86efac" : "#4ade80";
-          el.style.boxShadow    = g > 0.35 ? `0 0 ${Math.round(g*10)}px rgba(74,222,128,${(g*0.85).toFixed(2)})` : "none";
-        });
-      }
-      frameRef.current = requestAnimationFrame(animate);
+    let cancelled = false;
+    const timers = [];
+    const schedule = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
+    const typeStep = (idx) => {
+      if (cancelled) return;
+      const msg = TYPEWRITER_STEPS[idx];
+      setTyped("");
+      setRuleFrac(0);
+      let i = 0;
+      const tick = () => {
+        if (cancelled) return;
+        i += 1;
+        setTyped(msg.slice(0, i));
+        setRuleFrac(i / msg.length);
+        if (i < msg.length) schedule(tick, CHAR_MS);
+        else {
+          setFilled(prev => {
+            const next = [...prev];
+            next[idx] = true;
+            return next;
+          });
+          schedule(() => {
+            if (cancelled) return;
+            setTyped("");
+            schedule(() => {
+              if (cancelled) return;
+              const nextIdx = (idx + 1) % TYPEWRITER_STEPS.length;
+              if (nextIdx === 0) setFilled([false, false, false, false]);
+              typeStep(nextIdx);
+            }, CLEAR_MS);
+          }, HOLD_MS);
+        }
+      };
+      schedule(tick, CHAR_MS);
     };
-    frameRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameRef.current);
-  }, [CX, CY, R]);
-
-  // Stage progression
-  useEffect(() => {
-    const t = [
-      setTimeout(() => setStage(1), 8000),
-      setTimeout(() => setStage(2), 16000),
-      setTimeout(() => setStage(3), 22000),
-    ];
-    return () => t.forEach(clearTimeout);
-  }, []);
-
-  // Facts branch out one at a time, all stay for entire scan
-  useEffect(() => {
-    const maxSlots = SLOTS.length;
-    let count = 0;
-    const launch = () => {
-      if (count >= maxSlots) return;
-      const slot = SLOTS[count];
-      const fact = shuffledFacts.current[count % shuffledFacts.current.length];
-      setActiveFacts(prev => [...prev, { id: Date.now() + count, slot, fact }]);
-      count++;
-    };
-    const t0 = setTimeout(launch, 900);
-    const iv = setInterval(() => { if (count < maxSlots) launch(); }, 4000);
-    return () => { clearTimeout(t0); clearInterval(iv); };
+    typeStep(0);
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
   }, []);
 
   return (
-    <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
-      <style>{`
-        @keyframes factBranch {
-          0%   { opacity:0; transform:scale(0.35); }
-          55%  { opacity:1; transform:scale(1.05); }
-          100% { opacity:1; transform:scale(1); }
-        }
-        @keyframes lineGrow {
-          from { stroke-dashoffset: var(--ll); }
-          to   { stroke-dashoffset: 0; }
-        }
-        @keyframes nodePop {
-          0%   { r:0; opacity:0; }
-          70%  { r:6; opacity:1; }
-          100% { r:4.5; opacity:1; }
-        }
-        @keyframes globeRing {
-          0%,100% { opacity:0.07; } 50% { opacity:0.18; }
-        }
-      `}</style>
+    <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:24, padding:"24px"}}>
+      <style>{`@keyframes globeLoadingCaret { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
 
-      <div style={{position:"relative", width:W, height:H}}>
+      <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:28, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
 
-        {/* Particle layer — covers full container so transforms stay in sync */}
-        <div ref={containerRef} style={{position:"absolute",top:0,left:0,width:W,height:H,pointerEvents:"none"}}>
-          {SPHERE_POINTS.map((_, i) => (
-            <div key={i} data-pt={i} style={{
-              position:"absolute", top:0, left:0, width:4, height:4,
-              borderRadius:"50%", background:"#4ade80",
-            }}/>
-          ))}
-        </div>
+      <div style={{
+        fontFamily:"'Fraunces', Georgia, serif",
+        fontSize: isMobile ? 18 : 20,
+        lineHeight:1.3, color:"var(--moss)", fontWeight:400,
+        textAlign:"center", minHeight:28, letterSpacing:"-0.005em",
+      }}>
+        {typed}
+        <span style={{animation:"globeLoadingCaret 1s step-end infinite", opacity: typed ? 1 : 0.4}}>|</span>
+      </div>
 
-        {/* SVG: globe ring + connecting lines + attachment dots */}
-        <svg style={{position:"absolute",top:0,left:0,pointerEvents:"none",zIndex:6}} width={W} height={H}>
-          <circle cx={CX} cy={CY} r={R} fill="none" stroke="#4ade80" strokeWidth={0.6}
-            style={{animation:"globeRing 3.5s ease-in-out infinite"}}/>
+      <div style={{width:200, height:1, background:"var(--rule)", position:"relative"}}>
+        <div style={{
+          position:"absolute", left:0, top:0, bottom:0,
+          width: `${Math.round(ruleFrac * 100)}%`,
+          background:"var(--moss)",
+          transition:"width 40ms linear",
+        }}/>
+      </div>
 
-          {activeFacts.map(af => {
-            const s = af.slot;
-            const len = Math.hypot(s.lx - s.gx, s.ly - s.gy).toFixed(1);
-            return (
-              <g key={af.id}>
-                <line
-                  x1={s.gx} y1={s.gy} x2={s.lx} y2={s.ly}
-                  stroke="rgba(74,222,128,0.45)" strokeWidth={1.5}
-                  strokeDasharray={len}
-                  style={{"--ll": len, animation:"lineGrow 0.65s ease-out 0.08s forwards", strokeDashoffset: len}}
-                />
-                <circle cx={s.gx} cy={s.gy} r={0} fill="#4ade80"
-                  style={{animation:"nodePop 0.45s ease-out 0.05s forwards"}}/>
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Fact cards — stay in place for entire scan, tap to open source */}
-        {activeFacts.map(af => (
-          <a key={`c-${af.id}`}
-            href={af.fact.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
-            style={{
-              position:"absolute",
-              left: af.slot.cx, top: af.slot.cy,
-              width: af.slot.cw,
-              animation:"factBranch 0.55s cubic-bezier(0.34,1.4,0.64,1) 0.12s both",
-              zIndex:10,
-              textDecoration:"none",
-              cursor: af.fact.url ? "pointer" : "default",
-            }}>
-            <div style={{
-              background:"rgba(5,46,22,0.96)",
-              border:"1.5px solid rgba(74,222,128,0.55)",
-              borderRadius:12, padding:"10px 14px",
-              boxShadow:"0 4px 24px rgba(74,222,128,0.18)",
-              transition:"border-color 0.15s, box-shadow 0.15s",
-            }}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.9)"; e.currentTarget.style.boxShadow="0 4px 32px rgba(74,222,128,0.35)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.55)"; e.currentTarget.style.boxShadow="0 4px 24px rgba(74,222,128,0.18)";}}>
-              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:800,
-                fontSize:mob?18:20,color:"#4ade80",lineHeight:1,marginBottom:5}}>
-                {af.fact.stat}
-              </div>
-              <div style={{fontSize:mob?10:11,color:"rgba(255,255,255,0.65)",lineHeight:1.4}}>
-                {af.fact.text}
-              </div>
-              {af.fact.url && (
-                <div style={{fontSize:9,color:"rgba(74,222,128,0.5)",marginTop:5,letterSpacing:"0.04em"}}>
-                  TAP TO READ STUDY ↗
-                </div>
-              )}
-            </div>
-          </a>
+      <div style={{display:"flex", gap:16, alignItems:"center"}}>
+        {filled.map((on, i) => (
+          <div key={i} style={{
+            width:6, height:6, borderRadius:"50%",
+            background: on ? "var(--moss)" : "var(--ink-faint)",
+            opacity: on ? 1 : 0.35,
+            transition:"background 0.25s, opacity 0.25s",
+          }}/>
         ))}
+      </div>
 
-        {/* Stage indicator */}
-        <div style={{position:"absolute",bottom:0,left:0,right:0,textAlign:"center"}}>
-          {/* Progress bar */}
-          <div style={{width:"60%", maxWidth:280, height:3, borderRadius:99, background:"rgba(74,222,128,0.15)", margin:"0 auto 12px", overflow:"hidden"}}>
-            <div style={{height:"100%", borderRadius:99, background:"#4ade80", transition:"width 1.2s ease",
-              width: stage === 0 ? "15%" : stage === 1 ? "40%" : stage === 2 ? "72%" : "95%"
-            }}/>
-          </div>
-          <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
-            {STAGES.map((_, i) => (
-              <div key={i} style={{
-                width: i === stage ? 20 : 7, height:7, borderRadius:99,
-                background: i <= stage ? "#4ade80" : "rgba(74,222,128,0.15)",
-                transition:"all 0.5s ease",
-              }}/>
-            ))}
-          </div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",letterSpacing:"0.03em"}}>
-            {STAGES[stage]}
-          </div>
-        </div>
+      <div style={{
+        marginTop:8,
+        fontFamily:"'Fraunces', Georgia, serif",
+        fontSize:15, lineHeight:1.4, color:"var(--ink-soft)",
+        fontWeight:400, textAlign:"center",
+      }}>
+        hang on, this takes a second
       </div>
     </div>
   );
 };
-
-
 
 
 const scoreLabel   = (s) => s<=2?"Safe":s<=4?"Good":s<=6?"Caution":s<=8?"Switch":"Avoid";
@@ -7004,9 +6787,9 @@ function App() {
         </div>
       ) : !result ? (
         <>
-          {/* Globe overlay */}
+          {/* Globe overlay — cream typewriter for text/image scans */}
           {showOverlay && (
-            <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#052e16",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"globeOverlayIn 0.4s ease forwards"}}>
+            <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--cream)",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"globeOverlayIn 0.4s ease forwards"}}>
               <style>{`@keyframes globeOverlayIn{from{opacity:0}to{opacity:1}}`}</style>
               <GlobeLoading isMobile={isMobile}/>
             </div>
@@ -7015,25 +6798,68 @@ function App() {
           {/* Scan prompt — backend returned 422 cannot_score_from_text_only. Text queries alone can't be scored because they let the AI fabricate ingredients. */}
           {textOnlyBlocked && (
             <div style={{maxWidth:520, margin:`${isMobile?"96px":"112px"} auto 24px`, padding:"0 20px"}}>
-              <div style={{background:"#052e16", border:"1px solid rgba(34,197,94,0.25)", borderRadius:16, padding:"24px 20px", boxShadow:"0 4px 20px rgba(0,0,0,0.25)"}}>
-                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:20, fontWeight:800, color:"#f0fdf4", marginBottom:8, textAlign:"center", letterSpacing:"-0.2px"}}>Let's see the label</div>
-                <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:14, color:"#6ee7b7", opacity:0.85, marginBottom:20, textAlign:"center", lineHeight:1.5}}>To give you an accurate score, we need to read the actual ingredients on the package.</div>
+              <div style={{
+                background:"var(--cream-light)",
+                border:"1px solid var(--rule)",
+                borderRadius:"16px 20px 14px 18px / 18px 14px 20px 16px",
+                padding:"26px 24px",
+              }}>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                  textTransform:"uppercase", fontWeight:500, marginBottom:14,
+                  display:"flex", alignItems:"center", gap:10,
+                }}>
+                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                  Just a sec
+                </div>
+                <div style={{
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize:26, fontWeight:400, color:"var(--ink)",
+                  lineHeight:1.08, marginBottom:10, letterSpacing:"-0.015em",
+                }}>Let's see the label.</div>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:14, color:"var(--ink-soft)",
+                  marginBottom:22, lineHeight:1.55,
+                }}>To give you an accurate score, I need to read the actual ingredients on the package.</div>
                 <button
                   onClick={()=>{setTextOnlyBlocked(false); setShowBarcodeScanner(true);}}
-                  style={{width:"100%", padding:"14px 16px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10, boxShadow:"0 2px 10px rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
+                  style={{
+                    width:"100%", padding:"13px 16px",
+                    background:"var(--moss)", color:"var(--ivory)",
+                    border:"none",
+                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontWeight:500, fontSize:14, cursor:"pointer",
+                    marginBottom:10, letterSpacing:"0.005em",
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                   Scan barcode
                 </button>
                 <label style={{display:"block", width:"100%", cursor:"pointer"}}>
                   <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
                     onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; setTextOnlyBlocked(false); handleImageScan(f);}}/>
-                  <div style={{width:"100%", padding:"12px 16px", background:"transparent", color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <div style={{
+                    width:"100%", padding:"12px 16px",
+                    background:"transparent", color:"var(--ink)",
+                    border:"1px solid var(--rule-strong)",
+                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontWeight:500, fontSize:14, textAlign:"center",
+                    boxSizing:"border-box", letterSpacing:"0.005em",
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     Take a photo
                   </div>
                 </label>
-                <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:11, color:"#6ee7b7", opacity:0.55, marginTop:16, textAlign:"center", lineHeight:1.5}}>Product names alone can't tell us the full story since formulas change over time.</div>
+                <div style={{
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize:13, color:"var(--ink-faint)",
+                  marginTop:18, lineHeight:1.5, fontWeight:400,
+                }}>Product names alone can't tell the full story — formulas change over time.</div>
               </div>
             </div>
           )}
@@ -7339,10 +7165,9 @@ function App() {
             );
           })() : (
           <>
-          {/* ── NEW USER: full hero ── */}
+          {/* ── NEW USER: full hero (cream refresh) ── */}
 
-          {/* ── FIXED SCAN BAR — always visible, never scrolls away ── */}
-          {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
+          {/* Fixed scan bar — always visible, never scrolls away */}
           <div style={{
             position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
             background:"var(--cream)",
@@ -7350,127 +7175,95 @@ function App() {
             padding: isMobile ? "10px 16px" : "12px 40px",
           }}>
             <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
-              <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"rgba(15,42,24,0.9)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:14, padding:"10px 16px", cursor:"text"}}
-                onClick={()=>document.getElementById("hero-search-input").focus()}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" strokeWidth="2" opacity="0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"10px 16px", cursor:"text"}}
+                onClick={()=>document.getElementById("hero-search-input")?.focus()}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.55"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input
                   id="hero-search-input"
                   value={query}
                   onChange={e=>setQuery(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&analyze()}
                   placeholder="Search any product…"
-                  style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
+                  style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                 />
                 {query.trim() && (
-                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
                 )}
               </div>
               {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
               {!isMobile && (<>
                 <div onClick={()=>document.getElementById("hero-file-input").click()}
-                  style={{width:44, height:44, borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.2)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  style={{width:44, height:44, borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", flexShrink:0}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
                 <input id="hero-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
               </>)}
             </div>
           </div>
 
-          <section style={{background:"#052e16", position:"relative", overflow:"hidden", padding: isMobile ? `${44 + SAFE_TOP + 52}px 20px 40px` : "112px 40px 56px"}}>
-            {/* Animated gradient mesh background */}
-            <div style={{position:"absolute", inset:0, background:"linear-gradient(135deg,#052e16 0%,#0a3d1f 25%,#052e16 50%,#071f0c 75%,#052e16 100%)", backgroundSize:"400% 400%", animation:"gradientShift 12s ease infinite", pointerEvents:"none"}}/>
-            {/* Radial glow that breathes */}
-            <div style={{position:"absolute", top:"30%", left:"50%", transform:"translateX(-50%)", width:600, height:300, borderRadius:"50%", background:"radial-gradient(ellipse,rgba(34,197,94,0.12) 0%,transparent 70%)", animation:"livePulse 4s ease-in-out infinite", pointerEvents:"none"}}/>
-            {/* Floating particles */}
-            <style>{`
-              @keyframes float1 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-18px) translateX(8px)} }
-              @keyframes float2 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-12px) translateX(-10px)} }
-              @keyframes float3 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-20px) translateX(6px)} }
-              @keyframes float4 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-8px) translateX(-14px)} }
-              @keyframes float5 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(12px)} }
-              @keyframes countUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-              @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
-              @keyframes heroReveal { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-              @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-              @keyframes autoScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-              @keyframes scoreReveal { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
-            `}</style>
-            {[
-              {s:10,x:"8%",  y:"20%",a:0.25,anim:"float1",dur:"6s",  shape:"circle"},
-              {s:6, x:"15%", y:"65%",a:0.18,anim:"float2",dur:"8s",  shape:"circle"},
-              {s:14,x:"88%", y:"15%",a:0.20,anim:"float3",dur:"7s",  shape:"circle"},
-              {s:8, x:"92%", y:"70%",a:0.15,anim:"float1",dur:"9s",  shape:"diamond"},
-              {s:5, x:"75%", y:"30%",a:0.30,anim:"float4",dur:"5s",  shape:"circle"},
-              {s:12,x:"25%", y:"82%",a:0.15,anim:"float5",dur:"10s", shape:"circle"},
-              {s:7, x:"60%", y:"78%",a:0.20,anim:"float2",dur:"7.5s",shape:"diamond"},
-              {s:9, x:"45%", y:"12%",a:0.18,anim:"float3",dur:"6.5s",shape:"circle"},
-              {s:5, x:"82%", y:"50%",a:0.25,anim:"float1",dur:"8.5s",shape:"circle"},
-              {s:11,x:"5%",  y:"48%",a:0.15,anim:"float4",dur:"9.5s",shape:"diamond"},
-              {s:4, x:"38%", y:"88%",a:0.20,anim:"float5",dur:"7s",  shape:"circle"},
-              {s:8, x:"70%", y:"8%", a:0.22,anim:"float2",dur:"6s",  shape:"circle"},
-              {s:6, x:"52%", y:"92%",a:0.15,anim:"float3",dur:"11s", shape:"diamond"},
-              {s:10,x:"20%", y:"35%",a:0.12,anim:"float1",dur:"8s",  shape:"circle"},
-              {s:5, x:"95%", y:"38%",a:0.20,anim:"float5",dur:"7.5s",shape:"circle"},
-              {s:7, x:"33%", y:"18%",a:0.20,anim:"float3",dur:"9s",  shape:"diamond"},
-              {s:4, x:"67%", y:"55%",a:0.18,anim:"float4",dur:"6.5s",shape:"circle"},
-              {s:9, x:"12%", y:"85%",a:0.12,anim:"float2",dur:"8s",  shape:"circle"},
-              {s:5, x:"78%", y:"42%",a:0.20,anim:"float1",dur:"7s",  shape:"diamond"},
-              {s:6, x:"42%", y:"72%",a:0.15,anim:"float5",dur:"9.5s",shape:"circle"},
-              {s:8, x:"55%", y:"25%",a:0.18,anim:"float3",dur:"7.5s",shape:"circle"},
-              {s:4, x:"3%",  y:"72%",a:0.22,anim:"float4",dur:"6s",  shape:"diamond"},
-              {s:6, x:"86%", y:"85%",a:0.15,anim:"float2",dur:"10s", shape:"circle"},
-              {s:10,x:"48%", y:"5%", a:0.12,anim:"float1",dur:"8.5s",shape:"circle"},
-              {s:5, x:"22%", y:"52%",a:0.20,anim:"float5",dur:"7s",  shape:"diamond"},
-              {s:7, x:"64%", y:"40%",a:0.16,anim:"float2",dur:"9s",  shape:"circle"},
-              {s:4, x:"30%", y:"95%",a:0.14,anim:"float4",dur:"6.5s",shape:"diamond"},
-              {s:9, x:"50%", y:"60%",a:0.12,anim:"float1",dur:"11s", shape:"circle"},
-              {s:5, x:"18%", y:"10%",a:0.20,anim:"float3",dur:"7s",  shape:"circle"},
-              {s:8, x:"97%", y:"22%",a:0.18,anim:"float5",dur:"8s",  shape:"diamond"},
-              {s:4, x:"40%", y:"45%",a:0.14,anim:"float2",dur:"10s", shape:"circle"},
-              {s:6, x:"73%", y:"95%",a:0.12,anim:"float4",dur:"7.5s",shape:"circle"},
-              {s:10,x:"2%",  y:"30%",a:0.15,anim:"float1",dur:"9s",  shape:"diamond"},
-              {s:5, x:"58%", y:"15%",a:0.20,anim:"float3",dur:"6s",  shape:"circle"},
-              {s:7, x:"35%", y:"60%",a:0.12,anim:"float5",dur:"8.5s",shape:"circle"},
-              {s:4, x:"80%", y:"62%",a:0.18,anim:"float2",dur:"7s",  shape:"diamond"},
-              {s:11,x:"10%", y:"95%",a:0.10,anim:"float4",dur:"12s", shape:"circle"},
-              {s:5, x:"90%", y:"45%",a:0.20,anim:"float1",dur:"6.5s",shape:"circle"},
-              {s:6, x:"28%", y:"40%",a:0.14,anim:"float3",dur:"9.5s",shape:"diamond"},
-              {s:8, x:"62%", y:"68%",a:0.12,anim:"float5",dur:"8s",  shape:"circle"},
-            ].map((p,i)=>(
-              <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.s,height:p.s,borderRadius:p.shape==="circle"?"50%":"2px",transform:p.shape==="diamond"?"rotate(45deg)":undefined,background:"white",opacity:p.a,animation:`${p.anim} ${p.dur} ease-in-out infinite`,animationDelay:`${i*0.3}s`,pointerEvents:"none"}}/>
-            ))}
+          <style>{`
+            @keyframes heroReveal { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+            @keyframes autoScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+            .showcase-track:hover{animation-play-state:paused!important}
+          `}</style>
 
-            <div style={{maxWidth:720, margin:"0 auto", textAlign:"center", position:"relative", zIndex:1,
-              transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
-
-              {/* Live social proof */}
-              <div style={{display:"inline-flex", alignItems:"center", gap:8, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#86efac", fontSize:12, fontWeight:600, padding:"6px 16px", borderRadius:20, marginBottom:20, backdropFilter:"blur(4px)", animation:"heroReveal 0.6s ease 0.1s both"}}>
-                <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"livePulse 1.8s ease-in-out infinite", flexShrink:0}}/>
-                <span>2,847 products scanned today</span>
+          {/* Hero — cream with Fraunces headline */}
+          <section style={{background:"var(--cream)", padding: isMobile ? `${44 + SAFE_TOP + 64}px 24px 40px` : "128px 40px 56px", transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
+            <div style={{maxWidth:720, margin:"0 auto"}}>
+              <div style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                textTransform:"uppercase", fontWeight:500,
+                display:"flex", alignItems:"center", gap:10,
+                marginBottom:18,
+                animation:"heroReveal 0.6s ease 0.1s both",
+              }}>
+                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                2,847 scanned today
               </div>
 
-              <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08, animation:"heroReveal 0.6s ease 0.2s both"}}>
-                Scan anything.<br/><span style={{color:"#22c55e"}}>Know everything.</span>
+              <h1 style={{
+                fontFamily:"'Fraunces', Georgia, serif",
+                fontSize: isMobile ? 42 : 60,
+                fontWeight:400, color:"var(--ink)",
+                margin:"0 0 18px",
+                letterSpacing:"-0.02em",
+                lineHeight:1.02,
+                animation:"heroReveal 0.6s ease 0.2s both",
+              }}>
+                Scan anything.<br/><span style={{color:"var(--moss)"}}>Know what's in it.</span>
               </h1>
-              <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0", lineHeight:1.7, opacity:0.8, animation:"heroReveal 0.6s ease 0.35s both"}}>
+              <p style={{
+                fontFamily:"'Fraunces', Georgia, serif",
+                fontSize: isMobile ? 17 : 20,
+                color:"var(--ink-soft)",
+                margin:0, lineHeight:1.5, fontWeight:400,
+                letterSpacing:"-0.005em",
+                animation:"heroReveal 0.6s ease 0.35s both",
+              }}>
                 {isMobile ? "Understand what's in your products before it affects your health." : "Understand the chemical reality of every product in your home, before it affects your health."}
               </p>
             </div>
           </section>
 
-          {/* ── PRODUCT SHOWCASE — Endowment Effect: see value before committing ── */}
-          {/* Clicking any card triggers a real scan instantly */}
-          <div style={{background:"linear-gradient(180deg,#052e16 0%,#080f0a 60%)", paddingBottom:0}}>
-            <div style={{padding: isMobile ? "28px 0 20px" : "36px 0 24px"}}>
-              <div style={{textAlign:"center", marginBottom:16, padding:"0 20px"}}>
-                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.5, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6}}>Tap any product to scan it</div>
+          {/* Product showcase — auto-scrolling cream cards */}
+          <div style={{background:"var(--cream)", paddingBottom:0}}>
+            <div style={{padding: isMobile ? "12px 0 20px" : "20px 0 28px"}}>
+              <div style={{maxWidth:720, margin:"0 auto", padding:"0 24px", marginBottom:14}}>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                  textTransform:"uppercase", fontWeight:500,
+                  display:"flex", alignItems:"center", gap:10,
+                }}>
+                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                  Tap any to scan
+                </div>
               </div>
-              {/* Auto-scrolling infinite carousel — pauses on hover */}
-              <style>{`.showcase-track:hover{animation-play-state:paused!important}`}</style>
-              <div style={{overflow:"hidden",position:"relative"}}>
-                <div style={{position:"absolute",left:0,top:0,bottom:0,width:60,background:"linear-gradient(90deg,#080f0a,transparent)",zIndex:2,pointerEvents:"none"}}/>
-                <div style={{position:"absolute",right:0,top:0,bottom:0,width:60,background:"linear-gradient(270deg,#080f0a,transparent)",zIndex:2,pointerEvents:"none"}}/>
-                <div className="showcase-track" style={{display:"flex",gap:10,paddingBottom:4,animation:"autoScroll 32s linear infinite",width:"max-content"}}>
+              <div style={{overflow:"hidden", position:"relative"}}>
+                <div style={{position:"absolute", left:0, top:0, bottom:0, width:60, background:"linear-gradient(90deg,var(--cream),transparent)", zIndex:2, pointerEvents:"none"}}/>
+                <div style={{position:"absolute", right:0, top:0, bottom:0, width:60, background:"linear-gradient(270deg,var(--cream),transparent)", zIndex:2, pointerEvents:"none"}}/>
+                <div className="showcase-track" style={{display:"flex", gap:12, paddingBottom:4, animation:"autoScroll 32s linear infinite", width:"max-content"}}>
                   {[
                     {name:"M&Ms",cat:"Candy",score:8,flag:"Red 40 · Yellow 5"},
                     {name:"Tide Pods",cat:"Laundry",score:7,flag:"PVA film · Brighteners"},
@@ -7497,17 +7290,28 @@ function App() {
                     {name:"Oat Yeah Oat Milk",cat:"Beverage",score:2,flag:"Oats · Water · Clean"},
                     {name:"Dawn Dish Soap",cat:"Cleaning",score:5,flag:"Synthetic fragrance"},
                   ].map((item,i)=>{
-                    const sc=item.score<=2?"#22c55e":item.score<=4?"#a3e635":item.score<=6?"#f59e0b":item.score<=8?"#f97316":"#ef4444";
-                    const isClean=item.score<=2;
-                    return(
+                    const sc = item.score <= 3 ? "var(--score-green)" : item.score <= 5 ? "var(--score-amber)" : "var(--score-red)";
+                    const shapes = [
+                      "12px 14px 10px 15px / 14px 10px 15px 12px",
+                      "14px 10px 15px 12px / 10px 15px 12px 14px",
+                      "10px 15px 12px 14px / 15px 12px 14px 10px",
+                      "15px 12px 14px 10px / 12px 14px 10px 15px",
+                    ];
+                    return (
                       <div key={i} onClick={()=>{setQuery(item.name);analyze(item.name);}}
-                        style={{flexShrink:0,width:148,background:"rgba(15,42,24,0.85)",border:`1px solid ${isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.1)"}`,borderRadius:16,padding:"14px",cursor:"pointer",position:"relative",overflow:"hidden",
-                          marginLeft:i===0?(isMobile?16:40):0}}>
-                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:sc,borderRadius:"16px 16px 0 0"}}/>
-                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:10,color:"#6ee7b7",opacity:0.55,marginBottom:8,fontWeight:600}}>{item.cat}</div>
-                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:10,lineHeight:1.3}}>{item.name}</div>
-                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:30,fontWeight:900,color:sc,lineHeight:1,textShadow:`0 0 12px ${sc}66`}}>{item.score}</div>
-                        <div style={{fontSize:9,color:sc,opacity:0.6,marginTop:6,lineHeight:1.4}}>{item.flag}</div>
+                        style={{
+                          flexShrink:0, width:152,
+                          background:"var(--cream-light)",
+                          border:"1px solid var(--rule)",
+                          borderRadius: shapes[i % shapes.length],
+                          padding:"14px 14px 14px",
+                          cursor:"pointer", position:"relative",
+                          marginLeft: i === 0 ? (isMobile ? 24 : 40) : 0,
+                        }}>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9.5, letterSpacing:"0.22em", color:"var(--ink-faint)", marginBottom:8, fontWeight:500, textTransform:"uppercase"}}>{item.cat}</div>
+                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{item.name}</div>
+                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:30, fontWeight:400, color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{item.score}</div>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--ink-soft)", marginTop:6, lineHeight:1.4}}>{item.flag}</div>
                       </div>
                     );
                   })}
@@ -7515,24 +7319,35 @@ function App() {
               </div>
             </div>
 
-            {/* ── GOAL GRADIENT HOOK — Zeigarnik: incomplete task stays in memory ── */}
-            <div style={{maxWidth:600, margin:"0 auto 32px", padding:"0 20px"}}>
-              <div style={{background:"rgba(34,197,94,0.06)", border:"1px dashed rgba(34,197,94,0.25)", borderRadius:16, padding:"16px 20px", display:"flex", alignItems:"center", gap:14}}>
-                <div style={{display:"flex", gap:6, flexShrink:0}}>
-                  {[1,2,3].map(n=>(
-                    <div key={n} style={{width:28, height:28, borderRadius:"50%", border:"1.5px dashed rgba(34,197,94,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"rgba(34,197,94,0.35)"}}>
-                      {n}
-                    </div>
+            {/* Goal gradient hook — "scan 3 to unlock" */}
+            <div style={{maxWidth:600, margin:"0 auto 32px", padding:"0 24px"}}>
+              <div style={{
+                background:"var(--cream-light)",
+                border:"1px dashed var(--moss)",
+                borderRadius:"16px 20px 14px 18px / 18px 14px 20px 16px",
+                padding:"18px 20px",
+                display:"flex", alignItems:"center", gap:14,
+              }}>
+                <div style={{display:"flex", gap:8, flexShrink:0}}>
+                  {[1,2,3].map(n => (
+                    <div key={n} style={{
+                      width:28, height:28,
+                      borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+                      border:"1.5px dashed var(--moss)",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize:14, fontWeight:400, color:"var(--moss)", opacity:0.55,
+                    }}>{n}</div>
                   ))}
                 </div>
                 <div>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>Scan 3 products to unlock your Routine Score</div>
-                  <div style={{fontSize:11, color:"#6ee7b7", opacity:0.6}}>See your overall health exposure across everything you use daily</div>
+                  <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:2, letterSpacing:"-0.005em"}}>Scan three to unlock your shelf score.</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4}}>See your overall exposure across everything you use daily.</div>
                 </div>
               </div>
             </div>
 
-            {/* ── TODAY'S COMPARISON — Peak-End: memorable, shareable ── */}
+            {/* Today's Comparison — cream card */}
             {(() => {
               const comps = [
                 {a:{name:"Heinz Ketchup",score:6,flags:"HFCS · Caramel color"},    b:{name:"Annie's Ketchup",score:2,flags:"Organic · 5 ingredients"}},
@@ -7544,50 +7359,107 @@ function App() {
                 {a:{name:"Lay's Chips",score:5,flags:"Seed oils · Natural flavors"},b:{name:"Siete Chips",score:2,flags:"Avocado oil · Clean"}},
               ];
               const tc = comps[new Date().getDay()];
-              const sc = s => s<=2?"#22c55e":s<=4?"#a3e635":s<=6?"#f59e0b":s<=8?"#f97316":"#ef4444";
+              const sc = s => s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+              const scSoft = s => s <= 3 ? "var(--score-green-soft)" : s <= 5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
               return (
-                <div style={{maxWidth:600, margin:"0 auto 40px", padding:"0 20px"}}>
-                  <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
-                    <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4"}}>Today's Comparison</div>
-                    <div style={{background:"#a3e635", color:"#052e16", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:800, padding:"3px 10px", borderRadius:20, letterSpacing:"0.08em", textTransform:"uppercase"}}>Daily</div>
+                <div style={{maxWidth:600, margin:"0 auto 40px", padding:"0 24px"}}>
+                  <div style={{
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                    textTransform:"uppercase", fontWeight:500,
+                    display:"flex", alignItems:"center", gap:10,
+                    marginBottom:12,
+                  }}>
+                    <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                    Today's comparison
                   </div>
-                  <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px", display:"flex", gap:10, alignItems:"center"}}>
-                    {[tc.a, tc.b].map((prod,pi)=>(
+                  <div style={{
+                    background:"var(--cream-light)",
+                    border:"1px solid var(--rule)",
+                    borderRadius:"20px 14px 18px 16px / 14px 18px 16px 20px",
+                    padding:"20px", display:"flex", gap:12, alignItems:"center",
+                  }}>
+                    {[tc.a, tc.b].map((prod, pi) => (
                       <React.Fragment key={pi}>
-                        {pi===1&&<div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:800, color:"rgba(110,231,183,0.4)", flexShrink:0}}>VS</div>}
-                        <div onClick={()=>{setQuery(prod.name);analyze(prod.name);}}
-                          style={{flex:1, background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 12px", textAlign:"center", border:"1px solid rgba(34,197,94,0.1)", cursor:"pointer"}}>
-                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{prod.name}</div>
-                          <div style={{width:44, height:44, borderRadius:"50%", background:`${sc(prod.score)}18`, border:`2px solid ${sc(prod.score)}44`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 6px"}}>
-                            <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:18, fontWeight:900, color:sc(prod.score)}}>{prod.score}</span>
+                        {pi === 1 && (
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10, letterSpacing:"0.22em",
+                            fontWeight:500, color:"var(--ink-faint)",
+                            textTransform:"uppercase", flexShrink:0,
+                          }}>vs</div>
+                        )}
+                        <div onClick={()=>{setQuery(prod.name); analyze(prod.name);}}
+                          style={{
+                            flex:1, background:"var(--cream)",
+                            border:"1px solid var(--rule)",
+                            borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px",
+                            padding:"14px 12px", textAlign:"center", cursor:"pointer",
+                          }}>
+                          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{prod.name}</div>
+                          <div style={{
+                            width:48, height:48,
+                            borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+                            background: scSoft(prod.score),
+                            border:`2px solid ${sc(prod.score)}`,
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            margin:"0 auto 8px",
+                          }}>
+                            <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:sc(prod.score), letterSpacing:"-0.01em"}}>{prod.score}</span>
                           </div>
-                          <div style={{fontSize:10, color:"#6ee7b7", opacity:0.55, lineHeight:1.4}}>{prod.flags}</div>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10.5, color:"var(--ink-soft)", lineHeight:1.4}}>{prod.flags}</div>
                         </div>
                       </React.Fragment>
                     ))}
                   </div>
                   <div style={{textAlign:"center", marginTop:12}}>
-                    <span style={{fontSize:12, color:"#6ee7b7", opacity:0.5}}>Tap either product to see the full breakdown</span>
+                    <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:13, color:"var(--ink-faint)", fontWeight:400}}>Tap either product to see the full breakdown.</span>
                   </div>
                 </div>
               );
             })()}
           </div>
 
-          {error&&!textOnlyBlocked&&<div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 20px"}}><div style={{padding:"14px 20px",background:"rgba(239,68,68,0.15)",borderRadius:10,color:"#fca5a5",fontSize:14,border:"1px solid rgba(239,68,68,0.3)"}}>{error}</div></div>}
+          {error && !textOnlyBlocked && (
+            <div style={{maxWidth:600, margin:"0 auto 20px", padding:"0 24px"}}>
+              <div style={{
+                padding:"14px 20px",
+                background:"var(--score-red-soft)",
+                borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px",
+                border:"1px solid var(--score-red)",
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                color:"var(--score-red)", fontSize:14,
+              }}>{error}</div>
+            </div>
+          )}
 
-          {/* Homepage email capture */}
+          {/* Email capture — cream card */}
           {!emailDismissed && !user && (
-            <div style={{maxWidth:520, margin:"0 auto 0", padding:"0 20px 32px"}}>
-              <div style={{background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px"}}>
-                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:4}}>Get weekly safety alerts</div>
-                <div style={{fontSize:12, color:"#6ee7b7", opacity:0.7, marginBottom:14}}>Product recalls, ingredient flags, and safer swaps — straight to your inbox</div>
+            <div style={{maxWidth:520, margin:"0 auto", padding:"0 24px 40px"}}>
+              <div style={{
+                background:"var(--cream-light)",
+                border:"1px solid var(--rule)",
+                borderRadius:"16px 20px 14px 18px / 18px 14px 20px 16px",
+                padding:"22px",
+              }}>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                  textTransform:"uppercase", fontWeight:500,
+                  display:"flex", alignItems:"center", gap:10,
+                  marginBottom:10,
+                }}>
+                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                  Weekly alerts
+                </div>
+                <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:19, fontWeight:400, color:"var(--ink)", marginBottom:6, lineHeight:1.15, letterSpacing:"-0.005em"}}>Recalls, ingredient flags, safer swaps.</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", marginBottom:16, lineHeight:1.5}}>Straight to your inbox. No spam.</div>
                 <div style={{display:"flex", gap:8}}>
                   <input type="email" placeholder="your@email.com" value={captureEmail} onChange={e=>setCaptureEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
-                    style={{flex:1, padding:"10px 14px", borderRadius:10, border:"1px solid rgba(34,197,94,0.2)", background:"rgba(15,42,24,0.8)", color:"#f0fdf4", fontSize:13, outline:"none", fontFamily:"'DM Sans',sans-serif"}}/>
+                    style={{flex:1, padding:"10px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:"1px solid var(--rule-strong)", background:"var(--cream)", color:"var(--ink)", fontSize:13, outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif"}}/>
                   <button onClick={submitCaptureEmail} disabled={captureSubmitting}
-                    style={{padding:"10px 18px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1, boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
-                    {captureSubmitting ? "..." : captureMsg ? "Done!" : "Stay informed"}
+                    style={{padding:"10px 18px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1, letterSpacing:"0.005em"}}>
+                    {captureSubmitting ? "..." : captureMsg ? "Done" : "Stay informed"}
                   </button>
                 </div>
               </div>
