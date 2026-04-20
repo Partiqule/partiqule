@@ -4825,11 +4825,11 @@ app.get("/search", async (req, res) => {
     try {
       const { data } = await supabaseAdmin
         .from("scans")
-        .select("id,product_name,user_id,result_json,created_at")
+        .select("id,product_name,user_id,result_json,scanned_at")
         .ilike("product_name", `%${q}%`)
         .not("result_json->>ingredient_source", "is", null)
-        .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
-        .order("created_at", { ascending: false })
+        .gte("scanned_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+        .order("scanned_at", { ascending: false })
         .limit(20);
       scanSubstring = data || [];
     } catch (e) {
@@ -4864,7 +4864,7 @@ app.get("/search", async (req, res) => {
     .map(s => ({ ...s, _owned: s.user_id === userId }))
     .sort((a, b) => {
       if (a._owned !== b._owned) return a._owned ? -1 : 1;
-      return new Date(b.created_at) - new Date(a.created_at);
+      return new Date(b.scanned_at) - new Date(a.scanned_at);
     });
 
   for (const s of prioritizedScans) {
@@ -4877,12 +4877,12 @@ app.get("/search", async (req, res) => {
       id: `scan:${s.id}`,
       display_name: s.product_name,
       source: s._owned ? "own_scan" : "other_scan",
-      source_label: s._owned ? `Your scan from ${relativeTime(s.created_at)}` : "Recent verified scan",
+      source_label: s._owned ? `Your scan from ${relativeTime(s.scanned_at)}` : "Recent verified scan",
       score_preview: score,
       category: s.result_json?.category || "other",
       match_type: "substring",
       similarity: 1,
-      scanned_at: s.created_at,
+      scanned_at: s.scanned_at,
     });
   }
 
@@ -4931,12 +4931,12 @@ app.get("/search", async (req, res) => {
             id: `scan:${row.id}`,
             display_name: row.product_name,
             source: owned ? "own_scan" : "other_scan",
-            source_label: owned ? `Your scan from ${relativeTime(row.created_at)}` : "Recent verified scan",
+            source_label: owned ? `Your scan from ${relativeTime(row.scanned_at)}` : "Recent verified scan",
             score_preview: score,
             category: row.result_json?.category || "other",
             match_type: "trigram",
             similarity: typeof row.sim === "number" ? Math.round(row.sim * 100) / 100 : null,
-            scanned_at: row.created_at,
+            scanned_at: row.scanned_at,
           });
         }
       } catch (e) {
@@ -5061,14 +5061,14 @@ app.post("/analyze", rateLimit, async (req, res) => {
         if (!/^[0-9a-f-]{30,40}$/i.test(scanId)) return res.status(400).json({ error: "Invalid scan id" });
         const { data, error } = await supabaseAdmin
           .from("scans")
-          .select("result_json,product_name,created_at")
+          .select("result_json,product_name,scanned_at")
           .eq("id", scanId)
           .single();
         if (error || !data?.result_json) return res.status(404).json({ error: "Scan not found" });
         const result = { ...data.result_json };
         // Rewrite source to signal the user is seeing a reused scan, not a fresh verification
         result.ingredient_source = "previous_scan";
-        result.ingredient_verified_at = data.created_at || result.ingredient_verified_at;
+        result.ingredient_verified_at = data.scanned_at || result.ingredient_verified_at;
         result.ingredient_source_url = null;
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "scan" });
