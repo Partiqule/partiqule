@@ -120,7 +120,7 @@ function renderProductPage(productName, entry) {
 <!-- Google Fonts — matches main app -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="/favicon-512.png">
@@ -163,7 +163,7 @@ ${JSON.stringify(structuredData, null, 2)}
     --bg:#fafafa;
     --border:#e8e8e8;
   }
-  html,body{font-family:'Outfit',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+  html,body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
   a{color:var(--green);text-decoration:none;transition:color 0.15s}
   a:hover{color:#15803d}
   .container{max-width:860px;margin:0 auto;padding:0 24px}
@@ -187,7 +187,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .breadcrumb{font-size:12px;color:rgba(255,255,255,0.55);font-weight:500;letter-spacing:0.02em;margin-bottom:20px;text-transform:uppercase;letter-spacing:0.1em}
   .breadcrumb a{color:#4ade80}
   .breadcrumb-sep{margin:0 8px;opacity:0.5}
-  h1{font-family:'Outfit',sans-serif;font-size:48px;font-weight:800;letter-spacing:-1px;line-height:1.08;margin-bottom:20px;color:#fff}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:48px;font-weight:800;letter-spacing:-1px;line-height:1.08;margin-bottom:20px;color:#fff}
   .subtitle{font-size:17px;color:rgba(255,255,255,0.7);max-width:560px;line-height:1.55;margin-bottom:0}
 
   /* ── SCORE CARD — matches main app result card ── */
@@ -198,7 +198,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .score-category{display:inline-block;font-size:11px;font-weight:700;color:var(--green);background:var(--green-pale);padding:5px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
   .score-label-tag{display:inline-block;font-size:11px;font-weight:800;padding:6px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;margin-top:8px;background:${bg};color:${color};border:1px solid ${color}30}
   .score-number-box{text-align:right;flex-shrink:0}
-  .score-number{font-family:'Outfit',sans-serif;font-weight:900;font-size:96px;line-height:0.9;color:${color};letter-spacing:-3px}
+  .score-number{font-family:'Fraunces',Georgia,serif;font-weight:900;font-size:96px;line-height:0.9;color:${color};letter-spacing:-3px}
   .score-number-sub{font-size:18px;font-weight:700;color:${color};opacity:0.6;margin-top:-4px}
   .score-desc{font-size:15px;color:var(--muted);line-height:1.6;margin-top:12px}
   .reason-box{background:${bg};border-left:4px solid ${color};border-radius:10px;padding:18px 22px;font-size:15px;line-height:1.65;color:#1f2937;margin-top:24px}
@@ -206,12 +206,12 @@ ${JSON.stringify(structuredData, null, 2)}
   .child-notice-icon{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:20px}
   .child-notice-content{flex:1;min-width:0}
   .child-notice-title{font-size:13px;font-weight:800;color:#9d174d;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
-  .child-notice-score{font-size:22px;font-weight:900;color:#9d174d;font-family:'Outfit',sans-serif;margin-bottom:6px}
+  .child-notice-score{font-size:22px;font-weight:900;color:#9d174d;font-family:'Fraunces',Georgia,serif;margin-bottom:6px}
   .child-notice-body{font-size:13px;color:#831843;line-height:1.55}
 
   /* ── SECTIONS ── */
   .section{padding:40px 0;border-top:1px solid var(--border)}
-  .section h2{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;margin-bottom:18px;color:var(--text);letter-spacing:-0.5px}
+  .section h2{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:800;margin-bottom:18px;color:var(--text);letter-spacing:-0.5px}
   .section-label{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px}
   .concerns{display:flex;flex-wrap:wrap;gap:10px}
   .concern-tag{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#fff1f2;color:#7f1d1d;font-size:13px;font-weight:600;border-radius:24px;border:1px solid #fecdd3}
@@ -222,7 +222,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .cta-section::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(74,222,128,0.08),transparent 60%);pointer-events:none}
   .cta-inner{position:relative;z-index:1}
   .cta-label{font-size:12px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
-  .cta-title{font-family:'Outfit',sans-serif;font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px;color:#fff;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.2}
+  .cta-title{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px;color:#fff;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.2}
   .cta-body{font-size:16px;color:rgba(255,255,255,0.75);max-width:520px;margin:0 auto 28px;line-height:1.55}
   .cta-btn{background:#4ade80;color:#052e16!important;padding:16px 36px;border-radius:12px;font-size:16px;font-weight:800;display:inline-block;transition:all 0.15s;letter-spacing:-0.2px}
   .cta-btn:hover{background:#86efac;transform:translateY(-1px);box-shadow:0 8px 24px rgba(74,222,128,0.2)}
@@ -297,7 +297,7 @@ ${JSON.stringify(structuredData, null, 2)}
       <div class="score-top">
         <div class="score-meta">
           <div class="score-category">${titleCase(category.replace(/_/g, " "))}</div>
-          <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:26px;color:var(--text);letter-spacing:-0.5px;line-height:1.2">${escapeHtml(titleCase(productName))}</div>
+          <div style="font-family:'Fraunces',Georgia,serif;font-weight:800;font-size:26px;color:var(--text);letter-spacing:-0.5px;line-height:1.2">${escapeHtml(titleCase(productName))}</div>
           <div class="score-label-tag">${label}</div>
           <div class="score-desc">${scoreDesc(score)}</div>
         </div>

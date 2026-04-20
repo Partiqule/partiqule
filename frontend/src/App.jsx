@@ -410,7 +410,7 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
                 <rect x="10.5" y="4" width="3" height="16"/><rect x="16" y="4" width="1.5" height="16"/>
                 <rect x="19" y="4" width="3" height="16"/>
               </svg>
-              <span style={{fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:800,color:"#4ade80",letterSpacing:"0.04em"}}>Barcode</span>
+              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:13,fontWeight:800,color:"#4ade80",letterSpacing:"0.04em"}}>Barcode</span>
               <span style={{fontSize:10,color:"rgba(74,222,128,0.6)",textAlign:"center",lineHeight:1.3}}>Auto-scanning</span>
             </div>
             <button onClick={takePhoto}
@@ -421,7 +421,7 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
                 <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                 <circle cx="12" cy="13" r="4"/>
               </svg>
-              <span style={{fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:800,color:"white",letterSpacing:"0.04em"}}>Photo</span>
+              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:13,fontWeight:800,color:"white",letterSpacing:"0.04em"}}>Photo</span>
               <span style={{fontSize:10,color:"rgba(255,255,255,0.5)",textAlign:"center",lineHeight:1.3}}>Scan the label</span>
             </button>
           </div>
@@ -480,14 +480,14 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
 
       {phase === "loading" ? (
         <div key={statusText}
-             style={{fontFamily:"'Outfit',sans-serif", fontWeight:500, fontSize:15,
+             style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15,
                      color:"#6ee7b7", opacity:0.9, letterSpacing:"0.01em",
                      animation:"barcodeLoadingStatus 0.3s ease forwards"}}>
           {statusText}
         </div>
       ) : (
         <div style={{maxWidth:340, textAlign:"center"}}>
-          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:17,
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:17,
                        color:"#f0fdf4", marginBottom:8}}>
             We couldn't find this product
           </div>
@@ -498,7 +498,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
           <button onClick={onRetry}
             style={{width:"100%", padding:"14px 16px",
                     background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
-                    border:"none", borderRadius:12, fontFamily:"'Outfit',sans-serif",
+                    border:"none", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif",
                     fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10,
                     boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
             Try scanning again
@@ -508,7 +508,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto }) => {
               onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; onPhoto(f);}}/>
             <div style={{width:"100%", padding:"12px 16px", background:"transparent",
                          color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)",
-                         borderRadius:12, fontFamily:"'Outfit',sans-serif",
+                         borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif",
                          fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box"}}>
               Take a photo instead
             </div>
@@ -546,7 +546,7 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
         const aspect = logo.naturalWidth / logo.naturalHeight;
         ctx.drawImage(logo, 48, (100 - targetH) / 2, targetH * aspect, targetH);
       } else {
-        ctx.fillStyle = "#4ade80"; ctx.font = "800 30px 'Outfit',system-ui,sans-serif";
+        ctx.fillStyle = "#4ade80"; ctx.font = "800 30px 'DM Sans', system-ui, sans-serif";
         ctx.textAlign = "left"; ctx.textBaseline = "middle";
         ctx.fillText("PARTIQULE", 48, 50);
       }
@@ -582,13 +582,13 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
         const labelW = 130, labelH = 38, labelX = x + cardW / 2 - labelW / 2, labelY = cardY - 19;
         ctx.beginPath(); ctx.roundRect(labelX, labelY, labelW, labelH, 19);
         ctx.fillStyle = "#16a34a"; ctx.fill();
-        ctx.fillStyle = "#fff"; ctx.font = "700 20px 'Outfit',system-ui,sans-serif";
+        ctx.fillStyle = "#fff"; ctx.font = "700 20px 'DM Sans', system-ui, sans-serif";
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
         ctx.fillText("Better", labelX + labelW / 2, labelY + labelH / 2);
       }
 
       // Product name (2 lines max)
-      ctx.fillStyle = "#111"; ctx.font = "700 32px 'Outfit',system-ui,sans-serif";
+      ctx.fillStyle = "#111"; ctx.font = "700 32px 'DM Sans', system-ui, sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
       const words = name.split(" "); let line = "", lines = [];
       for (const w of words) {
@@ -609,12 +609,12 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
       ctx.beginPath(); ctx.arc(circX, circY, circR, 0, Math.PI * 2);
       ctx.fillStyle = sc(score) + "18"; ctx.fill();
       ctx.strokeStyle = sc(score); ctx.lineWidth = 5; ctx.stroke();
-      ctx.fillStyle = sc(score); ctx.font = "900 72px 'Outfit',system-ui,sans-serif";
+      ctx.fillStyle = sc(score); ctx.font = "900 72px 'DM Sans', system-ui, sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(parseFloat(score).toFixed(1), circX, circY);
 
       // /10 label
-      ctx.fillStyle = "#94a3b8"; ctx.font = "600 24px 'Outfit',system-ui,sans-serif";
+      ctx.fillStyle = "#94a3b8"; ctx.font = "600 24px 'DM Sans', system-ui, sans-serif";
       ctx.fillText("/10 score", circX, circY + circR + 40);
     };
 
@@ -623,7 +623,7 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
 
     // Delta line
     const deltaY = cardY + cardH + 70;
-    ctx.fillStyle = "#16a34a"; ctx.font = "800 36px 'Outfit',system-ui,sans-serif";
+    ctx.fillStyle = "#16a34a"; ctx.font = "800 36px 'DM Sans', system-ui, sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText("\u2193 " + delta + " points safer in the same category", W / 2, deltaY);
 
@@ -657,7 +657,7 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
     <div style={{position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}} onClick={onClose}>
       <div style={{background:"#fff", borderRadius:20, padding:20, maxWidth:480, width:"100%", maxHeight:"90vh", overflow:"auto"}} onClick={e => e.stopPropagation()}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
-          <span style={{fontFamily:"'Outfit',sans-serif", fontSize:16, fontWeight:700, color:"#111"}}>Compare & Share</span>
+          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:16, fontWeight:700, color:"#111"}}>Compare & Share</span>
           <button onClick={onClose} style={{background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#999", padding:0, lineHeight:1}}>x</button>
         </div>
         <div style={{borderRadius:12, overflow:"hidden", border:"1px solid #e2e8f0"}}>
@@ -668,7 +668,7 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
             flex:1, padding:"13px 16px", borderRadius:12,
             background: status === "copied" ? "#16a34a" : "linear-gradient(135deg,#22c55e,#16a34a)",
             border:"none", color:"#fff",
-            fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800,
+            fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:800,
             cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
           }}>
             <IconShare size={16} color="#fff"/>
@@ -954,7 +954,7 @@ const GlobeLoading = ({isMobile}) => {
             }}
               onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.9)"; e.currentTarget.style.boxShadow="0 4px 32px rgba(74,222,128,0.35)";}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(74,222,128,0.55)"; e.currentTarget.style.boxShadow="0 4px 24px rgba(74,222,128,0.18)";}}>
-              <div style={{fontFamily:"Outfit,sans-serif",fontWeight:800,
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:800,
                 fontSize:mob?18:20,color:"#4ade80",lineHeight:1,marginBottom:5}}>
                 {af.fact.stat}
               </div>
@@ -1049,18 +1049,18 @@ const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#
 const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
   if (score == null || isNaN(parseFloat(score))) return null;
   const num = parseFloat(score);
-  const color = num <= 3 ? "#16a34a" : num <= 5 ? "#d97706" : "#dc2626";
-  const bg    = num <= 3 ? "#f0fdf4" : num <= 5 ? "#fffbeb" : "#fef2f2";
+  const color = num <= 3 ? "var(--score-green)" : num <= 5 ? "var(--score-amber)" : "var(--score-red)";
+  const bg    = num <= 3 ? "var(--score-green-soft)" : num <= 5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
   const sizes = {
-    xs: { font: 13, pad: "1px 7px",  radius: 8,  weight: 700 },
-    sm: { font: 15, pad: "2px 10px", radius: 10, weight: 700 },
-    md: { font: 22, pad: "4px 14px", radius: 12, weight: 800 },
-    lg: { font: 32, pad: "6px 20px", radius: 14, weight: 800 },
+    xs: { font: 13, pad: "1px 7px",  radius: 8,  weight: 500 },
+    sm: { font: 15, pad: "2px 10px", radius: 10, weight: 500 },
+    md: { font: 24, pad: "4px 14px", radius: 12, weight: 400 },
+    lg: { font: 36, pad: "6px 20px", radius: 14, weight: 400 },
   };
   const s = sizes[size] || sizes.md;
   return (
     <span style={{
-      fontFamily: "'Outfit', sans-serif",
+      fontFamily: "'Fraunces', Georgia, serif",
       fontSize: s.font,
       fontWeight: s.weight,
       color,
@@ -1069,8 +1069,9 @@ const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
       borderRadius: s.radius,
       display: "inline-block",
       lineHeight: 1.2,
+      letterSpacing: "-0.01em",
     }}>
-      {num.toFixed(1)}{showLabel && <span style={{fontSize: s.font * 0.55, opacity: 0.6, marginLeft: 2}}>/10</span>}
+      {num.toFixed(1)}{showLabel && <span style={{fontSize: s.font * 0.5, opacity: 0.55, marginLeft: 2, fontFamily: "'DM Sans', system-ui, sans-serif", letterSpacing: "0.02em"}}>/10</span>}
     </span>
   );
 };
@@ -1080,7 +1081,7 @@ const categoryMeta = {
   food_beverage: {label:"Food & Drink",  color:"#0891b2",bg:"#ecfeff"},
   personal_care: {label:"Personal Care", color:"#db2777",bg:"#fdf2f8"},
   kitchen:       {label:"Kitchen",       color:"#d97706",bg:"#fffbeb"},
-  baby:          {label:"Baby & Kids",   color:"#7c3aed",bg:"#f5f3ff"},
+  baby:          {label:"Baby & Kids",   color:"#c8781a",bg:"#fdf4e7"},
   other:         {label:"General",       color:"#6b7280",bg:"#f9fafb"},
 };
 
@@ -1160,7 +1161,7 @@ const IconSun        = ({size=18,color="currentColor"}) => <svg width={size} hei
 const IconFire       = ({size=14,color="#ef4444"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>;
 const IconBook       = ({size=20,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>;
 const IconLink       = ({size=14,color="#6366f1"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>;
-const IconBundle     = ({size=20,color="#7c3aed"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.05 15.96 0 13.36 0c-1.31 0-2.4.5-3.27 1.33L9 2.5 7.91 1.33C7.04.5 5.95 0 4.64 0 2.04 0 0 2.05 0 4.64c0 .48.11.92.18 1.36H0v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.64-4c.9 0 1.64.74 1.64 1.64 0 .97-.79 1.72-1.64 2.36C12.15 5.36 11.35 4.61 11.35 3.64 11.35 2.74 12.1 2 13.36 2zM4.64 2c1.26 0 2.01.74 2.01 1.64 0 .97-.8 1.72-2.01 2.36C3.43 5.36 2.64 4.61 2.64 3.64 2.64 2.74 3.38 2 4.64 2zM20 19H2v-2h18v2zm0-5H2V8h18v6z"/></svg>;
+const IconBundle     = ({size=20,color="#c8781a"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.05 15.96 0 13.36 0c-1.31 0-2.4.5-3.27 1.33L9 2.5 7.91 1.33C7.04.5 5.95 0 4.64 0 2.04 0 0 2.05 0 4.64c0 .48.11.92.18 1.36H0v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.64-4c.9 0 1.64.74 1.64 1.64 0 .97-.79 1.72-1.64 2.36C12.15 5.36 11.35 4.61 11.35 3.64 11.35 2.74 12.1 2 13.36 2zM4.64 2c1.26 0 2.01.74 2.01 1.64 0 .97-.8 1.72-2.01 2.36C3.43 5.36 2.64 4.61 2.64 3.64 2.64 2.74 3.38 2 4.64 2zM20 19H2v-2h18v2zm0-5H2V8h18v6z"/></svg>;
 
 // ── ANIMATED SCORE ────────────────────────────────────────────
 const AnimatedScore = ({target, color}) => {
@@ -1217,10 +1218,10 @@ const ScoreArc = ({score}) => {
       </svg>
       {/* Centered score */}
       <div style={{position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:0}}>
-        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:64, fontWeight:900, lineHeight:1, letterSpacing:"-0.04em", color, textShadow:`0 0 32px ${glow}`}}>
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:64, fontWeight:900, lineHeight:1, letterSpacing:"-0.04em", color, textShadow:`0 0 32px ${glow}`}}>
           <AnimatedScore target={score} color={color}/>
         </div>
-        <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, color:"#6ee7b7", opacity:0.5, marginTop:2}}>out of 10</div>
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, color:"#6ee7b7", opacity:0.5, marginTop:2}}>out of 10</div>
       </div>
     </div>
   );
@@ -1236,7 +1237,7 @@ const RiskBar = ({score}) => {
   return (
     <div style={{marginTop:16}}>
       <div style={{textAlign:"center", marginBottom:10}}>
-        <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:scoreColor(score), padding:"5px 16px", borderRadius:20, background:`${scoreColor(score)}18`, border:`1px solid ${scoreColor(score)}33`}}>{meaning}</span>
+        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13, color:scoreColor(score), padding:"5px 16px", borderRadius:20, background:`${scoreColor(score)}18`, border:`1px solid ${scoreColor(score)}33`}}>{meaning}</span>
       </div>
       <div style={{position:"relative", height:8, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
         <div style={{position:"absolute", top:"50%", left:`${pct}%`, transform:"translate(-50%,-50%)", width:18, height:18, borderRadius:"50%", background:"#0f2a18", border:`3px solid ${scoreColor(score)}`, boxShadow:`0 0 12px ${scoreColor(score)}66`, transition:"left 1.2s cubic-bezier(.4,0,.2,1)"}}/>
@@ -1267,14 +1268,14 @@ const BundleCard = ({category, isDark}) => {
   const searchQuery = searches[category] || searches.other;
   const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchQuery)}&tag=partiqule-20`;
   return (
-    <div style={{background:isDark?"#1a1f2e":"#f5f3ff", borderRadius:16, padding:"24px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#ddd6fe"}`}}>
+    <div style={{background:isDark?"#1a1f2e":"#fdf4e7", borderRadius:16, padding:"24px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#ddd6fe"}`}}>
       <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:16}}>
-        <div style={{width:40, height:40, borderRadius:10, background:"#7c3aed", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+        <div style={{width:40, height:40, borderRadius:10, background:"#c8781a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
           <IconBundle size={20} color="#fff"/>
         </div>
         <div>
-          <div style={{fontSize:11, color:"#7c3aed", textTransform:"uppercase", fontWeight:700, letterSpacing:"0.05em", marginBottom:3}}>Bundle Recommendation</div>
-          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:17, color:text, lineHeight:1.3}}>{bundle.title}</div>
+          <div style={{fontSize:11, color:"#c8781a", textTransform:"uppercase", fontWeight:700, letterSpacing:"0.05em", marginBottom:3}}>Bundle Recommendation</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:17, color:text, lineHeight:1.3}}>{bundle.title}</div>
           <div style={{fontSize:13, color:muted, marginTop:3}}>{bundle.desc}</div>
         </div>
       </div>
@@ -1289,7 +1290,7 @@ const BundleCard = ({category, isDark}) => {
         ))}
       </div>
       <a href={amazonUrl} target="_blank" rel="noopener noreferrer"
-        style={{display:"flex", alignItems:"center", justifyContent:"center", gap:6, width:"100%", padding:"12px", borderRadius:10, background:"#7c3aed", color:"#fff", fontSize:14, fontWeight:600, textDecoration:"none", boxSizing:"border-box"}}>
+        style={{display:"flex", alignItems:"center", justifyContent:"center", gap:6, width:"100%", padding:"12px", borderRadius:10, background:"#c8781a", color:"#fff", fontSize:14, fontWeight:600, textDecoration:"none", boxSizing:"border-box"}}>
         Shop this bundle on Amazon <IconArrow size={14} color="#fff"/>
       </a>
     </div>
@@ -1312,7 +1313,7 @@ const SourceCitations = ({category, isDark}) => {
             <IconBook size={18} color="#6366f1"/>
           </div>
           <div>
-            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text}}>Research & Sources</div>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text}}>Research & Sources</div>
             <div style={{fontSize:12, color:muted}}>Scores based on peer-reviewed studies</div>
           </div>
         </div>
@@ -1409,12 +1410,12 @@ const EducationSection = ({isDark, isMobile=false}) => {
     },
     {
       tag: "How Scores Get More Accurate Over Time",
-      tagColor: "#7c3aed",
-      tagBg: isDark?"#1e1433":"#f5f3ff",
+      tagColor: "#c8781a",
+      tagBg: isDark?"#1e1433":"#fdf4e7",
       headline: "From AI estimate to verified fact",
       subhead: "Every scan makes the system smarter. Here is the honest explanation of how Partiqule works today, and where it is going.",
       stats: [
-        {number:"113",  label:"confirmed harmful substances in our registry — each with a hard minimum score it enforces in code", color:"#7c3aed", bg:"#f5f3ff"},
+        {number:"113",  label:"confirmed harmful substances in our registry — each with a hard minimum score it enforces in code", color:"#c8781a", bg:"#fdf4e7"},
         {number:"2-pass", label:"every scan runs through an AI scorer and an independent AI auditor before a result is returned", color:"#6d28d9", bg:"#ede9fe"},
         {number:"Code", label:"substance floors are enforced in code, not just in AI prompts — the AI cannot override them", color:"#5b21b6", bg:"#ddd6fe"},
         {number:"Verified", label:"over time, known products get hard-coded scores the AI cannot deviate from — moving from estimate to fact", color:"#4c1d95", bg:"#c4b5fd"},
@@ -1440,7 +1441,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
               <div style={{display:"inline-flex", alignItems:"center", gap:6, background:sec.tagBg, color:sec.tagColor, fontSize:13, fontWeight:600, padding:"5px 14px", borderRadius:20, marginBottom:16, textTransform:"uppercase", letterSpacing:"0.05em"}}>
                 {sec.tag}
               </div>
-              <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>{sec.headline}</h2>
+              <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?26:34, fontWeight:700, color:text, margin:"0 0 14px", letterSpacing:"-0.5px"}}>{sec.headline}</h2>
               <p style={{fontSize:16, color:muted, maxWidth:600, margin:"0 auto", lineHeight:1.75}}>{sec.subhead}</p>
             </div>
 
@@ -1448,7 +1449,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
             <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
               {sec.stats.map((s,i) => (
                 <div key={i} style={{background:isDark?"#0f2a18":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"transparent"}`, textAlign:"center"}}>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:28, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:28, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
                   <div style={{fontSize:13, color:isDark?"#6ee7b7":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
                 </div>
               ))}
@@ -1458,7 +1459,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
             <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?10:20}}>
               {sec.faqs.map((faq,i) => (
                 <div key={i} style={{background:surface, borderRadius:14, padding:"24px", border:`1.5px solid ${border}`}}>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:10}}>{faq.q}</div>
                   <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{faq.a}</div>
                 </div>
               ))}
@@ -1906,7 +1907,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                 Your household right now
               </div>
               <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
-                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:scoreColor(score), lineHeight:1}}>
+                <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:42, color:scoreColor(score), lineHeight:1}}>
                   {totalCurrent.toLocaleString()}
                 </span>
                 <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
@@ -1935,7 +1936,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                 If you switch to {altName}
               </div>
               <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:8}}>
-                <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:42, color:"#16a34a", lineHeight:1}}>
+                <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:42, color:"#16a34a", lineHeight:1}}>
                   {altTotal.toLocaleString()}
                 </span>
                 <span style={{fontSize:14, color:isDark?"#6ee7b7":"#555", fontWeight:500}}>
@@ -1952,7 +1953,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
 
             {/* The big why */}
             <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1fae5"}`}}>
-              <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:22, color:"#16a34a", marginBottom:4}}>
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:22, color:"#16a34a", marginBottom:4}}>
                 {reductionPct}% fewer exposures
               </div>
               <div style={{fontSize:13, color:isDark?"#6ee7b7":"#444", lineHeight:1.6}}>
@@ -1995,7 +1996,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                   <div style={{marginBottom:5}}>
                     <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
                       <span style={{fontSize:11, color:scoreColor(score), fontWeight:600}}>Current product</span>
-                      <span style={{fontSize:12, color:scoreColor(score), fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{curr.toLocaleString()}</span>
+                      <span style={{fontSize:12, color:scoreColor(score), fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{curr.toLocaleString()}</span>
                     </div>
                     <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                       <div style={{height:"100%", width:"100%", background:scoreColor(score), borderRadius:99}}/>
@@ -2012,7 +2013,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                           <span style={{fontSize:11, color:"#d97706", fontWeight:600}}>
                             {kids} child{kids>1?"ren":""} (2.5x sensitivity)
                           </span>
-                          <span style={{fontSize:12, color:"#d97706", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{kidsOnly.toLocaleString()}</span>
+                          <span style={{fontSize:12, color:"#d97706", fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{kidsOnly.toLocaleString()}</span>
                         </div>
                         <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                           <div style={{height:"100%", width:`${pctBar}%`, background:"#d97706", borderRadius:99}}/>
@@ -2025,7 +2026,7 @@ const ExposureCalculator = ({result, isDark, text, muted, isMobile, history=[]})
                   <div>
                     <div style={{display:"flex", justifyContent:"space-between", marginBottom:3}}>
                       <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>{altName}</span>
-                      <span style={{fontSize:12, color:"#16a34a", fontWeight:800, fontFamily:"'Outfit',sans-serif"}}>{alt.toLocaleString()}</span>
+                      <span style={{fontSize:12, color:"#16a34a", fontWeight:800, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{alt.toLocaleString()}</span>
                     </div>
                     <div style={{height:10, borderRadius:99, background:isDark?"rgba(34,197,94,0.15)":"#e5e7eb", overflow:"hidden"}}>
                       <div style={{height:"100%", width:`${Math.round((alt/curr)*100)}%`, background:"#16a34a", borderRadius:99}}/>
@@ -2199,7 +2200,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
                 <div style={{display:"flex", flexWrap:"wrap", gap:"4px 16px"}}>
                   {items.map((item,i) => (
                     <span key={i} style={{fontSize:12, color:nutColor}}>
-                      <strong style={{fontFamily:"'Outfit',sans-serif"}}>{item.val}{item.unit}</strong>
+                      <strong style={{fontFamily:"'DM Sans', system-ui, sans-serif"}}>{item.val}{item.unit}</strong>
                       <span style={{color:nutMuted, marginLeft:2}}>{item.label}</span>
                     </span>
                   ))}
@@ -2485,12 +2486,12 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
           {/* Pregnancy score bumps — show when pregnancy mode is on */}
           {pregnancyMode && pregnancyBumps.length > 0 && (
             <div style={{marginTop:18}}>
-              <div style={{fontSize:11, fontWeight:700, color:"#7c3aed", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
+              <div style={{fontSize:11, fontWeight:700, color:"#c8781a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
                 Why pregnancy score is higher ({result.pregnancy_score}/10)
               </div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 {pregnancyBumps.slice(0, 6).map((bump, i) => (
-                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a2e":"#f5f3ff", borderRadius:8, borderLeft:"3px solid #7c3aed", fontSize:12, color:isDark?"#ddd6fe":"#5b21b6", lineHeight:1.5}}>
+                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a2e":"#fdf4e7", borderRadius:8, borderLeft:"3px solid #c8781a", fontSize:12, color:isDark?"#ddd6fe":"#5b21b6", lineHeight:1.5}}>
                     {bump}
                   </div>
                 ))}
@@ -2649,7 +2650,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:3}}>
           <div>
             <div style={{fontSize:11, color:"#888", textTransform:"uppercase", letterSpacing:"0.05em"}}>{product.brand}</div>
-            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f0fdf4":"#111", fontFamily:"'Outfit',sans-serif", lineHeight:1.3}}>{product.name}</div>
+            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f0fdf4":"#111", fontFamily:"'DM Sans', system-ui, sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
             <ScoreBadge score={childMode && product.child_score != null ? product.child_score : product.score} size="xs" showLabel />
@@ -2659,7 +2660,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
         <div style={{fontSize:13, color:isDark?"#6ee7b7":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10}}>
           <div style={{display:"flex", alignItems:"center", gap:6}}>
-            <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'Outfit',sans-serif"}}>{product.price}</span>
+            <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'DM Sans', system-ui, sans-serif"}}>{product.price}</span>
             {product.source === "amazon" && <span style={{fontSize:10, color:"#f59e0b", fontWeight:600, background:"#fffbeb", padding:"2px 6px", borderRadius:10}}>Amazon</span>}
           </div>
           {hasLink && <span style={{display:"flex", alignItems:"center", gap:4, fontSize:13, color:"#16a34a", fontWeight:600}}>{shopLabel} <IconArrow size={13} color="#16a34a"/></span>}
@@ -2796,7 +2797,7 @@ const MostSearched = ({onSelect, isDark, isMobile}) => {
   const px      = isMobile?"16px":"40px";
   return (
     <section style={{maxWidth:1100, margin:"0 auto 48px", padding:`0 ${px}`}}>
-      <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?20:24, fontWeight:700, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>Most Searched Products</h2>
+      <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?20:24, fontWeight:700, color:text, textAlign:"center", marginBottom:8, letterSpacing:"-0.5px"}}>Most Searched Products</h2>
       <p style={{textAlign:"center", fontSize:14, color:muted, marginBottom:24}}>See how common products score — some results may surprise you</p>
       <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:12}}>
         {MOST_SEARCHED.map(item=>{
@@ -2848,8 +2849,8 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
       <style>{`
         .guide-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.08);}
         .guide-card{transition:transform 0.2s,box-shadow 0.2s;}
-        .guide-body h2{font-size:24px;font-weight:700;margin:36px 0 12px;font-family:'Outfit',sans-serif;}
-        .guide-body h3{font-size:20px;font-weight:700;margin:28px 0 10px;font-family:'Outfit',sans-serif;}
+        .guide-body h2{font-size:24px;font-weight:700;margin:36px 0 12px;font-family:'Fraunces',Georgia,serif;}
+        .guide-body h3{font-size:20px;font-weight:700;margin:28px 0 10px;font-family:'Fraunces',Georgia,serif;}
         .guide-body p{margin:0 0 20px;}
         .guide-body ul,.guide-body ol{margin:0 0 20px;padding-left:24px;}
         .guide-body li{margin-bottom:8px;}
@@ -2862,7 +2863,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>From the team</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?30:42,fontWeight:800,color:text,margin:"0 0 12px",letterSpacing:"-0.5px",lineHeight:1.1}}>Product Safety Guides</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:isMobile?30:42,fontWeight:800,color:text,margin:"0 0 12px",letterSpacing:"-0.5px",lineHeight:1.1}}>Product Safety Guides</h1>
         <p style={{fontSize:17,color:muted,margin:"0 0 28px",lineHeight:1.6}}>Real research. Real opinions. No brand influence.</p>
 
         {/* Category filter */}
@@ -2910,7 +2911,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
                     <span style={{fontSize:11,fontWeight:700,color:CATEGORY_COLORS[g.category]||"#6366f1",textTransform:"uppercase",letterSpacing:"0.08em"}}>{g.category}</span>
                     <span style={{fontSize:11,color:muted}}>{g.read_time_minutes} min read</span>
                   </div>
-                  <div style={{fontFamily:"'Outfit',sans-serif",fontSize:20,fontWeight:700,color:text,marginBottom:8,lineHeight:1.3}}>{g.title}</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:20,fontWeight:700,color:text,marginBottom:8,lineHeight:1.3}}>{g.title}</div>
                   <div style={{fontSize:14,color:muted,lineHeight:1.6}}>{g.excerpt}</div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:16}}>
@@ -2999,7 +3000,7 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
       </div>
 
       {/* Title */}
-      <h1 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?28:40,fontWeight:800,color:text,margin:"0 0 16px",letterSpacing:"-0.5px",lineHeight:1.15}}>{guide.title}</h1>
+      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:isMobile?28:40,fontWeight:800,color:text,margin:"0 0 16px",letterSpacing:"-0.5px",lineHeight:1.15}}>{guide.title}</h1>
 
       {/* Excerpt */}
       <p style={{fontSize:18,color:muted,margin:"0 0 24px",lineHeight:1.6,fontStyle:"italic"}}>{guide.excerpt}</p>
@@ -3031,7 +3032,7 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
       {/* CTA */}
       <div style={{marginTop:48,padding:"28px 24px",background:"#052e16",borderRadius:16,textAlign:"center"}}>
-        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>Scan the products mentioned in this guide</div>
+        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:8,fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan the products mentioned in this guide</div>
         <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",marginBottom:20}}>Free scans, no account required</div>
         <button onClick={()=>onNavigate("home")} style={{background:"#4ade80",color:"#052e16",border:"none",borderRadius:10,padding:"13px 32px",fontSize:15,fontWeight:700,cursor:"pointer"}}>
           Start scanning →
@@ -3139,7 +3140,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
       <div style={{maxWidth:760,margin:"0 auto",padding:isMobile?"16px 16px 80px":"32px 40px 80px"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
           <button onClick={()=>setEditing(null)} style={{color:muted,background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:600,padding:0}}>← Back</button>
-          <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>{editing.isNew?"New Guide":"Edit Guide"}</h2>
+          <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>{editing.isNew?"New Guide":"Edit Guide"}</h2>
         </div>
 
         {label("Title")}
@@ -3188,7 +3189,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <textarea id="guide-body-editor" value={body} onChange={e=>setBody(e.target.value)}
           placeholder="Write your guide here using HTML tags, or use the toolbar buttons above..."
           rows={18}
-          style={{width:"100%",padding:"12px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"'Outfit',monospace,sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
+          style={{width:"100%",padding:"12px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"'DM Sans', system-ui, sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
 
         {/* Preview */}
         {body && (
@@ -3233,7 +3234,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
   return (
     <div style={{maxWidth:760,margin:"0 auto",padding:isMobile?"16px 16px 80px":"32px 40px 80px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:28}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>Guides</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:22,fontWeight:700,color:text,margin:0}}>Guides</h2>
         <button onClick={startNew} style={{padding:"10px 20px",borderRadius:10,background:"#052e16",border:"none",color:"#4ade80",fontSize:14,fontWeight:700,cursor:"pointer"}}>
           + New guide
         </button>
@@ -3364,7 +3365,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
     setRetagSaving(false);
   };
 
-  const colorPresets = [["#d97706","Amber"],["#dc2626","Red"],["#2563eb","Blue"],["#16a34a","Green"],["#7c3aed","Purple"]];
+  const colorPresets = [["#d97706","Amber"],["#dc2626","Red"],["#2563eb","Blue"],["#16a34a","Green"]];
   const catOptions = ["food","food_beverage","beverage","snack","personal_care","skincare","cleaning","home","baby","clothing","supplement"];
 
   const renderRetagPanel = (c) => {
@@ -3401,7 +3402,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
 
   return (
     <div>
-      <h3 style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700,color:text,margin:"0 0 16px"}}>Intelligence Cards</h3>
+      <h3 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:18,fontWeight:700,color:text,margin:"0 0 16px"}}>Intelligence Cards</h3>
 
       {/* Feed runner */}
       <div style={{marginBottom:20}}>
@@ -3721,7 +3722,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
     <div style={{maxWidth:1000, margin:"0 auto", padding:"32px 24px 80px"}}>
       <div style={{marginBottom:28}}>
         <div style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Internal</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
         {/* Tab bar */}
         <div style={{display:"flex", gap:8, borderBottom:`2px solid ${border}`, paddingBottom:0}}>
           {[["dashboard","Dashboard"],["scores","Score Review"],["guides","Guides"],["intel","Intel Cards"]].map(([t,l])=>(
@@ -3834,7 +3835,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         ].map((s,i) => (
           <div key={i} style={{background:surface, borderRadius:12, border:`1px solid ${border}`, padding:"16px 20px"}}>
             <div style={{fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color:muted, marginBottom:6}}>{s.label}</div>
-            <div style={{fontSize:28, fontWeight:800, color:s.color, fontFamily:"'Outfit',sans-serif"}}>{s.value}</div>
+            <div style={{fontSize:28, fontWeight:800, color:s.color, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -4005,7 +4006,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
               const tierColor = {
                 too_high:        "#dc2626",
                 too_low:         "#d97706",
-                wrong_category:  "#7c3aed",
+                wrong_category:  "#c8781a",
                 missing_concern: "#dc2626",
                 other:           "#6b7280",
               }[f.suggested_tier] || "#6b7280";
@@ -4347,7 +4348,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
         width:"100%", padding:"14px", borderRadius:12,
         background:store&&budget?"#16a34a":(isDark?"#1e2433":"#e2e8f0"),
         color:store&&budget?"#fff":(isDark?"#475569":"#94a3b8"),
-        border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+        border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15,
         cursor:store&&budget?"pointer":"default",
       }}>Build my list</button>
     </div>
@@ -4372,7 +4373,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
         {/* Header */}
         <div style={{background:surface, borderRadius:14, padding:"14px 18px", border:`1.5px solid ${border}`, marginBottom:16}}>
           <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
-            <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif"}}>{current.name}</div>
+            <div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{current.name}</div>
             {avgScore!=null && (
               <div style={{display:"flex", flexDirection:"column", alignItems:"center"}}>
                 <ScoreBadge score={avgScore} size="sm"/>
@@ -4628,7 +4629,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
       {showSummary && current && (
         <div style={{position:"fixed", inset:0, zIndex:1000, background:isDark?"#0f1116":"#ffffff", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px", overflowY:"auto"}}>
           <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Shop complete</div>
-          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, marginBottom:20, textAlign:"center"}}>{current.name}</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, marginBottom:20, textAlign:"center"}}>{current.name}</div>
           {(() => {const si=items.filter(i=>i.score!=null);if(!si.length)return null;const avg=si.reduce((s,i)=>s+(i.score||0),0)/si.length;return (<div style={{textAlign:"center",marginBottom:8}}><ScoreBadge score={avg} size="lg"/><div style={{fontSize:13,color:muted,marginTop:6}}>average score across {si.length} item{si.length!==1?"s":""}</div></div>);})()}
           {(() => {
             const sw=items.filter(i=>i.swappedFrom); const bgt=current.budget||0;
@@ -4636,15 +4637,15 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
             return (
               <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", maxWidth:300, margin:"20px 0"}}>
                 <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:text}}>{items.length}</div>
+                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:text}}>{items.length}</div>
                   <div style={{fontSize:12, color:muted, marginTop:2}}>item{items.length!==1?"s":""}</div>
                 </div>
                 <div style={{background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:sw.length>0?"#16a34a":text}}>{sw.length}</div>
+                  <div style={{fontSize:24, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:sw.length>0?"#16a34a":text}}>{sw.length}</div>
                   <div style={{fontSize:12, color:muted, marginTop:2}}>swap{sw.length!==1?"s":""} made</div>
                 </div>
                 {bgt>0 && (<div style={{gridColumn:"1 / -1", background:isDark?"#1e2433":"#f8faff", borderRadius:12, padding:"14px 16px", textAlign:"center"}}>
-                  <div style={{fontSize:20, fontWeight:700, fontFamily:"'Outfit',sans-serif", color:text}}>Est. ${est.toFixed(0)} of ${bgt.toFixed(0)}</div>
+                  <div style={{fontSize:20, fontWeight:700, fontFamily:"'DM Sans', system-ui, sans-serif", color:text}}>Est. ${est.toFixed(0)} of ${bgt.toFixed(0)}</div>
                   <div style={{fontSize:12, color:muted, marginTop:2}}>budget used</div>
                 </div>)}
               </div>
@@ -4652,7 +4653,7 @@ const GroceryListBuilder = ({lists, saveLists, createGroceryList, addGroceryItem
           })()}
           {(() => {const sw=items.filter(i=>i.swappedFrom&&i.swappedFromScore&&i.score!=null);if(!sw.length)return null;const best=sw.reduce((a,b)=>((b.swappedFromScore||0)-(b.score||0))>((a.swappedFromScore||0)-(a.score||0))?b:a);const imp=((best.swappedFromScore||0)-(best.score||0)).toFixed(1);if(parseFloat(imp)<=0)return null;return (<div style={{width:"100%",maxWidth:300,background:isDark?"#1a2a1a":"#f0fdf4",borderRadius:12,padding:"14px 16px",marginBottom:20}}><div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}}>Best swap</div><div style={{fontSize:14,fontWeight:600,color:text}}>{best.text}</div><div style={{fontSize:12,color:muted,marginTop:2}}>{imp} points better than {best.swappedFrom}</div></div>);})()}
           <div style={{display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:300}}>
-            <button onClick={()=>generateShopShareCard(current,items)} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
+            <button onClick={()=>generateShopShareCard(current,items)} style={{width:"100%",padding:"14px",borderRadius:12,background:"#16a34a",color:"#fff",border:"none",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
             <button onClick={()=>{saveLists(prev=>prev.map(l=>l.id===activeId?{...l,status:"completed",completedAt:new Date().toISOString()}:l));setActiveId(null);setShowSummary(false);setSummaryDismissed(false);setView("setup");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1.5px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
           </div>
         </div>
@@ -4686,7 +4687,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, add
   return (
     <div style={{maxWidth:700, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:24}}>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 4px"}}>Lists</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 4px"}}>Lists</h1>
         <p style={{fontSize:14, color:muted, margin:0}}>Shopping lists, grocery planning, and your routine</p>
       </div>
       <div style={{display:"flex", gap:8, marginBottom:28, borderBottom:`1px solid ${border}`, paddingBottom:0}}>
@@ -4699,7 +4700,7 @@ const ListsPage = ({lists, saveLists, createShoppingList, createGroceryList, add
         {activeList ? (<>
           <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:20}}>
             <button onClick={()=>setActiveListId(null)} style={{background:"none", border:"none", color:muted, cursor:"pointer", fontSize:14, padding:0}}>Back</button>
-            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:20, color:text, margin:0, flex:1}}>{activeList.name}</h2>
+            <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:20, color:text, margin:0, flex:1}}>{activeList.name}</h2>
             <span style={{fontSize:12, color:muted}}>{(activeList.items||[]).filter(i=>!i.checked).length} remaining</span>
           </div>
           <div style={{display:"flex", gap:8, marginBottom:20}}>
@@ -4810,7 +4811,7 @@ const RoutinePage = ({history, isDark, surface, border, text, muted, isMobile, u
 
       {/* Header */}
       <div style={{marginBottom:20}}>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?22:28, color:text, margin:"0 0 4px"}}>My Routine</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?22:28, color:text, margin:"0 0 4px"}}>My Routine</h1>
         <p style={{fontSize:14, color:muted, margin:0}}>Track your real chemical exposure across everything in your home</p>
       </div>
 
@@ -5044,7 +5045,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
         onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
           <div style={{flex:1, minWidth:0}}>
-            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
             <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"...":""}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
@@ -5054,7 +5055,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
         </div>
         {item.category && (
           <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
-            {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#7c3aed",bg:"#f5f3ff"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
+            {(() => { const cat = {clothing:{label:"Clothing",color:"#6366f1",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#db2777",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#c8781a",bg:"#fdf4e7"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
             <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result</span>
           </div>
         )}
@@ -5065,7 +5066,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scans</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>My Scans</h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:isDark?"#1e2433":"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -5079,7 +5080,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
       {history.length === 0 ? (
         <div style={{textAlign:"center", padding:"80px 0", color:muted}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={48}/></div>
-          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:600, fontSize:18, color:text, marginBottom:8}}>No scans yet</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:600, fontSize:18, color:text, marginBottom:8}}>No scans yet</div>
           <div style={{fontSize:14, marginBottom:24}}>Search for a product to get started</div>
           <button onClick={()=>onSearch("")} style={{padding:"10px 24px", borderRadius:8, border:"none", background:"#16a34a", color:"#fff", fontWeight:600, fontSize:14, cursor:"pointer"}}>Start Scanning</button>
         </div>
@@ -5100,7 +5101,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
             {highest && (
               <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
                 <div style={{fontSize:12, color:muted, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12}}>Highest Risk Found</div>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:6, lineHeight:1.3}}>{highest.product_name}</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:6, lineHeight:1.3}}>{highest.product_name}</div>
                 <div style={{display:"inline-flex", alignItems:"center", gap:6}}>
                   <ScoreBadge score={highest.score} size="sm" showLabel />
                   <span style={{fontSize:13, fontWeight:700, color:highest.score<=3?"#16a34a":highest.score<=5?"#d97706":"#dc2626"}}>{highest.score>=8?"Very High":highest.score>=6?"High":"Moderate"} Risk</span>
@@ -5119,7 +5120,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                 <div style={{flex:1, minWidth:200}}>
                   <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>This month</div>
                   <div style={{display:"flex", alignItems:"baseline", gap:12, marginBottom:6}}>
-                    <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:32, color:text}}>{thisMonthScans.length}</span>
+                    <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:32, color:text}}>{thisMonthScans.length}</span>
                     <span style={{fontSize:13, color:muted}}>scan{thisMonthScans.length!==1?"s":""}</span>
                   </div>
                   {thisMonthAvg !== null && (
@@ -5235,14 +5236,14 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12}}>
                         <div>
                           <div style={{fontSize:10, color:scoreColor(Math.round(avgScore)), fontWeight:700, textTransform:"uppercase", marginBottom:4}}>Current (all products)</div>
-                          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:scoreColor(Math.round(avgScore)), lineHeight:1}}>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:scoreColor(Math.round(avgScore)), lineHeight:1}}>
                             {Math.round(totalExposures).toLocaleString()}
                           </div>
                           <div style={{fontSize:11, color:muted}}>total annual exposures</div>
                         </div>
                         <div>
                           <div style={{fontSize:10, color:"#16a34a", fontWeight:700, textTransform:"uppercase", marginBottom:4}}>After switching</div>
-                          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", lineHeight:1}}>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", lineHeight:1}}>
                             {Math.round(totalAltExposures).toLocaleString()}
                           </div>
                           <div style={{fontSize:11, color:muted}}>total annual exposures</div>
@@ -5267,7 +5268,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
             <div style={{marginBottom:48}}>
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:20}}>
                 <div>
-                  <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 4px"}}>
+                  <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 4px"}}>
                     Recommended Alternatives
                   </h2>
                   <p style={{fontSize:13, color:muted, margin:0}}>Safer swaps based on what you've scanned · #ad affiliate links</p>
@@ -5309,7 +5310,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                           <div style={{fontSize:12, fontWeight:700, color:text}}>{alt.price}</div>
                         )}
                       </div>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, color:text, marginBottom:4, lineHeight:1.3}}>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13, color:text, marginBottom:4, lineHeight:1.3}}>
                         {alt.name?.length > 45 ? alt.name.slice(0,42)+"…" : alt.name}
                       </div>
                       {alt.brand && (
@@ -5337,7 +5338,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 
           {/* Timeline */}
           <div style={{marginBottom:8}}>
-            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 24px"}}>Scan History</h2>
+            <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?18:22, color:text, margin:"0 0 24px"}}>Scan History</h2>
 
             {viewMode === "date" && Object.entries(grouped).map(([date, items]) => (
               <div key={date} style={{marginBottom:36}}>
@@ -5400,7 +5401,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
       {/* Hero header */}
       <div style={{marginBottom:48}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:16}}>About Partiqule</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 24px", letterSpacing:"-1px", lineHeight:1.15}}>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?32:48, color:text, margin:"0 0 24px", letterSpacing:"-1px", lineHeight:1.15}}>
           Know what's in your products.
         </h1>
         <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
@@ -5423,7 +5424,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* Mission */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           The things that affect your health most aren't always the things on the front of the label. Microplastics in food-contact packaging. Synthetic dyes linked to carcinogenicity. PFAS in non-stick coatings. PVA film dissolving into waterways. Synthetic textiles shedding microfibers onto your skin every day. The research is there — but it's scattered, technical, and inaccessible to most people.
         </p>
@@ -5437,7 +5438,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* What we stand for */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
         <div style={{display:"flex", flexDirection:"column", gap:20}}>
           {[
             {title:"The full picture", body:"Microplastics are one part of the story. We score four dimensions: materials, exposure, packaging and sustainability. Your health, your home, and the planet are all affected differently by the same product."},
@@ -5449,7 +5450,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
             <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
               <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:6}}/>
               <div>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{v.title}</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{v.title}</div>
                 <div style={{fontSize:15, color:muted, lineHeight:1.7}}>{v.body}</div>
               </div>
             </div>
@@ -5459,7 +5460,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* Founders & human oversight */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Guided by expertise.</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Guided by expertise.</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:24}}>
           Partiqule was founded by <strong style={{color:text}}>Paul and Sara Miller</strong>, combining 20+ years of experience across technology and operations. Every scoring framework, weighting decision, and quality standard on this platform is grounded in peer-reviewed research and intentionally designed by its founders. AI powers the scale — but the system itself is human-built and continuously refined.
         </p>
@@ -5479,7 +5480,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
                 }}/>
               </div>
               <div>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
                 <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
                 <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{person.detail}</div>
               </div>
@@ -5523,7 +5524,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* The impact */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           Every scan is a small act of informed decision-making. When enough people start checking before they buy, manufacturers notice. We have already seen this happen. Public pressure and consumer awareness led to bans on microbeads across dozens of countries, forced reformulations of PFAS-coated cookware, and drove major brands to rethink their packaging. That change started with information.
         </p>
@@ -5537,7 +5538,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* AI Environmental Transparency */}
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>A note on AI energy and water use</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>A note on AI energy and water use</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           We know this question is coming. We'd rather address it directly than hope nobody asks.
         </p>
@@ -5560,7 +5561,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 
       {/* Contact */}
       <div>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
         <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
           Questions, partnerships, press, or just want to say hi? Reach us at{" "}
           <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
@@ -5772,7 +5773,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
     {
       number: "05",
       title: "Affiliate product standards",
-      color: "#7c3aed",
+      color: "#c8781a",
       content: [
         {
           heading: "How alternatives are selected",
@@ -5811,7 +5812,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?28:38, color:text, margin:"0 0 16px", letterSpacing:"-0.5px"}}>How Partiqule Works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
           Every score on Partiqule reflects the chemical and environmental impact of a product — what it's made of, how it exposes you, what happens to it after use. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
@@ -5827,7 +5828,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
           {number:"100%",label:"Affiliate-independent scoring"},
         ].map((s,i) => (
           <div key={i} style={{background:surface, borderRadius:14, padding:"20px 16px", border:`1.5px solid ${border}`, textAlign:"center"}}>
-            <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", marginBottom:4}}>{s.number}</div>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", marginBottom:4}}>{s.number}</div>
             <div style={{fontSize:12, color:muted, lineHeight:1.4}}>{s.label}</div>
           </div>
         ))}
@@ -5846,9 +5847,9 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div key={si} style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
           <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
             <div style={{width:48, height:48, borderRadius:12, background:`${step.color}15`, border:`1.5px solid ${step.color}44`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-              <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, color:step.color}}>{step.number}</span>
+              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, color:step.color}}>{step.number}</span>
             </div>
-            <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>{step.title}</h2>
+            <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>{step.title}</h2>
           </div>
           {step.content.map((block, bi) => (
             <div key={bi} style={{marginBottom:16, paddingLeft:68}}>
@@ -5877,9 +5878,9 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
           <div style={{width:48, height:48, borderRadius:12, background:"#052e1615", border:"1.5px solid #052e1644", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, color:"#052e16"}}>eg.</span>
+            <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, color:"#052e16"}}>eg.</span>
           </div>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Worked examples</h2>
+          <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Worked examples</h2>
         </div>
         <div style={{paddingLeft:68}}>
 
@@ -5929,9 +5930,9 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
         <div style={{display:"flex", alignItems:"flex-start", gap:20, marginBottom:20}}>
           <div style={{width:48, height:48, borderRadius:12, background:"#0891b215", border:"1.5px solid #0891b244", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-            <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, color:"#0891b2"}}>refs</span>
+            <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, color:"#0891b2"}}>refs</span>
           </div>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Research sources</h2>
+          <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?20:24, color:text, margin:"10px 0 0", letterSpacing:"-0.3px"}}>Research sources</h2>
         </div>
         <div style={{paddingLeft:68}}>
           <p style={{fontSize:15, color:muted, lineHeight:1.8, marginBottom:20}}>
@@ -5967,7 +5968,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
             },
             {
               category: "PFAS and non-stick chemicals",
-              color: "#7c3aed",
+              color: "#c8781a",
               refs: [
                 {citation:"FDA Total Diet Study (2024)", title:"Analytical results of testing food for PFAS from environmental contamination", journal:"U.S. FDA — PFAS detected across seafood, meat and dairy"},
                 {citation:"Sunderland et al. (2019)", title:"A review of the pathways of human exposure to poly and perfluoroalkyl substances (PFAS)", journal:"Journal of Exposure Science and Environmental Epidemiology — thyroid, fertility, cholesterol"},
@@ -6121,7 +6122,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
           <span style={{fontSize:11, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", background:"rgba(34,197,94,0.08)", padding:"3px 10px", borderRadius:20}}>How We Score</span>
         </div>
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?20:26, fontWeight:700, color:text, margin:"0 0 8px", letterSpacing:"-0.3px"}}>The scoring system, in full</h2>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?20:26, fontWeight:700, color:text, margin:"0 0 8px", letterSpacing:"-0.3px"}}>The scoring system, in full</h2>
         <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:"0 0 28px"}}>Every score is the output of a deterministic formula applied server-side. The AI provides dimension scores — we apply the weights. Here is the complete logic.</p>
 
         {/* Category formula table */}
@@ -6440,10 +6441,10 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
           <div style={{width:32, height:32, borderRadius:8, background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center"}}>
             <span style={{color:"#4ade80", fontWeight:800, fontSize:16}}>P</span>
           </div>
-          <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text}}>Partiqule</span>
+          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:18, color:text}}>Partiqule</span>
         </div>
 
-        <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:22, color:text, margin:"0 0 6px"}}>
+        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:22, color:text, margin:"0 0 6px"}}>
           {mode === "signup" ? "Create account" : mode === "reset" ? "Reset password" : "Welcome back"}
         </h2>
         <p style={{fontSize:14, color:muted, margin:"0 0 24px", lineHeight:1.5}}>
@@ -6463,7 +6464,7 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
               style={{padding:"11px 14px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#080f0a":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
           )}
           <button onClick={submit} disabled={loading}
-            style={{padding:"12px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:loading?"default":"pointer", opacity:loading?0.7:1}}>
+            style={{padding:"12px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, cursor:loading?"default":"pointer", opacity:loading?0.7:1}}>
             {loading ? "Please wait..." : mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
           </button>
         </div>
@@ -6503,11 +6504,11 @@ const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Privacy Policy</h1>
+      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Privacy Policy</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{s.title}</h2>
+          <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{s.title}</h2>
           {s.body.split("\n\n").map((para, j) => (
             <p key={j} style={{fontSize:15, color:muted, lineHeight:1.8, margin:"0 0 12px", whiteSpace:"pre-line"}}>{para}</p>
           ))}
@@ -6534,11 +6535,11 @@ const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Terms of Service</h1>
+      <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px"}}>Terms of Service</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
-          <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{s.title}</h2>
+          <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 12px"}}>{s.title}</h2>
           {s.body.split("\n\n").map((para, j) => (
             <p key={j} style={{fontSize:15, color:muted, lineHeight:1.8, margin:"0 0 12px", whiteSpace:"pre-line"}}>{para}</p>
           ))}
@@ -6584,14 +6585,14 @@ const AuditCompleteScreen = ({session, isDark, surface, border, text, muted, isM
     <div style={{maxWidth:600,margin:"0 auto",padding:isMobile?"40px 20px 80px":"60px 40px 80px"}}>
       <div style={{fontSize:11,fontWeight:700,color:result.grade.color,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,textAlign:"center"}}>{session.label} complete</div>
       <div style={{textAlign:"center",marginBottom:32}}>
-        <div style={{fontSize:96,fontWeight:900,fontFamily:"'Outfit',sans-serif",color:result.grade.color,lineHeight:1,marginBottom:8}}>{result.grade.letter}</div>
+        <div style={{fontSize:96,fontWeight:900,fontFamily:"'DM Sans', system-ui, sans-serif",color:result.grade.color,lineHeight:1,marginBottom:8}}>{result.grade.letter}</div>
         <div style={{fontSize:18,fontWeight:600,color:result.grade.color,marginBottom:4}}>{result.grade.label}</div>
         <div style={{fontSize:14,color:muted}}>Average score {result.avg}/10 across {result.itemCount} product{result.itemCount!==1?"s":""}</div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:28}}>
         {[{value:result.itemCount,label:"scanned",color:text},{value:result.flaggedCount,label:"flagged",color:result.flaggedCount>0?"#dc2626":"#16a34a"},{value:result.cleanCount,label:"clean",color:"#16a34a"}].map((stat,i)=>(
           <div key={i} style={{background:isDark?"#1e2433":"#f8faff",borderRadius:12,padding:"14px 10px",textAlign:"center"}}>
-            <div style={{fontSize:26,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:stat.color}}>{stat.value}</div>
+            <div style={{fontSize:26,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:stat.color}}>{stat.value}</div>
             <div style={{fontSize:11,color:muted,marginTop:2}}>{stat.label}</div>
           </div>
         ))}
@@ -6627,7 +6628,7 @@ const AuditCompleteScreen = ({session, isDark, surface, border, text, muted, isM
         </div>
       )}
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <button onClick={()=>generateShareCard(session,result)} style={{width:"100%",padding:"14px",borderRadius:12,background:result.grade.color,color:"#fff",border:"none",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
+        <button onClick={()=>generateShareCard(session,result)} style={{width:"100%",padding:"14px",borderRadius:12,background:result.grade.color,color:"#fff",border:"none",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:15,cursor:"pointer"}}>Share my results</button>
         <button onClick={()=>{saveAuditSession(null);setPage("home");}} style={{width:"100%",padding:"12px",borderRadius:12,background:"none",color:muted,border:`1px solid ${border}`,fontWeight:600,fontSize:14,cursor:"pointer"}}>Done</button>
       </div>
     </div>
@@ -6706,7 +6707,7 @@ const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMob
         <div>
           <div style={{fontSize:11,fontWeight:700,color:session.color,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>{session.label}</div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            {avgScore?<span style={{fontSize:22,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(parseFloat(avgScore))}}>{avgScore}</span>:<span style={{fontSize:14,color:muted}}>Scan your first item</span>}
+            {avgScore?<span style={{fontSize:22,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(parseFloat(avgScore))}}>{avgScore}</span>:<span style={{fontSize:14,color:muted}}>Scan your first item</span>}
             {localItems.length>0&&<span style={{fontSize:12,color:muted}}>{localItems.length} item{localItems.length!==1?"s":""}{flaggedCount>0&&<span style={{color:"#dc2626",fontWeight:700,marginLeft:6}}>{flaggedCount} flagged</span>}</span>}
           </div>
         </div>
@@ -6716,7 +6717,7 @@ const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMob
       {showLastResult&&lastResult&&(
         <div style={{margin:"12px 20px",padding:"12px 16px",borderRadius:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <div><div style={{fontSize:14,fontWeight:700,color:text}}>{lastResult.product_name}</div>{lastResult.summary&&<div style={{fontSize:12,color:muted,marginTop:2,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:1,WebkitBoxOrient:"vertical"}}>{lastResult.summary}</div>}</div>
-          <div style={{fontSize:24,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(lastResult.score),marginLeft:16,flexShrink:0}}>{lastResult.score}</div>
+          <div style={{fontSize:24,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(lastResult.score),marginLeft:16,flexShrink:0}}>{lastResult.score}</div>
         </div>
       )}
 
@@ -6743,7 +6744,7 @@ const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMob
           <div ref={tilesRef} style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:"0 20px"}}>
             {localItems.map((item,i)=>(
               <div key={item.id||i} style={{flexShrink:0,width:72,height:80,borderRadius:10,padding:"8px 6px",background:isDark?"#1e2433":"#f8faff",border:`1px solid ${isDark?"#2a3347":"#e5e7eb"}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",textAlign:"center"}}>
-                <div style={{fontSize:18,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(item.score),lineHeight:1}}>{item.score}</div>
+                <div style={{fontSize:18,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(item.score),lineHeight:1}}>{item.score}</div>
                 <div style={{fontSize:9,color:muted,lineHeight:1.3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{item.product_name}</div>
               </div>
             ))}
@@ -6753,7 +6754,7 @@ const AuditSessionView = ({session, saveAuditSession, isDark, text, muted, isMob
 
       {localItems.length>=1&&(
         <div style={{padding:"12px 20px 32px"}}>
-          <button onClick={()=>onFinish({...session,items:localItems,status:"completed",completedAt:new Date().toISOString()})} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:session.color,color:"#fff",fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:16,cursor:"pointer"}}>Finish {session.label}<span style={{fontSize:13,opacity:0.8,marginLeft:8}}>{localItems.length} item{localItems.length!==1?"s":""}</span></button>
+          <button onClick={()=>onFinish({...session,items:localItems,status:"completed",completedAt:new Date().toISOString()})} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:session.color,color:"#fff",fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:16,cursor:"pointer"}}>Finish {session.label}<span style={{fontSize:13,opacity:0.8,marginLeft:8}}>{localItems.length} item{localItems.length!==1?"s":""}</span></button>
         </div>
       )}
 
@@ -6813,7 +6814,7 @@ const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border
     <div style={{maxWidth:700,margin:"0 auto",padding:isMobile?"24px 0 80px":"48px 0 80px"}}>
       <div style={{padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20}}>
         <div style={{fontSize:11,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Health intelligence</div>
-        <h1 style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:isMobile?26:32,color:text,margin:"0 0 4px"}}>Your Feed</h1>
+        <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontWeight:700,fontSize:isMobile?26:32,color:text,margin:"0 0 4px"}}>Your Feed</h1>
         <p style={{fontSize:14,color:muted,margin:0}}>Safety findings, regulatory alerts, and insights from your scan history</p>
       </div>
       <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20,paddingBottom:4}}>
@@ -6857,7 +6858,7 @@ const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPa
       <div onClick={()=>setPage("history")} style={{background:isDark?"#1e2433":"#ffffff",borderRadius:16,padding:"16px 20px",border:`1.5px solid ${isDark?"#2a3347":"#e5e7eb"}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",width:64,height:64,borderRadius:"50%",background:`${sc}15`,border:`2px solid ${sc}40`,flexShrink:0}}>
-            <span style={{fontSize:24,fontWeight:900,fontFamily:"'Outfit',sans-serif",color:sc,lineHeight:1}}>{score.current}</span>
+            <span style={{fontSize:24,fontWeight:900,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc,lineHeight:1}}>{score.current}</span>
             <span style={{fontSize:9,color:sc,opacity:0.7,marginTop:1}}>/10</span>
           </div>
           <div>
@@ -6942,7 +6943,7 @@ const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResul
             <div style={{fontSize:12,color:muted,lineHeight:1.5,flex:1,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{card.body}</div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
               <span style={{fontSize:12,fontWeight:700,color:card.labelColor}}>{card.action} →</span>
-              {card.score!=null&&<span style={{fontSize:13,fontWeight:800,fontFamily:"'Outfit',sans-serif",color:sc(card.score)}}>{card.score}/10</span>}
+              {card.score!=null&&<span style={{fontSize:13,fontWeight:800,fontFamily:"'DM Sans', system-ui, sans-serif",color:sc(card.score)}}>{card.score}/10</span>}
             </div>
           </div>
         ))}
@@ -7821,7 +7822,6 @@ function App() {
       <style>{`
         *{box-sizing:border-box;}
         body{margin:0;background:#080f0a;}
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
         :root{
           --green-deep:#052e16;--green-mid:#14532d;--green-bright:#22c55e;
           --lime:#a3e635;--amber:#f59e0b;--orange:#f97316;--red:#ef4444;
@@ -7841,7 +7841,7 @@ function App() {
         @keyframes gFloat4{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-10px) translateX(-16px)}}
         @keyframes gFloat5{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-20px) translateX(14px)}}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
-        h1,h2,h3,.outfit{font-family:'Outfit',sans-serif;}
+        h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
       `}</style>
 
       {/* ── GLOBAL FLOATING PARTICLES — fixed, full viewport, always present ── */}
@@ -7916,7 +7916,7 @@ function App() {
                 {label:"My Scans",   action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
-                  fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:item.active?700:500,
+                  fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?700:500,
                   color:item.active?"#22c55e":"#6ee7b7", opacity:item.active?1:0.55,
                   cursor:"pointer", padding:"6px 12px", borderRadius:8,
                   background:item.active?"rgba(34,197,94,0.1)":"transparent",
@@ -7924,19 +7924,19 @@ function App() {
                 }}>{item.label}{item.label==="My Scans"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}{item.label==="Lists"&&(()=>{try{const ct=lists.reduce((s,l)=>s+(l.items||[]).filter(x=>!x.checked).length,0);if(ct>0)return <span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:700,padding:"2px 6px",borderRadius:10,marginLeft:4}}>{ct}</span>;}catch{}return null;})()}</span>
               ))}
               {isAdminUser(user) && (
-                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'Outfit',sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
+                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
               )}
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:8, marginLeft:8}}>
                   <div style={{width:32, height:32, borderRadius:"50%", background:"rgba(34,197,94,0.15)", border:"1px solid rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
-                    <span style={{fontFamily:"'Outfit',sans-serif", color:"#22c55e", fontWeight:800, fontSize:13}}>{user.email[0].toUpperCase()}</span>
+                    <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", color:"#22c55e", fontWeight:800, fontSize:13}}>{user.email[0].toUpperCase()}</span>
                   </div>
-                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
+                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
                 </div>
               ) : (
-                <button onClick={()=>setShowAuth(true)} style={{marginLeft:8, padding:"8px 18px", borderRadius:10, border:"none", background:"rgba(34,197,94,0.12)", color:"#22c55e", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", border:"1px solid rgba(34,197,94,0.2)"}}>Sign in</button>
+                <button onClick={()=>setShowAuth(true)} style={{marginLeft:8, padding:"8px 18px", borderRadius:10, border:"none", background:"rgba(34,197,94,0.12)", color:"#22c55e", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", border:"1px solid rgba(34,197,94,0.2)"}}>Sign in</button>
               )}
-              <button onClick={reset} style={{padding:"8px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>New Scan</button>
+              <button onClick={reset} style={{padding:"8px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>New Scan</button>
             </nav>
           )}
         </div>
@@ -7964,7 +7964,7 @@ function App() {
                 style={{padding:"12px 16px", borderRadius:10, border:"none",
                   background:page===item.pg?"rgba(34,197,94,0.12)":"transparent",
                   color:page===item.pg?"#22c55e":"#6ee7b7",
-                  fontFamily:"'Outfit',sans-serif", fontSize:15,
+                  fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15,
                   fontWeight:page===item.pg?700:500, cursor:"pointer", textAlign:"left",
                   opacity:page===item.pg?1:0.7,
                 }}>
@@ -7974,14 +7974,14 @@ function App() {
             {user ? (
               <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, borderTop:"1px solid rgba(34,197,94,0.1)"}}>
                 <span style={{fontSize:13, color:"#6ee7b7", opacity:0.6}}>{user.email}</span>
-                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
+                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
               </div>
             ) : (
-              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:10, border:"1.5px solid rgba(34,197,94,0.3)", background:"none", color:"#22c55e", fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"left", marginTop:8}}>
+              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:10, border:"1.5px solid rgba(34,197,94,0.3)", background:"none", color:"#22c55e", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"left", marginTop:8}}>
                 Sign in / Create account
               </button>
             )}
-            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"13px 16px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'Outfit',sans-serif", fontSize:15, fontWeight:800, cursor:"pointer", marginTop:8, boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>
+            <button onClick={()=>{reset(); setMenuOpen(false);}} style={{padding:"13px 16px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:800, cursor:"pointer", marginTop:8, boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>
               New Scan
             </button>
           </div>
@@ -8074,7 +8074,7 @@ function App() {
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
-          <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:32, color:text, margin:"0 0 12px"}}>Page not found</h1>
+          <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:32, color:text, margin:"0 0 12px"}}>Page not found</h1>
           <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
           <button onClick={reset} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
             Go to Partiqule →
@@ -8113,7 +8113,7 @@ function App() {
       ) : page === "science" ? (
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>The Science</h1>
+            <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:32, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>The Science</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
           <EducationSection isDark={isDark} isMobile={isMobile}/>
@@ -8121,7 +8121,7 @@ function App() {
       ) : page === "settings" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?24:28, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>Settings</h1>
+            <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?24:28, color:text, margin:"0 0 8px", letterSpacing:"-0.5px"}}>Settings</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
           </div>
 
@@ -8158,7 +8158,7 @@ function App() {
                   </>
                 ) : (
                   <>
-                    <div style={{fontSize:17, fontWeight:800, color:text, marginBottom:6, fontFamily:"'Outfit',sans-serif", letterSpacing:"-0.3px"}}>
+                    <div style={{fontSize:17, fontWeight:800, color:text, marginBottom:6, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"-0.3px"}}>
                       Unlock unlimited scans
                     </div>
                     <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
@@ -8183,7 +8183,7 @@ function App() {
                     }} style={{
                       width:"100%", padding:"14px", borderRadius:12, border:"none",
                       background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff",
-                      fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
+                      fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
                       boxShadow:"0 4px 14px rgba(34,197,94,0.35)",
                       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                     }}>
@@ -8333,11 +8333,11 @@ function App() {
           {textOnlyBlocked && (
             <div style={{maxWidth:520, margin:`${isMobile?"96px":"112px"} auto 24px`, padding:"0 20px"}}>
               <div style={{background:"#052e16", border:"1px solid rgba(34,197,94,0.25)", borderRadius:16, padding:"24px 20px", boxShadow:"0 4px 20px rgba(0,0,0,0.25)"}}>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:20, fontWeight:800, color:"#f0fdf4", marginBottom:8, textAlign:"center", letterSpacing:"-0.2px"}}>Let's see the label</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:20, fontWeight:800, color:"#f0fdf4", marginBottom:8, textAlign:"center", letterSpacing:"-0.2px"}}>Let's see the label</div>
                 <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:14, color:"#6ee7b7", opacity:0.85, marginBottom:20, textAlign:"center", lineHeight:1.5}}>To give you an accurate score, we need to read the actual ingredients on the package.</div>
                 <button
                   onClick={()=>{setTextOnlyBlocked(false); setShowBarcodeScanner(true);}}
-                  style={{width:"100%", padding:"14px 16px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:12, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10, boxShadow:"0 2px 10px rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}
+                  style={{width:"100%", padding:"14px 16px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, cursor:"pointer", marginBottom:10, boxShadow:"0 2px 10px rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                   Scan barcode
@@ -8345,7 +8345,7 @@ function App() {
                 <label style={{display:"block", width:"100%", cursor:"pointer"}}>
                   <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
                     onChange={e=>{const f=e.target.files?.[0]; if(!f) return; e.target.value=""; setTextOnlyBlocked(false); handleImageScan(f);}}/>
-                  <div style={{width:"100%", padding:"12px 16px", background:"transparent", color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)", borderRadius:12, fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+                  <div style={{width:"100%", padding:"12px 16px", background:"transparent", color:"#4ade80", border:"1px solid rgba(34,197,94,0.4)", borderRadius:12, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:14, textAlign:"center", boxSizing:"border-box", display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     Take a photo
                   </div>
@@ -8435,7 +8435,7 @@ function App() {
                         style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
                       />
                       {query.trim() && (
-                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
                       )}
                     </div>
                     {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
@@ -8469,9 +8469,9 @@ function App() {
                     if (showEmpty) {
                       return (
                         <div style={{maxWidth:860, margin:"10px auto 0", padding:"14px 16px", background:"rgba(15,42,24,0.95)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12}}>
-                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, color:"#f0fdf4", fontWeight:700, marginBottom:6}}>No verified matches</div>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"#f0fdf4", fontWeight:700, marginBottom:6}}>No verified matches</div>
                           <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:12, color:"#9ca3af", marginBottom:12}}>We couldn't find this product in our verified data. Scan the barcode or label for an accurate score.</div>
-                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"10px 14px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
+                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"10px 14px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
                         </div>
                       );
                     }
@@ -8482,13 +8482,13 @@ function App() {
                             onClick={()=>selectSearchMatch(m)}
                             style={{display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderBottom: i<searchMatches.length-1 ? "1px solid rgba(34,197,94,0.1)" : "none", cursor:"pointer"}}>
                             <div style={{flex:1, minWidth:0}}>
-                              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{m.display_name}</div>
+                              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{m.display_name}</div>
                               <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:11, color:sourceColor(m.source), marginTop:2}}>
                                 {m.source_label}{m.match_type === "trigram" ? ` · close match` : ""}
                               </div>
                             </div>
                             {m.score_preview != null && (
-                              <div style={{width:36, height:36, borderRadius:10, background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, flexShrink:0}}>
+                              <div style={{width:36, height:36, borderRadius:10, background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:15, flexShrink:0}}>
                                 {m.score_preview}
                               </div>
                             )}
@@ -8509,14 +8509,14 @@ function App() {
                   {/* Greeting + streak */}
                   <div style={{marginBottom:20, display:"flex", alignItems:"flex-start", justifyContent:"space-between"}}>
                     <div>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?22:26, fontWeight:800, color:"#f0fdf4", marginBottom:4}}>{greet}</div>
                       <div style={{fontSize:13, color:"#6ee7b7", opacity:0.7}}>{history.length} product{history.length!==1?"s":""} scanned</div>
                     </div>
                     {/* Streak — Zeigarnik: loss aversion keeps people coming back */}
                     {streak >= 1 && (
                       <div style={{display:"flex", alignItems:"center", gap:6, background:"rgba(245,158,11,0.1)", border:"1px solid rgba(245,158,11,0.25)", borderRadius:20, padding:"6px 12px", flexShrink:0}}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day streak</span>
+                        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:800, color:"#f59e0b"}}>{streak} day streak</span>
                       </div>
                     )}</div>
 
@@ -8543,21 +8543,21 @@ function App() {
                   {history.length === 0 && (
                   <div style={{marginBottom:24}}>
                     <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
-                      <div style={{fontFamily:"'Outfit',sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
-                      <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:700, color:"#6ee7b7", opacity:0.8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:20, padding:"3px 10px"}}>{todayLabel}</div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:15,fontWeight:700,color:"#f0fdf4"}}>Today's Comparison</div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:700, color:"#6ee7b7", opacity:0.8, background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:20, padding:"3px 10px"}}>{todayLabel}</div>
                     </div>
                     <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)",border:"1px solid rgba(34,197,94,0.15)",borderRadius:16,overflow:"hidden",position:"relative"}}>
-                      <div style={{position:"absolute",top:10,left:10,background:"#a3e635",color:"#052e16",fontFamily:"'Outfit',sans-serif",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:"0.08em",textTransform:"uppercase"}}>Head to Head</div>
+                      <div style={{position:"absolute",top:10,left:10,background:"#a3e635",color:"#052e16",fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:9,fontWeight:800,padding:"3px 10px",borderRadius:20,letterSpacing:"0.08em",textTransform:"uppercase"}}>Head to Head</div>
                       <div style={{padding:"36px 20px 20px"}}>
                         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
                           {[todayComp.a, todayComp.b].map((prod,pi)=>(
                             <React.Fragment key={pi}>
-                              {pi===1&&<div style={{fontFamily:"'Outfit',sans-serif",fontSize:13,fontWeight:800,color:"#6ee7b7",opacity:0.5,flexShrink:0}}>VS</div>}
+                              {pi===1&&<div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:13,fontWeight:800,color:"#6ee7b7",opacity:0.5,flexShrink:0}}>VS</div>}
                               <div onClick={()=>{setQuery(prod.name);analyze(prod.name);}}
                                 style={{flex:1,background:"rgba(0,0,0,0.2)",borderRadius:12,padding:"14px 10px",textAlign:"center",border:"1px solid rgba(34,197,94,0.1)",cursor:"pointer"}}>
-                                <div style={{fontFamily:"'Outfit',sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:8,lineHeight:1.3}}>{prod.name}</div>
+                                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:8,lineHeight:1.3}}>{prod.name}</div>
                                 <div style={{width:44,height:44,borderRadius:"50%",background:`${scoreCol(prod.score)}18`,border:`2px solid ${scoreCol(prod.score)}44`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px"}}>
-                                  <span style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:900,color:scoreCol(prod.score)}}>{prod.score}</span>
+                                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:18,fontWeight:900,color:scoreCol(prod.score)}}>{prod.score}</span>
                                 </div>
                                 <div style={{fontSize:10,color:"#6ee7b7",opacity:0.6,lineHeight:1.4}}>{prod.flags}</div>
                               </div>
@@ -8602,7 +8602,7 @@ function App() {
                   style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans',sans-serif", fontSize:15, background:"transparent", color:"#f0fdf4", minWidth:0}}
                 />
                 {query.trim() && (
-                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
+                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0, boxShadow:"0 2px 8px rgba(34,197,94,0.35)"}}>Scan</button>
                 )}
               </div>
               {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
@@ -8689,7 +8689,7 @@ function App() {
                 <span>2,847 products scanned today</span>
               </div>
 
-              <h1 style={{fontFamily:"'Outfit',sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08, animation:"heroReveal 0.6s ease 0.2s both"}}>
+              <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:isMobile?36:56, fontWeight:900, color:"#ffffff", margin:"0 0 16px", letterSpacing:isMobile?"-1px":"-2px", lineHeight:1.08, animation:"heroReveal 0.6s ease 0.2s both"}}>
                 Scan anything.<br/><span style={{color:"#22c55e"}}>Know everything.</span>
               </h1>
               <p style={{fontSize:isMobile?15:18, color:"#86efac", margin:"0", lineHeight:1.7, opacity:0.8, animation:"heroReveal 0.6s ease 0.35s both"}}>
@@ -8703,7 +8703,7 @@ function App() {
           <div style={{background:"linear-gradient(180deg,#052e16 0%,#080f0a 60%)", paddingBottom:0}}>
             <div style={{padding: isMobile ? "28px 0 20px" : "36px 0 24px"}}>
               <div style={{textAlign:"center", marginBottom:16, padding:"0 20px"}}>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.5, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6}}>Tap any product to scan it</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"#6ee7b7", opacity:0.5, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6}}>Tap any product to scan it</div>
               </div>
               {/* Auto-scrolling infinite carousel — pauses on hover */}
               <style>{`.showcase-track:hover{animation-play-state:paused!important}`}</style>
@@ -8744,9 +8744,9 @@ function App() {
                         style={{flexShrink:0,width:148,background:"rgba(15,42,24,0.85)",border:`1px solid ${isClean?"rgba(34,197,94,0.3)":"rgba(34,197,94,0.1)"}`,borderRadius:16,padding:"14px",cursor:"pointer",position:"relative",overflow:"hidden",
                           marginLeft:i===0?(isMobile?16:40):0}}>
                         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:sc,borderRadius:"16px 16px 0 0"}}/>
-                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:10,color:"#6ee7b7",opacity:0.55,marginBottom:8,fontWeight:600}}>{item.cat}</div>
-                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:10,lineHeight:1.3}}>{item.name}</div>
-                        <div style={{fontFamily:"'Outfit',sans-serif",fontSize:30,fontWeight:900,color:sc,lineHeight:1,textShadow:`0 0 12px ${sc}66`}}>{item.score}</div>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:10,color:"#6ee7b7",opacity:0.55,marginBottom:8,fontWeight:600}}>{item.cat}</div>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:12,fontWeight:700,color:"#f0fdf4",marginBottom:10,lineHeight:1.3}}>{item.name}</div>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:30,fontWeight:900,color:sc,lineHeight:1,textShadow:`0 0 12px ${sc}66`}}>{item.score}</div>
                         <div style={{fontSize:9,color:sc,opacity:0.6,marginTop:6,lineHeight:1.4}}>{item.flag}</div>
                       </div>
                     );
@@ -8760,13 +8760,13 @@ function App() {
               <div style={{background:"rgba(34,197,94,0.06)", border:"1px dashed rgba(34,197,94,0.25)", borderRadius:16, padding:"16px 20px", display:"flex", alignItems:"center", gap:14}}>
                 <div style={{display:"flex", gap:6, flexShrink:0}}>
                   {[1,2,3].map(n=>(
-                    <div key={n} style={{width:28, height:28, borderRadius:"50%", border:"1.5px dashed rgba(34,197,94,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"rgba(34,197,94,0.35)"}}>
+                    <div key={n} style={{width:28, height:28, borderRadius:"50%", border:"1.5px dashed rgba(34,197,94,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"rgba(34,197,94,0.35)"}}>
                       {n}
                     </div>
                   ))}
                 </div>
                 <div>
-                  <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>Scan 3 products to unlock your Routine Score</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:700, color:"#22c55e", marginBottom:2}}>Scan 3 products to unlock your Routine Score</div>
                   <div style={{fontSize:11, color:"#6ee7b7", opacity:0.6}}>See your overall health exposure across everything you use daily</div>
                 </div>
               </div>
@@ -8788,18 +8788,18 @@ function App() {
               return (
                 <div style={{maxWidth:600, margin:"0 auto 40px", padding:"0 20px"}}>
                   <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
-                    <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4"}}>Today's Comparison</div>
-                    <div style={{background:"#a3e635", color:"#052e16", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, padding:"3px 10px", borderRadius:20, letterSpacing:"0.08em", textTransform:"uppercase"}}>Daily</div>
+                    <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4"}}>Today's Comparison</div>
+                    <div style={{background:"#a3e635", color:"#052e16", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:800, padding:"3px 10px", borderRadius:20, letterSpacing:"0.08em", textTransform:"uppercase"}}>Daily</div>
                   </div>
                   <div style={{background:"linear-gradient(135deg,#0f2a18,#122e1a)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px", display:"flex", gap:10, alignItems:"center"}}>
                     {[tc.a, tc.b].map((prod,pi)=>(
                       <React.Fragment key={pi}>
-                        {pi===1&&<div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:800, color:"rgba(110,231,183,0.4)", flexShrink:0}}>VS</div>}
+                        {pi===1&&<div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:800, color:"rgba(110,231,183,0.4)", flexShrink:0}}>VS</div>}
                         <div onClick={()=>{setQuery(prod.name);analyze(prod.name);}}
                           style={{flex:1, background:"rgba(0,0,0,0.25)", borderRadius:12, padding:"14px 12px", textAlign:"center", border:"1px solid rgba(34,197,94,0.1)", cursor:"pointer"}}>
-                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{prod.name}</div>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:700, color:"#f0fdf4", marginBottom:8, lineHeight:1.3}}>{prod.name}</div>
                           <div style={{width:44, height:44, borderRadius:"50%", background:`${sc(prod.score)}18`, border:`2px solid ${sc(prod.score)}44`, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 6px"}}>
-                            <span style={{fontFamily:"'Outfit',sans-serif", fontSize:18, fontWeight:900, color:sc(prod.score)}}>{prod.score}</span>
+                            <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:18, fontWeight:900, color:sc(prod.score)}}>{prod.score}</span>
                           </div>
                           <div style={{fontSize:10, color:"#6ee7b7", opacity:0.55, lineHeight:1.4}}>{prod.flags}</div>
                         </div>
@@ -8820,13 +8820,13 @@ function App() {
           {!emailDismissed && !user && (
             <div style={{maxWidth:520, margin:"0 auto 0", padding:"0 20px 32px"}}>
               <div style={{background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:16, padding:"20px"}}>
-                <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:4}}>Get weekly safety alerts</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:700, color:"#f0fdf4", marginBottom:4}}>Get weekly safety alerts</div>
                 <div style={{fontSize:12, color:"#6ee7b7", opacity:0.7, marginBottom:14}}>Product recalls, ingredient flags, and safer swaps — straight to your inbox</div>
                 <div style={{display:"flex", gap:8}}>
                   <input type="email" placeholder="your@email.com" value={captureEmail} onChange={e=>setCaptureEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
                     style={{flex:1, padding:"10px 14px", borderRadius:10, border:"1px solid rgba(34,197,94,0.2)", background:"rgba(15,42,24,0.8)", color:"#f0fdf4", fontSize:13, outline:"none", fontFamily:"'DM Sans',sans-serif"}}/>
                   <button onClick={submitCaptureEmail} disabled={captureSubmitting}
-                    style={{padding:"10px 18px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1, boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
+                    style={{padding:"10px 18px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", whiteSpace:"nowrap", opacity:captureSubmitting?0.7:1, boxShadow:"0 2px 10px rgba(34,197,94,0.3)"}}>
                     {captureSubmitting ? "..." : captureMsg ? "Done!" : "Stay informed"}
                   </button>
                 </div>
@@ -8844,7 +8844,7 @@ function App() {
             {history.length > 0 && (
               <div style={{maxWidth:1100, margin:"0 auto 40px", padding:`0 ${isMobile?"16px":"40px"}`}}>
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14}}>
-                  <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?16:18, color:text, margin:0}}>Recently viewed</h2>
+                  <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?16:18, color:text, margin:0}}>Recently viewed</h2>
                   <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontSize:13, color:"#16a34a", fontWeight:600, cursor:"pointer"}}>See all →</span>
                 </div>
                 <div style={{display:"flex", gap:12, overflowX:"auto", paddingBottom:8, scrollbarWidth:"none", msOverflowStyle:"none"}}>
@@ -8857,7 +8857,7 @@ function App() {
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=border;}}>
                         {/* Score circle */}
                         <div style={{width:32, height:32, borderRadius:"50%", background:scoreBg(item.score), display:"flex", alignItems:"center", justifyContent:"center", marginBottom:8}}>
-                          <span style={{fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, color:scoreColor(item.score)}}>{item.score}</span>
+                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, color:scoreColor(item.score)}}>{item.score}</span>
                         </div>
                         <div style={{fontSize:12, fontWeight:600, color:text, lineHeight:1.3, marginBottom:4, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                           {item.product_name}
@@ -8926,7 +8926,62 @@ function App() {
                   )}
                 </div>
 
-                <h2 style={{fontFamily:"'Outfit',sans-serif",fontSize:isMobile?22:28,fontWeight:700,color:text,margin:"0 0 24px",letterSpacing:"-0.5px",wordBreak:"break-word"}}>{result.product_name?.length > 60 ? result.product_name.slice(0,57)+"…" : result.product_name}</h2>
+                {/* Product header: brand small caps · product name serif · composition data line */}
+                {(() => {
+                  const fullName = result.product_name || "";
+                  const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
+                  const brand = brandMatch ? brandMatch[1] : null;
+                  const productBody = brandMatch ? brandMatch[2] : fullName;
+                  const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
+                  // Category-aware composition line (Phase 2 Addition)
+                  const cat = result.category || "";
+                  const compositionLine = (() => {
+                    if (cat === "clothing" && result.composition) {
+                      return String(result.composition).toUpperCase().replace(/\s*[,·]\s*/g, " · ");
+                    }
+                    if (Array.isArray(result.ingredient_list) && result.ingredient_list.length > 0) {
+                      return result.ingredient_list.slice(0, 3).map(x => String(x).trim().toUpperCase()).join(" · ");
+                    }
+                    return null;
+                  })();
+                  return (
+                    <div style={{margin:"0 0 18px"}}>
+                      {brand && (
+                        <div style={{
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontSize:11,
+                          letterSpacing:"0.22em",
+                          color:isDark?"#6ee7b7":"var(--ink)",
+                          textTransform:"uppercase",
+                          fontWeight:500,
+                          marginBottom:4,
+                        }}>{brand.toUpperCase()}</div>
+                      )}
+                      <h2 style={{
+                        fontFamily:"'Fraunces', Georgia, serif",
+                        fontSize:isMobile?26:32,
+                        fontWeight:400,
+                        color:text,
+                        margin:"0 0 10px",
+                        letterSpacing:"-0.01em",
+                        lineHeight:1.06,
+                        wordBreak:"break-word",
+                      }}>{displayName}</h2>
+                      {compositionLine && (
+                        <div style={{
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontSize:10.5,
+                          letterSpacing:"0.14em",
+                          color:isDark?"#8a9080":"var(--ink-faint)",
+                          textTransform:"uppercase",
+                          paddingBottom:12,
+                          borderBottom:`1px solid ${isDark?"rgba(240,253,244,0.12)":"var(--rule)"}`,
+                          margin:"0 0 4px",
+                        }}>{compositionLine}</div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Hero score — swaps to child score when childMode active */}
                 {(() => {
@@ -9171,8 +9226,8 @@ function App() {
                     <div style={{marginTop:16, marginBottom:4, textAlign:"left"}}>
                       <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <span style={{fontFamily:"'Outfit',sans-serif", fontSize:11, fontWeight:800, color:"#ef4444", textTransform:"uppercase", letterSpacing:"0.1em"}}>Flagged Substances</span>
-                        <span style={{background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:800, color:"#ef4444"}}>{flagged.slice(0,8).length}</span>
+                        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"#ef4444", textTransform:"uppercase", letterSpacing:"0.1em"}}>Flagged Substances</span>
+                        <span style={{background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:800, color:"#ef4444"}}>{flagged.slice(0,8).length}</span>
                       </div>
                       <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
                         {flagged.slice(0, 8).map((f, i) => {
@@ -9180,7 +9235,7 @@ function App() {
                           const displayName = cleanName(f.name);
                           if (!displayName || isGeneric(displayName)) return null;
                           return (
-                            <span key={i} style={{fontFamily:"'Outfit',sans-serif", fontSize:12, fontWeight:700, padding:"5px 12px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
+                            <span key={i} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:700, padding:"5px 12px", borderRadius:20, background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
                               {displayName}
                             </span>
                           );
@@ -9196,7 +9251,7 @@ function App() {
                   const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
                   return (
                     <div style={{marginBottom:16}}>
-                      <div style={{display:"inline-block", background:`${scoreColor(displayScore)}18`, color:scoreColor(displayScore), border:`1px solid ${scoreColor(displayScore)}33`, padding:"7px 22px", borderRadius:20, fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800, margin:"18px 0 8px", letterSpacing:"0.02em"}}>
+                      <div style={{display:"inline-block", background:`${scoreColor(displayScore)}18`, color:scoreColor(displayScore), border:`1px solid ${scoreColor(displayScore)}33`, padding:"7px 22px", borderRadius:20, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:800, margin:"18px 0 8px", letterSpacing:"0.02em"}}>
                         {scoreLabel(displayScore)} — {pregnancyMode && result.pregnancy_score ? "pregnancy safety" : childMode && result.child_score ? "for children" : catLabel}
                       </div>
                       <div style={{fontSize:11,color:muted,marginTop:2}}>
@@ -9328,19 +9383,61 @@ function App() {
                   );
                 })()}
 
-                {/* ── INGREDIENT LIST ── */}
-                {result.ingredient_list && result.ingredient_list.length > 0 && (
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:10, fontWeight:700, color:isDark?"#6ee7b7":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
-                      Full ingredient list
+                {/* ── INGREDIENT LIST (category-aware per Addition 2) ── */}
+                {result.ingredient_list && result.ingredient_list.length > 0 && (() => {
+                  const cat = result.category || "";
+                  const labelMap = {
+                    food:          "WHAT'S INSIDE",
+                    food_beverage: "WHAT'S INSIDE",
+                    beverage:      "WHAT'S INSIDE",
+                    restaurant:    "WHAT'S INSIDE",
+                    supplement:    "WHAT'S INSIDE",
+                    personal_care: "INGREDIENTS",
+                    baby:          "INGREDIENTS",
+                    home:          "WHAT'S IN IT",
+                    clothing:      "MATERIALS",
+                  };
+                  const label = labelMap[cat] || "COMPOSITION";
+                  const flowingCats = ["food","food_beverage","beverage","restaurant","supplement","personal_care","baby","home"];
+                  const flowing = flowingCats.includes(cat);
+                  return (
+                    <div style={{marginBottom:18, textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10,
+                        letterSpacing:"0.22em",
+                        color:isDark?"#4ade80":"var(--moss)",
+                        textTransform:"uppercase",
+                        fontWeight:500,
+                        marginBottom:12,
+                        display:"flex",
+                        alignItems:"center",
+                        gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        {label}
+                      </div>
+                      {flowing ? (
+                        <p style={{
+                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontSize:15,
+                          lineHeight:1.55,
+                          color:isDark?"#f0fdf4":"var(--ink)",
+                          margin:"0 0 6px",
+                          fontWeight:400,
+                        }}>
+                          {result.ingredient_list.join(", ")}
+                        </p>
+                      ) : (
+                        <div style={{background:isDark?"#1a1a18":"var(--cream-light)", borderRadius:"14px 18px 12px 16px / 16px 12px 18px 14px", padding:"12px 14px", border:`1px solid ${isDark?"#2a2a28":"var(--rule-soft)"}`}}>
+                          <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:isDark?"#6ee7b7":"var(--ink-soft)", lineHeight:1.7, margin:0}}>
+                            {result.ingredient_list.join(", ")}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div style={{background:isDark?"#1a1a18":"#f8f9fa", borderRadius:10, padding:"12px 14px", border:`1px solid ${isDark?"#2a2a28":"#e9ecef"}`}}>
-                      <p style={{fontSize:12, color:isDark?"#6ee7b7":"#64748b", lineHeight:1.7, margin:0}}>
-                        {result.ingredient_list.join(", ")}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* ── INGREDIENT SOURCE / CREDIBILITY ── */}
                 {(() => {
@@ -9359,10 +9456,10 @@ function App() {
                   if (!label) return null;
                   const conf = result.ingredient_confidence;
                   const color = conf === "high"
-                    ? (isDark ? "#6ee7b7" : "#052e16")
+                    ? (isDark ? "#6ee7b7" : "var(--moss)")
                     : conf === "medium"
-                    ? (isDark ? "#9ca3af" : "#6b7280")
-                    : (isDark ? "#fbbf24" : "#b45309");
+                    ? (isDark ? "#9ca3af" : "var(--ink-soft)")
+                    : (isDark ? "#fbbf24" : "var(--amber)");
                   let timeAgo = "";
                   if (result.ingredient_verified_at) {
                     const t = new Date(result.ingredient_verified_at).getTime();
@@ -9382,15 +9479,17 @@ function App() {
                   const url = result.ingredient_source_url;
                   return (
                     <div style={{
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: 12,
+                      fontFamily: "'Fraunces', Georgia, serif",
+                      fontSize: 13,
+                      fontWeight: 400,
                       color,
-                      marginTop: -4,
-                      marginBottom: 16,
-                      lineHeight: 1.6,
+                      marginTop: -2,
+                      marginBottom: 18,
+                      lineHeight: 1.5,
+                      textAlign: "left",
                     }}>
                       {url ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration: "underline", cursor: "pointer"}}>
+                        <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration: "underline", textUnderlineOffset: 2, cursor: "pointer"}}>
                           {label}
                         </a>
                       ) : label}
@@ -9524,7 +9623,7 @@ function App() {
                         width:"100%", marginTop:8, padding:"14px 16px",
                         background:"#052e16", color:"#4ade80",
                         border:"none", borderRadius:12, cursor:"pointer",
-                        fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15,
+                        fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15,
                         display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                       }}>
                       See safer alternatives →
@@ -9616,7 +9715,7 @@ function App() {
                         style={{
                           width:"100%", padding:"14px", borderRadius:12,
                           background:"#16a34a", color:"#fff", border:"none",
-                          fontFamily:"'Outfit',sans-serif", fontWeight:700,
+                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700,
                           fontSize:15, cursor:"pointer",
                         }}>
                         {displayScore > 5 ? "See safer alternatives" : "Scan another product"}
@@ -9629,7 +9728,7 @@ function App() {
                           width:"100%", padding:"12px", borderRadius:12,
                           background:"none", color:"#16a34a",
                           border:"1.5px solid #16a34a",
-                          fontFamily:"'Outfit',sans-serif", fontWeight:600,
+                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:600,
                           fontSize:14, cursor:"pointer",
                         }}>
                         {displayScore > 5
@@ -9698,7 +9797,7 @@ function App() {
                 <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, overflow:"hidden"}}>
                   <div style={{background:"#052e16", padding:"20px 24px"}}>
                     <div style={{fontSize:11, fontWeight:700, color:"#4ade80", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
-                    <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'Outfit',sans-serif"}}>
+                    <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
                       {(result.alternatives?.length||0) + (result.ai_alternatives?.length||0) > 0
                         ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
                         : "Exploring alternatives"}
@@ -9777,7 +9876,7 @@ function App() {
                         <button onClick={() => setCompareAlt(best)} style={{
                           width:"100%", padding:"12px", borderRadius:10,
                           background:"none", border:"1.5px solid #16a34a",
-                          fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:13,
+                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13,
                           color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                           marginTop:4,
                         }}>
@@ -9833,7 +9932,7 @@ function App() {
               </svg>
 
               <div style={{fontSize:11, color:"#86efac", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Safer alternatives for</div>
-              <h2 style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:isMobile?20:26, color:"#fff", margin:"0 0 6px", lineHeight:1.2}}>
+              <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?20:26, color:"#fff", margin:"0 0 6px", lineHeight:1.2}}>
                 {result.product_name?.length > 50 ? result.product_name.slice(0,47)+"…" : result.product_name}
               </h2>
               <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", borderRadius:20, padding:"4px 14px"}}>
@@ -9889,7 +9988,7 @@ function App() {
                   return (
                     <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
                       <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                        <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
+                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
                         <div style={{flexShrink:0}}><ScoreBadge score={score} size="xs" showLabel /></div>
                       </div>
                       {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
@@ -9949,7 +10048,7 @@ function App() {
                   <button onClick={() => setCompareAlt(best)} style={{
                     width:"100%", padding:"14px", borderRadius:12,
                     background:"none", border:"1.5px solid #16a34a",
-                    fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:14,
+                    fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:14,
                     color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
                   }}>
                     <IconShare size={16} color="#16a34a"/> Compare & Share
@@ -9993,7 +10092,7 @@ function App() {
 
               {/* Scan again CTA */}
               <button onClick={()=>{setShowAlts(false); reset();}}
-                style={{width:"100%", padding:"14px", borderRadius:12, background:"#16a34a", color:"#fff", border:"none", fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:15, cursor:"pointer"}}>
+                style={{width:"100%", padding:"14px", borderRadius:12, background:"#16a34a", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, cursor:"pointer"}}>
                 Scan another product
               </button>
             </div>
@@ -10030,20 +10129,20 @@ function App() {
             <div onClick={()=>setScanSheetOpen(false)} style={{position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.5)"}}/>
             <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:isDark?"#1e2433":"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
               <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 20px"}}/>
-              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'Outfit',sans-serif"}}>Scan a product</div>
+              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
               <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
                 style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
                 <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                 </div>
-                <div><div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'Outfit',sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
+                <div><div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
               </div>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
-                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'Outfit',sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
               </label>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
@@ -10080,7 +10179,7 @@ function App() {
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <span style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:800, color:"white", letterSpacing:"0.02em"}}>Scan Another</span>
+              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:800, color:"white", letterSpacing:"0.02em"}}>Scan Another</span>
             </div>
           )}
 
@@ -10111,12 +10210,12 @@ function App() {
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
                   {!isMobile && <input id="nav-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>}
-                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:600, color:"#22c55e", letterSpacing:"0.04em"}}>Scan</span>
+                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:600, color:"#22c55e", letterSpacing:"0.04em"}}>Scan</span>
                 </div>
               ) : (
                 <div key={i} onClick={item.action} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", color: item.active ? "#22c55e" : "#6ee7b7", opacity: item.active ? 1 : 0.4, transition:"opacity 0.15s"}}>
                   {item.icon}
-                  <span style={{fontFamily:"'Outfit',sans-serif", fontSize:9, fontWeight:600, letterSpacing:"0.04em"}}>{item.label}</span>
+                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:600, letterSpacing:"0.04em"}}>{item.label}</span>
                 </div>
               )
             ))}
@@ -10211,7 +10310,7 @@ function App() {
             <circle cx="4"  cy="28" r="1.5" fill="#4ade80" opacity="0.45"/>
             <circle cx="28" cy="4"  r="1.8" fill="#86efac" opacity="0.55"/>
           </svg>
-          <span style={{fontFamily:"'Outfit',sans-serif",fontSize:20,color:"#fff",fontWeight:700}}>Partiqule</span>
+          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:20,color:"#fff",fontWeight:700}}>Partiqule</span>
         </div>
         <div style={{marginBottom:20, color:"#6ee7b7", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
         <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
@@ -10266,7 +10365,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{minHeight:"100vh", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center"}}><IcoScan size={48}/></div>
-          <div style={{fontFamily:"'Outfit',sans-serif", fontWeight:700, fontSize:24, color:"#fff"}}>Something went wrong</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:24, color:"#fff"}}>Something went wrong</div>
           <div style={{fontSize:14, color:"#86efac", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
           <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#4ade80", color:"#052e16", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:8}}>
             Reload Partiqule

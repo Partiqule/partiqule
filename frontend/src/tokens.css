@@ -38,6 +38,11 @@
   --score-amber: #c49a33;   /* scores 4 to 5 · golden wheat */
   --score-red:   #b0493a;   /* scores > 5  · terracotta clay */
 
+  /* ─── Score tinted backgrounds (badges, cards) ──────── */
+  --score-green-soft: rgba(107, 140, 62, 0.08);
+  --score-amber-soft: rgba(196, 154, 51, 0.10);
+  --score-red-soft:   rgba(176, 73, 58, 0.08);
+
   /* ─── Outer frame for web contexts ──────────────────── */
   --outer-bg:    #e0d8c5;
 
