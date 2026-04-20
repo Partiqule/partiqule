@@ -454,7 +454,7 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
         padding:`${SAFE_TOP+16}px 20px 16px`,
         display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center"}}>
-          <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:26, width:"auto", objectFit:"contain", display:"block"}}/>
+          <img src="/partiqule-wordmark-light.svg" alt="Partiqule" style={{height:26, width:"auto", objectFit:"contain", display:"block"}}/>
         </div>
         <button onClick={() => { cleanup(); onClose(); }}
           style={{width:38,height:38,borderRadius:"50%",
@@ -788,7 +788,8 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
     const logoImg = new Image();
     logoImg.onload = () => renderTopBar(logoImg);
     logoImg.onerror = () => { /* keep text fallback */ };
-    logoImg.src = "/partiqule-wordmark-1080.png";
+    // Dark moss top bar — use the cream-letter variant for contrast.
+    logoImg.src = "/partiqule-wordmark-light-1080.png";
 
     // Two card areas
     const cardY = 160, cardH = 540, gap = 40, cardW = (W - 48 * 2 - gap) / 2;
@@ -1208,28 +1209,6 @@ const ScoreArc = ({score}) => {
           <AnimatedScore target={score} color={color}/>
         </div>
         <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, color:"#6ee7b7", opacity:0.5, marginTop:2}}>out of 10</div>
-      </div>
-    </div>
-  );
-};
-
-const RiskBar = ({score}) => {
-  const pct = (score/10)*100;
-  const meaning = score <= 2 ? "Safe — no significant concerns"
-    : score <= 4 ? "Good — mostly clean, use with awareness"
-    : score <= 6 ? "Caution — real concerns, consider alternatives"
-    : score <= 8 ? "Switch — known concerns, time to swap"
-    : "Avoid — confirmed harmful substances";
-  return (
-    <div style={{marginTop:16}}>
-      <div style={{textAlign:"center", marginBottom:10}}>
-        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13, color:scoreColor(score), padding:"5px 16px", borderRadius:20, background:`${scoreColor(score)}18`, border:`1px solid ${scoreColor(score)}33`}}>{meaning}</span>
-      </div>
-      <div style={{position:"relative", height:8, borderRadius:99, background:"linear-gradient(to right,#16a34a,#65a30d,#d97706,#dc2626,#991b1b)", overflow:"visible"}}>
-        <div style={{position:"absolute", top:"50%", left:`${pct}%`, transform:"translate(-50%,-50%)", width:18, height:18, borderRadius:"50%", background:"#0f2a18", border:`3px solid ${scoreColor(score)}`, boxShadow:`0 0 12px ${scoreColor(score)}66`, transition:"left 1.2s cubic-bezier(.4,0,.2,1)"}}/>
-      </div>
-      <div style={{display:"flex", justifyContent:"space-between", fontSize:10, color:"#6ee7b7", opacity:0.4, marginTop:7, fontWeight:600, letterSpacing:"0.06em"}}>
-        <span>SAFER</span><span>RISKIER</span>
       </div>
     </div>
   );
@@ -7865,11 +7844,9 @@ function App() {
                   </>);
                 })()}
 
-                {/* "Which room?" selector removed from Surface 1 (2026-04-20) per the
-                    Surface 1 reduction. The pendingRoomTag state and setter remain in
-                    place; previously-tagged history rows still group by room (see
-                    line ~3667). To re-introduce new-scan room tagging, place the
-                    selector on Surface 2 with design-system tokens. */}
+                {/* "Which room?" selector lives on Surface 2 (detail overlay) — moved off
+                    Surface 1 on 2026-04-20 per the Surface 1 reduction. See the room tag
+                    block below the BREAKING IT DOWN section. */}
 
                 {/* Intelligence cards — regulatory findings relevant to this product */}
                 {result.intelligence_cards?.length > 0 && (
@@ -8436,6 +8413,91 @@ function App() {
                     <div style={{fontSize:12, color:"var(--ink-soft)", lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
                   </div>
                 )}
+
+                {/* ROOM TAG — surfaced on Surface 2 (moved from Surface 1 on 2026-04-20).
+                    Persists onto the history row's `room` field so the by-room grouping
+                    in HistoryPage works. When already tagged, shows "Tagged: <Room>"
+                    with an Edit button that flips back to the selector. */}
+                {(() => {
+                  const ROOM_OPTIONS = {
+                    food:["Pantry","Kitchen"], food_beverage:["Pantry","Kitchen"], beverage:["Pantry","Kitchen"], snack:["Pantry","Kitchen"],
+                    personal_care:["Bathroom","Bedroom"], skincare:["Bathroom","Bedroom"],
+                    cleaning:["Kitchen","Bathroom","Laundry","Living Room"], home:["Kitchen","Living Room","Bedroom","Laundry"],
+                    clothing:["Closet","Kids Room"], baby:["Nursery","Kids Room","Bathroom"], toy:["Kids Room","Nursery"],
+                  };
+                  const options = ROOM_OPTIONS[result.category] || [];
+                  if (!options.length) return null;
+                  const existingRoom = (history.find(h => h.product_name === result.product_name) || {}).room || null;
+                  const showSelector = !existingRoom || pendingRoomTag === result.product_name;
+
+                  const tagRoom = (room) => {
+                    const updated = history.map((h, i) => i === 0 && h.product_name === result.product_name ? {...h, room} : h);
+                    setHistory(updated);
+                    try { localStorage.setItem("ps_history", JSON.stringify(updated)); } catch {}
+                    setPendingRoomTag(null);
+                  };
+
+                  const SectionLabel = ({text}) => (
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:"var(--moss)", textTransform:"uppercase",
+                      fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                      {text}
+                    </div>
+                  );
+
+                  if (!showSelector) {
+                    return (
+                      <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                        <SectionLabel text="Tagged"/>
+                        <div style={{display:"flex", alignItems:"center", gap:12}}>
+                          <span style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:18, fontWeight:400, color:"var(--ink)",
+                            letterSpacing:"-0.005em",
+                          }}>{existingRoom}</span>
+                          <button onClick={() => setPendingRoomTag(result.product_name)} style={{
+                            background:"transparent", border:"none", cursor:"pointer", padding:"2px 0",
+                            fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12,
+                            color:"var(--ink-soft)", letterSpacing:"0.02em",
+                            textDecoration:"underline", textUnderlineOffset:3,
+                          }}>Edit</button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <SectionLabel text="Which room?"/>
+                      <div style={{display:"flex", flexWrap:"wrap", gap:8, alignItems:"center"}}>
+                        {options.map(room => {
+                          const selected = room === existingRoom;
+                          return (
+                            <button key={room} onClick={() => tagRoom(room)} style={{
+                              padding:"7px 14px", borderRadius:9999,
+                              background: selected ? "var(--moss)" : "var(--cream-light)",
+                              border: selected ? "none" : "1px solid var(--rule)",
+                              color: selected ? "var(--ivory)" : "var(--ink)",
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:12, fontWeight:500, cursor:"pointer",
+                              letterSpacing:"0.02em", transition:"all 0.2s",
+                            }}>{room}</button>
+                          );
+                        })}
+                        <button onClick={() => setPendingRoomTag(null)} style={{
+                          marginLeft:"auto", padding:"7px 10px",
+                          background:"transparent", border:"none", cursor:"pointer",
+                          fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12,
+                          color:"var(--ink-soft)", letterSpacing:"0.02em",
+                        }}>Skip</button>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* WHAT'S IN IT — full ingredient list + source credibility */}
                 {result.ingredient_list && result.ingredient_list.length > 0 && (() => {
