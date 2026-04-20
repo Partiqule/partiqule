@@ -1689,6 +1689,8 @@ NUTRITION: For ANY food, beverage, supplement, or restaurant product — read th
   },
   "summary_short": "max 30 words, first-person friend voice, plain language, no regulatory jargon",
   "summary_long": "60 to 100 words, research tone with specific regulatory details, lab testing references, brand progress, and historical context",
+  "verdict_adult": "single-sentence verdict for general use. Max 18 words, first person, specific, takes a position.",
+  "verdict_kid": "single-sentence verdict phrased for a parent scanning for their child. Same facts, kid context. Only populate for food/beverage/supplement/personal_care/clothing/home/home_furnishing/toy/baby categories. Otherwise null.",
   "ingredient_list": ["ingredient 1", "ingredient 2"],
   "raw_concerns": ["concern 1"],
   "confidence": "high|medium|low",
@@ -1734,7 +1736,38 @@ BAD summary_short examples (NEVER produce):
 
 summary_long rules stay as before: 60 to 100 words, 3 to 5 sentences, research tone, include regulatory details (EU restrictions, FDA rulings, state bans), lab references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes with dates, and historical context.
 
-Never soften summary_short to hide what summary_long says.` }
+Never soften summary_short to hide what summary_long says.
+
+VERDICT VOICE RULE (CRITICAL):
+
+Generate two verdict variants per scan:
+
+verdict_adult: Standard verdict for general use. First person, specific, takes a position. Voice rules same as summary_short (no hedging, no "Overall,", no restating product name, no consumers/users/individuals). Max 18 words.
+
+verdict_kid: Same score threshold but phrased for a parent scanning for their child. Only populate for categories that can apply to kids: food, beverage, supplement, personal_care, clothing, home, home_furnishing, toy, baby. For other categories (restaurant, accessory, kitchen, other), return null for verdict_kid.
+
+Kid-context framing by score band:
+
+Score 1-3: "Good for a kid" / "Safe for their [skin/routine/snack time]" / "No issues here for a kid"
+Score 4-5: "Not ideal for a kid" / "I'd save this for adults" / "Cleaner options exist for kids"
+Score 6-7: "I'd skip this for a kid" / "Not for their [snack/daily/regular] rotation" / "Something cleaner would be better for them"
+Score 8-10: "Hard skip for a kid" / "Not for the little one" / "I'd pass for kids"
+
+Same voice rules as adult verdicts: first person, specific, short, no hedging. Context is explicitly about the child.
+
+GOOD verdict examples:
+
+Product: Goldfish Colors, score 6
+verdict_adult: "I'd pass on this one."
+verdict_kid: "I'd skip this for a kid. The original Goldfish skip the dyes."
+
+Product: Salt and Stone body lotion, score 2
+verdict_adult: "Clean pick. Good for daily use."
+verdict_kid: "Safe for their skin. Good for a kid."
+
+Product: Lululemon Align, score 5
+verdict_adult: "Keep these for the gym."
+verdict_kid: "Not ideal for a kid. Find cotton basics instead."` }
         ]
       }]
     })
@@ -4046,6 +4079,8 @@ Return ONLY this JSON:
   },
   "summary_short": "max 30 words, first-person friend voice, plain language, no regulatory jargon",
   "summary_long": "60 to 100 words, research tone with specific regulatory details, lab testing references, brand progress, and historical context",
+  "verdict_adult": "single-sentence verdict for general use. Max 18 words, first person, specific, takes a position.",
+  "verdict_kid": "single-sentence verdict phrased for a parent scanning for their child. Same facts, kid context. Only populate for food/beverage/supplement/personal_care/clothing/home/home_furnishing/toy/baby categories. Otherwise null.",
   "ingredient_list": ["ingredient 1", "ingredient 2", "ingredient 3"],
   "raw_concerns": ["concern 1", "concern 2", "concern 3"],
   "confidence": "high|medium|low",
@@ -4099,6 +4134,37 @@ BAD summary_short examples (NEVER produce):
 summary_long rules stay as before: 60 to 100 words, 3 to 5 sentences, research tone, include regulatory details (EU restrictions, FDA rulings, state bans), lab references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes with dates, and historical context.
 
 Never soften summary_short to hide what summary_long says.
+
+VERDICT VOICE RULE (CRITICAL):
+
+Generate two verdict variants per scan:
+
+verdict_adult: Standard verdict for general use. First person, specific, takes a position. Voice rules same as summary_short (no hedging, no "Overall,", no restating product name, no consumers/users/individuals). Max 18 words.
+
+verdict_kid: Same score threshold but phrased for a parent scanning for their child. Only populate for categories that can apply to kids: food, beverage, supplement, personal_care, clothing, home, home_furnishing, toy, baby. For other categories (restaurant, accessory, kitchen, other), return null for verdict_kid.
+
+Kid-context framing by score band:
+
+Score 1-3: "Good for a kid" / "Safe for their [skin/routine/snack time]" / "No issues here for a kid"
+Score 4-5: "Not ideal for a kid" / "I'd save this for adults" / "Cleaner options exist for kids"
+Score 6-7: "I'd skip this for a kid" / "Not for their [snack/daily/regular] rotation" / "Something cleaner would be better for them"
+Score 8-10: "Hard skip for a kid" / "Not for the little one" / "I'd pass for kids"
+
+Same voice rules as adult verdicts: first person, specific, short, no hedging. Context is explicitly about the child.
+
+GOOD verdict examples:
+
+Product: Goldfish Colors, score 6
+verdict_adult: "I'd pass on this one."
+verdict_kid: "I'd skip this for a kid. The original Goldfish skip the dyes."
+
+Product: Salt and Stone body lotion, score 2
+verdict_adult: "Clean pick. Good for daily use."
+verdict_kid: "Safe for their skin. Good for a kid."
+
+Product: Lululemon Align, score 5
+verdict_adult: "Keep these for the gym."
+verdict_kid: "Not ideal for a kid. Find cotton basics instead."
 
 SUBSTANCE NAMING RULES — critical for accurate scoring:
 Always name the SPECIFIC chemical, not a generic category. These rules apply to every concern you generate:

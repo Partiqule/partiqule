@@ -7785,7 +7785,28 @@ function App() {
                       );
                     })()}
 
-                    <RiskBar score={displayScore}/>
+                    {/* Single verdict sentence — swaps to kid verdict when childMode active.
+                        Falls back to adult verdict, then generic scoreLabel meaning for cached scans. */}
+                    {(() => {
+                      const fallback = displayScore <= 2 ? "Safe — no significant concerns."
+                        : displayScore <= 4 ? "Good — mostly clean."
+                        : displayScore <= 6 ? "Caution — real concerns, consider alternatives."
+                        : displayScore <= 8 ? "Switch — time to swap."
+                        : "Avoid — confirmed harmful substances.";
+                      const sentence = (childMode && result.verdict_kid)
+                        ? result.verdict_kid
+                        : (result.verdict_adult || result.verdict || fallback);
+                      return (
+                        <div style={{
+                          marginTop:14, marginBottom:2, textAlign:"center", padding:"0 12px",
+                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontSize:18, lineHeight:1.35,
+                          color:"var(--ink)", fontWeight:400, letterSpacing:"-0.005em",
+                        }}>
+                          {sentence}
+                        </div>
+                      );
+                    })()}
 
                     {/* Pregnancy mode indicator — shown when pregnancy mode active in settings */}
                     {pregnancyMode && result.pregnancy_score && (
@@ -7938,121 +7959,9 @@ function App() {
                   </div>
                 )}
 
-                {/* ── FLAGGED SUBSTANCE BUBBLES — prime spot right after score arc ── */}
-                {(() => {
-                  // Generic food/processing terms that are NOT harmful substances
-                  const GENERIC_TERMS = new Set([
-                    "binding agents","emulsifiers","natural flavoring","natural flavors",
-                    "natural flavor","artificial flavor","artificial flavoring","flavorings",
-                    "processing aids","processing aid","stabilizers","stabilizer",
-                    "thickeners","thickener","food additives","additives","preservatives",
-                    "colorings","coloring","colors","colour","colouring","antioxidants",
-                    "antioxidant","humectants","humectant","fillers","filler","carriers",
-                    "carrier","solvents","solvent","natural ingredients","whole ingredients",
-                    "organic ingredients","clean ingredients","certified ingredients",
-                    "natural coffee","coffee flavor","coffee taste","almond flavor",
-                    "menthol concentration","menthol","peppermint oil","wintergreen oil",
-                    "polymeric coating","interior coating","tin coating","metal coating",
-                    "food grade coating","lacquer","enamel coating",
-                  ]);
-                  const isGeneric = (name) => {
-                    const n = name.toLowerCase().trim();
-                    if (GENERIC_TERMS.has(n)) return true;
-                    // Filter descriptions not chemical names
-                    if (n.length > 40) return true;
-                    if (/\b(for|with|in|of|from|using|added|used|based|concentration|coating|level)\b/.test(n)) return true;
-                    return false;
-                  };
-                  // Clean parenthetical hedges from substance names before displaying
-                  const cleanName = (name) => name
-                    .replace(/\s*\((presumed|potential|possible|suspected|unconfirmed|estimated|likely|may be present|trace)\)/gi, "")
-                    .trim();
+                {/* FLAGGED SUBSTANCES and NUTRITION BADGES moved to Surface 2 (detail overlay). */}
 
-                  const flagged = [];
-                  const seen = new Set();
-                  const add = (name, severity) => {
-                    const key = (name||"").toLowerCase().trim();
-                    if (!key || key === "unknown" || key.length < 2 || seen.has(key)) return;
-                    if (isGeneric(name)) return;
-                    seen.add(key);
-                    flagged.push({name, severity});
-                  };
-                  (result.food_analysis?.concerns || []).forEach(c => {
-                    if (c?.substance && c.substance !== "Unknown") add(c.substance, c.severity || "medium");
-                  });
-                  (result.harmful_chemicals || []).forEach(c => add(c, "high"));
-                  const allConcerns = [
-                    ...(result.dimensions?.materials?.concerns || []),
-                    ...(result.concerns || []),
-                  ];
-                  allConcerns.forEach(c => {
-                    if (typeof c === "string") {
-                      const match = c.match(/^([A-Z][A-Za-z0-9\s\-\/]{1,30}?)(?:\s*[—:–]|\s+is\s|\s+\()/);
-                      if (match) add(match[1].trim(), "medium");
-                    } else if (c?.substance) {
-                      add(c.substance, c.severity || "medium");
-                    }
-                  });
-                  if (flagged.length === 0) return null;
-                  // Badge treatment: severity comes from background tint + border.
-                  // Text is always var(--ink) for legibility on cream UI.
-                  const sStyle = (sev) => ({
-                    high:   {bg:"var(--score-red-soft)",   color:"var(--ink)", border:"1px solid var(--score-red)"},
-                    medium: {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"},
-                    low:    {bg:"var(--score-green-soft)", color:"var(--ink)", border:"1px solid var(--score-green)"},
-                  })[sev] || {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"};
-                  return (
-                    <div style={{marginTop:16, marginBottom:4, textAlign:"left"}}>
-                      <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:800, color:"#ef4444", textTransform:"uppercase", letterSpacing:"0.1em"}}>Flagged Substances</span>
-                        <span style={{background:"rgba(239,68,68,0.15)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:20, padding:"2px 8px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:800, color:"#ef4444"}}>{flagged.slice(0,8).length}</span>
-                      </div>
-                      <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
-                        {flagged.slice(0, 8).map((f, i) => {
-                          const st = sStyle(f.severity);
-                          const displayName = cleanName(f.name);
-                          if (!displayName || isGeneric(displayName)) return null;
-                          return (
-                            <span key={i} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, padding:"5px 12px", borderRadius:"var(--tile-shape-1)", background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
-                              {displayName}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Hero label */}
-                {(() => {
-                  const displayScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
-                  const catLabel = result.category === "food" ? "for food" : result.category === "beverage" ? "for beverages" : result.category === "food_beverage" ? "for food" : result.category === "personal_care" ? "for beauty" : result.category === "clothing" ? "for clothing" : result.category === "home" ? "for home" : result.category === "kitchen" ? "for home" : result.category === "home_furnishing" ? "for home" : result.category === "baby" ? "for baby products" : result.category === "supplement" ? "for supplements" : result.category === "toy" ? "for toys" : result.category === "accessory" ? "for accessories" : result.category === "restaurant" ? "for restaurant food" : "Overall";
-                  return (
-                    <div style={{marginBottom:16}}>
-                      <div style={{display:"inline-block", background:`${scoreColor(displayScore)}18`, color:scoreColor(displayScore), border:`1px solid ${scoreColor(displayScore)}33`, padding:"7px 22px", borderRadius:20, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:800, margin:"18px 0 8px", letterSpacing:"0.02em"}}>
-                        {scoreLabel(displayScore)} — {pregnancyMode && result.pregnancy_score ? "pregnancy safety" : childMode && result.child_score ? "for children" : catLabel}
-                      </div>
-                      <div style={{fontSize:11,color:muted,marginTop:2}}>
-                        {result.category === "food"           ? "Ingredients 90% · Packaging 10%"
-                        : result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
-                        : result.category === "beverage"      ? "Ingredient safety · Nutrition impact"
-                        : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
-                        : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
-                        : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
-                        : result.category === "toy"           ? "Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%"
-                        : result.category === "clothing"      ? "Materials 35% · Exposure 30% · Sustainability 35%"
-                        : result.category === "accessory"     ? "Materials 40% · Exposure 25% · Sustainability 35%"
-                        : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
-                        : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
-                        : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%"
-                        }
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Alt teaser — below hero label */}
+                {/* Alt teaser */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
                   const currentScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
@@ -8091,76 +8000,6 @@ function App() {
                     </div>
                   </div>
                 )}
-
-                {/* ── NUTRITION BADGES — % Daily Values ── */}
-                {(() => {
-                  const n = result.nutrition;
-                  const cat = result.category || "";
-                  const isFood = ["food","food_beverage","beverage","restaurant","supplement"].includes(cat);
-                  if (!n || !isFood) return null;
-
-                  const sugarDV  = childMode ? 25  : 50;
-                  const sodiumDV = childMode ? 1500 : 2300;
-                  const satFatDV = childMode ? 13  : 20;
-
-                  const getSev = (pct) => pct >= 100 ? "very_high" : pct >= 60 ? "high" : pct >= 30 ? "moderate" : "low";
-                  const SEV = {
-                    very_high: { bg: "#fef2f2", border:"#fca5a5", color:"#dc2626" },
-                    high:      { bg: "#fff7ed", border:"#fdba74", color:"#c2410c" },
-                    moderate:  { bg: "#fefce8", border:"#fde047", color:"#a16207" },
-                    low:       { bg: "#f1f5f9", border:"#cbd5e1", color:"#475569" },
-                  };
-
-                  const badges = [];
-
-                  if (n.sugar_g != null) {
-                    const pct = Math.round((n.sugar_g / sugarDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
-                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sugar</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (n.sodium_mg != null) {
-                    const pct = Math.round((n.sodium_mg / sodiumDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
-                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sodium</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (n.sat_fat_g != null) {
-                    const pct = Math.round((n.sat_fat_g / satFatDV) * 100);
-                    const cfg = SEV[getSev(pct)];
-                    badges.push(
-                      <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
-                        <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
-                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
-                        <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
-                      </div>
-                    );
-                  }
-
-                  if (!badges.length) return null;
-                  return (
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
-                        Nutrition · {childMode ? "Children's Daily Values" : "Daily Values"}
-                      </div>
-                      <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                        {badges}
-                      </div>
-                    </div>
-                  );
-                })()}
 
                 {/* ── SURFACE 1 — simple result view ──
                     The dense sections (full ingredient list, INGREDIENT SOURCE,
@@ -8593,6 +8432,17 @@ function App() {
                     ? Math.max(0, result.child_score - (result.overall_score || result.score))
                     : 0;
                   const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+                  const weightLine = result.category === "food" || result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
+                    : result.category === "beverage"      ? "Ingredient safety · Nutrition impact"
+                    : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
+                    : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
+                    : result.category === "personal_care" ? "Materials 45% · Exposure 45% · Packaging 5% · Sustainability 5%"
+                    : result.category === "toy"           ? "Materials 50% · Exposure 40% · Packaging 5% · Sustainability 5%"
+                    : result.category === "clothing"      ? "Materials 35% · Exposure 30% · Sustainability 35%"
+                    : result.category === "accessory"     ? "Materials 40% · Exposure 25% · Sustainability 35%"
+                    : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
+                    : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
+                    : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%";
                   const rows = [
                     { key:"materials",      label:"Materials",        score: Math.min(10, (d.materials?.score || result.score) + childDimBump), note: d.materials?.label },
                     { key:"usage_exposure", label:"Usage & exposure", score: Math.min(10, (d.usage_exposure?.score || 5) + childDimBump),       note: d.usage_exposure?.label },
@@ -8605,10 +8455,13 @@ function App() {
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:10, letterSpacing:"0.22em",
                         color:"var(--moss)", textTransform:"uppercase",
-                        fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                        fontWeight:500, marginBottom:6, display:"flex", alignItems:"center", gap:10,
                       }}>
                         <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                         Breaking it down
+                      </div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", marginBottom:14, letterSpacing:"0.02em"}}>
+                        {weightLine}
                       </div>
                       {rows.map((row, i) => (
                         <div key={row.key} style={{
@@ -8738,6 +8591,142 @@ function App() {
                         <a href={url} target="_blank" rel="noopener noreferrer" style={{color, textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}}>{srcLabel}</a>
                       ) : srcLabel}
                       {timeAgo ? ` · ${timeAgo}` : ""}
+                    </div>
+                  );
+                })()}
+
+                {/* NUTRITION — food/beverage categories only. DV switches with childMode. */}
+                {(() => {
+                  const n = result.nutrition;
+                  const cat = result.category || "";
+                  const isFood = ["food","food_beverage","beverage","restaurant","supplement"].includes(cat);
+                  if (!n || !isFood) return null;
+                  const sugarDV  = childMode ? 25   : 50;
+                  const sodiumDV = childMode ? 1500 : 2300;
+                  const satFatDV = childMode ? 13   : 20;
+                  const sevTokens = (pct) => pct >= 100
+                    ? {bg:"var(--score-red-soft)",   border:"1px solid var(--score-red)"}
+                    : pct >= 60
+                    ? {bg:"var(--score-red-soft)",   border:"1px solid var(--score-red)"}
+                    : pct >= 30
+                    ? {bg:"var(--score-amber-soft)", border:"1px solid var(--score-amber)"}
+                    : {bg:"var(--score-green-soft)", border:"1px solid var(--score-green)"};
+                  const items = [];
+                  if (n.sugar_g != null) { const pct = Math.round((n.sugar_g / sugarDV) * 100); items.push({k:"sugar", value:`${n.sugar_g}g`, label:"Sugar", pct, ...sevTokens(pct)}); }
+                  if (n.sodium_mg != null) { const pct = Math.round((n.sodium_mg / sodiumDV) * 100); items.push({k:"sodium", value:`${n.sodium_mg}mg`, label:"Sodium", pct, ...sevTokens(pct)}); }
+                  if (n.sat_fat_g != null) { const pct = Math.round((n.sat_fat_g / satFatDV) * 100); items.push({k:"satfat", value:`${n.sat_fat_g}g`, label:"Sat fat", pct, ...sevTokens(pct)}); }
+                  if (!items.length) return null;
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                        textTransform:"uppercase", fontWeight:500, marginBottom:6,
+                        display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                        Nutrition
+                      </div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", marginBottom:14, letterSpacing:"0.02em"}}>
+                        {childMode ? "Children's Daily Values" : "Daily Values"}
+                      </div>
+                      <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                        {items.map(it => (
+                          <div key={it.k} style={{
+                            flex:"1 1 auto", minWidth:92, textAlign:"center",
+                            padding:"12px 10px", borderRadius:"var(--tile-shape-1)",
+                            background:it.bg, border:it.border,
+                          }}>
+                            <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", lineHeight:1, letterSpacing:"-0.01em"}}>{it.value}</div>
+                            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--ink-soft)", margin:"6px 0 3px", letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:500}}>{it.label}</div>
+                            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ink)"}}>{it.pct}% DV</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* FLAGGED SUBSTANCES — badge cluster (cream-system tokens, ink text) */}
+                {(() => {
+                  const GENERIC_TERMS = new Set([
+                    "binding agents","emulsifiers","natural flavoring","natural flavors",
+                    "natural flavor","artificial flavor","artificial flavoring","flavorings",
+                    "processing aids","processing aid","stabilizers","stabilizer",
+                    "thickeners","thickener","food additives","additives","preservatives",
+                    "colorings","coloring","colors","colour","colouring","antioxidants",
+                    "antioxidant","humectants","humectant","fillers","filler","carriers",
+                    "carrier","solvents","solvent","natural ingredients","whole ingredients",
+                    "organic ingredients","clean ingredients","certified ingredients",
+                    "natural coffee","coffee flavor","coffee taste","almond flavor",
+                    "menthol concentration","menthol","peppermint oil","wintergreen oil",
+                    "polymeric coating","interior coating","tin coating","metal coating",
+                    "food grade coating","lacquer","enamel coating",
+                  ]);
+                  const isGeneric = (name) => {
+                    const n = name.toLowerCase().trim();
+                    if (GENERIC_TERMS.has(n)) return true;
+                    if (n.length > 40) return true;
+                    if (/\b(for|with|in|of|from|using|added|used|based|concentration|coating|level)\b/.test(n)) return true;
+                    return false;
+                  };
+                  const cleanName = (name) => name
+                    .replace(/\s*\((presumed|potential|possible|suspected|unconfirmed|estimated|likely|may be present|trace)\)/gi, "")
+                    .trim();
+                  const flagged = [];
+                  const seen = new Set();
+                  const add = (name, severity) => {
+                    const key = (name||"").toLowerCase().trim();
+                    if (!key || key === "unknown" || key.length < 2 || seen.has(key)) return;
+                    if (isGeneric(name)) return;
+                    seen.add(key);
+                    flagged.push({name, severity});
+                  };
+                  (result.food_analysis?.concerns || []).forEach(c => {
+                    if (c?.substance && c.substance !== "Unknown") add(c.substance, c.severity || "medium");
+                  });
+                  (result.harmful_chemicals || []).forEach(c => add(c, "high"));
+                  const allConcerns = [
+                    ...(result.dimensions?.materials?.concerns || []),
+                    ...(result.concerns || []),
+                  ];
+                  allConcerns.forEach(c => {
+                    if (typeof c === "string") {
+                      const match = c.match(/^([A-Z][A-Za-z0-9\s\-\/]{1,30}?)(?:\s*[—:–]|\s+is\s|\s+\()/);
+                      if (match) add(match[1].trim(), "medium");
+                    } else if (c?.substance) {
+                      add(c.substance, c.severity || "medium");
+                    }
+                  });
+                  if (flagged.length === 0) return null;
+                  const sStyle = (sev) => ({
+                    high:   {bg:"var(--score-red-soft)",   color:"var(--ink)", border:"1px solid var(--score-red)"},
+                    medium: {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"},
+                    low:    {bg:"var(--score-green-soft)", color:"var(--ink)", border:"1px solid var(--score-green)"},
+                  })[sev] || {bg:"var(--score-amber-soft)", color:"var(--ink)", border:"1px solid var(--score-amber)"};
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
+                        textTransform:"uppercase", fontWeight:500, marginBottom:14,
+                        display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                        Flagged substances
+                      </div>
+                      <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+                        {flagged.slice(0, 12).map((f, i) => {
+                          const st = sStyle(f.severity);
+                          const dn = cleanName(f.name);
+                          if (!dn || isGeneric(dn)) return null;
+                          return (
+                            <span key={i} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, padding:"5px 12px", borderRadius:"var(--tile-shape-1)", background:st.bg, color:st.color, border:st.border, whiteSpace:"nowrap", letterSpacing:"0.01em"}}>
+                              {dn}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })()}
