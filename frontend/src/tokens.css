@@ -1,0 +1,165 @@
+/**
+ * Partiqule Design Tokens
+ *
+ * Drop this file into frontend/src/ and import it in main.jsx or App.jsx:
+ *   import "./tokens.css"
+ *
+ * All colors, fonts, radii, and rule widths should come from these tokens.
+ * If you find yourself typing a hex code inline, pause and check whether it
+ * belongs here.
+ *
+ * Pair with the Google Fonts import in index.html:
+ * <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+ */
+
+:root {
+  /* ─── Paper and ink ─────────────────────────────────── */
+  --cream:       #f3ede2;
+  --cream-light: #f7f1e7;
+  --ivory:       #f9f5ea;
+  --ink:         #1a1f15;
+  --ink-soft:    #4a5342;
+  --ink-faint:   #8a9080;
+
+  /* ─── Brand ─────────────────────────────────────────── */
+  --moss:        #2d5a27;
+  --moss-deep:   #1f3f1b;
+  --sage:        #4a7c42;
+  --amber:       #c8781a;
+  --moss-soft:   rgba(45, 90, 39, 0.08);
+
+  /* ─── Rules and borders ─────────────────────────────── */
+  --rule:        rgba(26, 31, 21, 0.16);
+  --rule-soft:   rgba(26, 31, 21, 0.08);
+  --rule-strong: rgba(26, 31, 21, 0.28);
+
+  /* ─── Score colors (natural earth versions) ─────────── */
+  --score-green: #6b8c3e;   /* scores ≤ 3  · leaf green */
+  --score-amber: #c49a33;   /* scores 4 to 5 · golden wheat */
+  --score-red:   #b0493a;   /* scores > 5  · terracotta clay */
+
+  /* ─── Outer frame for web contexts ──────────────────── */
+  --outer-bg:    #e0d8c5;
+
+  /* ─── Type stacks ───────────────────────────────────── */
+  --serif: 'Fraunces', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+  /* --mono is retired. Data bits now render in DM Sans with uppercase and
+     letter-spacing. This alias stays pointed at --sans so any legacy
+     var(--mono) references keep working during migration. */
+  --mono:  'DM Sans', system-ui, sans-serif;
+
+  /* ─── Asymmetric radii: tiles (small) ───────────────── */
+  --tile-shape-1: 12px 14px 10px 15px / 14px 10px 15px 12px;
+  --tile-shape-2: 14px 10px 15px 12px / 10px 15px 12px 14px;
+  --tile-shape-3: 10px 15px 12px 14px / 15px 12px 14px 10px;
+  --tile-shape-4: 15px 12px 14px 10px / 12px 14px 10px 15px;
+  --tile-shape-5: 11px 13px 15px 12px / 13px 15px 12px 11px;
+  --tile-shape-6: 13px 15px 11px 14px / 15px 11px 14px 13px;
+
+  /* ─── Asymmetric radii: cards (medium) ──────────────── */
+  --card-shape-1: 16px 20px 14px 18px / 18px 14px 20px 16px;
+  --card-shape-2: 20px 14px 18px 16px / 14px 18px 16px 20px;
+  --card-shape-3: 14px 18px 16px 20px / 20px 16px 14px 18px;
+  --card-shape-4: 15px 16px 14px 18px / 16px 14px 18px 15px;
+
+  /* ─── Asymmetric radii: CTA and circles ─────────────── */
+  --cta-shape:    22px 18px 24px 20px / 20px 24px 18px 22px;
+  --circle-shape: 49% 51% 50% 50% / 52% 48% 52% 48%;
+
+  /* ─── Spacing scale ─────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  32px;
+  --space-8:  40px;
+
+  /* ─── Shadows ──────────────────────────────────────── */
+  --shadow-screen: 0 20px 40px rgba(26, 31, 21, 0.14), 0 0 0 1px rgba(26, 31, 21, 0.1);
+  --shadow-card:   0 4px 12px rgba(26, 31, 21, 0.06);
+  --shadow-lift:   0 2px 0 rgba(26, 31, 21, 0.15);
+
+  /* ─── Timing ───────────────────────────────────────── */
+  --ease-out:    cubic-bezier(0.2, 0, 0, 1);
+  --ease-inout:  cubic-bezier(0.4, 0, 0.2, 1);
+  --fade-in:     0.55s var(--ease-out);
+  --hover:       0.2s var(--ease-out);
+
+  /* ─── Font sizes, common ────────────────────────────── */
+  --text-display-xl: 38px;
+  --text-display:    32px;
+  --text-h1:         26px;
+  --text-h2:         22px;
+  --text-h3:         19px;
+  --text-body:       14px;
+  --text-small:      13px;
+  --text-stamp:      10.5px;
+  --text-micro:      10px;
+
+  /* ─── Letter spacing for mono caps ──────────────────── */
+  --mono-caps:       0.22em;
+  --mono-caps-tight: 0.14em;
+  --mono-caps-wide:  0.28em;
+}
+
+/* ─── Shared pattern references ─────────────────────────
+   Copy these into components where needed. Kept in comments
+   to avoid forcing any one selector on the project.
+   ──────────────────────────────────────────────────── */
+
+/* Paper grain overlay — apply to a screen's ::before pseudo */
+/*
+  ::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08, 0 0 0 0 0.1, 0 0 0 0 0.06, 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 1;
+  }
+*/
+
+/* Morning light wash — apply to a screen's ::after pseudo */
+/*
+  ::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 280px;
+    background: linear-gradient(to bottom,
+      rgba(255, 230, 180, 0.35) 0%,
+      rgba(255, 220, 170, 0.18) 35%,
+      rgba(245, 220, 180, 0.08) 70%,
+      transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+*/
+
+/* Section label — mono caps with a small horizontal rule */
+/*
+  .section-label {
+    font-family: var(--mono);
+    font-size: var(--text-micro);
+    letter-spacing: var(--mono-caps);
+    color: var(--moss);
+    text-transform: uppercase;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 22px;
+    height: 1px;
+    background: var(--moss);
+    opacity: 0.7;
+  }
+*/

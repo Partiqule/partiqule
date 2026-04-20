@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partiqule · Hero, v5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:       #f3ede2;
+  --cream-light: #f7f1e7;
+  --ivory:       #f9f5ea;
+  --ink:         #1a1f15;
+  --ink-soft:    #4a5342;
+  --ink-faint:   #8a9080;
+  --moss:        #2d5a27;
+  --moss-deep:   #1f3f1b;
+  --sage:        #4a7c42;
+  --amber:       #c8781a;
+  --moss-soft:   rgba(45, 90, 39, 0.08);
+  --rule:        rgba(26, 31, 21, 0.16);
+  --rule-strong: rgba(26, 31, 21, 0.28);
+  --score-green: #6b8c3e;
+  --score-amber: #c49a33;
+  --score-red:   #b0493a;
+  --serif: 'Fraunces', Georgia, serif;
+  --sans:        'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Sans', system-ui, sans-serif; /* mono retired; points to sans */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--sans);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+body {
+  padding: 48px 20px 64px;
+  background: #e0d8c5;
+}
+
+.frame-note {
+  max-width: 480px;
+  margin: 0 auto 28px;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  color: rgba(26, 31, 21, 0.55);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.screen {
+  width: 430px;
+  max-width: 100%;
+  margin: 0 auto;
+  background: var(--cream);
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 20px 40px rgba(26, 31, 21, 0.14),
+    0 0 0 1px rgba(26, 31, 21, 0.1);
+  padding-bottom: 80px;
+}
+
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08, 0 0 0 0 0.1, 0 0 0 0 0.06, 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+.screen::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  background: linear-gradient(to bottom,
+    rgba(255, 230, 180, 0.35) 0%,
+    rgba(255, 220, 170, 0.18) 35%,
+    rgba(245, 220, 180, 0.08) 70%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+}
+@keyframes drift1 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: var(--peak, 0.5); }
+  50% { transform: translate(8px, -55px); opacity: var(--peak, 0.5); }
+  85% { opacity: var(--peak, 0.4); }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: var(--peak, 0.45); }
+  50% { transform: translate(-10px, -50px); opacity: var(--peak, 0.5); }
+  80% { opacity: var(--peak, 0.35); }
+}
+@keyframes drift3 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  25% { opacity: var(--peak, 0.35); }
+  50% { transform: translate(4px, -65px); opacity: var(--peak, 0.45); }
+  75% { opacity: var(--peak, 0.35); }
+}
+
+.topbar {
+  padding: 18px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 3;
+  border-bottom: 1px solid var(--rule);
+  margin: 0 24px;
+}
+.wordmark {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--moss);
+}
+.profile-circle {
+  width: 34px;
+  height: 34px;
+  background: var(--moss-soft);
+  border: 1px solid var(--rule-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--moss);
+  cursor: pointer;
+  transition: background 0.2s;
+  border-radius: 48% 52% 50% 50% / 51% 49% 51% 49%;
+}
+.profile-circle:hover { background: rgba(45, 90, 39, 0.16); }
+
+.greeting-block {
+  padding: 32px 24px 30px;
+  position: relative;
+  z-index: 3;
+}
+.greeting {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 38px;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+  line-height: 1.02;
+  margin-bottom: 12px;
+}
+.stamp {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.stamp span { color: var(--ink-soft); }
+
+.scan-cta {
+  margin: 0 24px 36px;
+  background: var(--cream-light);
+  border: 1.5px solid var(--moss);
+  padding: 30px 28px 32px;
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  border-radius: 22px 18px 24px 20px / 20px 24px 18px 22px;
+}
+.scan-cta:hover {
+  transform: translateY(-2px);
+  border-color: var(--moss-deep);
+  background: #fcf6ea;
+}
+.scan-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--moss);
+  margin-bottom: 22px;
+}
+.scan-headline {
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 16px;
+  max-width: 92%;
+}
+.scan-sub {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.section {
+  padding: 0 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 3;
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.section-title em {
+  font-style: italic;
+  color: var(--moss);
+}
+.section-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.section-see-all {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--moss);
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.shelf-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 24px 12px;
+  margin: 0 -24px;
+}
+.shelf-strip::-webkit-scrollbar { display: none; }
+.shelf-item {
+  flex-shrink: 0;
+  width: 92px;
+  cursor: pointer;
+}
+.shelf-item-thumb {
+  width: 92px;
+  height: 92px;
+  background: var(--cream-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
+  border: 1px solid var(--rule);
+  transition: transform 0.15s;
+}
+.shelf-item:hover .shelf-item-thumb { transform: translateY(-2px); }
+
+.tile-shape-1 { border-radius: 12px 14px 10px 15px / 14px 10px 15px 12px; }
+.tile-shape-2 { border-radius: 14px 10px 15px 12px / 10px 15px 12px 14px; }
+.tile-shape-3 { border-radius: 10px 15px 12px 14px / 15px 12px 14px 10px; }
+.tile-shape-4 { border-radius: 15px 12px 14px 10px / 12px 14px 10px 15px; }
+.tile-shape-5 { border-radius: 11px 13px 15px 12px / 13px 15px 12px 11px; }
+.tile-shape-6 { border-radius: 13px 15px 11px 14px / 15px 11px 14px 13px; }
+
+.shelf-score-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  color: white;
+  font-family: var(--serif);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border-radius: 49% 51% 50% 50% / 52% 48% 52% 48%;
+  z-index: 2;
+}
+
+.product-ill {
+  width: 48px;
+  height: 48px;
+  stroke: var(--moss);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.82;
+}
+
+.shelf-item-name {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.25;
+  font-weight: 500;
+  padding: 0 2px;
+}
+.shelf-item-brand {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+  padding: 0 2px;
+  text-transform: uppercase;
+}
+.shelf-ledge {
+  margin: 6px 0 0;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.feed-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -24px;
+  padding: 4px 24px;
+}
+.feed-row::-webkit-scrollbar { display: none; }
+.feed-card {
+  flex-shrink: 0;
+  width: 300px;
+  background: var(--cream-light);
+  padding: 18px 20px 20px;
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+.feed-card:hover { transform: translateY(-1px); background: #faf3e6; }
+
+.card-shape-1 { border-radius: 16px 20px 14px 18px / 18px 14px 20px 16px; }
+.card-shape-2 { border-radius: 20px 14px 18px 16px / 14px 18px 16px 20px; }
+
+.feed-tag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  color: var(--moss);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feed-tag::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 1px;
+  background: var(--moss);
+  opacity: 0.6;
+}
+.feed-headline {
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin-bottom: 10px;
+}
+.feed-snippet {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.feed-more {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--moss);
+  padding-bottom: 2px;
+  border-bottom: 1px dotted var(--moss);
+  display: inline-block;
+}
+
+.recap-line {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.recap-line:last-child { border-bottom: none; }
+.recap-stat {
+  font-family: var(--serif);
+  font-size: 32px;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  min-width: 44px;
+  flex-shrink: 0;
+}
+.recap-label {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.35;
+  flex: 1;
+}
+.recap-label em {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 14px;
+  display: block;
+  margin-top: 3px;
+}
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--cream);
+  border-top: 1px solid var(--rule);
+  padding: 10px 8px 16px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  z-index: 4;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  cursor: pointer;
+  color: var(--ink-faint);
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--moss); }
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+}
+.nav-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.nav-scan {
+  background: var(--moss);
+  color: var(--ivory);
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -14px;
+  transition: background 0.2s;
+  border-radius: 49% 51% 50% 50% / 52% 48% 52% 48%;
+}
+.nav-scan:hover { background: var(--moss-deep); color: var(--ivory); }
+.nav-scan svg { stroke: var(--ivory); stroke-width: 1.8; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.greeting-block, .scan-cta, .section-shelf, .section-feed, .section-recap {
+  animation: fadeUp 0.6s ease-out backwards;
+}
+.greeting-block { animation-delay: 0.08s; }
+.scan-cta       { animation-delay: 0.20s; }
+.section-shelf  { animation-delay: 0.32s; }
+.section-feed   { animation-delay: 0.44s; }
+.section-recap  { animation-delay: 0.56s; }
+
+.review-note {
+  max-width: 640px;
+  margin: 40px auto 0;
+  padding: 0 24px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(26, 31, 21, 0.55);
+  line-height: 1.7;
+  text-align: center;
+}
+.review-note strong {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--moss);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="frame-note">Shelf items now carry simple hand-drawn illustrations instead of letters.</div>
+
+<div class="screen">
+
+  <div class="particles">
+    <div class="particle" style="left: 12%; top: 18%; width: 2px; height: 2px; background: rgba(45,90,39,0.5); animation: drift1 22s ease-in-out infinite; --peak: 0.55;"></div>
+    <div class="particle" style="left: 78%; top: 15%; width: 3px; height: 3px; background: rgba(200,120,26,0.45); animation: drift2 28s ease-in-out infinite; animation-delay: -5s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 35%; top: 28%; width: 1.5px; height: 1.5px; background: rgba(26,31,21,0.4); animation: drift3 26s ease-in-out infinite; animation-delay: -8s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 62%; top: 38%; width: 2px; height: 2px; background: rgba(45,90,39,0.5); animation: drift1 30s ease-in-out infinite; animation-delay: -12s; --peak: 0.4;"></div>
+    <div class="particle" style="left: 20%; top: 52%; width: 2.5px; height: 2.5px; background: rgba(200,120,26,0.4); animation: drift2 24s ease-in-out infinite; animation-delay: -2s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 85%; top: 62%; width: 1.5px; height: 1.5px; background: rgba(45,90,39,0.45); animation: drift3 32s ease-in-out infinite; animation-delay: -15s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 48%; top: 72%; width: 2px; height: 2px; background: rgba(26,31,21,0.35); animation: drift1 27s ease-in-out infinite; animation-delay: -7s; --peak: 0.4;"></div>
+    <div class="particle" style="left: 28%; top: 82%; width: 2px; height: 2px; background: rgba(45,90,39,0.45); animation: drift2 25s ease-in-out infinite; animation-delay: -18s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 72%; top: 85%; width: 1.5px; height: 1.5px; background: rgba(200,120,26,0.5); animation: drift3 29s ease-in-out infinite; animation-delay: -10s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 8%; top: 68%; width: 2.5px; height: 2.5px; background: rgba(45,90,39,0.4); animation: drift1 31s ease-in-out infinite; animation-delay: -22s; --peak: 0.4;"></div>
+    <div class="particle" style="left: 92%; top: 42%; width: 2px; height: 2px; background: rgba(26,31,21,0.4); animation: drift2 26s ease-in-out infinite; animation-delay: -14s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 55%; top: 12%; width: 1.5px; height: 1.5px; background: rgba(45,90,39,0.5); animation: drift3 23s ease-in-out infinite; animation-delay: -4s; --peak: 0.5;"></div>
+  </div>
+
+  <div class="topbar">
+    <div class="wordmark">Partiqule</div>
+    <div class="profile-circle">P</div>
+  </div>
+
+  <div class="greeting-block">
+    <div class="greeting">Morning, Paul.</div>
+    <div class="stamp">Today <span>·</span> 47 on your shelf <span>·</span> 3 swaps this week</div>
+  </div>
+
+  <div class="scan-cta">
+    <div class="scan-label">Scan</div>
+    <div class="scan-headline">What are you looking at?</div>
+    <div class="scan-sub">Tap anywhere, point me at a label.</div>
+  </div>
+
+  <div class="section section-shelf">
+    <div class="section-head">
+      <div>
+        <span class="section-title">Your <em>shelf</em></span>
+        <span class="section-count">47 items</span>
+      </div>
+      <a class="section-see-all">See all</a>
+    </div>
+
+    <div class="shelf-strip">
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-1">
+          <div class="shelf-score-dot" style="background: var(--score-green);">2</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <path d="M 14 18 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 18"/>
+            <path d="M 14 18 Q 17 14 20 14 L 28 14 Q 31 14 34 18"/>
+            <path d="M 20 14 Q 20 11 24 11 Q 28 11 28 14"/>
+            <path d="M 14 24 L 34 24" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Boxer Brief</div>
+        <div class="shelf-item-brand">Pact</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-2">
+          <div class="shelf-score-dot" style="background: var(--score-green);">2</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <rect x="13" y="13" width="22" height="22" rx="1.5"/>
+            <line x1="19" y1="13" x2="19" y2="35" opacity="0.55"/>
+            <line x1="24" y1="13" x2="24" y2="35" opacity="0.55"/>
+            <line x1="29" y1="13" x2="29" y2="35" opacity="0.55"/>
+            <line x1="13" y1="20" x2="35" y2="20" opacity="0.55"/>
+            <line x1="13" y1="28" x2="35" y2="28" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Dark Chocolate</div>
+        <div class="shelf-item-brand">Hu</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-3">
+          <div class="shelf-score-dot" style="background: var(--score-green);">1</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <path d="M 19 12 L 19 16 L 17 18 L 17 38 Q 17 39 18 39 L 30 39 Q 31 39 31 38 L 31 18 L 29 16 L 29 12 Z"/>
+            <line x1="19" y1="12" x2="29" y2="12" stroke-width="1.8"/>
+            <rect x="19" y="22" width="10" height="10" opacity="0.55"/>
+            <line x1="21" y1="26" x2="27" y2="26" opacity="0.55"/>
+            <line x1="21" y1="28.5" x2="27" y2="28.5" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Pure Castile</div>
+        <div class="shelf-item-brand">Bronner's</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-4">
+          <div class="shelf-score-dot" style="background: var(--score-green);">3</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <path d="M 10 30 Q 10 24 14 22 L 20 20 Q 22 17 26 16 Q 31 15 33 19 Q 35 22 37 24 Q 40 26 40 30 Q 40 33 37 33 L 13 33 Q 10 33 10 30 Z"/>
+            <path d="M 20 20 Q 21 23 22 25" opacity="0.55"/>
+            <path d="M 26 16 Q 27 19 27 22" opacity="0.55"/>
+            <line x1="12" y1="33" x2="38" y2="33" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Wool Runner</div>
+        <div class="shelf-item-brand">Allbirds</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-5">
+          <div class="shelf-score-dot" style="background: var(--score-green);">3</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <rect x="17" y="11" width="14" height="26" rx="1.5"/>
+            <ellipse cx="24" cy="11" rx="7" ry="1.2" opacity="0.6"/>
+            <path d="M 21 11 Q 21 13 24 13 Q 27 13 27 11" opacity="0.6"/>
+            <line x1="17" y1="18" x2="31" y2="18" opacity="0.55"/>
+            <line x1="17" y1="30" x2="31" y2="30" opacity="0.55"/>
+            <path d="M 20 22 Q 22 24 24 22 Q 26 20 28 22" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Vintage Cola</div>
+        <div class="shelf-item-brand">Olipop</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb tile-shape-6">
+          <div class="shelf-score-dot" style="background: var(--score-green);">2</div>
+          <svg class="product-ill" viewBox="0 0 48 48">
+            <path d="M 14 16 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 16"/>
+            <rect x="12" y="12" width="24" height="5" rx="1"/>
+            <ellipse cx="24" cy="14.5" rx="3" ry="0.8" opacity="0.55"/>
+            <line x1="19" y1="24" x2="29" y2="24" opacity="0.55"/>
+            <line x1="19" y1="28" x2="29" y2="28" opacity="0.55"/>
+            <line x1="19" y1="32" x2="29" y2="32" opacity="0.55"/>
+          </svg>
+        </div>
+        <div class="shelf-item-name">Hand Soap</div>
+        <div class="shelf-item-brand">Blueland</div>
+      </div>
+
+    </div>
+    <div class="shelf-ledge"></div>
+  </div>
+
+  <div class="section section-feed">
+    <div class="section-head">
+      <div class="section-title"><em>Thought</em> you'd want to know</div>
+      <a class="section-see-all">More</a>
+    </div>
+
+    <div class="feed-row">
+      <div class="feed-card card-shape-1">
+        <div class="feed-tag">California <span style="opacity:0.5;margin:0 4px;">·</span> 2h ago</div>
+        <div class="feed-headline">Four food dyes banned from school lunches by 2028.</div>
+        <div class="feed-snippet">Three of them show up in seven things you've scanned before. I flagged which ones.</div>
+        <span class="feed-more">Keep reading</span>
+      </div>
+
+      <div class="feed-card card-shape-2">
+        <div class="feed-tag">EU update <span style="opacity:0.5;margin:0 4px;">·</span> yesterday</div>
+        <div class="feed-headline">PFAS restrictions tightened for textile imports.</div>
+        <div class="feed-snippet">Two brands on your shelf are already compliant. Here's what it means.</div>
+        <span class="feed-more">Keep reading</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section section-recap">
+    <div class="section-head">
+      <div class="section-title">This <em>week</em></div>
+    </div>
+
+    <div class="recap-line">
+      <div class="recap-stat">12</div>
+      <div class="recap-label">products scanned<em>a quiet week, honestly</em></div>
+    </div>
+    <div class="recap-line">
+      <div class="recap-stat">4</div>
+      <div class="recap-label">added to your shelf<em>Pact leggings, Hu chocolate, two more</em></div>
+    </div>
+    <div class="recap-line">
+      <div class="recap-stat">3</div>
+      <div class="recap-label">swapped for something cleaner<em>nice work on the Clif Bars</em></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9v9a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+      <div class="nav-label">Home</div>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>
+      <div class="nav-label">Shelf</div>
+    </div>
+    <div class="nav-item nav-scan">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 7h4l2-2h6l2 2h4v12H3z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z"/></svg>
+      <div class="nav-label">Routine</div>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+      <div class="nav-label">You</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="review-note">
+  <strong>What's on the shelf now</strong>
+  Each product gets a hand-drawn line illustration of its category. Folded boxer brief, chocolate bar with scored squares, tall soap bottle, shoe in side profile, soda can with its tab, pump hand soap. All in moss at 1.5px stroke weight, matching every other line in the system. Score dots stay in their corners. Same tiles, same asymmetric radii, just content that actually looks like real things you own.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partiqule · Loading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:       #f3ede2;
+  --cream-light: #f7f1e7;
+  --ivory:       #f9f5ea;
+  --ink:         #1a1f15;
+  --ink-soft:    #4a5342;
+  --ink-faint:   #8a9080;
+  --moss:        #2d5a27;
+  --moss-deep:   #1f3f1b;
+  --sage:        #4a7c42;
+  --amber:       #c8781a;
+  --moss-soft:   rgba(45, 90, 39, 0.08);
+  --rule:        rgba(26, 31, 21, 0.16);
+  --rule-strong: rgba(26, 31, 21, 0.28);
+  --serif: 'Fraunces', Georgia, serif;
+  --sans:        'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Sans', system-ui, sans-serif; /* mono retired; points to sans */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--sans);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+body {
+  padding: 48px 20px 64px;
+  background: #e0d8c5;
+}
+
+.frame-note {
+  max-width: 480px;
+  margin: 0 auto 28px;
+  font-family: var(--serif);
+  font-size: 17px;
+  font-style: italic;
+  color: rgba(26, 31, 21, 0.55);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.screen {
+  width: 430px;
+  max-width: 100%;
+  min-height: 820px;
+  margin: 0 auto;
+  background: var(--cream);
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 20px 40px rgba(26, 31, 21, 0.14),
+    0 0 0 1px rgba(26, 31, 21, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Paper grain */
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08, 0 0 0 0 0.1, 0 0 0 0 0.06, 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 1;
+}
+
+/* Morning light wash */
+.screen::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  background: linear-gradient(to bottom,
+    rgba(255, 230, 180, 0.35) 0%,
+    rgba(255, 220, 170, 0.18) 35%,
+    rgba(245, 220, 180, 0.08) 70%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Particles */
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.particle { position: absolute; border-radius: 50%; opacity: 0; }
+@keyframes drift1 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: var(--peak, 0.5); }
+  50% { transform: translate(8px, -55px); opacity: var(--peak, 0.5); }
+  85% { opacity: var(--peak, 0.4); }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: var(--peak, 0.45); }
+  50% { transform: translate(-10px, -50px); opacity: var(--peak, 0.5); }
+  80% { opacity: var(--peak, 0.35); }
+}
+@keyframes drift3 {
+  0%, 100% { transform: translate(0, 0); opacity: 0; }
+  25% { opacity: var(--peak, 0.35); }
+  50% { transform: translate(4px, -65px); opacity: var(--peak, 0.45); }
+  75% { opacity: var(--peak, 0.35); }
+}
+
+/* Top bar */
+.topbar {
+  padding: 18px 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 3;
+  border-bottom: 1px solid var(--rule);
+  margin: 0 24px;
+}
+.wordmark {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--moss);
+}
+.profile-circle {
+  width: 34px;
+  height: 34px;
+  background: var(--moss-soft);
+  border: 1px solid var(--rule-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--moss);
+  border-radius: 48% 52% 50% 50% / 51% 49% 51% 49%;
+}
+
+/* Product identity header */
+.product-header {
+  padding: 32px 28px 20px;
+  position: relative;
+  z-index: 3;
+  animation: fadeUp 0.6s ease-out 0.1s backwards;
+}
+.found-stamp {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.found-stamp::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 1px;
+  background: var(--ink-faint);
+  opacity: 0.5;
+}
+.product-brand {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.product-name {
+  font-family: var(--serif);
+  font-size: 34px;
+  line-height: 1.02;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+/* Progress rule beneath product name */
+.progress-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--rule);
+  overflow: hidden;
+  position: relative;
+}
+.progress-rule::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--moss);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: progress-fill 4s ease-in-out infinite;
+}
+@keyframes progress-fill {
+  0%   { transform: scaleX(0); transform-origin: left; opacity: 1; }
+  50%  { transform: scaleX(1); transform-origin: left; opacity: 1; }
+  51%  { transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; opacity: 1; }
+}
+
+/* Center loading stage */
+.loading-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 60px;
+  position: relative;
+  z-index: 3;
+  animation: breathe 5s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.012); }
+}
+
+/* Score ring and orbiting dot */
+.ring-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 44px;
+  animation: fadeUp 0.7s ease-out 0.35s backwards;
+}
+
+/* The ring that draws itself */
+.ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg); /* start stroke from 12 o'clock */
+}
+.ring-track {
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 2;
+}
+.ring-fill {
+  fill: none;
+  stroke: var(--moss);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 377;
+  stroke-dashoffset: 377;
+  animation: draw-ring 3.2s ease-in-out infinite;
+}
+@keyframes draw-ring {
+  0%   { stroke-dashoffset: 377; }
+  50%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -377; }
+}
+
+/* Orbiting amber dot */
+.orbit {
+  position: absolute;
+  inset: 0;
+  animation: orbit-spin 2.4s linear infinite;
+}
+.orbit-dot {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translate(-50%, -2px);
+  width: 6px;
+  height: 6px;
+  background: var(--amber);
+  border-radius: 50%;
+}
+@keyframes orbit-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pulsing center dot */
+.center-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--moss);
+  border-radius: 50%;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+.center-pulse::before,
+.center-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--moss);
+}
+.center-pulse::before { animation: ripple 1.8s ease-out infinite; }
+.center-pulse::after  { animation: ripple 1.8s ease-out 0.9s infinite; }
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+  50%      { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+}
+@keyframes ripple {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(4.5); opacity: 0; }
+}
+
+/* Cycling status messages */
+.status-container {
+  position: relative;
+  height: 48px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  animation: fadeUp 0.7s ease-out 0.5s backwards;
+}
+.status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: -0.002em;
+  line-height: 1.4;
+  opacity: 0;
+}
+.status.s1 { animation: status-cycle 12s infinite; }
+.status.s2 { animation: status-cycle 12s infinite; animation-delay: 2.4s; }
+.status.s3 { animation: status-cycle 12s infinite; animation-delay: 4.8s; }
+.status.s4 { animation: status-cycle 12s infinite; animation-delay: 7.2s; }
+.status.s5 { animation: status-cycle 12s infinite; animation-delay: 9.6s; }
+
+@keyframes status-cycle {
+  0%   { opacity: 0; transform: translateY(6px); }
+  4%   { opacity: 1; transform: translateY(0); }
+  16%  { opacity: 1; transform: translateY(0); }
+  20%  { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+/* Step indicator */
+.steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  align-items: center;
+  justify-content: center;
+  animation: fadeUp 0.7s ease-out 0.6s backwards;
+}
+.step-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+  transition: background 0.3s, transform 0.3s;
+  opacity: 0.45;
+}
+.step-dot.d1 { animation: step-active 12s infinite; animation-delay: 0s; }
+.step-dot.d2 { animation: step-active 12s infinite; animation-delay: 2.4s; }
+.step-dot.d3 { animation: step-active 12s infinite; animation-delay: 4.8s; }
+.step-dot.d4 { animation: step-active 12s infinite; animation-delay: 7.2s; }
+.step-dot.d5 { animation: step-active 12s infinite; animation-delay: 9.6s; }
+@keyframes step-active {
+  0%, 20%, 100% { background: var(--moss); opacity: 1; transform: scale(1.3); }
+  0.1%, 19.9%   { background: var(--moss); opacity: 1; transform: scale(1.3); }
+  21%, 99%      { background: var(--rule-strong); opacity: 0.45; transform: scale(1); }
+}
+
+/* Footer note */
+.footer-note {
+  padding: 0 24px 36px;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-faint);
+  position: relative;
+  z-index: 3;
+  animation: fadeUp 0.7s ease-out 0.75s backwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.review-note {
+  max-width: 640px;
+  margin: 40px auto 0;
+  padding: 0 24px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(26, 31, 21, 0.55);
+  line-height: 1.7;
+  text-align: center;
+}
+.review-note strong {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--moss);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="frame-note">A loading screen that reads instead of spins.</div>
+
+<div class="screen">
+
+  <div class="particles">
+    <div class="particle" style="left: 12%; top: 20%; width: 2px; height: 2px; background: rgba(45,90,39,0.5); animation: drift1 22s ease-in-out infinite; --peak: 0.55;"></div>
+    <div class="particle" style="left: 78%; top: 16%; width: 3px; height: 3px; background: rgba(200,120,26,0.45); animation: drift2 28s ease-in-out infinite; animation-delay: -5s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 35%; top: 32%; width: 1.5px; height: 1.5px; background: rgba(26,31,21,0.4); animation: drift3 26s ease-in-out infinite; animation-delay: -8s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 62%; top: 40%; width: 2px; height: 2px; background: rgba(45,90,39,0.5); animation: drift1 30s ease-in-out infinite; animation-delay: -12s; --peak: 0.4;"></div>
+    <div class="particle" style="left: 20%; top: 54%; width: 2.5px; height: 2.5px; background: rgba(200,120,26,0.4); animation: drift2 24s ease-in-out infinite; animation-delay: -2s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 85%; top: 64%; width: 1.5px; height: 1.5px; background: rgba(45,90,39,0.45); animation: drift3 32s ease-in-out infinite; animation-delay: -15s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 48%; top: 74%; width: 2px; height: 2px; background: rgba(26,31,21,0.35); animation: drift1 27s ease-in-out infinite; animation-delay: -7s; --peak: 0.4;"></div>
+    <div class="particle" style="left: 28%; top: 84%; width: 2px; height: 2px; background: rgba(45,90,39,0.45); animation: drift2 25s ease-in-out infinite; animation-delay: -18s; --peak: 0.5;"></div>
+    <div class="particle" style="left: 72%; top: 86%; width: 1.5px; height: 1.5px; background: rgba(200,120,26,0.5); animation: drift3 29s ease-in-out infinite; animation-delay: -10s; --peak: 0.45;"></div>
+    <div class="particle" style="left: 92%; top: 44%; width: 2px; height: 2px; background: rgba(26,31,21,0.4); animation: drift2 26s ease-in-out infinite; animation-delay: -14s; --peak: 0.45;"></div>
+  </div>
+
+  <div class="topbar">
+    <div class="wordmark">Partiqule</div>
+    <div class="profile-circle">P</div>
+  </div>
+
+  <div class="product-header">
+    <div class="found-stamp">Just scanned <span style="opacity:0.5;margin:0 6px;">·</span> moment ago</div>
+    <div class="product-brand">Clif Bar &amp; Co.</div>
+    <h1 class="product-name">Chocolate Chip Clif Bar</h1>
+    <div class="progress-rule"></div>
+  </div>
+
+  <div class="loading-stage">
+
+    <div class="ring-container">
+      <svg class="ring-svg" viewBox="0 0 140 140">
+        <circle class="ring-track" cx="70" cy="70" r="60" />
+        <circle class="ring-fill"  cx="70" cy="70" r="60" />
+      </svg>
+      <div class="orbit">
+        <div class="orbit-dot"></div>
+      </div>
+      <div class="center-pulse"></div>
+    </div>
+
+    <div class="status-container">
+      <div class="status s1">Having a look at this one...</div>
+      <div class="status s2">Pulling the ingredients...</div>
+      <div class="status s3">Checking against what I know...</div>
+      <div class="status s4">Weighing the details...</div>
+      <div class="status s5">Finding cleaner options nearby...</div>
+    </div>
+
+    <div class="steps">
+      <span class="step-dot d1"></span>
+      <span class="step-dot d2"></span>
+      <span class="step-dot d3"></span>
+      <span class="step-dot d4"></span>
+      <span class="step-dot d5"></span>
+    </div>
+
+  </div>
+
+  <div class="footer-note">hang on, this takes a second</div>
+
+</div>
+
+<div class="review-note">
+  <strong>What's happening on screen</strong>
+  The product identity lands instantly at the top, so the transition from scan to this screen feels instant rather than blank. A thin rule beneath the product name fills left to right and empties right to left on a four-second loop, like a heartbeat. In the middle, the score ring draws itself in over three seconds, clears, and draws again, while a small amber dot orbits its edge at a slightly faster pace. A moss dot pulses in the center with two soft ripples expanding from it. Status messages in the friend voice cycle through five steps, each one paired with a lit dot in the progress row below. The whole stage breathes faintly every five seconds. Morning light and drifting particles stay the same as everywhere else.
+</div>
+
+</body>
+</html>

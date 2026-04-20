@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partiqule · Clothing Result Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:       #f3ede2;
+  --ivory:       #f9f5ea;
+  --ink:         #1a1f15;
+  --ink-soft:    #4a5342;
+  --ink-faint:   #8a9080;
+  --moss:        #2d5a27;
+  --sage:        #4a7c42;
+  --amber:       #c8781a;
+  --moss-soft:   rgba(45, 90, 39, 0.08);
+  --rule:        rgba(26, 31, 21, 0.12);
+  --rule-strong: rgba(26, 31, 21, 0.28);
+  --score-green: #16a34a;
+  --score-amber: #d97706;
+  --score-red:   #dc2626;
+  --serif: 'Fraunces', Georgia, serif;
+  --sans:        'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Sans', system-ui, sans-serif; /* mono retired; points to sans */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--sans);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+body {
+  padding: 48px 20px 64px;
+  background: #e0d8c5;
+}
+
+.frame-note {
+  max-width: 430px;
+  margin: 0 auto 28px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-style: italic;
+  color: rgba(26, 31, 21, 0.5);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Phone screen, flatter */
+.screen {
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--cream);
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 20px 40px rgba(26, 31, 21, 0.14),
+    0 0 0 1px rgba(26, 31, 21, 0.1);
+}
+
+/* Paper grain, slightly stronger for rawness */
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08, 0 0 0 0 0.1, 0 0 0 0 0.06, 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Top bar */
+.topbar {
+  padding: 18px 24px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 12px;
+  margin: 0 24px;
+  padding-left: 0;
+  padding-right: 0;
+}
+.wordmark {
+  font-family: var(--serif);
+  font-size: 21px;
+  color: var(--moss);
+}
+.shelf-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.shelf-badge strong {
+  color: var(--moss);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* Hero */
+.hero {
+  padding: 22px 24px 22px;
+  position: relative;
+  z-index: 2;
+}
+.greeting {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 20px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.stamp {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.product-brand {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+.product-name {
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.product-composition {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Verdict block */
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.score-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--score-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.score-number {
+  font-family: var(--serif);
+  font-size: 42px;
+  color: var(--score-amber);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.score-tag {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  background: var(--cream);
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.verdict-text {
+  flex: 1;
+}
+.verdict-headline {
+  font-family: var(--serif);
+  font-size: 25px;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 5px;
+  letter-spacing: -0.005em;
+}
+.verdict-sub {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+/* Friend's note */
+.note {
+  padding: 28px 24px 0;
+  position: relative;
+  z-index: 2;
+}
+.note-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--moss);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.note-label::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 1px;
+  background: var(--moss);
+  opacity: 0.7;
+}
+.note-body {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.42;
+  color: var(--ink);
+}
+.note-body .underlined {
+  border-bottom: 1.5px solid var(--amber);
+  padding-bottom: 1px;
+}
+
+/* Primary action */
+.action {
+  padding: 22px 24px 0;
+  display: flex;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+.btn {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.btn-primary {
+  background: var(--moss);
+  color: var(--ivory);
+  flex: 1.35;
+}
+.btn-primary:hover {
+  background: var(--sage);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  flex: 1;
+}
+.btn-secondary:hover { background: rgba(26, 31, 21, 0.04); }
+
+/* Swaps */
+.swaps {
+  margin-top: 32px;
+  padding: 0 24px;
+  position: relative;
+  z-index: 2;
+}
+.swaps-intro {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink);
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+.swap-card {
+  background: var(--ivory);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  border: 1px solid rgba(26, 31, 21, 0.08);
+}
+.swap-card:hover { transform: translateY(-1px); background: #fcf8ec; }
+.swap-score {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--score-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.swap-score span {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--score-green);
+  line-height: 1;
+}
+.swap-info { flex: 1; min-width: 0; }
+.swap-brand {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.swap-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+.swap-composition {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+.swap-tag {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  color: var(--moss);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-top: 6px;
+  display: inline-block;
+}
+
+/* Your shelf */
+.shelf {
+  margin-top: 34px;
+  padding: 26px 0 0;
+  position: relative;
+  z-index: 2;
+}
+.shelf-header {
+  padding: 0 24px 14px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.shelf-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--ink);
+}
+.shelf-title em {
+  font-style: italic;
+  color: var(--moss);
+}
+.shelf-see-all {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--moss);
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.shelf-see-all:hover { color: var(--sage); }
+.shelf-strip {
+  display: flex;
+  gap: 12px;
+  padding: 4px 24px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.shelf-strip::-webkit-scrollbar { display: none; }
+.shelf-item {
+  flex-shrink: 0;
+  width: 94px;
+  cursor: pointer;
+}
+.shelf-item-thumb {
+  width: 94px;
+  height: 94px;
+  background: var(--ivory);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  position: relative;
+  border: 1px solid rgba(26, 31, 21, 0.08);
+  transition: transform 0.15s;
+}
+.shelf-item:hover .shelf-item-thumb { transform: translateY(-2px); }
+.shelf-score-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: white;
+  font-family: var(--serif);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.shelf-item-thumb-inner {
+  font-family: var(--serif);
+  font-size: 30px;
+  color: var(--ink-soft);
+  opacity: 0.35;
+  font-style: italic;
+}
+.shelf-item-name {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink);
+  line-height: 1.25;
+  font-weight: 500;
+  padding: 0 2px;
+}
+.shelf-item-brand {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+  letter-spacing: 0.1em;
+  padding: 0 2px;
+  text-transform: uppercase;
+}
+
+/* Shelf ledge line */
+.shelf-line {
+  margin: 0 24px;
+  height: 1px;
+  background: var(--rule-strong);
+  position: relative;
+}
+
+/* Footer actions */
+.footer {
+  padding: 28px 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+}
+.footer-link {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  cursor: pointer;
+  padding-bottom: 1px;
+  border-bottom: 1px dotted var(--ink-faint);
+  transition: color 0.2s, border-color 0.2s;
+}
+.footer-link:hover {
+  color: var(--moss);
+  border-color: var(--moss);
+}
+.footer-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  text-align: right;
+  align-self: center;
+}
+
+/* Fade up */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero, .note, .action, .swaps, .shelf, .footer {
+  animation: fadeUp 0.55s ease-out backwards;
+}
+.hero   { animation-delay: 0.05s; }
+.note   { animation-delay: 0.15s; }
+.action { animation-delay: 0.25s; }
+.swaps  { animation-delay: 0.35s; }
+.shelf  { animation-delay: 0.45s; }
+.footer { animation-delay: 0.55s; }
+
+.review-note {
+  max-width: 430px;
+  margin: 32px auto 0;
+  padding: 0 24px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(26, 31, 21, 0.55);
+  line-height: 1.6;
+  text-align: center;
+}
+.review-note strong {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--moss);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="frame-note">Clothing result. Less glow, flatter surfaces, mono for the raw data bits.</div>
+
+<div class="screen">
+
+  <div class="topbar">
+    <div class="wordmark">Partiqule</div>
+    <div class="shelf-badge">YOUR SHELF <strong>47</strong></div>
+  </div>
+
+  <section class="hero">
+    <div class="greeting">Had a look, Paul.</div>
+    <div class="stamp">Logged 09:12 · Today</div>
+
+    <div class="product-brand">Lululemon</div>
+    <h1 class="product-name">Align High-Rise Pant 25"</h1>
+    <div class="product-composition">81% Nylon &middot; 19% Lycra Elastane</div>
+
+    <div class="verdict">
+      <div class="score-ring">
+        <div class="score-number">5</div>
+        <div class="score-tag">Out of 10</div>
+      </div>
+      <div class="verdict-text">
+        <div class="verdict-headline">Keep these for the gym.</div>
+        <div class="verdict-sub">For daily wear, there's something cleaner.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="note">
+    <div class="note-label">The why</div>
+    <p class="note-body">Mostly the fabric. Nylon and elastane give Aligns the feel people love, but the same synthetics <span class="underlined">shed microplastics every wash</span> and don't biodegrade. For sweat sessions, totally fine. For daily leggings, cotton blends score cleaner, with a little less snap-back.</p>
+  </section>
+
+  <div class="action">
+    <button class="btn btn-primary">Show me cleaner</button>
+    <button class="btn btn-secondary">Shelf them anyway</button>
+  </div>
+
+  <section class="swaps">
+    <p class="swaps-intro">Two I'd reach for instead:</p>
+
+    <div class="swap-card">
+      <div class="swap-score"><span>2</span></div>
+      <div class="swap-info">
+        <div class="swap-brand">Pact</div>
+        <div class="swap-name">Everyday Pocket Legging</div>
+        <div class="swap-composition">95% Organic Cotton &middot; 5% Spandex</div>
+        <span class="swap-tag">GOTS certified organic</span>
+      </div>
+    </div>
+
+    <div class="swap-card">
+      <div class="swap-score"><span>3</span></div>
+      <div class="swap-info">
+        <div class="swap-brand">Toad &amp; Co</div>
+        <div class="swap-name">Timehop Jogger</div>
+        <div class="swap-composition">62% Organic Cotton &middot; 33% Modal &middot; 5% Spandex</div>
+        <span class="swap-tag">Bluesign approved</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="shelf">
+    <div class="shelf-header">
+      <div class="shelf-title">On <em>your shelf</em> lately</div>
+      <a class="shelf-see-all">See all</a>
+    </div>
+
+    <div class="shelf-strip">
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-green);">2</div>
+          <div class="shelf-item-thumb-inner">P</div>
+        </div>
+        <div class="shelf-item-name">Boxer Brief</div>
+        <div class="shelf-item-brand">Pact</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-green);">3</div>
+          <div class="shelf-item-thumb-inner">A</div>
+        </div>
+        <div class="shelf-item-name">Wool Runner</div>
+        <div class="shelf-item-brand">Allbirds</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-green);">3</div>
+          <div class="shelf-item-thumb-inner">P</div>
+        </div>
+        <div class="shelf-item-name">Organic Tee</div>
+        <div class="shelf-item-brand">Patagonia</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-green);">2</div>
+          <div class="shelf-item-thumb-inner">H</div>
+        </div>
+        <div class="shelf-item-name">Dark Chocolate</div>
+        <div class="shelf-item-brand">Hu</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-amber);">4</div>
+          <div class="shelf-item-thumb-inner">G</div>
+        </div>
+        <div class="shelf-item-name">Compressive Bra</div>
+        <div class="shelf-item-brand">Girlfriend</div>
+      </div>
+
+      <div class="shelf-item">
+        <div class="shelf-item-thumb">
+          <div class="shelf-score-dot" style="background: var(--score-green);">1</div>
+          <div class="shelf-item-thumb-inner">B</div>
+        </div>
+        <div class="shelf-item-name">Pure Castile</div>
+        <div class="shelf-item-brand">Bronner's</div>
+      </div>
+    </div>
+
+    <div class="shelf-line"></div>
+  </section>
+
+  <div class="footer">
+    <a class="footer-link">Pass it along</a>
+    <div class="footer-meta">ID 4812.LULU.25</div>
+  </div>
+
+</div>
+
+<div class="review-note">
+  <strong>What changed</strong>
+  No glow halo on the score ring. Flatter buttons, flatter cards, tighter corners. Mono font now handles the data bits: timestamps, material compositions, shelf brand names, the review ID at the bottom. Reads more like a lab slip or a log entry than a SaaS screen. The voice stayed warm but the chrome got honest.
+</div>
+
+</body>
+</html>

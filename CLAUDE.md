@@ -684,3 +684,267 @@ rsvg-convert -w 180 -h 180 partiqule-q.svg -o apple-touch-icon.png
 - **MiiR:** Awin affiliate `https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392`
 - **Liquid Death:** 12 calibrated SKUs (score 1-3)
 - **MiiR:** 15 calibrated SKUs + 8 products.js entries (all score 1-2)
+
+---
+
+## Partiqule Design System
+
+This section defines the visual and voice system for every surface in the Partiqule app. Read this before writing any UI code. Every rule below has been arrived at deliberately and should not be changed without a design conversation first.
+
+---
+
+### The aesthetic, in a sentence
+
+Paper in natural light, not a SaaS dashboard. A knowing friend in your pocket, not an analyzer. Cream on cream with moss and amber accents, asymmetric shapes, serif warmth, DM Sans small caps for raw data, and a voice that reads labels for you without talking down.
+
+---
+
+### Foundation principles
+
+1. Copy carries more weight than chrome. Every string of text is a voice moment, every label is an opportunity to sound like a real person.
+2. The score is never the whole story. It appears next to a conversational verdict, not alone.
+3. Your shelf is the spine. Every scan ends on a reminder of the collection the user is building.
+4. One decision per moment. Each screen asks the user to do exactly one thing.
+5. Honesty over comfort. If a premium brand is amber, it scores amber. Warmth comes from voice, not from softening facts.
+6. Completion is ceremony. Loading, scanning, and shelving each get their own small moment.
+
+---
+
+### Colors
+
+All colors live in `frontend/src/tokens.css` as CSS custom properties. Never type a hex code inline in UI code. Always use `var(--token-name)`.
+
+#### Paper and ink
+
+```
+--cream:       #f3ede2   (primary page background)
+--cream-light: #f7f1e7   (elevated surfaces and tiles, barely distinct from cream)
+--ivory:       #f9f5ea   (button text on moss, occasional elevated accent)
+--ink:         #1a1f15   (primary text, nearly black with a warm green undertone)
+--ink-soft:    #4a5342   (secondary text, descriptions, sub copy)
+--ink-faint:   #8a9080   (tertiary text, stamps, metadata)
+```
+
+#### Brand
+
+```
+--moss:        #2d5a27   (primary brand color, CTAs, serif accents)
+--moss-deep:   #1f3f1b   (hover state only)
+--sage:        #4a7c42   (secondary moss, rarely used)
+--amber:       #c8781a   (warm accent, never a CTA color)
+--moss-soft:   rgba(45, 90, 39, 0.08)   (tinted backgrounds for badges)
+```
+
+#### Rules and borders
+
+```
+--rule:        rgba(26, 31, 21, 0.16)   (standard hairline)
+--rule-soft:   rgba(26, 31, 21, 0.08)   (subtle dividers)
+--rule-strong: rgba(26, 31, 21, 0.28)   (emphasized borders)
+```
+
+#### Score colors
+
+Natural earth versions that live inside the cream and moss palette. Thresholds unchanged from the original system (≤3 green, ≤5 amber, >5 red).
+
+```
+--score-green: #6b8c3e   (scores 3 and below)  — leaf green
+--score-amber: #c49a33   (scores 4 to 5)        — golden wheat
+--score-red:   #b0493a   (scores above 5)       — terracotta clay
+```
+
+#### Outer frame
+
+When rendering in a web context or embedding the app, the outer background is a slightly darker warm beige `--outer-bg: #e0d8c5`. Not used inside the screen itself.
+
+---
+
+### Typography
+
+Two fonts, each with a specific job. Never substitute and never mix up the roles.
+
+#### Fraunces
+
+Used for: greetings, product names, verdict headlines, section titles, score numbers, warm moments ("here's what I found"), feed card headlines.
+
+Fraunces is a variable font with axes for weight, optical size, softness, and wonk. The italic axis is NOT loaded — warmth comes from word choice, moss color, and opacity, never from slanted type. Use the default Regular weight unless a specific moment wants emphasis.
+
+Size range in app: 18px (small warm notes) to 40px (hero greetings). Most commonly 20 to 24px for section titles.
+
+Note: at sizes under 14px, the "wonk" axis can make Fraunces hard to read. Our system uses DM Sans below that threshold.
+
+#### DM Sans
+
+Used for: body text, button labels, descriptions, sub copy, product brand names in small caps, nutrition facts, ingredient lists, any functional text, and all the data moments that used to belong to DM Mono — timestamps, material compositions, section labels in caps, shelf brand names, SKU or review IDs.
+
+Weights 400 to 600 only.
+
+Data bits render uppercase with letter-spacing between 0.14em and 0.22em for a small caps treatment. This preserves the documentary feel without needing a third typeface. The `--mono` token in `tokens.css` is an alias pointing at DM Sans so legacy `var(--mono)` references keep working during migration.
+
+Brand labels follow the same pattern: uppercase, letter-spacing 0.22em.
+
+---
+
+### Asymmetric border radii
+
+A signature element of the system. No tile on any screen should use a symmetric radius. Each card, thumbnail, and circular element uses one of the predefined shapes to feel hand cut rather than stamped.
+
+#### Tile shapes (small tiles, shelf thumbnails)
+
+```
+--tile-shape-1: 12px 14px 10px 15px / 14px 10px 15px 12px
+--tile-shape-2: 14px 10px 15px 12px / 10px 15px 12px 14px
+--tile-shape-3: 10px 15px 12px 14px / 15px 12px 14px 10px
+--tile-shape-4: 15px 12px 14px 10px / 12px 14px 10px 15px
+--tile-shape-5: 11px 13px 15px 12px / 13px 15px 12px 11px
+--tile-shape-6: 13px 15px 11px 14px / 15px 11px 14px 13px
+```
+
+#### Card shapes (feed cards, alternatives)
+
+```
+--card-shape-1: 16px 20px 14px 18px / 18px 14px 20px 16px
+--card-shape-2: 20px 14px 18px 16px / 14px 18px 16px 20px
+--card-shape-3: 14px 18px 16px 20px / 20px 16px 14px 18px
+--card-shape-4: 15px 16px 14px 18px / 16px 14px 18px 15px
+```
+
+#### CTA shape (scan card and similar prominent surfaces)
+
+```
+--cta-shape: 22px 18px 24px 20px / 20px 24px 18px 22px
+```
+
+#### Circle shape (profile circles, nav scan button, score dots)
+
+```
+--circle-shape: 49% 51% 50% 50% / 52% 48% 52% 48%
+```
+
+When placing multiple tiles in a row or grid, cycle through the shapes so no two adjacent tiles match. The visual irregularity is the signal.
+
+---
+
+### Motion
+
+All motion is ambient and slow. No bouncy micro-interactions, no pulsing CTAs, no attention grabbing animations.
+
+1. Morning light wash. A static warm gradient at the top 280px of every screen. Mimics sunlight hitting a page on a kitchen table.
+2. Drifting particles. 12 small dots (1.5 to 3px) in moss, amber, and soft ink tints. Three drift animations at 22 to 32 second cycles. Low opacity.
+3. Breathing scale. Key stages (e.g. the hero scan card) scale by 1.012x on a 5 second cycle. Almost imperceptible.
+4. Fade up on load. Content sections fade in with 8px upward translate, staggered 80 to 150ms apart.
+5. Subtle hover lifts. Interactive cards translate up 1 to 2px on hover.
+
+#### Never
+- Glow halos behind elements
+- Pulsing or throbbing CTAs
+- Spinning icons or loaders
+- Circular loading animations (typewriter + linear rule + dots is the pattern)
+- Color shifts on hover
+- Anything that feels like a game or a toy
+
+---
+
+### Voice
+
+Write as a friend who reads labels for a living. First and second person. Specific over vague. Confident without being preachy. Short sentences. Real words.
+
+#### Use
+
+"Here's what I found, Paul."
+"I'd swap if you can."
+"Not a crisis. Just a cleaner one nearby."
+"Keep these for the gym."
+"Two I'd reach for instead."
+"Already on your shelf."
+"Nice work on the Clif Bars."
+"Mostly the fabric."
+
+#### Avoid
+
+"Analysis complete."
+"Score: 5/10."
+"Consider an alternative product."
+"View details."
+"Your results."
+"Product information."
+
+The test: would a friend say it out loud? If no, rewrite.
+
+#### Verdict phrasing by score
+
+```
+1 to 3 (green):  "Looks good to me."  /  "A keeper."  /  "Solid."
+4 to 5 (amber):  "I'd swap if you can."  /  "Fine for X, not Y."  /  "Judgment call."
+6 to 10 (red):   "I'd pass on this one."  /  "Skip it."  /  "Not great."
+```
+
+---
+
+### Component patterns
+
+#### Result screen
+
+Top to bottom: top bar (wordmark left, shelf badge right), product header (stamp, brand in caps, serif name, DM Sans composition), verdict block (score ring + conversational headline), friend's note (caps label + serif paragraph), primary action row (moss primary + outlined secondary), two swap cards, shelf strip with ledge, footer.
+
+#### Hero screen
+
+Top bar, greeting (38px serif, normal weight), DM Sans caps stamp, quiet scan card (cream with moss frame, not solid moss), shelf strip with ledge, intelligence feed cards horizontal, This Week recap with serif stats in moss, bottom nav.
+
+#### Loading screen
+
+No circular animations. Product identity at top matches the result screen. Center: typewriter animation cycling through four status messages — "Reading the label...", "Checking what's inside...", "Looking up what we know...", "Scoring against the rest..." — Fraunces normal weight, moss color. Below the typewriter: a 200px thin moss rule draws left to right as each step completes. Below the rule: four 6px moss dots, each fills as its step message appears, 16px spacing between dots. Static footer line in small serif.
+
+#### Detail view
+
+Extends the result screen with three new sections: sub-scores (horizontal rows, caps label + big serif score + sans description), composition breakdown (grouped with colored concern dots per item), Worth Knowing flags (editorial paragraphs with arrow action suggestions).
+
+#### Alternatives view
+
+Simple: back arrow, stamp tying it to source product, large serif title, serif subtitle, source toggle (Amazon / Brand site / Target), list of 4 to 6 alternative cards each with score ring + brand + name + DM Sans composition + tags.
+
+---
+
+### Layout conventions
+
+- Screen background is always `var(--cream)`
+- Primary padding unit is 24px for screen edges
+- Section spacing is 32px
+- Cards use 1px borders with `var(--rule)` or `var(--rule-soft)`
+- Bottom nav is always 80px tall with safe area padding on iOS
+- Top bar always has a 1px bottom border in `var(--rule)`
+- Caps labels always use the label pattern: small horizontal rule (22px wide, 1px tall, moss at 0.7 opacity) followed by DM Sans caps text with 10px gap
+
+---
+
+### Never do
+
+1. Use italics anywhere. Warmth comes from word choice, opacity, and moss color, not slanted type. The Fraunces italic axis is not loaded from Google Fonts for this reason.
+2. Use Outfit, DM Mono, or Instrument Serif. Fraunces and DM Sans only.
+3. Use purple `#7c3aed` as an accent. Signals generic SaaS.
+4. Use white backgrounds. Use cream.
+5. Use cold navy for dark surfaces. Dark mode is out of scope — the canonical surface is warm paper light.
+6. Put icons inside colored squares. This is the Linear and Notion pattern. Use serif typography or DM Sans caps labels instead.
+7. Use emoji in any UI string.
+8. Write hex codes inline. Always reference `var(--token-name)` from `tokens.css`.
+9. Use hard rounded rectangles or symmetric border-radius on tiles and cards. All tiles are asymmetric via shape tokens.
+10. Add glow halos to interactive elements.
+11. Write UI copy in third person or dashboard voice ("Your data", "Analysis", "Details").
+12. Create section headers that sound like a dashboard ("Overview", "Details", "Data", "Analysis").
+13. Use pulsing or bouncing animations.
+14. Substitute a system font for Fraunces or DM Sans.
+15. Make the primary score bigger than the verdict headline. They share the frame.
+16. Display the ingredients list or composition in sentence case. It is always DM Sans caps with letter-spacing.
+17. Let any screen end without a reference back to the user's shelf.
+
+---
+
+### Design system files
+
+All visual and code references live in one of:
+
+- `frontend/src/tokens.css` — authoritative source for all color, type, radius, spacing values
+- `docs/brand-kit.html` — visual reference for humans
+- `docs/mockups/` — HTML mockups of each screen (hero, clothing result, loading, details + alternatives, icon POC)
+
+If a pattern isn't in one of those files, pause and ask whether it needs to exist.

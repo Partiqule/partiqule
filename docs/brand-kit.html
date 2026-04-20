@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partiqule · Brand Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:       #f3ede2;
+  --cream-light: #f7f1e7;
+  --ivory:       #f9f5ea;
+  --ink:         #1a1f15;
+  --ink-body:    #2a2f24;   /* slightly lighter than ink, for body readability */
+  --ink-soft:    #3a4232;   /* darker than before for better contrast */
+  --ink-faint:   #6f7566;   /* darker than before for legibility */
+  --moss:        #2d5a27;
+  --moss-deep:   #1f3f1b;
+  --sage:        #4a7c42;
+  --amber:       #c8781a;
+  --moss-soft:   rgba(45, 90, 39, 0.08);
+  --rule:        rgba(26, 31, 21, 0.18);
+  --rule-soft:   rgba(26, 31, 21, 0.1);
+  --rule-strong: rgba(26, 31, 21, 0.3);
+  --score-green: #6b8c3e;
+  --score-amber: #c49a33;
+  --score-red:   #b0493a;
+  --serif: 'Fraunces', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Sans', system-ui, sans-serif; /* mono retired; points to sans */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--cream);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Lighter paper grain so it doesn't hurt readability */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08, 0 0 0 0 0.1, 0 0 0 0 0.06, 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 360px;
+  background: linear-gradient(to bottom,
+    rgba(255, 230, 180, 0.26) 0%,
+    rgba(255, 220, 170, 0.14) 35%,
+    rgba(245, 220, 180, 0.06) 70%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 80px 40px 120px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header ── */
+.kit-header {
+  margin-bottom: 72px;
+}
+.kit-stamp {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+.kit-stamp::before {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--ink-soft);
+  opacity: 0.5;
+}
+.kit-title {
+  font-family: var(--serif);
+  font-size: 72px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+.kit-title em {
+  font-style: italic;
+  color: var(--moss);
+}
+.kit-lede {
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--ink-body);
+  max-width: 640px;
+  font-weight: 400;
+}
+
+/* ── Section ── */
+.section {
+  margin-bottom: 72px;
+  padding-top: 48px;
+  border-top: 1px solid var(--rule);
+}
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: var(--moss);
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: var(--moss);
+  opacity: 0.6;
+}
+.section-title {
+  font-family: var(--serif);
+  font-size: 42px;
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.section-title em {
+  font-style: italic;
+  color: var(--moss);
+}
+.section-intro {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink-body);
+  max-width: 660px;
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+/* ── Foundation principles ── */
+.principle-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.principle {
+  padding: 28px 30px 28px;
+  background: var(--cream-light);
+  border: 1px solid var(--rule-soft);
+  border-radius: 16px 20px 14px 18px / 18px 14px 20px 16px;
+}
+.principle:nth-child(2n) {
+  border-radius: 20px 14px 18px 16px / 14px 18px 16px 20px;
+}
+.principle-num {
+  font-family: var(--serif);
+  font-size: 34px;
+  color: var(--moss);
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+.principle-text {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+/* ── Color swatches ── */
+.color-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+.color-group-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ink);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.swatch {
+  padding: 16px 18px 18px;
+  background: var(--cream-light);
+  border: 1px solid var(--rule-soft);
+}
+.swatch.shape-1 { border-radius: 14px 18px 12px 16px / 16px 12px 18px 14px; }
+.swatch.shape-2 { border-radius: 18px 12px 16px 14px / 12px 16px 14px 18px; }
+.swatch.shape-3 { border-radius: 12px 16px 14px 18px / 18px 14px 12px 16px; }
+.swatch-chip {
+  width: 100%;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: 10px 12px 9px 13px / 11px 9px 13px 10px;
+  border: 1px solid var(--rule-soft);
+}
+.swatch-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 4px;
+  letter-spacing: -0.005em;
+}
+.swatch-hex {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-body);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.swatch-note {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+/* ── Typography specimens ── */
+.type-specimen {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.type-specimen:first-of-type { padding-top: 8px; }
+.type-specimen:last-child { border-bottom: none; }
+.type-specimen-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.type-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--moss);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.type-use {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.type-sample-serif {
+  font-family: var(--serif);
+  font-size: 50px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+.type-sample-serif em {
+  font-style: italic;
+  color: var(--moss);
+}
+.type-sample-sans {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 14px;
+  max-width: 620px;
+}
+.type-sample-mono {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  letter-spacing: 0.18em;
+  color: var(--ink);
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* ── Shapes grid ── */
+.shapes-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.shape-demo {
+  background: var(--cream-light);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rule);
+}
+.shape-demo .num {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.shape-1 { border-radius: 12px 14px 10px 15px / 14px 10px 15px 12px; }
+.shape-2 { border-radius: 14px 10px 15px 12px / 10px 15px 12px 14px; }
+.shape-3 { border-radius: 10px 15px 12px 14px / 15px 12px 14px 10px; }
+.shape-4 { border-radius: 15px 12px 14px 10px / 12px 14px 10px 15px; }
+.shape-5 { border-radius: 11px 13px 15px 12px / 13px 15px 12px 11px; }
+.shape-6 { border-radius: 13px 15px 11px 14px / 15px 11px 14px 13px; }
+
+.shape-caption {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* ── Voice examples ── */
+.voice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.voice-good, .voice-bad {
+  padding: 22px 24px;
+  background: var(--cream-light);
+  border: 1px solid var(--rule-soft);
+}
+.voice-good { border-radius: 14px 18px 12px 16px / 16px 12px 18px 14px; }
+.voice-bad  { border-radius: 18px 12px 16px 14px / 12px 16px 14px 18px; }
+.voice-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.voice-good .voice-tag { color: var(--moss); }
+.voice-bad .voice-tag { color: var(--score-red); opacity: 0.85; }
+.voice-quote {
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1.3;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin-bottom: 12px;
+}
+.voice-bad .voice-quote {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(176, 73, 58, 0.5);
+}
+.voice-why {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* ── Never list ── */
+.never-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 32px;
+  margin-top: 24px;
+}
+.never-item {
+  font-family: var(--sans);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  padding-left: 26px;
+  position: relative;
+}
+.never-item::before {
+  content: '×';
+  position: absolute;
+  left: 0;
+  top: -2px;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--score-red);
+  line-height: 1;
+  font-weight: 400;
+}
+
+/* ── Footer ── */
+.kit-footer {
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.footer-line {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+.footer-stamp {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .container { padding: 48px 24px 80px; }
+  .kit-title { font-size: 52px; }
+  .principle-list,
+  .voice-row,
+  .never-list {
+    grid-template-columns: 1fr;
+  }
+  .swatches { grid-template-columns: 1fr 1fr; }
+  .shapes-grid { grid-template-columns: repeat(3, 1fr); }
+  .type-sample-serif { font-size: 38px; }
+  .section-title { font-size: 34px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="kit-header">
+    <div class="kit-stamp">Design system · version 1</div>
+    <h1 class="kit-title">A <em>brand kit</em> in paper and moss.</h1>
+    <p class="kit-lede">Everything in the Partiqule app follows the rules on this page. Cream backgrounds, warm typography, asymmetric shapes, moss and amber accents, and a voice that reads labels for you without talking down.</p>
+  </header>
+
+  <!-- Foundation -->
+  <section class="section">
+    <div class="section-label">Foundation</div>
+    <h2 class="section-title">Six things we always do.</h2>
+    <p class="section-intro">These are the principles that precede every design decision. When something feels off, start here and ask which of these got missed.</p>
+
+    <div class="principle-list">
+      <div class="principle">
+        <div class="principle-num">01</div>
+        <div class="principle-text">Copy carries more weight than chrome. Every string is a voice moment.</div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">02</div>
+        <div class="principle-text">The score is never the whole story. It sits next to a conversational verdict, not alone.</div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">03</div>
+        <div class="principle-text">Your shelf is the spine. Every scan ends on a reminder of the collection the user is building.</div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">04</div>
+        <div class="principle-text">One decision per moment. Each screen asks the user to do exactly one thing.</div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">05</div>
+        <div class="principle-text">Honest over comfortable. Warmth comes from voice, not from softening facts.</div>
+      </div>
+      <div class="principle">
+        <div class="principle-num">06</div>
+        <div class="principle-text">Completion is ceremony. Loading, scanning, and shelving each get their own moment.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Color -->
+  <section class="section">
+    <div class="section-label">Color</div>
+    <h2 class="section-title">Cream on <em>cream</em>, with moss and a touch of amber.</h2>
+    <p class="section-intro">The palette is warm, earthy, and low in saturation. Score colors are natural earth versions of green, yellow, and red. Nothing in the system is fire-engine or neon.</p>
+
+    <div class="color-groups">
+
+      <div class="color-group">
+        <div class="color-group-label">Paper and ink</div>
+        <div class="swatches">
+          <div class="swatch shape-1"><div class="swatch-chip" style="background:#f3ede2;"></div><div class="swatch-name">Cream</div><div class="swatch-hex">#f3ede2</div><div class="swatch-note">Primary page background.</div></div>
+          <div class="swatch shape-2"><div class="swatch-chip" style="background:#f7f1e7;"></div><div class="swatch-name">Cream light</div><div class="swatch-hex">#f7f1e7</div><div class="swatch-note">Elevated surfaces and tiles.</div></div>
+          <div class="swatch shape-3"><div class="swatch-chip" style="background:#f9f5ea;"></div><div class="swatch-name">Ivory</div><div class="swatch-hex">#f9f5ea</div><div class="swatch-note">Text on moss, occasional accent.</div></div>
+          <div class="swatch shape-1"><div class="swatch-chip" style="background:#1a1f15;"></div><div class="swatch-name">Ink</div><div class="swatch-hex">#1a1f15</div><div class="swatch-note">Primary text, near black with green warmth.</div></div>
+          <div class="swatch shape-2"><div class="swatch-chip" style="background:#3a4232;"></div><div class="swatch-name">Ink soft</div><div class="swatch-hex">#3a4232</div><div class="swatch-note">Secondary text and descriptions.</div></div>
+          <div class="swatch shape-3"><div class="swatch-chip" style="background:#6f7566;"></div><div class="swatch-name">Ink faint</div><div class="swatch-hex">#6f7566</div><div class="swatch-note">Metadata and stamps.</div></div>
+        </div>
+      </div>
+
+      <div class="color-group">
+        <div class="color-group-label">Brand</div>
+        <div class="swatches">
+          <div class="swatch shape-1"><div class="swatch-chip" style="background:#2d5a27;"></div><div class="swatch-name">Moss</div><div class="swatch-hex">#2d5a27</div><div class="swatch-note">Primary brand. CTAs, serif accents.</div></div>
+          <div class="swatch shape-2"><div class="swatch-chip" style="background:#1f3f1b;"></div><div class="swatch-name">Moss deep</div><div class="swatch-hex">#1f3f1b</div><div class="swatch-note">Hover state only.</div></div>
+          <div class="swatch shape-3"><div class="swatch-chip" style="background:#c8781a;"></div><div class="swatch-name">Amber</div><div class="swatch-hex">#c8781a</div><div class="swatch-note">Warm accent. Never a CTA.</div></div>
+        </div>
+      </div>
+
+      <div class="color-group">
+        <div class="color-group-label">Score colors (natural)</div>
+        <div class="swatches">
+          <div class="swatch shape-1"><div class="swatch-chip" style="background:#6b8c3e;"></div><div class="swatch-name">Leaf green</div><div class="swatch-hex">#6b8c3e</div><div class="swatch-note">Scores 3 and below.</div></div>
+          <div class="swatch shape-2"><div class="swatch-chip" style="background:#c49a33;"></div><div class="swatch-name">Golden wheat</div><div class="swatch-hex">#c49a33</div><div class="swatch-note">Scores 4 to 5.</div></div>
+          <div class="swatch shape-3"><div class="swatch-chip" style="background:#b0493a;"></div><div class="swatch-name">Terracotta</div><div class="swatch-hex">#b0493a</div><div class="swatch-note">Scores above 5.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Typography -->
+  <section class="section">
+    <div class="section-label">Typography</div>
+    <h2 class="section-title">Two fonts, each with <em>a job</em>.</h2>
+    <p class="section-intro">Fraunces does the warmth. DM Sans does everything else. Data bits that used to be mono are now DM Sans uppercase with letter-spacing, keeping the small-caps feel without the typewriter overtone.</p>
+
+    <div class="type-specimen">
+      <div class="type-specimen-head">
+        <div class="type-name">Fraunces</div>
+        <div class="type-use">for warmth and moments</div>
+      </div>
+      <div class="type-sample-serif">Here's what <em>I found</em>, Paul.</div>
+      <div class="type-sample-serif" style="font-size: 30px; color: var(--ink-body);">I'd swap if you can.</div>
+      <div class="type-sample-serif" style="font-size: 20px; font-style: italic; color: var(--ink-soft);">Two I'd reach for instead.</div>
+    </div>
+
+    <div class="type-specimen">
+      <div class="type-specimen-head">
+        <div class="type-name">DM Sans</div>
+        <div class="type-use">for body, function, and data</div>
+      </div>
+      <div class="type-sample-sans">Mostly the fabric. Nylon and elastane give Aligns the feel people love, but the same synthetics shed microplastics every wash and don't biodegrade.</div>
+      <div class="type-sample-sans" style="font-size: 13.5px; color: var(--ink-soft);">Tap anywhere, point me at a label.</div>
+      <div class="type-sample-sans" style="font-size: 11.5px; color: var(--ink-body); font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 16px;">Logged 09:12 &middot; Today</div>
+      <div class="type-sample-sans" style="font-size: 11px; color: var(--moss); font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; margin-top: 6px;">Fiber composition &middot; End of life &middot; Worth knowing</div>
+    </div>
+  </section>
+
+  <!-- Shapes -->
+  <section class="section">
+    <div class="section-label">Shapes</div>
+    <h2 class="section-title">Nothing is <em>stamped</em>.</h2>
+    <p class="section-intro">Every tile, card, and circle in the app uses an asymmetric radius so it looks hand cut. Six tile shapes for thumbnails, three card shapes for feed cards and alternatives, and one CTA shape for the largest surfaces. Cycle through them so adjacent tiles never match.</p>
+
+    <div class="shapes-grid">
+      <div class="shape-demo shape-1"><div class="num">1</div></div>
+      <div class="shape-demo shape-2"><div class="num">2</div></div>
+      <div class="shape-demo shape-3"><div class="num">3</div></div>
+      <div class="shape-demo shape-4"><div class="num">4</div></div>
+      <div class="shape-demo shape-5"><div class="num">5</div></div>
+      <div class="shape-demo shape-6"><div class="num">6</div></div>
+    </div>
+    <div class="shape-caption">Six tile shapes, cycled across the app so no two adjacent tiles share a radius.</div>
+  </section>
+
+  <!-- Voice -->
+  <section class="section">
+    <div class="section-label">Voice</div>
+    <h2 class="section-title">Write like <em>a friend</em> reads labels.</h2>
+    <p class="section-intro">First and second person. Specific over vague. Short sentences. Real words. The test: would a friend say it out loud? If no, rewrite.</p>
+
+    <div class="voice-row">
+      <div class="voice-good">
+        <div class="voice-tag">Sounds like Partiqule</div>
+        <div class="voice-quote">"I'd swap if you can."</div>
+        <div class="voice-why">Confident, first person, short.</div>
+      </div>
+      <div class="voice-bad">
+        <div class="voice-tag">Sounds like a dashboard</div>
+        <div class="voice-quote">"Alternative products recommended."</div>
+        <div class="voice-why">No one speaks like this.</div>
+      </div>
+    </div>
+
+    <div class="voice-row">
+      <div class="voice-good">
+        <div class="voice-tag">Sounds like Partiqule</div>
+        <div class="voice-quote">"Here's what I found, Paul."</div>
+        <div class="voice-why">Personal, warm, leads with what the user came for.</div>
+      </div>
+      <div class="voice-bad">
+        <div class="voice-tag">Sounds like a dashboard</div>
+        <div class="voice-quote">"Analysis complete. Your results:"</div>
+        <div class="voice-why">Technical, impersonal, performative.</div>
+      </div>
+    </div>
+
+    <div class="voice-row">
+      <div class="voice-good">
+        <div class="voice-tag">Sounds like Partiqule</div>
+        <div class="voice-quote">"Keep these for the gym."</div>
+        <div class="voice-why">Acknowledges the use case honestly.</div>
+      </div>
+      <div class="voice-bad">
+        <div class="voice-tag">Sounds like a dashboard</div>
+        <div class="voice-quote">"Product scored 5 of 10."</div>
+        <div class="voice-why">The number alone is not a verdict.</div>
+      </div>
+    </div>
+
+    <div class="voice-row">
+      <div class="voice-good">
+        <div class="voice-tag">Sounds like Partiqule</div>
+        <div class="voice-quote">"Nice work on the Clif Bars."</div>
+        <div class="voice-why">Personal observation, casual, specific.</div>
+      </div>
+      <div class="voice-bad">
+        <div class="voice-tag">Sounds like a dashboard</div>
+        <div class="voice-quote">"Weekly summary: 12 products scanned."</div>
+        <div class="voice-why">Reads like a system report, not a friend.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Never -->
+  <section class="section">
+    <div class="section-label">Never</div>
+    <h2 class="section-title">Things we <em>don't</em> do.</h2>
+    <p class="section-intro">These moves signal generic AI SaaS. They're the tells we're trying to escape. If you catch any of them sneaking back in, pull them out.</p>
+
+    <div class="never-list">
+      <div class="never-item">Outfit as a typeface anywhere</div>
+      <div class="never-item">Purple 7c3aed as an accent</div>
+      <div class="never-item">Pure white or cold navy surfaces</div>
+      <div class="never-item">Icons inside colored squares</div>
+      <div class="never-item">Emoji in any UI string</div>
+      <div class="never-item">Symmetric hard rounded rectangles</div>
+      <div class="never-item">Glow halos around interactive elements</div>
+      <div class="never-item">Dashboard voice (Overview, Data, Details)</div>
+      <div class="never-item">Pulsing or bouncing animations</div>
+      <div class="never-item">System fonts as substitutes</div>
+      <div class="never-item">Score bigger than verdict headline</div>
+      <div class="never-item">Any screen without a path back to the shelf</div>
+    </div>
+  </section>
+
+  <footer class="kit-footer">
+    <div class="footer-line">Everything else is tuning.</div>
+    <div class="footer-stamp">Partiqule &middot; Design system v1</div>
+  </footer>
+
+</div>
+
+</body>
+</html>
