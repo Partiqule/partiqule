@@ -1170,9 +1170,11 @@ const getHomeCoverage = (history) => {
 };
 
 
-const scoreColor   = (s) => s<=2?"#16a34a":s<=4?"#65a30d":s<=6?"#ca8a04":s<=8?"#ea580c":"#dc2626";
-const scoreBg      = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fef2f2";
-const scoreCardBg  = (s) => s<=2?"#f0fdf4":s<=4?"#f7fee7":s<=6?"#fefce8":s<=8?"#fff7ed":"#fff0f0";
+// Score colors use the three natural-earth tokens. No intermediate shades —
+// the threshold is either green, amber, or red by range.
+const scoreColor   = (s) => s<=3?"var(--score-green)":s<=5?"var(--score-amber)":"var(--score-red)";
+const scoreBg      = (s) => s<=3?"var(--score-green-soft)":s<=5?"var(--score-amber-soft)":"var(--score-red-soft)";
+const scoreCardBg  = scoreBg;
 
 const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
   if (score == null || isNaN(parseFloat(score))) return null;
@@ -1284,8 +1286,6 @@ const IcoProfile     = ({size=24}) => <svg width={size} height={size} viewBox="0
 
 
 const IconTrash      = ({size=15,color="#9ca3af"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/></svg>;
-const IconMoon       = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>;
-const IconSun        = ({size=18,color="currentColor"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-12.37-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0zM7.05 18.36l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0z"/></svg>;
 const IconFire       = ({size=14,color="#ef4444"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M13.5 0.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>;
 const IconBook       = ({size=20,color="#2d5a27"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>;
 const IconLink       = ({size=14,color="#2d5a27"}) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>;
@@ -1379,12 +1379,12 @@ const RiskBar = ({score}) => {
 
 // ── SCAN VS SAFE SPLIT VIEW ───────────────────────────────────
 // ── BUNDLE RECOMMENDATION (replaced with simple CTA) ─────────
-const BundleCard = ({category, isDark}) => {
+const BundleCard = ({category}) => {
   const bundle = BUNDLES[category] || BUNDLES.other;
-  const surface = isDark?"#0f2a18":"#fff";
-  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
-  const text    = isDark?"#f0fdf4":"#111";
-  const muted   = isDark?"#6ee7b7":"#888";
+  const surface = "var(--cream-light)";
+  const border  = "var(--rule)";
+  const text    = "var(--ink)";
+  const muted   = "var(--ink-soft)";
   const searches = {
     clothing:      "plastic-free organic cotton clothing",
     food_beverage: "plastic-free reusable food storage",
@@ -1396,7 +1396,7 @@ const BundleCard = ({category, isDark}) => {
   const searchQuery = searches[category] || searches.other;
   const amazonUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchQuery)}&tag=partiqule-20`;
   return (
-    <div style={{background:isDark?"#1a1f2e":"#fdf4e7", borderRadius:16, padding:"24px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#ddd6fe"}`}}>
+    <div style={{background:"#fdf4e7", borderRadius:16, padding:"24px", border:`1.5px solid ${"#ddd6fe"}`}}>
       <div style={{display:"flex", alignItems:"flex-start", gap:12, marginBottom:16}}>
         <div style={{width:40, height:40, borderRadius:10, background:"#c8781a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
           <IconBundle size={20} color="#fff"/>
@@ -1409,7 +1409,7 @@ const BundleCard = ({category, isDark}) => {
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:6, marginBottom:16}}>
         {bundle.items.map((item,i) => (
-          <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:isDark?"#6ee7b7":"#444"}}>
+          <div key={i} style={{display:"flex", alignItems:"center", gap:8, fontSize:13, color:"#444"}}>
             <div style={{width:18, height:18, borderRadius:"50%", background:"rgba(34,197,94,0.08)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
               <IconCheck size={11} color="#16a34a"/>
             </div>
@@ -1426,18 +1426,18 @@ const BundleCard = ({category, isDark}) => {
 };
 
 // ── SOURCE CITATIONS ──────────────────────────────────────────
-const SourceCitations = ({category, isDark}) => {
+const SourceCitations = ({category}) => {
   const [open, setOpen] = useState(false);
   const sources = SOURCES[category] || SOURCES.other;
-  const surface = isDark?"#0f2a18":"#fff";
-  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
-  const text    = isDark?"#f0fdf4":"#111";
-  const muted   = isDark?"#6ee7b7":"#888";
+  const surface = "var(--cream-light)";
+  const border  = "var(--rule)";
+  const text    = "var(--ink)";
+  const muted   = "var(--ink-soft)";
   return (
     <div style={{background:surface, borderRadius:16, border:`1.5px solid ${border}`, overflow:"hidden"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 24px", background:"none", border:"none", cursor:"pointer", textAlign:"left"}}>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
-          <div style={{width:34, height:34, borderRadius:9, background:isDark?"#1e1f3a":"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center"}}>
+          <div style={{width:34, height:34, borderRadius:9, background:"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center"}}>
             <IconBook size={18} color="#2d5a27"/>
           </div>
           <div>
@@ -1453,11 +1453,11 @@ const SourceCitations = ({category, isDark}) => {
           {sources.map((s,i) => (
             <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
               style={{display:"flex", alignItems:"flex-start", gap:10, padding:"10px 0", borderBottom:i<sources.length-1?`1px solid ${border}`:"none", textDecoration:"none"}}>
-              <div style={{width:28, height:28, borderRadius:7, background:isDark?"#1e1f3a":"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1}}>
+              <div style={{width:28, height:28, borderRadius:7, background:"#eef2ff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginTop:1}}>
                 <IconLink size={13} color="#2d5a27"/>
               </div>
               <div>
-                <div style={{fontSize:13, fontWeight:600, color:isDark?"#a5b4fc":"#4f46e5", lineHeight:1.4}}>{s.title}</div>
+                <div style={{fontSize:13, fontWeight:600, color:"#4f46e5", lineHeight:1.4}}>{s.title}</div>
                 <div style={{fontSize:11, color:muted, marginTop:2}}>{s.journal}</div>
               </div>
             </a>
@@ -1469,18 +1469,18 @@ const SourceCitations = ({category, isDark}) => {
 };
 
 // ── EDUCATION SECTION ─────────────────────────────────────────
-const EducationSection = ({isDark, isMobile=false}) => {
-  const surface = isDark?"#0f2a18":"#fff";
-  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
-  const text    = isDark?"#f0fdf4":"#111";
-  const muted   = isDark?"#6ee7b7":"#666";
-  const bg      = isDark?"#080f0a":"#fafafa";
+const EducationSection = ({isMobile=false}) => {
+  const surface = "var(--cream-light)";
+  const border  = "var(--rule)";
+  const text    = "var(--ink)";
+  const muted   = "var(--ink-soft)";
+  const bg      = "var(--cream)";
 
   const sections = [
     {
       tag: "Your Health",
       tagColor: "#16a34a",
-      tagBg: isDark?"#1a2a1a":"#f0fdf4",
+      tagBg: "#f0fdf4",
       headline: "What your products are doing to your body",
       subhead: "From microplastics in arterial plaques to artificial dyes being phased out by the FDA, the research on everyday product exposure has reached a turning point.",
       stats: [
@@ -1501,7 +1501,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
     {
       tag: "Your Family and Home",
       tagColor: "#2563eb",
-      tagBg: isDark?"#1e1f3a":"#eff6ff",
+      tagBg: "#eff6ff",
       headline: "What is coming into your home",
       subhead: "The packaging your products arrive in, the cleaning products you use around your family, and the exposure patterns of the people you live with all matter.",
       stats: [
@@ -1520,7 +1520,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
     {
       tag: "The Planet",
       tagColor: "#d97706",
-      tagBg: isDark?"#1e1200":"#fffbeb",
+      tagBg: "#fffbeb",
       headline: "The downstream impact of what we buy",
       subhead: "Every product has a lifecycle. From how it is made to how it is disposed of, everyday purchasing decisions accumulate into something much larger.",
       stats: [
@@ -1539,7 +1539,7 @@ const EducationSection = ({isDark, isMobile=false}) => {
     {
       tag: "How Scores Get More Accurate Over Time",
       tagColor: "#c8781a",
-      tagBg: isDark?"#1e1433":"#fdf4e7",
+      tagBg: "#fdf4e7",
       headline: "From AI estimate to verified fact",
       subhead: "Every scan makes the system smarter. Here is the honest explanation of how Partiqule works today, and where it is going.",
       stats: [
@@ -1576,9 +1576,9 @@ const EducationSection = ({isDark, isMobile=false}) => {
             {/* Stats grid */}
             <div style={{display:"grid", gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)", gap:isMobile?10:20, marginBottom:isMobile?32:48}}>
               {sec.stats.map((s,i) => (
-                <div key={i} style={{background:isDark?"#0f2a18":s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"transparent"}`, textAlign:"center"}}>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:28, fontWeight:800, color:isDark?"#4ade80":s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
-                  <div style={{fontSize:13, color:isDark?"#6ee7b7":s.color, lineHeight:1.5, opacity:isDark?1:0.85}}>{s.label}</div>
+                <div key={i} style={{background:s.bg, borderRadius:14, padding:"24px 20px", border:`1.5px solid ${"transparent"}`, textAlign:"center"}}>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:28, fontWeight:800, color:s.color, marginBottom:8, lineHeight:1.2}}>{s.number}</div>
+                  <div style={{fontSize:13, color:s.color, lineHeight:1.5, opacity:0.85}}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1714,7 +1714,7 @@ const CATEGORY_DROPDOWN_LABEL = {
   other:           "Substance Analysis",
 };
 
-const ProductInsightsDropdown = ({analysis, category, isDark}) => {
+const ProductInsightsDropdown = ({analysis, category}) => {
   const [open, setOpen] = useState(false);
   if (!analysis) return null;
 
@@ -1733,12 +1733,12 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
   const lows   = concerns.filter(c => c.severity === "low");
   const hasAny = concerns.length > 0 || analysis.positives?.length > 0;
 
-  const headerBorder = highs.length > 0 ? "#fecaca" : isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb";
-  const headerColor  = highs.length > 0 ? "#dc2626" : isDark ? "#6ee7b7" : "#555";
+  const headerBorder = highs.length > 0 ? "#fecaca" : "#e5e7eb";
+  const headerColor  = highs.length > 0 ? "#dc2626" : "#555";
   const dropdownLabel = CATEGORY_DROPDOWN_LABEL[category] || CATEGORY_DROPDOWN_LABEL.other;
 
   return (
-    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:isDark?"#0f2a18":"#f9fafb", textAlign:"left"}}>
+    <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${headerBorder}`, background:"#f9fafb", textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
         <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
           <span style={{display:"flex", alignItems:"center", opacity:0.9}}><IcoIngredients size={20}/></span>
@@ -1772,8 +1772,8 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           {analysis.nutrition && (() => {
             const n = analysis.nutrition;
             const verified = analysis.nutrition_verified !== false;
-            const nutColor  = isDark ? "#f0fdf4" : "#111";
-            const nutMuted  = isDark ? "#64748b"  : "#888";
+            const nutColor  = "#111";
+            const nutMuted  = "#888";
             const items = [
               n.calories   != null && { label:"cal",     val:n.calories,  unit:"" },
               n.protein_g  != null && { label:"protein", val:n.protein_g, unit:"g" },
@@ -1785,7 +1785,7 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
             ].filter(Boolean);
             if (!items.length) return null;
             return (
-              <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:isDark?"#0f2a18":"#f9fafb", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
+              <div style={{marginBottom:14, padding:"8px 12px", borderRadius:8, background:"#f9fafb", border:`1px solid ${"#e5e7eb"}`}}>
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
                   <div style={{fontSize:10, color:nutMuted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em"}}>
                     Per serving{n.serving_size ? ` (${n.serving_size})` : ""}
@@ -1820,14 +1820,14 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
                   {items.map((c, i) => {
                     const cfg = SEVERITY_CONFIG[c.severity];
                     return (
-                      <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a1a2e":cfg.bg, border:`1px solid ${cfg.border}`}}>
+                      <div key={i} style={{padding:"8px 12px", borderRadius:10, background:cfg.bg, border:`1px solid ${cfg.border}`}}>
                         <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:3, flexWrap:"wrap"}}>
                           <span style={{fontSize:12, fontWeight:700, color:cfg.color}}>{c.name}</span>
                           {c.type && TYPE_LABELS[c.type] && (
                             <span style={{fontSize:10, fontWeight:600, color:cfg.color, opacity:0.75, background:"rgba(0,0,0,0.05)", padding:"1px 6px", borderRadius:8}}>{TYPE_LABELS[c.type]}</span>
                           )}
                         </div>
-                        <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555", lineHeight:1.5}}>{c.reason}</div>
+                        <div style={{fontSize:12, color:"#555", lineHeight:1.5}}>{c.reason}</div>
                       </div>
                     );
                   })}
@@ -1842,11 +1842,11 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
               <div style={{fontSize:10, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>Positive Attributes</div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 {analysis.positives.map((p, i) => (
-                  <div key={i} style={{padding:"8px 12px", borderRadius:10, background:isDark?"#1a2a1a":"#f0fdf4", border:"1px solid #bbf7d0", display:"flex", alignItems:"flex-start", gap:8}}>
+                  <div key={i} style={{padding:"8px 12px", borderRadius:10, background:"#f0fdf4", border:"1px solid #bbf7d0", display:"flex", alignItems:"flex-start", gap:8}}>
                     <span style={{color:"#16a34a", fontWeight:700, fontSize:14, flexShrink:0}}>✓</span>
                     <div>
                       <div style={{fontSize:12, fontWeight:700, color:"#16a34a", marginBottom:2}}>{p.attribute}</div>
-                      {p.reason && <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555", lineHeight:1.5}}>{p.reason}</div>}
+                      {p.reason && <div style={{fontSize:12, color:"#555", lineHeight:1.5}}>{p.reason}</div>}
                     </div>
                   </div>
                 ))}
@@ -1855,11 +1855,11 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
           )}
 
           {!hasAny && (
-            <div style={{fontSize:13, color:isDark?"#6ee7b7":"#555", marginTop:10, fontStyle:"italic"}}>No specific substance concerns identified.</div>
+            <div style={{fontSize:13, color:"#555", marginTop:10, fontStyle:"italic"}}>No specific substance concerns identified.</div>
           )}
 
           {analysis.confidence_note && analysis.confidence !== "high" && (
-            <div style={{fontSize:11, color:isDark?"#6ee7b7":"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
+            <div style={{fontSize:11, color:"#999", marginTop:10, display:"flex", alignItems:"center", gap:4}}>
               <IcoInfo size={12}/> {analysis.confidence_note}
             </div>
           )}
@@ -1870,17 +1870,17 @@ const ProductInsightsDropdown = ({analysis, category, isDark}) => {
 };
 
 // Backward-compat alias
-const FoodAnalysisDropdown = ({food, isDark}) => (
-  <ProductInsightsDropdown analysis={food} category="food_beverage" isDark={isDark}/>
+const FoodAnalysisDropdown = ({food}) => (
+  <ProductInsightsDropdown analysis={food} category="food_beverage"/>
 );
 
 // ── DIMENSION DROPDOWN — reusable for all 4 main dimensions ──
-const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => {
+const DimensionDropdown = ({icon, label, score, concerns, children}) => {
   const [open, setOpen] = useState(false);
   const isHigh      = score > 6;
-  const color       = isHigh ? "#dc2626" : (isDark ? "#6ee7b7" : "#555");
-  const bg          = isHigh ? (isDark ? "#2a1a1a" : "#fef2f2") : (isDark ? "#0f2a18" : "#f9fafb");
-  const borderColor = isHigh ? "#fecaca" : (isDark ? "rgba(34,197,94,0.15)" : "#e5e7eb");
+  const color       = isHigh ? "var(--score-red)" : "var(--ink-soft)";
+  const bg          = isHigh ? "var(--score-red-soft)" : "var(--cream-light)";
+  const borderColor = isHigh ? "var(--score-red)" : "var(--rule)";
   return (
     <div style={{marginBottom:10, borderRadius:14, overflow:"hidden", border:`1.5px solid ${borderColor}`, background:bg, textAlign:"left"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", background:"none", border:"none", cursor:"pointer", gap:8}}>
@@ -1900,7 +1900,7 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
               {concerns.map((c,i)=>(
                 <div key={i} style={{display:"flex", alignItems:"flex-start", gap:8}}>
                   <span style={{color, fontSize:14, lineHeight:1.5, flexShrink:0, marginTop:1}}>•</span>
-                  <span style={{fontSize:13, color:isDark?"#6ee7b7":"#555", lineHeight:1.5, textAlign:"left"}}>{c}</span>
+                  <span style={{fontSize:13, color:"#555", lineHeight:1.5, textAlign:"left"}}>{c}</span>
                 </div>
               ))}
             </div>
@@ -1913,13 +1913,13 @@ const DimensionDropdown = ({icon, label, score, concerns, children, isDark}) => 
 
 // ── MANUFACTURING BADGE — smaller, always shows estimated ──
 // ── LEGACY SHIMS — kept so other code that references these doesn't break ──
-const PlasticScoreDropdown = ({result, isDark, muted}) => null;
-const HealthScoreDropdown  = ({result, isDark, muted}) => null;
+const PlasticScoreDropdown = ({result, muted}) => null;
+const HealthScoreDropdown  = ({result, muted}) => null;
 
 // ── SUGGESTION BOX ────────────────────────────────────────────
 // Users can suggest a product they want scored. Appears at the bottom
 // of the home page. Submits to /suggest, shows in admin panel.
-const SuggestionBox = ({isDark, isMobile, surface, border, text, muted, user}) => {
+const SuggestionBox = ({isMobile, surface, border, text, muted, user}) => {
   const [name, setName]     = useState("");
   const [email, setEmail]   = useState("");
   const [status, setStatus] = useState(null);
@@ -1959,18 +1959,18 @@ const SuggestionBox = ({isDark, isMobile, surface, border, text, muted, user}) =
               value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && submit()}
               placeholder="e.g. Stanley Quencher tumbler, Olaplex No. 3..."
-              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
             />
             {!user && (
               <input
                 value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="Email (optional — to get notified)"
-                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
+                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
               />
             )}
             <button onClick={submit} disabled={!name.trim() || status === "sending"} style={{
               width:"100%", padding:"12px", borderRadius:10, border:"none",
-              background: name.trim() ? "#16a34a" : isDark ? "#0f2a18" : "#e2e8f0",
+              background: name.trim() ? "#16a34a" : "#e2e8f0",
               color: name.trim() ? "#fff" : muted,
               fontSize:14, fontWeight:700, cursor: name.trim() ? "pointer" : "default",
               opacity: status === "sending" ? 0.6 : 1,
@@ -1989,7 +1989,7 @@ const SuggestionBox = ({isDark, isMobile, surface, border, text, muted, user}) =
 // Collapsible "How we got this score" panel that shows the triggered
 // substance floors, dimension breakdown, and child/pregnancy bumps.
 // Builds user trust by making the sophisticated scoring logic visible.
-const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode, pregnancyMode}) => {
+const ScoreExplainer = ({result, text, muted, surface, border, childMode, pregnancyMode}) => {
   const [open, setOpen] = useState(false);
   const score = result.overall_score || result.score;
 
@@ -2041,7 +2041,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
                   return (
                     <div key={key} style={{display:"flex", alignItems:"center", gap:12, fontSize:13}}>
                       <div style={{flex:"0 0 130px", color:text, fontWeight:500}}>{label}</div>
-                      <div style={{flex:1, height:6, background:isDark?"#0f2a18":"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
+                      <div style={{flex:1, height:6, background:"#f1f5f9", borderRadius:3, overflow:"hidden"}}>
                         <div style={{width:`${s*10}%`, height:"100%", background:c, borderRadius:3}}/>
                       </div>
                       <div style={{flex:"0 0 44px", textAlign:"right"}}><ScoreBadge score={s} size="xs" showLabel /></div>
@@ -2058,7 +2058,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
               <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Flags that raised this score</div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 {substanceFlags.slice(0,8).map((flag, i) => (
-                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a1a":"#fff1f2", borderRadius:8, borderLeft:"3px solid #dc2626", fontSize:12, color:isDark?"#fecaca":"#7f1d1d", lineHeight:1.5}}>
+                  <div key={i} style={{padding:"8px 12px", background:"#fff1f2", borderRadius:8, borderLeft:"3px solid #dc2626", fontSize:12, color:"#7f1d1d", lineHeight:1.5}}>
                     {typeof flag === "string" ? flag : (flag.reason || flag.concern || JSON.stringify(flag))}
                   </div>
                 ))}
@@ -2074,7 +2074,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
               </div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 {childBumps.slice(0, 6).map((bump, i) => (
-                  <div key={i} style={{padding:"8px 12px", background:isDark?"#2a1a1f":"#fdf2f8", borderRadius:8, borderLeft:"3px solid #9d174d", fontSize:12, color:isDark?"#fbcfe8":"#831843", lineHeight:1.5}}>
+                  <div key={i} style={{padding:"8px 12px", background:"#fdf2f8", borderRadius:8, borderLeft:"3px solid #9d174d", fontSize:12, color:"#831843", lineHeight:1.5}}>
                     {bump}
                   </div>
                 ))}
@@ -2090,7 +2090,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
               </div>
               <div style={{display:"flex", flexDirection:"column", gap:6}}>
                 {pregnancyBumps.slice(0, 6).map((bump, i) => (
-                  <div key={i} style={{padding:"8px 12px", background:isDark?"#1e1a2e":"#fdf4e7", borderRadius:8, borderLeft:"3px solid #c8781a", fontSize:12, color:isDark?"#ddd6fe":"#5b21b6", lineHeight:1.5}}>
+                  <div key={i} style={{padding:"8px 12px", background:"#fdf4e7", borderRadius:8, borderLeft:"3px solid #c8781a", fontSize:12, color:"#5b21b6", lineHeight:1.5}}>
                     {bump}
                   </div>
                 ))}
@@ -2111,7 +2111,7 @@ const ScoreExplainer = ({result, isDark, text, muted, surface, border, childMode
 // ── FEEDBACK BUTTON ───────────────────────────────────────────
 // "Report this score" button on the result page. Collapses into a form
 // when clicked, submits to /score-feedback, shows success confirmation.
-const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) => {
+const FeedbackButton = ({result, text, muted, border, surface, user}) => {
   const [open, setOpen]         = useState(false);
   const [tier, setTier]         = useState("");
   const [note, setNote]         = useState("");
@@ -2144,7 +2144,7 @@ const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) =>
 
   if (status === "sent") {
     return (
-      <div style={{padding:"12px 16px", borderRadius:12, background:isDark?"#052e16":"#f0fdf4", border:`1px solid ${isDark?"#14532d":"#bbf7d0"}`, textAlign:"center"}}>
+      <div style={{padding:"12px 16px", borderRadius:12, background:"#f0fdf4", border:`1px solid ${"#bbf7d0"}`, textAlign:"center"}}>
         <div style={{fontSize:13, fontWeight:700, color:"#16a34a"}}>Thanks — feedback received</div>
         <div style={{fontSize:12, color:muted, marginTop:2}}>We review every report to improve scores.</div>
       </div>
@@ -2183,7 +2183,7 @@ const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) =>
           <button key={opt.key} onClick={()=>setTier(opt.key)} style={{
             textAlign:"left", padding:"10px 12px", borderRadius:8,
             border:`1.5px solid ${tier === opt.key ? "#16a34a" : border}`,
-            background: tier === opt.key ? (isDark?"#052e16":"#f0fdf4") : "none",
+            background: tier === opt.key ? ("#f0fdf4") : "none",
             color: tier === opt.key ? "#16a34a" : text,
             fontSize:13, fontWeight: tier === opt.key ? 700 : 500, cursor:"pointer",
           }}>{opt.label}</button>
@@ -2195,14 +2195,14 @@ const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) =>
         maxLength={500}
         style={{
           width:"100%", minHeight:60, padding:"10px 12px", borderRadius:8,
-          border:`1px solid ${border}`, background:isDark?"#0f1923":"#fff",
+          border:`1px solid ${border}`, background:"#fff",
           color:text, fontSize:13, fontFamily:"inherit", resize:"vertical",
           boxSizing:"border-box", marginBottom:10, outline:"none",
         }}
       />
       <button onClick={submit} disabled={!tier || status === "sending"} style={{
         width:"100%", padding:"11px", borderRadius:10, border:"none",
-        background: tier ? "#16a34a" : (isDark?"#0f2a18":"#e2e8f0"),
+        background: tier ? "#16a34a" : ("#e2e8f0"),
         color: tier ? "#fff" : muted,
         fontSize:14, fontWeight:700, cursor: tier ? "pointer" : "default",
         opacity: status === "sending" ? 0.6 : 1,
@@ -2217,7 +2217,7 @@ const FeedbackButton = ({result, isDark, text, muted, border, surface, user}) =>
 // ── PRODUCT CARD ─────────────────────────────────────────────
 
 // ── PRODUCT CARD ─────────────────────────────────────────────
-const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => {
+const ProductCard = ({product, altSource="amazon", childMode=false}) => {
   const cat = categoryMeta[product.category] || categoryMeta.other;
   const amazonFallback = `https://www.amazon.com/s?k=${encodeURIComponent((product.brand ? product.brand + " " : "") + product.name)}&tag=partiqule-20`;
   const linkUrl = altSource === "brand" ? getBrandUrl(product.brand, product.name)
@@ -2228,9 +2228,9 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
 
   const cardStyle = {
     textDecoration:"none", display:"block",
-    background:isDark?"#0f2a18":"#fff",
+    background:"#fff",
     borderRadius:12, padding:"18px 22px",
-    border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e8e8e8"}`,
+    border:`1.5px solid ${"#e8e8e8"}`,
     transition:"border-color 0.2s, box-shadow 0.2s",
     cursor: hasLink ? "pointer" : "default",
     WebkitTapHighlightColor:"transparent",
@@ -2249,14 +2249,14 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:3}}>
           <div>
             <div style={{fontSize:11, color:"#888", textTransform:"uppercase", letterSpacing:"0.05em"}}>{product.brand}</div>
-            <div style={{fontSize:15, fontWeight:700, color:isDark?"#f0fdf4":"#111", fontFamily:"'DM Sans', system-ui, sans-serif", lineHeight:1.3}}>{product.name}</div>
+            <div style={{fontSize:15, fontWeight:700, color:"#111", fontFamily:"'DM Sans', system-ui, sans-serif", lineHeight:1.3}}>{product.name}</div>
           </div>
           <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:3, flexShrink:0}}>
             <ScoreBadge score={childMode && product.child_score != null ? product.child_score : product.score} size="xs" showLabel />
             <div style={{background:cat.bg, color:cat.color, fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:20}}>{cat.label}</div>
           </div>
         </div>
-        <div style={{fontSize:13, color:isDark?"#6ee7b7":"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
+        <div style={{fontSize:13, color:"#666", lineHeight:1.5}}>{product.material}{product.description ? ` — ${product.description}` : ""}</div>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:10}}>
           <div style={{display:"flex", alignItems:"center", gap:6}}>
             <span style={{fontSize:15, fontWeight:700, color:"#16a34a", fontFamily:"'DM Sans', system-ui, sans-serif"}}>{product.price}</span>
@@ -2278,7 +2278,7 @@ const ProductCard = ({product, isDark, altSource="amazon", childMode=false}) => 
       onClick={()=>track("Affiliate Click", {product: product.name, brand: product.brand, category: product.category})}
       style={cardStyle}
       onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.boxShadow="0 4px 24px rgba(22,163,74,0.12)";}}
-      onMouseLeave={e=>{e.currentTarget.style.borderColor=isDark?"rgba(34,197,94,0.15)":"#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
+      onMouseLeave={e=>{e.currentTarget.style.borderColor="#e8e8e8"; e.currentTarget.style.boxShadow="none";}}>
       {inner}
     </a>
   );
@@ -2401,7 +2401,7 @@ const GuideBody = ({html}) => (
 );
 
 // Guides index page
-const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}) => {
+const GuidesPage = ({text, muted, surface, border, isMobile, onNavigate}) => {
   const [guides, setGuides]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState("all");
@@ -2441,8 +2441,8 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
           {["all",...GUIDE_CATEGORIES].map(cat=>(
             <button key={cat} onClick={()=>setFilter(cat)} style={{
               padding:"6px 16px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
-              background:filter===cat?(CATEGORY_COLORS[cat]||"#052e16"):(isDark?"#0f2a18":"#f1f5f9"),
-              color:filter===cat?"#fff":(isDark?"#6ee7b7":"#64748b"),
+              background:filter===cat?(CATEGORY_COLORS[cat]||"#052e16"):("#f1f5f9"),
+              color:filter===cat?"#fff":("#64748b"),
               transition:"all 0.15s",
             }}>{cat.charAt(0).toUpperCase()+cat.slice(1)}</button>
           ))}
@@ -2506,7 +2506,7 @@ const GuidesPage = ({isDark, text, muted, surface, border, isMobile, onNavigate}
 };
 
 // Individual guide page
-const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, onNavigate, onScan}) => {
+const GuideViewPage = ({text, muted, surface, border, isMobile, slug, onNavigate, onScan}) => {
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -2565,7 +2565,7 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 
       {/* Category + meta */}
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#2d5a27",textTransform:"uppercase",letterSpacing:"0.08em",background:isDark?"#0f2a18":"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
+        <span style={{fontSize:12,fontWeight:700,color:CATEGORY_COLORS[guide.category]||"#2d5a27",textTransform:"uppercase",letterSpacing:"0.08em",background:"#f1f5f9",padding:"4px 12px",borderRadius:20}}>{guide.category}</span>
         <span style={{fontSize:13,color:muted}}>{guide.read_time_minutes} min read</span>
       </div>
 
@@ -2613,7 +2613,7 @@ const GuideViewPage = ({isDark, text, muted, surface, border, isMobile, slug, on
 };
 
 // Guide admin — write and publish guides
-const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
+const GuideAdminPage = ({text, muted, surface, border, isMobile}) => {
   const [guides, setGuides]         = useState([]);
   const [editing, setEditing]       = useState(null); // null = list, {} = new/edit
   const [saving, setSaving]         = useState(false);
@@ -2679,10 +2679,10 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
   const inp = (val,set,ph,type="text",rows) => rows ? (
     <textarea value={val} onChange={e=>set(e.target.value)} placeholder={ph} rows={rows}
-      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
+      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:"#fff",color:text,fontSize:14,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/>
   ) : (
     <input type={type} value={val} onChange={e=>set(e.target.value)} placeholder={ph}
-      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,boxSizing:"border-box"}}/>
+      style={{width:"100%",padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:"#fff",color:text,fontSize:14,boxSizing:"border-box"}}/>
   );
 
   const label = (l) => <div style={{fontSize:12,fontWeight:700,color:muted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6,marginTop:16}}>{l}</div>;
@@ -2700,7 +2700,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
   const ToolbarBtn = ({label:l, onClick}) => (
     <button type="button" onClick={onClick}
-      style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:isDark?"#0f2a18":"#f1f5f9",color:text,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+      style={{padding:"4px 10px",borderRadius:6,border:`1px solid ${border}`,background:"#f1f5f9",color:text,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
       {l}
     </button>
   );
@@ -2734,8 +2734,8 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
           {GUIDE_CATEGORIES.map(c=>(
             <button key={c} type="button" onClick={()=>setCategory(c)}
               style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,
-                background:category===c?(CATEGORY_COLORS[c]||"#052e16"):(isDark?"#0f2a18":"#f1f5f9"),
-                color:category===c?"#fff":(isDark?"#6ee7b7":"#64748b")}}>
+                background:category===c?(CATEGORY_COLORS[c]||"#052e16"):("#f1f5f9"),
+                color:category===c?"#fff":("#64748b")}}>
               {c.charAt(0).toUpperCase()+c.slice(1)}
             </button>
           ))}
@@ -2759,7 +2759,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
         <textarea id="guide-body-editor" value={body} onChange={e=>setBody(e.target.value)}
           placeholder="Write your guide here using HTML tags, or use the toolbar buttons above..."
           rows={18}
-          style={{width:"100%",padding:"12px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14,fontFamily:"'DM Sans', system-ui, sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
+          style={{width:"100%",padding:"12px 14px",borderRadius:8,border:`1px solid ${border}`,background:"#fff",color:text,fontSize:14,fontFamily:"'DM Sans', system-ui, sans-serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.7}}/>
 
         {/* Preview */}
         {body && (
@@ -2774,7 +2774,7 @@ const GuideAdminPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {label("Read time (minutes)")}
         <input type="number" value={readTime} onChange={e=>setReadTime(e.target.value)} min={1} max={60}
-          style={{width:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#111":"#fff",color:text,fontSize:14}}/>
+          style={{width:100,padding:"10px 14px",borderRadius:8,border:`1px solid ${border}`,background:"#fff",color:text,fontSize:14}}/>
 
         <div style={{display:"flex",alignItems:"center",gap:12,marginTop:24}}>
           <button onClick={()=>setPublished(p=>!p)} style={{
@@ -2853,7 +2853,7 @@ const isOverBroadCard = (c) =>
   !(Array.isArray(c.specific_products) && c.specific_products.length) &&
   !(Array.isArray(c.ingredient_triggers) && c.ingredient_triggers.length);
 
-const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
+const IntelAdminPage = ({text, muted, surface, border}) => {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({headline:"",body:"",label:"EWG Alert",label_color:"#d97706",action_text:"Learn more",action_url:"",action_page:"",ingredient_triggers:"",category_triggers:[],source_name:"",source_url:"",priority:5,active:true});
@@ -2940,16 +2940,16 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
 
   const renderRetagPanel = (c) => {
     if (retagId !== c.id) return null;
-    const inputStyle = {width:"100%",padding:"8px 12px",borderRadius:8,border:`1px solid ${border}`,background:isDark?"#0d1220":"#fff",color:text,fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
+    const inputStyle = {width:"100%",padding:"8px 12px",borderRadius:8,border:`1px solid ${border}`,background:"#fff",color:text,fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
     return (
-      <div style={{marginTop:10,padding:"14px 16px",borderRadius:10,background:isDark?"#131929":"#f9fafb",border:`1px solid ${border}`}}>
+      <div style={{marginTop:10,padding:"14px 16px",borderRadius:10,background:"#f9fafb",border:`1px solid ${border}`}}>
         <div style={{fontSize:12,fontWeight:700,color:text,marginBottom:10}}>Retag targeting fields</div>
         <div style={{marginBottom:10}}>
           <div style={{fontSize:11,color:muted,marginBottom:6}}>product_families ({retagForm.product_families.length} selected)</div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {CANONICAL_FAMILIES.map(fam=>{
               const on = retagForm.product_families.includes(fam);
-              return <button key={fam} onClick={()=>setRetagForm(f=>({...f,product_families: on ? f.product_families.filter(x=>x!==fam) : [...f.product_families,fam]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${on?"#16a34a":border}`,background:on?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:on?"#16a34a":muted,cursor:"pointer",fontFamily:"inherit"}}>{fam}</button>;
+              return <button key={fam} onClick={()=>setRetagForm(f=>({...f,product_families: on ? f.product_families.filter(x=>x!==fam) : [...f.product_families,fam]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${on?"#16a34a":border}`,background:on?("#f0fdf4"):"none",color:on?"#16a34a":muted,cursor:"pointer",fontFamily:"inherit"}}>{fam}</button>;
             })}
           </div>
         </div>
@@ -2978,7 +2978,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
       <div style={{marginBottom:20}}>
         <button onClick={runFeedNow} disabled={feedRunning} style={{padding:"10px 20px",borderRadius:10,background:feedRunning?muted:"#16a34a",color:"#fff",border:"none",fontWeight:700,fontSize:14,cursor:feedRunning?"not-allowed":"pointer"}}>{feedRunning?"Running...":"Run feed now"}</button>
         {feedResult&&(
-          <div style={{marginTop:12,padding:"12px 16px",borderRadius:10,fontSize:12,background:isDark?"#1e2433":"#f8faff",border:`1px solid ${border}`,color:text}}>
+          <div style={{marginTop:12,padding:"12px 16px",borderRadius:10,fontSize:12,background:"#f8faff",border:`1px solid ${border}`,color:text}}>
             <div style={{fontWeight:700,marginBottom:6}}>Feed run complete</div>
             <div style={{color:muted}}>Feeds checked: {feedResult.feeds_checked}</div>
             <div style={{color:muted}}>Articles found: {feedResult.articles_found}</div>
@@ -2996,7 +2996,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
             {draftCards.map(c=>{
               const overBroad = isOverBroadCard(c);
               return (
-              <div key={c.id} style={{padding:"12px 16px",borderRadius:12,background:isDark?"#2a1a00":"#fffbeb",border:"1px solid #fde68a"}}>
+              <div key={c.id} style={{padding:"12px 16px",borderRadius:12,background:"#fffbeb",border:"1px solid #fde68a"}}>
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -3057,28 +3057,28 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
       <div style={{background:surface,borderRadius:14,border:`1.5px solid ${border}`,padding:"20px"}}>
         <div style={{fontSize:14,fontWeight:700,color:text,marginBottom:16}}>Create new card</div>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          <input value={form.headline} onChange={e=>setForm(f=>({...f,headline:e.target.value}))} placeholder="Headline" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
-          <textarea value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))} placeholder="Body text" rows={3} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none",resize:"vertical"}}/>
+          <input value={form.headline} onChange={e=>setForm(f=>({...f,headline:e.target.value}))} placeholder="Headline" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          <textarea value={form.body} onChange={e=>setForm(f=>({...f,body:e.target.value}))} placeholder="Body text" rows={3} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none",resize:"vertical"}}/>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <input value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))} placeholder="Label (e.g. EWG Alert)" style={{flex:1,minWidth:150,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))} placeholder="Label (e.g. EWG Alert)" style={{flex:1,minWidth:150,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
             <div style={{display:"flex",gap:4,alignItems:"center"}}>
               {colorPresets.map(([c,n])=><button key={c} onClick={()=>setForm(f=>({...f,label_color:c}))} title={n} style={{width:24,height:24,borderRadius:6,background:c,border:form.label_color===c?"2px solid #fff":"2px solid transparent",cursor:"pointer"}}/>)}
             </div>
           </div>
-          <input value={form.ingredient_triggers} onChange={e=>setForm(f=>({...f,ingredient_triggers:e.target.value}))} placeholder="Ingredient triggers (comma-separated, e.g. Red 40, BHT)" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+          <input value={form.ingredient_triggers} onChange={e=>setForm(f=>({...f,ingredient_triggers:e.target.value}))} placeholder="Ingredient triggers (comma-separated, e.g. Red 40, BHT)" style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
           <div>
             <div style={{fontSize:12,color:muted,marginBottom:6}}>Category triggers</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {catOptions.map(cat=><button key={cat} onClick={()=>setForm(f=>({...f,category_triggers:f.category_triggers.includes(cat)?f.category_triggers.filter(c=>c!==cat):[...f.category_triggers,cat]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${form.category_triggers.includes(cat)?"#16a34a":border}`,background:form.category_triggers.includes(cat)?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:form.category_triggers.includes(cat)?"#16a34a":muted,cursor:"pointer"}}>{cat}</button>)}
+              {catOptions.map(cat=><button key={cat} onClick={()=>setForm(f=>({...f,category_triggers:f.category_triggers.includes(cat)?f.category_triggers.filter(c=>c!==cat):[...f.category_triggers,cat]}))} style={{fontSize:11,padding:"4px 10px",borderRadius:20,border:`1px solid ${form.category_triggers.includes(cat)?"#16a34a":border}`,background:form.category_triggers.includes(cat)?("#f0fdf4"):"none",color:form.category_triggers.includes(cat)?"#16a34a":muted,cursor:"pointer"}}>{cat}</button>)}
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <input value={form.action_text} onChange={e=>setForm(f=>({...f,action_text:e.target.value}))} placeholder="Action text" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
-            <input value={form.action_url} onChange={e=>setForm(f=>({...f,action_url:e.target.value}))} placeholder="Action URL (optional)" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.action_text} onChange={e=>setForm(f=>({...f,action_text:e.target.value}))} placeholder="Action text" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.action_url} onChange={e=>setForm(f=>({...f,action_url:e.target.value}))} placeholder="Action URL (optional)" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <input value={form.source_name} onChange={e=>setForm(f=>({...f,source_name:e.target.value}))} placeholder="Source name" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
-            <input value={form.source_url} onChange={e=>setForm(f=>({...f,source_url:e.target.value}))} placeholder="Source URL" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:isDark?"#131929":"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.source_name} onChange={e=>setForm(f=>({...f,source_name:e.target.value}))} placeholder="Source name" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
+            <input value={form.source_url} onChange={e=>setForm(f=>({...f,source_url:e.target.value}))} placeholder="Source URL" style={{flex:1,padding:"10px 14px",borderRadius:10,border:`1px solid ${border}`,background:"#f9fafb",color:text,fontSize:14,outline:"none"}}/>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontSize:12,color:muted}}>Priority: {form.priority}</span>
@@ -3092,7 +3092,7 @@ const IntelAdminPage = ({isDark, text, muted, surface, border}) => {
   );
 };
 
-const AdminPage = ({isDark, surface, border, text, muted, history: historyProp = []}) => {
+const AdminPage = ({surface, border, text, muted, history: historyProp = []}) => {
   const [adminTab, setAdminTab] = useState("dashboard"); // dashboard | guides
   const [cacheStatus, setCacheStatus]   = useState(null);
   const [clearing, setClearing]         = useState(false);
@@ -3308,9 +3308,9 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
       </div>
 
       {adminTab==="intel" ? (
-        <IntelAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border}/>
+        <IntelAdminPage text={text} muted={muted} surface={surface} border={border}/>
       ) : adminTab==="guides" ? (
-        <GuideAdminPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={false}/>
+        <GuideAdminPage text={text} muted={muted} surface={surface} border={border} isMobile={false}/>
       ) : adminTab==="scores" ? (
         <div>
           {/* Search + filter bar */}
@@ -3355,7 +3355,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontWeight:700, fontSize:15, color:text, marginBottom:3, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{s.product_name}</div>
                     <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap", marginBottom:flags.length?6:0}}>
-                      <span style={{fontSize:11, fontWeight:600, color:muted, background:isDark?"#1e293b":"#f1f5f9", padding:"2px 8px", borderRadius:6}}>{(s.category||"other").replace(/_/g," ")}</span>
+                      <span style={{fontSize:11, fontWeight:600, color:muted, background:"#f1f5f9", padding:"2px 8px", borderRadius:6}}>{(s.category||"other").replace(/_/g," ")}</span>
                       {s.confidence && <span style={{fontSize:11, color:muted}}>{s.confidence} confidence</span>}
                       {s.child_score && s.child_score !== sc && (
                         <span style={{fontSize:11, fontWeight:600, color:"#60a5fa", display:"flex", alignItems:"center", gap:3}}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 018 0v2"/></svg>Kids: {s.child_score}/10</span>
@@ -3420,7 +3420,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             {buckets.map((b,i) => (
               <div key={i} style={{display:"flex", alignItems:"center", gap:12}}>
                 <div style={{fontSize:13, fontWeight:700, color:b.color, width:36, flexShrink:0}}>{b.label}</div>
-                <div style={{flex:1, height:28, background:isDark?"#0f2a18":"#f1f5f9", borderRadius:6, overflow:"hidden"}}>
+                <div style={{flex:1, height:28, background:"#f1f5f9", borderRadius:6, overflow:"hidden"}}>
                   <div style={{
                     width: b.pct + "%", height:"100%", background:b.color,
                     borderRadius:6, minWidth: b.count > 0 ? 4 : 0,
@@ -3457,7 +3457,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
           <div style={sectionHead}>Top scanned categories</div>
           <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
             {topCats.map(([cat, count]) => (
-              <div key={cat} style={{background:isDark?"#0f2a18":"#f1f5f9", borderRadius:8, padding:"6px 14px", fontSize:13}}>
+              <div key={cat} style={{background:"#f1f5f9", borderRadius:8, padding:"6px 14px", fontSize:13}}>
                 <span style={{color:text, fontWeight:600}}>{cat}</span>
                 <span style={{color:muted, marginLeft:6}}>{count}</span>
               </div>
@@ -3501,7 +3501,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             value={testQuery} onChange={e => setTestQuery(e.target.value)}
             onKeyDown={e => e.key === "Enter" && runTestScan()}
             placeholder="e.g. Honey Nut Cheerios, Pampers Swaddlers, Tide pods..."
-            style={{flex:1, padding:"10px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:14, outline:"none"}}
+            style={{flex:1, padding:"10px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:"#fff", color:text, fontSize:14, outline:"none"}}
           />
           <button onClick={runTestScan} disabled={testLoading} style={{padding:"10px 24px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", opacity: testLoading ? 0.6 : 1}}>
             {testLoading ? "Scanning…" : "Scan"}
@@ -3509,7 +3509,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         </div>
 
         {testResult && (
-          <div style={{background:isDark?"#0f1923":"#f8fafb", borderRadius:12, padding:"16px 20px", border:`1px solid ${border}`}}>
+          <div style={{background:"#f8fafb", borderRadius:12, padding:"16px 20px", border:`1px solid ${border}`}}>
             {testResult.error ? (
               <div style={{color:"#dc2626", fontSize:13}}>{testResult.error}</div>
             ) : (
@@ -3530,7 +3530,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                 {testResult.dimension_scores && (
                   <div style={{marginTop:12, display:"flex", gap:8, flexWrap:"wrap"}}>
                     {Object.entries(testResult.dimension_scores).map(([k,v]) => (
-                      <div key={k} style={{background:isDark?"#0f2a18":"#fff", borderRadius:8, padding:"4px 10px", fontSize:11, border:`1px solid ${border}`}}>
+                      <div key={k} style={{background:"#fff", borderRadius:8, padding:"4px 10px", fontSize:11, border:`1px solid ${border}`}}>
                         <span style={{color:muted}}>{k}: </span><span style={{fontWeight:700, color:text}}>{v}</span>
                       </div>
                     ))}
@@ -3550,7 +3550,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             {history.slice(0,12).map((h,i) => {
               const score = h.score || h.overall_score || 0;
               return (
-                <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:isDark?"#0f2a18":"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
+                <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 12px", background:"#f8fafb", borderRadius:8, border:`1px solid ${border}`}}>
                   <div style={{flex:1}}>
                     <span style={{fontSize:13, fontWeight:600, color:text}}>{h.product_name}</span>
                     <span style={{fontSize:11, color:muted, marginLeft:8}}>{h.category}</span>
@@ -3588,7 +3588,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                 other:           "Other",
               }[f.suggested_tier] || f.suggested_tier;
               return (
-                <div key={f.id} style={{padding:"12px 14px", background:isDark?"#0f1923":"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
+                <div key={f.id} style={{padding:"12px 14px", background:"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
                   <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:8}}>
                     <div style={{flex:1, minWidth:0}}>
                       <div style={{fontSize:14, fontWeight:700, color:text}}>{f.product_name}</div>
@@ -3598,7 +3598,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
                     </div>
                     <div style={{background:tierColor, color:"#fff", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0}}>{tierLabel}</div>
                   </div>
-                  {f.note && <div style={{fontSize:12, color:muted, marginBottom:8, padding:"8px 10px", background:isDark?"#0f2a18":"#fff", borderRadius:6, borderLeft:`3px solid ${tierColor}`}}>{f.note}</div>}
+                  {f.note && <div style={{fontSize:12, color:muted, marginBottom:8, padding:"8px 10px", background:"#fff", borderRadius:6, borderLeft:`3px solid ${tierColor}`}}>{f.note}</div>}
                   {f.user_email && <div style={{fontSize:11, color:muted, marginBottom:8}}>from {f.user_email}</div>}
                   <div style={{display:"flex", gap:8}}>
                     <button onClick={() => { setTestQuery(f.product_name); runTestScan(); }} style={{padding:"6px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Rescan</button>
@@ -3618,29 +3618,29 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         <p style={{fontSize:12, color:muted, margin:"0 0 14px", lineHeight:1.5}}>Override or add product scores without a code deploy. Changes take effect within seconds and clear the product's cache automatically.</p>
 
         {/* Add new override form */}
-        <div style={{background:isDark?"#0f1923":"#f8fafb", borderRadius:10, padding:"14px 16px", border:`1px solid ${border}`, marginBottom:12}}>
+        <div style={{background:"#f8fafb", borderRadius:10, padding:"14px 16px", border:`1px solid ${border}`, marginBottom:12}}>
           <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Add / update override</div>
           <div style={{display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:8, marginBottom:8}}>
             <input
               value={newOverride.name} onChange={e=>setNewOverride({...newOverride, name:e.target.value})}
               placeholder="Product name (e.g. Huggies Little Movers)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
             />
             <input
               type="number" min="1" max="10" value={newOverride.floor} onChange={e=>setNewOverride({...newOverride, floor:e.target.value})}
               placeholder="Floor"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
             />
             <input
               type="number" min="1" max="10" value={newOverride.ceiling} onChange={e=>setNewOverride({...newOverride, ceiling:e.target.value})}
               placeholder="Ceiling"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
             />
           </div>
           <div style={{display:"grid", gridTemplateColumns:"1fr 2fr", gap:8, marginBottom:8}}>
             <select
               value={newOverride.category} onChange={e=>setNewOverride({...newOverride, category:e.target.value})}
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
             >
               {["food_beverage","beverage","baby","personal_care","home","kitchen","clothing","toy","supplement","restaurant","home_furnishing","accessory","other"].map(c =>
                 <option key={c} value={c}>{c}</option>
@@ -3649,16 +3649,16 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
             <input
               value={newOverride.substances} onChange={e=>setNewOverride({...newOverride, substances:e.target.value})}
               placeholder="Substances (comma-separated, e.g. Red 40, BHT)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13}}
+              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
             />
           </div>
           <textarea
             value={newOverride.reason} onChange={e=>setNewOverride({...newOverride, reason:e.target.value})}
             placeholder="Reason / summary (shown in app)"
-            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:isDark?"#0f2a18":"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
+            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
           />
           <button onClick={saveOverride} disabled={!newOverride.name.trim() || savingOverride}
-            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : isDark?"#0f2a18":"#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
+            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : "#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
             {savingOverride ? "Saving..." : "Save override"}
           </button>
         </div>
@@ -3667,7 +3667,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         {overrides.length > 0 && (
           <div style={{display:"flex", flexDirection:"column", gap:6}}>
             {overrides.map(o => (
-              <div key={o.name} style={{display:"flex", alignItems:"center", gap:12, padding:"8px 12px", background:isDark?"#0f1923":"#fff", borderRadius:8, border:`1px solid ${border}`}}>
+              <div key={o.name} style={{display:"flex", alignItems:"center", gap:12, padding:"8px 12px", background:"#fff", borderRadius:8, border:`1px solid ${border}`}}>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{fontSize:13, fontWeight:600, color:text}}>{o.name}</div>
                   <div style={{fontSize:11, color:muted, marginTop:1}}>
@@ -3692,7 +3692,7 @@ const AdminPage = ({isDark, surface, border, text, muted, history: historyProp =
         ) : (
           <div style={{display:"flex", flexDirection:"column", gap:8}}>
             {suggestions.map(s => (
-              <div key={s.id} style={{padding:"10px 14px", background:isDark?"#0f1923":"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
+              <div key={s.id} style={{padding:"10px 14px", background:"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
                 <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6}}>
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:14, fontWeight:700, color:text}}>{s.product_name}</div>
@@ -3729,7 +3729,7 @@ const CATEGORY_PRICE_ESTIMATES = {food:5,food_beverage:5.5,beverage:4.5,snack:4,
 
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
-const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
+const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
   const [priceFilter, setPriceFilter] = useState("all");
   const [viewMode, setViewMode] = useState("date");
   const avg = history.length ? Math.round(history.reduce((a,h)=>a+h.score,0)/history.length*10)/10 : 0;
@@ -3844,9 +3844,9 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
         <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Your <span style={{color:"var(--moss)"}}>shelf</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
-          <div style={{display:"flex", gap:4, background:isDark?"#1e2433":"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
+          <div style={{display:"flex", gap:4, background:"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
             {[["date","By date"],["room","By room"]].map(([mode,label])=>(
-              <button key={mode} onClick={()=>setViewMode(mode)} style={{padding:"5px 12px", borderRadius:8, border:"none", background:viewMode===mode?(isDark?"#2a3347":"#fff"):"none", color:viewMode===mode?text:muted, fontSize:12, fontWeight:viewMode===mode?600:400, cursor:"pointer"}}>{label}</button>
+              <button key={mode} onClick={()=>setViewMode(mode)} style={{padding:"5px 12px", borderRadius:8, border:"none", background:viewMode===mode?("#fff"):"none", color:viewMode===mode?text:muted, fontSize:12, fontWeight:viewMode===mode?600:400, cursor:"pointer"}}>{label}</button>
             ))}
           </div>
         </div>
@@ -3890,7 +3890,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 
           {/* Month-over-month comparison */}
           {thisMonthScans.length >= 3 && (
-            <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`, marginBottom:24}}>
+            <div style={{background:"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${"#bbf7d0"}`, marginBottom:24}}>
               <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:16, flexWrap:"wrap"}}>
                 <div style={{flex:1, minWidth:200}}>
                   <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6}}>This month</div>
@@ -3962,7 +3962,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
             );
 
             return (
-              <div style={{marginBottom:40, background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, overflow:"hidden"}}>
+              <div style={{marginBottom:40, background:"#f0fdf4", borderRadius:16, border:`1.5px solid ${"#bbf7d0"}`, overflow:"hidden"}}>
                 <button onClick={()=>setExpanded(e=>!e)} style={{width:"100%", padding:"16px 20px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
                   <div style={{textAlign:"left"}}>
                     <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3}}>
@@ -3977,7 +3977,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                 </button>
 
                 {expanded && (
-                  <div style={{padding:"0 20px 20px", borderTop:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+                  <div style={{padding:"0 20px 20px", borderTop:`1px solid ${"#bbf7d0"}`}}>
 
                     {/* Household inputs */}
                     <div style={{display:"flex", gap:20, marginTop:16, marginBottom:16}}>
@@ -4004,7 +4004,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
                     )}
 
                     {/* Total exposure summary */}
-                    <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#d1fae5"}`}}>
+                    <div style={{background:"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#d1fae5"}`}}>
                       <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>
                         If you switched every high-risk product
                       </div>
@@ -4169,7 +4169,7 @@ const HistoryPage = ({history, isDark, surface, border, text, muted, onSelect, o
 // ── BARCODE SCANNER ───────────────────────────────────────────
 
 
-const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNavigate}) => {
+const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate}) => {
   return (
     <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
 
@@ -4267,7 +4267,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
         </div>
 
         {/* Founders story */}
-        <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:16}}>
+        <div style={{background:"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${"#bbf7d0"}`, marginBottom:16}}>
           <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we started Partiqule</div>
           <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
             We started Partiqule after what we now call our awakening to product health.
@@ -4289,7 +4289,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
           </p>
         </div>
 
-        <div style={{padding:"14px 18px", background:isDark?"#0f2a18":"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
+        <div style={{padding:"14px 18px", background:"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
           <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
             Learn more:{" "}
             <span onClick={()=>onNavigate("science")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>The Science</span>
@@ -4329,7 +4329,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
         <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
           We also use Claude Haiku, Anthropic's most efficient model, specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy and cache results so the same product is never scored twice unnecessarily.
         </p>
-        <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:14, padding:"20px 24px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+        <div style={{background:"#f0fdf4", borderRadius:14, padding:"20px 24px", border:`1px solid ${"#bbf7d0"}`}}>
           <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:8}}>Our commitment</div>
           <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:0}}>
             As Partiqule grows, we'll publish an annual transparency note on our AI usage, water and energy estimates, and what we're doing to reduce them. We believe the tools that expose environmental harm should hold themselves to the same standard.
@@ -4351,7 +4351,7 @@ const AboutPage = ({isDark, text, muted, surface, border, isMobile, onScan, onNa
 };
 
 // ── METHODOLOGY PAGE ──────────────────────────────────────────
-const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
+const MethodologyPage = ({text, muted, surface, border, isMobile}) => {
   const steps = [
     {
       number: "01",
@@ -4613,7 +4613,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       </div>
 
       {/* Founders callout */}
-      <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"24px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, marginBottom:48}}>
+      <div style={{background:"#f0fdf4", borderRadius:16, padding:"24px", border:`1px solid ${"#bbf7d0"}`, marginBottom:48}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>About the founders</div>
         <p style={{fontSize:15, color:muted, lineHeight:1.8, margin:0}}>
           Partiqule was built by <strong style={{color:text}}>Paul and Sara Miller</strong>, who bring a combined 20 years of experience across technology, compliance, and audit. The scoring methodology, parameters, and quality review processes described on this page were designed and are maintained by them — not generated by AI. The AI applies the framework; Paul and Sara built it.
@@ -4905,14 +4905,14 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Category formula table */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Category Formulas — applied server-side, AI cannot override</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>Manufacturing removed — too inconsistent to measure fairly. All weights sum to 100%.</div>
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%", borderCollapse:"collapse", fontSize:isMobile?11:13}}>
               <thead>
-                <tr style={{background:isDark?"#1a2030":"#f1f5f9"}}>
+                <tr style={{background:"#f1f5f9"}}>
                   {["Category","Ingredients / Materials","Exposure","Packaging","Sustainability","Why"].map((h,i)=>(
                     <th key={i} style={{padding:"10px 14px", textAlign:"left", fontWeight:700, color:text, fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em", whiteSpace:"nowrap", borderBottom:`1px solid ${border}`}}>{h}</th>
                   ))}
@@ -4931,7 +4931,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                   {cat:"Home",         m:"30%", u:"45%", pk:"10%", s:"15%", why:"Inhalation and residue contact from cleaners, candles, and rugs is the primary story."},
                   {cat:"Baby",         m:"55%", u:"40%", pk:"5%",  s:"0%",  why:"Developing systems and higher skin absorption. Sustainability is secondary to safety."},
                 ].map((row, i) => (
-                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background: i%2===0 ? "transparent" : isDark?"#1a2030":"#fafafa"}}>
+                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background: i%2===0 ? "transparent" : "#fafafa"}}>
                     <td style={{padding:"10px 14px", fontWeight:700, color:text, whiteSpace:"nowrap"}}>{row.cat}</td>
                     <td style={{padding:"10px 14px", color:"#16a34a", fontWeight:700}}>{row.m}</td>
                     <td style={{padding:"10px 14px", color:muted}}>{row.u}</td>
@@ -4947,14 +4947,14 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* NOVA processing modifier */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>NOVA Processing Level — applied before substance scoring</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>The biggest predictor of food risk after specific substances. Ultra-processed formulations (NOVA 4) start with a structural materials penalty regardless of individual ingredient claims.</div>
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%", borderCollapse:"collapse", fontSize:isMobile?11:13}}>
               <thead>
-                <tr style={{background:isDark?"#1a2030":"#f1f5f9"}}>
+                <tr style={{background:"#f1f5f9"}}>
                   {["Level","Description","Examples","Materials baseline"].map((h,i)=>(
                     <th key={i} style={{padding:"10px 14px", textAlign:"left", fontWeight:700, color:text, fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em", borderBottom:`1px solid ${border}`}}>{h}</th>
                   ))}
@@ -4967,7 +4967,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                   {level:"NOVA 3", desc:"Processed foods", ex:"Canned beans, cheese, cured meats, bread with simple ingredients, fermented foods", base:"2-4 — moderate"},
                   {level:"NOVA 4", desc:"Ultra-processed formulations — industrial ingredients not found in home kitchens", ex:"Breakfast cereals with synthetic dyes, packaged cookies, plant-based meat, most fast food, flavored chips", base:"5+ — structural penalty"},
                 ].map((row,i)=>(
-                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background:i%2===0?"transparent":isDark?"#1a2030":"#fafafa"}}>
+                  <tr key={i} style={{borderBottom:`1px solid ${border}`, background:i%2===0?"transparent":"#fafafa"}}>
                     <td style={{padding:"10px 14px", fontWeight:700, color:i===3?"#dc2626":text}}>{row.level}</td>
                     <td style={{padding:"10px 14px", color:muted, fontSize:12}}>{row.desc}</td>
                     <td style={{padding:"10px 14px", color:muted, fontSize:11}}>{row.ex}</td>
@@ -4981,7 +4981,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Sugar penalty */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Added Sugar Penalty — scored independently of other concerns</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>WHO recommends less than 25g added sugar per day. Most cereal, snack bars, and beverages are consumed daily — cumulative exposure matters.</div>
           </div>
@@ -4992,7 +4992,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {range:">10g added sugar per serving", penalty:"Materials +2", color:"#ea580c"},
               {range:">20g added sugar per serving", penalty:"Materials +3 — exceeds half the WHO daily limit in one serving", color:"#dc2626"},
             ].map((row,i)=>(
-              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:isDark?"#1a2433":"#f8fafc", border:`1px solid ${border}`}}>
+              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:"#f8fafc", border:`1px solid ${border}`}}>
                 <div style={{fontSize:13, color:text}}>{row.range}</div>
                 <div style={{fontSize:12, fontWeight:700, color:row.color, flexShrink:0, marginLeft:12}}>{row.penalty}</div>
               </div>
@@ -5002,7 +5002,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* IARC substance floors - updated */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>IARC Substance Floors — context-sensitive, not a blanket rule</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>IARC classifies the strength of evidence, not the dose. A trace of glyphosate in a multi-grain product is not the same as glyphosate as the primary ingredient in a children's cereal.</div>
           </div>
@@ -5039,7 +5039,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {
                 tier:"Speculative — hedged language only",
                 floor:"No floor applied",
-                color:"#6b7280", bg:isDark?"#0f2a18":"#f8fafc", border_:border,
+                color:"#6b7280", bg:"#f8fafc", border_:border,
                 examples:"\"May contain,\" \"possible trace,\" \"could include\" — stripped before floors are checked.",
                 note:"Speculation does not warrant a penalty regardless of how dangerous the theoretical substance is."
               },
@@ -5049,7 +5049,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                   <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.tier}</div>
                   <div style={{fontSize:12, fontWeight:700, color:item.color, background:"white", padding:"2px 10px", borderRadius:10, border:`1px solid ${item.border_}`, whiteSpace:"nowrap", flexShrink:0}}>{item.floor}</div>
                 </div>
-                <div style={{fontSize:12, color:isDark?"#6ee7b7":"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
+                <div style={{fontSize:12, color:"#374151", lineHeight:1.6, marginBottom:4}}><strong>Examples:</strong> {item.examples}</div>
                 <div style={{fontSize:11, color:item.color, fontStyle:"italic"}}>{item.note}</div>
               </div>
             ))}
@@ -5058,7 +5058,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Positive ceilings */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Positive Ceilings — clean products are protected from over-scoring</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>We have 113 substance floors that push risky products up. These ceilings prevent genuinely clean products from being over-penalised by a paranoid AI. Applied server-side — the AI cannot override them.</div>
           </div>
@@ -5067,7 +5067,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {label:"USDA Organic certified + no confirmed dangerous substances", cap:"Final score cannot exceed 3", color:"#16a34a", note:"Organic certification prohibits synthetic pesticides, GMOs, and most synthetic additives. If no dangerous substance floors fired, the product is genuinely clean."},
               {label:"Non-GMO Project Verified + no synthetic dyes + no synthetic preservatives", cap:"Final score cannot exceed 4", color:"#059669", note:"Conventionally farmed but free of the worst additives. Kashi GO, clean conventional snacks, and similar products land here."},
             ].map((item,i)=>(
-              <div key={i} style={{padding:"12px 16px", background:isDark?"#1a2433":"#f0fdf4", borderRadius:12, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`}}>
+              <div key={i} style={{padding:"12px 16px", background:"#f0fdf4", borderRadius:12, border:`1px solid ${"#bbf7d0"}`}}>
                 <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6, flexWrap:"wrap"}}>
                   <div style={{fontSize:13, fontWeight:700, color:item.color, flex:1}}>{item.label}</div>
                   <div style={{fontSize:12, fontWeight:700, color:"#fff", background:item.color, padding:"3px 12px", borderRadius:10, flexShrink:0}}>{item.cap}</div>
@@ -5080,7 +5080,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Child vulnerability system */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Child Vulnerability System</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>Children have thinner skin, developing organ systems, and lower body weight — meaning a higher effective dose per kilogram. Every score can be viewed through a child safety lens.</div>
           </div>
@@ -5096,7 +5096,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                 {sub:"Parabens", bump:"+1", why:"Hormone mimicry — developing endocrine systems more vulnerable"},
                 {sub:"BPA / BPS / BPF", bump:"+2", why:"Endocrine disruption most harmful during developmental windows"},
               ].map((item, i) => (
-                <div key={i} style={{background:isDark?"#1a2433":"#f8fafc", borderRadius:10, padding:"10px 14px", border:`1px solid ${border}`}}>
+                <div key={i} style={{background:"#f8fafc", borderRadius:10, padding:"10px 14px", border:`1px solid ${border}`}}>
                   <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4}}>
                     <div style={{fontSize:12, fontWeight:700, color:text}}>{item.sub}</div>
                     <div style={{fontSize:12, fontWeight:800, color:"#dc2626", background:"#fef2f2", padding:"1px 8px", borderRadius:8, flexShrink:0, marginLeft:8}}>{item.bump}</div>
@@ -5105,7 +5105,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
                 </div>
               ))}
             </div>
-            <div style={{fontSize:12, color:muted, background:isDark?"#1a2433":"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`}}>
+            <div style={{fontSize:12, color:muted, background:"#f0fdf4", borderRadius:10, padding:"10px 14px", border:`1px solid ${"#bbf7d0"}`}}>
               <strong style={{color:"#16a34a"}}>How to use it:</strong> Tap the child safety toggle on any result to see the child-adjusted score. Child products (Honey Nut Cheerios, Pampers, baby lotions) are auto-detected and show a prompt automatically.
             </div>
           </div>
@@ -5113,7 +5113,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
         {/* Consistency checks */}
         <div style={{background:surface, borderRadius:14, border:`1px solid ${border}`, overflow:"hidden", marginBottom:24}}>
-          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+          <div style={{padding:"16px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
             <div style={{fontSize:13, fontWeight:700, color:text}}>Hallucination Guards — 4 rules that run after every score</div>
             <div style={{fontSize:12, color:muted, marginTop:2}}>The AI scores dimensions. These rules catch cases where those scores contradict the AI's own reasoning.</div>
           </div>
@@ -5124,7 +5124,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
               {rule:"Confidence-linked ceiling", detail:"Low confidence means the AI doesn't know enough to flag confirmed harmful substances. A low-confidence result cannot score above 6 — directional estimates only."},
               {rule:"Inert material ceiling", detail:"Glass, borosilicate, ceramic, and stainless steel cannot score above 3 on Materials. Hot water through glass has zero leaching risk. This is non-negotiable."},
             ].map((item, i) => (
-              <div key={i} style={{display:"flex", gap:14, padding:"12px 14px", background:isDark?"#1a2433":"#f8fafc", borderRadius:10, border:`1px solid ${border}`}}>
+              <div key={i} style={{display:"flex", gap:14, padding:"12px 14px", background:"#f8fafc", borderRadius:10, border:`1px solid ${border}`}}>
                 <div style={{width:24, height:24, borderRadius:"50%", background:"#052e16", color:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, flexShrink:0}}>{i+1}</div>
                 <div>
                   <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:3}}>{item.rule}</div>
@@ -5137,7 +5137,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
       </div>
 
       {/* Footer note */}
-      <div style={{background:isDark?"#0f2a18":"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
+      <div style={{background:"#f8fafc", borderRadius:14, padding:"20px 24px", border:`1px solid ${border}`}}>
         <div style={{fontSize:13, fontWeight:700, color:text, marginBottom:8}}>Questions about our methodology?</div>
         <p style={{fontSize:14, color:muted, lineHeight:1.7, margin:0}}>
           We welcome scrutiny. If you believe a score is inaccurate, or have published research that should inform our parameters, email us at{" "}
@@ -5151,7 +5151,7 @@ const MethodologyPage = ({isDark, text, muted, surface, border, isMobile}) => {
 
 // ── PRIVACY PAGE ──────────────────────────────────────────────
 // ── AUTH MODAL ────────────────────────────────────────────────
-const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
+const AuthModal = ({onClose, onAuth, onSetName}) => {
   const [mode,     setMode]     = useState("signin"); // signin | signup | reset
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
@@ -5161,12 +5161,11 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
   const [error,    setError]    = useState(null);
   const [success,  setSuccess]  = useState(null);
 
-  // Phase 4 cream refresh. isDark preserved for Phase 5 deletion but light-side uses tokens.
-  const surface = isDark ? "#0f2a18" : "var(--cream)";
-  const fieldBg = isDark ? "#080f0a" : "var(--cream-light)";
-  const bd      = isDark ? "rgba(34,197,94,0.15)" : "var(--rule-strong)";
-  const tx      = isDark ? "#f0fdf4" : "var(--ink)";
-  const mt      = isDark ? "#6ee7b7" : "var(--ink-soft)";
+  const surface = "var(--cream)";
+  const fieldBg = "var(--cream-light)";
+  const bd      = "var(--rule-strong)";
+  const tx      = "var(--ink)";
+  const mt      = "var(--ink-soft)";
 
   const submit = async () => {
     if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
@@ -5204,9 +5203,9 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
         background: surface,
         borderRadius: "22px 18px 24px 20px / 20px 24px 18px 22px",
         padding:"32px 28px", width:"100%", maxWidth:400,
-        border: `1px solid ${isDark ? bd : "var(--rule)"}`,
+        border: `1px solid ${"var(--rule)"}`,
         position:"relative",
-        boxShadow: isDark ? "none" : "0 20px 40px rgba(26,31,21,0.18)",
+        boxShadow: "0 20px 40px rgba(26,31,21,0.18)",
       }} onClick={e=>e.stopPropagation()}>
 
         <button onClick={onClose} style={{position:"absolute", top:16, right:16, background:"none", border:"none", cursor:"pointer", fontSize:22, color:mt, lineHeight:1}}>×</button>
@@ -5215,11 +5214,11 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
           <div style={{textAlign:"left", padding:"4px 0"}}>
             <div style={{
               fontFamily:"'DM Sans', system-ui, sans-serif",
-              fontSize:10, letterSpacing:"0.22em", color:isDark?"#6ee7b7":"var(--moss)",
+              fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
               textTransform:"uppercase", fontWeight:500, marginBottom:12,
               display:"flex", alignItems:"center", gap:10,
             }}>
-              <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+              <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
               Almost there
             </div>
             <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:26, fontWeight:400, color:tx, marginBottom:10, letterSpacing:"-0.015em", lineHeight:1.1}}>What should we call you?</div>
@@ -5232,11 +5231,11 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
 
         <div style={{
           fontFamily:"'DM Sans', system-ui, sans-serif",
-          fontSize:10, letterSpacing:"0.22em", color:isDark?"#6ee7b7":"var(--moss)",
+          fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
           textTransform:"uppercase", fontWeight:500, marginBottom:14,
           display:"flex", alignItems:"center", gap:10,
         }}>
-          <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
           Partiqule
         </div>
 
@@ -5267,16 +5266,16 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
 
         <div style={{marginTop:22, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:mt}}>
           {mode === "signin" && <>
-            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signup"); setError(null); setSuccess(null);}}>Create an account</span>
+            <span style={{cursor:"pointer", color:"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signup"); setError(null); setSuccess(null);}}>Create an account</span>
             <span style={{margin:"0 10px", opacity:0.4}}>·</span>
             <span style={{cursor:"pointer", color:mt}} onClick={()=>{setMode("reset"); setError(null); setSuccess(null);}}>Forgot password?</span>
           </>}
           {mode === "signup" && <>
             Already have an account?{" "}
-            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Sign in</span>
+            <span style={{cursor:"pointer", color:"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Sign in</span>
           </>}
           {mode === "reset" && <>
-            <span style={{cursor:"pointer", color:isDark?"#6ee7b7":"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
+            <span style={{cursor:"pointer", color:"var(--moss)", fontWeight:500}} onClick={()=>{setMode("signin"); setError(null); setSuccess(null);}}>Back to sign in</span>
           </>}
         </div>
         </>)}
@@ -5285,7 +5284,7 @@ const AuthModal = ({isDark, onClose, onAuth, onSetName}) => {
   );
 };
 
-const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
+const PrivacyPage = ({text, muted, surface, border, isMobile}) => {
   const sections = [
     { title:"1. Who we are", body:"Partiqule is a product health scanner operated by Partiqule Inc. We help people understand what is in the products they use every day. You can reach us at paul@partiqule.com." },
     { title:"2. What information we collect", body:"Partiqule collects the minimum information needed to provide the service.\n\nScan data: When you scan a product, we send the product name or image to our AI analysis service (Anthropic). We do not store a record of scans associated with you unless you create an account.\n\nEmail address: If you choose to save your scan history, we collect your email address. We use this only to associate your scan history with your account and to notify you of important product recalls or reformulations. We do not send marketing emails without your explicit consent.\n\nUsage data: We collect anonymous analytics (page views, scan counts, affiliate clicks) using Plausible Analytics, which is privacy-preserving and does not use cookies or track individuals.\n\nDevice data: We do not collect device identifiers, location data, or any data beyond what is described above." },
@@ -5314,7 +5313,7 @@ const PrivacyPage = ({isDark, text, muted, surface, border, isMobile}) => {
   );
 };
 
-const TermsPage = ({isDark, text, muted, surface, border, isMobile}) => {
+const TermsPage = ({text, muted, surface, border, isMobile}) => {
   const sections = [
     { title:"1. Overview", body:"Partiqule provides product health information and exposure scores to help you make more informed decisions. By using Partiqule, you agree to these Terms of Service." },
     { title:"2. Not medical advice", body:"Partiqule's scores, analyses, and recommendations are provided for informational and educational purposes only. They are based on available peer-reviewed research and AI analysis, and are not medical, health, or safety advice.\n\nYou should not rely on Partiqule as a substitute for professional medical, scientific, or nutritional guidance. Use of the platform is at your own risk." },
@@ -5387,7 +5386,7 @@ const computeLifestyleScore = (history) => {
   return {current,previous:prev,trend,delta,productCount:sample.length,worstCategory:worst?{label:CL[worst.cat]||worst.cat,avg:worst.avg}:null};
 };
 
-const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border, text, muted, isMobile, setPage, setResult, setQuery, analyze}) => {
+const FeedPage = ({liveIntelCards, staticCards, history, surface, border, text, muted, isMobile, setPage, setResult, setQuery, analyze}) => {
   const [filter, setFilter] = useState("all");
   const allCards = [
     ...(liveIntelCards||[]).map(card=>{
@@ -5413,8 +5412,8 @@ const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border
       </div>
       <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20,paddingBottom:4}}>
         {FILTERS.map(f=>(
-          <button key={f.id} onClick={()=>setFilter(f.id)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1px solid ${filter===f.id?"#16a34a":(isDark?"#2a3347":"#e5e7eb")}`,background:filter===f.id?(isDark?"#1a2a1a":"#f0fdf4"):"none",color:filter===f.id?"#16a34a":muted,fontWeight:filter===f.id?700:400,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"}}>
-            {f.label}{f.id==="yours"&&<span style={{marginLeft:4,fontSize:11,background:filter==="yours"?"#16a34a":(isDark?"#2a3347":"#e5e7eb"),color:filter==="yours"?"#fff":muted,borderRadius:10,padding:"1px 6px"}}>{allCards.filter(c=>c.isPersonal).length}</span>}
+          <button key={f.id} onClick={()=>setFilter(f.id)} style={{flexShrink:0,padding:"6px 14px",borderRadius:20,border:`1px solid ${filter===f.id?"#16a34a":("#e5e7eb")}`,background:filter===f.id?("#f0fdf4"):"none",color:filter===f.id?"#16a34a":muted,fontWeight:filter===f.id?700:400,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"}}>
+            {f.label}{f.id==="yours"&&<span style={{marginLeft:4,fontSize:11,background:filter==="yours"?"#16a34a":("#e5e7eb"),color:filter==="yours"?"#fff":muted,borderRadius:10,padding:"1px 6px"}}>{allCards.filter(c=>c.isPersonal).length}</span>}
           </button>
         ))}
       </div>
@@ -5423,7 +5422,7 @@ const FeedPage = ({liveIntelCards, staticCards, history, isDark, surface, border
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:0}}>
           {filtered.map((card,i)=>(
-            <div key={card.id||i} onClick={()=>handleCardTap(card)} style={{padding:`16px ${isMobile?"16px":"40px"}`,borderBottom:`1px solid ${isDark?"#1e2433":"#f1f5f9"}`,cursor:card.action_url||card.actionPage||card.productName?"pointer":"default",background:card.isPersonal?(isDark?"#0f1a14":"#fafff9"):"transparent"}}>
+            <div key={card.id||i} onClick={()=>handleCardTap(card)} style={{padding:`16px ${isMobile?"16px":"40px"}`,borderBottom:`1px solid ${"#f1f5f9"}`,cursor:card.action_url||card.actionPage||card.productName?"pointer":"default",background:card.isPersonal?("#fafff9"):"transparent"}}>
               {card.isPersonal&&<div style={{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,display:"flex",alignItems:"center",gap:6}}><div style={{width:6,height:6,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>Affects your products{card.affectedProducts?.length>0&&<span style={{color:muted,fontWeight:400,textTransform:"none",letterSpacing:0}}> — {card.affectedProducts.slice(0,2).join(", ")}{card.affectedProducts.length>2?` +${card.affectedProducts.length-2} more`:""}</span>}</div>}
               <div style={{display:"inline-block",fontSize:10,fontWeight:700,color:card.label_color||card.labelColor||"#d97706",background:`${card.label_color||card.labelColor||"#d97706"}18`,borderRadius:20,padding:"2px 8px",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>{card.label}</div>
               <div style={{fontSize:15,fontWeight:700,color:text,marginBottom:4,lineHeight:1.4}}>{card.headline}</div>
@@ -5609,7 +5608,7 @@ const ShelfStrip = ({ items, onSelect }) => {
   );
 };
 
-const LifestyleScoreCard = ({score, isDark, text, muted, border, isMobile, setPage}) => {
+const LifestyleScoreCard = ({score, text, muted, border, isMobile, setPage}) => {
   if(!score)return null;
   const sc = score.current<=3 ? "var(--score-green)" : score.current<=5 ? "var(--score-amber)" : "var(--score-red)";
   const scSoft = score.current<=3 ? "var(--score-green-soft)" : score.current<=5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
@@ -5682,7 +5681,7 @@ const generateForYouCards = (history, childMode) => {
   return cards.sort((a,b)=>b.priority-a.priority).slice(0,6);
 };
 
-const ForYouCarousel = ({cards, isDark, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
+const ForYouCarousel = ({cards, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
   const scrollRef = useRef(null);
   const CW = isMobile ? 280 : 320;
   const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
@@ -5802,7 +5801,6 @@ function App() {
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
   const [error,       setError]      = useState(null);
-  const [isDark,      setIsDark]     = useState(true); // dark-only for now
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
 
@@ -6495,15 +6493,15 @@ function App() {
     }
   };
 
-  const bg      = isDark?"#080f0a":"#fafafa";
-  const surface = isDark?"#0f2a18":"#fff";
-  const border  = isDark?"rgba(34,197,94,0.15)":"#eee";
-  const text    = isDark?"#f0fdf4":"#111";
-  const muted   = isDark?"#6ee7b7":"#888";
+  const bg      = "var(--cream)";
+  const surface = "var(--cream-light)";
+  const border  = "var(--rule)";
+  const text    = "var(--ink)";
+  const muted   = "var(--ink-soft)";
   const px      = isMobile ? "16px" : "40px";
 
   return (
-    <div style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif", transition:"background 0.3s"}}>
+    <div style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif"}}>
       <style>{`
         *{box-sizing:border-box;}
         body{margin:0;background:#080f0a;}
@@ -6569,7 +6567,7 @@ function App() {
       ))}
 
       {/* HEADER */}
-      <header style={{background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)", borderBottom:`1px solid rgba(34,197,94,0.15)`, position:"sticky", top:0, zIndex:100, transition:"background 0.3s", paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
+      <header style={{background:"var(--cream)", borderBottom:"1px solid var(--rule)", position:"sticky", top:0, zIndex:100, paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
         <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, height:44, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", cursor:"pointer"}} onClick={reset}>
             <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 28 : 32, width:"auto", objectFit:"contain", display:"block"}}/>
@@ -6578,10 +6576,10 @@ function App() {
           {(isMobile || isTablet) ? (
             /* Mobile/tablet — icon row + hamburger */
             <div style={{display:"flex", alignItems:"center", gap:8}}>
-              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"50%",background:"#052e16",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"#4ade80",fontWeight:700,fontSize:11}}>{displayName?displayName[0].toUpperCase():user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
+              {user && <button onClick={()=>{setPage("settings");setResult(null);setMenuOpen(false);}} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,border:`1px solid ${border}`,background:"none",cursor:"pointer"}}><div style={{width:24,height:24,borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",background:"var(--moss)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:"var(--ivory)",fontWeight:500,fontSize:11}}>{displayName?displayName[0].toUpperCase():user.email?.[0]?.toUpperCase()}</span></div><span style={{fontSize:13,color:text,fontWeight:600}}>Account</span></button>}
               <span onClick={()=>{setPage("history"); setResult(null); setMenuOpen(false);}} style={{position:"relative", cursor:"pointer", padding:8}}>
-                <IconHistory size={20} color={page==="history"?"#16a34a":muted}/>
-                {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"#16a34a"}}/>}
+                <IconHistory size={20} color={page==="history"?"var(--moss)":muted}/>
+                {history.length>0&&<span style={{position:"absolute", top:4, right:4, width:8, height:8, borderRadius:"50%", background:"var(--moss)"}}/>}
               </span>
               <button onClick={()=>setMenuOpen(o=>!o)} style={{width:44, height:44, borderRadius:8, border:`1px solid ${border}`, background:"none", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4, cursor:"pointer", WebkitTapHighlightColor:"transparent", touchAction:"manipulation"}}>
                 <div style={{width:18, height:2, background:text, borderRadius:2}}/>
@@ -6599,34 +6597,34 @@ function App() {
                 {label:"Shelf",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
-                  fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?700:500,
-                  color:item.active?"#22c55e":"#6ee7b7", opacity:item.active?1:0.55,
+                  fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?500:400,
+                  color:item.active?"var(--moss)":"var(--ink-soft)",
                   cursor:"pointer", padding:"6px 12px", borderRadius:8,
-                  background:item.active?"rgba(34,197,94,0.1)":"transparent",
+                  background:item.active?"var(--moss-soft)":"transparent",
                   transition:"all 0.15s",
-                }}>{item.label}{item.label==="Shelf"&&history.length>0&&<span style={{background:"#052e16",color:"#4ade80",fontSize:10,fontWeight:800,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
+                }}>{item.label}{item.label==="Shelf"&&history.length>0&&<span style={{background:"var(--moss)",color:"var(--ivory)",fontSize:10,fontWeight:500,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
               ))}
               {isAdminUser(user) && (
-                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"#a78bfa", cursor:"pointer", fontWeight:700, padding:"6px 12px"}}>Admin</span>
+                <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--amber)", cursor:"pointer", fontWeight:500, padding:"6px 12px"}}>Admin</span>
               )}
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:8, marginLeft:8}}>
-                  <div style={{width:32, height:32, borderRadius:"50%", background:"rgba(34,197,94,0.15)", border:"1px solid rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
-                    <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", color:"#22c55e", fontWeight:800, fontSize:13}}>{user.email[0].toUpperCase()}</span>
+                  <div style={{width:32, height:32, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--moss-soft)", border:"1px solid var(--rule-strong)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
+                    <span style={{fontFamily:"'Fraunces', Georgia, serif", color:"var(--moss)", fontWeight:400, fontSize:14}}>{user.email[0].toUpperCase()}</span>
                   </div>
-                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
+                  <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid var(--rule-strong)", background:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, cursor:"pointer"}}>Sign out</button>
                 </div>
               ) : (
-                <button onClick={()=>setShowAuth(true)} style={{marginLeft:8, padding:"8px 18px", borderRadius:10, border:"none", background:"rgba(34,197,94,0.12)", color:"#22c55e", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", border:"1px solid rgba(34,197,94,0.2)"}}>Sign in</button>
+                <button onClick={()=>setShowAuth(true)} style={{marginLeft:8, padding:"8px 18px", borderRadius:10, background:"transparent", color:"var(--moss)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", border:"1px solid var(--rule-strong)"}}>Sign in</button>
               )}
-              <button onClick={reset} style={{padding:"8px 20px", borderRadius:10, border:"none", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:13, cursor:"pointer", boxShadow:"0 2px 12px rgba(34,197,94,0.3)"}}>New Scan</button>
+              <button onClick={reset} style={{padding:"8px 20px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", letterSpacing:"0.005em"}}>New Scan</button>
             </nav>
           )}
         </div>
 
         {/* Mobile/tablet dropdown menu */}
         {(isMobile || isTablet) && menuOpen && (
-          <div style={{background:"rgba(5,46,22,0.98)", backdropFilter:"blur(16px)", borderTop:"1px solid rgba(34,197,94,0.15)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2, position:"relative", zIndex:200}}>
+          <div style={{background:"var(--cream)", borderTop:"1px solid var(--rule)", padding:"8px 16px 16px", display:"flex", flexDirection:"column", gap:2, position:"relative", zIndex:200}}>
             {[
               {label:"About",        pg:"about"},
               {label:"The Science",  pg:"science"},
@@ -6642,22 +6640,21 @@ function App() {
                 setMenuOpen(false);
               }}
                 style={{padding:"12px 16px", borderRadius:10, border:"none",
-                  background:page===item.pg?"rgba(34,197,94,0.12)":"transparent",
-                  color:page===item.pg?"#22c55e":"#6ee7b7",
+                  background:page===item.pg?"var(--moss-soft)":"transparent",
+                  color:page===item.pg?"var(--moss)":"var(--ink-soft)",
                   fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15,
-                  fontWeight:page===item.pg?700:500, cursor:"pointer", textAlign:"left",
-                  opacity:page===item.pg?1:0.7,
+                  fontWeight:page===item.pg?500:400, cursor:"pointer", textAlign:"left",
                 }}>
                 {item.label}
               </button>
             ))}
             {user ? (
-              <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, borderTop:"1px solid rgba(34,197,94,0.1)"}}>
-                <span style={{fontSize:13, color:"#6ee7b7", opacity:0.6}}>{user.email}</span>
-                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:"1px solid rgba(34,197,94,0.2)", background:"none", color:"#6ee7b7", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, cursor:"pointer"}}>Sign out</button>
+              <div style={{padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, borderTop:"1px solid var(--rule-soft)"}}>
+                <span style={{fontSize:13, color:"var(--ink-faint)"}}>{user.email}</span>
+                <button onClick={()=>{signOut(); setMenuOpen(false);}} style={{padding:"6px 14px", borderRadius:8, border:"1px solid var(--rule-strong)", background:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, cursor:"pointer"}}>Sign out</button>
               </div>
             ) : (
-              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:10, border:"1.5px solid rgba(34,197,94,0.3)", background:"none", color:"#22c55e", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"left", marginTop:8}}>
+              <button onClick={()=>{setShowAuth(true); setMenuOpen(false);}} style={{padding:"12px 16px", borderRadius:10, border:"1px solid var(--moss)", background:"none", color:"var(--moss)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, fontWeight:500, cursor:"pointer", textAlign:"left", marginTop:8}}>
                 Sign in / Create account
               </button>
             )}
@@ -6668,7 +6665,7 @@ function App() {
         )}
       </header>
 
-      {showAuth && <AuthModal isDark={isDark} onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
+      {showAuth && <AuthModal onClose={()=>setShowAuth(false)} onAuth={u=>{setUser(u); if(isAdminUser(u)){setPage("admin"); setShowAuth(false); return;} checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });}} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
 
       {/* ── Delete account confirmation modal ── */}
       {/* Account deleted toast */}
@@ -6683,11 +6680,11 @@ function App() {
 
       {showDeleteConfirm && (
         <div onClick={()=>setShowDeleteConfirm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:isDark?"#1a1a18":"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
             <div style={{fontSize:20,fontWeight:700,color:"#dc2626",marginBottom:8}}>Delete account?</div>
-            <div style={{fontSize:14,color:isDark?"#6ee7b7":"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
+            <div style={{fontSize:14,color:"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
             <button onClick={deleteAccount} style={{width:"100%",padding:"13px",borderRadius:10,background:"#dc2626",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Yes, delete my account</button>
-            <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${isDark?"#374151":"#e2e8f0"}`,color:isDark?"#6ee7b7":"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
+            <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${"#e2e8f0"}`,color:"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
           </div>
         </div>
       )}
@@ -6765,19 +6762,19 @@ function App() {
       )}
 
       {page === "admin" ? (
-        <AdminPage isDark={isDark} surface={surface} border={border} text={text} muted={muted} history={history}/>
+        <AdminPage surface={surface} border={border} text={text} muted={muted} history={history}/>
       ) : page === "guides" ? (
-        <GuidesPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onNavigate={navigateTo}/>
+        <GuidesPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onNavigate={navigateTo}/>
       ) : page === "guide" ? (
-        <GuideViewPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} slug={guideSlug} onNavigate={navigateTo} onScan={reset}/>
+        <GuideViewPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} slug={guideSlug} onNavigate={navigateTo} onScan={reset}/>
       ) : page === "privacy" ? (
-        <PrivacyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
+        <PrivacyPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "terms" ? (
-        <TermsPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
+        <TermsPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "about" ? (
-        <AboutPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset} onNavigate={setPage}/>
+        <AboutPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset} onNavigate={setPage}/>
       ) : page === "methodology" ? (
-        <MethodologyPage isDark={isDark} text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
+        <MethodologyPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
@@ -6788,9 +6785,9 @@ function App() {
           </button>
         </div>
       ) : page === "feed" ? (
-        <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
+        <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
       ) : page === "history" ? (
-        <HistoryPage history={history} isDark={isDark} surface={surface} border={border} text={text} muted={muted}
+        <HistoryPage history={history} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
           onSelect={(item)=>{setResult(item); setPage("home");}}
           onClear={()=>{setHistory([]); try{localStorage.removeItem("ps_history")}catch{}}}
@@ -6802,7 +6799,7 @@ function App() {
             <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>The <span style={{color:"var(--moss)"}}>science</span></h1>
             <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
-          <EducationSection isDark={isDark} isMobile={isMobile}/>
+          <EducationSection isMobile={isMobile}/>
         </div>
       ) : page === "settings" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
@@ -6814,8 +6811,8 @@ function App() {
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
             {/* ── PARTIQULE PREMIUM — always visible, discoverable purchase path ── */}
-            <div style={{background:isDark?"linear-gradient(135deg,#052e16 0%,#0f2a18 100%)":"linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%)", borderRadius:16, border:`1.5px solid ${isSubscribed?"#16a34a":(isDark?"rgba(34,197,94,0.3)":"#bbf7d0")}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "0 4px 20px rgba(34,197,94,0.15)"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`, background:"rgba(22,163,74,0.08)"}}>
+            <div style={{background:"linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%)", borderRadius:16, border:`1.5px solid ${isSubscribed?"#16a34a":("#bbf7d0")}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "0 4px 20px rgba(34,197,94,0.15)"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${"#bbf7d0"}`, background:"rgba(22,163,74,0.08)"}}>
                 <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", display:"flex", alignItems:"center", gap:6}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   Partiqule Premium
@@ -6888,7 +6885,7 @@ function App() {
 
             {/* Account */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Account</div>
               </div>
               {user ? (
@@ -6904,7 +6901,7 @@ function App() {
                   </div>
                   <div style={{marginBottom:12}}>
                     <div style={{fontSize:12, color:muted, fontWeight:600, marginBottom:6}}>Display name</div>
-                    <input value={displayName} onChange={e=>setDisplayName(e.target.value)} onBlur={e=>{try{localStorage.setItem("partiqule_display_name",e.target.value.trim());}catch{}}} placeholder="Add a name or nickname" style={{width:"100%", padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none", boxSizing:"border-box"}}/>
+                    <input value={displayName} onChange={e=>setDisplayName(e.target.value)} onBlur={e=>{try{localStorage.setItem("partiqule_display_name",e.target.value.trim());}catch{}}} placeholder="Add a name or nickname" style={{width:"100%", padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:"#f9fafb", color:text, fontSize:14, outline:"none", boxSizing:"border-box"}}/>
                   </div>
                   <button onClick={signOut} style={{width:"100%", padding:"12px", borderRadius:10, border:`1.5px solid ${border}`, background:"none", color:muted, fontSize:14, fontWeight:600, cursor:"pointer"}}>
                     Sign out
@@ -6912,7 +6909,7 @@ function App() {
                   <div style={{marginTop:16, padding:"16px 20px", borderTop:`1px solid ${border}`}}>
                     <div style={{fontSize:12, fontWeight:700, color:"#dc2626", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:8}}>Danger zone</div>
                     <div style={{fontSize:13, color:muted, marginBottom:12, lineHeight:1.5}}>Permanently deletes your account, scan history, and cancels any active subscription. This cannot be undone.</div>
-                    <button onClick={()=>setShowDeleteConfirm(true)} style={{width:"100%", padding:"14px", borderRadius:10, border:"2px solid #dc2626", background:isDark?"#2a1010":"#fef2f2", color:"#dc2626", fontSize:15, fontWeight:700, cursor:"pointer"}}>
+                    <button onClick={()=>setShowDeleteConfirm(true)} style={{width:"100%", padding:"14px", borderRadius:10, border:"2px solid #dc2626", background:"#fef2f2", color:"#dc2626", fontSize:15, fontWeight:700, cursor:"pointer"}}>
                       Delete My Account
                     </button>
                   </div>
@@ -6929,7 +6926,7 @@ function App() {
 
             {/* Child safety default */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>Scoring</div>
               </div>
               <div style={{padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
@@ -6979,7 +6976,7 @@ function App() {
 
             {/* About */}
             <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, overflow:"hidden"}}>
-              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:isDark?"#080f0a":"#f8fafc"}}>
+              <div style={{padding:"14px 20px", borderBottom:`1px solid ${border}`, background:"#f8fafc"}}>
                 <div style={{fontSize:12, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em"}}>About</div>
               </div>
               {[
@@ -7043,9 +7040,6 @@ function App() {
 
           {/* ── RETURNING USER: compact scan bar + discovery feed ── */}
           {history.length > 0 ? (() => {
-            const routineScore = Math.round(history.slice(0,20).reduce((a,h)=>a+(h.overall_score||h.score||5),0)/Math.min(history.length,20)*10)/10;
-            const highRisk = history.filter(h=>(h.overall_score||h.score||0)>=7).slice(0,2);
-            const swapList = history.filter(h=>(h.overall_score||h.score||0)>=5).slice(0,2);
             const nameForGreet = displayName || (user?.email ? (user.email.split("@")[0] || "").split(".")[0] : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
 
@@ -7267,7 +7261,7 @@ function App() {
                   )}
 
                   {/* Lifestyle score */}
-                  {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} isDark={isDark} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
+                  {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
 
                   {/* Feed link */}
                   {liveIntelCards?.length>0 && (
@@ -7285,7 +7279,7 @@ function App() {
                     const relevantLive = filterLiveCards(liveIntelCards, history).map(c=>({type:"live_intel",priority:c.priority||8,headline:c.headline,body:c.body,label:c.label||"News",labelColor:c.label_color||"#d97706",action:c.action_text||"Learn more",actionUrl:c.action_url||null,actionPage:c.action_page||null,sourceName:c.source_name,sourceUrl:c.source_url}));
                     const allCards = [...relevantLive,...staticCards].sort((a,b)=>b.priority-a.priority).slice(0,8);
                     if (!allCards.length) return null;
-                    return <ForYouCarousel cards={allCards} isDark={isDark} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
+                    return <ForYouCarousel cards={allCards} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
                   })()}
 
                   {/* This Week recap — mockup pattern */}
@@ -7351,8 +7345,8 @@ function App() {
           {/* Fitts's Law: scan is always one tap away regardless of scroll position */}
           <div style={{
             position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
-            background:"rgba(5,46,22,0.97)", backdropFilter:"blur(12px)",
-            borderBottom:"1px solid rgba(34,197,94,0.15)",
+            background:"var(--cream)",
+            borderBottom:"1px solid var(--rule)",
             padding: isMobile ? "10px 16px" : "12px 40px",
           }}>
             <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
@@ -7636,7 +7630,7 @@ function App() {
               </div>
             )}
             {/* Suggest a product — users can request new products for scoring */}
-            <SuggestionBox isDark={isDark} isMobile={isMobile} surface={surface} border={border} text={text} muted={muted} user={user}/>
+            <SuggestionBox isMobile={isMobile} surface={surface} border={border} text={text} muted={muted} user={user}/>
 
           </div>
           )}
@@ -7650,12 +7644,12 @@ function App() {
 
           {/* Demo banner */}
           {result.isDemo && (
-            <div style={{marginBottom:20, padding:"12px 20px", background:isDark?"#1a1a2e":"#eff6ff", borderRadius:12, border:"1.5px solid #93c5fd", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap"}}>
+            <div style={{marginBottom:20, padding:"12px 20px", background:"#eff6ff", borderRadius:12, border:"1.5px solid #93c5fd", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap"}}>
               <div style={{display:"flex", alignItems:"center", gap:10}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
                 <div>
                   <div style={{fontSize:13, fontWeight:700, color:"#2563eb"}}>This is a demo scan</div>
-                  <div style={{fontSize:12, color:isDark?"#6ee7b7":"#555"}}>M&Ms is a real example. Scan any product to get your own result.</div>
+                  <div style={{fontSize:12, color:"#555"}}>M&Ms is a real example. Scan any product to get your own result.</div>
                 </div>
               </div>
               <button onClick={reset} style={{padding:"7px 16px", borderRadius:8, background:"#2563eb", color:"#fff", border:"none", fontWeight:600, fontSize:13, cursor:"pointer", whiteSpace:"nowrap"}}>
@@ -7698,17 +7692,17 @@ function App() {
                       display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
                       fontFamily:"'DM Sans', system-ui, sans-serif",
                       fontSize:10, letterSpacing:"0.22em",
-                      color:isDark?"#8a9080":"var(--ink-faint)",
+                      color:"var(--ink-faint)",
                       textTransform:"uppercase", fontWeight:500,
                       marginBottom:14,
                     }}>
-                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.6}}/>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.6}}/>
                       <span>Logged · just now</span>
                       {result.cached && (
-                        <span style={{color:isDark?"#6ee7b7":"var(--moss)"}}>· Verified</span>
+                        <span style={{color:"var(--moss)"}}>· Verified</span>
                       )}
                       {result.confidence && (
-                        <span style={{color: result.confidence==="high" ? (isDark?"#6ee7b7":"var(--moss)") : result.confidence==="medium" ? (isDark?"#9ca3af":"var(--ink-soft)") : (isDark?"#fbbf24":"var(--amber)")}}>
+                        <span style={{color: result.confidence==="high" ? ("var(--moss)") : result.confidence==="medium" ? ("var(--ink-soft)") : ("var(--amber)")}}>
                           · {result.confidence} confidence
                         </span>
                       )}
@@ -7717,7 +7711,7 @@ function App() {
                       <div style={{
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:11, letterSpacing:"0.22em",
-                        color:isDark?"#f0fdf4":"var(--ink)",
+                        color:"var(--ink)",
                         textTransform:"uppercase", fontWeight:500,
                         marginBottom:4,
                       }}>{brand.toUpperCase()}</div>
@@ -7736,10 +7730,10 @@ function App() {
                       <div style={{
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:10.5, letterSpacing:"0.14em",
-                        color:isDark?"#8a9080":"var(--ink-soft)",
+                        color:"var(--ink-soft)",
                         textTransform:"uppercase",
                         paddingBottom:14,
-                        borderBottom:`1px solid ${isDark?"rgba(240,253,244,0.12)":"var(--rule)"}`,
+                        borderBottom:`1px solid ${"var(--rule)"}`,
                         marginBottom:4,
                       }}>{compositionLine}</div>
                     )}
@@ -7748,10 +7742,10 @@ function App() {
               })()}
 
               <div className="score-reveal" style={{
-                background:isDark?"#0f2a18":scoreCardBg(result.overall_score||result.score),
+                background:scoreCardBg(result.overall_score||result.score),
                 borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
                 padding:isMobile?"22px 16px":"32px 32px",
-                border:`1px solid ${isDark?"rgba(34,197,94,0.15)":scoreBg(result.overall_score||result.score)}`,
+                border:`1px solid ${scoreBg(result.overall_score||result.score)}`,
                 textAlign:"center",
               }}>
                 {/* Header row — "scanned by others" badge (other badges moved to stamp above) */}
@@ -7760,11 +7754,11 @@ function App() {
                     <div style={{
                       fontFamily:"'DM Sans', system-ui, sans-serif",
                       fontSize:10, letterSpacing:"0.22em",
-                      color:isDark?"#6ee7b7":"var(--moss)",
+                      color:"var(--moss)",
                       textTransform:"uppercase", fontWeight:500,
                       display:"flex", alignItems:"center", gap:10,
                     }}>
-                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#6ee7b7":"var(--moss)", opacity:0.7}}/>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       Scanned by others
                     </div>
                   </div>
@@ -7802,7 +7796,7 @@ function App() {
                     {result.category_score_context && (
                       <div style={{
                         fontSize: 12,
-                        color: isDark ? "#64748b" : "#94a3b8",
+                        color: "#94a3b8",
                         marginTop: 4,
                         letterSpacing: "0.02em"
                       }}>
@@ -7838,7 +7832,7 @@ function App() {
                         </div>
                         {result.pregnancy_score !== (result.overall_score || result.score) && (
                           <div style={{
-                            marginTop:12, background:isDark?"#2a1a2a":"#fdf4ff",
+                            marginTop:12, background:"#fdf4ff",
                             border:"1.5px solid #2d5a2744", borderRadius:12,
                             padding:"12px 16px", textAlign:"left",
                           }}>
@@ -7846,7 +7840,7 @@ function App() {
                               Pregnancy safety score: {result.pregnancy_score}/10 vs {result.overall_score || result.score}/10 standard
                             </div>
                             {(result.pregnancy_bumps || []).slice(0,2).map((b,i) => (
-                              <div key={i} style={{fontSize:11, color:isDark?"#d8b4fe":"#6b21a8", lineHeight:1.5, marginBottom:i < (result.pregnancy_bumps||[]).length-1 ? 4 : 0}}>
+                              <div key={i} style={{fontSize:11, color:"#6b21a8", lineHeight:1.5, marginBottom:i < (result.pregnancy_bumps||[]).length-1 ? 4 : 0}}>
                                 · {b}
                               </div>
                             ))}
@@ -7863,8 +7857,8 @@ function App() {
                         style={{
                           display:"flex", alignItems:"center", gap:8, margin:"0 auto",
                           padding:"7px 16px", borderRadius:20,
-                          background: childMode ? "#052e16" : isDark ? "#0f2a18" : "#f1f5f9",
-                          border: childMode ? "none" : `1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`,
+                          background: childMode ? "#052e16" : "#f1f5f9",
+                          border: childMode ? "none" : `1px solid ${"#e2e8f0"}`,
                           cursor:"pointer", transition:"all 0.2s",
                         }}>
                         <span style={{fontSize:12, fontWeight:700,
@@ -7876,7 +7870,7 @@ function App() {
                         {/* Toggle pill */}
                         <div style={{
                           width:32, height:18, borderRadius:9,
-                          background: childMode ? "#16a34a" : isDark ? "#374151" : "#d1d5db",
+                          background: childMode ? "#16a34a" : "#d1d5db",
                           position:"relative", transition:"background 0.2s", flexShrink:0,
                         }}>
                           <div style={{
@@ -7890,7 +7884,7 @@ function App() {
                       {/* Child score explanation card */}
                       {childMode && result.child_score && result.child_score !== (result.overall_score || result.score) && (
                         <div style={{
-                          marginTop:12, background:isDark?"#1a2a1a":"#f0fdf4",
+                          marginTop:12, background:"#f0fdf4",
                           border:"1.5px solid #16a34a44", borderRadius:12,
                           padding:"12px 16px", textAlign:"left",
                         }}>
@@ -7898,7 +7892,7 @@ function App() {
                             Child safety score: {result.child_score}/10 vs {result.overall_score || result.score}/10 for adults
                           </div>
                           {(result.child_bumps || []).slice(0,2).map((b,i) => (
-                            <div key={i} style={{fontSize:11, color:isDark?"#86efac":"#166534", lineHeight:1.5, marginBottom:i < (result.child_bumps||[]).length-1 ? 4 : 0}}>
+                            <div key={i} style={{fontSize:11, color:"#166534", lineHeight:1.5, marginBottom:i < (result.child_bumps||[]).length-1 ? 4 : 0}}>
                               · {b}
                             </div>
                           ))}
@@ -7912,7 +7906,7 @@ function App() {
                             onClick={() => { setChildMode(true); try{localStorage.setItem("partiqule_child_mode","1");}catch{} }}
                             style={{
                               width:"100%", padding:"8px 14px", borderRadius:10,
-                              background:isDark?"#1a2a1a":"#f0fdf4",
+                              background:"#f0fdf4",
                               border:"1px dashed #16a34a88",
                               cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
                             }}>
@@ -7938,13 +7932,13 @@ function App() {
                   const options = ROOM_OPTIONS[result.category] || [];
                   if (!options.length) return null;
                   return (
-                    <div style={{background:isDark?"#1a2030":"#f8faff", borderRadius:12, padding:"10px 14px", border:`1px solid ${isDark?"#1e2a3e":"#c7d7f0"}`, marginBottom:12, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
+                    <div style={{background:"#f8faff", borderRadius:12, padding:"10px 14px", border:`1px solid ${"#c7d7f0"}`, marginBottom:12, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
                       <span style={{fontSize:12, color:muted, whiteSpace:"nowrap"}}>Which room?</span>
                       {options.map(room=>(
                         <button key={room} onClick={()=>{
                           const updated=history.map((h,i)=>i===0&&h.product_name===result.product_name?{...h,room}:h);
                           setHistory(updated); try{localStorage.setItem("ps_history",JSON.stringify(updated));}catch{} setPendingRoomTag(null);
-                        }} style={{padding:"4px 12px", borderRadius:20, border:`1px solid ${isDark?"#2a3a5e":"#bfdbfe"}`, background:isDark?"#1e3a5f":"#dbeafe", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer"}}>
+                        }} style={{padding:"4px 12px", borderRadius:20, border:`1px solid ${"#bfdbfe"}`, background:"#dbeafe", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer"}}>
                           {room}
                         </button>
                       ))}
@@ -7957,7 +7951,7 @@ function App() {
                 {result.intelligence_cards?.length > 0 && (
                   <div style={{marginBottom:16}}>
                     {result.intelligence_cards.map((card,i)=>(
-                      <div key={card.id||i} onClick={()=>{if(card.action_url)window.open(card.action_url,"_blank");}} style={{marginBottom:8,padding:"12px 16px",borderRadius:12,background:isDark?"#1a1a10":"#fffbeb",border:`1.5px solid ${isDark?"#3a2a00":"#fde68a"}`,cursor:card.action_url?"pointer":"default"}}>
+                      <div key={card.id||i} onClick={()=>{if(card.action_url)window.open(card.action_url,"_blank");}} style={{marginBottom:8,padding:"12px 16px",borderRadius:12,background:"#fffbeb",border:`1.5px solid ${"#fde68a"}`,cursor:card.action_url?"pointer":"default"}}>
                         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                           <div style={{fontSize:10,fontWeight:700,color:card.label_color||"#d97706",textTransform:"uppercase",letterSpacing:"0.08em",background:`${card.label_color||"#d97706"}20`,borderRadius:20,padding:"2px 8px",display:"inline-block"}}>{card.label}</div>
                           {card.source_name&&<div style={{fontSize:10,color:muted}}>{card.source_name}</div>}
@@ -8093,7 +8087,7 @@ function App() {
                     <button
                       onClick={()=> isMobile ? setShowAlts(true) : document.getElementById("desktop-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
                       style={{width:"100%", marginBottom:14, padding:"10px 16px", borderRadius:12,
-                        background:isDark?"#1a2a1a":"#f0fdf4", border:"1.5px solid #16a34a55",
+                        background:"#f0fdf4", border:"1.5px solid #16a34a55",
                         cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left"}}>
                       <div style={{display:"flex", alignItems:"center", gap:8}}>
                         <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Better option</span>
@@ -8135,10 +8129,10 @@ function App() {
 
                   const getSev = (pct) => pct >= 100 ? "very_high" : pct >= 60 ? "high" : pct >= 30 ? "moderate" : "low";
                   const SEV = {
-                    very_high: { bg: isDark?"#3b0a0a":"#fef2f2", border:"#fca5a5", color:"#dc2626" },
-                    high:      { bg: isDark?"#2a1a00":"#fff7ed", border:"#fdba74", color:"#c2410c" },
-                    moderate:  { bg: isDark?"#2a2000":"#fefce8", border:"#fde047", color:"#a16207" },
-                    low:       { bg: isDark?"#1a1f2e":"#f1f5f9", border:"#cbd5e1", color:"#475569" },
+                    very_high: { bg: "#fef2f2", border:"#fca5a5", color:"#dc2626" },
+                    high:      { bg: "#fff7ed", border:"#fdba74", color:"#c2410c" },
+                    moderate:  { bg: "#fefce8", border:"#fde047", color:"#a16207" },
+                    low:       { bg: "#f1f5f9", border:"#cbd5e1", color:"#475569" },
                   };
 
                   const badges = [];
@@ -8149,7 +8143,7 @@ function App() {
                     badges.push(
                       <div key="sugar" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sugar_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sugar</div>
+                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sugar</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -8161,7 +8155,7 @@ function App() {
                     badges.push(
                       <div key="sodium" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sodium_mg}mg</div>
-                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sodium</div>
+                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sodium</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -8173,7 +8167,7 @@ function App() {
                     badges.push(
                       <div key="satfat" style={{flex:"1 1 auto", minWidth:80, textAlign:"center", padding:"10px 8px", borderRadius:10, background:cfg.bg, border:`1.5px solid ${cfg.border}`}}>
                         <div style={{fontSize:17, fontWeight:700, color:cfg.color, lineHeight:1}}>{n.sat_fat_g}g</div>
-                        <div style={{fontSize:11, color:isDark?"#6ee7b7":"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
+                        <div style={{fontSize:11, color:"#64748b", margin:"3px 0 2px"}}>Sat fat</div>
                         <div style={{fontSize:12, fontWeight:700, color:cfg.color}}>{pct}% DV</div>
                       </div>
                     );
@@ -8182,7 +8176,7 @@ function App() {
                   if (!badges.length) return null;
                   return (
                     <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10, fontWeight:700, color:isDark?"#6ee7b7":"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
+                      <div style={{fontSize:10, fontWeight:700, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>
                         Nutrition · {childMode ? "Children's Daily Values" : "Daily Values"}
                       </div>
                       <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
@@ -8215,7 +8209,7 @@ function App() {
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:10,
                         letterSpacing:"0.22em",
-                        color:isDark?"#4ade80":"var(--moss)",
+                        color:"var(--moss)",
                         textTransform:"uppercase",
                         fontWeight:500,
                         marginBottom:12,
@@ -8223,7 +8217,7 @@ function App() {
                         alignItems:"center",
                         gap:10,
                       }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                         {label}
                       </div>
                       {flowing ? (
@@ -8231,15 +8225,15 @@ function App() {
                           fontFamily:"'Fraunces', Georgia, serif",
                           fontSize:15,
                           lineHeight:1.55,
-                          color:isDark?"#f0fdf4":"var(--ink)",
+                          color:"var(--ink)",
                           margin:"0 0 6px",
                           fontWeight:400,
                         }}>
                           {result.ingredient_list.join(", ")}
                         </p>
                       ) : (
-                        <div style={{background:isDark?"#1a1a18":"var(--cream-light)", borderRadius:"14px 18px 12px 16px / 16px 12px 18px 14px", padding:"12px 14px", border:`1px solid ${isDark?"#2a2a28":"var(--rule-soft)"}`}}>
-                          <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:isDark?"#6ee7b7":"var(--ink-soft)", lineHeight:1.7, margin:0}}>
+                        <div style={{background:"var(--cream-light)", borderRadius:"14px 18px 12px 16px / 16px 12px 18px 14px", padding:"12px 14px", border:`1px solid ${"var(--rule-soft)"}`}}>
+                          <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.7, margin:0}}>
                             {result.ingredient_list.join(", ")}
                           </p>
                         </div>
@@ -8265,10 +8259,10 @@ function App() {
                   if (!label) return null;
                   const conf = result.ingredient_confidence;
                   const color = conf === "high"
-                    ? (isDark ? "#6ee7b7" : "var(--moss)")
+                    ? ("var(--moss)")
                     : conf === "medium"
-                    ? (isDark ? "#9ca3af" : "var(--ink-soft)")
-                    : (isDark ? "#fbbf24" : "var(--amber)");
+                    ? ("var(--ink-soft)")
+                    : ("var(--amber)");
                   let timeAgo = "";
                   if (result.ingredient_verified_at) {
                     const t = new Date(result.ingredient_verified_at).getTime();
@@ -8320,17 +8314,17 @@ function App() {
                     <div style={{
                       fontFamily:"'DM Sans', system-ui, sans-serif",
                       fontSize:10, letterSpacing:"0.22em",
-                      color:isDark?"#4ade80":"var(--moss)",
+                      color:"var(--moss)",
                       textTransform:"uppercase", fontWeight:500,
                       marginBottom:12, display:"flex", alignItems:"center", gap:10,
                     }}>
-                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       The why
                     </div>
                     <div style={{
                       fontFamily:"'Fraunces', Georgia, serif",
                       fontSize:17, lineHeight:1.5,
-                      color:isDark?"#f0fdf4":"var(--ink)",
+                      color:"var(--ink)",
                       fontWeight:400, letterSpacing:"-0.005em",
                     }}>
                       {String(result.summary).split(/\n\n+/).map((para, i) => (
@@ -8360,11 +8354,11 @@ function App() {
                       <div style={{
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:10, letterSpacing:"0.22em",
-                        color:isDark?"#4ade80":"var(--moss)",
+                        color:"var(--moss)",
                         textTransform:"uppercase", fontWeight:500,
                         marginBottom:12, display:"flex", alignItems:"center", gap:10,
                       }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                         Breaking it down
                       </div>
                       {rows.map((row, i) => (
@@ -8379,7 +8373,7 @@ function App() {
                           <div style={{
                             fontFamily:"'DM Sans', system-ui, sans-serif",
                             fontSize:10.5, letterSpacing:"0.22em",
-                            color:isDark?"#f0fdf4":"var(--ink)",
+                            color:"var(--ink)",
                             textTransform:"uppercase", fontWeight:500,
                           }}>{row.label}</div>
                           <div style={{
@@ -8401,7 +8395,7 @@ function App() {
                             <div style={{
                               gridColumn:1,
                               fontFamily:"'DM Sans', system-ui, sans-serif",
-                              fontSize:13, color:isDark?"#6ee7b7":"var(--ink-soft)",
+                              fontSize:13, color:"var(--ink-soft)",
                               lineHeight:1.45,
                             }}>{row.note}</div>
                           )}
@@ -8410,7 +8404,7 @@ function App() {
                     </div>
                   );
                 })() : (
-                  <div style={{padding:"12px 16px", background:isDark?"#0f2a18":"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px dashed ${isDark?"rgba(34,197,94,0.15)":"var(--rule)"}`, margin:"16px 0", textAlign:"left"}}>
+                  <div style={{padding:"12px 16px", background:"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px dashed ${"var(--rule)"}`, margin:"16px 0", textAlign:"left"}}>
                     <div style={{fontSize:12, color:muted, lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
                   </div>
                 )}
@@ -8444,11 +8438,11 @@ function App() {
                       <div style={{
                         fontFamily:"'DM Sans', system-ui, sans-serif",
                         fontSize:10, letterSpacing:"0.22em",
-                        color:isDark?"#4ade80":"var(--moss)",
+                        color:"var(--moss)",
                         textTransform:"uppercase", fontWeight:500,
                         marginBottom:16, display:"flex", alignItems:"center", gap:10,
                       }}>
-                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                         Worth knowing
                       </div>
                       {flags.map((flag, i) => (
@@ -8460,20 +8454,20 @@ function App() {
                           <div style={{
                             fontFamily:"'Fraunces', Georgia, serif",
                             fontSize:19, lineHeight:1.2,
-                            color:isDark?"#f0fdf4":"var(--ink)",
+                            color:"var(--ink)",
                             marginBottom:6, letterSpacing:"-0.005em", fontWeight:400,
                           }}>{flag.headline}</div>
                           {flag.body && (
                             <div style={{
                               fontFamily:"'DM Sans', system-ui, sans-serif",
-                              fontSize:13, color:isDark?"#6ee7b7":"var(--ink-soft)",
+                              fontSize:13, color:"var(--ink-soft)",
                               lineHeight:1.5, marginBottom: flag.action ? 8 : 0,
                             }}>{flag.body}</div>
                           )}
                           {flag.action && (
                             <span style={{
                               fontFamily:"'Fraunces', Georgia, serif",
-                              fontSize:14, color:isDark?"#4ade80":"var(--moss)",
+                              fontSize:14, color:"var(--moss)",
                               display:"inline-flex", alignItems:"center", gap:6, fontWeight:400,
                             }}>
                               <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:300}}>→</span>
@@ -8517,8 +8511,8 @@ function App() {
                     style={{
                       flex:"1 1 140px",
                       padding:"15px 18px",
-                      background:"transparent", color:isDark?"#f0fdf4":"var(--ink)",
-                      border:`1px solid ${isDark?"rgba(34,197,94,0.3)":"var(--rule-strong)"}`,
+                      background:"transparent", color:"var(--ink)",
+                      border:`1px solid ${"var(--rule-strong)"}`,
                       borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
                       cursor:"pointer",
                       fontFamily:"'DM Sans', system-ui, sans-serif",
@@ -8535,7 +8529,7 @@ function App() {
 
               {/* ACCOUNT / EMAIL CAPTURE — after 1st scan */}
               {result && !user && !emailDismissed && (
-                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
+                <div style={{background:"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${"#bbf7d0"}`}}>
                   <button onClick={()=>{setEmailDismissed(true); try{localStorage.setItem("ps_email_captured","1")}catch{}}}
                     style={{float:"right", background:"none", border:"none", color:muted, cursor:"pointer", fontSize:18, lineHeight:1, padding:0}}>×</button>
                   <div style={{fontSize:14, fontWeight:700, color:"#16a34a", marginBottom:4}}>Get your results by email</div>
@@ -8549,7 +8543,7 @@ function App() {
                       value={captureEmail}
                       onChange={e=>setCaptureEmail(e.target.value)}
                       onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
-                      style={{flex:1, padding:"10px 14px", borderRadius:8, border:`1px solid ${isDark?"#374151":"#d1fae5"}`, background:isDark?"#111":"#fff", color:text, fontSize:14}}
+                      style={{flex:1, padding:"10px 14px", borderRadius:8, border:`1px solid ${"#d1fae5"}`, background:"#fff", color:text, fontSize:14}}
                     />
                     <button onClick={submitCaptureEmail} disabled={captureSubmitting}
                       style={{padding:"10px 18px", borderRadius:8, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:13, cursor:"pointer", opacity:captureSubmitting?0.7:1}}>
@@ -8568,7 +8562,7 @@ function App() {
 
               {/* Signed in — sync confirmation */}
               {user && history.length > 0 && (
-                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:12, padding:"12px 16px", border:`1px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, display:"flex", alignItems:"center", gap:10}}>
+                <div style={{background:"#f0fdf4", borderRadius:12, padding:"12px 16px", border:`1px solid ${"#bbf7d0"}`, display:"flex", alignItems:"center", gap:10}}>
                   <IcoVerified size={16}/>
                   <span style={{fontSize:13, color:"#16a34a", fontWeight:600}}>Scans synced to your account</span>
                 </div>
@@ -8580,7 +8574,7 @@ function App() {
             {/* RIGHT — desktop alternatives sticky panel — only show if score > 3 */}
             {!isMobile && ((childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)) > 3 && (
               <div id="desktop-alternatives" style={{position:"sticky", top:20, display:"flex", flexDirection:"column", gap:16}}>
-                <div style={{background:isDark?"#0f2a18":"#fff", borderRadius:20, border:`1.5px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`, overflow:"hidden"}}>
+                <div style={{background:"#fff", borderRadius:20, border:`1.5px solid ${"#e2e8f0"}`, overflow:"hidden"}}>
                   <div style={{background:"#052e16", padding:"20px 24px"}}>
                     <div style={{fontSize:11, fontWeight:700, color:"#4ade80", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:4}}>Safer alternatives</div>
                     <div style={{fontSize:18, fontWeight:700, color:"#fff", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
@@ -8603,7 +8597,7 @@ function App() {
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : alt.affiliateUrl;
                       return (
-                      <div key={i} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
+                      <div key={i} style={{background:"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
                           <div style={{flexShrink:0}}><ScoreBadge score={alt.score} size="xs" showLabel /></div>
@@ -8625,7 +8619,7 @@ function App() {
                         : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name)
                         : `https://www.amazon.com/s?k=${encodeURIComponent(alt.name)}&tag=partiqule-20`;
                       return (
-                      <div key={`ai-${i}`} style={{background:isDark?"#080f0a":"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e8f5e9"}`}}>
+                      <div key={`ai-${i}`} style={{background:"#f8fafb", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#e8f5e9"}`}}>
                         <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:8, marginBottom:6}}>
                           <div style={{fontSize:14, fontWeight:700, color:text, lineHeight:1.3}}>{alt.name}</div>
                           <div style={{flexShrink:0}}><ScoreBadge score={alt.estimated_score} size="xs" showLabel /></div>
@@ -9008,9 +9002,9 @@ function App() {
                   </div>
                 )}
 
-                <BundleCard category={result.category} isDark={isDark}/>
+                <BundleCard category={result.category}/>
 
-                <FeedbackButton result={result} isDark={isDark} text={text} muted={muted} border={border} surface={surface} user={user}/>
+                <FeedbackButton result={result} text={text} muted={muted} border={border} surface={surface} user={user}/>
 
                 <button onClick={()=>{setShowAlts(false); reset();}}
                   style={{
@@ -9042,37 +9036,37 @@ function App() {
           {/* Scan bottom sheet — mobile */}
           {scanSheetOpen && (<>
             <div onClick={()=>setScanSheetOpen(false)} style={{position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.5)"}}/>
-            <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:isDark?"#1e2433":"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
-              <div style={{width:40, height:4, borderRadius:2, background:isDark?"#2a3347":"#e5e7eb", margin:"0 auto 20px"}}/>
+            <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
+              <div style={{width:40, height:4, borderRadius:2, background:"#e5e7eb", margin:"0 auto 20px"}}/>
               <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
               <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
-                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:isDark?"#052e16":"#f0fdf4", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
+                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:"#f0fdf4", border:`1.5px solid ${"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
                 <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
               </div>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
-                <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
               </label>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:isDark?"#1e2433":"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
-                <div style={{width:44, height:44, borderRadius:12, background:isDark?"#2a3347":"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:600, color:text}}>Choose from library</div><div style={{fontSize:12, color:muted, marginTop:2}}>Upload an existing photo</div></div>
               </label>
               <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
-                <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+                <div style={{flex:1, height:1, background:"#e5e7eb"}}/>
                 <span style={{fontSize:11, color:muted}}>or type a product name</span>
-                <div style={{flex:1, height:1, background:isDark?"#1e2433":"#e5e7eb"}}/>
+                <div style={{flex:1, height:1, background:"#e5e7eb"}}/>
               </div>
               <div style={{display:"flex", gap:8}}>
-                <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Tide Pods..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:isDark?"#131929":"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+                <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Tide Pods..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
                 <button onClick={()=>{if(modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} style={{padding:"10px 16px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:14, cursor:"pointer"}}>Search</button>
               </div>
             </div>
@@ -9101,8 +9095,8 @@ function App() {
           {/* Bottom Nav — always visible */}
           <div style={{
             position:"fixed", bottom:0, left:0, right:0, paddingBottom:"env(safe-area-inset-bottom, 0px)", minHeight:72,
-            background:"rgba(5,46,22,0.97)", backdropFilter:"blur(16px)",
-            borderTop:"1px solid rgba(34,197,94,0.15)",
+            background:"var(--cream)",
+            borderTop:"1px solid var(--rule)",
             display:"flex", alignItems:"flex-start", paddingTop:10,
             zIndex:9000,
           }}>
@@ -9117,16 +9111,16 @@ function App() {
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
                   <div onClick={()=>{isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();}}
-                    style={{width:52, height:52, borderRadius:"50%", background:"linear-gradient(135deg,#22c55e,#16a34a)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", boxShadow:"0 4px 16px rgba(34,197,94,0.4), 0 0 0 3px rgba(34,197,94,0.1)", marginTop:-14, animation:"pulseScan 2.5s ease-in-out infinite"}}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    style={{width:52, height:52, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginTop:-14}}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
                   {!isMobile && <input id="nav-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>}
-                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:600, color:"#22c55e", letterSpacing:"0.04em"}}>Scan</span>
+                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:500, color:"var(--moss)", letterSpacing:"0.15em", textTransform:"uppercase"}}>Scan</span>
                 </div>
               ) : (
-                <div key={i} onClick={item.action} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", color: item.active ? "#22c55e" : "#6ee7b7", opacity: item.active ? 1 : 0.4, transition:"opacity 0.15s"}}>
+                <div key={i} onClick={item.action} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer", color: item.active ? "var(--moss)" : "var(--ink-faint)", transition:"color 0.15s"}}>
                   {item.icon}
-                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:600, letterSpacing:"0.04em"}}>{item.label}</span>
+                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, fontWeight:500, letterSpacing:"0.15em", textTransform:"uppercase"}}>{item.label}</span>
                 </div>
               )
             ))}
@@ -9208,7 +9202,7 @@ function App() {
       )}
 
       {/* FOOTER */}
-      <footer style={{background:isDark?"#0d1117":"#111", color:"#888", padding:isMobile?"32px 16px":"48px 40px", textAlign:"center", fontSize:13, borderTop:"4px solid #052e16"}}>
+      <footer style={{background:"#111", color:"#888", padding:isMobile?"32px 16px":"48px 40px", textAlign:"center", fontSize:13, borderTop:"4px solid #052e16"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16}}>
           <svg width="32" height="32" viewBox="0 0 44 44">
             <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
