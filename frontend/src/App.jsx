@@ -149,6 +149,77 @@ function getSafeAreaTop() {
 
 const SAFE_TOP = getSafeAreaTop();
 
+// ── BRAND EXTRACTION ─────────────────────────────────────────────
+// Multi-word brand names that the first-capitalized-word regex misses —
+// "Salt and Stone" (lowercase "and"), "Ben & Jerry's" (ampersand glyph),
+// "Bob's Red Mill" (three tokens), etc. Order matters: longer prefixes first
+// so "Dr. Bronner's" wins before any shorter "Dr." brand would.
+const KNOWN_MULTIWORD_BRANDS = [
+  "Annie's Homegrown",
+  "Bob's Red Mill",
+  "Ben & Jerry's",
+  "Burt's Bees",
+  "Dr. Bronner's",
+  "Dr. Bronner",
+  "General Mills",
+  "Johnson & Johnson",
+  "Kraft Heinz",
+  "Mrs. Meyer's",
+  "Procter & Gamble",
+  "Salt & Stone",
+  "Salt and Stone",
+  "Seventh Generation",
+  "Tom's of Maine",
+  "Trader Joe's",
+  "Whole Foods",
+  "Amy's Kitchen",
+];
+
+// Normalise a string for brand-prefix comparison: lowercase + collapse
+// whitespace + treat "&" and "and" as equivalent so user input can use either.
+const normaliseForBrand = (s) =>
+  String(s || "")
+    .toLowerCase()
+    .replace(/\s*&\s*/g, " and ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Extract brand eyebrow + remaining product body from a product_name string.
+// Priority:
+//   1. explicit providedBrand arg (e.g. alt.brand or result.brand) — strip
+//      matching prefix from the body if it's there, else leave body intact.
+//   2. KNOWN_MULTIWORD_BRANDS prefix match on the raw product_name.
+//   3. Regex fallback: 1 or 2 leading capitalized words.
+// Returns { brand, body }; brand is "" when nothing matches.
+const extractBrand = (productName, providedBrand) => {
+  const name = String(productName || "").trim();
+  if (!name) return { brand: providedBrand || "", body: "" };
+  if (providedBrand) {
+    const normName = normaliseForBrand(name);
+    const normBrand = normaliseForBrand(providedBrand);
+    if (normBrand && (normName === normBrand || normName.startsWith(normBrand + " "))) {
+      // Slice off the matched token count from the raw name to preserve original casing on the body.
+      const tokens = name.split(/\s+/);
+      const brandTokens = normBrand.split(" ").length;
+      return { brand: providedBrand, body: tokens.slice(brandTokens).join(" ") };
+    }
+    return { brand: providedBrand, body: name };
+  }
+  const normName = normaliseForBrand(name);
+  for (const canon of KNOWN_MULTIWORD_BRANDS) {
+    const normCanon = normaliseForBrand(canon);
+    if (normName === normCanon || normName.startsWith(normCanon + " ")) {
+      const tokens = name.split(/\s+/);
+      const brandTokens = normCanon.split(" ").length;
+      return { brand: canon, body: tokens.slice(brandTokens).join(" ") };
+    }
+  }
+  // Regex fallback: first 1-2 leading capitalized words.
+  const m = name.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
+  if (m) return { brand: m[1], body: m[2] };
+  return { brand: "", body: name };
+};
+
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
@@ -5334,13 +5405,9 @@ const ShelfStrip = ({ items, onSelect }) => {
         <style>{`.shelf-strip-scroll::-webkit-scrollbar{display:none}`}</style>
         {items.map((item, i) => {
           const score = item.overall_score || item.score;
-          const brand = (() => {
-            const m = (item.product_name || "").match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+/);
-            return m ? m[1] : "";
-          })();
+          const { brand, body: shelfBody } = extractBrand(item.product_name, item.brand);
           const shortName = (() => {
-            const n = item.product_name || "";
-            const rest = brand ? n.slice(brand.length).trim() : n;
+            const rest = shelfBody || item.product_name || "";
             return rest.length > 18 ? rest.slice(0, 17) + "…" : rest;
           })();
           return (
@@ -7560,9 +7627,8 @@ function App() {
                   signals from the score card header but repositioned left. */}
               {(() => {
                 const fullName = result.product_name || "";
-                const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
-                const brand = brandMatch ? brandMatch[1] : null;
-                const productBody = brandMatch ? brandMatch[2] : fullName;
+                const { brand, body: productBodyRaw } = extractBrand(fullName, result.brand);
+                const productBody = productBodyRaw || fullName;
                 const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
                 const cat = result.category || "";
                 const compositionLine = (() => {
@@ -8322,9 +8388,8 @@ function App() {
           const detailScoreColor = detailScore == null ? "var(--ink-soft)" : detailScore <= 3 ? "var(--score-green)" : detailScore <= 5 ? "var(--score-amber)" : "var(--score-red)";
           const detailScoreSoft  = detailScore == null ? "rgba(107,114,128,0.10)" : detailScore <= 3 ? "var(--score-green-soft)" : detailScore <= 5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
           const fullName = result.product_name || "";
-          const brandMatch = fullName.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
-          const brand = brandMatch ? brandMatch[1] : null;
-          const productBody = brandMatch ? brandMatch[2] : fullName;
+          const { brand, body: productBodyRaw } = extractBrand(fullName, result.brand);
+          const productBody = productBodyRaw || fullName;
           const displayName = productBody.length > 60 ? productBody.slice(0, 57) + "…" : productBody;
           const cat = result.category || "";
           const compositionLine = (() => {
@@ -8879,10 +8944,10 @@ function App() {
                   </div>
                 ) : merged.map((alt, i) => {
                   const score = alt.estimated_score ?? alt.score ?? 3;
-                  const brand = (alt.brand || (alt.name || "").match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s/)?.[1] || "").trim();
+                  const { brand: extractedBrand, body: altBody } = extractBrand(alt.name, alt.brand);
+                  const brand = (extractedBrand || "").trim();
                   const shortName = (() => {
-                    const n = alt.name || "";
-                    const rest = brand ? n.slice(brand.length).trim() : n;
+                    const rest = altBody || alt.name || "";
                     return rest.length > 52 ? rest.slice(0, 49) + "…" : rest;
                   })();
                   const composition = (alt.material || "").toUpperCase().replace(/\s*[,·]\s*/g, " · ");
