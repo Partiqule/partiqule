@@ -9970,271 +9970,238 @@ function App() {
                   );
                 })()}
 
-                {/* ── 5 DIMENSION DROPDOWNS ── */}
-                <div style={isMobile ? {margin:"0 -14px"} : {}}>
+                {/* ── DETAIL VIEW SECTIONS (Session 4.1 — details-alts mockup) ─────────
+                   Replaces the old dimension-dropdown stack. Flat layout: THE WHY,
+                   BREAKING IT DOWN (from result.dimensions), WORTH KNOWING (from
+                   harmful_chemicals / identified_plastics / concerns), and the
+                   primary action row. Dimension dropdowns component is preserved
+                   in the codebase for other surfaces but not rendered here. */}
+
+                {/* THE WHY — conversational paragraph from result.summary */}
+                {result.summary && (
+                  <div style={{padding:"4px 0 4px", textAlign:"left"}}>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:isDark?"#4ade80":"var(--moss)",
+                      textTransform:"uppercase", fontWeight:500,
+                      marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                      The why
+                    </div>
+                    <div style={{
+                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontSize:17, lineHeight:1.5,
+                      color:isDark?"#f0fdf4":"var(--ink)",
+                      fontWeight:400, letterSpacing:"-0.005em",
+                    }}>
+                      {String(result.summary).split(/\n\n+/).map((para, i) => (
+                        <p key={i} style={{margin:"0 0 12px"}}>{para}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* BREAKING IT DOWN — flat rows per sub-dimension */}
                 {result.dimensions ? (() => {
                   const d = result.dimensions;
-                  // When child mode is on, bump health-relevant dimensions by the same delta as overall score
                   const childDimBump = pregnancyMode && result.pregnancy_score && result.overall_score
                     ? Math.max(0, result.pregnancy_score - (result.overall_score || result.score))
                     : (childMode && result.child_score && result.overall_score)
                     ? Math.max(0, result.child_score - (result.overall_score || result.score))
                     : 0;
-                  return (<>
-                    {/* Product Insights — all categories */}
-                    {result.food_analysis && (
-                      <div style={{position:"relative"}}>
-                        <ProductInsightsDropdown
-                          analysis={result.food_analysis}
-                          category={result.category}
-                          isDark={isDark}
-                        />
+                  const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+                  const rows = [
+                    { key:"materials",      label:"Materials",       score: Math.min(10, (d.materials?.score || result.score) + childDimBump),      note: d.materials?.label },
+                    { key:"usage_exposure", label:"Usage & exposure", score: Math.min(10, (d.usage_exposure?.score || 5) + childDimBump),           note: d.usage_exposure?.label },
+                    { key:"packaging",      label:"Packaging",       score: d.packaging?.score || 5,                                                 note: d.packaging?.label },
+                    { key:"sustainability", label:"Sustainability",  score: d.sustainability?.score || 5,                                            note: d.sustainability?.label },
+                  ];
+                  return (
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em",
+                        color:isDark?"#4ade80":"var(--moss)",
+                        textTransform:"uppercase", fontWeight:500,
+                        marginBottom:12, display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        Breaking it down
                       </div>
-                    )}
-                    {/* 1. Materials */}
-                    <DimensionDropdown icon={<IcoIngredients size={20}/>} label="Materials" score={Math.min(10,(d.materials?.score||result.score)+childDimBump)} concerns={d.materials?.concerns} isDark={isDark}>
-                      {d.materials?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.materials.label}</p>}
-                      {/* Only show chips when no Product Insights — otherwise redundant */}
-                      {!result.food_analysis && (<>
-                        {result.identified_plastics?.length > 0 && (
-                          <div style={{marginTop:8,marginBottom:4}}>
-                            <div style={{fontSize:11,color:"#dc2626",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Plastics identified</div>
-                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                              {result.identified_plastics.map((p,i)=>(
-                                <span key={i} style={{fontSize:12,fontWeight:700,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a1a":"#fef2f2",color:"#dc2626",border:"1px solid #fecaca"}}>{p}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {result.harmful_chemicals?.length > 0 && (
-                          <div style={{marginTop:8}}>
-                            <div style={{fontSize:11,color:"#d97706",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Harmful chemicals</div>
-                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                              {result.harmful_chemicals.map((c,i)=>(
-                                <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#2a1a00":"#fffbeb",color:"#d97706",border:"1px solid #fde68a"}}>{c}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {result.natural_materials?.length > 0 && (
-                          <div style={{marginTop:8}}>
-                            <div style={{fontSize:11,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Natural materials</div>
-                            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                              {result.natural_materials.map((m,i)=>(
-                                <span key={i} style={{fontSize:12,fontWeight:600,padding:"3px 10px",borderRadius:16,background:isDark?"#1a2a1a":"#f0fdf4",color:"#16a34a",border:"1px solid #bbf7d0"}}>{m}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </>)}
-                    </DimensionDropdown>
-
-                    {/* 2. Usage & Exposure */}
-                    <DimensionDropdown icon={<IcoSafety size={20}/>} label="Usage & Exposure" score={Math.min(10,(d.usage_exposure?.score||5)+childDimBump)} concerns={d.usage_exposure?.concerns} isDark={isDark}>
-                      {d.usage_exposure?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.usage_exposure.label}</p>}
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.usage_exposure?.frequency && d.usage_exposure.frequency !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#eff6ff",color:"#1d4ed8",display:"flex",alignItems:"center",gap:4}}>
-                            <IcoScore size={12}/>{d.usage_exposure.frequency === "daily" ? "Daily use" : d.usage_exposure.frequency === "weekly" ? "Weekly use" : d.usage_exposure.frequency === "occasional" ? "Occasional" : "Rare use"}
-                          </span>
-                        )}
-                        {d.usage_exposure?.type && d.usage_exposure.type !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf4ff",color:"#7e22ce",display:"flex",alignItems:"center",gap:4}}>
-                            <IcoSafety size={12}/>{d.usage_exposure.type === "ingestion" ? "Ingestion risk" : d.usage_exposure.type === "skin_contact" ? "Skin contact" : d.usage_exposure.type === "inhalation" ? "Inhalation risk" : "Mixed exposure"}
-                          </span>
-                        )}
-                        {d.usage_exposure?.intensity && d.usage_exposure.intensity !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fff7ed",color:"#c2410c",display:"flex",alignItems:"center",gap:4}}>
-                            <IcoScore size={12}/>{d.usage_exposure.intensity === "leave-on" ? "Leave-on" : d.usage_exposure.intensity === "rinse-off" ? "Rinse-off" : "Single contact"}
-                          </span>
-                        )}
-                        {d.usage_exposure?.vulnerable && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"#fdf2f8",color:"#9d174d",display:"flex",alignItems:"center",gap:4}}><IcoProfile size={12}/> Child product</span>
-                        )}
-                      </div>
-                    </DimensionDropdown>
-
-                    {/* 3. Packaging */}
-                    <DimensionDropdown icon={<IcoCategory size={20}/>} label="Packaging" score={d.packaging?.score||5} concerns={d.packaging?.concerns} isDark={isDark}>
-                      {d.packaging?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.packaging.label}</p>}
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.packaging?.refillable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoSaved size={12}/> Refillable</span>}
-                        {d.packaging?.primary && d.packaging.primary !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
-                            {d.packaging.primary}
-                          </span>
-                        )}
-                        {d.packaging?.end_of_life && d.packaging.end_of_life !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
-                            {d.packaging.end_of_life}
-                          </span>
-                        )}
-                      </div>
-                    </DimensionDropdown>
-
-                    {/* 4. Sustainability */}
-                    <DimensionDropdown icon={<IcoSaved size={20}/>} label="Sustainability" score={d.sustainability?.score||5} concerns={d.sustainability?.concerns} isDark={isDark}>
-                      {d.sustainability?.label && <p style={{fontSize:13,color:isDark?"#6ee7b7":"#555",lineHeight:1.6,margin:"10px 0 4px",fontStyle:"italic"}}>{d.sustainability.label}</p>}
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                        {d.sustainability?.reusable && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoSaved size={12}/> Reusable</span>}
-                        {d.sustainability?.replaces_single_use && <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:"rgba(34,197,94,0.08)",color:"#16a34a"}}><IcoVerified size={12}/> Replaces single-use</span>}
-                        {d.sustainability?.circularity && d.sustainability.circularity !== "unknown" && (
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,background:isDark?"#0f2a18":"#f9fafb",color:isDark?"#6ee7b7":"#555",border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`}}>
-                            {d.sustainability.circularity}
-                          </span>
-                        )}
-                      </div>
-                    </DimensionDropdown>
-
-                    {/* Sustainability and Packaging dropdowns render above */}
-
-                    {/* Primary action row — mockup: moss primary "Show me cleaner" + outlined secondary */}
-                    <div style={{display:"flex", gap:10, marginTop:10, flexWrap:"wrap"}}>
-                      <button
-                        onClick={()=>setShowAlts(true)}
-                        style={{
-                          flex:"1.35 1 160px",
-                          padding:"14px 16px",
-                          background:"var(--moss)", color:"var(--ivory)",
-                          border:"none",
-                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                          cursor:"pointer",
-                          fontFamily:"'DM Sans', system-ui, sans-serif",
-                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                      {rows.map((row, i) => (
+                        <div key={row.key} style={{
+                          padding:"18px 0",
+                          borderBottom: i < rows.length - 1 ? "1px solid var(--rule-soft)" : "none",
+                          display:"grid",
+                          gridTemplateColumns:"1fr auto",
+                          gap:"6px 20px",
+                          alignItems:"baseline",
                         }}>
-                        Show me cleaner
-                      </button>
-                      <button
-                        onClick={reset}
-                        style={{
-                          flex:"1 1 140px",
-                          padding:"14px 16px",
-                          background:"transparent", color:isDark?"#f0fdf4":"var(--ink)",
-                          border:`1px solid ${isDark?"rgba(34,197,94,0.3)":"var(--rule-strong)"}`,
-                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                          cursor:"pointer",
-                          fontFamily:"'DM Sans', system-ui, sans-serif",
-                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
-                        }}>
-                        Shelf it anyway
-                      </button>
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10.5, letterSpacing:"0.22em",
+                            color:isDark?"#f0fdf4":"var(--ink)",
+                            textTransform:"uppercase", fontWeight:500,
+                          }}>{row.label}</div>
+                          <div style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:30, lineHeight:1, letterSpacing:"-0.02em",
+                            gridRow:"span 2", alignSelf:"center", textAlign:"right",
+                            color: sc(row.score), fontWeight:400,
+                          }}>
+                            {Math.round(row.score)}
+                            <span style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:10, letterSpacing:"0.14em",
+                              textTransform:"uppercase",
+                              color:"var(--ink-faint)",
+                              marginLeft:4, verticalAlign:"middle", fontWeight:500,
+                            }}>/ 10</span>
+                          </div>
+                          {row.note && (
+                            <div style={{
+                              gridColumn:1,
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:13, color:isDark?"#6ee7b7":"var(--ink-soft)",
+                              lineHeight:1.45,
+                            }}>{row.note}</div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  </>);
+                  );
                 })() : (
-                  <div style={{padding:"12px 16px", background:isDark?"#0f2a18":"#f9fafb", borderRadius:12, border:`1px dashed ${isDark?"rgba(34,197,94,0.15)":"#e5e7eb"}`, marginBottom:10, textAlign:"left"}}>
-                    <div style={{fontSize:12, color:muted, lineHeight:1.6}}><IcoScan size={14}/> <strong>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis. Scan again to see Materials, Exposure, Packaging and Sustainability scores.</div>
+                  <div style={{padding:"12px 16px", background:isDark?"#0f2a18":"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px dashed ${isDark?"rgba(34,197,94,0.15)":"var(--rule)"}`, margin:"16px 0", textAlign:"left"}}>
+                    <div style={{fontSize:12, color:muted, lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
                   </div>
                 )}
 
-                </div>{/* end dropdowns negative-margin wrapper */}
-
-                {/* Peer comparison */}
-                <p style={{fontSize:15,color:"#6ee7b7",lineHeight:1.75,margin:0,textAlign:"left"}}>{result.summary}</p>
-
-                {/* Score explainability — "why is this a 7?" */}
-                <ScoreExplainer
-                  result={result}
-                  isDark={isDark}
-                  text={text}
-                  muted={muted}
-                  surface={surface}
-                  border={border}
-                  childMode={childMode}
-                  pregnancyMode={pregnancyMode}
-                />
-
-                {/* for food items scoring safe/good where fat, sugar, or calories are a real consideration */}
+                {/* WORTH KNOWING — editorial flags from harmful_chemicals / identified_plastics / concerns */}
                 {(() => {
-                  const score = result.overall_score || result.score;
-                  const isFood = ["food","food_beverage","beverage","restaurant"].includes(result.category);
-                  if (!isFood || score > 4) return null;
-
-                  // Products where the "clean but dense" note is genuinely useful
-                  const allText = JSON.stringify([result.concerns, result.summary, result.product_name]).toLowerCase();
-                  const hasDenseIngredients = /\b(fat|saturated|calori|sugar|carb|sodium|cholesterol|butter|oil|cream|honey|syrup|maple|coconut oil|ghee|lard|avocado oil)\b/.test(allText);
-                  if (!hasDenseIngredients) return null;
-
-                  return (
-                    <div style={{
-                      marginTop:12, padding:"10px 16px", borderRadius:10,
-                      background:isDark?"#1a2030":"#f8fafc",
-                      border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#e2e8f0"}`,
-                      display:"flex", alignItems:"flex-start", gap:10,
-                    }}>
-                      <span style={{fontSize:16, flexShrink:0, marginTop:1}}>ℹ</span>
-                      <span style={{fontSize:12, color:muted, lineHeight:1.6}}>
-                        <strong style={{color:text}}>Score measures ingredient safety, not nutrition.</strong>{" "}
-                        This score reflects chemical risk — synthetic pesticides, additives, and processing — not fat, sugar, or calorie content. A low score means clean ingredients, not a green light to eat freely.
-                      </span>
-                    </div>
-                  );
-                })()}
-
-                {/* Exposure Calculator — only show for products that need a swap */}
-                {displayScore > 3 && (result.break_even || result.alternatives?.length > 0) && (
-                  <ExposureCalculator
-                    result={result}
-                    isDark={isDark}
-                    text={text}
-                    muted={muted}
-                    isMobile={isMobile}
-                    history={history}
-                  />
-                )}
-
-                {/* CTA HIERARCHY — primary/secondary/tertiary */}
-                {(() => {
-                  const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
-                  const addToRoutine = () => {
-                    if (!alreadyInRoutine) {
-                      const entry = {...result, scannedAt: new Date().toISOString()};
-                      const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
-                      setHistory(next);
-                      try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
-                    } else {
-                      setPage("routine"); setResult(null);
+                  const flags = [];
+                  const conc = Array.isArray(result.concerns) ? result.concerns : [];
+                  // Prefer structured concerns first (have concern + explanation)
+                  conc.slice(0, 3).forEach((c) => {
+                    if (typeof c === "string") {
+                      flags.push({ headline: c, body: null, action: null });
+                    } else if (c && c.concern) {
+                      flags.push({ headline: c.concern, body: c.explanation || c.why || null, action: c.suggestion || null });
                     }
-                  };
+                  });
+                  // Fall back to harmful_chemicals / identified_plastics as compact flags
+                  if (flags.length < 3) {
+                    (result.harmful_chemicals || []).slice(0, 3 - flags.length).forEach((c) => {
+                      flags.push({ headline: c, body: "Common concern with this ingredient class.", action: null });
+                    });
+                  }
+                  if (flags.length < 3) {
+                    (result.identified_plastics || []).slice(0, 3 - flags.length).forEach((p) => {
+                      flags.push({ headline: p, body: "Plastic component identified on the label.", action: null });
+                    });
+                  }
+                  if (!flags.length) return null;
                   return (
-                    <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:16}}>
-                      {/* Primary CTA */}
-                      <button
-                        onClick={displayScore > 5
-                          ? () => { setShowAlts(true); }
-                          : () => { setShowAlts(false); reset(); }
-                        }
-                        style={{
-                          width:"100%", padding:"14px", borderRadius:12,
-                          background:"#16a34a", color:"#fff", border:"none",
-                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700,
-                          fontSize:15, cursor:"pointer",
+                    <div style={{padding:"22px 0 4px", textAlign:"left"}}>
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.22em",
+                        color:isDark?"#4ade80":"var(--moss)",
+                        textTransform:"uppercase", fontWeight:500,
+                        marginBottom:16, display:"flex", alignItems:"center", gap:10,
+                      }}>
+                        <span style={{display:"inline-block", width:22, height:1, background:isDark?"#4ade80":"var(--moss)", opacity:0.7}}/>
+                        Worth knowing
+                      </div>
+                      {flags.map((flag, i) => (
+                        <div key={i} style={{
+                          marginBottom: i < flags.length - 1 ? 20 : 0,
+                          paddingBottom: i < flags.length - 1 ? 20 : 0,
+                          borderBottom: i < flags.length - 1 ? "1px solid var(--rule-soft)" : "none",
                         }}>
-                        {displayScore > 5 ? "See safer alternatives" : "Scan another product"}
-                      </button>
-
-                      {/* Secondary CTA */}
-                      <button
-                        onClick={displayScore > 5 ? () => { setShowAlts(false); reset(); } : addToRoutine}
-                        style={{
-                          width:"100%", padding:"12px", borderRadius:12,
-                          background:"none", color:"#16a34a",
-                          border:"1.5px solid #16a34a",
-                          fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:600,
-                          fontSize:14, cursor:"pointer",
-                        }}>
-                        {displayScore > 5
-                          ? "Scan another product"
-                          : alreadyInRoutine ? "View My Routine" : "Add to My Routine"}
-                      </button>
-
-                      {/* Add to shopping list — home-relevant categories */}
-                      {["food","food_beverage","beverage","snack","supplement","cleaning","home","personal_care","baby"].includes(result?.category) && (
-                        <AddToListButton result={result} lists={lists} createShoppingList={createShoppingList} addItemToList={addItemToList} muted={muted}/>
-                      )}
-
+                          <div style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:19, lineHeight:1.2,
+                            color:isDark?"#f0fdf4":"var(--ink)",
+                            marginBottom:6, letterSpacing:"-0.005em", fontWeight:400,
+                          }}>{flag.headline}</div>
+                          {flag.body && (
+                            <div style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:13, color:isDark?"#6ee7b7":"var(--ink-soft)",
+                              lineHeight:1.5, marginBottom: flag.action ? 8 : 0,
+                            }}>{flag.body}</div>
+                          )}
+                          {flag.action && (
+                            <span style={{
+                              fontFamily:"'Fraunces', Georgia, serif",
+                              fontSize:14, color:isDark?"#4ade80":"var(--moss)",
+                              display:"inline-flex", alignItems:"center", gap:6, fontWeight:400,
+                            }}>
+                              <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:300}}>→</span>
+                              {flag.action}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   );
                 })()}
+
+                {/* Primary action row — mockup: moss primary "Show me cleaner" + outlined secondary */}
+                <div style={{display:"flex", gap:10, marginTop:24, flexWrap:"wrap"}}>
+                  <button
+                    onClick={()=>setShowAlts(true)}
+                    style={{
+                      flex:"1.35 1 160px",
+                      padding:"15px 18px",
+                      background:"var(--moss)", color:"var(--ivory)",
+                      border:"none",
+                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                      cursor:"pointer",
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                    }}>
+                    Show me cleaner
+                  </button>
+                  <button
+                    onClick={()=>{
+                      // "Shelf anyway" — add to history (becomes shelf) and head home
+                      const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                      if (!alreadyInRoutine) {
+                        const entry = {...result, scannedAt: new Date().toISOString()};
+                        const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                        setHistory(next);
+                        try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                      }
+                      reset();
+                    }}
+                    style={{
+                      flex:"1 1 140px",
+                      padding:"15px 18px",
+                      background:"transparent", color:isDark?"#f0fdf4":"var(--ink)",
+                      border:`1px solid ${isDark?"rgba(34,197,94,0.3)":"var(--rule-strong)"}`,
+                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                      cursor:"pointer",
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                    }}>
+                    Shelf anyway
+                  </button>
+                </div>
+
+                {/* Peer comparison, ScoreExplainer, food info, ExposureCalculator, and CTA
+                    HIERARCHY were previously rendered here. Their content is now replaced
+                    by THE WHY / BREAKING IT DOWN / WORTH KNOWING / primary action row above
+                    (Session 4.1 — details-alts mockup). Components remain defined for
+                    potential reuse on other surfaces. */}
+                {/* Add to shopping list — home-relevant categories (preserved utility) */}
+                {["food","food_beverage","beverage","snack","supplement","cleaning","home","personal_care","baby"].includes(result?.category) && (
+                  <div style={{marginTop:10}}>
+                    <AddToListButton result={result} lists={lists} createShoppingList={createShoppingList} addItemToList={addItemToList} muted={muted}/>
+                  </div>
+                )}
 
               </div>
 
@@ -10383,212 +10350,356 @@ function App() {
           </div>
         </div>
 
-        {/* ── ALTERNATIVES PAGE OVERLAY ── */}
-        {showAlts && result && (
-          <div style={{position:"fixed", inset:0, zIndex:9990, background:isDark?"#080f0a":"#fafafa", overflowY:"auto"}}>
+        {/* ── ALTERNATIVES VIEW (Session 4.1 — partiqule-details-alts mockup) ── */}
+        {showAlts && result && (() => {
+          // Identify alts on the user's own shelf so we can tag them.
+          const shelfNameSet = new Set((history || []).map(h => (h.product_name || "").toLowerCase().trim()));
+          const onShelf = (n) => shelfNameSet.has((n || "").toLowerCase().trim());
 
-            {/* Globe-inspired header */}
-            <div style={{background:"#052e16", padding:isMobile?`${28 + SAFE_TOP}px 20px 32px`:"40px 40px 44px", position:"relative", overflow:"hidden", textAlign:"center"}}>
-              <style>{`
-                @keyframes orbitSpin1{from{transform:rotate(-25deg)}to{transform:rotate(335deg)}}
-                @keyframes orbitSpin2{from{transform:rotate(50deg)}to{transform:rotate(410deg)}}
-                @keyframes corePulse{0%,100%{r:18}50%{r:20}}
-                @keyframes altFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-                @keyframes particleFade{0%,100%{opacity:0.2}50%{opacity:0.6}}
-                .alt-globe{animation:altFloat 3s ease-in-out infinite}
-                .orbit1{transform-origin:60px 60px;animation:orbitSpin1 4s linear infinite}
-                .orbit2{transform-origin:60px 60px;animation:orbitSpin2 6s linear infinite reverse}
-              `}</style>
-              {/* Particle dots */}
-              {[
-                {s:8,x:"8%",y:"25%",a:0.2,d:"0s"},{s:5,x:"88%",y:"18%",a:0.15,d:"0.5s"},
-                {s:10,x:"15%",y:"70%",a:0.12,d:"1s"},{s:6,x:"92%",y:"65%",a:0.18,d:"1.5s"},
-                {s:4,x:"45%",y:"8%",a:0.2,d:"0.8s"},{s:7,x:"72%",y:"80%",a:0.12,d:"0.3s"},
-                {s:5,x:"30%",y:"85%",a:0.15,d:"1.2s"},{s:8,x:"80%",y:"40%",a:0.1,d:"0.6s"},
-              ].map((p,i)=>(
-                <div key={i} style={{position:"absolute", left:p.x, top:p.y, width:p.s, height:p.s, borderRadius:"50%", background:"white", opacity:p.a, pointerEvents:"none", animation:`particleFade 3s ease-in-out ${p.d} infinite`}}/>
-              ))}
+          // Pull cleanest products per mockup source toggle.
+          const isRestaurant = result.category === "restaurant";
+          const dbAlts = filterAltsBySource(result.alternatives, altSource).slice(0, 3);
+          const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
+          const aiAlts = filterAltsBySource(result.ai_alternatives, altSource)
+            .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
+            .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
+            .slice(0, Math.max(0, 5 - dbAlts.length));
+          const merged = isRestaurant ? dbAlts : [...dbAlts, ...aiAlts];
+          const shelfCount = (history || []).length;
+          const productScore = result.overall_score || result.score;
+          const altShapes = [
+            "16px 14px 18px 15px / 14px 18px 15px 16px",
+            "14px 18px 15px 16px / 18px 15px 16px 14px",
+            "18px 15px 16px 14px / 15px 16px 14px 18px",
+            "15px 16px 14px 18px / 16px 14px 18px 15px",
+          ];
+          const amazonUrl = (name) => `https://www.amazon.com/s?k=${encodeURIComponent(name)}&tag=partiqule-20`;
+          const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
+          const noResults = merged.length === 0;
 
-              <button onClick={()=>setShowAlts(false)} style={{position:"absolute", top:16, left:16, background:"rgba(255,255,255,0.1)", border:"none", color:"#86efac", cursor:"pointer", fontSize:14, fontWeight:600, padding:"8px 14px", borderRadius:20, display:"flex", alignItems:"center", gap:6}}>
-                ← Back
-              </button>
+          // Compare & Share only surfaces if best alt is ≥2 points lower.
+          const compareBest = (() => {
+            const scored = [...(result.alternatives || []), ...(result.ai_alternatives || [])]
+              .filter(a => (a.score ?? a.estimated_score) != null);
+            if (!scored.length) return null;
+            const b = scored.reduce((a, c) => ((a.score ?? a.estimated_score) <= (c.score ?? c.estimated_score) ? a : c));
+            const bs = b.score ?? b.estimated_score;
+            return (productScore - bs) >= 2 ? b : null;
+          })();
 
-              {/* Animated orbital rings */}
-              <svg width="120" height="120" viewBox="0 0 120 120" style={{margin:"0 auto 16px", display:"block"}} className="alt-globe">
-                <ellipse cx="60" cy="60" rx="50" ry="15" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.55" className="orbit1"/>
-                <ellipse cx="60" cy="60" rx="44" ry="12" fill="none" stroke="#86efac" strokeWidth="1" opacity="0.35" className="orbit2"/>
-                <circle cx="60" cy="60" r="22" fill="#16a34a"/>
-                <circle cx="60" cy="60" r="18" fill="#4ade80"/>
-                <circle cx="53" cy="53" r="7" fill="#bbf7d0" opacity="0.6"/>
-              </svg>
-
-              <div style={{fontSize:11, color:"#86efac", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Safer alternatives for</div>
-              <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:isMobile?20:26, color:"#fff", margin:"0 0 6px", lineHeight:1.2}}>
-                {result.product_name?.length > 50 ? result.product_name.slice(0,47)+"…" : result.product_name}
-              </h2>
-              <div style={{display:"inline-flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.1)", borderRadius:20, padding:"4px 14px"}}>
-                <ScoreBadge score={result.overall_score||result.score} size="xs" showLabel />
-                <span style={{fontSize:12, color:"rgba(255,255,255,0.6)"}}>→ switch to score 1-3</span>
+          return (
+            <div style={{position:"fixed", inset:0, zIndex:9990, background:"var(--cream)", overflowY:"auto", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
+              {/* Top bar — back arrow left, shelf badge right */}
+              <div style={{
+                display:"flex", alignItems:"center", justifyContent:"space-between",
+                padding: `${(SAFE_TOP || 0) + 18}px 24px 12px`,
+                borderBottom:"1px solid var(--rule)",
+                background:"var(--cream)",
+                position:"sticky", top:0, zIndex:10,
+              }}>
+                <button onClick={()=>setShowAlts(false)} style={{
+                  display:"flex", alignItems:"center", gap:8,
+                  background:"transparent", border:"none", cursor:"pointer", padding:0,
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10.5, letterSpacing:"0.22em",
+                  color:"var(--ink-soft)", textTransform:"uppercase", fontWeight:500,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  Back
+                </button>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:11, color:"var(--ink-soft)", fontWeight:500, cursor:"pointer",
+                }} onClick={()=>{setShowAlts(false); setPage("history"); setResult(null);}}>
+                  Shelf <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{shelfCount}</strong>
+                </div>
               </div>
-            </div>
 
-            {/* Content */}
-            <div style={{maxWidth:640, margin:"0 auto", padding:isMobile?"20px 12px 60px":"32px 24px 80px", display:"flex", flexDirection:"column", gap:20}}>
-
-              {/* Source toggle */}
-              <div style={{display:"flex", gap:8, alignItems:"center", flexWrap:"wrap"}}>
-                <span style={{fontSize:12, color:muted, fontWeight:600}}>Shop via:</span>
-                {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src,label]) => (
-                  <button key={src} onClick={()=>setAltSource(src)} style={{fontSize:12, fontWeight:600, padding:"5px 14px", borderRadius:20, border:`1px solid ${altSource===src?"#16a34a":"#e2e8f0"}`, cursor:"pointer", background: altSource===src ? "#16a34a" : "transparent", color: altSource===src ? "#fff" : muted}}>
-                    {label}
-                  </button>
-                ))}
+              {/* Header block */}
+              <div style={{padding:"26px 24px 22px", maxWidth:640, margin:"0 auto"}}>
+                <div style={{
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize:10.5, letterSpacing:"0.2em",
+                  color:"var(--ink-faint)", textTransform:"uppercase",
+                  fontWeight:500, marginBottom:16,
+                }}>
+                  Instead of {result.product_name?.length > 40 ? result.product_name.slice(0, 37) + "…" : result.product_name} · {Math.round(productScore)}
+                </div>
+                <h1 style={{
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize: isMobile ? 36 : 44,
+                  fontWeight:400,
+                  color:"var(--ink)",
+                  letterSpacing:"-0.012em",
+                  lineHeight:1,
+                  margin:"0 0 10px",
+                }}>Cleaner options</h1>
+                <div style={{
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize:18, color:"var(--ink-soft)",
+                  lineHeight:1.35, fontWeight:400, letterSpacing:"-0.005em",
+                }}>
+                  {merged.length >= 1 ? `${merged.length} I'd reach for instead.` : "Checking for cleaner options…"}
+                </div>
               </div>
 
-              {/* DB alternatives */}
-              {(() => {
-                const isRestaurant = result.category === "restaurant";
-                const dbAlts = filterAltsBySource(result.alternatives, altSource).slice(0, 3);
-                const dbNames = new Set(dbAlts.map(p => p.name?.toLowerCase().trim()));
-                const aiAlts = filterAltsBySource(result.ai_alternatives, altSource)
-                  .filter((a, i, arr) => arr.findIndex(b => b.name?.toLowerCase().trim() === a.name?.toLowerCase().trim()) === i)
-                  .filter(a => !dbNames.has(a.name?.toLowerCase().trim()))
-                  .slice(0, 3 - dbAlts.length);
-                const hasAffiliate = dbAlts.length > 0 && result.category !== "other" && result.category !== "restaurant";
+              {/* Source toggle — mockup pill group */}
+              <div style={{
+                margin:"0 24px 20px",
+                maxWidth:640,
+                marginLeft:"auto", marginRight:"auto",
+              }}>
+                <div style={{
+                  padding:4,
+                  background:"var(--cream-light)",
+                  border:"1px solid var(--rule)",
+                  display:"flex", gap:2,
+                  borderRadius:"14px 16px 12px 15px / 12px 15px 14px 16px",
+                  margin:"0 24px",
+                }}>
+                  {[["amazon","Amazon"],["brand","Brand site"],["bigbox","Target"]].map(([src, label]) => {
+                    const active = altSource === src;
+                    return (
+                      <div key={src} onClick={()=>setAltSource(src)} style={{
+                        flex:1, padding:"10px 12px", textAlign:"center",
+                        cursor:"pointer",
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10.5, letterSpacing:"0.18em",
+                        color: active ? "var(--ivory)" : "var(--ink-soft)",
+                        textTransform:"uppercase", fontWeight:500,
+                        background: active ? "var(--moss)" : "transparent",
+                        borderRadius:10,
+                        transition:"background 0.2s, color 0.2s",
+                      }}>{label}</div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                // For restaurants use result.alternatives directly (AI suggestions land there)
-                // Split: first 2 = same place, last = better alternative
-                const restAlts = isRestaurant ? dbAlts : [];
-                const samePlace = isRestaurant ? restAlts.slice(0, 2) : [];
-                const betterAlt = isRestaurant ? restAlts.slice(2) : [];
-
-                const noResults = isRestaurant ? restAlts.length === 0 : (!dbAlts.length && !aiAlts.length);
-                if (noResults) return (
-                  <div style={{textAlign:"center", padding:"40px 20px", color:muted, fontSize:14}}>
-                    {altSource === "brand" ? "No direct brand alternatives found. Try Amazon for more options." : altSource === "bigbox" ? "No big-box alternatives found. Try Amazon or brand sites instead." : "No specific alternatives found. Try scanning a similar product for recommendations."}
+              {/* Alternative cards */}
+              <div style={{padding:"0 24px", maxWidth:640, margin:"0 auto"}}>
+                {noResults ? (
+                  <div style={{
+                    padding:"40px 24px", textAlign:"center",
+                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontSize:18, color:"var(--ink-soft)", lineHeight:1.4, fontWeight:400,
+                    letterSpacing:"-0.005em",
+                  }}>
+                    {altSource === "brand"
+                      ? "No direct brand alternatives for this one. Try Amazon."
+                      : altSource === "bigbox"
+                      ? "Nothing clean at Target for this category yet. Try brand sites."
+                      : "No specific alternatives landed. Scan a related product and I'll surface cleaner options."}
                   </div>
-                );
-
-                const amazonUrl = (name) => `https://www.amazon.com/s?k=${encodeURIComponent(name)}&tag=partiqule-20`;
-
-                const AltCard = ({alt, i}) => {
+                ) : merged.map((alt, i) => {
                   const score = alt.estimated_score ?? alt.score ?? 3;
+                  const brand = (alt.brand || (alt.name || "").match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s/)?.[1] || "").trim();
+                  const shortName = (() => {
+                    const n = alt.name || "";
+                    const rest = brand ? n.slice(brand.length).trim() : n;
+                    return rest.length > 52 ? rest.slice(0, 49) + "…" : rest;
+                  })();
+                  const composition = (alt.material || "").toUpperCase().replace(/\s*[,·]\s*/g, " · ");
+                  const tags = [];
                   const reason = alt.reason || alt.description || "";
-                  const material = alt.material || "";
-                  const buyUrl = alt.affiliateUrl || amazonUrl(alt.name);
+                  // Extract certification-style tags from reason text
+                  const certPatterns = [
+                    { rx: /\bGOTS\b/i, text: "GOTS certified" },
+                    { rx: /\bBluesign\b/i, text: "Bluesign approved" },
+                    { rx: /\bFair Trade\b/i, text: "Fair Trade" },
+                    { rx: /\bOEKO-TEX\b/i, text: "OEKO-TEX" },
+                    { rx: /\bUSDA Organic\b/i, text: "USDA Organic" },
+                    { rx: /\bNon-GMO\b/i, text: "Non-GMO" },
+                    { rx: /\bMade in USA\b/i, text: "Made in USA" },
+                    { rx: /\brecycled\b/i, text: "Recycled" },
+                  ];
+                  certPatterns.forEach(c => { if (c.rx.test(reason) || c.rx.test(composition)) tags.push({ text: c.text, kind: "cert" }); });
+                  if (onShelf(alt.name)) tags.push({ text: "On your shelf", kind: "shelf" });
+                  const buyUrl = altSource === "brand"
+                    ? getBrandUrl(alt.brand || alt.name, alt.name)
+                    : altSource === "bigbox"
+                    ? BIGBOX_URLS.target(alt.name)
+                    : (alt.affiliateUrl || amazonUrl(alt.name));
                   return (
-                    <div key={i} style={{background:isDark?"#1a2a1e":"#f0fdf4", borderRadius:12, padding:"16px 18px", border:`1.5px solid ${isDark?"#1e3a22":"#bbf7d0"}`}}>
-                      <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8, marginBottom:6}}>
-                        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text, lineHeight:1.3}}>{alt.name}</div>
-                        <div style={{flexShrink:0}}><ScoreBadge score={score} size="xs" showLabel /></div>
+                    <div key={i}
+                      onClick={(e)=>{
+                        // Default tap — open the buy link in new tab.
+                        window.open(buyUrl, "_blank", "noopener,noreferrer");
+                      }}
+                      style={{
+                        background:"var(--cream-light)",
+                        padding:"16px 18px 18px",
+                        border:"1px solid var(--rule-soft)",
+                        marginBottom:10,
+                        cursor:"pointer",
+                        transition:"transform 0.15s, background 0.2s",
+                        display:"flex", gap:16, alignItems:"flex-start",
+                        borderRadius: altShapes[i % altShapes.length],
+                      }}>
+                      {/* Score ring */}
+                      <div style={{
+                        width:52, height:52,
+                        borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
+                        background:"transparent",
+                        border:`2px solid ${sc(score)}`,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        flexShrink:0, marginTop:2,
+                      }}>
+                        <span style={{
+                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontSize:26, color:sc(score), lineHeight:1,
+                          fontWeight:400, letterSpacing:"-0.01em",
+                        }}>{Math.round(score)}</span>
                       </div>
-                      {material && <div style={{fontSize:12, color:isDark?"#86efac":"#166534", marginBottom:6, lineHeight:1.5}}>{material}</div>}
-                      {reason && <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:10}}>{reason}</div>}
-                      <div style={{display:"flex", gap:12, alignItems:"center", flexWrap:"wrap"}}>
-                        <button onClick={()=>{setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name);}}
-                          style={{display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#16a34a", fontWeight:600, background:"none", border:"none", cursor:"pointer", padding:0}}>
-                          <IcoSearch size={14}/> Scan this →
-                        </button>
-                        <a href={altSource === "brand" ? getBrandUrl(alt.brand || alt.name, alt.name) : altSource === "bigbox" ? BIGBOX_URLS.target(alt.name) : buyUrl} target="_blank" rel="noopener noreferrer"
-                          style={{display:"flex", alignItems:"center", gap:4, fontSize:12, color:isDark?"#6ee7b7":"#6b7280", fontWeight:600, textDecoration:"none"}}>
-                          🛒 {altSource === "brand" ? "Brand site" : altSource === "bigbox" ? "Find on Target" : "Find on Amazon"}
-                        </a>
+                      {/* Info */}
+                      <div style={{flex:1, minWidth:0}}>
+                        {brand && (
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10, letterSpacing:"0.22em",
+                            color:"var(--ink-faint)", textTransform:"uppercase",
+                            fontWeight:500, marginBottom:2,
+                          }}>{brand.toUpperCase()}</div>
+                        )}
+                        <div style={{
+                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontSize:19, color:"var(--ink)",
+                          lineHeight:1.15, marginBottom:8,
+                          letterSpacing:"-0.005em", fontWeight:400,
+                        }}>{shortName || alt.name}</div>
+                        {composition && (
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10, letterSpacing:"0.12em",
+                            color:"var(--ink-soft)", textTransform:"uppercase",
+                            marginBottom:8,
+                          }}>{composition}</div>
+                        )}
+                        {tags.length > 0 && (
+                          <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                            {tags.map((t, j) => (
+                              <span key={j} style={{
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontSize:10.5, fontWeight:500,
+                                padding:"2px 9px",
+                                borderRadius:40,
+                                color: t.kind === "shelf" ? "var(--amber)" : "var(--moss)",
+                                background: t.kind === "shelf" ? "rgba(200, 120, 26, 0.1)" : "var(--moss-soft)",
+                              }}>{t.text}</span>
+                            ))}
+                          </div>
+                        )}
+                        <div style={{display:"flex", gap:16, marginTop:10, flexWrap:"wrap"}}>
+                          <button onClick={(e)=>{ e.stopPropagation(); setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name); }}
+                            style={{
+                              background:"transparent", border:"none", padding:0, cursor:"pointer",
+                              fontFamily:"'Fraunces', Georgia, serif",
+                              fontSize:14, color:"var(--moss)",
+                              paddingBottom:1, borderBottom:"1px dotted var(--moss)",
+                            }}>Scan this</button>
+                        </div>
                       </div>
                     </div>
                   );
-                };
+                })}
+              </div>
 
-                return (
-                  <div style={{display:"flex", flexDirection:"column", gap:10}}>
-                    {isRestaurant ? (<>
-                      {samePlace.length > 0 && (<>
-                        <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Order smarter — same place</div>
-                        {samePlace.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
-                      </>)}
-                      {betterAlt.length > 0 && (<>
-                        <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginTop:8, marginBottom:4}}>Better alternative</div>
-                        {betterAlt.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
-                      </>)}
-                    </>) : (<>
-                      <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>Recommended swaps</div>
-                      {dbAlts.map(p => <ProductCard key={p.id} product={p} isDark={isDark} altSource={altSource} childMode={childMode}/>)}
-                      {aiAlts.length > 0 && (
-                        <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:dbAlts.length>0?4:0}}>
-                          {dbAlts.length > 0 && <div style={{fontSize:12, color:muted, textAlign:"center"}}>More from our AI</div>}
-                          {aiAlts.map((alt, i) => <AltCard key={i} alt={alt} i={i}/>)}
-                        </div>
-                      )}
-                      {hasAffiliate && <p style={{fontSize:11, color:muted, textAlign:"center", lineHeight:1.5}}>Affiliate links — commission at no extra cost to you. Never influences our scores.</p>}
-                    </>)}
-                  </div>
-                );
-              })()}
-
-              {/* Compare & Share — only when best alt is 2+ points lower */}
-              {(() => {
-                const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
-                const scored = allAlts.filter(a => (a.score ?? a.estimated_score) != null);
-                if (!scored.length) { return null; }
-                const best = scored.reduce((a, b) => ((a.score ?? a.estimated_score) <= (b.score ?? b.estimated_score) ? a : b));
-                const bestScore = best.score ?? best.estimated_score;
-                const productScore = result.overall_score || result.score;
-                const gap = productScore - bestScore;
-                // console.log("[CompareShare] product:", productScore, "bestAlt:", bestScore, "delta:", gap, "best:", best.name);
-                if (gap < 2) return null;
-                return (
-                  <button onClick={() => setCompareAlt(best)} style={{
-                    width:"100%", padding:"14px", borderRadius:12,
-                    background:"none", border:"1.5px solid #16a34a",
-                    fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:14,
-                    color:"#16a34a", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  }}>
-                    <IconShare size={16} color="#16a34a"/> Compare & Share
-                  </button>
-                );
-              })()}
-
-              {/* Bundle */}
-              <BundleCard category={result.category} isDark={isDark}/>
-
-              {/* Scan next — works for all categories when suggestions exist */}
-              {result.scan_next?.length > 0 && (
-                <div style={{background:isDark?"#1a2a1a":"#f0fdf4", borderRadius:16, padding:"20px 24px", border:`1.5px solid ${isDark?"#1e3a1e":"#bbf7d0"}`}}>
-                  <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:4}}>
-                    {["food","food_beverage","beverage","restaurant","supplement"].includes(result.category) ? "Compare these next" : "Complete your routine"}
-                  </div>
-                  <div style={{fontSize:13, color:muted, marginBottom:14, lineHeight:1.5}}>
-                    {["food","food_beverage","beverage","restaurant","supplement"].includes(result.category)
-                      ? "See how these compare — scan to build your full picture."
-                      : "People who scanned this also checked these — scan them to build your full exposure picture."}
-                  </div>
-                  <div style={{display:"flex", flexDirection:"column", gap:8}}>
-                    {result.scan_next.map((item,i)=>(
-                      <button key={i} onClick={()=>{setShowAlts(false); setResult(null); setQuery(item); analyze(item); track("Scan Next Click", {item, from: result.product_name, category: result.category});}}
-                        style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, border:`1px solid ${isDark?"rgba(34,197,94,0.15)":"#bbf7d0"}`, background:isDark?"#0f2a18":"#fff", cursor:"pointer", textAlign:"left"}}>
-                        <div style={{display:"flex", alignItems:"center", gap:10}}>
-                          <div style={{width:32, height:32, borderRadius:8, background:isDark?"#1a2a1a":"#f0fdf4", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                            <IcoScan size={16}/>
-                          </div>
-                          <span style={{fontSize:13, fontWeight:500, color:text}}>{item}</span>
-                        </div>
-                        <span style={{fontSize:12, color:"#16a34a", fontWeight:700}}>Scan →</span>
-                      </button>
-                    ))}
-                  </div>
+              {/* Bottom honest line */}
+              {!noResults && (
+                <div style={{
+                  padding:"24px 24px 0",
+                  textAlign:"center",
+                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontSize:14, color:"var(--ink-faint)",
+                  lineHeight:1.4, fontWeight:400,
+                  maxWidth:640, margin:"0 auto",
+                }}>
+                  These {merged.length} are the cleanest I found that match the use case.
                 </div>
               )}
 
-              {/* Feedback — "this score seems wrong" */}
-              <FeedbackButton result={result} isDark={isDark} text={text} muted={muted} border={border} surface={surface} user={user}/>
+              {/* Supplementary actions — preserved below the core list, restyled cream */}
+              <div style={{maxWidth:640, margin:"0 auto", padding:"32px 24px 40px", display:"flex", flexDirection:"column", gap:14}}>
+                {compareBest && (
+                  <button onClick={()=>setCompareAlt(compareBest)} style={{
+                    width:"100%", padding:"13px 16px",
+                    background:"transparent",
+                    border:"1px solid var(--moss)",
+                    color:"var(--moss)",
+                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontWeight:500, fontSize:14, cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                    letterSpacing:"0.005em",
+                  }}>
+                    <IconShare size={16} color="currentColor"/> Compare and share
+                  </button>
+                )}
 
-              {/* Scan again CTA */}
-              <button onClick={()=>{setShowAlts(false); reset();}}
-                style={{width:"100%", padding:"14px", borderRadius:12, background:"#16a34a", color:"#fff", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, cursor:"pointer"}}>
-                Scan another product
-              </button>
+                {result.scan_next?.length > 0 && (
+                  <div style={{
+                    background:"var(--cream-light)",
+                    border:"1px solid var(--rule)",
+                    borderRadius:"16px 20px 14px 18px / 18px 14px 20px 16px",
+                    padding:"20px 22px",
+                  }}>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:"var(--moss)", textTransform:"uppercase",
+                      fontWeight:500, marginBottom:12,
+                      display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                      {["food","food_beverage","beverage","restaurant","supplement"].includes(result.category) ? "Compare these next" : "Complete your routine"}
+                    </div>
+                    <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                      {result.scan_next.map((item, i) => (
+                        <button key={i} onClick={()=>{ setShowAlts(false); setResult(null); setQuery(item); analyze(item); track("Scan Next Click", {item, from: result.product_name, category: result.category}); }}
+                          style={{
+                            display:"flex", alignItems:"center", justifyContent:"space-between",
+                            padding:"11px 14px",
+                            borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px",
+                            border:"1px solid var(--rule)",
+                            background:"var(--cream)",
+                            cursor:"pointer", textAlign:"left",
+                          }}>
+                          <span style={{
+                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontSize:15, color:"var(--ink)", fontWeight:400,
+                            letterSpacing:"-0.005em",
+                          }}>{item}</span>
+                          <span style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10, letterSpacing:"0.22em",
+                            color:"var(--moss)", textTransform:"uppercase", fontWeight:500,
+                          }}>Scan →</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <BundleCard category={result.category} isDark={isDark}/>
+
+                <FeedbackButton result={result} isDark={isDark} text={text} muted={muted} border={border} surface={surface} user={user}/>
+
+                <button onClick={()=>{setShowAlts(false); reset();}}
+                  style={{
+                    width:"100%", padding:"13px 16px",
+                    background:"var(--moss)", color:"var(--ivory)",
+                    border:"none",
+                    borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                    fontFamily:"'DM Sans', system-ui, sans-serif",
+                    fontWeight:500, fontSize:14, cursor:"pointer",
+                    letterSpacing:"0.005em",
+                  }}>
+                  Scan another product
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         </>
       )}
 
