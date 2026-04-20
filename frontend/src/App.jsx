@@ -7167,6 +7167,15 @@ function App() {
   const [barcodeLoadingPhase, setBarcodeLoadingPhase] = useState(null);
   const [textOnlyBlocked, setTextOnlyBlocked] = useState(false); // backend 422 cannot_score_from_text_only — prompt user to scan
   const [modalQuery,  setModalQuery] = useState("");
+  // ── Text search match picker (verified-source only) ─────────────
+  // Debounced /search call surfaces calibration + prior-scan matches so users
+  // can get a scored result from typing when we have verified data. Raw text
+  // queries without a productId pick are still blocked by the backend gate.
+  const [searchMatches, setSearchMatches] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchedQuery, setSearchedQuery] = useState(""); // last query that returned from /search, for empty-state gating
+  const searchDebounceRef = useRef(null);
+  const searchAbortRef    = useRef(null);
   // ── Scan counter + subscription ───────────────────────────────
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -7558,6 +7567,82 @@ function App() {
     setLoading(false);
   };
 
+  // ── Match picker: tapping a search match runs /analyze with productId ──
+  const selectSearchMatch = async (match) => {
+    if (!match?.id) return;
+    try { document.activeElement?.blur?.(); } catch {}
+    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+      if (!user) setShowLimitModal("account");
+      else setShowLimitModal("paywall");
+      return;
+    }
+    setLoading(true); setError(null); setTextOnlyBlocked(false); setResult(null); setRevealDone(false);
+    setSearchMatches([]); // collapse picker so result can render cleanly
+    track("Search Match Select", { matchId: match.id, source: match.source, name: match.display_name });
+    try {
+      const res = await fetch(`${API_BASE}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: match.id, userId: user?.id || null }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || `Error ${res.status}`);
+      }
+      const data = await res.json();
+      setResult(data); saveToHistory(data); setQuery(data.product_name || match.display_name);
+      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
+      track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
+      if (!isSubscribed) {
+        const newCount = scanCount + 1;
+        setScanCount(newCount);
+        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+        if (newCount >= FREE_LIMIT) {
+          if (!user) setShowLimitModal("account");
+          else setShowLimitModal("paywall");
+        }
+      }
+    } catch (e) {
+      setError(e.message || "Couldn't load that product.");
+      track("Search Match Error", { error: e.message });
+    }
+    setLoading(false);
+  };
+
+  // ── Debounced /search as the user types in the home search bar ──
+  useEffect(() => {
+    // Hide the picker once a result is on screen.
+    if (result) { setSearchMatches([]); setSearchLoading(false); return; }
+    const trimmed = (query || "").trim();
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (searchAbortRef.current) { try { searchAbortRef.current.abort(); } catch {} searchAbortRef.current = null; }
+    if (trimmed.length < 3) {
+      setSearchMatches([]);
+      setSearchLoading(false);
+      return;
+    }
+    searchDebounceRef.current = setTimeout(async () => {
+      const ctrl = new AbortController();
+      searchAbortRef.current = ctrl;
+      setSearchLoading(true);
+      try {
+        const url = `${API_BASE}/search?q=${encodeURIComponent(trimmed)}${user?.id ? `&userId=${encodeURIComponent(user.id)}` : ""}`;
+        const res = await fetch(url, { signal: ctrl.signal });
+        if (!res.ok) { setSearchMatches([]); return; }
+        const data = await res.json();
+        setSearchMatches(Array.isArray(data.matches) ? data.matches : []);
+        setSearchedQuery(trimmed);
+      } catch (e) {
+        if (e.name !== "AbortError") { setSearchMatches([]); setSearchedQuery(trimmed); }
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [query, result, user?.id]);
+
   const runDemo = () => {
     const demo = {
       product_name: "M&Ms Milk Chocolate Candies",
@@ -7624,7 +7709,7 @@ function App() {
   };
 
   const [pendingRoomTag, setPendingRoomTag] = useState(null);
-  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null);};
+  const reset = () => {setResult(null); setError(null); setTextOnlyBlocked(false); setQuery(""); setPage("home"); setMenuOpen(false); setShowAlts(false); setFabOpen(false); setShowScanModal(false); setScanSheetOpen(false); setShowBarcodeScanner(false); setBarcodeLoadingPhase(null); setModalQuery(""); setPendingRoomTag(null); setSearchMatches([]); setSearchedQuery("");};
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
@@ -8362,6 +8447,60 @@ function App() {
                       <input id="home-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
                     </>)}
                   </div>
+
+                  {/* ── MATCH PICKER — renders when /search returns verified matches ── */}
+                  {(() => {
+                    const trimmed = query.trim();
+                    if (trimmed.length < 3 || result) return null;
+                    const hasSearched = searchedQuery === trimmed;
+                    const showLoading = searchLoading && searchMatches.length === 0;
+                    const showEmpty   = hasSearched && !searchLoading && searchMatches.length === 0;
+                    if (!showLoading && !showEmpty && searchMatches.length === 0) return null;
+                    const scoreCol = s => s==null ? "#6b7280" : s<=3 ? "#16a34a" : s<=5 ? "#d97706" : "#dc2626";
+                    const scoreBg  = s => s==null ? "rgba(107,114,128,0.12)" : s<=3 ? "rgba(22,163,74,0.12)" : s<=5 ? "rgba(217,119,6,0.12)" : "rgba(220,38,38,0.12)";
+                    const sourceColor = src => src === "calibration" ? "#4ade80" : src === "own_scan" ? "#6ee7b7" : "#9ca3af";
+                    if (showLoading) {
+                      return (
+                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"10px 14px", background:"rgba(15,42,24,0.95)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12, fontFamily:"'DM Sans',sans-serif", fontSize:13, color:"#9ca3af"}}>
+                          Searching…
+                        </div>
+                      );
+                    }
+                    if (showEmpty) {
+                      return (
+                        <div style={{maxWidth:860, margin:"10px auto 0", padding:"14px 16px", background:"rgba(15,42,24,0.95)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12}}>
+                          <div style={{fontFamily:"'Outfit',sans-serif", fontSize:13, color:"#f0fdf4", fontWeight:700, marginBottom:6}}>No verified matches</div>
+                          <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:12, color:"#9ca3af", marginBottom:12}}>We couldn't find this product in our verified data. Scan the barcode or label for an accurate score.</div>
+                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"10px 14px", background:"linear-gradient(135deg,#22c55e,#16a34a)", color:"#fff", border:"none", borderRadius:10, fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div style={{maxWidth:860, margin:"10px auto 0", background:"rgba(15,42,24,0.97)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:12, overflow:"hidden", maxHeight:360, overflowY:"auto"}}>
+                        {searchMatches.map((m, i) => (
+                          <div key={m.id+"-"+i}
+                            onClick={()=>selectSearchMatch(m)}
+                            style={{display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderBottom: i<searchMatches.length-1 ? "1px solid rgba(34,197,94,0.1)" : "none", cursor:"pointer"}}>
+                            <div style={{flex:1, minWidth:0}}>
+                              <div style={{fontFamily:"'Outfit',sans-serif", fontSize:14, fontWeight:700, color:"#f0fdf4", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{m.display_name}</div>
+                              <div style={{fontFamily:"'DM Sans',sans-serif", fontSize:11, color:sourceColor(m.source), marginTop:2}}>
+                                {m.source_label}{m.match_type === "trigram" ? ` · close match` : ""}
+                              </div>
+                            </div>
+                            {m.score_preview != null && (
+                              <div style={{width:36, height:36, borderRadius:10, background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Outfit',sans-serif", fontWeight:800, fontSize:15, flexShrink:0}}>
+                                {m.score_preview}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        <div onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}}
+                          style={{padding:"10px 14px", borderTop:"1px solid rgba(34,197,94,0.15)", background:"rgba(5,46,22,0.7)", fontFamily:"'DM Sans',sans-serif", fontSize:12, color:"#6ee7b7", textAlign:"center", cursor:"pointer"}}>
+                          Can't find your product? Scan the barcode →
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* ── FEED CONTENT ── */}
@@ -9211,6 +9350,8 @@ function App() {
                     open_beauty_facts:   "Verified via Open Beauty Facts",
                     open_products_facts: "Verified via Open Products Facts",
                     supabase_scans:      "From a previous Partiqule scan",
+                    previous_scan:       "From a previous Partiqule scan",
+                    calibration:         "Verified formula",
                     vision_ocr:          "Read from your photo",
                     none:                "Ingredients unverified",
                   };

@@ -4767,13 +4767,231 @@ async function attachIntelCards(result, userId) {
   return result;
 }
 
+// ── Text search: verified-source match picker ─────────────────
+// The raw-text /analyze path is gated (ALLOW_TEXT_PATH_SCORING=false) because
+// Pass 1 without ingredient ground truth fabricates from training priors.
+// /search offers a safer alternative: the user types, we surface matches we
+// have verified data for (calibration entries, prior OFF-verified scans), and
+// a tap dispatches /analyze with a productId that bypasses the gate.
+//
+// Sources:
+//   - calibration:<key>  → in-memory CALIBRATION Map (3,039+ known products)
+//   - scan:<uuid>        → Supabase scans row with ingredient_source populated
+//
+// Fuzzy matching: case-insensitive substring first, Jaccard-trigram similarity
+// fallback (threshold 0.3) when fewer than 5 substring hits. Trigram is in
+// memory for calibration, pg_trgm in Supabase for scans (requires the
+// pg_trgm extension — `CREATE EXTENSION IF NOT EXISTS pg_trgm;`).
+function buildTrigrams(str) {
+  const padded = "  " + (str || "").toLowerCase().trim() + "  ";
+  const out = new Set();
+  for (let i = 0; i <= padded.length - 3; i++) out.add(padded.slice(i, i + 3));
+  return out;
+}
+function trigramSimilarity(a, b) {
+  const ta = buildTrigrams(a);
+  const tb = buildTrigrams(b);
+  if (!ta.size || !tb.size) return 0;
+  let inter = 0;
+  for (const t of ta) if (tb.has(t)) inter++;
+  const union = ta.size + tb.size - inter;
+  return union ? inter / union : 0;
+}
+
+app.get("/search", async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  const rawQ = typeof req.query.q === "string" ? req.query.q : "";
+  const userId = typeof req.query.userId === "string" && req.query.userId ? req.query.userId : null;
+  const q = rawQ.trim().toLowerCase().replace(/\s+/g, " ");
+  if (q.length < 3 || q.length > 100) {
+    return res.json({ query: rawQ, matches: [], total_count: 0 });
+  }
+
+  const MATCH_CAP = 5;
+  const TRIGRAM_THRESHOLD = 0.3;
+
+  // ── Calibration substring scan (in-memory, ~3k entries) ──
+  const calibSubstring = [];
+  for (const c of calibrationAllEntries) {
+    if (c.key.includes(q) || c.keyNoApos.includes(q)) {
+      calibSubstring.push({ c, sim: c.key === q ? 1 : 0.95 });
+    }
+  }
+  calibSubstring.sort((a, b) => b.sim - a.sim || a.c.key.length - b.c.key.length);
+
+  // ── Scans substring (Supabase) — prefer user's own scans ──
+  let scanSubstring = [];
+  if (supabaseAdmin) {
+    try {
+      const { data } = await supabaseAdmin
+        .from("scans")
+        .select("id,product_name,user_id,result_json,created_at")
+        .ilike("product_name", `%${q}%`)
+        .not("result_json->>ingredient_source", "is", null)
+        .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(20);
+      scanSubstring = data || [];
+    } catch (e) {
+      console.warn("[Search] scans substring query failed:", e.message);
+    }
+  }
+
+  // ── Dedupe: calibration wins over scans on same normalized name ──
+  const taken = new Set();
+  const matches = [];
+
+  for (const { c } of calibSubstring) {
+    if (matches.length >= MATCH_CAP) break;
+    const entry = c.entry;
+    const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+    matches.push({
+      id: `calibration:${c.key}`,
+      display_name: toTitleCase(c.key),
+      source: "calibration",
+      source_label: "Verified formula",
+      score_preview: midScore,
+      category: entry.category || "other",
+      match_type: "substring",
+      similarity: 1,
+    });
+    taken.add(c.key);
+  }
+
+  // Dedupe scans by product_name (case-insensitive)
+  const seenScanNames = new Set();
+  const prioritizedScans = scanSubstring
+    .map(s => ({ ...s, _owned: s.user_id === userId }))
+    .sort((a, b) => {
+      if (a._owned !== b._owned) return a._owned ? -1 : 1;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+  for (const s of prioritizedScans) {
+    if (matches.length >= MATCH_CAP) break;
+    const normName = normalise(s.product_name || "");
+    if (!normName || taken.has(normName) || seenScanNames.has(normName)) continue;
+    seenScanNames.add(normName);
+    const score = s.result_json?.overall_score ?? s.result_json?.score ?? null;
+    matches.push({
+      id: `scan:${s.id}`,
+      display_name: s.product_name,
+      source: s._owned ? "own_scan" : "other_scan",
+      source_label: s._owned ? `Your scan from ${relativeTime(s.created_at)}` : "Recent verified scan",
+      score_preview: score,
+      category: s.result_json?.category || "other",
+      match_type: "substring",
+      similarity: 1,
+      scanned_at: s.created_at,
+    });
+  }
+
+  // ── Trigram fallback when substring matches are sparse ──
+  if (matches.length < MATCH_CAP) {
+    // Calibration trigram
+    const calibTrigram = [];
+    for (const c of calibrationAllEntries) {
+      if (taken.has(c.key)) continue;
+      if (c.key.includes(q) || c.keyNoApos.includes(q)) continue; // already handled
+      const sim = trigramSimilarity(q, c.key);
+      if (sim >= TRIGRAM_THRESHOLD) calibTrigram.push({ c, sim });
+    }
+    calibTrigram.sort((a, b) => b.sim - a.sim);
+
+    for (const { c, sim } of calibTrigram) {
+      if (matches.length >= MATCH_CAP) break;
+      const entry = c.entry;
+      const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+      matches.push({
+        id: `calibration:${c.key}`,
+        display_name: toTitleCase(c.key),
+        source: "calibration",
+        source_label: "Verified formula",
+        score_preview: midScore,
+        category: entry.category || "other",
+        match_type: "trigram",
+        similarity: Math.round(sim * 100) / 100,
+      });
+      taken.add(c.key);
+    }
+
+    // Scans trigram via pg_trgm similarity operator (requires the extension)
+    if (matches.length < MATCH_CAP && supabaseAdmin) {
+      try {
+        const { data } = await supabaseAdmin
+          .rpc("scans_trigram_search", { q, threshold: TRIGRAM_THRESHOLD, user_id_arg: userId, lim: 10 });
+        for (const row of data || []) {
+          if (matches.length >= MATCH_CAP) break;
+          const normName = normalise(row.product_name || "");
+          if (!normName || taken.has(normName) || seenScanNames.has(normName)) continue;
+          seenScanNames.add(normName);
+          const owned = row.user_id === userId;
+          const score = row.result_json?.overall_score ?? row.result_json?.score ?? null;
+          matches.push({
+            id: `scan:${row.id}`,
+            display_name: row.product_name,
+            source: owned ? "own_scan" : "other_scan",
+            source_label: owned ? `Your scan from ${relativeTime(row.created_at)}` : "Recent verified scan",
+            score_preview: score,
+            category: row.result_json?.category || "other",
+            match_type: "trigram",
+            similarity: typeof row.sim === "number" ? Math.round(row.sim * 100) / 100 : null,
+            scanned_at: row.created_at,
+          });
+        }
+      } catch (e) {
+        // Expected to fail until pg_trgm extension is enabled and the RPC is created.
+        // Falls back silently — substring results still serve the common case.
+        if (!e.message?.includes("scans_trigram_search")) {
+          console.warn("[Search] scans trigram RPC failed:", e.message);
+        }
+      }
+    }
+  }
+
+  log.info("text_search", {
+    query: q,
+    userId,
+    match_count: matches.length,
+    has_calibration_matches: matches.some(m => m.source === "calibration"),
+    has_own_scan_matches: matches.some(m => m.source === "own_scan"),
+    has_other_scan_matches: matches.some(m => m.source === "other_scan"),
+    zero_matches: matches.length === 0,
+  });
+
+  return res.json({
+    query: rawQ,
+    matches,
+    total_count: matches.length,
+  });
+});
+
+function toTitleCase(str) {
+  return (str || "").replace(/\w\S*/g, s => s.charAt(0).toUpperCase() + s.slice(1));
+}
+
+function relativeTime(iso) {
+  try {
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return "recently";
+    const diff = Date.now() - t;
+    const day = 86400000;
+    if (diff < day) return "today";
+    if (diff < 2 * day) return "yesterday";
+    if (diff < 7 * day) return `${Math.floor(diff / day)} days ago`;
+    if (diff < 30 * day) return `${Math.floor(diff / (7 * day))} weeks ago`;
+    return `${Math.floor(diff / (30 * day))} months ago`;
+  } catch { return "recently"; }
+}
+
 app.post("/analyze", rateLimit, async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.set("Pragma", "no-cache");
-  let { query, image, mediaType, userId } = req.body;
+  let { query, image, mediaType, userId, productId } = req.body;
 
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
+  // Also applies to productId picks below — they consume a scan like any other.
   if (userId && supabaseAdmin) {
     (async () => {
       try {
@@ -4782,6 +5000,86 @@ app.post("/analyze", rateLimit, async (req, res) => {
         await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
       } catch(e) { console.warn("scan_count increment failed:", e.message); }
     })();
+  }
+
+  // ── productId bypass: /search match picks ──
+  // `calibration:<key>` and `scan:<uuid>` both carry pre-verified data, so they
+  // skip the ALLOW_TEXT_PATH_SCORING gate that blocks raw text queries.
+  if (typeof productId === "string" && productId.length > 0 && productId.length < 200) {
+    try {
+      if (productId.startsWith("calibration:")) {
+        const key = productId.slice("calibration:".length);
+        const entry = CALIBRATION.get(key);
+        if (!entry) return res.status(404).json({ error: "Unknown calibration key" });
+        const productName = toTitleCase(key);
+        const cat = entry.category || "other";
+        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+        const kidsFloor = entry.kidsFloor || entry.floor;
+        const kidsCeil  = entry.kidsCeiling || entry.ceiling;
+        const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+        const concernsText = (entry.substances || []).join(" ");
+        const safety = computeSafetyScores(midScore, cat, productName, { flagged_substances: entry.substances || [] }, [], concernsText);
+        const alts = serializeAlternatives(
+          filterDbAlternatives(
+            findAlternatives(productName, cat, 3, productName),
+            cat, productName, midScore
+          ),
+          cat
+        );
+        const result = applyProductCalibration({
+          product_name: productName,
+          score: midScore, overall_score: midScore,
+          category: cat,
+          confidence: entry.confidence || "high",
+          is_child_product: safety.isChild,
+          child_score: entry.kidsFloor ? kidsMid : safety.childScore,
+          child_bumps: safety.childBumps || [],
+          pregnancy_score: safety.pregnancyScore,
+          pregnancy_bumps: safety.pregnancyBumps || [],
+          dimensions: buildFuzzyDimensions(entry, cat, midScore),
+          concerns: entry.substances || [],
+          flagged_substances: entry.substances || [],
+          summary: entry.reason || "",
+          nutrition: entry.nutrition || null,
+          alternatives: alts, ai_alternatives: [],
+          product_family: classifyProductFamily(productName, entry.substances || [], cat),
+          category_score_context: CATEGORY_CONTEXT[cat] || CATEGORY_CONTEXT.other,
+          ingredient_source: "calibration",
+          ingredient_confidence: entry.confidence || "high",
+          ingredient_verified_at: new Date().toISOString(),
+          ingredient_source_url: null,
+        });
+        await attachIntelCards(result, userId);
+        log.info("product_id_resolve", { productId, source: "calibration", score: midScore });
+        return res.json({ ...result, cached: false });
+      }
+
+      if (productId.startsWith("scan:")) {
+        if (!supabaseAdmin) return res.status(503).json({ error: "Scan lookup unavailable" });
+        const scanId = productId.slice("scan:".length);
+        // UUID sanity check — reject anything that isn't a plausible uuid format
+        if (!/^[0-9a-f-]{30,40}$/i.test(scanId)) return res.status(400).json({ error: "Invalid scan id" });
+        const { data, error } = await supabaseAdmin
+          .from("scans")
+          .select("result_json,product_name,created_at")
+          .eq("id", scanId)
+          .single();
+        if (error || !data?.result_json) return res.status(404).json({ error: "Scan not found" });
+        const result = { ...data.result_json };
+        // Rewrite source to signal the user is seeing a reused scan, not a fresh verification
+        result.ingredient_source = "previous_scan";
+        result.ingredient_verified_at = data.created_at || result.ingredient_verified_at;
+        result.ingredient_source_url = null;
+        await attachIntelCards(result, userId);
+        log.info("product_id_resolve", { productId, source: "scan" });
+        return res.json({ ...result, cached: false });
+      }
+
+      return res.status(400).json({ error: "Unknown productId scheme" });
+    } catch (e) {
+      console.warn("[productId] resolve failed:", e.message);
+      return res.status(500).json({ error: "productId resolve failed" });
+    }
   }
 
   // If image provided, use vision to identify + analyze in one pass

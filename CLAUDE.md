@@ -495,6 +495,64 @@ Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the 
 
 ---
 
+## Text Search (Verified Sources Only)
+
+Raw-text /analyze remains gated (`ALLOW_TEXT_PATH_SCORING=false`) — Pass 1 without ingredient ground truth fabricates from training priors. To keep text input as a usable scan surface, `GET /search` returns a short list of matches the user can tap, dispatching `/analyze` with a `productId` that bypasses the gate because the referenced data is already verified.
+
+**Endpoint** — `GET /search?q=<string>&userId=<uuid?>`
+- Validates `q` trimmed length in `[3, 100]`. Under 3 returns `{ matches: [], total_count: 0 }` without hitting any data source.
+- Normalizes `q` to lowercase, collapsed whitespace. The CALIBRATION Map keys are already normalized the same way, so substring matching is direct.
+- Not wrapped in `rateLimit` middleware on purpose — /search shouldn't consume a user's /analyze budget, and the endpoint does no AI work.
+
+**Sources**
+- `calibration` — in-memory `CALIBRATION` Map (3,039+ entries from `calibration.js` + admin overrides). Iterated via `calibrationAllEntries` which is rebuilt whenever calibration overrides reload. Substring primary, JS Jaccard-trigram fallback.
+- `own_scan` / `other_scan` — Supabase `scans` table, last 90 days, filtered to rows where `result_json->>ingredient_source` is not null (i.e. post-Pass-0 scans with known provenance). Substring via `ilike`. Trigram fallback via `scans_trigram_search` RPC (requires pg_trgm extension).
+
+**Sort** — calibration first, then own_scan, then other_scan. Within each tier, substring before trigram. Within each match type, higher similarity first. Cap 5 matches.
+
+**Dedupe** — calibration wins over scans on the same normalized product name. A product name that appears in both CALIBRATION and as a prior scan shows once, sourced to calibration.
+
+**Trigram** — simple JS implementation in `server.js` (`buildTrigrams` + `trigramSimilarity`). Jaccard similarity on padded 3-character windows. Threshold 0.3. Supabase-side trigram goes through a `scans_trigram_search` RPC — failing silently (substring still serves typed-correctly queries) until Paul runs the extension + RPC migration.
+
+**`/analyze` productId bypass** — When `/analyze` is called with a body of `{ productId, userId }` (no `query`, no `image`) the text gate is skipped:
+- `calibration:<normalized-key>` → lookup `CALIBRATION.get(key)`, build a scored result with the same shape as the fuzzy-calibration fast path. `ingredient_source` is set to `"calibration"`, `ingredient_confidence` to the entry's confidence.
+- `scan:<uuid>` → Supabase `scans` lookup by id. `result_json` is returned with `ingredient_source` rewritten to `"previous_scan"` so the credibility line reads "From a previous Partiqule scan" rather than claiming fresh OFF verification.
+
+Raw text queries (no `productId`, no `image`) still hit the `cannot_score_from_text_only` 422 gate.
+
+**Frontend match picker** — Home search input debounces 300ms, triggers `/search` at ≥3 chars, renders a floating panel below the fixed scan bar with one card per match. Each card shows: product name, source label (`Verified formula` / `Your scan from N days ago` / `Recent verified scan`), score preview (mid of `floor` and `ceiling` for calibration; stored overall_score for scans) colored by the score tier (green ≤3, amber ≤5, red >5). Tap → `selectSearchMatch` → `/analyze` with `productId`. Empty-state card shows "Scan barcode" as the primary fallback; a second "Can't find your product?" link sits under any populated list for the same purpose.
+
+The panel hides when `result` is set, so once a scan lands the user isn't looking at stale match suggestions layered behind the result.
+
+**Logging** — every /search call emits `log.info("text_search", { query, userId, match_count, has_calibration_matches, has_own_scan_matches, has_other_scan_matches, zero_matches })`. Railway log filter for gap analysis:
+```bash
+grep text_search | jq 'select(.zero_matches == true) | .query' | sort | uniq -c | sort -rn
+```
+
+**pg_trgm migration** — Supabase SQL Editor, one-time:
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Optional but strongly recommended: a supporting RPC for scan trigram search.
+-- Until this exists the endpoint still works — it just skips the scans-trigram
+-- fallback and relies on substring + calibration-trigram only.
+CREATE OR REPLACE FUNCTION scans_trigram_search(q text, threshold float, user_id_arg uuid, lim int)
+RETURNS TABLE(id uuid, product_name text, user_id uuid, result_json jsonb, created_at timestamptz, sim float)
+LANGUAGE sql STABLE AS $$
+  SELECT s.id, s.product_name, s.user_id, s.result_json, s.created_at,
+         similarity(lower(s.product_name), lower(q)) AS sim
+  FROM scans s
+  WHERE lower(s.product_name) % lower(q)
+    AND similarity(lower(s.product_name), lower(q)) > threshold
+    AND s.result_json->>'ingredient_source' IS NOT NULL
+    AND s.created_at > NOW() - INTERVAL '90 days'
+  ORDER BY (s.user_id = user_id_arg) DESC NULLS LAST, sim DESC
+  LIMIT lim;
+$$;
+```
+
+---
+
 ## Intel Card Relevance
 
 Intel cards surface on scan results only when they are directly relevant to the scanned product or to something in the user's recent history. The old category-based matching (`category_triggers` only) surfaced irrelevant cards across category siblings — e.g., a nail polish remover recall on a foundation scan. This was replaced 2026-04-19.
