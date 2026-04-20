@@ -6524,8 +6524,9 @@ function App() {
       {/* Account deleted toast */}
       {showAccountDeleted && (
         <div style={{position:"fixed",bottom:32,left:"50%",transform:"translateX(-50%)",zIndex:9999,
-          background:"#052e16",color:"#4ade80",padding:"14px 28px",borderRadius:14,
-          fontSize:15,fontWeight:700,boxShadow:"0 8px 32px rgba(0,0,0,0.25)",
+          background:"var(--moss)",color:"var(--ivory)",padding:"14px 28px",borderRadius:"var(--cta-shape)",
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:15,fontWeight:500,boxShadow:"var(--shadow-card)",
           display:"flex",alignItems:"center",gap:10,whiteSpace:"nowrap"}}>
           <span style={{fontSize:18}}>✓</span> Account deleted
         </div>
@@ -6633,7 +6634,7 @@ function App() {
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
           <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:36, color:text, margin:"0 0 12px", letterSpacing:"-0.015em"}}>Page not found.</h1>
           <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
-          <button onClick={reset} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
+          <button onClick={reset} style={{padding:"12px 28px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer"}}>
             Go to Partiqule →
           </button>
         </div>
@@ -6743,12 +6744,12 @@ function App() {
               {user ? (
                 <div style={{padding:"16px 20px"}}>
                   <div style={{display:"flex", alignItems:"center", gap:14, marginBottom:16}}>
-                    <div style={{width:44, height:44, borderRadius:"50%", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center"}}>
-                      <span style={{color:"#4ade80", fontWeight:700, fontSize:18}}>{user.email[0].toUpperCase()}</span>
+                    <div style={{width:44, height:44, borderRadius:"var(--circle-shape)", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center"}}>
+                      <span style={{color:"var(--ivory)", fontWeight:500, fontSize:18, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{user.email[0].toUpperCase()}</span>
                     </div>
                     <div>
                       <div style={{fontSize:15, fontWeight:600, color:text}}>{user.email}</div>
-                      <div style={{fontSize:13, color:"#16a34a", fontWeight:600}}>Signed in</div>
+                      <div style={{fontSize:13, color:"var(--moss)", fontWeight:500}}>Signed in</div>
                     </div>
                   </div>
                   <div style={{marginBottom:12}}>
@@ -6769,7 +6770,7 @@ function App() {
               ) : (
                 <div style={{padding:"16px 20px"}}>
                   <p style={{fontSize:14, color:muted, margin:"0 0 14px", lineHeight:1.6}}>Sign in to save your scan history across devices and unlock cloud sync.</p>
-                  <button onClick={()=>setShowAuth(true)} style={{width:"100%", padding:"12px", borderRadius:10, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer"}}>
+                  <button onClick={()=>setShowAuth(true)} style={{width:"100%", padding:"12px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>
                     Sign in / Create account
                   </button>
                 </div>
@@ -9207,11 +9208,11 @@ function App() {
               <div style={{width:40, height:4, borderRadius:2, background:"#e5e7eb", margin:"0 auto 20px"}}/>
               <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
               <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
-                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:14, background:"#f0fdf4", border:`1.5px solid ${"#bbf7d0"}`, cursor:"pointer", marginBottom:12}}>
-                <div style={{width:44, height:44, borderRadius:12, background:"#16a34a", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
+                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:"var(--card-shape-1)", background:"var(--moss-soft)", border:"1px solid var(--rule)", cursor:"pointer", marginBottom:12}}>
+                <div style={{width:44, height:44, borderRadius:"var(--tile-shape-1)", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                 </div>
-                <div><div style={{fontSize:15, fontWeight:700, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
               </div>
               <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
@@ -9234,7 +9235,7 @@ function App() {
               </div>
               <div style={{display:"flex", gap:8}}>
                 <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Tide Pods..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
-                <button onClick={()=>{if(modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} style={{padding:"10px 16px", borderRadius:10, background:"#052e16", color:"#4ade80", border:"none", fontWeight:700, fontSize:14, cursor:"pointer"}}>Search</button>
+                <button onClick={()=>{if(modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} style={{padding:"10px 16px", borderRadius:"var(--cta-shape)", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer"}}>Search</button>
               </div>
             </div>
           </>)}
@@ -9465,11 +9466,11 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{minHeight:"100vh", background:"#052e16", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
-          <div style={{display:"flex",justifyContent:"center"}}><IcoScan size={48}/></div>
-          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:24, color:"#fff"}}>Something went wrong</div>
-          <div style={{fontSize:14, color:"#86efac", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
-          <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#4ade80", color:"#052e16", fontWeight:700, fontSize:15, cursor:"pointer", marginTop:8}}>
+        <div style={{minHeight:"100vh", background:"var(--cream)", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
+          <div style={{display:"flex",justifyContent:"center"}}><IcoScan size={48} color="var(--moss)"/></div>
+          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", letterSpacing:"-0.01em"}}>Something went wrong</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
+          <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer", marginTop:8}}>
             Reload Partiqule
           </button>
         </div>
