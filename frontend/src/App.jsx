@@ -606,7 +606,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
         borderBottom: "1px solid var(--rule)",
         margin: "0 0",
       }}>
-        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:30, width:"auto", display:"block"}}/>
+        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:40, width:"auto", display:"block"}}/>
         <div style={{
           fontFamily:"'DM Sans', system-ui, sans-serif",
           fontSize:11, letterSpacing:"0.02em", color:"var(--ink-soft)", fontWeight:500,
@@ -959,7 +959,7 @@ const GlobeLoading = ({ isMobile }) => {
     <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:24, padding:"24px"}}>
       <style>{`@keyframes globeLoadingCaret { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
 
-      <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:36, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
+      <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:44, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
 
       <div style={{
         fontFamily:"'Fraunces', Georgia, serif",
@@ -6419,9 +6419,9 @@ function App() {
 
       {/* HEADER */}
       <header style={{background:"var(--cream)", borderBottom:"1px solid var(--rule)", position:"sticky", top:0, zIndex:100, paddingTop: SAFE_TOP ? `${SAFE_TOP}px` : 0}}>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, minHeight: isMobile ? 52 : 64, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:`0 ${px}`, minHeight: isMobile ? 60 : 72, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
           <div style={{display:"flex", alignItems:"center", cursor:"pointer"}} onClick={reset}>
-            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 30 : 38, width:"auto", objectFit:"contain", display:"block"}}/>
+            <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 38 : 50, width:"auto", objectFit:"contain", display:"block"}}/>
           </div>
 
           {(isMobile || isTablet) ? (
@@ -8173,47 +8173,56 @@ function App() {
                   </div>
                 )}
 
-                {/* Primary action row — moss primary "Show me cleaner" + outlined secondary */}
-                <div style={{display:"flex", gap:10, marginTop:18, flexWrap:"wrap"}}>
-                  <button
-                    onClick={()=>setShowAlts(true)}
-                    style={{
-                      flex:"1.35 1 160px",
-                      padding:"15px 18px",
-                      background:"var(--moss)", color:"var(--ivory)",
-                      border:"none",
-                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                      cursor:"pointer",
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
-                    }}>
-                    Show me cleaner
-                  </button>
-                  <button
-                    onClick={()=>{
-                      // "Shelf anyway" — add to history (becomes shelf) and head home
-                      const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
-                      if (!alreadyInRoutine) {
-                        const entry = {...result, scannedAt: new Date().toISOString()};
-                        const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
-                        setHistory(next);
-                        try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
-                      }
-                      reset();
-                    }}
-                    style={{
-                      flex:"1 1 140px",
-                      padding:"15px 18px",
-                      background:"transparent", color:"var(--ink)",
-                      border:"1px solid var(--rule-strong)",
-                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                      cursor:"pointer",
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
-                    }}>
-                    Shelf anyway
-                  </button>
-                </div>
+                {/* Primary action row — moss primary "Show me cleaner" + outlined secondary.
+                    "Show me cleaner" only renders when alternatives exist. */}
+                {(() => {
+                  const hasAlts = (result.alternatives?.length > 0) || (result.ai_alternatives?.length > 0);
+                  return (
+                    <div style={{display:"flex", gap:10, marginTop:18, flexWrap:"wrap"}}>
+                      {hasAlts && (
+                        <button
+                          onClick={()=>setShowAlts(true)}
+                          style={{
+                            flex:"1.35 1 160px",
+                            padding:"15px 18px",
+                            background:"var(--moss)", color:"var(--ivory)",
+                            border:"none",
+                            borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                            cursor:"pointer",
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                          }}>
+                          Show me cleaner
+                        </button>
+                      )}
+                      <button
+                        onClick={()=>{
+                          // "Shelf anyway" — add to history (becomes shelf) and head home
+                          const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                          if (!alreadyInRoutine) {
+                            const entry = {...result, scannedAt: new Date().toISOString()};
+                            const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                            setHistory(next);
+                            try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                          }
+                          reset();
+                        }}
+                        style={{
+                          flex: hasAlts ? "1 1 140px" : "1 1 100%",
+                          padding:"15px 18px",
+                          background: hasAlts ? "transparent" : "var(--moss)",
+                          color: hasAlts ? "var(--ink)" : "var(--ivory)",
+                          border: hasAlts ? "1px solid var(--rule-strong)" : "none",
+                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                          cursor:"pointer",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                        }}>
+                        Shelf anyway
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {/* Tell me more — opens the detail overlay */}
                 <div style={{marginTop:18, textAlign:"center"}}>
@@ -8336,16 +8345,26 @@ function App() {
                       </div>
                       );
                     })}
-                    {(!filterAltsBySource(result.alternatives, altSource)?.length && !filterAltsBySource(result.ai_alternatives, altSource)?.filter(a=>a.estimated_score < (result.overall_score||result.score)).length) && (
-                      <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
-                        <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>
-                          {altSource === "brand" ? "No direct brand alternatives" : altSource === "bigbox" ? "No big-box alternatives" : "No swap needed"}
+                    {(!filterAltsBySource(result.alternatives, altSource)?.length && !filterAltsBySource(result.ai_alternatives, altSource)?.filter(a=>a.estimated_score < (result.overall_score||result.score)).length) && (() => {
+                      const score = result.overall_score || result.score;
+                      // Score-aware empty-state copy — don't say "scores well" on a 6+.
+                      const headline = altSource === "brand" ? "No direct brand alternatives"
+                        : altSource === "bigbox" ? "No big-box alternatives"
+                        : score <= 3 ? "No swap needed"
+                        : score <= 5 ? "Nothing cleaner landed"
+                        : "No specific alternatives found";
+                      const body = altSource === "brand" ? "Try Amazon for more options →"
+                        : altSource === "bigbox" ? "Try Amazon or brand sites instead →"
+                        : score <= 3 ? "This one scores well — no swap to suggest."
+                        : score <= 5 ? "I didn't find a cleaner option that matches this use case."
+                        : "I couldn't pull specific alternatives for this one. Scan a related product to compare.";
+                      return (
+                        <div style={{textAlign:"center", padding:"32px 16px", color:muted}}>
+                          <div style={{fontSize:13, fontWeight:600, marginBottom:4}}>{headline}</div>
+                          <div style={{fontSize:12}}>{body}</div>
                         </div>
-                        <div style={{fontSize:12}}>
-                          {altSource === "brand" ? "Try Amazon for more options →" : altSource === "bigbox" ? "Try Amazon or brand sites instead →" : "This product scores well — no specific alternative to recommend."}
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     {/* Compare & Share — desktop panel */}
                     {(() => {
                       const allAlts = [...(result.alternatives || []), ...(result.ai_alternatives || [])];
@@ -8755,47 +8774,55 @@ function App() {
                   );
                 })()}
 
-                {/* Primary action row — mirrors Surface 1 */}
-                <div style={{display:"flex", gap:10, marginTop:28, flexWrap:"wrap"}}>
-                  <button
-                    onClick={()=>{ setShowDetail(false); setShowAlts(true); }}
-                    style={{
-                      flex:"1.35 1 160px",
-                      padding:"15px 18px",
-                      background:"var(--moss)", color:"var(--ivory)",
-                      border:"none",
-                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                      cursor:"pointer",
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
-                    }}>
-                    Show me cleaner
-                  </button>
-                  <button
-                    onClick={()=>{
-                      const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
-                      if (!alreadyInRoutine) {
-                        const entry = {...result, scannedAt: new Date().toISOString()};
-                        const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
-                        setHistory(next);
-                        try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
-                      }
-                      setShowDetail(false);
-                      reset();
-                    }}
-                    style={{
-                      flex:"1 1 140px",
-                      padding:"15px 18px",
-                      background:"transparent", color:"var(--ink)",
-                      border:"1px solid var(--rule-strong)",
-                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                      cursor:"pointer",
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontWeight:500, fontSize:14, letterSpacing:"0.005em",
-                    }}>
-                    Shelf anyway
-                  </button>
-                </div>
+                {/* Primary action row — mirrors Surface 1. "Show me cleaner" only when alts exist. */}
+                {(() => {
+                  const hasAlts = (result.alternatives?.length > 0) || (result.ai_alternatives?.length > 0);
+                  return (
+                    <div style={{display:"flex", gap:10, marginTop:28, flexWrap:"wrap"}}>
+                      {hasAlts && (
+                        <button
+                          onClick={()=>{ setShowDetail(false); setShowAlts(true); }}
+                          style={{
+                            flex:"1.35 1 160px",
+                            padding:"15px 18px",
+                            background:"var(--moss)", color:"var(--ivory)",
+                            border:"none",
+                            borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                            cursor:"pointer",
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                          }}>
+                          Show me cleaner
+                        </button>
+                      )}
+                      <button
+                        onClick={()=>{
+                          const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
+                          if (!alreadyInRoutine) {
+                            const entry = {...result, scannedAt: new Date().toISOString()};
+                            const next = [entry, ...history.filter(h => h.product_name !== result.product_name)].slice(0, 200);
+                            setHistory(next);
+                            try { localStorage.setItem("ps_history", JSON.stringify(next)); } catch {}
+                          }
+                          setShowDetail(false);
+                          reset();
+                        }}
+                        style={{
+                          flex: hasAlts ? "1 1 140px" : "1 1 100%",
+                          padding:"15px 18px",
+                          background: hasAlts ? "transparent" : "var(--moss)",
+                          color: hasAlts ? "var(--ink)" : "var(--ivory)",
+                          border: hasAlts ? "1px solid var(--rule-strong)" : "none",
+                          borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                          cursor:"pointer",
+                          fontFamily:"'DM Sans', system-ui, sans-serif",
+                          fontWeight:500, fontSize:14, letterSpacing:"0.005em",
+                        }}>
+                        Shelf anyway
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );
@@ -8936,11 +8963,17 @@ function App() {
                     fontSize:18, color:"var(--ink-soft)", lineHeight:1.4, fontWeight:400,
                     letterSpacing:"-0.005em",
                   }}>
+                    {/* Source-specific copy first — user can switch tabs for options. */}
                     {altSource === "brand"
                       ? "No direct brand alternatives for this one. Try Amazon."
                       : altSource === "bigbox"
                       ? "Nothing clean at Target for this category yet. Try brand sites."
-                      : "No specific alternatives landed. Scan a related product and I'll surface cleaner options."}
+                      /* Amazon tab: score-aware copy so we don't tell a user with a score-6 product that it "scores well". */
+                      : productScore <= 3
+                      ? "No swap needed — this one scores well."
+                      : productScore <= 5
+                      ? "I didn't find a cleaner option that matches this use case."
+                      : "I couldn't pull specific alternatives for this one. Scan a related product to compare."}
                   </div>
                 ) : merged.map((alt, i) => {
                   const score = alt.estimated_score ?? alt.score ?? 3;

@@ -1700,7 +1700,41 @@ NOTE: For ANY food, beverage, supplement, or restaurant product — populate nut
 NOVA 4 NUTRITION RULE: For any NOVA 4 ultra-processed product, you MUST populate at minimum sugar_g, sodium_mg, and calories from the label — this data is publicly available on every packaged food sold in the US. If a NOVA 4 product has added sugars that exceed 20% of daily value (10g+), this must show as a nutrition concern. Nutrition badges showing % DV are a core part of the score for processed foods.
 INGREDIENT_LIST RULE: For ALL food, beverage, supplement, and personal care products, populate ingredient_list with the actual ingredients in order as they appear on the label. For food products, this is always publicly available via FDA-required labeling. Return each ingredient as a separate string in the array. If a product has sub-ingredients (e.g. "CHOCOLATE CHIPS (sugar, cocoa butter, chocolate)"), include the parent ingredient only. If you cannot find the ingredient list for a truly obscure product, return an empty array. Never return null for ingredient_list on food products.
 SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.
-SUMMARY VOICE RULE (CRITICAL): summary_short and summary_long must both be honest about concerns, but differ in tone. They describe the SAME facts — just at different depth. summary_short is 2 to 3 sentences max, first-person friend voice ("I would swap if you can", "mostly the fabric"), plain language, no regulatory jargon, no lab measurements or ppm numbers, no brand-history details, no sentence longer than 18 words. summary_long is 60 to 100 words (3 to 5 sentences), research tone, includes regulatory details (EU restrictions, FDA rulings, state bans), lab testing references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes (phase-outs, certifications, formulation changes with dates), and historical context. Never soften summary_short to hide what summary_long says.` }
+SUMMARY VOICE RULE (CRITICAL): summary_short is the friend voice on the simple result screen. summary_long is the research brief on the detail screen. Both must be honest about the SAME facts.
+
+summary_short — REQUIRED:
+- Start with the problem or strength, NOT the product name
+- Use first person at least once ("I would", "I'd skip", "I like", "if it were me")
+- Name specific ingredients or fabric types — no generic categories
+- Short sentences, max 18 words each
+- 2 to 3 sentences total, 30 words max overall
+- Take a position — no hedging
+- Include one concrete action ("swap if you can", "fine to keep", "worth the upgrade")
+
+summary_short — FORBIDDEN:
+- Restating the product name at the start (already on screen)
+- Hedging language ("it depends", "some may", "could potentially")
+- "Consumers", "individuals", "users"
+- "Overall," as a sentence starter
+- Em dashes used as bullets
+- Bullet points of any kind
+- ppm numbers, lab citations, regulatory body names
+- Restating the score number
+
+GOOD summary_short examples:
+- Food with dyes (score 7): "The Red 40, Yellow 5 and Blue 1 are the issue here — petroleum dyes linked to behavior effects in kids. I'd swap to the plain Goldfish or a dye-free cheddar cracker."
+- Personal care clean (score 2): "Clean formula — no parabens, phthalates, or synthetic fragrance. I'd keep using this one, it's one of the better options on the shelf."
+- Clothing synthetic (score 6): "Mostly the fabric — polyester sheds microplastics every wash, and the DWR finish is a PFAS source. I'd save it for workouts and swap in cotton or merino for everyday."
+- Food score 8: "The seed oils and TBHQ preservative are doing the damage. If it were me I'd finish the bag and not rebuy — plenty of cleaner chip options now."
+
+BAD summary_short examples (NEVER produce):
+- "Goldfish Colors/Rainbow — petroleum dyes added in colored varieties (Red 40, Yellow 5, Blue 1 confirmed). Dye floors fire. Score higher than original. Stick to original or Whole Grain Goldfish." (restates product name, clinical language, no first person, nonsense phrase)
+- "Overall, this product contains some concerning ingredients that consumers should be aware of." (hedging, "consumers", "Overall,", no specifics)
+- "This sunscreen uses oxybenzone and octinoxate, which are chemical UV filters that some studies suggest may have endocrine-disrupting potential at certain exposure levels." (one 30-word sentence, hedged, no first person, no action)
+
+summary_long rules stay as before: 60 to 100 words, 3 to 5 sentences, research tone, include regulatory details (EU restrictions, FDA rulings, state bans), lab references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes with dates, and historical context.
+
+Never soften summary_short to hide what summary_long says.` }
         ]
       }]
     })
@@ -4030,10 +4064,41 @@ For restaurant category: populate composition_tier based on processing level, po
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 
-SUMMARY VOICE RULE (CRITICAL): summary_short and summary_long must both be honest about concerns, but differ in tone. They describe the SAME facts — just at different depth.
-- summary_short: 2 to 3 sentences max. First-person friend voice ("I would swap if you can", "mostly the fabric", "not a crisis"). Plain language. No regulatory jargon. No lab measurements or ppm numbers. No brand-history details. No sentence longer than 18 words. This text appears on the simple result screen — it should read like a text from a knowledgeable friend.
-- summary_long: 60 to 100 words, 3 to 5 sentences. Research tone but still readable. Include specific regulatory details (EU restrictions, FDA rulings, state bans), lab testing references when relevant (Mamavation, NEJM, Nature Medicine citations), brand progress notes (phase-outs, certifications, formulation changes with dates), and historical context. This text appears on the full breakdown detail screen — it should read like a deeper brief.
-Both must be honest about the same concerns. Never soften summary_short to hide what summary_long says.
+SUMMARY VOICE RULE (CRITICAL): summary_short is the friend voice that appears on the simple result screen. summary_long is the research brief on the detail screen. Both must be honest about the SAME facts.
+
+summary_short — REQUIRED:
+- Start with the problem or strength, NOT the product name
+- Use first person at least once ("I would", "I'd skip", "I like", "if it were me")
+- Name specific ingredients or fabric types — no generic categories
+- Short sentences, max 18 words each
+- 2 to 3 sentences total, 30 words max overall
+- Take a position — no hedging, no "some may feel", no "consumers might"
+- Include one concrete action ("swap if you can", "fine to keep", "worth the upgrade")
+
+summary_short — FORBIDDEN:
+- Restating the product name at the start (already on screen)
+- Hedging language ("it depends", "some may", "could potentially")
+- "Consumers", "individuals", "users" — talk to the person reading it
+- "Overall," as a sentence starter
+- Em dashes used as bullets or list separators
+- Bullet points of any kind
+- ppm numbers, lab citations, regulatory body names
+- Restating the score number
+
+GOOD summary_short examples:
+- Food with dyes (score 7): "The Red 40, Yellow 5 and Blue 1 are the issue here — petroleum dyes linked to behavior effects in kids. I'd swap to the plain Goldfish or a dye-free cheddar cracker."
+- Personal care clean (score 2): "Clean formula — no parabens, phthalates, or synthetic fragrance. I'd keep using this one, it's one of the better options on the shelf."
+- Clothing synthetic (score 6): "Mostly the fabric — polyester sheds microplastics every wash, and the DWR finish is a PFAS source. I'd save it for workouts and swap in cotton or merino for everyday."
+- Food score 8: "The seed oils and TBHQ preservative are doing the damage. If it were me I'd finish the bag and not rebuy — plenty of cleaner chip options now."
+
+BAD summary_short examples (NEVER produce):
+- "Goldfish Colors/Rainbow — petroleum dyes added in colored varieties (Red 40, Yellow 5, Blue 1 confirmed). Dye floors fire. Score higher than original. Stick to original or Whole Grain Goldfish." (restates product name, clinical language, no first person, nonsense phrase "dye floors fire")
+- "Overall, this product contains some concerning ingredients that consumers should be aware of." (hedging, "consumers", "Overall,", no specifics)
+- "This sunscreen uses oxybenzone and octinoxate, which are chemical UV filters that some studies suggest may have endocrine-disrupting potential at certain exposure levels." (one 30-word sentence, hedged, no first person, no action)
+
+summary_long rules stay as before: 60 to 100 words, 3 to 5 sentences, research tone, include regulatory details (EU restrictions, FDA rulings, state bans), lab references when relevant (Mamavation, NEJM, Nature Medicine), brand progress notes with dates, and historical context.
+
+Never soften summary_short to hide what summary_long says.
 
 SUBSTANCE NAMING RULES — critical for accurate scoring:
 Always name the SPECIFIC chemical, not a generic category. These rules apply to every concern you generate:
