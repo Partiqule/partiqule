@@ -8664,6 +8664,23 @@ function App() {
                   const cleanName = (name) => name
                     .replace(/\s*\((presumed|potential|possible|suspected|unconfirmed|estimated|likely|may be present|trace)\)/gi, "")
                     .trim();
+                  // Extract a substance name from a reason/concern string. Accepts em-dash,
+                  // en-dash, colon, plain hyphen-minus (with surrounding whitespace), " is ",
+                  // and "(" as separators between the name and its description. Without the
+                  // hyphen-minus case, all backend substance-floor reasons (which use plain
+                  // ASCII hyphen, e.g. "Red 40 - synthetic petroleum dye") fall through and
+                  // the badge cluster ends up empty. Case-insensitive on the leading letter
+                  // so substances like "aspartame" pass too.
+                  const extractName = (str) => {
+                    if (typeof str !== "string") return null;
+                    const trimmed = str.trim();
+                    if (!trimmed) return null;
+                    const sep = trimmed.match(/^(.{1,40}?)\s*(?:[—:–]|\s-\s|\sis\s|\()/i);
+                    if (sep && sep[1]) return sep[1].trim();
+                    // Short, looks-like-a-name string with no separator → use as-is
+                    if (trimmed.length <= 40 && /^[A-Za-z][A-Za-z0-9\s\-\/&,'.]+$/.test(trimmed)) return trimmed;
+                    return null;
+                  };
                   const flagged = [];
                   const seen = new Set();
                   const add = (name, severity) => {
@@ -8677,14 +8694,22 @@ function App() {
                     if (c?.substance && c.substance !== "Unknown") add(c.substance, c.severity || "medium");
                   });
                   (result.harmful_chemicals || []).forEach(c => add(c, "high"));
+                  // result.flagged_substances is populated by the backend cascade with
+                  // textFloor reason strings ("Red 40 - synthetic petroleum dye ..."). Run
+                  // each through the name extractor — these are HIGH severity since they
+                  // come from deterministic substance-floor matches, not AI guesses.
+                  (result.flagged_substances || []).forEach(s => {
+                    const name = extractName(s);
+                    if (name) add(name, "high");
+                  });
                   const allConcerns = [
                     ...(result.dimensions?.materials?.concerns || []),
                     ...(result.concerns || []),
                   ];
                   allConcerns.forEach(c => {
                     if (typeof c === "string") {
-                      const match = c.match(/^([A-Z][A-Za-z0-9\s\-\/]{1,30}?)(?:\s*[—:–]|\s+is\s|\s+\()/);
-                      if (match) add(match[1].trim(), "medium");
+                      const name = extractName(c);
+                      if (name) add(name, "medium");
                     } else if (c?.substance) {
                       add(c.substance, c.severity || "medium");
                     }
