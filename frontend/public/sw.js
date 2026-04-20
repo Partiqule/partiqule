@@ -1,4 +1,4 @@
-const CACHE_NAME = 'partiqule-v4';
+const CACHE_NAME = 'partiqule-v5';
 
 // Assets to cache on install — the app shell
 const PRECACHE_ASSETS = [
