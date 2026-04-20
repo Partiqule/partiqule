@@ -5421,13 +5421,31 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // Pass 1 without image data fabricates ingredient lists from training priors.
   // Block the AI pass until a Pass 0 ingredient resolution layer is built.
   // Cache and fuzzy-calibration paths above remain live — only the AI fallback is gated.
-  if (!ALLOW_TEXT_PATH_SCORING) {
-    log.info("text_path_blocked", { productName, userId });
+  //
+  // Defensive guard: if productId is present the request should have already
+  // returned from the productId bypass block at line ~5013. The `!productId`
+  // check here is belt-and-suspenders — a request that somehow carries both a
+  // query and an unresolved productId should never 422. Instead, log it so we
+  // can diagnose how it got here. The `productId` variable is in the outer
+  // /analyze handler scope.
+  if (!ALLOW_TEXT_PATH_SCORING && !productId) {
+    log.info("text_path_blocked", { productName, userId, has_query: !!query, has_image: !!image, has_productId: false });
     return res.status(422).json({
       success: false,
       error: "cannot_score_from_text_only",
       message: "We need to see the ingredient label to score this product accurately. Please scan the barcode or take a photo of the ingredient list.",
       userAction: "show_camera_prompt",
+    });
+  }
+  if (!ALLOW_TEXT_PATH_SCORING && productId) {
+    // A productId was attached but didn't resolve via the bypass block — either
+    // an unknown scheme or a malformed id. Return 400 so the client shows an
+    // actionable error instead of the scan-prompt overlay.
+    log.warn("text_path_blocked_with_productId", { productName, userId, productId_type: typeof productId, productId_len: String(productId).length, productId_prefix: String(productId).slice(0, 20) });
+    return res.status(400).json({
+      success: false,
+      error: "unresolved_productId",
+      message: "That match couldn't be resolved. Try another product or scan the barcode.",
     });
   }
 

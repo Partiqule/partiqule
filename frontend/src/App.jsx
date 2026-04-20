@@ -6937,12 +6937,21 @@ function App() {
                         id="home-search-input"
                         value={query}
                         onChange={e=>setQuery(e.target.value)}
-                        onKeyDown={e=>e.key==="Enter"&&query.trim()&&analyze()}
+                        onKeyDown={e=>{
+                          if (e.key !== "Enter" || !query.trim()) return;
+                          // If the picker has verified matches, prefer picking the top match over
+                          // firing a raw text scan (which would hit the text-only gate and 422).
+                          if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
+                          analyze();
+                        }}
                         placeholder="Search any product…"
                         style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                       />
                       {query.trim() && (
-                        <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
+                        <button onClick={()=>{
+                          if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
+                          analyze();
+                        }} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
                       )}
                     </div>
                     {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
@@ -7183,12 +7192,19 @@ function App() {
                   id="hero-search-input"
                   value={query}
                   onChange={e=>setQuery(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&analyze()}
+                  onKeyDown={e=>{
+                    if (e.key !== "Enter" || !query.trim()) return;
+                    if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
+                    analyze();
+                  }}
                   placeholder="Search any product…"
                   style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                 />
                 {query.trim() && (
-                  <button onClick={()=>analyze()} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
+                  <button onClick={()=>{
+                    if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
+                    analyze();
+                  }} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
                 )}
               </div>
               {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
