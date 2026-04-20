@@ -6797,7 +6797,7 @@ function App() {
                   setChildMode(next);
                   try { if(next) localStorage.setItem("partiqule_child_mode","1"); else localStorage.removeItem("partiqule_child_mode"); } catch {}
                 }} style={{
-                  width:52, height:30, borderRadius:15, border: childMode ? "none" : "1px solid var(--rule)", cursor:"pointer",
+                  width:52, height:30, borderRadius:9999, border: childMode ? "none" : "1px solid var(--rule)", cursor:"pointer",
                   background: childMode ? "var(--moss)" : "var(--cream-light)",
                   position:"relative", transition:"background 0.2s", flexShrink:0,
                 }}>
@@ -7534,7 +7534,7 @@ function App() {
       ) : (
         /* RESULTS */
         <>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"8px 0 60px":`40px 40px 80px`}}>
+        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 0 60px":`40px 40px 80px`}}>
           <div style={{padding: isMobile ? "0 12px" : 0}}>
           </div>
 
@@ -7618,7 +7618,10 @@ function App() {
                       color:text,
                       margin:"0 0 12px",
                       letterSpacing:"-0.015em",
-                      lineHeight:1.02,
+                      // 1.02 was clipping Fraunces ascenders on iOS Safari for product names
+                      // that started near the top of the result section. 1.1 keeps the tight
+                      // editorial feel while leaving room for cap-height + descenders.
+                      lineHeight:1.1,
                       wordBreak:"break-word",
                     }}>{displayName}</h2>
                     {compositionLine && (
@@ -7652,10 +7655,13 @@ function App() {
               })()}
 
               <div className="score-reveal" style={{
-                background:scoreCardBg(result.overall_score||result.score),
+                // Background stays neutral cream regardless of score. Per design system:
+                // "result card background must remain neutral cream" — score color is
+                // carried by the ring stroke + score number + verdict accent only.
+                background:"var(--cream-light)",
                 borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
                 padding:isMobile?"22px 16px":"32px 32px",
-                border:`1px solid ${scoreBg(result.overall_score||result.score)}`,
+                border:"1px solid var(--rule)",
                 textAlign:"center",
               }}>
                 {/* Header row — "scanned by others" badge (other badges moved to stamp above) */}
@@ -7726,16 +7732,19 @@ function App() {
                     })()}
 
                     {/* Single verdict sentence — swaps to kid verdict when childMode active.
-                        Falls back to adult verdict, then generic scoreLabel meaning for cached scans. */}
+                        Falls back to adult verdict, then friendly score-bucket sentence for cached
+                        pre-deploy scans. Friendly fallback uses the design system voice (knowing
+                        friend, not dashboard) so cached scans never show "Caution — real concerns". */}
                     {(() => {
-                      const fallback = displayScore <= 2 ? "Safe — no significant concerns."
-                        : displayScore <= 4 ? "Good — mostly clean."
-                        : displayScore <= 6 ? "Caution — real concerns, consider alternatives."
-                        : displayScore <= 8 ? "Switch — time to swap."
-                        : "Avoid — confirmed harmful substances.";
-                      const sentence = (childMode && result.verdict_kid)
-                        ? result.verdict_kid
-                        : (result.verdict_adult || result.verdict || fallback);
+                      const friendly = displayScore <= 3 ? "Looks good to me."
+                        : displayScore <= 5 ? "I'd swap if you can."
+                        : displayScore <= 7 ? "I'd skip if you can."
+                        : "Hard pass.";
+                      let sentence;
+                      if (childMode && result.verdict_kid)       sentence = result.verdict_kid;
+                      else if (result.verdict_adult)             sentence = result.verdict_adult;
+                      else if (result.verdict)                   sentence = result.verdict;
+                      else                                       sentence = childMode ? `For a kid: ${friendly}` : friendly;
                       return (
                         <div style={{
                           marginTop:14, marginBottom:2, textAlign:"center", padding:"0 12px",
@@ -7787,7 +7796,7 @@ function App() {
                         onClick={() => { const next = !childMode; setChildMode(next); try{if(next)localStorage.setItem("partiqule_child_mode","1");else localStorage.removeItem("partiqule_child_mode");}catch{} track("Child Mode Toggle", {enabled: next, product: result?.product_name}); }}
                         style={{
                           display:"flex", alignItems:"center", gap:10, margin:"0 auto",
-                          padding:"7px 16px", borderRadius:"var(--circle-shape)",
+                          padding:"7px 16px", borderRadius:9999,
                           background: childMode ? "var(--moss)" : "var(--cream-light)",
                           border: childMode ? "none" : "1px solid var(--rule)",
                           cursor:"pointer", transition:"all 0.2s",
@@ -7856,31 +7865,11 @@ function App() {
                   </>);
                 })()}
 
-                {/* Room tag prompt */}
-                {pendingRoomTag === result?.product_name && (() => {
-                  const ROOM_OPTIONS = {
-                    food:["Pantry","Kitchen"], food_beverage:["Pantry","Kitchen"], beverage:["Pantry","Kitchen"], snack:["Pantry","Kitchen"],
-                    personal_care:["Bathroom","Bedroom"], skincare:["Bathroom","Bedroom"],
-                    cleaning:["Kitchen","Bathroom","Laundry","Living Room"], home:["Kitchen","Living Room","Bedroom","Laundry"],
-                    clothing:["Closet","Kids Room"], baby:["Nursery","Kids Room","Bathroom"], toy:["Kids Room","Nursery"],
-                  };
-                  const options = ROOM_OPTIONS[result.category] || [];
-                  if (!options.length) return null;
-                  return (
-                    <div style={{background:"#f8faff", borderRadius:12, padding:"10px 14px", border:`1px solid ${"#c7d7f0"}`, marginBottom:12, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap"}}>
-                      <span style={{fontSize:12, color:muted, whiteSpace:"nowrap"}}>Which room?</span>
-                      {options.map(room=>(
-                        <button key={room} onClick={()=>{
-                          const updated=history.map((h,i)=>i===0&&h.product_name===result.product_name?{...h,room}:h);
-                          setHistory(updated); try{localStorage.setItem("ps_history",JSON.stringify(updated));}catch{} setPendingRoomTag(null);
-                        }} style={{padding:"4px 12px", borderRadius:20, border:`1px solid ${"#bfdbfe"}`, background:"#dbeafe", color:"#2563eb", fontSize:12, fontWeight:600, cursor:"pointer"}}>
-                          {room}
-                        </button>
-                      ))}
-                      <button onClick={()=>setPendingRoomTag(null)} style={{marginLeft:"auto", background:"none", border:"none", color:muted, fontSize:13, cursor:"pointer", padding:"0 4px"}}>Skip</button>
-                    </div>
-                  );
-                })()}
+                {/* "Which room?" selector removed from Surface 1 (2026-04-20) per the
+                    Surface 1 reduction. The pendingRoomTag state and setter remain in
+                    place; previously-tagged history rows still group by room (see
+                    line ~3667). To re-introduce new-scan room tagging, place the
+                    selector on Surface 2 with design-system tokens. */}
 
                 {/* Intelligence cards — regulatory findings relevant to this product */}
                 {result.intelligence_cards?.length > 0 && (
