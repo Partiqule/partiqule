@@ -9249,24 +9249,28 @@ function App() {
         />
       )}
 
-      {/* FOOTER */}
-      <footer style={{background:"#111", color:"#888", padding:isMobile?"32px 16px":"48px 40px", textAlign:"center", fontSize:13, borderTop:"4px solid #052e16"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16}}>
-          <svg width="32" height="32" viewBox="0 0 44 44">
-            <rect x="0" y="0" width="44" height="44" rx="11" fill="#052e16"/>
-            <rect x="20" y="29" width="4" height="11" rx="1.5" fill="#4ade80"/>
-            <ellipse cx="22" cy="21" rx="11" ry="10" fill="#4ade80"/>
-            <ellipse cx="22" cy="14" rx="8" ry="7" fill="#86efac"/>
-            <circle cx="37" cy="8"  r="2.5" fill="#4ade80" opacity="0.8"/>
-            <circle cx="39" cy="24" r="1.8" fill="#4ade80" opacity="0.5"/>
-            <circle cx="5"  cy="14" r="2"   fill="#86efac" opacity="0.6"/>
-            <circle cx="4"  cy="28" r="1.5" fill="#4ade80" opacity="0.45"/>
-            <circle cx="28" cy="4"  r="1.8" fill="#86efac" opacity="0.55"/>
-          </svg>
-          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif",fontSize:20,color:"#fff",fontWeight:700}}>Partiqule</span>
+      {/* FOOTER — cream warm-paper */}
+      <footer style={{
+        background:"var(--cream)",
+        color:"var(--ink-soft)",
+        padding: isMobile ? "40px 24px 48px" : "56px 40px 56px",
+        textAlign:"center", fontSize:13,
+        borderTop:"1px solid var(--rule)",
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+      }}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18}}>
+          <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:28, width:"auto", display:"block"}}/>
         </div>
-        <div style={{marginBottom:20, color:"#6ee7b7", maxWidth:400, margin:"0 auto 20px", lineHeight:1.6}}>Know what's in your products.<br/>Make choices that matter.</div>
-        <div style={{display:"flex", justifyContent:"center", gap:24, marginBottom:20, flexWrap:"wrap"}}>
+        <div style={{
+          fontFamily:"'Fraunces', Georgia, serif",
+          fontSize:17, lineHeight:1.5,
+          color:"var(--ink-soft)", fontWeight:400,
+          maxWidth:420, margin:"0 auto 28px",
+          letterSpacing:"-0.005em",
+        }}>
+          Know what's in your products.<br/>Make choices that matter.
+        </div>
+        <div style={{display:"flex", justifyContent:"center", gap: isMobile ? 18 : 24, marginBottom:26, flexWrap:"wrap", alignItems:"center"}}>
           {[
             {label:"About",           pg:"about",       path:"/about"},
             {label:"The Science",     pg:"science",     path:"/science"},
@@ -9274,31 +9278,58 @@ function App() {
             {label:"How It Works",    pg:"methodology", path:"/methodology"},
             {label:"Privacy Policy",  pg:"privacy",     path:"/privacy"},
             {label:"Terms of Service",pg:"terms",       path:"/terms"},
-          ].map(item=>(
-            <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({},"",item.path); window.scrollTo(0,0);}}
-              style={{color:"#6ee7b7", cursor:"pointer", fontSize:13, transition:"color 0.15s"}}
-              onMouseEnter={e=>e.target.style.color="#16a34a"}
-              onMouseLeave={e=>e.target.style.color="#555"}>
+          ].map(item => (
+            <span key={item.pg} onClick={()=>{setPage(item.pg); setResult(null); window.history.pushState({}, "", item.path); window.scrollTo(0, 0);}}
+              style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:13, color:"var(--ink-soft)", fontWeight:400,
+                cursor:"pointer", transition:"color 0.15s",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.color = "var(--moss)";}}
+              onMouseLeave={e=>{e.currentTarget.style.color = "var(--ink-soft)";}}>
               {item.label}
             </span>
           ))}
           <a href="https://instagram.com/partiquleapp" target="_blank" rel="noopener noreferrer"
-            style={{color:"#6ee7b7", fontSize:13, textDecoration:"none", display:"flex", alignItems:"center", gap:5, transition:"color 0.15s"}}
-            onMouseEnter={e=>e.currentTarget.style.color="#e1306c"}
-            onMouseLeave={e=>e.currentTarget.style.color="#555"}>
+            style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:13, color:"var(--ink-soft)", fontWeight:400,
+              textDecoration:"none",
+              display:"inline-flex", alignItems:"center", gap:6,
+              transition:"color 0.15s",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.color = "var(--moss)";}}
+            onMouseLeave={e=>{e.currentTarget.style.color = "var(--ink-soft)";}}>
             <IconInstagram size={14} color="currentColor"/> @partiquleapp
           </a>
         </div>
-        <div style={{color:"#6ee7b7", borderTop:"1px solid #222", paddingTop:16, marginTop:8}}>
-          <div style={{marginBottom:6}}>
+        <div style={{
+          borderTop:"1px solid var(--rule-soft)",
+          paddingTop:20, marginTop:4,
+          maxWidth:560, margin:"0 auto",
+        }}>
+          <div style={{
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:12, color:"var(--ink-faint)", marginBottom:8,
+          }}>
             © 2026 Partiqule Ltd.
           </div>
-          <div style={{marginBottom:8, fontSize:12, color:"#6ee7b7", lineHeight:1.6}}>
+          <div style={{
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:12, color:"var(--ink-faint)", lineHeight:1.6, marginBottom:12,
+          }}>
             As an Amazon Associate I earn from qualifying purchases. Affiliate links are always clearly labeled and never influence our scores.
           </div>
-          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#6ee7b7", textDecoration:"none", fontSize:13, transition:"color 0.15s"}}
-            onMouseEnter={e=>e.target.style.color="#4ade80"}
-            onMouseLeave={e=>e.target.style.color="#555"}>
+          <a href="mailto:paul@partiqule.com"
+            onClick={e=>{e.preventDefault(); window.location.href = "mailto:paul@partiqule.com";}}
+            style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:13, color:"var(--moss)",
+              textDecoration:"none", fontWeight:500,
+              transition:"color 0.15s",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.color = "var(--moss-deep)";}}
+            onMouseLeave={e=>{e.currentTarget.style.color = "var(--moss)";}}>
             paul@partiqule.com
           </a>
         </div>
