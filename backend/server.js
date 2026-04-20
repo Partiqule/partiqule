@@ -4734,7 +4734,7 @@ async function getUserRecentFamilies(userId) {
       .from("scans")
       .select("result_json")
       .eq("user_id", userId)
-      .gte("created_at", cutoff)
+      .gte("scanned_at", cutoff)
       .limit(500);
     if (error) throw error;
     const families = new Set();
