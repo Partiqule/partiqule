@@ -144,7 +144,10 @@ function getSafeAreaTop() {
   document.body.appendChild(el);
   const top = el.getBoundingClientRect().top;
   document.body.removeChild(el);
-  return top > 0 ? top : (isIOS ? 47 : 0);
+  // Fallback only for the Capacitor native iOS app — mobile Safari and
+  // mobile Chrome handle the status bar themselves, so injecting fake padding
+  // into web contexts creates a visible gap above the header.
+  return top > 0 ? top : (isCapacitor ? 47 : 0);
 }
 
 const SAFE_TOP = getSafeAreaTop();
@@ -6927,7 +6930,7 @@ function App() {
 
                 {/* ── FIXED SCAN BAR — always visible, never scrolls away (cream refresh) ── */}
                 <div style={{
-                  position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
+                  position:"fixed", top: (isMobile ? 60 : 72) + SAFE_TOP, left:0, right:0, zIndex:40,
                   background:"var(--cream)",
                   borderBottom:"1px solid var(--rule)",
                   padding: isMobile ? "10px 16px" : "12px 40px",
@@ -7023,7 +7026,7 @@ function App() {
                 </div>
 
                 {/* ── HOME CONTENT (cream refresh — partiqule-hero-v5 mockup) ── */}
-                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? `${44 + SAFE_TOP + 40}px 24px 24px` : "80px 40px 32px", background:"var(--cream)"}}>
+                <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? `${60 + SAFE_TOP + 40}px 24px 24px` : "80px 40px 32px", background:"var(--cream)"}}>
 
                   {/* Greeting block — Fraunces + DM Sans caps stamp */}
                   <div style={{marginBottom:32}}>
@@ -7182,7 +7185,7 @@ function App() {
 
           {/* Fixed scan bar — always visible, never scrolls away */}
           <div style={{
-            position:"fixed", top: 44 + SAFE_TOP, left:0, right:0, zIndex:40,
+            position:"fixed", top: (isMobile ? 60 : 72) + SAFE_TOP, left:0, right:0, zIndex:40,
             background:"var(--cream)",
             borderBottom:"1px solid var(--rule)",
             padding: isMobile ? "10px 16px" : "12px 40px",
@@ -7228,7 +7231,7 @@ function App() {
           `}</style>
 
           {/* Hero — cream with Fraunces headline */}
-          <section style={{background:"var(--cream)", padding: isMobile ? `${44 + SAFE_TOP + 64}px 24px 40px` : "128px 40px 56px", transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
+          <section style={{background:"var(--cream)", padding: isMobile ? `${60 + SAFE_TOP + 64}px 24px 40px` : "128px 40px 56px", transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
             <div style={{maxWidth:720, margin:"0 auto"}}>
               <div style={{
                 fontFamily:"'DM Sans', system-ui, sans-serif",
