@@ -880,6 +880,80 @@ function novaFloor(novaGroup, category) {
   return novaBounds(novaGroup, category).floor;
 }
 
+// ── Deterministic NOVA inference from ingredient text ──
+// The barcode path gets nova_group from Open Food Facts. The text and vision
+// paths don't have that structured signal — they just have an ingredient
+// string. This function looks for hallmark ultra-processing markers in the
+// ingredient list and returns a NOVA group so the same floor/ceiling logic
+// applies to all three paths.
+//
+// Motivating case: Abe's Mini Muffins (Chocolate Chip). Barcode path reads
+// OFF nova_group=4 and applies floor 7. Vision path pulled ingredients from
+// wholefoodsmarket.com via Tier 4, but there's no nova_group in that data,
+// so the AI scored 2 based on "non-GMO sugar, no dyes, real chocolate"
+// signals. The ingredient list DOES contain the NOVA 4 markers — fortified
+// rice milk (vitamin A palmitate, D2, B12, tricalcium phosphate), refined
+// oils (canola/safflower/sunflower), and a syrup. This function catches
+// those.
+//
+// Only fires for food/beverage categories. Returns null for everything else,
+// and for food/beverage ingredient lists without enough markers to classify.
+const NOVA4_MARKERS = [
+  /\bsyrup\b/,
+  /\bmaltodextrin\b/,
+  /\bdextrose\b/,
+  /\bhigh fructose corn syrup\b/,
+  /\binvert sugar\b/,
+  /\bisolat/,
+  /\blecithin\b/,
+  /mono.{0,3}(and|&).{0,3}diglycerid/,
+  /\bxanthan gum\b/,
+  /\bguar gum\b/,
+  /\bcarrageenan\b/,
+  /\bnatural flavor/,
+  /\bartificial flavor/,
+  /\btricalcium phosphate\b/,
+  /\bdicalcium phosphate\b/,
+  /\b(vitamin a palmitate|vitamin d2?\b|vitamin b12|vitamin e acetate|niacinamide|riboflavin|thiamin(e)? mononitrate|folic acid|pyridoxine)/,
+  /\b(hydrogenated|partially hydrogenated)\b/,
+  /\bmodified (food |corn )?starch\b/,
+  /\bmaltitol\b/,
+  /\bsucralose\b/,
+  /\baspartame\b/,
+  /\bacesulfame\b/,
+  /\binulin\b/,
+  /\b(soy|whey|pea|rice) protein (isolate|concentrate)\b/,
+  /\bautolyzed yeast/,
+  /\byeast extract\b/,
+  /\b(fd&c|red 40|yellow 5|yellow 6|blue 1|blue 2)\b/,
+  /\bbrominated vegetable oil\b/,
+  /\bcellulose gum\b/,
+  /\bsodium (benzoate|sorbate|stearoyl lactylate|caseinate)\b/,
+  /\bpotassium (sorbate|benzoate)\b/,
+  /\bdatem\b/,
+  /\bpolysorbate\b/,
+];
+const NOVA3_ONLY_MARKERS = [
+  /\bsugar\b/,
+  /\brefined (flour|oil)\b/,
+  /\bbrown sugar\b/,
+  /\bcane sugar\b/,
+];
+function inferNovaGroupFromIngredients(ingredientText, category) {
+  if (category !== "food" && category !== "beverage" && category !== "food_beverage") return null;
+  const t = String(ingredientText || "").toLowerCase();
+  if (!t || t.length < 10) return null;
+  const hits = [];
+  for (const re of NOVA4_MARKERS) if (re.test(t)) hits.push(re.source);
+  // 2+ ultra-processing markers → NOVA 4. 1 marker → NOVA 3. 0 markers with
+  // refined sugar/flour → NOVA 3. Otherwise let the barcode-derived NOVA or
+  // AI judgment stand (return null).
+  if (hits.length >= 2) return { nova: 4, matches: hits };
+  if (hits.length === 1) return { nova: 3, matches: hits };
+  for (const re of NOVA3_ONLY_MARKERS) if (re.test(t)) return { nova: 3, matches: [re.source] };
+  return null;
+}
+
 // ── UNIFIED ALTERNATIVE SERIALIZATION ─────────────────────────
 // Every scoring path (text, vision, barcode, fuzzy calibration) converts
 // raw DB alternatives into the public-facing shape through this helper.
@@ -5654,6 +5728,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
       mScore = aiFloors.mScore;
       uScore = aiFloors.uScore;
 
+      // NOVA floor/ceiling — inferred from ingredient text when not provided
+      // by a structured source. Keeps the vision path in parity with the
+      // barcode path so Abe's Mini Muffins scores the same via photo as it
+      // does via barcode.
+      const novaInf = inferNovaGroupFromIngredients(ingredientText, visionCat);
+      if (novaInf) {
+        const nova = novaBounds(novaInf.nova, visionCat);
+        if (nova.floor > mScore) {
+          console.log(`[vision_v2] NOVA ${novaInf.nova} inferred from ingredients (${novaInf.matches.slice(0,3).join(", ")}) — materials ${mScore} → ${nova.floor}`);
+          mScore = nova.floor;
+        }
+        if (mScore > nova.ceiling) mScore = nova.ceiling;
+      }
+
       let finalScore = computeScore(mScore, uScore, pkScore, sScore, visionCat);
       ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
         mScore, uScore, pkScore, sScore, finalScore, p1, p2, visionCat, productName
@@ -6236,6 +6324,19 @@ app.post("/analyze", rateLimit, async (req, res) => {
       uScore = aiFloors.uScore;
       const allTriggered = [...textFloors.triggered, ...aiFloors.triggered];
       if (allTriggered.length > 0) console.log(`[${tier}] Substance floors triggered: ${allTriggered.join(", ")}`);
+
+      // NOVA floor/ceiling inferred from ingredient text — parity with
+      // barcode path so the same product lands on the same score across
+      // text, vision, and barcode entry points.
+      const novaInf = inferNovaGroupFromIngredients(ingredientText, finalCategory);
+      if (novaInf) {
+        const nova = novaBounds(novaInf.nova, finalCategory);
+        if (nova.floor > mScore) {
+          console.log(`[${tier}] NOVA ${novaInf.nova} inferred from ingredients (${novaInf.matches.slice(0,3).join(", ")}) — materials ${mScore} → ${nova.floor}`);
+          mScore = nova.floor;
+        }
+        if (mScore > nova.ceiling) mScore = nova.ceiling;
+      }
 
       // Restaurant dimension floors
       if (finalCategory === "restaurant") {
