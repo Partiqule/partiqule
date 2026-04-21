@@ -219,6 +219,53 @@ function canonicalizeQuery(q) {
   return out;
 }
 
+// Tier 4 name-match acceptance. Trigram alone is too strict when the AI
+// returns the canonical longer variant of a short query (e.g. query "Abes
+// Mini Muffins" returns "Abe's Gluten Free Chocolate Chip Mini Muffins" —
+// same product, trigram Jaccard ~0.29). We accept if EITHER:
+//   (a) trigram >= TIER4_MIN_SIMILARITY against the original or canonicalized
+//       query (handles typical close matches), OR
+//   (b) every meaningful token from the query appears in the returned name
+//       (handles "query is a strict subset of a longer canonical name"), OR
+//   (c) the AI's reported brand matches a token in the query (handles
+//       "Abes" + brand="Abe's Muffins").
+// Rejects wildly different products (e.g. query "Abes Muffins" returned
+// "Starbucks Latte") because neither the trigram nor the token-subset test
+// passes.
+const TIER4_STOPWORDS = new Set(["the","a","an","and","or","of","with","for","in","on","to","by","from"]);
+function _tokenize(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter(t => t && !TIER4_STOPWORDS.has(t));
+}
+function isTier4NameAcceptable(originalQuery, usedQuery, returnedName, returnedBrand) {
+  const sim = Math.max(
+    trigramSimilarity(originalQuery, returnedName),
+    trigramSimilarity(usedQuery, returnedName),
+  );
+  if (sim >= TIER4_MIN_SIMILARITY) return true;
+
+  const returnedTokens = new Set([
+    ..._tokenize(returnedName),
+    ..._tokenize(returnedBrand),
+  ]);
+  const queryTokens = _tokenize(originalQuery);
+  const usedTokens = _tokenize(usedQuery);
+  const tokensAreSubset = (qt) => qt.length > 0 && qt.every(t => {
+    if (returnedTokens.has(t)) return true;
+    // Singular/plural tolerance: "muffins" matches "muffin" in returned name.
+    if (t.endsWith("s") && returnedTokens.has(t.slice(0, -1))) return true;
+    if (returnedTokens.has(t + "s")) return true;
+    return false;
+  });
+  if (tokensAreSubset(queryTokens) || tokensAreSubset(usedTokens)) return true;
+
+  return false;
+}
+
 async function _tier4OneCall(query, { incrementApiCount, checkApiBudget }) {
   if (typeof checkApiBudget === "function") checkApiBudget();
   if (typeof incrementApiCount === "function") incrementApiCount();
@@ -323,15 +370,9 @@ async function tier4WebExtract(productName, deps = {}) {
 
   const parsed = attempt.parsed;
   const returnedName = String(parsed.product_name || "");
-  if (returnedName) {
-    const sim = Math.max(
-      trigramSimilarity(productName, returnedName),
-      trigramSimilarity(usedQuery, returnedName),
-    );
-    if (sim < TIER4_MIN_SIMILARITY) {
-      console.log(`[tier4] name_mismatch query="${productName}" returned="${returnedName}" sim=${sim.toFixed(2)} threshold=${TIER4_MIN_SIMILARITY}`);
-      return null;
-    }
+  if (returnedName && !isTier4NameAcceptable(productName, usedQuery, returnedName, parsed.brand)) {
+    console.log(`[tier4] name_mismatch query="${productName}" returned="${returnedName}" (no trigram or token-subset match)`);
+    return null;
   }
   const ingredientText = parsed.ingredients.map(s => String(s).trim()).filter(Boolean).join(", ");
   const sourceDomain = String(parsed.source_domain || "").trim().toLowerCase().replace(/^www\./, "");
