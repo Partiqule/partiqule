@@ -1766,6 +1766,26 @@ summary_short — REQUIRED:
 - Take a position — no hedging
 - Include one concrete action ("swap if you can", "fine to keep", "worth the upgrade")
 
+HIGH-SCORE BEHAVIOR (score 1-3) — name the reasons AND explain why each one matters. The reader should walk away understanding what earned this product its score, not just hearing it's "clean".
+
+WORD CAP for score 1-3 is 35 to 50 words (overrides the 30-word general cap above). The expansion is REQUIRED to explain WHY each detail matters — not for rambling, marketing language, or filler.
+
+PATTERN to follow:
+[specific quality 1] ([brief why it matters]), [specific quality 2] ([brief why it matters]), and [specific quality 3] ([brief why it matters]). [Optional brand credit]. [Optional first-person endorsement].
+
+Each detail in a high-score summary_short should:
+- Name the specific quality choice the brand made (cite ingredients, certifications, testing practices, or absences by name)
+- Briefly explain why that choice matters in a parenthetical or short clause (no chlorine residue, no microplastic leaching, no glyphosate residue, no hidden allergen source, no synthetic fragrance, etc.)
+- Connect to user benefit when relevant
+- Give the brand credit by name when the choice is brand-driven
+
+FORBIDDEN for high-score summary_short:
+- Listing qualities without explaining why they matter
+- Generic praise ("This is a great product", "Excellent choice")
+- Marketing-speak ("premium", "innovative", "thoughtfully crafted")
+- Restating the score ("a solid 3 out of 10")
+- Low-effort fallbacks: "Looks good to me", "No concerns here", "Low concern", "minimal concern", "This product scored well"
+
 summary_short — FORBIDDEN:
 - Restating the product name at the start (already on screen)
 - Hedging language ("it depends", "some may", "could potentially")
