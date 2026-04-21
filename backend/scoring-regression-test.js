@@ -256,21 +256,18 @@ function runChildTest(test) {
 }
 
 // ── Category detection tests ──────────────────────────────────
-// Extract detectCategory from server.js source
-// Find the function body by tracking brace depth
+// Tests target detectCategoryFast — the sync Tier 4 fallback in
+// backend/categoryClassifier.js. The async AI-first classifier
+// (classifyCategory) isn't tested here because we maintain a zero-API-cost
+// contract for `npm test`. Fast is still the source of cache keys and the
+// safety net when AI is low-confidence or unavailable, so its behavior
+// must stay stable.
 let detectCategory = () => null;
-const catFuncStart = serverSrc.indexOf("function detectCategory(q)");
-if (catFuncStart !== -1) {
-  let braceDepth = 0, started = false, bodyStart = 0, bodyEnd = 0;
-  for (let i = catFuncStart; i < serverSrc.length; i++) {
-    if (serverSrc[i] === "{") { if (!started) { started = true; bodyStart = i + 1; } braceDepth++; }
-    if (serverSrc[i] === "}") { braceDepth--; if (started && braceDepth === 0) { bodyEnd = i; break; } }
-  }
-  try {
-    detectCategory = new Function("q", serverSrc.slice(bodyStart, bodyEnd));
-  } catch (e) {
-    console.warn("Could not parse detectCategory:", e.message);
-  }
+try {
+  const { detectCategoryFast } = require("./categoryClassifier");
+  detectCategory = detectCategoryFast;
+} catch (e) {
+  console.warn("Could not load detectCategoryFast:", e.message);
 }
 
 const CATEGORY_TESTS = [
