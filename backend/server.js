@@ -5387,8 +5387,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
         product_name: productName, category: imgCategory,
         score: finalScore,
         overall_score: finalScore,
-        summary:       p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
-        summary_short: p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary:       p1.summary_short || p1.summary || p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_short: p1.summary_short || p1.summary || p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         summary_long:  p1.summary_long || p1.summary || "",
         concerns: p2?.refined_concerns || p1.raw_concerns || [],
         // ── Child + pregnancy vulnerability (via shared helper) ──
@@ -5453,6 +5453,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
         ingredient_list: p1.ingredient_list || [],
         product_family: classifyProductFamily(productName, p1.ingredient_list, imgCategory),
         category_score_context: CATEGORY_CONTEXT[imgCategory] || CATEGORY_CONTEXT.other,
+        // Voice fields from Pass 1 (Pass 2 has no voice rules — its summary is for audit only)
+        verdict_adult: p1.verdict_adult || null,
+        verdict_kid:   p1.verdict_kid   || null,
         // Source provenance — image path reads ingredients from pixels via vision OCR.
         // ingredient_source intentionally NOT set here so evictIfPrePass0 keeps
         // image-path results out of long-term cache (CLAUDE.md "Pre-Pass-0 cache eviction").
@@ -5784,8 +5787,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
         product_name:     cleanProductName(p1.product_name || productName),
         score:            finalScore,
         overall_score:    finalScore,
-        summary:          p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
-        summary_short:    p2?.summary || p1.summary_short || p1.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary:          p1.summary_short || p1.summary || p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
+        summary_short:    p1.summary_short || p1.summary || p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         summary_long:     p1.summary_long || p1.summary || "",
         concerns:         p2?.refined_concerns || p1.raw_concerns || [],
         category:         finalCategory,
@@ -5849,6 +5852,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
         ingredient_list: ingredientArray.length ? ingredientArray : (p1.ingredient_list || []),
         product_family: classifyProductFamily(productName, ingredientArray.length ? ingredientArray : (p1.ingredient_list || []), finalCategory),
         category_score_context: CATEGORY_CONTEXT[finalCategory] || CATEGORY_CONTEXT.other,
+        // Voice fields from Pass 1 (Pass 2 has no voice rules — its summary is for audit only)
+        verdict_adult: p1.verdict_adult || null,
+        verdict_kid:   p1.verdict_kid   || null,
         // Source provenance — see CLAUDE.md "Five-Tier Scoring Cascade"
         source: sourceFields.source,
         source_label: sourceFields.source_label,
@@ -7702,6 +7708,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
         pass0.source === "open_products_facts" ? "Sourced from Open Products Facts" :
         "Verified via barcode",
       source_confidence: null,
+      // Voice fields from Pass 1 (Pass 2 has no voice rules — its summary is for audit only)
+      verdict_adult: p1.verdict_adult || null,
+      verdict_kid:   p1.verdict_kid   || null,
       dimensions: {
         materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
         usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [] },

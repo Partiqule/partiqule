@@ -184,12 +184,24 @@ const normaliseForBrand = (s) =>
     .replace(/\s+/g, " ")
     .trim();
 
+// Words that look like brand candidates to the regex fallback (capitalized,
+// leading) but are actually product descriptors. "Diet Coke" → don't extract
+// "Diet" as the brand. "Organic Bananas" → don't extract "Organic". When the
+// regex fallback hits one of these, return no brand so the full product name
+// renders as the body.
+const NON_BRAND_PREFIXES = new Set([
+  "diet", "organic", "natural", "classic", "original", "fresh", "raw",
+  "pure", "premium", "deluxe", "regular", "lite", "light", "zero",
+  "extra", "super", "ultra", "mini", "large", "small",
+]);
+
 // Extract brand eyebrow + remaining product body from a product_name string.
 // Priority:
 //   1. explicit providedBrand arg (e.g. alt.brand or result.brand) — strip
 //      matching prefix from the body if it's there, else leave body intact.
 //   2. KNOWN_MULTIWORD_BRANDS prefix match on the raw product_name.
-//   3. Regex fallback: 1 or 2 leading capitalized words.
+//   3. Regex fallback: 1 or 2 leading capitalized words, skipped when the
+//      first word is a known non-brand descriptor (Diet, Organic, etc.).
 // Returns { brand, body }; brand is "" when nothing matches.
 const extractBrand = (productName, providedBrand) => {
   const name = String(productName || "").trim();
@@ -216,7 +228,12 @@ const extractBrand = (productName, providedBrand) => {
   }
   // Regex fallback: first 1-2 leading capitalized words.
   const m = name.match(/^([A-Z][\w'&.]*(?:\s[A-Z][\w'&.]*)?)\s+(.+)$/);
-  if (m) return { brand: m[1], body: m[2] };
+  if (m) {
+    // Skip when the leading word is a known product descriptor, not a brand.
+    const firstWord = m[1].split(/\s+/)[0].toLowerCase();
+    if (NON_BRAND_PREFIXES.has(firstWord)) return { brand: "", body: name };
+    return { brand: m[1], body: m[2] };
+  }
   return { brand: "", body: name };
 };
 
@@ -7575,11 +7592,21 @@ function App() {
                       {result.cached && (
                         <span style={{color:"var(--moss)"}}>· Verified</span>
                       )}
-                      {result.confidence && (
+                      {/* Stamp annotation:
+                          - cascade-sourced (medium/low confidence): show source_label
+                            ("Sourced from Open Food Facts", "Best guess from product name", etc)
+                          - calibration / barcode / prior scan (source_confidence null): show
+                            nothing in the stamp — the score itself carries the trust.
+                          - Older results without source fields: fall back to AI confidence text. */}
+                      {result.source_label && (result.source_confidence === "medium" || result.source_confidence === "low") ? (
+                        <span style={{color: result.source_confidence === "low" ? "var(--amber)" : "var(--ink-soft)"}}>
+                          · {result.source_label}
+                        </span>
+                      ) : !result.source && result.confidence ? (
                         <span style={{color: result.confidence==="high" ? ("var(--moss)") : result.confidence==="medium" ? ("var(--ink-soft)") : ("var(--amber)")}}>
                           · {result.confidence} confidence
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     {brand && (
                       <div style={{
@@ -7614,21 +7641,8 @@ function App() {
                         marginBottom:4,
                       }}>{compositionLine}</div>
                     )}
-                    {/* Source confidence — only renders when the cascade resolved to a
-                        non-baseline source (Tier 3 = open_facts / Tier 4 = web_search /
-                        Tier 5 = ai_text_only_estimate). Calibration / barcode / prior
-                        scan have source_confidence: null and skip this line. */}
-                    {(result.source_confidence === "medium" || result.source_confidence === "low") && result.source_label && (
-                      <div style={{
-                        fontFamily:"'DM Sans', system-ui, sans-serif",
-                        fontSize:11.5, fontWeight:400,
-                        color: result.source_confidence === "low" ? "var(--amber)" : "var(--ink-soft)",
-                        marginTop: compositionLine ? 8 : 4,
-                        marginBottom: 4,
-                        letterSpacing:"0.02em",
-                        lineHeight:1.4,
-                      }}>{result.source_label}</div>
-                    )}
+                    {/* Source label is now rendered in the stamp row above (· Sourced from …),
+                        so we don't duplicate it here. */}
                   </div>
                 );
               })()}
@@ -7699,16 +7713,9 @@ function App() {
                       </div>
                     )}
 
-                    {/* Dual scoring explanation — one line, always visible */}
-                    {(() => {
-                      const foodCats = ["food_beverage","beverage","restaurant","baby"];
-                      if (!foodCats.includes(result.category)) return null;
-                      return (
-                        <div style={{fontSize:10, color:muted, marginTop:4, marginBottom:2, letterSpacing:"0.02em"}}>
-                          Chemical safety + nutritional impact · combined into one score
-                        </div>
-                      );
-                    })()}
+                    {/* Dashboard-voice subtitle ("Chemical safety + nutritional impact …")
+                        removed 2026-04-21 — the score itself plus category context line
+                        below carries the framing. */}
 
                     {/* Single verdict sentence — swaps to kid verdict when childMode active.
                         Falls back to adult verdict, then friendly score-bucket sentence for cached
