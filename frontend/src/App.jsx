@@ -5797,6 +5797,11 @@ function App() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   // Branded loading phase between barcode detection and result. null | "loading" | "error".
   const [barcodeLoadingPhase, setBarcodeLoadingPhase] = useState(null);
+  // Vision Contract v2 response states. null when not active.
+  // visionConfirmation: { identificationId, productName, brand, message } — low-confidence identification needs user confirmation
+  // visionRefusal: { productName, message } — cascade found nothing and label not legible, ask user to retake
+  const [visionConfirmation, setVisionConfirmation] = useState(null);
+  const [visionRefusal, setVisionRefusal] = useState(null);
   const [modalQuery,  setModalQuery] = useState("");
   // ── Text search match picker (verified-source only) ─────────────
   // Debounced /search call surfaces calibration + prior-scan matches so users
@@ -6404,6 +6409,29 @@ function App() {
       if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
       if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
       const data = await idResp.json();
+      // Vision Contract v2 branching — only fires when backend flag is on.
+      // "needs_confirmation" — identification confidence 0.50-0.60, modal asks the user to confirm.
+      // "need_better_photo" — cascade + label combined couldn't produce a score, friendly retake prompt.
+      if (data.status === "needs_confirmation") {
+        setLoading(false); setQuery("");
+        setVisionConfirmation({
+          identificationId: data.identificationId,
+          productName: data.identified?.product_name || "this product",
+          brand: data.identified?.brand || "",
+          message: data.message || "",
+        });
+        if (onDone) onDone();
+        return;
+      }
+      if (data.status === "need_better_photo") {
+        setLoading(false); setQuery("");
+        setVisionRefusal({
+          productName: data.identified?.product_name || "this product",
+          message: data.message || "",
+        });
+        if (onDone) onDone();
+        return;
+      }
       if (!data.product_name) throw new Error("Nothing detected");
       setQuery(data.product_name);
       setResult(data);
@@ -6427,6 +6455,43 @@ function App() {
       setError(err.name === "AbortError"
         ? "Scan timed out — please try again in a moment."
         : "Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
+    }
+  };
+
+  // Vision Contract v2 — user confirmed the identification. Backend resumes
+  // from cascade using the stored identificationId, skipping the vision call.
+  // Same three response shapes can come back; we treat them the same way.
+  const resumeFromConfirmation = async () => {
+    if (!visionConfirmation?.identificationId) return;
+    const { identificationId } = visionConfirmation;
+    setVisionConfirmation(null);
+    setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
+    try {
+      const r = await fetch(`${API_BASE}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificationId, userId: user?.id || null }),
+      });
+      if (r.status === 410) { setLoading(false); setQuery(""); setError("That identification expired. Try scanning again."); return; }
+      if (!r.ok) throw new Error(`Server error ${r.status}`);
+      const data = await r.json();
+      if (data.status === "need_better_photo") {
+        setLoading(false); setQuery("");
+        setVisionRefusal({
+          productName: data.identified?.product_name || "this product",
+          message: data.message || "",
+        });
+        return;
+      }
+      if (!data.product_name) throw new Error("Nothing detected");
+      setQuery(data.product_name);
+      setResult(data);
+      saveToHistory(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Resume from confirmation error:", err);
+      setLoading(false); setQuery("");
+      setError("Couldn't score that product. Try scanning again.");
     }
   };
 
@@ -9448,6 +9513,188 @@ function App() {
           onRetry={() => { setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
           onPhoto={async (file) => { setBarcodeLoadingPhase(null); await handleImageScan(file); }}
         />
+      )}
+
+      {/* VISION CONTRACT V2 — confirmation modal for low-confidence identification.
+          Cream card, Fraunces headline, moss primary / outlined secondary buttons. */}
+      {visionConfirmation && (
+        <div
+          onClick={() => setVisionConfirmation(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9998,
+            background: "rgba(5, 46, 22, 0.32)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--cream)",
+              borderRadius: "var(--card-shape-2)",
+              border: "1px solid var(--rule)",
+              padding: isMobile ? "28px 22px 22px" : "32px 28px 26px",
+              maxWidth: 420, width: "100%",
+              boxShadow: "0 12px 40px rgba(5, 46, 22, 0.18)",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, marginBottom: 14,
+            }}>
+              <div style={{ width: 22, height: 1, background: "var(--moss)", opacity: 0.7 }}/>
+              <span style={{
+                fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "var(--moss)", fontWeight: 500,
+              }}>Confirm identification</span>
+            </div>
+            <div style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: isMobile ? 24 : 26, lineHeight: 1.25,
+              color: "var(--ink)", fontWeight: 400,
+              marginBottom: 6,
+            }}>
+              Looks like {visionConfirmation.productName}.
+            </div>
+            <div style={{
+              fontSize: 15, color: "var(--ink-soft)", lineHeight: 1.45, marginBottom: 24,
+            }}>
+              {visionConfirmation.brand ? `${visionConfirmation.brand}. ` : ""}Is that right?
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button
+                onClick={resumeFromConfirmation}
+                style={{
+                  padding: "14px 20px",
+                  background: "var(--moss)",
+                  color: "var(--ivory)",
+                  border: "none",
+                  borderRadius: "var(--tile-shape-1)",
+                  fontSize: 15, fontWeight: 500,
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  cursor: "pointer",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                Yes, score it
+              </button>
+              <button
+                onClick={() => setVisionConfirmation(null)}
+                style={{
+                  padding: "13px 20px",
+                  background: "transparent",
+                  color: "var(--ink)",
+                  border: "1px solid var(--rule)",
+                  borderRadius: "var(--tile-shape-3)",
+                  fontSize: 15, fontWeight: 500,
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                No, retake photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VISION CONTRACT V2 — friendly refusal screen when cascade returns nothing
+          and the label is not fully legible. No alarm styling. Redirect, not error. */}
+      {visionRefusal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9998,
+          background: "var(--cream)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: isMobile ? "32px 22px" : "48px 40px",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}>
+          <div style={{ maxWidth: 440, width: "100%", textAlign: "left" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, marginBottom: 16,
+            }}>
+              <div style={{ width: 22, height: 1, background: "var(--moss)", opacity: 0.7 }}/>
+              <span style={{
+                fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "var(--moss)", fontWeight: 500,
+              }}>Need a clearer photo</span>
+            </div>
+            <div style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: isMobile ? 28 : 34, lineHeight: 1.2,
+              color: "var(--ink)", fontWeight: 400,
+              marginBottom: 14,
+            }}>
+              {visionRefusal.productName}
+            </div>
+            <div style={{
+              fontSize: 16, color: "var(--ink-soft)", lineHeight: 1.5,
+              marginBottom: 32,
+            }}>
+              {visionRefusal.message}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label
+                htmlFor="vision-refusal-retake"
+                style={{
+                  padding: "14px 20px",
+                  background: "var(--moss)",
+                  color: "var(--ivory)",
+                  border: "none",
+                  borderRadius: "var(--tile-shape-1)",
+                  fontSize: 15, fontWeight: 500,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  display: "block",
+                }}
+              >
+                Retake photo
+              </label>
+              <input
+                id="vision-refusal-retake"
+                type="file" accept="image/*" capture="environment"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  e.target.value = "";
+                  setVisionRefusal(null);
+                  handleImageScan(f);
+                }}
+              />
+              <button
+                onClick={() => { setVisionRefusal(null); setShowBarcodeScanner(true); }}
+                style={{
+                  padding: "13px 20px",
+                  background: "transparent",
+                  color: "var(--ink)",
+                  border: "1px solid var(--rule)",
+                  borderRadius: "var(--tile-shape-3)",
+                  fontSize: 15, fontWeight: 500,
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                Scan barcode instead
+              </button>
+              <button
+                onClick={() => setVisionRefusal(null)}
+                style={{
+                  padding: "10px 16px",
+                  background: "transparent",
+                  color: "var(--ink-soft)",
+                  border: "none",
+                  fontSize: 14, fontWeight: 400,
+                  fontFamily: "'DM Sans', system-ui, sans-serif",
+                  cursor: "pointer",
+                  textAlign: "center",
+                  marginTop: 4,
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* FOOTER — cream warm-paper */}
