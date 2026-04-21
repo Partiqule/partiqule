@@ -654,6 +654,63 @@ Not applied to text-query path or image-scan path — those continue to use `Glo
 
 ---
 
+## Vision Contract v2 (label-truth enforcement)
+
+Introduced 2026-04-21. Gated on `VISION_CONTRACT_V2=true` (Railway env). Default OFF preserves legacy behavior. The legacy vision path scores directly from pixels in a single Haiku call — high fabrication risk because the AI can project ingredients from product priors rather than reading what's literally on the label. v2 decomposes that into identify → cascade-verify → score, with label reads as a verification signal rather than the source of truth.
+
+Module: `backend/visionContract.js`. Three exports:
+- `callClaudeVisionIdentify(image, mediaType, deps)` — slim identify-only Haiku call. Returns `{ product_name, brand, variant, category, confidence, label_ingredients, label_legibility, reasoning }`. `label_legibility` is one of `full | partial | minimal | unreadable`. System prompt forbids inferring ingredients from priors and requires literal label reads.
+- `putIdentification` / `getIdentification` — in-memory store for the confirmation round-trip, keyed on UUID `identificationId` with 10-min TTL. Periodic cleanup via unref'd `setInterval`.
+- `reconcileIngredients(labelList, cascadeIngredients)` — normalizes both sides and returns `{ agreementPct, overlap, labelOnly, cascadeOnly, agreed }` (threshold 0.5). Used for audit logging only; scoring decisions always prefer cascade data.
+
+Handler: `/analyze` in `server.js` has a flag-gated branch before the legacy `if (image)` block. It handles both fresh vision POSTs and `{ identificationId }` resume POSTs from the confirmation modal.
+
+Flow:
+1. **Identify** — fresh path calls `callClaudeVisionIdentify`; resume path pulls from the in-memory store.
+2. **Confidence gate** (fresh only):
+   - `confidence < 0.50` → respond `{ status: "need_better_photo", reason: "low_confidence" }`.
+   - `0.50 <= confidence < 0.60` → respond `{ status: "needs_confirmation", identificationId, identified }` with a fresh stored record.
+   - `>= 0.60` → proceed silently.
+3. **Cascade** — CALIBRATION exact → `fuzzyCalibrationLookup` (vision-only Tier 1.5, retained to avoid regressions) → name-keyed score cache → `tier3OpenFactsTextSearch` → `tier4WebExtract`. Tier 5 (category prior) is intentionally **skipped** in the vision path — better to refuse than synthesize a score from product name alone.
+4. **Reconciliation** — when both cascade ingredients and `label_ingredients` are populated, `reconcileIngredients` runs and disagreements are logged as `vision_cascade_disagreement`. Cascade always wins for scoring.
+5. **Score or refuse**:
+   - Cascade hit (calibration) → calibration scoring path, identical shape to text/barcode calibration results.
+   - Cascade hit (OFF / web_search) → full Pass 1 with `materialContext` set to the verified ingredients. Substance floors, consistency checks, positive ceilings all run as in the barcode path.
+   - No cascade + `label_legibility === "full"` + `>= 3` label ingredients → Pass 1 from label ingredients, result flagged `source: "photo_verified"`, `source_confidence: "low"`, and a `vision_photo_verified_fallback` log event.
+   - Otherwise → respond `{ status: "need_better_photo", reason: "no_external_source" }`.
+
+Response schema additions:
+- `status: "needs_confirmation" | "need_better_photo"` — presence indicates a non-scored response.
+- `identificationId` — UUID for the resume POST, only on `needs_confirmation`.
+- `identified: { product_name, brand?, variant?, confidence? }` — surfaces on non-scored responses so the frontend can echo the identification in its prompts.
+- `reason: "low_confidence" | "no_external_source"` — machine-readable classification.
+- `vision_reconciliation` — agreement fraction, attached to scored results when both label and cascade ingredients existed.
+
+Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Fraunces headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"). Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
+
+Log events for audit:
+```bash
+# Confidence distribution + legibility patterns
+grep vision_identification_result | jq '{confidence, label_legibility}'
+
+# Audit cascade vs label divergence — these may indicate AI fabrication or genuine product changes
+grep vision_cascade_disagreement | jq '{product_name, agreement_pct, label_only, cascade_only}'
+
+# How often we score from label alone — should be rare once calibration grows
+grep vision_photo_verified_fallback | wc -l
+
+# Refusal rate — copy and thresholds tuning signal
+grep vision_refusal | jq '{reason, product_name}'
+```
+
+Cost profile: a cache-miss vision scan fires up to three Haiku calls (identify + Tier 4 web search + Pass 1 scoring) vs. one call in the legacy path. Acceptable at current volume; revisit the Tier 4 gate if cost scales unfavorably. Latency worst case ~24s (identify ~4s + Tier 4 ~12s + Pass 1 ~8s); a cache-hit scan still returns ~1s. The existing `GlobeLoading` overlay covers this budget.
+
+Turn-off path: set `VISION_CONTRACT_V2=false` (or unset) in Railway env. Backend reads the flag per-request, so the restart is the only required action — no cache clear, no frontend redeploy. The frontend states are defensive: they only render when backend responses carry the new `status` field.
+
+Re-introduction risk: if Tier 4 is loosened (timeout raised, trigram threshold dropped, `found: false` not respected), the vision path gains the same Danimals-style fabrication failure mode the text cascade closed in 2026-04-20. Don't loosen without a written reason.
+
+---
+
 ## Brand Logo
 
 The Partiqule wordmark was introduced 2026-04-19, replacing the older leaf/Q icon + "Partiqule" text lockup. The wordmark spells out "partiqule" in a cream serif with a large decorative green Q as the 6th letter. Two wordmark variants exist because both dark-chrome (app headers) and light-chrome (SEO pages) contexts need legible rendering.
