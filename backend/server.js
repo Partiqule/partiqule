@@ -23,6 +23,17 @@ const {
   detectCategoryFast,
   classifyCategory,
 } = require("./categoryClassifier");
+const {
+  callClaudeVisionIdentify,
+  putIdentification,
+  getIdentification,
+  reconcileIngredients,
+} = require("./visionContract");
+// Vision contract v2 — label-truth enforcement via identify-then-cascade.
+// OFF by default; Railway env toggles without redeploy (process.env is read
+// per-request). See CLAUDE.md "Vision Contract v2" when documented.
+const isVisionContractV2 = () =>
+  String(process.env.VISION_CONTRACT_V2 || "").toLowerCase() === "true";
 // Alias: all existing sync call sites (cache key generation, warm cache,
 // admin reload, fuzzy calibration) use detectCategoryFast via this name.
 // Scoring-time callers await classifyCategory() explicitly for AI-quality
@@ -5255,7 +5266,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.set("Pragma", "no-cache");
-  let { query, image, mediaType, userId, productId } = req.body;
+  let { query, image, mediaType, userId, productId, identificationId } = req.body;
 
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
   // Also applies to productId picks below — they consume a scan like any other.
@@ -5352,6 +5363,331 @@ app.post("/analyze", rateLimit, async (req, res) => {
     } catch (e) {
       console.warn("[productId] resolve failed:", e.message);
       return res.status(500).json({ error: "productId resolve failed" });
+    }
+  }
+
+  // ── VISION CONTRACT V2 (feature-flagged) ────────────────────────
+  // Identify from photo, verify ingredients via the cascade, then score.
+  // Falls through to the legacy `if (image)` block below when the flag is off.
+  // Also handles `{ identificationId }` resume POSTs from the confirmation
+  // modal — those skip vision entirely and run only the cascade + scoring.
+  if (isVisionContractV2() && (image || identificationId)) {
+    try {
+      // Step 1: obtain identification. Either fresh from vision, or resumed
+      // from the in-memory store via the confirmation round-trip.
+      let identification = null;
+      let fromResume = false;
+      if (identificationId) {
+        identification = getIdentification(identificationId);
+        if (!identification) {
+          return res.status(410).json({ error: "Identification expired, please rescan" });
+        }
+        fromResume = true;
+      } else {
+        identification = await callClaudeVisionIdentify(
+          image, mediaType || "image/jpeg",
+          { checkApiBudget, incrementApiCount },
+        );
+        log.info("vision_identification_result", {
+          product_name: identification.product_name,
+          brand: identification.brand,
+          confidence: identification.confidence,
+          label_legibility: identification.label_legibility,
+          label_ingredient_count: (identification.label_ingredients || []).length,
+          ai_category: identification.category,
+        });
+      }
+
+      const productName = identification.product_name || "Scanned product";
+
+      // Step 2: confidence gate. Only applies on fresh identify — a resumed
+      // identification is already user-confirmed.
+      if (!fromResume) {
+        if (identification.confidence < 0.50) {
+          log.info("vision_refusal", {
+            product_name: productName,
+            reason: "low_confidence",
+            confidence: identification.confidence,
+          });
+          return res.json({
+            status: "need_better_photo",
+            identified: { product_name: productName, confidence: identification.confidence },
+            reason: "low_confidence",
+            message: "I cannot tell what product this is. Try another angle with better lighting.",
+          });
+        }
+        if (identification.confidence < 0.60) {
+          const newId = putIdentification(identification);
+          return res.json({
+            status: "needs_confirmation",
+            identificationId: newId,
+            identified: {
+              product_name: productName,
+              brand: identification.brand,
+              variant: identification.variant,
+              confidence: identification.confidence,
+            },
+            message: `I see this looks like ${productName}. Is that right?`,
+          });
+        }
+      }
+
+      // Step 3: cascade — find verified ingredients from external sources.
+      // Order: CALIBRATION exact → fuzzy-cal (vision-only Tier 1.5) → name-key cache →
+      // Open Facts text search → web extract. Tier 5 (category prior) is skipped
+      // in the vision path; we prefer to refuse than synthesize.
+      const visionCat = identification.category || detectCategoryFast(productName) || "other";
+      let cascadeHit = null;
+
+      const calKey = normalise(productName);
+      const calExact = CALIBRATION.get(calKey) || CALIBRATION.get(productName.toLowerCase().trim());
+      if (calExact) {
+        cascadeHit = { tier: "calibration", entry: calExact, ingredients: (calExact.substances || []).join(", ") };
+      }
+      if (!cascadeHit) {
+        const fuzzy = fuzzyCalibrationLookup(productName);
+        if (fuzzy) {
+          cascadeHit = { tier: "fuzzy_calibration", entry: fuzzy.entry, ingredients: (fuzzy.entry.substances || []).join(", ") };
+        }
+      }
+      if (!cascadeHit) {
+        const nameKey = cacheKey(productName, visionCat);
+        const nCached = await cacheGet(nameKey);
+        if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
+          log.info("vision_cascade_cache_hit", { product_name: productName });
+          await attachIntelCards(nCached, userId);
+          return res.json({ ...nCached, cached: true });
+        }
+      }
+      if (!cascadeHit) {
+        const t3 = await tier3OpenFactsTextSearch(productName);
+        if (t3) cascadeHit = {
+          tier: "open_facts", source: t3.source, ingredients: t3.ingredients,
+          sourceUrl: t3.sourceUrl, sourceLabel: t3.sourceLabel, brand: t3.brand,
+          productData: t3.rawProduct,
+        };
+      }
+      if (!cascadeHit) {
+        try {
+          const t4 = await tier4WebExtract(productName, { checkApiBudget, incrementApiCount });
+          if (t4) cascadeHit = {
+            tier: "web_search", source: "web_search", ingredients: t4.ingredients,
+            sourceLabel: t4.sourceLabel, brand: t4.brand, sourceDomain: t4.sourceDomain,
+          };
+        } catch (e) { console.warn("[vision_v2] tier4 failed:", e.message); }
+      }
+
+      // Step 4a: cascade returned calibration entry → calibration scoring path.
+      if (cascadeHit && (cascadeHit.tier === "calibration" || cascadeHit.tier === "fuzzy_calibration")) {
+        const entry = cascadeHit.entry;
+        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
+        const concernsText = (entry.substances || []).join(" ");
+        const safety = computeSafetyScores(midScore, entry.category || visionCat, productName, { flagged_substances: entry.substances || [] }, [], concernsText);
+        const kidsFloor = entry.kidsFloor || entry.floor;
+        const kidsCeil  = entry.kidsCeiling || entry.ceiling;
+        const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+        const alts = serializeAlternatives(
+          filterDbAlternatives(findAlternatives(productName, entry.category || visionCat, 5, productName), entry.category || visionCat, productName, midScore),
+          entry.category || visionCat,
+        );
+        const recon = reconcileIngredients(identification.label_ingredients, entry.substances || []);
+        if (!recon.agreed && (identification.label_ingredients || []).length > 0) {
+          log.info("vision_cascade_disagreement", {
+            product_name: productName,
+            tier: cascadeHit.tier,
+            agreement_pct: recon.agreementPct,
+            label_only: recon.labelOnly.slice(0, 6),
+            cascade_only: recon.cascadeOnly.slice(0, 6),
+            used: "cascade",
+          });
+        }
+        const result = applyProductCalibration({
+          product_name: productName,
+          score: midScore, overall_score: midScore,
+          category: entry.category || visionCat,
+          confidence: entry.confidence || "high",
+          is_child_product: safety.isChild,
+          child_score: entry.kidsFloor ? kidsMid : safety.childScore,
+          child_bumps: safety.childBumps || [],
+          pregnancy_score: safety.pregnancyScore,
+          pregnancy_bumps: safety.pregnancyBumps || [],
+          dimensions: buildFuzzyDimensions(entry, entry.category || visionCat, midScore),
+          concerns: entry.substances || [],
+          flagged_substances: entry.substances || [],
+          summary: entry.reason || "",
+          alternatives: alts, ai_alternatives: [],
+          nutrition: entry.nutrition || null,
+          ingredient_list: identification.label_ingredients || [],
+          product_family: classifyProductFamily(productName, identification.label_ingredients, entry.category || visionCat),
+          category_score_context: CATEGORY_CONTEXT[entry.category || visionCat] || CATEGORY_CONTEXT.other,
+          ingredient_source: "calibration",
+          ingredient_confidence: entry.confidence || "high",
+          ingredient_verified_at: new Date().toISOString(),
+          ingredient_source_url: null,
+          source: "calibration",
+          source_label: "Verified formula",
+          source_confidence: null,
+          vision_reconciliation: recon.agreementPct,
+        });
+        const imgKey = cacheKey(productName, entry.category || visionCat);
+        cacheSet(imgKey, result);
+        await attachIntelCards(result, userId);
+        return res.json({ ...result, cached: false });
+      }
+
+      // Step 4b: cascade returned external data (OFF or web_search) → full Pass 1 scoring.
+      // Step 4c (fallback): no cascade + legible label → score from label.
+      let ingredientText = "";
+      let sourceLabelFinal = "";
+      let sourceKeyFinal = "";
+      let sourceUrlFinal = null;
+      let sourceConfidenceFinal = "medium";
+      let ingredientSourceField = "";
+      let ingredientConfidenceField = "medium";
+      let ingredientSourceUrlField = null;
+
+      if (cascadeHit) {
+        ingredientText = cascadeHit.ingredients;
+        sourceLabelFinal = cascadeHit.sourceLabel || "";
+        sourceKeyFinal = cascadeHit.source || cascadeHit.tier;
+        sourceUrlFinal = cascadeHit.sourceUrl || null;
+        ingredientSourceField = cascadeHit.source || cascadeHit.tier;
+        ingredientSourceUrlField = cascadeHit.sourceUrl || null;
+      } else if (identification.label_legibility === "full" && (identification.label_ingredients || []).length >= 3) {
+        log.info("vision_photo_verified_fallback", {
+          product_name: productName,
+          label_ingredient_count: identification.label_ingredients.length,
+          reason: "no_external_source",
+        });
+        ingredientText = identification.label_ingredients.join(", ");
+        sourceLabelFinal = "Verified by photo only — no external sources found";
+        sourceKeyFinal = "photo_verified";
+        sourceConfidenceFinal = "low";
+        ingredientSourceField = "vision_ocr";
+        ingredientConfidenceField = "low";
+      } else {
+        log.info("vision_refusal", {
+          product_name: productName,
+          reason: cascadeHit ? "unknown" : "no_external_source_and_illegible_label",
+          label_legibility: identification.label_legibility,
+        });
+        return res.json({
+          status: "need_better_photo",
+          identified: { product_name: productName, brand: identification.brand },
+          reason: "no_external_source",
+          message: `I can see this is ${productName} but the ingredient list isn't fully readable in this photo. Try another angle, or scan the barcode for verified data.`,
+        });
+      }
+
+      // Reconciliation log when both sources exist.
+      if (cascadeHit && (identification.label_ingredients || []).length > 0) {
+        const recon = reconcileIngredients(identification.label_ingredients, ingredientText);
+        if (!recon.agreed) {
+          log.info("vision_cascade_disagreement", {
+            product_name: productName,
+            tier: cascadeHit.tier,
+            agreement_pct: recon.agreementPct,
+            label_only: recon.labelOnly.slice(0, 6),
+            cascade_only: recon.cascadeOnly.slice(0, 6),
+            used: "cascade",
+          });
+        }
+      }
+
+      // Pass 1 with verified ingredients as materialContext.
+      const contextBlock = `INGREDIENT SOURCE: ${ingredientSourceField}\nFULL INGREDIENT LIST: ${ingredientText}\nThese ingredients come from ${sourceLabelFinal}. Score based on these ingredients, not on training priors.`;
+      const p1 = await pass1(productName, contextBlock, visionCat, null);
+      applyFlagDetectionToP1(p1, ingredientText, visionCat, "vision_v2");
+
+      let p2 = null;
+      try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[vision_v2] pass2 failed:", e.message); }
+
+      let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
+      let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+      let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
+      let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+
+      const textFloors = applySubstanceFloorsToText(ingredientText);
+      if (textFloors.mFloor > mScore) mScore = textFloors.mFloor;
+      if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
+      const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
+      mScore = aiFloors.mScore;
+      uScore = aiFloors.uScore;
+
+      let finalScore = computeScore(mScore, uScore, pkScore, sScore, visionCat);
+      ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
+        mScore, uScore, pkScore, sScore, finalScore, p1, p2, visionCat, productName
+      ));
+      ({ finalScore } = applyPositiveCeilings(finalScore, visionCat, p1, p2, []));
+
+      const safety = computeSafetyScores(finalScore, visionCat, productName, p1, textFloors.triggered, ingredientText);
+      const alternatives = serializeAlternatives(
+        filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
+        visionCat,
+      );
+
+      const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
+        : finalScore <= 4 ? "Good — mostly clean, use with awareness"
+        : finalScore <= 6 ? "Caution — real concerns, reduce use or find an alternative"
+        : finalScore <= 8 ? "Switch — real concerns, time to swap"
+        : "Avoid — known harmful substances";
+
+      const result = {
+        product_name:       productName,
+        brand:              identification.brand || "",
+        score:              finalScore,
+        overall_score:      finalScore,
+        category:           visionCat,
+        confidence:         p1.confidence || "medium",
+        is_child_product:   safety.isChild,
+        child_score:        safety.childScore,
+        child_bumps:        safety.childBumps || [],
+        pregnancy_score:    safety.pregnancyScore,
+        pregnancy_bumps:    safety.pregnancyBumps || [],
+        flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
+        concerns:           p2?.refined_concerns || p1.concerns || [],
+        summary:            p1.summary_short || p1.summary || "",
+        summary_short:      p1.summary_short || p1.summary || "",
+        summary_long:       p1.summary_long || p1.summary || "",
+        peer_comparison:    peerComparison,
+        ingredient_source:         ingredientSourceField,
+        ingredient_confidence:     ingredientConfidenceField,
+        ingredient_verified_at:    new Date().toISOString(),
+        ingredient_source_url:     ingredientSourceUrlField,
+        source: sourceKeyFinal,
+        source_label: sourceLabelFinal,
+        source_confidence: sourceConfidenceFinal,
+        verdict_adult: p1.verdict_adult || null,
+        verdict_kid:   p1.verdict_kid   || null,
+        dimensions: {
+          materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
+          usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [], frequency: p1.usage_exposure?.frequency || "unknown", type: p1.usage_exposure?.type || "unknown", intensity: p1.usage_exposure?.intensity || "unknown", vulnerable: p1.usage_exposure?.vulnerable || false },
+          packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [], primary: p1.packaging?.primary || "unknown", refillable: p1.packaging?.refillable || false, end_of_life: p1.packaging?.end_of_life || "unknown" },
+          sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [], reusable: p1.sustainability?.reusable || false, replaces_single_use: p1.sustainability?.replaces_single_use || false, replaces_count: p1.sustainability?.replaces_count || null, circularity: p1.sustainability?.circularity || "unknown" },
+        },
+        identified_plastics: p1.identified_plastics || [],
+        harmful_chemicals:   p1.harmful_chemicals   || [],
+        natural_materials:   p1.natural_materials   || [],
+        nutrition:           p1.nutrition || p1.product_analysis?.nutrition || null,
+        ingredient_list:     p1.ingredient_list?.length ? p1.ingredient_list : (identification.label_ingredients || []),
+        product_family:      classifyProductFamily(productName, p1.ingredient_list || identification.label_ingredients, visionCat),
+        alternatives,
+        ai_alternatives:     [],
+        scan_next:           buildScanNextFallback(productName, visionCat, alternatives),
+        category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+        cached:              false,
+      };
+      const calibrated = applyProductCalibration(result);
+      const imgKey = cacheKey(productName, visionCat);
+      cacheSet(imgKey, calibrated);
+      await attachIntelCards(calibrated, userId);
+      return res.json(calibrated);
+    } catch (err) {
+      console.error("[vision_v2] error:", err);
+      if (String(err.message).includes("API_BUDGET_EXCEEDED")) {
+        return res.status(503).json({ error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
+      }
+      return res.status(500).json({ error: err.message || "Vision scan failed" });
     }
   }
 
