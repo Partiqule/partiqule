@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors    = require("cors");
+const crypto  = require("crypto");
 const { findAlternatives } = require("./products");
 const { isPaApiConfigured, getAmazonAlternatives } = require("./amazon-api");
 const { applyProductCalibration, CALIBRATION, normalise, NUTRITION_LOOKUP } = require("./calibration");
@@ -339,9 +340,42 @@ const rateLimit = async (req, res, next) => {
 
 // ── HELPERS ───────────────────────────────────────────────────
 
+// ── Prompt-version cache prefix ──────────────────────────────────
+// Every cache key for an AI-scored result is prefixed with a short hash of
+// the Pass 1 / Pass 2 / Vision function source. When any of these prompts is
+// edited (voice rules, score guidance, calibration anchors, etc.), the hash
+// changes, every previous cache entry becomes unreachable by name, and the
+// next request rescore naturally with the current prompt. Old entries age
+// out via Redis TTL — no migration needed.
+//
+// Pass 0 / cascade tier 4 / tier 5 strings live in scoringCascade.js and
+// pass0.js. We hash those imported function bodies too so that re-touching
+// them also invalidates cache.
+//
+// Calibration map lookups, Supabase scan lookups, and the productId bypass
+// don't go through cacheGet/cacheSet — they're pre-verified data, not Pass
+// 1 outputs, and shouldn't be invalidated by prompt edits.
+//
+// The version is computed lazily-once on first cacheKey() call (after pass1
+// is defined). Computing eagerly here would race the function declarations.
+let __promptVersion = null;
+function promptVersion() {
+  if (__promptVersion) return __promptVersion;
+  const sources = [
+    typeof pass1 === "function" ? pass1.toString() : "",
+    typeof pass2 === "function" ? pass2.toString() : "",
+    typeof callClaudeVision === "function" ? callClaudeVision.toString() : "",
+    typeof tier4WebExtract === "function" ? tier4WebExtract.toString() : "",
+    typeof tier5CategoryPrior === "function" ? tier5CategoryPrior.toString() : "",
+  ].join("\n---\n");
+  __promptVersion = "v" + crypto.createHash("sha256").update(sources).digest("hex").slice(0, 8);
+  return __promptVersion;
+}
+
 function cacheKey(q, category) {
   const norm = q.toLowerCase().trim().replace(/\s+/g, " ");
-  return category ? `${category}:${norm}` : norm;
+  const tail = category ? `${category}:${norm}` : norm;
+  return `${promptVersion()}:${tail}`;
 }
 
 // Fuzzy calibration lookup — handles name variations and apostrophes
@@ -6328,13 +6362,14 @@ app.post("/admin/calibration", requireAdmin, async (req, res) => {
     if (error) throw error;
     // Refresh in-memory CALIBRATION so the change takes effect immediately
     await loadCalibrationOverrides();
-    // Also clear the product's cached score so next scan gets the new value
-    const cacheKey = `${category || "other"}:${key}`;
-    scoreCache.delete(cacheKey);
+    // Also clear the product's cached score so next scan gets the new value.
+    // Use cacheKey() so the prompt-version prefix is applied consistently.
+    const versionedKey = cacheKey(key, category || "other");
+    scoreCache.delete(versionedKey);
     scoreCache.delete(key);
     if (hasRedis) {
       try {
-        await fetch(`${REDIS_URL}/del/${encodeURIComponent(cacheKey)}`, {
+        await fetch(`${REDIS_URL}/del/${encodeURIComponent(versionedKey)}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
         });
@@ -6908,6 +6943,7 @@ app.listen(PORT, () => {
   console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
   console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
   console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
+  console.log(`[CACHE] Prompt version: ${promptVersion()} — old-prefix entries are unreachable until Redis TTL expires them`);
 
   // Daily intelligence feed scheduler — 7am UTC
   if (supabaseAdmin) {
@@ -7471,7 +7507,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     return res.status(400).json({ error: "Invalid barcode format" });
   }
 
-  const barcodeKey = `barcode:${barcode}`;
+  const barcodeKey = `${promptVersion()}:barcode:${barcode}`;
 
   // ── Cache check (same staleness logic as /analyze) ──
   const bCached = await cacheGet(barcodeKey);

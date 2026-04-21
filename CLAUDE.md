@@ -79,6 +79,8 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 
 **Caching (multi-layer):** In-memory Map -> Upstash Redis (90-day TTL) -> disk fallback (`/tmp/partiqule_cache.json`).
 
+**Cache versioning:** All Pass 1 output cache keys are prefixed with `v<8-char-sha>:` where the hash is computed at startup from the source of `pass1`, `pass2`, `callClaudeVision`, `tier4WebExtract`, and `tier5CategoryPrior`. When any of these prompts is edited the hash changes, every prior cache entry becomes unreachable by name, and the next request rescore naturally with the current prompt. Old entries age out via Redis TTL — no migration needed. Calibration map lookups, Supabase scan lookups, and the productId bypass don't go through cacheGet/cacheSet, so they're never invalidated by prompt edits. Startup logs the active version: `[CACHE] Prompt version: v<hash>`.
+
 **Intelligence feed pipeline:**
 1. Daily at 7am UTC: fetches 18 RSS feeds from EU/US/international health sources
 2. Filters articles by 120+ compound/topic keywords, skips older than 14 days
