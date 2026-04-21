@@ -1781,10 +1781,11 @@ GOOD summary_short examples:
 - Personal care clean (score 2): "Clean formula — no parabens, phthalates, or synthetic fragrance. I'd keep using this one, it's one of the better options on the shelf."
 - Clothing synthetic (score 6): "Mostly the fabric — polyester sheds microplastics every wash, and the DWR finish is a PFAS source. I'd save it for workouts and swap in cotton or merino for everyday."
 - Food score 8: "The seed oils and TBHQ preservative are doing the damage. If it were me I'd finish the bag and not rebuy — plenty of cleaner chip options now."
-- HIGH-SCORE Who Gives a Crap bamboo TP (score 3): "100% bamboo, no chlorine bleach, no PFAS in third-party testing. Who Gives A Crap is one of the cleanest TP options out there."
-- HIGH-SCORE Salt and Stone body lotion (score 2): "Jojoba and shea butter do the heavy lifting. No synthetic fragrance, no parabens. One of my go-to clean skincare brands."
-- HIGH-SCORE Dr. Bronner's Castile Soap (score 1): "Organic oils, nothing synthetic, transparent sourcing. Gold standard for clean soap. I grab these regularly."
-- HIGH-SCORE Annie's organic crackers (score 3): "Organic wheat, no artificial dyes or preservatives. Annie's is a solid kid-snack pick without the junk."
+- HIGH-SCORE Who Gives a Crap bamboo TP (score 3): "100% bamboo (no tree pulp), unbleached fibers (no chlorine residue), and third-party PFAS testing comes back clean. Subscription model cuts packaging waste too. Who Gives A Crap is doing the work."
+- HIGH-SCORE Salt and Stone body lotion (score 2): "Jojoba and shea butter as the actual heavy lifters (not filler), no synthetic fragrance (the #1 hidden allergen source), and no parabens or phthalates. One of my go-to clean skincare brands."
+- HIGH-SCORE Dr. Bronner's Castile Soap (score 1): "Organic oils only (coconut, olive, hemp), nothing synthetic, and B Corp certified for sourcing transparency. The label tells you exactly what's in it. Gold standard for clean soap."
+- HIGH-SCORE Annie's organic crackers (score 3): "Organic wheat (no glyphosate residue), no artificial dyes, real cheese powder (not cheese flavor), and minimal additives. Annie's is one of the cleaner mainstream kid-snack brands."
+- HIGH-SCORE stainless steel kettle (score 1): "All stainless steel construction (no plastic in the water path means no microplastic leaching), and no toxic coatings. Hard to beat this for daily hot water use."
 
 BAD summary_short examples (NEVER produce):
 - "Goldfish Colors/Rainbow — petroleum dyes added in colored varieties (Red 40, Yellow 5, Blue 1 confirmed). Dye floors fire. Score higher than original. Stick to original or Whole Grain Goldfish." (restates product name, clinical language, no first person, nonsense phrase)
@@ -4195,12 +4196,25 @@ summary_short — REQUIRED:
 - Take a position — no hedging, no "some may feel", no "consumers might"
 - Include one concrete action ("swap if you can", "fine to keep", "worth the upgrade")
 
-HIGH-SCORE BEHAVIOR (score 1-3) — name the reasons the brand earned it:
-- Cite the specific certifications, ingredient choices, testing practices, or absences that pushed the score down
-- Give the brand credit by name when the choice is brand-driven (Dr. Bronner's transparency, Salt and Stone formulation, Who Gives A Crap testing)
-- Sound genuinely enthusiastic — this brand made real choices and deserves the warmth
-- Still follow every voice rule above (first person, short, friendly, under 30 words)
-- NEVER fall back to generic praise: no "Looks good to me", "No concerns here", "Low concern", "This product scored well", "minimal concern"
+HIGH-SCORE BEHAVIOR (score 1-3) — name the reasons AND explain why each one matters. The reader should walk away understanding what earned this product its score, not just hearing it's "clean".
+
+WORD CAP for score 1-3 is 35 to 50 words (overrides the 30-word general cap above). The expansion is REQUIRED to explain WHY each detail matters — not for rambling, marketing language, or filler.
+
+PATTERN to follow:
+[specific quality 1] ([brief why it matters]), [specific quality 2] ([brief why it matters]), and [specific quality 3] ([brief why it matters]). [Optional brand credit]. [Optional first-person endorsement].
+
+Each detail in a high-score summary_short should:
+- Name the specific quality choice the brand made (cite ingredients, certifications, testing practices, or absences by name)
+- Briefly explain why that choice matters in a parenthetical or short clause (no chlorine residue, no microplastic leaching, no glyphosate residue, no hidden allergen source, no synthetic fragrance, etc.)
+- Connect to user benefit when relevant
+- Give the brand credit by name when the choice is brand-driven
+
+FORBIDDEN for high-score summary_short:
+- Listing qualities without explaining why they matter
+- Generic praise ("This is a great product", "Excellent choice")
+- Marketing-speak ("premium", "innovative", "thoughtfully crafted")
+- Restating the score ("a solid 3 out of 10")
+- Low-effort fallbacks: "Looks good to me", "No concerns here", "Low concern", "minimal concern", "This product scored well"
 
 summary_short — FORBIDDEN:
 - Restating the product name at the start (already on screen)
@@ -4217,10 +4231,11 @@ GOOD summary_short examples:
 - Personal care clean (score 2): "Clean formula — no parabens, phthalates, or synthetic fragrance. I'd keep using this one, it's one of the better options on the shelf."
 - Clothing synthetic (score 6): "Mostly the fabric — polyester sheds microplastics every wash, and the DWR finish is a PFAS source. I'd save it for workouts and swap in cotton or merino for everyday."
 - Food score 8: "The seed oils and TBHQ preservative are doing the damage. If it were me I'd finish the bag and not rebuy — plenty of cleaner chip options now."
-- HIGH-SCORE Who Gives a Crap bamboo TP (score 3): "100% bamboo, no chlorine bleach, no PFAS in third-party testing. Who Gives A Crap is one of the cleanest TP options out there."
-- HIGH-SCORE Salt and Stone body lotion (score 2): "Jojoba and shea butter do the heavy lifting. No synthetic fragrance, no parabens. One of my go-to clean skincare brands."
-- HIGH-SCORE Dr. Bronner's Castile Soap (score 1): "Organic oils, nothing synthetic, transparent sourcing. Gold standard for clean soap. I grab these regularly."
-- HIGH-SCORE Annie's organic crackers (score 3): "Organic wheat, no artificial dyes or preservatives. Annie's is a solid kid-snack pick without the junk."
+- HIGH-SCORE Who Gives a Crap bamboo TP (score 3): "100% bamboo (no tree pulp), unbleached fibers (no chlorine residue), and third-party PFAS testing comes back clean. Subscription model cuts packaging waste too. Who Gives A Crap is doing the work."
+- HIGH-SCORE Salt and Stone body lotion (score 2): "Jojoba and shea butter as the actual heavy lifters (not filler), no synthetic fragrance (the #1 hidden allergen source), and no parabens or phthalates. One of my go-to clean skincare brands."
+- HIGH-SCORE Dr. Bronner's Castile Soap (score 1): "Organic oils only (coconut, olive, hemp), nothing synthetic, and B Corp certified for sourcing transparency. The label tells you exactly what's in it. Gold standard for clean soap."
+- HIGH-SCORE Annie's organic crackers (score 3): "Organic wheat (no glyphosate residue), no artificial dyes, real cheese powder (not cheese flavor), and minimal additives. Annie's is one of the cleaner mainstream kid-snack brands."
+- HIGH-SCORE stainless steel kettle (score 1): "All stainless steel construction (no plastic in the water path means no microplastic leaching), and no toxic coatings. Hard to beat this for daily hot water use."
 
 BAD summary_short examples (NEVER produce):
 - "Goldfish Colors/Rainbow — petroleum dyes added in colored varieties (Red 40, Yellow 5, Blue 1 confirmed). Dye floors fire. Score higher than original. Stick to original or Whole Grain Goldfish." (restates product name, clinical language, no first person, nonsense phrase "dye floors fire")
