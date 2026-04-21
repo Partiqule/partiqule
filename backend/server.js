@@ -457,6 +457,63 @@ function cleanProductName(name) {
 function detectCategory(q) {
   const s = q.toLowerCase();
 
+  // ── Brand-first lookup ────────────────────────────────────────
+  // Some brands are unambiguous about their category regardless of what
+  // follows in the product name. Checking these BEFORE the keyword regex
+  // chain prevents false-positives from ambiguous words inside the brand
+  // (e.g. "Salt" in "Salt and Stone" pulling the product into food).
+  // Brand match is a strong signal — trust it.
+  const BRAND_CATEGORY = [
+    // personal_care
+    { match: /\bsalt\s*(and|&|\+)\s*stone\b/,        cat: "personal_care" },
+    { match: /\bdr\.?\s*bronner'?s?\b/,              cat: "personal_care" },
+    { match: /\bnative\s+(deodorant|body|shampoo|conditioner|lotion|bar|wash)?/, cat: "personal_care" },
+    { match: /\btom'?s\s+of\s+maine\b/,              cat: "personal_care" },
+    { match: /\bburt'?s\s+bees\b/,                   cat: "personal_care" },
+    { match: /\baveeno\b/,                           cat: "personal_care" },
+    { match: /\bcetaphil\b/,                         cat: "personal_care" },
+    { match: /\bcerave\b/,                           cat: "personal_care" },
+    { match: /\bla\s+roche.?posay\b/,                cat: "personal_care" },
+    { match: /\bthe\s+ordinary\b/,                   cat: "personal_care" },
+    { match: /\bglossier\b/,                         cat: "personal_care" },
+    { match: /\bneutrogena\b/,                       cat: "personal_care" },
+    { match: /\bolay\b/,                             cat: "personal_care" },
+    { match: /\beucerin\b/,                          cat: "personal_care" },
+    { match: /\baquaphor\b/,                         cat: "personal_care" },
+    { match: /\btatcha\b/,                           cat: "personal_care" },
+    { match: /\bherbivore\b/,                        cat: "personal_care" },
+    { match: /\bethique\b/,                          cat: "personal_care" },
+    { match: /\bwellnesse\b/,                        cat: "personal_care" },
+    { match: /\brisewell\b/,                         cat: "personal_care" },
+    { match: /\bmethod\s+(body|hand|dish)\b/,        cat: "personal_care" },
+    // home (cleaning) brands whose name overlaps food/personal_care
+    { match: /\bseventh\s+generation\s+(dish|laundry|detergent|cleaner|all.purpose)/, cat: "home" },
+    { match: /\bblueland\b/,                         cat: "home" },
+    { match: /\bbranch\s+basics\b/,                  cat: "home" },
+  ];
+  for (const b of BRAND_CATEGORY) {
+    if (b.match.test(s)) return b.cat;
+  }
+
+  // ── Compound-phrase lookup ────────────────────────────────────
+  // Two-word phrases that unambiguously identify a category even when a
+  // single-word keyword from a different category is present. "Ocean salt
+  // body scrub" must route to personal_care, not food via "salt".
+  const COMPOUND_PHRASE_CATEGORY = [
+    { match: /\bbody\s+(lotion|wash|butter|oil|scrub|cream|balm|milk|mist)\b/, cat: "personal_care" },
+    { match: /\bface\s+(cream|wash|oil|serum|mask|moisturizer|cleanser|toner|mist|balm)\b/, cat: "personal_care" },
+    { match: /\bhand\s+(cream|lotion|wash|sanitizer|soap|balm)\b/, cat: "personal_care" },
+    { match: /\bhair\s+(oil|serum|mask|treatment|balm|wax|gel|spray|cream)\b/, cat: "personal_care" },
+    { match: /\blip\s+(balm|oil|scrub|tint|gloss|stick|butter|mask|treatment)\b/, cat: "personal_care" },
+    { match: /\beye\s+(cream|serum|mask|balm|oil)\b/, cat: "personal_care" },
+    { match: /\bfoot\s+(cream|lotion|scrub|balm|mask)\b/, cat: "personal_care" },
+    { match: /\bshampoo\s+bar\b/, cat: "personal_care" },
+    { match: /\bdeodorant\s+(stick|bar|spray|roll.?on)\b/, cat: "personal_care" },
+  ];
+  for (const c of COMPOUND_PHRASE_CATEGORY) {
+    if (c.match.test(s)) return c.cat;
+  }
+
   // ── ELECTRONICS — before food to prevent "Apple" matching apple fruit ──
   if (/macbook|iphone|ipad|imac|apple watch|airpods|apple tv|apple mac|\bapple\s+(pro|air|mini|studio|ultra|m[0-9]|laptop|computer|phone|tablet|watch|earbuds|headphones)\b|samsung galaxy|samsung phone|samsung tablet|samsung tv|pixel phone|google pixel|android phone|windows laptop|dell laptop|hp laptop|lenovo thinkpad|surface pro|microsoft surface|chromebook|gaming laptop|nvidia|amd ryzen|intel core|\blaptop\b|\bsmartphone\b|\btablet\b(?!.*food)|\bdesktop computer\b|television|\b(4k|oled|qled)\s+tv\b|smart tv|monitor|keyboard|mouse\b(?!.*trap)|headphones|earbuds|airpods|bluetooth speaker|smart speaker|alexa|google home|ring doorbell|nest thermostat|robot vacuum|roomba|printer|camera(?!.*food)|drone|gaming console|playstation|xbox|nintendo switch|smart home|wifi router|hard drive|ssd|graphics card|cpu|motherboard|charger(?!.*food)|power bank|battery pack|electric vehicle|tesla|rivian|ev car/.test(s)) return "other";
 
@@ -507,7 +564,7 @@ function detectCategory(q) {
     /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop)\b/.test(s) ||
     /\b(cheese|yogurt|yoghurt|butter|cream|ghee|cottage|ricotta|mozzarella|cheddar|parmesan|brie)\b/.test(s) ||
     /\b(bread|bagel|muffin|croissant|tortilla|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
-    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|cheerio|cereal|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauce|salsa|dressing|vinegar|olive oil|syrup|hot sauce|sriracha|hummus|guacamole|pesto|marinara)\b/.test(s) ||
+    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|cheerio|cereal|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauce|salsa|dressing|vinegar|olive oil|syrup|hot sauce|sriracha|hummus|guacamole|pesto|marinara|salt|sea salt|himalayan salt|kosher salt|table salt|seasoning|spice blend|bouillon)\b/.test(s) ||
     /\b(soup|broth|stock|stew|chili|curry|ramen|frozen meal|canned food|baby food|infant formula|snack|food|meal|lunch|dinner|breakfast|salad|(?<!saran )wrap|bowl|burrito|sandwich|taco|burger|pizza|fries|wings|nuggets|entree|appetizer|side dish)\b/.test(s)
   ) return "food";
 

@@ -301,6 +301,19 @@ const CATEGORY_TESTS = [
   { query: "neutrogena sunscreen",      expect: "personal_care",  note: "Sunscreen" },
   { query: "casper mattress",           expect: "home_furnishing", note: "Furniture" },
   { query: "stanley tumbler",           expect: "kitchen",         note: "Drinkware" },
+  // Brand-lookup + compound-phrase cases added 2026-04-21 after Salt & Stone body lotion
+  // was miscategorized as food during cascade scoring. Brand name starts with the word
+  // "salt", which shouldn't pull the product into food classification.
+  { query: "salt and stone body lotion", expect: "personal_care",  note: "Personal care brand; body lotion compound phrase" },
+  { query: "salt & stone lotion",        expect: "personal_care",  note: "Brand with ampersand variant" },
+  { query: "salt and stone",             expect: "personal_care",  note: "Brand-only (no product type) — brand lookup wins" },
+  { query: "himalayan salt",             expect: "food",           note: "Salt in cooking context still food" },
+  { query: "sea salt",                   expect: "food",           note: "Cooking salt, not personal care" },
+  { query: "ocean salt body scrub",      expect: "personal_care",  note: "Body scrub compound phrase beats salt keyword" },
+  { query: "dr bronner's castile soap",  expect: "personal_care",  note: "Dr. Bronner's brand" },
+  { query: "aveeno daily lotion",        expect: "personal_care",  note: "Aveeno brand" },
+  { query: "coca-cola",                  expect: "beverage",       note: "Beverage regression" },
+  { query: "lululemon align",            expect: "clothing",       note: "Clothing regression" },
 ];
 
 let catTestsPassed = 0, catTestsFailed = 0;
