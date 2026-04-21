@@ -840,14 +840,27 @@ function applySubstanceFloorsToText(ingredText) {
   return { mFloor, uFloor, triggered };
 }
 
-// NOVA group hard floor — only for food and food_beverage (not beverage, which
-// would wrongly penalize sparkling water and other inert NOVA 4 items).
+// NOVA group hard floor/ceiling for food and beverage products.
+// Applied post-calibration in the barcode path. Text and vision paths rely
+// on prompt-level enforcement because NOVA group isn't resolved upstream.
+// Current philosophy (see CLAUDE.md "NOVA scoring floors"):
+//   NOVA 1 ceiling 3 — whole foods stay clean
+//   NOVA 3 floor 4   — processed carries inherent concern
+//   NOVA 4 floor 7   — ultra-processed is a real concern, not moderate
+// Traditional fermented foods (miso, kimchi, kefir, sauerkraut, tempeh) are
+// NOVA 3 but get a calibration-level exemption down to 2-3.
+function novaBounds(novaGroup, category) {
+  const empty = { floor: 0, ceiling: 10 };
+  if (!novaGroup) return empty;
+  if (category !== "food" && category !== "beverage" && category !== "food_beverage") return empty;
+  if (novaGroup === 1) return { floor: 0, ceiling: 3 };
+  if (novaGroup === 3) return { floor: 4, ceiling: 10 };
+  if (novaGroup === 4) return { floor: 7, ceiling: 10 };
+  return empty; // NOVA 2 scored by composition
+}
+// Back-compat alias — older call sites read `novaFloor(...)` as a number.
 function novaFloor(novaGroup, category) {
-  if (!novaGroup) return 0;
-  if (category !== "food" && category !== "food_beverage") return 0;
-  if (novaGroup === 4) return 5; // ultra-processed → materials min 5
-  if (novaGroup === 3) return 4; // processed → materials min 4
-  return 0;
+  return novaBounds(novaGroup, category).floor;
 }
 
 // ── UNIFIED ALTERNATIVE SERIALIZATION ─────────────────────────
@@ -1611,8 +1624,9 @@ SCORING RULES:
 - ORGANIC KIDS CLOTHING BRANDS (Little Rad Things, Pact Kids, Hanna Andersson, Burt\'s Bees Baby): materials 1-2, final score 1-3
 - Single-use disposables: sustainability score 8-9
 - Synthetic textiles (polyester, nylon, spandex): materials 5-7, usage 5-7
-- Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 7-8, usage 6-7, final 6-7
+- Ultra-processed food with synthetic dyes (Red 40, Yellow 5/6, Blue 1, titanium dioxide): materials 8-9, usage 6-7, final 8-9
 - NATURAL DYE RULE: Never apply the synthetic dye floor if the label shows natural colorants like vegetable juice, fruit extracts, spirulina, beet juice, turmeric, annatto, or carrot juice. Matt's Bakery, YumEarth, and Unreal use natural colorants — score materials 2-4, never 6+. When in doubt default to natural and do not apply the dye floor.
+- NOVA FLOORS AND CEILINGS for food and beverage (enforce these even when the label looks clean): NOVA 1 whole or minimally-processed foods ceiling at 3 (fresh produce, plain grains, nuts, plain yogurt, water). NOVA 3 processed foods floor at 4 (canned beans, aged cheeses, simple breads; traditional fermented foods like miso/kimchi/kefir are 2-3 via calibration only). NOVA 4 ultra-processed floor at 7 — "organic" and "natural" NOVA 4 is still NOVA 4. Escalate within NOVA 4: 7 for minimally-additive (RXBar-style, organic protein bars), 8 with artificial dyes or synthetic preservatives (BHT, BHA, TBHQ) or industrial seed oils as primary, 9 with multiple stacked concerns (HFCS + dyes + partially hydrogenated oils). For summary_short on NOVA 4 products do NOT use softening language like "moderate concern" — say "ultra-processed" directly.
 - Chemical sunscreen (oxybenzone, octinoxate): materials 6-7, usage 6-7
 - "Reef safe" / "reef friendly" sunscreen claims are UNREGULATED MARKETING — always check actual UV filter ingredients. If oxybenzone or octinoxate is visible, apply the 6-7 floor regardless of reef-safe label.
 - Synthetic fragrance in personal care: materials 5-6
@@ -1986,12 +2000,35 @@ High fiber (8g+/serving) from whole food sources: lower materials by 1 point.
 High protein (10g+/serving) from whole food sources: lower materials by 0.5 points (round down).
 Organic apple in plastic bag: materials=1 (whole food, organic), packaging=6 → final ~2. Always note packaging concern.
 
-NOVA PROCESSING MODIFIER — apply before scoring, not after:
-NOVA 1 — Unprocessed or minimally processed: fruits, vegetables, plain meat, eggs, plain oats, plain yogurt. No structural penalty.
-NOVA 2 — Processed culinary ingredients: oils, vinegars, flours, sugar alone. No penalty on their own.
-NOVA 3 — Processed foods: canned beans, cheese, cured meats without additives, fermented foods, bread with simple ingredients. Materials baseline 2-4.
-NOVA 4 — Ultra-processed formulations: industrial ingredients not found in home kitchens (emulsifiers, flavor enhancers, hydrolyzed protein, modified starch, synthetic vitamins added back, HFCS, 5+ additives). Materials baseline MINIMUM 5 regardless of individual ingredient cleanliness. The formulation itself is the concern. Never score a NOVA 4 product below 5.
-NOVA 4 examples: breakfast cereals with 10+ ingredients and synthetic dyes, packaged cookies, flavored chips, plant-based meat (Beyond Meat, Impossible Burger), most fast food, flavored protein bars with 20+ ingredients.
+NOVA CLASSIFICATION FLOORS AND CEILINGS (CRITICAL) — apply to food and beverage products AFTER calibration entries. These hard bounds supersede other scoring intuitions; the AI's job is to place the product within the band, not to debate the band.
+
+NOVA 1 (whole or minimally processed): raw fruits and vegetables, plain grains, nuts, seeds, plain yogurt, water, plain meat, eggs.
+- Ceiling: 3. If a product is clearly NOVA 1 and your other signals push higher than 3, rescore down to 3.
+- Whole foods are the clean baseline. Do not penalize them for packaging alone above this ceiling.
+
+NOVA 2 (processed culinary ingredients): olive oil, butter, sea salt, vinegars, raw honey, pure sugar, maple syrup.
+- No explicit floor or ceiling. Score by composition: olive oil ≈ 2, refined sugar ≈ 5.
+
+NOVA 3 (processed foods): canned vegetables or fruits, aged cheeses, packaged breads without additives, canned beans, simple preserved foods, cured meats without nitrites.
+- Floor: 4. Even "clean" NOVA 3 scores minimum 4 — processing itself adds concern.
+- Exception: traditional fermented foods with documented health benefits — miso, kimchi, sauerkraut, tempeh, kefir — can score 2-3 via calibration entries, NOT via this rule. If a fermented food lacks a calibration entry, the floor of 4 still applies.
+
+NOVA 4 (ultra-processed formulations): industrial ingredients not found in home kitchens — emulsifiers, flavor enhancers, hydrolyzed protein, modified starch, isolated proteins, synthetic vitamins added back, HFCS, 5+ additives, sweeteners that taste sweet but are not sugar.
+- Floor: 7. NOVA 4 is categorically concerning regardless of brand marketing. "Organic" NOVA 4 is still NOVA 4. "Natural" NOVA 4 is still NOVA 4.
+- Escalation within NOVA 4 is based on specific concerns:
+  * 7: organic or minimally-additive NOVA 4 (RXBar-style clean-label protein bars, organic cereals with minimal additives, clean-label plant milks).
+  * 7-8: standard NOVA 4 (most mass-market packaged snacks, cereals, frozen meals, sweetened yogurts, flavored chips).
+  * 8-9: NOVA 4 with artificial dyes (Red 40, Yellow 5/6, Blue 1), synthetic preservatives (BHT, BHA, TBHQ, sodium benzoate in the presence of vitamin C), or industrial seed oils as a primary ingredient.
+  * 9-10: NOVA 4 with multiple serious concerns stacked — HFCS + artificial dyes + artificial flavors + partially hydrogenated oils. Reserve 10 for products with confirmed contamination above regulatory limits.
+NOVA 4 examples: breakfast cereals with 10+ ingredients and synthetic dyes, packaged cookies, flavored chips, plant-based meat (Beyond Meat, Impossible Burger), most fast food, flavored protein bars with 20+ ingredients, mass-market ice cream with stabilizers.
+
+SUMMARY_SHORT GUIDANCE FOR NOVA 4 — be honest, not soft:
+Do not say "moderate concern" or "some concerns" for a NOVA 4 product. If it is ultra-processed, say so. Name the specific industrial features. Point at the whole-food alternative. First-person friend voice.
+
+Examples:
+- Organic protein bar, score 7: "RXBar-style protein bars are ultra-processed despite the clean label. Isolated protein, sugar binder, even organic versions score in this range. Real food scores cleaner — eggs, plain yogurt, nuts."
+- Mass-market cereal with Red 40, score 8: "Ultra-processed grains plus Red 40 plus high fructose corn syrup. This is the industrial food model optimized for shelf-life, not nutrition. Plain oats with fruit run cleaner."
+- Oreos, score 9: "Ultra-processed refined flour, high fructose corn syrup, artificial flavors, and partially hydrogenated oil residues. Hard to find a food category more heavily engineered. I would not pack these."
 
 SUGAR PENALTY — added sugar matters independently of other concerns:
 CRITICAL DISTINCTION: "Added sugar" and "natural sugar" are not the same thing and must never be treated the same.
@@ -2026,14 +2063,15 @@ Children's DV for added sugar is 25g/day (vs 50g for adults). Apply 2x sensitivi
 - >20g added sugar per serving in kids mode: materials +3
 Natural sugar in whole fruit/dairy: still no penalty in kids mode.
 
-FOOD TIER SCORE IMPACT — synthesizing NOVA, sugar, and substance concerns:
-Score 1-2 (Safe): NOVA 1-2, organic certified, no confirmed IARC substances, <5g added sugar. Organic produce, organic plain oats, plain organic yogurt, wild salmon.
-Score 3 (Good): NOVA 2-3, mostly clean, conventional farming but Non-GMO or low pesticide load, <6g added sugar, no synthetic dyes/preservatives. Kashi Organic, Poppi soda, Larabar, plain Greek yogurt (conventional), canned organic beans.
-Score 4 (Good): NOVA 3, conventional ingredients, some processing but whole food base, no confirmed IARC 2A as primary ingredient. Kashi conventional (non-organic), Cliff Bar, Kind bar, 365 WFM snacks, conventional eggs, plain whole milk.
-Score 5 (Caution): NOVA 3-4 boundary, OR confirmed IARC 2A substance as minor ingredient, OR NOVA 3 with >10g sugar. Quaker oats (conventional primary oats + confirmed glyphosate), Honest Kids juice pouches (high sugar + processing), plain hot dogs (nitrites confirmed).
-Score 6 (Caution): NOVA 4 product with significant concerns OR confirmed IARC 2A substance as primary ingredient + other concerns. Honey Nut Cheerios (primary oat with confirmed glyphosate + 12g sugar + NOVA 4), conventional flavored chips (MSG, artificial flavors, NOVA 4).
-Score 7 (Change): NOVA 4 + confirmed IARC Group 1 substance OR multiple IARC 2A concerns OR confirmed petroleum dyes. Hot dogs/processed meat with sodium nitrite (IARC Group 1). Candy/cereal with multiple petroleum dyes.
-Score 8-9 (Avoid): Multiple IARC Group 1 substances + ultra-processed OR PFAS food contamination confirmed. Chewing tobacco in food, heavily contaminated products.
+FOOD TIER SCORE IMPACT — synthesizing NOVA, sugar, and substance concerns under the NOVA 4 floor of 7:
+Score 1-2 (Safe): NOVA 1, whole or near-whole food, no confirmed IARC substances, <5g added sugar. Organic produce, plain organic oats, plain yogurt, wild salmon, nuts and seeds.
+Score 3 (Good): NOVA 1-2 with minor processing OR traditional fermented NOVA 3 with documented health benefits (miso, kimchi, sauerkraut, tempeh, kefir — via calibration entries only). Also Poppi soda, Spindrift, plain Greek yogurt (conventional) — NOVA 2-3 boundary with minimal additives.
+Score 4 (Good): NOVA 3 — canned beans, canned tomatoes, aged cheddar, simple breads, cured meats without nitrites. Conventional eggs, plain whole milk are NOVA 1 but land here if packaged/homogenized. Floor applies regardless of how "clean" the label reads.
+Score 5 (Caution): NOVA 3 with elevated sugar (>10g added) or a confirmed IARC 2A minor ingredient. Honest Kids juice pouches (added sugar + processing), conventional cured meats, NOVA 3 with glyphosate residue as minor ingredient.
+Score 6 (Caution): Reserved for NOVA 3 with multiple minor concerns stacked, or borderline NOVA 3-4 products where formulation intent is ambiguous. Most scans land here or jump to 7+.
+Score 7 (Change — NOVA 4 floor): Organic or minimally-additive NOVA 4 — RXBar, organic plant-based cereals with minimal additives, clean-label plant milks, organic protein bars. Formulation is industrial even when the label is clean.
+Score 8 (Change): Standard NOVA 4 with artificial dyes, synthetic preservatives (BHT, BHA, TBHQ), or industrial seed oils as primary ingredient. Conventional Cheerios variants with Red 40, Goldfish Colors, sweetened flavored yogurts with added colors.
+Score 9 (Avoid): NOVA 4 stacking multiple serious concerns — HFCS + artificial dyes + artificial flavors, or confirmed IARC Group 1 substance in a NOVA 4 matrix. Oreos, Lucky Charms, Kraft Mac and Cheese with color plus nitrite-cured meat.
 Score 10: Reserved for confirmed contamination above regulatory safety limits.
 
 IARC CARCINOGEN RULE — REVISED (replaces old "all IARC 2A = materials minimum 7"):
@@ -7779,11 +7817,16 @@ app.post("/barcode", rateLimit, async (req, res) => {
     mScore = aiFloors.mScore;
     uScore = aiFloors.uScore;
 
-    // ── NOVA group hard floor — NOVA 4 → materials ≥ 5, NOVA 3 → ≥ 4 ──
-    const novaMin = novaFloor(novaGroup, cat);
-    if (novaMin > mScore) {
-      console.log(`[BARCODE] NOVA ${novaGroup} floor raised materials ${mScore} → ${novaMin}`);
-      mScore = novaMin;
+    // ── NOVA group hard floor/ceiling ──
+    // NOVA 1 → materials ≤ 3, NOVA 3 → materials ≥ 4, NOVA 4 → materials ≥ 7.
+    const nova = novaBounds(novaGroup, cat);
+    if (nova.floor > mScore) {
+      console.log(`[BARCODE] NOVA ${novaGroup} floor raised materials ${mScore} → ${nova.floor}`);
+      mScore = nova.floor;
+    }
+    if (mScore > nova.ceiling) {
+      console.log(`[BARCODE] NOVA ${novaGroup} ceiling lowered materials ${mScore} → ${nova.ceiling}`);
+      mScore = nova.ceiling;
     }
 
     let finalScore = computeScore(mScore, uScore, pkScore, sScore, cat);

@@ -59,6 +59,7 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 3. Web search runs IN PARALLEL with pass1 (not blocking). If search returns data, it feeds into pass2
 4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
 5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
+5a. NOVA bounds (`novaBounds()` in server.js) override AI scores for food and beverage. NOVA 1 ceiling 3, NOVA 3 floor 4, NOVA 4 floor 7. Traditional fermented foods (miso, kimchi, kefir, sauerkraut, tempeh) exempt via calibration. Deterministic enforcement runs post-calibration in the barcode path; text and vision paths enforce the same bounds via prompt-level rules. Rationale: NOVA 1 ceiling reinforces whole foods as clean baseline, NOVA 3 floor acknowledges processing carries inherent concern, NOVA 4 floor of 7 signals ultra-processed as real concern matching UPF research (Monteiro 2025 Lancet, Srour 2024 BMJ, Lane 2024 Neurology).
 6. Regulatory flags from Supabase injected into AI prompt for approved findings
 7. Calibration registry (`backend/calibration.js`, 3,039 known products) overrides AI entirely
 8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
