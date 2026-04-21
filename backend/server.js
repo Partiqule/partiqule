@@ -4173,9 +4173,10 @@ Return ONLY this JSON:
   "confidence_reason": "why",
   "scan_next": ["related product 1", "related product 2", "related product 3"],
   "ai_alternatives": [
-    {"name": "specific product name", "reason": "max 10 words why safer", "material": "max 5 words", "estimated_score": 2},
-    {"name": "second alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
-    {"name": "third alternative", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
+    {"name": "specific product name — major clean brand", "reason": "max 10 words why safer", "material": "max 5 words", "estimated_score": 2},
+    {"name": "second alternative — mid-size specialty brand", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 1},
+    {"name": "third alternative — small or indie brand", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2},
+    {"name": "fourth alternative — optional, rotate brand size", "reason": "max 10 words", "material": "max 5 words", "estimated_score": 2}
   ]
 }
 
@@ -4321,20 +4322,45 @@ Always name the SPECIFIC chemical, not a generic category. These rules apply to 
 - Packaging speculation: if packaging MAY contain a harmful substance, write it as: "packaging may contain [specific substance] — unconfirmed" with severity "low", NOT as a high/medium concern
 
 AI ALTERNATIVES — same-use, same-function rule — CRITICAL — NEVER VIOLATE:
-Alternatives MUST serve the exact same purpose as the scanned product. This is the single most important rule for alternatives. Cross-category suggestions are STRICTLY FORBIDDEN and a serious failure.
+Alternatives MUST serve the exact same purpose as the scanned product. Ask yourself: "would someone reaching for the scanned product actually substitute this?" If the answer is no, do not suggest it. Cross-category AND cross-subcategory suggestions are STRICTLY FORBIDDEN.
 
-CATEGORY MAPPING — only suggest alternatives within these categories:
-- Cereal / breakfast food (Cheerios, Froot Loops, granola) → ONLY suggest other cereals or breakfast foods. NEVER suggest cough syrup, supplements, medication, or anything not eaten for breakfast.
-- Snack bar / granola bar → ONLY suggest other snack bars or granola bars
-- Soda / beverage → ONLY suggest other beverages
-- Diapers / training pants → ONLY suggest other diapers or cloth diaper systems
-- Sunscreen → ONLY suggest other sunscreens
-- Shampoo → ONLY suggest other shampoos
-- Cleaning spray → ONLY suggest other cleaning products
-- Frying pan / cookware → ONLY suggest other cookware
-- Clothing / jacket → ONLY suggest other clothing in the same category
+SUBCATEGORY COHERENCE — match not just the broad category but the specific use case. These examples cover the most common failure modes:
+- Muffins → other breakfast baked goods (muffins, scones, breakfast bars). NEVER candy bars, cookies, protein powder, or trail mix.
+- Chocolate chip cookies → other cookies (cleaner cookie brands, not protein bars, not candy)
+- Chips / salty snacks → other salty snacks (cleaner chips, popped grains, puffs). NEVER crackers, granola, or fruit snacks.
+- Ice cream / frozen dessert → other frozen desserts (cleaner ice cream, gelato, frozen yogurt). NEVER protein bars, smoothies, or yogurt cups.
+- Crackers → other crackers (seed crackers, whole-grain crackers). NEVER chips, cookies, or granola.
+- Chocolate candy bar → other chocolate bars (cleaner formulations). NEVER muffins, energy bars, or protein bars.
+- Body lotion → other body moisturizers (body creams, body butters). NEVER face serums, shampoo, or hand cream.
+- Face serum → other face serums. NEVER body lotion, toner, or moisturizer.
+- Shampoo → other shampoos. NEVER conditioner, body wash, or dry shampoo.
+- Breakfast cereal → other cereals or breakfast foods. NEVER cough syrup, supplements, medication, or anything not eaten for breakfast.
+- Snack bar / granola bar → other snack bars or granola bars. NEVER cereals, cookies, or trail mix.
+- Soda / beverage → other beverages.
+- Diapers / training pants → other diapers or cloth diaper systems.
+- Sunscreen → other sunscreens.
+- Cleaning spray → other cleaning products.
+- Frying pan / cookware → other cookware.
+- Clothing / jacket → other clothing in the same category.
 
 FOOD ALTERNATIVES must be the same type of food. Cheerios = breakfast cereal → suggest Bob's Red Mill Organic Oats, Nature's Path Organic Corn Flakes, One Degree Organic Sprouted Oat O's. NEVER suggest a medication, supplement, or non-food item as a food alternative.
+
+VARIETY AND BRAND DISCOVERY — suggest 3 to 4 alternatives and deliberately mix brand sizes:
+- One major clean brand (Annie's, 365 Whole Foods, Nature's Path, Bob's Red Mill).
+- One mid-size specialty brand (Simple Mills, Siete, One Degree, Kite Hill, Hu).
+- One small or indie brand the user may not know (see indie list below).
+Do NOT default to the same three brands every time. Rotate across the list below based on subcategory fit. A user scanning five different snacks should see five different brand mixes.
+
+INDIE BRANDS TO CONSIDER (include at least one when relevant to the subcategory):
+- Baked goods / breakfast: Purely Elizabeth, Bhu Foods, Mikey's, Elana's Pantry, Against the Grain, Simple Kneads, Little Northern Bakehouse.
+- Snacks / salty: Siete, Beanitos, Lesser Evil, From the Ground Up, Brad's Plant-Based, Jackson's, Hippeas.
+- Snacks / sweet: Hu, Alter Eco, Unreal, YumEarth, SmashMallow, Partake.
+- Bars: RXBar, Bhu Foods, Good! Snacks, Picky Bars, Kate's Real Food, GoMacro.
+- Frozen: Three Twins, Coconut Bliss, NadaMoo, Alden's Organic, Van Leeuwen (clean flavors only).
+- Personal care / body: Earth Mama, Badger Balm, Acure, Alaffia, 100% Pure, Osea, True Botanicals.
+- Personal care / baby: Earth Mama, Babyganics, Honest Company, Puracy.
+- Cleaning: Branch Basics, Blueland, Attitude, Molly's Suds, Aunt Fannie's.
+- Beverages: Poppi, Olipop, Spindrift, Health-Ade, GT's Kombucha, Humm.
 
 SUPPLEMENT AND MEDICINE ALTERNATIVES — must be the same type of product:
 - Cough syrup → suggest Zarbee's (honey-based, no dyes, no alcohol, score 1-2), Genexa (USDA organic inactive ingredients, no dyes, score 2), Maty's Organic (organic honey and herbs, score 1-2)

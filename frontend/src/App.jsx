@@ -8002,15 +8002,24 @@ function App() {
                   return (
                     <button
                       onClick={()=> isMobile ? setShowAlts(true) : document.getElementById("desktop-alternatives")?.scrollIntoView({behavior:"smooth", block:"start"})}
-                      style={{width:"100%", marginBottom:14, padding:"10px 16px", borderRadius:12,
-                        background:"#f0fdf4", border:"1.5px solid #16a34a55",
-                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left"}}>
-                      <div style={{display:"flex", alignItems:"center", gap:8}}>
-                        <span style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em"}}>Better option</span>
-                        <span style={{fontSize:13, color:text, fontWeight:600}}>{topAlt.name}</span>
-                        <span style={{fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:12, background:"rgba(34,197,94,0.08)", color:"#16a34a", border:"1px solid #bbf7d0"}}>{altS}/10</span>
+                      style={{
+                        width:"100%", marginBottom:14, padding:"10px 16px",
+                        borderRadius:"var(--tile-shape-2)",
+                        background:"var(--cream-light)",
+                        border:"1px solid var(--rule)",
+                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, textAlign:"left",
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                      }}>
+                      <div style={{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap"}}>
+                        <span style={{fontSize:10.5, color:"var(--moss)", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.18em"}}>Better option</span>
+                        <span style={{fontSize:13, color:"var(--ink)", fontWeight:500}}>{topAlt.name}</span>
+                        <span style={{
+                          fontSize:11, fontWeight:500, padding:"2px 8px", borderRadius:10,
+                          background:"var(--moss-soft)", color:"var(--moss)",
+                          border:"1px solid var(--rule-soft)",
+                        }}>{altS}/10</span>
                       </div>
-                      <span style={{fontSize:12, color:"#16a34a", fontWeight:600, flexShrink:0}}>
+                      <span style={{fontSize:12, color:"var(--moss)", fontWeight:500, flexShrink:0}}>
                         {isMobile ? "See alternatives →" : "See right →"}
                       </span>
                     </button>
