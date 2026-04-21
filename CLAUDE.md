@@ -667,26 +667,27 @@ Handler: `/analyze` in `server.js` has a flag-gated branch before the legacy `if
 
 Flow:
 1. **Identify** — fresh path calls `callClaudeVisionIdentify`; resume path pulls from the in-memory store.
-2. **Confidence gate** (fresh only):
-   - `confidence < 0.50` → respond `{ status: "need_better_photo", reason: "low_confidence" }`.
-   - `0.50 <= confidence < 0.60` → respond `{ status: "needs_confirmation", identificationId, identified }` with a fresh stored record.
-   - `>= 0.60` → proceed silently.
-3. **Cascade** — CALIBRATION exact → `fuzzyCalibrationLookup` (vision-only Tier 1.5, retained to avoid regressions) → name-keyed score cache → `tier3OpenFactsTextSearch` → `tier4WebExtract`. Tier 5 (category prior) is intentionally **skipped** in the vision path — better to refuse than synthesize a score from product name alone.
-4. **Reconciliation** — when both cascade ingredients and `label_ingredients` are populated, `reconcileIngredients` runs and disagreements are logged as `vision_cascade_disagreement`. Cascade always wins for scoring.
-5. **Score or refuse**:
+2. **Confidence gate** (fresh only). Policy: if vision returned a usable product_name, score it. Refusal is reserved for true non-identifications.
+   - No usable name OR `confidence < 0.30` → respond `{ status: "need_better_photo", reason: "low_confidence" }`. "No usable name" means empty, the placeholder "Scanned product", or fewer than 2 chars.
+   - `0.30 <= confidence < 0.45` → respond `{ status: "needs_confirmation", identificationId, identified }` with a fresh stored record.
+   - `>= 0.45` → proceed silently. (Raised from 0.60 because the cascade + Tier 5 fallback already handles cascade misses honestly; the high threshold was causing confirmed identifications to be refused.)
+3. **Cascade** — CALIBRATION exact → `fuzzyCalibrationLookup` (vision-only Tier 1.5, retained to avoid regressions) → name-keyed score cache → `tier3OpenFactsTextSearch` → `tier4WebExtract` → `tier5CategoryPrior`. Identical tier ordering to the text cascade: once the photo identifies the product, scoring follows the same product-name lookup path as if the user had typed the name.
+4. **Reconciliation** — when both cascade ingredients and `label_ingredients` are populated, `reconcileIngredients` runs and disagreements are logged as `vision_cascade_disagreement`. Cascade always wins for scoring; `label_legibility` is informational only.
+5. **Score**:
    - Cascade hit (calibration) → calibration scoring path, identical shape to text/barcode calibration results.
    - Cascade hit (OFF / web_search) → full Pass 1 with `materialContext` set to the verified ingredients. Substance floors, consistency checks, positive ceilings all run as in the barcode path.
-   - No cascade + `label_legibility === "full"` + `>= 3` label ingredients → Pass 1 from label ingredients, result flagged `source: "photo_verified"`, `source_confidence: "low"`, and a `vision_photo_verified_fallback` log event.
-   - Otherwise → respond `{ status: "need_better_photo", reason: "no_external_source" }`.
+   - No cascade → Tier 5 synthetic category-prior best guess, `source: "ai_text_only_estimate"`, `source_confidence: "low"`, `source_label: "Best guess from product name"`, `_skipCache: true`. Same UX and contract as Tier 5 in the text cascade — identified products always get a score, with an honest "best guess" label when no external source verified the formula.
+
+Label ingredients are never used as the scoring source (replaced the earlier `photo_verified` / `vision_photo_verified_fallback` path). The label was always supposed to be a verification signal, not a gating or scoring mechanism; gating on `label_legibility` caused confirmed identifications (Abes Mini Muffins, Peppermint) to refuse when the cascade missed and the label was partial. Tier 5 closes that gap with the same honest fallback the text path uses.
 
 Response schema additions:
 - `status: "needs_confirmation" | "need_better_photo"` — presence indicates a non-scored response.
 - `identificationId` — UUID for the resume POST, only on `needs_confirmation`.
 - `identified: { product_name, brand?, variant?, confidence? }` — surfaces on non-scored responses so the frontend can echo the identification in its prompts.
-- `reason: "low_confidence" | "no_external_source"` — machine-readable classification.
+- `reason: "low_confidence"` — machine-readable classification. `need_better_photo` only fires on `confidence < 0.5`; there is no longer a `no_external_source` refusal.
 - `vision_reconciliation` — agreement fraction, attached to scored results when both label and cascade ingredients existed.
 
-Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Fraunces headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"). Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
+Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Fraunces headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"); now only reached when identification confidence is below 0.5. Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
 
 Log events for audit:
 ```bash
@@ -696,10 +697,10 @@ grep vision_identification_result | jq '{confidence, label_legibility}'
 # Audit cascade vs label divergence — these may indicate AI fabrication or genuine product changes
 grep vision_cascade_disagreement | jq '{product_name, agreement_pct, label_only, cascade_only}'
 
-# How often we score from label alone — should be rare once calibration grows
-grep vision_photo_verified_fallback | wc -l
+# How often the cascade misses and Tier 5 (best-guess-from-name) fires — should fall as calibration grows
+grep vision_cascade_tier5 | jq '{product_name, category, score}'
 
-# Refusal rate — copy and thresholds tuning signal
+# Refusal rate — low-confidence identifications only (reason: "low_confidence")
 grep vision_refusal | jq '{reason, product_name}'
 ```
 

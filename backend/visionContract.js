@@ -87,7 +87,7 @@ async function callClaudeVisionIdentify(imageBase64, mediaType, deps = {}) {
         model: VISION_MODEL,
         max_tokens: 900,
         temperature: 0,
-        system: `You are analyzing a product photo. Your job is to IDENTIFY the product and REPORT ONLY WHAT YOU LITERALLY SEE on the label. Do NOT guess ingredients based on what products typically contain. If you cannot clearly see something, say so honestly. Return only valid JSON, no markdown. Never use apostrophes inside JSON string values.`,
+        system: `You are analyzing a product photo. Your job is to IDENTIFY the product (what it is, brand, variant) and separately REPORT WHAT YOU LITERALLY SEE on the ingredient label. These are two independent judgments: identity confidence is about how sure you are of WHAT THE PRODUCT IS; label legibility is about how readable the ingredient panel is. A photo can show a crystal-clear product name with a blurry ingredient panel — that is HIGH identity confidence and LOW label legibility. Do NOT let unreadable ingredients drag down your identity confidence. Return only valid JSON, no markdown. Never use apostrophes inside JSON string values.`,
         messages: [{
           role: "user",
           content: [
@@ -105,10 +105,17 @@ async function callClaudeVisionIdentify(imageBase64, mediaType, deps = {}) {
   "reasoning": "brief explanation of what you saw and how confident you are, under 30 words"
 }
 
+CONFIDENCE SCALE (identity only — NOT ingredient readability):
+- 0.90-1.00: You can read the full product name and brand clearly on the package.
+- 0.70-0.89: You can read most of the name/brand; minor ambiguity (exact variant unclear).
+- 0.45-0.69: You can see the general product type (e.g. "athletic socks", "muffins") but the specific brand or full name is not clearly visible.
+- 0.20-0.44: You have a rough guess about what the object is but it could be several products.
+- 0.00-0.19: The image does not show a consumer product, or the product is completely indeterminate (a hand, a blurry smear, a landscape).
+
 CRITICAL RULES:
+- Confidence is ONLY about product identity. It is INDEPENDENT of whether the ingredient list is readable. If you can clearly read "Abes Mini Muffins" on the package but the back-label ingredients are blurry, confidence should be 0.85+ and label_legibility should be "partial" or "minimal". DO NOT lower confidence because ingredients are unreadable — that is what label_legibility is for.
 - If label_ingredients is returned, every item must be something you can LITERALLY READ in the photo
 - If you cannot clearly read the ingredient list, set label_ingredients to null and label_legibility to the appropriate non-full value
-- Confidence below 0.6 means you are not sure what product this is
 - Never fabricate ingredients based on product type assumptions
 - label_legibility "full" means the ingredient list is not cut off, text is legible, and at least the first 5 to 8 ingredients are clearly readable` },
           ],

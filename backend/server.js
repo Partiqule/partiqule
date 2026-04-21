@@ -5434,12 +5434,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
       // Step 2: confidence gate. Only applies on fresh identify — a resumed
       // identification is already user-confirmed.
+      //
+      // Policy: if vision returned ANY usable product_name, score it. The
+      // cascade + Tier 5 already handle the "no verified ingredients" case
+      // honestly — refusing on top of that punishes the user for a cascade
+      // miss we've already designed around. Refuse only when vision genuinely
+      // could not identify a product (empty / placeholder name, or confidence
+      // so low it amounts to a guess).
+      const hasUsableName = productName && productName !== "Scanned product" && productName.trim().length >= 2;
       if (!fromResume) {
-        if (identification.confidence < 0.50) {
+        if (!hasUsableName || identification.confidence < 0.30) {
           log.info("vision_refusal", {
             product_name: productName,
             reason: "low_confidence",
             confidence: identification.confidence,
+            has_usable_name: hasUsableName,
           });
           return res.json({
             status: "need_better_photo",
@@ -5448,7 +5457,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
             message: "I cannot tell what product this is. Try another angle with better lighting.",
           });
         }
-        if (identification.confidence < 0.60) {
+        if (identification.confidence < 0.45) {
           const newId = putIdentification(identification);
           return res.json({
             status: "needs_confirmation",
@@ -5466,8 +5475,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
       // Step 3: cascade — find verified ingredients from external sources.
       // Order: CALIBRATION exact → fuzzy-cal (vision-only Tier 1.5) → name-key cache →
-      // Open Facts text search → web extract. Tier 5 (category prior) is skipped
-      // in the vision path; we prefer to refuse than synthesize.
+      // Open Facts text search → web extract → Tier 5 category-prior best guess.
+      // Identical behavior to the text-search cascade: once the photo has
+      // identified the product, scoring follows the same product-name lookup
+      // path as if the user had typed the name. Tier 5 ensures every identified
+      // product gets a score — with an honest "best guess" label when no
+      // external source verified the formula.
       const visionCat = identification.category || detectCategoryFast(productName) || "other";
       let cascadeHit = null;
 
@@ -5568,51 +5581,46 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       // Step 4b: cascade returned external data (OFF or web_search) → full Pass 1 scoring.
-      // Step 4c (fallback): no cascade + legible label → score from label.
-      let ingredientText = "";
-      let sourceLabelFinal = "";
-      let sourceKeyFinal = "";
-      let sourceUrlFinal = null;
-      let sourceConfidenceFinal = "medium";
-      let ingredientSourceField = "";
-      let ingredientConfidenceField = "medium";
-      let ingredientSourceUrlField = null;
-
-      if (cascadeHit) {
-        ingredientText = cascadeHit.ingredients;
-        sourceLabelFinal = cascadeHit.sourceLabel || "";
-        sourceKeyFinal = cascadeHit.source || cascadeHit.tier;
-        sourceUrlFinal = cascadeHit.sourceUrl || null;
-        ingredientSourceField = cascadeHit.source || cascadeHit.tier;
-        ingredientSourceUrlField = cascadeHit.sourceUrl || null;
-      } else if (identification.label_legibility === "full" && (identification.label_ingredients || []).length >= 3) {
-        log.info("vision_photo_verified_fallback", {
-          product_name: productName,
-          label_ingredient_count: identification.label_ingredients.length,
-          reason: "no_external_source",
+      // Step 4c: no cascade → Tier 5 synthetic category-prior best guess.
+      // Identified products always score; the label is not used as a gating
+      // mechanism anymore (see CLAUDE.md "Vision Contract v2" for rationale).
+      if (!cascadeHit) {
+        const t5 = tier5CategoryPrior(productName, visionCat, {
+          categoryAverages: CATEGORY_AVERAGES,
+          categoryContext: CATEGORY_CONTEXT,
         });
-        ingredientText = identification.label_ingredients.join(", ");
-        sourceLabelFinal = "Verified by photo only — no external sources found";
-        sourceKeyFinal = "photo_verified";
-        sourceConfidenceFinal = "low";
-        ingredientSourceField = "vision_ocr";
-        ingredientConfidenceField = "low";
-      } else {
-        log.info("vision_refusal", {
+        const synth = t5.syntheticResult;
+        const safety = computeSafetyScores(synth.score, visionCat, productName, {}, [], "");
+        synth.is_child_product = safety.isChild;
+        synth.child_score      = safety.childScore;
+        synth.child_bumps      = safety.childBumps || [];
+        synth.pregnancy_score  = safety.pregnancyScore;
+        synth.pregnancy_bumps  = safety.pregnancyBumps || [];
+        synth.brand            = identification.brand || "";
+        synth.alternatives = serializeAlternatives(
+          filterDbAlternatives(findAlternatives(productName, visionCat, 3, productName), visionCat, productName, synth.score),
+          visionCat,
+        );
+        log.info("vision_cascade_tier5", {
           product_name: productName,
-          reason: cascadeHit ? "unknown" : "no_external_source_and_illegible_label",
+          category: visionCat,
+          score: synth.score,
           label_legibility: identification.label_legibility,
         });
-        return res.json({
-          status: "need_better_photo",
-          identified: { product_name: productName, brand: identification.brand },
-          reason: "no_external_source",
-          message: `I can see this is ${productName} but the ingredient list isn't fully readable in this photo. Try another angle, or scan the barcode for verified data.`,
-        });
+        await attachIntelCards(synth, userId);
+        return res.json({ ...synth, cached: false });
       }
 
+      const ingredientText = cascadeHit.ingredients;
+      const sourceLabelFinal = cascadeHit.sourceLabel || "";
+      const sourceKeyFinal = cascadeHit.source || cascadeHit.tier;
+      const sourceConfidenceFinal = "medium";
+      const ingredientSourceField = cascadeHit.source || cascadeHit.tier;
+      const ingredientConfidenceField = "medium";
+      const ingredientSourceUrlField = cascadeHit.sourceUrl || null;
+
       // Reconciliation log when both sources exist.
-      if (cascadeHit && (identification.label_ingredients || []).length > 0) {
+      if ((identification.label_ingredients || []).length > 0) {
         const recon = reconcileIngredients(identification.label_ingredients, ingredientText);
         if (!recon.agreed) {
           log.info("vision_cascade_disagreement", {
