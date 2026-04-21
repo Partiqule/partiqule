@@ -464,7 +464,7 @@ function detectCategory(q) {
   // (e.g. "Salt" in "Salt and Stone" pulling the product into food).
   // Brand match is a strong signal — trust it.
   const BRAND_CATEGORY = [
-    // personal_care
+    // personal_care — skincare and body
     { match: /\bsalt\s*(and|&|\+)\s*stone\b/,        cat: "personal_care" },
     { match: /\bdr\.?\s*bronner'?s?\b/,              cat: "personal_care" },
     { match: /\bnative\s+(deodorant|body|shampoo|conditioner|lotion|bar|wash)?/, cat: "personal_care" },
@@ -486,10 +486,63 @@ function detectCategory(q) {
     { match: /\bwellnesse\b/,                        cat: "personal_care" },
     { match: /\brisewell\b/,                         cat: "personal_care" },
     { match: /\bmethod\s+(body|hand|dish)\b/,        cat: "personal_care" },
+    // personal_care — makeup brands (MAC needs context to avoid MacBook match)
+    { match: /\bfenty\s+beauty\b/,                   cat: "personal_care" },
+    { match: /\brare\s+beauty\b/,                    cat: "personal_care" },
+    { match: /\bcharlotte\s+tilbury\b/,              cat: "personal_care" },
+    { match: /\bnars\b/,                             cat: "personal_care" },
+    { match: /\bmac\s+(cosmetics|ruby|lipstick|lip|lipglass|matte|frost|velvet|prep|viva|studio|fix|retro|lustre|amplified|cremesheen)\b/, cat: "personal_care" },
+    { match: /\burban\s+decay\b/,                    cat: "personal_care" },
+    { match: /\btoo\s+faced\b/,                      cat: "personal_care" },
+    { match: /\bbenefit\s+(cosmetics|brow|mascara|they'?re|gimme|hoola|high)\b/, cat: "personal_care" },
+    { match: /\btarte\b/,                            cat: "personal_care" },
+    { match: /\be\.?l\.?f\.?\s+(cosmetics|makeup|foundation|lip|eye|brow|mascara|blush)\b/, cat: "personal_care" },
+    { match: /\bmaybelline\b/,                       cat: "personal_care" },
+    { match: /\bl'?oreal\b/,                         cat: "personal_care" },
+    { match: /\brevlon\b/,                           cat: "personal_care" },
+    { match: /\bcovergirl\b/,                        cat: "personal_care" },
+    { match: /\bclinique\b/,                         cat: "personal_care" },
+    { match: /\bestee\s+lauder\b/,                   cat: "personal_care" },
+    { match: /\bmilk\s+makeup\b/,                    cat: "personal_care" },
+    { match: /\bilia\b/,                             cat: "personal_care" },
+    { match: /\bpatrick\s+ta\b/,                     cat: "personal_care" },
+    { match: /\bsaie\b/,                             cat: "personal_care" },
+    { match: /\bmerit\b/,                            cat: "personal_care" },
+    { match: /\bkosas\b/,                            cat: "personal_care" },
+    // food — snack + cereal brands
+    { match: /\bgoldfish\b/,                         cat: "food" },
+    { match: /\bpepperidge\s+farm\b/,                cat: "food" },
+    { match: /\bcheez.?it(s)?\b/,                    cat: "food" },
+    { match: /\btriscuit(s)?\b/,                     cat: "food" },
+    { match: /\britz\s+cracker/,                     cat: "food" },
+    { match: /\bdoritos\b/,                          cat: "food" },
+    { match: /\blay'?s\b/,                           cat: "food" },
+    { match: /\bcheetos\b/,                          cat: "food" },
+    { match: /\bpringles\b/,                         cat: "food" },
+    { match: /\bfritos\b/,                           cat: "food" },
+    { match: /\bchex\s+mix\b/,                       cat: "food" },
+    { match: /\btostitos\b/,                         cat: "food" },
+    { match: /\bruffles\b/,                          cat: "food" },
+    { match: /\bsunchips\b/,                         cat: "food" },
+    { match: /\bcheerios\b/,                         cat: "food" },
+    { match: /\bchex\s+(cereal|honey|corn|wheat|rice)\b/, cat: "food" },
+    { match: /\bwheaties\b/,                         cat: "food" },
+    { match: /\bfroot\s+loops\b/,                    cat: "food" },
+    { match: /\blucky\s+charms\b/,                   cat: "food" },
+    { match: /\bcorn\s+flakes\b/,                    cat: "food" },
+    { match: /\braisin\s+bran\b/,                    cat: "food" },
+    { match: /\bcap'?n\s+crunch\b/,                  cat: "food" },
+    { match: /\bfrosted\s+flakes\b/,                 cat: "food" },
+    { match: /\bhoney\s+bunches\s+of\s+oats\b/,      cat: "food" },
+    { match: /\bmini.?wheats\b/,                     cat: "food" },
     // home (cleaning) brands whose name overlaps food/personal_care
     { match: /\bseventh\s+generation\s+(dish|laundry|detergent|cleaner|all.purpose)/, cat: "home" },
     { match: /\bblueland\b/,                         cat: "home" },
     { match: /\bbranch\s+basics\b/,                  cat: "home" },
+    // pet products — route to "other" since no dedicated pet category yet,
+    // runs BEFORE food regex so "cat food" / "dog food" don't pull into food.
+    { match: /\b(blue\s+buffalo|purina|wellness\s+core|iams|pedigree|friskies|fancy\s+feast|taste\s+of\s+the\s+wild|royal\s+canin|hill'?s\s+science\s+diet|greenies|temptations|nutro|merrick|orijen|acana)\b/, cat: "other" },
+    { match: /\b(dog|cat|puppy|kitten|pet)\s+(food|treat|treats|kibble|chow|biscuit|biscuits|dental|chew|chews)\b/, cat: "other" },
   ];
   for (const b of BRAND_CATEGORY) {
     if (b.match.test(s)) return b.cat;
@@ -505,10 +558,16 @@ function detectCategory(q) {
     { match: /\bhand\s+(cream|lotion|wash|sanitizer|soap|balm)\b/, cat: "personal_care" },
     { match: /\bhair\s+(oil|serum|mask|treatment|balm|wax|gel|spray|cream)\b/, cat: "personal_care" },
     { match: /\blip\s+(balm|oil|scrub|tint|gloss|stick|butter|mask|treatment)\b/, cat: "personal_care" },
-    { match: /\beye\s+(cream|serum|mask|balm|oil)\b/, cat: "personal_care" },
+    { match: /\beye\s+(cream|serum|mask|balm|oil|shadow|liner)\b/, cat: "personal_care" },
+    { match: /\beyeshadow\s+(palette|primer|stick|cream|quad)?\b/, cat: "personal_care" },
     { match: /\bfoot\s+(cream|lotion|scrub|balm|mask)\b/, cat: "personal_care" },
     { match: /\bshampoo\s+bar\b/, cat: "personal_care" },
+    { match: /\bbeauty\s+bar\b/, cat: "personal_care" },
     { match: /\bdeodorant\s+(stick|bar|spray|roll.?on)\b/, cat: "personal_care" },
+    // Makeup product types that can stand alone or trail a brand name
+    { match: /\b(setting|loose|pressed|finishing|translucent|mineral)\s+powder\b/, cat: "personal_care" },
+    { match: /\bblurring\s+(foundation|primer|powder)\b/, cat: "personal_care" },
+    { match: /\b(liquid|matte|stick|cream|serum)\s+foundation\b/, cat: "personal_care" },
   ];
   for (const c of COMPOUND_PHRASE_CATEGORY) {
     if (c.match.test(s)) return c.cat;
@@ -524,7 +583,7 @@ function detectCategory(q) {
   if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play.?doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayola|crayons|markers|play set|playset/.test(s)) return "toy";
 
   // ── ACCESSORIES — jewelry, bags, watches ──
-  if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|ring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
+  if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|\bring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
 
   // ── BABY — before clothing to catch training pants ──
   // Products like "baby shampoo" or "baby lotion" should be personal_care, not baby.
@@ -564,7 +623,7 @@ function detectCategory(q) {
     /\b(chicken|beef|pork|turkey|salmon|tuna|fish|shrimp|egg|tofu|tempeh|seitan|steak|bacon|sausage|hot dog|deli|jerky|spam|sardine|anchov|crab|lobster|scallop)\b/.test(s) ||
     /\b(cheese|yogurt|yoghurt|butter|cream|ghee|cottage|ricotta|mozzarella|cheddar|parmesan|brie)\b/.test(s) ||
     /\b(bread|bagel|muffin|croissant|tortilla|pita|cracker|rice|pasta|noodle|spaghetti|cereal|granola|oat|oatmeal|flour|quinoa|couscous|barley|rye|grits|cornmeal)\b/.test(s) ||
-    /\b(chip|crisp|pretzel|popcorn|candy|chocolate|gummy|gummie|cookie|biscuit|brownie|cake|donut|doughnut|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|skittle|reese|oreo|kit kat|twix|snickers|starburst|lifesaver|lollipop|cheerio|cereal|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauce|salsa|dressing|vinegar|olive oil|syrup|hot sauce|sriracha|hummus|guacamole|pesto|marinara|salt|sea salt|himalayan salt|kosher salt|table salt|seasoning|spice blend|bouillon)\b/.test(s) ||
+    /\b(chips?|crisps?|pretzels?|popcorn|candy|candies|chocolate|gummy|gummies|gummie|cookies?|biscuits?|brownies?|cakes?|donuts?|doughnuts?|snack bar|protein bar|energy bar|granola bar|candy bar|chocolate bar|kind bar|larabar|rxbar|clif bar|luna bar|quest bar|m&m|m&ms|skittles?|reese|oreos?|kit kat|twix|snickers?|starburst|lifesavers?|lollipops?|cheerios?|cereals?|peanut butter|almond butter|nutella|honey|jam|jelly|ketchup|mustard|mayo|sauces?|salsa|dressings?|vinegar|olive oil|syrups?|hot sauce|sriracha|hummus|guacamole|pesto|marinara|salt|sea salt|himalayan salt|kosher salt|table salt|seasonings?|spice blend|bouillon)\b/.test(s) ||
     /\b(soup|broth|stock|stew|chili|curry|ramen|frozen meal|canned food|baby food|infant formula|snack|food|meal|lunch|dinner|breakfast|salad|(?<!saran )wrap|bowl|burrito|sandwich|taco|burger|pizza|fries|wings|nuggets|entree|appetizer|side dish)\b/.test(s)
   ) return "food";
 

@@ -314,6 +314,30 @@ const CATEGORY_TESTS = [
   { query: "aveeno daily lotion",        expect: "personal_care",  note: "Aveeno brand" },
   { query: "coca-cola",                  expect: "beverage",       note: "Beverage regression" },
   { query: "lululemon align",            expect: "clothing",       note: "Clothing regression" },
+  // Category audit 2026-04-21 — Goldfish/Cheerios returned null, Blurring Foundation returned accessory
+  // because "ring" in "blurring" matched the accessory regex (missing leading word boundary)
+  { query: "goldfish",                   expect: "food",           note: "Snack brand" },
+  { query: "goldfish crackers",          expect: "food",           note: "Snack brand + product type" },
+  { query: "goldfish colors",            expect: "food",           note: "Snack brand variant" },
+  { query: "cheez-its",                  expect: "food",           note: "Snack brand plural" },
+  { query: "pretzels",                   expect: "food",           note: "Plural snack noun" },
+  { query: "chex mix",                   expect: "food",           note: "Snack brand phrase" },
+  { query: "doritos",                    expect: "food",           note: "Snack brand" },
+  { query: "lay's chips",                expect: "food",           note: "Snack brand" },
+  { query: "cheerios",                   expect: "food",           note: "Cereal brand" },
+  { query: "blurring foundation",        expect: "personal_care",  note: "Word boundary fix — ring in blurring used to match accessory" },
+  { query: "fenty beauty foundation",    expect: "personal_care",  note: "Makeup brand" },
+  { query: "rare beauty blush",          expect: "personal_care",  note: "Makeup brand" },
+  { query: "mac ruby woo",               expect: "personal_care",  note: "MAC Cosmetics lipstick (disambiguated from MacBook)" },
+  { query: "charlotte tilbury mascara",  expect: "personal_care",  note: "Makeup brand" },
+  { query: "nars lipstick",              expect: "personal_care",  note: "Makeup brand" },
+  { query: "setting powder",             expect: "personal_care",  note: "Makeup compound phrase" },
+  { query: "eyeshadow palette",          expect: "personal_care",  note: "Makeup compound phrase" },
+  { query: "concealer",                  expect: "personal_care",  note: "Makeup keyword" },
+  { query: "beauty bar",                 expect: "personal_care",  note: "Beauty bar compound phrase" },
+  { query: "blue buffalo dog food",      expect: "other",          note: "Pet food routed to other (no pet category yet)" },
+  { query: "purina cat food",            expect: "other",          note: "Pet food" },
+  { query: "greenies dental treats",     expect: "other",          note: "Pet treats brand" },
 ];
 
 let catTestsPassed = 0, catTestsFailed = 0;
