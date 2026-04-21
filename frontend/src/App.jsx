@@ -136,6 +136,60 @@ function filterAltsBySource(alts, source) {
 const isCapacitor = typeof window !== "undefined" && !!(window.Capacitor?.isNativePlatform?.());
 const isIOS = isCapacitor || /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+// ── PHOTO FLOW DIAGNOSTIC LOGGER (TEMPORARY) ─────────────────────
+// Tracks every state transition + entry point that touches the
+// scan-sheet / barcode-scanner / file-input flow so we can diagnose
+// why "Take a photo" sometimes drops the user into the barcode
+// scanner instead. REMOVE this whole block after the race is fixed.
+// Append ?debug=1 to the URL to surface logs on screen as well.
+const PHOTO_LOG_KEY = "pq_photo_logs";
+const PHOTO_LOG_MAX = 200;
+const __photoLogListeners = new Set();
+const photoLog = (event, detail) => {
+  const entry = { t: Date.now(), event, detail: detail ?? null };
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(PHOTO_LOG_KEY) || "[]"); } catch {}
+  arr.push(entry);
+  if (arr.length > PHOTO_LOG_MAX) arr = arr.slice(-PHOTO_LOG_MAX);
+  try { localStorage.setItem(PHOTO_LOG_KEY, JSON.stringify(arr)); } catch {}
+  try { console.log(`[PHOTO_FLOW] ${event}`, detail ?? ""); } catch {}
+  __photoLogListeners.forEach(fn => { try { fn(arr); } catch {} });
+};
+
+const PhotoLogOverlay = () => {
+  const enabled = typeof window !== "undefined" && window.location?.search?.includes("debug=1");
+  const [logs, setLogs] = useState(() => {
+    if (typeof localStorage === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem(PHOTO_LOG_KEY) || "[]"); } catch { return []; }
+  });
+  useEffect(() => {
+    if (!enabled) return;
+    const fn = (arr) => setLogs([...arr]);
+    __photoLogListeners.add(fn);
+    return () => { __photoLogListeners.delete(fn); };
+  }, [enabled]);
+  if (!enabled) return null;
+  const tail = logs.slice(-30);
+  return (
+    <div style={{
+      position:"fixed", bottom:0, left:0, right:0, maxHeight:"45vh", overflow:"auto",
+      background:"rgba(0,0,0,0.9)", color:"#7fff7f", fontFamily:"ui-monospace, Menlo, monospace",
+      fontSize:10, padding:8, zIndex:99999, lineHeight:1.4, pointerEvents:"auto",
+    }}>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4, color:"#ccc"}}>
+        <span>PHOTO_FLOW · {tail.length} of {logs.length} entries</span>
+        <button onClick={() => { try { localStorage.removeItem(PHOTO_LOG_KEY); } catch {}; setLogs([]); }}
+          style={{background:"#444", color:"#fff", border:"none", padding:"2px 8px", fontSize:10, borderRadius:4, cursor:"pointer"}}>clear</button>
+      </div>
+      {tail.map((l, i) => (
+        <div key={i}>
+          [{new Date(l.t).toISOString().slice(11,23)}] {l.event}{l.detail ? " " + JSON.stringify(l.detail) : ""}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Get safe area inset top — works in Capacitor and Safari
 function getSafeAreaTop() {
   if (typeof document === "undefined") return 0;
@@ -289,6 +343,7 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   };
 
   useEffect(() => {
+    photoLog("BARCODE_SCANNER_MOUNT", { native: IS_NATIVE });
     const start = async () => {
       if (IS_NATIVE) {
         try {
@@ -368,11 +423,13 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
     // Always use the native camera for photos — much higher resolution and quality
     // than capturing a frame from the barcode scanner's 1280x720 video stream.
     // The live video feed is for barcode detection only, not photo quality.
+    photoLog("BARCODE_SCANNER_TAKE_PHOTO_CLICK");
     await cleanup();
     const input = document.createElement("input");
     input.type = "file"; input.accept = "image/*"; input.capture = "environment";
     input.onchange = async (e) => {
       const file = e.target.files?.[0];
+      photoLog("BARCODE_SCANNER_TAKE_PHOTO_FILE", { hasFile: !!file });
       if (file) onPhoto(file);
     };
     input.click();
@@ -6284,6 +6341,7 @@ function App() {
 
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
+    photoLog("HANDLE_IMAGE_SCAN_ENTRY", { hasFile: !!file, size: file?.size, type: file?.type });
     if (!file) return;
     // ── Scan limit gate — same as text scan ──
     if (!isSubscribed && scanCount >= FREE_LIMIT) {
@@ -9240,22 +9298,22 @@ function App() {
             <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
               <div style={{width:40, height:4, borderRadius:2, background:"#e5e7eb", margin:"0 auto 20px"}}/>
               <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
-              <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
+              <div onClick={()=>{photoLog("SHEET_TAP_SCAN_BARCODE"); setScanSheetOpen(false); setShowBarcodeScanner(true);}}
                 style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:"var(--card-shape-1)", background:"var(--moss-soft)", border:"1px solid var(--rule)", cursor:"pointer", marginBottom:12}}>
                 <div style={{width:44, height:44, borderRadius:"var(--tile-shape-1)", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
               </div>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
-                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
+              <label onClick={()=>photoLog("SHEET_LABEL_TAKE_PHOTO_CLICK")} style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+                <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0]; photoLog("SHEET_TAKE_PHOTO_FILE_CHANGE", {hasFile: !!f, name: f?.name}); if(!f)return;e.target.value="";setTimeout(()=>{photoLog("SHEET_TAKE_PHOTO_TIMEOUT_FIRED"); setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
                 <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
               </label>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
-                <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
+              <label onClick={()=>photoLog("SHEET_LABEL_LIBRARY_CLICK")} style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+                <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0]; photoLog("SHEET_LIBRARY_FILE_CHANGE", {hasFile: !!f, name: f?.name}); if(!f)return;e.target.value="";setTimeout(()=>{photoLog("SHEET_LIBRARY_TIMEOUT_FIRED"); setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
@@ -9385,6 +9443,7 @@ function App() {
             }
           }}
           onPhoto={async (file) => {
+            photoLog("BARCODE_SCANNER_ON_PHOTO_RECEIVED", { hasFile: !!file });
             setShowBarcodeScanner(false);
             await handleImageScan(file);
           }}
@@ -9395,10 +9454,17 @@ function App() {
       {barcodeLoadingPhase && (
         <BarcodeLoadingView
           phase={barcodeLoadingPhase}
-          onRetry={() => { setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
-          onPhoto={async (file) => { setBarcodeLoadingPhase(null); await handleImageScan(file); }}
+          onRetry={() => { photoLog("LOADING_RETRY_BARCODE"); setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
+          onPhoto={async (file) => { photoLog("LOADING_TAKE_PHOTO_INSTEAD", {hasFile: !!file}); setBarcodeLoadingPhase(null); await handleImageScan(file); }}
         />
       )}
+
+      {/* DEBUG OVERLAY — appears when ?debug=1 is in the URL.
+          Shows the last ~30 photo-flow log events live so iPhone debugging
+          works without needing to attach Safari Web Inspector to a Mac.
+          REMOVE this entire overlay + the photoLog helper after the photo-
+          flow race condition is identified and fixed. */}
+      <PhotoLogOverlay/>
 
       {/* FOOTER — cream warm-paper */}
       <footer style={{
