@@ -109,6 +109,12 @@ app.use(cors({
       "https://partiqule.vercel.app",
       "http://localhost:3000",
       "http://localhost:5173",
+      // Capacitor iOS native builds send this origin on WKWebView fetches.
+      // Without this entry POST preflight fails and the WKWebView surfaces
+      // a bare "TypeError: Load failed" with no status code.
+      "capacitor://localhost",
+      // Older Capacitor / Ionic fallback — included for safety.
+      "ionic://localhost",
     ];
     // Only allow specific Vercel preview deployments from the partiqule project
     // (not any arbitrary .vercel.app subdomain)
