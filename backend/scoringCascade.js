@@ -157,10 +157,23 @@ async function tier3OpenFactsTextSearch(productName) {
 // the product, fetch retailer/brand pages, and return a strict JSON
 // {product_name, brand, ingredients[], category, source_domain}. The model
 // validates each field; we also validate post-parse that ingredients is a
-// non-empty array. If anything is off we return null and the cascade falls to
-// Tier 5. Timeout 8s — anything longer is a bad bet vs. letting Tier 5 answer
-// instantly with the honest "best guess" label.
-const TIER4_TIMEOUT_MS = 12000;
+// non-empty array.
+//
+// Tier 4 is intentionally AGGRESSIVE. For nearly every consumer product on a
+// US/UK shelf, an ingredient list exists online (retailer PDPs, brand sites,
+// nutrition databases, SmartLabel, EWG, OFF scan entries indexed outside OFF's
+// search API). The previous "if in doubt, return found:false" stance kept
+// fabrications out but also caused real products (Abes Mini Muffins, Athletic
+// Ankle Socks) to land in Tier 5 when ingredients were obviously findable.
+// The prompt below tells the AI to search hard, try multiple sources, and
+// accept the closest-matching VARIANT of the queried product rather than
+// giving up. The tier-specific similarity gate is relaxed to 0.45 (vs. 0.7
+// for Tier 3) because the AI is itself judging whether the returned product
+// is the right one — the trigram check is a sanity guard, not the primary
+// filter. Up to 2 attempts: the second uses a canonicalized query (adds
+// apostrophes, strips size/unit qualifiers) if the first misses.
+const TIER4_TIMEOUT_MS = 22000;
+const TIER4_MIN_SIMILARITY = 0.45;
 
 function extractJsonFromText(text) {
   const start = text.indexOf("{");
@@ -181,11 +194,35 @@ function extractJsonFromText(text) {
   return null;
 }
 
-async function tier4WebExtract(productName, { incrementApiCount, checkApiBudget } = {}) {
-  const start = Date.now();
+// Canonicalize a query for a retry pass when the first attempt misses. Adds
+// the apostrophe back into "Abes" → "Abe's", strips size/unit qualifiers
+// that often appear in ID'd product names but not in retailer titles.
+function canonicalizeQuery(q) {
+  let out = String(q || "").trim();
+  // Re-apostrophize common possessive brand prefixes dropped by vision OCR
+  out = out.replace(/\b(Abes|Annies|Amys|Traders|Trader Joes|Reeses|Hersheys|Kelloggs|Campbells|Moms|Bens|Jennies|Ghirardellis|Newmans|Smuckers|Tazos|Raos|Lays|Tims|Thomass)\b/gi, m => {
+    const map = {
+      "abes":"Abe's","annies":"Annie's","amys":"Amy's","traders":"Trader's",
+      "trader joes":"Trader Joe's","reeses":"Reese's","hersheys":"Hershey's",
+      "kelloggs":"Kellogg's","campbells":"Campbell's","moms":"Mom's",
+      "bens":"Ben's","jennies":"Jennie's","ghirardellis":"Ghirardelli's",
+      "newmans":"Newman's","smuckers":"Smucker's","tazos":"Tazo's",
+      "raos":"Rao's","lays":"Lay's","tims":"Tim's","thomass":"Thomas'",
+    };
+    return map[m.toLowerCase()] || m;
+  });
+  // Strip common qualifiers that narrow retailer searches
+  out = out
+    .replace(/\b\d+\s*(oz|fl oz|lb|lbs|g|kg|ml|l|count|ct|pack|pk)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return out;
+}
+
+async function _tier4OneCall(query, { incrementApiCount, checkApiBudget }) {
   if (typeof checkApiBudget === "function") checkApiBudget();
   if (typeof incrementApiCount === "function") incrementApiCount();
-
+  const start = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIER4_TIMEOUT_MS);
   try {
@@ -199,15 +236,21 @@ async function tier4WebExtract(productName, { incrementApiCount, checkApiBudget 
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 1200,
+        max_tokens: 1600,
         temperature: 0,
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
-        system: `You are a product-data extraction agent. Use web_search to find the product the user names, then read retailer or brand pages to extract its ingredient list verbatim. Prefer the manufacturer's own page or a major retailer (Amazon, Target, Walmart, Sephora, Ulta) over aggregators or news sites.
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+        system: `You are a consumer-product ingredient-extraction agent. Your job is to find and return the published ingredient list for the product the user names. Ingredient lists for nearly every mass-market product are available online — on retailer PDPs (Amazon, Target, Walmart, Kroger, Whole Foods, iHerb, Sephora, Ulta, Thrive Market), brand websites, SmartLabel.org, Open Food Facts, Open Beauty Facts, EWG, Yuka, manufacturer PDFs, FDA filings, or nutrition databases. Search hard, try multiple sources, and do not give up after one query.
+
+Recommended search strategy:
+  1. First try "<product name> ingredients" on major retailers and brand domains.
+  2. If the exact variant isn't found, search the brand or family name and look for the variant on the brand's own PDP listing.
+  3. If the first search returns only reviews/blogs/news, refine with "<brand> <product> ingredients list" or "<brand> <product> site:<retailer>".
+  4. If you find a VARIANT of the same product (e.g. query is "Abes Mini Muffins" and the brand page lists "Abe's Chocolate Chip Mini Muffins"), return that variant's ingredients — it is far more useful than returning nothing. Report the variant's full name in product_name.
 
 Return ONLY raw JSON (no markdown, no preamble) in this exact shape:
 
 {
-  "product_name": "string — the canonical product name as listed on the source page",
+  "product_name": "string — the canonical product name as listed on the source page, including variant/flavor",
   "brand": "string — the brand, or empty string if not specified",
   "ingredients": ["array", "of", "ingredient", "strings"],
   "category": "string — one of: food, beverage, snack, supplement, restaurant, personal_care, skincare, cleaning, home, clothing, baby, toy, home_furnishing, kitchen, accessory, other",
@@ -217,19 +260,20 @@ Return ONLY raw JSON (no markdown, no preamble) in this exact shape:
 
 Hard rules:
 - ingredients MUST be exactly as printed on the source page. Do NOT paraphrase, deduplicate, or add ingredients you have prior knowledge of. Order matters.
-- If you cannot find a clear ingredient list on a credible page, set "found": false and return an empty ingredients array. Do NOT guess.
-- If the product name on the page does not match the query, set "found": false. Do NOT substitute a similar product.
+- found:true is the strongly preferred outcome. Only set found:false if after multiple searches across different domains no credible ingredient list exists online.
+- For a clothing/home/accessory product where material composition is printed on the label (e.g. "72% nylon, 25% polyester, 3% spandex"), return those as "ingredients" — the cascade treats material composition as the ingredient-equivalent for those categories.
+- You MAY return ingredients for the closest available variant of the queried product, but name_mismatch downstream will reject anything wildly off. Use judgment.
 - Never use apostrophes inside JSON string values; use plain text.`,
         messages: [{
           role: "user",
-          content: `Find the ingredient list for: "${productName}". Search the web, read the most credible source page, and return the JSON.`,
+          content: `Find the ingredient list (or material composition, for textile/clothing products) for: "${query}". Search multiple retailers and the brand's own site. If the exact variant is not listed, use the closest available variant and report its full name. Return the JSON.`,
         }],
       }),
     });
     clearTimeout(timeout);
     if (!res.ok) {
       console.warn(`[tier4] http ${res.status}`);
-      return null;
+      return { ok: false, reason: `http_${res.status}`, duration: Date.now() - start };
     }
     const data = await res.json();
     const text = (data.content || [])
@@ -238,56 +282,73 @@ Hard rules:
       .join("")
       .trim();
     const jsonStr = extractJsonFromText(text);
-    if (!jsonStr) {
-      console.warn(`[tier4] no JSON in response (len=${text.length})`);
-      return null;
-    }
+    if (!jsonStr) return { ok: false, reason: "no_json", duration: Date.now() - start };
     let parsed;
     try { parsed = JSON.parse(jsonStr); }
-    catch (e) { console.warn(`[tier4] JSON parse failed: ${e.message}`); return null; }
-    if (!parsed.found) {
-      console.log(`[tier4] not_found query="${productName}" duration=${Date.now()-start}ms`);
-      return null;
-    }
+    catch (e) { return { ok: false, reason: `parse_${e.message}`, duration: Date.now() - start }; }
+    if (!parsed.found) return { ok: false, reason: "not_found", duration: Date.now() - start };
     if (!Array.isArray(parsed.ingredients) || parsed.ingredients.length === 0) {
-      console.log(`[tier4] empty_ingredients query="${productName}"`);
-      return null;
+      return { ok: false, reason: "empty_ingredients", duration: Date.now() - start };
     }
-    // Sanity guard: if the AI returns a name wildly different from the query,
-    // treat as no-match. Same threshold as Tier 3 for consistency.
-    const returnedName = String(parsed.product_name || "");
-    if (returnedName) {
-      const sim = trigramSimilarity(productName, returnedName);
-      if (sim < TIER3_MIN_SIMILARITY) {
-        console.log(`[tier4] name_mismatch query="${productName}" returned="${returnedName}" sim=${sim.toFixed(2)}`);
-        return null;
-      }
-    }
-    const ingredientText = parsed.ingredients.map(s => String(s).trim()).filter(Boolean).join(", ");
-    const sourceDomain = String(parsed.source_domain || "").trim().toLowerCase().replace(/^www\./, "");
-    const sourceLabel = sourceDomain ? `Sourced from ${sourceDomain}` : "Sourced from web search";
-    console.log(`[tier4] hit query="${productName}" domain=${sourceDomain} ingredients=${parsed.ingredients.length} duration=${Date.now()-start}ms`);
-    return {
-      ingredients: ingredientText,
-      ingredientArray: parsed.ingredients,
-      source: "web_search",
-      sourceUrl: null, // Anthropic web_search doesn't surface canonical URLs reliably
-      sourceLabel,
-      sourceConfidence: "medium",
-      productName: returnedName || productName,
-      brand: String(parsed.brand || ""),
-      category: String(parsed.category || ""),
-      sourceDomain,
-    };
+    return { ok: true, parsed, duration: Date.now() - start };
   } catch (e) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") {
-      console.warn(`[tier4] timeout after ${TIER4_TIMEOUT_MS}ms`);
-    } else {
-      console.warn(`[tier4] error: ${e.message}`);
+    if (e.name === "AbortError") return { ok: false, reason: "timeout", duration: Date.now() - start };
+    return { ok: false, reason: `error_${e.message}`, duration: Date.now() - start };
+  }
+}
+
+async function tier4WebExtract(productName, deps = {}) {
+  const started = Date.now();
+  // Attempt 1: verbatim query.
+  let attempt = await _tier4OneCall(productName, deps);
+  let usedQuery = productName;
+
+  // Attempt 2: canonicalized query. Retry budget is bounded by the existing
+  // per-call checkApiBudget/incrementApiCount; if the budget is exhausted the
+  // second call will throw and bail.
+  if (!attempt.ok) {
+    const canonical = canonicalizeQuery(productName);
+    if (canonical && canonical.toLowerCase() !== productName.toLowerCase()) {
+      console.log(`[tier4] retry1 query="${productName}" canonical="${canonical}" reason=${attempt.reason}`);
+      attempt = await _tier4OneCall(canonical, deps);
+      usedQuery = canonical;
     }
+  }
+
+  if (!attempt.ok) {
+    console.log(`[tier4] miss query="${productName}" reason=${attempt.reason} duration=${Date.now()-started}ms`);
     return null;
   }
+
+  const parsed = attempt.parsed;
+  const returnedName = String(parsed.product_name || "");
+  if (returnedName) {
+    const sim = Math.max(
+      trigramSimilarity(productName, returnedName),
+      trigramSimilarity(usedQuery, returnedName),
+    );
+    if (sim < TIER4_MIN_SIMILARITY) {
+      console.log(`[tier4] name_mismatch query="${productName}" returned="${returnedName}" sim=${sim.toFixed(2)} threshold=${TIER4_MIN_SIMILARITY}`);
+      return null;
+    }
+  }
+  const ingredientText = parsed.ingredients.map(s => String(s).trim()).filter(Boolean).join(", ");
+  const sourceDomain = String(parsed.source_domain || "").trim().toLowerCase().replace(/^www\./, "");
+  const sourceLabel = sourceDomain ? `Sourced from ${sourceDomain}` : "Sourced from web search";
+  console.log(`[tier4] hit query="${productName}" used="${usedQuery}" domain=${sourceDomain} ingredients=${parsed.ingredients.length} duration=${Date.now()-started}ms`);
+  return {
+    ingredients: ingredientText,
+    ingredientArray: parsed.ingredients,
+    source: "web_search",
+    sourceUrl: null,
+    sourceLabel,
+    sourceConfidence: "medium",
+    productName: returnedName || productName,
+    brand: String(parsed.brand || ""),
+    category: String(parsed.category || ""),
+    sourceDomain,
+  };
 }
 
 // ── Tier 5: category-prior best guess (no AI, no chemistry) ───────
