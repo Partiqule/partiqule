@@ -1735,14 +1735,25 @@ NOTE: For ANY food, beverage, supplement, or restaurant product — populate nut
 NOVA 4 NUTRITION RULE: For any NOVA 4 ultra-processed product, you MUST populate at minimum sugar_g, sodium_mg, and calories from the label — this data is publicly available on every packaged food sold in the US. If a NOVA 4 product has added sugars that exceed 20% of daily value (10g+), this must show as a nutrition concern. Nutrition badges showing % DV are a core part of the score for processed foods.
 INGREDIENT_LIST RULE: For ALL food, beverage, supplement, and personal care products, populate ingredient_list with the actual ingredients in order as they appear on the label. For food products, this is always publicly available via FDA-required labeling. Return each ingredient as a separate string in the array. If a product has sub-ingredients (e.g. "CHOCOLATE CHIPS (sugar, cocoa butter, chocolate)"), include the parent ingredient only. If you cannot find the ingredient list for a truly obscure product, return an empty array. Never return null for ingredient_list on food products.
 SUBSTANCE NAMING RULES: Always name the SPECIFIC chemical in concerns, never a generic category. Write "BHT" not "preservatives". Write "Red 40" not "artificial colors". Write "PTFE coating" not "non-stick chemicals". Write "PFOA" not "PFAS" if you know the specific compound. Write "oxybenzone" not "chemical sunscreen". Never flag "binding agents", "emulsifiers", "natural flavors", or "concentration levels" as concerns — these are not harmful substances. If packaging speculation exists, write it with severity "low" and hedged language. If you know a product's specific ingredients (Altoids has BHT, Chick-fil-A uses TBHQ in frying oil), name them explicitly.
-HOT-WATER-PLASTIC FLOOR RULE (CRITICAL): If hot water flows through plastic during normal use of the product, FINAL SCORE MINIMUM IS 7. Apply AFTER calibration entries (a calibration override wins). For non-calibrated AI-scored products this floor is enforced.
-Categories affected: drip coffee makers with plastic reservoirs or tubing, plastic kettles or kettles with plastic internals, electric tea makers with plastic in the water path, instant hot-water dispensers with plastic spouts/valves, plastic travel mugs for hot beverages, single-serve coffee pod systems (K-cups, Nespresso, Keurig — hot pressurized water through a plastic pod), plastic baby bottles used with warm/hot formula, plastic French press plungers/lids, any "hot water through plastic" brewing or cooking device.
-NOT affected: cold-water plastic (water bottles used cold, plastic pitchers), plastic containers for room-temperature food, plastic utensils for cold/warm items, plastic that only contacts steam externally.
-When this floor fires, summary_short MUST name the hot-water-plastic concern explicitly.
+HOT-WATER-PLASTIC FLOOR RULE (CRITICAL): If hot water flows through or contacts plastic during normal use, FINAL SCORE MINIMUM IS 7. Score escalates based on exposure severity. Apply AFTER calibration entries (a calibration override wins). For non-calibrated AI-scored products this floor is enforced.
+
+Severity scale within the rule:
+- Score 7 (baseline): simple plastic contact with hot water. Drip coffee maker with plastic reservoir but stainless carafe. Plastic kettle used occasionally.
+- Score 8 (worse): hot water passes THROUGH plastic, not just contact. Daily/frequent use. Coffee maker with plastic brew chamber AND plastic carafe. Electric kettle with plastic body used multiple times daily. Plastic French press for hot coffee.
+- Score 9 (worse still): pressurized hot water through plastic, single-use plastic waste added to leaching. Nespresso pods, K-cups, pod-based espresso. Single-serve plastic tea bags brewed in hot water.
+- Score 10: reserved for additional severe concerns beyond hot-water-plastic (known contaminated brand, recalled product, etc.).
+
+Categories affected (apply 7 minimum, scale up by severity): drip coffee makers with plastic reservoirs or tubing, plastic kettles and electric tea makers, instant hot-water dispensers with plastic spouts, single-serve coffee/tea pods (K-cups, Nespresso, Keurig), plastic travel mugs for hot beverages, baby bottles used with warm/hot formula, French press with plastic components, plastic pour-over cones used with boiling water, any "hot water through plastic" brewing or cooking device.
+
+NOT affected: cold-water plastic (Nalgene used cold, plastic pitchers), plastic containers for room-temperature food, plastic utensils for cold/warm items, plastic items that only touch steam externally without flow-through (slow cooker plastic lid).
+
+When this floor fires, summary_short MUST name the hot-water-plastic concern explicitly while keeping voice rules (first person, short, specific, no hedging).
+
 Examples:
-- Mr. Coffee plastic drip machine (score 7): "Plastic water reservoir means hot water picks up plastic leaching every brew. Stainless or glass carafes score cleaner. I'd upgrade if you're a daily coffee drinker."
-- Nespresso pods (score 7-8): "Each pod forces hot pressurized water through plastic, releasing microplastics and chemicals into your coffee. Refillable stainless pods or a French press skip this entirely."
-- Plastic kettle (score 8): "Boiling water in plastic is one of the highest-exposure daily habits for microplastic ingestion. A glass or stainless kettle costs about the same."
+- Mr. Coffee drip machine (score 8): "Plastic water reservoir AND plastic carafe means hot water picks up plastic both in brewing and while sitting. Glass carafe and stainless reservoir would be cleaner. I'd swap if you're a daily coffee drinker."
+- K-cups / Keurig pods (score 9): "Pressurized hot water forced through single-use plastic on every brew releases microplastics into your coffee. Plus the pod waste. Refillable stainless pods or a French press skip this entirely."
+- Plastic electric kettle (score 8): "Boiling water in plastic is one of the highest-exposure daily habits for microplastic ingestion. A glass or stainless kettle costs about the same. I'd swap."
+- Drip coffee maker with stainless carafe (score 7): "Plastic reservoir means hot water still picks up some leaching on the way through. Better than a fully-plastic machine but not as clean as pour-over glass."
 
 SUMMARY VOICE RULE (CRITICAL): summary_short is the friend voice on the simple result screen. summary_long is the research brief on the detail screen. Both must be honest about the SAME facts.
 
@@ -4153,14 +4164,25 @@ For restaurant category: populate composition_tier based on processing level, po
 If category is "other" or unknown, apply the most relevant concern types based on what the product is.
 Set concerns to [] and positives to [] if the product is genuinely clean with no flagged substances.
 
-HOT-WATER-PLASTIC FLOOR RULE (CRITICAL): If hot water flows through plastic during normal use of the product, FINAL SCORE MINIMUM IS 7. Apply AFTER calibration entries (a calibration override wins). For non-calibrated AI-scored products this floor is enforced.
-Categories affected: drip coffee makers with plastic reservoirs or tubing, plastic kettles or kettles with plastic internals, electric tea makers with plastic in the water path, instant hot-water dispensers with plastic spouts/valves, plastic travel mugs for hot beverages, single-serve coffee pod systems (K-cups, Nespresso, Keurig — hot pressurized water through a plastic pod), plastic baby bottles used with warm/hot formula, plastic French press plungers/lids, any "hot water through plastic" brewing or cooking device.
-NOT affected: cold-water plastic (water bottles used cold, plastic pitchers), plastic containers for room-temperature food, plastic utensils for cold/warm items, plastic that only contacts steam externally.
-When this floor fires, summary_short MUST name the hot-water-plastic concern explicitly.
+HOT-WATER-PLASTIC FLOOR RULE (CRITICAL): If hot water flows through or contacts plastic during normal use, FINAL SCORE MINIMUM IS 7. Score escalates based on exposure severity. Apply AFTER calibration entries (a calibration override wins). For non-calibrated AI-scored products this floor is enforced.
+
+Severity scale within the rule:
+- Score 7 (baseline): simple plastic contact with hot water. Drip coffee maker with plastic reservoir but stainless carafe. Plastic kettle used occasionally.
+- Score 8 (worse): hot water passes THROUGH plastic, not just contact. Daily/frequent use. Coffee maker with plastic brew chamber AND plastic carafe. Electric kettle with plastic body used multiple times daily. Plastic French press for hot coffee.
+- Score 9 (worse still): pressurized hot water through plastic, single-use plastic waste added to leaching. Nespresso pods, K-cups, pod-based espresso. Single-serve plastic tea bags brewed in hot water.
+- Score 10: reserved for additional severe concerns beyond hot-water-plastic (known contaminated brand, recalled product, etc.).
+
+Categories affected (apply 7 minimum, scale up by severity): drip coffee makers with plastic reservoirs or tubing, plastic kettles and electric tea makers, instant hot-water dispensers with plastic spouts, single-serve coffee/tea pods (K-cups, Nespresso, Keurig), plastic travel mugs for hot beverages, baby bottles used with warm/hot formula, French press with plastic components, plastic pour-over cones used with boiling water, any "hot water through plastic" brewing or cooking device.
+
+NOT affected: cold-water plastic (Nalgene used cold, plastic pitchers), plastic containers for room-temperature food, plastic utensils for cold/warm items, plastic items that only touch steam externally without flow-through (slow cooker plastic lid).
+
+When this floor fires, summary_short MUST name the hot-water-plastic concern explicitly while keeping voice rules (first person, short, specific, no hedging).
+
 Examples:
-- Mr. Coffee plastic drip machine (score 7): "Plastic water reservoir means hot water picks up plastic leaching every brew. Stainless or glass carafes score cleaner. I'd upgrade if you're a daily coffee drinker."
-- Nespresso pods (score 7-8): "Each pod forces hot pressurized water through plastic, releasing microplastics and chemicals into your coffee. Refillable stainless pods or a French press skip this entirely."
-- Plastic kettle (score 8): "Boiling water in plastic is one of the highest-exposure daily habits for microplastic ingestion. A glass or stainless kettle costs about the same."
+- Mr. Coffee drip machine (score 8): "Plastic water reservoir AND plastic carafe means hot water picks up plastic both in brewing and while sitting. Glass carafe and stainless reservoir would be cleaner. I'd swap if you're a daily coffee drinker."
+- K-cups / Keurig pods (score 9): "Pressurized hot water forced through single-use plastic on every brew releases microplastics into your coffee. Plus the pod waste. Refillable stainless pods or a French press skip this entirely."
+- Plastic electric kettle (score 8): "Boiling water in plastic is one of the highest-exposure daily habits for microplastic ingestion. A glass or stainless kettle costs about the same. I'd swap."
+- Drip coffee maker with stainless carafe (score 7): "Plastic reservoir means hot water still picks up some leaching on the way through. Better than a fully-plastic machine but not as clean as pour-over glass."
 
 SUMMARY VOICE RULE (CRITICAL): summary_short is the friend voice that appears on the simple result screen. summary_long is the research brief on the detail screen. Both must be honest about the SAME facts.
 
