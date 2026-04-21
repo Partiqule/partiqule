@@ -1356,7 +1356,7 @@ const EducationSection = ({isMobile=false}) => {
         {number:"100%", label:"of human blood samples tested in 2022 contained microplastics", color:"#16a34a", bg:"#f0fdf4"},
         {number:"58%",  label:"of carotid artery plaques studied in 2024 contained polypropylene (PP)", color:"#059669", bg:"#ecfdf5"},
         {number:"2025", label:"FDA banned Red 3 and began phasing out all petroleum-based synthetic food dyes", color:"#047857", bg:"#d1fae5"},
-        {number:"UPF",  label:"ultra-processed foods now linked to cardiovascular disease, cognitive decline and stroke — The Lancet 2025", color:"#052e16", bg:"#bbf7d0"},
+        {number:"UPF",  label:"ultra-processed foods now linked to cardiovascular disease, cognitive decline and stroke — The Lancet 2025", color:"var(--amber)", bg:"var(--cream-light)"},
       ],
       faqs: [
         {q:"What are microplastics and why do they matter?", a:"Microplastics are plastic particles under 5mm, many invisible to the naked eye. A 2024 New England Journal of Medicine study found polypropylene (PP) in 58% of carotid artery plaques. Patients with detectable microplastics had significantly higher rates of heart attack, stroke, and death over the following years."},
@@ -2469,11 +2469,31 @@ const GuideViewPage = ({text, muted, surface, border, isMobile, slug, onNavigate
         <GuideBody html={guide.body||""}/>
       </div>
 
-      {/* CTA */}
-      <div style={{marginTop:48,padding:"28px 24px",background:"#052e16",borderRadius:16,textAlign:"center"}}>
-        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:8,fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan the products mentioned in this guide</div>
-        <div style={{fontSize:14,color:"rgba(255,255,255,0.6)",marginBottom:20}}>Free scans, no account required</div>
-        <button onClick={()=>onNavigate("home")} style={{background:"#4ade80",color:"#052e16",border:"none",borderRadius:10,padding:"13px 32px",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+      {/* CTA — refreshed to cream system (2026-04-21) */}
+      <div style={{
+        marginTop:48, padding:"28px 24px",
+        background:"var(--cream-light)",
+        border:"1px solid var(--rule)",
+        borderRadius:"var(--card-shape-1)",
+        textAlign:"center",
+      }}>
+        <div style={{
+          fontFamily:"'Fraunces', Georgia, serif",
+          fontSize:22, fontWeight:400, color:"var(--ink)",
+          marginBottom:8, letterSpacing:"-0.01em", lineHeight:1.15,
+        }}>Scan the products mentioned in this guide</div>
+        <div style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:14, color:"var(--ink-soft)", marginBottom:20,
+        }}>Free scans, no account required</div>
+        <button onClick={()=>onNavigate("home")} style={{
+          background:"var(--moss)", color:"var(--ivory)", border:"none",
+          borderRadius:"var(--cta-shape)",
+          padding:"13px 32px",
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:15, fontWeight:500, cursor:"pointer",
+          letterSpacing:"0.005em",
+        }}>
           Start scanning →
         </button>
       </div>
@@ -3927,10 +3947,15 @@ const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, 
                     {key:"over50", label:"$50+"},
                   ].map(f => (
                     <button key={f.key} onClick={()=>setPriceFilter(f.key)}
-                      style={{padding:"5px 12px", borderRadius:20, border:`1.5px solid ${priceFilter===f.key?"#16a34a":border}`,
-                        background:priceFilter===f.key?"#052e16":"none",
-                        color:priceFilter===f.key?"#4ade80":muted,
-                        fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap"}}>
+                      style={{
+                        padding:"6px 14px", borderRadius:9999,
+                        border: priceFilter===f.key ? "none" : "1px solid var(--rule)",
+                        background: priceFilter===f.key ? "var(--moss)" : "var(--cream-light)",
+                        color: priceFilter===f.key ? "var(--ivory)" : "var(--ink-soft)",
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:12, fontWeight:500, cursor:"pointer",
+                        letterSpacing:"0.02em", whiteSpace:"nowrap", transition:"all 0.15s",
+                      }}>
                       {f.label}
                     </button>
                   ))}
@@ -5446,8 +5471,21 @@ const ShelfIllustration = ({ category }) => {
   }
 };
 
+// Filter out malformed history entries before rendering the shelf strip.
+// Pre-cascade scans sometimes saved placeholder or error text in
+// product_name (e.g. "(website/service ..." from a failed extract). Entries
+// stay in localStorage for data integrity — they just don't render here.
+const isValidShelfItem = (item) => {
+  const name = typeof item?.product_name === "string" ? item.product_name.trim() : "";
+  if (!name || name.length < 2) return false;
+  if (name.startsWith("(")) return false;
+  if (/website\/service/i.test(name)) return false;
+  return true;
+};
+
 const ShelfStrip = ({ items, onSelect }) => {
-  if (!items || items.length === 0) return null;
+  const clean = (items || []).filter(isValidShelfItem);
+  if (clean.length === 0) return null;
   const sc = (s) => s == null ? "var(--ink-faint)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
   return (
     <>
@@ -5458,7 +5496,7 @@ const ShelfStrip = ({ items, onSelect }) => {
         margin:"0 -4px",
       }}>
         <style>{`.shelf-strip-scroll::-webkit-scrollbar{display:none}`}</style>
-        {items.map((item, i) => {
+        {clean.map((item, i) => {
           const score = item.overall_score || item.score;
           const { brand, body: shelfBody } = extractBrand(item.product_name, item.brand);
           const shortName = (() => {
