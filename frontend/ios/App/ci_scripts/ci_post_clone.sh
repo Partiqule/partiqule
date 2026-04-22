@@ -28,13 +28,15 @@ REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "$(dirname "$0")/../../../.." && p
 cd "$REPO_ROOT/frontend"
 
 # Xcode Cloud images don't ship Node.js. Install via Homebrew (already present
-# on the image). Pin to node@20 for predictability — Capacitor 8 supports 18+.
+# on the image). Pin to node@22 because Capacitor 8 CLI hard-requires
+# NodeJS >=22.0.0 — build 8 on Xcode Cloud used node@20 and cap sync bailed
+# with "[fatal] The Capacitor CLI requires NodeJS >=22.0.0".
 # If Node is already on PATH (future image update, or local invocation),
 # `brew install` is a no-op.
 if ! command -v node >/dev/null 2>&1; then
-  brew install node@20
-  # node@20 is keg-only, needs to be added to PATH explicitly.
-  export PATH="/opt/homebrew/opt/node@20/bin:/usr/local/opt/node@20/bin:$PATH"
+  brew install node@22
+  # node@22 is keg-only, needs to be added to PATH explicitly.
+  export PATH="/opt/homebrew/opt/node@22/bin:/usr/local/opt/node@22/bin:$PATH"
 fi
 
 # Reproducible install from package-lock.json.
