@@ -1183,7 +1183,9 @@ function applyConsistencyChecks(mScore, uScore, pkScore, sScore, finalScore, p1,
 // Prevents the AI over-penalising genuinely clean food products.
 // Only applies to food/beverage categories.
 function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered) {
-  if (!FOOD_CATEGORIES_SET.has(category)) return { finalScore, ceilingFlags: [] };
+  const isFood = FOOD_CATEGORIES_SET.has(category);
+  const isPersonalCare = category === "personal_care";
+  if (!isFood && !isPersonalCare) return { finalScore, ceilingFlags: [] };
 
   const flags = [];
   const allText = JSON.stringify([
@@ -1198,6 +1200,46 @@ function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered)
   const dangerousSubstanceFired = substanceTriggered.some(t =>
     /red 40|yellow 5|yellow 6|blue 1|bha|tbhq|nitrite|nitrate|petroleum dye|pfas|pfoa|pfos|glyphosate|acrylamide/i.test(t)
   );
+
+  // ── PERSONAL CARE CLEAN CEILING ────────────────────────────────
+  // Cap final score at 3 when every signal agrees the product is clean:
+  //   1. AI layer: no harmful_chemicals captured, no flagged_substances
+  //      containing disqualifier patterns
+  //   2. Substance floor layer: no 118-substance hardcoded floor triggered
+  //   3. Deterministic flag layer: no concerning narrative/raw_concern text
+  //
+  // This addresses a systemic narrative/score mismatch (Burt's Bees Tinted
+  // Lip Balm 2026-04-23): Pass 1 correctly identifies a clean formulation
+  // and writes "benchmark clean lip balm — I'd keep using this one", but
+  // without a calibration anchor it defaults to conservative dimension
+  // scores of 5, producing an amber "caution" score that contradicts the
+  // voice. When three independent layers all agree nothing flags, 3 is a
+  // safer ceiling than 5.
+  //
+  // Disqualifiers are the common personal-care red flags (paraben family,
+  // synthetic fragrance, siloxanes, PEGs, petroleum dyes, phthalates,
+  // formaldehyde releasers, sulfates, known carcinogens). Natural/plant/
+  // essential-oil named fragrance does NOT disqualify — only undisclosed
+  // "Parfum" / "Fragrance" does. Matches the NATURAL FRAGRANCE RULE
+  // already in the Pass 1 prompt.
+  if (isPersonalCare) {
+    const hc = Array.isArray(p1.harmful_chemicals) ? p1.harmful_chemicals : [];
+    const fs = Array.isArray(p1.flagged_substances) ? p1.flagged_substances : [];
+    const pcDisqualifiers = /\b(paraben|methylparaben|propylparaben|butylparaben|ethylparaben|phenoxyethanol|dmdm hydantoin|quaternium-15|diazolidinyl|imidazolidinyl|formaldehyde|cyclopentasiloxane|cyclomethicone|dimethicone|trimethicone|peg-\d|propylene glycol|sodium lauryl sulfate|sodium laureth sulfate|\bsls\b|\bsles\b|oxybenzone|octinoxate|avobenzone|benzophenone|hydroquinone|coal tar|triclosan|\bbha\b|\bbht\b|\btbhq\b|phthalate|dehp|\bdbp\b|diethyl phthalate|red\s*40|yellow\s*5|yellow\s*6|blue\s*1|fd&c|petroleum dye|synthetic fragrance|parfum(?!\s*\()|retinyl palmitate|resorcinol|methylisothiazolinone|\bmit\b)/i;
+    const flaggedClean =
+      hc.length === 0 &&
+      !fs.some(s => pcDisqualifiers.test(String(s || ""))) &&
+      !pcDisqualifiers.test(allText);
+    const substanceFloorClean = !substanceTriggered.some(t => pcDisqualifiers.test(String(t || "")));
+    const hasIngredientList = Array.isArray(p1.ingredient_list) && p1.ingredient_list.length > 0;
+    if (flaggedClean && substanceFloorClean && hasIngredientList && finalScore > 3) {
+      console.log(`Personal care clean ceiling: capping score from ${finalScore} to 3`);
+      finalScore = 3;
+      flags.push("personal_care_clean_ceiling");
+    }
+    // Personal care doesn't use the food-specific ceilings below.
+    return { finalScore, ceilingFlags: flags };
+  }
 
   // CEILING 1: USDA Organic + no confirmed dangerous substances → cap at 3
   // CRITICAL GUARD: This ceiling only applies to minimally/moderately processed products.
