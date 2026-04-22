@@ -7592,28 +7592,24 @@ app.post('/apple-iap-confirm', async (req, res) => {
   if (!userId || !transactionId) return res.status(400).json({ error: 'Missing params' });
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin not configured' });
   try {
-    // 1) Detailed record in the subscriptions table.
-    const { error: subErr } = await supabaseAdmin.from('subscriptions').upsert({
-      user_id: userId,
-      is_subscribed: true,
-      platform: 'apple',
-      transaction_id: transactionId,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
-    if (subErr) throw subErr;
-
-    // 2) Flip profiles.is_subscribed so /subscription-status returns true on
-    //    subsequent app launches. This is what checkSubscription() reads — the
-    //    two tables are otherwise not synced. Without this step the purchase
-    //    appears to succeed in-session but reverts on the next app reload,
-    //    which is exactly what Apple reviewers flagged as "didn't receive
-    //    subscription benefits after successfully purchasing."
+    // Flip profiles.is_subscribed so /subscription-status returns true on
+    // subsequent app launches. This is what checkSubscription() reads.
+    // Without this step the purchase appears to succeed in-session but reverts
+    // on the next app reload — the exact failure mode Apple flagged with
+    // "didn't receive subscription benefits after successfully purchasing."
+    //
+    // Note: a previous version of this handler also wrote to a `subscriptions`
+    // audit table. That table doesn't exist in the current schema (CLAUDE.md
+    // lists it but it was never actually created), so the audit write was
+    // erroring out and failing the entire request. If you later want an audit
+    // trail of individual Apple transactions, create the table then re-add
+    // the insert — don't block the subscription confirmation on the audit.
     const { error: profErr } = await supabaseAdmin.from('profiles')
       .update({ is_subscribed: true })
       .eq('id', userId);
     if (profErr) throw profErr;
 
-    console.log('[IAP] Apple subscription confirmed for user', userId);
+    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId);
     res.json({ ok: true });
   } catch(e) {
     console.error('[IAP] Confirm error:', e.message);
