@@ -5947,19 +5947,26 @@ function App() {
       } catch (e) {
         console.warn("[IAP] getPurchases failed:", e?.message);
       }
+      // Plugin's getPurchases returns the same flat shape as purchaseProduct
+      // (TransactionHelpers.buildTransactionResponse). productIdentifier and
+      // transactionId are top-level keys — not nested and not ...Identifier.
       const active = purchases.find(p =>
-        (p?.productIdentifier || p?.product_id || p?.identifier) === IAP_PRODUCT_ID,
+        p?.productIdentifier === IAP_PRODUCT_ID && p?.isActive !== false,
       );
       if (!active) {
         setError("No active Partiqule subscription found on this Apple ID.");
         setTimeout(() => setError(null), 4000);
         return;
       }
-      const txnId = active.transactionIdentifier || active.transaction_id || active.id || "restored";
+      const txnId = active.transactionId || "restored";
       const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, transactionId: txnId, receipt: active.receipt || null }),
+        body: JSON.stringify({
+          userId: user.id,
+          transactionId: txnId,
+          receipt: active.receipt || active.jwsRepresentation || null,
+        }),
       });
       if (!confirmRes.ok) {
         setError("We couldn't restore your subscription on our side. Contact support.");
@@ -6014,10 +6021,27 @@ function App() {
           productType: PURCHASE_TYPE.SUBS,
         });
         console.log("[IAP] purchaseProduct RESOLVED after", Date.now() - purchaseStart, "ms. Result:", JSON.stringify(purchaseResult).slice(0, 500));
-        const transaction = purchaseResult?.transaction;
+        // The @capgo/native-purchases plugin returns a FLAT response dict
+        // (see TransactionHelpers.swift buildTransactionResponse). Keys:
+        // { transactionId, productIdentifier, receipt?, jwsRepresentation,
+        //   productType, purchaseDate, isUpgraded, ownershipType,
+        //   originalPurchaseDate, expirationDate, isActive, ... }
+        // — not the { transaction: {...} } wrapper my earlier code assumed.
+        // Property-name typos there caused every successful sandbox purchase
+        // to fall through to the "no transaction property" branch, which is
+        // why five sandbox RENEWAL transactions stacked up in the logs with
+        // no UI confirmation.
+        const txnId = purchaseResult?.transactionId;
+        const matches = purchaseResult?.productIdentifier === IAP_PRODUCT_ID;
+        // For auto-renewable subs the plugin exposes isActive (bool) based on
+        // expirationDate > now. If it's explicitly false we got back an
+        // EXPIRED renewal from sandbox queue replay (not an actual grant) —
+        // don't activate on those. Missing isActive = treat as active (Apple
+        // sometimes omits the field on fresh first purchases).
+        const isActive = purchaseResult?.isActive !== false;
         clearTimeout(iapTimeout);
-        if (transaction) {
-          console.log("[IAP] transaction present, txnId:", transaction.transactionIdentifier);
+        if (txnId && matches && isActive) {
+          console.log("[IAP] transaction present, txnId:", txnId, "isActive:", purchaseResult?.isActive);
           // Persist to backend FIRST. The server flips profiles.is_subscribed
           // (what /subscription-status reads) — without this the in-memory
           // isSubscribed=true reverts to false on the next app launch and the
@@ -6028,7 +6052,11 @@ function App() {
             const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
+              body: JSON.stringify({
+                userId: user?.id,
+                transactionId: txnId,
+                receipt: purchaseResult?.receipt || purchaseResult?.jwsRepresentation || null,
+              }),
             });
             backendOk = confirmRes.ok;
             if (!confirmRes.ok) {
@@ -6067,9 +6095,20 @@ function App() {
             }
           }
         } else {
-          console.log("[IAP] purchaseProduct returned with NO transaction property");
+          console.log("[IAP] purchaseProduct returned unusable result. txnId:",
+            txnId, "matches:", matches, "isActive:", purchaseResult?.isActive,
+            "subscriptionState:", purchaseResult?.subscriptionState);
           clearTimeout(iapTimeout);
-          setIapTimedOut(true);
+          // If the sandbox is replaying expired renewals (common when a
+          // tester has prior purchase history), don't trap the user in the
+          // error modal — just reset UI and let them try again. The real
+          // first-purchase path will succeed.
+          if (purchaseResult?.subscriptionState === "expired" || purchaseResult?.isActive === false) {
+            setError("That purchase came back expired. Try again — or reset purchase history in Settings > Developer > Sandbox.");
+            setTimeout(() => setError(null), 6000);
+          } else {
+            setIapTimedOut(true);
+          }
         }
       } catch (e) {
         clearTimeout(iapTimeout);
