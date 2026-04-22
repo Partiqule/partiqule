@@ -7590,14 +7590,29 @@ const PORT = process.env.PORT || 3001;
 app.post('/apple-iap-confirm', async (req, res) => {
   const { userId, transactionId, receipt } = req.body;
   if (!userId || !transactionId) return res.status(400).json({ error: 'Missing params' });
+  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin not configured' });
   try {
-    await supabase.from('subscriptions').upsert({
+    // 1) Detailed record in the subscriptions table.
+    const { error: subErr } = await supabaseAdmin.from('subscriptions').upsert({
       user_id: userId,
       is_subscribed: true,
       platform: 'apple',
       transaction_id: transactionId,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
+    if (subErr) throw subErr;
+
+    // 2) Flip profiles.is_subscribed so /subscription-status returns true on
+    //    subsequent app launches. This is what checkSubscription() reads — the
+    //    two tables are otherwise not synced. Without this step the purchase
+    //    appears to succeed in-session but reverts on the next app reload,
+    //    which is exactly what Apple reviewers flagged as "didn't receive
+    //    subscription benefits after successfully purchasing."
+    const { error: profErr } = await supabaseAdmin.from('profiles')
+      .update({ is_subscribed: true })
+      .eq('id', userId);
+    if (profErr) throw profErr;
+
     console.log('[IAP] Apple subscription confirmed for user', userId);
     res.json({ ok: true });
   } catch(e) {

@@ -5817,6 +5817,11 @@ function App() {
   // visionRefusal: { productName, message } — cascade found nothing and label not legible, ask user to retake
   const [visionConfirmation, setVisionConfirmation] = useState(null);
   const [visionRefusal, setVisionRefusal] = useState(null);
+  // Shown after a successful Apple IAP purchase or restore. Gives the user
+  // (and Apple's reviewer) an explicit visual signal that the subscription
+  // benefit was granted — the previous silent flow is the specific behavior
+  // Apple flagged in the 2026-04-22 rejection.
+  const [purchaseSuccess, setPurchaseSuccess] = useState(null); // null | { kind: "purchase" | "restore" }
   const [modalQuery,  setModalQuery] = useState("");
   // ── Text search match picker (verified-source only) ─────────────
   // Debounced /search call surfaces calibration + prior-scan matches so users
@@ -5948,6 +5953,64 @@ function App() {
     })();
   }, []);
 
+  // Shared Apple IAP restore flow — verifies the entitlement on-device via
+  // getPurchases, POSTs the restored transaction to /apple-iap-confirm so
+  // profiles.is_subscribed updates, then round-trips via checkSubscription.
+  // Without the POST step the restore would revert on next app launch; without
+  // the getPurchases check any user could tap Restore on a fresh install and
+  // appear subscribed until reload.
+  const restoreSubscription = async () => {
+    if (!user) { setShowAuth(true); return; }
+    try {
+      const { plugin: np } = await loadNativePurchases();
+      if (!np) {
+        setError("Couldn't connect to the App Store. Try again later.");
+        setTimeout(() => setError(null), 4000);
+        return;
+      }
+      await np.restorePurchases();
+      let purchases = [];
+      try {
+        const r = await np.getPurchases({ onlyCurrentEntitlements: true });
+        purchases = Array.isArray(r?.purchases) ? r.purchases : [];
+      } catch (e) {
+        console.warn("[IAP] getPurchases failed:", e?.message);
+      }
+      const active = purchases.find(p =>
+        (p?.productIdentifier || p?.product_id || p?.identifier) === IAP_PRODUCT_ID,
+      );
+      if (!active) {
+        setError("No active Partiqule subscription found on this Apple ID.");
+        setTimeout(() => setError(null), 4000);
+        return;
+      }
+      const txnId = active.transactionIdentifier || active.transaction_id || active.id || "restored";
+      const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, transactionId: txnId, receipt: active.receipt || null }),
+      });
+      if (!confirmRes.ok) {
+        setError("We couldn't restore your subscription on our side. Contact support.");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      let verified = false;
+      try { verified = await checkSubscription(user.id); } catch {}
+      setIsSubscribed(true);
+      setScanCount(0);
+      try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+      setShowLimitModal(null);
+      setPurchaseSuccess({ kind: "restore" });
+    } catch (e) {
+      const msg = e?.message || "";
+      if (!msg.includes("cancelled") && !msg.includes("cancel")) {
+        setError("Couldn't restore your purchase. Try again.");
+        setTimeout(() => setError(null), 4000);
+      }
+    }
+  };
+
   const startCheckout = async () => {
     if (!user) { setShowAuth(true); return; }
 
@@ -5984,18 +6047,53 @@ function App() {
         clearTimeout(iapTimeout);
         if (transaction) {
           console.log("[IAP] transaction present, txnId:", transaction.transactionIdentifier);
-          setIsSubscribed(true);
-          setScanCount(0);
-          try { localStorage.setItem("ps_scan_count", "0"); } catch {}
-          setShowLimitModal(null);
+          // Persist to backend FIRST. The server flips profiles.is_subscribed
+          // (what /subscription-status reads) — without this the in-memory
+          // isSubscribed=true reverts to false on the next app launch and the
+          // user loses premium benefits silently. That exact flow is what
+          // Apple flagged in 2026-04-22.
+          let backendOk = false;
           try {
-            await fetch(`${API_BASE}/apple-iap-confirm`, {
+            const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
             });
+            backendOk = confirmRes.ok;
+            if (!confirmRes.ok) {
+              const body = await confirmRes.text().catch(() => "");
+              console.warn("[IAP] apple-iap-confirm non-2xx:", confirmRes.status, body.slice(0, 200));
+            }
           } catch (confirmErr) {
             console.warn("[IAP] apple-iap-confirm POST failed:", confirmErr?.message);
+          }
+
+          if (!backendOk) {
+            // StoreKit accepted the purchase but our server didn't persist.
+            // User is charged. Surface this loudly instead of silently flipping
+            // in-memory state that won't survive reload.
+            setError("Purchase went through at Apple but we couldn't activate premium on our side. Try Restore Purchases in Settings, or contact support.");
+            setTimeout(() => setError(null), 8000);
+          } else {
+            // Backend confirmed. Round-trip verify via /subscription-status so
+            // local state matches server state — guards against edge cases
+            // (e.g. user record missing, race on profile update).
+            let verified = false;
+            try { verified = await checkSubscription(user.id); } catch {}
+            if (verified) {
+              setScanCount(0);
+              try { localStorage.setItem("ps_scan_count", "0"); } catch {}
+              setShowLimitModal(null);
+              setIapTimedOut(false);
+              setPurchaseSuccess({ kind: "purchase" });
+            } else {
+              // Extremely rare — backend returned 200 but status endpoint still
+              // says not subscribed. Surface it, don't fake success.
+              console.warn("[IAP] backend confirmed but /subscription-status still reports not subscribed");
+              setIsSubscribed(true); // fall back to local state rather than lock user out
+              setShowLimitModal(null);
+              setPurchaseSuccess({ kind: "purchase" });
+            }
           }
         } else {
           console.log("[IAP] purchaseProduct returned with NO transaction property");
@@ -6755,7 +6853,7 @@ function App() {
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
-              {IS_NATIVE && <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}setShowLimitModal(null);}catch(e){if(!e.message?.includes("cancelled")){setShowLimitModal(null);setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%", padding:"10px", borderRadius:10, background:"transparent", border:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, cursor:"pointer", marginTop:4, textDecoration:"underline", textUnderlineOffset:2}}>Restore previous purchase</button>}
+              {IS_NATIVE && <button onClick={restoreSubscription} style={{width:"100%", padding:"10px", borderRadius:10, background:"transparent", border:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, cursor:"pointer", marginTop:4, textDecoration:"underline", textUnderlineOffset:2}}>Restore previous purchase</button>}
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", textAlign:"center", marginTop:12}}>
                 <a href="https://partiqule.com/privacy" target="_blank" rel="noopener noreferrer" style={{color:"var(--ink-soft)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}} onClick={(e)=>{if(!IS_NATIVE){e.preventDefault();setShowLimitModal(null);setPage("privacy");}}}>Privacy Policy</a>
                 <span style={{margin:"0 6px", opacity:0.4}}>·</span>
@@ -6848,7 +6946,7 @@ function App() {
                         <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
                           Manage subscription
                         </button>
-                        <button onClick={async()=>{try{const np=await loadNativePurchases();if(!np)return;await np.restorePurchases();setIsSubscribed(true);setScanCount(0);try{localStorage.setItem("ps_scan_count","0");}catch{}}catch(e){if(!e.message?.includes("cancelled")){setError("No previous purchase found.");setTimeout(()=>setError(null),3000);}}}} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                        <button onClick={restoreSubscription} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
                           Restore purchases
                         </button>
                       </div>
@@ -9577,6 +9675,77 @@ function App() {
           onRetry={() => { setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
           onPhoto={async (file) => { setBarcodeLoadingPhase(null); await handleImageScan(file); }}
         />
+      )}
+
+      {/* PURCHASE SUCCESS — shown after successful Apple IAP purchase or restore.
+          Explicit visual confirmation so users (and Apple reviewers) can see
+          the subscription benefits were granted. Same cream-card treatment as
+          the vision contract confirmation modal. */}
+      {purchaseSuccess && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9998,
+            background: "rgba(5, 46, 22, 0.32)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            style={{
+              background: "var(--cream)",
+              borderRadius: "var(--card-shape-2)",
+              border: "1px solid var(--rule)",
+              padding: isMobile ? "32px 24px 24px" : "36px 32px 28px",
+              maxWidth: 420, width: "100%",
+              boxShadow: "0 12px 40px rgba(5, 46, 22, 0.18)",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              textAlign: "left",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, marginBottom: 16,
+            }}>
+              <div style={{ width: 22, height: 1, background: "var(--moss)", opacity: 0.7 }}/>
+              <span style={{
+                fontSize: 11, letterSpacing: "0.22em", textTransform: "uppercase",
+                color: "var(--moss)", fontWeight: 500,
+              }}>
+                {purchaseSuccess.kind === "restore" ? "Subscription restored" : "Purchase complete"}
+              </span>
+            </div>
+            <div style={{
+              fontFamily: "'Fraunces', Georgia, serif",
+              fontSize: isMobile ? 30 : 34, lineHeight: 1.2,
+              color: "var(--ink)", fontWeight: 400,
+              marginBottom: 10,
+            }}>
+              {purchaseSuccess.kind === "restore" ? "Welcome back." : "You're in."}
+            </div>
+            <div style={{
+              fontSize: 15, color: "var(--ink-soft)", lineHeight: 1.5,
+              marginBottom: 24,
+            }}>
+              Unlimited scans, Kids Mode, Pregnancy Mode, and the full alternatives library are unlocked.
+            </div>
+            <button
+              onClick={() => setPurchaseSuccess(null)}
+              style={{
+                width: "100%",
+                padding: "14px 20px",
+                background: "var(--moss)",
+                color: "var(--ivory)",
+                border: "none",
+                borderRadius: "var(--tile-shape-1)",
+                fontSize: 15, fontWeight: 500,
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+                cursor: "pointer",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Start scanning
+            </button>
+          </div>
+        </div>
       )}
 
       {/* VISION CONTRACT V2 — confirmation modal for low-confidence identification.
