@@ -1,0 +1,43 @@
+#!/bin/sh
+# Xcode Cloud post-clone hook.
+#
+# Xcode Cloud checks out the Git repo fresh on every build. Our iOS project's
+# Swift Package Manager config (ios/App/CapApp-SPM/Package.swift) references
+# each Capacitor plugin via a relative path into frontend/node_modules/, so
+# those dependencies must be installed before xcodebuild resolves SPM packages.
+# Without this script the Archive phase fails with:
+#
+#   xcodebuild: error: Could not resolve package dependencies: the package at
+#   '.../node_modules/@capgo/native-purchases' doesn't exist in file system
+#
+# The script also runs vite build + cap sync so the iOS app bundle includes
+# the latest web assets and a current plugin list.
+#
+# Location: Xcode Cloud searches ./ci_scripts/ci_post_clone.sh at the repo
+# root first, which is why this lives here and not under frontend/.
+
+set -euxo pipefail
+
+# Xcode Cloud exposes the cloned repo root via CI_PRIMARY_REPOSITORY_PATH.
+# Fall back to the script's parent dir so this also works if run locally.
+REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "$(dirname "$0")/.." && pwd)}"
+cd "$REPO_ROOT/frontend"
+
+# Xcode Cloud images don't ship Node.js. Install via Homebrew (already present
+# on the image). Pin to node@20 for predictability — Capacitor 8 supports 18+.
+# If Node is already on PATH (future image update, or local invocation),
+# `brew install` is a no-op.
+if ! command -v node >/dev/null 2>&1; then
+  brew install node@20
+  # node@20 is keg-only, needs to be added to PATH explicitly.
+  export PATH="/opt/homebrew/opt/node@20/bin:/usr/local/opt/node@20/bin:$PATH"
+fi
+
+# Reproducible install from package-lock.json.
+npm ci
+
+# Produce the web bundle and copy it into ios/App/App/public/ so the wrapped
+# WebView loads the latest JS. cap sync also regenerates CapApp-SPM/Package.swift
+# with whatever plugins are currently declared in package.json.
+npx vite build
+npx cap sync ios
