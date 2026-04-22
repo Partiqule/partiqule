@@ -1121,10 +1121,19 @@ function applyConsistencyChecks(mScore, uScore, pkScore, sScore, finalScore, p1,
   const summary        = (p1.summary || p2?.summary || "").toLowerCase();
   const lowMaterialsLabel = /natural material|inert|zero.*chemical|no.*harmful|clean.*formula|organic.*only|plant.based only|no.*synthetic/.test(materialsLabel + " " + summary);
   const lowUsageLabel     = /low exposure|minimal exposure|no.*ingestion|no.*contact risk|no.*leach/.test(usageLabel + " " + summary);
-  if (lowMaterialsLabel && mScore > 4) {
+  // Skip the materials label contradiction when a deterministic NOVA 4 / ultra-
+  // processed signal is present. The AI often labels ultra-processed food as
+  // "clean" because the ingredient strings look mild (non-GMO sugar, organic
+  // flour), but the deterministic NOVA floor is the right answer and should
+  // not be clawed back by a narrative contradiction.
+  const rawConcernsBlob = Array.isArray(p1.raw_concerns) ? p1.raw_concerns.join(" ").toLowerCase() : "";
+  const isDeterministicUltraProcessed = /nova 4 ultra-processed|nova 4 \(inferred|ultra-processed \(inferred/.test(rawConcernsBlob);
+  if (lowMaterialsLabel && mScore > 4 && !isDeterministicUltraProcessed) {
     console.log(`Consistency: materials label says clean but mScore=${mScore} — capping at 4`);
     mScore = Math.min(mScore, 4);
     flags.push("materials_label_contradiction");
+  } else if (lowMaterialsLabel && mScore > 4 && isDeterministicUltraProcessed) {
+    console.log(`Consistency: materials label says clean but NOVA 4 inferred deterministically — holding mScore=${mScore}`);
   }
   if (lowUsageLabel && uScore > 4) {
     console.log(`Consistency: usage label says low but uScore=${uScore} — capping at 4`);
