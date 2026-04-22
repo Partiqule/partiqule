@@ -5803,6 +5803,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         pregnancy_bumps:    safety.pregnancyBumps || [],
         flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
         concerns:           p2?.refined_concerns || p1.concerns || [],
+        raw_concerns:       p1.raw_concerns || [],
         summary:            p1.summary_short || p1.summary || "",
         summary_short:      p1.summary_short || p1.summary || "",
         summary_long:       p1.summary_long || p1.summary || "",
@@ -6480,6 +6481,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
         summary_short:    p1.summary_short || p1.summary || p2?.summary || p1.raw_concerns?.slice(0,2).join(". ") || "",
         summary_long:     p1.summary_long || p1.summary || "",
         concerns:         p2?.refined_concerns || p1.raw_concerns || [],
+        // Preserve raw_concerns so applyProductCalibration can read the NOVA 4
+        // deterministic marker injected by inferNovaGroupFromIngredients —
+        // p2.refined_concerns overwrites concerns above, which would otherwise
+        // hide the marker from the calibration-layer NOVA floor check.
+        raw_concerns:     p1.raw_concerns || [],
         category:         finalCategory,
         ...(() => {
           const safety = computeSafetyScores(finalScore, finalCategory, p1.product_name || productName, p1, textFloors.triggered, (p2?.refined_concerns || []).join(" "));

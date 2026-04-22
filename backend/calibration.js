@@ -5122,6 +5122,34 @@ function applyProductCalibration(result) {
     cleanedConcerns   = cleanedConcerns.filter(s => !PETROLEUM_DYE_PATTERN.test(s));
   }
 
+  // ── Authoritative NOVA floor (final step) ─────────────────────
+  // The text and vision cascades inject p1.raw_concerns with a
+  // "NOVA 4 ultra-processed (inferred from ingredients: ...)" marker when
+  // inferNovaGroupFromIngredients detects ultra-processing signals. That
+  // inference is deterministic from the ingredient list and represents the
+  // ground-truth material story — the barcode path enforces it explicitly
+  // via novaBounds(), and this final step brings text/vision paths to the
+  // same parity. No downstream logic can claw the score below this floor
+  // because this IS the last step before the result ships.
+  //
+  // Only food/beverage categories are NOVA-scored. Other categories skip.
+  const FOOD_CATS_FOR_NOVA = new Set(["food", "beverage", "food_beverage"]);
+  if (FOOD_CATS_FOR_NOVA.has(category)) {
+    const novaMarkerText = Array.isArray(result.raw_concerns)
+      ? result.raw_concerns.join(" ")
+      : (Array.isArray(result.concerns) ? result.concerns.join(" ") : "");
+    const novaMarkerFromResult = /NOVA\s*4\s*ultra-processed/i.test(novaMarkerText);
+    const novaMarkerFromTier    = result.composition_tier === 4;
+    if (novaMarkerFromResult || novaMarkerFromTier) {
+      const novaFloorVal = 7;
+      if (newScore < novaFloorVal) {
+        console.log(`[CAL] NOVA 4 final floor: "${rawName}" ${newScore}→${novaFloorVal} (deterministic ultra-processed signal)`);
+        newScore = novaFloorVal;
+        corrected = true;
+      }
+    }
+  }
+
   if (!corrected) {
     if (entry && entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
