@@ -13,14 +13,18 @@
 # The script also runs vite build + cap sync so the iOS app bundle includes
 # the latest web assets and a current plugin list.
 #
-# Location: Xcode Cloud searches ./ci_scripts/ci_post_clone.sh at the repo
-# root first, which is why this lives here and not under frontend/.
+# Location: Xcode Cloud resolves ci_scripts/ci_post_clone.sh relative to the
+# Xcode project directory — so this script must live at
+# frontend/ios/App/ci_scripts/ci_post_clone.sh (adjacent to App.xcodeproj),
+# not at the repo root. Build 7 confirmed the repo-root fallback documented
+# by Apple is not checked in practice.
 
 set -euxo pipefail
 
 # Xcode Cloud exposes the cloned repo root via CI_PRIMARY_REPOSITORY_PATH.
-# Fall back to the script's parent dir so this also works if run locally.
-REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "$(dirname "$0")/.." && pwd)}"
+# Local-invocation fallback: the script lives four directories deep under
+# the repo root (frontend/ios/App/ci_scripts/), so walk up four levels.
+REPO_ROOT="${CI_PRIMARY_REPOSITORY_PATH:-$(cd "$(dirname "$0")/../../../.." && pwd)}"
 cd "$REPO_ROOT/frontend"
 
 # Xcode Cloud images don't ship Node.js. Install via Homebrew (already present
