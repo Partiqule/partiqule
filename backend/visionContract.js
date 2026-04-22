@@ -87,7 +87,24 @@ async function callClaudeVisionIdentify(imageBase64, mediaType, deps = {}) {
         model: VISION_MODEL,
         max_tokens: 900,
         temperature: 0,
-        system: `You are analyzing a product photo. Your job is to IDENTIFY the product (what it is, brand, variant) and separately REPORT WHAT YOU LITERALLY SEE on the ingredient label. These are two independent judgments: identity confidence is about how sure you are of WHAT THE PRODUCT IS; label legibility is about how readable the ingredient panel is. A photo can show a crystal-clear product name with a blurry ingredient panel — that is HIGH identity confidence and LOW label legibility. Do NOT let unreadable ingredients drag down your identity confidence. Return only valid JSON, no markdown. Never use apostrophes inside JSON string values.`,
+        system: `You are analyzing a product photo. Your job is to IDENTIFY the product (what it is, brand, variant) and separately REPORT WHAT YOU LITERALLY SEE on the ingredient/composition label. These are two independent judgments: identity confidence is about how sure you are of WHAT THE PRODUCT IS; label legibility is about how readable the ingredient / material-composition panel is. A photo can show a crystal-clear product name with a blurry ingredient panel — that is HIGH identity confidence and LOW label legibility. Do NOT let unreadable ingredients drag down your identity confidence. Return only valid JSON, no markdown. Never use apostrophes inside JSON string values.
+
+WHAT TO READ FOR IDENTITY (confidence signal — any ONE of these is enough for a high-confidence identification):
+- Front-package product name and brand (food, beverage, personal care, home, supplement)
+- Brand wordmark / logo on a garment (Nike swoosh, Patagonia wordmark, Lululemon Omega, adidas trefoil, etc.) — treat as strong brand signal
+- Hangtag on clothing, shoes, or accessories (brand + product name + style/SKU)
+- Interior care label on clothing (brand + size + country of origin) — brand alone from a care label is enough for a partial identification; combine with visual cues about garment type
+- Barcode numbers printed on packaging or tags (these won't be decoded here, but the surrounding text usually names the product)
+- Shelf sign or neck label on bottles/jars
+- Box/package back panel (brand, variant, flavor, size)
+
+WHAT TO READ FOR LABEL CONTENTS (label_ingredients field):
+- Food/beverage/supplement/cleaning: the ingredient list ("sugar, flour, canola oil, ..."). Report verbatim, in order.
+- Personal care: the INCI-style ingredient list. Report verbatim.
+- Clothing / textile / shoes: the material composition on the CARE LABEL ("72% nylon, 25% polyester, 3% spandex", "100% cotton", "Shell: 100% recycled polyester. Lining: 100% polyester."). Report each composition line as a separate array element — the scoring pipeline treats material composition as the ingredient-equivalent for textile products.
+- Accessories (bags, wallets, watches, jewelry): the material tag if visible ("Genuine leather", "316L stainless steel", "PU exterior, cotton lining").
+- Home/furnishing: fabric content tag, finish/coating labels.
+If none of these panels is readable, set label_ingredients to null and label_legibility to the appropriate non-full value — but still return the product identity.`,
         messages: [{
           role: "user",
           content: [
@@ -106,18 +123,28 @@ async function callClaudeVisionIdentify(imageBase64, mediaType, deps = {}) {
 }
 
 CONFIDENCE SCALE (identity only — NOT ingredient readability):
-- 0.90-1.00: You can read the full product name and brand clearly on the package.
-- 0.70-0.89: You can read most of the name/brand; minor ambiguity (exact variant unclear).
-- 0.45-0.69: You can see the general product type (e.g. "athletic socks", "muffins") but the specific brand or full name is not clearly visible.
+- 0.90-1.00: You can read the full product name and brand clearly on the package, hangtag, or visible brand wordmark.
+- 0.70-0.89: You can read most of the name/brand; minor ambiguity (exact variant or model unclear). Clothing examples: clear brand wordmark visible on garment plus recognizable garment type ("Nike ankle socks", "Patagonia fleece").
+- 0.45-0.69: You can see the general product type (e.g. "athletic socks", "muffins", "running shoes") but the specific brand or full name is not clearly visible.
 - 0.20-0.44: You have a rough guess about what the object is but it could be several products.
 - 0.00-0.19: The image does not show a consumer product, or the product is completely indeterminate (a hand, a blurry smear, a landscape).
 
+CATEGORY CUES (for the category field):
+- Visible care label, sewn-in brand tag, fabric weave, stitching, garment hangtag, apparel graphic → clothing.
+- Shoe/sneaker/boot silhouette with brand logo → clothing.
+- Nutrition Facts panel visible → food or beverage.
+- Supplement Facts panel visible → supplement.
+- Drug Facts panel or Rx label → personal_care (OTC skincare/haircare route here too).
+- INCI ingredient list with water/aqua/glycerin at top → personal_care.
+- Cleaning bottle with hazard warnings / SDS language → home.
+
 CRITICAL RULES:
 - Confidence is ONLY about product identity. It is INDEPENDENT of whether the ingredient list is readable. If you can clearly read "Abes Mini Muffins" on the package but the back-label ingredients are blurry, confidence should be 0.85+ and label_legibility should be "partial" or "minimal". DO NOT lower confidence because ingredients are unreadable — that is what label_legibility is for.
-- If label_ingredients is returned, every item must be something you can LITERALLY READ in the photo
-- If you cannot clearly read the ingredient list, set label_ingredients to null and label_legibility to the appropriate non-full value
-- Never fabricate ingredients based on product type assumptions
-- label_legibility "full" means the ingredient list is not cut off, text is legible, and at least the first 5 to 8 ingredients are clearly readable` },
+- A clothing item with a visible brand wordmark (on the garment or on a hangtag) plus a recognizable garment type is a HIGH-confidence identification even without a visible care label. The scoring cascade will find the material composition online from the brand and product name.
+- If label_ingredients is returned, every item must be something you can LITERALLY READ in the photo (or material composition on a care label, for textile products).
+- If you cannot clearly read the ingredient list or composition label, set label_ingredients to null and label_legibility to the appropriate non-full value.
+- Never fabricate ingredients or material percentages based on product type assumptions.
+- label_legibility "full" means the ingredient list / material composition is not cut off, text is legible, and the list is substantially complete (5+ ingredients for food/personal care, or all shell/lining/trim lines for textile).` },
           ],
         }],
       }),
