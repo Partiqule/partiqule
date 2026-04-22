@@ -6026,22 +6026,27 @@ function App() {
         // { transactionId, productIdentifier, receipt?, jwsRepresentation,
         //   productType, purchaseDate, isUpgraded, ownershipType,
         //   originalPurchaseDate, expirationDate, isActive, ... }
-        // — not the { transaction: {...} } wrapper my earlier code assumed.
-        // Property-name typos there caused every successful sandbox purchase
-        // to fall through to the "no transaction property" branch, which is
-        // why five sandbox RENEWAL transactions stacked up in the logs with
-        // no UI confirmation.
-        const txnId = purchaseResult?.transactionId;
-        const matches = purchaseResult?.productIdentifier === IAP_PRODUCT_ID;
-        // For auto-renewable subs the plugin exposes isActive (bool) based on
-        // expirationDate > now. If it's explicitly false we got back an
-        // EXPIRED renewal from sandbox queue replay (not an actual grant) —
-        // don't activate on those. Missing isActive = treat as active (Apple
-        // sometimes omits the field on fresh first purchases).
-        const isActive = purchaseResult?.isActive !== false;
+        // Don't gate on purchaseResult.isActive at purchase time: it reflects
+        // expirationDate > now, which in sandbox queue-replay is always false
+        // (StoreKit dequeues old expired renewals on each purchaseProduct call).
+        // A just-completed purchase via payment sheet is always active in prod.
+        // For the richer "current entitlement" check we do a separate
+        // getPurchases call below — if that returns an active match we use it
+        // as the source of truth, otherwise we fall back to purchaseResult.
         clearTimeout(iapTimeout);
-        if (txnId && matches && isActive) {
-          console.log("[IAP] transaction present, txnId:", txnId, "isActive:", purchaseResult?.isActive);
+        const matches = purchaseResult?.productIdentifier === IAP_PRODUCT_ID;
+        let entitlement = null;
+        try {
+          const rp = await np.getPurchases({ onlyCurrentEntitlements: true });
+          entitlement = (rp?.purchases || []).find(
+            p => p?.productIdentifier === IAP_PRODUCT_ID && p?.isActive !== false,
+          ) || null;
+        } catch (e) { console.warn("[IAP] getPurchases-after-purchase failed:", e?.message); }
+        const txn = entitlement || (matches ? purchaseResult : null);
+        const txnId = txn?.transactionId;
+        if (txnId) {
+          console.log("[IAP] activating from", entitlement ? "current entitlement" : "purchase result",
+            "txnId:", txnId, "isActive:", txn?.isActive);
           // Persist to backend FIRST. The server flips profiles.is_subscribed
           // (what /subscription-status reads) — without this the in-memory
           // isSubscribed=true reverts to false on the next app launch and the
@@ -6055,7 +6060,7 @@ function App() {
               body: JSON.stringify({
                 userId: user?.id,
                 transactionId: txnId,
-                receipt: purchaseResult?.receipt || purchaseResult?.jwsRepresentation || null,
+                receipt: txn?.receipt || txn?.jwsRepresentation || null,
               }),
             });
             backendOk = confirmRes.ok;
@@ -6095,20 +6100,10 @@ function App() {
             }
           }
         } else {
-          console.log("[IAP] purchaseProduct returned unusable result. txnId:",
-            txnId, "matches:", matches, "isActive:", purchaseResult?.isActive,
-            "subscriptionState:", purchaseResult?.subscriptionState);
-          clearTimeout(iapTimeout);
-          // If the sandbox is replaying expired renewals (common when a
-          // tester has prior purchase history), don't trap the user in the
-          // error modal — just reset UI and let them try again. The real
-          // first-purchase path will succeed.
-          if (purchaseResult?.subscriptionState === "expired" || purchaseResult?.isActive === false) {
-            setError("That purchase came back expired. Try again — or reset purchase history in Settings > Developer > Sandbox.");
-            setTimeout(() => setError(null), 6000);
-          } else {
-            setIapTimedOut(true);
-          }
+          console.log("[IAP] no activatable transaction — matches:", matches,
+            "entitlement found:", !!entitlement,
+            "purchaseResult.productIdentifier:", purchaseResult?.productIdentifier);
+          setIapTimedOut(true);
         }
       } catch (e) {
         clearTimeout(iapTimeout);
