@@ -7,18 +7,33 @@ import { createClient } from "@supabase/supabase-js";
 let NativePurchases = null;
 let PURCHASE_TYPE = { SUBS: "subs" };
 let nativePurchasesLoading = null;
+// Returns { plugin: <Capacitor Proxy or null> } — NOT the Proxy directly.
+// Capacitor's plugin Proxy has a wildcard get trap that returns a function
+// for any property including `then`, which makes Promise.resolve(proxy) treat
+// the Proxy as a pending thenable. The resulting proxy.then(...) call posts
+// a bridge message for a nonexistent "then" plugin method that never settles,
+// so every `await` of an async function returning the raw Proxy hangs forever.
+// Wrapping in an object shields Promise.resolve from seeing a thenable.
 const loadNativePurchases = async () => {
-  if (NativePurchases) return NativePurchases;
-  if (nativePurchasesLoading) return nativePurchasesLoading;
+  if (NativePurchases) { console.log("[IAP] loadNativePurchases cache hit"); return { plugin: NativePurchases }; }
+  if (nativePurchasesLoading) { console.log("[IAP] loadNativePurchases already loading, awaiting"); return nativePurchasesLoading; }
+  console.log("[IAP] loadNativePurchases starting dynamic import");
   nativePurchasesLoading = (async () => {
     try {
       const mod = await import("@capgo/native-purchases");
+      console.log("[IAP] module import resolved, keys:", Object.keys(mod || {}).join(","));
       NativePurchases = mod.NativePurchases || null;
-      if (mod.PURCHASE_TYPE) PURCHASE_TYPE = mod.PURCHASE_TYPE;
-      return NativePurchases;
+      console.log("[IAP] NativePurchases bound:", NativePurchases ? "yes" : "NO — module exported falsy");
+      if (mod.PURCHASE_TYPE) {
+        PURCHASE_TYPE = mod.PURCHASE_TYPE;
+        console.log("[IAP] PURCHASE_TYPE:", JSON.stringify(PURCHASE_TYPE));
+      } else {
+        console.log("[IAP] mod.PURCHASE_TYPE missing — using fallback", JSON.stringify(PURCHASE_TYPE));
+      }
+      return { plugin: NativePurchases };
     } catch (e) {
-      console.warn("NativePurchases unavailable:", e.message);
-      return null;
+      console.error("[IAP] dynamic import FAILED:", e?.name, e?.message, e?.stack);
+      return { plugin: null };
     }
   })();
   return nativePurchasesLoading;
@@ -5911,18 +5926,24 @@ function App() {
 
   // Load product price from StoreKit on iOS so we show the real App Store price
   useEffect(() => {
+    console.log("[IAP] price-fetch effect fired, IS_NATIVE:", IS_NATIVE);
     if (!IS_NATIVE) return;
     (async () => {
       try {
-        const np = await loadNativePurchases();
-        if (!np) return; // StoreKit unavailable — use default price
-        const { products } = await np.getProducts({
+        console.log("[IAP] price-fetch: loading native purchases");
+        const { plugin: np } = await loadNativePurchases();
+        if (!np) { console.log("[IAP] price-fetch: np is null, aborting"); return; }
+        console.log("[IAP] price-fetch: calling getProducts with", IAP_PRODUCT_ID);
+        const result = await np.getProducts({
           productIdentifiers: [IAP_PRODUCT_ID],
           productType: PURCHASE_TYPE.SUBS,
         });
+        console.log("[IAP] price-fetch: getProducts returned", JSON.stringify(result).slice(0, 500));
+        const products = result?.products;
         if (products?.[0]?.priceString) setIapPrice(products[0].priceString + "/month");
+        else console.log("[IAP] price-fetch: no priceString in result — product not found in StoreKit?");
       } catch (e) {
-        // silently fall back to default price string
+        console.error("[IAP] price-fetch FAILED:", e?.name, e?.message, e?.stack);
       }
     })();
   }, []);
@@ -5931,15 +5952,20 @@ function App() {
     if (!user) { setShowAuth(true); return; }
 
     if (IS_NATIVE) {
+      console.log("[IAP] startCheckout: IS_NATIVE path, user:", user?.id);
       // iOS — purchase via StoreKit through @capgo/native-purchases
       setCheckingOut(true);
       setIapTimedOut(false);
+      const purchaseStart = Date.now();
       const iapTimeout = setTimeout(() => {
+        console.error("[IAP] TIMEOUT at 12000ms — purchaseProduct never resolved. Elapsed:", Date.now() - purchaseStart, "ms");
         setCheckingOut(false);
         setIapTimedOut(true);
       }, 12000);
       try {
-        const np = await loadNativePurchases();
+        console.log("[IAP] startCheckout: loading native purchases");
+        const { plugin: np } = await loadNativePurchases();
+        console.log("[IAP] startCheckout: np =", np ? "OK" : "NULL");
         if (!np) {
           clearTimeout(iapTimeout);
           setCheckingOut(false);
@@ -5948,12 +5974,16 @@ function App() {
           setTimeout(() => setError(null), 5000);
           return;
         }
-        const { transaction } = await np.purchaseProduct({
+        console.log("[IAP] startCheckout: calling purchaseProduct", IAP_PRODUCT_ID, "type:", PURCHASE_TYPE.SUBS);
+        const purchaseResult = await np.purchaseProduct({
           productIdentifier: IAP_PRODUCT_ID,
           productType: PURCHASE_TYPE.SUBS,
         });
+        console.log("[IAP] purchaseProduct RESOLVED after", Date.now() - purchaseStart, "ms. Result:", JSON.stringify(purchaseResult).slice(0, 500));
+        const transaction = purchaseResult?.transaction;
         clearTimeout(iapTimeout);
         if (transaction) {
+          console.log("[IAP] transaction present, txnId:", transaction.transactionIdentifier);
           setIsSubscribed(true);
           setScanCount(0);
           try { localStorage.setItem("ps_scan_count", "0"); } catch {}
@@ -5964,15 +5994,18 @@ function App() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userId: user?.id, transactionId: transaction.transactionIdentifier, receipt: transaction.receipt }),
             });
-          } catch {}
+          } catch (confirmErr) {
+            console.warn("[IAP] apple-iap-confirm POST failed:", confirmErr?.message);
+          }
         } else {
-          // StoreKit returned no transaction — show fallback
+          console.log("[IAP] purchaseProduct returned with NO transaction property");
           clearTimeout(iapTimeout);
           setIapTimedOut(true);
         }
       } catch (e) {
         clearTimeout(iapTimeout);
-        const msg = e.message || "";
+        console.error("[IAP] purchaseProduct THREW after", Date.now() - purchaseStart, "ms. name:", e?.name, "message:", e?.message, "code:", e?.code, "stack:", e?.stack);
+        const msg = e?.message || "";
         if (!msg.includes("cancelled") && !msg.includes("cancel")) {
           setIapTimedOut(true);
           setError("Purchase could not be completed. Try again or subscribe on our website.");
@@ -6450,9 +6483,18 @@ function App() {
       setLoading(false);
       if (onDone) onDone();
     } catch(err) {
-      console.error("Image scan error:", err);
+      // Log every property we can — iOS webview sometimes serializes Error as {}
+      console.error("[PHOTO] Image scan error:",
+        "name:", err?.name,
+        "message:", err?.message,
+        "code:", err?.code,
+        "status:", err?.status,
+        "stack:", err?.stack,
+        "toString:", String(err),
+        "keys:", err ? Object.keys(err).join(",") : "null-err",
+      );
       setLoading(false); setQuery("");
-      setError(err.name === "AbortError"
+      setError(err?.name === "AbortError"
         ? "Scan timed out — please try again in a moment."
         : "Couldn't identify that product. Try a photo of the front label, nutrition panel, or clothing tag — or just type the product name.");
     }
@@ -7944,6 +7986,19 @@ function App() {
                               · {b}
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Good kid score — green tier, child score matches adult score (no bumps needed) */}
+                      {childMode && result.child_score && result.child_score <= 3 && result.child_score === (result.overall_score || result.score) && (
+                        <div style={{
+                          marginTop:12, background:"var(--moss-soft)",
+                          border:"1px solid var(--rule)", borderRadius:"var(--card-shape-2)",
+                          padding:"12px 16px", textAlign:"left",
+                        }}>
+                          <div style={{fontSize:13, fontWeight:500, color:"var(--moss-deep)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>
+                            Kid-friendly score. Nice find.
+                          </div>
                         </div>
                       )}
 
