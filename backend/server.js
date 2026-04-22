@@ -6417,18 +6417,24 @@ app.post("/analyze", rateLimit, async (req, res) => {
         else                              finalScore = Math.max(finalScore, 3);
       }
 
+      // DEBUG: log every score mutation for NOVA 4 products so we can see in
+      // Railway logs which downstream gate is pulling the final score below
+      // the NOVA floor. Remove once the mystery gate is identified.
+      if (novaInf && novaInf.nova === 4) {
+        console.log(`[${tier}][nova_trace] BEFORE post-ceiling clamp: mScore=${mScore} uScore=${uScore} pkScore=${pkScore} sScore=${sScore} finalScore=${finalScore} composition_tier=${p1.product_analysis?.composition_tier} confidence=${p1.confidence}`);
+      }
+
       // ── NOVA-inferred final-score floor ──
-      // Authoritative enforcement: whatever the ceilings decided, an ultra-
-      // processed product must not score below its NOVA floor. Runs AFTER all
-      // consistency checks, positive ceilings, and the drift guard, so no
-      // downstream gate can claw it back (e.g. "Non-GMO clean" ceiling tried
-      // to cap Abes Muffins at 4 even with the raw_concerns bypass).
       if (novaInf) {
         const novaFinal = novaBounds(novaInf.nova, finalCategory).floor;
         if (novaFinal > finalScore) {
           console.log(`[${tier}] NOVA ${novaInf.nova} final-score floor: ${finalScore} → ${novaFinal}`);
           finalScore = novaFinal;
         }
+      }
+
+      if (novaInf && novaInf.nova === 4) {
+        console.log(`[${tier}][nova_trace] AFTER post-ceiling clamp: finalScore=${finalScore}`);
       }
 
       const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
@@ -6548,7 +6554,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
         ingredient_source_url: sourceFields.ingredient_source_url,
       };
 
+      if (novaInf && novaInf.nova === 4) {
+        console.log(`[${tier}][nova_trace] BEFORE applyProductCalibration: result.score=${result.score} result.composition_tier=${result.composition_tier} p1.product_analysis.composition_tier=${p1.product_analysis?.composition_tier}`);
+      }
       const calibrated = applyProductCalibration(result);
+      if (novaInf && novaInf.nova === 4) {
+        console.log(`[${tier}][nova_trace] AFTER applyProductCalibration: calibrated.score=${calibrated.score} calibrated.overall_score=${calibrated.overall_score} override=${JSON.stringify(calibrated.calibration_override || null).slice(0, 200)}`);
+      }
       if (calibrated.child_score != null) {
         const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
         calibrated.child_score = kidsCalibrated.overall_score;
