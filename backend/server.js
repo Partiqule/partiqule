@@ -5664,9 +5664,38 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       // Step 4b: cascade returned external data (OFF or web_search) → full Pass 1 scoring.
-      // Step 4c: no cascade → Tier 5 synthetic category-prior best guess.
-      // Identified products always score; the label is not used as a gating
-      // mechanism anymore (see CLAUDE.md "Vision Contract v2" for rationale).
+      // Step 4c: no cascade → ask user to confirm identification before Tier 5.
+      //
+      // When every verification tier (calibration, fuzzy, cache, OFF, web search)
+      // fails for a vision-identified product name, the name itself is suspect —
+      // real products are usually findable in at least one source. Asking the user
+      // to confirm before synthesizing a score protects against vision misreads
+      // like "Clinique Pop Lip & Cheek Oil" → "Unique Liquid Lipstick" silently
+      // producing a Tier 5 category-prior score that looks authoritative.
+      //
+      // On fresh identifications we pause here and return needs_confirmation.
+      // If the user confirms (fromResume), we proceed to Tier 5 — they've
+      // acknowledged the identification and opted in to a best-guess score.
+      if (!cascadeHit && !fromResume) {
+        const newId = putIdentification(identification);
+        log.info("vision_cascade_miss_confirming", {
+          product_name: productName,
+          confidence: identification.confidence,
+          has_brand: !!identification.brand,
+        });
+        return res.json({
+          status: "needs_confirmation",
+          identificationId: newId,
+          identified: {
+            product_name: productName,
+            brand: identification.brand,
+            variant: identification.variant,
+            confidence: identification.confidence,
+          },
+          message: `I see this looks like ${productName}. Is that right?`,
+        });
+      }
+
       if (!cascadeHit) {
         const t5 = tier5CategoryPrior(productName, visionCat, {
           categoryAverages: CATEGORY_AVERAGES,
