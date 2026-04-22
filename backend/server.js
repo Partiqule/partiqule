@@ -5740,6 +5740,15 @@ app.post("/analyze", rateLimit, async (req, res) => {
           mScore = nova.floor;
         }
         if (mScore > nova.ceiling) mScore = nova.ceiling;
+        // Surface the inferred NOVA into p1.raw_concerns so applyPositiveCeilings
+        // sees it as ultra-processed and does NOT cap the score at 4 via the
+        // Non-GMO / Organic ceiling rules. Without this, a Non-GMO Project
+        // Verified ultra-processed food (like Abe's Muffins) gets the NOVA 4
+        // floor raised to 7, then immediately capped back to 4 by the ceiling.
+        if (novaInf.nova === 4) {
+          p1.raw_concerns = Array.isArray(p1.raw_concerns) ? p1.raw_concerns : [];
+          p1.raw_concerns.push(`NOVA 4 ultra-processed (inferred from ingredients: ${novaInf.matches.slice(0, 3).join(", ")})`);
+        }
       }
 
       let finalScore = computeScore(mScore, uScore, pkScore, sScore, visionCat);
@@ -6336,6 +6345,14 @@ app.post("/analyze", rateLimit, async (req, res) => {
           mScore = nova.floor;
         }
         if (mScore > nova.ceiling) mScore = nova.ceiling;
+        // Surface the NOVA 4 inference into p1.raw_concerns so the Non-GMO /
+        // Organic ceilings in applyPositiveCeilings do not cap an ultra-
+        // processed-but-Non-GMO product back down to 4. See vision path
+        // for the same guard.
+        if (novaInf.nova === 4) {
+          p1.raw_concerns = Array.isArray(p1.raw_concerns) ? p1.raw_concerns : [];
+          p1.raw_concerns.push(`NOVA 4 ultra-processed (inferred from ingredients: ${novaInf.matches.slice(0, 3).join(", ")})`);
+        }
       }
 
       // Restaurant dimension floors
