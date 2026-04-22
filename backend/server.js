@@ -5766,6 +5766,17 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ));
       ({ finalScore } = applyPositiveCeilings(finalScore, visionCat, p1, p2, []));
 
+      // NOVA-inferred final-score floor — authoritative post-ceiling
+      // enforcement so Non-GMO / consistency ceilings can't claw an ultra-
+      // processed product back below its NOVA floor. Matches text-cascade logic.
+      if (novaInf) {
+        const novaFinal = novaBounds(novaInf.nova, visionCat).floor;
+        if (novaFinal > finalScore) {
+          console.log(`[vision_v2] NOVA ${novaInf.nova} final-score floor: ${finalScore} → ${novaFinal}`);
+          finalScore = novaFinal;
+        }
+      }
+
       const safety = computeSafetyScores(finalScore, visionCat, productName, p1, textFloors.triggered, ingredientText);
       const alternatives = serializeAlternatives(
         filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
@@ -6354,13 +6365,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
           mScore = nova.floor;
         }
         if (mScore > nova.ceiling) mScore = nova.ceiling;
-        // Surface the NOVA 4 inference into p1.raw_concerns so the Non-GMO /
-        // Organic ceilings in applyPositiveCeilings do not cap an ultra-
-        // processed-but-Non-GMO product back down to 4. See vision path
-        // for the same guard.
         if (novaInf.nova === 4) {
           p1.raw_concerns = Array.isArray(p1.raw_concerns) ? p1.raw_concerns : [];
           p1.raw_concerns.push(`NOVA 4 ultra-processed (inferred from ingredients: ${novaInf.matches.slice(0, 3).join(", ")})`);
+          // Upgrade composition_tier so applyProductCalibration's Tier rules
+          // don't later downgrade the score below the NOVA floor.
+          p1.product_analysis = p1.product_analysis || {};
+          p1.product_analysis.composition_tier = 4;
         }
       }
 
@@ -6404,6 +6415,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
         else if (isBurger)                finalScore = Math.max(finalScore, 4);
         else if (isTaco)                  finalScore = Math.max(finalScore, 3);
         else                              finalScore = Math.max(finalScore, 3);
+      }
+
+      // ── NOVA-inferred final-score floor ──
+      // Authoritative enforcement: whatever the ceilings decided, an ultra-
+      // processed product must not score below its NOVA floor. Runs AFTER all
+      // consistency checks, positive ceilings, and the drift guard, so no
+      // downstream gate can claw it back (e.g. "Non-GMO clean" ceiling tried
+      // to cap Abes Muffins at 4 even with the raw_concerns bypass).
+      if (novaInf) {
+        const novaFinal = novaBounds(novaInf.nova, finalCategory).floor;
+        if (novaFinal > finalScore) {
+          console.log(`[${tier}] NOVA ${novaInf.nova} final-score floor: ${finalScore} → ${novaFinal}`);
+          finalScore = novaFinal;
+        }
       }
 
       const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
