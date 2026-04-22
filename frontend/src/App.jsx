@@ -263,7 +263,15 @@ const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 // ── BARCODE SCANNER ──────────────────────────────────────────
 // Full-screen camera viewfinder with live barcode detection.
-// Uses ML Kit on iOS (via Capacitor) and ZXing on mobile web.
+// Single code path for iOS, Android, and web: getUserMedia + native
+// BarcodeDetector (delegates to Apple Vision on iOS WKWebView,
+// GmsVision on Android WebView), with a ZXing fallback for browsers
+// that don't ship BarcodeDetector. The previous MLKit-native path was
+// removed because its dependency (GoogleMLKit/BarcodeScanning) is
+// CocoaPods-only and our iOS project uses SPM — the plugin couldn't
+// be linked, so it emitted "not implemented on ios" in Xcode logs.
+// WebKit BarcodeDetector is hardware-accelerated and fast enough for
+// point-and-shoot UPC/EAN scanning.
 const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
   const videoRef    = useRef(null);
   const canvasRef   = useRef(null);
@@ -283,16 +291,6 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
     if (hintTimer.current) { clearTimeout(hintTimer.current); hintTimer.current = null; }
     try { controlsRef.current?.stop?.(); } catch(e) {}
     try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch(e) {}
-    if (IS_NATIVE) {
-      try {
-        const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
-        await BarcodeScanner.stopScan();
-        await BarcodeScanner.removeAllListeners();
-      } catch(e) {}
-      // Restore the webview background so the rest of the app looks normal
-      document.documentElement.classList.remove("barcode-active");
-      document.body.classList.remove("barcode-active");
-    }
   };
 
   const onFound = (value) => {
@@ -306,74 +304,53 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
 
   useEffect(() => {
     const start = async () => {
-      if (IS_NATIVE) {
-        try {
-          // Make the webview transparent so the native ML Kit camera shows through
-          document.documentElement.classList.add("barcode-active");
-          document.body.classList.add("barcode-active");
+      try {
+        // Lower resolution = faster barcode decoding
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        streamRef.current = stream;
+        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+        setStatus("scanning"); setScanMsg("Point at a barcode");
 
-          const { BarcodeScanner } = await import("@capacitor-mlkit/barcode-scanning");
+        // Surface a gentle retry hint if the user hasn't found a barcode after 12s.
+        hintTimer.current = setTimeout(() => {
+          if (!stopRef.current) setHint(true);
+        }, 12000);
 
-          // Check that ML Kit is supported on this device
-          const { supported } = await BarcodeScanner.isSupported();
-          if (!supported) {
-            setStatus("error"); setScanMsg("Barcode scanning not supported on this device");
-            return;
-          }
-
-          const { camera } = await BarcodeScanner.requestPermissions();
-          if (camera !== "granted" && camera !== "limited") {
-            setStatus("error"); setScanMsg("Camera permission denied. Enable in Settings.");
-            return;
-          }
-
-          await BarcodeScanner.addListener("barcodeScanned", ({ barcode }) => onFound(barcode.rawValue));
-          await BarcodeScanner.startScan();
-          setStatus("scanning"); setScanMsg("Point at a barcode");
-        } catch(e) {
-          console.warn("[BARCODE] native scanner error:", e?.message || e);
-          setStatus("error"); setScanMsg("Scanner unavailable — try photo instead");
-        }
-      } else {
-        try {
-          // Lower resolution = faster barcode decoding
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        // WebKit BarcodeDetector — hardware-accelerated on iOS 17+ (Apple Vision)
+        // and Android Chrome (GmsVision). Works inside Capacitor WKWebView with no
+        // native plugin required. ZXing fallback stays for any WebView that lacks
+        // the API (older iOS, some desktop browsers).
+        if ("BarcodeDetector" in window) {
+          const detector = new window.BarcodeDetector({
+            formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","qr_code","data_matrix","itf","codabar"]
           });
-          streamRef.current = stream;
-          if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
-          setStatus("scanning"); setScanMsg("Point at a barcode");
-
-          // Use native BarcodeDetector (iOS 17+ / Chrome Android) — hardware-accelerated, much faster than ZXing
-          hintTimer.current = setTimeout(() => {
-            if (!stopRef.current) setHint(true);
-          }, 12000);
-
-          if ("BarcodeDetector" in window) {
-            const detector = new window.BarcodeDetector({
-              formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","code_93","qr_code","data_matrix","itf","codabar"]
-            });
-            const scan = async () => {
-              if (stopRef.current || !videoRef.current) return;
-              try {
-                const barcodes = await detector.detect(videoRef.current);
-                if (barcodes.length > 0) { onFound(barcodes[0].rawValue); return; }
-              } catch(e) {}
-              if (!stopRef.current) rafRef.current = requestAnimationFrame(scan);
-            };
-            rafRef.current = requestAnimationFrame(scan);
-          } else {
-            // ZXing fallback for older browsers
-            const { BrowserMultiFormatReader } = await import("@zxing/browser");
-            const reader = new BrowserMultiFormatReader();
-            const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
-              (result) => { if (result && !stopRef.current) onFound(result.getText()); }
-            );
-            controlsRef.current = controls;
-          }
-        } catch(e) {
-          setStatus("error"); setScanMsg("Camera unavailable — try typing instead");
+          const scan = async () => {
+            if (stopRef.current || !videoRef.current) return;
+            try {
+              const barcodes = await detector.detect(videoRef.current);
+              if (barcodes.length > 0) { onFound(barcodes[0].rawValue); return; }
+            } catch(e) {}
+            if (!stopRef.current) rafRef.current = requestAnimationFrame(scan);
+          };
+          rafRef.current = requestAnimationFrame(scan);
+        } else {
+          const { BrowserMultiFormatReader } = await import("@zxing/browser");
+          const reader = new BrowserMultiFormatReader();
+          const controls = await reader.decodeFromVideoDevice(undefined, videoRef.current,
+            (result) => { if (result && !stopRef.current) onFound(result.getText()); }
+          );
+          controlsRef.current = controls;
         }
+      } catch(e) {
+        console.warn("[BARCODE] camera/detector error:", e?.message || e);
+        setStatus("error");
+        setScanMsg(
+          e?.name === "NotAllowedError"
+            ? "Camera permission denied. Enable in Settings."
+            : "Camera unavailable — try a photo instead."
+        );
       }
     };
     start();
@@ -440,19 +417,13 @@ const BarcodeScannerView = ({ onBarcode, onPhoto, onClose }) => {
           100% { top:calc(100% - 10px); opacity:0 }
         }
         @keyframes barcodeFlash { 0%,100%{opacity:0} 50%{opacity:1} }
-        /* When native ML Kit is active, make the webview transparent so
-           the camera feed (rendered in a native layer behind the webview)
-           is visible through it. Class toggled by the scanner mount effect. */
-        html.barcode-active,
-        body.barcode-active,
-        .barcode-active #root { background: transparent !important; }
       `}</style>
 
-      {/* Live camera feed — web only (iOS uses native layer) */}
-      {!IS_NATIVE && (
-        <video ref={videoRef} playsInline muted autoPlay
-          style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
-      )}
+      {/* Live camera feed — rendered on every platform since we no longer use
+          a native camera layer. The video element sits under the dark overlay
+          + scanning frame. */}
+      <video ref={videoRef} playsInline muted autoPlay
+        style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
       <canvas ref={canvasRef} style={{display:"none"}}/>
 
       {/* Green flash on barcode detect */}
