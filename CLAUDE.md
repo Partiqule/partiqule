@@ -41,6 +41,15 @@ After ANY backend/server.js or backend/calibration.js change, clear the cache:
 curl "https://partiqule-production.up.railway.app/cache-clear" -H "x-admin-key: $ADMIN_KEY"
 ```
 
+**IMPORTANT: `/cache-clear` only clears the in-memory `scoreCache` Map — it does NOT clear Redis or the disk fallback.** Redis holds cached scored results for 90 days. If a scoring-logic fix changes how a product is scored, the old score will continue serving from Redis on cache-miss-to-in-memory until the entry ages out. Symptoms: the response carries `"cached": true` and a score that doesn't reflect the new logic.
+
+To fully invalidate a specific product's cached score (both layers):
+```bash
+curl "https://partiqule-production.up.railway.app/cache-clear-product?name=abes+mini+muffins+chocolate+chip" -H "x-admin-key: $ADMIN_KEY"
+```
+
+`/cache-clear-product` clears in-memory, Redis, and saves disk. Use this when testing scoring changes on specific items. For a global prompt-level change there's no need to touch Redis directly — the cache key is prefixed with the `v<8-char-sha>` prompt hash, so Redis entries from older prompts become structurally unreachable and age out. Only manual deterministic changes (substance floors, calibration entries, NOVA inference, consistency checks) that reuse the same cache key require `/cache-clear-product` for targeted retesting.
+
 The `ADMIN_KEY` env var must be set in Railway. There is no hardcoded fallback. Query param `?key=` also works but header is preferred (avoids key leaking in logs).
 
 Commit messages: plain English only, no special characters, no em dashes (they break terminal quote parsing).
@@ -78,7 +87,7 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 - Baby: Materials 55% + Exposure 40% + Packaging 5%
 - Toys: Materials 50% + Exposure 40% + Packaging 5% + Sustainability 5%
 
-**Caching (multi-layer):** In-memory Map -> Upstash Redis (90-day TTL) -> disk fallback (`/tmp/partiqule_cache.json`).
+**Caching (multi-layer):** In-memory Map -> Upstash Redis (90-day TTL) -> disk fallback (`/tmp/partiqule_cache.json`). On `cacheGet`, layers are checked in order — in-memory first, Redis on miss, disk on Redis miss. Writes populate all three. `/cache-clear` only clears in-memory; Redis and disk survive. `/cache-clear-product?name=X` clears all three for a specific product. When testing deterministic scoring fixes (substance floors, calibration, NOVA inference) against known-cached products, use the per-product endpoint or the Redis entry will serve a stale score until it ages out.
 
 **Cache versioning:** All Pass 1 output cache keys are prefixed with `v<8-char-sha>:` where the hash is computed at startup from the source of `pass1`, `pass2`, `callClaudeVision`, `tier4WebExtract`, and `tier5CategoryPrior`. When any of these prompts is edited the hash changes, every prior cache entry becomes unreachable by name, and the next request rescore naturally with the current prompt. Old entries age out via Redis TTL — no migration needed. Calibration map lookups, Supabase scan lookups, and the productId bypass don't go through cacheGet/cacheSet, so they're never invalidated by prompt edits. Startup logs the active version: `[CACHE] Prompt version: v<hash>`.
 
@@ -752,6 +761,10 @@ The result object built by all food-category scoring paths must include `raw_con
 - `[${tier}] NOVA N inferred from ingredients (marker1, marker2, marker3) — materials X → Y` — fires in the cascade when materials is raised.
 - `[${tier}][nova_trace] ...` — debug trace at three checkpoints (before post-ceiling clamp, after, before/after applyProductCalibration). Useful when a NOVA 4 product is scoring unexpectedly low.
 - `[CAL] NOVA 4 final floor: "X" N→7 (deterministic ultra-processed signal)` — fires inside applyProductCalibration when the authoritative clamp activates.
+
+### Debugging an unexpected score
+
+If a NOVA 4 product is returning a score below 7, check the response `cached` field first. `"cached": true` means Redis served a pre-fix result; clear it with `/cache-clear-product?name=X` and re-request to force a fresh cascade run. Only investigate the scoring pipeline once `"cached": false` is confirmed.
 
 ### What this is NOT
 
