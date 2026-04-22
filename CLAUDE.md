@@ -59,7 +59,7 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 3. Web search runs IN PARALLEL with pass1 (not blocking). If search returns data, it feeds into pass2
 4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
 5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
-5a. NOVA bounds (`novaBounds()` in server.js) override AI scores for food and beverage. NOVA 1 ceiling 3, NOVA 3 floor 4, NOVA 4 floor 7. Traditional fermented foods (miso, kimchi, kefir, sauerkraut, tempeh) exempt via calibration. Deterministic enforcement runs post-calibration in the barcode path; text and vision paths enforce the same bounds via prompt-level rules. Rationale: NOVA 1 ceiling reinforces whole foods as clean baseline, NOVA 3 floor acknowledges processing carries inherent concern, NOVA 4 floor of 7 signals ultra-processed as real concern matching UPF research (Monteiro 2025 Lancet, Srour 2024 BMJ, Lane 2024 Neurology).
+5a. NOVA bounds (`novaBounds()` in server.js) override AI scores for food and beverage. NOVA 1 ceiling 3, NOVA 3 floor 4, NOVA 4 floor 7. Traditional fermented foods (miso, kimchi, kefir, sauerkraut, tempeh) exempt via calibration. Barcode path reads `nova_group` directly from Open Food Facts. Text and vision paths use `inferNovaGroupFromIngredients()` (server.js) — a deterministic scan of the ingredient string for hallmark ultra-processing markers (fortification vitamins, tricalcium/dicalcium phosphate, syrups, HFCS, maltodextrin, dextrose, isolates, lecithin, mono/diglycerides, xanthan/guar gum, carrageenan, natural/artificial flavors, modified starches, hydrogenated oils, aspartame/sucralose/acesulfame, FD&C colors, sodium/potassium benzoates and sorbates, yeast extract, DATEM, polysorbates). 2+ markers → NOVA 4, 1 marker → NOVA 3, refined sugar/flour alone → NOVA 3. The inference injects `"NOVA 4 ultra-processed (inferred from ingredients: ...)"` into `p1.raw_concerns` and sets `p1.product_analysis.composition_tier = 4` so downstream consistency checks and positive ceilings recognize the signal. Authoritative floor enforcement is the LAST step of `applyProductCalibration` in calibration.js — food/beverage + NOVA 4 marker → score clamped to min 7 regardless of any upstream ceiling. This is the parity mechanism: Abe's Mini Muffins scores 7 identically via barcode, text search, or photo. Rationale: NOVA 1 ceiling reinforces whole foods as clean baseline, NOVA 3 floor acknowledges processing carries inherent concern, NOVA 4 floor of 7 signals ultra-processed as real concern matching UPF research (Monteiro 2025 Lancet, Srour 2024 BMJ, Lane 2024 Neurology).
 6. Regulatory flags from Supabase injected into AI prompt for approved findings
 7. Calibration registry (`backend/calibration.js`, 3,039 known products) overrides AI entirely
 8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
@@ -287,6 +287,7 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 - Pregnancy scores computed on ALL paths (including image/camera -- was previously missing)
 - Regulatory flags are loaded into `REGULATORY_FLAGS_CACHE` on startup and injected into pass1 via `buildRegulatoryContext()`
 - Fuzzy calibration uses a prefix index (rebuilt on calibration override reload) for fast lookups
+- All food/beverage paths enforce NOVA 4 floor via `inferNovaGroupFromIngredients()` (text, vision) or OFF `nova_group` (barcode). `applyProductCalibration` runs the authoritative final-step clamp (floor 7) so no downstream ceiling can override it. `result.raw_concerns` must be preserved on the response object so the calibration layer can read the `"NOVA 4 ultra-processed"` marker — don't let `p2.refined_concerns` overwrite `concerns` without also copying `raw_concerns` separately.
 
 ### Category detection
 - `detectCategory()` routes products before scoring. Order matters -- baby personal care ("baby shampoo") routes to personal_care, baby supplements ("kids vitamins") route to supplement, before the baby catch-all
@@ -403,7 +404,7 @@ The cascade was added on 2026-04-20, replacing the prior `cannot_score_from_text
 | 1 | `CALIBRATION` map | Exact / fuzzy match against `backend/calibration.js` (3,039+ entries) | `null` | `"Verified formula"` |
 | 2 | Cache | In-memory + Redis hit on `cacheKey(productName, category)` | inherited | inherited |
 | 3 | Open Facts text search | `tier3OpenFactsTextSearch` queries OFF / OBF / OPF in parallel via `cgi/search.pl?search_terms=...`. Strict acceptance: trigram sim ≥ 0.7, non-empty `ingredients_text`, `complete` flag truthy. Best match across all three sources wins. Pass 1 receives the verified ingredient list as `materialContext`. | `"medium"` | `"Sourced from Open Food Facts"` (or Beauty / Products Facts) |
-| 4 | Anthropic web_search | `tier4WebExtract` runs one Haiku call with the `web_search_20250305` tool, asking for strict JSON `{product_name, brand, ingredients[], category, source_domain, found}`. 12s timeout. Validates `found: true`, non-empty `ingredients`, and trigram sim ≥ 0.7 between query and returned `product_name` (rejects substituted "similar product" hits). Pass 1 receives the extracted list as `materialContext`. | `"medium"` | `"Sourced from <domain>"` (e.g. `amazon.com`) |
+| 4 | Anthropic web_search | `tier4WebExtract` runs one Haiku call with the `web_search_20250305` tool (`max_uses: 5`), asking for strict JSON `{product_name, brand, ingredients[], category, source_domain, found}`. 22s timeout. Prompt directs aggressive multi-source search: retailer PDPs (Amazon, Target, Walmart, Whole Foods, iHerb, Sephora, Ulta, Thrive), brand sites, SmartLabel, OFF/OBF, EWG, Yuka, FDA filings. `found:true` is strongly preferred; closest-matching variant accepted. For clothing/home/accessory, material composition ("72% nylon, 25% polyester") is returned as ingredients. Validates `found: true`, non-empty `ingredients`, and `isTier4NameAcceptable(originalQuery, usedQuery, returnedName, returnedBrand)` — an OR of (a) trigram ≥ 0.45 against original or canonicalized query, (b) every meaningful query token present in returned name or brand (handles "query is a strict subset of a longer canonical name" — e.g. "Abes Mini Muffins" accepts "Abe's Gluten Free Chocolate Chip Mini Muffins"), (c) apostrophe strip + singular/plural tolerance. Two-attempt retry: first verbatim query, second with `canonicalizeQuery` (reintroduces apostrophes for ~20 common brand possessives, strips size/unit qualifiers). Pass 1 receives the extracted list as `materialContext`. | `"medium"` | `"Sourced from <domain>"` (e.g. `amazon.com`) |
 | 5 | Category-prior best guess | `tier5CategoryPrior` — **does NOT call Pass 1**. Synthetic result built from `CATEGORY_AVERAGES[cat].avg`, all dimensions = midpoint, `flagged_substances: []`, `harmful_chemicals: []`, `ingredient_list: []`, substance floors bypassed. Honest summary names the limitation. `_skipCache: true` so the cascade re-runs on the next visit (OFF or web search may have data later). | `"low"` | `"Best guess from product name"` |
 
 Tiers 1 and 2 live inline in `server.js` `/analyze`. Tiers 3, 4, 5 + the in-flight dedupe wrapper live in `backend/scoringCascade.js`. Server.js orchestrates: cascade is wrapped in `dedupeInflight(productName, category, fn)` so concurrent identical queries share one execution and don't fan out into N web searches.
@@ -447,6 +448,8 @@ The existing `confidence` field continues to mean **AI scoring confidence** (hig
 If Tier 3's strictness is loosened (similarity threshold drops below 0.7, `complete` flag check is dropped, or `ingredients_text` empty is allowed), the Danimals failure mode comes back via OFF rather than via Pass 1. Same outcome. Don't loosen these without a written reason.
 
 If Tier 5 ever calls Pass 1 (someone "fixes" it to give richer narrative), fabrications return. The synthetic result is the contract.
+
+Tier 4's name-match gate (`isTier4NameAcceptable`) uses an OR of trigram + token-subset. The token-subset branch is what lets longer canonical variants through ("Abe's Gluten Free Chocolate Chip Mini Muffins" for the short query "Abes Mini Muffins"). Don't replace it with a strict trigram-only gate — the threshold would either reject correct hits (trigram ~0.33 for that example) or accept wildly different products. The current OR keeps both ends tight.
 
 ---
 
@@ -659,7 +662,7 @@ Not applied to text-query path or image-scan path — those continue to use `Glo
 Introduced 2026-04-21. Gated on `VISION_CONTRACT_V2=true` (Railway env). Default OFF preserves legacy behavior. The legacy vision path scores directly from pixels in a single Haiku call — high fabrication risk because the AI can project ingredients from product priors rather than reading what's literally on the label. v2 decomposes that into identify → cascade-verify → score, with label reads as a verification signal rather than the source of truth.
 
 Module: `backend/visionContract.js`. Three exports:
-- `callClaudeVisionIdentify(image, mediaType, deps)` — slim identify-only Haiku call. Returns `{ product_name, brand, variant, category, confidence, label_ingredients, label_legibility, reasoning }`. `label_legibility` is one of `full | partial | minimal | unreadable`. System prompt forbids inferring ingredients from priors and requires literal label reads.
+- `callClaudeVisionIdentify(image, mediaType, deps)` — slim identify-only Haiku call. Returns `{ product_name, brand, variant, category, confidence, label_ingredients, label_legibility, reasoning }`. `label_legibility` is one of `full | partial | minimal | unreadable`. System prompt explicitly decouples identity confidence from label legibility ("a photo can show a crystal-clear product name with a blurry ingredient panel — that is HIGH identity confidence and LOW label legibility") and includes a 5-bucket CONFIDENCE SCALE keyed to product-name visibility, NOT photo quality or ingredient readability. Clothing-specific cues called out: brand wordmarks on garments (Nike swoosh, Patagonia, adidas trefoil), hangtags, interior care labels (material composition treated as `label_ingredients` — each "72% nylon" style line as a separate array element), barcodes on tags. Explicit rule: a garment with a visible brand wordmark plus recognizable garment type is a high-confidence identification even when no care label is readable — the cascade finds material composition online from brand + product name. CATEGORY CUES section maps visual signals → category (care label → clothing, INCI list → personal_care, Nutrition Facts → food, Drug Facts → personal_care, hazard warnings → home).
 - `putIdentification` / `getIdentification` — in-memory store for the confirmation round-trip, keyed on UUID `identificationId` with 10-min TTL. Periodic cleanup via unref'd `setInterval`.
 - `reconcileIngredients(labelList, cascadeIngredients)` — normalizes both sides and returns `{ agreementPct, overlap, labelOnly, cascadeOnly, agreed }` (threshold 0.5). Used for audit logging only; scoring decisions always prefer cascade data.
 
@@ -667,10 +670,10 @@ Handler: `/analyze` in `server.js` has a flag-gated branch before the legacy `if
 
 Flow:
 1. **Identify** — fresh path calls `callClaudeVisionIdentify`; resume path pulls from the in-memory store.
-2. **Confidence gate** (fresh only). Policy: if vision returned a usable product_name, score it. Refusal is reserved for true non-identifications.
+2. **Confidence gate** (fresh only). Policy: if vision returned a usable product_name, score it. Refusal is reserved for true non-identifications. Thresholds dropped from the original 0.50/0.60 to 0.30/0.45 (2026-04-21) because the cascade + Tier 5 fallback + NOVA-inference floor already handle every downstream case honestly; higher thresholds were causing confirmed identifications to be refused (Abes Mini Muffins, Athletic Ankle Socks).
    - No usable name OR `confidence < 0.30` → respond `{ status: "need_better_photo", reason: "low_confidence" }`. "No usable name" means empty, the placeholder "Scanned product", or fewer than 2 chars.
    - `0.30 <= confidence < 0.45` → respond `{ status: "needs_confirmation", identificationId, identified }` with a fresh stored record.
-   - `>= 0.45` → proceed silently. (Raised from 0.60 because the cascade + Tier 5 fallback already handles cascade misses honestly; the high threshold was causing confirmed identifications to be refused.)
+   - `>= 0.45` → proceed silently.
 3. **Cascade** — CALIBRATION exact → `fuzzyCalibrationLookup` (vision-only Tier 1.5, retained to avoid regressions) → name-keyed score cache → `tier3OpenFactsTextSearch` → `tier4WebExtract` → `tier5CategoryPrior`. Identical tier ordering to the text cascade: once the photo identifies the product, scoring follows the same product-name lookup path as if the user had typed the name.
 4. **Reconciliation** — when both cascade ingredients and `label_ingredients` are populated, `reconcileIngredients` runs and disagreements are logged as `vision_cascade_disagreement`. Cascade always wins for scoring; `label_legibility` is informational only.
 5. **Score**:
@@ -709,6 +712,52 @@ Cost profile: a cache-miss vision scan fires up to three Haiku calls (identify +
 Turn-off path: set `VISION_CONTRACT_V2=false` (or unset) in Railway env. Backend reads the flag per-request, so the restart is the only required action — no cache clear, no frontend redeploy. The frontend states are defensive: they only render when backend responses carry the new `status` field.
 
 Re-introduction risk: if Tier 4 is loosened (timeout raised, trigram threshold dropped, `found: false` not respected), the vision path gains the same Danimals-style fabrication failure mode the text cascade closed in 2026-04-20. Don't loosen without a written reason.
+
+---
+
+## NOVA 4 Floor Parity (text, vision, barcode)
+
+Introduced 2026-04-21. Motivating case: Abe's Mini Muffins scored 7 via barcode (correct — NOVA 4 signaled by Open Food Facts `nova_group`) but 2 via vision photo and 4 via text search. Same product, three different entry points, wildly different scores. The barcode path applies a deterministic NOVA floor via `novaBounds(nova_group, category)`; the text and vision paths had no structured NOVA signal so Pass 1 scored the ingredients as "clean" from surface markers (Non-GMO, no artificial dyes) even when the ingredient list contained hallmark ultra-processing markers.
+
+### Inference
+
+`inferNovaGroupFromIngredients(ingredientText, category)` in `server.js` scans the ingredient string for ultra-processing markers. 2+ markers → NOVA 4, 1 marker → NOVA 3, refined sugar/flour alone → NOVA 3, whole foods → null. Fires only for food / beverage / food_beverage categories. Markers currently cover:
+- Fortification vitamins (A palmitate, D2, B12, thiamin mononitrate, folic acid, pyridoxine, niacinamide, riboflavin)
+- Tricalcium / dicalcium phosphate
+- Syrups (any), HFCS, maltodextrin, dextrose, inulin
+- Isolates ("isolat"), lecithin, mono/diglycerides, xanthan / guar gum, carrageenan, cellulose gum
+- Natural / artificial flavors
+- Modified starches
+- Hydrogenated / partially hydrogenated oils
+- Aspartame, sucralose, acesulfame, maltitol
+- FD&C colors (Red 40, Yellow 5/6, Blue 1/2), brominated vegetable oil
+- Sodium / potassium benzoate, sorbate, sodium nitrite, sodium caseinate, DATEM, polysorbates
+- Autolyzed yeast, yeast extract
+- Protein isolates / concentrates (whey, soy, pea, rice)
+
+### Three-point enforcement
+
+1. **Materials floor** in the cascade (both text and vision paths): `novaBounds(inferredNova, cat).floor` raises `mScore`. For NOVA 4 + food → materials floored to 7.
+2. **Signal propagation** — the inference injects a `"NOVA 4 ultra-processed (inferred from ingredients: ...)"` line into `p1.raw_concerns` and sets `p1.product_analysis.composition_tier = 4`. This lets downstream gates recognize the signal:
+   - `applyConsistencyChecks` — Rule 1 (label/score contradiction) has a `isDeterministicUltraProcessed` bypass that reads `p1.raw_concerns` for the marker and skips the materials cap when present.
+   - `applyPositiveCeilings` — existing `isUltraProcessed` regex scans the same text (via `JSON.stringify(p1.raw_concerns).toLowerCase()`) and the Non-GMO / Organic ceilings respect it.
+3. **Authoritative final floor** — last step inside `applyProductCalibration` (calibration.js). When `result.raw_concerns` contains the marker OR `result.composition_tier === 4`, and category is food / beverage / food_beverage, score is clamped to min 7. This step runs AFTER entry floors/ceilings, compositionTier rules, sugar/sodium/fat floors, and Whole Foods banned checks — nothing downstream can claw it back.
+
+### Response shape requirement
+
+The result object built by all food-category scoring paths must include `raw_concerns: p1.raw_concerns || []` separately from `concerns` (which is typically `p2.refined_concerns || p1.raw_concerns`). Without the separate `raw_concerns` field, `p2.refined_concerns` overwrites `concerns` and the calibration-layer NOVA floor can't see the marker. Text cascade and vision_v2 both set this field explicitly — keep them in sync.
+
+### Log events
+
+- `[${tier}] NOVA N inferred from ingredients (marker1, marker2, marker3) — materials X → Y` — fires in the cascade when materials is raised.
+- `[${tier}][nova_trace] ...` — debug trace at three checkpoints (before post-ceiling clamp, after, before/after applyProductCalibration). Useful when a NOVA 4 product is scoring unexpectedly low.
+- `[CAL] NOVA 4 final floor: "X" N→7 (deterministic ultra-processed signal)` — fires inside applyProductCalibration when the authoritative clamp activates.
+
+### What this is NOT
+
+Not applied to non-food categories. Clothing, personal care, home, baby, toy, supplement, restaurant, accessory paths all skip NOVA inference entirely — the marker list is food-specific and the floor is gated to `FOOD_CATS_FOR_NOVA` = `{food, beverage, food_beverage}`. Supplements are NOT in that set because NOVA classification doesn't map cleanly to supplement formulations; supplement scoring uses the existing materials 65% + exposure 25% + packaging 10% weighting with its own substance floors.
+
+Not applied to the barcode path's OFF `nova_group` input — that path uses the structured field directly via `novaBounds(nova_group, cat)`, unchanged. The inference only fires when structured NOVA data is unavailable (text cascade via Tier 3/4, vision path after cascade hit).
 
 ---
 
