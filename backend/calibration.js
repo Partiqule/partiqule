@@ -290,6 +290,14 @@ const ENTRIES = [
   ["maybelline great lash",        { floor:5, ceiling:7, substances:["quaternium-15"], reason:"Quaternium-15 formaldehyde releaser in original formula — floor fires (mFloor:6)", confidence:"high", category:"personal_care" }],
   ["burts bees lip balm",          { floor:1, ceiling:2, substances:[], reason:"Beeswax + vitamin E — no synthetic fragrance, no parabens", confidence:"high", category:"personal_care" }],
   ["burt's bees lip",              { floor:1, ceiling:2, substances:[], reason:"Beeswax + natural ingredients — benchmark clean lip care", confidence:"high", category:"personal_care" }],
+  ["burts bees tinted lip",        { floor:1, ceiling:2, substances:[], reason:"Beeswax + plant oils + carmine/iron oxide colors — no petroleum dyes, no synthetic fragrance", confidence:"high", category:"personal_care" }],
+  ["burts bees tinted lip balm",   { floor:1, ceiling:2, substances:[], reason:"Beeswax + coconut oil + olive oil + natural colorants — no petroleum dyes, no parabens. Ingredients verified 04 2026", confidence:"high", category:"personal_care" }],
+  // Brand-level fallback — any Burt's Bees lip product variant (chapstick,
+  // balm, stick, tinted, moisturizing lip oil, etc.) scores 1-2. Burt's Bees
+  // maintains a consistent clean formulation standard across their lip line.
+  // Positioned AFTER the more specific entries above so Map iteration order
+  // gives the specific variant's reason when it matches first.
+  ["burts bees lip",               { floor:1, ceiling:2, substances:[], reason:"Beeswax-based formulation, no synthetic fragrance, no parabens — Burt's Bees lip line benchmark", confidence:"high", category:"personal_care" }],
   ["chapstick classic",            { floor:3, ceiling:5, substances:["BHT","synthetic fragrance"], reason:"BHT preservative + synthetic fragrance — BHT floor fires", confidence:"high", category:"personal_care" }],
 
   // ══════════════════════════════════════════════════════════════
