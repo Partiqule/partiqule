@@ -5196,16 +5196,52 @@ function buildFuzzyDimensions(entry, category, midScore) {
   const pkgOver  = entry.packaging || {};
   const useOver  = entry.usage || entry.usage_exposure || {};
   const sustOver = entry.sustainability || {};
+  const matOver  = entry.materials || {};
   const pick = (a, b) => (a !== undefined ? a : b);
+
+  // ── Calibration-to-dimension reconciliation (2026-04-23) ───────────
+  //
+  // The generic enrichFuzzyDimensions scorer doesn't know about brand
+  // certifications (Bluesign, OEKO-TEX, GOTS, Fair Trade, etc.). It sees
+  // "recycled polyester + elastane" and scores materials 5 / sustainability 6
+  // for microfiber shedding, regardless of whether the specific SKU has
+  // verified clean credentials. Calibration floor/ceiling clamps the
+  // HEADLINE score correctly (e.g. Vuori Performance Jogger midpoint 3)
+  // but the dimension rows still read 5/5/3/6 — users do the weighted
+  // math, get ~5, and see a 3 that doesn't reconcile.
+  //
+  // Fix: for every calibrated entry, cap or floor each dimension at the
+  // calibration midpoint so the dimensions always reconcile with the
+  // headline. Clean calibration (floor ≤ 3) caps all dimensions DOWN to
+  // the midpoint; concerning calibration (floor ≥ 5) floors all dimensions
+  // UP to the midpoint. Middle tier (floor 4) untouched.
+  //
+  // Direction is preserved — if a dimension is already cleaner than the
+  // clamp direction, it stays. The rule only pulls OUT-OF-RANGE dimensions
+  // toward the calibrated signal, never in the wrong direction.
+  //
+  // Explicit entry-level dimension overrides (entry.materials.score,
+  // entry.packaging.score, entry.usage.score, entry.sustainability.score)
+  // bypass reconciliation — if the calibration author knows what a specific
+  // dimension should be, they can pin it directly.
+  const floor = entry.floor, ceiling = entry.ceiling;
+  const reconcile = (base, override) => {
+    if (override !== undefined) return override;  // explicit pin wins
+    if (floor == null || ceiling == null) return base;
+    const mid = Math.round((floor + ceiling) / 2);
+    if (floor <= 3) return Math.min(base, mid);   // clean: cap down
+    if (floor >= 5) return Math.max(base, mid);   // concerning: floor up
+    return base;                                  // middle tier untouched
+  };
 
   return {
     materials: {
-      score: fd.mScore,
+      score: reconcile(fd.mScore, matOver.score),
       concerns: substances,
-      label: meta.materials.label,
+      label: matOver.label || meta.materials.label,
     },
     usage_exposure: {
-      score: pick(useOver.score, fd.uScore),
+      score: reconcile(fd.uScore, useOver.score),
       concerns: fd.usageConcerns,
       label: useOver.label || meta.usage_exposure.label,
       frequency: useOver.frequency || meta.usage_exposure.frequency,
@@ -5214,7 +5250,7 @@ function buildFuzzyDimensions(entry, category, midScore) {
       vulnerable: pick(useOver.vulnerable, meta.usage_exposure.vulnerable),
     },
     packaging: {
-      score: pick(pkgOver.score, fd.pkScore),
+      score: reconcile(fd.pkScore, pkgOver.score),
       concerns: [],
       label: pkgOver.label || meta.packaging.label,
       primary: pkgOver.primary || meta.packaging.primary,
@@ -5222,7 +5258,7 @@ function buildFuzzyDimensions(entry, category, midScore) {
       refillable: pick(pkgOver.refillable, meta.packaging.refillable),
     },
     sustainability: {
-      score: pick(sustOver.score, fd.sScore),
+      score: reconcile(fd.sScore, sustOver.score),
       concerns: fd.sustainConcerns,
       label: sustOver.label || meta.sustainability.label,
       circularity: sustOver.circularity || meta.sustainability.circularity,
