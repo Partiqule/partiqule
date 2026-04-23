@@ -8053,10 +8053,18 @@ function App() {
                         : displayScore <= 5 ? "I'd swap if you can."
                         : displayScore <= 7 ? "I'd skip if you can."
                         : "Hard pass.";
+                      // When the score itself is a guess (Tier 5 best-guess-from-name)
+                      // a definitive verdict undercuts the hedge — swap in a
+                      // neutral, label-seeking line instead.
+                      const isGuess = result.source_confidence === "low" || result.confidence === "low";
+                      const guessVerdict = displayScore <= 3 ? "Probably fine, but I'd want the label."
+                        : displayScore <= 5 ? "Too many unknowns to be sure."
+                        : "Hard to say without the label.";
                       let sentence;
                       if (childMode && result.verdict_kid)       sentence = result.verdict_kid;
                       else if (result.verdict_adult)             sentence = result.verdict_adult;
                       else if (result.verdict)                   sentence = result.verdict;
+                      else if (isGuess)                          sentence = childMode ? `For a kid: ${guessVerdict}` : guessVerdict;
                       else                                       sentence = childMode ? `For a kid: ${friendly}` : friendly;
                       return (
                         <div style={{
@@ -8248,17 +8256,34 @@ function App() {
                   );
                 })()}
 
-                {/* Confidence disclaimer — medium/low only */}
+                {/* Confidence disclaimer — medium/low only. Design-system
+                    compliant: cream card, amber accent, no emoji, no alarm
+                    colors. Friend voice in the body copy. */}
                 {result.confidence && result.confidence !== "high" && (
-                  <div style={{background:result.confidence==="medium"?"#fffbeb":"#fef2f2", border:`1px solid ${result.confidence==="medium"?"#fde68a":"#fecaca"}`, borderRadius:10, padding:"10px 14px", marginBottom:16, display:"flex", gap:10, alignItems:"flex-start"}}>
-                    <span style={{fontSize:16, flexShrink:0}}>⚠️</span>
-                    <div>
-                      <div style={{fontSize:12, fontWeight:700, color:result.confidence==="medium"?"#92400e":"#991b1b", marginBottom:2}}>
-                        {result.confidence==="medium"?"Ingredient data partially verified":"Limited ingredient data — score is an estimate"}
-                      </div>
-                      <div style={{fontSize:11, color:result.confidence==="medium"?"#78350f":"#7f1d1d", lineHeight:1.5}}>
-                        {result.confidence_reason || "Full ingredient list not publicly available. Score based on known brand practices and typical materials for this product type."}
-                      </div>
+                  <div style={{
+                    background:"var(--cream-light)",
+                    border:"1px solid var(--rule)",
+                    borderRadius:"var(--tile-shape-2)",
+                    padding:"14px 16px",
+                    marginBottom:16,
+                  }}>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:10, letterSpacing:"0.22em",
+                      color:"var(--amber)",
+                      textTransform:"uppercase", fontWeight:500,
+                      marginBottom:8, display:"flex", alignItems:"center", gap:10,
+                    }}>
+                      <span style={{display:"inline-block", width:22, height:1, background:"var(--amber)", opacity:0.7}}/>
+                      {result.confidence==="medium" ? "Partial data" : "Guessing from the name"}
+                    </div>
+                    <div style={{
+                      fontFamily:"'DM Sans', system-ui, sans-serif",
+                      fontSize:13, color:"var(--ink-soft)", lineHeight:1.55,
+                    }}>
+                      {result.confidence_reason || (result.confidence==="medium"
+                        ? "I have some of the ingredient list but not all. Score is my best read."
+                        : "The full ingredient list isn't public. This score is my best guess from the product type — scan the barcode or label for a verified score.")}
                     </div>
                   </div>
                 )}
