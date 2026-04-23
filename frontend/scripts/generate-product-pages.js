@@ -38,26 +38,29 @@ function slugify(name) {
 }
 
 // ── Score → label / color / tier ──
+// Colors pull from the app's natural-earth palette in frontend/src/tokens.css.
+// Score thresholds match App.jsx scoreColor/scoreBg helpers (≤3 green, ≤5 amber, >5 red).
 function scoreLabel(score) {
-  if (score <= 2) return "Excellent";
-  if (score <= 4) return "Good";
-  if (score <= 6) return "Caution";
-  if (score <= 8) return "Concern";
-  return "Avoid";
+  if (score <= 3) return "Looks good";
+  if (score <= 5) return "Judgment call";
+  if (score <= 7) return "I'd skip";
+  return "Hard pass";
+}
+function scoreVerdict(score) {
+  if (score <= 3) return "Looks good to me.";
+  if (score <= 5) return "I'd swap if you can.";
+  if (score <= 7) return "I'd skip if you can.";
+  return "Hard pass.";
 }
 function scoreColor(score) {
-  if (score <= 2) return "#16a34a";
-  if (score <= 4) return "#65a30d";
-  if (score <= 6) return "#d97706";
-  if (score <= 8) return "#dc2626";
-  return "#7f1d1d";
+  if (score <= 3) return "#6b8c3e";   // --score-green, leaf
+  if (score <= 5) return "#c49a33";   // --score-amber, wheat
+  return "#b0493a";                   // --score-red, terracotta
 }
-function scoreBg(score) {
-  if (score <= 2) return "#f0fdf4";
-  if (score <= 4) return "#f7fee7";
-  if (score <= 6) return "#fefce8";
-  if (score <= 8) return "#fff7ed";
-  return "#fff1f2";
+function scoreSoftBg(score) {
+  if (score <= 3) return "rgba(107, 140, 62, 0.08)";
+  if (score <= 5) return "rgba(196, 154, 51, 0.10)";
+  return "rgba(176, 73, 58, 0.08)";
 }
 
 // ── Render a single product page as an HTML string ──
@@ -66,11 +69,20 @@ function renderProductPage(productName, entry) {
   const score      = Math.round((entry.floor + entry.ceiling) / 2);
   const childScore = entry.kidsFloor ? Math.round((entry.kidsFloor + (entry.kidsCeiling || entry.ceiling)) / 2) : null;
   const label      = scoreLabel(score);
+  const verdict    = scoreVerdict(score);
   const color      = scoreColor(score);
-  const bg         = scoreBg(score);
+  const softBg     = scoreSoftBg(score);
   const category   = entry.category || "product";
   const substances = entry.substances || [];
   const reason     = entry.reason || "";
+  const releaseStatus = entry.status ? {
+    status: entry.status,
+    note: entry.statusNote || null,
+    expected_release: entry.statusExpectedRelease || null,
+    verified: entry.verified || [],
+    pending: entry.pending || [],
+    third_party_references: entry.thirdPartyReferences || [],
+  } : null;
 
   const title       = `${titleCase(productName)} Score: ${score}/10 — ${label} | Partiqule`;
   const description = reason
@@ -149,104 +161,131 @@ ${JSON.stringify(structuredData, null, 2)}
 <script defer data-domain="partiqule.com" src="https://plausible.io/js/script.tagged-events.js"></script>
 
 <style>
+  /* Design tokens — mirrored from frontend/src/tokens.css. Keep in sync. */
   *{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --green-dark:#052e16;
-    --green-dark-line:#14532d;
-    --green-bright:#4ade80;
-    --green:#16a34a;
-    --green-pale:#f0fdf4;
-    --green-pale-border:#bbf7d0;
-    --text:#0a0a0a;
-    --muted:#64748b;
-    --surface:#ffffff;
-    --bg:#fafafa;
-    --border:#e8e8e8;
+    --cream:#f3ede2;
+    --cream-light:#f7f1e7;
+    --ivory:#f9f5ea;
+    --ink:#1a1f15;
+    --ink-soft:#4a5342;
+    --ink-faint:#8a9080;
+    --moss:#2d5a27;
+    --moss-deep:#1f3f1b;
+    --amber:#c8781a;
+    --moss-soft:rgba(45, 90, 39, 0.08);
+    --rule:rgba(26, 31, 21, 0.16);
+    --rule-soft:rgba(26, 31, 21, 0.08);
+    --rule-strong:rgba(26, 31, 21, 0.28);
+    --tile-shape-2:14px 10px 15px 12px / 10px 15px 12px 14px;
+    --card-shape-2:20px 14px 18px 16px / 14px 18px 16px 20px;
+    --cta-shape:22px 18px 24px 20px / 20px 24px 18px 22px;
   }
-  html,body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--text);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
-  a{color:var(--green);text-decoration:none;transition:color 0.15s}
-  a:hover{color:#15803d}
-  .container{max-width:860px;margin:0 auto;padding:0 24px}
+  html,body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--ink);background:var(--cream);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--moss);text-decoration:none;transition:color 0.15s}
+  a:hover{color:var(--moss-deep)}
+  .container{max-width:780px;margin:0 auto;padding:0 24px}
 
-  /* ── NAV BAR — matches main app ── */
-  .nav{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);background:rgba(255,255,255,0.95)}
-  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
-  .brand{display:flex;align-items:center;color:var(--text)}
-  .brand img{height:30px;width:auto;display:block;flex-shrink:0}
-  .nav-links{display:flex;align-items:center;gap:28px}
-  .nav-links a{font-size:14px;color:var(--muted);font-weight:500}
-  .nav-links a:hover{color:var(--text)}
-  .nav-cta{background:var(--green);color:#fff!important;padding:9px 18px;border-radius:10px;font-size:14px;font-weight:700}
-  .nav-cta:hover{background:#15803d}
+  /* ── NAV — cream with moss wordmark ── */
+  .nav{background:var(--cream);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:10}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+  .brand{display:flex;align-items:center}
+  .brand img{height:28px;width:auto;display:block}
+  .nav-links{display:flex;align-items:center;gap:24px}
+  .nav-links a{font-size:13px;color:var(--ink-soft);font-weight:500}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-cta{background:var(--moss);color:var(--ivory)!important;padding:9px 16px;border-radius:var(--tile-shape-2);font-size:13px;font-weight:500;letter-spacing:0.01em}
+  .nav-cta:hover{background:var(--moss-deep)}
 
-  /* ── HERO — dark green with particles, matches main app ── */
-  .hero{background:#052e16;color:#f1f5f9;padding:80px 0 72px;position:relative;overflow:hidden;border-bottom:1px solid #14532d}
-  .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(74,222,128,0.08),transparent 50%),radial-gradient(circle at 80% 70%,rgba(74,222,128,0.06),transparent 50%);pointer-events:none}
-  .particle{position:absolute;border-radius:50%;background:#4ade80;pointer-events:none}
+  /* ── HEADER — cream with warm morning-light gradient ── */
+  .hero{background:var(--cream);padding:40px 0 8px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;top:0;left:0;right:0;height:240px;background:linear-gradient(to bottom, rgba(255,230,180,0.32) 0%, rgba(245,220,180,0.08) 70%, transparent 100%);pointer-events:none;z-index:0}
   .hero-inner{position:relative;z-index:1}
-  .breadcrumb{font-size:12px;color:rgba(255,255,255,0.55);font-weight:500;letter-spacing:0.02em;margin-bottom:20px;text-transform:uppercase;letter-spacing:0.1em}
-  .breadcrumb a{color:#4ade80}
-  .breadcrumb-sep{margin:0 8px;opacity:0.5}
-  h1{font-family:'Fraunces',Georgia,serif;font-size:48px;font-weight:800;letter-spacing:-1px;line-height:1.08;margin-bottom:20px;color:#fff}
-  .subtitle{font-size:17px;color:rgba(255,255,255,0.7);max-width:560px;line-height:1.55;margin-bottom:0}
+  .stamp{display:inline-flex;align-items:center;gap:10px;font-size:10px;color:var(--moss);font-weight:500;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:16px}
+  .stamp::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
+  .stamp a{color:var(--moss)}
+  .breadcrumb-sep{opacity:0.5;margin:0 6px}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:40px;font-weight:400;letter-spacing:-0.015em;line-height:1.08;margin-bottom:18px;color:var(--ink)}
 
-  /* ── SCORE CARD — matches main app result card ── */
-  .score-wrap{padding:48px 0 32px;background:var(--bg)}
-  .score-card{background:var(--surface);border-radius:20px;padding:40px 36px;box-shadow:0 4px 20px rgba(0,0,0,0.04);border:1px solid var(--border);margin-top:-96px;position:relative;z-index:2}
-  .score-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:24px;flex-wrap:wrap}
-  .score-meta{flex:1;min-width:200px}
-  .score-category{display:inline-block;font-size:11px;font-weight:700;color:var(--green);background:var(--green-pale);padding:5px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
-  .score-label-tag{display:inline-block;font-size:11px;font-weight:800;padding:6px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;margin-top:8px;background:${bg};color:${color};border:1px solid ${color}30}
-  .score-number-box{text-align:right;flex-shrink:0}
-  .score-number{font-family:'Fraunces',Georgia,serif;font-weight:900;font-size:96px;line-height:0.9;color:${color};letter-spacing:-3px}
-  .score-number-sub{font-size:18px;font-weight:700;color:${color};opacity:0.6;margin-top:-4px}
-  .score-desc{font-size:15px;color:var(--muted);line-height:1.6;margin-top:12px}
-  .reason-box{background:${bg};border-left:4px solid ${color};border-radius:10px;padding:18px 22px;font-size:15px;line-height:1.65;color:#1f2937;margin-top:24px}
-  .child-notice{background:#fdf2f8;border:1px solid #fbcfe8;border-radius:14px;padding:18px 22px;margin-top:20px;display:flex;gap:16px;align-items:flex-start}
-  .child-notice-icon{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:20px}
-  .child-notice-content{flex:1;min-width:0}
-  .child-notice-title{font-size:13px;font-weight:800;color:#9d174d;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
-  .child-notice-score{font-size:22px;font-weight:900;color:#9d174d;font-family:'Fraunces',Georgia,serif;margin-bottom:6px}
-  .child-notice-body{font-size:13px;color:#831843;line-height:1.55}
+  /* ── SCORE CARD ── */
+  .score-wrap{padding:18px 0 32px;background:var(--cream)}
+  .score-card{background:var(--cream-light);border:1px solid var(--rule);border-radius:var(--card-shape-2);padding:32px 32px;position:relative}
+  .score-top{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .score-meta{flex:1;min-width:220px}
+  .score-category-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-family:'DM Sans',system-ui,sans-serif;font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500}
+  .score-category-row::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
+  .score-verdict{font-family:'Fraunces',Georgia,serif;font-size:26px;line-height:1.2;color:var(--ink);letter-spacing:-0.01em;font-weight:400;margin-bottom:8px}
+  .score-context{font-size:13px;color:var(--ink-faint);line-height:1.55}
+  .score-number-box{flex-shrink:0;text-align:right}
+  .score-number{font-family:'Fraunces',Georgia,serif;font-weight:400;font-size:84px;line-height:0.95;color:${color};letter-spacing:-0.02em;background:${softBg};padding:4px 20px;border-radius:14px;display:inline-block}
+  .score-number-sub{font-size:13px;color:${color};opacity:0.55;margin-top:6px;font-family:'DM Sans',system-ui,sans-serif;font-weight:400;letter-spacing:0.02em}
 
-  /* ── SECTIONS ── */
-  .section{padding:40px 0;border-top:1px solid var(--border)}
-  .section h2{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:800;margin-bottom:18px;color:var(--text);letter-spacing:-0.5px}
-  .section-label{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px}
-  .concerns{display:flex;flex-wrap:wrap;gap:10px}
-  .concern-tag{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:#fff1f2;color:#7f1d1d;font-size:13px;font-weight:600;border-radius:24px;border:1px solid #fecdd3}
-  .concern-tag::before{content:"●";color:#dc2626;font-size:10px}
+  /* ── PRE-RELEASE CARD ── */
+  .release-card{background:var(--cream-light);border:1px solid var(--amber);border-radius:var(--card-shape-2);padding:16px 20px;margin-top:20px;font-family:'DM Sans',system-ui,sans-serif}
+  .release-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:10px;letter-spacing:0.22em;color:var(--amber);text-transform:uppercase;font-weight:500}
+  .release-header::before{content:"";display:inline-block;width:18px;height:1px;background:var(--amber);opacity:0.8}
+  .release-note{font-size:13px;color:var(--ink-soft);line-height:1.55}
+  .release-expected{color:var(--ink-faint)}
+  .release-list-label{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:500;margin-top:14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .release-list-label.verified{color:var(--moss)}
+  .release-list-label.pending{color:var(--amber)}
+  .release-list-label.coverage{color:var(--moss)}
+  .release-list-label::before{content:"";display:inline-block;width:22px;height:1px;opacity:0.7}
+  .release-list-label.verified::before{background:var(--moss)}
+  .release-list-label.pending::before{background:var(--amber)}
+  .release-list-label.coverage::before{background:var(--moss)}
+  .release-row{font-size:13px;color:var(--ink-soft);line-height:1.55;margin-bottom:6px;display:flex;gap:8px;align-items:flex-start}
+  .release-row-check{flex-shrink:0;margin-top:2px;color:var(--moss);font-weight:500}
+  .release-row-meta{color:var(--ink-faint);font-size:12px}
+  .release-row-link{color:var(--moss);font-weight:500}
 
-  /* ── CTA SECTION ── */
-  .cta-section{background:#052e16;color:#fff;padding:72px 0;text-align:center;position:relative;overflow:hidden}
-  .cta-section::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(74,222,128,0.08),transparent 60%);pointer-events:none}
-  .cta-inner{position:relative;z-index:1}
-  .cta-label{font-size:12px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
-  .cta-title{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px;color:#fff;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.2}
-  .cta-body{font-size:16px;color:rgba(255,255,255,0.75);max-width:520px;margin:0 auto 28px;line-height:1.55}
-  .cta-btn{background:#4ade80;color:#052e16!important;padding:16px 36px;border-radius:12px;font-size:16px;font-weight:800;display:inline-block;transition:all 0.15s;letter-spacing:-0.2px}
-  .cta-btn:hover{background:#86efac;transform:translateY(-1px);box-shadow:0 8px 24px rgba(74,222,128,0.2)}
+  /* ── REASON ── */
+  .reason-wrap{padding:32px 0 20px}
+  .reason-label{display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500;margin-bottom:14px}
+  .reason-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
+  .reason-body{font-family:'Fraunces',Georgia,serif;font-size:18px;line-height:1.55;color:var(--ink);font-weight:400;letter-spacing:-0.005em}
+
+  /* ── WHAT'S IN IT ── */
+  .concerns-wrap{padding:8px 0 32px}
+  .concerns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .concern-tag{display:inline-flex;align-items:center;padding:8px 14px;background:var(--cream-light);color:var(--ink-soft);font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:0.02em;border-radius:var(--tile-shape-2);border:1px solid var(--rule)}
+
+  /* ── KIDS NOTE ── */
+  .kids-note{background:var(--cream-light);border:1px solid var(--rule);border-radius:var(--tile-shape-2);padding:16px 20px;margin-top:20px}
+  .kids-note-label{font-size:10px;letter-spacing:0.22em;color:var(--amber);text-transform:uppercase;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .kids-note-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--amber);opacity:0.7}
+  .kids-note-score{font-family:'Fraunces',Georgia,serif;font-size:24px;color:var(--ink);font-weight:400;letter-spacing:-0.01em;margin-bottom:4px}
+  .kids-note-body{font-size:13px;color:var(--ink-soft);line-height:1.55}
+
+  /* ── CTA ── */
+  .cta-section{background:var(--cream-light);padding:48px 0;margin-top:40px;border-top:1px solid var(--rule)}
+  .cta-inner{text-align:center}
+  .cta-label{font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500;margin-bottom:12px;display:inline-flex;align-items:center;gap:10px}
+  .cta-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
+  .cta-title{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:400;letter-spacing:-0.015em;line-height:1.2;margin-bottom:10px;color:var(--ink);max-width:520px;margin-left:auto;margin-right:auto}
+  .cta-body{font-size:14px;color:var(--ink-soft);max-width:460px;margin:0 auto 22px;line-height:1.55}
+  .cta-btn{background:var(--moss);color:var(--ivory)!important;padding:14px 28px;border-radius:var(--cta-shape);font-size:14px;font-weight:500;letter-spacing:0.01em;display:inline-block;transition:background 0.2s}
+  .cta-btn:hover{background:var(--moss-deep)}
 
   /* ── FOOTER ── */
-  footer{background:#0a0a0a;color:rgba(255,255,255,0.55);padding:48px 0 60px;text-align:center;font-size:13px}
-  footer .footer-brand{color:#fff;margin-bottom:16px;display:inline-flex;align-items:center}
-  footer .footer-brand img{height:24px;width:auto;display:block}
-  footer .footer-links{margin-bottom:20px}
-  footer .footer-links a{color:rgba(255,255,255,0.55);margin:0 14px}
-  footer .footer-links a:hover{color:#fff}
-  footer .footer-legal{font-size:12px;color:rgba(255,255,255,0.35)}
+  footer{background:var(--cream);color:var(--ink-faint);padding:32px 0 40px;text-align:center;font-size:12px;border-top:1px solid var(--rule-soft)}
+  footer .footer-brand{display:inline-block;margin-bottom:12px}
+  footer .footer-brand img{height:22px;width:auto;display:block}
+  footer .footer-links{margin-bottom:10px}
+  footer .footer-links a{color:var(--ink-soft);margin:0 10px}
+  footer .footer-links a:hover{color:var(--ink)}
+  footer .footer-legal{font-size:11px;color:var(--ink-faint)}
 
   /* ── MOBILE ── */
   @media(max-width:720px){
     .nav-links a:not(.nav-cta){display:none}
-    .hero{padding:56px 0 60px}
-    h1{font-size:32px}
-    .score-card{padding:28px 22px;margin-top:-60px}
-    .score-number{font-size:72px}
-    .score-top{flex-direction:column}
-    .score-number-box{text-align:left;width:100%}
-    .cta-title{font-size:24px}
-    .section{padding:32px 0}
+    .hero{padding:32px 0 8px}
+    h1{font-size:30px}
+    .score-card{padding:24px 20px}
+    .score-top{flex-direction:column;align-items:flex-start}
+    .score-number-box{text-align:left}
+    .score-number{font-size:64px;padding:2px 16px}
+    .cta-title{font-size:22px}
   }
 </style>
 </head>
@@ -260,34 +299,19 @@ ${JSON.stringify(structuredData, null, 2)}
     <div class="nav-links">
       <a href="https://partiqule.com/methodology">How it works</a>
       <a href="https://partiqule.com/guides">Guides</a>
-      <a href="https://partiqule.com" class="nav-cta">Scan a product →</a>
+      <a href="https://partiqule.com" class="nav-cta">Scan a product</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
-  <!-- Floating particles matching main app -->
-  <div class="particle" style="width:8px;height:8px;top:20%;left:8%;opacity:0.25"></div>
-  <div class="particle" style="width:5px;height:5px;top:65%;left:15%;opacity:0.18"></div>
-  <div class="particle" style="width:12px;height:12px;top:18%;right:12%;opacity:0.2"></div>
-  <div class="particle" style="width:7px;height:7px;top:70%;right:18%;opacity:0.15"></div>
-  <div class="particle" style="width:4px;height:4px;top:40%;left:50%;opacity:0.3"></div>
-  <div class="particle" style="width:10px;height:10px;top:80%;left:40%;opacity:0.12"></div>
-  <div class="particle" style="width:6px;height:6px;top:30%;right:35%;opacity:0.22"></div>
-  <div class="particle" style="width:5px;height:5px;top:55%;left:30%;opacity:0.2"></div>
-  <div class="particle" style="width:8px;height:8px;top:15%;left:55%;opacity:0.15"></div>
-  <div class="particle" style="width:4px;height:4px;top:45%;right:8%;opacity:0.25"></div>
-
   <div class="container hero-inner">
-    <div class="breadcrumb">
+    <div class="stamp">
       <a href="https://partiqule.com">Home</a>
       <span class="breadcrumb-sep">›</span>
-      Products
-      <span class="breadcrumb-sep">›</span>
-      ${titleCase(category.replace(/_/g, " "))}
+      <span>${escapeHtml(titleCase(category.replace(/_/g, " ")))}</span>
     </div>
     <h1>${escapeHtml(titleCase(productName))}</h1>
-    <p class="subtitle">${reason ? escapeHtml(reason.slice(0, 180) + (reason.length > 180 ? "..." : "")) : `Independent scoring for microplastic and chemical concerns across materials, usage, packaging, and sustainability.`}</p>
   </div>
 </header>
 
@@ -296,10 +320,9 @@ ${JSON.stringify(structuredData, null, 2)}
     <div class="score-card">
       <div class="score-top">
         <div class="score-meta">
-          <div class="score-category">${titleCase(category.replace(/_/g, " "))}</div>
-          <div style="font-family:'Fraunces',Georgia,serif;font-weight:800;font-size:26px;color:var(--text);letter-spacing:-0.5px;line-height:1.2">${escapeHtml(titleCase(productName))}</div>
-          <div class="score-label-tag">${label}</div>
-          <div class="score-desc">${scoreDesc(score)}</div>
+          <div class="score-category-row">${escapeHtml(titleCase(category.replace(/_/g, " ")))}</div>
+          <div class="score-verdict">${escapeHtml(verdict)}</div>
+          <div class="score-context">${escapeHtml(label)} — ${escapeHtml(scoreDesc(score))}</div>
         </div>
         <div class="score-number-box">
           <div class="score-number">${score}</div>
@@ -307,24 +330,27 @@ ${JSON.stringify(structuredData, null, 2)}
         </div>
       </div>
 
-      ${reason ? `<div class="reason-box">${escapeHtml(reason)}</div>` : ""}
+      ${releaseStatus ? renderReleaseCard(releaseStatus) : ""}
 
-      ${childScore ? `<div class="child-notice">
-        <div class="child-notice-icon">👶</div>
-        <div class="child-notice-content">
-          <div class="child-notice-title">Child safety score</div>
-          <div class="child-notice-score">${childScore} / 10</div>
-          <div class="child-notice-body">Children are more vulnerable to these concerns — developing organ systems, higher exposure per body weight, and thinner skin all amplify chemical impact for young users.</div>
-        </div>
+      ${childScore ? `<div class="kids-note">
+        <div class="kids-note-label">For kids</div>
+        <div class="kids-note-score">${childScore} / 10</div>
+        <div class="kids-note-body">Kids are more exposed to these concerns — developing organ systems, higher exposure per body weight, and thinner skin amplify chemical impact.</div>
       </div>` : ""}
     </div>
   </div>
 </section>
 
-${substances.length ? `<section class="section">
+${reason ? `<section class="reason-wrap">
   <div class="container">
-    <div class="section-label">Flagged concerns</div>
-    <h2>What's in it</h2>
+    <div class="reason-label">The why</div>
+    <div class="reason-body">${escapeHtml(reason)}</div>
+  </div>
+</section>` : ""}
+
+${substances.length ? `<section class="concerns-wrap">
+  <div class="container">
+    <div class="reason-label">What's in it</div>
     <div class="concerns">
       ${substances.map(s => `<span class="concern-tag">${escapeHtml(s)}</span>`).join("\n      ")}
     </div>
@@ -333,25 +359,25 @@ ${substances.length ? `<section class="section">
 
 <section class="cta-section">
   <div class="container cta-inner">
-    <div class="cta-label">Ready for a cleaner swap?</div>
-    <h2 class="cta-title">Scan any product. See what's really in it.</h2>
-    <p class="cta-body">Partiqule instantly scores any product for microplastics, synthetic dyes, hormone disruptors, and more — then shows cleaner alternatives.</p>
-    <a href="https://partiqule.com/?q=${encodeURIComponent(productName)}" class="cta-btn">Open Partiqule →</a>
+    <div class="cta-label">Scan another</div>
+    <h2 class="cta-title">Open Partiqule. Know what's really in it.</h2>
+    <p class="cta-body">Score any product for microplastics, synthetic dyes, hormone disruptors, and more. Plus cleaner alternatives, one tap away.</p>
+    <a href="https://partiqule.com/?q=${encodeURIComponent(productName)}" class="cta-btn">Open Partiqule</a>
   </div>
 </section>
 
 <footer>
   <div class="container">
-    <div class="footer-brand">
-      <img src="/partiqule-wordmark.svg" alt="Partiqule">
-    </div>
+    <a href="https://partiqule.com" class="footer-brand">
+      <img src="/partiqule-wordmark-light.svg" alt="Partiqule">
+    </a>
     <div class="footer-links">
       <a href="https://partiqule.com">Home</a>
       <a href="https://partiqule.com/methodology">How scoring works</a>
       <a href="https://partiqule.com/guides">Guides</a>
       <a href="https://partiqule.com/privacy">Privacy</a>
     </div>
-    <div class="footer-legal">© ${new Date().getFullYear()} Partiqule · Know what's in your products</div>
+    <div class="footer-legal">© ${new Date().getFullYear()} Partiqule · Know what's really in it</div>
   </div>
 </footer>
 
@@ -359,16 +385,58 @@ ${substances.length ? `<section class="section">
 </html>`;
 }
 
+// ── Pre-release card render — matches App.jsx release-card block ──
+function renderReleaseCard(rs) {
+  const headerLabel = rs.status === "pre_release" ? "Not yet shipped" : rs.status.replace(/_/g, " ");
+  const defaultNote = "This product isn't available for purchase yet. Score reflects the brand's stated claims — we'll update once independent verification lands.";
+  const noteHtml = escapeHtml(rs.note || defaultNote);
+  const expected = rs.expected_release ? ` <span class="release-expected">Expected: ${escapeHtml(rs.expected_release)}.</span>` : "";
+
+  const verifiedBlock = Array.isArray(rs.verified) && rs.verified.length > 0
+    ? `<div class="release-list-label verified">Verified</div>` +
+      rs.verified.map(v => {
+        const meta = [v.source, v.date].filter(Boolean).join(", ");
+        const claimNode = v.url
+          ? `<a href="${escapeHtml(v.url)}" target="_blank" rel="noopener noreferrer" class="release-row-link">${escapeHtml(v.claim)}</a>`
+          : escapeHtml(v.claim);
+        return `<div class="release-row"><span class="release-row-check">✓</span><div>${claimNode}${meta ? ` <span class="release-row-meta">· ${escapeHtml(meta)}</span>` : ""}</div></div>`;
+      }).join("\n")
+    : "";
+
+  const pendingBlock = Array.isArray(rs.pending) && rs.pending.length > 0
+    ? `<div class="release-list-label pending">Pending</div>` +
+      rs.pending.map(p => {
+        const extras = [p.status, p.expectedBy ? `expected ${p.expectedBy}` : null].filter(Boolean).join(" · ");
+        return `<div class="release-row"><span class="release-row-meta">·</span><div>${escapeHtml(p.claim)}${extras ? ` <span class="release-row-meta">· ${escapeHtml(extras)}</span>` : ""}</div></div>`;
+      }).join("\n")
+    : "";
+
+  const coverageBlock = Array.isArray(rs.third_party_references) && rs.third_party_references.length > 0
+    ? `<div class="release-list-label coverage">Independent coverage</div>` +
+      rs.third_party_references.map(t => {
+        const summaryRow = t.summary ? `<div class="release-row-meta" style="margin-top:2px">${escapeHtml(t.summary)}</div>` : "";
+        return `<div class="release-row"><div><a href="${escapeHtml(t.url || "#")}" target="_blank" rel="noopener noreferrer" class="release-row-link">${escapeHtml(t.source || "Source")}</a>${t.date ? ` <span class="release-row-meta">${escapeHtml(t.date)}</span>` : ""}${summaryRow}</div></div>`;
+      }).join("\n")
+    : "";
+
+  return `<div class="release-card">
+    <div class="release-header">${escapeHtml(headerLabel)}</div>
+    <div class="release-note">${noteHtml}${expected}</div>
+    ${verifiedBlock}
+    ${pendingBlock}
+    ${coverageBlock}
+  </div>`;
+}
+
 function titleCase(s) {
   return s.replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function scoreDesc(score) {
-  if (score <= 2) return "Safe — no significant chemical or ingredient concerns.";
-  if (score <= 4) return "Good — mostly clean, use with awareness.";
-  if (score <= 6) return "Caution — real concerns, reduce use or find an alternative.";
-  if (score <= 8) return "Concern — consider switching to a cleaner option.";
-  return "Avoid — known harmful substances present.";
+  if (score <= 3) return "no significant chemical or ingredient concerns.";
+  if (score <= 5) return "real concerns, but manageable if you can't swap.";
+  if (score <= 7) return "real concerns — worth finding a cleaner option.";
+  return "known harmful substances present.";
 }
 
 function escapeHtml(s) {
