@@ -489,13 +489,15 @@ Pass 0 (`backend/pass0.js`) resolves a verified ingredient list BEFORE Pass 1 sc
 { ingredients, source, confidence, sourceUrl, verifiedAt, rawProduct }
 ```
 
-`source` is one of: `open_food_facts`, `open_beauty_facts`, `open_products_facts`, `supabase_scans`, `vision_ocr`, `none`. `rawProduct` is the source-specific opaque object callers can mine for additional fields (barcode paths extract nutrition/NOVA/brand/serving from it).
+`source` is one of: `open_food_facts`, `open_beauty_facts`, `open_products_facts`, `barcode_index`, `barcode_external`, `supabase_scans`, `vision_ocr`, `none`. `rawProduct` is the source-specific opaque object callers can mine for additional fields (barcode paths extract nutrition/NOVA/brand/serving from it).
 
 Resolution order:
 1. If `barcode` provided: Open Food Facts v2 → Open Beauty Facts v2 → Open Products Facts v2 (parallel fetch, preference by order). Product found with ingredient text → `confidence: "high"`. Product found without ingredient text → `confidence: "medium"` (we know identity, not materials).
-2. If `productName` provided and no barcode hit: Supabase `scans` table, JSONB lookup via `result_json->ingredient_list`, case-insensitive match on `product_name`, within last 12 months, most recent first. `confidence: "medium"`.
-3. If `image` provided and nothing else hit: **stub — returns `source: "none"`**. A future session will refactor `callClaudeVision` to populate Pass 0 via an OCR-only pass.
-4. Nothing hits → `source: "none", confidence: "none"`.
+2. If `barcode` provided and nothing hit in OFF/OBF/OPF: local barcode index (`backend/barcodeIndex.js`) — hand-curated UPC/EAN → product-name map for brands already in calibration. Source = `barcode_index`, confidence = `medium` (identity only, no ingredients). See "Barcode fallback chain" below.
+3. If `barcode` provided and local index misses: optional external barcode API (`backend/barcodeLookup.js`) — gated on `BARCODE_LOOKUP_PROVIDER` env var. Source = `barcode_external`, confidence = `medium`.
+4. If `productName` provided and no barcode hit: Supabase `scans` table, JSONB lookup via `result_json->ingredient_list`, case-insensitive match on `product_name`, within last 12 months, most recent first. `confidence: "medium"`.
+5. If `image` provided and nothing else hit: **stub — returns `source: "none"`**. A future session will refactor `callClaudeVision` to populate Pass 0 via an OCR-only pass.
+6. Nothing hits → `source: "none", confidence: "none"`.
 
 Integration: `/barcode` calls Pass 0 as its first step (replaces the previous inline OFF/OBF/OPF fetch). `/analyze` text path no longer uses Pass 0 directly — it runs the five-tier cascade in `backend/scoringCascade.js` instead. `/analyze` image path is unchanged.
 
@@ -513,6 +515,40 @@ Monitoring hit rate:
 grep pass0_resolution | jq -r '.source' | sort | uniq -c
 ```
 Every resolution emits a structured log: `[pass0_resolution] {"productName":..., "barcode":..., "source":..., "confidence":..., "duration_ms":...}`.
+
+### Barcode fallback chain (2026-04-23)
+
+OFF has broad coverage of food products; Open Beauty Facts (58k total) and Open Products Facts (40k total) have near-zero US consumer-goods coverage. Tested 10 common US barcodes (Blueland, Native, Huggies, Tide, Seventh Generation, Branch Basics, Dropps, Nivea, L'Oréal, Garnier): every single one 404s in all three databases. Before this change that meant a dead-end `fallback_required: true` response even for products we'd already calibrated by name.
+
+Two stages were added to `tryBarcode` in `pass0.js` after the OFF-family miss:
+
+**Stage 4: Local barcode index** (`backend/barcodeIndex.js`)
+- Exports `BARCODE_INDEX` Map and `lookupBarcode(barcode)` helper.
+- Handles UPC-A ↔ EAN-13 normalization (12-digit UPC matches 13-digit EAN with leading 0 stripped).
+- Seed is intentionally small — only add UPCs you've physically verified (scan the product, read the label). Fabricated UPCs risk misidentifying a different product that legitimately owns that UPC.
+- Returned entry points to a canonical product name that exists in `calibration.js` or fuzzy-matches one.
+- On hit: `/barcode` short-circuits to calibration lookup, no AI call, instant response.
+
+**Stage 5: External barcode lookup** (`backend/barcodeLookup.js`)
+- Optional third-party API client. Gated on `BARCODE_LOOKUP_PROVIDER` env var — no value set means no call, no cost, graceful degradation.
+- Supported providers: `upcitemdb` (free tier 100/day, trial 1000/day, paid ~$30/mo for 10k/day) or `go-upc` (requires API key).
+- API key goes in `BARCODE_LOOKUP_KEY`.
+- Returns `product_name` + `brand` only — ingredients empty. `/barcode` routes the name through calibration + fuzzy-calibration lookup the same way the local index does.
+- Add a provider by extending the `externalBarcodeLookup` dispatch in `barcodeLookup.js`.
+
+`/barcode` endpoint behavior for the new sources:
+- When `pass0.source === "barcode_index" || "barcode_external"` AND calibration has an entry for the returned name → build a calibration-shaped result (midpoint score, `buildFuzzyDimensions(calHit)`, `applyProductCalibration` final clamp), attach intel cards, cache, return. No AI call. Matches the `/analyze` productId bypass pattern.
+- When the new source returns a name but no calibration entry exists → falls through to the existing Pass 1 pipeline with empty `ingredText`. Pass 1 handles it but confidence will be low. A future patch could route this into the text cascade (Tier 3/4/5) for better fallback.
+
+Monitoring:
+```bash
+# Measure fallback-stage hit rates
+grep pass0_resolution | jq -r '.source' | sort | uniq -c
+# Spot brands scoring by barcode_index vs barcode_external
+grep 'BARCODE' | grep -E 'barcode_index|barcode_external'
+```
+
+Seeding workflow: when a user reports a barcode scan that returned fallback_required for a product we have calibrated, (1) verify the UPC on the physical product, (2) add `["<upc>", "<calibration key>"]` to `barcodeIndex.js`, (3) ship. The brand now resolves instantly for all future scans. If this becomes a high-volume workflow, a Supabase-backed table with an admin UI is the next step.
 
 ### Pre-Pass 0 cache eviction
 
