@@ -4971,6 +4971,19 @@ function applyProductCalibration(result) {
     }
   }
 
+  // Pre-release status propagation — calibration entries can carry an
+  // optional `status` / `statusNote` / `statusExpectedRelease` field for
+  // brands that have been scored but have not yet shipped product. The
+  // frontend renders an amber "Not yet available" card above the score.
+  // See CLAUDE.md "Pre-release calibration status" for the full shape.
+  const releaseStatus = entry?.status
+    ? {
+        status: entry.status,
+        note: entry.statusNote || null,
+        expected_release: entry.statusExpectedRelease || null,
+      }
+    : null;
+
   // ── Nutrition — merge four sources in priority order:
   // 1. Explicit result top-level fields
   // 2. result.nutrition from AI pass
@@ -5144,10 +5157,10 @@ function applyProductCalibration(result) {
   if (!corrected) {
     if (entry && entry.confidence === "high") {
       console.log(`[CAL] Confirmed: "${rawName}" scored ${currentScore} — within range`);
-      return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, confidence: "high", nutrition: nutrition_out, retailer_restricted: wfBanned, nutrition_concerns };
+      return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, confidence: "high", nutrition: nutrition_out, retailer_restricted: wfBanned, nutrition_concerns, release_status: releaseStatus };
     }
-    if (wfBanned) return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns };
-    return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, nutrition_concerns };
+    if (wfBanned) return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, retailer_restricted: true, nutrition_concerns, release_status: releaseStatus };
+    return { ...result, flagged_substances: cleanedSubstances, concerns: cleanedConcerns, nutrition: nutrition_out, nutrition_concerns, release_status: releaseStatus };
   }
 
   return {
@@ -5160,6 +5173,7 @@ function applyProductCalibration(result) {
     nutrition:            nutrition_out,
     retailer_restricted:  wfBanned,
     nutrition_concerns,
+    release_status:       releaseStatus,
     calibration_override: {
       original_score: currentScore,
       corrected_to:   newScore,

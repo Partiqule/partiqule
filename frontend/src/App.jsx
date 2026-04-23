@@ -6661,7 +6661,19 @@ function App() {
   const px      = isMobile ? "16px" : "40px";
 
   return (
-    <div style={{minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+    <div style={{
+      minHeight:"100vh", background:bg, fontFamily:"'DM Sans',system-ui,sans-serif",
+      // Reserve space at the bottom so the fixed bottom nav (72px + safe-area)
+      // and the Scan Another pill (anchored at bottom:88) don't overlap body
+      // content on mobile web. Without this, scrolling past the Scan Another
+      // pill leaves the body visible UNDER the fixed elements — classic
+      // sticky-footer overlap bug reported 2026-04-23. Larger padding when a
+      // result is rendered because the pill is visible then. Desktop has no
+      // bottom nav so no padding needed.
+      paddingBottom: (isMobile || isTablet)
+        ? (result ? "calc(160px + env(safe-area-inset-bottom, 0px))" : "calc(88px + env(safe-area-inset-bottom, 0px))")
+        : 0,
+    }}>
       <style>{`
         *{box-sizing:border-box;}
         body{margin:0;background:#080f0a;}
@@ -7977,6 +7989,45 @@ function App() {
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
                       <ScoreArc score={displayScore}/>
                     </div>
+
+                    {/* Pre-release / status banner — renders above the score context
+                        when a calibration entry carries a status field (e.g. pre_release
+                        for brands that haven't shipped product yet). Score still renders
+                        so users get the expected-range preview, but the card makes it
+                        explicit this is anticipated scoring, not a verified current product. */}
+                    {result.release_status && (
+                      <div style={{
+                        marginTop: 12, marginBottom: 4,
+                        background: "var(--cream-light)",
+                        border: "1px solid var(--amber)",
+                        borderRadius: "var(--card-shape-2)",
+                        padding: "12px 16px",
+                        textAlign: "left",
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                      }}>
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: 8, marginBottom: 6,
+                        }}>
+                          <div style={{ width: 18, height: 1, background: "var(--amber)", opacity: 0.8 }}/>
+                          <span style={{
+                            fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase",
+                            color: "var(--amber)", fontWeight: 500,
+                          }}>
+                            {result.release_status.status === "pre_release" ? "Not yet shipped" : result.release_status.status.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div style={{
+                          fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.5,
+                        }}>
+                          {result.release_status.note || "This product isn't available for purchase yet. Score reflects the brand's stated claims — we'll update once independent verification lands."}
+                          {result.release_status.expected_release && (
+                            <span style={{ color: "var(--ink-faint)" }}>
+                              {" "}Expected: {result.release_status.expected_release}.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {result.category_score_context && (
                       <div style={{

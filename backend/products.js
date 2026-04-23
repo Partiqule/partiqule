@@ -5216,6 +5216,34 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       brands: ["pact","kotn","tentree","everlane","reformation","quince","amour vert"],
       inject: ["organic","cotton","shirt","basic"],
     },
+    // Kids clothing brand injection — ensures Carter's/Cat & Jack/OshKosh
+    // queries find the organic kids alternatives we added in kc-001 through
+    // kc-005.
+    {
+      categories: ["clothing","baby"],
+      brands: ["carter","cat & jack","cat jack","catandjack","oshkosh","gerber","wonder nation","simple joys","primary","hanna andersson","little planet","burt's bees baby","burts bees baby"],
+      inject: ["kids","children","organic cotton","baby"],
+    },
+    // Sleepwear — route any pajama/sleeper query to the kids-clothing
+    // alternatives which include non-FR-treated tight-fit options.
+    {
+      categories: ["clothing","baby"],
+      brands: ["pajama","pajamas","sleeper","sleepers","pjs","nightwear","sleepwear"],
+      inject: ["pajamas","sleepwear","organic cotton","tight fit"],
+    },
+    // Underwear / intimates brand injection — surfaces Pact, Boody, Organic
+    // Basics alternatives when users query conventional underwear brands.
+    {
+      categories: ["clothing"],
+      brands: ["calvin klein","victoria's secret","victorias secret","hanes","fruit of the loom","aerie","tommy john","saxx","meundies"],
+      inject: ["underwear","intimates","organic cotton","basics"],
+    },
+    // Denim — Citizens of Humanity, Levi's etc. → surface cleaner denim alternatives.
+    {
+      categories: ["clothing"],
+      brands: ["levi","levis","levi's","wrangler","lee jeans","american eagle jeans","gap jeans","old navy jeans","madewell","j.crew","citizens of humanity","paige jeans","mother jeans","agolde"],
+      inject: ["jeans","denim","pants"],
+    },
   ];
   const queryJoined = queries.join(" ");
   const injections = [];
