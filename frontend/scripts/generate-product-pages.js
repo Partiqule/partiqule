@@ -89,7 +89,14 @@ function renderProductPage(productName, entry) {
     ? `${reason.slice(0, 155)}${reason.length > 155 ? "..." : ""}`
     : `${titleCase(productName)} scored ${score}/10 (${label}) for microplastic and chemical concerns. See what's in it and find cleaner alternatives on Partiqule.`;
   const canonicalUrl = `https://partiqule.com/products/${slug}`;
-  const ogImage     = `https://partiqule.com/og-image.png`;
+  // Per-product OG preview if one exists in public/og/<slug>.png, else the
+  // shared site-wide card at /og-image.png. Per-product files are generated
+  // by frontend/scripts/build-product-og-images.py (manifest-driven — opt in
+  // per product so the repo doesn't balloon with 3,000 PNGs).
+  const perProductOg = path.join(PUBLIC_DIR, "og", `${slug}.png`);
+  const ogImage = fs.existsSync(perProductOg)
+    ? `https://partiqule.com/og/${slug}.png`
+    : `https://partiqule.com/og-image.png`;
 
   // Schema.org structured data for rich results
   const structuredData = {
