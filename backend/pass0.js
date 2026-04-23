@@ -17,6 +17,9 @@
 //   resolveIngredients({ productName, barcode, image, category, supabase })
 //     -> { ingredients, source, confidence, sourceUrl, verifiedAt, rawProduct }
 
+const { lookupBarcode } = require("./barcodeIndex");
+const { externalBarcodeLookup } = require("./barcodeLookup");
+
 const USER_AGENT = "Partiqule/1.0 (paul@partiqule.com)";
 const FACTS_TIMEOUT_MS = 6000;
 const SUPABASE_CACHE_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000; // 12 months
@@ -57,8 +60,8 @@ function extractIngredientText(product) {
 }
 
 async function tryBarcode(barcode) {
-  // Fire all three OFF-family sources in parallel, then pick by preference order
-  // (food > beauty > product). Matches legacy /barcode behavior.
+  // Stage 1: Open Food / Beauty / Products Facts in parallel.
+  // Preference order: food > beauty > product. Matches legacy /barcode behavior.
   const results = await Promise.allSettled(
     BARCODE_ATTEMPTS.map((a) => fetchFactsProduct(a.apiBase, barcode))
   );
@@ -67,9 +70,6 @@ async function tryBarcode(barcode) {
     if (r.status !== "fulfilled" || !r.value) continue;
     const product = r.value;
     const ingredients = extractIngredientText(product);
-    // A product record without an ingredient list still counts as a verified
-    // identity hit (we know what the product is), but confidence drops to
-    // "medium" because we cannot verify materials.
     const confidence = ingredients ? "high" : "medium";
     return {
       ingredients: ingredients || null,
@@ -80,6 +80,41 @@ async function tryBarcode(barcode) {
       rawProduct: product,
     };
   }
+
+  // Stage 2: Local barcode index. Hand-curated UPC → product-name map for
+  // brands we've already calibrated (Blueland, Method, Huggies, etc.) but
+  // that aren't in any of the OFF-family databases.
+  const localName = lookupBarcode(barcode);
+  if (localName) {
+    return {
+      ingredients: null,
+      source: "barcode_index",
+      confidence: "medium",
+      sourceUrl: null,
+      verifiedAt: new Date().toISOString(),
+      rawProduct: { product_name: localName, _source: "local_barcode_index" },
+    };
+  }
+
+  // Stage 3: External barcode lookup API (gated on BARCODE_LOOKUP_PROVIDER env).
+  // Returns a product-name-only record; the /barcode handler runs it through
+  // calibration + cascade the same way the local index does.
+  const external = await externalBarcodeLookup(barcode);
+  if (external && external.product_name) {
+    return {
+      ingredients: null,
+      source: "barcode_external",
+      confidence: "medium",
+      sourceUrl: null,
+      verifiedAt: new Date().toISOString(),
+      rawProduct: {
+        product_name: external.product_name,
+        brands: external.brand || "",
+        _source: external._source,
+      },
+    };
+  }
+
   return null;
 }
 

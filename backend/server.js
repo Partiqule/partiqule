@@ -8509,11 +8509,60 @@ app.post("/barcode", rateLimit, async (req, res) => {
   // Pass 0 returns the raw product object for downstream nutrition extraction
   // plus source metadata (ingredient_source, confidence, verifiedAt) that we
   // store on the result and inject into the Pass 1 prompt.
+  //
+  // Pass 0 also consults a local barcode index (backend/barcodeIndex.js) and
+  // an optional external barcode API (backend/barcodeLookup.js, env-gated)
+  // after the three Open-Facts databases miss. Those two stages return a
+  // product_name without ingredients — when that happens we short-circuit to
+  // calibration lookup below so brands we've already scored resolve instantly.
   const pass0 = await resolveIngredients({ barcode, supabase: supabaseAdmin });
   const offProduct = pass0.rawProduct;
-  const sourceName = pass0.source; // "open_food_facts" | "open_beauty_facts" | "open_products_facts" | "none"
+  const sourceName = pass0.source; // "open_food_facts" | "open_beauty_facts" | "open_products_facts" | "barcode_index" | "barcode_external" | "none"
   if (offProduct) {
     console.log(`[BARCODE] ${barcode} found in ${sourceName} (confidence: ${pass0.confidence})`);
+  }
+
+  // ── Short-circuit: barcode_index / barcode_external → calibration ──
+  // These two sources return a product_name only (no ingredients). If the
+  // name matches a calibration entry, serve the calibration score directly.
+  // This is how Blueland/Method/Huggies/Native/etc. barcodes resolve without
+  // burning an AI call. Mirrors the warm-cache calibration bypass pattern.
+  if (offProduct && (sourceName === "barcode_index" || sourceName === "barcode_external")) {
+    const resolvedName = offProduct.product_name || "";
+    const calHit = CALIBRATION.get(normalise(resolvedName)) || fuzzyCalibrationLookup(resolvedName)?.entry;
+    if (calHit) {
+      const midScore = Math.round((calHit.floor + calHit.ceiling) / 2);
+      const calCategory = calHit.category || detectCategory(resolvedName) || "other";
+      const calibrated = applyProductCalibration({
+        product_name: resolvedName,
+        score: midScore,
+        overall_score: midScore,
+        category: calCategory,
+        confidence: calHit.confidence || "high",
+        dimensions: buildFuzzyDimensions(calHit, calCategory, midScore),
+        concerns: calHit.substances || [],
+        summary: calHit.reason || "",
+        ingredient_list: [],
+        flagged_substances: [],
+        alternatives: [],
+        ai_alternatives: [],
+        ingredient_source: sourceName,
+        ingredient_confidence: pass0.confidence || "medium",
+        ingredient_verified_at: pass0.verifiedAt,
+        ingredient_source_url: null,
+        source: "calibration",
+        source_label: "Verified formula",
+        source_confidence: null,
+      });
+      console.log(`[BARCODE] ${barcode} (${sourceName}) → "${resolvedName}" → calibration ${calHit.floor}-${calHit.ceiling}`);
+      await attachIntelCards(calibrated, userId);
+      cacheSet(barcodeKey, calibrated);
+      return res.json({ ...calibrated, barcode, cached: false });
+    }
+    // No calibration hit — fall through to the existing pipeline, which will
+    // run Pass 1 with empty ingredients. Pass 1 handles the empty case but
+    // confidence will be low; a future patch could route this into the text
+    // cascade (Tier 3/4/5) for richer fallback.
   }
 
   if (!offProduct) {
