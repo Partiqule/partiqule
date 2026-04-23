@@ -8586,10 +8586,10 @@ app.post("/barcode", rateLimit, async (req, res) => {
       barcode,
       origin_country: gs1Hint,
       message: gs1Hint
-        ? `We couldn't identify this barcode, but it looks like a product from ${gs1Hint}. Try photographing the label for a full scan.`
-        : "We couldn't identify this barcode automatically. Try photographing the label for a full scan.",
+        ? `I don't know this barcode yet — looks like a product from ${gs1Hint}. Snap a photo of the label and I'll read it for you.`
+        : "I don't know this barcode yet. Snap a photo of the label and I'll read it for you.",
       action: "photo_scan",
-      cta: "Scan the label instead",
+      cta: "Take a photo instead",
     });
   }
 

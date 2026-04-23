@@ -707,14 +707,14 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
               fontWeight:400, marginBottom:10,
               letterSpacing:"-0.01em",
             }}>
-              I couldn't find this one.
+              I don't know this barcode yet.
             </div>
             <div style={{
               fontFamily:"'DM Sans', system-ui, sans-serif",
               fontSize:13, color:"var(--ink-soft)",
               lineHeight:1.55, marginBottom:24,
             }}>
-              The barcode didn't land in any of our ingredient sources. Try again, or take a photo of the label.
+              Snap a photo of the label and I'll read it for you.
             </div>
             <button onClick={onRetry} style={{
               width:"100%", padding:"13px 16px",
