@@ -5078,7 +5078,10 @@ function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
     usageFreq = "daily"; usageType = "skin_contact"; usageIntensity = "leave-on";
   } else if (isClothing) {
     usageLabel = "Worn against skin. Heat and perspiration increase absorption of fabric chemicals.";
-    usageFreq = "weekly"; usageType = "skin_contact"; usageIntensity = "leave-on";
+    // "weekly" understates clothing exposure — underwear, bras, socks,
+    // activewear, and daily-basics are daily skin contact. Outerwear and
+    // formalwear are weekly but those are minorities.
+    usageFreq = "daily"; usageType = "skin_contact"; usageIntensity = "leave-on";
   } else if (isHome) {
     usageLabel = "Used for cleaning. Inhalation and residue on surfaces are the main exposure routes.";
     usageFreq = "weekly"; usageType = "inhalation";
@@ -6442,6 +6445,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
       success: false,
       error: "unresolved_productId",
       message: "That match couldn't be resolved. Try another product or scan the barcode.",
+    });
+  }
+
+  // Reject bare-fiber queries that have no brand / product identity — these
+  // would fall through to Tier 5 and produce a synthetic "best guess" score
+  // for an abstract fabric term (e.g. "polyester", "100% polyester", "spandex",
+  // "lyocell"). That's a fabrication vector — no real product backs the score.
+  // Surface a friendly "need more specifics" response instead.
+  const fiberOnlyPattern = /^\s*(?:\d+\s*%\s*)?(?:polyester|nylon|spandex|elastane|lycra|acrylic|rayon|viscose|modal|cupro|lyocell|tencel|cotton|linen|hemp|wool|merino|cashmere|bamboo)\s*$/i;
+  if (fiberOnlyPattern.test(productName)) {
+    log.info("fabric_only_query_rejected", { productName });
+    return res.status(400).json({
+      success: false,
+      error: "fabric_only_query",
+      message: "That's a fabric name, not a specific product. Try a brand and product — like \"Lululemon leggings\" or \"Pact organic tee\".",
     });
   }
 
