@@ -966,8 +966,8 @@ The Partiqule wordmark was introduced 2026-04-19, replacing the older leaf/Q ico
 
 | File | When to use |
 |---|---|
-| `partiqule-wordmark.svg` | Primary, cream letters — dark backgrounds (main app nav, barcode scanner overlay, SEO page footer, Barcode loading screen) |
-| `partiqule-wordmark-light.svg` | Dark letters on transparent — light backgrounds (SEO page nav at `background:#fff`) |
+| `partiqule-wordmark.svg` | Dark letters on transparent — for light/cream backgrounds (main app nav, SEO page nav, loading screens on cream) |
+| `partiqule-wordmark-light.svg` | Cream/light letters — for dark backgrounds (barcode scanner overlay, dark-chrome contexts). Naming is "light-colored letters", not "for light backgrounds" — this is confusing; verified 2026-04-23 by pixel inspection of the PNG exports. |
 | `partiqule-stacked.svg` | Vertical Q-above-text lockup — reserved for future use (about page, stories, etc.) |
 | `partiqule-q.svg` | Q-only, green `#2d6a32` on transparent — favicon source and anywhere a full wordmark won't fit |
 | `partiqule-wordmark-{360,720,1080}.png` | PNG exports of the primary wordmark — for canvas rendering (share cards) and any context where SVG is awkward |
