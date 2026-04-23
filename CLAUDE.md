@@ -74,8 +74,9 @@ Commit messages: plain English only, no special characters, no em dashes (they b
 8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
 9. Pregnancy scores via `computeSafetyScores()` helper -- computed on ALL paths including image/camera
 10. Consistency checks (`applyConsistencyChecks`) catch AI hallucinations (label contradictions, inert material ceilings, confidence-linked caps)
-11. Positive ceilings (`applyPositiveCeilings`) prevent over-penalizing USDA Organic and Non-GMO verified products
+11. Positive ceilings (`applyPositiveCeilings`) prevent over-penalizing USDA Organic and Non-GMO verified products. Also caps personal_care at 3 when three layers agree clean (2026-04-21, Burt's Bees fix), and caps clothing at 3 when GOTS/OEKO-TEX certified + no clothing-specific disqualifier fired (2026-04-22).
 12. Intelligence cards attached via in-memory cache (2-min TTL, avoids Supabase query per scan)
+13. Calibration entry category wins over detected category for weight selection (2026-04-22). When a calibration entry sets `category: "clothing"` but `detectCategoryFast()` returned `"baby"` (pajamas), the calibration category drives weight formula selection. Prevents pajamas from scoring with baby weights (sustainability 0%) which dropped FR-treatment and microfiber penalties. Applies in vision and barcode paths.
 
 **Category scoring weights:**
 - Food/beverage: Materials 90% + Packaging 10%
@@ -215,15 +216,21 @@ pq_foryou                   -- For You carousel seen state by date
 
 ## Supabase Tables
 
-**Existing:**
-- `profiles` -- user_id, email, scan_count, stripe_customer_id, is_subscribed
+**Actually exist in production (verified 2026-04-22):**
+- `profiles` -- id, email, scan_count, stripe_customer_id, is_subscribed, subscription_ends_at
 - `scans` -- user_id, product_name, category, score, result_json, scanned_at
+- `guides` -- content-management for guide articles, published flag, admin emails can write
 - `score_feedback` -- product reports from users (pending/resolved/dismissed)
-- `suggestions` -- product suggestions from users (pending/added/dismissed)
-- `calibration_overrides` -- admin score overrides (merged into CALIBRATION Map at runtime)
 - `intelligence_cards` -- admin-curated and auto-generated intelligence cards
 - `regulatory_flags` -- regulatory findings extracted from approved intelligence cards
-- `subscriptions` -- Apple IAP and Stripe subscription records
+- `product_safety_findings` -- admin-populated or legacy
+
+**Referenced in code but do NOT exist — endpoints that touch them 500 silently:**
+- `subscriptions` -- `/apple-iap-confirm` no longer writes here (fixed 2026-04-22; profiles.is_subscribed is the source of truth). Could add if a transaction audit trail is wanted later.
+- `suggestions` -- `/suggest`, `/suggestions`, `/suggestions/resolve` all 500 silently. Unused feature.
+- `calibration_overrides` -- startup `loadCalibrationOverrides` wraps in try/catch so it logs but doesn't crash; `/admin/calibration` endpoints 500. Create the table if admin calibration overrides are wanted at runtime.
+
+All tables have RLS enabled as of 2026-04-22 — see "Security conventions" above for policy details.
 
 ---
 
@@ -322,6 +329,17 @@ When multiple async operations update the same `lists` state (e.g. batch recipe 
 - Intelligence card mutations validated against field allowlist
 - Internal error details never exposed to client responses
 - Cache-clear rate-limited to once per 60 seconds
+- **User auth middleware `requireUserAuth`** (2026-04-22) — three endpoints require a verified Supabase JWT in `Authorization: Bearer <token>`: `/delete-account`, `/apple-iap-confirm`, and the `/analyze` scan-count increment path. userId is derived from the token's `sub` claim, never from the request body. Without this, anonymous callers could (a) grant themselves or anyone premium via `/apple-iap-confirm`, (b) delete any account by guessing a UUID, (c) reset any user's scan_count to bypass the paywall. Frontend helper `authHeaders()` pulls `session.access_token` from Supabase and attaches the Bearer header. Anonymous `/analyze` scans still work — they just skip the counter increment.
+- **Apple receipt verification** (2026-04-22) — `/apple-iap-confirm` cryptographically verifies the Apple receipt (JWS payload bundleId + productId match, or legacy verifyReceipt fallback) before flipping `profiles.is_subscribed`. An authenticated user cannot fabricate a transactionId for a product they didn't buy. StoreKit 2 JWS verification parses payload without full signature verification (rotating trust roots is heavier lift — worth doing but beyond the scope of this patch).
+- **Atomic scan-count increment** (2026-04-22) — `/analyze` uses a Supabase RPC `increment_scan_count(uid)` for the counter update. Run this migration once:
+  ```sql
+  CREATE OR REPLACE FUNCTION increment_scan_count(uid uuid)
+  RETURNS void LANGUAGE sql AS $$
+    UPDATE profiles SET scan_count = COALESCE(scan_count, 0) + 1 WHERE id = uid;
+  $$;
+  ```
+  Fallback (non-atomic select + upsert) still runs if the RPC isn't installed — safe to deploy code first, run migration later.
+- **Supabase RLS** (2026-04-22) — all 7 public tables have Row Level Security enabled: `profiles` (own read/update), `scans` (own CRUD), `guides` (published=true read, admin email manage), and `score_feedback` / `intelligence_cards` / `regulatory_flags` / `product_safety_findings` (backend-only via `supabaseAdmin`). Backend uses the service role key to bypass RLS; the frontend anon key can only access what the policies allow. Stale CLAUDE.md previously listed `subscriptions`, `suggestions`, `calibration_overrides` as existing — they do not. `/suggest`, `/apple-iap-confirm` (audit write), and `/admin/calibration` all touched non-existent tables; `/apple-iap-confirm` was patched 2026-04-22 to drop the `subscriptions` write. The other two endpoints still 500 silently when invoked.
 
 ### Frontend styling
 100% inline JavaScript styles (camelCase). No CSS files. Dark mode via `isDark` boolean (currently always true). Color system: green (safe) -> yellow (caution) -> orange (warn) -> red (danger). Mobile breakpoint: `isMobile = width < 768`. Tablet breakpoint: `isTablet = width >= 768 && width <= 1024`.
@@ -663,6 +681,110 @@ Error phase is triggered by: (1) fetch timeout via AbortError, (2) non-2xx respo
 Visuals: forest green `#052e16` background (matches Score color system), Partiqule leaf logo (same SVG used in scan header / footer) at 96×96 with a 1.6s `barcodeLoadingPulse` scale+drop-shadow animation, Outfit font throughout, no emoji. Z-index 9998 (under `BarcodeScannerView` at 9999 so a retry can layer on top).
 
 Not applied to text-query path or image-scan path — those continue to use `GlobeLoading` via the existing `loading` / `showOverlay` effect (see `App.jsx` ~6842). The barcode path is self-contained and does not touch `setLoading`.
+
+---
+
+## Pre-release calibration status (2026-04-23)
+
+Calibration entries can carry an optional `status` / `statusNote` / `statusExpectedRelease` trio for brands that have been scored but have not yet shipped product. Designed for brand-outreach situations (e.g. Sports Organics reached out 2026-04-23 but is pre-launch with signup landing page only — no SKUs, no independent verification). Without this mechanism the options are (a) leave the brand out entirely so users querying it get a cascade miss, or (b) ship a plain calibration entry that misrepresents the brand's current state. Neither is good; the status field is.
+
+Entry shape:
+```js
+["sports organics", {
+  floor: 2, ceiling: 4,
+  substances: ["elastane blend", "undisclosed dyes"],
+  reason: "GOTS-certified organic cotton claimed... pending verification.",
+  confidence: "medium",
+  category: "clothing",
+  status: "pre_release",
+  statusNote: "Signup landing page only — no products shipped yet. Scoring based on publicly stated claims; will tighten once independent lab testing or GOTS certificate cross-reference is available.",
+  statusExpectedRelease: "2026-Q3", // optional
+}]
+```
+
+Supported status values: `pre_release` (brand hasn't shipped yet). More can be added later (`discontinued`, `reformulating`, `recalled`) — the frontend card falls back to rendering the status string itself if it's not explicitly cased.
+
+`applyProductCalibration` in `calibration.js` propagates these fields to `result.release_status` on every return branch. Frontend renders an amber-outlined cream card above the `category_score_context` line showing:
+- Small-caps label: "Not yet shipped" (pre_release) or the status string de-snake-cased
+- The `statusNote` text, or a generic default
+- Expected release date suffix if set
+
+Score itself still renders so users get the expected-range preview — the card frames expectations rather than hiding the score.
+
+### Workflow when a brand reaches out
+
+1. Research the brand via web search agent (grounded in real sources, NOT marketing copy)
+2. If pre-launch / unverified: add calibration entry with `status: "pre_release"` and honest note
+3. Reach back to brand for: GOTS licensee number, OEKO-TEX certificate number, Mamavation/lab testing, PFAS-free statement, elastane % in cotton blends
+4. When documentation lands: drop the status fields, tighten `confidence`, update `reason` with `Ingredients verified MM YYYY` note per the calibration-entry-integrity rule
+
+---
+
+## Clothing scoring mechanisms (2026-04-22 overhaul)
+
+The clothing category is the most-scanned in the app. A 40-finding audit shipped in one pass after Instagram traffic hit; documenting the key mechanisms here so they don't regress.
+
+### Fiber classification (server.js `buildFuzzyDimensions`)
+
+- `hasSynthFiber` matches `nylon | polyester | spandex | elastane | lycra | acrylic | microfiber | viscose | modal | rayon | cupro | bamboo viscose | bamboo rayon`. The last four are chemically regenerated cellulosics that shed microfibers like synthetics — critical greenwashing guard. Lyocell and tencel stay OUT of this list (closed-loop process = legitimately cleaner).
+- `hasNatural` matches `merino wool | cashmere | cotton | linen | hemp | lyocell | tencel` — and specifically EXCLUDES bare `bamboo` because 99% of commercial bamboo textile is viscose-processed. Only cross-referenced "bamboo linen" (mechanical process) would deserve natural treatment and it's rare enough the detection doesn't try.
+- Empty-substances clothing calibration entries (e.g. Pact Organic at floor:1 ceiling:3 with `substances: []`) now get uScore=2 and sScore=2 instead of defaulting to 5/4. The calibration floor IS the signal that the brand is clean; defaults shouldn't contradict it.
+
+### Clothing clean ceiling (`applyPositiveCeilings`)
+
+When a clothing product has a verified certification (`GOTS | OEKO-TEX | USDA Organic | Fair Trade Certified | Bluesign | Cradle to Cradle | OCS`) AND no clothing-specific disqualifier fired (PFAS, formaldehyde, azo dye, chrome-tan, silver nanoparticle, flame retardant, lead, PVC, phthalate), cap final at 3. Parallel to the food USDA Organic ceiling and personal_care clean ceiling. Closes the gap where verified-clean clothing could still hedge up if Pass 1 was conservative.
+
+### Clothing-specific substance floors (server.js `SUBSTANCE_FLOORS`)
+
+- **DWR / water-repellent** — mFloor:6, matches bare `DWR` or `durable water repellent` or `water-repellent finish/coating/treatment` with a negative lookahead for `free` / `pfas.free`. Historically all DWR was PFAS-based; a few brands now claim PFAS-free C0 alternatives.
+- **PFAS DWR explicit** — mFloor:8, matches `PFAS.*DWR | DWR.*PFAS | durable water repellent.*fluoro`. Tiered higher than bare DWR because both terms together is strongest evidence.
+- **Chrome-tanned leather** — mFloor:5, matches `chrome.?tan(ning|ned) | chromium.?tan | conventional leather`. Covers Nike Air Force 1, Timberland, Frye, Common Projects, Blundstone, Danner.
+- **Silver nanoparticle antimicrobial** — mFloor:6, matches `silverescent | silver nanoparticle | silver.*antimicrobial | polygiene`. Covers Lululemon Silverescent, Mack Weldon Silver, ExOfficio.
+- **Azo/disperse/reactive dyes** — mFloor:6, matches `azo dye | azo.?dye | aromatic amine.*dye | disperse dye | reactive dye`.
+- **Microfiber shedding** — mFloor:6, broadened pattern covers `microfiber shed | shed microfiber | microfiber pollut | microplastic shed | shed microplastic | fiber shedding`.
+
+### Calibration category overrides detected category
+
+When a calibration entry's `category` differs from what `detectCategoryFast()` returned, the calibration wins for weight formula selection. Fixes the pajama bug (Cat & Jack pajamas detected as `baby`, calibration marks them `clothing` → pre-fix ran the baby formula which zeroes sustainability, dropping FR-treatment and microfiber penalties). Applies in vision and barcode paths.
+
+### Kids-mode floors on FR-treated sleepwear
+
+Carter's, OshKosh, Cat & Jack, Simple Joys sleepwear entries carry `kidsFloor: 7, kidsCeiling: 9`. Base adult floor is 5-7; kids mode elevates to 7-9 because the FR chemicals contact kids' skin 8-10 hours nightly. Wonder Nation at `kidsFloor: 6, kidsCeiling: 8` (lower base).
+
+### Alternatives matching rules specific to clothing
+
+- `STRICT_CATEGORIES` enforces same-category matching for clothing. An organic cotton tee won't surface as an alternative for a synthetic leggings scan unless both are category:"clothing".
+- `BLOCK_OTHER` excludes "other" category alternatives for supplement/personal_care/baby. Clothing allows "other" fallthrough since some clean clothing products pre-date category assignment.
+- Gender-mismatch penalty extended from personal_care to clothing (2026-04-22): men's products deprioritized by 15 points on women's queries and vice versa.
+- Brand-keyword injection: activewear brands (Lululemon/Athleta/Vuori/Alo/Outdoor Voices/Gymshark/Nike/Adidas) inject `activewear, leggings, athletic, workout`; outdoor tech brands (Patagonia/North Face/Arc'teryx/Cotopaxi/Marmot) inject `jacket, outerwear, rain jacket, hiking`; fast fashion (Shein/Zara/H&M/Forever21/Uniqlo/Old Navy/Gap) inject `clothing, shirt, dress, basic`; clean basics (Pact/Kotn/Tentree/Everlane/Reformation/Quince) inject `organic, cotton, shirt, basic`; kids brands (Carter's/Cat & Jack/OshKosh/Wonder Nation/Simple Joys/Hanna Andersson/Little Planet/Burt's Bees Baby) inject `kids, children, organic cotton, baby`; sleepwear terms (pajama/sleeper/pjs/nightwear) inject `pajamas, sleepwear, organic cotton, tight fit`; denim brands (Levi's/Madewell/J.Crew/Citizens of Humanity/Paige/Mother/AGOLDE) inject `jeans, denim, pants`.
+
+### Kids clothing alternatives (products.js)
+
+Five kc-* entries ship as of 2026-04-22 — Pact Kids, Hanna Andersson Organic Pajamas, Little Planet, Colored Organics, Burt's Bees Baby Sleeper. Previously the clothing catalog had zero kids-tagged items so Carter's / Cat & Jack queries returned nothing. All five are GOTS-certified.
+
+### Bare-fiber query rejection (text-path)
+
+`/analyze` returns a 400 `fabric_only_query` response for queries that are just a fabric name (e.g. `polyester`, `100% spandex`, `lyocell`). Pattern: `/^\s*(?:\d+\s*%\s*)?(fabric terms)\s*$/i`. These have no brand/product identity and would fall through to Tier 5 synthetic scoring — a fabrication vector. User gets a friendly "try a brand and product" prompt instead.
+
+### PFAS brand auditing protocol
+
+Brands claim PFAS phase-outs constantly. Before lowering a floor:
+1. Cross-reference against Mamavation EPA-certified lab testing (or equivalent: Consumer Reports, EWG, Toxic-Free Future).
+2. For split-use brands, separate product lines: DWR-finished items stay at floor:5 until independent verification; cotton/fleece/lounge items with no chemical finish can score lower.
+3. Insert specific product entries BEFORE the brand default in calibration.js — Map iteration order determines which `startsWith` match wins via `fuzzyCalibrationLookup`.
+4. Cite investigations with dates in reason strings (e.g. "Mamavation 2022 lab testing: 32ppm organic fluorine", "Texas AG Ken Paxton Civil Investigative Demand 2026-04-13").
+
+Previously dead "nike shoes" entry removed 2026-04-22 (contradicted verified Nike FY24 PFAS elimination + was dead code due to iteration order).
+
+---
+
+## Mobile web layout (fixed footer / result page)
+
+Root wrapper at `frontend/src/App.jsx` `minHeight: 100vh` now includes dynamic `paddingBottom` on mobile/tablet:
+- Without a result: `calc(88px + env(safe-area-inset-bottom, 0px))`
+- With a result: `calc(160px + env(safe-area-inset-bottom, 0px))` (accounts for Scan Another pill at bottom:88 + bottom nav at bottom:0 overlap)
+
+This fixes a bug reported 2026-04-23 where mobile Safari scrolling past the Scan Another pill revealed body content peeking under the fixed nav + pill. Desktop has no bottom nav so `paddingBottom: 0`. When adding new fixed-position bottom elements, update the calc or the overlap returns.
 
 ---
 
