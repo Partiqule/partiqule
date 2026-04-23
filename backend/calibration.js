@@ -392,6 +392,28 @@ const ENTRIES = [
   // CLOTHING — KEY BRANDS
   // ══════════════════════════════════════════════════════════════
   ["lululemon align",              { floor:5, ceiling:7, substances:["nylon","elastane","PFAS indicator 32ppm"], reason:"Lululemon Align — Nulu fabric (87% nylon / 13% Lycra). Mamavation EPA-certified lab testing 2022 found 32ppm organic fluorine (PFAS indicator) in crotch area. Lululemon claims PFAS phase-out in FY23, but Texas AG Ken Paxton issued a Civil Investigative Demand on April 13, 2026 alleging the phase-out claim is misleading. Daily intimate skin contact + synthetic microfiber shedding + unverified PFAS phase-out.", confidence:"high", category:"clothing" }],
+  ["sports organics",              { floor:1, ceiling:3,
+    substances:["organic cotton","elastane","merino wool","GOTS certified fabric","OEKO-TEX Standard 100"],
+    reason:"Sports Organics — cotton line (Classic Bra, Mia Bike Shorts): 91% organic cotton + 9% elastane with GOTS-certified fabric and OEKO-TEX Standard 100. Merino line (Speed T): 100% merino wool with OEKO-TEX Standard 100. Ingredients verified 04 2026 via brand disclosure. Pre-release: company-level GOTS and registry cross-references still pending.",
+    confidence:"medium",
+    category:"clothing",
+    status:"pre_release",
+    statusNote:"Brand disclosure received 2026-04-23. Fabric certifications verified against brand product pages; company-level GOTS in progress per brand. Floor will tighten once GOTS license number and OEKO-TEX certificate are cross-referenced against public registries.",
+    statusExpectedRelease:"2026-Q3",
+    verified:[
+      { claim:"91% organic cotton + 9% elastane (Classic Bra, Mia Bike Shorts)", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"100% merino wool (Merino Speed T)", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"GOTS certification at fabric level", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"OEKO-TEX Standard 100 certification at fabric level", source:"brand disclosure + product page", date:"2026-04" }
+    ],
+    pending:[
+      { claim:"Company-level GOTS certification (whole-supply-chain, not just fabric)", status:"in progress per brand", wouldChangeScoreTo:1, expectedBy:"2026-Q3" },
+      { claim:"OEKO-TEX certificate number cross-reference against oeko-tex.com registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"GOTS license number cross-reference against global-standard.org registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"Independent lab testing for dyes, finishes, or heavy metals (Mamavation / Consumer Reports / Toxic-Free Future)", status:"no third-party testing published yet", wouldChangeScoreTo:1 }
+    ],
+    thirdPartyReferences:[]
+  }],
   ["pact organic",                 { floor:1, ceiling:3, substances:[], reason:"GOTS certified organic cotton — gold standard clothing certification", confidence:"high", category:"clothing" }],
   ["pact clothing",                { floor:1, ceiling:3, substances:[], reason:"Pact — GOTS certified organic cotton, Fair Trade. Benchmark clean clothing brand across all product lines.", confidence:"high", category:"clothing" }],
   ["pact men",                     { floor:1, ceiling:3, substances:[], reason:"Pact men's clothing — GOTS certified organic cotton, Fair Trade. Benchmark clean.", confidence:"high", category:"clothing" }],
@@ -4985,13 +5007,23 @@ function applyProductCalibration(result) {
   // Pre-release status propagation — calibration entries can carry an
   // optional `status` / `statusNote` / `statusExpectedRelease` field for
   // brands that have been scored but have not yet shipped product. The
-  // frontend renders an amber "Not yet available" card above the score.
+  // frontend renders an amber "Not yet shipped" card above the score.
+  //
+  // Extended 2026-04-23 with structured provenance fields:
+  //   verified[]              — substantiated claims
+  //   pending[]               — promise-vs-proof bucket
+  //   thirdPartyReferences[]  — independent coverage (Mamavation etc.)
+  //
+  // All three are optional. Empty arrays render nothing on the frontend.
   // See CLAUDE.md "Pre-release calibration status" for the full shape.
   const releaseStatus = entry?.status
     ? {
         status: entry.status,
         note: entry.statusNote || null,
         expected_release: entry.statusExpectedRelease || null,
+        verified: entry.verified || [],
+        pending: entry.pending || [],
+        third_party_references: entry.thirdPartyReferences || [],
       }
     : null;
 

@@ -724,35 +724,61 @@ Not applied to text-query path or image-scan path — those continue to use `Glo
 
 Calibration entries can carry an optional `status` / `statusNote` / `statusExpectedRelease` trio for brands that have been scored but have not yet shipped product. Designed for brand-outreach situations (e.g. Sports Organics reached out 2026-04-23 but is pre-launch with signup landing page only — no SKUs, no independent verification). Without this mechanism the options are (a) leave the brand out entirely so users querying it get a cascade miss, or (b) ship a plain calibration entry that misrepresents the brand's current state. Neither is good; the status field is.
 
-Entry shape:
+Entry shape (extended 2026-04-23 with structured provenance fields):
 ```js
 ["sports organics", {
-  floor: 2, ceiling: 4,
-  substances: ["elastane blend", "undisclosed dyes"],
-  reason: "GOTS-certified organic cotton claimed... pending verification.",
+  floor: 1, ceiling: 3,
+  substances: ["organic cotton", "elastane", "GOTS certified fabric", "OEKO-TEX Standard 100"],
+  reason: "Sports Organics — cotton line... Pre-release: company-level GOTS and registry cross-references still pending.",
   confidence: "medium",
   category: "clothing",
   status: "pre_release",
-  statusNote: "Signup landing page only — no products shipped yet. Scoring based on publicly stated claims; will tighten once independent lab testing or GOTS certificate cross-reference is available.",
-  statusExpectedRelease: "2026-Q3", // optional
+  statusNote: "Brand disclosure received 2026-04-23...",
+  statusExpectedRelease: "2026-Q3",                // optional
+
+  // ── Structured provenance (all optional, all arrays) ──
+  verified: [
+    { claim: "GOTS certification at fabric level", source: "brand disclosure + product page", date: "2026-04", url: "https://..." /* optional */ },
+  ],
+  pending: [
+    { claim: "Company-level GOTS certification", status: "in progress per brand", wouldChangeScoreTo: 1, expectedBy: "2026-Q3" },
+  ],
+  thirdPartyReferences: [
+    { source: "Bottlecup", url: "https://...", date: "2025-09", summary: "≤200 char excerpt" /* optional */ },
+  ],
 }]
 ```
 
 Supported status values: `pre_release` (brand hasn't shipped yet). More can be added later (`discontinued`, `reformulating`, `recalled`) — the frontend card falls back to rendering the status string itself if it's not explicitly cased.
 
-`applyProductCalibration` in `calibration.js` propagates these fields to `result.release_status` on every return branch. Frontend renders an amber-outlined cream card above the `category_score_context` line showing:
+### Field semantics
+
+- **`verified[]`** — substantiated claims. Required: `claim`, `source`, `date` (`YYYY-MM`). Optional: `url` to substantiation. Rendered as moss checkmark list.
+- **`pending[]`** — promise-vs-proof bucket. Required: `claim`, `status` (short progress phrase). Optional: `wouldChangeScoreTo` (1-10, drives future auto-promotion), `expectedBy` (`YYYY-QN` or `YYYY-MM`). Rendered as amber bullet list.
+- **`thirdPartyReferences[]`** — independent coverage (Mamavation, Consumer Reports, EWG, Toxic-Free Future, reviewer outlets). Required: `source`, `url`, `date` (`YYYY-MM`). Optional: `summary` (≤200 chars). Rendered as moss linked list.
+
+Invariants: `verified[]` and `pending[]` are disjoint (a claim moves between them, never copies). Entries with `status: "pre_release"` and ≥1 third-party reference become eligible to drop pre-release status.
+
+`applyProductCalibration` in `calibration.js` propagates these fields to `result.release_status` on every return branch. All three array fields default to `[]` when absent on the source entry. Frontend renders an amber-outlined cream card above the `category_score_context` line showing:
 - Small-caps label: "Not yet shipped" (pre_release) or the status string de-snake-cased
 - The `statusNote` text, or a generic default
 - Expected release date suffix if set
+- **Verified** section (moss caps, IconCheck rows) when `verified[]` is non-empty
+- **Pending** section (amber caps, bulleted rows) when `pending[]` is non-empty
+- **Independent coverage** section (moss caps, linked source rows) when `third_party_references[]` is non-empty
 
 Score itself still renders so users get the expected-range preview — the card frames expectations rather than hiding the score.
 
 ### Workflow when a brand reaches out
 
 1. Research the brand via web search agent (grounded in real sources, NOT marketing copy)
-2. If pre-launch / unverified: add calibration entry with `status: "pre_release"` and honest note
+2. If pre-launch / unverified: add calibration entry with `status: "pre_release"` and honest note. Populate `verified[]` with disclosures you've received, `pending[]` with what's still awaiting substantiation, `thirdPartyReferences[]` with any independent coverage.
 3. Reach back to brand for: GOTS licensee number, OEKO-TEX certificate number, Mamavation/lab testing, PFAS-free statement, elastane % in cotton blends
-4. When documentation lands: drop the status fields, tighten `confidence`, update `reason` with `Ingredients verified MM YYYY` note per the calibration-entry-integrity rule
+4. When documentation lands: move rows from `pending[]` to `verified[]` (don't copy — move), tighten `confidence`, update `reason` with `Ingredients verified MM YYYY` note per the calibration-entry-integrity rule. Once enough items verify, drop the status fields entirely.
+
+### Future auto-promotion hook (not shipped)
+
+`pending[].wouldChangeScoreTo` exists to enable a future cron job that attempts structured verification (GOTS license lookup at global-standard.org, OEKO-TEX cert lookup at oeko-tex.com, Mamavation publication scraping). On success: move the row from `pending` → `verified` with `date: <today>`, log `[calibration_auto_promotion]`, and once all pending items clear, apply `wouldChangeScoreTo` to `floor`/`ceiling`. The schema is shipped; the promotion job isn't.
 
 ---
 

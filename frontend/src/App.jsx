@@ -8026,6 +8026,81 @@ function App() {
                             </span>
                           )}
                         </div>
+
+                        {/* Verified claims — substantiated disclosures */}
+                        {Array.isArray(result.release_status.verified) && result.release_status.verified.length > 0 && (
+                          <div style={{marginTop: 14}}>
+                            <div style={{
+                              fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase",
+                              color: "var(--moss)", fontWeight: 500,
+                              marginBottom: 8, display: "flex", alignItems: "center", gap: 10,
+                            }}>
+                              <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                              Verified
+                            </div>
+                            {result.release_status.verified.map((v, i) => (
+                              <div key={i} style={{display:"flex", gap:8, fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:6, alignItems:"flex-start"}}>
+                                <span style={{flexShrink:0, marginTop:2}}><IconCheck size={14} color="var(--moss)"/></span>
+                                <div style={{flex:1}}>
+                                  {v.url ? (
+                                    <a href={v.url} target="_blank" rel="noopener noreferrer" style={{color:"var(--moss)", textDecoration:"none", borderBottom:"1px solid var(--moss-soft)"}}>{v.claim}</a>
+                                  ) : v.claim}
+                                  {(v.source || v.date) && (
+                                    <span style={{color:"var(--ink-faint)", fontSize:12}}>
+                                      {" · "}{[v.source, v.date].filter(Boolean).join(", ")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Pending claims — promise vs proof */}
+                        {Array.isArray(result.release_status.pending) && result.release_status.pending.length > 0 && (
+                          <div style={{marginTop: 14}}>
+                            <div style={{
+                              fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase",
+                              color: "var(--amber)", fontWeight: 500,
+                              marginBottom: 8, display: "flex", alignItems: "center", gap: 10,
+                            }}>
+                              <span style={{display:"inline-block", width:22, height:1, background:"var(--amber)", opacity:0.7}}/>
+                              Pending
+                            </div>
+                            {result.release_status.pending.map((p, i) => (
+                              <div key={i} style={{fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:6}}>
+                                <span style={{color:"var(--ink-faint)"}}>·</span> {p.claim}
+                                {(p.status || p.expectedBy) && (
+                                  <span style={{color:"var(--ink-faint)", fontSize:12}}>
+                                    {" · "}{p.status}
+                                    {p.expectedBy && ` · expected ${p.expectedBy}`}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Third-party references — independent coverage */}
+                        {Array.isArray(result.release_status.third_party_references) && result.release_status.third_party_references.length > 0 && (
+                          <div style={{marginTop: 14}}>
+                            <div style={{
+                              fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase",
+                              color: "var(--moss)", fontWeight: 500,
+                              marginBottom: 8, display: "flex", alignItems: "center", gap: 10,
+                            }}>
+                              <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                              Independent coverage
+                            </div>
+                            {result.release_status.third_party_references.map((t, i) => (
+                              <div key={i} style={{fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:8}}>
+                                <a href={t.url} target="_blank" rel="noopener noreferrer" style={{color:"var(--moss)", fontWeight:500, textDecoration:"none"}}>{t.source}</a>
+                                {t.date && <span style={{color:"var(--ink-faint)", fontSize:12, marginLeft:6}}>{t.date}</span>}
+                                {t.summary && <div style={{marginTop:2, color:"var(--ink-soft)", fontSize:12}}>{t.summary}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
