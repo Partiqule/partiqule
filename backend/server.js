@@ -5187,6 +5187,17 @@ function buildFuzzyDimensions(entry, category, midScore) {
   const substances = entry.substances || [];
   const fd = enrichFuzzyDimensions(substances, category, midScore);
   const meta = buildFuzzyDimensionMeta(category, substances, entry.reason || "", fd);
+
+  // Entry-level overrides let calibration entries that know their actual
+  // packaging / usage / sustainability profile (refill systems, compostable,
+  // Forever Tin, etc.) skip the generic category fallback. Any unset field
+  // falls back to the category-level meta. Accepts either snake_case or
+  // camelCase keys for readability.
+  const pkgOver  = entry.packaging || {};
+  const useOver  = entry.usage || entry.usage_exposure || {};
+  const sustOver = entry.sustainability || {};
+  const pick = (a, b) => (a !== undefined ? a : b);
+
   return {
     materials: {
       score: fd.mScore,
@@ -5194,29 +5205,29 @@ function buildFuzzyDimensions(entry, category, midScore) {
       label: meta.materials.label,
     },
     usage_exposure: {
-      score: fd.uScore,
+      score: pick(useOver.score, fd.uScore),
       concerns: fd.usageConcerns,
-      label: meta.usage_exposure.label,
-      frequency: meta.usage_exposure.frequency,
-      type: meta.usage_exposure.type,
-      intensity: meta.usage_exposure.intensity,
-      vulnerable: meta.usage_exposure.vulnerable,
+      label: useOver.label || meta.usage_exposure.label,
+      frequency: useOver.frequency || meta.usage_exposure.frequency,
+      type: useOver.type || meta.usage_exposure.type,
+      intensity: pick(useOver.intensity, meta.usage_exposure.intensity),
+      vulnerable: pick(useOver.vulnerable, meta.usage_exposure.vulnerable),
     },
     packaging: {
-      score: fd.pkScore,
+      score: pick(pkgOver.score, fd.pkScore),
       concerns: [],
-      label: meta.packaging.label,
-      primary: meta.packaging.primary,
-      end_of_life: meta.packaging.end_of_life,
-      refillable: meta.packaging.refillable,
+      label: pkgOver.label || meta.packaging.label,
+      primary: pkgOver.primary || meta.packaging.primary,
+      end_of_life: pkgOver.endOfLife || pkgOver.end_of_life || meta.packaging.end_of_life,
+      refillable: pick(pkgOver.refillable, meta.packaging.refillable),
     },
     sustainability: {
-      score: fd.sScore,
+      score: pick(sustOver.score, fd.sScore),
       concerns: fd.sustainConcerns,
-      label: meta.sustainability.label,
-      circularity: meta.sustainability.circularity,
-      reusable: meta.sustainability.reusable,
-      replaces_single_use: meta.sustainability.replaces_single_use,
+      label: sustOver.label || meta.sustainability.label,
+      circularity: sustOver.circularity || meta.sustainability.circularity,
+      reusable: pick(sustOver.reusable, meta.sustainability.reusable),
+      replaces_single_use: pick(sustOver.replacesSingleUse, pick(sustOver.replaces_single_use, meta.sustainability.replaces_single_use)),
     },
   };
 }
