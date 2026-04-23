@@ -10,11 +10,44 @@
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
+import crypto from "node:crypto";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
 const PUBLIC_DIR = path.resolve(__dirname, "../public");
 const OUT_DIR = path.join(PUBLIC_DIR, "products");
+
+// ── OG image cache-busting ──
+// Instagram, Facebook, iMessage, Twitter etc. cache OG preview images keyed
+// on URL for 7-30 days. A design refresh to og-image.png doesn't refresh
+// those cached previews — the URL didn't change, so scrapers don't re-fetch.
+//
+// Fix: append a content-hash query param (?v=<8-char sha>) to every og:image
+// URL. Next time a scraper hits the page, it sees a new URL and refetches
+// the (fresh) image. When the image content changes, the hash changes,
+// and cached references become stale and trigger a rescrape on next view.
+//
+// No file renames, no 404s — the underlying PNG still lives at the clean
+// path; the query param is ignored by the server but fingerprints the URL
+// for scraper cache keys.
+const _hashCache = new Map();
+function imageVersion(absPath) {
+  if (_hashCache.has(absPath)) return _hashCache.get(absPath);
+  if (!fs.existsSync(absPath)) {
+    _hashCache.set(absPath, null);
+    return null;
+  }
+  const bytes = fs.readFileSync(absPath);
+  const hash = crypto.createHash("sha1").update(bytes).digest("hex").slice(0, 8);
+  _hashCache.set(absPath, hash);
+  return hash;
+}
+function versionedImageUrl(publicPath) {
+  const abs = path.join(PUBLIC_DIR, publicPath.replace(/^\//, ""));
+  const v = imageVersion(abs);
+  const base = `https://partiqule.com${publicPath.startsWith("/") ? publicPath : "/" + publicPath}`;
+  return v ? `${base}?v=${v}` : base;
+}
 
 // ── Load calibration data from the backend ──
 // calibration.js exports { CALIBRATION } as a Map, not named exports via ESM.
@@ -93,10 +126,13 @@ function renderProductPage(productName, entry) {
   // shared site-wide card at /og-image.png. Per-product files are generated
   // by frontend/scripts/build-product-og-images.py (manifest-driven — opt in
   // per product so the repo doesn't balloon with 3,000 PNGs).
+  //
+  // Every URL carries ?v=<8-char-sha> fingerprint — when we ship a refreshed
+  // OG image, the hash changes and scrapers rescrape on next view.
   const perProductOg = path.join(PUBLIC_DIR, "og", `${slug}.png`);
   const ogImage = fs.existsSync(perProductOg)
-    ? `https://partiqule.com/og/${slug}.png`
-    : `https://partiqule.com/og-image.png`;
+    ? versionedImageUrl(`/og/${slug}.png`)
+    : versionedImageUrl(`/og-image.png`);
 
   // Schema.org structured data for rich results
   const structuredData = {

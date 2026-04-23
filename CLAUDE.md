@@ -958,6 +958,46 @@ Not applied to the barcode path's OFF `nova_group` input — that path uses the 
 
 ---
 
+## OG preview freshness (2026-04-23)
+
+Instagram, Facebook, iMessage, Twitter, Slack, and LinkedIn cache link-preview images keyed on the image URL, typically for 7-30 days. That meant any time we shipped a design refresh to `og-image.png`, already-shared links kept showing the stale old preview until the scrapers happened to refetch — or someone ran the Facebook Sharing Debugger manually on every URL.
+
+**Fix: content-hashed query params on every `og:image` URL.** Both the SEO page generator and a post-build fingerprint script append `?v=<8-char-sha>` to every OG image reference. When the underlying image bytes change, the hash changes, the URL becomes a new cache key, and scrapers refetch on next view — automatically, no manual debugger runs.
+
+### Pipeline
+
+1. **`frontend/scripts/generate-product-pages.js`** — SEO generator. Its `versionedImageUrl(publicPath)` helper reads the PNG from `frontend/public/`, SHA-1 hashes the bytes, takes the first 8 chars, and appends `?v=<hash>` to the URL emitted in each page's `<meta property="og:image">` and `<meta name="twitter:image">` tags. Applies to every product's `og:image` reference — whether that's the shared site-wide card at `/og-image.png` or a per-product card at `/og/<slug>.png`.
+2. **`frontend/scripts/fingerprint-og.js`** — post-build script wired as `postbuild` in `frontend/package.json`. Runs after `vite build` has emitted `dist/index.html`. Regex-matches every `og:image` / `twitter:image` meta tag in the built HTML, looks up the referenced file under `frontend/public/`, hashes it, and rewrites the URL with the `?v=<hash>` fingerprint. Handles the homepage + any other Vite-built HTML.
+3. **Underlying images are never renamed.** `/og-image.png` still lives at `/og-image.png` on the server. The query param is ignored by the file server but fingerprints the URL for scraper cache keys.
+
+### Build order
+
+```
+npm run build
+  prebuild: generate-product-pages.js   ← SEO pages emit versioned OG URLs
+  build:    vite build                   ← index.html emitted with plain URLs
+  postbuild: fingerprint-og.js          ← dist/index.html rewritten with ?v=<hash>
+```
+
+### One-time migration for existing shares
+
+Content fingerprinting only kicks in when scrapers next fetch a URL. Previously-scraped Instagram/Facebook cached previews still point to the un-versioned URL and will keep showing the old preview image until the scraper naturally re-fetches (up to 30 days) OR you manually kick the cache at **https://developers.facebook.com/tools/debug/** (paste URL → click "Scrape Again"). After that, the URL moves to the `?v=<hash>` system permanently and all future refreshes are automatic.
+
+### Design refresh workflow going forward
+
+1. Update the OG image source (edit `frontend/scripts/build-og-image.py` and/or `build-product-og-images.py`, regenerate PNGs)
+2. `npm run build` — fingerprints change, `og:image` URLs update
+3. Deploy via Vercel
+4. Done. Scrapers rescrape on next view.
+
+No manual debugger runs per URL, no file renames, no code changes in the SEO template.
+
+### Caveat — page URL cache is separate
+
+The OG image URL cache is what we fingerprinted. There's a separate cache for the PAGE URL itself that holds the og:image URL (along with the title + description) from the last scrape. When we change the og:image URL inside the page, scrapers only notice on their next page-URL refetch. That cache TTL is also 7-30 days. So a single design refresh doesn't instantly propagate to every existing cached preview — but it DOES propagate automatically over the cache TTL window without any manual work. For urgent refreshes (e.g. a content moment that needs to go live today), still run the FB debugger on the specific URLs Sara/Paul is about to share.
+
+---
+
 ## Brand Logo
 
 The Partiqule wordmark was introduced 2026-04-19, replacing the older leaf/Q icon + "Partiqule" text lockup. The wordmark spells out "partiqule" in a cream serif with a large decorative green Q as the 6th letter. Two wordmark variants exist because both dark-chrome (app headers) and light-chrome (SEO pages) contexts need legible rendering.
