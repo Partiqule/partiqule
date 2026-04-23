@@ -8297,15 +8297,18 @@ function App() {
 
                 {/* FLAGGED SUBSTANCES and NUTRITION BADGES moved to Surface 2 (detail overlay). */}
 
-                {/* Alt teaser — renders for any score > 2 where a meaningfully
-                    cleaner alternative exists. 1-2 scored products don't surface
-                    the teaser: no cleaner option exists for 1, and 2→1 is a
-                    marginal upgrade not worth the screen real estate. 3+ always
-                    shows the teaser when the alt list has anything cleaner. */}
+                {/* Alt teaser — renders for every scanned product where a
+                    genuinely cleaner alternative exists. The altS >= currentScore
+                    guard below handles the "no meaningful improvement" case
+                    honestly: a score-1 product never shows the teaser (nothing
+                    can score lower), and any product with no cleaner alt in the
+                    DB falls through the same way. Sara's content arc is about
+                    the continuous clean-up journey, so we surface the best
+                    available alternative even on clean-tier scans. */}
                 {(() => {
                   const topAlt = result.alternatives?.[0] || result.ai_alternatives?.[0];
                   const currentScore = pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score);
-                  if (!topAlt || currentScore <= 2) return null;
+                  if (!topAlt) return null;
                   const altS = topAlt.score ?? topAlt.estimated_score ?? 2;
                   if (altS >= currentScore) return null;
                   return (
