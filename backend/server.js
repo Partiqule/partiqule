@@ -697,8 +697,22 @@ const SUBSTANCE_FLOORS = [
   // ══════════════════════════════════════════════════════════
   // TEXTILE CHEMICALS — EU REACH restricted
   // ══════════════════════════════════════════════════════════
-  { match: /azo dye|azo.?dye|aromatic amine.*dye/i,                   mFloor:6, uFloor:5, reason:"Azo dyes — release carcinogenic aromatic amines (EU REACH)" },
+  { match: /azo dye|azo.?dye|aromatic amine.*dye|disperse dye|reactive dye/i, mFloor:6, uFloor:5, reason:"Azo/disperse/reactive dyes — release carcinogenic aromatic amines (EU REACH)" },
   { match: /PFAS.*DWR|DWR.*PFAS|durable water repellent.*fluoro/i,    mFloor:8, uFloor:6, reason:"PFAS DWR coating — forever chemicals on fabric" },
+  // Bare-DWR / water-repellent coating floor — catches products where the AI
+  // or OFF text mentions DWR or water-repellent without the word "PFAS".
+  // Historically all DWR was PFAS-based; a few brands now claim PFAS-free DWR
+  // (C0 / non-fluorinated) — the "(?!.free|(?!.*pfas.free))" negative lookahead
+  // prevents double-firing when the context already disqualifies fluorinated.
+  { match: /\bDWR\b(?!.*(free|pfas.free))|durable water repellent(?!.*(free|pfas.free))|water.repellent (finish|coating|treatment)(?!.*(free|pfas.free))/i, mFloor:6, uFloor:5, reason:"DWR / water-repellent finish — historically PFAS-based unless certified fluorine-free" },
+  // Chrome-tanned leather — hexavalent chromium pollution risk, EU REACH
+  // under review. Common in conventional leather (Nike Air Force 1,
+  // Timberland, Frye, Common Projects, Blundstone, Danner).
+  { match: /chrome.?tan(ning|ned)|chromium.?tan|conventional leather/i, mFloor:5, uFloor:4, reason:"Chrome-tanned leather — hexavalent chromium pollution risk" },
+  // Silver nanoparticle antimicrobial — EU under regulatory review, leaches
+  // into waterways, endocrine concern. Found in activewear antibacterial
+  // treatments (Lululemon Silverescent, Mack Weldon Silver, ExOfficio).
+  { match: /silverescent|silver nanoparticle|silver.*antimicrobial|polygiene/i, mFloor:6, uFloor:5, reason:"Silver nanoparticle antimicrobial — EU under regulatory review, waterway leaching" },
   { match: /dimethylpolysiloxane|antifoam.*silicone|silicone.*antifoam/i, mFloor:5, uFloor:4, reason:"Dimethylpolysiloxane — silicone antifoaming in frying oils" },
   { match: /nonylphenol|nonylphenol ethoxylate|\bNPE\b/i,              mFloor:7, uFloor:6, reason:"Nonylphenol — EU SVHC, endocrine disruptor, textile processing" },
   { match: /pentachlorophenol|\bPCP\b.*wood|wood.*\bPCP\b/i,           mFloor:8, uFloor:7, reason:"Pentachlorophenol — IARC Group 1, banned textile preservative" },
@@ -764,7 +778,7 @@ const SUBSTANCE_FLOORS = [
   // MICROPLASTICS
   // ══════════════════════════════════════════════════════════
   { match: /microplastic|microbead|polyethylene.*bead|polypropylene.*bead/i, mFloor:6, uFloor:6, reason:"Microplastics/microbeads — direct ingestion/absorption, bioaccumulation" },
-  { match: /microfiber.*shed|shed.*microfiber/i,                       mFloor:6, uFloor:5, reason:"Microfiber shedding — ocean contamination, food chain entry" },
+  { match: /microfiber.*shed|shed.*microfiber|microfiber.*pollut|microplastic.*shed|shed.*microplastic|fiber shedding/i, mFloor:6, uFloor:5, reason:"Microfiber shedding — ocean contamination, food chain entry" },
 
   // ══════════════════════════════════════════════════════════
   // POLYCHLORINATED COMPOUNDS
@@ -1213,7 +1227,8 @@ function applyConsistencyChecks(mScore, uScore, pkScore, sScore, finalScore, p1,
 function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered) {
   const isFood = FOOD_CATEGORIES_SET.has(category);
   const isPersonalCare = category === "personal_care";
-  if (!isFood && !isPersonalCare) return { finalScore, ceilingFlags: [] };
+  const isClothing = category === "clothing";
+  if (!isFood && !isPersonalCare && !isClothing) return { finalScore, ceilingFlags: [] };
 
   const flags = [];
   const allText = JSON.stringify([
@@ -1266,6 +1281,31 @@ function applyPositiveCeilings(finalScore, category, p1, p2, substanceTriggered)
       flags.push("personal_care_clean_ceiling");
     }
     // Personal care doesn't use the food-specific ceilings below.
+    return { finalScore, ceilingFlags: flags };
+  }
+
+  // ── CLOTHING GOTS / OEKO-TEX CLEAN CEILING ─────────────────────
+  // Cap final at 3 when the product has a verified organic or clean-textile
+  // certification AND no clothing-specific disqualifier fired. Parallel to
+  // the food USDA Organic ceiling and personal_care clean ceiling. Known
+  // certified-clean clothing brands (Pact, Tentree, Kotn, Little Planet,
+  // Hanna Andersson) should land here regardless of what the AI hedged at.
+  if (isClothing) {
+    const hc = Array.isArray(p1.harmful_chemicals) ? p1.harmful_chemicals : [];
+    const fs = Array.isArray(p1.flagged_substances) ? p1.flagged_substances : [];
+    const clothingDisqualifiers = /\b(pfas|pfoa|pfos|perfluor|fluoropoly|\bdwr\b|formaldehyde|wrinkle.free|wrinkle.resistant|azo dye|chrome.?tan|silverescent|silver nanoparticle|polygiene|antimicrobial|flame retardant|pbde|tcep|tdcpp|\blead\b|\bpvc\b|vinyl chloride|phthalate)/i;
+    const isCertifiedClean =
+      /\bgots\b|oeko.?tex|usda.?organic|fair.?trade.?certified|bluesign|cradle.?to.?cradle|\bocs\b|organic content standard/i.test(allText);
+    const flaggedClean =
+      hc.length === 0 &&
+      !fs.some(s => clothingDisqualifiers.test(String(s || ""))) &&
+      !clothingDisqualifiers.test(allText);
+    const substanceFloorClean = !substanceTriggered.some(t => clothingDisqualifiers.test(String(t || "")));
+    if (isCertifiedClean && flaggedClean && substanceFloorClean && finalScore > 3) {
+      console.log(`Clothing clean ceiling: capping score from ${finalScore} to 3 (GOTS/OEKO-TEX verified, no disqualifiers)`);
+      finalScore = 3;
+      flags.push("clothing_clean_ceiling");
+    }
     return { finalScore, ceilingFlags: flags };
   }
 
@@ -4821,15 +4861,25 @@ function enrichFuzzyDimensions(substances, category, midScore) {
 
   // ── Detect substance classes (shared across all categories) ──
   const hasPFAS = subs.some(s => /pfas|pfoa|pfos|dwr(?!.*free)|perfluor|fluoropoly/i.test(s)) && !subs.some(s => /pfas.free|free.*pfas/i.test(s));
-  const hasSynthFiber = subs.some(s => /\bnylon\b|polyester|spandex|elastane|lycra|acrylic|rayon|microfiber/i.test(s));
-  const hasAntimicrobial = subs.some(s => /silverescent|antimicrobial|silver.*nano/i.test(s));
+  // hasSynthFiber now includes chemically regenerated cellulosics (viscose,
+  // modal, bamboo viscose, cupro). These shed microfibers like synthetics
+  // and require chemical solvent processing despite marketing as "natural".
+  // Lyocell/tencel use a closed-loop process so they're NOT in this list —
+  // they're the one regenerated cellulosic that scores closer to clean.
+  const hasSynthFiber = subs.some(s => /\bnylon\b|polyester|spandex|elastane|lycra|acrylic|microfiber|\bviscose\b|\bmodal\b|\brayon\b|\bcupro\b|bamboo\s+viscose|bamboo\s+rayon/i.test(s));
+  const hasAntimicrobial = subs.some(s => /silverescent|antimicrobial|silver.*nano|polygiene/i.test(s));
   const hasFormaldehyde = subs.some(s => /formaldehyde|wrinkle.free|wrinkle.resistant|DMDM hydantoin|quaternium.15|diazolidinyl/i.test(s));
   const hasAzoDyes = subs.some(s => /azo dye/i.test(s));
   const hasLead = subs.some(s => /\blead\b/i.test(s));
   const hasPVC = subs.some(s => /\bpvc\b|vinyl chloride/i.test(s));
   const hasFlameRetardant = subs.some(s => /flame retardant/i.test(s));
   const hasOrganic = subs.some(s => /organic cotton|gots|oeko.tex/i.test(s));
-  const hasNatural = subs.some(s => /merino wool|cashmere|\bcotton\b|linen|hemp|bamboo/i.test(s)) && !hasSynthFiber;
+  // hasNatural specifically excludes bare "bamboo" and "bamboo viscose" —
+  // 99% of commercially sold "bamboo" textile is bamboo viscose, a chemically
+  // regenerated cellulosic that shouldn't be credited as a natural fiber.
+  // Only bamboo-linen (mechanical process) would deserve natural treatment,
+  // and it's rare enough we don't try to detect it.
+  const hasNatural = subs.some(s => /merino wool|cashmere|\bcotton\b|linen|hemp|lyocell|tencel/i.test(s)) && !hasSynthFiber;
   const hasChemTreatment = subs.some(s => /chemical|chrome tanning|stone washing|distress/i.test(s));
   const hasMoisture = subs.some(s => /moisture.wicking/i.test(s));
   const hasGoreTex = subs.some(s => /gore.tex|ePE membrane/i.test(s));
@@ -4895,8 +4945,15 @@ function enrichFuzzyDimensions(substances, category, midScore) {
     else if (hasFormaldehyde) uScore = 6;
     else if (hasSynthFiber && hasMoisture) uScore = 5;
     else if (hasSynthFiber) uScore = 5;
-    else if (hasNatural) uScore = 2;
     else if (hasOrganic) uScore = 1;
+    else if (hasNatural) uScore = 2;
+    // Empty-substances clothing calibration entries previously fell through
+    // with uScore = 5 (the default init), which contradicted low-floor clean
+    // brands like Pact Organic, Kotn, Tentree whose substances arrays are
+    // empty by design. Trust the calibration floor — if the entry says 1-3,
+    // the brand doesn't have concerning substances, so exposure is low.
+    else if (midScore <= 3) uScore = 2;
+    else if (midScore <= 5) uScore = 4;
   } else if (isHome) {
     if (hasSynthFragrance) uScore = 6;
     else uScore = 4;
@@ -4908,6 +4965,11 @@ function enrichFuzzyDimensions(substances, category, midScore) {
     if (hasSynthFiber) sScore = 6;
     if (hasOrganic) sScore = 2;
     else if (hasNatural && !hasSynthFiber) sScore = 3;
+    // Empty-substances low-floor calibration: trust the floor — these are
+    // brands the calibration author scored clean for a reason (Fair Trade,
+    // organic programs, supply-chain transparency). Default sScore = 4
+    // previously dragged clean brands down.
+    else if (!hasSynthFiber && midScore <= 3) sScore = 2;
   }
 
   const pkScore = 3;
@@ -5672,7 +5734,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // path as if the user had typed the name. Tier 5 ensures every identified
       // product gets a score — with an honest "best guess" label when no
       // external source verified the formula.
-      const visionCat = identification.category || detectCategoryFast(productName) || "other";
+      let visionCat = identification.category || detectCategoryFast(productName) || "other";
       let cascadeHit = null;
 
       const calKey = normalise(productName);
@@ -5684,6 +5746,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
         const fuzzy = fuzzyCalibrationLookup(productName);
         if (fuzzy) {
           cascadeHit = { tier: "fuzzy_calibration", entry: fuzzy.entry, ingredients: (fuzzy.entry.substances || []).join(", ") };
+        }
+      }
+      // Calibration category wins over detected category for weight selection.
+      // Fixes a class of bug where pajamas (detected as baby via regex) have
+      // calibration entries marked "clothing", and the baby formula has
+      // sustainability weight 0 — which drops microfiber/FR penalties that
+      // only apply in the clothing formula. More generally, calibration is
+      // the authoritative source of truth when it has an opinion.
+      if (cascadeHit?.entry?.category && CATEGORY_AVERAGES[cascadeHit.entry.category]) {
+        if (visionCat !== cascadeHit.entry.category) {
+          console.log(`[vision] calibration category override: ${visionCat} → ${cascadeHit.entry.category} for "${productName}"`);
+          visionCat = cascadeHit.entry.category;
         }
       }
       if (!cascadeHit) {
@@ -8506,6 +8580,14 @@ app.post("/barcode", rateLimit, async (req, res) => {
     else if (!cat && cls.category === "other") cat = "other";
   } catch (e) {
     console.warn("[classify] barcode error, using Fast category:", e.message);
+  }
+
+  // Calibration category wins if there's a matching entry. Same rationale as
+  // the vision path: calibration is authoritative when it has an opinion.
+  const bcCalHit = CALIBRATION.get(normalise(productName)) || fuzzyCalibrationLookup(productName)?.entry;
+  if (bcCalHit?.category && CATEGORY_AVERAGES[bcCalHit.category] && bcCalHit.category !== cat) {
+    console.log(`[barcode] calibration category override: ${cat} → ${bcCalHit.category} for "${productName}"`);
+    cat = bcCalHit.category;
   }
 
   // ── Build rich context from OFF data for pass1 ──

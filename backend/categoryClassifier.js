@@ -191,15 +191,39 @@ function detectCategoryFast(q) {
 
   if (/\btoy\b|lego|playmobil|barbie|hot wheels|action figure|stuffed animal|plush toy|play.?doh|playdoh|puzzle|board game|building block|wooden toy|bath toy|sensory toy|fidget|slime kit|kinetic sand|nerf|rc car|remote control car|doll house|dollhouse|train set|crayola|crayons|markers|play set|playset/.test(s)) return "toy";
 
-  if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|\bring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|hat(?!.*baby)|scarf(?!.*kids)|beanie(?!.*kids)|gloves(?!.*cleaning)|umbrella/.test(s)) return "accessory";
-
+  // BABY PERSONAL CARE / SUPPLEMENTS first — before baby accessory lookaheads below.
   if (/\b(baby|infant|toddler|newborn)\s+(shampoo|conditioner|lotion|soap|body wash|sunscreen|moisturizer|oil|cream|powder|deodorant|toothpaste|face wash)/.test(s)) return "personal_care";
   if (/\b(baby|infant|toddler|kids?|children.?s?)\s+(vitamin|supplement|probiotic|multivitamin|gummy vitamin|tylenol|ibuprofen|acetaminophen|medicine|drops)/.test(s)) return "supplement";
+
+  // SUPPLEMENT — must run before clothing because pre-workout powders, protein
+  // powders, creatine etc. would otherwise match "workout"/"protein" in the
+  // clothing regex. A viral clothing post brought this bug to light 2026-04-22.
+  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|gummy vitamin|tylenol|acetaminophen|advil|ibuprofen|benadryl|diphenhydramine|zyrtec|cetirizine|tums|antacid|allegra|claritin|pepto|robitussin|mucinex|dayquil|nyquil/.test(s)) return "supplement";
+
+  // BABY ACCESSORY GUARD — "baby hat", "kids beanie", "toddler gloves" etc.
+  // must route to baby before the accessory regex below strips them out via
+  // broken negative lookaheads (which only check "after" not "before").
+  if (/\b(baby|infant|toddler|newborn|kids?|children.?s?)\s+(hat|beanie|scarf|gloves|mittens|socks|booties|bib|onesie)\b/.test(s)) return "baby";
+
+  // CLEANING GLOVES → home (must beat clothing/accessory pattern below).
+  if (/\bcleaning\s+gloves\b|\brubber\s+gloves\b|\bdish\s+gloves\b|\blatex\s+gloves\b/.test(s)) return "home";
+
+  // CLOTHING — must run before accessory so "workout gloves", "running gloves",
+  // clothing-adjacent accessories resolve as clothing instead of accessory.
+  // Clothing regex tightened to avoid bare "workout"/"yoga" matches hitting
+  // non-clothing products (yoga block, workout supplement).
+  if (/\b(workout|running|athletic|gym|sport|cycling|hiking|ski|snow)\s+(gloves|mittens|socks|shorts|shirt|top|tights|leggings|bra|jacket|hoodie|pants?|tee|tank)\b/.test(s)) return "clothing";
+  if (/\byoga\s+(pants?|top|shirt|shorts?|tights?|leggings?|bra|tank|wear)\b/.test(s)) return "clothing";
+  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|\bbra\b|legging|fleece|apparel|activewear|lululemon|dress|skirt|shorts|tights|blazer|coat|swimsuit|bikini|shoe|sneaker|\bboot\b|sandal|\bheel\b|loafer|oxford|slipper|flip flop|birkenstock|crocs|\bnike\b|adidas|new balance|puma/.test(s)) return "clothing";
+
+  // BABY general — after baby-accessory and after clothing so pajama/onesie
+  // still routes to baby but a shirt query doesn't.
   if (/baby|infant|toddler|newborn|nursery|diaper|nappy|bib|onesie|pajama|romper|breast pump|pacifier|dummy|teether|stroller|pram|car seat|crib|bassinet|training pants|pull.?up.*diaper|potty training|enfamil|similac|waterwipes|desitin/.test(s)) return "baby";
 
-  if (/shirt|pant|jean|jacket|hoodie|sweater|sock|underwear|bra|legging|fleece|fabric|cloth|wear|apparel|activewear|athletic|workout|yoga|polyester|lululemon|dress|skirt|shorts|tights|blazer|coat|swimsuit|bikini|shoe|sneaker|boot|sandal|heel|loafer|oxford|slipper|flip flop|birkenstock|crocs|\bnike\b|adidas|new balance|puma/.test(s)) return "clothing";
-
-  if (/supplement|vitamin|multivitamin|probiotic|protein powder|whey|collagen|omega|fish oil|zinc|magnesium|calcium|iron supplement|melatonin|ashwagandha|creatine|pre.?workout|greens powder|superfood powder|capsule|gummy vitamin|tylenol|acetaminophen|advil|ibuprofen|benadryl|diphenhydramine|zyrtec|cetirizine|tums|antacid|allegra|claritin|pepto|robitussin|mucinex|dayquil|nyquil/.test(s)) return "supplement";
+  // ACCESSORY — moved after clothing so "workout gloves"/"baby hat"/"kids
+  // scarf" and related already routed correctly above. Negative lookaheads
+  // retained for edge cases (doorbell ring, apple watch, cleaning gloves).
+  if (/\bjewelry\b|\bjewellery\b|necklace|bracelet|earring|\bring\b(?!.*doorbell)|brooch|pendant|anklet|cuff|bangle|watch(?!.*apple)|\bhandbag\b|purse|clutch|wallet|tote bag|backpack|satchel|suitcase|luggage|duffel|duffle|crossbody|messenger bag|gym bag|belt|sunglasses|\bhat\b|scarf|beanie|gloves|umbrella/.test(s)) return "accessory";
 
   if (/mattress|pillow|duvet|comforter|bedding|bed sheet|blanket|sofa|couch|furniture|memory foam|latex mattress|carpet|rug|curtain|drape|upholster|sectional|armchair|loveseat|ottoman|dresser|nightstand|bookshelf|bookcase|bed frame|headboard/.test(s)) return "home_furnishing";
 

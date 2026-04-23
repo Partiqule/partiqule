@@ -335,6 +335,22 @@ const CATEGORY_TESTS = [
   { query: "blue buffalo dog food",      expect: "other",          note: "Pet food routed to other (no pet category yet)" },
   { query: "purina cat food",            expect: "other",          note: "Pet food" },
   { query: "greenies dental treats",     expect: "other",          note: "Pet treats brand" },
+  // 2026-04-22 clothing-audit regressions — the viral Instagram post drove
+  // workout-clothing scans that hit these. Keep these tests green.
+  { query: "pre-workout powder",         expect: "supplement",     note: "Pre-workout supplement — was routing to clothing via workout match" },
+  { query: "pre workout supplement",     expect: "supplement",     note: "Pre-workout supplement spelled without hyphen" },
+  { query: "workout gloves",             expect: "clothing",       note: "Workout gloves — was routing to accessory via bare gloves" },
+  { query: "running gloves",             expect: "clothing",       note: "Running gloves" },
+  { query: "baby hat",                   expect: "baby",           note: "Baby hat — was routing to accessory because lookahead checked wrong direction" },
+  { query: "kids beanie",                expect: "baby",           note: "Kids beanie" },
+  { query: "toddler gloves",             expect: "baby",           note: "Toddler gloves" },
+  { query: "cleaning gloves",            expect: "home",           note: "Cleaning gloves — was routing to accessory" },
+  { query: "dish gloves",                expect: "home",           note: "Dish gloves" },
+  { query: "yoga pants",                 expect: "clothing",       note: "Yoga pants — kept clothing via tightened yoga regex" },
+  { query: "cork yoga block",            expect: null,             note: "Yoga block — no longer false-matches clothing; falls to null for other" },
+  { query: "lululemon align leggings",   expect: "clothing",       note: "Clothing brand regression" },
+  { query: "protein powder",             expect: "supplement",     note: "Protein powder — supplement" },
+  { query: "whey protein",               expect: "supplement",     note: "Whey — not clothing" },
 ];
 
 let catTestsPassed = 0, catTestsFailed = 0;

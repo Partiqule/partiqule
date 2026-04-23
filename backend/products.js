@@ -75,6 +75,71 @@ const products = [
     tags: ["laundry", "microfiber", "filter", "accessory", "washing", "synthetic", "fleece"]
   },
 
+  // ── KIDS CLOTHING ────────────────────────────────────────────
+  // Added 2026-04-22 after the clothing audit flagged that kids-tagged
+  // clothing queries (Carter's, Cat & Jack, Wonder Nation) returned zero DB
+  // alternatives because no ct/kc entry was tagged kids.
+  {
+    id: "kc-001",
+    name: "Pact Kids Organic Cotton Tee",
+    brand: "Pact",
+    category: "clothing",
+    plasticScore: 1,
+    material: "100% GOTS-certified organic cotton",
+    description: "Fair Trade sewn, no synthetic dyes, no formaldehyde finishes — kid skin safe",
+    affiliateUrl: `https://wearpact.com/shop/kids?utm_source=partiqule`,
+    price: "$15–22",
+    tags: ["kids", "children", "organic", "cotton", "t-shirt", "tee", "shirt", "gots", "fair trade", "baby"]
+  },
+  {
+    id: "kc-002",
+    name: "Hanna Andersson Organic Cotton Pajamas",
+    brand: "Hanna Andersson",
+    category: "clothing",
+    plasticScore: 1,
+    material: "GOTS-certified organic cotton, no flame retardant chemicals",
+    description: "Tight-fit certification exempts from FR treatment — no chemical flame retardants",
+    affiliateUrl: `https://www.hannaandersson.com/organic-pajamas?utm_source=partiqule`,
+    price: "$32–44",
+    tags: ["kids", "children", "baby", "pajamas", "sleepwear", "organic cotton", "gots", "pjs", "tight fit"]
+  },
+  {
+    id: "kc-003",
+    name: "Little Planet by Carter's Organic Basics",
+    brand: "Little Planet",
+    category: "clothing",
+    plasticScore: 2,
+    material: "GOTS-certified organic cotton",
+    description: "Carter's clean sub-brand — organic cotton and non-toxic dyes",
+    affiliateUrl: `https://www.carters.com/c/little-planet?utm_source=partiqule`,
+    price: "$14–24",
+    tags: ["kids", "baby", "infant", "toddler", "organic cotton", "basics", "onesie", "pajamas", "little planet"]
+  },
+  {
+    id: "kc-004",
+    name: "Colored Organics Kids Basics",
+    brand: "Colored Organics",
+    category: "clothing",
+    plasticScore: 1,
+    material: "100% GOTS-certified organic cotton, low-impact dyes",
+    description: "Independent kids brand focused on organic cotton and non-toxic dye processing",
+    affiliateUrl: `https://coloredorganics.com/?utm_source=partiqule`,
+    price: "$18–30",
+    tags: ["kids", "children", "baby", "organic cotton", "basics", "dress", "shirt", "romper"]
+  },
+  {
+    id: "kc-005",
+    name: "Burt's Bees Baby Organic Sleeper",
+    brand: "Burt's Bees Baby",
+    category: "clothing",
+    plasticScore: 1,
+    material: "GOTS-certified organic cotton",
+    description: "No FR chemicals, no formaldehyde, no synthetic fragrance — infant-safe by design",
+    affiliateUrl: `https://www.burtsbeesbaby.com/?utm_source=partiqule`,
+    price: "$12–18",
+    tags: ["baby", "infant", "newborn", "sleeper", "onesie", "organic cotton", "burts bees", "pajamas", "sleepwear"]
+  },
+
   // ── FOOD & BEVERAGE PACKAGING ────────────────────────────
   {
     id: "fb-001",
@@ -376,7 +441,7 @@ const products = [
     id: "ac-001",
     name: "Leather Watch Band by Barton",
     brand: "Barton Watch Bands",
-    category: "clothing",
+    category: "accessory",
     plasticScore: 2,
     material: "Full-grain genuine leather",
     description: "No synthetic rubber, no microplastic shedding against skin",
@@ -388,7 +453,7 @@ const products = [
     id: "ac-002",
     name: "Woven Fabric Watch Band by Casetify",
     brand: "Casetify",
-    category: "clothing",
+    category: "accessory",
     plasticScore: 3,
     material: "Recycled woven fabric, stainless clasp",
     description: "Fabric weave sheds far fewer microplastics than rubber or silicone",
@@ -400,7 +465,7 @@ const products = [
     id: "ac-003",
     name: "Stainless Steel Watch Band",
     brand: "Pantheon",
-    category: "clothing",
+    category: "accessory",
     plasticScore: 1,
     material: "316L stainless steel",
     description: "Zero plastic, zero microfiber shedding, lifetime durability",
@@ -1497,7 +1562,7 @@ const products = [
     id: "sp-007",
     name: "Hemp Gym Bag",
     brand: "Rawganique",
-    category: "clothing",
+    category: "accessory",
     plasticScore: 1,
     material: "100% hemp canvas",
     description: "Nylon and polyester gym bags shed microplastics — hemp canvas doesn't",
@@ -1523,7 +1588,7 @@ const products = [
     id: "ht-001",
     name: "Organic Cotton Bed Sheets",
     brand: "Parachute",
-    category: "clothing",
+    category: "home_furnishing",
     plasticScore: 1,
     material: "GOTS-certified 100% organic cotton",
     description: "Polyester sheets shed microplastics while you sleep 8 hours — cotton doesn't",
@@ -1535,7 +1600,7 @@ const products = [
     id: "ht-002",
     name: "Linen Duvet Cover",
     brand: "Cultiver",
-    category: "clothing",
+    category: "home_furnishing",
     plasticScore: 1,
     material: "100% French linen",
     description: "Linen is plant-based — polyester duvets shed millions of microfibers in the wash",
@@ -1547,7 +1612,7 @@ const products = [
     id: "ht-003",
     name: "Organic Cotton Towels",
     brand: "Brooklinen",
-    category: "clothing",
+    category: "home",
     plasticScore: 1,
     material: "100% organic Turkish cotton",
     description: "Microfiber towels shed synthetic particles — organic cotton is plastic-free",
@@ -1559,7 +1624,7 @@ const products = [
     id: "ht-004",
     name: "Wool Blanket",
     brand: "Pendleton",
-    category: "clothing",
+    category: "home_furnishing",
     plasticScore: 2,
     material: "100% virgin wool",
     description: "Acrylic and fleece blankets shed huge amounts of microplastics — wool is natural",
@@ -1571,7 +1636,7 @@ const products = [
     id: "ht-005",
     name: "Organic Cotton Pillow",
     brand: "Avocado Green",
-    category: "other",
+    category: "home_furnishing",
     plasticScore: 2,
     material: "Organic cotton shell, natural latex fill",
     description: "Synthetic pillows shed polyester microfibers all night — natural latex doesn't",
@@ -1583,7 +1648,7 @@ const products = [
     id: "ht-006",
     name: "Linen Table Cloth",
     brand: "LinenMe",
-    category: "other",
+    category: "home",
     plasticScore: 1,
     material: "100% European linen",
     description: "Polyester tablecloths shed microplastics near food — linen is plant-based",
@@ -1595,7 +1660,7 @@ const products = [
     id: "ht-007",
     name: "Organic Cotton Bath Mat",
     brand: "Kassatex",
-    category: "other",
+    category: "home",
     plasticScore: 1,
     material: "100% organic cotton",
     description: "Synthetic bath mats shed microplastics in every wash — cotton stays clean",
@@ -1607,7 +1672,7 @@ const products = [
     id: "ht-008",
     name: "Jute Area Rug",
     brand: "nuLOOM",
-    category: "other",
+    category: "home_furnishing",
     plasticScore: 1,
     material: "100% natural jute fiber",
     description: "Synthetic rugs are one of the largest sources of indoor microplastic pollution",
@@ -1619,7 +1684,7 @@ const products = [
     id: "ht-009",
     name: "Organic Cotton Shower Curtain",
     brand: "Coyuchi",
-    category: "other",
+    category: "home",
     plasticScore: 1,
     material: "100% organic cotton",
     description: "PVC and PEVA shower curtains off-gas chemicals — cotton is safe and washable",
@@ -5127,6 +5192,30 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       brands: ["listerine","scope","act"],
       inject: ["mouthwash","oral care","dental"],
     },
+    // Clothing brand→keyword injections. Brand-only queries like "Lululemon"
+    // previously returned weak alternatives because no product-type tag was
+    // injected. Activewear brands inject activewear keywords so Girlfriend
+    // Collective / Tentree / Pact leggings surface in brand-only queries.
+    {
+      categories: ["clothing"],
+      brands: ["lululemon","alo yoga","alo ","athleta","vuori","fabletics","outdoor voices","gymshark","spanx","bombas","nike","adidas","under armour","\bua "],
+      inject: ["activewear","leggings","athletic","workout"],
+    },
+    {
+      categories: ["clothing"],
+      brands: ["patagonia","north face","columbia","arc'teryx","arcteryx","cotopaxi","marmot","rei co-op","outdoor research","mountain hardwear","the north face"],
+      inject: ["jacket","outerwear","rain jacket","hiking"],
+    },
+    {
+      categories: ["clothing"],
+      brands: ["shein","zara","h&m","forever 21","uniqlo","old navy","gap","h & m"],
+      inject: ["clothing","shirt","dress","basic"],
+    },
+    {
+      categories: ["clothing"],
+      brands: ["pact","kotn","tentree","everlane","reformation","quince","amour vert"],
+      inject: ["organic","cotton","shirt","basic"],
+    },
   ];
   const queryJoined = queries.join(" ");
   const injections = [];
@@ -5208,7 +5297,7 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       const pName = p.name.toLowerCase();
       const isMensProduct = /\bmens?\b|men'?s|male grooming/.test(pTags);
       const isMensQuery = /\bmen\b|\bmens\b|\bmen'?s\b|old spice|axe |gillett|every man jack|duke cannon|baxter|harry'?s razor|dollar shave/i.test(queryJoined);
-      if (isMensProduct && !isMensQuery && category === "personal_care") score = Math.max(0, score - 15);
+      if (isMensProduct && !isMensQuery && (category === "personal_care" || category === "clothing")) score = Math.max(0, score - 15);
       // Age mismatch filter — exclude kids products for adult queries in clothing/personal_care
       const isKidsProduct = /\bkids?\b|children|baby|infant|toddler|newborn/.test(pTags + " " + pName);
       const isKidsQuery = /\bkids?\b|\bchildren\b|\bbaby\b|\btoddler\b|\binfant\b|\bnewborn\b|\bjunior\b/.test(queryJoined);

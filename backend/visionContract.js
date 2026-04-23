@@ -215,6 +215,29 @@ function normalizeIngredient(s) {
     .trim();
 }
 
+// Synonym groups used by the reconciler. Each group is a set of terms that
+// mean the same thing for scoring purposes — the label might print "spandex"
+// while the cascade source says "elastane", or vice versa. Without these,
+// vision_cascade_disagreement logs fire for near-identical formulations just
+// because different vocabularies were used. Keep groups narrow enough that
+// synonymy is actual identity, not mere adjacency.
+const SYNONYM_GROUPS = [
+  ["spandex", "elastane", "lycra"],
+  ["lyocell", "tencel"],
+  ["viscose", "rayon"],
+  ["aqua", "water"],
+  ["tocopherol", "vitamin e"],
+  ["ascorbic acid", "vitamin c"],
+  ["sodium chloride", "salt"],
+];
+
+function synonymMatch(a, b) {
+  for (const group of SYNONYM_GROUPS) {
+    if (group.some(g => a.includes(g)) && group.some(g => b.includes(g))) return true;
+  }
+  return false;
+}
+
 function reconcileIngredients(labelList, cascadeIngredients) {
   const labelNorm = (labelList || []).map(normalizeIngredient).filter(Boolean);
   let cascadeSplit;
@@ -231,7 +254,7 @@ function reconcileIngredients(labelList, cascadeIngredients) {
   for (const lbl of labelNorm) {
     let matched = false;
     for (const c of cascadeSet) {
-      if (c === lbl || c.includes(lbl) || lbl.includes(c)) { matched = true; break; }
+      if (c === lbl || c.includes(lbl) || lbl.includes(c) || synonymMatch(lbl, c)) { matched = true; break; }
     }
     if (matched) overlap.push(lbl); else labelOnly.push(lbl);
   }
@@ -239,7 +262,7 @@ function reconcileIngredients(labelList, cascadeIngredients) {
   for (const c of cascadeNorm) {
     let matched = false;
     for (const lbl of labelNorm) {
-      if (lbl === c || lbl.includes(c) || c.includes(lbl)) { matched = true; break; }
+      if (lbl === c || lbl.includes(c) || c.includes(lbl) || synonymMatch(lbl, c)) { matched = true; break; }
     }
     if (!matched) cascadeOnly.push(c);
   }
