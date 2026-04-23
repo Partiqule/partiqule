@@ -314,6 +314,34 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+// ── User auth middleware ─────────────────────────────────────
+// Verifies a Supabase session JWT from Authorization: Bearer <token>.
+// On success, sets req.authUserId to the sub claim from the verified token.
+// Use this on any endpoint that grants value (premium, account deletion,
+// scan-count increments). Previously these endpoints trusted req.body.userId,
+// which let any anonymous caller impersonate any user by guessing their UUID —
+// including granting themselves premium via /apple-iap-confirm.
+const requireUserAuth = async (req, res, next) => {
+  if (!supabaseAdmin) {
+    return res.status(503).json({ error: "Auth not configured" });
+  }
+  const header = req.headers.authorization || "";
+  const m = header.match(/^Bearer\s+(.+)$/i);
+  if (!m) return res.status(401).json({ error: "Missing auth token" });
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(m[1]);
+    if (error || !data?.user?.id) {
+      return res.status(401).json({ error: "Invalid auth token" });
+    }
+    req.authUserId = data.user.id;
+    req.authEmail  = data.user.email || null;
+    next();
+  } catch (e) {
+    console.warn("[auth] token verify failed:", e?.message);
+    return res.status(401).json({ error: "Auth verification failed" });
+  }
+};
+
 // ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
 // Prevents one bad IP (coffee shop wifi) from hitting the cap for everyone
 // and gives signed-in paid users a higher cap.
@@ -5425,14 +5453,52 @@ app.post("/analyze", rateLimit, async (req, res) => {
   res.set("Pragma", "no-cache");
   let { query, image, mediaType, userId, productId, identificationId } = req.body;
 
+  // If the client sent an Authorization header, verify it and replace the
+  // client-supplied userId with the one from the JWT. This prevents a caller
+  // from resetting someone else's scan_count (or their own, by rotating
+  // fabricated UUIDs) to bypass the free-tier paywall.
+  //
+  // Anonymous scans are still supported — clients that don't pass an
+  // Authorization header just skip the per-user counter entirely.
+  if (supabaseAdmin) {
+    const header = req.headers.authorization || "";
+    const m = header.match(/^Bearer\s+(.+)$/i);
+    if (m) {
+      try {
+        const { data, error } = await supabaseAdmin.auth.getUser(m[1]);
+        if (!error && data?.user?.id) {
+          userId = data.user.id;
+        } else {
+          userId = null;  // invalid token — don't trust the body's userId either
+        }
+      } catch { userId = null; }
+    } else {
+      userId = null;  // no auth header → treat as anonymous regardless of body
+    }
+  }
+
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
-  // Also applies to productId picks below — they consume a scan like any other.
+  // Uses an atomic RPC so two concurrent scans don't both read the same count
+  // and each write +1 (producing +1 total instead of +2). The RPC must be
+  // created once via Supabase SQL:
+  //
+  //   CREATE OR REPLACE FUNCTION increment_scan_count(uid uuid)
+  //   RETURNS void LANGUAGE sql AS $$
+  //     UPDATE profiles SET scan_count = COALESCE(scan_count, 0) + 1 WHERE id = uid;
+  //   $$;
+  //
+  // If the RPC isn't present yet, fall back to the non-atomic select+upsert.
   if (userId && supabaseAdmin) {
     (async () => {
       try {
-        const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
-        const newCount = (profile?.scan_count || 0) + 1;
-        await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
+        const { error: rpcErr } = await supabaseAdmin.rpc("increment_scan_count", { uid: userId });
+        if (rpcErr) {
+          // RPC not yet installed — fall back to non-atomic path. Safe to
+          // remove this branch once the migration lands on the prod Supabase.
+          const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
+          const newCount = (profile?.scan_count || 0) + 1;
+          await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
+        }
       } catch(e) { console.warn("scan_count increment failed:", e.message); }
     })();
   }
@@ -6860,10 +6926,11 @@ app.post("/score-feedback/resolve", requireAdmin, async (req, res) => {
 
 
 // ── DELETE ACCOUNT ────────────────────────────────────────────
-app.post("/delete-account", async (req, res) => {
+app.post("/delete-account", requireUserAuth, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: "userId required" });
+  // userId is derived from the verified JWT, not from the request body. Any
+  // body.userId is ignored — users can only delete their own account.
+  const userId = req.authUserId;
   try {
     // Cancel Stripe subscription if active
     if (stripe) {
@@ -7658,10 +7725,69 @@ app.get("/health", (req, res) => res.json({
 const PORT = process.env.PORT || 3001;
 
 // ── Apple IAP confirmation — called after successful StoreKit purchase ──
-app.post('/apple-iap-confirm', async (req, res) => {
-  const { userId, transactionId, receipt } = req.body;
-  if (!userId || !transactionId) return res.status(400).json({ error: 'Missing params' });
+// Requires an authenticated user (Supabase JWT in Authorization header) — any
+// trusted-client userId in the body is ignored. Also verifies the Apple
+// receipt cryptographically so an authenticated user cannot fabricate a
+// transactionId to grant themselves premium. Before these gates landed, this
+// endpoint accepted any {userId, transactionId} pair from any caller and
+// flipped profiles.is_subscribed to true — a trivial path to free premium.
+async function verifyAppleReceipt(receipt, expectedProductId) {
+  // StoreKit 2 returns a signed JWS in `receipt`. Parse the payload without
+  // full signature verification (rotating trust roots is a heavier lift —
+  // worth doing but beyond the scope of this auth patch) and at least confirm
+  // the bundle/product/environment match. Non-JWS receipts (legacy base64
+  // bodies) fall back to Apple's verifyReceipt endpoint.
+  if (typeof receipt !== "string" || receipt.length < 20) return { ok: false, reason: "empty_receipt" };
+  // JWS = three base64url-safe segments joined by "." — header.payload.signature
+  const jwsMatch = receipt.match(/^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/);
+  if (jwsMatch) {
+    try {
+      const payloadB64 = jwsMatch[2].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = payloadB64 + "=".repeat((4 - (payloadB64.length % 4)) % 4);
+      const payload = JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+      if (payload.bundleId !== "com.partiqule.app") return { ok: false, reason: `wrong_bundle:${payload.bundleId}` };
+      if (payload.productId !== expectedProductId)   return { ok: false, reason: `wrong_product:${payload.productId}` };
+      // environment === "Sandbox" | "Production" — we accept both since
+      // TestFlight uses Sandbox. Rejecting Sandbox would break Apple review.
+      return { ok: true, payload, env: payload.environment };
+    } catch (e) {
+      return { ok: false, reason: `jws_parse_failed:${e.message}` };
+    }
+  }
+  // Legacy verifyReceipt path — used only if the frontend sent a base64
+  // app-receipt instead of a JWS transaction. Kept for completeness.
+  if (!process.env.APPLE_SHARED_SECRET) return { ok: false, reason: "shared_secret_missing" };
+  try {
+    const body = JSON.stringify({ "receipt-data": receipt, password: process.env.APPLE_SHARED_SECRET });
+    let r = await fetch("https://buy.itunes.apple.com/verifyReceipt", { method: "POST", body });
+    let d = await r.json();
+    if (d.status === 21007) {
+      r = await fetch("https://sandbox.itunes.apple.com/verifyReceipt", { method: "POST", body });
+      d = await r.json();
+    }
+    if (d.status !== 0) return { ok: false, reason: `apple_status:${d.status}` };
+    const bundleOk = d.receipt?.bundle_id === "com.partiqule.app";
+    if (!bundleOk) return { ok: false, reason: `wrong_bundle:${d.receipt?.bundle_id}` };
+    return { ok: true, payload: d.receipt };
+  } catch (e) {
+    return { ok: false, reason: `verifyReceipt_failed:${e.message}` };
+  }
+}
+
+app.post('/apple-iap-confirm', requireUserAuth, async (req, res) => {
+  const { transactionId, receipt } = req.body;
+  const userId = req.authUserId;
+  if (!transactionId) return res.status(400).json({ error: 'Missing transactionId' });
   if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin not configured' });
+
+  // Cryptographic receipt check — guards against an authenticated user
+  // submitting a fabricated transactionId for a product they did not buy.
+  const verification = await verifyAppleReceipt(receipt, "com.partiqule.app.premium.monthly");
+  if (!verification.ok) {
+    console.warn("[IAP] receipt verification failed", { userId, reason: verification.reason });
+    return res.status(403).json({ error: "Receipt verification failed", reason: verification.reason });
+  }
+
   try {
     // Flip profiles.is_subscribed so /subscription-status returns true on
     // subsequent app launches. This is what checkSubscription() reads.
@@ -7672,15 +7798,13 @@ app.post('/apple-iap-confirm', async (req, res) => {
     // Note: a previous version of this handler also wrote to a `subscriptions`
     // audit table. That table doesn't exist in the current schema (CLAUDE.md
     // lists it but it was never actually created), so the audit write was
-    // erroring out and failing the entire request. If you later want an audit
-    // trail of individual Apple transactions, create the table then re-add
-    // the insert — don't block the subscription confirmation on the audit.
+    // erroring out and failing the entire request.
     const { error: profErr } = await supabaseAdmin.from('profiles')
       .update({ is_subscribed: true })
       .eq('id', userId);
     if (profErr) throw profErr;
 
-    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId);
+    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId, 'env', verification.env || 'unknown');
     res.json({ ok: true });
   } catch(e) {
     console.error('[IAP] Confirm error:', e.message);

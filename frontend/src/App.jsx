@@ -5815,8 +5815,9 @@ function App() {
     if (!user) { setError("Not signed in."); setTimeout(()=>setError(null),3000); return; }
     try {
       const r = await fetch(`${API_BASE}/delete-account`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ userId: user.id }),
+        method:"POST",
+        headers: { "Content-Type":"application/json", ...(await authHeaders()) },
+        body: JSON.stringify({}),
       });
       const d = await r.json();
       if (!r.ok) { setShowDeleteConfirm(false); setError("Delete failed. Please try again."); setTimeout(()=>setError(null),4000); return; }
@@ -5850,6 +5851,20 @@ function App() {
   const width   = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width <= 1024;
+
+  // ── Auth helper ──────────────────────────────────────────────
+  // Returns { "Authorization": "Bearer <jwt>" } for the current session, or
+  // an empty object if the user is not signed in. Used on endpoints that
+  // grant value (premium, account deletion, scan-count increment) so the
+  // backend can verify user identity cryptographically instead of trusting a
+  // client-supplied userId.
+  const authHeaders = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      return token ? { "Authorization": `Bearer ${token}` } : {};
+    } catch { return {}; }
+  };
 
   // ── Auth listener ────────────────────────────────────────────
   const checkSubscription = async (userId) => {
@@ -5961,9 +5976,8 @@ function App() {
       const txnId = active.transactionId || "restored";
       const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: JSON.stringify({
-          userId: user.id,
           transactionId: txnId,
           receipt: active.receipt || active.jwsRepresentation || null,
         }),
@@ -6056,9 +6070,8 @@ function App() {
           try {
             const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...(await authHeaders()) },
               body: JSON.stringify({
-                userId: user?.id,
                 transactionId: txnId,
                 receipt: txn?.receipt || txn?.jwsRepresentation || null,
               }),
@@ -6299,7 +6312,7 @@ function App() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim(), userId: user?.id || null}),signal:controller.signal});
+      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json", ...(await authHeaders())},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
       clearTimeout(timeout);
       if (!res.ok){
         const e = await res.json().catch(() => ({}));
@@ -6344,8 +6357,8 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: match.id, userId: user?.id || null }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ productId: match.id }),
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
@@ -6537,8 +6550,8 @@ function App() {
       const imgTimeout = setTimeout(() => imgController.abort(), 45000);
       const idResp = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType: "image/jpeg", userId: user?.id || null }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" }),
         signal: imgController.signal,
       });
       clearTimeout(imgTimeout);
@@ -6614,8 +6627,8 @@ function App() {
     try {
       const r = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificationId, userId: user?.id || null }),
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ identificationId }),
       });
       if (r.status === 410) { setLoading(false); setQuery(""); setError("That identification expired. Try scanning again."); return; }
       if (!r.ok) throw new Error(`Server error ${r.status}`);
