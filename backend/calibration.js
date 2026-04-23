@@ -392,6 +392,73 @@ const ENTRIES = [
   // CLOTHING — KEY BRANDS
   // ══════════════════════════════════════════════════════════════
   ["lululemon align",              { floor:5, ceiling:7, substances:["nylon","elastane","PFAS indicator 32ppm"], reason:"Lululemon Align — Nulu fabric (87% nylon / 13% Lycra). Mamavation EPA-certified lab testing 2022 found 32ppm organic fluorine (PFAS indicator) in crotch area. Lululemon claims PFAS phase-out in FY23, but Texas AG Ken Paxton issued a Civil Investigative Demand on April 13, 2026 alleging the phase-out claim is misleading. Daily intimate skin contact + synthetic microfiber shedding + unverified PFAS phase-out.", confidence:"high", category:"clothing" }],
+  // SKU-specific Sports Organics entries — must precede the brand-level entry
+  // so fuzzy match (Map iteration order) hits these first. Each SKU inherits
+  // the brand-level pre-release status for the banner; SKU rows differ only
+  // in name, URL slug (via frontend/scripts/generate-product-pages.js), and
+  // the SKU-specific reason prefix. Pending list references the same four
+  // brand-level verifications — duplicated here so each SEO page surfaces
+  // the full provenance on its own.
+  ["sports organics classic organic cotton sports bra", { floor:1, ceiling:3,
+    substances:["organic cotton","elastane","GOTS certified fabric","OEKO-TEX Standard 100"],
+    reason:"Sports Organics Classic Sports Bra — 91% organic cotton + 9% elastane with GOTS-certified fabric and OEKO-TEX Standard 100. Ingredients verified 04 2026 via brand disclosure. Pre-release: company-level GOTS and registry cross-references still pending.",
+    confidence:"medium", category:"clothing",
+    status:"pre_release",
+    statusNote:"Brand disclosure received 2026-04-23. Fabric certifications verified against brand product pages; company-level GOTS in progress per brand. Floor will tighten once GOTS license number and OEKO-TEX certificate are cross-referenced against public registries.",
+    statusExpectedRelease:"2026-Q3",
+    verified:[
+      { claim:"91% organic cotton + 9% elastane", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"GOTS certification at fabric level", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"OEKO-TEX Standard 100 certification at fabric level", source:"brand disclosure + product page", date:"2026-04" }
+    ],
+    pending:[
+      { claim:"Company-level GOTS certification (whole-supply-chain, not just fabric)", status:"in progress per brand", wouldChangeScoreTo:1, expectedBy:"2026-Q3" },
+      { claim:"OEKO-TEX certificate number cross-reference against oeko-tex.com registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"GOTS license number cross-reference against global-standard.org registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"Independent lab testing for dyes, finishes, or heavy metals (Mamavation / Consumer Reports / Toxic-Free Future)", status:"no third-party testing published yet", wouldChangeScoreTo:1 }
+    ],
+    thirdPartyReferences:[]
+  }],
+  ["sports organics mia organic cotton bike shorts", { floor:1, ceiling:3,
+    substances:["organic cotton","elastane","GOTS certified fabric","OEKO-TEX Standard 100"],
+    reason:"Sports Organics Mia Bike Shorts — 91% organic cotton + 9% elastane with GOTS-certified fabric and OEKO-TEX Standard 100. Same fabric as the Classic Sports Bra. Ingredients verified 04 2026 via brand disclosure. Pre-release: company-level GOTS and registry cross-references still pending.",
+    confidence:"medium", category:"clothing",
+    status:"pre_release",
+    statusNote:"Brand disclosure received 2026-04-23. Fabric certifications verified against brand product pages; company-level GOTS in progress per brand. Floor will tighten once GOTS license number and OEKO-TEX certificate are cross-referenced against public registries.",
+    statusExpectedRelease:"2026-Q3",
+    verified:[
+      { claim:"91% organic cotton + 9% elastane", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"GOTS certification at fabric level", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"OEKO-TEX Standard 100 certification at fabric level", source:"brand disclosure + product page", date:"2026-04" }
+    ],
+    pending:[
+      { claim:"Company-level GOTS certification (whole-supply-chain, not just fabric)", status:"in progress per brand", wouldChangeScoreTo:1, expectedBy:"2026-Q3" },
+      { claim:"OEKO-TEX certificate number cross-reference against oeko-tex.com registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"GOTS license number cross-reference against global-standard.org registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"Independent lab testing for dyes, finishes, or heavy metals (Mamavation / Consumer Reports / Toxic-Free Future)", status:"no third-party testing published yet", wouldChangeScoreTo:1 }
+    ],
+    thirdPartyReferences:[]
+  }],
+  ["sports organics merino speed short sleeve t shirt", { floor:1, ceiling:3,
+    substances:["merino wool","OEKO-TEX Standard 100"],
+    reason:"Sports Organics Merino Speed T — 100% merino wool with OEKO-TEX Standard 100. Natural fiber, biodegradable, no microfiber shedding. No GOTS because wool is outside the GOTS scope. Ingredients verified 04 2026 via brand disclosure. Pre-release: OEKO-TEX registry cross-reference and independent lab testing still pending.",
+    confidence:"medium", category:"clothing",
+    status:"pre_release",
+    statusNote:"Brand disclosure received 2026-04-23. OEKO-TEX certification verified against brand product page. Floor will tighten once OEKO-TEX certificate number is cross-referenced against the public registry and wool dyehouse is identified.",
+    statusExpectedRelease:"2026-Q3",
+    verified:[
+      { claim:"100% merino wool", source:"brand disclosure + product page", date:"2026-04" },
+      { claim:"OEKO-TEX Standard 100 certification at fabric level", source:"brand disclosure + product page", date:"2026-04" }
+    ],
+    pending:[
+      { claim:"OEKO-TEX certificate number cross-reference against oeko-tex.com registry", status:"not yet attempted", wouldChangeScoreTo:1 },
+      { claim:"Wool dyehouse and dye class (reactive vs chrome-mordant)", status:"not disclosed", wouldChangeScoreTo:1 },
+      { claim:"Independent lab testing for dyes, finishes, or heavy metals (Mamavation / Consumer Reports / Toxic-Free Future)", status:"no third-party testing published yet", wouldChangeScoreTo:1 }
+    ],
+    thirdPartyReferences:[]
+  }],
+
+  // Brand-level fallback — lower priority than the three SKU entries above.
   ["sports organics",              { floor:1, ceiling:3,
     substances:["organic cotton","elastane","merino wool","GOTS certified fabric","OEKO-TEX Standard 100"],
     reason:"Sports Organics — cotton line (Classic Bra, Mia Bike Shorts): 91% organic cotton + 9% elastane with GOTS-certified fabric and OEKO-TEX Standard 100. Merino line (Speed T): 100% merino wool with OEKO-TEX Standard 100. Ingredients verified 04 2026 via brand disclosure. Pre-release: company-level GOTS and registry cross-references still pending.",
