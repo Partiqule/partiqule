@@ -175,7 +175,7 @@ function renderProductPage(productName, entry) {
 <!-- Google Fonts — matches main app -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" href="/favicon-512.png">
@@ -248,7 +248,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .stamp::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
   .stamp a{color:var(--moss)}
   .breadcrumb-sep{opacity:0.5;margin:0 6px}
-  h1{font-family:'Fraunces',Georgia,serif;font-size:40px;font-weight:400;letter-spacing:-0.015em;line-height:1.08;margin-bottom:18px;color:var(--ink)}
+  h1{font-family:'Lora',Georgia,serif;font-size:40px;font-weight:400;letter-spacing:-0.015em;line-height:1.08;margin-bottom:18px;color:var(--ink)}
 
   /* ── SCORE CARD ── */
   .score-wrap{padding:18px 0 32px;background:var(--cream)}
@@ -257,10 +257,10 @@ ${JSON.stringify(structuredData, null, 2)}
   .score-meta{flex:1;min-width:220px}
   .score-category-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-family:'DM Sans',system-ui,sans-serif;font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500}
   .score-category-row::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
-  .score-verdict{font-family:'Fraunces',Georgia,serif;font-size:26px;line-height:1.2;color:var(--ink);letter-spacing:-0.01em;font-weight:400;margin-bottom:8px}
+  .score-verdict{font-family:'Lora',Georgia,serif;font-size:26px;line-height:1.2;color:var(--ink);letter-spacing:-0.01em;font-weight:400;margin-bottom:8px}
   .score-context{font-size:13px;color:var(--ink-faint);line-height:1.55}
   .score-number-box{flex-shrink:0;text-align:right}
-  .score-number{font-family:'Fraunces',Georgia,serif;font-weight:400;font-size:84px;line-height:0.95;color:${color};letter-spacing:-0.02em;background:${softBg};padding:4px 20px;border-radius:14px;display:inline-block}
+  .score-number{font-family:'Lora',Georgia,serif;font-weight:400;font-size:84px;line-height:0.95;color:${color};letter-spacing:-0.02em;background:${softBg};padding:4px 20px;border-radius:14px;display:inline-block}
   .score-number-sub{font-size:13px;color:${color};opacity:0.55;margin-top:6px;font-family:'DM Sans',system-ui,sans-serif;font-weight:400;letter-spacing:0.02em}
 
   /* ── PRE-RELEASE CARD ── */
@@ -286,7 +286,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .reason-wrap{padding:32px 0 20px}
   .reason-label{display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500;margin-bottom:14px}
   .reason-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
-  .reason-body{font-family:'Fraunces',Georgia,serif;font-size:18px;line-height:1.55;color:var(--ink);font-weight:400;letter-spacing:-0.005em}
+  .reason-body{font-family:'Lora',Georgia,serif;font-size:18px;line-height:1.55;color:var(--ink);font-weight:400;letter-spacing:-0.005em}
 
   /* ── WHAT'S IN IT ── */
   .concerns-wrap{padding:8px 0 32px}
@@ -297,7 +297,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .kids-note{background:var(--cream-light);border:1px solid var(--rule);border-radius:var(--tile-shape-2);padding:16px 20px;margin-top:20px}
   .kids-note-label{font-size:10px;letter-spacing:0.22em;color:var(--amber);text-transform:uppercase;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:10px}
   .kids-note-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--amber);opacity:0.7}
-  .kids-note-score{font-family:'Fraunces',Georgia,serif;font-size:24px;color:var(--ink);font-weight:400;letter-spacing:-0.01em;margin-bottom:4px}
+  .kids-note-score{font-family:'Lora',Georgia,serif;font-size:24px;color:var(--ink);font-weight:400;letter-spacing:-0.01em;margin-bottom:4px}
   .kids-note-body{font-size:13px;color:var(--ink-soft);line-height:1.55}
 
   /* ── CTA ── */
@@ -305,7 +305,7 @@ ${JSON.stringify(structuredData, null, 2)}
   .cta-inner{text-align:center}
   .cta-label{font-size:10px;letter-spacing:0.22em;color:var(--moss);text-transform:uppercase;font-weight:500;margin-bottom:12px;display:inline-flex;align-items:center;gap:10px}
   .cta-label::before{content:"";display:inline-block;width:22px;height:1px;background:var(--moss);opacity:0.7}
-  .cta-title{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:400;letter-spacing:-0.015em;line-height:1.2;margin-bottom:10px;color:var(--ink);max-width:520px;margin-left:auto;margin-right:auto}
+  .cta-title{font-family:'Lora',Georgia,serif;font-size:28px;font-weight:400;letter-spacing:-0.015em;line-height:1.2;margin-bottom:10px;color:var(--ink);max-width:520px;margin-left:auto;margin-right:auto}
   .cta-body{font-size:14px;color:var(--ink-soft);max-width:460px;margin:0 auto 22px;line-height:1.55}
   .cta-btn{background:var(--moss);color:var(--ivory)!important;padding:14px 28px;border-radius:var(--cta-shape);font-size:14px;font-weight:500;letter-spacing:0.01em;display:inline-block;transition:background 0.2s}
   .cta-btn:hover{background:var(--moss-deep)}

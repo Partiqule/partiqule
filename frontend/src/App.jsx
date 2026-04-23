@@ -652,7 +652,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
           }}>{brand}</div>
         )}
         <div style={{
-          fontFamily:"'Fraunces', Georgia, serif",
+          fontFamily:"'Lora', Georgia, serif",
           fontSize:30, lineHeight:1.06, color:"var(--ink)",
           letterSpacing:"-0.01em", fontWeight:400,
           opacity: productName ? 1 : 0.5,
@@ -670,7 +670,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
         {phase === "loading" ? (
           <>
             <div style={{
-              fontFamily:"'Fraunces', Georgia, serif",
+              fontFamily:"'Lora', Georgia, serif",
               fontSize:20, lineHeight:1.3, color:"var(--moss)",
               fontWeight:400, textAlign:"center",
               minHeight:28, letterSpacing:"-0.005em",
@@ -702,7 +702,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
         ) : (
           <div style={{maxWidth:320, textAlign:"center"}}>
             <div style={{
-              fontFamily:"'Fraunces', Georgia, serif",
+              fontFamily:"'Lora', Georgia, serif",
               fontSize:24, lineHeight:1.15, color:"var(--ink)",
               fontWeight:400, marginBottom:10,
               letterSpacing:"-0.01em",
@@ -750,7 +750,7 @@ const BarcodeLoadingView = ({ phase, onRetry, onPhoto, product }) => {
         <div style={{
           padding:"20px 24px 36px",
           textAlign:"center",
-          fontFamily:"'Fraunces', Georgia, serif",
+          fontFamily:"'Lora', Georgia, serif",
           fontSize:15, lineHeight:1.4, color:"var(--ink-soft)",
           fontWeight:400,
         }}>
@@ -983,7 +983,7 @@ const GlobeLoading = ({ isMobile }) => {
       <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:44, width:"auto", display:"block", opacity:0.9, marginBottom:8}}/>
 
       <div style={{
-        fontFamily:"'Fraunces', Georgia, serif",
+        fontFamily:"'Lora', Georgia, serif",
         fontSize: isMobile ? 18 : 20,
         lineHeight:1.3, color:"var(--moss)", fontWeight:400,
         textAlign:"center", minHeight:28, letterSpacing:"-0.005em",
@@ -1014,7 +1014,7 @@ const GlobeLoading = ({ isMobile }) => {
 
       <div style={{
         marginTop:8,
-        fontFamily:"'Fraunces', Georgia, serif",
+        fontFamily:"'Lora', Georgia, serif",
         fontSize:15, lineHeight:1.4, color:"var(--ink-soft)",
         fontWeight:400, textAlign:"center",
       }}>
@@ -1065,7 +1065,7 @@ const ScoreBadge = ({ score, size = "md", showLabel = false }) => {
   const s = sizes[size] || sizes.md;
   return (
     <span style={{
-      fontFamily: "'Fraunces', Georgia, serif",
+      fontFamily: "'Lora', Georgia, serif",
       fontSize: s.font,
       fontWeight: s.weight,
       color,
@@ -2274,8 +2274,8 @@ const GuidesPage = ({text, muted, surface, border, isMobile, onNavigate}) => {
       <style>{`
         .guide-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.08);}
         .guide-card{transition:transform 0.2s,box-shadow 0.2s;}
-        .guide-body h2{font-size:24px;font-weight:700;margin:36px 0 12px;font-family:'Fraunces',Georgia,serif;}
-        .guide-body h3{font-size:20px;font-weight:700;margin:28px 0 10px;font-family:'Fraunces',Georgia,serif;}
+        .guide-body h2{font-size:24px;font-weight:700;margin:36px 0 12px;font-family:'Lora',Georgia,serif;}
+        .guide-body h3{font-size:20px;font-weight:700;margin:28px 0 10px;font-family:'Lora',Georgia,serif;}
         .guide-body p{margin:0 0 20px;}
         .guide-body ul,.guide-body ol{margin:0 0 20px;padding-left:24px;}
         .guide-body li{margin-bottom:8px;}
@@ -2288,7 +2288,7 @@ const GuidesPage = ({text, muted, surface, border, isMobile, onNavigate}) => {
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>From the team</div>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontSize:isMobile?34:46,fontWeight:400,color:text,margin:"0 0 12px",letterSpacing:"-0.015em",lineHeight:1.05}}>Product Safety <span style={{color:"var(--moss)"}}>guides</span></h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif",fontSize:isMobile?34:46,fontWeight:400,color:text,margin:"0 0 12px",letterSpacing:"-0.015em",lineHeight:1.05}}>Product Safety <span style={{color:"var(--moss)"}}>guides</span></h1>
         <p style={{fontSize:17,color:muted,margin:"0 0 28px",lineHeight:1.6}}>Real research. Real opinions. No brand influence.</p>
 
         {/* Category filter */}
@@ -2425,7 +2425,7 @@ const GuideViewPage = ({text, muted, surface, border, isMobile, slug, onNavigate
       </div>
 
       {/* Title */}
-      <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontSize:isMobile?30:42,fontWeight:400,color:text,margin:"0 0 16px",letterSpacing:"-0.015em",lineHeight:1.05}}>{guide.title}</h1>
+      <h1 style={{fontFamily:"'Lora', Georgia, serif",fontSize:isMobile?30:42,fontWeight:400,color:text,margin:"0 0 16px",letterSpacing:"-0.015em",lineHeight:1.05}}>{guide.title}</h1>
 
       {/* Excerpt */}
       <p style={{fontSize:18,color:muted,margin:"0 0 24px",lineHeight:1.6,fontStyle:"italic"}}>{guide.excerpt}</p>
@@ -2464,7 +2464,7 @@ const GuideViewPage = ({text, muted, surface, border, isMobile, slug, onNavigate
         textAlign:"center",
       }}>
         <div style={{
-          fontFamily:"'Fraunces', Georgia, serif",
+          fontFamily:"'Lora', Georgia, serif",
           fontSize:22, fontWeight:400, color:"var(--ink)",
           marginBottom:8, letterSpacing:"-0.01em", lineHeight:1.15,
         }}>Scan the products mentioned in this guide</div>
@@ -3716,7 +3716,7 @@ const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, 
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Your <span style={{color:"var(--moss)"}}>shelf</span></h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Your <span style={{color:"var(--moss)"}}>shelf</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -4059,7 +4059,7 @@ const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate})
           <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
           About Partiqule
         </div>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?36:54, color:text, margin:"0 0 24px", letterSpacing:"-0.015em", lineHeight:1.04}}>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?36:54, color:text, margin:"0 0 24px", letterSpacing:"-0.015em", lineHeight:1.04}}>
           Know what's <span style={{color:"var(--moss)"}}>in your products.</span>
         </h1>
         <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
@@ -4470,7 +4470,7 @@ const MethodologyPage = ({text, muted, surface, border, isMobile}) => {
       {/* Header */}
       <div style={{marginBottom:40}}>
         <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12}}>Transparency & Methodology</div>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?34:48, color:text, margin:"0 0 16px", letterSpacing:"-0.015em", lineHeight:1.05}}>How <span style={{color:"var(--moss)"}}>Partiqule</span> works</h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?34:48, color:text, margin:"0 0 16px", letterSpacing:"-0.015em", lineHeight:1.05}}>How <span style={{color:"var(--moss)"}}>Partiqule</span> works</h1>
         <p style={{fontSize:16, color:muted, lineHeight:1.8, margin:"0 0 8px"}}>
           Every score on Partiqule reflects the chemical and environmental impact of a product — what it's made of, how it exposes you, what happens to it after use. This page explains exactly how we measure that — combining expert-defined parameters, a 113-substance registry sourced from EU REACH, IARC, EWG, FDA and EPA, a dual scoring formula calibrated by category, and human quality review. We believe tools that expose hidden harm should be fully transparent about their own process.
         </p>
@@ -5113,7 +5113,7 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
           Partiqule
         </div>
 
-        <h2 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:tx, margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.08}}>
+        <h2 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:28, color:tx, margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.08}}>
           {mode === "signup" ? "Make it yours." : mode === "reset" ? "Reset your password." : "Welcome back."}
         </h2>
         <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:mt, margin:"0 0 22px", lineHeight:1.55}}>
@@ -5191,7 +5191,7 @@ const NicknamePromptModal = ({onSave}) => {
           <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
           One quick thing
         </div>
-        <h2 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.1}}>What should I call you?</h2>
+        <h2 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.015em", lineHeight:1.1}}>What should I call you?</h2>
         <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", margin:"0 0 22px", lineHeight:1.55}}>Pick something short. I'll use it when I greet you.</p>
         {err && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{err}</div>}
         <input type="text" autoFocus value={value} onChange={e=>{setValue(e.target.value); if(err) setErr(null);}} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="e.g. Sarah, Mom, Coach..." maxLength={30}
@@ -5219,7 +5219,7 @@ const PrivacyPage = ({text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Privacy Policy</h1>
+      <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Privacy Policy</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
@@ -5250,7 +5250,7 @@ const TermsPage = ({text, muted, surface, border, isMobile}) => {
   ];
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
-      <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Terms of Service</h1>
+      <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Terms of Service</h1>
       <p style={{fontSize:14, color:muted, marginBottom:40}}>Last updated: April 2026</p>
       {sections.map((s, i) => (
         <div key={i} style={{marginBottom:32, paddingBottom:32, borderBottom: i < sections.length-1 ? `1px solid ${border}` : "none"}}>
@@ -5327,7 +5327,7 @@ const FeedPage = ({liveIntelCards, staticCards, history, surface, border, text, 
     <div style={{maxWidth:700,margin:"0 auto",padding:isMobile?"24px 0 80px":"48px 0 80px"}}>
       <div style={{padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20}}>
         <div style={{fontSize:11,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Health intelligence</div>
-        <h1 style={{fontFamily:"'Fraunces', Georgia, serif",fontWeight:400,fontSize:isMobile?30:38,color:text,margin:"0 0 4px",letterSpacing:"-0.015em"}}>Your <span style={{color:"var(--moss)"}}>feed</span></h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif",fontWeight:400,fontSize:isMobile?30:38,color:text,margin:"0 0 4px",letterSpacing:"-0.015em"}}>Your <span style={{color:"var(--moss)"}}>feed</span></h1>
         <p style={{fontSize:14,color:muted,margin:0}}>Safety findings, regulatory alerts, and insights from your scan history</p>
       </div>
       <div style={{display:"flex",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:`0 ${isMobile?"16px":"40px"}`,marginBottom:20,paddingBottom:4}}>
@@ -5507,7 +5507,7 @@ const ShelfStrip = ({ items, onSelect }) => {
                     borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
                     background: sc(score),
                     color:"var(--ivory)",
-                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontFamily:"'Lora', Georgia, serif",
                     fontSize:13,
                     display:"flex", alignItems:"center", justifyContent:"center",
                     lineHeight:1, fontWeight:400,
@@ -5563,7 +5563,7 @@ const LifestyleScoreCard = ({score, text, muted, border, isMobile, setPage}) => 
             border: `2px solid ${sc}`,
             flexShrink:0,
           }}>
-            <span style={{fontSize:26, fontWeight:400, fontFamily:"'Fraunces', Georgia, serif", color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{score.current}</span>
+            <span style={{fontSize:26, fontWeight:400, fontFamily:"'Lora', Georgia, serif", color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{score.current}</span>
             <span style={{fontSize:9, color:sc, opacity:0.7, marginTop:2, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
           </div>
           <div>
@@ -5575,7 +5575,7 @@ const LifestyleScoreCard = ({score, text, muted, border, isMobile, setPage}) => 
         <div style={{textAlign:"right", flexShrink:0}}>
           {score.worstCategory && (<>
             <div style={{fontSize:10, color:"var(--ink-faint)", marginBottom:2, letterSpacing:"0.14em", textTransform:"uppercase", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500}}>Biggest pull</div>
-            <div style={{fontSize:14, fontWeight:400, color:"var(--ink)", fontFamily:"'Fraunces', Georgia, serif", letterSpacing:"-0.005em"}}>{score.worstCategory.label}</div>
+            <div style={{fontSize:14, fontWeight:400, color:"var(--ink)", fontFamily:"'Lora', Georgia, serif", letterSpacing:"-0.005em"}}>{score.worstCategory.label}</div>
             <div style={{fontSize:11, color:"var(--ink-faint)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>avg {score.worstCategory.avg}/10</div>
           </>)}
         </div>
@@ -5631,7 +5631,7 @@ const ForYouCarousel = ({cards, text, muted, isMobile, setPage, setResult, setQu
   return (
     <div style={{marginBottom:28}}>
       <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", padding:`0 ${isMobile?"16px":"40px"}`, marginBottom:14, maxWidth:1100, margin:"0 auto 14px"}}>
-        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
+        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
           Thought you'd <span style={{color:"var(--moss)"}}>want to know</span>
         </div>
         <div style={{display:"flex", gap:4}}>{cards.map((_,i)=><div key={i} style={{width:5, height:5, borderRadius:"50%", background:"var(--rule-strong)"}}/>)}</div>
@@ -5661,15 +5661,15 @@ const ForYouCarousel = ({cards, text, muted, isMobile, setPage, setResult, setQu
                 <span style={{display:"inline-block", width:16, height:1, background:"var(--moss)", opacity:0.6}}/>
                 {card.label}
               </div>
-              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:20, fontWeight:400, color:"var(--ink)", lineHeight:1.15, letterSpacing:"-0.005em", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.headline}</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:20, fontWeight:400, color:"var(--ink)", lineHeight:1.15, letterSpacing:"-0.005em", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.headline}</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, flex:1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.body}</div>
               <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, gap:8}}>
                 <span style={{
-                  fontFamily:"'Fraunces', Georgia, serif", fontSize:14, color:"var(--moss)",
+                  fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--moss)",
                   paddingBottom:1, borderBottom:"1px dotted var(--moss)",
                 }}>{card.action}</span>
                 {card.score!=null && (
-                  <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:sc(card.score), letterSpacing:"-0.01em"}}>
+                  <span style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:sc(card.score), letterSpacing:"-0.01em"}}>
                     {card.score}<span style={{fontSize:11, opacity:0.55, marginLeft:1, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
                   </span>
                 )}
@@ -6691,7 +6691,7 @@ function App() {
         @keyframes pulseScan{0%,100%{box-shadow:var(--shadow-card)}50%{box-shadow:0 4px 16px rgba(26,31,21,0.10)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
-        h1,h2,h3{font-family:'Fraunces',Georgia,serif;}
+        h1,h2,h3{font-family:'Lora',Georgia,serif;}
       `}</style>
 
       {/* HEADER */}
@@ -6738,7 +6738,7 @@ function App() {
               {user ? (
                 <div style={{display:"flex", alignItems:"center", gap:8, marginLeft:8}}>
                   <div style={{width:32, height:32, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--moss-soft)", border:"1px solid var(--rule-strong)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer"}} title={user.email}>
-                    <span style={{fontFamily:"'Fraunces', Georgia, serif", color:"var(--moss)", fontWeight:400, fontSize:14}}>{user.email[0].toUpperCase()}</span>
+                    <span style={{fontFamily:"'Lora', Georgia, serif", color:"var(--moss)", fontWeight:400, fontSize:14}}>{user.email[0].toUpperCase()}</span>
                   </div>
                   <button onClick={signOut} style={{padding:"6px 14px", borderRadius:8, border:"1px solid var(--rule-strong)", background:"none", color:"var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, cursor:"pointer"}}>Sign out</button>
                 </div>
@@ -6853,7 +6853,7 @@ function App() {
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                 Free scans used
               </div>
-              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>That's your {FREE_LIMIT} free scans. Make a quick account to keep going — unlimited scans, child and pregnancy scoring, clean alternatives. $4.99 a month.</div>
               <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>Create account</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
@@ -6869,10 +6869,10 @@ function App() {
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                 Partiqule Premium
               </div>
-              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've found a lot to think about.</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've found a lot to think about.</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>
                 Unlimited scans, child and pregnancy scoring, clean alternatives.
-                <span style={{display:"block", marginTop:8, fontFamily:"'Fraunces', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month. Cancel anytime.</span></span>
+                <span style={{display:"block", marginTop:8, fontFamily:"'Lora', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month. Cancel anytime.</span></span>
               </div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:12, letterSpacing:"0.005em", opacity:checkingOut?0.7:1}}>
                 {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
@@ -6921,7 +6921,7 @@ function App() {
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
-          <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:36, color:text, margin:"0 0 12px", letterSpacing:"-0.015em"}}>Page not found.</h1>
+          <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:36, color:text, margin:"0 0 12px", letterSpacing:"-0.015em"}}>Page not found.</h1>
           <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
           <button onClick={reset} style={{padding:"12px 28px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer"}}>
             Go to Partiqule →
@@ -6939,7 +6939,7 @@ function App() {
       ) : page === "science" ? (
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>The <span style={{color:"var(--moss)"}}>science</span></h1>
+            <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:40, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>The <span style={{color:"var(--moss)"}}>science</span></h1>
             <p style={{fontSize:15, color:muted, margin:0}}>The research behind product health: your body, your home, and the planet</p>
           </div>
           <EducationSection isMobile={isMobile}/>
@@ -6947,7 +6947,7 @@ function App() {
       ) : page === "settings" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:isMobile?"24px 16px 80px":"48px 40px 80px"}}>
           <div style={{marginBottom:32}}>
-            <h1 style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Settings</h1>
+            <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Settings</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
           </div>
 
@@ -7276,7 +7276,7 @@ function App() {
                     if (showEmpty) {
                       return (
                         <div style={{maxWidth:860, margin:"10px auto 0", padding:"16px 18px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px"}}>
-                          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:6, letterSpacing:"-0.005em"}}>No verified matches yet.</div>
+                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:6, letterSpacing:"-0.005em"}}>No verified matches yet.</div>
                           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:14, lineHeight:1.5}}>Scan the barcode or label — formulas change, and we only score what we can verify.</div>
                           <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"11px 14px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
                         </div>
@@ -7289,20 +7289,20 @@ function App() {
                             onClick={()=>selectSearchMatch(m)}
                             style={{display:"flex", alignItems:"center", gap:12, padding:"12px 16px", borderBottom: i<searchMatches.length-1 ? "1px solid var(--rule-soft)" : "none", cursor:"pointer"}}>
                             <div style={{flex:1, minWidth:0}}>
-                              <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", letterSpacing:"-0.005em"}}>{m.display_name}</div>
+                              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", letterSpacing:"-0.005em"}}>{m.display_name}</div>
                               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.14em", color:sourceColor(m.source), marginTop:3, textTransform:"uppercase", fontWeight:500}}>
                                 {m.source_label}{m.match_type === "trigram" ? " · CLOSE MATCH" : ""}
                               </div>
                             </div>
                             {m.score_preview != null && (
-                              <div style={{width:36, height:36, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:16, flexShrink:0, letterSpacing:"-0.01em"}}>
+                              <div style={{width:36, height:36, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:scoreBg(m.score_preview), color:scoreCol(m.score_preview), display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:16, flexShrink:0, letterSpacing:"-0.01em"}}>
                                 {m.score_preview}
                               </div>
                             )}
                           </div>
                         ))}
                         <div onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}}
-                          style={{padding:"11px 16px", borderTop:"1px solid var(--rule)", background:"var(--cream)", fontFamily:"'Fraunces', Georgia, serif", fontSize:14, color:"var(--moss)", textAlign:"center", cursor:"pointer"}}>
+                          style={{padding:"11px 16px", borderTop:"1px solid var(--rule)", background:"var(--cream)", fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--moss)", textAlign:"center", cursor:"pointer"}}>
                           Can't find your product? Scan the barcode →
                         </div>
                       </div>
@@ -7313,10 +7313,10 @@ function App() {
                 {/* ── HOME CONTENT (cream refresh — partiqule-hero-v5 mockup) ── */}
                 <div style={{maxWidth:860, margin:"0 auto", padding: isMobile ? `${60 + SAFE_TOP + 40}px 24px 24px` : "80px 40px 32px", background:"var(--cream)"}}>
 
-                  {/* Greeting block — Fraunces + DM Sans caps stamp */}
+                  {/* Greeting block — Lora + DM Sans caps stamp */}
                   <div style={{marginBottom:32}}>
                     <div style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize: isMobile ? 34 : 38,
                       color:"var(--ink)",
                       letterSpacing:"-0.015em",
@@ -7358,7 +7358,7 @@ function App() {
                       marginBottom:18,
                     }}>Scan</div>
                     <div style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize: isMobile ? 30 : 34,
                       lineHeight:1.04,
                       color:"var(--ink)",
@@ -7377,7 +7377,7 @@ function App() {
                   {history.length > 0 && (
                     <div style={{marginBottom:28}}>
                       <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:14}}>
-                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
+                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
                           Your <span style={{color:"var(--moss)"}}>shelf</span>
                           <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.2em", color:"var(--ink-faint)", textTransform:"uppercase", fontWeight:500, marginLeft:10}}>{history.length} items</span>
                         </div>
@@ -7428,7 +7428,7 @@ function App() {
                     if (!lines.length) return null;
                     return (
                       <div style={{marginBottom:24}}>
-                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400, marginBottom:14}}>
+                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400, marginBottom:14}}>
                           This <span style={{color:"var(--moss)"}}>week</span>
                         </div>
                         <div>
@@ -7439,7 +7439,7 @@ function App() {
                               borderBottom: i < lines.length - 1 ? "1px solid var(--rule)" : "none",
                             }}>
                               <div style={{
-                                fontFamily:"'Fraunces', Georgia, serif",
+                                fontFamily:"'Lora', Georgia, serif",
                                 fontSize:30, color:"var(--moss)",
                                 letterSpacing:"-0.02em", lineHeight:1,
                                 minWidth:44, flexShrink:0, fontWeight:400,
@@ -7448,7 +7448,7 @@ function App() {
                                 {l.label}
                                 {l.sub && (
                                   <div style={{
-                                    fontFamily:"'Fraunces', Georgia, serif",
+                                    fontFamily:"'Lora', Georgia, serif",
                                     color:"var(--ink-soft)", fontSize:13,
                                     marginTop:3, fontWeight:400,
                                   }}>{l.sub}</div>
@@ -7515,7 +7515,7 @@ function App() {
             .showcase-track:hover{animation-play-state:paused!important}
           `}</style>
 
-          {/* Hero — cream with Fraunces headline */}
+          {/* Hero — cream with Lora headline */}
           <section style={{background:"var(--cream)", padding: isMobile ? `${60 + SAFE_TOP + 64}px 24px 40px` : "128px 40px 56px", transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
             <div style={{maxWidth:720, margin:"0 auto"}}>
               <div style={{
@@ -7531,7 +7531,7 @@ function App() {
               </div>
 
               <h1 style={{
-                fontFamily:"'Fraunces', Georgia, serif",
+                fontFamily:"'Lora', Georgia, serif",
                 fontSize: isMobile ? 42 : 60,
                 fontWeight:400, color:"var(--ink)",
                 margin:"0 0 18px",
@@ -7542,7 +7542,7 @@ function App() {
                 Scan anything.<br/><span style={{color:"var(--moss)"}}>Know what's in it.</span>
               </h1>
               <p style={{
-                fontFamily:"'Fraunces', Georgia, serif",
+                fontFamily:"'Lora', Georgia, serif",
                 fontSize: isMobile ? 17 : 20,
                 color:"var(--ink-soft)",
                 margin:0, lineHeight:1.5, fontWeight:400,
@@ -7617,8 +7617,8 @@ function App() {
                           marginLeft: i === 0 ? (isMobile ? 24 : 40) : 0,
                         }}>
                         <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9.5, letterSpacing:"0.22em", color:"var(--ink-faint)", marginBottom:8, fontWeight:500, textTransform:"uppercase"}}>{item.cat}</div>
-                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{item.name}</div>
-                        <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:30, fontWeight:400, color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{item.score}</div>
+                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{item.name}</div>
+                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:30, fontWeight:400, color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{item.score}</div>
                         <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--ink-soft)", marginTop:6, lineHeight:1.4}}>{item.flag}</div>
                       </div>
                     );
@@ -7643,13 +7643,13 @@ function App() {
                       borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
                       border:"1.5px dashed var(--moss)",
                       display:"flex", alignItems:"center", justifyContent:"center",
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize:14, fontWeight:400, color:"var(--moss)", opacity:0.55,
                     }}>{n}</div>
                   ))}
                 </div>
                 <div>
-                  <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:2, letterSpacing:"-0.005em"}}>Scan three to unlock your shelf score.</div>
+                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:2, letterSpacing:"-0.005em"}}>Scan three to unlock your shelf score.</div>
                   <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4}}>See your overall exposure across everything you use daily.</div>
                 </div>
               </div>
@@ -7704,7 +7704,7 @@ function App() {
                             borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px",
                             padding:"14px 12px", textAlign:"center", cursor:"pointer",
                           }}>
-                          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{prod.name}</div>
+                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", marginBottom:10, lineHeight:1.15, letterSpacing:"-0.005em"}}>{prod.name}</div>
                           <div style={{
                             width:48, height:48,
                             borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
@@ -7713,7 +7713,7 @@ function App() {
                             display:"flex", alignItems:"center", justifyContent:"center",
                             margin:"0 auto 8px",
                           }}>
-                            <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:sc(prod.score), letterSpacing:"-0.01em"}}>{prod.score}</span>
+                            <span style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, color:sc(prod.score), letterSpacing:"-0.01em"}}>{prod.score}</span>
                           </div>
                           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10.5, color:"var(--ink-soft)", lineHeight:1.4}}>{prod.flags}</div>
                         </div>
@@ -7721,7 +7721,7 @@ function App() {
                     ))}
                   </div>
                   <div style={{textAlign:"center", marginTop:12}}>
-                    <span style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:13, color:"var(--ink-faint)", fontWeight:400}}>Tap either product to see the full breakdown.</span>
+                    <span style={{fontFamily:"'Lora', Georgia, serif", fontSize:13, color:"var(--ink-faint)", fontWeight:400}}>Tap either product to see the full breakdown.</span>
                   </div>
                 </div>
               );
@@ -7760,7 +7760,7 @@ function App() {
                   <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                   Weekly alerts
                 </div>
-                <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:19, fontWeight:400, color:"var(--ink)", marginBottom:6, lineHeight:1.15, letterSpacing:"-0.005em"}}>Recalls, ingredient flags, safer swaps.</div>
+                <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:19, fontWeight:400, color:"var(--ink)", marginBottom:6, lineHeight:1.15, letterSpacing:"-0.005em"}}>Recalls, ingredient flags, safer swaps.</div>
                 <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", marginBottom:16, lineHeight:1.5}}>Straight to your inbox. No spam.</div>
                 <div style={{display:"flex", gap:8}}>
                   <input type="email" placeholder="your@email.com" value={captureEmail} onChange={e=>setCaptureEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitCaptureEmail()}
@@ -7906,13 +7906,13 @@ function App() {
                       }}>{brand.toUpperCase()}</div>
                     )}
                     <h2 style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize: isMobile ? 30 : 38,
                       fontWeight:400,
                       color:text,
                       margin:"0 0 12px",
                       letterSpacing:"-0.015em",
-                      // 1.02 was clipping Fraunces ascenders on iOS Safari for product names
+                      // 1.02 was clipping Lora ascenders on iOS Safari for product names
                       // that started near the top of the result section. 1.1 keeps the tight
                       // editorial feel while leaving room for cap-height + descenders.
                       lineHeight:1.1,
@@ -8144,7 +8144,7 @@ function App() {
                       return (
                         <div style={{
                           marginTop:14, marginBottom:2, textAlign:"center", padding:"0 12px",
-                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontFamily:"'Lora', Georgia, serif",
                           fontSize:18, lineHeight:1.35,
                           color:"var(--ink)", fontWeight:400, letterSpacing:"-0.005em",
                         }}>
@@ -8390,7 +8390,7 @@ function App() {
                       The why
                     </div>
                     <div style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize:17, lineHeight:1.5,
                       color:"var(--ink)",
                       fontWeight:400, letterSpacing:"-0.005em",
@@ -8457,7 +8457,7 @@ function App() {
                 <div style={{marginTop:18, textAlign:"center"}}>
                   <button onClick={()=>setShowDetail(true)} style={{
                     background:"none", border:"none", padding:"4px 0", cursor:"pointer",
-                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontFamily:"'Lora', Georgia, serif",
                     fontSize:15, color:"var(--moss)", fontWeight:400,
                     borderBottom:"1px dotted var(--moss)",
                     letterSpacing:"-0.005em",
@@ -8521,7 +8521,7 @@ function App() {
                       <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, fontWeight:500, color:"var(--moss)", textTransform:"uppercase", letterSpacing:"0.22em"}}>Safer alternatives</span>
                     </div>
-                    <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.25}}>
+                    <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.25}}>
                       {(result.alternatives?.length||0) + (result.ai_alternatives?.length||0) > 0
                         ? `${(result.alternatives?.length||0) + (result.ai_alternatives?.length||0)} better option${((result.alternatives?.length||0) + (result.ai_alternatives?.length||0)) !== 1 ? "s" : ""} found`
                         : "Exploring alternatives"}
@@ -8711,7 +8711,7 @@ function App() {
                   }}>{brand.toUpperCase()}</div>
                 )}
                 <h2 style={{
-                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontFamily:"'Lora', Georgia, serif",
                   fontSize: isMobile ? 30 : 36,
                   fontWeight:400, color:"var(--ink)",
                   margin:"0 0 12px",
@@ -8738,7 +8738,7 @@ function App() {
                     display:"flex", alignItems:"center", justifyContent:"center",
                   }}>
                     <span style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize:34, color: detailScoreColor, lineHeight:1,
                       fontWeight:400, letterSpacing:"-0.02em",
                     }}>{typeof detailScore === "number" ? Math.round(detailScore * 10) / 10 : "?"}</span>
@@ -8746,7 +8746,7 @@ function App() {
                   <div style={{flex:1, minWidth:0}}>
                     {(result.summary_short || result.summary) && (
                       <div style={{
-                        fontFamily:"'Fraunces', Georgia, serif",
+                        fontFamily:"'Lora', Georgia, serif",
                         fontSize:18, lineHeight:1.25, color:"var(--ink)",
                         fontWeight:400, letterSpacing:"-0.005em",
                       }}>
@@ -8769,7 +8769,7 @@ function App() {
                       The why
                     </div>
                     <div style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize:16, lineHeight:1.55, color:"var(--ink)",
                       fontWeight:400, letterSpacing:"-0.005em",
                     }}>
@@ -8845,7 +8845,7 @@ function App() {
                             color:"var(--ink)", textTransform:"uppercase", fontWeight:500,
                           }}>{row.label}</div>
                           <div style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontFamily:"'Lora', Georgia, serif",
                             fontSize:30, lineHeight:1, letterSpacing:"-0.02em",
                             gridRow:"span 2", alignSelf:"center", textAlign:"right",
                             color: sc(row.score), fontWeight:400,
@@ -8873,7 +8873,7 @@ function App() {
                   );
                 })() : (
                   <div style={{padding:"12px 16px", background:"var(--cream-light)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:"1px dashed var(--rule)", margin:"16px 0", textAlign:"left"}}>
-                    <div style={{fontSize:12, color:"var(--ink-soft)", lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
+                    <div style={{fontSize:12, color:"var(--ink-soft)", lineHeight:1.6, fontFamily:"'DM Sans', system-ui, sans-serif"}}><strong style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, fontWeight:400}}>Rescan for full breakdown</strong> — this result predates our 5-dimension analysis.</div>
                   </div>
                 )}
 
@@ -8918,7 +8918,7 @@ function App() {
                         <SectionLabel text="Tagged"/>
                         <div style={{display:"flex", alignItems:"center", gap:12}}>
                           <span style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontFamily:"'Lora', Georgia, serif",
                             fontSize:18, fontWeight:400, color:"var(--ink)",
                             letterSpacing:"-0.005em",
                           }}>{existingRoom}</span>
@@ -8991,7 +8991,7 @@ function App() {
                       </div>
                       {flowing ? (
                         <p style={{
-                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontFamily:"'Lora', Georgia, serif",
                           fontSize:15, lineHeight:1.55,
                           color:"var(--ink)", margin:"0 0 6px", fontWeight:400,
                         }}>{result.ingredient_list.join(", ")}</p>
@@ -9037,7 +9037,7 @@ function App() {
                   const url = result.ingredient_source_url;
                   return (
                     <div style={{
-                      fontFamily:"'Fraunces', Georgia, serif",
+                      fontFamily:"'Lora', Georgia, serif",
                       fontSize:13, fontWeight:400, color,
                       marginTop:-2, marginBottom:12, lineHeight:1.5, textAlign:"left",
                     }}>
@@ -9091,7 +9091,7 @@ function App() {
                             padding:"12px 10px", borderRadius:"var(--tile-shape-1)",
                             background:it.bg, border:it.border,
                           }}>
-                            <div style={{fontFamily:"'Fraunces', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", lineHeight:1, letterSpacing:"-0.01em"}}>{it.value}</div>
+                            <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, color:"var(--ink)", lineHeight:1, letterSpacing:"-0.01em"}}>{it.value}</div>
                             <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--ink-soft)", margin:"6px 0 3px", letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:500}}>{it.label}</div>
                             <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ink)"}}>{it.pct}% DV</div>
                           </div>
@@ -9239,7 +9239,7 @@ function App() {
                           borderBottom: i < flags.length - 1 ? "1px solid var(--rule-soft)" : "none",
                         }}>
                           <div style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontFamily:"'Lora', Georgia, serif",
                             fontSize:19, lineHeight:1.2, color:"var(--ink)",
                             marginBottom:6, letterSpacing:"-0.005em", fontWeight:400,
                           }}>{flag.headline}</div>
@@ -9252,7 +9252,7 @@ function App() {
                           )}
                           {flag.action && (
                             <span style={{
-                              fontFamily:"'Fraunces', Georgia, serif",
+                              fontFamily:"'Lora', Georgia, serif",
                               fontSize:14, color:"var(--moss)",
                               display:"inline-flex", alignItems:"center", gap:6, fontWeight:400,
                             }}>
@@ -9396,7 +9396,7 @@ function App() {
                   Instead of {result.product_name?.length > 40 ? result.product_name.slice(0, 37) + "…" : result.product_name} · {Math.round(productScore)}
                 </div>
                 <h1 style={{
-                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontFamily:"'Lora', Georgia, serif",
                   fontSize: isMobile ? 36 : 44,
                   fontWeight:400,
                   color:"var(--ink)",
@@ -9405,7 +9405,7 @@ function App() {
                   margin:"0 0 10px",
                 }}>Cleaner options</h1>
                 <div style={{
-                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontFamily:"'Lora', Georgia, serif",
                   fontSize:18, color:"var(--ink-soft)",
                   lineHeight:1.35, fontWeight:400, letterSpacing:"-0.005em",
                 }}>
@@ -9451,7 +9451,7 @@ function App() {
                 {noResults ? (
                   <div style={{
                     padding:"40px 24px", textAlign:"center",
-                    fontFamily:"'Fraunces', Georgia, serif",
+                    fontFamily:"'Lora', Georgia, serif",
                     fontSize:18, color:"var(--ink-soft)", lineHeight:1.4, fontWeight:400,
                     letterSpacing:"-0.005em",
                   }}>
@@ -9522,7 +9522,7 @@ function App() {
                         flexShrink:0, marginTop:2,
                       }}>
                         <span style={{
-                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontFamily:"'Lora', Georgia, serif",
                           fontSize:26, color:sc(score), lineHeight:1,
                           fontWeight:400, letterSpacing:"-0.01em",
                         }}>{Math.round(score)}</span>
@@ -9538,7 +9538,7 @@ function App() {
                           }}>{brand.toUpperCase()}</div>
                         )}
                         <div style={{
-                          fontFamily:"'Fraunces', Georgia, serif",
+                          fontFamily:"'Lora', Georgia, serif",
                           fontSize:19, color:"var(--ink)",
                           lineHeight:1.15, marginBottom:8,
                           letterSpacing:"-0.005em", fontWeight:400,
@@ -9569,7 +9569,7 @@ function App() {
                           <button onClick={(e)=>{ e.stopPropagation(); setShowAlts(false); setResult(null); setQuery(alt.name); analyze(alt.name); }}
                             style={{
                               background:"transparent", border:"none", padding:0, cursor:"pointer",
-                              fontFamily:"'Fraunces', Georgia, serif",
+                              fontFamily:"'Lora', Georgia, serif",
                               fontSize:14, color:"var(--moss)",
                               paddingBottom:1, borderBottom:"1px dotted var(--moss)",
                             }}>Scan this</button>
@@ -9585,7 +9585,7 @@ function App() {
                 <div style={{
                   padding:"24px 24px 0",
                   textAlign:"center",
-                  fontFamily:"'Fraunces', Georgia, serif",
+                  fontFamily:"'Lora', Georgia, serif",
                   fontSize:14, color:"var(--ink-faint)",
                   lineHeight:1.4, fontWeight:400,
                   maxWidth:640, margin:"0 auto",
@@ -9641,7 +9641,7 @@ function App() {
                             cursor:"pointer", textAlign:"left",
                           }}>
                           <span style={{
-                            fontFamily:"'Fraunces', Georgia, serif",
+                            fontFamily:"'Lora', Georgia, serif",
                             fontSize:15, color:"var(--ink)", fontWeight:400,
                             letterSpacing:"-0.005em",
                           }}>{item}</span>
@@ -9890,7 +9890,7 @@ function App() {
               </span>
             </div>
             <div style={{
-              fontFamily: "'Fraunces', Georgia, serif",
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: isMobile ? 30 : 34, lineHeight: 1.2,
               color: "var(--ink)", fontWeight: 400,
               marginBottom: 10,
@@ -9925,7 +9925,7 @@ function App() {
       )}
 
       {/* VISION CONTRACT V2 — confirmation modal for low-confidence identification.
-          Cream card, Fraunces headline, moss primary / outlined secondary buttons. */}
+          Cream card, Lora headline, moss primary / outlined secondary buttons. */}
       {visionConfirmation && (
         <div
           onClick={() => setVisionConfirmation(null)}
@@ -9958,7 +9958,7 @@ function App() {
               }}>Confirm identification</span>
             </div>
             <div style={{
-              fontFamily: "'Fraunces', Georgia, serif",
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: isMobile ? 24 : 26, lineHeight: 1.25,
               color: "var(--ink)", fontWeight: 400,
               marginBottom: 6,
@@ -10028,7 +10028,7 @@ function App() {
               }}>Need a clearer photo</span>
             </div>
             <div style={{
-              fontFamily: "'Fraunces', Georgia, serif",
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: isMobile ? 28 : 34, lineHeight: 1.2,
               color: "var(--ink)", fontWeight: 400,
               marginBottom: 14,
@@ -10119,7 +10119,7 @@ function App() {
           <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height:28, width:"auto", display:"block"}}/>
         </div>
         <div style={{
-          fontFamily:"'Fraunces', Georgia, serif",
+          fontFamily:"'Lora', Georgia, serif",
           fontSize:17, lineHeight:1.5,
           color:"var(--ink-soft)", fontWeight:400,
           maxWidth:420, margin:"0 auto 28px",
@@ -10206,7 +10206,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{minHeight:"100vh", background:"var(--cream)", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:32, textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center"}}><IcoScan size={48} color="var(--moss)"/></div>
-          <div style={{fontFamily:"'Fraunces', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", letterSpacing:"-0.01em"}}>Something went wrong</div>
+          <div style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:28, color:"var(--ink)", letterSpacing:"-0.01em"}}>Something went wrong</div>
           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", maxWidth:320, lineHeight:1.6}}>Partiqule hit an unexpected error. Tap below to reload and try again.</div>
           <button onClick={()=>window.location.reload()} style={{padding:"12px 28px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer", marginTop:8}}>
             Reload Partiqule

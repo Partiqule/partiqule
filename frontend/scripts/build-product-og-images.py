@@ -68,7 +68,7 @@ def verdict(score: int) -> str:
     return "Hard pass."
 
 # ── Fonts ───────────────────────────────────────────────────────
-# Fraunces isn't system-installed; Georgia is the closest serif available.
+# Lora isn't system-installed; Georgia is the closest serif available.
 # DM Sans also not installed; Helvetica/Futura approximate for caps labels.
 def load_font(candidates: list[str], size: int):
     for path in candidates:
@@ -178,7 +178,7 @@ def compose(product: dict) -> Image.Image:
     name_top = 200
     text_max_w = 680  # leave room for the score box on the right
 
-    # Product name in Fraunces-ish serif, up to 2 lines
+    # Product name in Lora-ish serif, up to 2 lines
     name_font = load_serif(60)
     lines = wrap_lines(draw, name, name_font, text_max_w, max_lines=2)
     # If the name overflows to a truncated 2nd line, shrink the font once

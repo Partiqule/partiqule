@@ -29,7 +29,7 @@ MOSS = (45, 90, 39)              # --moss
 AMBER_WARM = (255, 230, 180)     # morning-light top tint
 
 # ── Fonts ───────────────────────────────────────────────────────
-# Fraunces isn't installed system-wide. Fall back to Georgia — visually
+# Lora isn't installed system-wide. Fall back to Georgia — visually
 # closest serif available on macOS. The wordmark image carries the brand
 # identity; the tagline is secondary.
 def load_font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont:
@@ -100,7 +100,7 @@ draw.rectangle([(eyebrow_x, rule_y + 8), (eyebrow_x + rule_w, rule_y + 10)], fil
 # Eyebrow text (letter-spaced approximation)
 draw.text((eyebrow_x + rule_w + 12, rule_y), EYEBROW, font=SANS_CAPS, fill=MOSS)
 
-# ── Tagline (Fraunces fallback: Georgia) ────────────────────────
+# ── Tagline (Lora fallback: Georgia) ────────────────────────
 TAGLINE = "Score any product. Find the cleaner swap."
 tag_bbox = draw.textbbox((0, 0), TAGLINE, font=SERIF)
 tag_w = tag_bbox[2] - tag_bbox[0]

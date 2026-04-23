@@ -9,7 +9,7 @@
  * belongs here.
  *
  * Pair with the Google Fonts import in index.html:
- * <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+ * <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
  */
 
 :root {
@@ -47,7 +47,7 @@
   --outer-bg:    #e0d8c5;
 
   /* ─── Type stacks ───────────────────────────────────── */
-  --serif: 'Fraunces', Georgia, serif;
+  --serif: 'Lora', Georgia, serif;
   --sans:  'DM Sans', system-ui, sans-serif;
   /* --mono is retired. Data bits now render in DM Sans with uppercase and
      letter-spacing. This alias stays pointed at --sans so any legacy

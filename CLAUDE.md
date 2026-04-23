@@ -883,7 +883,7 @@ Response schema additions:
 - `reason: "low_confidence"` — machine-readable classification. `need_better_photo` only fires on `confidence < 0.5`; there is no longer a `no_external_source` refusal.
 - `vision_reconciliation` — agreement fraction, attached to scored results when both label and cascade ingredients existed.
 
-Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Fraunces headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"); now only reached when identification confidence is below 0.5. Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
+Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Lora headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"); now only reached when identification confidence is below 0.5. Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
 
 Log events for audit:
 ```bash
@@ -1148,15 +1148,15 @@ When rendering in a web context or embedding the app, the outer background is a 
 
 Two fonts, each with a specific job. Never substitute and never mix up the roles.
 
-#### Fraunces
+#### Lora
 
 Used for: greetings, product names, verdict headlines, section titles, score numbers, warm moments ("here's what I found"), feed card headlines.
 
-Fraunces is a variable font with axes for weight, optical size, softness, and wonk. The italic axis is NOT loaded — warmth comes from word choice, moss color, and opacity, never from slanted type. Use the default Regular weight unless a specific moment wants emphasis.
+Lora is a variable font with axes for weight, optical size, softness, and wonk. The italic axis is NOT loaded — warmth comes from word choice, moss color, and opacity, never from slanted type. Use the default Regular weight unless a specific moment wants emphasis.
 
 Size range in app: 18px (small warm notes) to 40px (hero greetings). Most commonly 20 to 24px for section titles.
 
-Note: at sizes under 14px, the "wonk" axis can make Fraunces hard to read. Our system uses DM Sans below that threshold.
+Note: at sizes under 14px, the "wonk" axis can make Lora hard to read. Our system uses DM Sans below that threshold.
 
 #### DM Sans
 
@@ -1278,7 +1278,7 @@ Top bar, greeting (38px serif, normal weight), DM Sans caps stamp, quiet scan ca
 
 #### Loading screen
 
-No circular animations. Product identity at top matches the result screen. Center: typewriter animation cycling through four status messages — "Reading the label...", "Checking what's inside...", "Looking up what we know...", "Scoring against the rest..." — Fraunces normal weight, moss color. Below the typewriter: a 200px thin moss rule draws left to right as each step completes. Below the rule: four 6px moss dots, each fills as its step message appears, 16px spacing between dots. Static footer line in small serif.
+No circular animations. Product identity at top matches the result screen. Center: typewriter animation cycling through four status messages — "Reading the label...", "Checking what's inside...", "Looking up what we know...", "Scoring against the rest..." — Lora normal weight, moss color. Below the typewriter: a 200px thin moss rule draws left to right as each step completes. Below the rule: four 6px moss dots, each fills as its step message appears, 16px spacing between dots. Static footer line in small serif.
 
 #### Detail view
 
@@ -1304,8 +1304,8 @@ Simple: back arrow, stamp tying it to source product, large serif title, serif s
 
 ### Never do
 
-1. Use italics anywhere. Warmth comes from word choice, opacity, and moss color, not slanted type. The Fraunces italic axis is not loaded from Google Fonts for this reason.
-2. Use Outfit, DM Mono, or Instrument Serif. Fraunces and DM Sans only.
+1. Use italics anywhere. Warmth comes from word choice, opacity, and moss color, not slanted type. The Lora italic axis is not loaded from Google Fonts for this reason.
+2. Use Outfit, DM Mono, or Instrument Serif. Lora and DM Sans only.
 3. Use purple `#7c3aed` as an accent. Signals generic SaaS.
 4. Use white backgrounds. Use cream.
 5. Use cold navy for dark surfaces. Dark mode is out of scope — the canonical surface is warm paper light.
@@ -1317,7 +1317,7 @@ Simple: back arrow, stamp tying it to source product, large serif title, serif s
 11. Write UI copy in third person or dashboard voice ("Your data", "Analysis", "Details").
 12. Create section headers that sound like a dashboard ("Overview", "Details", "Data", "Analysis").
 13. Use pulsing or bouncing animations.
-14. Substitute a system font for Fraunces or DM Sans.
+14. Substitute a system font for Lora or DM Sans.
 15. Make the primary score bigger than the verdict headline. They share the frame.
 16. Display the ingredients list or composition in sentence case. It is always DM Sans caps with letter-spacing.
 17. Let any screen end without a reference back to the user's shelf.
