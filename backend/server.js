@@ -7450,7 +7450,7 @@ app.get("/recent-scans", requireAdmin, async (req, res) => {
     try {
       let query = supabaseAdmin
         .from("scans")
-        .select("product_name, category, score, result_json, scanned_at")
+        .select("product_name, category, score, result_json, scanned_at, platform")
         .order("scanned_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -7465,6 +7465,7 @@ app.get("/recent-scans", requireAdmin, async (req, res) => {
           score:              row.score,
           category:           row.category,
           scanned_at:         row.scanned_at,
+          platform:           row.platform || null,
           flagged_substances: row.result_json?.concerns || [],
           confidence:         row.result_json?.confidence || null,
           cached:             row.result_json?.cached || false,

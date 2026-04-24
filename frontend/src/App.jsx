@@ -6299,6 +6299,20 @@ function App() {
     }
   };
 
+  // Platform signal for analytics — "ios" for Capacitor native wrapper,
+  // "pwa" for standalone installed PWA, "web" for everything else. Written
+  // on every cloud scan so we can break down scan volume by surface.
+  // Added 2026-04-24. Supabase migration must add the `platform` column to
+  // `scans` before this field will persist (see the ALTER TABLE in Ops).
+  const detectPlatform = () => {
+    if (IS_NATIVE) return "ios";
+    try {
+      if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return "pwa";
+      if (window.navigator.standalone === true) return "pwa"; // iOS Safari "Add to Home Screen"
+    } catch {}
+    return "web";
+  };
+
   const saveToCloud = async (item, userId) => {
     try {
       const { error } = await supabase.from("scans").upsert({
@@ -6306,6 +6320,7 @@ function App() {
         product_name: item.product_name,
         category:     item.category || "other",
         score:        item.score || 0,
+        platform:     detectPlatform(),
         // Store lightweight version — skip large AI arrays to keep row size manageable
         result_json:  {
           product_name:     item.product_name,
