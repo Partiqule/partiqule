@@ -5705,6 +5705,145 @@ function useWindowWidth() {
   return width;
 }
 
+// ── ResetPasswordPage ─────────────────────────────────────────
+// Lands the user after they click the Supabase password-reset email.
+// The Supabase SDK auto-picks up the recovery token from the URL hash
+// fragment (detectSessionInUrl defaults to true on createClient), sets a
+// recovery-mode session, and fires PASSWORD_RECOVERY. From there the
+// user can call supabase.auth.updateUser({ password }) to set a new
+// password and be signed in.
+const ResetPasswordPage = ({ onDone }) => {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm]   = useState("");
+  const [status, setStatus]     = useState("loading"); // loading | ready | submitting | success | expired
+  const [error, setError]       = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Supabase fires PASSWORD_RECOVERY when it consumes the recovery
+    // token from the URL fragment on page load.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (cancelled) return;
+      if (event === "PASSWORD_RECOVERY") setStatus("ready");
+    });
+
+    // If the SDK already processed the fragment before this effect ran,
+    // getSession() returns a live session — treat that as recovery mode.
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (data.session) setStatus((s) => s === "loading" ? "ready" : s);
+    });
+
+    // Fallback: the URL may have no token at all (user bookmarked the
+    // page, link expired, or the reset email's link was tampered with).
+    // Wait 3s for SDK to settle, then if still no session, show expired.
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      supabase.auth.getSession().then(({ data }) => {
+        if (cancelled) return;
+        if (!data.session) setStatus("expired");
+      });
+    }, 3000);
+
+    return () => { cancelled = true; subscription.unsubscribe(); clearTimeout(t); };
+  }, []);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (password.length < 8) { setError("Use at least 8 characters."); return; }
+    if (password !== confirm) { setError("Passwords don't match."); return; }
+    setStatus("submitting");
+    const { error: err } = await supabase.auth.updateUser({ password });
+    if (err) {
+      setStatus("ready");
+      setError(err.message || "Something went wrong. Try again.");
+      return;
+    }
+    setStatus("success");
+    setTimeout(() => {
+      window.history.replaceState({}, "", "/");
+      onDone && onDone();
+    }, 1800);
+  };
+
+  const input = {
+    width: "100%", padding: "12px 14px", marginBottom: 10,
+    border: "1px solid var(--rule)", borderRadius: "var(--tile-shape-2)",
+    background: "var(--cream)", fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontSize: 14, color: "var(--ink)", boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{minHeight: "100vh", background: "var(--cream)", padding: "60px 20px"}}>
+      <div style={{maxWidth: 420, margin: "0 auto"}}>
+        <div style={{textAlign: "center", marginBottom: 24}}>
+          <img src="/partiqule-wordmark-light.svg" alt="Partiqule" style={{height: 28}}/>
+        </div>
+        <div style={{
+          background: "var(--cream-light)",
+          borderRadius: "var(--card-shape-2)",
+          border: "1px solid var(--rule)",
+          padding: "32px 28px",
+        }}>
+          {status === "expired" ? (
+            <>
+              <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:26, color:"var(--ink)", margin:"0 0 12px", letterSpacing:"-0.01em"}}>
+                This link has expired.
+              </h1>
+              <p style={{fontSize:14, color:"var(--ink-soft)", lineHeight:1.6, marginBottom:20}}>
+                Reset links are good for an hour. Head back and request a new one — we'll send a fresh email.
+              </p>
+              <button onClick={() => { window.location.href = "/"; }} style={{width:"100%", padding:"13px 16px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"var(--cta-shape)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer"}}>
+                Back to Partiqule
+              </button>
+            </>
+          ) : status === "success" ? (
+            <>
+              <div style={{fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10}}>
+                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                Done
+              </div>
+              <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:26, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.01em"}}>
+                Password updated.
+              </h1>
+              <p style={{fontSize:14, color:"var(--ink-soft)", lineHeight:1.6}}>
+                Heading you home — you're signed in.
+              </p>
+            </>
+          ) : (
+            <form onSubmit={submit}>
+              <div style={{fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10}}>
+                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                Reset password
+              </div>
+              <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:26, color:"var(--ink)", margin:"0 0 8px", letterSpacing:"-0.01em"}}>
+                Set a new password.
+              </h1>
+              <p style={{fontSize:14, color:"var(--ink-soft)", lineHeight:1.55, marginBottom:20}}>
+                Choose something at least 8 characters. We'll sign you in right after.
+              </p>
+              <input type="password" placeholder="New password" value={password} onChange={e=>setPassword(e.target.value)} style={input} autoComplete="new-password" autoFocus/>
+              <input type="password" placeholder="Confirm password" value={confirm}  onChange={e=>setConfirm(e.target.value)}  style={{...input, marginBottom:16}} autoComplete="new-password"/>
+              {error && (
+                <div style={{fontSize:13, color:"var(--amber)", marginBottom:14, lineHeight:1.5}}>{error}</div>
+              )}
+              <button
+                type="submit"
+                disabled={status === "submitting" || status === "loading"}
+                style={{width:"100%", padding:"13px 16px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"var(--cta-shape)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:(status === "submitting" || status === "loading") ? "not-allowed" : "pointer", opacity:(status === "submitting" || status === "loading") ? 0.6 : 1}}
+              >
+                {status === "submitting" ? "Updating…" : status === "loading" ? "Verifying link…" : "Update password"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── MAIN APP ──────────────────────────────────────────────────
 function App() {
   const [query,       setQuery]      = useState("");
@@ -6247,8 +6386,9 @@ function App() {
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
     if (path === "/feed") { setPage("feed"); return; }
     if (path === "/account") { setPage("settings"); return; }
+    if (path === "/reset-password") { setPage("reset-password"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed", "/reset-password"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -6918,6 +7058,8 @@ function App() {
         <AboutPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile} onScan={reset} onNavigate={setPage}/>
       ) : page === "methodology" ? (
         <MethodologyPage text={text} muted={muted} surface={surface} border={border} isMobile={isMobile}/>
+      ) : page === "reset-password" ? (
+        <ResetPasswordPage onDone={() => { setPage("home"); }}/>
       ) : page === "404" ? (
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
