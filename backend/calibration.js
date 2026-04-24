@@ -30,6 +30,11 @@ function normalise(str) {
     .toLowerCase()
     .trim()
     .replace(/[®™©]/g, "")
+    // Hyphens treated as whitespace so branded spellings like "Play-Doh",
+    // "Pop-Tarts", "Scotch-Brite", "Kool-Aid" match calibration keys that
+    // were authored with plain spaces. Applied before whitespace collapse
+    // so the subsequent \s+ dedupe catches any doubled spaces.
+    .replace(/-+/g, " ")
     .replace(/\s+/g, " ")
     .replace(/['']/g, "'");
 }
