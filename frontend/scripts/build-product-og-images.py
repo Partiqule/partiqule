@@ -68,25 +68,46 @@ def verdict(score: int) -> str:
     return "Hard pass."
 
 # ── Fonts ───────────────────────────────────────────────────────
-# Lora isn't system-installed; Georgia is the closest serif available.
-# DM Sans also not installed; Helvetica/Futura approximate for caps labels.
+# Lora variable TTF shipped with the repo at scripts/fonts/. PIL loads
+# the variable font and we select the weight instance (Regular or Bold)
+# via set_variation_by_name. Georgia stays as the fallback if the local
+# file goes missing. DM Sans is approximated with Helvetica / Futura
+# since it isn't installed system-wide.
+LORA_TTF = Path(__file__).resolve().parent / "fonts" / "Lora[wght].ttf"
+
 def load_font(candidates: list[str], size: int):
     for path in candidates:
         if os.path.exists(path):
             return ImageFont.truetype(path, size=size)
     return ImageFont.load_default()
 
-def load_serif(size): return load_font([
-    "/System/Library/Fonts/Supplemental/Georgia.ttf",
-    "/Library/Fonts/Georgia.ttf",
-    "/System/Library/Fonts/Times.ttc",
-], size=size)
+def _load_lora(size: int, weight: str) -> "ImageFont.FreeTypeFont | None":
+    if not LORA_TTF.exists():
+        return None
+    font = ImageFont.truetype(str(LORA_TTF), size=size)
+    try:
+        font.set_variation_by_name(weight)
+    except Exception:
+        pass
+    return font
 
-def load_serif_bold(size): return load_font([
-    "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
-    "/Library/Fonts/Georgia Bold.ttf",
-    "/System/Library/Fonts/Supplemental/Georgia.ttf",
-], size=size)
+def load_serif(size):
+    f = _load_lora(size, "Regular")
+    if f: return f
+    return load_font([
+        "/System/Library/Fonts/Supplemental/Georgia.ttf",
+        "/Library/Fonts/Georgia.ttf",
+        "/System/Library/Fonts/Times.ttc",
+    ], size=size)
+
+def load_serif_bold(size):
+    f = _load_lora(size, "Bold")
+    if f: return f
+    return load_font([
+        "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
+        "/Library/Fonts/Georgia Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Georgia.ttf",
+    ], size=size)
 
 def load_sans(size): return load_font([
     "/System/Library/Fonts/HelveticaNeue.ttc",

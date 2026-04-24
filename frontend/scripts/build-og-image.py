@@ -29,20 +29,34 @@ MOSS = (45, 90, 39)              # --moss
 AMBER_WARM = (255, 230, 180)     # morning-light top tint
 
 # ── Fonts ───────────────────────────────────────────────────────
-# Lora isn't installed system-wide. Fall back to Georgia — visually
-# closest serif available on macOS. The wordmark image carries the brand
-# identity; the tagline is secondary.
+# Lora variable TTF shipped with the repo at scripts/fonts/. PIL loads
+# the variable font and we select a named weight instance (Regular, Bold
+# etc.) via set_variation_by_name. Georgia stays as the fallback if the
+# local file goes missing.
+LORA_TTF = Path(__file__).resolve().parent / "fonts" / "Lora[wght].ttf"
+
+def load_serif(size: int, weight: str = "Regular") -> ImageFont.FreeTypeFont:
+    if LORA_TTF.exists():
+        font = ImageFont.truetype(str(LORA_TTF), size=size)
+        try:
+            font.set_variation_by_name(weight)
+        except Exception:
+            pass
+        return font
+    for fallback in ["/System/Library/Fonts/Supplemental/Georgia.ttf",
+                     "/Library/Fonts/Georgia.ttf",
+                     "/System/Library/Fonts/Times.ttc"]:
+        if os.path.exists(fallback):
+            return ImageFont.truetype(fallback, size=size)
+    return ImageFont.load_default()
+
 def load_font(candidates: list[str], size: int) -> ImageFont.FreeTypeFont:
     for path in candidates:
         if os.path.exists(path):
             return ImageFont.truetype(path, size=size)
     return ImageFont.load_default()
 
-SERIF = load_font([
-    "/System/Library/Fonts/Supplemental/Georgia.ttf",
-    "/Library/Fonts/Georgia.ttf",
-    "/System/Library/Fonts/Times.ttc",
-], size=46)
+SERIF = load_serif(46, "Regular")
 
 SANS_CAPS = load_font([
     "/System/Library/Fonts/Supplemental/Futura.ttc",
