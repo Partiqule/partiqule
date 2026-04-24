@@ -5330,10 +5330,26 @@ async function attachIntelCards(result, userId) {
     const cards = await getActiveIntelCards();
     if (!cards.length) return result;
     const userFamilies = await getUserRecentFamilies(userId);
+    // Match ingredient_triggers against flagged_substances, NOT ingredient_list.
+    //
+    // ingredient_list is the raw "what's in it" list which frequently contains
+    // negated phrases like "lead-free", "BPA-free", "arsenic-tested". The
+    // word-boundary regex the matcher uses (\blead\b etc.) matches "lead-free"
+    // because the hyphen is a word boundary — so cards trigger on products
+    // that explicitly DO NOT contain the substance. Water bottle marketed as
+    // "lead-free" fires a card about lead in rice.
+    //
+    // flagged_substances is the authoritative list of substances we've
+    // determined are actual CONCERNS for this product — survived substance
+    // floors, AI flagging, calibration. A lead-free water bottle has lead in
+    // ingredient_list but NOT in flagged_substances. That's the right signal.
+    const triggerSource = Array.isArray(result.flagged_substances) && result.flagged_substances.length > 0
+      ? result.flagged_substances
+      : (Array.isArray(result.ingredient_list) ? result.ingredient_list : []);
     const matching = filterRelevantCards(cards, {
       productFamily: result.product_family || null,
       productName:   result.product_name   || "",
-      ingredientList: Array.isArray(result.ingredient_list) ? result.ingredient_list : [],
+      ingredientList: triggerSource,
       userFamilies,
       limit: 3,
     });
