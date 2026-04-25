@@ -728,7 +728,7 @@ const SUBSTANCE_FLOORS = [
   { match: /saccharin/i,                                                mFloor:4, uFloor:3, reason:"Saccharin — historically IARC 2B (downgraded), gut microbiome" },
   { match: /acesulfame.?k|acesulfame potassium/i,                      mFloor:4, uFloor:3, reason:"Acesulfame-K — animal carcinogen studies, gut disruption" },
   { match: /\bcarrageenan\b/i,                                          mFloor:5, uFloor:4, reason:"Carrageenan — intestinal inflammation, WHO concern (food grade)" },
-  { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate|sodium benzoate.*vitamin.c|vitamin.c.*sodium benzoate/i, mFloor:6, uFloor:5, reason:"Sodium benzoate + vitamin C = benzene formation (IARC Group 1)" },
+  { match: /sodium benzoate.*ascorbic|ascorbic.*sodium benzoate|sodium benzoate.*vitamin.c|vitamin.c.*sodium benzoate|sodium benzoate.*citric acid|citric acid.*sodium benzoate/i, mFloor:6, uFloor:5, reason:"Sodium benzoate + citric acid (or ascorbic acid / vitamin C) = benzene formation risk (IARC Group 1) in acidic conditions, especially with heat/light exposure" },
   { match: /\bsodium benzoate\b/i,                                      mFloor:4, uFloor:3, reason:"Sodium benzoate — preservative, benzene risk when combined with vitamin C or citric acid" },
   { match: /\bmonosodium glutamate\b|\bMSG\b/i,                         mFloor:4, uFloor:3, reason:"MSG — excitotoxin concerns, FDA GRAS but contested, headache/sensitivity triggers" },
   { match: /brominated vegetable oil|\bBVO\b/i,                         mFloor:6, uFloor:5, reason:"BVO — FDA proposed ban 2023, iodine displacement, organ buildup" },

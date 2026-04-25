@@ -8281,23 +8281,27 @@ function App() {
                         pre-deploy scans. Friendly fallback uses the design system voice (knowing
                         friend, not dashboard) so cached scans never show "Caution — real concerns". */}
                     {(() => {
+                      // Verdict ALWAYS derived from displayScore so it can't
+                      // contradict the score number on screen. Past bug: AI-
+                      // generated verdict_adult / verdict_kid fields stored
+                      // with the cached scan would render text from a pre-
+                      // bump or pre-floor score, leaving users with messages
+                      // like "Safe for a kid" next to a 10/10 ring (toothpaste
+                      // Apr 25) or "Not ideal" next to a green 3 (drink mix
+                      // barcode same day). Bucket-by-score is honest and
+                      // never disagrees with the visible number.
                       const friendly = displayScore <= 3 ? "Looks good to me."
                         : displayScore <= 5 ? "I'd swap if you can."
                         : displayScore <= 7 ? "I'd skip if you can."
                         : "Hard pass.";
-                      // When the score itself is a guess (Tier 5 best-guess-from-name)
-                      // a definitive verdict undercuts the hedge — swap in a
-                      // neutral, label-seeking line instead.
+                      // Tier 5 / low-confidence best-guess scores — hedge.
                       const isGuess = result.source_confidence === "low" || result.confidence === "low";
                       const guessVerdict = displayScore <= 3 ? "Probably fine, but I'd want the label."
                         : displayScore <= 5 ? "Too many unknowns to be sure."
                         : "Hard to say without the label.";
-                      let sentence;
-                      if (childMode && result.verdict_kid)       sentence = result.verdict_kid;
-                      else if (result.verdict_adult)             sentence = result.verdict_adult;
-                      else if (result.verdict)                   sentence = result.verdict;
-                      else if (isGuess)                          sentence = childMode ? `For a kid: ${guessVerdict}` : guessVerdict;
-                      else                                       sentence = childMode ? `For a kid: ${friendly}` : friendly;
+                      const sentence = isGuess
+                        ? (childMode ? `For a kid: ${guessVerdict}` : guessVerdict)
+                        : (childMode ? `For a kid: ${friendly}` : friendly);
                       return (
                         <div style={{
                           marginTop:14, marginBottom:2, textAlign:"center", padding:"0 12px",
