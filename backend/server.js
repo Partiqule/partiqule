@@ -8321,6 +8321,30 @@ app.get("/cache-clear-product", requireAdmin, async (req, res) => {
   res.json({ ok: true, key, wasInMemory });
 });
 
+// Clears the barcode-keyed cache entry. /cache-clear-product only clears
+// name-keyed entries, but the /barcode endpoint also stores results under
+// `<promptVersion>:barcode:<barcode>` for direct UPC lookups. When a
+// scoring-logic fix targets barcode-resolved products, this endpoint is
+// the way to invalidate the per-barcode cache without nuking everything.
+app.get("/cache-clear-barcode", requireAdmin, async (req, res) => {
+  const barcode = (req.query.barcode || "").trim();
+  if (!/^\d{4,14}$/.test(barcode)) return res.status(400).json({ error: "barcode param required (4-14 digits)" });
+  const key = `${promptVersion()}:barcode:${barcode}`;
+  const wasInMemory = scoreCache.has(key);
+  scoreCache.delete(key);
+  if (hasRedis) {
+    try {
+      await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+      });
+    } catch(e) { console.warn("[REDIS] del error:", e.message); }
+  }
+  saveCacheToDisk();
+  console.log(`[CACHE] Cleared barcode ${barcode} (key: ${key}, wasInMemory: ${wasInMemory})`);
+  res.json({ ok: true, key, wasInMemory });
+});
+
 // Migrate legacy Redis entries — unwraps {value, ex} wrapper and re-stores correctly
 app.post("/cache-migrate-redis", requireAdmin, async (req, res) => {
   if (!hasRedis) return res.json({ ok: false, error: "Redis not configured" });
