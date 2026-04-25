@@ -981,6 +981,75 @@ const NOVA3_ONLY_MARKERS = [
   /\bbrown sugar\b/,
   /\bcane sugar\b/,
 ];
+// ── Ingredient-signal product naming + category inference ──
+// Used by the /barcode endpoint when Pass 0 returns a record with no
+// product_name (common in OFF/OBF/OPF — anonymous submissions, partial
+// data). Both helpers operate on the parsed ingredient_list array.
+//
+// inferProductTypeFromIngredients returns a generic descriptor like
+// "drink mix" or "stainless steel water bottle" so the UI can show
+// "Brand drink mix" instead of "Product 697029995037".
+//
+// inferCategoryFromIngredients returns a category string when the
+// ingredient profile is unambiguous. It overrides product-name-based
+// detectCategory when that returns "other". Drink mix with sucralose +
+// citric acid + sodium benzoate is a beverage even if the name says
+// nothing.
+function inferProductTypeFromIngredients(ingredientList) {
+  if (!Array.isArray(ingredientList) || ingredientList.length === 0) return "";
+  const t = ingredientList.join(" ").toLowerCase();
+  // Beverage / drink mix signals
+  if (/sucralose|aspartame|acesulfame|stevia|monk fruit/.test(t) &&
+      /citric acid|sodium citrate|sodium benzoate/.test(t)) return "drink mix";
+  if (/carbonated water|sparkling water/.test(t)) return "sparkling beverage";
+  if (/electrolyte|sodium chloride.*potassium|magnesium.*potassium/.test(t)) return "electrolyte drink";
+  if (/caffeine|guarana|taurine/.test(t) && /sugar|sucralose|stevia/.test(t)) return "energy drink";
+  if (/coffee|espresso/.test(t)) return "coffee product";
+  if (/black tea|green tea|tea leaves|camellia sinensis/.test(t)) return "tea product";
+  // Personal care
+  if (/sodium lauryl sulfate|cocamidopropyl betaine|peg-/.test(t)) return "personal care product";
+  if (/hydrated silica|sorbitol.*glycerin|fluoride/.test(t)) return "toothpaste";
+  // Drinkware / kitchen
+  if (/stainless steel.*tritan|tritan.*stainless steel|18\/8 stainless/.test(t)) return "stainless steel water bottle";
+  // Snack / food
+  if (/wheat flour|enriched flour|enriched wheat/.test(t) && /sugar|corn syrup/.test(t)) return "packaged snack";
+  if (/whey protein|soy protein|pea protein/.test(t)) return "protein product";
+  return "";
+}
+
+function inferCategoryFromIngredients(ingredientList) {
+  if (!Array.isArray(ingredientList) || ingredientList.length === 0) return null;
+  const t = ingredientList.join(" ").toLowerCase();
+  // Beverage signals — at least 2 markers needed to flip category from "other"
+  let beverageHits = 0;
+  for (const sig of [
+    /\bsucralose\b/, /\baspartame\b/, /\bacesulfame\b/, /\bstevia\b/,
+    /\bsodium benzoate\b/, /\bcitric acid\b/, /\bsodium citrate\b/,
+    /\bcarbonated water\b/, /\bsparkling water\b/, /\bcaffeine\b/, /\btaurine\b/,
+    /\bhigh fructose corn syrup\b/, /\bcorn syrup\b/, /\bhfcs\b/,
+    /\belectrolyte\b/, /\bcoconut water\b/, /\bjuice\b/, /\btea leaves\b/,
+  ]) if (sig.test(t)) beverageHits++;
+  if (beverageHits >= 2) return "beverage";
+  // Personal care signals
+  let pcHits = 0;
+  for (const sig of [
+    /\bsodium lauryl sulfate\b/, /\bsls\b/, /\bcocamidopropyl betaine\b/,
+    /\bpeg-/, /\bphenoxyethanol\b/, /\bglycerin\b/, /\bhyaluronic acid\b/,
+    /\bniacinamide\b/, /\bsalicylic acid\b/, /\bbenzoyl peroxide\b/,
+    /\bhydrated silica\b/, /\bfluoride\b/,
+  ]) if (sig.test(t)) pcHits++;
+  if (pcHits >= 2) return "personal_care";
+  // Cleaning / home
+  let homeHits = 0;
+  for (const sig of [
+    /\bquaternary ammonium\b/, /\bsodium hypochlorite\b/, /\bbleach\b/,
+    /\bammonia\b/, /\bhydrogen peroxide\b/, /\bsurfactant blend\b/,
+    /\bdisinfect/,
+  ]) if (sig.test(t)) homeHits++;
+  if (homeHits >= 2) return "home";
+  return null;
+}
+
 function inferNovaGroupFromIngredients(ingredientText, category) {
   if (category !== "food" && category !== "beverage" && category !== "food_beverage") return null;
   const t = String(ingredientText || "").toLowerCase();
@@ -8647,9 +8716,38 @@ app.post("/barcode", rateLimit, async (req, res) => {
   }
 
   // ── Extract product data from OFF response ──
-  const productName  = offProduct.product_name_en || offProduct.product_name || `Product ${barcode}`;
-  const brand        = offProduct.brands           || "";
   const ingredText   = offProduct.ingredients_text_en || offProduct.ingredients_text || "";
+  // Parse ingredient list before naming so the name fallback can mine it
+  const ingredientList = ingredText
+    ? ingredText.split(/,(?![^(]*\))/).map(s => s.trim()).filter(Boolean)
+    : [];
+
+  // ── Product name resolution ──
+  // OFF/OBF/OPF often store records with no product_name (anonymous user
+  // submissions, partial entries). The previous fallback was literally
+  // "Product <barcode>" — a number — which leaked through to the UI as the
+  // product title. Sara hit this on a drink mix that displayed as
+  // "697029995037". Build a more honest fallback by mining brand,
+  // generic_name, OFF categories, and ingredient signals.
+  const brand = (offProduct.brands || "").split(",")[0].trim();
+  const genericName = offProduct.generic_name_en || offProduct.generic_name || "";
+  const offCategories = offProduct.categories_tags_en || offProduct.categories_tags || [];
+  const offCategoryStr = (offProduct.categories || "").split(",").map(s => s.replace(/^en:/, "").trim()).filter(Boolean)[0] || "";
+  const ingredientTypeGuess = inferProductTypeFromIngredients(ingredientList);
+
+  function buildProductName() {
+    const explicit = (offProduct.product_name_en || offProduct.product_name || "").trim();
+    if (explicit) return explicit;
+    // Try brand + descriptor — most informative
+    const descriptor = genericName || offCategoryStr || ingredientTypeGuess;
+    if (brand && descriptor) return `${brand} ${descriptor}`.trim();
+    if (descriptor) return descriptor;
+    if (brand) return brand;
+    // Honest last resort — never a bare barcode number
+    return "Scanned product";
+  }
+  const productName = buildProductName();
+
   const novaGroup    = offProduct.nova_group;
   const servingG     = parseFloat(offProduct.serving_quantity) || 100;
   const nutr         = offProduct.nutriments || {};
@@ -8662,15 +8760,22 @@ app.post("/barcode", rateLimit, async (req, res) => {
     : null;
   const servingLabel = offProduct.serving_size || (servingG ? `${servingG}g` : "");
 
-  // Parse ingredient list into array
-  const ingredientList = ingredText
-    ? ingredText.split(/,(?![^(]*\))/).map(s => s.trim()).filter(Boolean)
-    : [];
-
   // ── Check if already cached by product name ──
   // Same sync/async split as /analyze: cache key uses Fast for stability,
   // then AI refines the category for the scoring path if cache misses.
   let cat       = detectCategory(productName);
+  // Ingredient-signal fallback: when productName-based detection returns
+  // "other" (common when the OFF record had no real name and we built one),
+  // see if the ingredient list strongly suggests a different category. A
+  // drink mix with sucralose + citric acid + sodium benzoate is a beverage
+  // even if the product_name is "Scanned product".
+  if (!cat || cat === "other") {
+    const ingredientCat = inferCategoryFromIngredients(ingredientList);
+    if (ingredientCat) {
+      console.log(`[BARCODE] category override from ingredients: ${cat || "(none)"} → ${ingredientCat}`);
+      cat = ingredientCat;
+    }
+  }
   const nameKey = cacheKey(productName, cat);
   const nCached = await cacheGet(nameKey);
   if (nCached && evictIfPrePass0(nCached, nameKey)) {
