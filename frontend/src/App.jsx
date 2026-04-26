@@ -41,6 +41,39 @@ const loadNativePurchases = async () => {
 
 const API_BASE = "https://partiqule-production.up.railway.app";
 
+// Bump APP_VERSION on every release that ships meaningful changes. The
+// minimum-version gate at /min-version compares against this value and
+// blocks the app with an Update Required screen if the running version
+// is older than the server-controlled MIN_*_VERSION envs. Increase
+// patch for bug fixes, minor for features, major for breaking changes.
+const APP_VERSION = "1.1.0";
+
+// App Store + social URLs used by the Update Required screen and the
+// review-prompt modal. Replace APP_STORE_ID with the production App
+// Store ID once it lands. The itms-apps:// scheme jumps directly into
+// the App Store app on iOS; the https fallback works in browsers.
+const APP_STORE_ID = "id000000000";  // TODO: replace with real App Store ID after first submission
+const APP_STORE_URL_NATIVE = `itms-apps://itunes.apple.com/app/${APP_STORE_ID}`;
+const APP_STORE_URL_WEB    = `https://apps.apple.com/app/${APP_STORE_ID}`;
+const APP_STORE_REVIEW_URL_NATIVE = `${APP_STORE_URL_NATIVE}?action=write-review`;
+const APP_STORE_REVIEW_URL_WEB    = `${APP_STORE_URL_WEB}?action=write-review`;
+const INSTAGRAM_URL = "https://instagram.com/partiquleapp";
+const TIKTOK_URL    = "https://tiktok.com/@partiquleapp";
+
+// Naive semver compare: returns -1/0/1 for a < / = / > b. Handles
+// "1.10.0" vs "1.2.0" correctly (numeric segments). Non-numeric
+// suffixes (-beta etc.) are stripped before compare.
+function compareVersions(a, b) {
+  const parse = v => String(v || "0").split(/[.+\-]/)[0].split(".").map(n => parseInt(n) || 0);
+  const A = parse(a), B = parse(b);
+  for (let i = 0; i < Math.max(A.length, B.length); i++) {
+    const ai = A[i] || 0, bi = B[i] || 0;
+    if (ai > bi) return 1;
+    if (ai < bi) return -1;
+  }
+  return 0;
+}
+
 // Team emails — these accounts get automatic admin nav access
 const ADMIN_EMAILS = ["paul@partiqule.com", "sara@partiqule.com"];
 const isAdminUser = (user) => user && ADMIN_EMAILS.includes(user.email?.toLowerCase());
@@ -5705,6 +5738,99 @@ function useWindowWidth() {
   return width;
 }
 
+// ── UpdateRequiredView ────────────────────────────────────────
+// Full-screen blocking gate when the running APP_VERSION is older than
+// the server-controlled MIN_*_VERSION. Renders before the rest of the
+// app on every boot. Apple doesn't allow forcing auto-updates, but most
+// users have App Store auto-updates enabled — this catches the few who
+// don't and walks them to the update with one tap.
+const UpdateRequiredView = ({ minVersion }) => {
+  const isNative = IS_NATIVE;
+  const onUpdate = () => {
+    const url = isNative ? APP_STORE_URL_NATIVE : APP_STORE_URL_WEB;
+    try { window.location.href = url; } catch {}
+  };
+  return (
+    <div style={{minHeight:"100vh", background:"var(--cream)", padding:"60px 20px"}}>
+      <div style={{maxWidth:420, margin:"0 auto"}}>
+        <div style={{textAlign:"center", marginBottom:24}}>
+          <img src="/partiqule-wordmark-light.svg" alt="Partiqule" style={{height:28}}/>
+        </div>
+        <div style={{
+          background:"var(--cream-light)",
+          borderRadius:"var(--card-shape-2)",
+          border:"1px solid var(--rule)",
+          padding:"32px 28px",
+        }}>
+          <div style={{fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10}}>
+            <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+            Time to update
+          </div>
+          <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:26, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.01em"}}>
+            There's a newer version of Partiqule.
+          </h1>
+          <p style={{fontSize:14, color:"var(--ink-soft)", lineHeight:1.6, marginBottom:20}}>
+            We've shipped fixes that need a fresh install to work. {isNative ? "Open the App Store to grab the latest version — takes a few seconds." : "Refresh this page or reinstall to get the latest."} You're on {APP_VERSION}; the new minimum is {minVersion}.
+          </p>
+          <button onClick={onUpdate} style={{width:"100%", padding:"13px 16px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"var(--cta-shape)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer"}}>
+            {isNative ? "Open the App Store" : "Refresh and reload"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── ReviewSocialsPrompt ───────────────────────────────────────
+// One-time soft modal triggered after the user crosses a scan-count
+// threshold (default 20). Shows a primary "Leave a review" CTA, a
+// secondary "Follow us on Instagram" outlined button, and a tertiary
+// "Maybe later" dismissal. Sets ps_review_prompted so it never fires
+// twice per device.
+const ReviewSocialsPrompt = ({ onClose }) => {
+  const isNative = IS_NATIVE;
+  const reviewUrl = isNative ? APP_STORE_REVIEW_URL_NATIVE : APP_STORE_REVIEW_URL_WEB;
+  const dismiss = () => {
+    try { localStorage.setItem("ps_review_prompted", new Date().toISOString()); } catch {}
+    onClose();
+  };
+  const openReview = () => { try { window.open(reviewUrl, "_blank"); } catch {} dismiss(); };
+  const openInstagram = () => { try { window.open(INSTAGRAM_URL, "_blank"); } catch {} dismiss(); };
+  return (
+    <div style={{position:"fixed", inset:0, zIndex:9990, background:"rgba(26,31,21,0.55)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}
+      onClick={dismiss}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:"var(--cream-light)",
+        borderRadius:"var(--card-shape-2)",
+        border:"1px solid var(--rule)",
+        padding:"28px 24px",
+        width:"100%", maxWidth:380,
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+      }}>
+        <div style={{fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", gap:10}}>
+          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+          Quick favor
+        </div>
+        <h2 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:24, color:"var(--ink)", margin:"0 0 10px", letterSpacing:"-0.01em"}}>
+          Enjoying Partiqule?
+        </h2>
+        <p style={{fontSize:14, color:"var(--ink-soft)", lineHeight:1.55, marginBottom:20}}>
+          A quick App Store review helps other people find us — and following along on Instagram is the best way to see what Sara's testing next.
+        </p>
+        <button onClick={openReview} style={{width:"100%", padding:"13px 16px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>
+          Leave a review
+        </button>
+        <button onClick={openInstagram} style={{width:"100%", padding:"12px 16px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>
+          Follow on Instagram
+        </button>
+        <button onClick={dismiss} style={{width:"100%", padding:"10px 16px", background:"none", color:"var(--ink-faint)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, cursor:"pointer"}}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ── ResetPasswordPage ─────────────────────────────────────────
 // Lands the user after they click the Supabase password-reset email.
 // The Supabase SDK auto-picks up the recovery token from the URL hash
@@ -5944,6 +6070,8 @@ function App() {
   const searchAbortRef    = useRef(null);
   // ── Scan counter + subscription ───────────────────────────────
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
+  const [updateRequired, setUpdateRequired] = useState(null); // {minVersion} when running version is below MIN_*_VERSION
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
   const [iapPrice,     setIapPrice]     = useState("$4.99/month"); // loaded from StoreKit
@@ -6424,6 +6552,41 @@ function App() {
   // Fetch live intelligence cards on mount
   useEffect(()=>{fetch(`${API_BASE}/api/intelligence-cards`).then(r=>r.json()).then(d=>setLiveIntelCards(d.cards||[])).catch(()=>{});},[]);
 
+  // Minimum-version check on mount. If the running APP_VERSION is below
+  // the server-controlled MIN_*_VERSION, render the UpdateRequiredView
+  // gate instead of the app. Permissive default — the gate only fires
+  // when env vars are explicitly set to a higher version in Railway.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${API_BASE}/min-version`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (cancelled) return;
+        const minForPlatform = IS_NATIVE ? (d.ios_min || "0.0.0") : (d.web_min || "0.0.0");
+        if (compareVersions(APP_VERSION, minForPlatform) < 0) {
+          setUpdateRequired({ minVersion: minForPlatform });
+        }
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Review-prompt trigger: fires once per device when scanCount crosses
+  // 20. localStorage flag prevents re-firing. Anonymous users with no
+  // cloud-synced count can still hit this via local scan tracking.
+  useEffect(() => {
+    if (showReviewPrompt) return;
+    if (scanCount < 20) return;
+    let alreadyPrompted = false;
+    try { alreadyPrompted = !!localStorage.getItem("ps_review_prompted"); } catch {}
+    if (alreadyPrompted) return;
+    // Small delay so the prompt doesn't slam onto a fresh scan result
+    const t = setTimeout(() => setShowReviewPrompt(true), 1800);
+    return () => clearTimeout(t);
+  }, [scanCount, showReviewPrompt]);
+
   // Scroll to top on every page change and every result load
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -6814,6 +6977,13 @@ function App() {
   const text    = "var(--ink)";
   const muted   = "var(--ink-soft)";
   const px      = isMobile ? "16px" : "40px";
+
+  // Hard gate: when /min-version says we're below the floor, block the
+  // entire app and show the update screen. Returns early so no other
+  // surfaces render — the user can only update or close.
+  if (updateRequired) {
+    return <UpdateRequiredView minVersion={updateRequired.minVersion}/>;
+  }
 
   return (
     <div style={{
@@ -10019,6 +10189,13 @@ function App() {
           onRetry={() => { setBarcodeLoadingPhase(null); setShowBarcodeScanner(true); }}
           onPhoto={async (file) => { setBarcodeLoadingPhase(null); await handleImageScan(file); }}
         />
+      )}
+
+      {/* REVIEW + SOCIALS PROMPT — fires once per device when scanCount
+          crosses 20. Dismissal sets ps_review_prompted in localStorage
+          so it never re-fires. */}
+      {showReviewPrompt && (
+        <ReviewSocialsPrompt onClose={() => setShowReviewPrompt(false)}/>
       )}
 
       {/* PURCHASE SUCCESS — shown after successful Apple IAP purchase or restore.

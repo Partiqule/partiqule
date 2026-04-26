@@ -7947,6 +7947,27 @@ app.get("/health", (req, res) => res.json({
   uptime: Math.round(process.uptime()) + "s",
 }));
 
+// Minimum app version gate. The frontend calls this on boot, compares the
+// returned ios_min / web_min against its own APP_VERSION constant, and
+// renders an Update Required screen if it's older. Bump these env vars in
+// Railway whenever you ship a breaking backend change (auth requirements,
+// schema migration, response shape) so old clients get a friendly nudge to
+// the App Store instead of a silent broken experience.
+//
+// Defaults are permissive — set MIN_IOS_VERSION / MIN_WEB_VERSION env vars
+// in Railway after the first iOS submission lands to start enforcing.
+app.get("/min-version", (req, res) => {
+  res.set("Cache-Control", "public, max-age=300"); // 5 min CDN cache
+  res.json({
+    ios_min: process.env.MIN_IOS_VERSION || "1.0.0",
+    web_min: process.env.MIN_WEB_VERSION || "1.0.0",
+    update_url: {
+      ios:  process.env.APP_STORE_URL || null,
+      web:  "https://partiqule.com",
+    },
+  });
+});
+
 const PORT = process.env.PORT || 3001;
 
 // ── Apple IAP confirmation — called after successful StoreKit purchase ──
