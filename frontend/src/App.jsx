@@ -46,19 +46,19 @@ const API_BASE = "https://partiqule-production.up.railway.app";
 // blocks the app with an Update Required screen if the running version
 // is older than the server-controlled MIN_*_VERSION envs. Increase
 // patch for bug fixes, minor for features, major for breaking changes.
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.1";
 
 // App Store + social URLs used by the Update Required screen and the
 // review-prompt modal. Replace APP_STORE_ID with the production App
 // Store ID once it lands. The itms-apps:// scheme jumps directly into
 // the App Store app on iOS; the https fallback works in browsers.
-const APP_STORE_ID = "id000000000";  // TODO: replace with real App Store ID after first submission
+const APP_STORE_ID = "id6761738421";
 const APP_STORE_URL_NATIVE = `itms-apps://itunes.apple.com/app/${APP_STORE_ID}`;
 const APP_STORE_URL_WEB    = `https://apps.apple.com/app/${APP_STORE_ID}`;
 const APP_STORE_REVIEW_URL_NATIVE = `${APP_STORE_URL_NATIVE}?action=write-review`;
 const APP_STORE_REVIEW_URL_WEB    = `${APP_STORE_URL_WEB}?action=write-review`;
 const INSTAGRAM_URL = "https://instagram.com/partiquleapp";
-const TIKTOK_URL    = "https://tiktok.com/@partiquleapp";
+const TIKTOK_URL    = "https://tiktok.com/@partiqule";
 
 // Naive semver compare: returns -1/0/1 for a < / = / > b. Handles
 // "1.10.0" vs "1.2.0" correctly (numeric segments). Non-numeric
@@ -5796,6 +5796,7 @@ const ReviewSocialsPrompt = ({ onClose }) => {
   };
   const openReview = () => { try { window.open(reviewUrl, "_blank"); } catch {} dismiss(); };
   const openInstagram = () => { try { window.open(INSTAGRAM_URL, "_blank"); } catch {} dismiss(); };
+  const openTikTok    = () => { try { window.open(TIKTOK_URL, "_blank"); } catch {} dismiss(); };
   return (
     <div style={{position:"fixed", inset:0, zIndex:9990, background:"rgba(26,31,21,0.55)", display:"flex", alignItems:"center", justifyContent:"center", padding:16}}
       onClick={dismiss}>
@@ -5820,9 +5821,14 @@ const ReviewSocialsPrompt = ({ onClose }) => {
         <button onClick={openReview} style={{width:"100%", padding:"13px 16px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>
           Leave a review
         </button>
-        <button onClick={openInstagram} style={{width:"100%", padding:"12px 16px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:8}}>
-          Follow on Instagram
-        </button>
+        <div style={{display:"flex", gap:8, marginBottom:8}}>
+          <button onClick={openInstagram} style={{flex:1, padding:"12px 14px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:13, cursor:"pointer"}}>
+            Instagram
+          </button>
+          <button onClick={openTikTok} style={{flex:1, padding:"12px 14px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", borderRadius:"var(--cta-shape)", fontWeight:500, fontSize:13, cursor:"pointer"}}>
+            TikTok
+          </button>
+        </div>
         <button onClick={dismiss} style={{width:"100%", padding:"10px 16px", background:"none", color:"var(--ink-faint)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, cursor:"pointer"}}>
           Maybe later
         </button>
