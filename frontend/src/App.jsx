@@ -7434,8 +7434,12 @@ function App() {
                       return (
                         <div style={{maxWidth:860, margin:"10px auto 0", padding:"16px 18px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px"}}>
                           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:6, letterSpacing:"-0.005em"}}>No verified matches yet.</div>
-                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:14, lineHeight:1.5}}>Scan the barcode or label — formulas change, and we only score what we can verify.</div>
-                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"11px 14px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer"}}>Scan barcode</button>
+                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:14, lineHeight:1.5}}>Snap a photo of the label — formulas change, and reading the actual ingredient list is the most accurate path.</div>
+                          <label style={{display:"block", width:"100%", cursor:"pointer", marginBottom:8}}>
+                            <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setSearchMatches([]); await handleImageScan(f);}}/>
+                            <div style={{width:"100%", padding:"11px 14px", background:"var(--moss)", color:"var(--ivory)", border:"none", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, textAlign:"center", boxSizing:"border-box"}}>Take a photo</div>
+                          </label>
+                          <button onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}} style={{width:"100%", padding:"10px 14px", background:"transparent", color:"var(--ink-soft)", border:"1px solid var(--rule)", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:12, cursor:"pointer"}}>Or scan the barcode</button>
                         </div>
                       );
                     }
@@ -7458,10 +7462,10 @@ function App() {
                             )}
                           </div>
                         ))}
-                        <div onClick={()=>{setSearchMatches([]); setShowBarcodeScanner(true);}}
-                          style={{padding:"11px 16px", borderTop:"1px solid var(--rule)", background:"var(--cream)", fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--moss)", textAlign:"center", cursor:"pointer"}}>
-                          Can't find your product? Scan the barcode →
-                        </div>
+                        <label style={{display:"block", padding:"11px 16px", borderTop:"1px solid var(--rule)", background:"var(--cream)", fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--moss)", textAlign:"center", cursor:"pointer"}}>
+                          <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setSearchMatches([]); await handleImageScan(f);}}/>
+                          Can't find your product? Snap a photo of the label →
+                        </label>
                       </div>
                     );
                   })()}
@@ -9854,21 +9858,24 @@ function App() {
             <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
               <div style={{width:40, height:4, borderRadius:2, background:"#e5e7eb", margin:"0 auto 20px"}}/>
               <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
-              <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
-                style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:"var(--card-shape-1)", background:"var(--moss-soft)", border:"1px solid var(--rule)", cursor:"pointer", marginBottom:12}}>
-                <div style={{width:44, height:44, borderRadius:"var(--tile-shape-1)", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
-                </div>
-                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Fastest path for packaged food</div></div>
-              </div>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+              {/* Photo is the primary scan path — reads the actual label, works on any product
+                  regardless of database coverage, and gives the most consistent result.
+                  Barcode is demoted to a secondary "quick scan" for known packaged products. */}
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"16px 20px", borderRadius:"var(--card-shape-1)", background:"var(--moss-soft)", border:"1px solid var(--rule)", cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
-                <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <div style={{width:44, height:44, borderRadius:"var(--tile-shape-1)", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
-                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Point at the label</div></div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Take a photo</div><div style={{fontSize:12, color:muted, marginTop:2}}>Read the label — most accurate</div></div>
               </label>
-              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"#f8faff", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+              <div onClick={()=>{setScanSheetOpen(false); setShowBarcodeScanner(true);}}
+                style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"var(--cream-light)", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
+                <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2.2" strokeLinecap="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14M21 5v14"/></svg>
+                </div>
+                <div><div style={{fontSize:15, fontWeight:600, color:text, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan barcode</div><div style={{fontSize:12, color:muted, marginTop:2}}>Faster for packaged products</div></div>
+              </div>
+              <label style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderRadius:14, background:"var(--cream-light)", border:`1px solid ${border}`, cursor:"pointer", marginBottom:12}}>
                 <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";setTimeout(()=>{setScanSheetOpen(false);handleImageScan(f);},100);}}/>
                 <div style={{width:44, height:44, borderRadius:12, background:"#e5e7eb", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={muted} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
