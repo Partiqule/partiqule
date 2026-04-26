@@ -584,6 +584,9 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["roundup",                        { floor:7, ceiling:9, substances:["glyphosate"], reason:"Glyphosate IARC Group 2A — primary application of probable carcinogen, Bayer 3B legal settlements", confidence:"high", category:"home" }],
   ["ortho home defense",            { floor:6, ceiling:8, substances:["bifenthrin"], reason:"Bifenthrin pyrethroid — aquatic toxin, EPA-flagged waterway harm", confidence:"high", category:"home" }],
+  ["ortho groundclear",             { floor:7, ceiling:9, substances:["glyphosate","imazapyr"], reason:"Ortho GroundClear Year Long — glyphosate (IARC 2A) + imazapyr persistent soil herbicide. Long residual activity in soil ecosystems.", confidence:"high", category:"home" }],
+  ["spectracide triazicide",        { floor:7, ceiling:9, substances:["gamma-cyhalothrin"], reason:"Spectracide Triazicide — gamma-cyhalothrin synthetic pyrethroid. Highly toxic to bees, aquatic invertebrates; EPA restricted near waterways.", confidence:"high", category:"home" }],
+  ["spectracide weed stop",         { floor:7, ceiling:9, substances:["2,4-D","dicamba","mecoprop"], reason:"Spectracide Weed Stop — 2,4-D + dicamba + mecoprop. 2,4-D is IARC Group 2B possible carcinogen; dicamba volatility implicated in off-target drift damage.", confidence:"high", category:"home" }],
 
   // ══════════════════════════════════════════════════════════════
   // ORAL RINSE
@@ -606,6 +609,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["off! deep woods",               { floor:6, ceiling:8, substances:["DEET"], reason:"98% DEET — neurotoxin class, skin absorption, not recommended for children under 3", confidence:"high", category:"other" }],
   ["off family care",               { floor:4, ceiling:6, substances:["DEET"], reason:"15% DEET — lower concentration but still neurotoxic class", confidence:"high", category:"other" }],
+  ["off citronella candle",         { floor:1, ceiling:3, substances:["citronella oil"], reason:"Citronella oil candle — plant-derived active, low concern for outdoor use. Watch for paraffin-only wax versions which add a small particulate concern.", confidence:"high", category:"home" }],
   ["sawyer picaridin",              { floor:2, ceiling:4, substances:[], reason:"Picaridin — CDC approved, lower toxicity than DEET, does not dissolve plastics", confidence:"high", category:"other" }],
   ["thermacell",                    { floor:5, ceiling:7, substances:["allethrin"], reason:"Allethrin pyrethroid volatilized into breathing zone — EPA-registered pesticide continuously inhaled", confidence:"high", category:"other" }],
   ["repel lemon eucalyptus",        { floor:1, ceiling:3, substances:[], reason:"PMD/oil of lemon eucalyptus — plant-based, CDC approved", confidence:"high", category:"other" }],
@@ -1503,6 +1507,8 @@ const ENTRIES = [
   ["aveeno baby",                   { floor:3, ceiling:5, substances:["dimethicone","phenoxyethanol"], reason:"Dimethicone + phenoxyethanol (EU-restricted for infant use) + fragrance in some SKUs. Better than Johnson's but not clean-label.", confidence:"high", category:"baby" }],
   ["aquaphor baby",                 { floor:4, ceiling:6, substances:["petrolatum","mineral oil"], reason:"White petrolatum (petroleum-derived) + mineral oil base. USP grade so contamination risk is low, but petroleum origin is the concern for daily infant use.", confidence:"high", category:"baby" }],
   ["eucerin baby",                  { floor:3, ceiling:5, substances:["petrolatum","phenoxyethanol"], reason:"Petrolatum base + phenoxyethanol preservative. Phenoxyethanol adds endocrine concern for daily infant skin use.", confidence:"high", category:"baby" }],
+  ["babyganics mineral sunscreen",  { floor:1, ceiling:3, substances:["zinc oxide","titanium dioxide"], reason:"Babyganics Mineral Sunscreen — zinc oxide + titanium dioxide only, no chemical UV filters. Mineral-only formula is the cleanest sunscreen tier for infant skin.", confidence:"high", category:"personal_care", kidsFloor:1, kidsCeiling:3 }],
+  ["babyganics natural insect repellent", { floor:1, ceiling:3, substances:[], reason:"Babyganics Natural Insect Repellent — essential-oil blend (citronella, peppermint, geranium, soybean), no DEET, no picaridin, no synthetic pyrethroids.", confidence:"high", category:"other", kidsFloor:1, kidsCeiling:3 }],
   ["babyganics",                    { floor:3, ceiling:5, substances:["phenoxyethanol","SLS derivatives"], reason:"Plant-based marketing but phenoxyethanol (EU-restricted under-3 products) + SLS derivatives in some products. EWG grade C. Not as clean as branding suggests.", confidence:"high", category:"baby" }],
   ["mustela baby",                  { floor:3, ceiling:5, substances:["phenoxyethanol","fragrance"], reason:"Phenoxyethanol in most products, fragrance in many. French brand but formulations still contain EU-debated preservatives for infant skin.", confidence:"high", category:"baby" }],
 

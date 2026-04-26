@@ -1,0 +1,24 @@
+name,score,kids_score,tier,top_concern,top_alternative,alternative_score
+Repel 100 Insect Repellent,ERROR,,,This operation was aborted,,
+Clorox Pool Shock,ERROR,,,"HTTP 429: {""error"":""Too many scans from this network. Sign in for a higher limit, or try again in an hour.""}",,
+HTH Pool Care Chlorinating Granules,ERROR,,,"HTTP 429: {""error"":""Too many scans from this network. Sign in for a higher limit, or try again in an hour.""}",,
+Off Backyard Pretreat,ERROR,,,"HTTP 429: {""error"":""Too many scans from this network. Sign in for a higher limit, or try again in an hour.""}",,
+Roundup Weed and Grass Killer,8,,cache,glyphosate,,
+Banana Boat Sport Ultra SPF 50,7,,calibration,oxybenzone,Kosas Tinted Face Oil,2
+Neutrogena Ultra Sheer SPF 70,7,,calibration,oxybenzone,Kosas Tinted Face Oil,2
+Hawaiian Tropic Sheer Touch SPF 30,7,,web_search,"Titanium dioxide — IARC Group 2B, EU food ban (E171)",Stainless Nail File,1
+OFF Deep Woods,7,,web_search,"DEET (N,N-Diethyl-m-toluamide) inhalation exposure; EPA flagged for neurotoxicity in high doses",Repel Lemon Eucalyptus (PMD) Plant-Based,2
+Cutter Backyard Bug Control Spray,7,,web_search,"Lambda-cyhalothrin neurotoxic synthetic pyrethroid, EPA toxicity class II",Concentrated Cleaning Tablets,1
+Ortho Home Defense Insect Killer,7,,calibration,bifenthrin,Linen Table Cloth,1
+Scotts Turf Builder Weed and Feed,7,,web_search,"2,4-D (1.22%) — EPA Toxicity Category II, endocrine disruptor, groundwater contamination risk",Manual weeding or hand-pulling (mechanical removal),1
+Coppertone Sport SPF 50,6,,calibration,homosalate,Copper Tongue Cleaner,1
+Sun Bum Original SPF 30,6,,calibration,avobenzone,Kosas Tinted Face Oil,2
+Cutter Backwoods,6,,web_search,DEET systemic absorption via skin and respiratory inhalation during spray application,Repel Lemon Eucalyptus (Oil of Lemon Eucalyptus),2
+Off FamilyCare Clean Feel,6,,category_prior,,,
+Off Citronella Candle,6,,calibration,paraffin wax,Beeswax Candle (Handcrafted),1
+Ortho GroundClear Weed Killer,6,,category_prior,,,
+Babyganics Mineral Sunscreen SPF 50,4,6,calibration,phenoxyethanol,,
+Babyganics Natural Insect Repellent,4,6,calibration,phenoxyethanol,,
+Spectracide Triazicide Lawn Insect Killer,4,8,calibration,BPA-free plastic,,
+Spectracide Weed Stop,4,8,calibration,BPA-free plastic,,
+Sawyer Picaridin,3,,calibration,,,

@@ -1,0 +1,106 @@
+──────────────────────────────────────────────────────────────────────────────
+PATIO SHOOT AUDIT
+──────────────────────────────────────────────────────────────────────────────
+
+STATUS                SCORE   EXP     NAME
+──────────────────────────────────────────────────────────────────────────────
+ERROR                 ERROR   5-9     Repel 100 Insect Repellent
+  ↳ DEET insect repellent
+ERROR                 ERROR   6-10    Clorox Pool Shock
+  ↳ Pool chemical (calcium hypochlorite / trichloro-s-triazinetrione)
+ERROR                 ERROR   6-10    HTH Pool Care Chlorinating Granules
+  ↳ Pool chemical (calcium hypochlorite / trichloro-s-triazinetrione)
+ERROR                 ERROR   —       Off Backyard Pretreat
+  ↳ Scoring failed (see top_concern)
+MISSING_CALIBRATION   8       7-10    Roundup Weed and Grass Killer
+  ↳ Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D); in range but anchored by cache tier — add a named entry to lock it
+PASS                  7       6-9     Banana Boat Sport Ultra SPF 50
+PASS                  7       6-9     Neutrogena Ultra Sheer SPF 70
+PASS                  7       —       Hawaiian Tropic Sheer Touch SPF 30
+MISSING_CALIBRATION   7       5-9     OFF Deep Woods
+  ↳ DEET insect repellent; in range but anchored by web_search tier — add a named entry to lock it
+PASS                  7       —       Cutter Backyard Bug Control Spray
+PASS                  7       7-10    Ortho Home Defense Insect Killer
+MISSING_CALIBRATION   7       7-10    Scotts Turf Builder Weed and Feed
+  ↳ Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D); in range but anchored by web_search tier — add a named entry to lock it
+PASS                  6       —       Coppertone Sport SPF 50
+PASS                  6       —       Sun Bum Original SPF 30
+MISSING_CALIBRATION   6       5-9     Cutter Backwoods
+  ↳ DEET insect repellent; in range but anchored by web_search tier — add a named entry to lock it
+MISSING_CALIBRATION   6       5-9     Off FamilyCare Clean Feel
+  ↳ DEET insect repellent; in range but anchored by category_prior tier — add a named entry to lock it
+FLAG_HIGH             6       1-3     Off Citronella Candle
+  ↳ Citronella candle; expected ≤ 3, got 6
+FLAG_LOW              6       7-10    Ortho GroundClear Weed Killer
+  ↳ Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D); expected ≥ 7, got 6
+FLAG_HIGH             4       1-3     Babyganics Mineral Sunscreen SPF 50
+  ↳ Mineral-only sunscreen; expected ≤ 3, got 4
+FLAG_HIGH             4       1-3     Babyganics Natural Insect Repellent
+  ↳ Plant-based / essential-oil insect repellent; expected ≤ 3, got 4
+FLAG_LOW              4       7-10    Spectracide Triazicide Lawn Insect Killer
+  ↳ Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D); expected ≥ 7, got 4
+FLAG_LOW              4       7-10    Spectracide Weed Stop
+  ↳ Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D); expected ≥ 7, got 4
+PASS                  3       1-4     Sawyer Picaridin
+
+──────────────────────────────────────────────────────────────────────────────
+SUMMARY
+──────────────────────────────────────────────────────────────────────────────
+Total products:        23
+PASS:                  8
+FLAG_LOW:              3
+FLAG_HIGH:             3
+MISSING_CALIBRATION:   5
+ERROR:                 4
+Total flagged:         15
+
+Products needing attention — FLAG_LOW (3):
+  • Ortho GroundClear Weed Killer  (6, expected 7-10)
+  • Spectracide Triazicide Lawn Insect Killer  (4, expected 7-10)
+  • Spectracide Weed Stop  (4, expected 7-10)
+
+Products needing attention — FLAG_HIGH (3):
+  • Off Citronella Candle  (6, expected 1-3)
+  • Babyganics Mineral Sunscreen SPF 50  (4, expected 1-3)
+  • Babyganics Natural Insect Repellent  (4, expected 1-3)
+
+Products needing attention — MISSING_CALIBRATION (5):
+  • Roundup Weed and Grass Killer  (8, expected 7-10)
+  • OFF Deep Woods  (7, expected 5-9)
+  • Scotts Turf Builder Weed and Feed  (7, expected 7-10)
+  • Cutter Backwoods  (6, expected 5-9)
+  • Off FamilyCare Clean Feel  (6, expected 5-9)
+
+──────────────────────────────────────────────────────────────────────────────
+SUGGESTED CALIBRATION DIFFS  (review before pasting into calibration.js)
+──────────────────────────────────────────────────────────────────────────────
+
+// Ortho GroundClear Weed Killer  →  FLAG_LOW  (got 6, want 7-10)
+```js
+  ["ortho groundclear weed killer", { floor:7, ceiling:10, substances:["glyphosate","bifenthrin","permethrin","2,4-D"], reason:"Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D) — calibrated for filming 2026-04-26", confidence:"high", category:"home" }],
+```
+
+// Spectracide Triazicide Lawn Insect Killer  →  FLAG_LOW  (got 4, want 7-10)
+```js
+  ["spectracide triazicide lawn insect killer", { floor:7, ceiling:10, substances:["glyphosate","bifenthrin","permethrin","2,4-D"], reason:"Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D) — calibrated for filming 2026-04-26", confidence:"high", category:"home" }],
+```
+
+// Spectracide Weed Stop  →  FLAG_LOW  (got 4, want 7-10)
+```js
+  ["spectracide weed stop", { floor:7, ceiling:10, substances:["glyphosate","bifenthrin","permethrin","2,4-D"], reason:"Synthetic pesticide / herbicide (glyphosate, bifenthrin, permethrin, 2,4-D) — calibrated for filming 2026-04-26", confidence:"high", category:"home" }],
+```
+
+// Off Citronella Candle  →  FLAG_HIGH  (got 6, want 1-3)
+```js
+  ["off citronella candle", { floor:1, ceiling:3, substances:["citronella oil"], reason:"Citronella candle — calibrated for filming 2026-04-26", confidence:"high", category:"home" }],
+```
+
+// Babyganics Mineral Sunscreen SPF 50  →  FLAG_HIGH  (got 4, want 1-3)
+```js
+  ["babyganics mineral sunscreen spf 50", { floor:1, ceiling:3, substances:["zinc oxide","titanium dioxide"], reason:"Mineral-only sunscreen — calibrated for filming 2026-04-26", confidence:"high", category:"personal_care", kidsFloor:1, kidsCeiling:3 }],
+```
+
+// Babyganics Natural Insect Repellent  →  FLAG_HIGH  (got 4, want 1-3)
+```js
+  ["babyganics natural insect repellent", { floor:1, ceiling:3, substances:[], reason:"Plant-based / essential-oil insect repellent — calibrated for filming 2026-04-26", confidence:"high", category:"other", kidsFloor:1, kidsCeiling:4 }],
+```
