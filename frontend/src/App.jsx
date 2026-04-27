@@ -46,7 +46,7 @@ const API_BASE = "https://partiqule-production.up.railway.app";
 // blocks the app with an Update Required screen if the running version
 // is older than the server-controlled MIN_*_VERSION envs. Increase
 // patch for bug fixes, minor for features, major for breaking changes.
-const APP_VERSION = "1.1";
+const APP_VERSION = "1.2";
 
 // App Store + social URLs used by the Update Required screen and the
 // review-prompt modal. Replace APP_STORE_ID with the production App
