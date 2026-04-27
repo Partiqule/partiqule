@@ -5738,6 +5738,76 @@ function useWindowWidth() {
   return width;
 }
 
+// ── Sourcing flags ────────────────────────────────────────────
+// Mines product names for sourcing markers (wild-caught, farm-raised,
+// grass-fed, organic, etc.) and surfaces them as chips on the result.
+// Same logic the backend uses in scoringCascade.js detectSourcingFlags;
+// duplicated here so the frontend can fall back when result.sourcing_flags
+// isn't populated (older cached scans, non-whole-food paths). Backend
+// flags win when present.
+function deriveSourcingFlags(productName) {
+  const norm = String(productName || "").toLowerCase();
+  const flags = [];
+  const add = (type, label, tone) => { if (!flags.find(f => f.type === type)) flags.push({ type, label, tone }); };
+
+  if (/\bwild[-\s]?caught\b|\bwild salmon|\bwild shrimp|\bwild sockeye|\bwild coho|\bwild chinook|\bwild halibut|\bwild cod|\bwild tuna|\balaskan salmon\b/.test(norm)) add("wild_caught", "Wild caught", "positive");
+  if (/\bsockeye|\bcoho|\bchinook|\bking salmon|\bpink salmon|\bchum salmon\b/.test(norm) && !/farm/.test(norm)) add("wild_pacific", "Wild Pacific", "positive");
+  if (/grass[-\s]?fed/.test(norm))                 add("grass_fed", "Grass-fed", "positive");
+  if (/pasture[-\s]?raised/.test(norm))            add("pasture_raised", "Pasture-raised", "positive");
+  if (/cage[-\s]?free/.test(norm))                 add("cage_free", "Cage-free", "positive");
+  if (/free[-\s]?range/.test(norm))                add("free_range", "Free-range", "positive");
+  if (/usda organic/.test(norm))                   add("usda_organic", "USDA Organic", "positive");
+  else if (/\borganic\b/.test(norm))               add("organic", "Organic", "positive");
+  if (/heritage breed|heritage (pig|cattle|chicken|turkey)/.test(norm)) add("heritage", "Heritage breed", "positive");
+  if (/non[-\s]?gmo/.test(norm))                   add("non_gmo", "Non-GMO", "positive");
+  if (/\bmsc certified|marine stewardship/.test(norm)) add("msc_certified", "MSC Certified", "positive");
+  if (/\basc certified|aquaculture stewardship/.test(norm)) add("asc_certified", "ASC Certified", "positive");
+  if (/certified humane|animal welfare approved/.test(norm)) add("humane", "Certified Humane", "positive");
+  if (/antibiotic[-\s]?free|no antibiotics/.test(norm)) add("antibiotic_free", "Antibiotic-free", "positive");
+  if (/hormone[-\s]?free|no (added )?hormones/.test(norm)) add("hormone_free", "Hormone-free", "positive");
+
+  const hasWild = flags.find(f => f.type === "wild_caught" || f.type === "wild_pacific");
+  if (!hasWild) {
+    if (/farm[-\s]?raised|farmed\b/.test(norm))    add("farm_raised", "Farm-raised", "caution");
+    else if (/atlantic salmon/.test(norm))         add("farm_raised", "Farm-raised", "caution");
+  }
+  if (/conventional|feedlot/.test(norm))           add("conventional", "Conventional", "caution");
+  if (/(processed|cured|smoked|nitrate)/.test(norm) && /(meat|sausage|bacon|ham|hot dog|deli)/.test(norm)) add("processed", "Processed", "caution");
+
+  return flags;
+}
+
+// SourcingFlags renders a row of small chips. Positive flags get a
+// moss checkmark; caution flags get an amber dot. No alarm colors.
+const SourcingFlags = ({ flags }) => {
+  if (!Array.isArray(flags) || flags.length === 0) return null;
+  return (
+    <div style={{display:"flex", flexWrap:"wrap", gap:6, marginTop:10, marginBottom:6}}>
+      {flags.map((f, i) => {
+        const isPositive = f.tone === "positive";
+        const color = isPositive ? "var(--moss)" : "var(--amber)";
+        const bg    = isPositive ? "var(--moss-soft)" : "rgba(200, 120, 26, 0.08)";
+        return (
+          <span key={f.type || i} style={{
+            display:"inline-flex", alignItems:"center", gap:5,
+            padding:"4px 10px", borderRadius:"var(--tile-shape-2)",
+            background: bg,
+            border:"1px solid var(--rule-soft)",
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:11, fontWeight:500, color,
+            letterSpacing:"0.02em",
+          }}>
+            <span style={{
+              fontSize:8, lineHeight:1, color,
+            }}>{isPositive ? "✓" : "·"}</span>
+            {f.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 // ── UpdateRequiredView ────────────────────────────────────────
 // Full-screen blocking gate when the running APP_VERSION is older than
 // the server-controlled MIN_*_VERSION. Renders before the rest of the
@@ -8637,6 +8707,17 @@ function App() {
                 )}
 
                 {/* FLAGGED SUBSTANCES and NUTRITION BADGES moved to Surface 2 (detail overlay). */}
+
+                {/* SOURCING FLAGS — wild caught, farm-raised, grass-fed,
+                    organic, etc. derived from the product name. Backend
+                    sets result.sourcing_flags for whole-food paths;
+                    frontend falls back to deriveSourcingFlags() so every
+                    scan can surface relevant chips. */}
+                <SourcingFlags flags={
+                  Array.isArray(result.sourcing_flags) && result.sourcing_flags.length > 0
+                    ? result.sourcing_flags
+                    : deriveSourcingFlags(result.product_name)
+                }/>
 
                 {/* Alt teaser — renders for every scanned product where a
                     genuinely cleaner alternative exists. The altS >= currentScore

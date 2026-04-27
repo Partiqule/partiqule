@@ -403,6 +403,57 @@ async function tier4WebExtract(productName, deps = {}) {
 //   - honest summary that names the limitation
 //   - sourceConfidence: "low" + sourceLabel: "Best guess from product name"
 // Substance floors are bypassed by callers because there's nothing to floor.
+// ── Sourcing flags ──────────────────────────────────────────────
+// Extracted from product names to surface on the result UI as small
+// chips. Tone drives visual treatment in the frontend (moss / amber).
+//
+//   tone: "positive"  → moss chip with checkmark (clean signal)
+//   tone: "caution"   → amber chip (worth knowing about)
+//
+// Both intrinsic flags (implied by the matched whole-food pattern —
+// e.g. "atlantic salmon" → farm_raised) and explicit flags (mined
+// from the product name string — e.g. "wild caught", "grass-fed",
+// "organic") are merged. Explicit flags win when there's a conflict
+// (a product literally labeled "Wild Atlantic Salmon" is wild_caught,
+// not farm_raised).
+function detectSourcingFlags(productName) {
+  const norm = String(productName || "").toLowerCase();
+  const flags = [];
+  const add = (type, label, tone) => {
+    if (!flags.find(f => f.type === type)) flags.push({ type, label, tone });
+  };
+
+  // ── Positive sourcing markers ──
+  if (/\bwild[-\s]?caught\b|\bwild salmon|\bwild shrimp|\bwild sockeye|\bwild coho|\bwild chinook|\bwild halibut|\bwild cod|\bwild tuna|\balaskan salmon\b/.test(norm)) add("wild_caught", "Wild caught", "positive");
+  if (/\bsockeye|\bcoho|\bchinook|\bking salmon|\bpink salmon|\bchum salmon\b/.test(norm) && !/farm/.test(norm)) add("wild_pacific", "Wild Pacific", "positive");
+  if (/grass[-\s]?fed/.test(norm))                 add("grass_fed", "Grass-fed", "positive");
+  if (/pasture[-\s]?raised/.test(norm))            add("pasture_raised", "Pasture-raised", "positive");
+  if (/cage[-\s]?free/.test(norm))                 add("cage_free", "Cage-free", "positive");
+  if (/free[-\s]?range/.test(norm))                add("free_range", "Free-range", "positive");
+  if (/usda organic/.test(norm))                   add("usda_organic", "USDA Organic", "positive");
+  else if (/\borganic\b/.test(norm))               add("organic", "Organic", "positive");
+  if (/heritage breed|heritage (pig|cattle|chicken|turkey)/.test(norm)) add("heritage", "Heritage breed", "positive");
+  if (/non[-\s]?gmo/.test(norm))                   add("non_gmo", "Non-GMO", "positive");
+  if (/\bmsc certified|marine stewardship/.test(norm)) add("msc_certified", "MSC Certified", "positive");
+  if (/\basc certified|aquaculture stewardship/.test(norm)) add("asc_certified", "ASC Certified", "positive");
+  if (/certified humane|animal welfare approved/.test(norm)) add("humane", "Certified Humane", "positive");
+  if (/antibiotic[-\s]?free|no antibiotics/.test(norm)) add("antibiotic_free", "Antibiotic-free", "positive");
+  if (/hormone[-\s]?free|no (added )?hormones/.test(norm)) add("hormone_free", "Hormone-free", "positive");
+
+  // ── Caution sourcing markers ──
+  // Farm-raised: explicit text OR the implicit case of Atlantic salmon
+  // without a wild qualifier (Atlantic salmon is overwhelmingly farmed).
+  const hasWild = flags.find(f => f.type === "wild_caught" || f.type === "wild_pacific");
+  if (!hasWild) {
+    if (/farm[-\s]?raised|farmed\b/.test(norm))    add("farm_raised", "Farm-raised", "caution");
+    else if (/atlantic salmon/.test(norm))         add("farm_raised", "Farm-raised", "caution");
+  }
+  if (/conventional|feedlot/.test(norm))           add("conventional", "Conventional", "caution");
+  if (/(processed|cured|smoked|nitrate)/.test(norm) && /(meat|sausage|bacon|ham|hot dog|deli)/.test(norm)) add("processed", "Processed meat", "caution");
+
+  return flags;
+}
+
 // ── Whole-foods detector ──────────────────────────────────────────
 // Whole foods (salmon, chicken, eggs, fresh produce, plain dairy) ARE the
 // ingredient — there's no printed ingredient list to scan because the
@@ -519,6 +570,7 @@ function tier5CategoryPrior(productName, category, { categoryAverages, categoryC
   if (wholeFood) {
     const score = Math.round((wholeFood.floor + wholeFood.ceiling) / 2);
     const summary = wholeFood.why;
+    const sourcingFlags = detectSourcingFlags(productName);
     return {
       syntheticResult: {
         product_name: productName,
@@ -536,6 +588,7 @@ function tier5CategoryPrior(productName, category, { categoryAverages, categoryC
         harmful_chemicals: [],
         natural_materials: [],
         ingredient_list: [productName],
+        sourcing_flags: sourcingFlags,
         dimensions: {
           materials:      { score, label: summary, concerns: [] },
           usage_exposure: { score, label: "Consumed as a primary food source.", concerns: [], frequency: "weekly", type: "ingestion", intensity: "leave-on", vulnerable: false },
