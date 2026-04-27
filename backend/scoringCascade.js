@@ -403,7 +403,168 @@ async function tier4WebExtract(productName, deps = {}) {
 //   - honest summary that names the limitation
 //   - sourceConfidence: "low" + sourceLabel: "Best guess from product name"
 // Substance floors are bypassed by callers because there's nothing to floor.
+// ── Whole-foods detector ──────────────────────────────────────────
+// Whole foods (salmon, chicken, eggs, fresh produce, plain dairy) ARE the
+// ingredient — there's no printed ingredient list to scan because the
+// product itself is the ingredient. The previous Tier 5 fallback returned
+// a generic "guessing from the product type" message which was honest for
+// branded packaged goods but wrong for whole foods. Sara hit this on a
+// Trader Joe's Atlantic salmon scan.
+//
+// Detector returns null when the product name doesn't look like a whole
+// food, OR an object with { floor, ceiling, why, wholeFood: true } that
+// Tier 5 uses to build a real high-confidence result.
+//
+// Tiers (rough):
+//   floor 1-3  wild fish, fresh produce, eggs, plain nuts/seeds, plain
+//              whole grains, wild game, plain organic dairy
+//   floor 2-4  farmed Atlantic salmon, conventional poultry, conventional
+//              plain dairy
+//   floor 3-5  conventional red meat (ground beef, steak), pork
+//   floor 5-7  processed meats (bacon, sausage, hot dogs, deli meat)
+function detectWholeFood(productName) {
+  const norm = String(productName || "").toLowerCase().trim();
+  if (!norm) return null;
+
+  // Strip common brand prefixes so "trader joe's atlantic salmon" matches
+  // the same patterns as "atlantic salmon".
+  const stripped = norm
+    .replace(/\b(trader joe'?s?|whole foods|365|kirkland|costco|aldi|publix|wegmans|sprouts|natural grocers|fresh market|kroger|safeway|walmart|target|sam'?s club|harris teeter)\b/g, "")
+    .replace(/\b(pro cut|fresh|frozen|raw|wild caught|wild-caught|skin on|skinless|boneless|center cut|cage-?free|free-?range|pasture-?raised|grass-?fed|grass fed|organic|natural|certified humane|antibiotic-?free|hormone-?free|all natural)\b/g, "")
+    .replace(/\b(filet|fillet|portion|portions|steaks?|chops?|breasts?|thighs?|wings?|drumsticks?|tenderloin|loin|chuck|rib(eye)?|brisket|roast|short rib|sirloin)\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Order matters — most specific patterns first.
+  const patterns = [
+    // Wild fish & shellfish — clean
+    { match: /(wild salmon|wild-caught salmon|alaskan salmon|sockeye|coho|chinook|king salmon|pink salmon|chum salmon)/, floor:1, ceiling:3,
+      why:"Wild-caught salmon — clean protein with omega-3s. Lower contaminant load than farmed counterparts. Sustainably caught Pacific salmon (sockeye, coho, chinook) is the cleanest tier." },
+    { match: /(halibut|cod|haddock|pollock|mahi mahi|mahi-mahi|sea bass|black bass|striped bass|snapper|rockfish|sole|flounder|trout|arctic char|tilapia)/, floor:1, ceiling:3,
+      why:"Whole white fish — clean lean protein. Wild-caught is the cleanest; farmed varieties (especially imported tilapia) have somewhat higher contaminant exposure." },
+    { match: /(sardine|mackerel|anchov|herring)/, floor:1, ceiling:3,
+      why:"Small oily fish — exceptional omega-3 source with very low mercury. Among the cleanest seafood choices." },
+    { match: /(tuna)(?!\s+(casserole|salad|melt|sandwich))/, floor:2, ceiling:4,
+      why:"Tuna — high protein and omega-3s but mercury accumulation is a real concern. Skipjack and chunk light have lower mercury than albacore or yellowfin. Limit to 2-3 servings/week." },
+    { match: /(wild shrimp|wild prawn|spot prawn|gulf shrimp)/, floor:1, ceiling:3,
+      why:"Wild-caught shrimp/prawns — clean lean protein, low mercury." },
+    { match: /(shrimp|prawn|scallop|oyster|mussel|clam|crab|lobster)(?!\s+(chip|cracker|flavor))/, floor:2, ceiling:4,
+      why:"Shellfish — clean protein. Farmed and imported varieties may carry higher antibiotic and PCB exposure than wild domestic." },
+
+    // Farmed Atlantic salmon — middle tier, common case
+    { match: /(atlantic salmon|farmed salmon|farm-?raised salmon|norwegian salmon|scottish salmon)/, floor:2, ceiling:4,
+      why:"Farmed Atlantic salmon — typically carries higher PCB and contaminant load than wild caught due to feed and pen conditions. Color is added via astaxanthin. Still a clean protein source with omega-3s, just one tier below the wild-caught benchmark. For maximum clean omega-3 density, choose wild Pacific salmon when available." },
+    { match: /(salmon)/, floor:2, ceiling:4,
+      why:"Salmon — clean protein with omega-3s. Wild-caught (sockeye, coho, chinook) is the cleanest tier; farmed Atlantic carries higher PCB load. The product page didn't specify which — the score reflects the typical range." },
+
+    // Whole eggs
+    { match: /^(eggs?|chicken eggs?|brown eggs?|white eggs?|jumbo eggs?|large eggs?|extra large eggs?|cage.?free eggs?|free.?range eggs?|pasture.?raised eggs?|organic eggs?|farm fresh eggs?)\s*$/, floor:1, ceiling:3,
+      why:"Whole eggs — complete protein, B12, choline. Pasture-raised eggs have measurably higher omega-3 and vitamin D than conventional. Look for Certified Humane or Animal Welfare Approved labels." },
+
+    // Plain nuts and seeds
+    { match: /^(raw |dry roasted |roasted )?(almond|cashew|walnut|pecan|pistachio|macadamia|brazil nut|hazelnut|peanut|chia seed|flax seed|flaxseed|hemp seed|hemp heart|pumpkin seed|pepita|sunflower seed|sesame seed)s?\s*$/, floor:1, ceiling:3,
+      why:"Plain nuts and seeds — minimally processed, healthy fats and protein. Watch for added oils (often canola or palm) and salt in flavored varieties." },
+
+    // Plain whole grains
+    { match: /^(brown rice|jasmine rice|basmati rice|wild rice|black rice|red rice|quinoa|oats|rolled oats|steel.?cut oats|old.?fashioned oats|barley|farro|millet|buckwheat|wheat berries|spelt|amaranth|teff|sorghum|bulgur|freekeh)\s*$/, floor:1, ceiling:3,
+      why:"Whole grain — minimally processed carbohydrate source. Look for organic when possible (especially for oats due to glyphosate residue concerns) and watch for added flavorings on flavored varieties." },
+
+    // Wild game
+    { match: /(elk|venison|bison|buffalo|wild boar|rabbit)(?!\s+(chip|jerky|sausage|hot dog))/, floor:1, ceiling:3,
+      why:"Wild game / pasture-raised alternatives — leaner than conventional red meat, no feedlot exposure. Naturally lower in saturated fat and higher in CLA and omega-3." },
+
+    // Conventional poultry
+    { match: /^(chicken|turkey|duck|cornish hen|whole chicken|whole turkey|ground turkey|ground chicken)/, floor:2, ceiling:4,
+      why:"Conventional poultry — lean protein. Look for organic and pasture-raised for lower antibiotic exposure and better omega-3 ratios. Skin and dark meat carry slightly more saturated fat but more nutrients." },
+
+    // Plain dairy (no additives)
+    { match: /^(whole milk|2% milk|1% milk|skim milk|nonfat milk|reduced fat milk|milk|heavy cream|whipping cream|half and half|half-and-half|plain greek yogurt|plain yogurt|plain skyr|cottage cheese|cream cheese|sour cream|butter|unsalted butter|salted butter|ricotta|mascarpone|kefir)\s*$/, floor:2, ceiling:4,
+      why:"Plain dairy — calcium, protein, and naturally occurring fats. Conventional dairy carries trace pesticide and antibiotic exposure; organic and grass-fed are cleaner. Look for A2 milk if you have sensitivities." },
+
+    // Aged cheese (slightly higher tier — sodium concern)
+    { match: /^(cheddar|mozzarella|parmesan|parmigiano|gouda|swiss|brie|camembert|blue cheese|feta|goat cheese|gruyere|manchego|pecorino|asiago|provolone|colby|monterey jack|havarti|fontina)\s*$/, floor:2, ceiling:4,
+      why:"Aged cheese — calcium and protein, but high sodium. Raw-milk and grass-fed varieties have measurably better fatty acid profiles." },
+
+    // Pork (other than processed)
+    { match: /^(pork|pork chop|pork loin|pork tenderloin|pork shoulder|pork belly|ground pork)\s*$/, floor:3, ceiling:5,
+      why:"Pork — conventional pigs raised in concentrated feeding operations carry higher antibiotic and arsenic exposure. Look for pasture-raised, heritage breed, or certified humane labels for cleaner sourcing." },
+
+    // Conventional red meat
+    { match: /(ground beef|beef|ribeye|sirloin|chuck|brisket|tenderloin|filet mignon|flank steak|skirt steak|hanger steak|t-bone|porterhouse|new york strip|strip steak|short rib|prime rib|chuck roast|round roast|stew meat|veal|lamb|leg of lamb|lamb chop)(?!\s+(jerky|stick|crisp|chip))/, floor:3, ceiling:5,
+      why:"Conventional red meat — feedlot-raised cattle carry higher hormone, antibiotic, and saturated fat profiles. Grass-fed and pasture-raised have measurably better omega-3 ratios and lower inflammatory load. Look for 100% grass-fed labels (not just 'grass-fed') to avoid grain-finished beef." },
+
+    // Processed meats — IARC group 1 carcinogen
+    { match: /(bacon|sausage|ham|salami|pepperoni|hot dog|deli meat|lunch meat|cold cut|prosciutto|mortadella|chorizo|kielbasa|bratwurst|pastrami|corned beef|jerky|meat stick)/, floor:5, ceiling:7,
+      why:"Processed meat — IARC Group 1 carcinogen due to nitrates, sodium, and smoke compounds (HCAs, PAHs). Even 'uncured' varieties typically use celery powder which contributes the same nitrates. Limit consumption; look for nitrate-free pasture-raised options for occasional use." },
+
+    // Fresh produce — broad catch-all (last because pattern is loose)
+    { match: /^(fresh\s+)?(banana|apple|orange|tangerine|clementine|mandarin|grapefruit|pear|berry|berries|strawberr|blueberr|raspberr|blackberr|cranberr|grape|kiwi|melon|watermelon|cantaloupe|honeydew|peach|plum|nectarine|cherry|cherries|pineapple|mango|papaya|guava|fig|date|pomegranate|persimmon|avocado|tomato|cucumber|lettuce|romaine|arugula|spinach|kale|chard|collard|broccoli|cauliflower|brussels sprout|cabbage|bok choy|carrot|celery|onion|shallot|leek|garlic|ginger|potato|sweet potato|yam|squash|butternut|acorn squash|spaghetti squash|zucchini|cucumber|pepper|bell pepper|jalapeño|jalapeno|chili|tomato|eggplant|mushroom|portobello|shiitake|asparagus|artichoke|beet|radish|turnip|parsnip|fennel|corn on the cob|edamame|peas|green bean|snap pea|snow pea|cilantro|parsley|basil|mint|rosemary|thyme|sage|oregano|dill|chives)s?\s*$/, floor:1, ceiling:3,
+      why:"Fresh whole produce — minimally processed, no additives. Organic is cleanest for the 'Dirty Dozen' (strawberries, spinach, kale, peaches, etc.); 'Clean Fifteen' items (avocado, pineapple, onion) carry low pesticide residue even conventional." },
+  ];
+
+  // Run patterns against both the original normalized name AND the
+  // brand-stripped version, return the first match.
+  for (const p of patterns) {
+    if (p.match.test(stripped) || p.match.test(norm)) return { ...p, wholeFood: true };
+  }
+  return null;
+}
+
 function tier5CategoryPrior(productName, category, { categoryAverages, categoryContext } = {}) {
+  // Whole-foods interception — when the product name looks like a whole
+  // food (salmon, chicken, eggs, fresh produce, plain dairy, etc.), the
+  // generic "guessing from product type" message is wrong because the
+  // product IS the ingredient. Return a real high-confidence result.
+  const wholeFood = detectWholeFood(productName);
+  if (wholeFood) {
+    const score = Math.round((wholeFood.floor + wholeFood.ceiling) / 2);
+    const summary = wholeFood.why;
+    return {
+      syntheticResult: {
+        product_name: productName,
+        category: category || "food",
+        score,
+        overall_score: score,
+        confidence: "high",
+        confidence_note: "Whole food — the product itself is the ingredient. Score reflects typical contaminant and processing profile for this category.",
+        summary,
+        summary_short: summary,
+        summary_long: summary,
+        concerns: [],
+        flagged_substances: [],
+        identified_plastics: [],
+        harmful_chemicals: [],
+        natural_materials: [],
+        ingredient_list: [productName],
+        dimensions: {
+          materials:      { score, label: summary, concerns: [] },
+          usage_exposure: { score, label: "Consumed as a primary food source.", concerns: [], frequency: "weekly", type: "ingestion", intensity: "leave-on", vulnerable: false },
+          packaging:      { score: 3, label: "Whole food — packaging varies by retailer (typically minimal).", concerns: [], primary: "varies", refillable: false, end_of_life: "varies" },
+          sustainability: { score, label: "Whole food sustainability depends on sourcing — wild vs. farmed, organic vs. conventional, local vs. imported.", concerns: [], reusable: false, replaces_single_use: false, replaces_count: null, circularity: "single-use" },
+        },
+        is_child_product: false,
+        child_score: score,
+        child_bumps: [],
+        pregnancy_score: score,
+        pregnancy_bumps: [],
+        peer_comparison: "Whole food — clean ingredient profile",
+        scan_next: [],
+        nutrition: null,
+        alternatives: [],
+        ai_alternatives: [],
+        product_family: null,
+        category_score_context: "Whole foods score 1-5 depending on processing and sourcing",
+        whole_food: true,
+        // Source-provenance fields
+        source: "whole_food_inference",
+        source_label: "Whole food",
+        source_confidence: null,
+        // Whole-food results ARE cacheable — they're deterministic from name.
+        _skipCache: false,
+      },
+    };
+  }
+
   const cat = category || "other";
   const avgEntry = (categoryAverages || {})[cat] || (categoryAverages || {}).other || { avg: 5.5 };
   const score = Math.round(avgEntry.avg);

@@ -1028,6 +1028,78 @@ const ENTRIES = [
   ["applegate organics chicken nuggets",{ floor:2, ceiling:4, substances:[], reason:"USDA Organic, no TBHQ — benchmark clean frozen nugget", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
+  // WHOLE FOODS — single-ingredient items where the product IS the
+  // ingredient. These exist so direct queries like "atlantic salmon",
+  // "chicken breast", "eggs" hit calibration before falling through
+  // to the cascade. The whole-foods detector in scoringCascade.js
+  // catches everything else (brand-prefixed, unusual phrasing, etc.).
+  // Tier rationale: wild fish + plain produce + eggs = floor 1-3,
+  // farmed fish + conventional poultry/dairy = 2-4, conventional red
+  // meat = 3-5, processed meats = 5-7. See detectWholeFood() for the
+  // full tier mapping.
+  // ══════════════════════════════════════════════════════════════
+  // Salmon variants
+  ["atlantic salmon",                { floor:2, ceiling:4, substances:["farmed fish","trace PCBs"], reason:"Farmed Atlantic salmon — typically carries higher PCB and contaminant load than wild caught due to feed and pen conditions. Color is added via astaxanthin. Still a clean protein source with omega-3s, just one tier below wild Pacific salmon.", confidence:"high", category:"food_beverage" }],
+  ["wild salmon",                    { floor:1, ceiling:3, substances:[], reason:"Wild-caught salmon — clean protein with omega-3s. Lower contaminant load than farmed. Sockeye, coho, and chinook are the cleanest tier.", confidence:"high", category:"food_beverage" }],
+  ["wild caught salmon",             { floor:1, ceiling:3, substances:[], reason:"Wild-caught salmon — benchmark clean protein source with high omega-3 density.", confidence:"high", category:"food_beverage" }],
+  ["sockeye salmon",                 { floor:1, ceiling:3, substances:[], reason:"Sockeye salmon — wild-caught Pacific. Among the cleanest seafood available, high omega-3 and astaxanthin.", confidence:"high", category:"food_beverage" }],
+  ["coho salmon",                    { floor:1, ceiling:3, substances:[], reason:"Coho salmon — wild-caught Pacific. Clean omega-3 protein.", confidence:"high", category:"food_beverage" }],
+  ["king salmon",                    { floor:1, ceiling:3, substances:[], reason:"King (chinook) salmon — wild-caught Pacific. Clean omega-3 protein with rich flavor profile.", confidence:"high", category:"food_beverage" }],
+  ["chinook salmon",                 { floor:1, ceiling:3, substances:[], reason:"Chinook salmon — wild-caught Pacific. Clean omega-3 protein.", confidence:"high", category:"food_beverage" }],
+  ["farmed salmon",                  { floor:2, ceiling:4, substances:["farmed fish","trace PCBs"], reason:"Farmed salmon — higher PCB and contaminant load than wild caught due to feed and pen conditions. Still clean protein, just below the wild-caught tier.", confidence:"high", category:"food_beverage" }],
+  ["salmon",                         { floor:2, ceiling:4, substances:[], reason:"Salmon — clean protein with omega-3s. Score reflects typical range; wild Pacific is the cleanest tier (1-3) and farmed Atlantic carries higher PCB load (2-4).", confidence:"high", category:"food_beverage" }],
+  // Trader Joe's specific salmon SKUs
+  ["trader joes pro cut atlantic salmon",{ floor:2, ceiling:4, substances:["farmed fish","trace PCBs"], reason:"Trader Joe's Pro Cut Atlantic Salmon — farmed Atlantic, typical contaminant profile (higher PCB and dioxin load than wild Pacific). Color from astaxanthin in feed. Clean protein with omega-3s, just below the wild-caught benchmark. Trader Joe's sources from Norway and Chile depending on availability.", confidence:"high", category:"food_beverage" }],
+  ["trader joes atlantic salmon",    { floor:2, ceiling:4, substances:["farmed fish","trace PCBs"], reason:"Trader Joe's Atlantic Salmon — farmed Atlantic, typical contaminant profile. Clean protein source with omega-3s; one tier below wild Pacific.", confidence:"high", category:"food_beverage" }],
+  ["trader joes wild salmon",        { floor:1, ceiling:3, substances:[], reason:"Trader Joe's Wild Salmon — Pacific wild-caught. Clean omega-3 protein, benchmark clean tier.", confidence:"high", category:"food_beverage" }],
+  // Other whole fish
+  ["wild shrimp",                    { floor:1, ceiling:3, substances:[], reason:"Wild-caught shrimp — clean lean protein, low mercury.", confidence:"high", category:"food_beverage" }],
+  ["shrimp",                         { floor:2, ceiling:4, substances:[], reason:"Shrimp — clean protein. Wild domestic is cleanest; imported farmed varieties carry higher antibiotic and PCB exposure.", confidence:"high", category:"food_beverage" }],
+  ["cod",                            { floor:1, ceiling:3, substances:[], reason:"Cod — wild-caught, lean white fish, very low mercury and contaminants.", confidence:"high", category:"food_beverage" }],
+  ["halibut",                        { floor:1, ceiling:3, substances:[], reason:"Halibut — clean wild-caught white fish, low contaminant load.", confidence:"high", category:"food_beverage" }],
+  ["sardines",                       { floor:1, ceiling:3, substances:[], reason:"Sardines — small oily fish, exceptional omega-3 density with very low mercury. Among the cleanest seafood available.", confidence:"high", category:"food_beverage" }],
+  ["anchovies",                      { floor:1, ceiling:3, substances:[], reason:"Anchovies — small oily fish, low mercury, excellent omega-3 source.", confidence:"high", category:"food_beverage" }],
+  ["mackerel",                       { floor:1, ceiling:3, substances:[], reason:"Mackerel (Atlantic / Pacific) — high omega-3 with low mercury. King mackerel is the exception (high mercury) — avoid that specific variety.", confidence:"high", category:"food_beverage" }],
+  ["tuna",                           { floor:2, ceiling:4, substances:["mercury concern"], reason:"Tuna — high protein and omega-3s but mercury accumulation is real. Skipjack and chunk light have lower mercury than albacore or yellowfin. Limit to 2-3 servings/week.", confidence:"high", category:"food_beverage" }],
+  // Eggs
+  ["eggs",                           { floor:1, ceiling:3, substances:[], reason:"Whole eggs — complete protein, B12, choline. Pasture-raised eggs have measurably higher omega-3 and vitamin D than conventional. Look for Certified Humane or Animal Welfare Approved.", confidence:"high", category:"food_beverage" }],
+  ["chicken eggs",                   { floor:1, ceiling:3, substances:[], reason:"Chicken eggs — complete protein, B12, choline. Clean whole food.", confidence:"high", category:"food_beverage" }],
+  ["pasture raised eggs",            { floor:1, ceiling:3, substances:[], reason:"Pasture-raised eggs — measurably higher omega-3 and vitamin D content than conventional. Cleanest egg tier.", confidence:"high", category:"food_beverage" }],
+  ["organic eggs",                   { floor:1, ceiling:3, substances:[], reason:"Organic eggs — no synthetic pesticides in feed, no antibiotics. Clean whole food protein.", confidence:"high", category:"food_beverage" }],
+  // Conventional poultry
+  ["chicken breast",                 { floor:2, ceiling:4, substances:[], reason:"Conventional chicken breast — lean protein. Look for organic and pasture-raised for lower antibiotic exposure and better omega-3 ratios.", confidence:"high", category:"food_beverage" }],
+  ["chicken thighs",                 { floor:2, ceiling:4, substances:[], reason:"Conventional chicken thighs — lean protein with slightly more saturated fat than breast but more nutrients. Look for organic and pasture-raised when possible.", confidence:"high", category:"food_beverage" }],
+  ["whole chicken",                  { floor:2, ceiling:4, substances:[], reason:"Whole chicken — clean lean protein. Organic and pasture-raised carry meaningfully lower antibiotic exposure.", confidence:"high", category:"food_beverage" }],
+  ["ground turkey",                  { floor:2, ceiling:4, substances:[], reason:"Ground turkey — lean protein. Conventional carries trace antibiotic exposure; organic and pasture-raised are cleaner.", confidence:"high", category:"food_beverage" }],
+  ["ground chicken",                 { floor:2, ceiling:4, substances:[], reason:"Ground chicken — lean protein. Organic and pasture-raised reduce antibiotic exposure.", confidence:"high", category:"food_beverage" }],
+  // Conventional red meat
+  ["ground beef",                    { floor:3, ceiling:5, substances:["conventional beef"], reason:"Conventional ground beef — feedlot-raised cattle have higher hormone, antibiotic, and saturated fat profiles. Grass-fed and pasture-raised have measurably better omega-3 ratios. Look for 100% grass-fed labels (not just 'grass-fed') to avoid grain-finished beef.", confidence:"high", category:"food_beverage" }],
+  ["grass fed ground beef",          { floor:1, ceiling:3, substances:[], reason:"Grass-fed ground beef — better omega-3 ratio, no feedlot hormones or antibiotics. Cleanest red meat tier.", confidence:"high", category:"food_beverage" }],
+  ["ribeye",                         { floor:3, ceiling:5, substances:["conventional beef"], reason:"Ribeye — conventional feedlot-raised. Grass-fed has measurably better fat profile.", confidence:"high", category:"food_beverage" }],
+  ["sirloin",                        { floor:3, ceiling:5, substances:["conventional beef"], reason:"Sirloin — leaner cut but conventional beef carries feedlot exposure. Grass-fed is cleaner.", confidence:"high", category:"food_beverage" }],
+  ["beef",                           { floor:3, ceiling:5, substances:["conventional beef"], reason:"Beef — conventional feedlot-raised carries higher hormone, antibiotic, and saturated fat profiles. Grass-fed and pasture-raised significantly cleaner.", confidence:"high", category:"food_beverage" }],
+  ["steak",                          { floor:3, ceiling:5, substances:["conventional beef"], reason:"Steak — conventional beef carries feedlot exposure. Grass-fed has measurably better omega ratio and lower inflammatory load.", confidence:"high", category:"food_beverage" }],
+  ["pork chop",                      { floor:3, ceiling:5, substances:["conventional pork"], reason:"Pork chop — conventional pigs raised in CAFOs carry higher antibiotic and arsenic exposure. Pasture-raised heritage breeds are cleaner.", confidence:"high", category:"food_beverage" }],
+  ["pork tenderloin",                { floor:3, ceiling:5, substances:["conventional pork"], reason:"Pork tenderloin — leaner cut but conventional sourcing carries CAFO exposure. Heritage breeds cleaner.", confidence:"high", category:"food_beverage" }],
+  // Plain dairy
+  ["whole milk",                     { floor:2, ceiling:4, substances:[], reason:"Whole milk — calcium, protein, naturally occurring fats. Conventional carries trace pesticide and antibiotic exposure; organic and grass-fed are cleaner. A2 milk for those with sensitivity.", confidence:"high", category:"food_beverage" }],
+  ["organic whole milk",             { floor:1, ceiling:3, substances:[], reason:"Organic whole milk — no synthetic pesticides in feed, no growth hormones, no antibiotics. Cleanest conventional dairy.", confidence:"high", category:"food_beverage" }],
+  ["plain greek yogurt",             { floor:2, ceiling:4, substances:[], reason:"Plain Greek yogurt — high protein, probiotic. Avoid flavored varieties (added sugar). Organic is cleaner.", confidence:"high", category:"food_beverage" }],
+  ["butter",                         { floor:2, ceiling:4, substances:[], reason:"Butter — naturally occurring fats. Grass-fed has higher CLA and omega-3 content. Organic avoids trace pesticide exposure from feed.", confidence:"high", category:"food_beverage" }],
+  ["grass fed butter",               { floor:1, ceiling:3, substances:[], reason:"Grass-fed butter — measurably higher CLA and omega-3 content. Cleanest butter tier.", confidence:"high", category:"food_beverage" }],
+  // Plain produce — broad-stroke entries (the detector handles the long tail)
+  ["bananas",                        { floor:1, ceiling:3, substances:[], reason:"Bananas — fresh whole produce, low pesticide load (Clean Fifteen). Organic if you want to be thorough.", confidence:"high", category:"food_beverage" }],
+  ["apples",                         { floor:1, ceiling:3, substances:["pesticide residue"], reason:"Apples — fresh whole produce. Conventional apples are on the EWG Dirty Dozen list (high pesticide residue); organic recommended.", confidence:"high", category:"food_beverage" }],
+  ["strawberries",                   { floor:1, ceiling:3, substances:["pesticide residue"], reason:"Strawberries — top of the EWG Dirty Dozen list for pesticide residue. Buy organic when possible.", confidence:"high", category:"food_beverage" }],
+  ["blueberries",                    { floor:1, ceiling:3, substances:[], reason:"Blueberries — antioxidant-rich whole produce. Conventional carries moderate pesticide load; organic is cleaner.", confidence:"high", category:"food_beverage" }],
+  ["spinach",                        { floor:1, ceiling:3, substances:["pesticide residue"], reason:"Spinach — Dirty Dozen #2 for pesticide residue. Organic recommended.", confidence:"high", category:"food_beverage" }],
+  ["kale",                           { floor:1, ceiling:3, substances:["pesticide residue"], reason:"Kale — Dirty Dozen list. Organic recommended.", confidence:"high", category:"food_beverage" }],
+  ["avocado",                        { floor:1, ceiling:3, substances:[], reason:"Avocado — Clean Fifteen, very low pesticide residue even conventional. Healthy monounsaturated fats.", confidence:"high", category:"food_beverage" }],
+  ["broccoli",                       { floor:1, ceiling:3, substances:[], reason:"Broccoli — fresh whole produce, low pesticide residue. Cruciferous vegetable with high nutrient density.", confidence:"high", category:"food_beverage" }],
+  ["carrots",                        { floor:1, ceiling:3, substances:[], reason:"Carrots — fresh whole produce, beta-carotene rich. Conventional has moderate pesticide load; organic is cleaner.", confidence:"high", category:"food_beverage" }],
+  ["sweet potato",                   { floor:1, ceiling:3, substances:[], reason:"Sweet potato — fresh whole produce, complex carb with vitamin A. Low pesticide residue.", confidence:"high", category:"food_beverage" }],
+
+  // ══════════════════════════════════════════════════════════════
   // BABY FORMULA
   // ══════════════════════════════════════════════════════════════
   ["hipp",                         { floor:1, ceiling:3, substances:[], reason:"European organic formula — benchmark clean baby formula", confidence:"high", category:"baby" }],
