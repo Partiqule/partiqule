@@ -8540,23 +8540,33 @@ function App() {
                       // Apr 25) or "Not ideal" next to a green 3 (drink mix
                       // barcode same day). Bucket-by-score is honest and
                       // never disagrees with the visible number.
-                      // Verdict thresholds shifted 2026-04-28 — Paul flagged
-                      // that score 4 was incorrectly labeled "I'd swap if you
-                      // can". 4 is generally safe (sits in the typical
-                      // category-average band for most products), so it
-                      // belongs in the Looks good bucket. Swap reserved for
-                      // 5+. Score color thresholds (≤3 green / ≤5 amber /
-                      // >5 red) are unchanged — color and verdict can have
+                      // Verdict bucket copy refreshed 2026-04-28. Humanized
+                      // wording — fewer first-person prescriptions, more
+                      // honest description of where the product sits.
+                      //   1-3  Looks good.
+                      //   4-5  Could be cleaner.
+                      //   6    Swap when you can.
+                      //   7    Better options exist.
+                      //   8-9  Hard pass.
+                      //   10   Avoid.
+                      // Score color thresholds (≤3 green / ≤5 amber / >5
+                      // red) are unchanged — color and verdict can have
                       // different sensitivities.
-                      const friendly = displayScore <= 4 ? "Looks good to me."
-                        : displayScore <= 6 ? "I'd swap if you can."
-                        : displayScore <= 7 ? "I'd skip if you can."
-                        : "Hard pass.";
-                      // Tier 5 / low-confidence best-guess scores — hedge.
+                      const friendly = displayScore <= 3 ? "Looks good."
+                        : displayScore <= 5 ? "Could be cleaner."
+                        : displayScore <= 6 ? "Swap when you can."
+                        : displayScore <= 7 ? "Better options exist."
+                        : displayScore <= 9 ? "Hard pass."
+                        : "Avoid.";
+                      // Tier 5 / low-confidence best-guess scores — same
+                      // bucket boundaries, hedged tone.
                       const isGuess = result.source_confidence === "low" || result.confidence === "low";
-                      const guessVerdict = displayScore <= 4 ? "Probably fine, but I'd want the label."
-                        : displayScore <= 6 ? "Too many unknowns to be sure."
-                        : "Hard to say without the label.";
+                      const guessVerdict = displayScore <= 3 ? "Probably fine."
+                        : displayScore <= 5 ? "Hard to say without the label."
+                        : displayScore <= 6 ? "Worth a closer look at the label."
+                        : displayScore <= 7 ? "Likely worth a swap once you see the label."
+                        : displayScore <= 9 ? "Skip until you can verify."
+                        : "Avoid.";
                       const sentence = isGuess
                         ? (childMode ? `For a kid: ${guessVerdict}` : guessVerdict)
                         : (childMode ? `For a kid: ${friendly}` : friendly);

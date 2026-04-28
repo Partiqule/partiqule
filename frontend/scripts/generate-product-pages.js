@@ -74,19 +74,28 @@ function slugify(name) {
 // Colors pull from the app's natural-earth palette in frontend/src/tokens.css.
 // Score thresholds match App.jsx scoreColor/scoreBg helpers (≤3 green, ≤5 amber, >5 red).
 // Score buckets for SEO product pages. Mirror App.jsx verdict logic:
-// 4 is generally safe (Looks good), 5-6 are swap candidates, 7 is skip,
-// 8+ is hard pass. Color thresholds in scoreColor() stay at ≤3/≤5/>5.
+//   1-3  Looks good.
+//   4-5  Could be cleaner.
+//   6    Swap when you can.
+//   7    Better options exist.
+//   8-9  Hard pass.
+//   10   Avoid.
+// Color thresholds in scoreColor() stay at ≤3/≤5/>5.
 function scoreLabel(score) {
-  if (score <= 4) return "Looks good";
-  if (score <= 6) return "Judgment call";
-  if (score <= 7) return "I'd skip";
-  return "Hard pass";
+  if (score <= 3) return "Looks good";
+  if (score <= 5) return "Could be cleaner";
+  if (score <= 6) return "Swap when you can";
+  if (score <= 7) return "Better options exist";
+  if (score <= 9) return "Hard pass";
+  return "Avoid";
 }
 function scoreVerdict(score) {
-  if (score <= 4) return "Looks good to me.";
-  if (score <= 6) return "I'd swap if you can.";
-  if (score <= 7) return "I'd skip if you can.";
-  return "Hard pass.";
+  if (score <= 3) return "Looks good.";
+  if (score <= 5) return "Could be cleaner.";
+  if (score <= 6) return "Swap when you can.";
+  if (score <= 7) return "Better options exist.";
+  if (score <= 9) return "Hard pass.";
+  return "Avoid.";
 }
 function scoreColor(score) {
   if (score <= 3) return "#6b8c3e";   // --score-green, leaf
