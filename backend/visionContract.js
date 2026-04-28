@@ -148,6 +148,7 @@ CATEGORY CUES (for the category field):
 CRITICAL RULES:
 - Confidence is ONLY about product identity. It is INDEPENDENT of whether the ingredient list is readable. If you can clearly read "Abes Mini Muffins" on the package but the back-label ingredients are blurry, confidence should be 0.85+ and label_legibility should be "partial" or "minimal". DO NOT lower confidence because ingredients are unreadable — that is what label_legibility is for.
 - A clothing item with a visible brand wordmark (on the garment or on a hangtag) plus a recognizable garment type is a HIGH-confidence identification even without a visible care label. The scoring cascade will find the material composition online from the brand and product name.
+- RETAILER SCREENSHOT RULE: When the photo is a screenshot of an Amazon, Target, Walmart, or other retailer page, the brand storefront button often reads "Visit the Store" / "Shop the [Brand] Store" / "Visit [Brand] Store" — these are NEVER product names. Read past the storefront chrome to find the actual product title (usually in larger text directly above or below the brand wordmark, or in the "About this item" section). Other retailer UI strings to ignore as product names: "Sponsored", "Add to Cart", "Buy Now", "Customer Reviews", "Free Returns", "100+ bought in past month". If you can read the brand wordmark but the actual product title isn't visible in the screenshot, return brand only and confidence 0.55 — do not return UI button text as the product name.
 - If label_ingredients is returned, every item must be something you can LITERALLY READ in the photo (or material composition on a care label, for textile products).
 - If you cannot clearly read the ingredient list or composition label, set label_ingredients to null and label_legibility to the appropriate non-full value.
 - Never fabricate ingredients or material percentages based on product type assumptions.
@@ -183,12 +184,29 @@ CRITICAL RULES:
       ? parsed.label_ingredients.map(s => String(s).trim()).filter(Boolean)
       : null;
 
+    // Retailer-chrome filter: when a user screenshots an Amazon/Target/etc.
+    // listing, the vision model sometimes returns the brand storefront button
+    // text ("Visit the Store") as the product name. Strip these — they're
+    // never product names. Confidence drops so the user sees the confirmation
+    // modal instead of a Tier 5 best-guess on the wrong identity.
+    let productName = String(parsed.product_name || "").trim();
+    let brandOut = parsed.brand ? String(parsed.brand).trim() : null;
+    let confidenceOut = confidence;
+    if (productName && looksLikeRetailerChrome(productName)) {
+      console.warn(`[vision_identify] retailer chrome detected as product_name: "${productName}" — falling back to brand only`);
+      // If we have a brand, fall through to brand-only identification at
+      // medium confidence so the cascade can still try (brand + category)
+      // and the user gets the confirmation modal.
+      productName = brandOut || "";
+      confidenceOut = Math.min(confidenceOut, 0.55);
+    }
+
     return {
-      product_name: String(parsed.product_name || "").trim() || "Scanned product",
-      brand: parsed.brand ? String(parsed.brand).trim() : null,
+      product_name: productName || "Scanned product",
+      brand: brandOut,
       variant: parsed.variant ? String(parsed.variant).trim() : null,
       category: typeof parsed.category === "string" ? parsed.category : null,
-      confidence,
+      confidence: confidenceOut,
       label_ingredients: labelIngredients,
       label_legibility: legibility,
       reasoning: String(parsed.reasoning || "").slice(0, 400),
@@ -197,6 +215,33 @@ CRITICAL RULES:
     clearTimeout(timer);
     throw e;
   }
+}
+
+// Retailer storefront/UI strings that the vision model sometimes returns
+// as product_name when the user screenshots an Amazon, Target, Walmart,
+// etc. listing. None of these are real product names. Match is exact-ish
+// (case-insensitive, trimmed). Triggers a fallback to brand-only id at
+// medium confidence in callClaudeVisionIdentify.
+const RETAILER_CHROME_STRINGS = [
+  /^visit the store$/i,
+  /^visit [a-z0-9'&\-\s]+ store$/i,
+  /^shop the [a-z0-9'&\-\s]+ store$/i,
+  /^shop [a-z0-9'&\-\s]+$/i,
+  /^sponsored$/i,
+  /^add to cart$/i,
+  /^buy now$/i,
+  /^customer reviews$/i,
+  /^free returns$/i,
+  /^\d+\+ bought in past month$/i,
+  /^see more from [a-z0-9'&\-\s]+$/i,
+  /^amazon's choice$/i,
+  /^best seller$/i,
+  /^prime$/i,
+];
+function looksLikeRetailerChrome(name) {
+  const t = String(name || "").trim();
+  if (!t) return false;
+  return RETAILER_CHROME_STRINGS.some(re => re.test(t));
 }
 
 // ── Reconciliation ───────────────────────────────────────────────
