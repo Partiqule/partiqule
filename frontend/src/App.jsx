@@ -46,7 +46,7 @@ const API_BASE = "https://partiqule-production.up.railway.app";
 // blocks the app with an Update Required screen if the running version
 // is older than the server-controlled MIN_*_VERSION envs. Increase
 // patch for bug fixes, minor for features, major for breaking changes.
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.3";
 
 // App Store + social URLs used by the Update Required screen and the
 // review-prompt modal. Replace APP_STORE_ID with the production App
@@ -6157,9 +6157,9 @@ function App() {
   const deleteAccount = async () => {
     if (!user) { setError("Not signed in."); setTimeout(()=>setError(null),3000); return; }
     try {
-      const r = await fetch(`${API_BASE}/delete-account`, {
+      const r = await authedFetch(`${API_BASE}/delete-account`, {
         method:"POST",
-        headers: { "Content-Type":"application/json", ...(await authHeaders()) },
+        headers: { "Content-Type":"application/json" },
         body: JSON.stringify({}),
       });
       const d = await r.json();
@@ -6207,6 +6207,30 @@ function App() {
       const token = data?.session?.access_token;
       return token ? { "Authorization": `Bearer ${token}` } : {};
     } catch { return {}; }
+  };
+
+  // authedFetch wraps fetch with auth-header injection + a one-shot 401
+  // retry that calls supabase.auth.refreshSession() before falling
+  // through. Default Supabase access tokens last 1 hour. Without this
+  // wrapper the next /analyze call after that hour returned 401, and
+  // callers that didn't tolerate the failure surfaced it as a sign-out
+  // — the bug Paul reported on a real user. Now: stale token →
+  // transparent refresh → retry → success. Real auth failures (revoked
+  // session, deleted user) still bubble up.
+  const authedFetch = async (url, options = {}) => {
+    const buildOpts = async () => ({
+      ...options,
+      headers: { ...(options.headers || {}), ...(await authHeaders()) },
+    });
+    let res = await fetch(url, await buildOpts());
+    if (res.status !== 401) return res;
+    // 401 — try one refresh + retry. Don't loop on persistent failures.
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data?.session) return res;
+      res = await fetch(url, await buildOpts());
+    } catch { /* network / SDK error — return original 401 */ }
+    return res;
   };
 
   // ── Auth listener ────────────────────────────────────────────
@@ -6317,9 +6341,9 @@ function App() {
         return;
       }
       const txnId = active.transactionId || "restored";
-      const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
+      const confirmRes = await authedFetch(`${API_BASE}/apple-iap-confirm`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transactionId: txnId,
           receipt: active.receipt || active.jwsRepresentation || null,
@@ -6411,9 +6435,9 @@ function App() {
           // Apple flagged in 2026-04-22.
           let backendOk = false;
           try {
-            const confirmRes = await fetch(`${API_BASE}/apple-iap-confirm`, {
+            const confirmRes = await authedFetch(`${API_BASE}/apple-iap-confirm`, {
               method: "POST",
-              headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 transactionId: txnId,
                 receipt: txn?.receipt || txn?.jwsRepresentation || null,
@@ -6706,7 +6730,7 @@ function App() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
-      const res = await fetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json", ...(await authHeaders())},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
+      const res = await authedFetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
       clearTimeout(timeout);
       if (!res.ok){
         const e = await res.json().catch(() => ({}));
@@ -6749,9 +6773,9 @@ function App() {
     setSearchMatches([]); // collapse picker so result can render cleanly
     track("Search Match Select", { matchId: match.id, source: match.source, name: match.display_name });
     try {
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await authedFetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId: match.id }),
       });
       if (!res.ok) {
@@ -6942,9 +6966,9 @@ function App() {
       });
       const imgController = new AbortController();
       const imgTimeout = setTimeout(() => imgController.abort(), 45000);
-      const idResp = await fetch(`${API_BASE}/analyze`, {
+      const idResp = await authedFetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: base64, mediaType: "image/jpeg" }),
         signal: imgController.signal,
       });
@@ -7019,9 +7043,9 @@ function App() {
     setVisionConfirmation(null);
     setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
     try {
-      const r = await fetch(`${API_BASE}/analyze`, {
+      const r = await authedFetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identificationId }),
       });
       if (r.status === 410) { setLoading(false); setQuery(""); setError("That identification expired. Try scanning again."); return; }
