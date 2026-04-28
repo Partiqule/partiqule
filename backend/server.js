@@ -411,27 +411,11 @@ const rateLimit = async (req, res, next) => {
 // don't go through cacheGet/cacheSet — they're pre-verified data, not Pass
 // 1 outputs, and shouldn't be invalidated by prompt edits.
 //
-// The version is computed lazily-once on first cacheKey() call (after pass1
-// is defined). Computing eagerly here would race the function declarations.
-let __promptVersion = null;
-function promptVersion() {
-  if (__promptVersion) return __promptVersion;
-  const sources = [
-    typeof pass1 === "function" ? pass1.toString() : "",
-    typeof pass2 === "function" ? pass2.toString() : "",
-    typeof callClaudeVision === "function" ? callClaudeVision.toString() : "",
-    typeof tier4WebExtract === "function" ? tier4WebExtract.toString() : "",
-    typeof tier5CategoryPrior === "function" ? tier5CategoryPrior.toString() : "",
-  ].join("\n---\n");
-  __promptVersion = "v" + crypto.createHash("sha256").update(sources).digest("hex").slice(0, 8);
-  return __promptVersion;
-}
-
-function cacheKey(q, category) {
-  const norm = q.toLowerCase().trim().replace(/\s+/g, " ");
-  const tail = category ? `${category}:${norm}` : norm;
-  return `${promptVersion()}:${tail}`;
-}
+// Shared cache-key helpers live in cacheKeys.js so preload_redis.js can
+// import the same logic. Previously the preload script had its own
+// cacheKey that omitted the promptVersion prefix; preloads were
+// orphaned in Redis. Discovered 2026-04-28.
+const { promptVersion, cacheKey } = require("./cacheKeys");
 
 // Fuzzy calibration lookup — handles name variations and apostrophes
 // "Matt's bakery" matches "matts bakery", "Seventh Generation soap" matches "seventh generation dish"
