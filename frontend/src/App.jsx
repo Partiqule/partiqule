@@ -8540,14 +8540,22 @@ function App() {
                       // Apr 25) or "Not ideal" next to a green 3 (drink mix
                       // barcode same day). Bucket-by-score is honest and
                       // never disagrees with the visible number.
-                      const friendly = displayScore <= 3 ? "Looks good to me."
-                        : displayScore <= 5 ? "I'd swap if you can."
+                      // Verdict thresholds shifted 2026-04-28 — Paul flagged
+                      // that score 4 was incorrectly labeled "I'd swap if you
+                      // can". 4 is generally safe (sits in the typical
+                      // category-average band for most products), so it
+                      // belongs in the Looks good bucket. Swap reserved for
+                      // 5+. Score color thresholds (≤3 green / ≤5 amber /
+                      // >5 red) are unchanged — color and verdict can have
+                      // different sensitivities.
+                      const friendly = displayScore <= 4 ? "Looks good to me."
+                        : displayScore <= 6 ? "I'd swap if you can."
                         : displayScore <= 7 ? "I'd skip if you can."
                         : "Hard pass.";
                       // Tier 5 / low-confidence best-guess scores — hedge.
                       const isGuess = result.source_confidence === "low" || result.confidence === "low";
-                      const guessVerdict = displayScore <= 3 ? "Probably fine, but I'd want the label."
-                        : displayScore <= 5 ? "Too many unknowns to be sure."
+                      const guessVerdict = displayScore <= 4 ? "Probably fine, but I'd want the label."
+                        : displayScore <= 6 ? "Too many unknowns to be sure."
                         : "Hard to say without the label.";
                       const sentence = isGuess
                         ? (childMode ? `For a kid: ${guessVerdict}` : guessVerdict)
@@ -9073,7 +9081,14 @@ function App() {
             return null;
           })();
           const longCopy = result.summary_long || result.summary_short || result.summary || "";
-          const hasLong = !!result.summary_long;
+          // The rescan banner is meant to flag scans that genuinely predate
+          // the detailed summary structure — short, stub-y reasons. But
+          // every calibration entry sets a substantial `summary` field
+          // without a separate `summary_long`, so the previous check
+          // (`!!result.summary_long`) fired the rescan banner on every
+          // calibration scan. Treat any summary >= 80 chars as detailed
+          // enough to suppress the banner.
+          const hasLong = !!(result.summary_long || (longCopy && longCopy.length >= 80));
           return (
             <div style={{
               position:"fixed", inset:0, zIndex:9991,
