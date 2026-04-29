@@ -266,7 +266,7 @@ function isTier4NameAcceptable(originalQuery, usedQuery, returnedName, returnedB
   return false;
 }
 
-async function _tier4OneCall(query, { incrementApiCount, checkApiBudget }) {
+async function _tier4OneCall(query, { incrementApiCount, checkApiBudget }, attemptKind = "verbatim") {
   if (typeof checkApiBudget === "function") checkApiBudget();
   if (typeof incrementApiCount === "function") incrementApiCount();
   const start = Date.now();
@@ -318,9 +318,22 @@ Hard rules:
       }),
     });
     clearTimeout(timeout);
+    const finish = (outcome) => {
+      const duration = Date.now() - start;
+      console.log(JSON.stringify({
+        level: "info", event: "tier4_attempt",
+        ts: new Date().toISOString(),
+        query, attempt_kind: attemptKind,
+        duration_ms: duration,
+        result: outcome.ok ? "success" : outcome.reason,
+        ingredient_count: outcome.parsed?.ingredients?.length || 0,
+        source_domain: outcome.parsed?.source_domain || null,
+      }));
+      return { ...outcome, duration };
+    };
     if (!res.ok) {
       console.warn(`[tier4] http ${res.status}`);
-      return { ok: false, reason: `http_${res.status}`, duration: Date.now() - start };
+      return finish({ ok: false, reason: `http_${res.status}` });
     }
     const data = await res.json();
     const text = (data.content || [])
@@ -329,26 +342,36 @@ Hard rules:
       .join("")
       .trim();
     const jsonStr = extractJsonFromText(text);
-    if (!jsonStr) return { ok: false, reason: "no_json", duration: Date.now() - start };
+    if (!jsonStr) return finish({ ok: false, reason: "no_json" });
     let parsed;
     try { parsed = JSON.parse(jsonStr); }
-    catch (e) { return { ok: false, reason: `parse_${e.message}`, duration: Date.now() - start }; }
-    if (!parsed.found) return { ok: false, reason: "not_found", duration: Date.now() - start };
+    catch (e) { return finish({ ok: false, reason: `parse_${e.message}` }); }
+    if (!parsed.found) return finish({ ok: false, reason: "not_found", parsed });
     if (!Array.isArray(parsed.ingredients) || parsed.ingredients.length === 0) {
-      return { ok: false, reason: "empty_ingredients", duration: Date.now() - start };
+      return finish({ ok: false, reason: "empty_ingredients", parsed });
     }
-    return { ok: true, parsed, duration: Date.now() - start };
+    return finish({ ok: true, parsed });
   } catch (e) {
     clearTimeout(timeout);
-    if (e.name === "AbortError") return { ok: false, reason: "timeout", duration: Date.now() - start };
-    return { ok: false, reason: `error_${e.message}`, duration: Date.now() - start };
+    const duration = Date.now() - start;
+    const reason = e.name === "AbortError" ? "timeout" : `error_${e.message}`;
+    console.log(JSON.stringify({
+      level: "info", event: "tier4_attempt",
+      ts: new Date().toISOString(),
+      query, attempt_kind: attemptKind,
+      duration_ms: duration,
+      result: reason,
+      ingredient_count: 0,
+      source_domain: null,
+    }));
+    return { ok: false, reason, duration };
   }
 }
 
 async function tier4WebExtract(productName, deps = {}) {
   const started = Date.now();
   // Attempt 1: verbatim query.
-  let attempt = await _tier4OneCall(productName, deps);
+  let attempt = await _tier4OneCall(productName, deps, "verbatim");
   let usedQuery = productName;
 
   // Attempt 2: canonicalized query. Retry budget is bounded by the existing
@@ -358,7 +381,7 @@ async function tier4WebExtract(productName, deps = {}) {
     const canonical = canonicalizeQuery(productName);
     if (canonical && canonical.toLowerCase() !== productName.toLowerCase()) {
       console.log(`[tier4] retry1 query="${productName}" canonical="${canonical}" reason=${attempt.reason}`);
-      attempt = await _tier4OneCall(canonical, deps);
+      attempt = await _tier4OneCall(canonical, deps, "canonical");
       usedQuery = canonical;
     }
   }
