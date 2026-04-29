@@ -180,8 +180,23 @@ const cacheGet = async (key) => {
   return null;
 };
 
-// Write: memory + Redis + disk
+// Write: memory + Redis + disk.
+// Skip the Redis + disk write when the result is calibration-direct.
+// CALIBRATION.get is an O(1) Map lookup and applyProductCalibration is
+// sub-millisecond — caching deterministic-from-calibration results adds a
+// Redis round-trip for zero compute saved. Skipping also shrinks the blast
+// radius on prompt-version flips: only AI-scored entries become unreachable;
+// calibration-direct lookups always rebuild from the in-memory CALIBRATION
+// map on demand.
+//
+// Tier 5 synthetic results already set _skipCache:true for a different
+// reason (we want the next visit to retry the cascade). Same flag, both
+// reasons.
 const cacheSet = (key, value) => {
+  if (value && (value._skipCache || value.source === "calibration" || value.ingredient_source === "calibration")) {
+    scoreCache.set(key, value); // in-memory only — no Redis, no disk
+    return;
+  }
   scoreCache.set(key, value);
   redisSet(key, value); // async, non-blocking
   saveCacheToDisk();    // async-ish file write
