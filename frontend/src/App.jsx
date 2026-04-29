@@ -6811,35 +6811,53 @@ function App() {
   // Same three response shapes can come back; we treat them the same way.
   const resumeFromConfirmation = async () => {
     if (!visionConfirmation?.identificationId) return;
-    const { identificationId } = visionConfirmation;
+    const { identificationId, productName: confirmedName } = visionConfirmation;
     setVisionConfirmation(null);
     setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
+    const showFailModal = (message) => {
+      setLoading(false); setQuery("");
+      setVisionRefusal({ productName: confirmedName || "this product", message });
+    };
     try {
       const r = await authedFetch(`${API_BASE}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identificationId }),
       });
-      if (r.status === 410) { setLoading(false); setQuery(""); setError("That identification expired. Try scanning again."); return; }
-      if (!r.ok) throw new Error(`Server error ${r.status}`);
-      const data = await r.json();
-      if (data.status === "need_better_photo") {
-        setLoading(false); setQuery("");
-        setVisionRefusal({
-          productName: data.identified?.product_name || "this product",
-          message: data.message || "",
-        });
+      if (r.status === 410) {
+        showFailModal("That identification expired. Try scanning again.");
         return;
       }
-      if (!data.product_name) throw new Error("Nothing detected");
+      if (r.status === 429) {
+        showFailModal("Too many scans right now. Try again in a few minutes.");
+        return;
+      }
+      let data = null;
+      try { data = await r.json(); } catch {}
+      console.log("[resumeFromConfirmation] status", r.status, "data", data);
+      if (!r.ok) {
+        showFailModal(data?.error || `Couldn't score that product. (${r.status})`);
+        return;
+      }
+      if (data?.status === "need_better_photo") {
+        showFailModal(data.message || "Try another angle with better lighting.");
+        return;
+      }
+      if (data?.status === "needs_confirmation") {
+        showFailModal("We couldn't find this product in any database. Try scanning the barcode or label.");
+        return;
+      }
+      if (!data?.product_name) {
+        showFailModal("We couldn't score that product. Try scanning the barcode or label.");
+        return;
+      }
       setQuery(data.product_name);
       setResult(data);
       saveToHistory(data);
       setLoading(false);
     } catch (err) {
-      console.error("Resume from confirmation error:", err);
-      setLoading(false); setQuery("");
-      setError("Couldn't score that product. Try scanning again.");
+      console.error("[resumeFromConfirmation] error:", err);
+      showFailModal("Something went wrong scoring that product. Try again.");
     }
   };
 
