@@ -5857,6 +5857,66 @@ const ResetPasswordPage = ({ onDone }) => {
   );
 };
 
+// ── PHASE 1 SPIKE: streaming test harness ────────────────────
+// Verifies whether chunked JSON from the backend arrives incrementally
+// through Capacitor's iOS WebView, or buffers until completion. Renders
+// each chunk + the wall-clock client_received_ms gap from the previous
+// chunk. If chunks arrive at ~1s, ~2s, ~4s gaps we have streaming. If
+// all four arrive together at ~4s we don't.
+// DELETE both this component and the /spike/stream backend endpoint
+// once Phase 1 is decided.
+const StreamSpike = ({ isMobile, text, muted }) => {
+  const [running, setRunning] = useState(false);
+  const [chunks, setChunks] = useState([]);
+  const run = async () => {
+    setChunks([]);
+    setRunning(true);
+    const startedAt = Date.now();
+    let lastReceived = startedAt;
+    try {
+      const res = await fetch(`${API_BASE}/spike/stream`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, nl);
+          buffer = buffer.slice(nl + 1);
+          if (!line.trim()) continue;
+          const now = Date.now();
+          let parsed;
+          try { parsed = JSON.parse(line); } catch { parsed = { raw: line }; }
+          const gap_ms = now - lastReceived;
+          const total_ms = now - startedAt;
+          lastReceived = now;
+          setChunks(prev => [...prev, { ...parsed, client_gap_ms: gap_ms, client_total_ms: total_ms }]);
+        }
+      }
+    } catch (e) {
+      setChunks(prev => [...prev, { error: e.message }]);
+    }
+    setRunning(false);
+  };
+  return (
+    <div style={{background:"var(--cream-light)", border:`1px solid var(--rule)`, borderRadius:"var(--card-shape-1)", padding:isMobile?"16px":"20px", marginBottom:24}}>
+      <div style={{fontSize:11, fontWeight:700, color:"var(--moss)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8}}>Streaming Spike (admin only)</div>
+      <p style={{fontSize:13, color:muted, margin:"0 0 12px", lineHeight:1.5}}>Tests whether chunked JSON arrives incrementally through the WebView. If client_gap_ms is ~1000/1000/2000 we have streaming. If all chunks land in the last burst we do not.</p>
+      <button onClick={run} disabled={running} style={{padding:"10px 18px", borderRadius:8, border:"none", background:"var(--moss)", color:"var(--ivory)", fontSize:14, fontWeight:600, cursor:running?"default":"pointer", opacity:running?0.6:1}}>
+        {running ? "Streaming..." : "Run stream test"}
+      </button>
+      {chunks.length > 0 && (
+        <pre style={{marginTop:14, padding:"10px 12px", background:"#fff", borderRadius:6, border:"1px solid var(--rule)", fontSize:11, color:text, overflow:"auto", maxHeight:300}}>
+{chunks.map(c => JSON.stringify(c)).join("\n")}
+        </pre>
+      )}
+    </div>
+  );
+};
+
 // ── MAIN APP ──────────────────────────────────────────────────
 function App() {
   const [query,       setQuery]      = useState("");
@@ -7167,6 +7227,7 @@ function App() {
             <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Settings</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
           </div>
+          {isAdminUser(user) && <StreamSpike isMobile={isMobile} text={text} muted={muted}/>}
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 

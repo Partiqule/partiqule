@@ -7793,6 +7793,33 @@ app.get("/health", (req, res) => res.json({
   uptime: Math.round(process.uptime()) + "s",
 }));
 
+// ── PHASE 1 SPIKE: throwaway streaming endpoint ──────────────
+// Verifies whether chunked JSON streaming arrives incrementally
+// through the Capacitor iOS WebView, or buffers until response
+// completion. Emits 3 newline-delimited JSON chunks at 1s, 2s, 4s
+// (4s total wall time). DELETE THIS ENDPOINT once Phase 1 is decided.
+app.get("/spike/stream", async (req, res) => {
+  res.setHeader("Content-Type", "application/x-ndjson");
+  res.setHeader("Cache-Control", "no-cache, no-store, no-transform");
+  res.setHeader("X-Accel-Buffering", "no"); // disable nginx-style proxy buffering if any
+  res.flushHeaders?.();
+
+  const emit = (obj) => {
+    res.write(JSON.stringify({ ...obj, server_ts: Date.now() }) + "\n");
+    if (typeof res.flush === "function") res.flush();
+  };
+
+  const start = Date.now();
+  emit({ stage: "first", elapsed_ms: 0 });
+  await new Promise(r => setTimeout(r, 1000));
+  emit({ stage: "second", elapsed_ms: Date.now() - start });
+  await new Promise(r => setTimeout(r, 1000));
+  emit({ stage: "third", elapsed_ms: Date.now() - start });
+  await new Promise(r => setTimeout(r, 2000));
+  emit({ stage: "done", elapsed_ms: Date.now() - start });
+  res.end();
+});
+
 // Minimum app version gate. The frontend calls this on boot, compares the
 // returned ios_min / web_min against its own APP_VERSION constant, and
 // renders an Update Required screen if it's older. Bump these env vars in
