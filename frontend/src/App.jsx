@@ -5909,9 +5909,20 @@ const StreamSpike = ({ isMobile, text, muted }) => {
         {running ? "Streaming..." : "Run stream test"}
       </button>
       {chunks.length > 0 && (
-        <pre style={{marginTop:14, padding:"10px 12px", background:"#fff", borderRadius:6, border:"1px solid var(--rule)", fontSize:11, color:text, overflow:"auto", maxHeight:300}}>
-{chunks.map(c => JSON.stringify(c)).join("\n")}
-        </pre>
+        <div style={{marginTop:14, padding:"10px 12px", background:"#fff", borderRadius:6, border:"1px solid var(--rule)", fontSize:13, color:text}}>
+          {chunks.map((c, i) => (
+            <div key={i} style={{padding:"6px 0", borderBottom: i < chunks.length - 1 ? "1px solid var(--rule-soft)" : "none"}}>
+              <div style={{fontWeight:700, marginBottom:2}}>{c.stage || c.error || "?"}</div>
+              <div style={{color:muted, fontSize:12}}>
+                gap: <strong style={{color:text}}>{c.client_gap_ms}ms</strong> · total: {c.client_total_ms}ms · server: {c.elapsed_ms}ms
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:10, padding:"8px 10px", background:"var(--cream-light)", borderRadius:4, fontSize:12, color:muted, lineHeight:1.5}}>
+            Streaming works if gaps after the first are ~1000, ~1000, ~2000.<br/>
+            Buffered if gaps are ~0, ~0, ~0 (everything lands together at the end).
+          </div>
+        </div>
       )}
     </div>
   );
