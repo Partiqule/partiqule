@@ -4629,11 +4629,24 @@ function filterDbAlternatives(alternatives, category, productName, productScore 
     const desc   = (alt.description || "").toLowerCase();
     const combined = `${name} ${tags} ${desc}`;
 
-    // Block alternatives that score worse than the product being scanned
+    // Block alternatives that score worse than the product being scanned.
+    //
+    // For products already scoring 1-2 (already clean), the strict
+    // "alt must score lower" rule guarantees zero alternatives ever surface
+    // because almost no products in the catalog score below 2. Tag Heuer at
+    // score 2 + Apple Watch at score 2 is useful context for users — they're
+    // peer-clean choices, not regressions. So when productScore <= 2, allow
+    // alternatives with the same score (peer-clean), but still block any
+    // alternative scoring worse. For productScore >= 3, the strict
+    // "must be cleaner" rule still applies.
     const altScore = alt.plasticScore ?? alt.score ?? null;
-    if (productScore !== null && altScore !== null && altScore >= productScore) {
-      console.log(`DB filter: blocked "${alt.name}" (score ${altScore} >= product score ${productScore}) for "${productName}"`);
-      return false;
+    if (productScore !== null && altScore !== null) {
+      const peerCleanAllowed = productScore <= 2;
+      const blocked = peerCleanAllowed ? (altScore > productScore) : (altScore >= productScore);
+      if (blocked) {
+        console.log(`DB filter: blocked "${alt.name}" (score ${altScore} vs product ${productScore}, peerClean=${peerCleanAllowed}) for "${productName}"`);
+        return false;
+      }
     }
 
     // Food scans: block medicine, personal care, cleaning products

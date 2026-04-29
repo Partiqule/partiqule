@@ -474,6 +474,81 @@ const products = [
     tags: ["watch band", "metal band", "stainless", "apple watch", "watch strap", "accessory", "wearable", "sport band"]
   },
 
+  // ── SMARTWATCHES & WATCHES ──
+  {
+    id: "ac-010", name: "Nordgreen Native Solar Watch", brand: "Nordgreen",
+    category: "accessory", plasticScore: 2,
+    material: "Recycled stainless steel, sapphire crystal, vegan leather strap",
+    description: "B Corp, recycled steel cases, solar movement (no battery replacement)",
+    affiliateUrl: `https://nordgreen.com/?ref=partiqule`,
+    price: "$200–400",
+    tags: ["watch", "smartwatch", "wristwatch", "timepiece", "wearable", "stainless steel", "sapphire", "sustainable"]
+  },
+  {
+    id: "ac-011", name: "Solios Solar Watch", brand: "Solios",
+    category: "accessory", plasticScore: 2,
+    material: "Recycled stainless steel, vegan leather, solar movement",
+    description: "Climate-neutral B Corp, no battery replacements ever",
+    affiliateUrl: `https://soliosatches.com?ref=partiqule`,
+    price: "$200–350",
+    tags: ["watch", "smartwatch", "wristwatch", "timepiece", "wearable", "solar", "sustainable", "vegan"]
+  },
+  {
+    id: "ac-012", name: "Citizen Eco-Drive Titanium", brand: "Citizen",
+    category: "accessory", plasticScore: 2,
+    material: "Super Titanium case, sapphire crystal, solar movement",
+    description: "Hypoallergenic titanium, zero battery waste, decades of life",
+    affiliateUrl: `https://www.amazon.com/s?k=Citizen+Eco-Drive+Titanium&tag=partiqule-20`,
+    price: "$250–500",
+    tags: ["watch", "smartwatch", "wristwatch", "timepiece", "wearable", "titanium", "solar", "sustainable"]
+  },
+  {
+    id: "ac-013", name: "Apple Watch SE (Recycled Aluminum)", brand: "Apple",
+    category: "accessory", plasticScore: 2,
+    material: "100% recycled aluminum case, fluoroelastomer Sport Band",
+    description: "Material disclosures published, BPA/PVC-free band, hypoallergenic",
+    affiliateUrl: `https://www.amazon.com/s?k=Apple+Watch+SE&tag=partiqule-20`,
+    price: "$249",
+    tags: ["watch", "smartwatch", "fitness tracker", "wearable", "recycled aluminum", "apple"]
+  },
+  {
+    id: "ac-014", name: "Garmin Instinct Solar", brand: "Garmin",
+    category: "accessory", plasticScore: 3,
+    material: "Fiber-reinforced polymer case, silicone band",
+    description: "Solar charging extends battery life, inert silicone strap",
+    affiliateUrl: `https://www.amazon.com/s?k=Garmin+Instinct+Solar&tag=partiqule-20`,
+    price: "$300–450",
+    tags: ["watch", "smartwatch", "fitness tracker", "wearable", "solar", "silicone", "garmin"]
+  },
+
+  // ── JEWELRY ──
+  {
+    id: "ac-020", name: "Mejuri Recycled Gold Necklace", brand: "Mejuri",
+    category: "accessory", plasticScore: 2,
+    material: "Recycled solid 14k gold, sterling silver, or vermeil",
+    description: "Recycled metals, no nickel allergens, transparent supply chain",
+    affiliateUrl: `https://mejuri.com?ref=partiqule`,
+    price: "$80–500",
+    tags: ["jewelry", "necklace", "gold", "recycled", "fine jewelry", "accessory", "ring", "bracelet"]
+  },
+  {
+    id: "ac-021", name: "Catbird Recycled Gold Earrings", brand: "Catbird",
+    category: "accessory", plasticScore: 2,
+    material: "Recycled 14k gold, conflict-free stones",
+    description: "Brooklyn-made, recycled metals, ethical sourcing",
+    affiliateUrl: `https://www.catbirdnyc.com?ref=partiqule`,
+    price: "$100–600",
+    tags: ["jewelry", "earrings", "gold", "recycled", "fine jewelry", "accessory", "earring", "stud"]
+  },
+  {
+    id: "ac-022", name: "Aurate Solid Gold Bracelet", brand: "Aurate",
+    category: "accessory", plasticScore: 2,
+    material: "Recycled 14k or 18k solid gold, conflict-free diamonds",
+    description: "Recycled gold, traceable diamonds, no plating",
+    affiliateUrl: `https://auratenewyork.com?ref=partiqule`,
+    price: "$150–800",
+    tags: ["jewelry", "bracelet", "gold", "fine jewelry", "recycled", "accessory", "necklace"]
+  },
 
   {
     id: "bk-001",
@@ -4324,6 +4399,42 @@ const products = [
     price:"$32-45",
     tags:["period underwear","reusable period","feminine care","period","underwear","leak proof","zero waste period","sustainable period","absorbent"]
   },
+  {
+    id:"fh-007", name:"DivaCup Menstrual Cup", brand:"DivaCup",
+    plasticScore:1, category:"personal_care",
+    material:"100% medical-grade silicone, BPA-free, latex-free, dye-free",
+    description:"Reusable menstrual cup. Replaces hundreds of disposable tampons or pads per year. 10-year lifespan.",
+    affiliateUrl:`https://www.amazon.com/s?k=DivaCup+menstrual+cup&tag=${AMAZON_TAG}`,
+    price:"$25-35",
+    tags:["menstrual cup","period cup","feminine care","period","menstrual","reusable","silicone","tampax alternative","always alternative","kotex alternative","zero waste period"]
+  },
+  {
+    id:"fh-008", name:"Rael Organic Cotton Pads", brand:"Rael",
+    plasticScore:2, category:"personal_care",
+    material:"100% certified organic cotton, biodegradable, no chlorine bleach, no fragrance",
+    description:"Organic cotton pads with no synthetic top layer, no fragrance, no chlorine bleach. Better than mainstream pads for sensitive skin.",
+    affiliateUrl:`https://www.amazon.com/s?k=Rael+organic+cotton+pads&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["pads","menstrual","period","feminine","sanitary","organic cotton","biodegradable","always alternative","kotex alternative","stayfree alternative"]
+  },
+  {
+    id:"fh-009", name:"Lola Organic Cotton Tampons", brand:"Lola",
+    plasticScore:2, category:"personal_care",
+    material:"100% organic cotton, biodegradable, no synthetic fibers, no fragrance",
+    description:"Organic cotton tampons with no rayon, no fragrance, no synthetic absorbents. BPA-free applicator option.",
+    affiliateUrl:`https://www.amazon.com/s?k=Lola+organic+cotton+tampons&tag=${AMAZON_TAG}`,
+    price:"$8-12",
+    tags:["tampon","tampons","menstrual","period","feminine","sanitary","organic cotton","tampax alternative","kotex alternative","playtex alternative"]
+  },
+  {
+    id:"fh-010", name:"Nixit Menstrual Disc", brand:"Nixit",
+    plasticScore:1, category:"personal_care",
+    material:"Medical-grade silicone, BPA-free, latex-free",
+    description:"Reusable menstrual disc. 12-hour wear, less leakage than cups for some users. Replaces disposable products.",
+    affiliateUrl:`https://www.amazon.com/s?k=Nixit+menstrual+disc&tag=${AMAZON_TAG}`,
+    price:"$45-55",
+    tags:["menstrual disc","period disc","feminine care","period","menstrual","reusable","silicone","tampax alternative","always alternative","kotex alternative"]
+  },
 
   // ── GARDEN & OUTDOOR ──────────────────────────────────────────
   {
@@ -4732,6 +4843,81 @@ const products = [
     affiliateUrl:"https://www.amazon.com/s?k=RW+Knudsen+organic+juice&tag=partiqule-20", price:"$5-8",
     tags:["juice","cranberry juice","berry juice","apple juice","organic juice","no added sugar","juice alternative","ocean spray alternative","no preservatives"] },
 
+  // ── SODAS / CARBONATED ALTERNATIVES ──
+  { id:"bv-020", name:"Zevia Zero Calorie Soda", brand:"Zevia", plasticScore:2, category:"beverage",
+    material:"Carbonated water, stevia, citric acid, natural flavors. No sugar, no artificial sweeteners.",
+    description:"Stevia-sweetened soda. Zero sugar, zero artificial sweeteners, no aspartame or sucralose.",
+    affiliateUrl:"https://www.amazon.com/s?k=Zevia+soda&tag=partiqule-20", price:"$6-10",
+    tags:["soda","cola","sparkling","carbonated","fizzy drink","zero sugar","stevia","coca-cola alternative","pepsi alternative","sprite alternative","dr pepper alternative","mountain dew alternative"] },
+
+  { id:"bv-021", name:"Poppi Prebiotic Soda", brand:"Poppi", plasticScore:2, category:"beverage",
+    material:"Apple cider vinegar, fruit juice, prebiotic fiber. 25 cal, 5g sugar.",
+    description:"Low-sugar prebiotic soda with real fruit. Cleaner take on classic flavors.",
+    affiliateUrl:"https://www.amazon.com/s?k=Poppi+prebiotic+soda&tag=partiqule-20", price:"$25-35 (12pk)",
+    tags:["soda","cola","sparkling","carbonated","fizzy drink","prebiotic","low sugar","coca-cola alternative","pepsi alternative","sprite alternative"] },
+
+  { id:"bv-022", name:"OliPop Vintage Cola", brand:"OliPop", plasticScore:2, category:"beverage",
+    material:"Prebiotic plant fiber, fruit juice, natural flavors. 5g sugar, 9g fiber.",
+    description:"Direct cola alternative. Real fiber, low sugar, no HFCS or artificial colors.",
+    affiliateUrl:"https://www.amazon.com/s?k=OliPop+Vintage+Cola&tag=partiqule-20", price:"$25-35 (12pk)",
+    tags:["soda","cola","sparkling","carbonated","fizzy drink","prebiotic","low sugar","coca-cola alternative","coke alternative","pepsi alternative"] },
+
+  { id:"bv-023", name:"Bubly Sparkling Water (Unflavored)", brand:"Bubly", plasticScore:2, category:"beverage",
+    material:"Sparkling water with natural flavors only. Zero calories, zero sweeteners.",
+    description:"Mainstream sparkling water alternative for cola drinkers cutting sugar entirely.",
+    affiliateUrl:"https://www.amazon.com/s?k=Bubly+sparkling+water&tag=partiqule-20", price:"$5-8 (8pk)",
+    tags:["soda","sparkling water","carbonated","fizzy drink","zero calorie","zero sugar","la croix alternative","coca-cola alternative"] },
+
+  { id:"bv-024", name:"Health-Ade Kombucha", brand:"Health-Ade", plasticScore:1, category:"beverage",
+    material:"USDA Organic, raw fermented tea. 4g sugar, live probiotics, glass bottle.",
+    description:"Probiotic carbonated drink. Cleaner than energy drinks for a similar boost.",
+    affiliateUrl:"https://www.amazon.com/s?k=Health-Ade+Kombucha&tag=partiqule-20", price:"$3-5",
+    tags:["kombucha","fermented","probiotic drink","sparkling","carbonated","organic","red bull alternative","monster alternative","energy drink alternative"] },
+
+  // ── SALTY SNACKS / CHIPS ALTERNATIVES ──
+  { id:"sn-001", name:"Siete Grain-Free Tortilla Chips", brand:"Siete", plasticScore:2, category:"food_beverage",
+    material:"Cassava flour, coconut flour, avocado oil, sea salt. No corn, no seed oils.",
+    description:"Avocado oil chips, no seed oils, grain-free. Direct Doritos/Tostitos swap.",
+    affiliateUrl:"https://www.amazon.com/s?k=Siete+grain+free+tortilla+chips&tag=partiqule-20", price:"$5-7",
+    tags:["chips","tortilla chips","salty snack","snack","grain free","avocado oil","no seed oils","doritos alternative","tostitos alternative","fritos alternative"] },
+
+  { id:"sn-002", name:"Jackson's Sea Salt Sweet Potato Chips", brand:"Jackson's", plasticScore:2, category:"food_beverage",
+    material:"Sweet potatoes, coconut oil, sea salt. Three ingredients only, no seed oils.",
+    description:"Cleanest mainstream chip — no seed oils, no preservatives, three ingredients.",
+    affiliateUrl:"https://www.amazon.com/s?k=Jackson's+sweet+potato+chips&tag=partiqule-20", price:"$4-6",
+    tags:["chips","potato chips","salty snack","snack","sweet potato","coconut oil","no seed oils","lays alternative","ruffles alternative","kettle alternative"] },
+
+  { id:"sn-003", name:"Hippeas Organic Chickpea Puffs", brand:"Hippeas", plasticScore:2, category:"food_beverage",
+    material:"USDA Organic chickpea flour, sunflower oil, sea salt. High protein, plant-based.",
+    description:"Crunchy puff with real protein. Cleaner than Cheetos/Funyuns at similar texture.",
+    affiliateUrl:"https://www.amazon.com/s?k=Hippeas+chickpea+puffs&tag=partiqule-20", price:"$4-6",
+    tags:["chips","puffs","salty snack","snack","organic","chickpea","cheetos alternative","funyuns alternative","cheez-it alternative"] },
+
+  { id:"sn-004", name:"Simple Mills Almond Flour Crackers", brand:"Simple Mills", plasticScore:2, category:"food_beverage",
+    material:"Almond flour, sunflower seeds, flax, cassava. No grains, no seed oils.",
+    description:"Cleanest cracker. Almond-flour base, no wheat, no seed oils, real ingredients.",
+    affiliateUrl:"https://www.amazon.com/s?k=Simple+Mills+almond+flour+crackers&tag=partiqule-20", price:"$5-7",
+    tags:["chips","crackers","salty snack","snack","almond flour","grain free","cheez-it alternative","triscuit alternative","wheat thins alternative","ritz alternative"] },
+
+  { id:"sn-005", name:"Lesser Evil Paleo Puffs", brand:"Lesser Evil", plasticScore:2, category:"food_beverage",
+    material:"Cassava, coconut oil, Himalayan salt. Paleo-friendly, no seed oils.",
+    description:"Puffed snack with no seed oils. Direct Pirate's Booty / Cheez-It swap.",
+    affiliateUrl:"https://www.amazon.com/s?k=Lesser+Evil+paleo+puffs&tag=partiqule-20", price:"$4-6",
+    tags:["chips","puffs","salty snack","snack","paleo","coconut oil","pirate booty alternative","cheez-it alternative","cheetos alternative"] },
+
+  // ── CEREAL / GRANOLA ALTERNATIVES ──
+  { id:"sn-010", name:"Purely Elizabeth Ancient Grain Granola", brand:"Purely Elizabeth", plasticScore:2, category:"food_beverage",
+    material:"Ancient grain oats, coconut sugar, virgin coconut oil. No refined sugar.",
+    description:"Coconut sugar instead of refined cane. Real ingredients, organic options.",
+    affiliateUrl:"https://www.amazon.com/s?k=Purely+Elizabeth+granola&tag=partiqule-20", price:"$6-9",
+    tags:["granola","cereal","oats","muesli","breakfast","ancient grain","coconut sugar","cheerios alternative","frosted flakes alternative","kellogg alternative","general mills alternative"] },
+
+  { id:"sn-011", name:"One Degree Organic Sprouted Cereal", brand:"One Degree", plasticScore:2, category:"food_beverage",
+    material:"Sprouted whole grain, USDA Organic, no synthetic vitamins, glyphosate-tested.",
+    description:"Sprouted-grain cereal that tests free of glyphosate. Whole-grain breakfast done right.",
+    affiliateUrl:"https://www.amazon.com/s?k=One+Degree+sprouted+cereal&tag=partiqule-20", price:"$6-9",
+    tags:["cereal","granola","oats","breakfast","sprouted grain","organic","cheerios alternative","kellogg alternative","general mills alternative","frosted flakes alternative"] },
+
   // ══════════════════════════════════════════════════════════════
   // FROZEN FOOD ALTERNATIVES
   // ══════════════════════════════════════════════════════════════
@@ -5107,6 +5293,21 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
     "diaper":    ["diaper","nappy","diaper alternative"],
     "desitin":   ["diaper cream","rash cream","baby cream","baby skin"],
     "formula":   ["baby formula","infant formula","formula"],
+    "watch":     ["watch","smartwatch","wristwatch","timepiece","fitness tracker"],
+    "smartwatch":["smartwatch","watch","fitness tracker","wearable"],
+    "soda":      ["soda","cola","sparkling","carbonated","fizzy drink","prebiotic soda"],
+    "cola":      ["cola","soda","sparkling","carbonated"],
+    "chips":     ["chips","crisps","salty snack","tortilla chips","potato chips","snack"],
+    "chip":      ["chips","chip","salty snack","snack"],
+    "snack":     ["snack","crackers","chips","granola","bar"],
+    "granola":   ["granola","cereal","oats","muesli","breakfast"],
+    "cereal":    ["cereal","granola","oats","muesli","breakfast"],
+    "kombucha":  ["kombucha","fermented","probiotic drink","sparkling"],
+    "necklace":  ["necklace","jewelry","chain","pendant"],
+    "earring":   ["earring","earrings","jewelry"],
+    "bracelet":  ["bracelet","jewelry","wristband"],
+    "ring":      ["ring","jewelry","band"],
+    "jewelry":   ["jewelry","necklace","earrings","bracelet","ring"],
   };
 
   // Category-based keyword injection — when query contains a known brand but not
@@ -5244,6 +5445,53 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
       brands: ["levi","levis","levi's","wrangler","lee jeans","american eagle jeans","gap jeans","old navy jeans","madewell","j.crew","citizens of humanity","paige jeans","mother jeans","agolde"],
       inject: ["jeans","denim","pants"],
     },
+    // Watch / smartwatch brand injection — surface smartwatch and traditional
+    // watch alternatives when users query a brand without saying "watch".
+    {
+      categories: ["accessory"],
+      brands: ["apple watch","garmin","fitbit","oura","whoop","samsung galaxy watch","pixel watch","tag heuer","rolex","omega","fossil","timex","casio","g-shock","seiko","citizen","daniel wellington","mvmt","nordgreen","solios","olivia burton","swatch"],
+      inject: ["watch","smartwatch","wristwatch","timepiece","wearable"],
+    },
+    // Soda / carbonated beverage brand injection — Coke/Pepsi/etc. queries
+    // had no chance of finding Olipop/Spindrift/Zevia until now because the
+    // generic "beverage" tag wasn't enough on its own.
+    {
+      categories: ["food_beverage","beverage"],
+      brands: ["coca-cola","coca cola","coke","pepsi","sprite","fanta","dr pepper","dr. pepper","mountain dew","7up","seven up","a&w","root beer","ginger ale","schweppes","canada dry","sierra mist","crush","sunkist soda","squirt"],
+      inject: ["soda","sparkling","carbonated","cola"],
+    },
+    // Energy drinks — also a beverage gap.
+    {
+      categories: ["food_beverage","beverage"],
+      brands: ["red bull","monster","rockstar","bang energy","celsius","reign","ghost energy","prime energy","alani"],
+      inject: ["energy drink","sparkling","carbonated"],
+    },
+    // Salty snack brand injection — Doritos/Lay's/Cheetos couldn't find any
+    // candy-tagged alternatives before. Inject "chips" / "snack" so chip-tagged
+    // alternatives in the catalog have a fighting chance.
+    {
+      categories: ["food_beverage","food"],
+      brands: ["doritos","lays","lay's","cheetos","fritos","ruffles","tostitos","sun chips","sunchips","pringles","funyuns","kettle brand","cape cod chips","utz","wise chips","herr's","goldfish","cheez-it","cheez it","cheezit"],
+      inject: ["chips","snack","salty snack","tortilla chips","potato chips","crackers"],
+    },
+    // Cookie / packaged sweet brand injection.
+    {
+      categories: ["food_beverage","food"],
+      brands: ["oreo","chips ahoy","keebler","famous amos","nutter butter","nilla","fig newton","milano","pepperidge farm cookies","entenmann's","entenmanns","nutty bars","little debbie"],
+      inject: ["cookie","cookies","snack","sweet treat"],
+    },
+    // Cereal brand injection.
+    {
+      categories: ["food_beverage","food"],
+      brands: ["cheerios","frosted flakes","lucky charms","froot loops","cocoa puffs","trix","corn flakes","raisin bran","special k","mini wheats","cinnamon toast crunch","captain crunch","life cereal","kix","apple jacks","honey nut","kellogg","general mills"],
+      inject: ["cereal","granola","breakfast","oats"],
+    },
+    // Jewelry brand injection.
+    {
+      categories: ["accessory"],
+      brands: ["pandora","tiffany","kay jewelers","zales","jared","kendra scott","mejuri","gorjana","baublebar","missoma","catbird","monica vinader"],
+      inject: ["jewelry","necklace","earrings","bracelet"],
+    },
   ];
   const queryJoined = queries.join(" ");
   const injections = [];
@@ -5273,7 +5521,13 @@ function findAlternatives(query, category, limit = 3, fallbackQuery = "") {
   const queryLower = query.toLowerCase();
 
   // Minimum threshold — food needs higher bar since category is broad
-  const minScore = ["food", "food_beverage", "beverage"].includes(category) ? 18 : 13;
+  // Food categories used to require minScore=18 (category match 8 + 2 tag
+  // matches at 5 each). That blocked most snack/soda queries because the
+  // catalog didn't have enough tag overlap to clear the bar — "Doritos"
+  // queries with "chips/snack" injection only scored ~13 and got filtered.
+  // 14 = category (8) + 1 strong tag match (5) + 1 partial match (1) — still
+  // meaningful relevance, just not a double-tag wall.
+  const minScore = ["food", "food_beverage", "beverage"].includes(category) ? 14 : 13;
 
   // Word-boundary helper — prevents "lean" matching "cleaner", "meal" matching "meals" etc.
   function wordMatch(haystack, needle) {

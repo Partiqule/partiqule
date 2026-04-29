@@ -308,12 +308,17 @@ Return ONLY raw JSON (no markdown, no preamble) in this exact shape:
 Hard rules:
 - ingredients MUST be exactly as printed on the source page. Do NOT paraphrase, deduplicate, or add ingredients you have prior knowledge of. Order matters.
 - found:true is the strongly preferred outcome. Only set found:false if after multiple searches across different domains no credible ingredient list exists online.
-- For a clothing/home/accessory product where material composition is printed on the label (e.g. "72% nylon, 25% polyester, 3% spandex"), return those as "ingredients" — the cascade treats material composition as the ingredient-equivalent for those categories.
+- For non-consumable products (clothing, home, accessory, toy, kitchen, home_furnishing — including watches, jewelry, bags, eyewear, leather goods, hardware, electronics housings), return the MATERIAL COMPOSITION as the "ingredients" array. This is the cascade's ingredient-equivalent for those categories. Examples:
+  - Textile composition strings: ["72% nylon", "25% polyester", "3% spandex"]
+  - Watches/jewelry: ["stainless steel case", "leather strap", "mineral crystal", "silicone gasket"]
+  - Bags: ["full-grain leather exterior", "polyester lining", "metal hardware"]
+  - Toys: ["ABS plastic", "polyester filling", "polypropylene"]
+  Pull these from spec pages, brand "materials" sections, retailer "About this item" / "Specifications", or care labels. If only a narrative description is available ("crafted from calfskin with a sapphire crystal"), extract the named materials as separate array entries. found:true is correct as long as you can identify the primary materials; a percentage breakdown is not required for non-textile categories.
 - You MAY return ingredients for the closest available variant of the queried product, but name_mismatch downstream will reject anything wildly off. Use judgment.
 - Never use apostrophes inside JSON string values; use plain text.`,
         messages: [{
           role: "user",
-          content: `Find the ingredient list (or material composition, for textile/clothing products) for: "${query}". Search multiple retailers and the brand's own site. If the exact variant is not listed, use the closest available variant and report its full name. Return the JSON.`,
+          content: `Find the ingredient list — or, for non-consumable products like watches, jewelry, bags, clothing, toys, or home goods, the material composition (case material, strap, lining, filling, etc.) — for: "${query}". Search multiple retailers and the brand's own site. If the exact variant is not listed, use the closest available variant and report its full name. Return the JSON.`,
         }],
       }),
     });
