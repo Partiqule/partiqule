@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repo.
 
 ---
 
 ## Project Overview
 
-Partiqule -- AI-powered product health scoring app. Users search, scan a barcode, or photograph a product and receive a 1-10 risk score with specific chemical concerns, child/pregnancy safety scores, and curated cleaner alternatives. Lower score = safer product.
+Partiqule — AI-powered product health scoring app. Search, scan a barcode, or photograph a product → 1-10 risk score with chemical concerns, child/pregnancy safety scores, and curated alternatives. **Lower score = safer.**
 
-Paul is CEO/developer. Sara is co-founder handling content and Instagram.
+Paul is CEO/developer. Sara is co-founder (content + Instagram).
 
 ---
 
@@ -21,555 +21,387 @@ cd backend && npm install && node server.js
 # Frontend (port 3000, proxies API to backend)
 cd frontend && npm install && npm run dev
 
-# Production build (frontend) -- also generates 2,400+ SEO pages via prebuild
+# Production build (also generates 2,400+ SEO pages)
 cd frontend && npm run build
 
-# Regression tests (zero API cost -- runs against calibration data only)
+# Regression tests (zero API cost)
 cd backend && npm test
 
 # iOS build
 cd frontend && npm run build && npx cap sync ios && npx cap open ios
 
-# Deploy script
+# Deploy
 ./deploy.sh "commit message"
 ```
 
-Backend requires `backend/.env` with at minimum `ANTHROPIC_API_KEY`. See `backend/.env.example` for all variables.
+Backend requires `backend/.env` with `ANTHROPIC_API_KEY` at minimum. See `backend/.env.example`.
 
-After ANY backend/server.js or backend/calibration.js change, clear the cache:
+**Cache invalidation** after backend logic changes:
 ```bash
+# Clears in-memory only (Redis + disk survive)
 curl "https://partiqule-production.up.railway.app/cache-clear" -H "x-admin-key: $ADMIN_KEY"
+
+# Clears all 3 layers for one product (use for deterministic scoring fixes)
+curl "https://partiqule-production.up.railway.app/cache-clear-product?name=abes+mini+muffins" -H "x-admin-key: $ADMIN_KEY"
 ```
 
-**IMPORTANT: `/cache-clear` only clears the in-memory `scoreCache` Map — it does NOT clear Redis or the disk fallback.** Redis holds cached scored results for 90 days. If a scoring-logic fix changes how a product is scored, the old score will continue serving from Redis on cache-miss-to-in-memory until the entry ages out. Symptoms: the response carries `"cached": true` and a score that doesn't reflect the new logic.
+Cache keys are prefixed with `v<8-char-sha>` of the prompts. Prompt edits auto-invalidate via key change. Only deterministic changes (substance floors, calibration, NOVA inference) require per-product clearing.
 
-To fully invalidate a specific product's cached score (both layers):
-```bash
-curl "https://partiqule-production.up.railway.app/cache-clear-product?name=abes+mini+muffins+chocolate+chip" -H "x-admin-key: $ADMIN_KEY"
-```
+`ADMIN_KEY` set in Railway. No hardcoded fallback. Header preferred over `?key=`.
 
-`/cache-clear-product` clears in-memory, Redis, and saves disk. Use this when testing scoring changes on specific items. For a global prompt-level change there's no need to touch Redis directly — the cache key is prefixed with the `v<8-char-sha>` prompt hash, so Redis entries from older prompts become structurally unreachable and age out. Only manual deterministic changes (substance floors, calibration entries, NOVA inference, consistency checks) that reuse the same cache key require `/cache-clear-product` for targeted retesting.
-
-The `ADMIN_KEY` env var must be set in Railway. There is no hardcoded fallback. Query param `?key=` also works but header is preferred (avoids key leaking in logs).
-
-Commit messages: plain English only, no special characters, no em dashes (they break terminal quote parsing).
+**Commit messages:** plain English, no special chars, no em dashes (break terminal quote parsing).
 
 ---
 
 ## Architecture
 
-**Frontend:** React 18 + Vite. The entire UI lives in a single monolithic component (`frontend/src/App.jsx`, ~9,800 lines) with inline styles throughout -- no CSS files or framework. State is managed with `useState` hooks only. Capacitor wraps the app for iOS (StoreKit IAP via `@capgo/native-purchases` loaded dynamically).
+**Frontend:** React 18 + Vite. Single monolithic `frontend/src/App.jsx` (~9,800 lines), inline styles only, `useState` only. Capacitor wraps for iOS (StoreKit IAP via `@capgo/native-purchases`, dynamic import).
 
-**Backend:** Express API (`backend/server.js`, ~6,900 lines). Single-file server with all endpoints, scoring logic, caching, and intelligence feed pipeline.
+**Backend:** Express in `backend/server.js` (~6,900 lines). All endpoints, scoring, caching, intelligence pipeline.
 
-**Scoring pipeline (two-pass with smart skip):**
-1. Pass 1: Claude Haiku analyzes product across 5 dimensions (materials, usage, packaging, sustainability, manufacturing)
-2. Pass 2: Independent Claude call verifies Pass 1 -- SKIPPED when pass1 returns high confidence with real dimension scores (not flat 5s) and no web search context, saving ~20s and 1 API call
-3. Web search runs IN PARALLEL with pass1 (not blocking). If search returns data, it feeds into pass2
-4. Final score = weighted formula by category (e.g. food: materials 90% + packaging 10%)
-5. Substance floors (118 hardcoded chemicals) override AI scores -- enforced on ALL 6 code paths
-5a. NOVA bounds (`novaBounds()` in server.js) override AI scores for food and beverage. NOVA 1 ceiling 3, NOVA 3 floor 4, NOVA 4 floor 7. Traditional fermented foods (miso, kimchi, kefir, sauerkraut, tempeh) exempt via calibration. Barcode path reads `nova_group` directly from Open Food Facts. Text and vision paths use `inferNovaGroupFromIngredients()` (server.js) — a deterministic scan of the ingredient string for hallmark ultra-processing markers (fortification vitamins, tricalcium/dicalcium phosphate, syrups, HFCS, maltodextrin, dextrose, isolates, lecithin, mono/diglycerides, xanthan/guar gum, carrageenan, natural/artificial flavors, modified starches, hydrogenated oils, aspartame/sucralose/acesulfame, FD&C colors, sodium/potassium benzoates and sorbates, yeast extract, DATEM, polysorbates). 2+ markers → NOVA 4, 1 marker → NOVA 3, refined sugar/flour alone → NOVA 3. The inference injects `"NOVA 4 ultra-processed (inferred from ingredients: ...)"` into `p1.raw_concerns` and sets `p1.product_analysis.composition_tier = 4` so downstream consistency checks and positive ceilings recognize the signal. Authoritative floor enforcement is the LAST step of `applyProductCalibration` in calibration.js — food/beverage + NOVA 4 marker → score clamped to min 7 regardless of any upstream ceiling. This is the parity mechanism: Abe's Mini Muffins scores 7 identically via barcode, text search, or photo. Rationale: NOVA 1 ceiling reinforces whole foods as clean baseline, NOVA 3 floor acknowledges processing carries inherent concern, NOVA 4 floor of 7 signals ultra-processed as real concern matching UPF research (Monteiro 2025 Lancet, Srour 2024 BMJ, Lane 2024 Neurology).
-6. Regulatory flags from Supabase injected into AI prompt for approved findings
-7. Calibration registry (`backend/calibration.js`, 3,039 known products) overrides AI entirely
-8. Child scores via `computeSafetyScores()` helper -- uses `shouldComputeChildScore()` for all household categories
-9. Pregnancy scores via `computeSafetyScores()` helper -- computed on ALL paths including image/camera
-10. Consistency checks (`applyConsistencyChecks`) catch AI hallucinations (label contradictions, inert material ceilings, confidence-linked caps)
-11. Positive ceilings (`applyPositiveCeilings`) prevent over-penalizing USDA Organic and Non-GMO verified products. Also caps personal_care at 3 when three layers agree clean (2026-04-21, Burt's Bees fix), and caps clothing at 3 when GOTS/OEKO-TEX certified + no clothing-specific disqualifier fired (2026-04-22).
-12. Intelligence cards attached via in-memory cache (2-min TTL, avoids Supabase query per scan)
-13. Calibration entry category wins over detected category for weight selection (2026-04-22). When a calibration entry sets `category: "clothing"` but `detectCategoryFast()` returned `"baby"` (pajamas), the calibration category drives weight formula selection. Prevents pajamas from scoring with baby weights (sustainability 0%) which dropped FR-treatment and microfiber penalties. Applies in vision and barcode paths.
+### Scoring pipeline
 
-**Category scoring weights:**
-- Food/beverage: Materials 90% + Packaging 10%
-- Restaurant: Materials 90% + Packaging 10%
-- Supplement: Materials 65% + Exposure 25% + Packaging 10%
-- Personal care: Materials 45% + Exposure 45% + Packaging 5% + Sustainability 5%
-- Clothing: Materials 35% + Exposure 30% + Sustainability 35%
-- Home/cleaning: Materials 30% + Exposure 45% + Packaging 10% + Sustainability 15%
-- Baby: Materials 55% + Exposure 40% + Packaging 5%
-- Toys: Materials 50% + Exposure 40% + Packaging 5% + Sustainability 5%
+1. **Pass 0** — `backend/pass0.js` resolves verified ingredients (OFF → OBF → OPF → barcode_index → barcode_external → Supabase scans → vision OCR stub). Source + confidence + URL persisted on result.
+2. **Pass 1** — Claude Haiku scores 5 dimensions (materials, usage, packaging, sustainability, manufacturing) with verified ingredients as ground truth.
+3. **Pass 2** — independent verification. Skipped when Pass 1 returns high confidence with non-flat dim scores and no web context.
+4. Web search runs in parallel with Pass 1.
+5. **Final score** = weighted formula by category (see weights below).
+6. **Substance floors** — 118 hardcoded chemicals override AI scores on all 6 paths.
+7. **NOVA bounds** — food/beverage only. NOVA 1 ceiling 3, NOVA 3 floor 4, NOVA 4 floor 7. Barcode reads OFF `nova_group` directly. Text/vision use `inferNovaGroupFromIngredients()` (markers: fortification vitamins, phosphates, syrups, HFCS, maltodextrin, isolates, lecithin, mono/diglycerides, gums, carrageenan, flavors, modified starches, hydrogenated oils, artificial sweeteners, FD&C colors, benzoates, sorbates, yeast extract, DATEM, polysorbates). 2+ markers → NOVA 4. Authoritative final clamp lives in `applyProductCalibration` (calibration.js). Traditional ferments exempt via calibration.
+8. **Regulatory flags** from Supabase injected into Pass 1 prompt.
+9. **Calibration registry** (`backend/calibration.js`, 3,039 entries) overrides AI entirely.
+10. **Child scores** via `computeSafetyScores()` + `shouldComputeChildScore()` (all household categories).
+11. **Pregnancy scores** via `computeSafetyScores()` on every path including image.
+12. **Consistency checks** — catch hallucinations (label contradictions, inert material ceilings).
+13. **Positive ceilings** — cap USDA Organic + Non-GMO at 3; personal_care at 3 with 3-layer agreement; clothing at 3 with GOTS/OEKO-TEX + no disqualifier.
+14. **Intel cards** attached via 2-min in-memory cache.
+15. **Calibration entry category wins** over detected category for weight selection (prevents pajamas scoring with baby weights).
 
-**Caching (multi-layer):** In-memory Map -> Upstash Redis (90-day TTL) -> disk fallback (`/tmp/partiqule_cache.json`). On `cacheGet`, layers are checked in order — in-memory first, Redis on miss, disk on Redis miss. Writes populate all three. `/cache-clear` only clears in-memory; Redis and disk survive. `/cache-clear-product?name=X` clears all three for a specific product. When testing deterministic scoring fixes (substance floors, calibration, NOVA inference) against known-cached products, use the per-product endpoint or the Redis entry will serve a stale score until it ages out.
+### Category weights
 
-**Cache versioning:** All Pass 1 output cache keys are prefixed with `v<8-char-sha>:` where the hash is computed at startup from the source of `pass1`, `pass2`, `callClaudeVision`, `tier4WebExtract`, and `tier5CategoryPrior`. When any of these prompts is edited the hash changes, every prior cache entry becomes unreachable by name, and the next request rescore naturally with the current prompt. Old entries age out via Redis TTL — no migration needed. Calibration map lookups, Supabase scan lookups, and the productId bypass don't go through cacheGet/cacheSet, so they're never invalidated by prompt edits. Startup logs the active version: `[CACHE] Prompt version: v<hash>`.
+```
+Food/beverage:    Materials 90% + Packaging 10%
+Restaurant:       Materials 90% + Packaging 10%
+Supplement:       Materials 65% + Exposure 25% + Packaging 10%
+Personal care:    Materials 45% + Exposure 45% + Packaging 5% + Sustainability 5%
+Clothing:         Materials 35% + Exposure 30% + Sustainability 35%
+Home/cleaning:    Materials 30% + Exposure 45% + Packaging 10% + Sustainability 15%
+Baby:             Materials 55% + Exposure 40% + Packaging 5%
+Toys:             Materials 50% + Exposure 40% + Packaging 5% + Sustainability 5%
+```
 
-**Intelligence feed pipeline:**
-1. Daily at 7am UTC: fetches 18 RSS feeds from EU/US/international health sources
-2. Filters articles by 120+ compound/topic keywords, skips older than 14 days
-3. Claude Haiku writes card copy with jurisdiction-aware prompting
-4. Cards saved as drafts (active: false) to Supabase for admin review
-5. On approval: regulatory flags extracted via Claude and injected into scoring prompt
-6. Live cards appear in For You carousel, Feed page, and on relevant scan results
+### Caching
+
+In-memory Map → Upstash Redis (90d TTL) → disk fallback (`/tmp/partiqule_cache.json`). Reads cascade through layers; writes populate all three. Prompt-version prefix on cache keys (see `backend/cacheKeys.js`).
+
+**Pre-Pass-0 entries auto-evict** on cache hit. Any cached result lacking `ingredient_source` is dropped from memory + Redis and re-scored fresh. Image-path scans currently don't write `ingredient_source`, so they're effectively uncached until OCR is wired into Pass 0.
+
+### Intelligence feed
+
+1. Daily 7am UTC: 18 RSS feeds (EU/US/intl health sources)
+2. Filter by 120+ keywords, skip >14d old
+3. Haiku writes card copy, jurisdiction-aware
+4. Saved as drafts (active: false) for admin review
+5. On approval: regulatory flags extracted + injected into scoring
+6. Live cards appear in For You carousel, Feed page, relevant scan results
 
 ---
 
-## Ten Design Laws -- Apply to Every Change
+## Ten Design Laws
 
-Before writing any code, name which law(s) the change serves. If a design choice conflicts with a law, the law wins.
+Apply to every change. If a design choice conflicts with a law, the law wins.
 
 ```
-01 Value in 30 seconds    -- no paywall, tutorial, or input required before first result
-02 Score never destination -- every score shown has a next action visible without scrolling
-03 Surfaces are earned    -- features appear only when user behavior triggers them
-04 One decision per moment -- one primary action per screen or card, others visually subordinate
-05 Completion is ceremony  -- audits/sessions get grade + share card + clear next step
-06 Constraint = personal.  -- budget/mode inputs framed as telling the app about you, never a limit
-07 Flow protects itself    -- task modes hide nav bar, preserve session state indefinitely
-08 Honest over comfortable -- scores never softened, flags always name specific compounds
-09 Context makes score     -- every score shown with category average or trend context
-10 Share is native         -- every completion moment has a purpose-built share card
+01 Value in 30 seconds      no paywall/tutorial/input before first result
+02 Score never destination  every score has a next action visible without scrolling
+03 Surfaces are earned      features appear when behavior triggers them
+04 One decision per moment  one primary action per screen/card
+05 Completion is ceremony   audits get grade + share card + clear next step
+06 Constraint = personal    budget/mode framed as telling app about you
+07 Flow protects itself     task modes hide nav, preserve session indefinitely
+08 Honest over comfortable  scores never softened, flags name compounds
+09 Context makes score      every score shown with category average or trend
+10 Share is native          every completion has a purpose-built share card
 ```
 
-Score color thresholds (consistent everywhere, never change):
-- <= 3.0 -> #16a34a (green)   background: #f0fdf4
-- <= 5.0 -> #d97706 (amber)   background: #fffbeb
-- > 5.0 -> #dc2626 (red)     background: #fef2f2
+**Score color thresholds (never change):**
+- ≤ 3.0 → `#16a34a` green   (bg `#f0fdf4`)
+- ≤ 5.0 → `#d97706` amber   (bg `#fffbeb`)
+- > 5.0 → `#dc2626` red     (bg `#fef2f2`)
 
-**ScoreBadge component** -- a shared component renders score numbers identically across all surfaces. A 6.8 in My Routine must look identical to a 6.8 on a scan result. Never render score numbers with ad-hoc inline color logic; always use ScoreBadge.
+**ScoreBadge component** renders score numbers identically across surfaces. Never use ad-hoc inline color logic for scores.
 
 ---
 
 ## Key Files
 
-- `frontend/src/App.jsx` -- Entire React UI (~9,800 lines, all components defined as const functions)
-- `frontend/vite.config.js` -- Build target is `safari15` for iOS WKWebView compatibility
-- `frontend/public/sw.js` -- Service worker (cache name `partiqule-v2`)
-- `frontend/scripts/generate-product-pages.js` -- Generates 2,400+ static SEO pages at build time
-- `backend/server.js` -- All API endpoints, scoring logic, substance registry, intelligence feed, caching
-- `backend/calibration.js` -- 3,039 known product scores with product-level entries for major activewear brands (Lululemon, Vuori, Alo Yoga)
-- `backend/products.js` -- 420+ affiliate alternative products across 6 categories with synonym expansion, brand injection, and gender/age matching
-- `backend/amazon-api.js` -- Amazon Creators API integration (tag: partiqule-20)
-- `backend/scoring-regression-test.js` -- 95 assertion tests (calibration, substance floors, child detection, category detection)
+- `frontend/src/App.jsx` — entire React UI, all components defined as const functions
+- `frontend/vite.config.js` — build target `safari15` for WKWebView
+- `frontend/public/sw.js` — service worker (currently `partiqule-v10`)
+- `frontend/scripts/generate-product-pages.js` — generates 2,400+ SEO pages
+- `frontend/scripts/fingerprint-og.js` — postbuild step, content-hashes og:image URLs
+- `backend/server.js` — all API endpoints, scoring, caching, intel feed
+- `backend/calibration.js` — 3,039 product entries
+- `backend/cacheKeys.js` — shared cache-key + prompt-version helpers (used by server + preload_redis)
+- `backend/pass0.js` — ingredient resolution
+- `backend/scoringCascade.js` — five-tier text cascade + whole-foods detector
+- `backend/visionContract.js` — vision identify → cascade-verify → score
+- `backend/products.js` — 420+ affiliate alternatives
+- `backend/amazon-api.js` — Amazon Creators API (tag: `partiqule-20`)
 
 ---
 
-## Navigation Structure
+## Navigation
 
-**Bottom nav (mobile):** Home | Feed | Scan (center FAB) | Lists | Profile
-
+**Bottom nav (mobile):** Home | Feed | Scan FAB | Lists | Profile
 **Desktop nav:** About | Feed | The Science | Lists | Audit | My Scans
+**Hamburger (≤1024px):** About, Science, How it Works, Guides, My Routine, My Scans, Audit, Settings, Admin
 
-**Hamburger menu (mobile/tablet, renders when width <= 1024):**
-About, The Science, How it Works, Guides, My Routine, My Scans, Start Audit, Settings, Admin (admin only)
-
-**iPad handling:** `isTablet = width >= 768 && width <= 1024`. iPad gets hamburger menu, not desktop nav. All mobile UI conditions use `(isMobile || isTablet)`.
+`isTablet = width >= 768 && width <= 1024`. iPad gets hamburger. All mobile UI uses `(isMobile || isTablet)`.
 
 ---
 
 ## API Endpoints
 
-**Public:**
-- `POST /analyze` -- Main scoring endpoint. Accepts `{query, category, childMode, pregnancyMode, image, mediaType}`
-- `POST /barcode` -- Barcode scan via Open Food Facts + full AI pipeline
-- `GET /health` -- Status check
-- `GET /api/intelligence-cards` -- Active live intelligence cards
-- `POST /api/recipe-ingredients` -- AI-powered recipe ingredient expansion
-- `GET /api/price-lookup` -- Amazon price lookup
+**Public:** `POST /analyze`, `POST /barcode`, `GET /search`, `GET /health`, `GET /api/intelligence-cards`, `POST /api/recipe-ingredients`, `GET /api/price-lookup`, `GET /min-version`
 
-**User:**
-- `POST /subscribe` -- Email newsletter signup
-- `POST /delete-account` -- Full account + subscription deletion
-- `POST /create-checkout` -- Stripe checkout session
-- `GET /scan-count` / `GET /subscription-status` -- User state
-- `POST /score-feedback` -- User score reports
-- `POST /suggest` -- Product suggestion submissions
-- `POST /verify-apple-receipt` / `POST /apple-iap-confirm` -- iOS IAP
+**User (require Supabase JWT):** `POST /subscribe`, `POST /delete-account`, `POST /create-checkout`, `GET /scan-count`, `GET /subscription-status`, `POST /score-feedback`, `POST /suggest`, `POST /verify-apple-receipt`, `POST /apple-iap-confirm`
 
-**Intelligence feed (require ADMIN_KEY):**
-- `GET /api/intelligence/all` -- All cards including drafts (admin)
-- `POST /api/intelligence/approve/:id` -- Approve card + extract regulatory flags
-- `DELETE /api/intelligence/dismiss/:id` -- Dismiss draft card
-- `POST /api/intelligence/run` -- Run RSS feed pipeline manually
-- `POST /api/intelligence-cards` -- Create card manually
-- `PATCH /api/intelligence-cards/:id` -- Update card
-- `DELETE /api/intelligence-cards/:id` -- Delete card
+**Intel (admin):** `GET /api/intelligence/all`, `POST /api/intelligence/approve/:id`, `DELETE /api/intelligence/dismiss/:id`, `POST /api/intelligence/run`, `POST/PATCH/DELETE /api/intelligence-cards*`
 
-**Admin (require ADMIN_KEY):**
-- `GET /admin/api-budget` -- View API spend counters
-- `GET /admin/reload-redis` -- Batched Redis reload
-- `GET/POST/DELETE /admin/calibration` -- Score overrides via Supabase
-- `GET /cache-status` / `GET /cache-clear` / `GET /cache-clear-product`
-- `GET /recent-scans` -- Admin scan browser
-- `GET /score-feedback` / `POST /score-feedback/resolve`
-- `GET /suggestions` / `POST /suggestions/resolve`
+**Admin:** `GET /admin/api-budget`, `GET /admin/reload-redis`, `GET/POST/DELETE /admin/calibration`, `GET /cache-status`, `GET /cache-clear`, `GET /cache-clear-product`, `GET /cache-clear-barcode`, `GET /recent-scans`, `GET /score-feedback`, `POST /score-feedback/resolve`, `POST /admin/flag-detection-diff`
 
 ---
 
 ## localStorage Keys
 
 ```
-ps_history                  -- array of scan objects
-ps_lists                    -- array of list objects (shopping + grocery)
-ps_scan_count               -- integer, scans used (free tier enforcement)
-ps_email_captured           -- "1" if email capture dismissed
-ps_font_scale               -- number 1-1.6, accessibility font scaling
-ps_audit_session            -- JSON of active audit session (survives backgrounding)
-ps_last_audit               -- JSON summary of last completed audit (7-day TTL)
-ps_feed_last_visit          -- ISO timestamp, last Feed page visit (for badge count)
-partiqule_child_mode        -- "1" if kids scoring mode active
-partiqule_pregnancy_mode    -- "1" if pregnancy scoring mode active
-partiqule_display_name      -- user's chosen display name
-pq_visits                   -- feed visit tracking (last 60 entries)
-pq_foryou                   -- For You carousel seen state by date
+ps_history, ps_lists, ps_scan_count, ps_email_captured, ps_font_scale,
+ps_audit_session, ps_last_audit, ps_feed_last_visit
+partiqule_child_mode, partiqule_pregnancy_mode, partiqule_display_name
+pq_visits, pq_foryou
 ```
 
 ---
 
-## Supabase Tables
+## Supabase Tables (verified production state)
 
-**Actually exist in production (verified 2026-04-22):**
-- `profiles` -- id, email, scan_count, stripe_customer_id, is_subscribed, subscription_ends_at
-- `scans` -- user_id, product_name, category, score, result_json, scanned_at
-- `guides` -- content-management for guide articles, published flag, admin emails can write
-- `score_feedback` -- product reports from users (pending/resolved/dismissed)
-- `intelligence_cards` -- admin-curated and auto-generated intelligence cards
-- `regulatory_flags` -- regulatory findings extracted from approved intelligence cards
-- `product_safety_findings` -- admin-populated or legacy
+**Exist:** `profiles`, `scans`, `guides`, `score_feedback`, `intelligence_cards`, `regulatory_flags`, `product_safety_findings`
 
-**Referenced in code but do NOT exist — endpoints that touch them 500 silently:**
-- `subscriptions` -- `/apple-iap-confirm` no longer writes here (fixed 2026-04-22; profiles.is_subscribed is the source of truth). Could add if a transaction audit trail is wanted later.
-- `suggestions` -- `/suggest`, `/suggestions`, `/suggestions/resolve` all 500 silently. Unused feature.
-- `calibration_overrides` -- startup `loadCalibrationOverrides` wraps in try/catch so it logs but doesn't crash; `/admin/calibration` endpoints 500. Create the table if admin calibration overrides are wanted at runtime.
+**Don't exist (endpoints touching them silently 500):** `subscriptions` (removed from `/apple-iap-confirm`), `suggestions` (`/suggest` 500s), `calibration_overrides` (`/admin/calibration` 500s)
 
-All tables have RLS enabled as of 2026-04-22 — see "Security conventions" above for policy details.
+All tables have RLS enabled. Backend uses service role key (bypasses RLS); frontend anon key respects policies.
+
+**Auto-create profile on signup** — trigger `on_auth_user_created` runs `INSERT INTO profiles (id, email)` from `auth.users`. Required to prevent IAP attribution failures.
 
 ---
 
 ## Current Feature State
 
-**LIVE (do not break):**
-- Scan (text + barcode + image), calibration scoring, alternatives panel (Amazon/Brand/Target)
-- Kids Mode (`childMode`) and Pregnancy Mode (`pregnancyMode`) -- both persist via localStorage
-- ScoreBadge shared component for all score rendering
-- Score context line (`category_score_context` on scan response)
-- CTA hierarchy on scan result: primary = See Alternatives or Scan Another, secondary contextual
-- ShareCompareCard for alternatives comparison sharing (scan-result share card removed April 2026)
-- Room tagging on scan result ("Which room?" prompt for home-relevant categories)
-- My Routine (RoutinePage), scan history (HistoryPage) with "By date / By room" toggle
-- Home coverage card on hero page (getHomeCoverage)
-- Lifestyle score card (computeLifestyleScore) -- permanent fixture between greeting and For You
-- For You intelligence carousel (generateForYouCards + ForYouCarousel) with auto-scroll
-- Live intelligence cards from RSS feed merged into For You carousel
-- Intelligence cards surfaced on relevant scan results via product-family matching, specific-SKU fuzzy match, and (for authenticated users) 30-day scan history intersection — see "Intel Card Relevance"
-- Feed page (/feed) -- dedicated scrollable inbox of all intelligence cards with filters
-- Audit session flow (AuditSessionView) with pause/resume and completion ceremony (AuditCompleteScreen)
-- Audit type selector (5 types: pantry, beauty, home, closet, nursery)
-- Lists page with three tabs: Grocery Lists, Shopping Lists, My Routine
-- Grocery list builder with recipe ingredient expansion, swap suggestions, budget tracker, quantity controls, post-shop summary and share card
-- Shopping lists with add/check/delete items
-- Subscription: Stripe (web) + Apple IAP with Restore Purchases
-- Guides platform, admin panel with Intel Cards tab (per-card Retag editor for product_families, specific_products, ingredient_triggers; over-broad drafts block Approve with inline warning)
-- Bottom sheet scan modal (mobile) with camera/library/text options
-- Client-side barcode detection (BarcodeDetector API) before vision fallback
-- Service worker v2 with proper navigation fallback
-- Display name collection after signup, editable in Settings
-- Account deletion with prominent "Danger zone" section in Settings
+**LIVE:**
+- Scan (text + barcode + image), calibration, alternatives (Amazon/Brand/Target)
+- Kids Mode + Pregnancy Mode (localStorage persist)
+- ScoreBadge, score context line, CTA hierarchy on result
+- Match picker, source confidence badge, ingredient source line
+- Room tagging, My Routine, scan history (date/room toggle)
+- Home coverage card, lifestyle score card, For You carousel, Feed page
+- Intel cards on relevant scans (product-family + specific-SKU + 30d history)
+- Audit flow (5 types: pantry, beauty, home, closet, nursery) + completion ceremony
+- Lists page (3 tabs: grocery, shopping, routine), recipe ingredient expansion
+- Stripe + Apple IAP with Restore Purchases, account deletion
+- Guides platform, admin Intel Cards tab with retag editor
+- Bottom sheet scan modal (photo-first, barcode secondary)
+- Display name collection, Settings page, Danger Zone
+- Whole-foods detector + sourcing flag chips (wild caught, organic, grass-fed, etc.)
+- Auth-refresh on 401 via `authedFetch` wrapper
+- Min-version enforcement (UpdateRequiredView)
+- Per-product OG cards with content-hash fingerprinting
 
-**NOT YET BUILT (Phase 2+):**
-- Batch scan session (dedicated scan mode, accumulates into audit)
-- Pantry Audit / Beauty Audit / Home Audit completion flows with persistent results
-- Lifestyle Score timeline and monthly snapshots
-- Recipe Library (Sara-curated)
-- Supabase-backed lists (server-side grocery lists with sync)
-- User preferences synced to Supabase profiles (currently localStorage only)
+**NOT YET BUILT:**
+- Batch scan session, dedicated audit completion flows
+- Lifestyle Score timeline, Recipe Library
+- Supabase-backed lists, server-synced preferences
 
 ---
 
 ## Critical Conventions
 
 ### iOS / Capacitor
-- `@capgo/native-purchases` must be loaded via dynamic `import()`, NOT `require()`
-- Build target must be `safari15` in vite.config.js for WKWebView compatibility
-- After any frontend change: `npm run build && npx cap sync ios` before testing in Xcode
-- `IS_NATIVE` uses `window.Capacitor.isNativePlatform()` -- NOT screen width check
-- iPad (820px) gets tablet treatment: hamburger menu, not desktop nav
+- `@capgo/native-purchases` via dynamic `import()`, NOT `require()`
+- Build target `safari15` in vite.config.js
+- After frontend changes: `npm run build && npx cap sync ios`
+- `IS_NATIVE` uses `window.Capacitor.isNativePlatform()`, not width
+- iPad (820px) gets tablet treatment
 
 ### The duplicate import bug
-When copying App.jsx from external sources, line 4 often re-introduces `import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases"` which conflicts with the `let` declaration on line 2. Always check the first 5 lines after copying.
+When copying App.jsx from external sources, line 4 often re-introduces `import { NativePurchases, PURCHASE_TYPE } from "@capgo/native-purchases"` which conflicts with line 2's `let`. Check first 5 lines after copying.
 
 ### The stale closure bug
-When multiple async operations update the same `lists` state (e.g. batch recipe ingredient adds), each call captures a stale snapshot. Use functional `saveLists(prev => prev.map(...))` for ALL async state updates. The `saveLists` helper supports both direct values and functional updates.
+Multiple async ops updating same `lists` state capture stale snapshots. Use functional `saveLists(prev => prev.map(...))` for ALL async updates.
 
-### API spend guardrails
-- Hard daily cap (default 500) and monthly cap (default 5000) on Claude API calls
-- Override via env vars `API_DAILY_CAP` and `API_MONTHLY_CAP`
-- NEVER run bulk operations without confirming the rate limit and budget are adequate
+### API spend
+Hard daily cap (default 500) + monthly cap (default 5000). Override via `API_DAILY_CAP` / `API_MONTHLY_CAP`. Never bulk without confirming.
 
-### Scoring pipeline consistency
-- There are 6 code paths that produce a scored result (text, vision, text-fuzzy, vision-fuzzy, barcode, admin-reload). All must use `serializeAlternatives()` and `computeSafetyScores()`.
-- All 6 paths must include `category_score_context` field
-- All 6 paths must enforce substance floors via `applySubstanceFloors()`
-- All 3 fresh-result paths (text, vision, barcode) call `attachIntelCards()` before `res.json()`
-- Child scores use `shouldComputeChildScore()` (all household categories), not just `detectChildProduct()` (baby/toy/kid-branded only)
-- Pregnancy scores computed on ALL paths (including image/camera -- was previously missing)
-- Regulatory flags are loaded into `REGULATORY_FLAGS_CACHE` on startup and injected into pass1 via `buildRegulatoryContext()`
-- Fuzzy calibration uses a prefix index (rebuilt on calibration override reload) for fast lookups
-- All food/beverage paths enforce NOVA 4 floor via `inferNovaGroupFromIngredients()` (text, vision) or OFF `nova_group` (barcode). `applyProductCalibration` runs the authoritative final-step clamp (floor 7) so no downstream ceiling can override it. `result.raw_concerns` must be preserved on the response object so the calibration layer can read the `"NOVA 4 ultra-processed"` marker — don't let `p2.refined_concerns` overwrite `concerns` without also copying `raw_concerns` separately.
+### 6 scoring paths must stay in sync
+text, vision, text-fuzzy, vision-fuzzy, barcode, admin-reload. All must:
+- Use `serializeAlternatives()` and `computeSafetyScores()`
+- Include `category_score_context`
+- Enforce substance floors via `applySubstanceFloors()`
+- Set `ingredient_source` on result (image path is the gap)
+- Preserve `raw_concerns` separately from `concerns` (NOVA 4 marker lives here)
+- Fresh paths call `attachIntelCards()` before `res.json()`
 
 ### Category detection
-- `detectCategory()` routes products before scoring. Order matters -- baby personal care ("baby shampoo") routes to personal_care, baby supplements ("kids vitamins") route to supplement, before the baby catch-all
-- 13 categories: other, restaurant, toy, accessory, baby, clothing, supplement, home_furnishing, kitchen, home, personal_care, beverage, food
-- Null return (unrecognized) falls back to "other" category weights
+`detectCategory()` order matters. Baby personal_care ("baby shampoo") routes to personal_care BEFORE baby. 13 categories. Null falls back to "other". **Calibration category wins over detected category** for weight selection.
 
 ### Alternatives matching (`findAlternatives` in products.js)
-- Synonym expansion maps product terms to related keywords (e.g. "pad" -> menstrual/period/feminine, "blouse" -> top/shirt/women)
-- Brand-keyword injection adds product-type keywords when query contains a known brand (e.g. "Always" injects "menstrual, pads, feminine care")
-- Gender matching: men's-tagged products deprioritized (-15 points) for non-masculine queries
-- Age matching: kids-tagged products excluded (score=0) for adult clothing/personal_care queries
-- Category filter: "other" category blocked from supplement/personal_care/baby queries (prevents garden tools for Garden of Life)
-- Calibration dedup: nutrition-only entries must NOT appear after full entries in calibration.js (Map.set overwrites -- last entry wins)
-- PFAS brand auditing: when a brand claims PFAS phase-out, verify against independent lab testing and regulatory actions before lowering floors. Split brands by product type -- DWR-finished items stay at floor:5 until independent lab verification; cotton/fleece/lounge items with no chemical finish can score lower. Insert specific product entries BEFORE the brand default in calibration.js (Map iteration order determines which `startsWith` match wins). Cite investigations with dates in reason strings.
+- Synonym expansion (pad → menstrual/period; blouse → top/shirt/women)
+- Brand-keyword injection (Always → menstrual/pads; Lululemon → activewear/leggings)
+- Gender penalty (-15 for cross-gender)
+- Age exclusion (kids products score=0 for adult queries)
+- `STRICT_CATEGORIES` enforces same-category for clothing
+- `BLOCK_OTHER` excludes "other" for supplement/personal_care/baby
+- **Calibration dedup:** nutrition-only entries must NOT appear AFTER full entries (Map.set overwrites — last wins)
 
-### Security conventions
-- `ADMIN_KEY` must be set via env var -- no hardcoded fallback
-- Admin auth prefers `x-admin-key` header; query param `?key=` also accepted (needed for curl)
-- All admin requests are audit-logged with IP, path, method
-- User input to `/analyze` is sanitized (length cap 300, control chars stripped)
-- Barcode input validated as 4-14 digit string
-- Recipe ingredients input sanitized (length cap 200, quote stripping, servings 1-100)
-- Intelligence card mutations validated against field allowlist
-- Internal error details never exposed to client responses
-- Cache-clear rate-limited to once per 60 seconds
-- **User auth middleware `requireUserAuth`** (2026-04-22) — three endpoints require a verified Supabase JWT in `Authorization: Bearer <token>`: `/delete-account`, `/apple-iap-confirm`, and the `/analyze` scan-count increment path. userId is derived from the token's `sub` claim, never from the request body. Without this, anonymous callers could (a) grant themselves or anyone premium via `/apple-iap-confirm`, (b) delete any account by guessing a UUID, (c) reset any user's scan_count to bypass the paywall. Frontend helper `authHeaders()` pulls `session.access_token` from Supabase and attaches the Bearer header. Anonymous `/analyze` scans still work — they just skip the counter increment.
-- **Apple receipt verification** (2026-04-22) — `/apple-iap-confirm` cryptographically verifies the Apple receipt (JWS payload bundleId + productId match, or legacy verifyReceipt fallback) before flipping `profiles.is_subscribed`. An authenticated user cannot fabricate a transactionId for a product they didn't buy. StoreKit 2 JWS verification parses payload without full signature verification (rotating trust roots is heavier lift — worth doing but beyond the scope of this patch).
-- **Atomic scan-count increment** (2026-04-22) — `/analyze` uses a Supabase RPC `increment_scan_count(uid)` for the counter update. Run this migration once:
-  ```sql
-  CREATE OR REPLACE FUNCTION increment_scan_count(uid uuid)
-  RETURNS void LANGUAGE sql AS $$
-    UPDATE profiles SET scan_count = COALESCE(scan_count, 0) + 1 WHERE id = uid;
-  $$;
-  ```
-  Fallback (non-atomic select + upsert) still runs if the RPC isn't installed — safe to deploy code first, run migration later.
-- **Supabase RLS** (2026-04-22) — all 7 public tables have Row Level Security enabled: `profiles` (own read/update), `scans` (own CRUD), `guides` (published=true read, admin email manage), and `score_feedback` / `intelligence_cards` / `regulatory_flags` / `product_safety_findings` (backend-only via `supabaseAdmin`). Backend uses the service role key to bypass RLS; the frontend anon key can only access what the policies allow. Stale CLAUDE.md previously listed `subscriptions`, `suggestions`, `calibration_overrides` as existing — they do not. `/suggest`, `/apple-iap-confirm` (audit write), and `/admin/calibration` all touched non-existent tables; `/apple-iap-confirm` was patched 2026-04-22 to drop the `subscriptions` write. The other two endpoints still 500 silently when invoked.
+### Security
+- `ADMIN_KEY` env var only, no hardcoded fallback
+- All admin requests audit-logged
+- User input sanitized (`/analyze` 300 char cap, control chars stripped)
+- Barcode validated as 4-14 digits
+- Recipe ingredients sanitized (200 char cap, servings 1-100)
+- Intel card mutations validated against `INTEL_CARD_FIELDS` allowlist
+- Internal errors never exposed to client
+- `/cache-clear` rate-limited to 1/min
+- **`requireUserAuth` middleware:** `/delete-account`, `/apple-iap-confirm`, `/analyze` scan-count increment require Supabase JWT. userId from token's `sub` claim, never request body.
+- **Apple receipts cryptographically verified** (JWS payload bundleId+productId match, or legacy verifyReceipt fallback) before flipping `is_subscribed`
+- **Atomic scan-count increment** via `increment_scan_count(uid)` RPC. Fallback (non-atomic) still works if RPC missing.
+- **RLS on all 7 tables**
 
 ### Frontend styling
-100% inline JavaScript styles (camelCase). No CSS files. Dark mode via `isDark` boolean (currently always true). Color system: green (safe) -> yellow (caution) -> orange (warn) -> red (danger). Mobile breakpoint: `isMobile = width < 768`. Tablet breakpoint: `isTablet = width >= 768 && width <= 1024`.
-
-### Ingredient data sources per scoring path
-
-Pass 1 does not have a single ingredient source — it varies by entry point:
-
-- **Text path** (`/analyze` with `query`): five-tier cascade — CALIBRATION map → cache → Open Facts text search → web_search extraction → category-prior best guess. Tiers 1-4 feed real ingredients into Pass 1; Tier 5 skips Pass 1 entirely and returns a synthetic category-typical estimate with empty chemistry fields. See "Five-Tier Scoring Cascade" section below.
-- **Vision path** (`/analyze` with `image`): `callClaudeVision` reads the label from pixels. LABEL TRUTH RULE in the vision system prompt tries to prevent AI priors from overriding visible text, but the risk is not eliminated.
-- **Barcode path** (`/barcode`): Open Food Facts `ingredients_text_en` is injected into pass1 as ground truth via `offContext`. Safest path; only works for products in OFF indexes.
-
-Calibration entries and flagDetection both treat AI-returned `ingredient_list` as input. The cascade's strict gating in Tiers 3 and 4 (≥0.7 trigram similarity, non-empty ingredients, OFF `complete` flag, AI extraction validates returned-name against query) is what keeps fabrications out of Pass 1; Tier 5 contains the remaining risk by skipping Pass 1 altogether.
+100% inline JS styles (camelCase). Dark mode is `isDark` boolean (always true). Mobile `< 768`, tablet `768-1024`. **No CSS files except `tokens.css`.**
 
 ### Calibration entry integrity
+Brands reformulate. Verify ingredients against current package/manufacturer/recent-OFF, not memory. Include `Ingredients verified MM YYYY` in `reason` field. **Listing substances a product no longer contains is a defamation risk.**
 
-Calibration entries must reflect the CURRENT product formulation. Brands reformulate frequently (Danimals, Mott's, Kraft Mac and Cheese, Kellogg, General Mills have all removed artificial dyes in recent years). Before adding or editing a calibration entry:
-
-- Verify ingredients against the current package label, manufacturer website, or a recent Open Food Facts entry — not from memory or historical reputation.
-- Include a `Ingredients verified <MM YYYY>` note in the `reason` field when the substance list was checked against a real product.
-- An entry listing substances the product no longer contains is a defamation risk, not a scoring error.
+### PFAS auditing protocol
+1. Cross-reference brand claims against Mamavation EPA-cert lab testing (or Consumer Reports, EWG, Toxic-Free Future)
+2. For split-use brands, separate product lines: DWR items stay floor:5 until verified; cotton/fleece/lounge can score lower
+3. Insert specific entries BEFORE brand defaults (Map iteration order wins via `startsWith`)
+4. Cite investigations with dates in `reason`
 
 ### Session rules
-- Always read CLAUDE.md before writing any code in a session.
-- Test on 390px viewport after any UI change.
+- Always read CLAUDE.md before writing code
+- Test on 390px viewport after UI changes
 
 ---
 
-## App Store Submission Notes
+## Five-Tier Cascade (text path)
 
-**Account deletion path:** Account button in header (mobile/tablet) or Settings in hamburger menu -> Settings page -> Danger Zone -> Delete My Account. Direct URL: partiqule.com/account
+`/analyze` text queries run cascade in `backend/scoringCascade.js`:
 
-**Restore Purchases:** Available in paywall modal ("Restore previous purchase") and Settings > Subscription section ("Restore purchases"). Both call `loadNativePurchases().restorePurchases()`.
+| # | Source | confidence | label |
+|---|---|---|---|
+| 1 | CALIBRATION map (exact/fuzzy) | `null` | "Verified formula" |
+| 2 | Cache hit | inherited | inherited |
+| 3 | OFF/OBF/OPF text search (trigram ≥0.7, non-empty ingredients, `complete` flag) | `medium` | "Sourced from Open Food Facts" (etc.) |
+| 4 | Anthropic web_search (22s timeout, 2-attempt retry with `canonicalizeQuery`, `isTier4NameAcceptable` gate) | `medium` | "Sourced from <domain>" |
+| 5 | Category-prior synthetic + whole-foods detector | `low` | "Best guess from product name" |
 
-**Subscription terms (all required by Apple, adjacent to subscribe button):**
-1. Subscription title: "Partiqule Premium"
-2. Length: "monthly"
-3. Price: dynamic from StoreKit (fallback "$4.99/month")
-4. "Payment will be charged to your Apple ID at confirmation of purchase"
-5. Auto-renewal disclosure with specific cancellation path (Settings > Apple ID > Subscriptions)
-6. Functional URL links: Privacy Policy (partiqule.com/privacy), Terms of Service (partiqule.com/terms), Apple EULA (apple.com standard EULA)
-7. Standard Apple EULA link also in App Store description
+**Tier 5 never calls Pass 1.** Returns synthetic result with empty chemistry, `_skipCache: true`. Closes the fabrication path. Whole-foods detector intercepts before generic fallback (50+ patterns: wild fish, eggs, produce, dairy, conventional poultry, red meat, processed meats).
 
-**IAP error handling:** StoreKit failures show immediate toast error + web subscription fallback. No silent failures.
+`dedupeInflight(query, category, fn)` collapses concurrent identical queries to one execution. 5-min slot cleanup.
 
-**iPad:** isTablet breakpoint covers 768-1024px. Hamburger menu 44x44px touch target with z-index 200.
+**Tier 4 cost guard:** fires only on Tier 3 miss. Same `apiCallCounts` as `callClaude`.
 
----
+**Don't loosen Tier 3 strictness** (similarity, complete flag, ingredient text checks) or Tier 4's `isTier4NameAcceptable` OR-gate without written reason — fabrication failure mode returns.
 
-## Deployment
-
-- **Backend:** Railway (auto-detects `backend/package.json`, runs `npm start`)
-- **Frontend:** Vercel (root: `frontend`, framework: Vite, prebuild generates SEO pages)
-- **iOS:** Xcode Archive -> App Store Connect -> TestFlight / App Store
-- `API_BASE` in `App.jsx` line 27 must point to the Railway backend URL
-- SEO pages at `/products/<slug>` are served by Vercel rewrite in `vercel.json`
-- Service worker `partiqule-v2` -- bump version when deploying breaking changes
+Result schema fields: `source` (machine), `source_label` (UI copy), `source_confidence` (`null`/`medium`/`low`).
 
 ---
 
-## flagDetection Integration
+## Vision Contract v2
 
-Deterministic substance detection is integrated into Pass 1 scoring. The AI cannot contradict findings from `backend/flagDetection.js`.
+Gated on `VISION_CONTRACT_V2=true`. Module: `backend/visionContract.js`. Flow:
 
-- Pre-AI: when ingredient text is available (barcode via OFF), `detectFlags` runs before pass1 and confirmed substances are injected into the prompt as `DETERMINISTIC FLAGS DETECTED`.
-- Post-AI: `detectFlags` runs again on the AI-captured `ingredient_list`. `validateAIResponse` compares AI-claimed substances to the deterministic set. `mergeFlags` merges deterministic findings into `p1.harmful_chemicals` and appends any AI-missed findings to `p1.raw_concerns` so `applySubstanceFloors` picks them up.
-- Disagreements are logged with structured data under `[flag_detection_override]` for audit. The log fires only when `missingFromAI` has entries (deterministic caught something the AI missed). `extraInAI` alone does not log, since AI narrative concerns often cannot be matched by the deterministic layer.
+1. **Identify** (`callClaudeVisionIdentify`) — slim Haiku call returns `{product_name, brand, variant, category, confidence, label_ingredients, label_legibility, reasoning}`. CONFIDENCE SCALE keyed to product-name visibility, decoupled from photo quality. Retailer-chrome filter (`looksLikeRetailerChrome`) strips Amazon/Target storefront text.
+2. **Confidence gate:** no usable name OR `< 0.30` → `need_better_photo`. `0.30-0.45` → `needs_confirmation` modal. `≥ 0.45` → silent proceed.
+3. **Cascade** — same 5-tier order, calibration → fuzzy → cache → Tier 3 → Tier 4 → Tier 5.
+4. **Reconciliation** (`reconcileIngredients`) — agreement % logged; cascade always wins for scoring.
+5. **Score** — calibration/Pass1/Tier5 same shape as text path.
 
-Pattern-level validation in `mergeFlags` / `aiContradictsDeterministic`: when the AI claims a substance, validation operates per-pattern, not per-bucket. For each AI claim, every `FLAG_DEFS` pattern whose regex matches the claim is checked against the deterministic `matches` array for that bucket. If the specific pattern label is present in `matches` → confirmed, the claim is kept. If not → contradicted, the claim is dropped. This prevents an AI fabrication for one substance (e.g. cyclopentasiloxane) from surviving merge just because a sibling in the same bucket was confirmed (e.g. dimethicone made `siloxanes.present === true`). Out-of-bucket claims (no `detFlags.flags[flagName]` entry because the category bucket was skipped) are still preserved as before.
+Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens cream-card modal. `needs_better_photo` takes over screen.
 
-Feature flag: `FLAG_DETECTION_ENABLED` (Railway env var).
-- Default: enabled.
-- To disable: set `FLAG_DETECTION_ENABLED=false` in Railway.
-
-Diff endpoint: `POST /admin/flag-detection-diff` with `{ productName }` in body. Returns `oldScore`, `newScore`, `oldConcerns`, `newConcerns`, `deterministicFlags`, `aiInconsistencies`. Use to sanity-check behavior on known products before trusting the pipeline at scale.
+Cost: ~3x Haiku calls in cache-miss vs legacy (identify + Tier 4 + Pass 1). Latency worst case ~24s.
 
 ---
 
-## Five-Tier Scoring Cascade
+## Pre-release Calibration Status
 
-Text-only `/analyze` queries (no `image`, no `productId`, no `barcode`) run through a five-tier cascade. First hit wins. Every tier returns a scored result — there is no dead-end path. Honest confidence labels surface to the user when the score depends on a non-baseline source.
+Calibration entries can carry status fields for unshipped brands:
 
-The cascade was added on 2026-04-20, replacing the prior `cannot_score_from_text_only` 422 gate (in place since 2026-04-18). The gate's "Let's see the label" prompt UI in the frontend was removed in the same change. `ALLOW_TEXT_PATH_SCORING` is no longer a flag.
+```js
+["sports organics", {
+  floor: 1, ceiling: 3,
+  substances: [...], reason: "...", confidence: "medium",
+  category: "clothing",
+  status: "pre_release",
+  statusNote: "Brand disclosure 2026-04-23...",
+  statusExpectedRelease: "2026-Q3",
+  verified: [
+    { claim: "GOTS at fabric level", source: "brand disclosure", date: "2026-04", url: "..." },
+  ],
+  pending: [
+    { claim: "Company-level GOTS", status: "in progress", wouldChangeScoreTo: 1, expectedBy: "2026-Q3" },
+  ],
+  thirdPartyReferences: [
+    { source: "Bottlecup", url: "...", date: "2025-09", summary: "..." },
+  ],
+}]
+```
 
-### Tiers
+`applyProductCalibration` propagates these to `result.release_status`. Frontend renders amber-outlined card above `category_score_context`. Score still renders.
 
-| # | Source | Implementation | source_confidence | source_label |
-|---|---|---|---|---|
-| 1 | `CALIBRATION` map | Exact / fuzzy match against `backend/calibration.js` (3,039+ entries) | `null` | `"Verified formula"` |
-| 2 | Cache | In-memory + Redis hit on `cacheKey(productName, category)` | inherited | inherited |
-| 3 | Open Facts text search | `tier3OpenFactsTextSearch` queries OFF / OBF / OPF in parallel via `cgi/search.pl?search_terms=...`. Strict acceptance: trigram sim ≥ 0.7, non-empty `ingredients_text`, `complete` flag truthy. Best match across all three sources wins. Pass 1 receives the verified ingredient list as `materialContext`. | `"medium"` | `"Sourced from Open Food Facts"` (or Beauty / Products Facts) |
-| 4 | Anthropic web_search | `tier4WebExtract` runs one Haiku call with the `web_search_20250305` tool (`max_uses: 5`), asking for strict JSON `{product_name, brand, ingredients[], category, source_domain, found}`. 22s timeout. Prompt directs aggressive multi-source search: retailer PDPs (Amazon, Target, Walmart, Whole Foods, iHerb, Sephora, Ulta, Thrive), brand sites, SmartLabel, OFF/OBF, EWG, Yuka, FDA filings. `found:true` is strongly preferred; closest-matching variant accepted. For clothing/home/accessory, material composition ("72% nylon, 25% polyester") is returned as ingredients. Validates `found: true`, non-empty `ingredients`, and `isTier4NameAcceptable(originalQuery, usedQuery, returnedName, returnedBrand)` — an OR of (a) trigram ≥ 0.45 against original or canonicalized query, (b) every meaningful query token present in returned name or brand (handles "query is a strict subset of a longer canonical name" — e.g. "Abes Mini Muffins" accepts "Abe's Gluten Free Chocolate Chip Mini Muffins"), (c) apostrophe strip + singular/plural tolerance. Two-attempt retry: first verbatim query, second with `canonicalizeQuery` (reintroduces apostrophes for ~20 common brand possessives, strips size/unit qualifiers). Pass 1 receives the extracted list as `materialContext`. | `"medium"` | `"Sourced from <domain>"` (e.g. `amazon.com`) |
-| 5 | Category-prior best guess | `tier5CategoryPrior` — **does NOT call Pass 1**. Synthetic result built from `CATEGORY_AVERAGES[cat].avg`, all dimensions = midpoint, `flagged_substances: []`, `harmful_chemicals: []`, `ingredient_list: []`, substance floors bypassed. Honest summary names the limitation. `_skipCache: true` so the cascade re-runs on the next visit (OFF or web search may have data later). | `"low"` | `"Best guess from product name"` |
-
-Tiers 1 and 2 live inline in `server.js` `/analyze`. Tiers 3, 4, 5 + the in-flight dedupe wrapper live in `backend/scoringCascade.js`. Server.js orchestrates: cascade is wrapped in `dedupeInflight(productName, category, fn)` so concurrent identical queries share one execution and don't fan out into N web searches.
-
-### Why Tier 5 is "contained"
-
-Calling `pass1(productName, null, category)` with no ingredient list is the failure mode that triggered the 2026-04-18 disable (Danimals Strawberry Smoothie returned a fabricated ingredient list with substances the product hadn't contained for years). The defamation risk is real.
-
-Tier 5 closes that path: no AI call, no fabricated chemistry. The user sees the typical-for-category score with `confidence: "low"`, an honest summary ("Without the ingredient list I'm guessing from the product type. Scan the barcode or label for a verified score."), and the amber `Best guess from product name` label below the product header. `_skipCache: true` prevents the synthetic result from being persisted — every next request re-tries the cascade.
-
-### Result schema additions
-
-Three new top-level fields, populated by every scoring path (cascade + calibration productId + scan productId + image vision + image fuzzy-cal + barcode):
-
-- `source` — machine-readable: `calibration` | `previous_scan` | `open_food_facts` | `open_beauty_facts` | `open_products_facts` | `web_search` | `vision_ocr` | `ai_text_only_estimate`
-- `source_label` — human-readable copy shown in the UI
-- `source_confidence` — `null` (baseline trust, no UI badge) | `"medium"` | `"low"`
-
-The existing `confidence` field continues to mean **AI scoring confidence** (high/medium/low). Don't conflate. The new field is `source_confidence` and lives separately.
-
-### In-flight deduplication
-
-`dedupeInflight(query, category, fn)` in `scoringCascade.js`. Map keyed on `${normalized}|${category}`. Same Promise is awaited by every concurrent caller. Slot is cleared 5 minutes after the Promise settles, so a follow-up visit gets a fresh cascade run. This protects against cost spikes when many users (or rapid retap) submit the same query simultaneously — without it, Tier 4 would fire N parallel web searches.
-
-### Frontend UX
-
-- Match picker (existing) still surfaces `/search` results as the user types — verified-source-only matches that bypass the cascade entirely via productId.
-- Result screen renders the `source_label` as a small DM Sans line below the product header **only when `source_confidence` is `"medium"` or `"low"`**. Color: `var(--ink-soft)` for medium, `var(--amber)` for low. Calibration / barcode / prior-scan paths set `source_confidence: null` and skip the badge entirely.
-- The existing "Ingredient Source Display" line below the ingredient list (keyed on `ingredient_source`, not `source`) is unchanged — it shows source provenance for the verified ingredient list, separately from the source confidence badge near the score.
-- TYPEWRITER_STEPS (used by both `BarcodeLoadingView` and `GlobeLoading`) gained a `"Searching the web..."` beat for the longer Tier 4 latency. Both components dynamically size their dot indicator from `TYPEWRITER_STEPS.length`.
-
-### Cost guardrails
-
-- Tier 4 increments the same `apiCallCounts` as `callClaude` (passed in via `{checkApiBudget, incrementApiCount}`). Same daily/monthly cap applies.
-- Tier 4 fires **only when Tier 3 misses**. Most popular products hit Tier 1 (calibration) or Tier 3 (OFF) and never reach Tier 4.
-- Dedupe collapses concurrent identical queries to one execution.
-- Tier 5 makes zero API calls.
-
-### Re-introduction risk
-
-If Tier 3's strictness is loosened (similarity threshold drops below 0.7, `complete` flag check is dropped, or `ingredients_text` empty is allowed), the Danimals failure mode comes back via OFF rather than via Pass 1. Same outcome. Don't loosen these without a written reason.
-
-If Tier 5 ever calls Pass 1 (someone "fixes" it to give richer narrative), fabrications return. The synthetic result is the contract.
-
-Tier 4's name-match gate (`isTier4NameAcceptable`) uses an OR of trigram + token-subset. The token-subset branch is what lets longer canonical variants through ("Abe's Gluten Free Chocolate Chip Mini Muffins" for the short query "Abes Mini Muffins"). Don't replace it with a strict trigram-only gate — the threshold would either reject correct hits (trigram ~0.33 for that example) or accept wildly different products. The current OR keeps both ends tight.
+**Workflow when brand reaches out:**
+1. Web search agent for grounded research (NOT marketing copy)
+2. Pre-launch → ship with `status: "pre_release"`, populate `verified[]` with disclosures, `pending[]` with awaiting items, `thirdPartyReferences[]` with independent coverage
+3. When docs land: move rows pending → verified (don't copy), update `reason` with `Ingredients verified MM YYYY`
+4. Once enough items verified, drop status fields entirely
 
 ---
 
-## Pass 0 Ingredient Resolution
+## flagDetection
 
-Pass 0 (`backend/pass0.js`) resolves a verified ingredient list BEFORE Pass 1 scoring runs. It exists so the AI never has to invent ingredients from training priors — the text-path fabrication bug was the motivating incident.
+Deterministic substance detection in `backend/flagDetection.js`. Pre-AI run (when ingredients available, e.g. barcode OFF) injects findings into Pass 1 prompt as `DETERMINISTIC FLAGS DETECTED`. Post-AI `validateAIResponse` + `mergeFlags` checks claims against deterministic set per-pattern (not per-bucket — prevents AI fabrications surviving via sibling matches).
 
-`resolveIngredients({ productName, barcode, image, category, supabase })` returns:
-```
-{ ingredients, source, confidence, sourceUrl, verifiedAt, rawProduct }
-```
+Disagreements logged as `[flag_detection_override]` only when `missingFromAI` has entries. Feature flag `FLAG_DETECTION_ENABLED` (default true).
 
-`source` is one of: `open_food_facts`, `open_beauty_facts`, `open_products_facts`, `barcode_index`, `barcode_external`, `supabase_scans`, `vision_ocr`, `none`. `rawProduct` is the source-specific opaque object callers can mine for additional fields (barcode paths extract nutrition/NOVA/brand/serving from it).
+Diff endpoint: `POST /admin/flag-detection-diff` `{productName}` returns oldScore/newScore/oldConcerns/newConcerns/deterministicFlags/aiInconsistencies.
 
-Resolution order:
-1. If `barcode` provided: Open Food Facts v2 → Open Beauty Facts v2 → Open Products Facts v2 (parallel fetch, preference by order). Product found with ingredient text → `confidence: "high"`. Product found without ingredient text → `confidence: "medium"` (we know identity, not materials).
-2. If `barcode` provided and nothing hit in OFF/OBF/OPF: local barcode index (`backend/barcodeIndex.js`) — hand-curated UPC/EAN → product-name map for brands already in calibration. Source = `barcode_index`, confidence = `medium` (identity only, no ingredients). See "Barcode fallback chain" below.
-3. If `barcode` provided and local index misses: optional external barcode API (`backend/barcodeLookup.js`) — gated on `BARCODE_LOOKUP_PROVIDER` env var. Source = `barcode_external`, confidence = `medium`.
-4. If `productName` provided and no barcode hit: Supabase `scans` table, JSONB lookup via `result_json->ingredient_list`, case-insensitive match on `product_name`, within last 12 months, most recent first. `confidence: "medium"`.
-5. If `image` provided and nothing else hit: **stub — returns `source: "none"`**. A future session will refactor `callClaudeVision` to populate Pass 0 via an OCR-only pass.
-6. Nothing hits → `source: "none", confidence: "none"`.
+---
 
-Integration: `/barcode` calls Pass 0 as its first step (replaces the previous inline OFF/OBF/OPF fetch). `/analyze` text path no longer uses Pass 0 directly — it runs the five-tier cascade in `backend/scoringCascade.js` instead. `/analyze` image path is unchanged.
+## Intel Card Relevance
 
-Pass 1 receives the source metadata as an `INGREDIENT SOURCE:` line in its context block, instructing it to trust the provided ingredient list over its training priors.
+Cards fire when BOTH gates pass (`backend/intelMatch.js`):
 
-Result record fields persisted to `scans.result_json`:
-- `ingredient_source` — which database the ingredient list came from
-- `ingredient_confidence` — `high` / `medium` / `low` / `none`
-- `ingredient_verified_at` — ISO timestamp of the Pass 0 resolution
-- `ingredient_source_url` — browsable verification URL (OFF page), null for Supabase cache
+1. **Relevance gate** — at least one of:
+   - A) `card.product_families` includes scan's `product_family`
+   - B) `card.specific_products` fuzzy-matches `product_name` (<10 chars: word-boundary; ≥10: bidirectional substring)
+   - C) `card.product_families` ∩ user's 30d distinct family history (auth users only)
+   - Both empty → broad-advisory passes auto
 
-Monitoring hit rate:
-```bash
-# In Railway logs:
-grep pass0_resolution | jq -r '.source' | sort | uniq -c
-```
-Every resolution emits a structured log: `[pass0_resolution] {"productName":..., "barcode":..., "source":..., "confidence":..., "duration_ms":...}`.
+2. **Ingredient trigger gate** — when `card.ingredient_triggers` populated, ≥1 word-boundary match in `result.flagged_substances` (NOT narrative `ingredient_list`)
 
-### Barcode fallback chain (2026-04-23)
+`category_triggers` deprecated. `CANONICAL_FAMILIES` (29 strings) lives in `backend/productFamilies.js` and `App.jsx` (sync via `// KEEP IN SYNC` comment). AI prompt embeds the list; non-canonical values dropped post-parse.
 
-OFF has broad coverage of food products; Open Beauty Facts (58k total) and Open Products Facts (40k total) have near-zero US consumer-goods coverage. Tested 10 common US barcodes (Blueland, Native, Huggies, Tide, Seventh Generation, Branch Basics, Dropps, Nivea, L'Oréal, Garnier): every single one 404s in all three databases. Before this change that meant a dead-end `fallback_required: true` response even for products we'd already calibrated by name.
+**Over-broad guard:** card with all three targeting fields empty rejected at write + approval. Admin `Approve` button disabled for over-broad drafts.
 
-Two stages were added to `tryBarcode` in `pass0.js` after the OFF-family miss:
-
-**Stage 4: Local barcode index** (`backend/barcodeIndex.js`)
-- Exports `BARCODE_INDEX` Map and `lookupBarcode(barcode)` helper.
-- Handles UPC-A ↔ EAN-13 normalization (12-digit UPC matches 13-digit EAN with leading 0 stripped).
-- Seed is intentionally small — only add UPCs you've physically verified (scan the product, read the label). Fabricated UPCs risk misidentifying a different product that legitimately owns that UPC.
-- Returned entry points to a canonical product name that exists in `calibration.js` or fuzzy-matches one.
-- On hit: `/barcode` short-circuits to calibration lookup, no AI call, instant response.
-
-**Stage 5: External barcode lookup** (`backend/barcodeLookup.js`)
-- Optional third-party API client. Gated on `BARCODE_LOOKUP_PROVIDER` env var — no value set means no call, no cost, graceful degradation.
-- Supported providers: `upcitemdb` (free tier 100/day, trial 1000/day, paid ~$30/mo for 10k/day) or `go-upc` (requires API key).
-- API key goes in `BARCODE_LOOKUP_KEY`.
-- Returns `product_name` + `brand` only — ingredients empty. `/barcode` routes the name through calibration + fuzzy-calibration lookup the same way the local index does.
-- Add a provider by extending the `externalBarcodeLookup` dispatch in `barcodeLookup.js`.
-
-`/barcode` endpoint behavior for the new sources:
-- When `pass0.source === "barcode_index" || "barcode_external"` AND calibration has an entry for the returned name → build a calibration-shaped result (midpoint score, `buildFuzzyDimensions(calHit)`, `applyProductCalibration` final clamp), attach intel cards, cache, return. No AI call. Matches the `/analyze` productId bypass pattern.
-- When the new source returns a name but no calibration entry exists → falls through to the existing Pass 1 pipeline with empty `ingredText`. Pass 1 handles it but confidence will be low. A future patch could route this into the text cascade (Tier 3/4/5) for better fallback.
-
-Monitoring:
-```bash
-# Measure fallback-stage hit rates
-grep pass0_resolution | jq -r '.source' | sort | uniq -c
-# Spot brands scoring by barcode_index vs barcode_external
-grep 'BARCODE' | grep -E 'barcode_index|barcode_external'
-```
-
-Seeding workflow: when a user reports a barcode scan that returned fallback_required for a product we have calibrated, (1) verify the UPC on the physical product, (2) add `["<upc>", "<calibration key>"]` to `barcodeIndex.js`, (3) ship. The brand now resolves instantly for all future scans. If this becomes a high-volume workflow, a Supabase-backed table with an admin UI is the next step.
-
-### Pre-Pass 0 cache eviction
-
-Cached scan results that predate Pass 0 lack the `ingredient_source` field and may contain AI-fabricated ingredients from the pre-Pass-0 pipeline (motivating incident: an Armani Luminous Silk Foundation scan flagged cyclopentasiloxane, which the current formula does not contain).
-
-On every cache hit in `/analyze` (text and image) and `/barcode` (both barcode-key and name-key lookups), `evictIfPrePass0` checks whether `cached.ingredient_source` is populated. If it is falsy (null, undefined, or empty string), the entry is evicted from both memory and Redis, and the request falls through to the normal scoring pipeline. Entries with any non-empty value (`open_food_facts`, `open_beauty_facts`, `open_products_facts`, `supabase_scans`, `vision_ocr`, `none`, etc.) are served normally.
-
-Each eviction emits `log.info("prepass0_cache_eviction", { cache_key, product_name, created_at_if_available })` so prevalence can be measured in Railway logs:
-```bash
-grep prepass0_cache_eviction | wc -l
-```
-
-Consequence for the image path: fresh image-path scoring does not currently write `ingredient_source`, so image results are effectively uncached until Pass 0 gains an OCR step. This is an intentional trade — fabrication risk outweighs cache benefit. Barcode scans that land in OFF/OBF/OPF cache normally with `ingredient_source` populated.
+User history cache: 60s per user. Anonymous users skip path C.
 
 ---
 
 ## Ingredient Source Display
 
-Every scan result surfaces a small "credibility" line below the Full ingredient list and above the dimension dropdowns (where flagged substances appear). It tells the user where the ingredient list came from so the score is auditable rather than opaque.
-
-Source → copy mapping (from `result.ingredient_source`):
+Below ingredient list, above dimension dropdowns. Reads `result.ingredient_source`:
 - `open_food_facts` → "Verified via Open Food Facts"
 - `open_beauty_facts` → "Verified via Open Beauty Facts"
 - `open_products_facts` → "Verified via Open Products Facts"
@@ -577,759 +409,273 @@ Source → copy mapping (from `result.ingredient_source`):
 - `calibration` → "Verified formula"
 - `vision_ocr` → "Read from your photo"
 - `none` → "Ingredients unverified"
+- missing key or unmapped → hidden
 
-Distinct from this line: the **source confidence badge** (added 2026-04-20) renders below the product header on the result screen and reads `result.source_label` when `result.source_confidence` is `"medium"` or `"low"`. See "Five-Tier Scoring Cascade" → Frontend UX. Two different lines, two different fields, two different placements — don't conflate them.
+Confidence colors (`ingredient_confidence`):
+- `high` → forest green
+- `medium` → neutral gray
+- `low` / `none` / unknown → subtle amber
 
-Confidence styling (from `result.ingredient_confidence`):
-- `high` → forest green text (`#052e16` light, `#6ee7b7` dark)
-- `medium` → neutral gray (`#6b7280` light, `#9ca3af` dark)
-- `low` / `none` / unknown → subtle amber (`#b45309` light, `#fbbf24` dark)
+Timestamp (`ingredient_verified_at`): `< 24h` "just now", `< 7d` "N days ago", else "Apr 15, 2026". Null → omit.
 
-Timestamp formatting (from `result.ingredient_verified_at`, appended after `·`):
-- < 24h → "just now"
-- < 7d → "1 day ago" / "N days ago"
-- otherwise → "Apr 15, 2026" (`Intl` "short, numeric, numeric")
-- null/invalid → omit the `· timeAgo` suffix entirely
+URL (`ingredient_source_url`) makes label a `target="_blank"` anchor.
 
-Tappable source: when `result.ingredient_source_url` is set, the source label becomes a `target="_blank" rel="noopener noreferrer"` anchor opening the verification URL (typically the OFF/OBF/OPF product page). When null (e.g. `supabase_scans`), it renders as plain text.
-
-Edge cases:
-- `result.ingredient_source` missing entirely (older cached scans pre-Pass 0): the entire source line is hidden — no fallback, no broken row.
-- Source key not in the mapping above: the line is hidden rather than rendering "undefined".
-- Empty `ingredient_list` does not suppress the source line — "Ingredients unverified" is still meaningful when nothing was resolved.
-
-Styling: 12px Outfit, no icon, no emoji, `marginTop: -4` to sit close under the ingredient list card. Inline implementation in `App.jsx` immediately after the `INGREDIENT LIST` block.
+**Distinct from source confidence badge** (top of result, shows `result.source_label` when `source_confidence` is medium/low). Two different lines, two different fields.
 
 ---
 
-## Text Search (Verified Sources Only)
+## Text Search
 
-Raw-text /analyze runs the five-tier cascade (see "Five-Tier Scoring Cascade" above). `/search` is the lighter-weight companion: a `GET` endpoint that surfaces verified-source matches (calibration entries + prior OFF-verified scans) so users can tap a known-good match instead of waiting for the cascade to run. `/analyze` with a `productId` from `/search` short-circuits straight to that pre-verified data — no cascade, no API spend.
+`GET /search?q=<3-100>&userId=<uuid?>`. Surfaces calibration + prior-OFF-verified scans as match picker before cascade runs. Substring primary, JS Jaccard-trigram fallback (threshold 0.3). Sort: calibration → own_scan → other_scan, substring before trigram, similarity desc. Cap 5.
 
-**Endpoint** — `GET /search?q=<string>&userId=<uuid?>`
-- Validates `q` trimmed length in `[3, 100]`. Under 3 returns `{ matches: [], total_count: 0 }` without hitting any data source.
-- Normalizes `q` to lowercase, collapsed whitespace. The CALIBRATION Map keys are already normalized the same way, so substring matching is direct.
-- Not wrapped in `rateLimit` middleware on purpose — /search shouldn't consume a user's /analyze budget, and the endpoint does no AI work.
+Calibration wins dedup over scans on same normalized name. Not rate-limited.
 
-**Sources**
-- `calibration` — in-memory `CALIBRATION` Map (3,039+ entries from `calibration.js` + admin overrides). Iterated via `calibrationAllEntries` which is rebuilt whenever calibration overrides reload. Substring primary, JS Jaccard-trigram fallback.
-- `own_scan` / `other_scan` — Supabase `scans` table, last 90 days, filtered to rows where `result_json->>ingredient_source` is not null (i.e. post-Pass-0 scans with known provenance). Substring via `ilike`. Trigram fallback via `scans_trigram_search` RPC (requires pg_trgm extension).
+`/analyze` with `{productId, userId}` body bypasses cascade:
+- `calibration:<key>` → CALIBRATION lookup
+- `scan:<uuid>` → Supabase by id, `ingredient_source` rewritten to `previous_scan`
 
-**Sort** — calibration first, then own_scan, then other_scan. Within each tier, substring before trigram. Within each match type, higher similarity first. Cap 5 matches.
+Raw text queries hit cascade.
 
-**Dedupe** — calibration wins over scans on the same normalized product name. A product name that appears in both CALIBRATION and as a prior scan shows once, sourced to calibration.
-
-**Trigram** — simple JS implementation in `server.js` (`buildTrigrams` + `trigramSimilarity`). Jaccard similarity on padded 3-character windows. Threshold 0.3. Supabase-side trigram goes through a `scans_trigram_search` RPC — failing silently (substring still serves typed-correctly queries) until Paul runs the extension + RPC migration.
-
-**`/analyze` productId bypass** — When `/analyze` is called with a body of `{ productId, userId }` (no `query`, no `image`) the text gate is skipped:
-- `calibration:<normalized-key>` → lookup `CALIBRATION.get(key)`, build a scored result with the same shape as the fuzzy-calibration fast path. `ingredient_source` is set to `"calibration"`, `ingredient_confidence` to the entry's confidence.
-- `scan:<uuid>` → Supabase `scans` lookup by id. `result_json` is returned with `ingredient_source` rewritten to `"previous_scan"` so the credibility line reads "From a previous Partiqule scan" rather than claiming fresh OFF verification.
-
-Raw text queries (no `productId`, no `image`) still hit the `cannot_score_from_text_only` 422 gate.
-
-**Frontend match picker** — Home search input debounces 300ms, triggers `/search` at ≥3 chars, renders a floating panel below the fixed scan bar with one card per match. Each card shows: product name, source label (`Verified formula` / `Your scan from N days ago` / `Recent verified scan`), score preview (mid of `floor` and `ceiling` for calibration; stored overall_score for scans) colored by the score tier (green ≤3, amber ≤5, red >5). Tap → `selectSearchMatch` → `/analyze` with `productId`. Empty-state card shows "Scan barcode" as the primary fallback; a second "Can't find your product?" link sits under any populated list for the same purpose.
-
-The panel hides when `result` is set, so once a scan lands the user isn't looking at stale match suggestions layered behind the result.
-
-**Logging** — every /search call emits `log.info("text_search", { query, userId, match_count, has_calibration_matches, has_own_scan_matches, has_other_scan_matches, zero_matches })`. Railway log filter for gap analysis:
-```bash
-grep text_search | jq 'select(.zero_matches == true) | .query' | sort | uniq -c | sort -rn
-```
-
-**pg_trgm migration** — Supabase SQL Editor, one-time:
-```sql
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- Optional but strongly recommended: a supporting RPC for scan trigram search.
--- Until this exists the endpoint still works — it just skips the scans-trigram
--- fallback and relies on substring + calibration-trigram only.
-CREATE OR REPLACE FUNCTION scans_trigram_search(q text, threshold float, user_id_arg uuid, lim int)
-RETURNS TABLE(id uuid, product_name text, user_id uuid, result_json jsonb, created_at timestamptz, sim float)
-LANGUAGE sql STABLE AS $$
-  SELECT s.id, s.product_name, s.user_id, s.result_json, s.created_at,
-         similarity(lower(s.product_name), lower(q)) AS sim
-  FROM scans s
-  WHERE lower(s.product_name) % lower(q)
-    AND similarity(lower(s.product_name), lower(q)) > threshold
-    AND s.result_json->>'ingredient_source' IS NOT NULL
-    AND s.created_at > NOW() - INTERVAL '90 days'
-  ORDER BY (s.user_id = user_id_arg) DESC NULLS LAST, sim DESC
-  LIMIT lim;
-$$;
-```
+`pg_trgm` extension + `scans_trigram_search` RPC required for scan-trigram fallback (works without — substring still functions).
 
 ---
 
-## Intel Card Relevance
+## Whole-foods Detection
 
-Intel cards surface on scan results only when they are directly relevant to the scanned product or to something in the user's recent history. The old category-based matching (`category_triggers` only) surfaced irrelevant cards across category siblings — e.g., a nail polish remover recall on a foundation scan. This was replaced 2026-04-19.
+`detectWholeFood()` in `backend/scoringCascade.js`. ~50 patterns covering wild fish/seafood, eggs, fresh produce, dairy, conventional poultry, red meat, processed meats. Tier 5 intercepts whole foods BEFORE generic synthetic fallback.
 
-**Product family classification** — every scan computes `product_family` via `backend/productFamilies.js` (`classifyProductFamily(productName, ingredients, category)`). The classifier returns one of 29 canonical strings (foundation, lip_balm, nail_polish_remover, sunscreen, hair_shampoo, wound_care, etc.) or `null` if no rule matches. `CANONICAL_FAMILIES` in that file is the single source of truth; the AI intel-card prompt (`writeIntelligenceCard` in `server.js`) reads the same constant. Keep `frontend/src/App.jsx` `CANONICAL_FAMILIES` in sync when the list changes — there's a `// KEEP IN SYNC` comment above it. All 6 scoring paths populate `result_json.product_family` at scan time.
-
-**Matching rule** — a card fires when both of these pass, evaluated by `filterRelevantCards` in `backend/intelMatch.js`:
-
-1. Relevance gate — AT LEAST ONE of:
-   - A) `card.product_families` includes the scan's `product_family`
-   - B) `card.specific_products` matches the scan's `product_name` (fuzzy; see below)
-   - C) `card.product_families` intersects the user's distinct 30-day scan history (authenticated users only)
-   - Broad-advisory: when both `product_families` and `specific_products` are empty, the gate passes automatically
-
-2. Ingredient trigger gate — when `card.ingredient_triggers` is populated, at least one trigger must word-boundary match an entry in `result.ingredient_list` (structured array, not narrative text). Empty triggers skip this gate.
-
-`category_triggers` is still stored in the schema for backward compatibility but is no longer consulted by the matcher.
-
-**Fuzzy name matching** — `specificProductMatches` normalizes both sides (lowercase, strip apostrophes, collapse non-alphanumerics to single spaces). Entries < 10 chars require word-boundary token match (`Tide` matches `Tide Pods`, not `Riptide Beverage`). Entries ≥ 10 chars allow bidirectional substring (`Armani Luminous Silk` matches `Armani Luminous Silk Foundation` forward and `Armani Luminous Silk` if an even longer entry is targeted).
-
-**User history cache** — `getUserRecentFamilies(userId)` queries `scans WHERE user_id = ? AND created_at > NOW() - INTERVAL '30 days'`, extracts distinct `result_json.product_family`, and caches per user for 60s. Returns `null` for anonymous users — path C is skipped structurally. Only fires once per user per minute to avoid Supabase roundtrips on rapid successive scans.
-
-**Over-broad guard** — `isOverBroadCard(card)` is true when `product_families`, `specific_products`, and `ingredient_triggers` are all empty. Such a card would fire on every scan globally. Guarded in two places:
-
-- `writeIntelligenceCard` rejects over-broad AI-drafted cards post-parse with `[Intel] Rejecting over-broad card (no targeting fields)` and returns `null` (never saved).
-- `/api/intelligence/approve/:id` returns `400` if the admin tries to activate an over-broad card. Admin UI in `IntelAdminPage` mirrors this by disabling the `Approve` button on drafts that are over-broad and showing an inline red warning.
-
-**AI prompt vocabulary** — `writeIntelligenceCard` embeds `CANONICAL_FAMILIES.join(", ")` in the prompt so the AI can only emit known family strings. Post-parse validation filters out any value not in the canonical set (`[Intel] Dropped non-canonical product_families from "<headline>": ...`). The prompt explicitly instructs: food/cleaning/clothing articles must populate either `specific_products` or `ingredient_triggers` to give the card an anchor, or be rejected.
-
-**Admin retag flow** — `IntelAdminPage` has a per-card `Retag` button that opens an inline editor for the three targeting fields only (product_families chips, specific_products and ingredient_triggers as comma-separated inputs). Saves via `PATCH /api/intelligence-cards/:id`. The `INTEL_CARD_FIELDS` allowlist in `server.js` was corrected in the same session — previously it listed fields that didn't exist on the schema and silently dropped every PATCH payload.
-
-**Pre-Pass-0-style stale eviction** — not added to intel cards. The 2-min in-memory cache (`intelCardsCache`) refreshes on its own TTL and picks up schema/field changes on the next fetch.
+`detectSourcingFlags()` extracts chips: wild caught, organic, grass-fed, pasture-raised, MSC certified, free-range, etc. Frontend renders as `SourcingFlags` component below product header.
 
 ---
 
-## Barcode Loading Screen
+## Barcode Loading + Fallback
 
-Between barcode detection and result render, the app shows a dedicated branded overlay (`BarcodeLoadingView` in `App.jsx`) instead of the generic GlobeLoading overlay. This replaces the jarring transition from scan view → result with an intentional branded moment.
+`BarcodeLoadingView` in `App.jsx`. State: `barcodeLoadingPhase` = `null` | `"loading"` | `"error"`.
 
-State: `barcodeLoadingPhase` — `null` (hidden) | `"loading"` | `"error"`.
+- **Min display 2000ms** (handler enforces, not component)
+- **Timeout 60000ms** (full pipeline takes 10-30s on cache-miss)
+- Status text cycles: `0-1500ms` "Reading barcode..." → `1500-4000ms` "Finding product..." → `4000-10000ms` "Analyzing ingredients..." → `10000ms+` "Almost there..."
+- Error triggered by: AbortError, non-2xx, `fallback_required: true`
 
-Timing contract (enforced inside the `onBarcode` handler, not inside the component):
-- **Minimum display: 2000ms.** If the `/barcode` API returns sooner, the handler awaits `MIN_DISPLAY_MS - elapsed` before clearing the phase and rendering the result.
-- **Timeout: 60000ms.** `AbortController.abort()` fires at 60s; the catch block surfaces the error phase (after the 2s minimum). Full pipeline (Pass 0 OFF fetch + Pass 1 + Pass 2 + floors/consistency) realistically takes 10–30s on cache-miss, so anything under ~45s is expected latency, not failure. 5s was the original value and caused every cache-miss to land in the error phase; do not lower this without confirming real pipeline latency.
-- If the API returns after 2s but before 60s, the result renders immediately.
+Pass 0 barcode chain: OFF/OBF/OPF parallel → `backend/barcodeIndex.js` (hand-curated UPC→name map, normalizes UPC-A↔EAN-13) → `backend/barcodeLookup.js` (UPCItemDB or go-upc, gated on `BARCODE_LOOKUP_PROVIDER` env var).
 
-Status text phases (cycle based on elapsed time inside the component):
-- `0–1500ms` → "Reading barcode..."
-- `1500–4000ms` → "Finding product..."
-- `4000–10000ms` → "Analyzing ingredients..."
-- `10000ms+` → "Almost there..."
+When local index or external returns name + calibration has entry → short-circuit to calibration-shaped result, no AI call. Otherwise falls through to Pass 1.
 
-Error phase is triggered by: (1) fetch timeout via AbortError, (2) non-2xx response, (3) `fallback_required: true` in the response body (barcode not in any Pass 0 source). Error shows "We couldn't find this product" with two buttons: "Try scanning again" (reopens `BarcodeScannerView`) and "Take a photo instead" (hidden `<input type="file" capture="environment">` routing into `handleImageScan`). No generic red error banner — the overlay owns the entire error UX.
-
-Visuals: forest green `#052e16` background (matches Score color system), Partiqule leaf logo (same SVG used in scan header / footer) at 96×96 with a 1.6s `barcodeLoadingPulse` scale+drop-shadow animation, Outfit font throughout, no emoji. Z-index 9998 (under `BarcodeScannerView` at 9999 so a retry can layer on top).
-
-Not applied to text-query path or image-scan path — those continue to use `GlobeLoading` via the existing `loading` / `showOverlay` effect (see `App.jsx` ~6842). The barcode path is self-contained and does not touch `setLoading`.
+**Seeding workflow:** physically verify UPC, add `["<upc>", "<calibration key>"]` to `barcodeIndex.js`, ship.
 
 ---
 
-## Pre-release calibration status (2026-04-23)
+## Service Worker
 
-Calibration entries can carry an optional `status` / `statusNote` / `statusExpectedRelease` trio for brands that have been scored but have not yet shipped product. Designed for brand-outreach situations (e.g. Sports Organics reached out 2026-04-23 but is pre-launch with signup landing page only — no SKUs, no independent verification). Without this mechanism the options are (a) leave the brand out entirely so users querying it get a cascade miss, or (b) ship a plain calibration entry that misrepresents the brand's current state. Neither is good; the status field is.
-
-Entry shape (extended 2026-04-23 with structured provenance fields):
-```js
-["sports organics", {
-  floor: 1, ceiling: 3,
-  substances: ["organic cotton", "elastane", "GOTS certified fabric", "OEKO-TEX Standard 100"],
-  reason: "Sports Organics — cotton line... Pre-release: company-level GOTS and registry cross-references still pending.",
-  confidence: "medium",
-  category: "clothing",
-  status: "pre_release",
-  statusNote: "Brand disclosure received 2026-04-23...",
-  statusExpectedRelease: "2026-Q3",                // optional
-
-  // ── Structured provenance (all optional, all arrays) ──
-  verified: [
-    { claim: "GOTS certification at fabric level", source: "brand disclosure + product page", date: "2026-04", url: "https://..." /* optional */ },
-  ],
-  pending: [
-    { claim: "Company-level GOTS certification", status: "in progress per brand", wouldChangeScoreTo: 1, expectedBy: "2026-Q3" },
-  ],
-  thirdPartyReferences: [
-    { source: "Bottlecup", url: "https://...", date: "2025-09", summary: "≤200 char excerpt" /* optional */ },
-  ],
-}]
-```
-
-Supported status values: `pre_release` (brand hasn't shipped yet). More can be added later (`discontinued`, `reformulating`, `recalled`) — the frontend card falls back to rendering the status string itself if it's not explicitly cased.
-
-### Field semantics
-
-- **`verified[]`** — substantiated claims. Required: `claim`, `source`, `date` (`YYYY-MM`). Optional: `url` to substantiation. Rendered as moss checkmark list.
-- **`pending[]`** — promise-vs-proof bucket. Required: `claim`, `status` (short progress phrase). Optional: `wouldChangeScoreTo` (1-10, drives future auto-promotion), `expectedBy` (`YYYY-QN` or `YYYY-MM`). Rendered as amber bullet list.
-- **`thirdPartyReferences[]`** — independent coverage (Mamavation, Consumer Reports, EWG, Toxic-Free Future, reviewer outlets). Required: `source`, `url`, `date` (`YYYY-MM`). Optional: `summary` (≤200 chars). Rendered as moss linked list.
-
-Invariants: `verified[]` and `pending[]` are disjoint (a claim moves between them, never copies). Entries with `status: "pre_release"` and ≥1 third-party reference become eligible to drop pre-release status.
-
-`applyProductCalibration` in `calibration.js` propagates these fields to `result.release_status` on every return branch. All three array fields default to `[]` when absent on the source entry. Frontend renders an amber-outlined cream card above the `category_score_context` line showing:
-- Small-caps label: "Not yet shipped" (pre_release) or the status string de-snake-cased
-- The `statusNote` text, or a generic default
-- Expected release date suffix if set
-- **Verified** section (moss caps, IconCheck rows) when `verified[]` is non-empty
-- **Pending** section (amber caps, bulleted rows) when `pending[]` is non-empty
-- **Independent coverage** section (moss caps, linked source rows) when `third_party_references[]` is non-empty
-
-Score itself still renders so users get the expected-range preview — the card frames expectations rather than hiding the score.
-
-### Workflow when a brand reaches out
-
-1. Research the brand via web search agent (grounded in real sources, NOT marketing copy)
-2. If pre-launch / unverified: add calibration entry with `status: "pre_release"` and honest note. Populate `verified[]` with disclosures you've received, `pending[]` with what's still awaiting substantiation, `thirdPartyReferences[]` with any independent coverage.
-3. Reach back to brand for: GOTS licensee number, OEKO-TEX certificate number, Mamavation/lab testing, PFAS-free statement, elastane % in cotton blends
-4. When documentation lands: move rows from `pending[]` to `verified[]` (don't copy — move), tighten `confidence`, update `reason` with `Ingredients verified MM YYYY` note per the calibration-entry-integrity rule. Once enough items verify, drop the status fields entirely.
-
-### Future auto-promotion hook (not shipped)
-
-`pending[].wouldChangeScoreTo` exists to enable a future cron job that attempts structured verification (GOTS license lookup at global-standard.org, OEKO-TEX cert lookup at oeko-tex.com, Mamavation publication scraping). On success: move the row from `pending` → `verified` with `date: <today>`, log `[calibration_auto_promotion]`, and once all pending items clear, apply `wouldChangeScoreTo` to `floor`/`ceiling`. The schema is shipped; the promotion job isn't.
+`frontend/public/sw.js` — currently `partiqule-v10`. Bump on breaking changes. Precaches app shell + favicons + wordmark. Strategies: never-cache APIs/admin, cache-first Google Fonts, network-first navigation with cached-shell fallback, network-first other assets with cache fallback.
 
 ---
 
-## Clothing scoring mechanisms (2026-04-22 overhaul)
+## OG Preview Freshness
 
-The clothing category is the most-scanned in the app. A 40-finding audit shipped in one pass after Instagram traffic hit; documenting the key mechanisms here so they don't regress.
+Content-hashed `?v=<8-char-sha>` query params on every `og:image`. Two pipelines:
 
-### Fiber classification (server.js `buildFuzzyDimensions`)
+1. `frontend/scripts/generate-product-pages.js` — SEO generator's `versionedImageUrl()` hashes PNG bytes, appends to og:image refs
+2. `frontend/scripts/fingerprint-og.js` — postbuild step, regex-rewrites og:image/twitter:image in `dist/index.html` with hashes
 
-- `hasSynthFiber` matches `nylon | polyester | spandex | elastane | lycra | acrylic | microfiber | viscose | modal | rayon | cupro | bamboo viscose | bamboo rayon`. The last four are chemically regenerated cellulosics that shed microfibers like synthetics — critical greenwashing guard. Lyocell and tencel stay OUT of this list (closed-loop process = legitimately cleaner).
-- `hasNatural` matches `merino wool | cashmere | cotton | linen | hemp | lyocell | tencel` — and specifically EXCLUDES bare `bamboo` because 99% of commercial bamboo textile is viscose-processed. Only cross-referenced "bamboo linen" (mechanical process) would deserve natural treatment and it's rare enough the detection doesn't try.
-- Empty-substances clothing calibration entries (e.g. Pact Organic at floor:1 ceiling:3 with `substances: []`) now get uScore=2 and sScore=2 instead of defaulting to 5/4. The calibration floor IS the signal that the brand is clean; defaults shouldn't contradict it.
+When PNG bytes change, hash changes, scrapers refetch on next view. Page-URL cache holds the og:image URL too — scrapers notice changes only on next page refetch (7-30d TTL).
 
-### Clothing clean ceiling (`applyPositiveCeilings`)
-
-When a clothing product has a verified certification (`GOTS | OEKO-TEX | USDA Organic | Fair Trade Certified | Bluesign | Cradle to Cradle | OCS`) AND no clothing-specific disqualifier fired (PFAS, formaldehyde, azo dye, chrome-tan, silver nanoparticle, flame retardant, lead, PVC, phthalate), cap final at 3. Parallel to the food USDA Organic ceiling and personal_care clean ceiling. Closes the gap where verified-clean clothing could still hedge up if Pass 1 was conservative.
-
-### Clothing-specific substance floors (server.js `SUBSTANCE_FLOORS`)
-
-- **DWR / water-repellent** — mFloor:6, matches bare `DWR` or `durable water repellent` or `water-repellent finish/coating/treatment` with a negative lookahead for `free` / `pfas.free`. Historically all DWR was PFAS-based; a few brands now claim PFAS-free C0 alternatives.
-- **PFAS DWR explicit** — mFloor:8, matches `PFAS.*DWR | DWR.*PFAS | durable water repellent.*fluoro`. Tiered higher than bare DWR because both terms together is strongest evidence.
-- **Chrome-tanned leather** — mFloor:5, matches `chrome.?tan(ning|ned) | chromium.?tan | conventional leather`. Covers Nike Air Force 1, Timberland, Frye, Common Projects, Blundstone, Danner.
-- **Silver nanoparticle antimicrobial** — mFloor:6, matches `silverescent | silver nanoparticle | silver.*antimicrobial | polygiene`. Covers Lululemon Silverescent, Mack Weldon Silver, ExOfficio.
-- **Azo/disperse/reactive dyes** — mFloor:6, matches `azo dye | azo.?dye | aromatic amine.*dye | disperse dye | reactive dye`.
-- **Microfiber shedding** — mFloor:6, broadened pattern covers `microfiber shed | shed microfiber | microfiber pollut | microplastic shed | shed microplastic | fiber shedding`.
-
-### Calibration category overrides detected category
-
-When a calibration entry's `category` differs from what `detectCategoryFast()` returned, the calibration wins for weight formula selection. Fixes the pajama bug (Cat & Jack pajamas detected as `baby`, calibration marks them `clothing` → pre-fix ran the baby formula which zeroes sustainability, dropping FR-treatment and microfiber penalties). Applies in vision and barcode paths.
-
-### Kids-mode floors on FR-treated sleepwear
-
-Carter's, OshKosh, Cat & Jack, Simple Joys sleepwear entries carry `kidsFloor: 7, kidsCeiling: 9`. Base adult floor is 5-7; kids mode elevates to 7-9 because the FR chemicals contact kids' skin 8-10 hours nightly. Wonder Nation at `kidsFloor: 6, kidsCeiling: 8` (lower base).
-
-### Alternatives matching rules specific to clothing
-
-- `STRICT_CATEGORIES` enforces same-category matching for clothing. An organic cotton tee won't surface as an alternative for a synthetic leggings scan unless both are category:"clothing".
-- `BLOCK_OTHER` excludes "other" category alternatives for supplement/personal_care/baby. Clothing allows "other" fallthrough since some clean clothing products pre-date category assignment.
-- Gender-mismatch penalty extended from personal_care to clothing (2026-04-22): men's products deprioritized by 15 points on women's queries and vice versa.
-- Brand-keyword injection: activewear brands (Lululemon/Athleta/Vuori/Alo/Outdoor Voices/Gymshark/Nike/Adidas) inject `activewear, leggings, athletic, workout`; outdoor tech brands (Patagonia/North Face/Arc'teryx/Cotopaxi/Marmot) inject `jacket, outerwear, rain jacket, hiking`; fast fashion (Shein/Zara/H&M/Forever21/Uniqlo/Old Navy/Gap) inject `clothing, shirt, dress, basic`; clean basics (Pact/Kotn/Tentree/Everlane/Reformation/Quince) inject `organic, cotton, shirt, basic`; kids brands (Carter's/Cat & Jack/OshKosh/Wonder Nation/Simple Joys/Hanna Andersson/Little Planet/Burt's Bees Baby) inject `kids, children, organic cotton, baby`; sleepwear terms (pajama/sleeper/pjs/nightwear) inject `pajamas, sleepwear, organic cotton, tight fit`; denim brands (Levi's/Madewell/J.Crew/Citizens of Humanity/Paige/Mother/AGOLDE) inject `jeans, denim, pants`.
-
-### Kids clothing alternatives (products.js)
-
-Five kc-* entries ship as of 2026-04-22 — Pact Kids, Hanna Andersson Organic Pajamas, Little Planet, Colored Organics, Burt's Bees Baby Sleeper. Previously the clothing catalog had zero kids-tagged items so Carter's / Cat & Jack queries returned nothing. All five are GOTS-certified.
-
-### Bare-fiber query rejection (text-path)
-
-`/analyze` returns a 400 `fabric_only_query` response for queries that are just a fabric name (e.g. `polyester`, `100% spandex`, `lyocell`). Pattern: `/^\s*(?:\d+\s*%\s*)?(fabric terms)\s*$/i`. These have no brand/product identity and would fall through to Tier 5 synthetic scoring — a fabrication vector. User gets a friendly "try a brand and product" prompt instead.
-
-### PFAS brand auditing protocol
-
-Brands claim PFAS phase-outs constantly. Before lowering a floor:
-1. Cross-reference against Mamavation EPA-certified lab testing (or equivalent: Consumer Reports, EWG, Toxic-Free Future).
-2. For split-use brands, separate product lines: DWR-finished items stay at floor:5 until independent verification; cotton/fleece/lounge items with no chemical finish can score lower.
-3. Insert specific product entries BEFORE the brand default in calibration.js — Map iteration order determines which `startsWith` match wins via `fuzzyCalibrationLookup`.
-4. Cite investigations with dates in reason strings (e.g. "Mamavation 2022 lab testing: 32ppm organic fluorine", "Texas AG Ken Paxton Civil Investigative Demand 2026-04-13").
-
-Previously dead "nike shoes" entry removed 2026-04-22 (contradicted verified Nike FY24 PFAS elimination + was dead code due to iteration order).
-
----
-
-## Mobile web layout (fixed footer / result page)
-
-Root wrapper at `frontend/src/App.jsx` `minHeight: 100vh` now includes dynamic `paddingBottom` on mobile/tablet:
-- Without a result: `calc(88px + env(safe-area-inset-bottom, 0px))`
-- With a result: `calc(160px + env(safe-area-inset-bottom, 0px))` (accounts for Scan Another pill at bottom:88 + bottom nav at bottom:0 overlap)
-
-This fixes a bug reported 2026-04-23 where mobile Safari scrolling past the Scan Another pill revealed body content peeking under the fixed nav + pill. Desktop has no bottom nav so `paddingBottom: 0`. When adding new fixed-position bottom elements, update the calc or the overlap returns.
-
----
-
-## Vision Contract v2 (label-truth enforcement)
-
-Introduced 2026-04-21. Gated on `VISION_CONTRACT_V2=true` (Railway env). Default OFF preserves legacy behavior. The legacy vision path scores directly from pixels in a single Haiku call — high fabrication risk because the AI can project ingredients from product priors rather than reading what's literally on the label. v2 decomposes that into identify → cascade-verify → score, with label reads as a verification signal rather than the source of truth.
-
-Module: `backend/visionContract.js`. Three exports:
-- `callClaudeVisionIdentify(image, mediaType, deps)` — slim identify-only Haiku call. Returns `{ product_name, brand, variant, category, confidence, label_ingredients, label_legibility, reasoning }`. `label_legibility` is one of `full | partial | minimal | unreadable`. System prompt explicitly decouples identity confidence from label legibility ("a photo can show a crystal-clear product name with a blurry ingredient panel — that is HIGH identity confidence and LOW label legibility") and includes a 5-bucket CONFIDENCE SCALE keyed to product-name visibility, NOT photo quality or ingredient readability. Clothing-specific cues called out: brand wordmarks on garments (Nike swoosh, Patagonia, adidas trefoil), hangtags, interior care labels (material composition treated as `label_ingredients` — each "72% nylon" style line as a separate array element), barcodes on tags. Explicit rule: a garment with a visible brand wordmark plus recognizable garment type is a high-confidence identification even when no care label is readable — the cascade finds material composition online from brand + product name. CATEGORY CUES section maps visual signals → category (care label → clothing, INCI list → personal_care, Nutrition Facts → food, Drug Facts → personal_care, hazard warnings → home).
-- `putIdentification` / `getIdentification` — in-memory store for the confirmation round-trip, keyed on UUID `identificationId` with 10-min TTL. Periodic cleanup via unref'd `setInterval`.
-- `reconcileIngredients(labelList, cascadeIngredients)` — normalizes both sides and returns `{ agreementPct, overlap, labelOnly, cascadeOnly, agreed }` (threshold 0.5). Used for audit logging only; scoring decisions always prefer cascade data.
-
-Handler: `/analyze` in `server.js` has a flag-gated branch before the legacy `if (image)` block. It handles both fresh vision POSTs and `{ identificationId }` resume POSTs from the confirmation modal.
-
-Flow:
-1. **Identify** — fresh path calls `callClaudeVisionIdentify`; resume path pulls from the in-memory store.
-2. **Confidence gate** (fresh only). Policy: if vision returned a usable product_name, score it. Refusal is reserved for true non-identifications. Thresholds dropped from the original 0.50/0.60 to 0.30/0.45 (2026-04-21) because the cascade + Tier 5 fallback + NOVA-inference floor already handle every downstream case honestly; higher thresholds were causing confirmed identifications to be refused (Abes Mini Muffins, Athletic Ankle Socks).
-   - No usable name OR `confidence < 0.30` → respond `{ status: "need_better_photo", reason: "low_confidence" }`. "No usable name" means empty, the placeholder "Scanned product", or fewer than 2 chars.
-   - `0.30 <= confidence < 0.45` → respond `{ status: "needs_confirmation", identificationId, identified }` with a fresh stored record.
-   - `>= 0.45` → proceed silently.
-3. **Cascade** — CALIBRATION exact → `fuzzyCalibrationLookup` (vision-only Tier 1.5, retained to avoid regressions) → name-keyed score cache → `tier3OpenFactsTextSearch` → `tier4WebExtract` → `tier5CategoryPrior`. Identical tier ordering to the text cascade: once the photo identifies the product, scoring follows the same product-name lookup path as if the user had typed the name.
-4. **Reconciliation** — when both cascade ingredients and `label_ingredients` are populated, `reconcileIngredients` runs and disagreements are logged as `vision_cascade_disagreement`. Cascade always wins for scoring; `label_legibility` is informational only.
-5. **Score**:
-   - Cascade hit (calibration) → calibration scoring path, identical shape to text/barcode calibration results.
-   - Cascade hit (OFF / web_search) → full Pass 1 with `materialContext` set to the verified ingredients. Substance floors, consistency checks, positive ceilings all run as in the barcode path.
-   - No cascade → Tier 5 synthetic category-prior best guess, `source: "ai_text_only_estimate"`, `source_confidence: "low"`, `source_label: "Best guess from product name"`, `_skipCache: true`. Same UX and contract as Tier 5 in the text cascade — identified products always get a score, with an honest "best guess" label when no external source verified the formula.
-
-Label ingredients are never used as the scoring source (replaced the earlier `photo_verified` / `vision_photo_verified_fallback` path). The label was always supposed to be a verification signal, not a gating or scoring mechanism; gating on `label_legibility` caused confirmed identifications (Abes Mini Muffins, Peppermint) to refuse when the cascade missed and the label was partial. Tier 5 closes that gap with the same honest fallback the text path uses.
-
-Response schema additions:
-- `status: "needs_confirmation" | "need_better_photo"` — presence indicates a non-scored response.
-- `identificationId` — UUID for the resume POST, only on `needs_confirmation`.
-- `identified: { product_name, brand?, variant?, confidence? }` — surfaces on non-scored responses so the frontend can echo the identification in its prompts.
-- `reason: "low_confidence"` — machine-readable classification. `need_better_photo` only fires on `confidence < 0.5`; there is no longer a `no_external_source` refusal.
-- `vision_reconciliation` — agreement fraction, attached to scored results when both label and cascade ingredients existed.
-
-Frontend: `App.jsx` `handleImageScan` branches on `data.status`. `needs_confirmation` opens a cream-card modal (Lora headline, moss primary "Yes, score it", outlined secondary "No, retake photo"). "Yes" calls `resumeFromConfirmation` which POSTs `{ identificationId, userId }` to `/analyze` — no second vision call. `need_better_photo` takes over the screen with a full-cream refusal view (moss primary "Retake photo" via hidden camera input, outlined "Scan barcode instead", minimal "Cancel"); now only reached when identification confidence is below 0.5. Both states sit at z-index 9998 alongside the barcode loading overlay. Design system compliance is mandatory: no alarm colors, no italics, no emoji, asymmetric radii via `var(--card-shape-2)` and `var(--tile-shape-*)`.
-
-Log events for audit:
-```bash
-# Confidence distribution + legibility patterns
-grep vision_identification_result | jq '{confidence, label_legibility}'
-
-# Audit cascade vs label divergence — these may indicate AI fabrication or genuine product changes
-grep vision_cascade_disagreement | jq '{product_name, agreement_pct, label_only, cascade_only}'
-
-# How often the cascade misses and Tier 5 (best-guess-from-name) fires — should fall as calibration grows
-grep vision_cascade_tier5 | jq '{product_name, category, score}'
-
-# Refusal rate — low-confidence identifications only (reason: "low_confidence")
-grep vision_refusal | jq '{reason, product_name}'
-```
-
-Cost profile: a cache-miss vision scan fires up to three Haiku calls (identify + Tier 4 web search + Pass 1 scoring) vs. one call in the legacy path. Acceptable at current volume; revisit the Tier 4 gate if cost scales unfavorably. Latency worst case ~24s (identify ~4s + Tier 4 ~12s + Pass 1 ~8s); a cache-hit scan still returns ~1s. The existing `GlobeLoading` overlay covers this budget.
-
-Turn-off path: set `VISION_CONTRACT_V2=false` (or unset) in Railway env. Backend reads the flag per-request, so the restart is the only required action — no cache clear, no frontend redeploy. The frontend states are defensive: they only render when backend responses carry the new `status` field.
-
-Re-introduction risk: if Tier 4 is loosened (timeout raised, trigram threshold dropped, `found: false` not respected), the vision path gains the same Danimals-style fabrication failure mode the text cascade closed in 2026-04-20. Don't loosen without a written reason.
-
----
-
-## NOVA 4 Floor Parity (text, vision, barcode)
-
-Introduced 2026-04-21. Motivating case: Abe's Mini Muffins scored 7 via barcode (correct — NOVA 4 signaled by Open Food Facts `nova_group`) but 2 via vision photo and 4 via text search. Same product, three different entry points, wildly different scores. The barcode path applies a deterministic NOVA floor via `novaBounds(nova_group, category)`; the text and vision paths had no structured NOVA signal so Pass 1 scored the ingredients as "clean" from surface markers (Non-GMO, no artificial dyes) even when the ingredient list contained hallmark ultra-processing markers.
-
-### Inference
-
-`inferNovaGroupFromIngredients(ingredientText, category)` in `server.js` scans the ingredient string for ultra-processing markers. 2+ markers → NOVA 4, 1 marker → NOVA 3, refined sugar/flour alone → NOVA 3, whole foods → null. Fires only for food / beverage / food_beverage categories. Markers currently cover:
-- Fortification vitamins (A palmitate, D2, B12, thiamin mononitrate, folic acid, pyridoxine, niacinamide, riboflavin)
-- Tricalcium / dicalcium phosphate
-- Syrups (any), HFCS, maltodextrin, dextrose, inulin
-- Isolates ("isolat"), lecithin, mono/diglycerides, xanthan / guar gum, carrageenan, cellulose gum
-- Natural / artificial flavors
-- Modified starches
-- Hydrogenated / partially hydrogenated oils
-- Aspartame, sucralose, acesulfame, maltitol
-- FD&C colors (Red 40, Yellow 5/6, Blue 1/2), brominated vegetable oil
-- Sodium / potassium benzoate, sorbate, sodium nitrite, sodium caseinate, DATEM, polysorbates
-- Autolyzed yeast, yeast extract
-- Protein isolates / concentrates (whey, soy, pea, rice)
-
-### Three-point enforcement
-
-1. **Materials floor** in the cascade (both text and vision paths): `novaBounds(inferredNova, cat).floor` raises `mScore`. For NOVA 4 + food → materials floored to 7.
-2. **Signal propagation** — the inference injects a `"NOVA 4 ultra-processed (inferred from ingredients: ...)"` line into `p1.raw_concerns` and sets `p1.product_analysis.composition_tier = 4`. This lets downstream gates recognize the signal:
-   - `applyConsistencyChecks` — Rule 1 (label/score contradiction) has a `isDeterministicUltraProcessed` bypass that reads `p1.raw_concerns` for the marker and skips the materials cap when present.
-   - `applyPositiveCeilings` — existing `isUltraProcessed` regex scans the same text (via `JSON.stringify(p1.raw_concerns).toLowerCase()`) and the Non-GMO / Organic ceilings respect it.
-3. **Authoritative final floor** — last step inside `applyProductCalibration` (calibration.js). When `result.raw_concerns` contains the marker OR `result.composition_tier === 4`, and category is food / beverage / food_beverage, score is clamped to min 7. This step runs AFTER entry floors/ceilings, compositionTier rules, sugar/sodium/fat floors, and Whole Foods banned checks — nothing downstream can claw it back.
-
-### Response shape requirement
-
-The result object built by all food-category scoring paths must include `raw_concerns: p1.raw_concerns || []` separately from `concerns` (which is typically `p2.refined_concerns || p1.raw_concerns`). Without the separate `raw_concerns` field, `p2.refined_concerns` overwrites `concerns` and the calibration-layer NOVA floor can't see the marker. Text cascade and vision_v2 both set this field explicitly — keep them in sync.
-
-### Log events
-
-- `[${tier}] NOVA N inferred from ingredients (marker1, marker2, marker3) — materials X → Y` — fires in the cascade when materials is raised.
-- `[${tier}][nova_trace] ...` — debug trace at three checkpoints (before post-ceiling clamp, after, before/after applyProductCalibration). Useful when a NOVA 4 product is scoring unexpectedly low.
-- `[CAL] NOVA 4 final floor: "X" N→7 (deterministic ultra-processed signal)` — fires inside applyProductCalibration when the authoritative clamp activates.
-
-### Debugging an unexpected score
-
-If a NOVA 4 product is returning a score below 7, check the response `cached` field first. `"cached": true` means Redis served a pre-fix result; clear it with `/cache-clear-product?name=X` and re-request to force a fresh cascade run. Only investigate the scoring pipeline once `"cached": false` is confirmed.
-
-### What this is NOT
-
-Not applied to non-food categories. Clothing, personal care, home, baby, toy, supplement, restaurant, accessory paths all skip NOVA inference entirely — the marker list is food-specific and the floor is gated to `FOOD_CATS_FOR_NOVA` = `{food, beverage, food_beverage}`. Supplements are NOT in that set because NOVA classification doesn't map cleanly to supplement formulations; supplement scoring uses the existing materials 65% + exposure 25% + packaging 10% weighting with its own substance floors.
-
-Not applied to the barcode path's OFF `nova_group` input — that path uses the structured field directly via `novaBounds(nova_group, cat)`, unchanged. The inference only fires when structured NOVA data is unavailable (text cascade via Tier 3/4, vision path after cascade hit).
-
----
-
-## OG preview freshness (2026-04-23)
-
-Instagram, Facebook, iMessage, Twitter, Slack, and LinkedIn cache link-preview images keyed on the image URL, typically for 7-30 days. That meant any time we shipped a design refresh to `og-image.png`, already-shared links kept showing the stale old preview until the scrapers happened to refetch — or someone ran the Facebook Sharing Debugger manually on every URL.
-
-**Fix: content-hashed query params on every `og:image` URL.** Both the SEO page generator and a post-build fingerprint script append `?v=<8-char-sha>` to every OG image reference. When the underlying image bytes change, the hash changes, the URL becomes a new cache key, and scrapers refetch on next view — automatically, no manual debugger runs.
-
-### Pipeline
-
-1. **`frontend/scripts/generate-product-pages.js`** — SEO generator. Its `versionedImageUrl(publicPath)` helper reads the PNG from `frontend/public/`, SHA-1 hashes the bytes, takes the first 8 chars, and appends `?v=<hash>` to the URL emitted in each page's `<meta property="og:image">` and `<meta name="twitter:image">` tags. Applies to every product's `og:image` reference — whether that's the shared site-wide card at `/og-image.png` or a per-product card at `/og/<slug>.png`.
-2. **`frontend/scripts/fingerprint-og.js`** — post-build script wired as `postbuild` in `frontend/package.json`. Runs after `vite build` has emitted `dist/index.html`. Regex-matches every `og:image` / `twitter:image` meta tag in the built HTML, looks up the referenced file under `frontend/public/`, hashes it, and rewrites the URL with the `?v=<hash>` fingerprint. Handles the homepage + any other Vite-built HTML.
-3. **Underlying images are never renamed.** `/og-image.png` still lives at `/og-image.png` on the server. The query param is ignored by the file server but fingerprints the URL for scraper cache keys.
-
-### Build order
-
-```
-npm run build
-  prebuild: generate-product-pages.js   ← SEO pages emit versioned OG URLs
-  build:    vite build                   ← index.html emitted with plain URLs
-  postbuild: fingerprint-og.js          ← dist/index.html rewritten with ?v=<hash>
-```
-
-### One-time migration for existing shares
-
-Content fingerprinting only kicks in when scrapers next fetch a URL. Previously-scraped Instagram/Facebook cached previews still point to the un-versioned URL and will keep showing the old preview image until the scraper naturally re-fetches (up to 30 days) OR you manually kick the cache at **https://developers.facebook.com/tools/debug/** (paste URL → click "Scrape Again"). After that, the URL moves to the `?v=<hash>` system permanently and all future refreshes are automatic.
-
-### Design refresh workflow going forward
-
-1. Update the OG image source (edit `frontend/scripts/build-og-image.py` and/or `build-product-og-images.py`, regenerate PNGs)
-2. `npm run build` — fingerprints change, `og:image` URLs update
-3. Deploy via Vercel
-4. Done. Scrapers rescrape on next view.
-
-No manual debugger runs per URL, no file renames, no code changes in the SEO template.
-
-### Caveat — page URL cache is separate
-
-The OG image URL cache is what we fingerprinted. There's a separate cache for the PAGE URL itself that holds the og:image URL (along with the title + description) from the last scrape. When we change the og:image URL inside the page, scrapers only notice on their next page-URL refetch. That cache TTL is also 7-30 days. So a single design refresh doesn't instantly propagate to every existing cached preview — but it DOES propagate automatically over the cache TTL window without any manual work. For urgent refreshes (e.g. a content moment that needs to go live today), still run the FB debugger on the specific URLs Sara/Paul is about to share.
+For urgent refreshes: developers.facebook.com/tools/debug → Scrape Again per URL.
 
 ---
 
 ## Brand Logo
 
-The Partiqule wordmark was introduced 2026-04-19, replacing the older leaf/Q icon + "Partiqule" text lockup. The wordmark spells out "partiqule" in a cream serif with a large decorative green Q as the 6th letter. Two wordmark variants exist because both dark-chrome (app headers) and light-chrome (SEO pages) contexts need legible rendering.
+Wordmark spells "partiqule" with green Q. Variants in `frontend/public/`:
 
-**Asset files** (all in `frontend/public/`):
-
-| File | When to use |
+| File | Use |
 |---|---|
-| `partiqule-wordmark.svg` | Dark letters on transparent — for light/cream backgrounds (main app nav, SEO page nav, loading screens on cream) |
-| `partiqule-wordmark-light.svg` | Cream/light letters — for dark backgrounds (barcode scanner overlay, dark-chrome contexts). Naming is "light-colored letters", not "for light backgrounds" — this is confusing; verified 2026-04-23 by pixel inspection of the PNG exports. |
-| `partiqule-stacked.svg` | Vertical Q-above-text lockup — reserved for future use (about page, stories, etc.) |
-| `partiqule-q.svg` | Q-only, green `#2d6a32` on transparent — favicon source and anywhere a full wordmark won't fit |
-| `partiqule-wordmark-{360,720,1080}.png` | PNG exports of the primary wordmark — for canvas rendering (share cards) and any context where SVG is awkward |
+| `partiqule-wordmark.svg` | Dark letters — light/cream backgrounds |
+| `partiqule-wordmark-light.svg` | Cream letters — dark backgrounds |
+| `partiqule-stacked.svg` | Vertical Q-above-text — reserved |
+| `partiqule-q.svg` | Q-only green `#2d6a32` — favicon source |
+| `partiqule-wordmark-{360,720,1080}.png` | Canvas rendering |
 
-**Favicons** — generated from `partiqule-q.svg` via `rsvg-convert`:
-
-- `favicon.ico` — multi-size ICO (16, 32, 48 px) — primary entry point via `<link rel="icon" href="/favicon.ico">`
-- `favicon-16x16.png`, `favicon-32.png`, `favicon-192.png`, `favicon-512.png`
-- `apple-touch-icon.png` (180×180) — also symlinked as `apple-touch-icon-180x180.png`
-
-**Regenerating** — when the source SVG changes, regenerate PNGs + favicon.ico:
-
-```bash
-# Requires librsvg (brew install librsvg)
-cd frontend/public
-rsvg-convert -w 360 partiqule-wordmark.svg -o partiqule-wordmark-360.png
-rsvg-convert -w 720 partiqule-wordmark.svg -o partiqule-wordmark-720.png
-rsvg-convert -w 1080 partiqule-wordmark.svg -o partiqule-wordmark-1080.png
-rsvg-convert -w 16 -h 16 partiqule-q.svg -o favicon-16x16.png
-rsvg-convert -w 32 -h 32 partiqule-q.svg -o favicon-32.png
-rsvg-convert -w 192 -h 192 partiqule-q.svg -o favicon-192.png
-rsvg-convert -w 512 -h 512 partiqule-q.svg -o favicon-512.png
-rsvg-convert -w 180 -h 180 partiqule-q.svg -o apple-touch-icon.png
-# favicon.ico needs Python — see scripts/pack-ico.py (or regenerate inline with the snippet in the 2026-04-19 commit history)
-```
-
-**Context inventory** — every surface that renders the logo and which variant it uses:
-
-- Main app header (`App.jsx` main nav) — `partiqule-wordmark.svg`, height 28 mobile / 32 desktop
-- Barcode scanner top bar overlay — `partiqule-wordmark.svg`, height 26 (dark camera background)
-- Barcode loading screen (`BarcodeLoadingView`) — `partiqule-wordmark.svg`, height 60, pulse-animated
-- SEO product pages nav (generated in `scripts/generate-product-pages.js`) — `partiqule-wordmark-light.svg`, height 30 (white nav background)
-- SEO product pages footer — `partiqule-wordmark.svg`, height 24 (near-black footer background)
-- Share card canvas (`ShareCompareCard`) — `partiqule-wordmark-1080.png` rasterized, drawn via `Image` onload into the top bar. Falls back to canvas text "PARTIQULE" if the image fails to load or if share is triggered before onload fires (cache-miss first use).
-- Favicon / browser tab — `favicon.ico` multi-size + PNG links in `index.html`
-- PWA manifest — `favicon-192.png` and `favicon-512.png`
-- Service worker precache (`sw.js`) — `favicon.ico`, all favicon PNGs, `partiqule-wordmark.svg`. `CACHE_NAME` was bumped `partiqule-v2` → `partiqule-v3` during the wordmark migration so clients refetch.
-
-**Not updated in the wordmark migration:**
-
-- `frontend/public/og-image.png` (1200×630 social preview) — still contains the old leaf icon + "Partiqule" text. Composed image with decorative elements (radar graphic, floating particles) — not cleanly swappable via code. Regenerate in a design tool when convenient.
-- iOS app icon — flows through Xcode / Capacitor config, not from this repo. Update in `frontend/ios/App/App/Assets.xcassets/` when next submitting to App Store.
-- Loops email templates — live in the Loops dashboard, not in this repo.
-- `frontend/public/logo.png` (old leaf logo) — kept in place because removing it could break cached clients. Safe to delete after a week of the wordmark being live.
-- `partiqule-icon.svg` and `partiqule-banner.svg` — legacy old-design SVGs, kept for reference. Nothing in current code references them. Safe to delete.
-
-**Color tokens** (for any new logo variant):
-- Cream: `#f3ede2`
-- Primary green Q: `#2d6a32`
-- App chrome dark: `#052e16`
-
-**Sizing** — wordmark aspect ratio is ~2.87:1. At 32px height, width ~92px. When a bigger presence is desired, prefer wider containers or the stacked variant over stretching.
+Favicons regenerated from `partiqule-q.svg` via `rsvg-convert` (brew install librsvg). Wordmark aspect ~2.87:1.
 
 ---
 
 ## Brand Partnerships
 
-- **Amazon Associates:** tag `partiqule-20` for all Amazon affiliate links
-- **MiiR:** Awin affiliate `https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392`
-- **Liquid Death:** 12 calibrated SKUs (score 1-3)
-- **MiiR:** 15 calibrated SKUs + 8 products.js entries (all score 1-2)
+- **Amazon Associates:** tag `partiqule-20`
+- **MiiR:** Awin `https://www.awin1.com/cread.php?awinmid=120517&awinaffid=2836392`
+- **Liquid Death:** 12 calibrated SKUs (1-3)
+- **MiiR:** 15 calibrated SKUs + 8 products.js (1-2)
+- **Sports Organics:** 3 SKUs, pre_release status, 2026-Q3 expected
+
+---
+
+## App Store
+
+**Account deletion:** Account button → Settings → Danger Zone. Direct: partiqule.com/account
+**Restore Purchases:** in paywall modal + Settings > Subscription. Both call `loadNativePurchases().restorePurchases()`.
+
+**Subscription terms (Apple-required, adjacent to subscribe button):**
+1. Title: "Partiqule Premium"
+2. Length: "monthly"
+3. Price: dynamic from StoreKit (fallback "$4.99/month")
+4. "Payment will be charged to your Apple ID at confirmation of purchase"
+5. Auto-renewal disclosure with cancel path (Settings > Apple ID > Subscriptions)
+6. Functional links: Privacy (partiqule.com/privacy), Terms (partiqule.com/terms), Apple EULA
+7. Apple EULA link also in App Store description
+
+**App ID:** `id6761738421`
+**Version:** `APP_VERSION` in App.jsx, Railway env `MIN_IOS_VERSION` / `MIN_WEB_VERSION` enforces minimum (UpdateRequiredView)
+
+---
+
+## Auth Refresh
+
+`authedFetch` wrapper retries once on 401 after `supabase.auth.refreshSession()`. Used on `/analyze`, `/delete-account`, `/apple-iap-confirm`. Critical for IAP attribution — without it, expired tokens silently fail subscription writes.
+
+---
+
+## Deployment
+
+- **Backend:** Railway (auto-detects `backend/package.json`, runs `npm start`)
+- **Frontend:** Vercel (root: `frontend`, framework: Vite, prebuild generates SEO pages)
+- **iOS:** Xcode Archive → App Store Connect
+- `API_BASE` in App.jsx must point to Railway backend
+- SEO `/products/<slug>` served via `vercel.json` rewrite
+- Bump `sw.js` `CACHE_NAME` for breaking changes
 
 ---
 
 ## Partiqule Design System
 
-This section defines the visual and voice system for every surface in the Partiqule app. Read this before writing any UI code. Every rule below has been arrived at deliberately and should not be changed without a design conversation first.
+Read this before writing UI. Every rule is deliberate.
 
----
+### Aesthetic
 
-### The aesthetic, in a sentence
+Paper in natural light, not a SaaS dashboard. A knowing friend in your pocket. Cream on cream with moss and amber accents, asymmetric shapes, serif warmth, DM Sans small caps for raw data.
 
-Paper in natural light, not a SaaS dashboard. A knowing friend in your pocket, not an analyzer. Cream on cream with moss and amber accents, asymmetric shapes, serif warmth, DM Sans small caps for raw data, and a voice that reads labels for you without talking down.
+### Foundation
 
----
+1. Copy carries more weight than chrome
+2. The score is never the whole story
+3. Your shelf is the spine
+4. One decision per moment
+5. Honesty over comfort
+6. Completion is ceremony
 
-### Foundation principles
-
-1. Copy carries more weight than chrome. Every string of text is a voice moment, every label is an opportunity to sound like a real person.
-2. The score is never the whole story. It appears next to a conversational verdict, not alone.
-3. Your shelf is the spine. Every scan ends on a reminder of the collection the user is building.
-4. One decision per moment. Each screen asks the user to do exactly one thing.
-5. Honesty over comfort. If a premium brand is amber, it scores amber. Warmth comes from voice, not from softening facts.
-6. Completion is ceremony. Loading, scanning, and shelving each get their own small moment.
-
----
-
-### Colors
-
-All colors live in `frontend/src/tokens.css` as CSS custom properties. Never type a hex code inline in UI code. Always use `var(--token-name)`.
-
-#### Paper and ink
+### Colors (use `var(--token)` from `tokens.css`, never inline hex)
 
 ```
---cream:       #f3ede2   (primary page background)
---cream-light: #f7f1e7   (elevated surfaces and tiles, barely distinct from cream)
---ivory:       #f9f5ea   (button text on moss, occasional elevated accent)
---ink:         #1a1f15   (primary text, nearly black with a warm green undertone)
---ink-soft:    #4a5342   (secondary text, descriptions, sub copy)
---ink-faint:   #8a9080   (tertiary text, stamps, metadata)
+--cream:       #f3ede2   (primary background)
+--cream-light: #f7f1e7   (elevated surfaces)
+--ivory:       #f9f5ea   (button text on moss)
+--ink:         #1a1f15   (primary text)
+--ink-soft:    #4a5342   (secondary)
+--ink-faint:   #8a9080   (tertiary)
+
+--moss:        #2d5a27   (primary brand, CTAs)
+--moss-deep:   #1f3f1b   (hover only)
+--sage:        #4a7c42   (secondary moss, rare)
+--amber:       #c8781a   (warm accent, never CTA)
+--moss-soft:   rgba(45, 90, 39, 0.08)
+
+--rule:        rgba(26, 31, 21, 0.16)
+--rule-soft:   rgba(26, 31, 21, 0.08)
+--rule-strong: rgba(26, 31, 21, 0.28)
+
+--score-green: #6b8c3e   (≤3, leaf)
+--score-amber: #c49a33   (4-5, wheat)
+--score-red:   #b0493a   (>5, terracotta)
 ```
 
-#### Brand
+### Typography — Lora + DM Sans only
 
-```
---moss:        #2d5a27   (primary brand color, CTAs, serif accents)
---moss-deep:   #1f3f1b   (hover state only)
---sage:        #4a7c42   (secondary moss, rarely used)
---amber:       #c8781a   (warm accent, never a CTA color)
---moss-soft:   rgba(45, 90, 39, 0.08)   (tinted backgrounds for badges)
-```
+**Lora** (variable weight, no italic axis loaded): greetings, product names, verdict headlines, section titles, score numbers, feed card headlines. 18-40px, most commonly 20-24. Below 14px wonk axis hurts readability.
 
-#### Rules and borders
+**DM Sans** (400-600): body, buttons, descriptions, sub copy, brand names (uppercase + 0.22em letter-spacing), nutrition facts, ingredients, all data moments. Replaces what used to be DM Mono — `--mono` token aliases DM Sans.
 
-```
---rule:        rgba(26, 31, 21, 0.16)   (standard hairline)
---rule-soft:   rgba(26, 31, 21, 0.08)   (subtle dividers)
---rule-strong: rgba(26, 31, 21, 0.28)   (emphasized borders)
-```
-
-#### Score colors
-
-Natural earth versions that live inside the cream and moss palette. Thresholds unchanged from the original system (≤3 green, ≤5 amber, >5 red).
-
-```
---score-green: #6b8c3e   (scores 3 and below)  — leaf green
---score-amber: #c49a33   (scores 4 to 5)        — golden wheat
---score-red:   #b0493a   (scores above 5)       — terracotta clay
-```
-
-#### Outer frame
-
-When rendering in a web context or embedding the app, the outer background is a slightly darker warm beige `--outer-bg: #e0d8c5`. Not used inside the screen itself.
-
----
-
-### Typography
-
-Two fonts, each with a specific job. Never substitute and never mix up the roles.
-
-#### Lora
-
-Used for: greetings, product names, verdict headlines, section titles, score numbers, warm moments ("here's what I found"), feed card headlines.
-
-Lora is a variable font with axes for weight, optical size, softness, and wonk. The italic axis is NOT loaded — warmth comes from word choice, moss color, and opacity, never from slanted type. Use the default Regular weight unless a specific moment wants emphasis.
-
-Size range in app: 18px (small warm notes) to 40px (hero greetings). Most commonly 20 to 24px for section titles.
-
-Note: at sizes under 14px, the "wonk" axis can make Lora hard to read. Our system uses DM Sans below that threshold.
-
-#### DM Sans
-
-Used for: body text, button labels, descriptions, sub copy, product brand names in small caps, nutrition facts, ingredient lists, any functional text, and all the data moments that used to belong to DM Mono — timestamps, material compositions, section labels in caps, shelf brand names, SKU or review IDs.
-
-Weights 400 to 600 only.
-
-Data bits render uppercase with letter-spacing between 0.14em and 0.22em for a small caps treatment. This preserves the documentary feel without needing a third typeface. The `--mono` token in `tokens.css` is an alias pointing at DM Sans so legacy `var(--mono)` references keep working during migration.
-
-Brand labels follow the same pattern: uppercase, letter-spacing 0.22em.
-
----
+Data bits render uppercase letter-spacing 0.14-0.22em (small caps treatment).
 
 ### Asymmetric border radii
 
-A signature element of the system. No tile on any screen should use a symmetric radius. Each card, thumbnail, and circular element uses one of the predefined shapes to feel hand cut rather than stamped.
-
-#### Tile shapes (small tiles, shelf thumbnails)
+Every tile/card/circle uses a predefined shape. Cycle through shapes so adjacent tiles don't match.
 
 ```
---tile-shape-1: 12px 14px 10px 15px / 14px 10px 15px 12px
---tile-shape-2: 14px 10px 15px 12px / 10px 15px 12px 14px
---tile-shape-3: 10px 15px 12px 14px / 15px 12px 14px 10px
---tile-shape-4: 15px 12px 14px 10px / 12px 14px 10px 15px
---tile-shape-5: 11px 13px 15px 12px / 13px 15px 12px 11px
---tile-shape-6: 13px 15px 11px 14px / 15px 11px 14px 13px
+Tile shapes (small): --tile-shape-1 through -6
+Card shapes (feed): --card-shape-1 through -4
+CTA shape: --cta-shape (scan card)
+Circle shape: --circle-shape (profile, score dots)
 ```
-
-#### Card shapes (feed cards, alternatives)
-
-```
---card-shape-1: 16px 20px 14px 18px / 18px 14px 20px 16px
---card-shape-2: 20px 14px 18px 16px / 14px 18px 16px 20px
---card-shape-3: 14px 18px 16px 20px / 20px 16px 14px 18px
---card-shape-4: 15px 16px 14px 18px / 16px 14px 18px 15px
-```
-
-#### CTA shape (scan card and similar prominent surfaces)
-
-```
---cta-shape: 22px 18px 24px 20px / 20px 24px 18px 22px
-```
-
-#### Circle shape (profile circles, nav scan button, score dots)
-
-```
---circle-shape: 49% 51% 50% 50% / 52% 48% 52% 48%
-```
-
-When placing multiple tiles in a row or grid, cycle through the shapes so no two adjacent tiles match. The visual irregularity is the signal.
-
----
 
 ### Motion
 
-All motion is ambient and slow. No bouncy micro-interactions, no pulsing CTAs, no attention grabbing animations.
+Slow, ambient. No bouncy micro-interactions.
 
-1. Morning light wash. A static warm gradient at the top 280px of every screen. Mimics sunlight hitting a page on a kitchen table.
-2. Drifting particles. 12 small dots (1.5 to 3px) in moss, amber, and soft ink tints. Three drift animations at 22 to 32 second cycles. Low opacity.
-3. Breathing scale. Key stages (e.g. the hero scan card) scale by 1.012x on a 5 second cycle. Almost imperceptible.
-4. Fade up on load. Content sections fade in with 8px upward translate, staggered 80 to 150ms apart.
-5. Subtle hover lifts. Interactive cards translate up 1 to 2px on hover.
+1. Morning light wash — static warm gradient top 280px
+2. Drifting particles — 12 dots, 22-32s cycles, low opacity
+3. Breathing scale — hero scales 1.012x on 5s cycle
+4. Fade up on load — 8px translate, 80-150ms stagger
+5. Subtle hover lifts — 1-2px translate
 
-#### Never
-- Glow halos behind elements
-- Pulsing or throbbing CTAs
-- Spinning icons or loaders
-- Circular loading animations (typewriter + linear rule + dots is the pattern)
-- Color shifts on hover
-- Anything that feels like a game or a toy
-
----
+**Never:** glow halos, pulsing CTAs, spinning loaders, circular loading, hover color shifts, anything game/toy-like.
 
 ### Voice
 
-Write as a friend who reads labels for a living. First and second person. Specific over vague. Confident without being preachy. Short sentences. Real words.
+Friend who reads labels for a living. First/second person. Specific over vague. Confident not preachy. Short sentences. Real words.
 
-#### Use
+**Use:** "Here's what I found, Paul." / "I'd swap if you can." / "Not a crisis. Just a cleaner one nearby." / "Already on your shelf."
 
-"Here's what I found, Paul."
-"I'd swap if you can."
-"Not a crisis. Just a cleaner one nearby."
-"Keep these for the gym."
-"Two I'd reach for instead."
-"Already on your shelf."
-"Nice work on the Clif Bars."
-"Mostly the fabric."
+**Avoid:** "Analysis complete." / "Score: 5/10." / "Consider an alternative product." / "View details." / "Your results."
 
-#### Avoid
+Test: would a friend say it out loud?
 
-"Analysis complete."
-"Score: 5/10."
-"Consider an alternative product."
-"View details."
-"Your results."
-"Product information."
-
-The test: would a friend say it out loud? If no, rewrite.
-
-#### Verdict phrasing by score
+### Verdict phrasing
 
 ```
-1 to 3 (green):  "Looks good to me."  /  "A keeper."  /  "Solid."
-4 to 5 (amber):  "I'd swap if you can."  /  "Fine for X, not Y."  /  "Judgment call."
-6 to 10 (red):   "I'd pass on this one."  /  "Skip it."  /  "Not great."
+1-3 (green):  "Looks good."
+4-5 (amber):  "Could be cleaner."
+6 (amber):    "Swap when you can."
+7 (red):      "Better options exist."
+8-9 (red):    "Hard pass."
+10 (red):     "Avoid."
 ```
 
----
+Always derive verdict from `displayScore`, never trust AI-generated verdict_kid/verdict_adult fields.
 
-### Component patterns
+### Layout
 
-#### Result screen
+- Background always `var(--cream)`
+- Screen edge padding 24px
+- Section spacing 32px
+- 1px borders with `var(--rule)` or `var(--rule-soft)`
+- Bottom nav 80px with safe-area padding
+- Top bar 1px bottom border
+- Caps labels: 22px×1px moss rule + 10px gap + DM Sans caps
 
-Top to bottom: top bar (wordmark left, shelf badge right), product header (stamp, brand in caps, serif name, DM Sans composition), verdict block (score ring + conversational headline), friend's note (caps label + serif paragraph), primary action row (moss primary + outlined secondary), two swap cards, shelf strip with ledge, footer.
+### Never
 
-#### Hero screen
+1. Italics anywhere (Lora italic axis not loaded)
+2. Outfit, DM Mono, Instrument Serif (Lora + DM Sans only)
+3. Purple `#7c3aed` accent
+4. White backgrounds (use cream)
+5. Cold navy dark surfaces (no dark mode)
+6. Icons in colored squares (Linear/Notion pattern)
+7. Emoji in any UI string
+8. Inline hex codes
+9. Symmetric border-radius on tiles/cards
+10. Glow halos
+11. Third-person dashboard voice
+12. Headers like "Overview", "Details", "Analysis"
+13. Pulsing/bouncing animations
+14. System font substitutes
+15. Score bigger than verdict headline
+16. Sentence-case ingredient lists (caps + letter-spacing)
+17. Screens ending without shelf reference
 
-Top bar, greeting (38px serif, normal weight), DM Sans caps stamp, quiet scan card (cream with moss frame, not solid moss), shelf strip with ledge, intelligence feed cards horizontal, This Week recap with serif stats in moss, bottom nav.
+### Reference files
 
-#### Loading screen
+- `frontend/src/tokens.css` — authoritative tokens
+- `docs/brand-kit.html` — visual reference
+- `docs/mockups/` — HTML mockups per screen
 
-No circular animations. Product identity at top matches the result screen. Center: typewriter animation cycling through four status messages — "Reading the label...", "Checking what's inside...", "Looking up what we know...", "Scoring against the rest..." — Lora normal weight, moss color. Below the typewriter: a 200px thin moss rule draws left to right as each step completes. Below the rule: four 6px moss dots, each fills as its step message appears, 16px spacing between dots. Static footer line in small serif.
-
-#### Detail view
-
-Extends the result screen with three new sections: sub-scores (horizontal rows, caps label + big serif score + sans description), composition breakdown (grouped with colored concern dots per item), Worth Knowing flags (editorial paragraphs with arrow action suggestions).
-
-#### Alternatives view
-
-Simple: back arrow, stamp tying it to source product, large serif title, serif subtitle, source toggle (Amazon / Brand site / Target), list of 4 to 6 alternative cards each with score ring + brand + name + DM Sans composition + tags.
-
----
-
-### Layout conventions
-
-- Screen background is always `var(--cream)`
-- Primary padding unit is 24px for screen edges
-- Section spacing is 32px
-- Cards use 1px borders with `var(--rule)` or `var(--rule-soft)`
-- Bottom nav is always 80px tall with safe area padding on iOS
-- Top bar always has a 1px bottom border in `var(--rule)`
-- Caps labels always use the label pattern: small horizontal rule (22px wide, 1px tall, moss at 0.7 opacity) followed by DM Sans caps text with 10px gap
-
----
-
-### Never do
-
-1. Use italics anywhere. Warmth comes from word choice, opacity, and moss color, not slanted type. The Lora italic axis is not loaded from Google Fonts for this reason.
-2. Use Outfit, DM Mono, or Instrument Serif. Lora and DM Sans only.
-3. Use purple `#7c3aed` as an accent. Signals generic SaaS.
-4. Use white backgrounds. Use cream.
-5. Use cold navy for dark surfaces. Dark mode is out of scope — the canonical surface is warm paper light.
-6. Put icons inside colored squares. This is the Linear and Notion pattern. Use serif typography or DM Sans caps labels instead.
-7. Use emoji in any UI string.
-8. Write hex codes inline. Always reference `var(--token-name)` from `tokens.css`.
-9. Use hard rounded rectangles or symmetric border-radius on tiles and cards. All tiles are asymmetric via shape tokens.
-10. Add glow halos to interactive elements.
-11. Write UI copy in third person or dashboard voice ("Your data", "Analysis", "Details").
-12. Create section headers that sound like a dashboard ("Overview", "Details", "Data", "Analysis").
-13. Use pulsing or bouncing animations.
-14. Substitute a system font for Lora or DM Sans.
-15. Make the primary score bigger than the verdict headline. They share the frame.
-16. Display the ingredients list or composition in sentence case. It is always DM Sans caps with letter-spacing.
-17. Let any screen end without a reference back to the user's shelf.
-
----
-
-### Design system files
-
-All visual and code references live in one of:
-
-- `frontend/src/tokens.css` — authoritative source for all color, type, radius, spacing values
-- `docs/brand-kit.html` — visual reference for humans
-- `docs/mockups/` — HTML mockups of each screen (hero, clothing result, loading, details + alternatives, icon POC)
-
-If a pattern isn't in one of those files, pause and ask whether it needs to exist.
+If a pattern isn't in one of those, pause and ask.
