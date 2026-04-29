@@ -6676,11 +6676,24 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const p1 = await pass1(productName, cascadeContext, resolvedCategory, preDetected);
       applyFlagDetectionToP1(p1, ingredientText, resolvedCategory, tier);
 
-      let p2 = null;
-      try { p2 = await safePass2(productName, p1, ingredientText); }
-      catch(e) { console.warn(`[${tier}] pass2 failed:`, e.message); }
-
+      // Parallelize: Pass 2 needs only Pass 1 output; Amazon PA API needs only
+      // the Pass-1 product name + category + identified plastics. Neither
+      // depends on the other, so fire them concurrently and wait once.
       const finalCategory = (p1.category && p1.category !== "other" ? p1.category : resolvedCategory) || "other";
+      const aiProductNameEarly = p1.product_name || productName;
+      const isRestaurantEarly = finalCategory === "restaurant";
+
+      console.time(`[${tier}] pass2+amazon parallel`);
+      const p2Promise = safePass2(productName, p1, ingredientText)
+        .catch(e => { console.warn(`[${tier}] pass2 failed:`, e.message); return null; });
+      const amazonPromise = (isPaApiConfigured() && !isRestaurantEarly)
+        ? getAmazonAlternatives(aiProductNameEarly, finalCategory, p1.identified_plastics || [])
+            .catch(e => { console.warn(`[${tier}] amazon api failed:`, e.message); return null; })
+        : Promise.resolve(null);
+      let p2;
+      let amazonResultsEarly;
+      [p2, amazonResultsEarly] = await Promise.all([p2Promise, amazonPromise]);
+      console.timeEnd(`[${tier}] pass2+amazon parallel`);
 
       let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
       let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
@@ -6791,7 +6804,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
       const aiProductName = p1.product_name || productName;
 
-      // Alternatives
+      // Alternatives — Amazon PA API was already fired in parallel with Pass 2
+      // above. Use those results if non-empty; otherwise fall back to DB.
       let finalAlternatives;
       const isRestaurant = finalCategory === "restaurant";
       if (isRestaurant) {
@@ -6801,16 +6815,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
           affiliateUrl: `https://www.amazon.com/s?k=${encodeURIComponent(a.name)}&tag=${process.env.AMAZON_PARTNER_TAG||"partiqule-20"}`,
           category: "food_beverage"
         }));
-      } else if (isPaApiConfigured()) {
-        const amazonResults = await getAmazonAlternatives(aiProductName, finalCategory, p1.identified_plastics || []);
-        if (amazonResults && amazonResults.length > 0) {
-          finalAlternatives = amazonResults;
-        } else {
-          finalAlternatives = filterDbAlternatives(
-            findAlternatives(aiProductName, finalCategory, 3, productName),
-            finalCategory, productName, finalScore
-          ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
-        }
+      } else if (amazonResultsEarly && amazonResultsEarly.length > 0) {
+        finalAlternatives = amazonResultsEarly;
       } else {
         finalAlternatives = filterDbAlternatives(
           findAlternatives(aiProductName, finalCategory, 3, productName),
