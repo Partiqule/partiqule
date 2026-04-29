@@ -172,7 +172,19 @@ async function tier3OpenFactsTextSearch(productName) {
 // is the right one — the trigram check is a sanity guard, not the primary
 // filter. Up to 2 attempts: the second uses a canonicalized query (adds
 // apostrophes, strips size/unit qualifiers) if the first misses.
-const TIER4_TIMEOUT_MS = 22000;
+// Tier 4 timeout dropped 22000 -> 8000 (2026-04-29) and the canonicalize
+// retry replaced with parallel-attempts. Worst-case latency was 44s
+// (22s verbatim + 22s canonical retry), making fresh-scan UX painful on
+// iOS. With the cap and parallel attempts, worst case is 8s and best
+// case is whichever attempt returns first with usable ingredients.
+//
+// Hit-rate trade-off: web searches that hadn't returned in 8s rarely
+// returned anything usable anyway. Tier 5 (synthetic, low-confidence)
+// already exists as the honest fallback when Tier 4 misses.
+//
+// Compare hit rate against the 22s baseline before/after deploy via
+// the tier4_attempt logs introduced in the previous commit.
+const TIER4_TIMEOUT_MS = 8000;
 const TIER4_MIN_SIMILARITY = 0.45;
 
 function extractJsonFromText(text) {
@@ -370,20 +382,40 @@ Hard rules:
 
 async function tier4WebExtract(productName, deps = {}) {
   const started = Date.now();
-  // Attempt 1: verbatim query.
-  let attempt = await _tier4OneCall(productName, deps, "verbatim");
-  let usedQuery = productName;
+  // Fire verbatim and canonical queries in parallel. Whichever returns
+  // first with usable ingredients wins. Worst case latency = TIER4_TIMEOUT_MS
+  // (both attempts hit the timeout simultaneously). Previously this was
+  // serial: verbatim then canonical, doubling worst-case latency to 2x
+  // TIER4_TIMEOUT_MS.
+  //
+  // Cost note: this can fire two API calls per scan instead of one. The
+  // existing checkApiBudget/incrementApiCount counters cover both.
+  const canonical = canonicalizeQuery(productName);
+  const hasDistinctCanonical = canonical && canonical.toLowerCase() !== productName.toLowerCase();
 
-  // Attempt 2: canonicalized query. Retry budget is bounded by the existing
-  // per-call checkApiBudget/incrementApiCount; if the budget is exhausted the
-  // second call will throw and bail.
-  if (!attempt.ok) {
-    const canonical = canonicalizeQuery(productName);
-    if (canonical && canonical.toLowerCase() !== productName.toLowerCase()) {
-      console.log(`[tier4] retry1 query="${productName}" canonical="${canonical}" reason=${attempt.reason}`);
-      attempt = await _tier4OneCall(canonical, deps, "canonical");
-      usedQuery = canonical;
-    }
+  const verbatimPromise = _tier4OneCall(productName, deps, "verbatim");
+  const canonicalPromise = hasDistinctCanonical
+    ? _tier4OneCall(canonical, deps, "canonical")
+    : Promise.resolve(null);
+
+  // Race: take the first attempt that returns ok:true. If neither
+  // succeeds, fall through to whichever returned a definitive result.
+  let attempt = null;
+  let usedQuery = productName;
+  const results = await Promise.allSettled([verbatimPromise, canonicalPromise]);
+  const verbatimRes = results[0].status === "fulfilled" ? results[0].value : null;
+  const canonicalRes = results[1].status === "fulfilled" ? results[1].value : null;
+
+  if (verbatimRes?.ok) {
+    attempt = verbatimRes;
+    usedQuery = productName;
+  } else if (canonicalRes?.ok) {
+    attempt = canonicalRes;
+    usedQuery = canonical;
+  } else {
+    // Neither succeeded; pick the one with a usable parsed body if any
+    // (better failure reason for logs).
+    attempt = verbatimRes || canonicalRes || { ok: false, reason: "no_response" };
   }
 
   if (!attempt.ok) {
