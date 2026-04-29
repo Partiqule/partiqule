@@ -294,6 +294,31 @@ const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
 const supabase = createClient(SUPA_URL, SUPA_KEY);
 
+// Module-scoped auth helpers — same shape as the App-component versions, but
+// reachable from top-level admin components (AdminPage, IntelAdminPage) so
+// they don't have to embed an admin key in the bundle.
+const authHeaders = async () => {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+  } catch { return {}; }
+};
+const authedFetch = async (url, options = {}) => {
+  const buildOpts = async () => ({
+    ...options,
+    headers: { ...(options.headers || {}), ...(await authHeaders()) },
+  });
+  let res = await fetch(url, await buildOpts());
+  if (res.status !== 401) return res;
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data?.session) return res;
+    res = await fetch(url, await buildOpts());
+  } catch {}
+  return res;
+};
+
 // ── BARCODE SCANNER ──────────────────────────────────────────
 // Full-screen camera viewfinder with live barcode detection.
 // Single code path for iOS, Android, and web: getUserMedia + native
@@ -1804,74 +1829,6 @@ const DimensionDropdown = ({icon, label, score, concerns, children}) => {
 const PlasticScoreDropdown = ({result, muted}) => null;
 const HealthScoreDropdown  = ({result, muted}) => null;
 
-// ── SUGGESTION BOX ────────────────────────────────────────────
-// Users can suggest a product they want scored. Appears at the bottom
-// of the home page. Submits to /suggest, shows in admin panel.
-const SuggestionBox = ({isMobile, surface, border, text, muted, user}) => {
-  const [name, setName]     = useState("");
-  const [email, setEmail]   = useState("");
-  const [status, setStatus] = useState(null);
-
-  const submit = async () => {
-    if (!name.trim()) return;
-    setStatus("sending");
-    try {
-      const r = await fetch(`${API_BASE}/suggest`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          product_name: name.trim(),
-          user_email:   email.trim() || user?.email || null,
-        }),
-      });
-      if (!r.ok) throw new Error();
-      setStatus("sent");
-      setName(""); setEmail("");
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  return (
-    <div style={{maxWidth:600, margin:"0 auto 60px", padding:`0 ${isMobile?"16px":"40px"}`}}>
-      <div style={{background:surface, borderRadius:16, border:`1px solid ${border}`, padding:isMobile?"24px 20px":"32px 32px"}}>
-        <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6}}>Suggest a product</div>
-        <p style={{fontSize:14, color:muted, margin:"0 0 20px", lineHeight:1.6}}>Want us to score a specific product? Let us know and we'll add it.</p>
-        {status === "sent" ? (
-          <div style={{fontSize:14, color:"#16a34a", fontWeight:600, padding:"16px 0", textAlign:"center"}}>
-            Thanks! We'll add this to our queue.
-          </div>
-        ) : (
-          <>
-            <input
-              value={name} onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && submit()}
-              placeholder="e.g. Stanley Quencher tumbler, Olaplex No. 3..."
-              style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
-            />
-            {!user && (
-              <input
-                value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="Email (optional — to get notified)"
-                style={{width:"100%", padding:"12px 16px", borderRadius:10, border:`1.5px solid ${border}`, background:"#fff", color:text, fontSize:14, outline:"none", marginBottom:10, boxSizing:"border-box"}}
-              />
-            )}
-            <button onClick={submit} disabled={!name.trim() || status === "sending"} style={{
-              width:"100%", padding:"12px", borderRadius:10, border:"none",
-              background: name.trim() ? "#16a34a" : "#e2e8f0",
-              color: name.trim() ? "#fff" : muted,
-              fontSize:14, fontWeight:700, cursor: name.trim() ? "pointer" : "default",
-              opacity: status === "sending" ? 0.6 : 1,
-            }}>
-              {status === "sending" ? "Submitting..." : "Submit suggestion"}
-            </button>
-            {status === "error" && <div style={{fontSize:13, color:"#dc2626", marginTop:8, textAlign:"center"}}>Something went wrong. Please try again.</div>}
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
 
 // ── SCORE EXPLAINER ───────────────────────────────────────────
 // Collapsible "How we got this score" panel that shows the triggered
@@ -2774,11 +2731,10 @@ const IntelAdminPage = ({text, muted, surface, border}) => {
   const [retagSaving, setRetagSaving] = useState(false);
   const [retagMsg, setRetagMsg] = useState(null);
 
-  const AK = encodeURIComponent("RowenaRavenclaw2024!");
-  const fetchCards = async()=>{setLoading(true);try{const r=await fetch(`${API_BASE}/api/intelligence/all?key=${AK}`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
+  const fetchCards = async()=>{setLoading(true);try{const r=await authedFetch(`${API_BASE}/api/intelligence/all`);const d=await r.json();setCards(d.cards||[]);}catch{}setLoading(false);};
   useEffect(()=>{fetchCards();},[]);
 
-  const runFeedNow = async()=>{setFeedRunning(true);setFeedResult(null);try{const r=await fetch(`${API_BASE}/api/intelligence/run?key=${AK}`,{method:"POST",headers:{"Content-Type":"application/json"}});setFeedResult(await r.json());}catch(e){setFeedResult({error:e.message});}setFeedRunning(false);fetchCards();};
+  const runFeedNow = async()=>{setFeedRunning(true);setFeedResult(null);try{const r=await authedFetch(`${API_BASE}/api/intelligence/run`,{method:"POST",headers:{"Content-Type":"application/json"}});setFeedResult(await r.json());}catch(e){setFeedResult({error:e.message});}setFeedRunning(false);fetchCards();};
 
   const draftCards = cards.filter(c=>!c.active);
   const liveCards = cards.filter(c=>c.active);
@@ -2788,7 +2744,7 @@ const IntelAdminPage = ({text, muted, surface, border}) => {
     setSaving(true);setMsg(null);
     const payload={...form,ingredient_triggers:form.ingredient_triggers?form.ingredient_triggers.split(",").map(s=>s.trim()).filter(Boolean):[],category_triggers:form.category_triggers.length?form.category_triggers:null};
     try{
-      const r=await fetch(`${API_BASE}/api/intelligence-cards?key=${encodeURIComponent("RowenaRavenclaw2024!")}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const r=await authedFetch(`${API_BASE}/api/intelligence-cards`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
       if(!r.ok)throw new Error("Save failed");
       setMsg("Card created");setForm({headline:"",body:"",label:"",label_color:"#d97706",action_text:"Learn more",action_url:"",action_page:"",ingredient_triggers:"",category_triggers:[],source_name:"",source_url:"",priority:5,active:true});
       fetchCards();
@@ -2797,15 +2753,15 @@ const IntelAdminPage = ({text, muted, surface, border}) => {
   };
 
   const approveCard = async(id)=>{
-    try{const r=await fetch(`${API_BASE}/api/intelligence/approve/${id}?key=${AK}`,{method:"POST"});if(r.ok)setCards(prev=>prev.map(c=>c.id===id?{...c,active:true}:c));}catch(e){console.error("Approve failed:",e.message);}
+    try{const r=await authedFetch(`${API_BASE}/api/intelligence/approve/${id}`,{method:"POST"});if(r.ok)setCards(prev=>prev.map(c=>c.id===id?{...c,active:true}:c));}catch(e){console.error("Approve failed:",e.message);}
   };
 
   const deactivateCard = async(id)=>{
-    try{await fetch(`${API_BASE}/api/intelligence-cards/${id}?key=${AK}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({active:false})});setCards(prev=>prev.map(c=>c.id===id?{...c,active:false}:c));}catch{}
+    try{await authedFetch(`${API_BASE}/api/intelligence-cards/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({active:false})});setCards(prev=>prev.map(c=>c.id===id?{...c,active:false}:c));}catch{}
   };
 
   const deleteCard = async(id)=>{
-    try{const r=await fetch(`${API_BASE}/api/intelligence/dismiss/${id}?key=${AK}`,{method:"DELETE"});if(r.ok)setCards(prev=>prev.filter(c=>c.id!==id));}catch(e){console.error("Delete failed:",e.message);}
+    try{const r=await authedFetch(`${API_BASE}/api/intelligence/dismiss/${id}`,{method:"DELETE"});if(r.ok)setCards(prev=>prev.filter(c=>c.id!==id));}catch(e){console.error("Delete failed:",e.message);}
   };
 
   const openRetag = (c) => {
@@ -2828,7 +2784,7 @@ const IntelAdminPage = ({text, muted, surface, border}) => {
       ingredient_triggers: toRetagArr(retagForm.ingredient_triggers),
     };
     try {
-      const r = await fetch(`${API_BASE}/api/intelligence-cards/${retagId}?key=${AK}`, {
+      const r = await authedFetch(`${API_BASE}/api/intelligence-cards/${retagId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -3002,6 +2958,7 @@ const IntelAdminPage = ({text, muted, surface, border}) => {
 
 const AdminPage = ({surface, border, text, muted, history: historyProp = []}) => {
   const [adminTab, setAdminTab] = useState("dashboard"); // dashboard | guides
+  const [accessState, setAccessState] = useState("checking"); // checking | allowed | denied
   const [cacheStatus, setCacheStatus]   = useState(null);
   const [clearing, setClearing]         = useState(false);
   const [testQuery, setTestQuery]       = useState("");
@@ -3016,98 +2973,36 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
   const [scansTotal,   setScansTotal]   = useState(0);
   const [feedback, setFeedback]         = useState([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [suggestions, setSuggestions]   = useState([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [overrides, setOverrides] = useState([]);
-  const [newOverride, setNewOverride] = useState({name:"", floor:5, ceiling:7, category:"food_beverage", reason:"", substances:""});
-  const [savingOverride, setSavingOverride] = useState(false);
 
   useEffect(() => {
-    if (!historyProp.length) {
-      try {
-        const h = JSON.parse(localStorage.getItem("ps_history") || "[]");
-        setHistory(h);
-      } catch {}
-    }
-    fetchCacheStatus();
-    fetchRecentScans();
-    fetchFeedback();
-    fetchSuggestions();
-    fetchOverrides();
-  }, []);
-
-  const fetchOverrides = async () => {
-    try {
-      const r = await fetch(`${API_BASE}/admin/calibration?key=RowenaRavenclaw2024!`);
-      if (r.ok) setOverrides(await r.json());
-    } catch {}
-  };
-
-  const saveOverride = async () => {
-    if (!newOverride.name.trim()) return;
-    setSavingOverride(true);
-    try {
-      const body = {
-        ...newOverride,
-        floor:      parseInt(newOverride.floor),
-        ceiling:    parseInt(newOverride.ceiling),
-        substances: newOverride.substances ? newOverride.substances.split(",").map(s=>s.trim()).filter(Boolean) : [],
-        updated_by: "admin",
-      };
-      const r = await fetch(`${API_BASE}/admin/calibration?key=RowenaRavenclaw2024!`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(body),
-      });
-      if (r.ok) {
-        await fetchOverrides();
-        setNewOverride({name:"", floor:5, ceiling:7, category:"food_beverage", reason:"", substances:""});
+    (async () => {
+      const r = await authedFetch(`${API_BASE}/admin/me`);
+      if (!r.ok) { setAccessState("denied"); return; }
+      setAccessState("allowed");
+      if (!historyProp.length) {
+        try {
+          const h = JSON.parse(localStorage.getItem("ps_history") || "[]");
+          setHistory(h);
+        } catch {}
       }
-    } catch {}
-    setSavingOverride(false);
-  };
-
-  const deleteOverride = async (name) => {
-    try {
-      await fetch(`${API_BASE}/admin/calibration?name=${encodeURIComponent(name)}&key=RowenaRavenclaw2024!`, {
-        method: "DELETE",
-      });
-      await fetchOverrides();
-    } catch {}
-  };
+      fetchCacheStatus();
+      fetchRecentScans();
+      fetchFeedback();
+    })();
+  }, []);
 
   const fetchFeedback = async () => {
     setFeedbackLoading(true);
     try {
-      const r = await fetch(`${API_BASE}/score-feedback?key=RowenaRavenclaw2024!`);
+      const r = await authedFetch(`${API_BASE}/score-feedback`);
       if (r.ok) setFeedback(await r.json());
     } catch {}
     setFeedbackLoading(false);
   };
 
-  const fetchSuggestions = async () => {
-    setSuggestionsLoading(true);
-    try {
-      const r = await fetch(`${API_BASE}/suggestions?key=RowenaRavenclaw2024!`);
-      if (r.ok) setSuggestions(await r.json());
-    } catch {}
-    setSuggestionsLoading(false);
-  };
-
-  const resolveSuggestion = async (id, status) => {
-    try {
-      await fetch(`${API_BASE}/suggestions/resolve?key=RowenaRavenclaw2024!`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ id, status }),
-      });
-      setSuggestions(s => s.filter(x => x.id !== id));
-    } catch {}
-  };
-
   const resolveFeedback = async (id, status) => {
     try {
-      await fetch(`${API_BASE}/score-feedback/resolve?key=RowenaRavenclaw2024!`, {
+      await authedFetch(`${API_BASE}/score-feedback/resolve`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ id, status }),
@@ -3118,7 +3013,7 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
 
   const fetchCacheStatus = async () => {
     try {
-      const r = await fetch(`${API_BASE}/cache-status?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
+      const r = await authedFetch(`${API_BASE}/cache-status`);
       if (r.ok) setCacheStatus(await r.json());
     } catch { setCacheStatus({error:"unreachable"}) }
   };
@@ -3132,7 +3027,7 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
       const params = new URLSearchParams({ limit: 50, offset });
       if (cat)    params.set("category", cat);
       if (search) params.set("search", search);
-      const r = await fetch(`${API_BASE}/recent-scans?${params}&key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
+      const r = await authedFetch(`${API_BASE}/recent-scans?${params}`);
       if (r.ok) {
         const data = await r.json();
         setRecentScans(offset > 0 ? prev => [...prev, ...data] : data);
@@ -3145,7 +3040,7 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
   const clearCache = async () => {
     setClearing(true);
     try {
-      await fetch(`${API_BASE}/cache-clear?key=${encodeURIComponent("RowenaRavenclaw2024!")}`);
+      await authedFetch(`${API_BASE}/cache-clear`);
       await fetchCacheStatus();
     } finally { setClearing(false); }
   };
@@ -3195,6 +3090,22 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
 
   const card = {background:surface, borderRadius:14, border:`1px solid ${border}`, padding:"20px 24px", marginBottom:16};
   const sectionHead = {fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", color:muted, marginBottom:14};
+
+  if (accessState === "checking") {
+    return (
+      <div style={{maxWidth:1000, margin:"0 auto", padding:"80px 24px", textAlign:"center", color:muted, fontSize:14}}>
+        Checking access…
+      </div>
+    );
+  }
+  if (accessState === "denied") {
+    return (
+      <div style={{maxWidth:600, margin:"0 auto", padding:"80px 24px", textAlign:"center"}}>
+        <h1 style={{fontFamily:"Lora, serif", fontWeight:500, fontSize:32, color:text, margin:"0 0 12px"}}>Not found</h1>
+        <p style={{color:muted, fontSize:14, margin:0}}>This page doesn't exist or you don't have access.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{maxWidth:1000, margin:"0 auto", padding:"32px 24px 80px"}}>
@@ -3520,108 +3431,8 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
         )}
       </div>
 
-      {/* Calibration overrides — add/edit scores without code deploy */}
-      <div style={card}>
-        <div style={sectionHead}>Calibration overrides {overrides.length > 0 && <span style={{marginLeft:8, color:muted, fontWeight:400}}>({overrides.length} active)</span>}</div>
-        <p style={{fontSize:12, color:muted, margin:"0 0 14px", lineHeight:1.5}}>Override or add product scores without a code deploy. Changes take effect within seconds and clear the product's cache automatically.</p>
-
-        {/* Add new override form */}
-        <div style={{background:"#f8fafb", borderRadius:10, padding:"14px 16px", border:`1px solid ${border}`, marginBottom:12}}>
-          <div style={{fontSize:11, fontWeight:700, color:muted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>Add / update override</div>
-          <div style={{display:"grid", gridTemplateColumns:"2fr 1fr 1fr", gap:8, marginBottom:8}}>
-            <input
-              value={newOverride.name} onChange={e=>setNewOverride({...newOverride, name:e.target.value})}
-              placeholder="Product name (e.g. Huggies Little Movers)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
-            />
-            <input
-              type="number" min="1" max="10" value={newOverride.floor} onChange={e=>setNewOverride({...newOverride, floor:e.target.value})}
-              placeholder="Floor"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
-            />
-            <input
-              type="number" min="1" max="10" value={newOverride.ceiling} onChange={e=>setNewOverride({...newOverride, ceiling:e.target.value})}
-              placeholder="Ceiling"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
-            />
-          </div>
-          <div style={{display:"grid", gridTemplateColumns:"1fr 2fr", gap:8, marginBottom:8}}>
-            <select
-              value={newOverride.category} onChange={e=>setNewOverride({...newOverride, category:e.target.value})}
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
-            >
-              {["food_beverage","beverage","baby","personal_care","home","kitchen","clothing","toy","supplement","restaurant","home_furnishing","accessory","other"].map(c =>
-                <option key={c} value={c}>{c}</option>
-              )}
-            </select>
-            <input
-              value={newOverride.substances} onChange={e=>setNewOverride({...newOverride, substances:e.target.value})}
-              placeholder="Substances (comma-separated, e.g. Red 40, BHT)"
-              style={{padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13}}
-            />
-          </div>
-          <textarea
-            value={newOverride.reason} onChange={e=>setNewOverride({...newOverride, reason:e.target.value})}
-            placeholder="Reason / summary (shown in app)"
-            style={{width:"100%", padding:"8px 12px", borderRadius:6, border:`1px solid ${border}`, background:"#fff", color:text, fontSize:13, minHeight:50, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box", marginBottom:8}}
-          />
-          <button onClick={saveOverride} disabled={!newOverride.name.trim() || savingOverride}
-            style={{padding:"8px 20px", borderRadius:6, border:"none", background:newOverride.name.trim() ? "#16a34a" : "#e2e8f0", color:newOverride.name.trim() ? "#fff" : muted, fontSize:13, fontWeight:700, cursor:newOverride.name.trim() ? "pointer" : "default", opacity:savingOverride ? 0.6 : 1}}>
-            {savingOverride ? "Saving..." : "Save override"}
-          </button>
-        </div>
-
-        {/* Active overrides list */}
-        {overrides.length > 0 && (
-          <div style={{display:"flex", flexDirection:"column", gap:6}}>
-            {overrides.map(o => (
-              <div key={o.name} style={{display:"flex", alignItems:"center", gap:12, padding:"8px 12px", background:"#fff", borderRadius:8, border:`1px solid ${border}`}}>
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:13, fontWeight:600, color:text}}>{o.name}</div>
-                  <div style={{fontSize:11, color:muted, marginTop:1}}>
-                    floor {o.floor} · ceiling {o.ceiling} · {o.category}
-                    {o.updated_by && ` · by ${o.updated_by}`}
-                  </div>
-                </div>
-                <button onClick={() => deleteOverride(o.name)} style={{padding:"4px 10px", borderRadius:5, border:`1px solid ${border}`, background:"none", color:"#dc2626", fontSize:11, fontWeight:600, cursor:"pointer"}}>Delete</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Pending product suggestions */}
-      <div style={card}>
-        <div style={sectionHead}>Pending suggestions {suggestions.length > 0 && <span style={{color:"#16a34a", marginLeft:8}}>({suggestions.length})</span>}</div>
-        {suggestionsLoading ? (
-          <div style={{fontSize:13, color:muted}}>Loading...</div>
-        ) : suggestions.length === 0 ? (
-          <div style={{fontSize:13, color:muted}}>No pending suggestions.</div>
-        ) : (
-          <div style={{display:"flex", flexDirection:"column", gap:8}}>
-            {suggestions.map(s => (
-              <div key={s.id} style={{padding:"10px 14px", background:"#f8fafb", borderRadius:10, border:`1px solid ${border}`}}>
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:6}}>
-                  <div style={{flex:1, minWidth:0}}>
-                    <div style={{fontSize:14, fontWeight:700, color:text}}>{s.product_name}</div>
-                    <div style={{fontSize:11, color:muted, marginTop:2}}>
-                      {s.user_email || "anonymous"} · {new Date(s.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <div style={{display:"flex", gap:6, marginTop:6}}>
-                  <button onClick={() => { setTestQuery(s.product_name); runTestScan(); }} style={{padding:"5px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Score now</button>
-                  <button onClick={() => resolveSuggestion(s.id, "added")} style={{padding:"5px 12px", borderRadius:6, border:"none", background:"#16a34a", color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer"}}>Mark added</button>
-                  <button onClick={() => resolveSuggestion(s.id, "dismissed")} style={{padding:"5px 12px", borderRadius:6, border:`1px solid ${border}`, background:"none", color:muted, fontSize:11, fontWeight:600, cursor:"pointer"}}>Dismiss</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       <div style={{textAlign:"center", fontSize:11, color:muted, marginTop:8}}>
-        Admin key required · Partiqule internal · Not indexed
+        Partiqule internal · Not indexed
       </div>
     </>)}
     </div>
@@ -6197,42 +6008,6 @@ function App() {
 
   // ── Auth helper ──────────────────────────────────────────────
   // Returns { "Authorization": "Bearer <jwt>" } for the current session, or
-  // an empty object if the user is not signed in. Used on endpoints that
-  // grant value (premium, account deletion, scan-count increment) so the
-  // backend can verify user identity cryptographically instead of trusting a
-  // client-supplied userId.
-  const authHeaders = async () => {
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token;
-      return token ? { "Authorization": `Bearer ${token}` } : {};
-    } catch { return {}; }
-  };
-
-  // authedFetch wraps fetch with auth-header injection + a one-shot 401
-  // retry that calls supabase.auth.refreshSession() before falling
-  // through. Default Supabase access tokens last 1 hour. Without this
-  // wrapper the next /analyze call after that hour returned 401, and
-  // callers that didn't tolerate the failure surfaced it as a sign-out
-  // — the bug Paul reported on a real user. Now: stale token →
-  // transparent refresh → retry → success. Real auth failures (revoked
-  // session, deleted user) still bubble up.
-  const authedFetch = async (url, options = {}) => {
-    const buildOpts = async () => ({
-      ...options,
-      headers: { ...(options.headers || {}), ...(await authHeaders()) },
-    });
-    let res = await fetch(url, await buildOpts());
-    if (res.status !== 401) return res;
-    // 401 — try one refresh + retry. Don't loop on persistent failures.
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error || !data?.session) return res;
-      res = await fetch(url, await buildOpts());
-    } catch { /* network / SDK error — return original 401 */ }
-    return res;
-  };
-
   // ── Auth listener ────────────────────────────────────────────
   const checkSubscription = async (userId) => {
     try {
@@ -6595,14 +6370,11 @@ function App() {
       window.history.replaceState({}, "", path); // clean URL
     }
 
-    // Admin page — key check (move PARTIQULE_ADMIN_KEY to env var for production hardening)
+    // Admin page — gated server-side via JWT + allowlisted email.
+    // Render the page; the AdminPage component verifies access on mount
+    // and shows a 404-style fallback if the signed-in user isn't on the list.
     if (path === "/admin") {
-      const adminKey = process?.env?.PARTIQULE_ADMIN_KEY || "RowenaRavenclaw2024!";
-      if (params.get("key") === adminKey) {
-        setPage("admin");
-      } else {
-        setPage("404");
-      }
+      setPage("admin");
       return;
     }
 
@@ -8240,9 +8012,6 @@ function App() {
                 </div>
               </div>
             )}
-            {/* Suggest a product — users can request new products for scoring */}
-            <SuggestionBox isMobile={isMobile} surface={surface} border={border} text={text} muted={muted} user={user}/>
-
           </div>
           )}
         </>

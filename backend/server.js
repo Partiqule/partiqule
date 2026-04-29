@@ -47,57 +47,6 @@ const detectCategory = detectCategoryFast;
 const FLAG_DETECTION_ENABLED = process.env.FLAG_DETECTION_ENABLED !== "false";
 
 // ── CALIBRATION OVERRIDES ─────────────────────────────────────
-// Admin can add/edit calibration entries via Supabase without a code deploy.
-// Overrides are merged into the in-memory CALIBRATION Map at boot and after
-// each admin edit. Runtime cost is zero — same Map lookup as before.
-// Supabase schema: calibration_overrides table with columns:
-//   name text (primary key, normalised), floor int, ceiling int, kids_floor int,
-//   kids_ceiling int, category text, substances jsonb, reason text, confidence text,
-//   updated_at timestamptz, updated_by text
-const calibrationOverrideKeys = new Set(); // tracks which keys came from overrides
-
-const loadCalibrationOverrides = async () => {
-  if (typeof supabaseAdmin === "undefined" || !supabaseAdmin) return { count: 0 };
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .select("*");
-    if (error) throw error;
-
-    // Remove any previously loaded overrides (so deleted ones go away)
-    for (const k of calibrationOverrideKeys) CALIBRATION.delete(k);
-    calibrationOverrideKeys.clear();
-
-    let loaded = 0;
-    for (const row of data || []) {
-      const key = normalise(row.name);
-      if (!key) continue;
-      CALIBRATION.set(key, {
-        floor:        row.floor,
-        ceiling:      row.ceiling,
-        kidsFloor:    row.kids_floor || undefined,
-        kidsCeiling:  row.kids_ceiling || undefined,
-        substances:   row.substances || [],
-        reason:       row.reason || "",
-        confidence:   row.confidence || "high",
-        category:     row.category || "other",
-        __override:   true,
-      });
-      calibrationOverrideKeys.add(key);
-      loaded++;
-    }
-    if (typeof buildCalibrationIndex === "function") buildCalibrationIndex();
-    console.log(`[CALIBRATION] Loaded ${loaded} overrides from Supabase`);
-    return { count: loaded };
-  } catch (e) {
-    console.warn("[CALIBRATION] Override load failed:", e.message);
-    return { count: 0, error: e.message };
-  }
-};
-// Load on boot (deferred so supabaseAdmin exists) + periodic refresh every 5 min
-setTimeout(() => loadCalibrationOverrides(), 2000);
-setInterval(() => loadCalibrationOverrides(), 5 * 60 * 1000);
-
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
@@ -303,15 +252,43 @@ const log = {
   error: (event, data={}) => console.error(JSON.stringify({level:"error", event, ts:new Date().toISOString(), ...data})),
 };
 
-// ── ADMIN KEY ─────────────────────────────────────────────────
+// ── ADMIN AUTH ────────────────────────────────────────────────
+// Two-path admin auth:
+//   1) x-admin-key / ?key=  — for curl, scheduled tasks, deploy.sh, preload_redis.js
+//   2) Supabase JWT in Authorization: Bearer with email in ADMIN_EMAILS allowlist
+//      — for the in-app admin UI, so we never ship a shared secret to the browser
 const ADMIN_KEY = process.env.ADMIN_KEY;
-if (!ADMIN_KEY) console.warn("[SECURITY] ADMIN_KEY env var not set — admin endpoints will reject all requests");
-const requireAdmin = (req, res, next) => {
-  const key = req.headers["x-admin-key"] || req.query.key;
-  if (!ADMIN_KEY || key !== ADMIN_KEY) return res.status(401).json({ error: "Unauthorized" });
+if (!ADMIN_KEY) console.warn("[SECURITY] ADMIN_KEY env var not set — key-based admin auth disabled");
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "paul@partiqule.com,sara@partiqule.com")
+  .split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+
+const requireAdmin = async (req, res, next) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
-  log.info("admin_access", { path: req.path, method: req.method, ip });
-  next();
+
+  // Path 1: key
+  const key = req.headers["x-admin-key"] || req.query.key;
+  if (ADMIN_KEY && key === ADMIN_KEY) {
+    log.info("admin_access", { path: req.path, method: req.method, ip, via: "key" });
+    return next();
+  }
+
+  // Path 2: JWT with allowlisted email
+  if (supabaseAdmin) {
+    const m = (req.headers.authorization || "").match(/^Bearer\s+(.+)$/i);
+    if (m) {
+      try {
+        const { data, error } = await supabaseAdmin.auth.getUser(m[1]);
+        const email = data?.user?.email?.toLowerCase();
+        if (!error && email && ADMIN_EMAILS.includes(email)) {
+          req.adminEmail = email;
+          log.info("admin_access", { path: req.path, method: req.method, ip, via: "jwt", email });
+          return next();
+        }
+      } catch {}
+    }
+  }
+
+  return res.status(401).json({ error: "Unauthorized" });
 };
 
 // ── User auth middleware ─────────────────────────────────────
@@ -7062,64 +7039,6 @@ app.get("/score-feedback", requireAdmin, async (req, res) => {
   }
 });
 
-// ── PRODUCT SUGGESTIONS ───────────────────────────────────────
-// Users can suggest a product they want scored. Stored in Supabase
-// suggestions table for admin review + action.
-app.post("/suggest", async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Suggestions not configured" });
-  const { product_name, user_email } = req.body || {};
-  if (!product_name || !product_name.trim()) return res.status(400).json({ error: "product_name required" });
-  try {
-    const { error } = await supabaseAdmin.from("suggestions").insert({
-      product_name: product_name.trim().slice(0, 200),
-      user_email:   user_email?.trim()?.slice(0, 200) || null,
-      status:       "pending",
-    });
-    if (error) throw error;
-    console.log(`[SUGGEST] "${product_name}" submitted`);
-    res.json({ success: true });
-  } catch (e) {
-    console.error("[SUGGEST] save error:", e.message);
-    res.status(500).json({ error: "Could not save suggestion" });
-  }
-});
-
-app.get("/suggestions", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const status = req.query.status || "pending";
-    const { data, error } = await supabaseAdmin
-      .from("suggestions")
-      .select("id, product_name, user_email, created_at, status")
-      .eq("status", status)
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    console.error("[SUGGEST] fetch error:", e.message);
-    res.status(500).json({ error: "Could not fetch suggestions" });
-  }
-});
-
-app.post("/suggestions/resolve", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const { id, status } = req.body || {};
-  if (!id || !["added", "dismissed", "pending"].includes(status)) {
-    return res.status(400).json({ error: "id and valid status required" });
-  }
-  try {
-    const { error } = await supabaseAdmin
-      .from("suggestions")
-      .update({ status })
-      .eq("id", id);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 app.post("/score-feedback/resolve", requireAdmin, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
   const { id, status } = req.body || {};
@@ -7322,6 +7241,10 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
 
 app.get("/cache-stats",  requireAdmin, (req, res) => res.json({ size: scoreCache.size, keys: [...scoreCache.keys()] }));
 app.get("/cache-status", requireAdmin, (req, res) => res.json({ size: scoreCache.size, uptime: Math.round(process.uptime()), memory: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + "MB" }));
+
+// Lets the admin UI verify the signed-in user's JWT is on the allowlist.
+// requireAdmin already does the gating; this endpoint just echoes success.
+app.get("/admin/me", requireAdmin, (req, res) => res.json({ isAdmin: true, email: req.adminEmail || null }));
 let lastCacheClear = 0;
 app.get("/cache-clear",  requireAdmin, (req, res) => {
   const now = Date.now();
@@ -7329,101 +7252,6 @@ app.get("/cache-clear",  requireAdmin, (req, res) => {
   lastCacheClear = now;
   scoreCache.clear();
   res.json({ cleared: true, message: "Score cache cleared — all products will be rescored on next scan" });
-});
-
-// ── CALIBRATION OVERRIDE ADMIN ────────────────────────────────
-// List all overrides (admin UI)
-app.get("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.json([]);
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (error) throw error;
-    res.json(data || []);
-  } catch (e) {
-    console.error("[CALIBRATION] list error:", e.message);
-    res.status(500).json({ error: "Failed to load calibration overrides" });
-  }
-});
-
-// Create or update an override
-app.post("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const {
-    name, floor, ceiling, kids_floor, kids_ceiling,
-    category, substances, reason, confidence, updated_by,
-  } = req.body || {};
-  if (!name || typeof floor !== "number" || typeof ceiling !== "number") {
-    return res.status(400).json({ error: "name, floor, ceiling required" });
-  }
-  if (floor > ceiling) {
-    return res.status(400).json({ error: "floor cannot be greater than ceiling" });
-  }
-  try {
-    const key = normalise(name);
-    const { error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .upsert({
-        name:         key,
-        floor:        Math.max(1, Math.min(10, floor)),
-        ceiling:      Math.max(1, Math.min(10, ceiling)),
-        kids_floor:   kids_floor ? Math.max(1, Math.min(10, kids_floor)) : null,
-        kids_ceiling: kids_ceiling ? Math.max(1, Math.min(10, kids_ceiling)) : null,
-        category:     category || "other",
-        substances:   substances || [],
-        reason:       (reason || "").slice(0, 500),
-        confidence:   confidence || "high",
-        updated_by:   updated_by || "admin",
-        updated_at:   new Date().toISOString(),
-      }, { onConflict: "name" });
-    if (error) throw error;
-    // Refresh in-memory CALIBRATION so the change takes effect immediately
-    await loadCalibrationOverrides();
-    // Also clear the product's cached score so next scan gets the new value.
-    // Use cacheKey() so the prompt-version prefix is applied consistently.
-    const versionedKey = cacheKey(key, category || "other");
-    scoreCache.delete(versionedKey);
-    scoreCache.delete(key);
-    if (hasRedis) {
-      try {
-        await fetch(`${REDIS_URL}/del/${encodeURIComponent(versionedKey)}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-        });
-        await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-        });
-      } catch {}
-    }
-    log.info("calibration_override_saved", {name: key, floor, ceiling, category, updated_by});
-    res.json({ success: true, name: key });
-  } catch (e) {
-    log.error("calibration_override_error", {error: e.message});
-    res.status(500).json({ error: "Failed to save calibration override" });
-  }
-});
-
-// Delete an override
-app.delete("/admin/calibration", requireAdmin, async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const name = req.query.name || req.body?.name;
-  if (!name) return res.status(400).json({ error: "name required" });
-  try {
-    const key = normalise(name);
-    const { error } = await supabaseAdmin
-      .from("calibration_overrides")
-      .delete()
-      .eq("name", key);
-    if (error) throw error;
-    await loadCalibrationOverrides();
-    res.json({ success: true });
-  } catch (e) {
-    console.error("[CALIBRATION] delete error:", e.message);
-    res.status(500).json({ error: "Failed to delete calibration override" });
-  }
 });
 
 // ── Flag detection diff — compare AI-only vs AI+deterministic for a product ──
@@ -8028,13 +7856,7 @@ app.post('/apple-iap-confirm', requireUserAuth, async (req, res) => {
     // Flip profiles.is_subscribed so /subscription-status returns true on
     // subsequent app launches. This is what checkSubscription() reads.
     // Without this step the purchase appears to succeed in-session but reverts
-    // on the next app reload — the exact failure mode Apple flagged with
-    // "didn't receive subscription benefits after successfully purchasing."
-    //
-    // Note: a previous version of this handler also wrote to a `subscriptions`
-    // audit table. That table doesn't exist in the current schema (CLAUDE.md
-    // lists it but it was never actually created), so the audit write was
-    // erroring out and failing the entire request.
+    // on the next app reload.
     const { error: profErr } = await supabaseAdmin.from('profiles')
       .update({ is_subscribed: true })
       .eq('id', userId);
