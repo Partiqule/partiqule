@@ -966,6 +966,9 @@ function novaFloor(novaGroup, category) {
 //
 // Only fires for food/beverage categories. Returns null for everything else,
 // and for food/beverage ingredient lists without enough markers to classify.
+// Base ultra-processing markers. 2+ hits → NOVA 4. Each represents an
+// ingredient that's structurally industrial: emulsifier, sweetener, dye,
+// fortification additive, gum, etc.
 const NOVA4_MARKERS = [
   /\bsyrup\b/,
   /\bmaltodextrin\b/,
@@ -990,7 +993,6 @@ const NOVA4_MARKERS = [
   /\baspartame\b/,
   /\bacesulfame\b/,
   /\binulin\b/,
-  /\b(soy|whey|pea|rice) protein (isolate|concentrate)\b/,
   /\bautolyzed yeast/,
   /\byeast extract\b/,
   /\b(fd&c|red 40|yellow 5|yellow 6|blue 1|blue 2)\b/,
@@ -1000,6 +1002,41 @@ const NOVA4_MARKERS = [
   /\bpotassium (sorbate|benzoate)\b/,
   /\bdatem\b/,
   /\bpolysorbate\b/,
+];
+
+// Protein concentrate/isolate is *structurally* a single mechanical
+// extraction, not chemical modification. It's a Monteiro NOVA 4 trait when
+// paired with other industrial markers (Quest Bars, Premier Protein) but
+// alone — or with only a "natural flavor" — it doesn't justify the floor:7
+// clamp. Magic Spoon Cocoa scored 7 under the prior logic via "whey protein
+// concentrate + natural flavor" alone; under the new rule it lands ~4-5.
+const PROTEIN_CONCENTRATE_MARKER = /\b(soy|whey|pea|rice) protein (isolate|concentrate)\b/;
+
+// Pair-qualifying industrial markers. When PROTEIN_CONCENTRATE_MARKER fires,
+// at least one of these must ALSO fire for the protein to count toward NOVA 4.
+// Subset of NOVA4_MARKERS — chosen per Paul's spec: "gums, modified starch,
+// FD&C dyes, artificial sweeteners, HFCS, emulsifiers (polysorbates,
+// mono- and diglycerides)." Natural flavor intentionally NOT in this list —
+// it's an industrial marker on its own (still in NOVA4_MARKERS) but not a
+// strong-enough signal to convert protein concentrate from NOVA 3 to NOVA 4.
+const NOVA4_PROTEIN_PAIR_PARTNERS = [
+  // gums
+  /\bxanthan gum\b/, /\bguar gum\b/, /\bcellulose gum\b/, /\bcarrageenan\b/,
+  // modified starch
+  /\bmodified (food |corn )?starch\b/,
+  // FD&C dyes
+  /\b(fd&c|red 40|yellow 5|yellow 6|blue 1|blue 2)\b/,
+  // artificial sweeteners
+  /\bsucralose\b/, /\baspartame\b/, /\bacesulfame\b/, /\bmaltitol\b/,
+  // HFCS / industrial syrups
+  /\bhigh fructose corn syrup\b/, /\binvert sugar\b/, /\bmaltodextrin\b/,
+  // emulsifiers
+  /\bpolysorbate\b/, /mono.{0,3}(and|&).{0,3}diglycerid/,
+  /\bdatem\b/, /\bsodium stearoyl lactylate\b/,
+  // hydrogenated oils
+  /\b(hydrogenated|partially hydrogenated)\b/,
+  // brominated
+  /\bbrominated vegetable oil\b/,
 ];
 const NOVA3_ONLY_MARKERS = [
   /\bsugar\b/,
@@ -1082,11 +1119,27 @@ function inferNovaGroupFromIngredients(ingredientText, category) {
   if (!t || t.length < 10) return null;
   const hits = [];
   for (const re of NOVA4_MARKERS) if (re.test(t)) hits.push(re.source);
+  // Protein-concentrate handling: structurally a single mechanical extraction.
+  // Counts toward NOVA 4 ONLY when paired with at least one industrial marker
+  // (gums, modified starch, dyes, artificial sweeteners, HFCS, emulsifiers).
+  // See PROTEIN_CONCENTRATE_MARKER + NOVA4_PROTEIN_PAIR_PARTNERS comments.
+  let proteinAddsToNova4 = false;
+  if (PROTEIN_CONCENTRATE_MARKER.test(t)) {
+    const hasPair = NOVA4_PROTEIN_PAIR_PARTNERS.some(re => re.test(t));
+    if (hasPair) {
+      proteinAddsToNova4 = true;
+      hits.push(PROTEIN_CONCENTRATE_MARKER.source);
+    }
+  }
   // 2+ ultra-processing markers → NOVA 4. 1 marker → NOVA 3. 0 markers with
-  // refined sugar/flour → NOVA 3. Otherwise let the barcode-derived NOVA or
-  // AI judgment stand (return null).
+  // refined sugar/flour → NOVA 3. Standalone protein concentrate (no pair)
+  // contributes a NOVA 3 signal — still ultra-processed by Monteiro, just
+  // not floor-7 territory.
   if (hits.length >= 2) return { nova: 4, matches: hits };
   if (hits.length === 1) return { nova: 3, matches: hits };
+  if (PROTEIN_CONCENTRATE_MARKER.test(t) && !proteinAddsToNova4) {
+    return { nova: 3, matches: [PROTEIN_CONCENTRATE_MARKER.source] };
+  }
   for (const re of NOVA3_ONLY_MARKERS) if (re.test(t)) return { nova: 3, matches: [re.source] };
   return null;
 }
