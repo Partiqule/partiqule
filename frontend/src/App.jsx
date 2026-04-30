@@ -6037,13 +6037,6 @@ function App() {
     }
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
-  // Streaming: once the first identified event arrives, hide the full-screen
-  // loading overlay so the result page can render progressively. The result
-  // itself carries _streaming + _stage which drive the in-page placeholder
-  // and rotating caption.
-  useEffect(()=>{
-    if (streamStage) setShowOverlay(false);
-  }, [streamStage]);
   const [error,       setError]      = useState(null);
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
@@ -6092,6 +6085,15 @@ function App() {
   // the rotating caption + score-arc placeholder while the streaming /analyze
   // endpoint progresses through its seam points. Cleared on complete or error.
   const [streamStage,   setStreamStage] = useState(null);
+  // Streaming: once the first identified event arrives, hide the full-screen
+  // loading overlay so the result page can render progressively. The result
+  // itself carries _streaming + _stage which drive the in-page placeholder
+  // and rotating caption. Must come AFTER the useState above — the
+  // dependency-array literal [streamStage] is evaluated immediately and
+  // would TDZ-throw if this useEffect ran before the const initializer.
+  useEffect(()=>{
+    if (streamStage) setShowOverlay(false);
+  }, [streamStage]);
   const [showAlts,    setShowAlts]   = useState(false);
   const [showDetail,  setShowDetail] = useState(false);
   const [compareAlt,  setCompareAlt] = useState(null);
