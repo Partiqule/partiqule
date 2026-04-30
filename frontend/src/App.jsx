@@ -319,6 +319,64 @@ const authedFetch = async (url, options = {}) => {
   return res;
 };
 
+// Streaming /analyze consumer. POSTs with Accept: application/x-ndjson,
+// reads the response as a ReadableStream, splits on newlines, and
+// dispatches each line's parsed object to handlers keyed by event name.
+//
+// Lines with no event field are treated as a complete event (so backend
+// fast paths that still call res.json behave correctly). Side effects
+// like scan-counter increment and saveToHistory live in the complete
+// handler so a backgrounded mid-stream connection never counts as a
+// successful scan.
+const streamingAnalyze = async (body, handlers, signal) => {
+  const res = await authedFetch(`${API_BASE}/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/x-ndjson" },
+    body: JSON.stringify(body),
+    signal,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const e = new Error(err.error || `Error ${res.status}`);
+    e.status = res.status;
+    e.body = err;
+    throw e;
+  }
+  if (!res.body || !res.body.getReader) {
+    // Older clients without ReadableStream — fall back to one-shot JSON
+    const data = await res.json();
+    handlers.complete?.(data);
+    return;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line) continue;
+      let parsed;
+      try { parsed = JSON.parse(line); } catch { continue; }
+      const event = parsed.event || "complete";
+      const handler = handlers[event];
+      if (handler) handler(parsed);
+    }
+  }
+  // Flush any trailing line without newline
+  if (buffer.trim()) {
+    try {
+      const parsed = JSON.parse(buffer.trim());
+      const event = parsed.event || "complete";
+      handlers[event]?.(parsed);
+    } catch {}
+  }
+};
+
 // ── BARCODE SCANNER ──────────────────────────────────────────
 // Full-screen camera viewfinder with live barcode detection.
 // Single code path for iOS, Android, and web: getUserMedia + native
@@ -1286,6 +1344,33 @@ const ScoreArc = ({score}) => {
         </div>
         <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:600, color:"#6ee7b7", opacity:0.5, marginTop:2}}>out of 10</div>
       </div>
+    </div>
+  );
+};
+
+// Empty placeholder shown while streaming /analyze hasn't yet emitted a
+// scored event. Matches ScoreArc's 176×176 frame so the layout doesn't
+// shift when the real score animates in. Caption rotates with stage.
+const ScorePlaceholder = ({ stage }) => {
+  const caption =
+    stage === "identified"   ? "Checking for concerns…" :
+    stage === "scored"       ? "Finding alternatives…" :
+    stage === "alternatives" ? "Finishing up…" :
+                               "Scoring…";
+  return (
+    <div style={{position:"relative", width:176, height:176, margin:"0 auto"}}>
+      <svg width="176" height="176" viewBox="0 0 176 176" style={{transform:"rotate(-90deg)"}}>
+        <circle cx="88" cy="88" r="70" fill="none" stroke="var(--rule)" strokeWidth="10"/>
+      </svg>
+      <div style={{position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:6, padding:"0 16px"}}>
+        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--ink-soft)", textAlign:"center", lineHeight:1.3}}>{caption}</div>
+        <div style={{display:"flex", gap:6}}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{width:5, height:5, borderRadius:"50%", background:"var(--moss)", opacity:0.35, animation:`scorePlaceholderDot 1.4s ${i*0.18}s infinite ease-in-out`}}/>
+          ))}
+        </div>
+      </div>
+      <style>{`@keyframes scorePlaceholderDot{0%,100%{opacity:0.25}50%{opacity:0.85}}`}</style>
     </div>
   );
 };
@@ -5952,6 +6037,13 @@ function App() {
     }
     return()=>clearTimeout(overlayTimerRef.current);
   },[loading]);
+  // Streaming: once the first identified event arrives, hide the full-screen
+  // loading overlay so the result page can render progressively. The result
+  // itself carries _streaming + _stage which drive the in-page placeholder
+  // and rotating caption.
+  useEffect(()=>{
+    if (streamStage) setShowOverlay(false);
+  }, [streamStage]);
   const [error,       setError]      = useState(null);
   const [page,        setPage]       = useState("home");
   const [guideSlug,   setGuideSlug]  = useState("");
@@ -5996,6 +6088,10 @@ function App() {
   const [childMode,     setChildMode]  = useState(()=>localStorage.getItem("partiqule_child_mode")==="1");
   const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
   const [revealDone,    setRevealDone]  = useState(false);
+  // streamStage: null | "identified" | "scored" | "alternatives" — drives
+  // the rotating caption + score-arc placeholder while the streaming /analyze
+  // endpoint progresses through its seam points. Cleared on complete or error.
+  const [streamStage,   setStreamStage] = useState(null);
   const [showAlts,    setShowAlts]   = useState(false);
   const [showDetail,  setShowDetail] = useState(false);
   const [compareAlt,  setCompareAlt] = useState(null);
@@ -6569,35 +6665,53 @@ function App() {
       }
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
+    setStreamStage(null);
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 75000); // 45s — two AI passes + alts
-      const res = await authedFetch(`${API_BASE}/analyze`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q.trim()}),signal:controller.signal});
+      const timeout = setTimeout(() => controller.abort(), 75000);
+      let partial = {};
+      await streamingAnalyze({ query: q.trim() }, {
+        identified: (e) => {
+          partial = { ...partial, ...e, _streaming: true, _stage: "identified" };
+          setResult({ ...partial });
+          setStreamStage("identified");
+        },
+        scored: (e) => {
+          partial = { ...partial, ...e, _streaming: true, _stage: "scored" };
+          setResult({ ...partial });
+          setStreamStage("scored");
+        },
+        alternatives: (e) => {
+          partial = { ...partial, ...e, _streaming: true, _stage: "alternatives" };
+          setResult({ ...partial });
+          setStreamStage("alternatives");
+        },
+        complete: (data) => {
+          setResult(data);
+          saveToHistory(data);
+          setStreamStage(null);
+          if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
+          track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
+          if (!isSubscribed) {
+            const newCount = scanCount + 1;
+            setScanCount(newCount);
+            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+            if (newCount >= FREE_LIMIT) {
+              if (!user) setShowLimitModal("account");
+              else setShowLimitModal("paywall");
+            }
+          }
+        },
+        error: (e) => { throw new Error(e.error || e.message || "Scan failed"); },
+      }, controller.signal);
       clearTimeout(timeout);
-      if (!res.ok){
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `Error ${res.status}`);
-      }
-      const data = await res.json();
-      setResult(data); saveToHistory(data);
-      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
-      track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
-      // ── Scan counter — increment and check limits ──
-      if (!isSubscribed) {
-        const newCount = scanCount + 1;
-        setScanCount(newCount);
-        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-        if (newCount >= FREE_LIMIT) {
-          if (!user) setShowLimitModal("account");
-          else setShowLimitModal("paywall");
-        }
-      }
     } catch(e){
       const msg = e.name === "AbortError"
         ? "Scan timed out — please try again in a moment."
         : e.message;
       setError(msg);
+      setStreamStage(null);
       track("Scan Error", { error: msg });
     }
     setLoading(false);
@@ -6613,33 +6727,35 @@ function App() {
       return;
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
+    setStreamStage(null);
     setSearchMatches([]); // collapse picker so result can render cleanly
     track("Search Match Select", { matchId: match.id, source: match.source, name: match.display_name });
     try {
-      const res = await authedFetch(`${API_BASE}/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: match.id }),
+      let partial = {};
+      await streamingAnalyze({ productId: match.id }, {
+        identified: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "identified" }; setResult({ ...partial }); setStreamStage("identified"); },
+        scored: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "scored" }; setResult({ ...partial }); setStreamStage("scored"); },
+        alternatives: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
+        complete: (data) => {
+          setResult(data); saveToHistory(data); setQuery(data.product_name || match.display_name);
+          setStreamStage(null);
+          if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
+          track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
+          if (!isSubscribed) {
+            const newCount = scanCount + 1;
+            setScanCount(newCount);
+            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+            if (newCount >= FREE_LIMIT) {
+              if (!user) setShowLimitModal("account");
+              else setShowLimitModal("paywall");
+            }
+          }
+        },
+        error: (e) => { throw new Error(e.error || e.message || "Couldn't load that product."); },
       });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `Error ${res.status}`);
-      }
-      const data = await res.json();
-      setResult(data); saveToHistory(data); setQuery(data.product_name || match.display_name);
-      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
-      track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
-      if (!isSubscribed) {
-        const newCount = scanCount + 1;
-        setScanCount(newCount);
-        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-        if (newCount >= FREE_LIMIT) {
-          if (!user) setShowLimitModal("account");
-          else setShowLimitModal("paywall");
-        }
-      }
     } catch (e) {
       setError(e.message || "Couldn't load that product.");
+      setStreamStage(null);
       track("Search Match Error", { error: e.message });
     }
     setLoading(false);
@@ -6809,54 +6925,58 @@ function App() {
       });
       const imgController = new AbortController();
       const imgTimeout = setTimeout(() => imgController.abort(), 45000);
-      const idResp = await authedFetch(`${API_BASE}/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType: "image/jpeg" }),
-        signal: imgController.signal,
-      });
+      let partial = {};
+      let refused = false;
+      try {
+        await streamingAnalyze({ image: base64, mediaType: "image/jpeg" }, {
+          identified: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "identified" }; setResult({ ...partial }); setStreamStage("identified"); setQuery(e.product_name || "Analyzing label..."); },
+          scored: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "scored" }; setResult({ ...partial }); setStreamStage("scored"); },
+          alternatives: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
+          complete: (data) => {
+            // Vision v2 refusal/confirmation paths come through complete with a status field.
+            if (data.status === "needs_confirmation") {
+              refused = true;
+              setLoading(false); setQuery(""); setResult(null); setStreamStage(null);
+              setVisionConfirmation({
+                identificationId: data.identificationId,
+                productName: data.identified?.product_name || "this product",
+                brand: data.identified?.brand || "",
+                message: data.message || "",
+              });
+              return;
+            }
+            if (data.status === "need_better_photo") {
+              refused = true;
+              setLoading(false); setQuery(""); setResult(null); setStreamStage(null);
+              setVisionRefusal({
+                productName: data.identified?.product_name || "this product",
+                message: data.message || "",
+              });
+              return;
+            }
+            if (!data.product_name) throw new Error("Nothing detected");
+            setQuery(data.product_name);
+            setResult(data);
+            saveToHistory(data);
+            setStreamStage(null);
+            if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
+            if (!isSubscribed) {
+              const newCount = scanCount + 1;
+              setScanCount(newCount);
+              try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+              if (newCount >= FREE_LIMIT) {
+                if (!user) setShowLimitModal("account");
+                else setShowLimitModal("paywall");
+              }
+            }
+          },
+          error: (e) => { throw new Error(e.error || e.message || "Image scan failed"); },
+        }, imgController.signal);
+      } catch (streamErr) {
+        if (streamErr.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); if (onDone) onDone(); return; }
+        throw streamErr;
+      }
       clearTimeout(imgTimeout);
-      if (idResp.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); return; }
-      if (!idResp.ok) throw new Error(`Server error ${idResp.status}`);
-      const data = await idResp.json();
-      // Vision Contract v2 branching — only fires when backend flag is on.
-      // "needs_confirmation" — identification confidence 0.50-0.60, modal asks the user to confirm.
-      // "need_better_photo" — cascade + label combined couldn't produce a score, friendly retake prompt.
-      if (data.status === "needs_confirmation") {
-        setLoading(false); setQuery("");
-        setVisionConfirmation({
-          identificationId: data.identificationId,
-          productName: data.identified?.product_name || "this product",
-          brand: data.identified?.brand || "",
-          message: data.message || "",
-        });
-        if (onDone) onDone();
-        return;
-      }
-      if (data.status === "need_better_photo") {
-        setLoading(false); setQuery("");
-        setVisionRefusal({
-          productName: data.identified?.product_name || "this product",
-          message: data.message || "",
-        });
-        if (onDone) onDone();
-        return;
-      }
-      if (!data.product_name) throw new Error("Nothing detected");
-      setQuery(data.product_name);
-      setResult(data);
-      saveToHistory(data);
-      if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
-      // ── Increment scan counter ──
-      if (!isSubscribed) {
-        const newCount = scanCount + 1;
-        setScanCount(newCount);
-        try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-        if (newCount >= FREE_LIMIT) {
-          if (!user) setShowLimitModal("account");
-          else setShowLimitModal("paywall");
-        }
-      }
       setLoading(false);
       if (onDone) onDone();
     } catch(err) {
@@ -6885,49 +7005,52 @@ function App() {
     const { identificationId, productName: confirmedName } = visionConfirmation;
     setVisionConfirmation(null);
     setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
+    setStreamStage("identified"); // user already confirmed name; jump straight to "scoring" caption
     const showFailModal = (message) => {
-      setLoading(false); setQuery("");
+      setLoading(false); setQuery(""); setResult(null); setStreamStage(null);
       setVisionRefusal({ productName: confirmedName || "this product", message });
     };
     try {
-      const r = await authedFetch(`${API_BASE}/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificationId }),
+      let partial = { product_name: confirmedName, _streaming: true, _stage: "identified" };
+      setResult({ ...partial });
+      await streamingAnalyze({ identificationId }, {
+        identified: (e) => { partial = { ...partial, ...e, _stage: "identified" }; setResult({ ...partial }); setStreamStage("identified"); },
+        scored: (e) => { partial = { ...partial, ...e, _stage: "scored" }; setResult({ ...partial }); setStreamStage("scored"); },
+        alternatives: (e) => { partial = { ...partial, ...e, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
+        complete: (data) => {
+          if (data.status === "need_better_photo") {
+            showFailModal(data.message || "Try another angle with better lighting.");
+            return;
+          }
+          if (data.status === "needs_confirmation") {
+            showFailModal("We couldn't find this product in any database. Try scanning the barcode or label.");
+            return;
+          }
+          if (!data.product_name) {
+            showFailModal("We couldn't score that product. Try scanning the barcode or label.");
+            return;
+          }
+          setQuery(data.product_name);
+          setResult(data);
+          saveToHistory(data);
+          setStreamStage(null);
+          setLoading(false);
+          if (!isSubscribed) {
+            const newCount = scanCount + 1;
+            setScanCount(newCount);
+            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+            if (newCount >= FREE_LIMIT) {
+              if (!user) setShowLimitModal("account");
+              else setShowLimitModal("paywall");
+            }
+          }
+        },
+        error: (e) => { showFailModal(e.error || e.message || "Couldn't score that product."); },
       });
-      if (r.status === 410) {
-        showFailModal("That identification expired. Try scanning again.");
-        return;
-      }
-      if (r.status === 429) {
-        showFailModal("Too many scans right now. Try again in a few minutes.");
-        return;
-      }
-      let data = null;
-      try { data = await r.json(); } catch {}
-      console.log("[resumeFromConfirmation] status", r.status, "data", data);
-      if (!r.ok) {
-        showFailModal(data?.error || `Couldn't score that product. (${r.status})`);
-        return;
-      }
-      if (data?.status === "need_better_photo") {
-        showFailModal(data.message || "Try another angle with better lighting.");
-        return;
-      }
-      if (data?.status === "needs_confirmation") {
-        showFailModal("We couldn't find this product in any database. Try scanning the barcode or label.");
-        return;
-      }
-      if (!data?.product_name) {
-        showFailModal("We couldn't score that product. Try scanning the barcode or label.");
-        return;
-      }
-      setQuery(data.product_name);
-      setResult(data);
-      saveToHistory(data);
-      setLoading(false);
     } catch (err) {
       console.error("[resumeFromConfirmation] error:", err);
+      if (err.status === 410) { showFailModal("That identification expired. Try scanning again."); return; }
+      if (err.status === 429) { showFailModal("Too many scans right now. Try again in a few minutes."); return; }
       showFailModal("Something went wrong scoring that product. Try again.");
     }
   };
@@ -8277,7 +8400,9 @@ function App() {
                       </div>
                     )}
                     <div style={{display:"flex",justifyContent:"center",marginBottom:4}}>
-                      <ScoreArc score={displayScore}/>
+                      {(displayScore == null || isNaN(displayScore) || result._streaming && result._stage === "identified")
+                        ? <ScorePlaceholder stage={streamStage || result._stage}/>
+                        : <ScoreArc score={displayScore}/>}
                     </div>
 
                     {/* Pre-release / status banner — renders above the score context

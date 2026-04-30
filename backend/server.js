@@ -202,6 +202,56 @@ const cacheSet = (key, value) => {
   saveCacheToDisk();    // async-ish file write
 };
 
+// ── STREAMING RESPONSE HELPER ─────────────────────────────────
+// Opt-in chunked JSON streaming for /analyze. Clients send
+// Accept: application/x-ndjson and consume via ReadableStream
+// (see streamingAnalyze in App.jsx). Clients that don't send the
+// header get the legacy single-JSON response — no contract break.
+//
+// Headers + flushHeaders are deferred until the first emit() or
+// complete() so callers can still use res.status(N).json(...) for
+// pre-stream errors. Once any emit fires, the response is committed
+// and subsequent errors must use errorJson which writes an event:error
+// chunk and ends the stream.
+function makeStreamHelper(req, res) {
+  const wantsStream = (req.headers.accept || "").includes("application/x-ndjson");
+  if (!wantsStream) {
+    return {
+      streaming: false,
+      emit: () => {},
+      complete: (final) => res.json(final),
+      errorJson: (status, body) => res.status(status).json(body),
+    };
+  }
+  let started = false;
+  const begin = () => {
+    if (started) return;
+    started = true;
+    res.setHeader("Content-Type", "application/x-ndjson");
+    res.setHeader("Cache-Control", "no-cache, no-store, no-transform");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders?.();
+  };
+  return {
+    streaming: true,
+    emit: (event, payload) => {
+      begin();
+      res.write(JSON.stringify({ event, ...payload }) + "\n");
+      if (typeof res.flush === "function") res.flush();
+    },
+    complete: (final) => {
+      begin();
+      res.write(JSON.stringify({ event: "complete", ...final }) + "\n");
+      res.end();
+    },
+    errorJson: (status, body) => {
+      if (!started) return res.status(status).json(body);
+      res.write(JSON.stringify({ event: "error", ...body }) + "\n");
+      res.end();
+    },
+  };
+}
+
 // Delete from memory + Redis. Redis del is fire-and-forget.
 const cacheDelete = (key) => {
   scoreCache.delete(key);
@@ -5637,6 +5687,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // Prevent service workers and browsers from caching API responses
   res.set("Cache-Control", "no-store, no-cache, must-revalidate");
   res.set("Pragma", "no-cache");
+  // Streaming opt-in via Accept: application/x-ndjson. Slow paths emit
+  // identified/scored/alternatives events as they complete; fast paths
+  // just call stream.complete with the full payload.
+  const stream = makeStreamHelper(req, res);
   let { query, image, mediaType, userId, productId, identificationId } = req.body;
 
   // If the client sent an Authorization header, verify it and replace the
@@ -5697,7 +5751,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       if (productId.startsWith("calibration:")) {
         const key = productId.slice("calibration:".length);
         const entry = CALIBRATION.get(key);
-        if (!entry) return res.status(404).json({ error: "Unknown calibration key" });
+        if (!entry) return stream.errorJson(404, { error: "Unknown calibration key" });
         const productName = toTitleCase(key);
         const cat = entry.category || "other";
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
@@ -5741,20 +5795,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
         });
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "calibration", score: midScore });
-        return res.json({ ...result, cached: false });
+        return stream.complete({ ...result, cached: false });
       }
 
       if (productId.startsWith("scan:")) {
-        if (!supabaseAdmin) return res.status(503).json({ error: "Scan lookup unavailable" });
+        if (!supabaseAdmin) return stream.errorJson(503, { error: "Scan lookup unavailable" });
         const scanId = productId.slice("scan:".length);
         // UUID sanity check — reject anything that isn't a plausible uuid format
-        if (!/^[0-9a-f-]{30,40}$/i.test(scanId)) return res.status(400).json({ error: "Invalid scan id" });
+        if (!/^[0-9a-f-]{30,40}$/i.test(scanId)) return stream.errorJson(400, { error: "Invalid scan id" });
         const { data, error } = await supabaseAdmin
           .from("scans")
           .select("result_json,product_name,scanned_at")
           .eq("id", scanId)
           .single();
-        if (error || !data?.result_json) return res.status(404).json({ error: "Scan not found" });
+        if (error || !data?.result_json) return stream.errorJson(404, { error: "Scan not found" });
         const result = { ...data.result_json };
         // Rewrite source to signal the user is seeing a reused scan, not a fresh verification
         result.ingredient_source = "previous_scan";
@@ -5765,13 +5819,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
         result.source_confidence = null;
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "scan" });
-        return res.json({ ...result, cached: false });
+        return stream.complete({ ...result, cached: false });
       }
 
-      return res.status(400).json({ error: "Unknown productId scheme" });
+      return stream.errorJson(400, { error: "Unknown productId scheme" });
     } catch (e) {
       console.warn("[productId] resolve failed:", e.message);
-      return res.status(500).json({ error: "productId resolve failed" });
+      return stream.errorJson(500, { error: "productId resolve failed" });
     }
   }
 
@@ -5789,7 +5843,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       if (identificationId) {
         identification = getIdentification(identificationId);
         if (!identification) {
-          return res.status(410).json({ error: "Identification expired, please rescan" });
+          return stream.errorJson(410, { error: "Identification expired, please rescan" });
         }
         fromResume = true;
       } else {
@@ -5827,7 +5881,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
             confidence: identification.confidence,
             has_usable_name: hasUsableName,
           });
-          return res.json({
+          return stream.complete({
             status: "need_better_photo",
             identified: { product_name: productName, confidence: identification.confidence },
             reason: "low_confidence",
@@ -5836,7 +5890,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         }
         if (identification.confidence < 0.45) {
           const newId = putIdentification(identification);
-          return res.json({
+          return stream.complete({
             status: "needs_confirmation",
             identificationId: newId,
             identified: {
@@ -5890,7 +5944,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
           await attachIntelCards(nCached, userId);
-          return res.json({ ...nCached, cached: true });
+          return stream.complete({ ...nCached, cached: true });
         }
       }
       if (!cascadeHit) {
@@ -5966,7 +6020,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         const imgKey = cacheKey(productName, entry.category || visionCat);
         cacheSet(imgKey, result);
         await attachIntelCards(result, userId);
-        return res.json({ ...result, cached: false });
+        return stream.complete({ ...result, cached: false });
       }
 
       // Step 4b: cascade returned external data (OFF or web_search) → full Pass 1 scoring.
@@ -5989,7 +6043,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           confidence: identification.confidence,
           has_brand: !!identification.brand,
         });
-        return res.json({
+        return stream.complete({
           status: "needs_confirmation",
           identificationId: newId,
           identified: {
@@ -6026,7 +6080,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           label_legibility: identification.label_legibility,
         });
         await attachIntelCards(synth, userId);
-        return res.json({ ...synth, cached: false });
+        return stream.complete({ ...synth, cached: false });
       }
 
       const ingredientText = cascadeHit.ingredients;
@@ -6051,6 +6105,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
           });
         }
       }
+
+      // Stream seam 1: vision identification + cascade hit → product is
+      // identified, ingredients verified. Frontend renders product card.
+      stream.emit("identified", {
+        product_name: productName,
+        brand: identification.brand || cascadeHit.brand || "",
+        ingredient_source: ingredientSourceField,
+        ingredient_confidence: ingredientConfidenceField,
+        ingredient_count: (cascadeHit.ingredientArray || ingredientText.split(",")).length,
+        category: visionCat,
+        tier: cascadeHit.tier,
+      });
 
       // Pass 1 with verified ingredients as materialContext.
       const contextBlock = `INGREDIENT SOURCE: ${ingredientSourceField}\nFULL INGREDIENT LIST: ${ingredientText}\nThese ingredients come from ${sourceLabelFinal}. Score based on these ingredients, not on training priors.`;
@@ -6113,10 +6179,28 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       const safety = computeSafetyScores(finalScore, visionCat, productName, p1, textFloors.triggered, ingredientText);
+
+      // Stream seam 2: scoring complete — frontend animates score arc.
+      stream.emit("scored", {
+        score: finalScore,
+        overall_score: finalScore,
+        category: visionCat,
+        confidence: p1.confidence || "medium",
+        materials_score: mScore,
+        usage_score: uScore,
+        packaging_score: pkScore,
+        sustainability_score: sScore,
+        concerns: p2?.refined_concerns || p1.concerns || [],
+        flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
+      });
+
       const alternatives = serializeAlternatives(
         filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
         visionCat,
       );
+
+      // Stream seam 3: alternatives ready.
+      stream.emit("alternatives", { alternatives });
 
       const peerComparison = finalScore <= 2 ? "Safe — no significant chemical or ingredient concerns"
         : finalScore <= 4 ? "Good — mostly clean, use with awareness"
@@ -6174,13 +6258,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const imgKey = cacheKey(productName, visionCat);
       cacheSet(imgKey, calibrated);
       await attachIntelCards(calibrated, userId);
-      return res.json(calibrated);
+      return stream.complete(calibrated);
     } catch (err) {
       console.error("[vision_v2] error:", err);
       if (String(err.message).includes("API_BUDGET_EXCEEDED")) {
-        return res.status(503).json({ error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
+        return stream.errorJson(503, { error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
       }
-      return res.status(500).json({ error: err.message || "Vision scan failed" });
+      return stream.errorJson(500, { error: err.message || "Vision scan failed" });
     }
   }
 
@@ -6218,7 +6302,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           imgSkipFuzzy = true;
         } else {
           console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
-          return res.json({ ...imgCached, cached: true });
+          return stream.complete({ ...imgCached, cached: true });
         }
       }
 
@@ -6265,7 +6349,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         });
         cacheSet(imgKey, fuzzyResult);
         console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
-        return res.json({ ...fuzzyResult, cached: false });
+        return stream.complete({ ...fuzzyResult, cached: false });
       }
 
       // Pass 2 audit using identified name
@@ -6427,18 +6511,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
       cacheSet(imgKey, calibratedResult);
       console.log(`[CACHED] Vision "${productName}" → score ${calibratedResult.score}`);
       await attachIntelCards(calibratedResult, userId);
-      return res.json(calibratedResult);
+      return stream.complete(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
       if (String(err.message).includes("API_BUDGET_EXCEEDED")) {
-        return res.status(503).json({ error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
+        return stream.errorJson(503, { error: "Partiqule has hit its daily scan limit. Please try again tomorrow." });
       }
-      return res.status(500).json({ error: err.message || "Image scan failed" });
+      return stream.errorJson(500, { error: err.message || "Image scan failed" });
     }
   }
 
-  if (!query?.trim()) return res.status(400).json({ error: "Query is required" });
-  if (typeof query !== "string" || query.length > 500) return res.status(400).json({ error: "Invalid query" });
+  if (!query?.trim()) return stream.errorJson(400, { error: "Query is required" });
+  if (typeof query !== "string" || query.length > 500) return stream.errorJson(400, { error: "Invalid query" });
 
   const extracted    = extractProductFromUrl(query.trim());
   const productName  = (extracted || query.trim()).slice(0, 300).replace(/[\x00-\x1f]/g, "");
@@ -6476,7 +6560,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       skipFuzzyCalibration = true; // bypass fuzzy cal this once so AI enriches the result
     } else {
       console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
-      return res.json({ ...cached, cached: true });
+      return stream.complete({ ...cached, cached: true });
     }
   }
 
@@ -6551,7 +6635,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
     });
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
-    return res.json({ ...fuzzyResult, cached: false });
+    return stream.complete({ ...fuzzyResult, cached: false });
   }
 
   console.log(`[CACHE MISS] ${key} — running cascade`);
@@ -6562,7 +6646,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // — surface a 400 instead of running the cascade with garbage.
   if (productId) {
     log.warn("unresolved_productId_in_cascade", { productName, userId, productId_type: typeof productId, productId_len: String(productId).length, productId_prefix: String(productId).slice(0, 20) });
-    return res.status(400).json({
+    return stream.errorJson(400, {
       success: false,
       error: "unresolved_productId",
       message: "That match couldn't be resolved. Try another product or scan the barcode.",
@@ -6577,7 +6661,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const fiberOnlyPattern = /^\s*(?:\d+\s*%\s*)?(?:polyester|nylon|spandex|elastane|lycra|acrylic|rayon|viscose|modal|cupro|lyocell|tencel|cotton|linen|hemp|wool|merino|cashmere|bamboo)\s*$/i;
   if (fiberOnlyPattern.test(productName)) {
     log.info("fabric_only_query_rejected", { productName });
-    return res.status(400).json({
+    return stream.errorJson(400, {
       success: false,
       error: "fabric_only_query",
       message: "That's a fabric name, not a specific product. Try a brand and product — like \"Lululemon leggings\" or \"Pact organic tee\".",
@@ -6676,6 +6760,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const preDetected = FLAG_DETECTION_ENABLED && ingredientText
         ? detectDeterministicFlags(ingredientText, resolvedCategory)
         : null;
+
+      // Stream seam 1: cascade resolved → product is identified, ingredients
+      // verified. Frontend renders the product card with an empty score badge.
+      stream.emit("identified", {
+        product_name: productName,
+        brand: brandHint || "",
+        ingredient_source: sourceFields.source,
+        ingredient_confidence: sourceFields.source_confidence,
+        ingredient_count: ingredientArray.length,
+        category: resolvedCategory,
+        tier,
+      });
 
       console.log(`[${tier}] running pass1 with verified ingredients (${ingredientArray.length} items)`);
       const p1 = await pass1(productName, cascadeContext, resolvedCategory, preDetected);
@@ -6809,6 +6905,21 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
       const aiProductName = p1.product_name || productName;
 
+      // Stream seam 2: scoring complete → frontend animates score arc to
+      // final value and fills in dimensions. Alternatives panel still empty.
+      stream.emit("scored", {
+        score: finalScore,
+        overall_score: finalScore,
+        category: finalCategory,
+        confidence: p1.confidence || "medium",
+        materials_score: mScore,
+        usage_score: uScore,
+        packaging_score: pkScore,
+        sustainability_score: sScore,
+        concerns: p2?.refined_concerns || p1.raw_concerns || [],
+        flagged_substances: p1.flagged_substances || [],
+      });
+
       // Alternatives — Amazon PA API was already fired in parallel with Pass 2
       // above. Use those results if non-empty; otherwise fall back to DB.
       let finalAlternatives;
@@ -6828,6 +6939,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
           finalCategory, productName, finalScore
         ).map(p => ({ ...p, score: p.plasticScore, source: "static" }));
       }
+
+      // Stream seam 3: alternatives ready → frontend slides up alts panel.
+      stream.emit("alternatives", { alternatives: finalAlternatives });
 
       const result = {
         product_name:     cleanProductName(p1.product_name || productName),
@@ -6938,7 +7052,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       console.log(`[CASCADE ${cascadeOutcome.tier}] ${key} — score ${cascadeOutcome.result.score}, not cached`);
     }
     await attachIntelCards(cascadeOutcome.result, userId);
-    res.json(cascadeOutcome.result);
+    stream.complete(cascadeOutcome.result);
 
   } catch (err) {
     console.error("Cascade error:", err.message);
