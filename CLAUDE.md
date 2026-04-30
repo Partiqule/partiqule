@@ -292,6 +292,13 @@ Brands reformulate. Verify ingredients against current package/manufacturer/rece
 ### Session rules
 - Always read CLAUDE.md before writing code
 - Test on 390px viewport after UI changes
+- **Before pushing any frontend refactor, render the React tree in a real browser.** `vite build` and `node -c` only catch syntax errors. `curl` smoke tests only exercise endpoints that don't render. Temporal-dead-zone bugs (a `useEffect` whose dep array references a `useState` declared later in the same component, an arrow-function `const` referenced before its line executes, a circular reference between module-scope helpers) are invisible to all of those and only surface when React actually calls the component. Workflow:
+  ```bash
+  cd frontend && npm run build && npx vite preview --port 5173
+  # then load http://localhost:5173 in Chrome/Safari with DevTools → Console open
+  # confirm: no red errors in console, app renders past first paint
+  ```
+  Bug class that motivated this rule: streamStage useEffect placed before its useState declaration in App.jsx — TDZ took down production with a "Cannot access 'Mt' before initialization" error that vite build, curl, and the regression test suite all passed. Only a real browser load would have caught it.
 
 ---
 
