@@ -6116,6 +6116,76 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // On fresh identifications we pause here and return needs_confirmation.
       // If the user confirms (fromResume), we proceed to Tier 5 — they've
       // acknowledged the identification and opted in to a best-guess score.
+      // Before falling through to confirmation or Tier 5, check if
+      // vision read textile composition off the label. For clothing
+      // and related categories, the label is authoritative even
+      // when the cascade found nothing online. The garment in the
+      // photo IS the product being scored, regardless of whether
+      // its specific SKU is indexed on a brand site. Bug 3 from
+      // the 2026-04 diagnosis, second half.
+      const TEXTILE_CATEGORIES_FALLBACK = new Set([
+        "clothing", "shoes", "accessory", "home_furnishing", "baby"
+      ]);
+      const labelArr = identification.label_ingredients || [];
+      const labelHasFiberPct = labelArr.length > 0 &&
+        labelArr.some(s => /\d+\s*%/.test(String(s)));
+      const labelLegibleEnough = identification.label_legibility !== "unreadable" &&
+        identification.label_legibility !== null;
+      const canScoreFromLabel = !cascadeHit &&
+        TEXTILE_CATEGORIES_FALLBACK.has(visionCat) &&
+        labelHasFiberPct &&
+        labelLegibleEnough;
+
+      if (canScoreFromLabel) {
+        log.info("vision_label_only_scoring", {
+          product_name: productName,
+          brand: identification.brand,
+          category: visionCat,
+          label_ingredients: labelArr,
+          label_legibility: identification.label_legibility,
+        });
+        // Synthesize a cascade-shaped object so the existing Tier 4
+        // scoring path (Pass 1 + Pass 2) handles label data the same
+        // way it handles web-extracted data, with the source clearly
+        // marked as label_ocr.
+        const labelIngredientText = labelArr.join(", ");
+        const labelContextBlock = `INGREDIENT SOURCE: label_ocr\nFULL INGREDIENT LIST: ${labelIngredientText}\nThese ingredients were read directly from the care label on the garment in the user's photo. Score based on these ingredients, not on training priors.`;
+        const p1Label = await pass1(productName, labelContextBlock, visionCat, null);
+        applyFlagDetectionToP1(p1Label, labelIngredientText, visionCat, "vision_v2_label");
+        let p2Label = null;
+        try {
+          p2Label = await pass2(productName, p1Label);
+        } catch (e) {
+          console.warn("[vision_v2] label-only pass2 failed:", e.message);
+        }
+        const labelSafety = computeSafetyScores(
+          p1Label.score, visionCat, productName, p1Label, [], labelIngredientText
+        );
+        const labelResult = {
+          ...p1Label,
+          product_name: productName,
+          brand: identification.brand || "",
+          category: visionCat,
+          ingredient_list: labelIngredientText,
+          ingredient_source: "label_ocr",
+          ingredient_confidence: "high",
+          ingredient_source_url: null,
+          source_label: "Read directly from the care label",
+          tier: "label_ocr",
+          is_child_product: labelSafety.isChild,
+          child_score: labelSafety.childScore,
+          child_bumps: labelSafety.childBumps || [],
+          pregnancy_score: labelSafety.pregnancyScore,
+          pregnancy_bumps: labelSafety.pregnancyBumps || [],
+          alternatives: p2Label?.alternatives || serializeAlternatives(
+            filterDbAlternatives(findAlternatives(productName, visionCat, 3, productName), visionCat, productName, p1Label.score),
+            visionCat,
+          ),
+        };
+        await attachIntelCards(labelResult, userId);
+        return stream.complete({ ...labelResult, cached: false });
+      }
+
       if (!cascadeHit && !fromResume) {
         const newId = putIdentification(identification);
         log.info("vision_cascade_miss_confirming", {
