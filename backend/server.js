@@ -6286,6 +6286,122 @@ app.post("/analyze", rateLimit, async (req, res) => {
         return stream.complete({ ...synth, cached: false });
       }
 
+      // ── TEXTILE CASCADE FAST PATH (Mode A) ──────────────────
+      // When the cascade returned composition for a textile
+      // category, route through the textile scorer instead of
+      // Pass 1/Pass 2. Same calibration table as Mode B (label
+      // OCR) so identical garments score identically regardless
+      // of which label the user photographed. Source attribution
+      // reflects the cascade origin (brand site, retailer, etc.)
+      // rather than label_ocr.
+      const TEXTILE_CATEGORIES_CASCADE = new Set([
+        "clothing", "shoes", "accessory", "home_furnishing", "baby"
+      ]);
+      if (TEXTILE_CATEGORIES_CASCADE.has(visionCat)) {
+        const cascadeFibers = parseComposition([cascadeHit.ingredients]);
+        if (cascadeFibers.length > 0) {
+          const isKidCascade = !!identification.is_child_product;
+          const isSleepwearCascade = isSleepwearFromName(productName);
+          const contactLevelCascade = /\b(underwear|base layer|legging|tight)\b/i.test(productName) ? "high"
+            : /\b(jacket|coat|outerwear|sweater)\b/i.test(productName) ? "low"
+            : "medium";
+
+          const textileResultCascade = scoreComposition(cascadeFibers, {
+            certifications: [],
+            kidMode: isKidCascade,
+            isSleepwear: isSleepwearCascade,
+            contactLevel: contactLevelCascade,
+          });
+
+          if (textileResultCascade.score !== null) {
+            log.info("textile_cascade_path", {
+              product_name: productName,
+              brand: identification.brand,
+              category: visionCat,
+              score: textileResultCascade.score,
+              precise_score: textileResultCascade.precise_score,
+              fibers: textileResultCascade.fibers.map(f => `${f.pct}% ${f.label}`),
+              breakdown: textileResultCascade.breakdown,
+              cascade_tier: cascadeHit.tier,
+              cascade_source: cascadeHit.sourceLabel || cascadeHit.source,
+            });
+
+            const finalScoreC = textileResultCascade.score;
+            const safetyC = computeSafetyScores(finalScoreC, visionCat, productName, {}, [], cascadeFibers.map(f => f.label).join(", "));
+            const peerComparisonC = finalScoreC <= 2 ? "Safe, no significant chemical or ingredient concerns"
+              : finalScoreC <= 4 ? "Good, mostly clean, use with awareness"
+              : finalScoreC <= 6 ? "Caution, real concerns, reduce use or find an alternative"
+              : finalScoreC <= 8 ? "Switch, real concerns, time to swap"
+              : "Avoid, known harmful substances";
+
+            const altsListC = serializeAlternatives(
+              filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScoreC),
+              visionCat,
+            );
+
+            const cascadeSourceLabel = cascadeHit.sourceLabel ||
+              (cascadeHit.brand ? `From ${cascadeHit.brand}` : "From web search");
+
+            const resultC = {
+              product_name:       productName,
+              brand:              identification.brand || cascadeHit.brand || "",
+              score:              finalScoreC,
+              overall_score:      finalScoreC,
+              precise_score:      textileResultCascade.precise_score,
+              category:           visionCat,
+              confidence:         "high",
+              is_child_product:   safetyC.isChild,
+              child_score:        safetyC.childScore,
+              child_bumps:        safetyC.childBumps || [],
+              pregnancy_score:    safetyC.pregnancyScore,
+              pregnancy_bumps:    safetyC.pregnancyBumps || [],
+              flagged_substances: [],
+              concerns:           [],
+              raw_concerns:       [],
+              summary:            textileResultCascade.explanation,
+              summary_short:      textileResultCascade.explanation,
+              summary_long:       textileResultCascade.explanation,
+              peer_comparison:    peerComparisonC,
+              ingredient_source:        cascadeHit.source || cascadeHit.tier,
+              ingredient_confidence:    "high",
+              ingredient_verified_at:   new Date().toISOString(),
+              ingredient_source_url:    cascadeHit.sourceUrl || null,
+              source: cascadeHit.source || cascadeHit.tier,
+              source_label: cascadeSourceLabel,
+              source_confidence: "high",
+              verdict_adult: null,
+              verdict_kid:   null,
+              dimensions: {
+                materials:      { score: finalScoreC, label: "Materials", concerns: [] },
+                usage_exposure: { score: finalScoreC, label: "Usage", concerns: [], frequency: "unknown", type: "unknown", intensity: "unknown", vulnerable: false },
+                packaging:      { score: 5, label: "Packaging", concerns: [], primary: "unknown", refillable: false, end_of_life: "unknown" },
+                sustainability: { score: finalScoreC, label: "Sustainability", concerns: [], reusable: false, replaces_single_use: false, replaces_count: null, circularity: "unknown" },
+              },
+              identified_plastics: [],
+              harmful_chemicals:   [],
+              natural_materials:   textileResultCascade.fibers.filter(f => !f.synthetic).map(f => f.label),
+              nutrition:           null,
+              ingredient_list:     [cascadeHit.ingredients],
+              product_family:      classifyProductFamily(productName, [cascadeHit.ingredients], visionCat),
+              alternatives:        altsListC,
+              ai_alternatives:     [],
+              scan_next:           buildScanNextFallback(productName, visionCat, altsListC),
+              category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+              tier:                "textile_cascade",
+              textile_breakdown:   textileResultCascade.breakdown,
+              textile_fibers:      textileResultCascade.fibers,
+              partial_read:        false,
+              cached:              false,
+            };
+            const calibratedC = applyProductCalibration(resultC);
+            const cascadeKey = cacheKey(productName, visionCat);
+            cacheSet(cascadeKey, calibratedC);
+            await attachIntelCards(calibratedC, userId);
+            return stream.complete(calibratedC);
+          }
+        }
+      }
+
       // Determine which ingredient source to trust. For textile
       // categories, the visible care label is ground truth when it
       // is readable. The cascade may have hit the wrong specific
