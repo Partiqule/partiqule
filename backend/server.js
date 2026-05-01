@@ -5900,6 +5900,27 @@ app.post("/analyze", rateLimit, async (req, res) => {
           return stream.errorJson(410, { error: "Identification expired, please rescan" });
         }
         fromResume = true;
+        // If the user edited the name during confirmation,
+        // override the stored identification with their
+        // corrected version. Best-effort split: if the edit
+        // starts with the original brand, keep the brand and
+        // replace the product name. Otherwise treat the whole
+        // edit as the product name.
+        if (req.body && req.body.edited_name) {
+          const edited = String(req.body.edited_name).trim();
+          if (edited.length > 0) {
+            log.info("textile_edit_applied", {
+              original_brand: identification.brand,
+              original_product_name: identification.product_name,
+              edited_name: edited,
+            });
+            if (identification.brand && edited.toLowerCase().startsWith(identification.brand.toLowerCase())) {
+              identification.product_name = edited.slice(identification.brand.length).trim() || edited;
+            } else {
+              identification.product_name = edited;
+            }
+          }
+        }
       } else {
         identification = await callClaudeVisionIdentify(
           image, mediaType || "image/jpeg",
@@ -6256,6 +6277,44 @@ app.post("/analyze", rateLimit, async (req, res) => {
             confidence: identification.confidence,
           },
           message: `I see this looks like ${productName}. Is that right?`,
+        });
+      }
+
+      // Textile cascade-miss confirmation. When both Tier 3 and
+      // Tier 4 missed for a textile query, ask the user to confirm
+      // or edit the identified product name before falling to a
+      // category-prior estimate. The user often knows the right
+      // name even when vision misread it (Cloud 84 vs Cloud 94).
+      // Trust their correction and retry the cascade with the
+      // edited query.
+      const TEXTILE_CONFIRM_CATEGORIES = new Set([
+        "clothing", "baby"
+      ]);
+      if (TEXTILE_CONFIRM_CATEGORIES.has(visionCat) && !fromResume) {
+        const editableName = identification.brand
+          ? `${identification.brand} ${productName}`.trim()
+          : productName.trim();
+        const newId = putIdentification(identification);
+        log.info("textile_cascade_miss_confirming", {
+          product_name: productName,
+          brand: identification.brand,
+          category: visionCat,
+          editable_name: editableName,
+        });
+        return stream.complete({
+          status: "needs_confirmation",
+          identificationId: newId,
+          identified: {
+            product_name: productName,
+            brand: identification.brand,
+            variant: identification.variant,
+            confidence: identification.confidence,
+            editable_name: editableName,
+          },
+          confirmation_kind: "textile_cascade_miss",
+          message: `I see this looks like ${editableName}. Does that match what's on the tag?`,
+          actions: ["confirm", "edit"],
+          edit_hint: "Edit the brand and product name, then we will look it up again.",
         });
       }
 
