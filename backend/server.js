@@ -6477,6 +6477,20 @@ app.post("/analyze", rateLimit, async (req, res) => {
           score: synth.score,
           label_legibility: identification.label_legibility,
         });
+        // TEMPORARY diagnostic — chasing a frontend "Something went
+        // wrong scoring that product" thrown from the outer catch in
+        // resumeFromConfirmation. Confirms the synthetic payload is
+        // well-formed before stream.complete sends it. Remove once
+        // the source of the error is identified.
+        log.info("textile_resume_payload_check", {
+          has_product_name: !!synth.product_name,
+          has_score: typeof synth.score === "number",
+          has_dimensions: !!synth.dimensions,
+          has_summary: !!synth.summary,
+          has_summary_short: !!synth.summary_short,
+          has_summary_long: !!synth.summary_long,
+          keys: Object.keys(synth || {}),
+        });
         await attachIntelCards(synth, userId);
         return stream.complete({ ...synth, cached: false });
       }
