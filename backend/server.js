@@ -6221,16 +6221,37 @@ app.post("/analyze", rateLimit, async (req, res) => {
         }
       }
 
+      const visionBrand = (identification.brand || "").trim();
+
+      // Style codes are noisy. Validate format before trusting them:
+      // 4-12 alphanumeric chars, optional hyphen-suffixed extension.
+      // Rejects partial reads, OCR garbage, and accidentally-populated
+      // product names.
+      const STYLE_CODE_REGEX = /^[A-Z0-9]{4,12}(-[A-Z0-9]{1,6})?$/i;
+      const rawStyleCode = (identification.style_code || "").trim();
+      const visionStyleCode = STYLE_CODE_REGEX.test(rawStyleCode) ? rawStyleCode : "";
+      const usingStyleCode = !!(visionBrand && visionStyleCode);
+
       const calKey = normalise(productName);
       const calExact = CALIBRATION.get(calKey) || CALIBRATION.get(productName.toLowerCase().trim());
       if (calExact) {
         cascadeHit = { tier: "calibration", entry: calExact, ingredients: (calExact.substances || []).join(", ") };
       }
-      if (!cascadeHit) {
+      // Brand-level fuzzy calibration short-circuits cascade. When a
+      // precise identifier (style_code) is available we want Tier 4
+      // to resolve the actual SKU, not let "Nike" generic calibration
+      // claim the result.
+      if (!cascadeHit && !usingStyleCode) {
         const fuzzy = fuzzyCalibrationLookup(productName, visionCat);
         if (fuzzy) {
           cascadeHit = { tier: "fuzzy_calibration", entry: fuzzy.entry, ingredients: (fuzzy.entry.substances || []).join(", ") };
         }
+      } else if (!cascadeHit && usingStyleCode) {
+        log.info("fuzzy_calibration_bypassed_for_style_code", {
+          brand: visionBrand,
+          style_code: visionStyleCode,
+          reason: "precise identifier available, prefer Tier 4",
+        });
       }
       // Calibration category wins over detected category for weight selection.
       // Fixes a class of bug where pajamas (detected as baby via regex) have
@@ -6244,17 +6265,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
           visionCat = cascadeHit.entry.category;
         }
       }
-      // Build the brand-aware query for cascade lookups. When vision
-      // extracted a brand, prepend it to the product name so Tier 3
-      // and Tier 4 search for "Nike Dri-FIT 2pc" instead of "Boys
-      // Jogger". Generic queries match generic products. This is
-      // Bug 1 from the 2026-04 diagnosis.
-      const visionBrand = (identification.brand || "").trim();
-      const cascadeQuery = visionBrand &&
-        !productName.toLowerCase().includes(visionBrand.toLowerCase())
+      // Build the cascade query. Three-tier preference:
+      //   1. brand + style_code  (Nike 86N898-B4T) — precise SKU identifier
+      //      from a hangtag, beats every other form of query.
+      //   2. brand + product_name (Nike Dri-FIT 2pc) — when vision read a
+      //      product name and brand isn't already in it. Generic queries
+      //      match generic products; brand prepending fixes that.
+      //   3. product_name as-is — fallback when brand is missing.
+      const cascadeQuery = usingStyleCode
+        ? `${visionBrand} ${visionStyleCode}`
+        : visionBrand && !productName.toLowerCase().includes(visionBrand.toLowerCase())
         ? `${visionBrand} ${productName}`
         : productName;
-      if (cascadeQuery !== productName) {
+      if (usingStyleCode) {
+        log.info("cascade_query_style_code", {
+          brand: visionBrand,
+          style_code: visionStyleCode,
+          product_name: productName,
+          surface_type: identification.surface_type,
+        });
+      } else if (cascadeQuery !== productName) {
         log.info("vision_cascade_query_branded", {
           product_name: productName,
           brand: visionBrand,
