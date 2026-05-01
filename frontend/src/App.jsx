@@ -7322,6 +7322,7 @@ function App() {
         @keyframes pulseScan{0%,100%{box-shadow:var(--shadow-card)}50%{box-shadow:0 4px 16px rgba(26,31,21,0.10)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
         @keyframes partiqulePulse{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.9;transform:scale(1.1)}}
+        @keyframes whyFadeIn{from{opacity:0}to{opacity:1}}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3{font-family:'Lora',Georgia,serif;}
       `}</style>
@@ -9459,11 +9460,15 @@ function App() {
                         />
                       )}
                     </div>
-                    <div style={{
-                      fontFamily:"'Lora', Georgia, serif",
-                      fontSize:16, lineHeight:1.55, color:"var(--ink)",
-                      fontWeight:400, letterSpacing:"-0.005em",
-                    }}>
+                    <div
+                      key={`why-${result.summary_long && result.summary_long.length > 600 ? "enriched" : "deterministic"}`}
+                      style={{
+                        fontFamily:"'Lora', Georgia, serif",
+                        fontSize:16, lineHeight:1.55, color:"var(--ink)",
+                        fontWeight:400, letterSpacing:"-0.005em",
+                        animation:"whyFadeIn 0.4s ease-in-out forwards",
+                      }}
+                    >
                       {String(longCopy).split(/\n\n+/).map((para, i) => (
                         <p key={i} style={{margin:"0 0 12px"}}>{para}</p>
                       ))}
