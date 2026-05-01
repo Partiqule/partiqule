@@ -6815,7 +6815,6 @@ function App() {
         },
         complete: (data) => {
           setResult(data);
-          enrichTextileExplanation(data);
           saveToHistory(data);
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
@@ -6865,7 +6864,6 @@ function App() {
         alternatives: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
         complete: (data) => {
           setResult(data); saveToHistory(data); setQuery(data.product_name || match.display_name);
-          enrichTextileExplanation(data);
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
@@ -7090,7 +7088,6 @@ function App() {
             if (!data.product_name) throw new Error("Nothing detected");
             setQuery(data.product_name);
             setResult(data);
-            enrichTextileExplanation(data);
             saveToHistory(data);
             setStreamStage(null);
             if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
@@ -7170,7 +7167,6 @@ function App() {
           }
           setQuery(data.product_name);
           setResult(data);
-          enrichTextileExplanation(data);
           saveToHistory(data);
           setStreamStage(null);
           setLoading(false);
@@ -7193,6 +7189,23 @@ function App() {
       showFailModal("Something went wrong scoring that product. Try again.");
     }
   };
+
+  // Fire textile enrichment when the detail view becomes
+  // visible for a textile scan. Skips if already enriched
+  // (summary_long > 600 chars indicates enriched copy) or if
+  // the scan isn't textile. Triggering on detail-open instead
+  // of scan-complete avoids a scroll jump when the enriched
+  // text lands and saves the API call when users don't open
+  // the deeper Why.
+  useEffect(() => {
+    if (!showDetail || !result) return;
+    const TEXTILE_CATEGORIES = new Set(["clothing", "baby", "shoes", "home_furnishing", "accessory"]);
+    const isTextileTier = result.tier === "textile_scorer" || result.tier === "textile_cascade";
+    if (!TEXTILE_CATEGORIES.has(result.category) || !isTextileTier) return;
+    if (result.summary_long && result.summary_long.length > 600) return;
+    enrichTextileExplanation(result);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDetail, result?.product_name, result?.tier]);
 
   // Fire enrichment for textile scans. Called after the
   // deterministic scan completes. Updates summary_long when
@@ -9046,19 +9059,6 @@ function App() {
                     }}>
                       <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       The why
-                      {explanationEnriching && (
-                        <span
-                          aria-label="enriching explanation"
-                          style={{
-                            display:"inline-block",
-                            width:6, height:6,
-                            borderRadius:"50%",
-                            background:"var(--moss)",
-                            opacity:0.6,
-                            animation:"partiqulePulse 1.4s ease-in-out infinite",
-                          }}
-                        />
-                      )}
                     </div>
                     <div style={{
                       fontFamily:"'Lora', Georgia, serif",
