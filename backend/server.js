@@ -6260,7 +6260,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // On fresh identifications we pause here and return needs_confirmation.
       // If the user confirms (fromResume), we proceed to Tier 5 — they've
       // acknowledged the identification and opted in to a best-guess score.
-      if (!cascadeHit && !fromResume) {
+      // Textile categories fall through to a richer confirmation gate below
+      // that supports an editable name field; the generic gate skips them.
+      const TEXTILE_CONFIRM_CATEGORIES = new Set([
+        "clothing", "baby"
+      ]);
+      if (!cascadeHit && !fromResume && !TEXTILE_CONFIRM_CATEGORIES.has(visionCat)) {
         const newId = putIdentification(identification);
         log.info("vision_cascade_miss_confirming", {
           product_name: productName,
@@ -6287,9 +6292,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // name even when vision misread it (Cloud 84 vs Cloud 94).
       // Trust their correction and retry the cascade with the
       // edited query.
-      const TEXTILE_CONFIRM_CATEGORIES = new Set([
-        "clothing", "baby"
-      ]);
       if (TEXTILE_CONFIRM_CATEGORIES.has(visionCat) && !fromResume) {
         const editableName = identification.brand
           ? `${identification.brand} ${productName}`.trim()
