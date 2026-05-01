@@ -260,6 +260,42 @@ function scoreComposition(parsed, options = {}) {
   const preciseScore = score;
   const roundedScore = Math.max(1, Math.min(10, Math.round(score)));
 
+  // Per-vector dimension scores. Three vectors aligned with the
+  // textile scoring model: skin exposure, microfiber shedding,
+  // manufacturing impact. Weighted averages across the parsed
+  // fibers, with kid-mode skin bump and cert mfg shifts applied
+  // independently. The certShift value computed above already
+  // accounts for cotton-specific GOTS handling, so we reuse it
+  // for mfg.
+  let skinRaw = 0;
+  let shedRaw = 0;
+  let mfgRaw = 0;
+  let hasSynthetic = false;
+  for (const fiber of parsed) {
+    const entry = FIBER_TABLE[fiber.key];
+    const w = fiber.pct / 100;
+    skinRaw += w * entry.skin;
+    shedRaw += w * entry.shed;
+    mfgRaw += w * entry.mfg;
+    if (entry.synthetic) hasSynthetic = true;
+  }
+  // Kid-mode skin bump: synthetic-driven, contact-level scaled.
+  if (kidMode && hasSynthetic) {
+    if (contactLevel === "high") skinRaw += 2;
+    else if (contactLevel === "medium") skinRaw += 1;
+  }
+  // Sleepwear elastane floor for skin: matches the overall floor
+  // mechanic (chemical flame retardants on stretch sleepwear).
+  if (kidMode && isSleepwear && parsed.some(f => f.key === "elastane")) {
+    if (skinRaw < 6) skinRaw = 6;
+  }
+  // Cert shifts apply to manufacturing only.
+  mfgRaw += certShift;
+
+  const skin_score = Math.max(1, Math.min(10, Math.round(skinRaw)));
+  const shed_score = Math.max(1, Math.min(10, Math.round(shedRaw)));
+  const mfg_score  = Math.max(1, Math.min(10, Math.round(mfgRaw)));
+
   return {
     score: roundedScore,
     precise_score: Math.round(preciseScore * 100) / 100,
@@ -271,6 +307,9 @@ function scoreComposition(parsed, options = {}) {
     short_verdict: buildShortVerdict(parsed, { kidMode }),
     fibers: parsed,
     certifications: appliedCerts,
+    skin_score,
+    shed_score,
+    mfg_score,
     breakdown: {
       weighted_base: Math.round(weightedScore * 100) / 100,
       blend_bump: blendBump,
@@ -278,6 +317,9 @@ function scoreComposition(parsed, options = {}) {
       kid_bump: Math.round(kidBump * 100) / 100,
       synthetic_pct: syntheticPct,
       total_pct_read: totalPct,
+      skin_raw: Math.round(skinRaw * 100) / 100,
+      shed_raw: Math.round(shedRaw * 100) / 100,
+      mfg_raw: Math.round(mfgRaw * 100) / 100,
     },
     partial_read: partialRead,
     blend_bump_applied: blendBump > 0,
@@ -528,6 +570,7 @@ function _runTests() {
     });
     console.log(`\n${c.name} (score ${result.score}):`);
     console.log(`  Short:  ${result.short_verdict}`);
+    console.log(`  Vectors: skin=${result.skin_score} shed=${result.shed_score} mfg=${result.mfg_score}`);
     console.log(`  Long:   ${result.explanation}`);
   }
 }

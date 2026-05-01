@@ -9497,7 +9497,22 @@ function App() {
                     ? Math.max(0, result.child_score - (result.overall_score || result.score))
                     : 0;
                   const sc = (s) => s == null ? "var(--ink-soft)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
-                  const weightLine = result.category === "food" || result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
+                  // Layout-driven rendering: textile scans ship a dimension_layout
+                  // describing their three vectors (skin/shed/mfg). Other categories
+                  // fall back to the legacy four-dimension layout (materials,
+                  // usage_exposure, packaging, sustainability). The childDimBump
+                  // boosts the legacy materials + usage_exposure rows only;
+                  // textile per-vector scores already account for kid mode.
+                  const fallbackLayout = [
+                    { key:"materials",      label:"Materials" },
+                    { key:"usage_exposure", label:"Usage & exposure" },
+                    { key:"packaging",      label:"Packaging" },
+                    { key:"sustainability", label:"Sustainability" },
+                  ];
+                  const dimensionLayout = result.dimension_layout || fallbackLayout;
+                  const weightLine = result.dimension_layout
+                    ? result.dimension_layout.map(l => `${l.label} ${l.weight}%`).join(" · ")
+                    : result.category === "food" || result.category === "food_beverage" ? "Ingredients 90% · Packaging 10%"
                     : result.category === "beverage"      ? "Ingredient safety · Nutrition impact"
                     : result.category === "restaurant"    ? "Ingredients 85% · Packaging 10% · Sustainability 5%"
                     : result.category === "supplement"    ? "Ingredients 65% · Exposure 25% · Packaging 10%"
@@ -9508,12 +9523,14 @@ function App() {
                     : result.category === "home"          ? "Materials 30% · Exposure 45% · Packaging 10% · Sustainability 15%"
                     : result.category === "baby"          ? "Materials 55% · Exposure 40% · Packaging 5%"
                     : "Materials 45% · Exposure 30% · Packaging 10% · Sustainability 15%";
-                  const rows = [
-                    { key:"materials",      label:"Materials",        score: Math.min(10, (d.materials?.score || result.score) + childDimBump), note: d.materials?.label },
-                    { key:"usage_exposure", label:"Usage & exposure", score: Math.min(10, (d.usage_exposure?.score || 5) + childDimBump),       note: d.usage_exposure?.label },
-                    { key:"packaging",      label:"Packaging",        score: d.packaging?.score || 5,                                             note: d.packaging?.label },
-                    { key:"sustainability", label:"Sustainability",   score: d.sustainability?.score || 5,                                        note: d.sustainability?.label },
-                  ];
+                  const rows = dimensionLayout.map(layout => {
+                    const dim = d[layout.key];
+                    if (!dim) return null;
+                    const bumpEligible = !result.dimension_layout && (layout.key === "materials" || layout.key === "usage_exposure");
+                    const baseScore = dim.score != null ? dim.score : (layout.key === "materials" ? result.score : 5);
+                    const adjusted = bumpEligible ? Math.min(10, baseScore + childDimBump) : baseScore;
+                    return { key: layout.key, label: layout.label, score: adjusted, note: dim.label };
+                  }).filter(Boolean);
                   return (
                     <div style={{padding:"18px 0 4px", textAlign:"left"}}>
                       <div style={{
