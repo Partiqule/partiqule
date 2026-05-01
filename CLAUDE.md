@@ -77,6 +77,26 @@ Cache keys are prefixed with `v<8-char-sha>` of the prompts. Prompt edits auto-i
 14. **Intel cards** attached via 2-min in-memory cache.
 15. **Calibration entry category wins** over detected category for weight selection (prevents pajamas scoring with baby weights).
 
+### Textile scoring (clothing / baby)
+
+Clothing and baby-clothing scans bypass Pass 1 / Pass 2 / web cascade entirely. The deterministic textile scorer (`backend/textileScorer.js`) takes a parsed fiber composition and returns a score with three per-vector dimensions in 3–5 seconds.
+
+- **`textileScorer.js`** — 26-fiber FIBER_TABLE (cotton, polyester, acrylic, nylon, elastane, wool, linen, hemp, silk, cashmere, down, tencel, modal, viscose, bamboo viscose, leather variants), each with `base / shed / mfg / skin / synthetic` properties. `parseComposition` extracts `XX% fiber` pairs from label_ingredients via regex + alias map. `scoreComposition` weights per fiber, applies blend bump (>30% synthetic in multi-fiber blends), cert shifts (GOTS / OEKO-TEX 100 / Bluesign / Cradle to Cradle), kid-mode skin bump, and sleepwear elastane floor (≥6 for stretch pajamas). Returns `score`, `precise_score`, `short_verdict`, `explanation`, `skin_score`, `shed_score`, `mfg_score`, plus a `breakdown` for diagnostics.
+
+- **Mode B — textile_fast_path** (label-driven): Vision V2 image-scan path. When `surface_type` is care_label and `label_ingredients` contains parseable fiber percentages, route directly to `scoreComposition` and return. Bypasses calibration, cache, OFF, Tier 4, Pass 1/2.
+
+- **Mode A — textile_cascade_path** (cascade-driven): When the cascade returned composition for a textile category (Tier 4 hit on a brand site), route through `scoreComposition` instead of Pass 1/2. Same scoring math as Mode B so identical garments score identically regardless of which surface the user photographed. Generic-query honesty: if `cascadeQuery` matches `^(brand) (jacket|shirt|pants|...)\s*$`, set `confidence/source_confidence = "estimated"` and source_label to "Estimated from product type. Scan the care tag for a verified score."
+
+- **Style code routing**: When vision extracts `identification.style_code` matching `/^[A-Z0-9]{4,12}(-[A-Z0-9]{1,6})?$/i`, the cascade query becomes `"${brand} ${style_code}"` instead of `"${brand} ${product_name}"`. Brand-level fuzzy calibration is bypassed when style_code is present (precise SKU > generic brand entry).
+
+- **Textile cascade-miss confirmation gate**: When clothing/baby cascade misses entirely (Tier 3 + Tier 4 both miss), backend returns `{status: "needs_confirmation", confirmation_kind: "textile_cascade_miss", identified.editable_name}`. Frontend renders the editable confirmation card; user can confirm as-is or edit the name and retry. Resume body carries `edited_name`, backend overrides `identification.product_name` and re-runs cascade.
+
+- **Per-vector dimensions for textile**: Result `dimensions` carries `skin_exposure / shedding / manufacturing` (not the food-pipeline `materials / usage_exposure / packaging / sustainability`). Result also carries `dimension_layout: [{key, label, weight}, ...]` so the frontend BREAKING IT DOWN block iterates layout-driven instead of hardcoded keys. Non-textile scans still get the legacy four-vector layout.
+
+- **Streaming register C enrichment**: `POST /enrich-explanation` returns a 4–6 sentence citation-aware long-form explanation (Browne 2011, Henry 2019, Marfella 2024 NEJM, Amato-Lourenco 2021 THORAX, named chemistries — PFAS / azo dyes / formaldehyde / phthalates / chromium VI, EU regulatory bans, GOTS/OEKO-TEX/Bluesign references). Score is fixed; the prompt forbids verdict-softening language. Frontend fires this on detail-view mount (not scan-complete) so users who don't open the deeper Why don't burn the API call. Result swaps in via keyed div with `whyFadeIn` opacity transition. Backend uses `callClaudeText` (plain-text companion to `callClaude`, no JSON parsing).
+
+- **Cross-family fuzzy calibration block**: `CATEGORY_FAMILIES` defines compatible category groups (textile/wearable, topical, ingested, household, toy). `fuzzyCalibrationLookup` accepts a `visionCategoryHint` that gates phase-4 substring matches; cross-family hits are dropped (`fuzzy_calibration_category_blocked`). Prevents textile scans like "PINK STRAWBERRIES/TIYRTZ" from cross-matching to a food calibration entry on the substring "strawberries".
+
 ### Category weights
 
 ```
@@ -145,7 +165,8 @@ Apply to every change. If a design choice conflicts with a law, the law wins.
 - `backend/cacheKeys.js` — shared cache-key + prompt-version helpers (used by server + preload_redis)
 - `backend/pass0.js` — ingredient resolution
 - `backend/scoringCascade.js` — five-tier text cascade + whole-foods detector
-- `backend/visionContract.js` — vision identify → cascade-verify → score
+- `backend/textileScorer.js` — deterministic textile fiber scorer (26-fiber table, blend math, cert shifts, kid mode, sleepwear floor, per-vector outputs)
+- `backend/visionContract.js` — vision identify → cascade-verify → score; emits `surface_type / style_code / barcode / color / price` on hangtag scans
 - `backend/products.js` — 420+ affiliate alternatives
 - `backend/amazon-api.js` — Amazon Creators API (tag: `partiqule-20`)
 
@@ -163,7 +184,7 @@ Apply to every change. If a design choice conflicts with a law, the law wins.
 
 ## API Endpoints
 
-**Public:** `POST /analyze`, `POST /barcode`, `GET /search`, `GET /health`, `GET /api/intelligence-cards`, `POST /api/recipe-ingredients`, `GET /api/price-lookup`, `GET /min-version`
+**Public:** `POST /analyze`, `POST /barcode`, `POST /enrich-explanation`, `GET /search`, `GET /health`, `GET /api/intelligence-cards`, `POST /api/recipe-ingredients`, `GET /api/price-lookup`, `GET /min-version`
 
 **User (require Supabase JWT):** `POST /subscribe`, `POST /delete-account`, `POST /create-checkout`, `GET /scan-count`, `GET /subscription-status`, `POST /score-feedback`, `POST /suggest`, `POST /verify-apple-receipt`, `POST /apple-iap-confirm`
 
@@ -199,6 +220,7 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 ## Current Feature State
 
 **LIVE:**
+- **Textile scoring (flagship category)** — clothing and baby-clothing scans run through the deterministic 26-fiber `textileScorer` end-to-end: Mode B (label-driven fast path) and Mode A (cascade-driven fast path) both bypass Pass 1/2; per-vector dimensions (Skin Exposure / Microfiber Shedding / Manufacturing Impact) replace the food-pipeline four-vector; user-correction loop via `textile_cascade_miss` confirmation card with editable product name; brand+style_code preference for hangtag scans; cross-family fuzzy calibration block; honest "estimated" labeling on generic-query cascade hits; streaming register C enrichment via `/enrich-explanation` with citation-aware voice, rendered with shimmer dot on detail-view mount.
 - Scan (text + barcode + image), calibration, alternatives (Amazon/Brand/Target)
 - Kids Mode + Pregnancy Mode (localStorage persist)
 - ScoreBadge, score context line, CTA hierarchy on result
@@ -217,10 +239,21 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 - Min-version enforcement (UpdateRequiredView)
 - Per-product OG cards with content-hash fingerprinting
 
-**NOT YET BUILT:**
-- Batch scan session, dedicated audit completion flows
-- Lifestyle Score timeline, Recipe Library
-- Supabase-backed lists, server-synced preferences
+**On the horizon:**
+1. **Framing guide + camera UX redesign** — most clothing scans hit `label_legibility="unreadable"` because users photograph hangtags from arm's length without knowing the model needs the care label up close. A camera viewfinder with a guide reticle and surface-aware coaching ("hold the care tag flat, fill the frame") would lift Mode B fire-rate from ~10% to most clothing scans.
+2. **Lateral extension of textile patterns to food and personal care** — the deterministic-scorer + register C enrichment + per-vector dimensions + user-correction loop pattern proved out on textiles. Same architecture should extend to food (dimensions: ingredient quality / processing / additives) and personal care (ingredient safety / endocrine load / dermal absorption) replacing the current Pass 1 monolith.
+3. **Structured typing with brand autocomplete** — the text-search path today has no awareness of what's calibrated. Brand autocomplete from the calibration table would push users toward queries the system can answer authoritatively, reducing fuzzy-match misfires and Tier 5 best-guess responses.
+
+---
+
+## Known Bugs
+
+- **Vision OCR ceiling on hangtags.** Most hangtag scans return `confidence=0.35`, `brand=null`, generic placeholder names ("BOYS 2PC"), and `label_legibility="unreadable"`. The hangtag prompt extraction works in principle but Haiku misses brand wordmarks and style codes at typical phone-shot distance. Manifests as legacy 0.30-0.45 confirmation gate firing constantly on clothing scans. Fix is upstream (camera UX), not a prompt change.
+- **FTC disclosure phrasing not firing Mode B.** Strings like `"Made with at least 30% recycled polyester (exclusive of trimmings, ornamentation, interlinings and linage)"` parse to one fiber via `parseComposition`, but Mode B's gate sometimes skips. Likely interaction between `label_legibility="partial"` and the fiber-percentage detector. Repro: scan a Target pajama hangtag with visible "30% recycled polyester" disclosure.
+- **Generic-query regex misses brand-less patterns.** `genericProductRegex` requires `^(brand-or-leading-words)? (jacket|shirt|...)\s*$`. When vision returns a brand-less generic name like just "BOYS 2PC", `isGenericQuery` doesn't fire because the pattern requires a category-level word. Users see `confidence: "high"` on a textile_cascade_path result that should read "estimated."
+- **`/barcode` does not route clothing through textile scorer.** Hangtag UPCs (when they resolve at all — UPCitemDB rejects most apparel "in-store use" 19xxx codes as INVALID_UPC) currently fall through to Pass 1 with empty ingredients. Routing should detect clothing category from OFF/external response and either short-circuit to Mode A with the resolved name or seed a calibration entry; today it does neither.
+- **Calibration short-circuit precision.** `barcode_index` and `barcode_external` short-circuits use the resolved name + fuzzy calibration. The fuzzy lookup is now category-gated, but exact-match calibration on a generic resolved name (e.g. "Nike Athletic Shorts") still claims any size/colorway of that style with the same score. Acceptable for narrowly-named entries; risky for brand-prefix entries.
+- **Whole-food detector accepts bare digit strings.** `/analyze` with `query="199012607584"` (a bare UPC string) routes through `detectWholeFood` and returns "Whole white fish" boilerplate. The detector should reject pure-numeric inputs before consulting the whole-food pattern table.
 
 ---
 
