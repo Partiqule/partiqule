@@ -106,7 +106,7 @@ WHAT TO READ FOR IDENTITY (confidence signal — any ONE of these is enough for 
 WHAT TO READ FOR LABEL CONTENTS (label_ingredients field):
 - Food/beverage/supplement/cleaning: the ingredient list ("sugar, flour, canola oil, ..."). Report verbatim, in order.
 - Personal care: the INCI-style ingredient list. Report verbatim.
-- Clothing / textile / shoes: the material composition on the CARE LABEL ("72% nylon, 25% polyester, 3% spandex", "100% cotton", "Shell: 100% recycled polyester. Lining: 100% polyester."). Report each composition line as a separate array element — the scoring pipeline treats material composition as the ingredient-equivalent for textile products.
+- Clothing / textile / shoes: the material composition on the CARE LABEL. Report each fiber percentage as its own array element, never bundled. Correct format: ["72% nylon", "25% polyester", "3% spandex"] or ["93% polyester", "7% elastane"] or ["100% cotton"]. Wrong format: ["72% nylon, 25% polyester, 3% spandex"] (do not bundle into one string). For multi-component garments, prefix with the section: ["Shell: 100% recycled polyester", "Lining: 100% polyester"]. The scoring pipeline treats material composition as the ingredient-equivalent for textile products.
 - Accessories (bags, wallets, watches, jewelry): the material tag if visible ("Genuine leather", "316L stainless steel", "PU exterior, cotton lining").
 - Home/furnishing: fabric content tag, finish/coating labels.
 If none of these panels is readable, set label_ingredients to null and label_legibility to the appropriate non-full value — but still return the product identity.`,
@@ -152,6 +152,7 @@ CRITICAL RULES:
 - If label_ingredients is returned, every item must be something you can LITERALLY READ in the photo (or material composition on a care label, for textile products).
 - If you cannot clearly read the ingredient list or composition label, set label_ingredients to null and label_legibility to the appropriate non-full value.
 - Never fabricate ingredients or material percentages based on product type assumptions.
+- For textile composition labels, fiber percentages must sum to 100%. If your reading of the label sums to less than 100%, the label contains additional fibers you have not yet read. Re-read the label and look for smaller text, secondary lines, or stretch fibers (elastane, spandex, lycra) that often appear below the primary fiber. Returning "100% Polyester" when the label actually shows "93% Polyester 7% Elastane" is a fabrication.
 - Never fabricate a product_name from category hints. If the package clearly says "Lip & Cheek Oil" but you cannot read the brand, return product_name: "Lip & Cheek Oil" with brand: null and confidence ≤ 0.65 — do not substitute "Liquid Lipstick" or any other guess based on what the product looks like it could be. The cascade will ask the user to confirm.
 - label_legibility "full" means the ingredient list / material composition is not cut off, text is legible, and the list is substantially complete (5+ ingredients for food/personal care, or all shell/lining/trim lines for textile).` },
           ],
