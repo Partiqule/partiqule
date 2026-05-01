@@ -5912,6 +5912,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
           label_ingredient_count: (identification.label_ingredients || []).length,
           ai_category: identification.category,
         });
+        log.info("vision_label_ingredients", {
+          product_name: identification.product_name,
+          brand: identification.brand,
+          label_ingredients: identification.label_ingredients || [],
+        });
       }
 
       const productName = identification.product_name || "Scanned product";
