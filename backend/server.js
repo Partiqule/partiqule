@@ -6163,27 +6163,68 @@ app.post("/analyze", rateLimit, async (req, res) => {
         return stream.complete({ ...synth, cached: false });
       }
 
-      const ingredientText = cascadeHit.ingredients;
-      const sourceLabelFinal = cascadeHit.sourceLabel || "";
-      const sourceKeyFinal = cascadeHit.source || cascadeHit.tier;
-      const sourceConfidenceFinal = "medium";
-      const ingredientSourceField = cascadeHit.source || cascadeHit.tier;
-      const ingredientConfidenceField = "medium";
-      const ingredientSourceUrlField = cascadeHit.sourceUrl || null;
+      // Determine which ingredient source to trust. For textile
+      // categories, the visible care label is ground truth when it
+      // is readable. The cascade may have hit the wrong specific
+      // product on the brand's site (right brand, wrong SKU). The
+      // photo cannot lie about which garment is in the user's hand.
+      // Bug 3 from the 2026-04 diagnosis.
+      const TEXTILE_CATEGORIES = new Set([
+        "clothing", "shoes", "accessory", "home_furnishing", "baby"
+      ]);
+      const labelIngredientArray = identification.label_ingredients || [];
+      const labelHasComposition = labelIngredientArray.length > 0 &&
+        labelIngredientArray.some(s => /\d+\s*%/.test(String(s)));
+      const isTextile = TEXTILE_CATEGORIES.has(visionCat);
+      const labelLegible = identification.label_legibility !== "unreadable" &&
+        identification.label_legibility !== null;
 
-      // Reconciliation log when both sources exist.
-      if ((identification.label_ingredients || []).length > 0) {
-        const recon = reconcileIngredients(identification.label_ingredients, ingredientText);
-        if (!recon.agreed) {
-          log.info("vision_cascade_disagreement", {
-            product_name: productName,
-            tier: cascadeHit.tier,
-            agreement_pct: recon.agreementPct,
-            label_only: recon.labelOnly.slice(0, 6),
-            cascade_only: recon.cascadeOnly.slice(0, 6),
-            used: "cascade",
-          });
+      let useLabelAsSource = false;
+      let recon = null;
+      if (labelIngredientArray.length > 0) {
+        recon = reconcileIngredients(labelIngredientArray, cascadeHit.ingredients);
+        // Trust the label for textiles when vision read composition
+        // and the label was at least partially legible. We do not
+        // require cascade disagreement to flip — the label is
+        // authoritative for the specific garment in the photo even
+        // when the cascade happens to land on the same product.
+        if (isTextile && labelHasComposition && labelLegible) {
+          useLabelAsSource = true;
         }
+      }
+
+      const ingredientText = useLabelAsSource
+        ? labelIngredientArray.join(", ")
+        : cascadeHit.ingredients;
+      const sourceLabelFinal = useLabelAsSource
+        ? "Read directly from the care label"
+        : (cascadeHit.sourceLabel || "");
+      const sourceKeyFinal = useLabelAsSource
+        ? "label_ocr"
+        : (cascadeHit.source || cascadeHit.tier);
+      const sourceConfidenceFinal = useLabelAsSource ? "high" : "medium";
+      const ingredientSourceField = useLabelAsSource
+        ? "label_ocr"
+        : (cascadeHit.source || cascadeHit.tier);
+      const ingredientConfidenceField = useLabelAsSource ? "high" : "medium";
+      const ingredientSourceUrlField = useLabelAsSource
+        ? null
+        : (cascadeHit.sourceUrl || null);
+
+      // Reconciliation log. Always emit when both sources exist so
+      // we can audit how often label and cascade disagree on real
+      // textile scans.
+      if (recon && !recon.agreed) {
+        log.info("vision_cascade_disagreement", {
+          product_name: productName,
+          tier: cascadeHit.tier,
+          agreement_pct: recon.agreementPct,
+          label_only: recon.labelOnly.slice(0, 6),
+          cascade_only: recon.cascadeOnly.slice(0, 6),
+          used: useLabelAsSource ? "label" : "cascade",
+          category: visionCat,
+          label_legibility: identification.label_legibility,
+        });
       }
 
       // Stream seam 1: vision identification + cascade hit → product is
