@@ -427,7 +427,7 @@ async function tier4WebExtract(productName, deps = {}) {
   const ingredientText = parsed.ingredients.map(s => String(s).trim()).filter(Boolean).join(", ");
   const sourceDomain = String(parsed.source_domain || "").trim().toLowerCase().replace(/^www\./, "");
   const sourceLabel = sourceDomain ? `Sourced from ${sourceDomain}` : "Sourced from web search";
-  console.log(`[tier4] hit query="${productName}" used="${usedQuery}" domain=${sourceDomain} ingredients=${parsed.ingredients.length} duration=${Date.now()-started}ms`);
+  console.log(`[tier4] hit query="${productName}" used="${usedQuery}" domain=${sourceDomain} ingredients=${parsed.ingredients.length} ingredient_text="${parsed.ingredients.join(", ")}" duration=${Date.now()-started}ms`);
   return {
     ingredients: ingredientText,
     ingredientArray: parsed.ingredients,
