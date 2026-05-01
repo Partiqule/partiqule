@@ -159,6 +159,22 @@ function scoreComposition(parsed, options = {}) {
     return { score: null, error: "no_composition_parsed" };
   }
 
+  // Upgrade cert-shifted fiber variants. When a relevant cert
+  // is present, swap the parsed fiber key to its cert-shifted
+  // variant so both the score and the explanation use the
+  // correct base entry. This avoids contradictory text like
+  // "without GOTS certification..." followed by "With GOTS
+  // certification..."
+  const hasGots = certifications.some(c => c === "gots");
+  if (hasGots) {
+    for (const f of parsed) {
+      if (f.key === "cotton_organic" && FIBER_TABLE.cotton_organic_gots) {
+        f.key = "cotton_organic_gots";
+        f.label = FIBER_TABLE.cotton_organic_gots.label;
+      }
+    }
+  }
+
   const totalPct = parsed.reduce((sum, f) => sum + f.pct, 0);
   const partialRead = totalPct < 95;
 
@@ -247,7 +263,11 @@ function scoreComposition(parsed, options = {}) {
   return {
     score: roundedScore,
     precise_score: Math.round(preciseScore * 100) / 100,
-    explanation: buildExplanation(parsed, appliedCerts, partialRead),
+    explanation: buildExplanation(parsed, appliedCerts, partialRead, {
+      kidMode,
+      isSleepwear,
+      contactLevel,
+    }),
     fibers: parsed,
     certifications: appliedCerts,
     breakdown: {
@@ -265,11 +285,119 @@ function scoreComposition(parsed, options = {}) {
   };
 }
 
-function buildExplanation(parsed, certs, partialRead) {
-  const parts = parsed.map(f => `${f.pct}% ${f.label}`).join(", ");
-  const certText = certs.length ? ` Certified: ${certs.join(", ")}.` : "";
-  const partialText = partialRead ? " (partial label read; verify the full tag for a complete score)" : "";
-  return `${parts}.${certText}${partialText}`;
+// Fiber-specific voice grounded in the three vectors (skin
+// exposure, microfiber shedding, manufacturing impact). Used
+// by buildExplanation. Each entry is the dominant-fiber
+// sentence — composed with blend context, kid context, and
+// certification context as needed.
+const FIBER_EXPLANATIONS = {
+  cotton_organic_gots: "GOTS-certified organic cotton is about as clean as fabric gets. No pesticides in the field, no toxic dyes in the mill, no synthetic finishes.",
+  cotton_organic: "Organic cotton skips the pesticide load of conventional, but without GOTS certification the dyes and finishes are still unverified.",
+  cotton_conventional: "Conventional cotton means pesticide residue and unknown dye chemistry. Not the worst, but not what you'd choose if you had the option.",
+  cotton_recycled: "Recycled cotton skips the water and pesticide load of growing new fiber. Solid choice.",
+  polyester_virgin: "Polyester sheds microplastic fibers every wash, and moisture-wicking finishes often involve PFAS chemistry that absorbs through skin.",
+  polyester_recycled: "Recycled polyester reduces the petroleum footprint, but the microplastic shedding is the same as virgin polyester.",
+  acrylic: "Acrylic sheds more microplastic fibers than any other synthetic, and there's no real performance reason to wear it. Wool or cotton would do the same job.",
+  nylon_virgin: "Nylon is more durable than polyester and sheds less, but it's still plastic against your skin and the chemical finishes are usually undisclosed.",
+  nylon_recycled: "Recycled nylon cuts the petroleum impact. Same shedding profile as virgin nylon, which is to say less than polyester but still real.",
+  elastane: "Elastane is what gives stretch fabric its stretch. It's plastic, it sheds, and it's almost always blended with other synthetics.",
+  wool_untreated: "Untreated wool is naturally flame-resistant, biodegradable, and one of the cleanest fibers you can wear.",
+  wool_merino: "Merino wool is fine enough to feel soft, breathable, and naturally moisture-wicking without any chemical finish.",
+  wool_superwash: "Superwash wool is treated with a polymer coating to prevent shrinking. That coating sheds microplastics, which defeats the point of choosing wool.",
+  linen: "Linen is one of the lowest-impact fabrics there is. Grows with little water, biodegrades cleanly, lasts decades.",
+  hemp: "Hemp grows without pesticides, uses less water than cotton, and the fiber is naturally durable. About as clean as it gets.",
+  silk: "Conventional silk processing uses heavy chemicals to extract the fiber, but the fiber itself is biodegradable and skin-safe.",
+  cashmere: "Cashmere is naturally soft and biodegradable. The processing is chemical-heavy, but the end fiber sits well against skin.",
+  down: "Down insulation is biodegradable and effective. Worth knowing the source — look for RDS-certified to confirm ethical sourcing.",
+  tencel_lyocell: "Tencel and Lyocell are made from wood pulp in a closed-loop process that recycles its own solvents. Among the cleanest cellulosic fabrics.",
+  modal: "Modal is wood-pulp-derived like Tencel, but the processing uses more chemicals. Better than viscose, not as clean as Lyocell.",
+  viscose_rayon: "Viscose and rayon are made from wood pulp using carbon disulfide, which is a known neurotoxin in the manufacturing process. The finished fabric is fine on skin, but the upstream impact is real.",
+  bamboo_viscose: "Bamboo viscose is processed exactly like regular viscose. The plant source doesn't change the chemistry — same carbon disulfide processing.",
+  leather_chrome: "Chrome-tanned leather is fast and cheap to produce, but the tanning process uses chromium salts that contaminate water and worker exposure is a known issue.",
+  leather_vegetable: "Vegetable-tanned leather uses tree bark and plant tannins instead of chromium. Slower, cleaner, and the leather develops a richer patina.",
+  leather_synthetic_pu: "PU synthetic leather is plastic. It sheds microplastics and the manufacturing involves solvents.",
+  leather_synthetic_pvc: "PVC synthetic leather contains plasticizers, often phthalates, which are endocrine disruptors that absorb through skin.",
+};
+
+const CERT_EXPLANATIONS = {
+  gots: "With GOTS certification, the dyes, finishes, and processing all meet third-party standards.",
+  oeko_tex_100: "OEKO-TEX certification means the finished fabric has been tested for harmful chemicals.",
+  bluesign: "Bluesign certification covers the manufacturing process for chemical management.",
+  cradle_to_cradle: "Cradle to Cradle certification covers material health, recyclability, and manufacturing impact end-to-end.",
+};
+
+function buildExplanation(parsed, certs, partialRead, options = {}) {
+  const { kidMode = false, isSleepwear = false, contactLevel = "medium" } = options;
+
+  if (!parsed || parsed.length === 0) {
+    return "Composition unreadable. Scan the care tag for a verified score.";
+  }
+
+  // Sort by percentage descending, take dominant fiber
+  const sorted = [...parsed].sort((a, b) => b.pct - a.pct);
+  const dominant = sorted[0];
+  const dominantEntry = FIBER_TABLE[dominant.key];
+
+  // Start with the dominant fiber's explanation
+  let sentences = [];
+  const dominantText = FIBER_EXPLANATIONS[dominant.key];
+  if (dominantText) sentences.push(dominantText);
+
+  // Blend context: if a meaningful second fiber exists (>15%) AND
+  // it's a different risk profile (natural+synthetic mix), call it out.
+  if (sorted.length > 1 && sorted[1].pct >= 15) {
+    const second = sorted[1];
+    const secondEntry = FIBER_TABLE[second.key];
+    if (secondEntry && dominantEntry) {
+      // Mixed natural/synthetic blend — call out the synthetic role
+      if (!dominantEntry.synthetic && secondEntry.synthetic) {
+        sentences.push(`The ${second.pct}% ${secondEntry.label.toLowerCase()} is where the score comes from — those synthetic fibers shed and add chemical exposure that the ${dominantEntry.label.toLowerCase()} doesn't.`);
+      } else if (dominantEntry.synthetic && !secondEntry.synthetic) {
+        // Dominant is synthetic, secondary is natural — note the natural fiber but main risk is synthetic
+        sentences.push(`The ${second.pct}% ${secondEntry.label.toLowerCase()} helps a little, but the synthetic majority is what drives the score.`);
+      }
+    }
+  }
+
+  // Kid mode addendum — synthetic-dominant garments get the
+  // cumulative-exposure framing.
+  if (kidMode && dominantEntry?.synthetic) {
+    if (isSleepwear) {
+      sentences.push("For a kid in sleepwear especially — 10 hours of skin contact per night — this matters more.");
+    } else if (contactLevel === "high") {
+      sentences.push("For a kid with skin-contact wear, more hours against developing skin means more cumulative exposure. The score reflects that.");
+    } else {
+      sentences.push("For a kid, more skin contact for longer means more cumulative exposure. The score reflects that.");
+    }
+  }
+
+  // Sleepwear elastane floor — fires whenever a kid sleepwear
+  // garment contains elastane, regardless of dominant fiber.
+  // Explains the score floor mechanic so the user understands
+  // why even a cotton-dominant garment scored at 6.
+  if (kidMode && isSleepwear && parsed.some(f => f.key === "elastane")) {
+    sentences.push("Stretch fabrics in pajamas usually require chemical flame retardants to meet flammability rules, which floors the score at 6.");
+  }
+
+  // Certification addendum (light touch — only mention if cert meaningfully shifts the conversation)
+  if (certs && certs.length > 0) {
+    // Match cert labels back to keys (CERT_EXPLANATIONS uses keys, certs array contains labels)
+    for (const certLabel of certs) {
+      for (const [key, info] of Object.entries(CERTIFICATIONS)) {
+        if (info.label === certLabel && CERT_EXPLANATIONS[key]) {
+          sentences.push(CERT_EXPLANATIONS[key]);
+          break;
+        }
+      }
+    }
+  }
+
+  // Partial read note
+  if (partialRead) {
+    sentences.push("Note: only part of the label was readable, so the score is based on what we could see.");
+  }
+
+  return sentences.join(" ");
 }
 
 // Test cases. Run with: node backend/textileScorer.js
@@ -335,6 +463,27 @@ function _runTests() {
     if (result.partial_read) console.log(`     partial_read: true (total=${result.breakdown.total_pct_read}%)`);
   }
   console.log(`\n${passed}/${passed + failed} tests passed`);
+
+  console.log("\n--- Sample explanations ---");
+  const sampleCases = [
+    { name: "100% Polyester adult", input: ["100% Polyester"] },
+    { name: "95/5 cotton-spandex kid sleepwear", input: ["95% Cotton", "5% Spandex"], kidMode: true, isSleepwear: true },
+    { name: "100% polyester kid sleepwear", input: ["100% Polyester"], kidMode: true, isSleepwear: true },
+    { name: "100% GOTS organic cotton", input: ["100% Organic Cotton"], certs: ["gots"] },
+    { name: "60/40 cotton-poly", input: ["60% Cotton", "40% Polyester"] },
+    { name: "100% Acrylic", input: ["100% Acrylic"] },
+  ];
+  for (const c of sampleCases) {
+    const parsed = parseComposition(c.input);
+    const result = scoreComposition(parsed, {
+      certifications: c.certs || [],
+      kidMode: c.kidMode || false,
+      isSleepwear: c.isSleepwear || false,
+      contactLevel: "medium",
+    });
+    console.log(`\n${c.name} (score ${result.score}):`);
+    console.log(`  ${result.explanation}`);
+  }
 }
 
 if (require.main === module) {
