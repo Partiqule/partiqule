@@ -6013,6 +6013,129 @@ const StreamSpike = ({ isMobile, text, muted }) => {
   );
 };
 
+function TextileConfirmationCard({ visionConfirmation, onConfirm, onEdit, onDismiss }) {
+  const [editValue, setEditValue] = useState(visionConfirmation.editableName || "");
+  const handleEdit = () => {
+    const trimmed = editValue.trim();
+    if (trimmed.length === 0) return;
+    onEdit(trimmed);
+  };
+  return (
+    <div
+      onClick={onDismiss}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: "20px",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--cream)",
+          borderRadius: "var(--card-shape-2)",
+          padding: "32px 24px",
+          maxWidth: "480px",
+          width: "100%",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--sans)",
+            fontSize: "12px",
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--moss)",
+            marginBottom: "12px",
+          }}
+        >
+          Confirm the name
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--serif)",
+            fontSize: "24px",
+            lineHeight: 1.3,
+            color: "var(--ink)",
+            marginBottom: "12px",
+          }}
+        >
+          I see this looks like:
+        </div>
+        <input
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            fontFamily: "var(--serif)",
+            fontSize: "20px",
+            color: "var(--ink)",
+            background: "var(--cream-light)",
+            border: "1px solid var(--rule)",
+            borderRadius: "12px",
+            marginBottom: "16px",
+            boxSizing: "border-box",
+          }}
+        />
+        <div
+          style={{
+            fontFamily: "var(--sans)",
+            fontSize: "14px",
+            color: "var(--ink-soft)",
+            marginBottom: "24px",
+            lineHeight: 1.5,
+          }}
+        >
+          Does that match what's on the tag? Edit if needed, then we'll look it up again.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: "14px",
+              fontFamily: "var(--sans)",
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "var(--cream)",
+              background: "var(--moss)",
+              border: "none",
+              borderRadius: "999px",
+              cursor: "pointer",
+            }}
+          >
+            Yes, that's right
+          </button>
+          <button
+            onClick={handleEdit}
+            style={{
+              padding: "14px",
+              fontFamily: "var(--sans)",
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "var(--moss)",
+              background: "var(--cream)",
+              border: "1.5px solid var(--moss)",
+              borderRadius: "999px",
+              cursor: "pointer",
+            }}
+          >
+            Edit and try again
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────
 function App() {
   const [query,       setQuery]      = useState("");
@@ -6944,6 +7067,11 @@ function App() {
                 productName: data.identified?.product_name || "this product",
                 brand: data.identified?.brand || "",
                 message: data.message || "",
+                confirmationKind: data.confirmation_kind || "default",
+                editableName: data.identified?.editable_name ||
+                  (data.identified?.brand && data.identified?.product_name
+                    ? `${data.identified.brand} ${data.identified.product_name}`.trim()
+                    : data.identified?.product_name || ""),
               });
               return;
             }
@@ -7002,7 +7130,7 @@ function App() {
   // Vision Contract v2 — user confirmed the identification. Backend resumes
   // from cascade using the stored identificationId, skipping the vision call.
   // Same three response shapes can come back; we treat them the same way.
-  const resumeFromConfirmation = async () => {
+  const resumeFromConfirmation = async (editedName = null) => {
     if (!visionConfirmation?.identificationId) return;
     const { identificationId, productName: confirmedName } = visionConfirmation;
     setVisionConfirmation(null);
@@ -7015,7 +7143,11 @@ function App() {
     try {
       let partial = { product_name: confirmedName, _streaming: true, _stage: "identified" };
       setResult({ ...partial });
-      await streamingAnalyze({ identificationId }, {
+      const resumeBody = { identificationId };
+      if (editedName && editedName.trim().length > 0) {
+        resumeBody.edited_name = editedName.trim();
+      }
+      await streamingAnalyze(resumeBody, {
         identified: (e) => { partial = { ...partial, ...e, _stage: "identified" }; setResult({ ...partial }); setStreamStage("identified"); },
         scored: (e) => { partial = { ...partial, ...e, _stage: "scored" }; setResult({ ...partial }); setStreamStage("scored"); },
         alternatives: (e) => { partial = { ...partial, ...e, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
@@ -10393,7 +10525,15 @@ function App() {
 
       {/* VISION CONTRACT V2 — confirmation modal for low-confidence identification.
           Cream card, Lora headline, moss primary / outlined secondary buttons. */}
-      {visionConfirmation && (
+      {visionConfirmation && visionConfirmation.confirmationKind === "textile_cascade_miss" && (
+        <TextileConfirmationCard
+          visionConfirmation={visionConfirmation}
+          onConfirm={() => resumeFromConfirmation(null)}
+          onEdit={(editedName) => resumeFromConfirmation(editedName)}
+          onDismiss={() => setVisionConfirmation(null)}
+        />
+      )}
+      {visionConfirmation && visionConfirmation.confirmationKind !== "textile_cascade_miss" && (
         <div
           onClick={() => setVisionConfirmation(null)}
           style={{
