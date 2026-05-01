@@ -268,6 +268,7 @@ function scoreComposition(parsed, options = {}) {
       isSleepwear,
       contactLevel,
     }),
+    short_verdict: buildShortVerdict(parsed, { kidMode }),
     fibers: parsed,
     certifications: appliedCerts,
     breakdown: {
@@ -317,6 +318,38 @@ const FIBER_EXPLANATIONS = {
   leather_vegetable: "Vegetable-tanned leather uses tree bark and plant tannins instead of chromium. Slower, cleaner, and the leather develops a richer patina.",
   leather_synthetic_pu: "PU synthetic leather is plastic. It sheds microplastics and the manufacturing involves solvents.",
   leather_synthetic_pvc: "PVC synthetic leather contains plasticizers, often phthalates, which are endocrine disruptors that absorb through skin.",
+};
+
+// Tight 1-line punchlines for the breakdown card side-of-score
+// text. Complements the full FIBER_EXPLANATIONS in The Why.
+// Lead with the fiber name, then the so-what in 5-12 words.
+const FIBER_VERDICTS = {
+  cotton_organic_gots: "GOTS organic cotton, about as clean as fabric gets.",
+  cotton_organic: "Organic cotton, but unverified dyes and finishes.",
+  cotton_conventional: "Conventional cotton with pesticide residue.",
+  cotton_recycled: "Recycled cotton, lighter footprint.",
+  polyester_virgin: "Polyester. Sheds microplastics with every wash.",
+  polyester_recycled: "Recycled polyester. Same shedding as virgin.",
+  acrylic: "Acrylic. Worst microplastic shedder there is.",
+  nylon_virgin: "Nylon. Plastic with undisclosed chemical finishes.",
+  nylon_recycled: "Recycled nylon. Lighter petroleum footprint.",
+  elastane: "Elastane. Plastic stretch fiber that sheds.",
+  wool_untreated: "Untreated wool. Naturally clean and biodegradable.",
+  wool_merino: "Merino wool. Soft and breathable without chemistry.",
+  wool_superwash: "Superwash wool. Polymer-coated and shedding.",
+  linen: "Linen. Low-impact and biodegradable.",
+  hemp: "Hemp. Low-pesticide and durable.",
+  silk: "Silk. Biodegradable, skin-safe fiber.",
+  cashmere: "Cashmere. Biodegradable, soft against skin.",
+  down: "Down. Biodegradable insulation.",
+  tencel_lyocell: "Tencel. Closed-loop processing, clean cellulosic.",
+  modal: "Modal. Wood pulp with chemical processing.",
+  viscose_rayon: "Viscose. Carbon disulfide in manufacturing.",
+  bamboo_viscose: "Bamboo viscose. Same chemistry as regular viscose.",
+  leather_chrome: "Chrome-tanned leather. Chromium contamination.",
+  leather_vegetable: "Vegetable-tanned leather. Plant tannins, slower process.",
+  leather_synthetic_pu: "PU synthetic leather. Plastic that sheds.",
+  leather_synthetic_pvc: "PVC leather. Phthalates that absorb through skin.",
 };
 
 const CERT_EXPLANATIONS = {
@@ -398,6 +431,18 @@ function buildExplanation(parsed, certs, partialRead, options = {}) {
   }
 
   return sentences.join(" ");
+}
+
+function buildShortVerdict(parsed, options = {}) {
+  if (!parsed || parsed.length === 0) {
+    return "Composition unreadable.";
+  }
+  const sorted = [...parsed].sort((a, b) => b.pct - a.pct);
+  const dominant = sorted[0];
+  const verdict = FIBER_VERDICTS[dominant.key];
+  if (verdict) return verdict;
+  // Fallback for fibers without a verdict entry
+  return `${dominant.label}, primary fiber.`;
 }
 
 // Test cases. Run with: node backend/textileScorer.js
@@ -482,7 +527,8 @@ function _runTests() {
       contactLevel: "medium",
     });
     console.log(`\n${c.name} (score ${result.score}):`);
-    console.log(`  ${result.explanation}`);
+    console.log(`  Short:  ${result.short_verdict}`);
+    console.log(`  Long:   ${result.explanation}`);
   }
 }
 
