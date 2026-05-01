@@ -5991,8 +5991,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
           visionCat = cascadeHit.entry.category;
         }
       }
+      // Build the brand-aware query for cascade lookups. When vision
+      // extracted a brand, prepend it to the product name so Tier 3
+      // and Tier 4 search for "Nike Dri-FIT 2pc" instead of "Boys
+      // Jogger". Generic queries match generic products. This is
+      // Bug 1 from the 2026-04 diagnosis.
+      const visionBrand = (identification.brand || "").trim();
+      const cascadeQuery = visionBrand &&
+        !productName.toLowerCase().includes(visionBrand.toLowerCase())
+        ? `${visionBrand} ${productName}`
+        : productName;
+      if (cascadeQuery !== productName) {
+        log.info("vision_cascade_query_branded", {
+          product_name: productName,
+          brand: visionBrand,
+          query: cascadeQuery,
+        });
+      }
+
       if (!cascadeHit) {
-        const nameKey = cacheKey(productName, visionCat);
+        const nameKey = cacheKey(cascadeQuery, visionCat);
         const nCached = await cacheGet(nameKey);
         if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
@@ -6001,7 +6019,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         }
       }
       if (!cascadeHit) {
-        const t3 = await tier3OpenFactsTextSearch(productName);
+        const t3 = await tier3OpenFactsTextSearch(cascadeQuery);
         if (t3) cascadeHit = {
           tier: "open_facts", source: t3.source, ingredients: t3.ingredients,
           sourceUrl: t3.sourceUrl, sourceLabel: t3.sourceLabel, brand: t3.brand,
@@ -6010,7 +6028,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
       if (!cascadeHit) {
         try {
-          const t4 = await tier4WebExtract(productName, { checkApiBudget, incrementApiCount });
+          const t4 = await tier4WebExtract(cascadeQuery, {
+            checkApiBudget,
+            incrementApiCount,
+            expectedBrand: visionBrand || null,
+          });
           if (t4) cascadeHit = {
             tier: "web_search", source: "web_search", ingredients: t4.ingredients,
             sourceLabel: t4.sourceLabel, brand: t4.brand, sourceDomain: t4.sourceDomain,

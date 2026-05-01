@@ -375,6 +375,7 @@ Hard rules:
 
 async function tier4WebExtract(productName, deps = {}) {
   const started = Date.now();
+  const expectedBrand = (deps.expectedBrand || "").trim();
   // Attempt 1: verbatim query.
   let attempt = await _tier4OneCall(productName, deps, "verbatim");
   let usedQuery = productName;
@@ -401,6 +402,27 @@ async function tier4WebExtract(productName, deps = {}) {
   if (returnedName && !isTier4NameAcceptable(productName, usedQuery, returnedName, parsed.brand)) {
     console.log(`[tier4] name_mismatch query="${productName}" returned="${returnedName}" (no trigram or token-subset match)`);
     return null;
+  }
+  // Brand reconciliation. When vision extracted a brand from the
+  // photo (e.g. "Nike" from a visible swoosh), reject Tier 4 results
+  // that came back with a different brand. A returned brand of
+  // "Goodlion" for a queried brand of "Nike" is a hard reject. An
+  // empty or absent returned brand is permitted (the cascade may
+  // have hit a generic listing). Bug 2 from the 2026-04 diagnosis.
+  if (expectedBrand) {
+    const returnedBrand = String(parsed.brand || "").trim();
+    if (returnedBrand) {
+      const expectedLower = expectedBrand.toLowerCase();
+      const returnedLower = returnedBrand.toLowerCase();
+      const matches =
+        returnedLower.includes(expectedLower) ||
+        expectedLower.includes(returnedLower) ||
+        trigramSimilarity(expectedLower, returnedLower) >= 0.6;
+      if (!matches) {
+        console.log(`[tier4] brand_mismatch expected="${expectedBrand}" returned="${returnedBrand}" rejecting`);
+        return null;
+      }
+    }
   }
   const ingredientText = parsed.ingredients.map(s => String(s).trim()).filter(Boolean).join(", ");
   const sourceDomain = String(parsed.source_domain || "").trim().toLowerCase().replace(/^www\./, "");
