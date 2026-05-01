@@ -7652,12 +7652,27 @@ app.post("/enrich-explanation", rateLimit, async (req, res) => {
 VOICE: Light technical, citation-aware. Match this register:
 "This jacket is 89% polyester and 11% elastane, both petroleum-derived synthetics that shed microplastic fibers during wear and washing. Research by Browne et al. (2011) and Henry et al. (2019) documents 700,000+ microfibers released per wash cycle from synthetic textiles. Microplastics accumulate in human lung tissue (Amato-Lourenco et al. 2021, THORAX) and organs (Marfella et al. 2024, NEJM). Without GOTS, OEKO-TEX, or Bluesign certification, the chemical treatments are unknown. Conventional dyeing likely includes azo dyes (EU-banned in textiles), and water-resistant finishes may contain PFAS (perfluoroalkyl substances)."
 
+FIBER SHEDDING PRIORS (match the scoring model):
+Microfiber shedding rates by fiber type, ordered worst to best:
+1. Acrylic — highest shedding of any common synthetic, especially in fluffy or loose-knit constructions
+2. Polyester — high shedding, well-documented in research
+3. Nylon — moderate shedding, more durable than polyester
+4. Elastane/spandex — sheds in proportion to its blend percentage
+5. Recycled synthetics — same shedding rates as their virgin counterparts; the recycled designation is about petroleum input, not shedding
+6. Wool (untreated) — minimal shedding, biodegradable
+7. Cotton, linen, hemp — natural fibers, may shed but biodegrade
+
+When discussing acrylic specifically, do NOT claim it sheds less than polyester or nylon. Acrylic is the worst microfiber shedder among common synthetics. This is the position the scoring model takes.
+
 RULES:
 - Name specific studies when relevant (Browne 2011, Henry 2019, Marfella 2024 NEJM, Amato-Lourenco 2021 THORAX, etc.)
 - Name specific chemistries (PFAS, azo dyes, formaldehyde, NPEs, phthalates, chromium VI)
 - Reference EU regulatory bans where applicable (REACH restrictions, EU 2018/1513 azo dye limits)
 - Reference certifications by name (GOTS, OEKO-TEX 100, Bluesign, Cradle to Cradle)
 - Do NOT contradict the score. The score is fixed at ${score}/10.
+- Do NOT soften the verdict. The score is the verdict. Never describe a score as "moderate", "actually fine", "not so bad", or use phrases that contradict the score's range.
+- Score 1-2 means safe. Score 3-4 means good. Score 5-6 means caution. Score 7-8 means swap. Score 9-10 means avoid. The explanation should sound consistent with the score's range.
+- Do NOT compare the scored item favorably to worse alternatives in a way that softens the verdict ("at least it's not X"). Explain the actual concerns directly.
 - 4-6 sentences. Long enough to be substantive, short enough to read.
 - Plain text, no markdown, no headers, no bullet points.
 - Never use first person ("I", "we"). Never use em dashes, use hyphens or rewrite.
