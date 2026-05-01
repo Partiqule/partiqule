@@ -6232,6 +6232,7 @@ function App() {
   // visionRefusal: { productName, message } — cascade found nothing and label not legible, ask user to retake
   const [visionConfirmation, setVisionConfirmation] = useState(null);
   const [visionRefusal, setVisionRefusal] = useState(null);
+  const [explanationEnriching, setExplanationEnriching] = useState(false);
   // Shown after a successful Apple IAP purchase or restore. Gives the user
   // (and Apple's reviewer) an explicit visual signal that the subscription
   // benefit was granted — the previous silent flow is the specific behavior
@@ -6814,6 +6815,7 @@ function App() {
         },
         complete: (data) => {
           setResult(data);
+          enrichTextileExplanation(data);
           saveToHistory(data);
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
@@ -6863,6 +6865,7 @@ function App() {
         alternatives: (e) => { partial = { ...partial, ...e, _streaming: true, _stage: "alternatives" }; setResult({ ...partial }); setStreamStage("alternatives"); },
         complete: (data) => {
           setResult(data); saveToHistory(data); setQuery(data.product_name || match.display_name);
+          enrichTextileExplanation(data);
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
@@ -7087,6 +7090,7 @@ function App() {
             if (!data.product_name) throw new Error("Nothing detected");
             setQuery(data.product_name);
             setResult(data);
+            enrichTextileExplanation(data);
             saveToHistory(data);
             setStreamStage(null);
             if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
@@ -7166,6 +7170,7 @@ function App() {
           }
           setQuery(data.product_name);
           setResult(data);
+          enrichTextileExplanation(data);
           saveToHistory(data);
           setStreamStage(null);
           setLoading(false);
@@ -7186,6 +7191,76 @@ function App() {
       if (err.status === 410) { showFailModal("That identification expired. Try scanning again."); return; }
       if (err.status === 429) { showFailModal("Too many scans right now. Try again in a few minutes."); return; }
       showFailModal("Something went wrong scoring that product. Try again.");
+    }
+  };
+
+  // Fire enrichment for textile scans. Called after the
+  // deterministic scan completes. Updates summary_long when
+  // the enriched explanation returns. On error or 12s timeout,
+  // silently keeps the deterministic Why text.
+  const enrichTextileExplanation = async (resultData) => {
+    if (!resultData) return;
+
+    const TEXTILE_CATEGORIES = new Set(["clothing", "baby", "shoes", "home_furnishing", "accessory"]);
+    const isTextileTier = resultData.tier === "textile_scorer" || resultData.tier === "textile_cascade";
+    if (!TEXTILE_CATEGORIES.has(resultData.category) || !isTextileTier) {
+      return;
+    }
+    if (!resultData.textile_fibers || !Array.isArray(resultData.textile_fibers) || resultData.textile_fibers.length === 0) {
+      return;
+    }
+
+    setExplanationEnriching(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    try {
+      const fibers = resultData.textile_fibers.map(f => ({ pct: f.pct, label: f.label }));
+      const isKid = !!resultData.is_child_product;
+      const productNameLower = (resultData.product_name || "").toLowerCase();
+      const isSleepwear = /\b(pajama|pyjama|sleepwear|nightgown|onesie|sleeper)\b/.test(productNameLower);
+      const contactLevel = /\b(underwear|base layer|legging|tight)\b/.test(productNameLower) ? "high"
+        : /\b(jacket|coat|outerwear|sweater)\b/.test(productNameLower) ? "low"
+        : "medium";
+
+      const response = await fetch(`${API_BASE}/enrich-explanation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productName: resultData.product_name,
+          brand: resultData.brand || "",
+          category: resultData.category,
+          score: resultData.score,
+          fibers,
+          kidMode: isKid,
+          isSleepwear,
+          contactLevel,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn("[textile_enrich] non-ok response:", response.status);
+        setExplanationEnriching(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.summary_long && typeof data.summary_long === "string" && data.summary_long.length > 50) {
+        setResult(prev => prev ? { ...prev, summary_long: data.summary_long } : prev);
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        console.warn("[textile_enrich] timed out at 12s");
+      } else {
+        console.warn("[textile_enrich] failed:", err.message);
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setExplanationEnriching(false);
     }
   };
 
@@ -7233,6 +7308,7 @@ function App() {
         @keyframes popIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}.pop-in{animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
         @keyframes pulseScan{0%,100%{box-shadow:var(--shadow-card)}50%{box-shadow:0 4px 16px rgba(26,31,21,0.10)}}
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
+        @keyframes partiqulePulse{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.9;transform:scale(1.1)}}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3{font-family:'Lora',Georgia,serif;}
       `}</style>
@@ -8970,6 +9046,19 @@ function App() {
                     }}>
                       <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       The why
+                      {explanationEnriching && (
+                        <span
+                          aria-label="enriching explanation"
+                          style={{
+                            display:"inline-block",
+                            width:6, height:6,
+                            borderRadius:"50%",
+                            background:"var(--moss)",
+                            opacity:0.6,
+                            animation:"partiqulePulse 1.4s ease-in-out infinite",
+                          }}
+                        />
+                      )}
                     </div>
                     <div style={{
                       fontFamily:"'Lora', Georgia, serif",
@@ -9356,6 +9445,19 @@ function App() {
                     }}>
                       <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                       The why
+                      {explanationEnriching && (
+                        <span
+                          aria-label="enriching explanation"
+                          style={{
+                            display:"inline-block",
+                            width:6, height:6,
+                            borderRadius:"50%",
+                            background:"var(--moss)",
+                            opacity:0.6,
+                            animation:"partiqulePulse 1.4s ease-in-out infinite",
+                          }}
+                        />
+                      )}
                     </div>
                     <div style={{
                       fontFamily:"'Lora', Georgia, serif",
