@@ -487,7 +487,42 @@ function buildCalibrationIndex() {
 }
 buildCalibrationIndex();
 
-function fuzzyCalibrationLookup(productName) {
+// ── Category-family compatibility ──
+// Used to gate fuzzy-substring calibration matches across unrelated
+// domains. The fuzzy lookup's phase 4 (substring containment) is
+// prone to false positives — e.g. a clothing tag scan with text
+// "PINK STRAWBERRIES/TIYRTZ" matching a food calibration entry on
+// the substring "strawberries". Without a family gate, the calibration
+// category override would flip the scan from clothing to food and
+// score against food chemistry. Categories listed in the same Set
+// can override one another via fuzzy. Cross-family overrides via
+// substring fuzzy are blocked. baby intentionally appears in two
+// families because baby products span both wearables (pajamas) and
+// topicals (lotion) — the existing pajamas-detected-as-baby override
+// case must continue to work.
+const CATEGORY_FAMILIES = [
+  new Set(["clothing", "baby", "accessory", "home_furnishing", "shoes"]),
+  new Set(["personal_care", "skincare", "baby"]),
+  new Set(["food", "beverage", "food_beverage", "snack", "restaurant", "supplement"]),
+  new Set(["home", "kitchen", "cleaning"]),
+  new Set(["toy"]),
+];
+
+function categoryFamily(cat) {
+  if (!cat) return [];
+  return CATEGORY_FAMILIES.filter(f => f.has(cat));
+}
+
+function categoriesCompatible(a, b) {
+  if (!a || !b) return true;
+  if (a === b) return true;
+  for (const fam of CATEGORY_FAMILIES) {
+    if (fam.has(a) && fam.has(b)) return true;
+  }
+  return false;
+}
+
+function fuzzyCalibrationLookup(productName, visionCategoryHint = null) {
   const norm        = normalise(productName);
   const normNoApos  = norm.replace(/'/g, "");
 
@@ -517,9 +552,22 @@ function fuzzyCalibrationLookup(productName) {
     }
   }
 
-  // 4. Query contains calibration key as a phrase — full scan (only for long keys)
+  // 4. Query contains calibration key as a phrase — full scan (only for long keys).
+  // This is the loosest match phase and the one most prone to false
+  // positives. When the caller supplies a visionCategoryHint, block hits
+  // whose calibration category is in a different family from the hint.
+  // Phases 1-3 are tighter (exact / shared prefix) and stay un-gated.
   for (const c of calibrationAllEntries) {
     if (c.key.length >= 6 && (norm.includes(c.key) || normNoApos.includes(c.keyNoApos))) {
+      if (visionCategoryHint && c.entry.category && !categoriesCompatible(visionCategoryHint, c.entry.category)) {
+        log.info("fuzzy_calibration_category_blocked", {
+          query: norm,
+          matched_key: c.key,
+          calibration_category: c.entry.category,
+          vision_category: visionCategoryHint,
+        });
+        continue;
+      }
       return { key: c.key, entry: c.entry };
     }
   }
@@ -6179,7 +6227,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         cascadeHit = { tier: "calibration", entry: calExact, ingredients: (calExact.substances || []).join(", ") };
       }
       if (!cascadeHit) {
-        const fuzzy = fuzzyCalibrationLookup(productName);
+        const fuzzy = fuzzyCalibrationLookup(productName, visionCat);
         if (fuzzy) {
           cascadeHit = { tier: "fuzzy_calibration", entry: fuzzy.entry, ingredients: (fuzzy.entry.substances || []).join(", ") };
         }
@@ -6800,7 +6848,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
 
       // ── Fuzzy calibration check before running pass2 ──
       // Skipped when stale entry was evicted so pass2 runs and enriches the result.
-      const imgFuzzy = !imgSkipFuzzy && fuzzyCalibrationLookup(productName);
+      const imgFuzzy = !imgSkipFuzzy && fuzzyCalibrationLookup(productName, category);
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
         const midScore = Math.round((entry.floor + entry.ceiling) / 2);
@@ -9455,7 +9503,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
 
   // Calibration category wins if there's a matching entry. Same rationale as
   // the vision path: calibration is authoritative when it has an opinion.
-  const bcCalHit = CALIBRATION.get(normalise(productName)) || fuzzyCalibrationLookup(productName)?.entry;
+  const bcCalHit = CALIBRATION.get(normalise(productName)) || fuzzyCalibrationLookup(productName, cat)?.entry;
   if (bcCalHit?.category && CATEGORY_AVERAGES[bcCalHit.category] && bcCalHit.category !== cat) {
     console.log(`[barcode] calibration category override: ${cat} → ${bcCalHit.category} for "${productName}"`);
     cat = bcCalHit.category;
