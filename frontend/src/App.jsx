@@ -10703,7 +10703,7 @@ function App() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
-                onClick={resumeFromConfirmation}
+                onClick={() => resumeFromConfirmation()}
                 style={{
                   padding: "14px 20px",
                   background: "var(--moss)",
