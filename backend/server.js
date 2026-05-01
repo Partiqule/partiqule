@@ -1952,6 +1952,58 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
   }
 }
 
+// Plain-text companion to callClaude. Same retry/backoff/timeout
+// shape, same model, same budget accounting. Skips the JSON
+// extraction step — returns the raw concatenated text from the
+// response so callers can use it directly. Used for prose-only
+// generations (e.g. textile explanation enrichment) where
+// forcing JSON would either prevent the use case or require the
+// model to wrap prose in a JSON envelope unnecessarily.
+async function callClaudeText(system, userPrompt, maxTokens=800, retries=3) {
+  checkApiBudget();
+  incrementApiCount();
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+      const res = await fetch(ANTHROPIC_API, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "anthropic-beta": "prompt-caching-2024-07-31",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: maxTokens,
+          temperature: 0,
+          system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+          messages: [{ role: "user", content: userPrompt }]
+        })
+      });
+      clearTimeout(timeout);
+      if ((res.status === 429 || res.status === 529) && attempt < retries) {
+        const wait = Math.min((attempt + 1) * 8000 + Math.random() * 2000, 30000);
+        console.log(`Anthropic ${res.status}, retrying in ${Math.round(wait)}ms (attempt ${attempt+1}/${retries})`);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      return data.content.map(b => b.text || "").join("").trim();
+    } catch(err) {
+      clearTimeout(timeout);
+      if (err.name === "AbortError") {
+        if (attempt < retries) { console.log(`Timeout, retrying (attempt ${attempt+1})`); continue; }
+        throw new Error("Request timed out after 25s");
+      }
+      throw err;
+    }
+  }
+}
+
 // ── PASS 1: DEEP ANALYSIS ─────────────────────────────────────
 // Vision pass — identifies product from image AND scores it in one call
 async function callClaudeVision(imageBase64, mediaType, retries=3) {
@@ -7544,6 +7596,108 @@ const triggerLoopsEvent = async (email, eventName, properties={}) => {
     console.error("[LOOPS] Event error:", e.message);
   }
 };
+
+// Enrichment companion to /analyze for textile (clothing/baby/etc.)
+// scans. The deterministic textile scorer ships a short verdict
+// and a baseline Why immediately. This route generates the
+// register C long-form explanation in a separate call so the
+// initial scan stays fast (3-5s) while the richer copy fills in
+// asynchronously (3-4s after). Frontend swaps summary_long when
+// the response lands; on error or timeout, the deterministic
+// baseline stays.
+const TEXTILE_ENRICH_CATEGORIES = new Set(["clothing", "baby", "shoes", "home_furnishing", "accessory"]);
+
+app.post("/enrich-explanation", rateLimit, async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  try {
+    const {
+      productName,
+      brand = "",
+      category,
+      score,
+      fibers,
+      kidMode = false,
+      isSleepwear = false,
+      contactLevel = "medium",
+    } = req.body || {};
+
+    if (!productName || typeof productName !== "string" || productName.trim().length === 0) {
+      return res.status(400).json({ error: "productName is required" });
+    }
+    if (!category || !TEXTILE_ENRICH_CATEGORIES.has(category)) {
+      return res.status(400).json({ error: "category must be one of clothing, baby, shoes, home_furnishing, accessory" });
+    }
+    if (typeof score !== "number" || score < 1 || score > 10) {
+      return res.status(400).json({ error: "score must be a number between 1 and 10" });
+    }
+    if (!Array.isArray(fibers) || fibers.length === 0) {
+      return res.status(400).json({ error: "fibers must be a non-empty array" });
+    }
+    for (const f of fibers) {
+      if (!f || typeof f.pct !== "number" || typeof f.label !== "string") {
+        return res.status(400).json({ error: "each fiber must have numeric pct and string label" });
+      }
+    }
+    if (!["high", "medium", "low"].includes(contactLevel)) {
+      return res.status(400).json({ error: "contactLevel must be high, medium, or low" });
+    }
+
+    const fiberSummary = fibers.map(f => `${f.pct}% ${f.label}`).join(", ");
+    const kidContextLine = kidMode
+      ? `\nThis is being scored for a child${isSleepwear ? " (sleepwear, ~10 hours of skin contact per night)" : ""}. Skin-contact level: ${contactLevel}.`
+      : "";
+
+    const systemPrompt = `You are writing The Why explanation for a textile/clothing scan in the Partiqule app. The score is already calculated by a deterministic textile scorer. Your job is to explain WHY the score is what it is, grounded in research and named chemistries.
+
+VOICE: Light technical, citation-aware. Match this register:
+"This jacket is 89% polyester and 11% elastane, both petroleum-derived synthetics that shed microplastic fibers during wear and washing. Research by Browne et al. (2011) and Henry et al. (2019) documents 700,000+ microfibers released per wash cycle from synthetic textiles. Microplastics accumulate in human lung tissue (Amato-Lourenco et al. 2021, THORAX) and organs (Marfella et al. 2024, NEJM). Without GOTS, OEKO-TEX, or Bluesign certification, the chemical treatments are unknown. Conventional dyeing likely includes azo dyes (EU-banned in textiles), and water-resistant finishes may contain PFAS (perfluoroalkyl substances)."
+
+RULES:
+- Name specific studies when relevant (Browne 2011, Henry 2019, Marfella 2024 NEJM, Amato-Lourenco 2021 THORAX, etc.)
+- Name specific chemistries (PFAS, azo dyes, formaldehyde, NPEs, phthalates, chromium VI)
+- Reference EU regulatory bans where applicable (REACH restrictions, EU 2018/1513 azo dye limits)
+- Reference certifications by name (GOTS, OEKO-TEX 100, Bluesign, Cradle to Cradle)
+- Do NOT contradict the score. The score is fixed at ${score}/10.
+- 4-6 sentences. Long enough to be substantive, short enough to read.
+- Plain text, no markdown, no headers, no bullet points.
+- Never use first person ("I", "we"). Never use em dashes, use hyphens or rewrite.
+- Never make medical claims. Reference research findings, not health outcomes.
+- ${kidMode ? "Mention the kid-specific exposure context naturally if the synthetics warrant it." : "Adult-context only."}`;
+
+    const userPrompt = `Product: ${brand ? brand.trim() + " " : ""}${productName.trim()}
+Category: ${category}
+Composition: ${fiberSummary}
+Score: ${score}/10${kidContextLine}
+
+Write the explanation.`;
+
+    let enriched;
+    try {
+      enriched = await callClaudeText(systemPrompt, userPrompt, 600, 2);
+    } catch (err) {
+      log.warn("textile_enrich_api_failed", { error: err.message, product_name: productName });
+      return res.status(502).json({ error: "Enrichment unavailable" });
+    }
+
+    if (!enriched || enriched.length < 50) {
+      log.warn("textile_enrich_too_short", { length: enriched?.length || 0, product_name: productName });
+      return res.status(502).json({ error: "Enrichment unavailable" });
+    }
+
+    log.info("textile_enrich_succeeded", {
+      product_name: productName,
+      brand,
+      category,
+      score,
+      length: enriched.length,
+    });
+
+    return res.json({ summary_long: enriched });
+  } catch (err) {
+    console.error("[/enrich-explanation] error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
 
 app.post("/subscribe", async (req, res) => {
   res.set("Cache-Control", "no-store");
