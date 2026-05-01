@@ -124,8 +124,33 @@ If none of these panels is readable, set label_ingredients to null and label_leg
   "confidence": 0.0 to 1.0,
   "label_ingredients": [array of ingredients you LITERALLY SEE on the label, in order. Only include ingredients you can READ. Do not infer ingredients you think are typical for this product type. If ingredient list is not visible or not fully legible, return null.],
   "label_legibility": "full" | "partial" | "minimal" | "unreadable",
+  "surface_type": "care_label" | "brand_patch" | "hangtag" | "unknown" | null,
+  "style_code": "alphanumeric style code if visible on a hangtag (e.g. 86N898-B4T), or null",
+  "barcode": "the digit string printed under the barcode bars (12-13 digits, no spaces), or null",
+  "color": "color name as printed on the hangtag (e.g. STAR BLUE, IVORY), or null",
+  "price": "retail price as printed (e.g. $60.00), or null",
   "reasoning": "brief explanation of what you saw and how confident you are, under 30 words"
 }
+
+SURFACE TYPE DETECTION:
+Identify which surface the user photographed and set surface_type accordingly:
+- care_label: a sewn-in fabric tag inside the garment (typically at the neck or side seam) with composition, care symbols, and country of origin.
+- brand_patch: a woven or printed label on the back of the neck or waistband showing the brand name and possibly the size or product line.
+- hangtag: a paper or plastic tag attached to the garment with a string or plastic loop, typically showing brand, product name or style code, size, color, price, and often a barcode.
+- unknown: if the surface type cannot be determined or the photo is not a clothing tag at all (e.g. food packaging, cosmetic bottle).
+- null: when the photo is unrelated to product identification.
+
+HANGTAG EXTRACTION:
+When surface_type is hangtag, extract these additional fields:
+- style_code: the alphanumeric code identifying the specific product (e.g. "86N898-B4T"). Often appears below or near the product name. Distinct from the barcode digits. Return null if not visible.
+- barcode: the digits printed below or beside the barcode bars. Read the long horizontal string of numbers, typically 12 to 13 digits. Do not include spaces. Return null if not visible or unreadable.
+- color: the color name if printed (e.g. "STAR BLUE", "BLUE FLORAL", "IVORY"). Return null if not visible.
+- price: the retail price if visible (e.g. "$60.00"). Return null if not visible.
+- composition: if a fiber composition is printed on the hangtag (some technical wear hangtags include this), extract it via label_ingredients exactly as you would from a care label.
+
+For hangtags, the product_name field may be generic placeholder text (like "BOYS 2PC" or "V-NECK SWEATER"). That is fine — extract it as printed. The style_code and barcode fields are the precise identifiers that uniquely identify the SKU.
+
+For care_label and brand_patch surfaces, set style_code, barcode, color, and price to null. Those fields are hangtag-specific.
 
 CONFIDENCE SCALE (identity only — NOT ingredient readability):
 - 0.90-1.00: You can read BOTH the brand wordmark AND the product name clearly on the package, hangtag, or visible brand logo.
@@ -202,6 +227,21 @@ CRITICAL RULES:
       confidenceOut = Math.min(confidenceOut, 0.55);
     }
 
+    // Surface-specific fields. surface_type is one of care_label,
+    // brand_patch, hangtag, unknown, or null. Hangtag-specific
+    // fields (style_code, barcode, color, price) are passed through
+    // as nullable strings so downstream code can branch on their
+    // presence without re-parsing the response.
+    const SURFACE_TYPES = ["care_label", "brand_patch", "hangtag", "unknown"];
+    const surfaceType = SURFACE_TYPES.includes(parsed.surface_type)
+      ? parsed.surface_type
+      : null;
+    const trimOrNull = (v) => {
+      if (v == null) return null;
+      const s = String(v).trim();
+      return s.length > 0 ? s : null;
+    };
+
     return {
       product_name: productName || "Scanned product",
       brand: brandOut,
@@ -210,6 +250,11 @@ CRITICAL RULES:
       confidence: confidenceOut,
       label_ingredients: labelIngredients,
       label_legibility: legibility,
+      surface_type: surfaceType,
+      style_code: trimOrNull(parsed.style_code),
+      barcode: trimOrNull(parsed.barcode),
+      color: trimOrNull(parsed.color),
+      price: trimOrNull(parsed.price),
       reasoning: String(parsed.reasoning || "").slice(0, 400),
     };
   } catch (e) {
