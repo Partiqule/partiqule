@@ -6144,46 +6144,154 @@ app.post("/analyze", rateLimit, async (req, res) => {
           label_ingredients: labelArr,
           label_legibility: identification.label_legibility,
         });
-        // Synthesize a cascade-shaped object so the existing Tier 4
-        // scoring path (Pass 1 + Pass 2) handles label data the same
-        // way it handles web-extracted data, with the source clearly
-        // marked as label_ocr.
-        const labelIngredientText = labelArr.join(", ");
-        const labelContextBlock = `INGREDIENT SOURCE: label_ocr\nFULL INGREDIENT LIST: ${labelIngredientText}\nThese ingredients were read directly from the care label on the garment in the user's photo. Score based on these ingredients, not on training priors.`;
-        const p1Label = await pass1(productName, labelContextBlock, visionCat, null);
-        applyFlagDetectionToP1(p1Label, labelIngredientText, visionCat, "vision_v2_label");
-        let p2Label = null;
-        try {
-          p2Label = await pass2(productName, p1Label);
-        } catch (e) {
-          console.warn("[vision_v2] label-only pass2 failed:", e.message);
-        }
-        const labelSafety = computeSafetyScores(
-          p1Label.score, visionCat, productName, p1Label, [], labelIngredientText
-        );
-        const labelResult = {
-          ...p1Label,
+
+        // Treat the label as a synthesized cascade hit so all the
+        // downstream scoring (substance floors, NOVA inference,
+        // consistency checks, dimensions, summaries) runs the
+        // same way it does for Tier 4 web hits. Source is marked
+        // label_ocr so the user-facing card reads "Read directly
+        // from the care label" instead of a domain.
+        const ingredientText = labelArr.join(", ");
+        const sourceLabelFinal = "Read directly from the care label";
+        const sourceKeyFinal = "label_ocr";
+        const sourceConfidenceFinal = "high";
+        const ingredientSourceField = "label_ocr";
+        const ingredientConfidenceField = "high";
+        const ingredientSourceUrlField = null;
+
+        stream.emit("identified", {
           product_name: productName,
           brand: identification.brand || "",
+          ingredient_source: ingredientSourceField,
+          ingredient_confidence: ingredientConfidenceField,
+          ingredient_count: labelArr.length,
           category: visionCat,
-          ingredient_list: labelIngredientText,
-          ingredient_source: "label_ocr",
-          ingredient_confidence: "high",
-          ingredient_source_url: null,
-          source_label: "Read directly from the care label",
           tier: "label_ocr",
-          is_child_product: labelSafety.isChild,
-          child_score: labelSafety.childScore,
-          child_bumps: labelSafety.childBumps || [],
-          pregnancy_score: labelSafety.pregnancyScore,
-          pregnancy_bumps: labelSafety.pregnancyBumps || [],
-          alternatives: p2Label?.alternatives || serializeAlternatives(
-            filterDbAlternatives(findAlternatives(productName, visionCat, 3, productName), visionCat, productName, p1Label.score),
-            visionCat,
-          ),
+        });
+
+        const contextBlock = `INGREDIENT SOURCE: label_ocr\nFULL INGREDIENT LIST: ${ingredientText}\nThese ingredients were read directly from the care label on the garment in the user's photo. Score based on these ingredients, not on training priors.`;
+        const p1 = await pass1(productName, contextBlock, visionCat, null);
+        applyFlagDetectionToP1(p1, ingredientText, visionCat, "vision_v2_label");
+
+        let p2 = null;
+        try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[vision_v2] label pass2 failed:", e.message); }
+
+        let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
+        let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
+        let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
+        let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
+
+        const textFloors = applySubstanceFloorsToText(ingredientText);
+        if (textFloors.mFloor > mScore) mScore = textFloors.mFloor;
+        if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
+        const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
+        mScore = aiFloors.mScore;
+        uScore = aiFloors.uScore;
+
+        const novaInf = inferNovaGroupFromIngredients(ingredientText, visionCat);
+        if (novaInf) {
+          const nova = novaBounds(novaInf.nova, visionCat);
+          if (nova.floor > mScore) {
+            console.log(`[vision_v2_label] NOVA ${novaInf.nova} inferred — materials ${mScore} to ${nova.floor}`);
+            mScore = nova.floor;
+          }
+          if (mScore > nova.ceiling) mScore = nova.ceiling;
+          if (novaInf.nova === 4) {
+            p1.raw_concerns = Array.isArray(p1.raw_concerns) ? p1.raw_concerns : [];
+            p1.raw_concerns.push(`NOVA 4 ultra-processed (inferred from ingredients: ${novaInf.matches.slice(0, 3).join(", ")})`);
+          }
+        }
+
+        let finalScore = computeScore(mScore, uScore, pkScore, sScore, visionCat);
+        ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
+          mScore, uScore, pkScore, sScore, finalScore, p1, p2, visionCat, productName
+        ));
+        ({ finalScore } = applyPositiveCeilings(finalScore, visionCat, p1, p2, []));
+
+        if (novaInf) {
+          const novaFinal = novaBounds(novaInf.nova, visionCat).floor;
+          if (novaFinal > finalScore) finalScore = novaFinal;
+        }
+
+        const safety = computeSafetyScores(finalScore, visionCat, productName, p1, textFloors.triggered, ingredientText);
+
+        stream.emit("scored", {
+          score: finalScore,
+          overall_score: finalScore,
+          category: visionCat,
+          confidence: p1.confidence || "medium",
+          materials_score: mScore,
+          usage_score: uScore,
+          packaging_score: pkScore,
+          sustainability_score: sScore,
+          concerns: p2?.refined_concerns || p1.concerns || [],
+          flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
+        });
+
+        const alternatives = serializeAlternatives(
+          filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
+          visionCat,
+        );
+        stream.emit("alternatives", { alternatives });
+
+        const peerComparison = finalScore <= 2 ? "Safe, no significant chemical or ingredient concerns"
+          : finalScore <= 4 ? "Good, mostly clean, use with awareness"
+          : finalScore <= 6 ? "Caution, real concerns, reduce use or find an alternative"
+          : finalScore <= 8 ? "Switch, real concerns, time to swap"
+          : "Avoid, known harmful substances";
+
+        const result = {
+          product_name:       productName,
+          brand:              identification.brand || "",
+          score:              finalScore,
+          overall_score:      finalScore,
+          category:           visionCat,
+          confidence:         p1.confidence || "medium",
+          is_child_product:   safety.isChild,
+          child_score:        safety.childScore,
+          child_bumps:        safety.childBumps || [],
+          pregnancy_score:    safety.pregnancyScore,
+          pregnancy_bumps:    safety.pregnancyBumps || [],
+          flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
+          concerns:           p2?.refined_concerns || p1.concerns || [],
+          raw_concerns:       p1.raw_concerns || [],
+          summary:            p1.summary_short || p1.summary || "",
+          summary_short:      p1.summary_short || p1.summary || "",
+          summary_long:       p1.summary_long || p1.summary || "",
+          peer_comparison:    peerComparison,
+          ingredient_source:         ingredientSourceField,
+          ingredient_confidence:     ingredientConfidenceField,
+          ingredient_verified_at:    new Date().toISOString(),
+          ingredient_source_url:     ingredientSourceUrlField,
+          source: sourceKeyFinal,
+          source_label: sourceLabelFinal,
+          source_confidence: sourceConfidenceFinal,
+          verdict_adult: p1.verdict_adult || null,
+          verdict_kid:   p1.verdict_kid   || null,
+          dimensions: {
+            materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
+            usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [], frequency: p1.usage_exposure?.frequency || "unknown", type: p1.usage_exposure?.type || "unknown", intensity: p1.usage_exposure?.intensity || "unknown", vulnerable: p1.usage_exposure?.vulnerable || false },
+            packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [], primary: p1.packaging?.primary || "unknown", refillable: p1.packaging?.refillable || false, end_of_life: p1.packaging?.end_of_life || "unknown" },
+            sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [], reusable: p1.sustainability?.reusable || false, replaces_single_use: p1.sustainability?.replaces_single_use || false, replaces_count: p1.sustainability?.replaces_count || null, circularity: p1.sustainability?.circularity || "unknown" },
+          },
+          identified_plastics: p1.identified_plastics || [],
+          harmful_chemicals:   p1.harmful_chemicals   || [],
+          natural_materials:   p1.natural_materials   || [],
+          nutrition:           p1.nutrition || p1.product_analysis?.nutrition || null,
+          ingredient_list:     p1.ingredient_list?.length ? p1.ingredient_list : labelArr,
+          product_family:      classifyProductFamily(productName, p1.ingredient_list || labelArr, visionCat),
+          alternatives,
+          ai_alternatives:     [],
+          scan_next:           buildScanNextFallback(productName, visionCat, alternatives),
+          category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+          tier:                "label_ocr",
+          cached:              false,
         };
-        await attachIntelCards(labelResult, userId);
-        return stream.complete({ ...labelResult, cached: false });
+        const calibrated = applyProductCalibration(result);
+        const imgKey = cacheKey(productName, visionCat);
+        cacheSet(imgKey, calibrated);
+        await attachIntelCards(calibrated, userId);
+        return stream.complete(calibrated);
       }
 
       if (!cascadeHit && !fromResume) {
