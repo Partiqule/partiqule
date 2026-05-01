@@ -6299,6 +6299,15 @@ app.post("/analyze", rateLimit, async (req, res) => {
       ]);
       if (TEXTILE_CATEGORIES_CASCADE.has(visionCat)) {
         const cascadeFibers = parseComposition([cascadeHit.ingredients]);
+        // Detect whether the cascade query was generic enough that
+        // the result could be any of many products from this brand.
+        // Generic = brand plus a category-level word (Jacket, Shirt,
+        // Pants, etc.) with nothing more specific. When the query is
+        // generic, the cascade may have landed on the wrong specific
+        // product even though the brand is correct.
+        const genericProductRegex = /^[a-z\s]*\b(jacket|shirt|tee|tshirt|t-shirt|pants|shorts|sweater|hoodie|coat|dress|skirt|leggings|joggers|top|bottoms|outerwear|garment)\b[a-z\s]*$/i;
+        const isGenericQuery = genericProductRegex.test(productName.trim()) &&
+          productName.trim().split(/\s+/).length <= 3;
         if (cascadeFibers.length > 0) {
           const isKidCascade = !!identification.is_child_product;
           const isSleepwearCascade = isSleepwearFromName(productName);
@@ -6324,6 +6333,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
               breakdown: textileResultCascade.breakdown,
               cascade_tier: cascadeHit.tier,
               cascade_source: cascadeHit.sourceLabel || cascadeHit.source,
+              generic_query: isGenericQuery,
             });
 
             const finalScoreC = textileResultCascade.score;
@@ -6339,8 +6349,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
               visionCat,
             );
 
-            const cascadeSourceLabel = cascadeHit.sourceLabel ||
-              (cascadeHit.brand ? `From ${cascadeHit.brand}` : "From web search");
+            const cascadeSourceLabel = isGenericQuery
+              ? "Estimated from product type. Scan the care tag for a verified score."
+              : (cascadeHit.sourceLabel || (cascadeHit.brand ? `From ${cascadeHit.brand}` : "From web search"));
 
             const resultC = {
               product_name:       productName,
@@ -6349,7 +6360,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
               overall_score:      finalScoreC,
               precise_score:      textileResultCascade.precise_score,
               category:           visionCat,
-              confidence:         "high",
+              confidence:         isGenericQuery ? "estimated" : "high",
               is_child_product:   safetyC.isChild,
               child_score:        safetyC.childScore,
               child_bumps:        safetyC.childBumps || [],
@@ -6363,12 +6374,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
               summary_long:       textileResultCascade.explanation,
               peer_comparison:    peerComparisonC,
               ingredient_source:        cascadeHit.source || cascadeHit.tier,
-              ingredient_confidence:    "high",
+              ingredient_confidence:    isGenericQuery ? "estimated" : "high",
               ingredient_verified_at:   new Date().toISOString(),
               ingredient_source_url:    cascadeHit.sourceUrl || null,
               source: cascadeHit.source || cascadeHit.tier,
               source_label: cascadeSourceLabel,
-              source_confidence: "high",
+              source_confidence: isGenericQuery ? "estimated" : "high",
               verdict_adult: null,
               verdict_kid:   null,
               dimensions: {
