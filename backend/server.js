@@ -19,6 +19,7 @@ const {
   tier5CategoryPrior,
   dedupeInflight,
 } = require("./scoringCascade");
+const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
   detectCategoryFast,
   classifyCategory,
@@ -5973,6 +5974,128 @@ app.post("/analyze", rateLimit, async (req, res) => {
       let visionCat = identification.category || detectCategoryFast(productName) || "other";
       let cascadeHit = null;
 
+      // ── TEXTILE FAST PATH ───────────────────────────────────
+      // For clothing categories where vision read fiber
+      // composition off the label, route directly to the
+      // deterministic textile scorer. Bypasses calibration,
+      // cache, OFF, Tier 4 web search, and Pass 1/Pass 2.
+      // Same input always produces same output. 3-5 second
+      // total scan time vs 25-35 seconds for the full pipeline.
+      const TEXTILE_CATEGORIES_FAST = new Set([
+        "clothing", "shoes", "accessory", "home_furnishing", "baby"
+      ]);
+      const isTextileCategory = TEXTILE_CATEGORIES_FAST.has(visionCat);
+      const labelArrFast = identification.label_ingredients || [];
+      const labelHasFiberPctFast = labelArrFast.length > 0 &&
+        labelArrFast.some(s => /\d+\s*%/.test(String(s)));
+      const labelLegibleFast = identification.label_legibility !== "unreadable" &&
+        identification.label_legibility !== null;
+
+      if (isTextileCategory && labelHasFiberPctFast && labelLegibleFast) {
+        const parsedFibers = parseComposition(labelArrFast);
+        if (parsedFibers.length > 0) {
+          const isKid = !!identification.is_child_product;
+          const isSleepwear = isSleepwearFromName(productName);
+          const contactLevel = /\b(underwear|base layer|legging|tight)\b/i.test(productName) ? "high"
+            : /\b(jacket|coat|outerwear|sweater)\b/i.test(productName) ? "low"
+            : "medium";
+
+          const textileResult = scoreComposition(parsedFibers, {
+            certifications: [],
+            kidMode: isKid,
+            isSleepwear,
+            contactLevel,
+          });
+
+          if (textileResult.score !== null) {
+            log.info("textile_fast_path", {
+              product_name: productName,
+              brand: identification.brand,
+              category: visionCat,
+              score: textileResult.score,
+              precise_score: textileResult.precise_score,
+              fibers: textileResult.fibers.map(f => `${f.pct}% ${f.label}`),
+              breakdown: textileResult.breakdown,
+              partial_read: textileResult.partial_read,
+              contact_level: contactLevel,
+              is_sleepwear: isSleepwear,
+            });
+
+            const finalScore = textileResult.score;
+            const safety = computeSafetyScores(finalScore, visionCat, productName, {}, [], textileResult.fibers.map(f => f.label).join(", "));
+            const peerComparison = finalScore <= 2 ? "Safe, no significant chemical or ingredient concerns"
+              : finalScore <= 4 ? "Good, mostly clean, use with awareness"
+              : finalScore <= 6 ? "Caution, real concerns, reduce use or find an alternative"
+              : finalScore <= 8 ? "Switch, real concerns, time to swap"
+              : "Avoid, known harmful substances";
+
+            const summary = textileResult.explanation;
+
+            const altsList = serializeAlternatives(
+              filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
+              visionCat,
+            );
+
+            const result = {
+              product_name:       productName,
+              brand:              identification.brand || "",
+              score:              finalScore,
+              overall_score:      finalScore,
+              precise_score:      textileResult.precise_score,
+              category:           visionCat,
+              confidence:         textileResult.partial_read ? "medium" : "high",
+              is_child_product:   safety.isChild,
+              child_score:        safety.childScore,
+              child_bumps:        safety.childBumps || [],
+              pregnancy_score:    safety.pregnancyScore,
+              pregnancy_bumps:    safety.pregnancyBumps || [],
+              flagged_substances: [],
+              concerns:           [],
+              raw_concerns:       [],
+              summary:            summary,
+              summary_short:      summary,
+              summary_long:       summary,
+              peer_comparison:    peerComparison,
+              ingredient_source:        "label_ocr",
+              ingredient_confidence:    textileResult.partial_read ? "medium" : "high",
+              ingredient_verified_at:   new Date().toISOString(),
+              ingredient_source_url:    null,
+              source: "label_ocr",
+              source_label: "Read directly from the care label",
+              source_confidence: textileResult.partial_read ? "medium" : "high",
+              verdict_adult: null,
+              verdict_kid:   null,
+              dimensions: {
+                materials:      { score: finalScore, label: "Materials", concerns: [] },
+                usage_exposure: { score: finalScore, label: "Usage", concerns: [], frequency: "unknown", type: "unknown", intensity: "unknown", vulnerable: false },
+                packaging:      { score: 5, label: "Packaging", concerns: [], primary: "unknown", refillable: false, end_of_life: "unknown" },
+                sustainability: { score: finalScore, label: "Sustainability", concerns: [], reusable: false, replaces_single_use: false, replaces_count: null, circularity: "unknown" },
+              },
+              identified_plastics: [],
+              harmful_chemicals:   [],
+              natural_materials:   textileResult.fibers.filter(f => !f.synthetic).map(f => f.label),
+              nutrition:           null,
+              ingredient_list:     labelArrFast,
+              product_family:      classifyProductFamily(productName, labelArrFast, visionCat),
+              alternatives:        altsList,
+              ai_alternatives:     [],
+              scan_next:           buildScanNextFallback(productName, visionCat, altsList),
+              category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+              tier:                "textile_scorer",
+              textile_breakdown:   textileResult.breakdown,
+              textile_fibers:      textileResult.fibers,
+              partial_read:        textileResult.partial_read,
+              cached:              false,
+            };
+            const calibrated = applyProductCalibration(result);
+            const fastKey = cacheKey(productName, visionCat);
+            cacheSet(fastKey, calibrated);
+            await attachIntelCards(calibrated, userId);
+            return stream.complete(calibrated);
+          }
+        }
+      }
+
       const calKey = normalise(productName);
       const calExact = CALIBRATION.get(calKey) || CALIBRATION.get(productName.toLowerCase().trim());
       if (calExact) {
@@ -6116,184 +6239,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // On fresh identifications we pause here and return needs_confirmation.
       // If the user confirms (fromResume), we proceed to Tier 5 — they've
       // acknowledged the identification and opted in to a best-guess score.
-      // Before falling through to confirmation or Tier 5, check if
-      // vision read textile composition off the label. For clothing
-      // and related categories, the label is authoritative even
-      // when the cascade found nothing online. The garment in the
-      // photo IS the product being scored, regardless of whether
-      // its specific SKU is indexed on a brand site. Bug 3 from
-      // the 2026-04 diagnosis, second half.
-      const TEXTILE_CATEGORIES_FALLBACK = new Set([
-        "clothing", "shoes", "accessory", "home_furnishing", "baby"
-      ]);
-      const labelArr = identification.label_ingredients || [];
-      const labelHasFiberPct = labelArr.length > 0 &&
-        labelArr.some(s => /\d+\s*%/.test(String(s)));
-      const labelLegibleEnough = identification.label_legibility !== "unreadable" &&
-        identification.label_legibility !== null;
-      const canScoreFromLabel = !cascadeHit &&
-        TEXTILE_CATEGORIES_FALLBACK.has(visionCat) &&
-        labelHasFiberPct &&
-        labelLegibleEnough;
-
-      if (canScoreFromLabel) {
-        log.info("vision_label_only_scoring", {
-          product_name: productName,
-          brand: identification.brand,
-          category: visionCat,
-          label_ingredients: labelArr,
-          label_legibility: identification.label_legibility,
-        });
-
-        // Treat the label as a synthesized cascade hit so all the
-        // downstream scoring (substance floors, NOVA inference,
-        // consistency checks, dimensions, summaries) runs the
-        // same way it does for Tier 4 web hits. Source is marked
-        // label_ocr so the user-facing card reads "Read directly
-        // from the care label" instead of a domain.
-        const ingredientText = labelArr.join(", ");
-        const sourceLabelFinal = "Read directly from the care label";
-        const sourceKeyFinal = "label_ocr";
-        const sourceConfidenceFinal = "high";
-        const ingredientSourceField = "label_ocr";
-        const ingredientConfidenceField = "high";
-        const ingredientSourceUrlField = null;
-
-        stream.emit("identified", {
-          product_name: productName,
-          brand: identification.brand || "",
-          ingredient_source: ingredientSourceField,
-          ingredient_confidence: ingredientConfidenceField,
-          ingredient_count: labelArr.length,
-          category: visionCat,
-          tier: "label_ocr",
-        });
-
-        const contextBlock = `INGREDIENT SOURCE: label_ocr\nFULL INGREDIENT LIST: ${ingredientText}\nThese ingredients were read directly from the care label on the garment in the user's photo. Score based on these ingredients, not on training priors.`;
-        const p1 = await pass1(productName, contextBlock, visionCat, null);
-        applyFlagDetectionToP1(p1, ingredientText, visionCat, "vision_v2_label");
-
-        let p2 = null;
-        try { p2 = await pass2(productName, p1); } catch(e) { console.warn("[vision_v2] label pass2 failed:", e.message); }
-
-        let mScore  = p2?.materials_score      ?? p1.materials?.score      ?? 5;
-        let uScore  = p2?.usage_score          ?? p1.usage_exposure?.score  ?? 5;
-        let pkScore = p2?.packaging_score      ?? p1.packaging?.score       ?? 5;
-        let sScore  = p2?.sustainability_score ?? p1.sustainability?.score  ?? 5;
-
-        const textFloors = applySubstanceFloorsToText(ingredientText);
-        if (textFloors.mFloor > mScore) mScore = textFloors.mFloor;
-        if (textFloors.uFloor > uScore) uScore = textFloors.uFloor;
-        const aiFloors = applySubstanceFloors(mScore, uScore, p1, p2);
-        mScore = aiFloors.mScore;
-        uScore = aiFloors.uScore;
-
-        const novaInf = inferNovaGroupFromIngredients(ingredientText, visionCat);
-        if (novaInf) {
-          const nova = novaBounds(novaInf.nova, visionCat);
-          if (nova.floor > mScore) {
-            console.log(`[vision_v2_label] NOVA ${novaInf.nova} inferred — materials ${mScore} to ${nova.floor}`);
-            mScore = nova.floor;
-          }
-          if (mScore > nova.ceiling) mScore = nova.ceiling;
-          if (novaInf.nova === 4) {
-            p1.raw_concerns = Array.isArray(p1.raw_concerns) ? p1.raw_concerns : [];
-            p1.raw_concerns.push(`NOVA 4 ultra-processed (inferred from ingredients: ${novaInf.matches.slice(0, 3).join(", ")})`);
-          }
-        }
-
-        let finalScore = computeScore(mScore, uScore, pkScore, sScore, visionCat);
-        ({ mScore, uScore, pkScore, sScore, finalScore } = applyConsistencyChecks(
-          mScore, uScore, pkScore, sScore, finalScore, p1, p2, visionCat, productName
-        ));
-        ({ finalScore } = applyPositiveCeilings(finalScore, visionCat, p1, p2, []));
-
-        if (novaInf) {
-          const novaFinal = novaBounds(novaInf.nova, visionCat).floor;
-          if (novaFinal > finalScore) finalScore = novaFinal;
-        }
-
-        const safety = computeSafetyScores(finalScore, visionCat, productName, p1, textFloors.triggered, ingredientText);
-
-        stream.emit("scored", {
-          score: finalScore,
-          overall_score: finalScore,
-          category: visionCat,
-          confidence: p1.confidence || "medium",
-          materials_score: mScore,
-          usage_score: uScore,
-          packaging_score: pkScore,
-          sustainability_score: sScore,
-          concerns: p2?.refined_concerns || p1.concerns || [],
-          flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
-        });
-
-        const alternatives = serializeAlternatives(
-          filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScore),
-          visionCat,
-        );
-        stream.emit("alternatives", { alternatives });
-
-        const peerComparison = finalScore <= 2 ? "Safe, no significant chemical or ingredient concerns"
-          : finalScore <= 4 ? "Good, mostly clean, use with awareness"
-          : finalScore <= 6 ? "Caution, real concerns, reduce use or find an alternative"
-          : finalScore <= 8 ? "Switch, real concerns, time to swap"
-          : "Avoid, known harmful substances";
-
-        const result = {
-          product_name:       productName,
-          brand:              identification.brand || "",
-          score:              finalScore,
-          overall_score:      finalScore,
-          category:           visionCat,
-          confidence:         p1.confidence || "medium",
-          is_child_product:   safety.isChild,
-          child_score:        safety.childScore,
-          child_bumps:        safety.childBumps || [],
-          pregnancy_score:    safety.pregnancyScore,
-          pregnancy_bumps:    safety.pregnancyBumps || [],
-          flagged_substances: [...(p1.flagged_substances || []), ...textFloors.triggered],
-          concerns:           p2?.refined_concerns || p1.concerns || [],
-          raw_concerns:       p1.raw_concerns || [],
-          summary:            p1.summary_short || p1.summary || "",
-          summary_short:      p1.summary_short || p1.summary || "",
-          summary_long:       p1.summary_long || p1.summary || "",
-          peer_comparison:    peerComparison,
-          ingredient_source:         ingredientSourceField,
-          ingredient_confidence:     ingredientConfidenceField,
-          ingredient_verified_at:    new Date().toISOString(),
-          ingredient_source_url:     ingredientSourceUrlField,
-          source: sourceKeyFinal,
-          source_label: sourceLabelFinal,
-          source_confidence: sourceConfidenceFinal,
-          verdict_adult: p1.verdict_adult || null,
-          verdict_kid:   p1.verdict_kid   || null,
-          dimensions: {
-            materials:      { score: mScore,  label: p1.materials?.label      || "", concerns: p1.materials?.concerns      || [] },
-            usage_exposure: { score: uScore,  label: p1.usage_exposure?.label || "", concerns: p1.usage_exposure?.concerns || [], frequency: p1.usage_exposure?.frequency || "unknown", type: p1.usage_exposure?.type || "unknown", intensity: p1.usage_exposure?.intensity || "unknown", vulnerable: p1.usage_exposure?.vulnerable || false },
-            packaging:      { score: pkScore, label: p1.packaging?.label      || "", concerns: p1.packaging?.concerns      || [], primary: p1.packaging?.primary || "unknown", refillable: p1.packaging?.refillable || false, end_of_life: p1.packaging?.end_of_life || "unknown" },
-            sustainability: { score: sScore,  label: p1.sustainability?.label  || "", concerns: p1.sustainability?.concerns  || [], reusable: p1.sustainability?.reusable || false, replaces_single_use: p1.sustainability?.replaces_single_use || false, replaces_count: p1.sustainability?.replaces_count || null, circularity: p1.sustainability?.circularity || "unknown" },
-          },
-          identified_plastics: p1.identified_plastics || [],
-          harmful_chemicals:   p1.harmful_chemicals   || [],
-          natural_materials:   p1.natural_materials   || [],
-          nutrition:           p1.nutrition || p1.product_analysis?.nutrition || null,
-          ingredient_list:     p1.ingredient_list?.length ? p1.ingredient_list : labelArr,
-          product_family:      classifyProductFamily(productName, p1.ingredient_list || labelArr, visionCat),
-          alternatives,
-          ai_alternatives:     [],
-          scan_next:           buildScanNextFallback(productName, visionCat, alternatives),
-          category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
-          tier:                "label_ocr",
-          cached:              false,
-        };
-        const calibrated = applyProductCalibration(result);
-        const imgKey = cacheKey(productName, visionCat);
-        cacheSet(imgKey, calibrated);
-        await attachIntelCards(calibrated, userId);
-        return stream.complete(calibrated);
-      }
-
       if (!cascadeHit && !fromResume) {
         const newId = putIdentification(identification);
         log.info("vision_cascade_miss_confirming", {
