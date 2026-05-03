@@ -1373,6 +1373,58 @@ const PERSONAL_CARE_INGREDIENTS = {
     reasoning: "Cinnamal is one of the strongest individual fragrance allergens in the EU declared list, with sensitization rates documented across major dermatology surveillance networks. The base_hazard_score of 7 (higher than limonene and linalool at 5) reflects the more potent sensitization potential and the established clinical relevance through Fragrance Mix I screening. Cinnamal appears in products with cinnamon, holiday-spice, or warm-fragrance themes, including cinnamon-flavored lip products, holiday body products, and warming massage oils. The pregnancy_score_floor of 7 reflects the precautionary framework appropriate for higher-potency allergens. Cinnamal illustrates that fragrance allergens have meaningful potency hierarchy: not all 80+ declared allergens carry equivalent risk, and cinnamal is among the more concerning ones to encounter at typical use concentrations.",
   },
 
+  octisalate: {
+    inci_name: "Octisalate",
+    aliases: [
+      "octisalate",
+      "ethylhexyl salicylate",
+      "octyl salicylate",
+      "2-ethylhexyl salicylate",
+      "2-ethylhexyl 2-hydroxybenzoate",
+    ],
+    hazard_class: "endocrine_disruptor",
+    base_hazard_score: 6,
+    skin_absorption_modifier: 0.85,
+    pregnancy_concern: true,
+    pregnancy_score_floor: 7,
+    kid_concern: true,
+    kid_score_floor: 7,
+    regulatory_citations: [
+      "Matta et al. 2020 (JAMA 323:256-267): octisalate plasma concentrations reached 5.1 ng/mL in aerosol spray, 5.8 ng/mL in nonaerosol spray, and 4.6 ng/mL in pump spray sunscreen formulations after a single application — over 10 times the FDA 0.5 ng/mL threshold for additional safety data requirement",
+      "FDA Proposed Sunscreen Rule (2019, 21 CFR Part 352): octisalate among 12 chemical UV filters classified as not Generally Recognized as Safe and Effective (not GRASE), pending submission of additional safety data including systemic absorption findings",
+      "EU Cosmetics Regulation 1223/2009 Annex VI: octisalate (ethylhexyl salicylate) permitted as UV filter at maximum 5.0% concentration; under EU regulatory reassessment for endocrine disruption potential",
+      "ECHA REACH classification: octisalate suspected of damaging the unborn child (Reproductive Toxicity Category 2 designation by registering companies); 2020 ECHA decision required fish sexual development test based on potential endocrine disruption signal",
+      "Octisalate metabolism pathway: hydrolyzes in skin and systemic circulation to salicylic acid plus 2-ethylhexanol; the salicylic acid metabolite shares the pregnancy precaution framework that applies to direct salicylic acid use, with chronic high-frequency sunscreen application generating measurable systemic salicylic acid exposure",
+    ],
+    reasoning: "Octisalate is a weak UVB filter rarely used alone; its primary function in sunscreen formulations is as a solubilizer and stabilizer for stronger filters like avobenzone. Despite minimal sun protection contribution, it is one of the most systemically absorbed chemical filters per the Matta JAMA 2020 study, with plasma concentrations 10x the FDA threshold after typical use. The base_hazard_score of 6 reflects the convergence of FDA not-GRASE classification, ECHA suspected reproductive toxicity classification, and the salicylic acid metabolism pathway that connects octisalate exposure to pregnancy precautions. Sits one notch below oxybenzone (8) and matches the homosalate score (6) reflecting comparable regulatory and toxicological concern profiles — appropriate given octisalate is also a salicylate.",
+  },
+
+  dimethicone: {
+    inci_name: "Dimethicone",
+    aliases: [
+      "dimethicone",
+      "polydimethylsiloxane",
+      "pdms",
+      "dimethyl silicone",
+      "linear dimethicone",
+    ],
+    hazard_class: "preservative_concern",
+    base_hazard_score: 3,
+    skin_absorption_modifier: 0.2,
+    pregnancy_concern: false,
+    pregnancy_score_floor: null,
+    kid_concern: false,
+    kid_score_floor: null,
+    regulatory_citations: [
+      "CIR Amended Safety Assessment (2022, Final Report on Methicones): dimethicone concluded safe as used in cosmetic products based on accumulated toxicology data; high molecular weight polymer not systemically absorbed through intact skin",
+      "EU Cosmetics Regulation 1223/2009: dimethicone (linear silicone) not restricted; explicitly permitted under current EU framework even as cyclic silicones D4, D5, D6 face restrictions under EU Regulation 2024/1328",
+      "Distinction from cyclic silicones: dimethicone is a LINEAR silicone polymer chemically distinct from the cyclic silicones (cyclotetrasiloxane D4, cyclopentasiloxane D5, cyclohexasiloxane D6) that EU is restricting due to vPvB (very persistent, very bioaccumulative) classification; conflation between these is a common clean-beauty marketing inaccuracy",
+      "Environmental considerations: while dimethicone has lower environmental persistence than cyclic silicones, broader silicone polymer family does present aquatic accumulation concerns documented in ECHA assessments; EU restrictions to date target cyclic forms specifically",
+      "FDA: dimethicone classified as Generally Recognized as Safe (GRAS) for cosmetic and pharmaceutical applications including over-the-counter skin protectant monograph; widely used in barrier creams, anti-flatulence medications, and infant gas drops",
+    ],
+    reasoning: "Dimethicone has a strong safety profile that contrasts with its frequent vilification in clean-beauty marketing. The base_hazard_score of 3 reflects the regulatory consensus across CIR (safe), EU (unrestricted), and FDA (GRAS) supported by the high molecular weight that prevents systemic absorption. The skin_absorption_modifier of 0.2 captures the well-documented finding that dimethicone sits on skin rather than penetrating, which is what makes it effective as an occlusive moisturizer and barrier ingredient. Dimethicone is functionally similar to petrolatum (also score 4 in this calibration) and serves the same protective barrier role with a slightly cleaner safety profile due to lower contamination concerns. The honest framing: clean-beauty conflation between dimethicone (safe) and cyclic silicones D4/D5/D6 (EU-restricted) is a common but inaccurate marketing pattern; this calibration entry treats dimethicone on its own scientific merits.",
+  },
+
 };
 
 // Alias lookup map, built once at module load for fast matching.

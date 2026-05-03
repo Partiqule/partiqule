@@ -69,9 +69,14 @@ function parseIngredients(input) {
   if (Array.isArray(input)) {
     rawList = input;
   } else if (typeof input === "string") {
-    // Split on commas, semicolons, AND periods (Active/Inactive sections
-    // on US OTC labels are period-separated)
-    rawList = input.split(/[,;.]+/).map((s) => s.trim()).filter(Boolean);
+    // Pre-strip ALL percentages from input before splitting.
+    // This prevents periods inside decimal percentages (2.7%, 7.5%, 4.5%)
+    // from shattering ingredients when we split on period delimiters
+    // separating Active/Inactive sections.
+    const stripped = input.replace(/\d+(\.\d+)?\s*%/g, "");
+    // Now split on commas, semicolons, AND periods (Active/Inactive
+    // sections on US OTC labels are period-separated)
+    rawList = stripped.split(/[,;.]+/).map((s) => s.trim()).filter(Boolean);
   } else {
     return [];
   }
@@ -81,8 +86,6 @@ function parseIngredients(input) {
       .trim();
     // Strip "Active:" / "Inactive:" / "Other ingredients:" headers
     cleaned = cleaned.replace(/^(active|inactive|other\s+ingredients?)\s*(ingredients?)?\s*:\s*/i, "");
-    // Strip trailing percentage like " 22%" or " 5.5%"
-    cleaned = cleaned.replace(/\s*\d+(\.\d+)?\s*%\s*$/, "");
     cleaned = cleaned.trim();
     const matched = lookupIngredient(cleaned);
     return {
