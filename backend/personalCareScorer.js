@@ -243,13 +243,87 @@ function scoreIngredients(parsed, options = {}) {
 }
 
 // ─────────────────────────────────────────────────────────
+// INGREDIENT RECEIPT TABLE
+// ─────────────────────────────────────────────────────────
+// Returns a one-line receipt for a calibration entry, citing the specific
+// regulation or finding that drives the hazard score. Matches Sara's
+// "receipts over claims" voice rule.
+function getIngredientReceipt(entry) {
+  const receipts = {
+    oxybenzone: "Hawaii banned it in sunscreens. EU dropped the cap to 2.2%.",
+    octinoxate: "Banned in Hawaii alongside oxybenzone. EU under review for endocrine concerns.",
+    octocrylene: "Degrades into benzophenone over time. Prop 65 listed.",
+    homosalate: "EU restricted to facial 7.34% effective 2025.",
+    octisalate: "Plasma levels ten times the FDA threshold per the agency's own study.",
+    avobenzone: "Photo-unstable. Usually paired with octocrylene to stabilize.",
+    zinc_oxide: "FDA Category I. The mineral filter regulators trust.",
+    methylparaben: "EU restricted in kid products under three. Endocrine activity documented.",
+    propylparaben: "EU restricted. Stronger endocrine signal than methylparaben.",
+    butylparaben: "EU concentration limit. Listed in California Prop 65 review.",
+    ethylparaben: "Generally lower concern of the parabens, still EU restricted in kid products.",
+    isobutylparaben: "EU restricted concentration. Endocrine disruption documented.",
+    diethyl_phthalate: "Linked to endocrine disruption. Hidden under fragrance disclosures.",
+    dibutyl_phthalate: "EU prohibits in cosmetics. Reproductive toxicant per CLP.",
+    diethylhexyl_phthalate: "Banned in EU cosmetics. Strong endocrine and reproductive concerns.",
+    benzyl_butyl_phthalate: "EU prohibits in cosmetics. Prop 65 listed.",
+    diisobutyl_phthalate: "EU restricted. Reproductive toxicant.",
+    dimethyl_phthalate: "Lower concern of the phthalate family. Still hidden under fragrance.",
+    di_n_hexyl_phthalate: "Reproductive toxicant. EU prohibits in cosmetics.",
+    dmdm_hydantoin: "Releases formaldehyde. EU now requires warning labels.",
+    quaternium_15: "Strongest formaldehyde releaser. EU phase-out 2024-2026.",
+    imidazolidinyl_urea: "Formaldehyde donor. Common contact allergen.",
+    diazolidinyl_urea: "Releases formaldehyde. Banned in EU children's products.",
+    sodium_hydroxymethylglycinate: "Formaldehyde donor marketed as gentler. Same mechanism.",
+    sodium_lauryl_sulfate: "Common irritant. Not the carcinogen the internet claims.",
+    sodium_laureth_sulfate: "Carries 1,4-dioxane contamination from the manufacturing process.",
+    ammonium_lauryl_sulfate: "Same irritation profile as SLS. Same regulatory treatment.",
+    cocamide_dea: "IARC possibly carcinogenic. California Prop 65 listed since 2012.",
+    cocamide_mea: "Lower concern than cocamide DEA. Still forms nitrosamines with certain preservatives.",
+    tea_lauryl_sulfate: "Forms NDELA carcinogen with formaldehyde donors in the same formula.",
+    sodium_coco_sulfate: "Mostly SLS in coconut clothing. The natural marketing hides the chemistry.",
+    phenoxyethanol: "Generally fine at the EU 1% cap. France advises against on diaper area under three.",
+    methylisothiazolinone: "EU banned in leave-on products. Drove a global contact dermatitis epidemic.",
+    methylchloroisothiazolinone: "EU restricts to rinse-off only. Major contact allergen.",
+    triclosan: "FDA banned from consumer soaps in 2016. Still in some toothpaste.",
+    triclocarban: "FDA banned from consumer soaps alongside triclosan. Endocrine disruptor.",
+    benzyl_alcohol: "Generally low concern. EU declared fragrance allergen above threshold.",
+    petrolatum: "Safe at USP grade. Concerning when contamination controls are weak.",
+    mineral_oil: "Same as petrolatum. EU MOAH framework targets the contamination, not the parent.",
+    talc: "IARC reclassified to Group 2A in 2024. J&J pulled the baby powder.",
+    peg: "Carries the same 1,4-dioxane contamination concern as SLES.",
+    propylene_glycol: "Mostly fine. Can sensitize at high concentrations.",
+    retinoids: "EU classified reproductive toxicant 1B. Skip during pregnancy.",
+    retinol: "EU classified reproductive toxicant 1B. Skip during pregnancy.",
+    salicylic_acid: "OK at low concentrations. EU restricted in kid products under three.",
+    hydroquinone: "FDA pulled from OTC in 2020. Prescription only.",
+    benzoyl_peroxide: "Degrades into benzene. FDA recalled six products in March 2025.",
+    azelaic_acid: "ACOG-pregnancy-safe. The rare effective active without major concerns.",
+    fragrance: "Hides anywhere from one to a hundred chemicals. EU now declares 80 individual allergens.",
+    limonene: "Citrus fragrance allergen. Oxidizes into a stronger allergen after opening.",
+    linalool: "Lavender and floral fragrance allergen. Same oxidation story as limonene.",
+    cinnamal: "Strongest of the EU declared fragrance allergens. Cinnamon's primary irritant.",
+  };
+
+  const aliases = (entry.aliases || []).map(a => a.toLowerCase());
+  const inciLower = (entry.inci_name || "").toLowerCase();
+  for (const [k, v] of Object.entries(receipts)) {
+    const kSpaced = k.replace(/_/g, " ");
+    if (aliases.includes(kSpaced) || aliases.includes(k) || inciLower === kSpaced || inciLower === k) {
+      return v;
+    }
+  }
+  return `${(entry.hazard_class || "ingredient").replace(/_/g, " ")} concern documented in regulatory record.`;
+}
+
+// ─────────────────────────────────────────────────────────
 // EXPLANATION BUILDER
 // ─────────────────────────────────────────────────────────
 function buildExplanation(parsed, scoreResult, options = {}) {
   const { kidMode = false, pregnancyMode = false } = options;
   if (!scoreResult || scoreResult.score === null) {
-    return "Not enough recognized ingredients to score this product confidently.";
+    return "Not enough recognized ingredients to score this one. The label might be incomplete.";
   }
+
   const matched = parsed.filter((p) => p.entry !== null);
   const sortedByPosition = [...matched].sort((a, b) => a.position - b.position);
   const dominantConcerns = sortedByPosition
@@ -258,29 +332,45 @@ function buildExplanation(parsed, scoreResult, options = {}) {
 
   const parts = [];
 
-  if (dominantConcerns.length > 0) {
-    const namesAndReasons = dominantConcerns.map((m) => {
-      const entry = m.entry;
-      return `${entry.inci_name} (${entry.hazard_class.replace(/_/g, " ")}, hazard ${entry.base_hazard_score})`;
-    });
-    parts.push(`This product contains ${namesAndReasons.join(", ")} from the calibration database.`);
-  } else if (matched.length > 0) {
-    parts.push(`This product contains ${matched.length} ingredient${matched.length === 1 ? "" : "s"} from the calibration database, all at lower hazard levels.`);
+  if (dominantConcerns.length === 0 && matched.length > 0) {
+    parts.push(`${matched.length} ingredient${matched.length === 1 ? "" : "s"} flagged. All lower concern. Nothing the label is hiding.`);
+  } else if (dominantConcerns.length === 1) {
+    const c = dominantConcerns[0];
+    parts.push(`One ingredient flagged: ${c.entry.inci_name}. ${getIngredientReceipt(c.entry)}`);
+  } else if (dominantConcerns.length === 2) {
+    const [a, b] = dominantConcerns;
+    parts.push(`Two ingredients worth knowing. ${a.entry.inci_name}. ${getIngredientReceipt(a.entry)} ${b.entry.inci_name}. ${getIngredientReceipt(b.entry)}`);
+  } else if (dominantConcerns.length >= 3) {
+    const [a, b, c] = dominantConcerns;
+    parts.push(`Three ingredients worth knowing. ${a.entry.inci_name}. ${getIngredientReceipt(a.entry)} ${b.entry.inci_name}. ${getIngredientReceipt(b.entry)} ${c.entry.inci_name}. ${getIngredientReceipt(c.entry)}`);
   }
 
   if (scoreResult.floor_triggered_by) {
     const f = scoreResult.floor_triggered_by;
-    parts.push(`The ${f.mode} mode score floor of ${f.floor} is set by ${f.ingredient}.`);
-  }
+    const dominantReceipts = dominantConcerns.map(c => getIngredientReceipt(c.entry).toLowerCase()).join(" ");
 
-  if (scoreResult.breakdown.is_leave_on) {
-    parts.push("As a leave-on product, ingredients have sustained skin contact, amplifying exposure.");
-  } else {
-    parts.push("As a rinse-off product, contact duration is brief.");
+    if (f.mode === "kid") {
+      if (!dominantReceipts.includes("kid product") && !dominantReceipts.includes("under three")) {
+        parts.push(`Kid mode floors the score at ${f.floor} on ${f.ingredient}.`);
+      }
+    } else if (f.mode === "pregnancy") {
+      if (!dominantReceipts.includes("skip during pregnancy") && !dominantReceipts.includes("pregnancy contraindication")) {
+        parts.push(`Pregnancy contraindication on ${f.ingredient}. Skip during pregnancy and breastfeeding.`);
+      }
+    }
   }
 
   if (scoreResult.matched_count < 3 && parsed.length > 10) {
-    parts.push(`Only ${scoreResult.matched_count} of ${parsed.length} ingredients matched the calibration database; remaining ingredients are presumed lower-concern fillers.`);
+    parts.push(`${scoreResult.matched_count} of ${parsed.length} ingredients in the calibration table. The rest are presumed lower concern.`);
+  }
+
+  const swapPointerFires = scoreResult.score >= 6 && scoreResult.breakdown.is_leave_on;
+  if (swapPointerFires) {
+    parts.push("Cleaner swaps exist. Same shelf, very different score.");
+  } else if (scoreResult.breakdown.is_leave_on && scoreResult.breakdown.has_high_concern_match) {
+    parts.push("Leave-on product means sustained skin contact.");
+  } else if (!scoreResult.breakdown.is_leave_on && scoreResult.breakdown.has_high_concern_match) {
+    parts.push("Rinse-off limits contact time, but the formulation still carries these.");
   }
 
   return parts.join(" ");
@@ -290,12 +380,13 @@ function buildExplanation(parsed, scoreResult, options = {}) {
 // SHORT VERDICT
 // ─────────────────────────────────────────────────────────
 function buildShortVerdict(parsed, scoreResult) {
-  if (!scoreResult || scoreResult.score === null) return "Insufficient ingredient data";
+  if (!scoreResult || scoreResult.score === null) return "Label too incomplete to score";
   const score = scoreResult.score;
-  if (score <= 3) return "Clean ingredient profile";
-  if (score <= 5) return "Mostly clean with minor concerns";
-  if (score <= 7) return "Multiple concerning ingredients";
-  return "Significant ingredient concerns";
+  if (score <= 2) return "Clean profile. Worth keeping.";
+  if (score <= 4) return "Mostly clean. Worth a look.";
+  if (score <= 6) return "Mixed. Cleaner swaps exist.";
+  if (score <= 8) return "Multiple concerns. Worth swapping.";
+  return "Significant concerns. Skip if you can.";
 }
 
 // ─────────────────────────────────────────────────────────
