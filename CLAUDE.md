@@ -332,6 +332,9 @@ Brands reformulate. Verify ingredients against current package/manufacturer/rece
   # confirm: no red errors in console, app renders past first paint
   ```
   Bug class that motivated this rule: streamStage useEffect placed before its useState declaration in App.jsx — TDZ took down production with a "Cannot access 'Mt' before initialization" error that vite build, curl, and the regression test suite all passed. Only a real browser load would have caught it.
+- **One feature per Claude Code session. Surgical patches only — never full-file overwrites mid-session.** If a session sprawls into a second feature, end the session and start a fresh one.
+- **Verify before drafting.** For any work involving regulatory citations, scientific claims, or external facts (calibration entries, ingredient hazard data, regulatory references in product reasoning), each citation must be confirmed via web_search before being written to a file. Memory-based citations have produced errors three times and the verification step catches them before commit.
+- **Embed JavaScript directly in Claude Code prompts** when adding calibration entries, scorer logic, or other code blocks. Avoid the dual-copy pattern of drafting in chat then pasting separately into a Claude Code prompt — embed the code in the prompt itself so the source of truth lives in one place and the apply step is verifiable.
 
 ---
 
