@@ -21,6 +21,13 @@ const {
 } = require("./scoringCascade");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
+  parseIngredients: parsePersonalCareIngredients,
+  scoreIngredients: scorePersonalCareIngredients,
+  buildExplanation: buildPersonalCareExplanation,
+  buildShortVerdict: buildPersonalCareVerdict,
+  EXPOSURE_PROFILES: PERSONAL_CARE_EXPOSURE_PROFILES,
+} = require("./personalCareScorer");
+const {
   detectCategoryFast,
   classifyCategory,
 } = require("./categoryClassifier");
@@ -573,6 +580,29 @@ function fuzzyCalibrationLookup(productName, visionCategoryHint = null) {
   }
 
   return null;
+}
+
+// Derives EXPOSURE_PROFILES key from product name + category for personal care.
+// EXPOSURE_PROFILES keys: lotion, face_cream, serum, sunscreen, deodorant,
+// lip_product, makeup, shampoo, conditioner, body_wash, face_cleanser,
+// toothpaste, hand_soap, unknown.
+function derivePersonalCareSubtype(productName, visionCat) {
+  if (visionCat !== "personal_care") return "unknown";
+  const name = (productName || "").toLowerCase();
+  if (/\bsunscreen|spf|sun\s*lotion|sunblock\b/.test(name)) return "sunscreen";
+  if (/\btoothpaste|tooth\s*paste\b/.test(name)) return "toothpaste";
+  if (/\bdeodorant|antiperspirant\b/.test(name)) return "deodorant";
+  if (/\blip\s*(balm|stick|gloss)|chapstick\b/.test(name)) return "lip_product";
+  if (/\bshampoo\b/.test(name)) return "shampoo";
+  if (/\bconditioner\b/.test(name)) return "conditioner";
+  if (/\bface\s*(wash|cleanser)|facial\s*cleanser\b/.test(name)) return "face_cleanser";
+  if (/\bbody\s*wash|shower\s*gel\b/.test(name)) return "body_wash";
+  if (/\bhand\s*soap|hand\s*wash\b/.test(name)) return "hand_soap";
+  if (/\bserum|treatment\s*oil\b/.test(name)) return "serum";
+  if (/\bface\s*cream|moisturizer|moisturiser|night\s*cream|day\s*cream\b/.test(name)) return "face_cream";
+  if (/\b(foundation|concealer|mascara|eyeliner|lipstick|blush|bronzer|highlighter)\b/.test(name)) return "makeup";
+  if (/\blotion|body\s*butter|body\s*cream\b/.test(name)) return "lotion";
+  return "unknown";
 }
 
 function cleanProductName(name) {
@@ -6105,6 +6135,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const TEXTILE_CATEGORIES_FAST = new Set([
         "clothing", "shoes", "accessory", "home_furnishing", "baby"
       ]);
+      const PERSONAL_CARE_CATEGORIES_FAST = new Set(["personal_care"]);
+      const PERSONAL_CARE_CATEGORIES_CASCADE = new Set(["personal_care"]);
+      const PERSONAL_CARE_CONFIRM_CATEGORIES = new Set(["personal_care"]);
       const isTextileCategory = TEXTILE_CATEGORIES_FAST.has(visionCat);
       const labelArrFast = identification.label_ingredients || [];
       const labelHasFiberPctFast = labelArrFast.length > 0 &&
@@ -6217,6 +6250,135 @@ app.post("/analyze", rateLimit, async (req, res) => {
             cacheSet(fastKey, calibrated);
             await attachIntelCards(calibrated, userId);
             return stream.complete(calibrated);
+          }
+        }
+      }
+
+      // ───────────────────────────────────────────────────────────
+      // PERSONAL CARE MODE B FAST PATH (label OCR-driven)
+      // ───────────────────────────────────────────────────────────
+      // Gates: personal_care category + parseable INCI list with ≥3 items
+      // + ≥1 calibration match + scorer confidence high or medium.
+      // Falls through to AI cascade when any gate fails.
+      if (PERSONAL_CARE_CATEGORIES_FAST.has(visionCat)) {
+        const labelArrPC = identification.label_ingredients || [];
+        const labelLegiblePC = labelArrPC.length > 0 &&
+          identification.label_legibility !== "unreadable" &&
+          identification.label_legibility !== null;
+
+        if (labelLegiblePC) {
+          const joinedLabel = labelArrPC.join(", ");
+          const parsedPC = parsePersonalCareIngredients(joinedLabel);
+          const matchedPCCount = parsedPC.filter(p => p.entry !== null).length;
+
+          if (parsedPC.length >= 3 && matchedPCCount >= 1) {
+            const kidModePC = (req.body && req.body.kidMode === true) ||
+              (identification && identification.is_child_product === true);
+            const pregnancyModePC = !!(req.body && req.body.pregnancyMode === true);
+            const subtypePC = derivePersonalCareSubtype(productName, visionCat);
+
+            const pcResult = scorePersonalCareIngredients(parsedPC, {
+              kidMode: kidModePC,
+              pregnancyMode: pregnancyModePC,
+              productCategory: subtypePC,
+            });
+
+            if (pcResult.confidence === "high" || pcResult.confidence === "medium") {
+              const explanationPC = buildPersonalCareExplanation(parsedPC, pcResult, {
+                kidMode: kidModePC,
+                pregnancyMode: pregnancyModePC,
+              });
+              const shortVerdictPC = buildPersonalCareVerdict(parsedPC, pcResult);
+              const finalScorePC = pcResult.score;
+              const safetyPC = computeSafetyScores(finalScorePC, visionCat, productName, {}, [], joinedLabel);
+              const peerComparisonPC = finalScorePC <= 2 ? "Safe, no significant chemical or ingredient concerns"
+                : finalScorePC <= 4 ? "Good, mostly clean, use with awareness"
+                : finalScorePC <= 6 ? "Caution, real concerns, reduce use or find an alternative"
+                : finalScorePC <= 8 ? "Switch, real concerns, time to swap"
+                : "Avoid, known harmful substances";
+              const altsListPC = serializeAlternatives(
+                filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScorePC),
+                visionCat,
+              );
+
+              log.info("personal_care_fast_path", {
+                product_name: productName,
+                brand: identification.brand,
+                category: visionCat,
+                subtype: subtypePC,
+                score: finalScorePC,
+                precise_score: pcResult.precise_score,
+                matched_count: pcResult.matched_count,
+                total_ingredients: pcResult.total_ingredients,
+                confidence: pcResult.confidence,
+                kid_mode: kidModePC,
+                pregnancy_mode: pregnancyModePC,
+                floor_triggered_by: pcResult.floor_triggered_by,
+              });
+
+              const result = {
+                product_name:       productName,
+                brand:              identification.brand || "",
+                score:              finalScorePC,
+                overall_score:      finalScorePC,
+                precise_score:      pcResult.precise_score,
+                category:           visionCat,
+                confidence:         pcResult.confidence,
+                is_child_product:   safetyPC.isChild,
+                child_score:        safetyPC.childScore,
+                child_bumps:        safetyPC.childBumps || [],
+                pregnancy_score:    safetyPC.pregnancyScore,
+                pregnancy_bumps:    safetyPC.pregnancyBumps || [],
+                flagged_substances: [],
+                concerns:           [],
+                raw_concerns:       [],
+                summary:            shortVerdictPC,
+                summary_short:      shortVerdictPC,
+                summary_long:       explanationPC,
+                peer_comparison:    peerComparisonPC,
+                ingredient_source:        "label_ocr",
+                ingredient_confidence:    pcResult.confidence,
+                ingredient_verified_at:   new Date().toISOString(),
+                ingredient_source_url:    null,
+                source: "label_ocr",
+                source_label: "Read directly from the ingredient label",
+                source_confidence: pcResult.confidence,
+                verdict_adult: null,
+                verdict_kid:   null,
+                dimensions: {
+                  ingredient_hazard: { score: pcResult.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
+                  skin_absorption:   { score: pcResult.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
+                  use_frequency:     { score: pcResult.use_frequency_score,     label: "Use Frequency",     concerns: [] },
+                },
+                dimension_layout: [
+                  { key: "ingredient_hazard", label: "Ingredient Hazard", weight: 40 },
+                  { key: "skin_absorption",   label: "Skin Absorption",   weight: 30 },
+                  { key: "use_frequency",     label: "Use Frequency",     weight: 30 },
+                ],
+                identified_plastics: [],
+                harmful_chemicals:   [],
+                natural_materials:   [],
+                nutrition:           null,
+                ingredient_list:     labelArrPC,
+                product_family:      classifyProductFamily(productName, labelArrPC, visionCat),
+                alternatives:        altsListPC,
+                ai_alternatives:     [],
+                scan_next:           buildScanNextFallback(productName, visionCat, altsListPC),
+                category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+                tier:                "personal_care_scorer",
+                personal_care_breakdown:           pcResult.breakdown,
+                personal_care_matched:             pcResult.matched_ingredients,
+                personal_care_floor_triggered_by:  pcResult.floor_triggered_by,
+                kid_mode:           kidModePC,
+                pregnancy_mode:     pregnancyModePC,
+                partial_read:       false,
+                cached:             false,
+              };
+              const calibratedPC = applyProductCalibration(result);
+              cacheSet(cacheKey(productName, visionCat), calibratedPC);
+              await attachIntelCards(calibratedPC, userId);
+              return stream.complete(calibratedPC);
+            }
           }
         }
       }
@@ -6399,7 +6561,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const TEXTILE_CONFIRM_CATEGORIES = new Set([
         "clothing", "baby"
       ]);
-      if (!cascadeHit && !fromResume && !TEXTILE_CONFIRM_CATEGORIES.has(visionCat)) {
+      if (!cascadeHit && !fromResume && !TEXTILE_CONFIRM_CATEGORIES.has(visionCat) && !PERSONAL_CARE_CONFIRM_CATEGORIES.has(visionCat)) {
         const newId = putIdentification(identification);
         log.info("vision_cascade_miss_confirming", {
           product_name: productName,
@@ -6449,6 +6611,44 @@ app.post("/analyze", rateLimit, async (req, res) => {
           },
           confirmation_kind: "textile_cascade_miss",
           message: `I see this looks like ${editableName}. Does that match what's on the tag?`,
+          actions: ["confirm", "edit"],
+          edit_hint: "Edit the brand and product name, then we will look it up again.",
+        });
+      }
+
+      // ───────────────────────────────────────────────────────────
+      // PERSONAL CARE CASCADE-MISS CONFIRMATION
+      // ───────────────────────────────────────────────────────────
+      // When category is personal_care and cascade returned no usable hit,
+      // surface editable confirmation card instead of forcing a low-quality
+      // estimated score.
+      if (
+        PERSONAL_CARE_CONFIRM_CATEGORIES.has(visionCat) &&
+        !fromResume &&
+        (!cascadeHit || !cascadeHit.ingredients)
+      ) {
+        const editableNamePC = identification.brand
+          ? `${identification.brand} ${productName}`.trim()
+          : productName.trim();
+        const newIdPC = putIdentification(identification);
+        log.info("personal_care_cascade_miss_confirming", {
+          product_name: productName,
+          brand: identification.brand,
+          category: visionCat,
+          editable_name: editableNamePC,
+        });
+        return stream.complete({
+          status: "needs_confirmation",
+          identificationId: newIdPC,
+          identified: {
+            product_name: productName,
+            brand: identification.brand,
+            variant: identification.variant,
+            confidence: identification.confidence,
+            editable_name: editableNamePC,
+          },
+          confirmation_kind: "personal_care_cascade_miss",
+          message: `I see this looks like ${editableNamePC}. Does that match the bottle?`,
           actions: ["confirm", "edit"],
           edit_hint: "Edit the brand and product name, then we will look it up again.",
         });
@@ -6608,6 +6808,136 @@ app.post("/analyze", rateLimit, async (req, res) => {
             cacheSet(cascadeKey, calibratedC);
             await attachIntelCards(calibratedC, userId);
             return stream.complete(calibratedC);
+          }
+        }
+      }
+
+      // ───────────────────────────────────────────────────────────
+      // PERSONAL CARE MODE A CASCADE FAST PATH (post-Tier 4)
+      // ───────────────────────────────────────────────────────────
+      // After Tier 3/4 cascade hit returns ingredient data, route through
+      // scorer if category matches and ingredients parse with ≥1 match.
+      if (cascadeHit && PERSONAL_CARE_CATEGORIES_CASCADE.has(visionCat) && cascadeHit.ingredients) {
+        const cascadeIngredientStr = Array.isArray(cascadeHit.ingredients)
+          ? cascadeHit.ingredients.join(", ")
+          : cascadeHit.ingredients;
+        const parsedCascadePC = parsePersonalCareIngredients(cascadeIngredientStr);
+        const matchedCascadeCount = parsedCascadePC.filter(p => p.entry !== null).length;
+
+        if (parsedCascadePC.length >= 3 && matchedCascadeCount >= 1) {
+          const kidModeCPC = (req.body && req.body.kidMode === true) ||
+            (identification && identification.is_child_product === true);
+          const pregnancyModeCPC = !!(req.body && req.body.pregnancyMode === true);
+          const subtypeCPC = derivePersonalCareSubtype(productName, visionCat);
+          const pcGenericRegex = /^[a-z\s]*\b(shampoo|conditioner|lotion|moisturizer|moisturiser|sunscreen|deodorant|toothpaste|soap|cleanser|serum|cream|wash|gel)\b[a-z\s]*$/i;
+          const isGenericQueryPC = pcGenericRegex.test(productName.trim()) &&
+            productName.trim().split(/\s+/).length <= 3;
+
+          const pcResultC = scorePersonalCareIngredients(parsedCascadePC, {
+            kidMode: kidModeCPC,
+            pregnancyMode: pregnancyModeCPC,
+            productCategory: subtypeCPC,
+          });
+
+          if (pcResultC.confidence === "high" || pcResultC.confidence === "medium") {
+            const finalConfidencePC = isGenericQueryPC ? "estimated" : pcResultC.confidence;
+            const explanationCPC = buildPersonalCareExplanation(parsedCascadePC, pcResultC, {
+              kidMode: kidModeCPC,
+              pregnancyMode: pregnancyModeCPC,
+            });
+            const shortVerdictCPC = buildPersonalCareVerdict(parsedCascadePC, pcResultC);
+            const finalScoreCPC = pcResultC.score;
+            const safetyCPC = computeSafetyScores(finalScoreCPC, visionCat, productName, {}, [], cascadeIngredientStr);
+            const peerComparisonCPC = finalScoreCPC <= 2 ? "Safe, no significant chemical or ingredient concerns"
+              : finalScoreCPC <= 4 ? "Good, mostly clean, use with awareness"
+              : finalScoreCPC <= 6 ? "Caution, real concerns, reduce use or find an alternative"
+              : finalScoreCPC <= 8 ? "Switch, real concerns, time to swap"
+              : "Avoid, known harmful substances";
+            const altsListCPC = serializeAlternatives(
+              filterDbAlternatives(findAlternatives(productName, visionCat, 5, productName), visionCat, productName, finalScoreCPC),
+              visionCat,
+            );
+            const sourceLabelCPC = isGenericQueryPC
+              ? "Estimated from product type. Scan the ingredient label for a verified score."
+              : (cascadeHit.sourceLabel || (cascadeHit.brand ? `From ${cascadeHit.brand}` : "From web search"));
+
+            log.info("personal_care_cascade_path", {
+              product_name: productName,
+              brand: identification.brand,
+              category: visionCat,
+              subtype: subtypeCPC,
+              score: finalScoreCPC,
+              precise_score: pcResultC.precise_score,
+              matched_count: pcResultC.matched_count,
+              total_ingredients: pcResultC.total_ingredients,
+              confidence: pcResultC.confidence,
+              cascade_tier: cascadeHit.tier,
+              cascade_source: cascadeHit.sourceLabel || cascadeHit.source,
+              generic_query: isGenericQueryPC,
+            });
+
+            const resultCPC = {
+              product_name:       productName,
+              brand:              identification.brand || cascadeHit.brand || "",
+              score:              finalScoreCPC,
+              overall_score:      finalScoreCPC,
+              precise_score:      pcResultC.precise_score,
+              category:           visionCat,
+              confidence:         finalConfidencePC,
+              is_child_product:   safetyCPC.isChild,
+              child_score:        safetyCPC.childScore,
+              child_bumps:        safetyCPC.childBumps || [],
+              pregnancy_score:    safetyCPC.pregnancyScore,
+              pregnancy_bumps:    safetyCPC.pregnancyBumps || [],
+              flagged_substances: [],
+              concerns:           [],
+              raw_concerns:       [],
+              summary:            shortVerdictCPC,
+              summary_short:      shortVerdictCPC,
+              summary_long:       explanationCPC,
+              peer_comparison:    peerComparisonCPC,
+              ingredient_source:        cascadeHit.source || cascadeHit.tier,
+              ingredient_confidence:    finalConfidencePC,
+              ingredient_verified_at:   new Date().toISOString(),
+              ingredient_source_url:    cascadeHit.sourceUrl || null,
+              source: cascadeHit.source || cascadeHit.tier,
+              source_label: sourceLabelCPC,
+              source_confidence: finalConfidencePC,
+              verdict_adult: null,
+              verdict_kid:   null,
+              dimensions: {
+                ingredient_hazard: { score: pcResultC.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
+                skin_absorption:   { score: pcResultC.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
+                use_frequency:     { score: pcResultC.use_frequency_score,     label: "Use Frequency",     concerns: [] },
+              },
+              dimension_layout: [
+                { key: "ingredient_hazard", label: "Ingredient Hazard", weight: 40 },
+                { key: "skin_absorption",   label: "Skin Absorption",   weight: 30 },
+                { key: "use_frequency",     label: "Use Frequency",     weight: 30 },
+              ],
+              identified_plastics: [],
+              harmful_chemicals:   [],
+              natural_materials:   [],
+              nutrition:           null,
+              ingredient_list:     Array.isArray(cascadeHit.ingredients) ? cascadeHit.ingredients : [cascadeIngredientStr],
+              product_family:      classifyProductFamily(productName, [cascadeIngredientStr], visionCat),
+              alternatives:        altsListCPC,
+              ai_alternatives:     [],
+              scan_next:           buildScanNextFallback(productName, visionCat, altsListCPC),
+              category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
+              tier:                "personal_care_cascade",
+              personal_care_breakdown:           pcResultC.breakdown,
+              personal_care_matched:             pcResultC.matched_ingredients,
+              personal_care_floor_triggered_by:  pcResultC.floor_triggered_by,
+              kid_mode:           kidModeCPC,
+              pregnancy_mode:     pregnancyModeCPC,
+              partial_read:       false,
+              cached:             false,
+            };
+            const calibratedCPC = applyProductCalibration(resultCPC);
+            cacheSet(cacheKey(productName, visionCat), calibratedCPC);
+            await attachIntelCards(calibratedCPC, userId);
+            return stream.complete(calibratedCPC);
           }
         }
       }
