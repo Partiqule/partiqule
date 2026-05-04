@@ -254,7 +254,13 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 - **`/barcode` does not route clothing through textile scorer.** Hangtag UPCs (when they resolve at all — UPCitemDB rejects most apparel "in-store use" 19xxx codes as INVALID_UPC) currently fall through to Pass 1 with empty ingredients. Routing should detect clothing category from OFF/external response and either short-circuit to Mode A with the resolved name or seed a calibration entry; today it does neither.
 - **Calibration short-circuit precision.** `barcode_index` and `barcode_external` short-circuits use the resolved name + fuzzy calibration. The fuzzy lookup is now category-gated, but exact-match calibration on a generic resolved name (e.g. "Nike Athletic Shorts") still claims any size/colorway of that style with the same score. Acceptable for narrowly-named entries; risky for brand-prefix entries.
 - **Whole-food detector accepts bare digit strings.** `/analyze` with `query="199012607584"` (a bare UPC string) routes through `detectWholeFood` and returns "Whole white fish" boilerplate. The detector should reject pure-numeric inputs before consulting the whole-food pattern table.
-- **PENDING: Fuzzy calibration path bypasses personalCareScorer for text-searched personal care products.** Banana Boat via text search returns score 6 with `child_score` null and `pregnancy_score` 10. The two scoring paths produce inconsistent kid/pregnancy behavior (Mode B label-OCR and Mode A cascade now triple-compute via personalCareScorer; fuzzy_cal_hit short-circuits before either runs). Diagnose in a separate session. Likely fix: either populate `kid_score_floor`/`pregnancy_score_floor` on fuzzy calibration entries, or route fuzzy_cal_hit results through personalCareScorer when category is personal_care.
+- **PENDING: Fuzzy calibration path returns `child_score: null` across all categories for products without an explicit `kidsFloor` on their calibration entry.** Confirmed via 10-product test on 2026-05-04: Banana Boat (personal_care), Skittles (food), Tide Evo (home), Maraschino Cherries (food, calibration entry missing entirely) all return adult score correctly but null `child_score`. Lucky Charms (food, has `kidsFloor`) is the only product on the test list with a working kid delta. `pregnancy_score` works correctly across categories.
+
+  Two architectural fix options:
+  (a) Populate `kidsFloor` on every fuzzy calibration entry. Data work, no code changes, but requires retroactive entry update.
+  (b) Route `fuzzy_cal_hit` results through category-specific deterministic scorers (`personalCareScorer`, plus equivalents for food/home/textile) that compute kid scores from ingredient calibration data. Code work, but architecturally cleaner and self-maintaining as calibration entries are added.
+
+  Diagnose in a separate session. Half-day scope minimum.
 
 ---
 
