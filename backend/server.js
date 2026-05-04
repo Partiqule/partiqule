@@ -6272,25 +6272,54 @@ app.post("/analyze", rateLimit, async (req, res) => {
           const matchedPCCount = parsedPC.filter(p => p.entry !== null).length;
 
           if (parsedPC.length >= 3 && matchedPCCount >= 1) {
-            const kidModePC = (req.body && req.body.kidMode === true) ||
-              (identification && identification.is_child_product === true);
-            const pregnancyModePC = !!(req.body && req.body.pregnancyMode === true);
             const subtypePC = derivePersonalCareSubtype(productName, visionCat);
 
-            const pcResult = scorePersonalCareIngredients(parsedPC, {
-              kidMode: kidModePC,
-              pregnancyMode: pregnancyModePC,
+            // Triple-score: adult baseline drives result.score, kid + pregnancy
+            // variants drive result.child_score / result.pregnancy_score so the
+            // frontend display-swap toggle picks a precomputed value without
+            // requiring a rescan. computeSafetyScores is intentionally skipped
+            // for personal_care — its regex-based bumps would double-apply on
+            // top of the scorer's calibration-table mode floors.
+            const pcResultAdult = scorePersonalCareIngredients(parsedPC, {
+              kidMode: false,
+              pregnancyMode: false,
+              productCategory: subtypePC,
+            });
+            const pcResultKid = scorePersonalCareIngredients(parsedPC, {
+              kidMode: true,
+              pregnancyMode: false,
+              productCategory: subtypePC,
+            });
+            const pcResultPregnancy = scorePersonalCareIngredients(parsedPC, {
+              kidMode: false,
+              pregnancyMode: true,
               productCategory: subtypePC,
             });
 
-            if (pcResult.confidence === "high" || pcResult.confidence === "medium") {
-              const explanationPC = buildPersonalCareExplanation(parsedPC, pcResult, {
-                kidMode: kidModePC,
-                pregnancyMode: pregnancyModePC,
+            if (pcResultAdult.confidence === "high" || pcResultAdult.confidence === "medium") {
+              const childBumpsPC = pcResultKid.floor_triggered_by
+                ? [{
+                    ingredient: pcResultKid.floor_triggered_by.ingredient,
+                    mode: "kid",
+                    floor: pcResultKid.floor_triggered_by.floor,
+                    reason: `${pcResultKid.floor_triggered_by.ingredient} floors the kid score at ${pcResultKid.floor_triggered_by.floor}.`,
+                  }]
+                : [];
+              const pregnancyBumpsPC = pcResultPregnancy.floor_triggered_by
+                ? [{
+                    ingredient: pcResultPregnancy.floor_triggered_by.ingredient,
+                    mode: "pregnancy",
+                    floor: pcResultPregnancy.floor_triggered_by.floor,
+                    reason: `${pcResultPregnancy.floor_triggered_by.ingredient} floors the pregnancy score at ${pcResultPregnancy.floor_triggered_by.floor}.`,
+                  }]
+                : [];
+              const isChildProductPC = detectChildProduct(productName, visionCat);
+              const explanationPC = buildPersonalCareExplanation(parsedPC, pcResultAdult, {
+                kidMode: false,
+                pregnancyMode: false,
               });
-              const shortVerdictPC = buildPersonalCareVerdict(parsedPC, pcResult);
-              const finalScorePC = pcResult.score;
-              const safetyPC = computeSafetyScores(finalScorePC, visionCat, productName, {}, [], joinedLabel);
+              const shortVerdictPC = buildPersonalCareVerdict(parsedPC, pcResultAdult);
+              const finalScorePC = pcResultAdult.score;
               const peerComparisonPC = finalScorePC <= 2 ? "Safe, no significant chemical or ingredient concerns"
                 : finalScorePC <= 4 ? "Good, mostly clean, use with awareness"
                 : finalScorePC <= 6 ? "Caution, real concerns, reduce use or find an alternative"
@@ -6307,28 +6336,29 @@ app.post("/analyze", rateLimit, async (req, res) => {
                 category: visionCat,
                 subtype: subtypePC,
                 score: finalScorePC,
-                precise_score: pcResult.precise_score,
-                matched_count: pcResult.matched_count,
-                total_ingredients: pcResult.total_ingredients,
-                confidence: pcResult.confidence,
-                kid_mode: kidModePC,
-                pregnancy_mode: pregnancyModePC,
-                floor_triggered_by: pcResult.floor_triggered_by,
+                precise_score: pcResultAdult.precise_score,
+                matched_count: pcResultAdult.matched_count,
+                total_ingredients: pcResultAdult.total_ingredients,
+                confidence: pcResultAdult.confidence,
+                child_score: pcResultKid.score,
+                pregnancy_score: pcResultPregnancy.score,
+                kid_floor_triggered_by: pcResultKid.floor_triggered_by,
+                pregnancy_floor_triggered_by: pcResultPregnancy.floor_triggered_by,
               });
 
               const result = {
                 product_name:       productName,
                 brand:              identification.brand || "",
-                score:              finalScorePC,
-                overall_score:      finalScorePC,
-                precise_score:      pcResult.precise_score,
+                score:              pcResultAdult.score,
+                overall_score:      pcResultAdult.score,
+                precise_score:      pcResultAdult.precise_score,
                 category:           visionCat,
-                confidence:         pcResult.confidence,
-                is_child_product:   safetyPC.isChild,
-                child_score:        safetyPC.childScore,
-                child_bumps:        safetyPC.childBumps || [],
-                pregnancy_score:    safetyPC.pregnancyScore,
-                pregnancy_bumps:    safetyPC.pregnancyBumps || [],
+                confidence:         pcResultAdult.confidence,
+                is_child_product:   isChildProductPC,
+                child_score:        pcResultKid.score,
+                child_bumps:        childBumpsPC,
+                pregnancy_score:    pcResultPregnancy.score,
+                pregnancy_bumps:    pregnancyBumpsPC,
                 flagged_substances: [],
                 concerns:           [],
                 raw_concerns:       [],
@@ -6337,18 +6367,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
                 summary_long:       explanationPC,
                 peer_comparison:    peerComparisonPC,
                 ingredient_source:        "label_ocr",
-                ingredient_confidence:    pcResult.confidence,
+                ingredient_confidence:    pcResultAdult.confidence,
                 ingredient_verified_at:   new Date().toISOString(),
                 ingredient_source_url:    null,
                 source: "label_ocr",
                 source_label: "Read directly from the ingredient label",
-                source_confidence: pcResult.confidence,
+                source_confidence: pcResultAdult.confidence,
                 verdict_adult: null,
                 verdict_kid:   null,
                 dimensions: {
-                  ingredient_hazard: { score: pcResult.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
-                  skin_absorption:   { score: pcResult.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
-                  use_frequency:     { score: pcResult.use_frequency_score,     label: "Use Frequency",     concerns: [] },
+                  ingredient_hazard: { score: pcResultAdult.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
+                  skin_absorption:   { score: pcResultAdult.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
+                  use_frequency:     { score: pcResultAdult.use_frequency_score,     label: "Use Frequency",     concerns: [] },
                 },
                 dimension_layout: [
                   { key: "ingredient_hazard", label: "Ingredient Hazard", weight: 40 },
@@ -6366,11 +6396,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
                 scan_next:           buildScanNextFallback(productName, visionCat, altsListPC),
                 category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
                 tier:                "personal_care_scorer",
-                personal_care_breakdown:           pcResult.breakdown,
-                personal_care_matched:             pcResult.matched_ingredients,
-                personal_care_floor_triggered_by:  pcResult.floor_triggered_by,
-                kid_mode:           kidModePC,
-                pregnancy_mode:     pregnancyModePC,
+                personal_care_breakdown:           pcResultAdult.breakdown,
+                personal_care_matched:             pcResultAdult.matched_ingredients,
+                personal_care_floor_triggered_by:  pcResultAdult.floor_triggered_by,
                 partial_read:       false,
                 cached:             false,
               };
@@ -6825,29 +6853,55 @@ app.post("/analyze", rateLimit, async (req, res) => {
         const matchedCascadeCount = parsedCascadePC.filter(p => p.entry !== null).length;
 
         if (parsedCascadePC.length >= 3 && matchedCascadeCount >= 1) {
-          const kidModeCPC = (req.body && req.body.kidMode === true) ||
-            (identification && identification.is_child_product === true);
-          const pregnancyModeCPC = !!(req.body && req.body.pregnancyMode === true);
           const subtypeCPC = derivePersonalCareSubtype(productName, visionCat);
           const pcGenericRegex = /^[a-z\s]*\b(shampoo|conditioner|lotion|moisturizer|moisturiser|sunscreen|deodorant|toothpaste|soap|cleanser|serum|cream|wash|gel)\b[a-z\s]*$/i;
           const isGenericQueryPC = pcGenericRegex.test(productName.trim()) &&
             productName.trim().split(/\s+/).length <= 3;
 
-          const pcResultC = scorePersonalCareIngredients(parsedCascadePC, {
-            kidMode: kidModeCPC,
-            pregnancyMode: pregnancyModeCPC,
+          // Triple-score: same display-swap pattern as Mode B fast path.
+          // computeSafetyScores skipped to avoid double-bumping the
+          // calibration-table mode floors the scorer already applied.
+          const pcResultCAdult = scorePersonalCareIngredients(parsedCascadePC, {
+            kidMode: false,
+            pregnancyMode: false,
+            productCategory: subtypeCPC,
+          });
+          const pcResultCKid = scorePersonalCareIngredients(parsedCascadePC, {
+            kidMode: true,
+            pregnancyMode: false,
+            productCategory: subtypeCPC,
+          });
+          const pcResultCPregnancy = scorePersonalCareIngredients(parsedCascadePC, {
+            kidMode: false,
+            pregnancyMode: true,
             productCategory: subtypeCPC,
           });
 
-          if (pcResultC.confidence === "high" || pcResultC.confidence === "medium") {
-            const finalConfidencePC = isGenericQueryPC ? "estimated" : pcResultC.confidence;
-            const explanationCPC = buildPersonalCareExplanation(parsedCascadePC, pcResultC, {
-              kidMode: kidModeCPC,
-              pregnancyMode: pregnancyModeCPC,
+          if (pcResultCAdult.confidence === "high" || pcResultCAdult.confidence === "medium") {
+            const childBumpsCPC = pcResultCKid.floor_triggered_by
+              ? [{
+                  ingredient: pcResultCKid.floor_triggered_by.ingredient,
+                  mode: "kid",
+                  floor: pcResultCKid.floor_triggered_by.floor,
+                  reason: `${pcResultCKid.floor_triggered_by.ingredient} floors the kid score at ${pcResultCKid.floor_triggered_by.floor}.`,
+                }]
+              : [];
+            const pregnancyBumpsCPC = pcResultCPregnancy.floor_triggered_by
+              ? [{
+                  ingredient: pcResultCPregnancy.floor_triggered_by.ingredient,
+                  mode: "pregnancy",
+                  floor: pcResultCPregnancy.floor_triggered_by.floor,
+                  reason: `${pcResultCPregnancy.floor_triggered_by.ingredient} floors the pregnancy score at ${pcResultCPregnancy.floor_triggered_by.floor}.`,
+                }]
+              : [];
+            const isChildProductCPC = detectChildProduct(productName, visionCat);
+            const finalConfidencePC = isGenericQueryPC ? "estimated" : pcResultCAdult.confidence;
+            const explanationCPC = buildPersonalCareExplanation(parsedCascadePC, pcResultCAdult, {
+              kidMode: false,
+              pregnancyMode: false,
             });
-            const shortVerdictCPC = buildPersonalCareVerdict(parsedCascadePC, pcResultC);
-            const finalScoreCPC = pcResultC.score;
-            const safetyCPC = computeSafetyScores(finalScoreCPC, visionCat, productName, {}, [], cascadeIngredientStr);
+            const shortVerdictCPC = buildPersonalCareVerdict(parsedCascadePC, pcResultCAdult);
+            const finalScoreCPC = pcResultCAdult.score;
             const peerComparisonCPC = finalScoreCPC <= 2 ? "Safe, no significant chemical or ingredient concerns"
               : finalScoreCPC <= 4 ? "Good, mostly clean, use with awareness"
               : finalScoreCPC <= 6 ? "Caution, real concerns, reduce use or find an alternative"
@@ -6867,10 +6921,14 @@ app.post("/analyze", rateLimit, async (req, res) => {
               category: visionCat,
               subtype: subtypeCPC,
               score: finalScoreCPC,
-              precise_score: pcResultC.precise_score,
-              matched_count: pcResultC.matched_count,
-              total_ingredients: pcResultC.total_ingredients,
-              confidence: pcResultC.confidence,
+              precise_score: pcResultCAdult.precise_score,
+              matched_count: pcResultCAdult.matched_count,
+              total_ingredients: pcResultCAdult.total_ingredients,
+              confidence: pcResultCAdult.confidence,
+              child_score: pcResultCKid.score,
+              pregnancy_score: pcResultCPregnancy.score,
+              kid_floor_triggered_by: pcResultCKid.floor_triggered_by,
+              pregnancy_floor_triggered_by: pcResultCPregnancy.floor_triggered_by,
               cascade_tier: cascadeHit.tier,
               cascade_source: cascadeHit.sourceLabel || cascadeHit.source,
               generic_query: isGenericQueryPC,
@@ -6879,16 +6937,16 @@ app.post("/analyze", rateLimit, async (req, res) => {
             const resultCPC = {
               product_name:       productName,
               brand:              identification.brand || cascadeHit.brand || "",
-              score:              finalScoreCPC,
-              overall_score:      finalScoreCPC,
-              precise_score:      pcResultC.precise_score,
+              score:              pcResultCAdult.score,
+              overall_score:      pcResultCAdult.score,
+              precise_score:      pcResultCAdult.precise_score,
               category:           visionCat,
               confidence:         finalConfidencePC,
-              is_child_product:   safetyCPC.isChild,
-              child_score:        safetyCPC.childScore,
-              child_bumps:        safetyCPC.childBumps || [],
-              pregnancy_score:    safetyCPC.pregnancyScore,
-              pregnancy_bumps:    safetyCPC.pregnancyBumps || [],
+              is_child_product:   isChildProductCPC,
+              child_score:        pcResultCKid.score,
+              child_bumps:        childBumpsCPC,
+              pregnancy_score:    pcResultCPregnancy.score,
+              pregnancy_bumps:    pregnancyBumpsCPC,
               flagged_substances: [],
               concerns:           [],
               raw_concerns:       [],
@@ -6906,9 +6964,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
               verdict_adult: null,
               verdict_kid:   null,
               dimensions: {
-                ingredient_hazard: { score: pcResultC.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
-                skin_absorption:   { score: pcResultC.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
-                use_frequency:     { score: pcResultC.use_frequency_score,     label: "Use Frequency",     concerns: [] },
+                ingredient_hazard: { score: pcResultCAdult.ingredient_hazard_score, label: "Ingredient Hazard", concerns: [] },
+                skin_absorption:   { score: pcResultCAdult.skin_absorption_score,   label: "Skin Absorption",   concerns: [] },
+                use_frequency:     { score: pcResultCAdult.use_frequency_score,     label: "Use Frequency",     concerns: [] },
               },
               dimension_layout: [
                 { key: "ingredient_hazard", label: "Ingredient Hazard", weight: 40 },
@@ -6926,11 +6984,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
               scan_next:           buildScanNextFallback(productName, visionCat, altsListCPC),
               category_score_context: CATEGORY_CONTEXT[visionCat] || CATEGORY_CONTEXT.other,
               tier:                "personal_care_cascade",
-              personal_care_breakdown:           pcResultC.breakdown,
-              personal_care_matched:             pcResultC.matched_ingredients,
-              personal_care_floor_triggered_by:  pcResultC.floor_triggered_by,
-              kid_mode:           kidModeCPC,
-              pregnancy_mode:     pregnancyModeCPC,
+              personal_care_breakdown:           pcResultCAdult.breakdown,
+              personal_care_matched:             pcResultCAdult.matched_ingredients,
+              personal_care_floor_triggered_by:  pcResultCAdult.floor_triggered_by,
               partial_read:       false,
               cached:             false,
             };
