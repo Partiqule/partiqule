@@ -381,10 +381,29 @@ function buildExplanation(parsed, scoreResult, options = {}) {
 // ─────────────────────────────────────────────────────────
 function buildShortVerdict(parsed, scoreResult) {
   if (!scoreResult || scoreResult.score === null) return "Label too incomplete to score";
+
   const score = scoreResult.score;
+  const matched = parsed.filter((p) => p.entry !== null);
+
+  const dominantConcern = matched
+    .filter((m) => m.entry.base_hazard_score >= 6)
+    .sort((a, b) => {
+      const hazardDiff = b.entry.base_hazard_score - a.entry.base_hazard_score;
+      if (hazardDiff !== 0) return hazardDiff;
+      return a.position - b.position;
+    })[0];
+
   if (score <= 2) return "Clean profile. Worth keeping.";
-  if (score <= 4) return "Mostly clean. Worth a look.";
-  if (score <= 6) return "Mixed. Cleaner swaps exist.";
+  if (score <= 4 && !dominantConcern) return "Mostly clean. Few flags.";
+
+  if (dominantConcern) {
+    const name = dominantConcern.entry.inci_name;
+    if (score <= 6) return `${name} flagged. Cleaner swaps exist.`;
+    if (score <= 8) return `${name} worth swapping out. Cleaner shelf options exist.`;
+    return `${name} is the headline concern. Skip if you can.`;
+  }
+
+  if (score <= 6) return "Mixed profile. Cleaner swaps exist.";
   if (score <= 8) return "Multiple concerns. Worth swapping.";
   return "Significant concerns. Skip if you can.";
 }
