@@ -285,6 +285,27 @@ text, vision, text-fuzzy, vision-fuzzy, barcode, admin-reload. All must:
 - Preserve `raw_concerns` separately from `concerns` (NOVA 4 marker lives here)
 - Fresh paths call `attachIntelCards()` before `res.json()`
 
+### Operational metadata on scan results
+
+Every scored result carries four operational fields persisted to `scans.result_json` for analytics. Set by backend, whitelisted by frontend `saveToCloud`. Confirmation/refusal responses do NOT persist (frontend skips `saveToCloud` for those) — they live in Railway logs only.
+
+**input_mode** (5 values): `text` | `image` | `productId` | `identificationId` | `barcode`. Set once at handler entry from `req.body` shape.
+
+**scoring_path** (8 values): `fast_path` | `cascade_path` | `cache_hit` | `barcode` | `calibration_short_circuit` | `legacy_ai` | `confirmation_pending` | `refused`. Bucketed value, NOT the granular log label. Granular labels (`textile_fast_path`, `personal_care_cascade_path`, `vision_cascade_tier5`, etc.) continue to be emitted to Railway logs unchanged. Bucket rules:
+- `fast_path` — Mode B (label OCR) deterministic scorer
+- `cascade_path` — Mode A (web search) deterministic scorer
+- `cache_hit` — full prior result returned without re-scoring
+- `barcode` — UPC resolved via barcode_index/barcode_external + calibration
+- `calibration_short_circuit` — fuzzy_cal_hit, productId match, vision cascade calibration
+- `legacy_ai` — Pass 1/Pass 2 ran (any path)
+- `confirmation_pending` / `refused` — set on response objects but not persisted to Supabase, since `saveToCloud` skips confirmation/refusal responses by design. The enum values exist for forward compatibility; if confirmation persistence is added later, no enum extension needed.
+
+**original_scoring_path**: only meaningful when `scoring_path = "cache_hit"`. Carries the bucket the cached value was originally produced under, so cache-hit analytics retain causal fidelity. `null` on fresh paths.
+
+**latency_ms**: backend-measured handler latency (`Date.now() - requestStartMs`). Stamped per-request. NEVER cached — `stampFresh` runs after `cacheSet` so cached payloads don't carry a stale latency.
+
+Helpers in server.js: `stampFresh(result, inputMode, scoringPath, requestStartMs)` for fresh paths, `stampCacheHit(cached, inputMode, requestStartMs)` for cache-read paths. If a new terminal `stream.complete` / `res.json` is added in `/analyze` or `/barcode`, it MUST stamp.
+
 ### Category detection
 `detectCategory()` order matters. Baby personal_care ("baby shampoo") routes to personal_care BEFORE baby. 13 categories. Null falls back to "other". **Calibration category wins over detected category** for weight selection.
 

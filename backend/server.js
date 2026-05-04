@@ -260,6 +260,25 @@ function makeStreamHelper(req, res) {
   };
 }
 
+// Operational metadata helpers — see CLAUDE.md "Operational metadata
+// on scan results". Stamp scoring_path / input_mode / latency_ms onto
+// every terminal result so analytics can slice by request type and
+// path that produced the score.
+function stampCacheHit(cached, inputMode, requestStartMs) {
+  cached.original_scoring_path = cached.scoring_path || null;
+  cached.scoring_path = "cache_hit";
+  cached.input_mode = inputMode;
+  cached.latency_ms = Date.now() - requestStartMs;
+  return cached;
+}
+
+function stampFresh(result, inputMode, scoringPath, requestStartMs) {
+  result.input_mode = inputMode;
+  result.scoring_path = scoringPath;
+  result.latency_ms = Date.now() - requestStartMs;
+  return result;
+}
+
 // Delete from memory + Redis. Redis del is fire-and-forget.
 const cacheDelete = (key) => {
   scoreCache.delete(key);
@@ -5877,6 +5896,16 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const stream = makeStreamHelper(req, res);
   let { query, image, mediaType, userId, productId, identificationId } = req.body;
 
+  // Operational metadata for Supabase scan logging. inputMode reflects which
+  // request shape arrived; scoring_path is set per terminal site below;
+  // latency_ms is computed at each terminal. See CLAUDE.md
+  // "Operational metadata on scan results".
+  const requestStartMs = Date.now();
+  const inputMode = image ? "image"
+    : productId ? "productId"
+    : identificationId ? "identificationId"
+    : "text";
+
   // If the client sent an Authorization header, verify it and replace the
   // client-supplied userId with the one from the JWT. This prevents a caller
   // from resetting someone else's scan_count (or their own, by rotating
@@ -5979,6 +6008,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         });
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "calibration", score: midScore });
+        stampFresh(result, inputMode, "calibration_short_circuit", requestStartMs);
         return stream.complete({ ...result, cached: false });
       }
 
@@ -6003,6 +6033,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         result.source_confidence = null;
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "scan" });
+        stampFresh(result, inputMode, "calibration_short_circuit", requestStartMs);
         return stream.complete({ ...result, cached: false });
       }
 
@@ -6246,9 +6277,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
               cached:              false,
             };
             const calibrated = applyProductCalibration(result);
+            calibrated.scoring_path = "fast_path";
+            calibrated.input_mode = inputMode;
             const fastKey = cacheKey(productName, visionCat);
             cacheSet(fastKey, calibrated);
             await attachIntelCards(calibrated, userId);
+            stampFresh(calibrated, inputMode, "fast_path", requestStartMs);
             return stream.complete(calibrated);
           }
         }
@@ -6396,8 +6430,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
                 cached:             false,
               };
               const calibratedPC = applyProductCalibration(result);
+              calibratedPC.scoring_path = "fast_path";
+              calibratedPC.input_mode = inputMode;
               cacheSet(cacheKey(productName, visionCat), calibratedPC);
               await attachIntelCards(calibratedPC, userId);
+              stampFresh(calibratedPC, inputMode, "fast_path", requestStartMs);
               return stream.complete(calibratedPC);
             }
           }
@@ -6481,6 +6518,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
           await attachIntelCards(nCached, userId);
+          stampCacheHit(nCached, inputMode, requestStartMs);
           return stream.complete({ ...nCached, cached: true });
         }
       }
@@ -6558,9 +6596,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
           source_confidence: null,
           vision_reconciliation: recon.agreementPct,
         });
+        result.scoring_path = "calibration_short_circuit";
+        result.input_mode = inputMode;
         const imgKey = cacheKey(productName, entry.category || visionCat);
         cacheSet(imgKey, result);
         await attachIntelCards(result, userId);
+        stampFresh(result, inputMode, "calibration_short_circuit", requestStartMs);
         return stream.complete({ ...result, cached: false });
       }
 
@@ -6699,6 +6740,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           label_legibility: identification.label_legibility,
         });
         await attachIntelCards(synth, userId);
+        stampFresh(synth, inputMode, "legacy_ai", requestStartMs);
         return stream.complete({ ...synth, cached: false });
       }
 
@@ -6825,9 +6867,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
               cached:              false,
             };
             const calibratedC = applyProductCalibration(resultC);
+            calibratedC.scoring_path = "cascade_path";
+            calibratedC.input_mode = inputMode;
             const cascadeKey = cacheKey(productName, visionCat);
             cacheSet(cascadeKey, calibratedC);
             await attachIntelCards(calibratedC, userId);
+            stampFresh(calibratedC, inputMode, "cascade_path", requestStartMs);
             return stream.complete(calibratedC);
           }
         }
@@ -6976,8 +7021,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
               cached:             false,
             };
             const calibratedCPC = applyProductCalibration(resultCPC);
+            calibratedCPC.scoring_path = "cascade_path";
+            calibratedCPC.input_mode = inputMode;
             cacheSet(cacheKey(productName, visionCat), calibratedCPC);
             await attachIntelCards(calibratedCPC, userId);
+            stampFresh(calibratedCPC, inputMode, "cascade_path", requestStartMs);
             return stream.complete(calibratedCPC);
           }
         }
@@ -7196,9 +7244,12 @@ app.post("/analyze", rateLimit, async (req, res) => {
         cached:              false,
       };
       const calibrated = applyProductCalibration(result);
+      calibrated.scoring_path = "legacy_ai";
+      calibrated.input_mode = inputMode;
       const imgKey = cacheKey(productName, visionCat);
       cacheSet(imgKey, calibrated);
       await attachIntelCards(calibrated, userId);
+      stampFresh(calibrated, inputMode, "legacy_ai", requestStartMs);
       return stream.complete(calibrated);
     } catch (err) {
       console.error("[vision_v2] error:", err);
@@ -7209,6 +7260,13 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // LEGACY VISION V1 PATH — VISION_CONTRACT_V2=false ONLY
+  // ─────────────────────────────────────────────────────────────
+  // scoring_path / input_mode / latency_ms instrumentation deliberately
+  // not applied here. V2 (above) is production. If V1 is ever re-enabled,
+  // scans served by this branch will surface in analytics with null
+  // scoring_path values — that is the intended signal.
   // If image provided, use vision to identify + analyze in one pass
   if (image) {
     try {
@@ -7501,6 +7559,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       skipFuzzyCalibration = true; // bypass fuzzy cal this once so AI enriches the result
     } else {
       console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
+      stampCacheHit(cached, inputMode, requestStartMs);
       return stream.complete({ ...cached, cached: true });
     }
   }
@@ -7574,8 +7633,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
       source_label: "Verified formula",
       source_confidence: null,
     });
+    fuzzyResult.scoring_path = "calibration_short_circuit";
+    fuzzyResult.input_mode = inputMode;
     cacheSet(key, fuzzyResult);
     console.log(`[FUZZY CAL HIT] "${productName}" matched calibration — score ${midScore}, child ${fuzzySafety.childScore}, preg ${fuzzySafety.pregnancyScore}`);
+    stampFresh(fuzzyResult, inputMode, "calibration_short_circuit", requestStartMs);
     return stream.complete({ ...fuzzyResult, cached: false });
   }
 
@@ -7986,6 +8048,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       return { tier, result: calibrated, skipCache: false };
     });
 
+    cascadeOutcome.result.scoring_path = "legacy_ai";
+    cascadeOutcome.result.input_mode = inputMode;
     if (!cascadeOutcome.skipCache) {
       cacheSet(key, cascadeOutcome.result);
       console.log(`[CACHED] ${key} via ${cascadeOutcome.tier} (score: ${cascadeOutcome.result.score}, total: ${scoreCache.size}${hasRedis?" + Redis":""})`);
@@ -7993,6 +8057,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       console.log(`[CASCADE ${cascadeOutcome.tier}] ${key} — score ${cascadeOutcome.result.score}, not cached`);
     }
     await attachIntelCards(cascadeOutcome.result, userId);
+    stampFresh(cascadeOutcome.result, inputMode, "legacy_ai", requestStartMs);
     stream.complete(cascadeOutcome.result);
 
   } catch (err) {
@@ -9684,6 +9749,8 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
 // and returns a fully scored result identical to a text scan.
 app.post("/barcode", rateLimit, async (req, res) => {
   const { barcode, userId } = req.body || {};
+  const requestStartMs = Date.now();
+  const inputMode = "barcode";
   if (!barcode) return res.status(400).json({ error: "barcode required" });
   if (typeof barcode !== "string" || !/^\d{4,14}$/.test(barcode.trim())) {
     return res.status(400).json({ error: "Invalid barcode format" });
@@ -9706,6 +9773,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     const bStale = !bCached.dimensions || bCached._preloaded || bCached._warmCache || (noIng && noFlag && allFive);
     if (!bStale) {
       console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
+      stampCacheHit(bCached, inputMode, requestStartMs);
       return res.json({ ...bCached, cached: true });
     }
     scoreCache.delete(barcodeKey);
@@ -9761,8 +9829,11 @@ app.post("/barcode", rateLimit, async (req, res) => {
         source_confidence: null,
       });
       console.log(`[BARCODE] ${barcode} (${sourceName}) → "${resolvedName}" → calibration ${calHit.floor}-${calHit.ceiling}`);
+      calibrated.scoring_path = "barcode";
+      calibrated.input_mode = inputMode;
       await attachIntelCards(calibrated, userId);
       cacheSet(barcodeKey, calibrated);
+      stampFresh(calibrated, inputMode, "barcode", requestStartMs);
       return res.json({ ...calibrated, barcode, cached: false });
     }
     // No calibration hit — fall through to the existing pipeline, which will
@@ -9874,6 +9945,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
       nCached.dimensions.sustainability?.score === 5;
     if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na))) {
       cacheSet(barcodeKey, nCached);
+      stampCacheHit(nCached, inputMode, requestStartMs);
       return res.json({ ...nCached, cached: true, barcode });
     }
     scoreCache.delete(nameKey);
@@ -10072,6 +10144,8 @@ app.post("/barcode", rateLimit, async (req, res) => {
     };
 
     const calibrated = applyProductCalibration(result);
+    calibrated.scoring_path = "legacy_ai";
+    calibrated.input_mode = inputMode;
 
     // Cache under both barcode key and product name key
     cacheSet(barcodeKey, calibrated);
@@ -10079,6 +10153,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
 
     console.log(`[BARCODE] Scored "${productName}" -> ${calibrated.overall_score}/10 (${ingredientList.length} ingredients)`);
     await attachIntelCards(calibrated, userId);
+    stampFresh(calibrated, inputMode, "legacy_ai", requestStartMs);
     res.json(calibrated);
 
   } catch(err) {

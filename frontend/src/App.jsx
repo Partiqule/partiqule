@@ -6634,6 +6634,10 @@ function App() {
           dimensions:       item.dimensions,
           food_analysis:    item.food_analysis,
           cached:           item.cached,
+          input_mode:            item.input_mode            ?? null,
+          scoring_path:          item.scoring_path          ?? null,
+          original_scoring_path: item.original_scoring_path ?? null,
+          latency_ms:            item.latency_ms            ?? null,
         },
         scanned_at:   new Date().toISOString(),
       }, { onConflict: "user_id,product_name" });
