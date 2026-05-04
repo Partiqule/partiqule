@@ -261,6 +261,7 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
   (b) Route `fuzzy_cal_hit` results through category-specific deterministic scorers (`personalCareScorer`, plus equivalents for food/home/textile) that compute kid scores from ingredient calibration data. Code work, but architecturally cleaner and self-maintaining as calibration entries are added.
 
   Diagnose in a separate session. Half-day scope minimum.
+- **PENDING: `CHILD_CONCERN_SUBSTANCES` coverage gaps.** Today's UV filter addition (commit 0ecf4d6) fixed one ingredient family. Other ingredient families that fire pregnancy concerns but lack kid concern entries: retinoids, salicylic acid (high concentration), aluminum compounds, formaldehyde-releasing preservatives beyond parabens. Each gap should be diagnosed against real production scan data once instrumentation has accumulated 48-72 hours of traffic. Adding entries without scan data risks miscalibrating bumps for products users don't actually scan.
 
 ---
 
