@@ -262,6 +262,7 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 
   Diagnose in a separate session. Half-day scope minimum.
 - **PENDING: `CHILD_CONCERN_SUBSTANCES` coverage gaps.** Today's UV filter addition (commit 0ecf4d6) fixed one ingredient family. Other ingredient families that fire pregnancy concerns but lack kid concern entries: retinoids, salicylic acid (high concentration), aluminum compounds, formaldehyde-releasing preservatives beyond parabens. Each gap should be diagnosed against real production scan data once instrumentation has accumulated 48-72 hours of traffic. Adding entries without scan data risks miscalibrating bumps for products users don't actually scan.
+- **PENDING: Skittles routing fuzzy_cal_hit vs web_search inconsistency.** Live test 2026-05-04 returned score 7 from web_search path despite calibration.js having a skittles entry with midScore 8. Response metadata: `scoring_path: cache_hit`, `original_scoring_path: legacy_ai`, `source: web_search` — the cached value was originally produced by Pass 1 going through Tier 4, not calibration. Either the originating scan predated the skittles calibration entry, or some path skipped the Tier 1 calibration check (`skipFuzzyCalibration` flag, productId bypass). Diagnose in a separate session.
 
 ---
 
