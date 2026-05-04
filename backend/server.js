@@ -1604,6 +1604,7 @@ const CHILD_CONCERN_SUBSTANCES = [
   { match: /synthetic fragrance|artificial fragrance|fragrance.*parfum|\bparfum\b/i, bump: 2, reason: "Undisclosed fragrance chemicals include phthalates and VOCs — children's developing endocrine systems are more sensitive and skin absorption is 2-3x higher than adults" },
   { match: /formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea/i, bump: 2, reason: "Formaldehyde and formaldehyde-releasing preservatives — carcinogen with heightened concern for developing respiratory systems in children" },
   { match: /parabens?|methylparaben|propylparaben|butylparaben/i, bump: 1, reason: "Parabens — endocrine disruption concern, developing hormonal systems more vulnerable" },
+  { match: /oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate|octocrylene/i, bump: 2, reason: "Chemical UV filters — confirmed transdermal absorption with hormonal activity. Children's body weight and 2-3x absorption rate amplify exposure (Matta JAMA 2019)" },
   { match: /bisphenol|BPA|BPS/i,                   bump: 2, reason: "BPA/BPS endocrine disruption most harmful during developmental windows in childhood" },
   { match: /chlorine.*bleach|chlorine.*pulp|dioxin/i, bump: 1, reason: "Chlorine bleaching byproducts (dioxins) have child-specific developmental endpoints" },
   { match: /polypropylene.*liner|polyester.*skin|synthetic.*liner/i, bump: 1, reason: "Synthetic materials in direct contact with sensitive baby skin — higher absorption rate" },
@@ -1622,8 +1623,6 @@ const CHILD_CONCERN_SUBSTANCES = [
 ];
 
 function computeChildScore(baseScore, concernsText, category, productName, isChildProduct) {
-  if (!isChildProduct) return { childScore: null, childBumps: [] };
-
   let bump = 0;
   const bumps = [];
 
@@ -1632,13 +1631,9 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
   const hasNaturalColorantsOnly = NATURAL_COLORANT.test(concernsText + " " + productName);
   const hasPetroleumDyes = /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|FD&C|petroleum dye/i.test(concernsText);
 
-  // Always add +1 for child product — developing systems baseline
-  bump += 1;
-  bumps.push("Children's developing organ systems require more protective thresholds than adult scoring");
-
-  // Check for specific child-concern substances
+  // Chemistry-driven bumps run unconditionally — Red 40 hurts kids whether the
+  // product is marketed to them or not. Mirrors computePregnancyScore semantics.
   for (const concern of CHILD_CONCERN_SUBSTANCES) {
-    // Skip the dye bump if only natural colorants confirmed and no petroleum dyes present
     if (hasNaturalColorantsOnly && !hasPetroleumDyes &&
         concern.match.toString().includes("petroleum dye|artificial.*color|artificial.*dye")) {
       continue;
@@ -1649,25 +1644,34 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
     }
   }
 
-  // Category-specific bumps
-  if (category === "baby") {
+  // Kid-marketed-product baseline + category bumps — only applied when the
+  // product is specifically targeted at children. Preserves the marketing-
+  // recognition signal: kid-marketed products carry an extra protective margin.
+  if (isChildProduct) {
     bump += 1;
-    bumps.push("Baby products: highest vulnerability — newborn skin is 5x more permeable than adult skin");
-  }
+    bumps.push("Children's developing organ systems require more protective thresholds than adult scoring");
 
-  // Clothing bump — children wear fabrics against skin all day, higher absorption
-  if (category === "clothing") {
-    bump += 1;
-    bumps.push("Children's skin absorbs chemicals from fabrics at 2-3x adult rate — daily all-day contact amplifies exposure");
-  }
-
-  // Candle/home fragrance bump — children's lungs are more vulnerable to VOCs
-  if (category === "home" || category === "home_furnishing") {
-    if (/candle|wax|diffuser|air freshener|reed diffuser/i.test(productName + " " + concernsText)) {
+    if (category === "baby") {
       bump += 1;
-      bumps.push("Airborne VOCs and fragrance particulates from candles — children's developing lungs and nervous systems more vulnerable to inhalation exposure");
+      bumps.push("Baby products: highest vulnerability — newborn skin is 5x more permeable than adult skin");
+    }
+
+    if (category === "clothing") {
+      bump += 1;
+      bumps.push("Children's skin absorbs chemicals from fabrics at 2-3x adult rate — daily all-day contact amplifies exposure");
+    }
+
+    if (category === "home" || category === "home_furnishing") {
+      if (/candle|wax|diffuser|air freshener|reed diffuser/i.test(productName + " " + concernsText)) {
+        bump += 1;
+        bumps.push("Airborne VOCs and fragrance particulates from candles — children's developing lungs and nervous systems more vulnerable to inhalation exposure");
+      }
     }
   }
+
+  // No bumps fired and product is not kid-marketed — return null so the UI
+  // hides the kid-mode delta entirely (clean formulas don't need a kid score).
+  if (bump === 0) return { childScore: null, childBumps: [] };
 
   const childScore = Math.min(10, baseScore + bump);
   return { childScore, childBumps: bumps };
