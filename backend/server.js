@@ -1279,10 +1279,15 @@ function serializeAlternatives(rawAlts, category) {
 function computeSafetyScores(finalScore, category, productName, p1, substanceTriggers = [], extraText = "") {
   const isChild = detectChildProduct(productName, category);
   const computeChild = shouldComputeChildScore(productName, category);
+  // Restrict matching corpus to structured detection only.
+  // Narrative concerns text contains negations ("No artificial dyes
+  // detected") that regex cannot distinguish from positive statements.
+  // Defamation-class fabrication risk: kid bumps must fire on actual
+  // detected substances from the structured list, not narrative text.
+  // 2026-05-05: Pretzel Crisps petroleum dye fabrication was caused by
+  // /artificial.*dye/ matching inside "No artificial dyes detected".
   const flagText = [
     ...(p1?.flagged_substances || []),
-    ...(p1?.materials?.concerns || []),
-    ...(p1?.concerns || []),
     ...substanceTriggers,
     extraText || "",
   ].filter(Boolean).join(" ");
