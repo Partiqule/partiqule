@@ -246,6 +246,46 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 
 ---
 
+## 2026-05-05 SESSION
+
+Engine deployed in Phase 1 shadow mode. `backend/foodScorer.js` produces deterministic scoring at 0.080-2ms vs `legacy_ai` 9-32 seconds. Engine integrated in `/analyze` for both text cascade and image-V2 paths. Bucket 1 (10 colors) + Bucket 2 (7 preservatives) calibration foundation complete. Phase 1 data accumulation begins now via `food_scorer_shadow` log events. After ~1 week of data, run aggregation queries for Phase 2 promotion decision. Image-legacy path integration deferred to follow-up. Strategic position: "system too slow to push" objection has concrete path to resolution via Phase 2 user-facing engine promotion.
+
+**Phase 1 shadow log shape** (greppable in Railway via `food_scorer_shadow`):
+- `event`, `product_name`, `category`, `input_mode` (`text`|`image`), `ingredient_source` (`cascade_resolved`|`label_ocr`)
+- `engine_status` (`scored`|`insufficient_coverage`|`out_of_scope`|`no_ingredients`|`engine_error`), `engine_score`, `engine_latency_ms`
+- `cascade_score`, `cascade_latency_ms`, `delta`
+- `matched_count`, `unmatched_count`, `unmatched_ingredients[]` (calibration roadmap data)
+- For `scored`: `top_match_name`, `top_match_score`, `matched_keys[]`, `calculation_notes`
+- For `insufficient_coverage`: `total_weight` (signal-strength near-miss diagnostics)
+
+**Engine architecture:**
+- Position-weighted hybrid scoring: `weighted_average` aggregated against `max(score) - 1` floor, clamped to `[1, 9]`
+- Coverage gate (`W_MIN = 0.30`): engine runs only if total position weight of matched ingredients ≥ threshold; otherwise returns `insufficient_coverage`
+- Dedupe by entry key (e.g., `sodium benzoate` + `potassium benzoate` → one match for `benzoates` at first-occurrence position)
+- NOVA classification deferred to Phase 2 (calibration entries carry `nova_typical` field but engine doesn't consume yet)
+- Engine fires only on cache misses to non-bypass paths; `productId` short-circuit and cache-hit paths don't trigger shadow log (expected — those are calibrated/cached and not the comparison case)
+
+**Today's commits (six total):**
+1. `3282683` — Pretzel petroleum dye fabrication hotfix (defamation-class, P0): restricted `flagText` corpus to structured detection, dropping narrative-text negation false positives
+2. `3bbfec9` — SW v11 cache bump: closed Bug 3 operational metadata regression by forcing browsers to revalidate against latest App.jsx
+3. `064a98f` — Word boundary discipline across 42 substance-matching rules: dropped greedy catchalls and 2-char acronym risks
+4. `bdbe7a5` — Bucket 2 preservatives complete (7 entries: sodium nitrite, sulfites, BHA, BHT, benzoates, sorbates, propionates)
+5. `2f31b07` — `foodScorer.js` engine + 35 lake-variant aliases + text cascade integration in shadow mode
+6. `a110de1` — Image-V2 path engine integration with uniform `input_mode` and `ingredient_source` logging fields
+
+**Production verification:**
+- Twizzlers (text): `engine_status: insufficient_coverage`, `total_weight: 0.15`, 18 unmatched ingredients (real Bucket 3-7 calibration roadmap data)
+- Baja Blast (text): scored 6, cascade scored 8, delta -2, hybrid floor activated correctly via Yellow 5/Blue 1
+- Hearty Bar (image): `insufficient_coverage` (clean-label gap), `input_mode: image`, `ingredient_source` field populating
+
+**Phase 2 promotion criteria** (target: ~1 week from now):
+- Aggregate `delta` distribution across `engine_status: scored` events
+- Identify systematic disagreements (engine vs cascade) and triage
+- Surface most-frequent `unmatched_ingredients` for Bucket 3-7 prioritization
+- If agreement rate is high enough and unmatched roadmap is well-prioritized, promote engine to user-facing for `engine_status: scored` results
+
+---
+
 ## Known Bugs
 
 - **Vision OCR ceiling on hangtags.** Most hangtag scans return `confidence=0.35`, `brand=null`, generic placeholder names ("BOYS 2PC"), and `label_legibility="unreadable"`. The hangtag prompt extraction works in principle but Haiku misses brand wordmarks and style codes at typical phone-shot distance. Manifests as legacy 0.30-0.45 confirmation gate firing constantly on clothing scans. Fix is upstream (camera UX), not a prompt change.
