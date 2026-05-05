@@ -277,6 +277,108 @@ const FOOD_INGREDIENTS = {
     ],
     reasoning: "Red 3 (Erythrosine) is a xanthene synthetic dye used historically in maraschino cherries, candy, baked goods, and gelatin products to produce vivid pink and red hues. Red 3 is the strongest regulatory case in the artificial-color bucket and the only synthetic food color where the FDA has taken binding action: the January 15, 2025 final rule revoked authorization in food and ingested drugs under the Delaney Clause, which mandates revocation when an additive induces cancer in animals (compliance deadlines January 15, 2027 for food and January 18, 2028 for drugs). The hazard score of 8 reflects three converging evidence pathways. Behavioral: California's OEHHA 2021 systematic review explicitly covered erythrosine alongside the other AB 2316 dyes, finding behavioral associations across 64% of 27 reviewed trials (52% statistically significant). Regulatory: California AB 418 (signed October 2023) was the first state-level Red 3 ban and preceded the FDA action by 15 months; further back, the FDA's 1990 decision not to extend the provisional listing of Red 3 in cosmetics was based on the same thyroid carcinogenicity finding under the same Delaney Clause mechanism, creating a 35-year regulatory gap before the food authorization was finally revoked. Mechanistic: Borzelleca, Capen, and Hallagan 1987 (Food and Chemical Toxicology 25(10):723-733) showed statistically significant thyroid follicular cell hypertrophy, hyperplasia, and adenomas in male Charles River CD rats fed up to 4.0% Red 3 in diet for 30 months; the mechanism is endocrine-mediated rather than direct genotoxic, with Red 3 inhibiting iodine uptake and blocking T4-to-T3 conversion, raising TSH and stimulating thyroid cell proliferation. The kid_score_floor of 9 sits one point above the McCann-tested dyes because thyroid hormone is critical for developing nervous systems: any dietary exposure that disrupts thyroid signaling carries amplified concern for children, and OEHHA 2021's behavioral signal applies here as it does for the other dyes. The pregnancy_score_floor of 8 is genuinely pregnancy-specific rather than precaution-based, since maternal thyroid hormone is essential for fetal brain development and disruption is a documented developmental endpoint. The FDA found the rat-specific mechanism not directly translatable to humans but issued the Delaney revocation regardless because the legal standard does not require human-equivalent mechanism, only animal-induced cancer.",
   },
+
+  caramel_color_iv: {
+    inci_name: "Caramel Color IV",
+    aliases: [
+      "caramel color iv",
+      "caramel color (class iv)",
+      "caramel color class iv",
+      "caramel color 4",
+      "ammonia sulfite caramel",
+      "sulfite ammonia caramel",
+      "e150d",
+      "e 150d",
+      "e150 d",
+      // Generic "caramel color" / "caramel coloring" included on the
+      // pragmatic basis that most US labels do not specify class, and
+      // when caramel color appears in soda or acid-stable beverage
+      // applications it is almost always Class IV. See reasoning for
+      // the class-ambiguity disclosure.
+      "caramel color",
+      "caramel coloring",
+      "caramel colour",
+      "caramel colouring",
+    ],
+    hazard_class: "artificial_color",
+    base_hazard_score: 6,
+    nova_typical: 4,
+    whole_food_indicator: false,
+    quantity_threshold: null,
+    pregnancy_concern: true,
+    pregnancy_score_floor: 6,
+    kid_concern: true,
+    kid_score_floor: 7,
+    regulatory_citations: [
+      "FDA 21 CFR 73.85: Caramel is listed for use in food in amounts consistent with good manufacturing practice. The regulation covers all four classes (I, II, III, IV) generically as \"Caramel\" without distinguishing the production processes. Heavy-metal specifications: lead not more than 10 ppm, arsenic not more than 3 ppm, mercury not more than 0.1 ppm. Caramel is exempt from FDA batch certification (Part 73) unlike the FD&C synthetic dyes (Part 74). FDA is reviewing whether to set 4-MEI-specific limits for Class III and IV caramel.",
+      "National Toxicology Program 2007 (NTP Technical Report Series 535, PubMed 17342198): \"Toxicology and carcinogenesis studies of 4-methylimidazole (CAS No. 822-36-6) in F344/N rats and B6C3F1 mice (feed studies).\" Two-year feed study with 99.5% pure 4-MEI. Found clear evidence of carcinogenic activity in male and female B6C3F1 mice based on increased incidences of alveolar/bronchiolar neoplasms (lung tumors). Equivocal evidence in female F344/N rats (mononuclear cell leukemia) and no evidence in male F344/N rats. Foundational primary research that drove subsequent IARC and Prop 65 actions.",
+      "California Proposition 65: 4-Methylimidazole (4-MEI) listed effective January 7, 2011 as known to the State of California to cause cancer. OEHHA established a No Significant Risk Level (NSRL) of 29 micrograms per day (initial proposal was 16 μg/day; final raised to 29), effective February 8, 2012. Products exposing consumers to more than 29 μg/day of 4-MEI must carry Prop 65 warning labels. Triggered industry-wide reformulation pressure including Coca-Cola requesting suppliers reduce 4-MEI levels.",
+      "IARC Monograph Volume 101 (2013): 4-Methylimidazole classified as Group 2B (possibly carcinogenic to humans). Classification based on the NTP 2007 mouse lung tumor data; IARC found sufficient evidence in experimental animals and inadequate evidence in humans. Same hazard band as aspartame, lead, and radiofrequency electromagnetic fields.",
+      "EFSA Panel on Food Additives and Nutrient Sources, 2011: \"Scientific Opinion on the re-evaluation of caramel colours (E 150 a,b,c,d) as food additives\" (EFSA Journal 2011;9(3):2004). Established a group ADI of 300 mg/kg bw/day for E150a, E150b, and E150d (Class IV), and a separate lower ADI of 100 mg/kg bw/day for E150c (Class III) due to THI immunotoxicity concerns. EFSA's exposure assessment flagged that high consumers of foods containing E150a, E150c, or E150d could exceed the established ADIs at maximum industry-reported use levels.",
+    ],
+    reasoning: "Caramel Color IV (sulfite-ammonia caramel, E150d) is the most heavily used colorant in cola sodas, dark sauces (soy sauce, Worcestershire, BBQ), gravies, dark beers, and acid-stable beverage applications. Class IV is one of four caramel-color classes that share a name but use different production processes; the ammonia-based Classes III and IV produce 4-methylimidazole (4-MEI) as a byproduct, while the non-ammonia Classes I and II do not. When a label reads simply \"caramel color\" without class specification, the application context typically signals the class: beverages and acid-stable products are almost always Class IV, baked goods and alcoholic products are often Class III (also 4-MEI-bearing), and Classes I and II are minority uses concentrated in whiskeys and some non-acid sauces. The hazard score of 6 reflects three converging evidence pathways. Carcinogenicity: the NTP 2007 two-year feed study found clear evidence of lung tumors in male and female mice; IARC classified 4-MEI as Group 2B (possibly carcinogenic to humans) in 2013. Regulatory: California Proposition 65 listed 4-MEI as a known carcinogen in 2011 with a 29 μg/day NSRL; EFSA's 2011 reassessment flagged high consumers could exceed ADIs at maximum industry-reported levels; the FDA is reviewing whether to set 4-MEI-specific limits. Modern context: industry voluntary reformulation since 2011 has reduced typical 4-MEI exposure roughly in half (FDA 2024 estimate ~0.017 mg/day vs prior 0.043-0.046 mg/day), with Coca-Cola now at 9.5-11.7 μg/L (well below the NSRL even at heavy consumption). However, malta drinks still range 900+ μg/L (Malta Goya 915.8-963.3 μg/L), and Class IV's 4-MEI content remains 112-1276 mg/kg across commercial samples, so legacy-formulation and unreformulated products remain genuine concerns. The kid_score_floor of 7 reflects children's higher per-body-weight beverage consumption combined with developing-tissue sensitivity to possible carcinogens. The pregnancy_score_floor of 6 matches the adult score because there is no pregnancy-specific 4-MEI mechanism comparable to Red 3's thyroid disruption; the general IARC 2B classification applies but does not amplify pregnancy concern. The mouse-specific lung carcinogenicity mechanism is not directly translatable to humans, but the IARC 2B and Prop 65 listings stand on the experimental animal evidence regardless.",
+  },
+
+  titanium_dioxide: {
+    inci_name: "Titanium Dioxide",
+    aliases: [
+      "titanium dioxide",
+      "titanium oxide",
+      "tio2",
+      "ti02",
+      "e171",
+      "ci 77891",
+      "color additive titanium dioxide",
+    ],
+    hazard_class: "artificial_color",
+    base_hazard_score: 7,
+    nova_typical: 4,
+    whole_food_indicator: false,
+    quantity_threshold: null,
+    pregnancy_concern: true,
+    pregnancy_score_floor: 7,
+    kid_concern: true,
+    kid_score_floor: 8,
+    regulatory_citations: [
+      "FDA 21 CFR 73.575: Titanium dioxide is listed for use in food coloring subject to a maximum of 1 percent by weight of the food. Color additive mixtures may contain SiO2 and/or Al2O3 as dispersing aids (not more than 2 percent total). Exempt from FDA batch certification (Part 73). FDA reaffirmed the safety conclusion in December 2022 and opened a public comment period in 2023 on a petition to revoke the listing; as of May 2026 the listing remains active.",
+      "European Commission Regulation (EU) 2022/63, adopted January 14, 2022, published January 18, 2022: withdrew the authorisation to use titanium dioxide (E171) as a food additive. Entered into force February 7, 2022 with a six-month transition period; full ban applied from August 7, 2022. This was the first time the EU withdrew authorisation for an existing food additive (versus failing to authorise a new additive). Titanium dioxide remains permitted in medicinal products as a separate carve-out to avoid pharmaceutical shortages.",
+      "EFSA Panel on Food Additives and Flavourings, May 6, 2021: \"Safety assessment of titanium dioxide (E171) as a food additive\" (EFSA Journal 2021;19(5):6585). Concluded that E171 can no longer be considered safe when used as a food additive because a concern for genotoxicity could not be ruled out and a cut-off particle size for genotoxicity could not be identified. EFSA could not establish a maximum Acceptable Daily Intake. This was the first application of the 2018 EFSA Scientific Committee Guidance on Nanotechnology to a food additive safety assessment, marking a methodological shift from the prior 2016 assessment that had considered E171 safe.",
+      "International regulatory landscape on E171/TiO2 as a food additive: France implemented a national ban in 2019 (preceding the EU action). The EU ban followed under Regulation 2022/63. The United Kingdom Food Standards Agency and Food Standards Scotland reviewed the EFSA opinion in March 2022 and chose not to implement a corresponding ban, stating that no safety concerns had been identified. Health Canada and Food Standards Australia New Zealand (FSANZ 2022 reassessment) continue to permit the additive. The split is methodological rather than evidentiary: EU regulators applied the 2018 nanotechnology guidance and reached precautionary conclusions, while UK, Canadian, Australian, and US regulators continue to apply traditional risk assessment frameworks and find the existing evidence inconclusive of harm.",
+    ],
+    reasoning: "Titanium dioxide (TiO2, E171) is a white pigment used in coated candies (M&M's, Skittles white interior), chewing gum, dairy alternatives, white frostings, and some pharmaceutical coatings. The hazard score of 7 reflects the strongest single regulatory signal in the artificial-color bucket combined with consistent biological mechanism research, weighed against a genuine international regulatory split. Regulatory: the EU's 2022 withdrawal of titanium dioxide authorisation (Regulation 2022/63) was the first time the EU withdrew an existing food additive authorisation rather than failing to authorise a new one; France had already banned the additive nationally in 2019; the EFSA 2021 reassessment that drove the action concluded E171 \"can no longer be considered safe\" and was the first food additive assessment to apply the 2018 EFSA Nanotechnology Guidance, marking a methodological shift in how nanoparticle ingredients are evaluated. Mechanistic: gut-microbiome research published 2022-2025 has consistently shown that TiO2 nanoparticles decrease beneficial bacteria (Bifidobacterium, Lactobacillus), increase colitis severity in experimental mouse models, induce oxidative stress and inflammation, and a 2025 Food and Chemical Toxicology paper found that the smallest particles raise blood sugar and impair glucose processing. Honest regulatory split: the United Kingdom Food Standards Agency, Health Canada, Food Standards Australia New Zealand, and the US FDA have all reviewed the same evidence and chosen to maintain approval, finding the EFSA precautionary methodology not yet warranting binding action under their respective frameworks; the FDA continues to permit TiO2 with the 1% by weight cap and reaffirmed safety in December 2022. The split is methodological rather than evidentiary: regulators using the 2018 nanotechnology guidance reach precautionary conclusions, regulators using traditional frameworks do not. The kid_score_floor of 8 reflects that titanium dioxide is heavily used in white-coated candies and gums marketed to children, and the developing gut microbiome is more sensitive to dysbiosis than the adult microbiome. The pregnancy_score_floor of 7 matches the adult score because there is no pregnancy-specific TiO2 mechanism comparable to Red 3's thyroid pathway; the general EFSA concern applies but is not pregnancy-amplified.",
+  },
+
+  annatto_extract: {
+    inci_name: "Annatto Extract",
+    aliases: [
+      "annatto",
+      "annatto extract",
+      "annatto coloring",
+      "annatto color",
+      "annatto seed extract",
+      "bixa orellana extract",
+      "bixin",
+      "norbixin",
+      "e160b",
+      "ci 75120",
+    ],
+    hazard_class: "natural_color",
+    base_hazard_score: 2,
+    nova_typical: 1,
+    whole_food_indicator: false,
+    quantity_threshold: null,
+    pregnancy_concern: false,
+    pregnancy_score_floor: 2,
+    kid_concern: false,
+    kid_score_floor: 3,
+    regulatory_citations: [
+      "FDA 21 CFR 73.30: Annatto extract has been permanently listed as a color additive exempt from certification since 1963 (Part 73, like other natural colors and unlike the FD&C synthetic dyes in Part 74). Sourced from the seeds of Bixa orellana L. via food-grade extractants (alkaline aqueous solution, alkaline propylene glycol, ethyl alcohol, or edible vegetable oils). Bixin is the principal pigment of oil-soluble extracts; norbixin is the principal pigment of alkaline water-soluble extracts. Heavy-metal specifications: arsenic not more than 3 ppm, lead not more than 10 ppm. Used in foods generally in amounts consistent with good manufacturing practice.",
+      "European Union: Annatto bixin and norbixin are authorized as food additives under Regulation (EC) No 1333/2008 Annex II, with purity criteria specified in Commission Regulation (EU) No 231/2012. Commission Regulation (EU) 2020/771 (June 11, 2020) split the previous combined E160b authorization into two separate additives: E160b(i) Annatto bixin and E160b(ii) Annatto norbixin, reflecting their different toxicological profiles and ADIs. Annatto is NOT subject to the EU mandatory child-warning label that applies to the Southampton Six synthetic colors.",
+      "EFSA Panel on Food Additives, 2016 and 2019: re-evaluation of annatto extracts (E160b) as a food additive, with 2019 follow-up exposure assessment (EFSA Journal 2019;17(3):5626). Established ADI of 6 mg bixin/kg bw per day and a separate ADI of 0.3 mg norbixin/kg bw per day, distinguishing the two pigments because of their different toxicological profiles. The 2017 exposure assessment found bixin exposure below the ADI for all population groups, with norbixin exposure approaching or exceeding the ADI only for toddlers at the 95th percentile under proposed extended uses. JECFA earlier established separate ADIs in 2006 (bixin 12 mg/kg bw, norbixin 0.6 mg/kg bw), revising the 1974 temporary group ADI of 1.25 mg/kg bw.",
+      "Allergy and sensitivity literature: norbixin acts as a hapten by binding to food proteins such as bovine kappa-casein and serum albumin, producing IgE-mediated reactions in sensitive individuals. Anaphylaxis case reports are documented (Nish et al. 1991, others), and in one challenge study 26% of patients with chronic urticaria or angioneurotic edema reacted to oral annatto provocation. Annatto is NOT among the FDA's major food allergens (Big Nine including sesame as of 2023) and is not subject to mandatory allergen labeling. Reactions are real but rare in the general population and well-characterized as IgE-mediated rather than systemic toxicity.",
+    ],
+    reasoning: "Annatto extract is a natural carotenoid colorant from the seeds of Bixa orellana, used for centuries in Latin American cuisine and now standard in cheddar cheese (annatto is what makes cheddar orange, not the cheese itself), butter, margarine, and various snack foods. This entry serves as the natural-color reference anchor in the calibration table: without a low-hazard natural colorant baseline, the food scorer would treat all colorants as equally concerning, conflating annatto with Red 40. The hazard score of 2 reflects six decades of FDA listing without revocation pressure, EFSA and JECFA affirmations with established ADIs, and an evidence base showing bixin actually has antioxidant and anti-genotoxic effects in some animal studies (no liver tumor promotion in the 2003 F344 rat medium-term bioassay). The score is not lower than 2 because IgE-mediated allergic reactions are real and documented, with anaphylaxis case reports on record and a 26% reaction rate in chronic urticaria patients orally provoked; this places annatto in the bounded-concern band rather than the inert band, even though it is far below the synthetic-dye band. The kid_score_floor of 3 reflects EFSA's finding that norbixin exposure can approach or exceed the ADI for toddlers at the 95th percentile under proposed extended uses, plus documented pediatric sensitivity cases. The pregnancy_score_floor of 2 matches the adult score because there is no pregnancy-specific concern in the EFSA or JECFA reviews and centuries of traditional use in Latin American cuisine include consumption during pregnancy without documented signals; the bounded allergy concern is the same in pregnancy as in non-pregnancy.",
+  },
 };
 
 function lookupIngredient(rawName) {
