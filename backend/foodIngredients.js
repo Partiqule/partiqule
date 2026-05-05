@@ -41,6 +41,27 @@
 // score in that mode cannot drop below the floor, even if NOVA banding
 // would otherwise place it lower.
 
+/**
+ * CALIBRATION ALIAS DISCIPLINE
+ *
+ * For each substance entry, the aliases array must include all common label
+ * variations the substance might appear under, including:
+ *   - Generic name (e.g., "red 40")
+ *   - Full FDA name where common (e.g., "FD&C Red No. 40")
+ *   - INCI/cosmetic name where different
+ *   - EU E-number variants (e.g., "e129", "e 129")
+ *   - INS code variants (e.g., "ins 129")
+ *   - Lake variants for color additives (e.g., "red 40 lake",
+ *     "red 40 aluminum lake", "fd&c red no. 40 lake") — lakes are the dye
+ *     precipitated onto aluminum substrate; same hazard profile, different
+ *     FDA listing under 21 CFR Part 74 subpart B
+ *   - Common label-prefix variants (e.g., "preservative e211", "color e110")
+ *
+ * This discipline ensures the engine matches real-world ingredient labels
+ * without per-engine normalization logic. The engine reads aliases verbatim;
+ * if a label variant isn't in aliases, the substance won't match.
+ */
+
 const FOOD_INGREDIENTS = {
   // Skeleton showing entry shape. Uncomment and modify when adding entries.
   // example_key: {
@@ -79,6 +100,10 @@ const FOOD_INGREDIENTS = {
       "allura red",
       "e129",
       "ci 16035",
+      "red 40 lake",
+      "red 40 aluminum lake",
+      "fd&c red no. 40 lake",
+      "fd&c red 40 lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 7,
@@ -108,6 +133,11 @@ const FOOD_INGREDIENTS = {
       "tartrazine",
       "e102",
       "ci 19140",
+      "yellow 5 lake",
+      "yellow 5 aluminum lake",
+      "fd&c yellow no. 5 lake",
+      "fd&c yellow 5 lake",
+      "tartrazine lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 7,
@@ -138,6 +168,11 @@ const FOOD_INGREDIENTS = {
       "sunset yellow",
       "e110",
       "ci 15985",
+      "yellow 6 lake",
+      "yellow 6 aluminum lake",
+      "fd&c yellow no. 6 lake",
+      "fd&c yellow 6 lake",
+      "sunset yellow lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 7,
@@ -168,6 +203,11 @@ const FOOD_INGREDIENTS = {
       "brilliant blue",
       "e133",
       "ci 42090",
+      "blue 1 lake",
+      "blue 1 aluminum lake",
+      "fd&c blue no. 1 lake",
+      "fd&c blue 1 lake",
+      "brilliant blue fcf lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 7,
@@ -198,6 +238,12 @@ const FOOD_INGREDIENTS = {
       "indigo carmine",
       "e132",
       "ci 73015",
+      "blue 2 lake",
+      "blue 2 aluminum lake",
+      "fd&c blue no. 2 lake",
+      "fd&c blue 2 lake",
+      "indigo carmine lake",
+      "indigotine lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 6,
@@ -228,6 +274,11 @@ const FOOD_INGREDIENTS = {
       "fast green",
       "e143",
       "ci 42053",
+      "green 3 lake",
+      "green 3 aluminum lake",
+      "fd&c green no. 3 lake",
+      "fd&c green 3 lake",
+      "fast green fcf lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 7,
@@ -258,6 +309,11 @@ const FOOD_INGREDIENTS = {
       "erythrosine b",
       "e127",
       "ci 45430",
+      "red 3 lake",
+      "red 3 aluminum lake",
+      "fd&c red no. 3 lake",
+      "fd&c red 3 lake",
+      "erythrosine lake",
     ],
     hazard_class: "artificial_color",
     base_hazard_score: 8,

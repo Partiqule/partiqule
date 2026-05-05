@@ -19,6 +19,7 @@ const {
   tier5CategoryPrior,
   dedupeInflight,
 } = require("./scoringCascade");
+const { scoreFood: scoreFoodEngine } = require("./foodScorer");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
   parseIngredients: parsePersonalCareIngredients,
@@ -7781,6 +7782,27 @@ app.post("/analyze", rateLimit, async (req, res) => {
         ? detectDeterministicFlags(ingredientText, resolvedCategory)
         : null;
 
+      // foodScorer Phase-1 shadow scoring. Runs synchronously in ~1ms.
+      // Result is logged for engine-vs-cascade comparison after cascade
+      // completes; not user-facing in Phase 1. See backend/foodScorer.js.
+      let engineResult = null;
+      try {
+        if (ingredientText && resolvedCategory) {
+          engineResult = scoreFoodEngine({
+            productName,
+            category: resolvedCategory,
+            ingredients: ingredientText,
+          });
+        }
+      } catch (e) {
+        console.warn(`[food_scorer] engine error: ${e.message}`);
+        engineResult = {
+          status: "engine_error",
+          error: e.message,
+          engine_latency_ms: 0,
+        };
+      }
+
       // Stream seam 1: cascade resolved → product is identified, ingredients
       // verified. Frontend renders the product card with an empty score badge.
       stream.emit("identified", {
@@ -8062,7 +8084,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         calibrated.child_score = kidsCalibrated.overall_score;
       }
 
-      return { tier, result: calibrated, skipCache: false };
+      return { tier, result: calibrated, skipCache: false, engineResult };
     });
 
     cascadeOutcome.result.scoring_path = "legacy_ai";
@@ -8074,7 +8096,57 @@ app.post("/analyze", rateLimit, async (req, res) => {
       console.log(`[CASCADE ${cascadeOutcome.tier}] ${key} — score ${cascadeOutcome.result.score}, not cached`);
     }
     await attachIntelCards(cascadeOutcome.result, userId);
-    stampFresh(cascadeOutcome.result, inputMode, "legacy_ai", requestStartMs);
+    try {
+      stampFresh(cascadeOutcome.result, inputMode, "legacy_ai", requestStartMs);
+    } catch (e) {
+      console.warn(`[stamp_fresh] error: ${e.message}`);
+    }
+
+    // foodScorer Phase-1 shadow log. Independent try/catch so a stamp_fresh
+    // or shadow-log error doesn't block the user-facing response. Skip
+    // out_of_scope (engine wasn't applicable) — we only want signal on
+    // cases where the engine produced or could have produced a score.
+    if (cascadeOutcome.engineResult &&
+        cascadeOutcome.engineResult.status !== "out_of_scope") {
+      try {
+        const er = cascadeOutcome.engineResult;
+        const shadowLog = {
+          event: "food_scorer_shadow",
+          product_name: productName,
+          category: cascadeOutcome.result?.category || null,
+          engine_status: er.status,
+          engine_score: er.score,
+          engine_latency_ms: er.engine_latency_ms,
+          cascade_score: cascadeOutcome.result?.score,
+          cascade_latency_ms: Date.now() - requestStartMs,
+          delta: (er.score != null && cascadeOutcome.result?.score != null)
+            ? er.score - cascadeOutcome.result.score
+            : null,
+          matched_count: er.matched_ingredients?.length ?? 0,
+          unmatched_count: er.unmatched_ingredients?.length ?? 0,
+        };
+
+        if (er.status === "scored") {
+          shadowLog.top_match_name = er.top_match_name;
+          shadowLog.top_match_score = er.top_match_score;
+          shadowLog.matched_keys = er.matched_keys;
+          shadowLog.calculation_notes = er.breakdown?.calculation_notes;
+        }
+
+        if (er.unmatched_ingredients?.length > 0) {
+          shadowLog.unmatched_ingredients = er.unmatched_ingredients;
+        }
+
+        if (er.status === "insufficient_coverage") {
+          shadowLog.total_weight = er.total_weight;
+        }
+
+        console.log(JSON.stringify(shadowLog));
+      } catch (e) {
+        console.warn(`[shadow_log] error: ${e.message}`);
+      }
+    }
+
     stream.complete(cascadeOutcome.result);
 
   } catch (err) {
