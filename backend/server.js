@@ -7125,6 +7125,27 @@ app.post("/analyze", rateLimit, async (req, res) => {
         tier: cascadeHit.tier,
       });
 
+      // foodScorer Phase-1 shadow scoring (image-V2 path). Symmetric to
+      // text cascade integration — runs synchronously in ~1ms, result
+      // logged after cascade completes; not user-facing in Phase 1.
+      let engineResult = null;
+      try {
+        if (ingredientText && visionCat) {
+          engineResult = scoreFoodEngine({
+            productName,
+            category: visionCat,
+            ingredients: ingredientText,
+          });
+        }
+      } catch (e) {
+        console.warn(`[food_scorer] engine error: ${e.message}`);
+        engineResult = {
+          status: "engine_error",
+          error: e.message,
+          engine_latency_ms: 0,
+        };
+      }
+
       // Pass 1 with verified ingredients as materialContext.
       const contextBlock = `INGREDIENT SOURCE: ${ingredientSourceField}\nFULL INGREDIENT LIST: ${ingredientText}\nThese ingredients come from ${sourceLabelFinal}. Score based on these ingredients, not on training priors.`;
       const p1 = await pass1(productName, contextBlock, visionCat, null);
@@ -7267,7 +7288,57 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const imgKey = cacheKey(productName, visionCat);
       cacheSet(imgKey, calibrated);
       await attachIntelCards(calibrated, userId);
-      stampFresh(calibrated, inputMode, "legacy_ai", requestStartMs);
+      try {
+        stampFresh(calibrated, inputMode, "legacy_ai", requestStartMs);
+      } catch (e) {
+        console.warn(`[stamp_fresh] error: ${e.message}`);
+      }
+
+      // foodScorer Phase-1 shadow log (image-V2 path). Independent
+      // try/catch so a stamp_fresh or shadow-log error doesn't block the
+      // user-facing response. Skip out_of_scope (engine wasn't applicable).
+      if (engineResult && engineResult.status !== "out_of_scope") {
+        try {
+          const er = engineResult;
+          const shadowLog = {
+            event: "food_scorer_shadow",
+            product_name: productName,
+            category: visionCat,
+            input_mode: inputMode,
+            ingredient_source: useLabelAsSource ? "label_ocr" : "cascade_resolved",
+            engine_status: er.status,
+            engine_score: er.score,
+            engine_latency_ms: er.engine_latency_ms,
+            cascade_score: calibrated?.score,
+            cascade_latency_ms: Date.now() - requestStartMs,
+            delta: (er.score != null && calibrated?.score != null)
+              ? er.score - calibrated.score
+              : null,
+            matched_count: er.matched_ingredients?.length ?? 0,
+            unmatched_count: er.unmatched_ingredients?.length ?? 0,
+          };
+
+          if (er.status === "scored") {
+            shadowLog.top_match_name = er.top_match_name;
+            shadowLog.top_match_score = er.top_match_score;
+            shadowLog.matched_keys = er.matched_keys;
+            shadowLog.calculation_notes = er.breakdown?.calculation_notes;
+          }
+
+          if (er.unmatched_ingredients?.length > 0) {
+            shadowLog.unmatched_ingredients = er.unmatched_ingredients;
+          }
+
+          if (er.status === "insufficient_coverage") {
+            shadowLog.total_weight = er.total_weight;
+          }
+
+          console.log(JSON.stringify(shadowLog));
+        } catch (e) {
+          console.warn(`[shadow_log] error: ${e.message}`);
+        }
+      }
+
       return stream.complete(calibrated);
     } catch (err) {
       console.error("[vision_v2] error:", err);
@@ -8114,6 +8185,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
           event: "food_scorer_shadow",
           product_name: productName,
           category: cascadeOutcome.result?.category || null,
+          input_mode: inputMode,
+          ingredient_source: "cascade_resolved",
           engine_status: er.status,
           engine_score: er.score,
           engine_latency_ms: er.engine_latency_ms,
