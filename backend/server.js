@@ -6531,7 +6531,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       if (!cascadeHit) {
-        const nameKey = cacheKey(cascadeQuery, visionCat);
+        const nameKey = cacheKey(productName, visionCat);
         const nCached = await cacheGet(nameKey);
         if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
