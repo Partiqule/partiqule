@@ -1601,21 +1601,21 @@ const CHILD_FOOD_BRANDS = /froot loops|fruit loops|lucky charms|cocoa puffs|coun
 
 // Substances with specific child developmental concerns — higher weight than adult scoring
 const CHILD_CONCERN_SUBSTANCES = [
-  { match: /Red\s*40|Yellow\s*5|Yellow\s*6|Blue\s*1|Blue\s*2|titanium dioxide|petroleum dye|artificial.*color(?! from| derived from| of fruit| of vegetable)|artificial.*dye(?! from| of)/i, bump: 2, reason: "Petroleum dyes linked to childhood ADHD and hyperactivity (McCann et al., Lancet 2007) — children are uniquely vulnerable" },
-  { match: /glyphosate/i,                          bump: 1, reason: "EWG child-specific glyphosate threshold is lower than adult — body weight adjustment means children receive higher effective dose" },
-  { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i,        bump: 2, reason: "PFAS disrupts immune and hormone development in children — CDC flagged as priority child health concern" },
-  { match: /phthalate|DEHP|DBP/i,                  bump: 2, reason: "Phthalates disrupt reproductive development — most critical during early childhood (Swan 2021)" },
-  { match: /flame retardant|PBDE|TCEP|TDCPP/i,     bump: 2, reason: "Flame retardant neurotoxicity disproportionately affects developing brains (Stapleton 2011)" },
+  { match: /\bRed\s*40\b|\bYellow\s*5\b|\bYellow\s*6\b|\bBlue\s*1\b|\bBlue\s*2\b|\btitanium dioxide\b|\bpetroleum dye\b/i, bump: 2, reason: "Petroleum dyes linked to childhood ADHD and hyperactivity (McCann et al., Lancet 2007) — children are uniquely vulnerable" },
+  { match: /\bglyphosate\b/i,                      bump: 1, reason: "EWG child-specific glyphosate threshold is lower than adult — body weight adjustment means children receive higher effective dose" },
+  { match: /\bPFAS\b|\bPFOA\b|\bPFOS\b|perfluoro/i, bump: 2, reason: "PFAS disrupts immune and hormone development in children — CDC flagged as priority child health concern" },
+  { match: /\bphthalate\b|\bDEHP\b|\bDBP\b/i,      bump: 2, reason: "Phthalates disrupt reproductive development — most critical during early childhood (Swan 2021)" },
+  { match: /flame retardant|\bPBDE\b|\bTCEP\b|\bTDCPP\b/i, bump: 2, reason: "Flame retardant neurotoxicity disproportionately affects developing brains (Stapleton 2011)" },
   { match: /synthetic fragrance|artificial fragrance|fragrance.*parfum|\bparfum\b/i, bump: 2, reason: "Undisclosed fragrance chemicals include phthalates and VOCs — children's developing endocrine systems are more sensitive and skin absorption is 2-3x higher than adults" },
   { match: /formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea/i, bump: 2, reason: "Formaldehyde and formaldehyde-releasing preservatives — carcinogen with heightened concern for developing respiratory systems in children" },
-  { match: /parabens?|methylparaben|propylparaben|butylparaben/i, bump: 1, reason: "Parabens — endocrine disruption concern, developing hormonal systems more vulnerable" },
+  { match: /\bparabens?\b|\bmethylparaben\b|\bpropylparaben\b|\bbutylparaben\b/i, bump: 1, reason: "Parabens — endocrine disruption concern, developing hormonal systems more vulnerable" },
   { match: /oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate|octocrylene/i, bump: 2, reason: "Chemical UV filters — confirmed transdermal absorption with hormonal activity. Children's body weight and 2-3x absorption rate amplify exposure (Matta JAMA 2019)" },
-  { match: /bisphenol|BPA|BPS/i,                   bump: 2, reason: "BPA/BPS endocrine disruption most harmful during developmental windows in childhood" },
-  { match: /chlorine.*bleach|chlorine.*pulp|dioxin/i, bump: 1, reason: "Chlorine bleaching byproducts (dioxins) have child-specific developmental endpoints" },
+  { match: /\bbisphenol\b|\bBPA\b|\bBPS\b/i,       bump: 2, reason: "BPA/BPS endocrine disruption most harmful during developmental windows in childhood" },
+  { match: /chlorine.*bleach|chlorine.*pulp|\bdioxin\b/i, bump: 1, reason: "Chlorine bleaching byproducts (dioxins) have child-specific developmental endpoints" },
   { match: /polypropylene.*liner|polyester.*skin|synthetic.*liner/i, bump: 1, reason: "Synthetic materials in direct contact with sensitive baby skin — higher absorption rate" },
   // Clothing/home specific
   { match: /azo dye|azo.*color|disperse.*dye|reactive.*dye/i, bump: 2, reason: "Azo dyes can release carcinogenic aromatic amines — banned in EU for skin-contact textiles. Children's skin absorbs at 2-3x adult rate" },
-  { match: /DWR|water.*repellent|stain.*resist|C8|C6 fluorocarbon/i, bump: 1, reason: "Durable water repellent (DWR) treatments often contain PFAS — persistent in body and environment, endocrine disruption concern for children" },
+  { match: /\bDWR\b|water.*repellent|stain.*resist|C6 fluorocarbon/i, bump: 1, reason: "Durable water repellent (DWR) treatments often contain PFAS — persistent in body and environment, endocrine disruption concern for children" },
   // Candle/home air quality specific
   { match: /paraffin|petroleum wax|mineral.*wax/i,  bump: 1, reason: "Paraffin wax combustion releases VOCs including benzene and toluene — children's developing lungs more vulnerable to airborne toxicants" },
   { match: /synthetic.*fragrance.*candle|fragrance.*oil.*candle|candle.*parfum/i, bump: 2, reason: "Synthetic fragrance in candles releases VOCs when burned — children's lungs are more permeable and developing nervous systems more sensitive to VOC exposure" },
@@ -1719,25 +1719,25 @@ const PREGNANCY_CONCERN_SUBSTANCES = [
   // Moderate mercury
   { match: /albacore tuna|yellowfin tuna|white tuna/i, bump: 1, reason: "Moderate mercury — FDA recommends limiting albacore tuna to 1 serving per week during pregnancy" },
   // Hydroquinone
-  { match: /hydroquinone/i, bump: 2, reason: "Hydroquinone has 35-45% systemic absorption through skin — safety in pregnancy not established. Many countries restrict use during pregnancy" },
+  { match: /\bhydroquinone\b/i, bump: 2, reason: "Hydroquinone has 35-45% systemic absorption through skin — safety in pregnancy not established. Many countries restrict use during pregnancy" },
   // Toluene
   { match: /\btoluene\b/i, bump: 2, reason: "Toluene causes fetal solvent syndrome at high exposures — nail salon workers show elevated miscarriage risk. Avoid during pregnancy (OTIS 2012)" },
   // Formaldehyde and releasers
   { match: /formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea/i, bump: 2, reason: "Formaldehyde is a known carcinogen and developmental toxicant — linked to adverse pregnancy outcomes at occupational exposures" },
   // BPA/BPS/BPF
-  { match: /bisphenol|BPA|BPS|BPF/i, bump: 2, reason: "Bisphenol A disrupts estrogen signaling — most critical during fetal development. Associated with altered birth weight and early puberty (Braun 2017)" },
+  { match: /\bbisphenol\b|\bBPA\b|\bBPS\b|\bBPF\b/i, bump: 2, reason: "Bisphenol A disrupts estrogen signaling — most critical during fetal development. Associated with altered birth weight and early puberty (Braun 2017)" },
   // Phthalates
-  { match: /phthalate|DEHP|DBP|DEP|DnBP/i, bump: 2, reason: "Phthalates are anti-androgenic — prenatal exposure linked to altered genital development in male infants (Swan 2005, Environmental Health Perspectives)" },
+  { match: /\bphthalate\b|\bDEHP\b|\bDBP\b|\bDEP\b|\bDnBP\b/i, bump: 2, reason: "Phthalates are anti-androgenic — prenatal exposure linked to altered genital development in male infants (Swan 2005, Environmental Health Perspectives)" },
   // PFAS
-  { match: /\bPFAS\b|PFOA|PFOS|perfluoro/i, bump: 2, reason: "PFAS crosses the placenta — associated with reduced birth weight, immune disruption, and altered thyroid function in newborns (Grandjean 2020)" },
+  { match: /\bPFAS\b|\bPFOA\b|\bPFOS\b|perfluoro/i, bump: 2, reason: "PFAS crosses the placenta — associated with reduced birth weight, immune disruption, and altered thyroid function in newborns (Grandjean 2020)" },
   // Chemical UV filters
   { match: /oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate/i, bump: 1, reason: "Chemical UV filters detected in cord blood and breast milk — oxybenzone shows hormonal activity in vitro. FDA requested more safety data in 2019" },
   // Parabens
-  { match: /parabens?|methylparaben|propylparaben|butylparaben|ethylparaben/i, bump: 1, reason: "Parabens mimic estrogen and have been detected in cord blood — endocrine disruption concern during fetal development" },
+  { match: /\bparabens?\b|\bmethylparaben\b|\bpropylparaben\b|\bbutylparaben\b|\bethylparaben\b/i, bump: 1, reason: "Parabens mimic estrogen and have been detected in cord blood — endocrine disruption concern during fetal development" },
   // Nitrites/nitrates
   { match: /sodium nitrite|sodium nitrate|cured meat|processed meat.*nitrite/i, bump: 1, reason: "Nitrites form nitrosamines — WHO recommends limiting processed meat with nitrites during pregnancy" },
   // Caffeine
-  { match: /caffeine|guarana|kola nut/i, bump: 1, reason: "Caffeine crosses the placenta — ACOG recommends under 200mg/day. High intake associated with restricted fetal growth (Chen 2012)" },
+  { match: /\bcaffeine\b|\bguarana\b|kola nut/i, bump: 1, reason: "Caffeine crosses the placenta — ACOG recommends under 200mg/day. High intake associated with restricted fetal growth (Chen 2012)" },
   // Contraindicated herbs
   { match: /dong quai|black cohosh|blue cohosh|pennyroyal|tansy|wormwood|mugwort|sassafras/i, bump: 3, reason: "Contraindicated herbs during pregnancy — can stimulate uterine contractions or cause miscarriage (Natural Medicines Comprehensive Database)" },
   // Synthetic fragrance
@@ -1745,11 +1745,11 @@ const PREGNANCY_CONCERN_SUBSTANCES = [
   // Salicylic acid
   { match: /salicylic acid/i, bump: 1, reason: "High-dose or large-area topical salicylic acid linked to complications — most dermatologists recommend avoiding in first trimester" },
   // Listeria-risk foods
-  { match: /unpasteurized|raw milk|soft cheese|brie\b|camembert|raw sprouts|raw.*fish|sashimi|smoked salmon|\blox\b|deli meat/i, bump: 2, reason: "Listeria risk — listeriosis during pregnancy can cause miscarriage, stillbirth, or severe newborn illness. FDA advises avoiding these foods" },
+  { match: /unpasteurized|raw milk|soft cheese|brie\b|\bcamembert\b|raw sprouts|raw.*fish|\bsashimi\b|smoked salmon|\blox\b|deli meat/i, bump: 2, reason: "Listeria risk — listeriosis during pregnancy can cause miscarriage, stillbirth, or severe newborn illness. FDA advises avoiding these foods" },
   // Artificial sweeteners
   { match: /\bsaccharin\b|aspartame|acesulfame/i, bump: 1, reason: "Artificial sweeteners cross the placenta — emerging evidence of altered gut microbiome in offspring. ACOG advises moderation (Azad 2016)" },
   // Spray self-tanners
-  { match: /dihydroxyacetone|DHA.*self.?tan|self.?tan.*DHA/i, bump: 1, reason: "DHA in spray self-tanners may be inhaled — inhalation safety during pregnancy not established. Topical application is considered lower risk" },
+  { match: /\bdihydroxyacetone\b|\bDHA\b.*self.?tan|self.?tan.*\bDHA\b/i, bump: 1, reason: "DHA in spray self-tanners may be inhaled — inhalation safety during pregnancy not established. Topical application is considered lower risk" },
 ];
 
 function computePregnancyScore(baseScore, concernsText, category, productName) {
