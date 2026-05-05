@@ -1615,8 +1615,16 @@ const CHILD_CONCERN_SUBSTANCES = [
   { match: /paraffin|petroleum wax|mineral.*wax/i,  bump: 1, reason: "Paraffin wax combustion releases VOCs including benzene and toluene — children's developing lungs more vulnerable to airborne toxicants" },
   { match: /synthetic.*fragrance.*candle|fragrance.*oil.*candle|candle.*parfum/i, bump: 2, reason: "Synthetic fragrance in candles releases VOCs when burned — children's lungs are more permeable and developing nervous systems more sensitive to VOC exposure" },
   { match: /lead.*wick|metal.*wick/i,               bump: 3, reason: "Lead core wicks banned in US since 2003 — if present, lead combustion poses severe neurotoxicity risk. Child IQ impacts documented at very low blood lead levels" },
-  // Neurotoxicity class — EWG-inspired
-  { match: /toluene|xylene|benzene|styrene/i,       bump: 2, reason: "Neurotoxic solvent — children's developing brains are uniquely vulnerable. EPA classifies benzene as known human carcinogen" },
+  // Neurotoxicity class — split per substance to ensure correct attribution.
+  // "styrene" removed: false-positive matches against polymer names (polystyrene,
+  // acrylonitrile butadiene styrene, styrene-butadiene rubber). Polymerized styrene
+  // in finished consumer products does not pose the acute exposure risk that free
+  // styrene monomer does, and the rare cases of free monomer are captured by other
+  // rules. Word boundaries on remaining substances prevent substring collision
+  // with compound chemical names.
+  { match: /\bbenzene\b/i,  bump: 2, reason: "Benzene exposure — IARC Group 1 carcinogen with no safe threshold. Children's developing organ systems are uniquely vulnerable" },
+  { match: /\btoluene\b/i,  bump: 2, reason: "Toluene exposure — neurotoxic solvent associated with developmental delays. Children's developing nervous systems are uniquely vulnerable (EPA IRIS)" },
+  { match: /\bxylene\b/i,   bump: 2, reason: "Xylene exposure — neurotoxic solvent. Children's developing nervous systems are uniquely vulnerable" },
   { match: /1,4-dioxane|ethylene oxide/i,           bump: 2, reason: "1,4-dioxane is a probable carcinogen found as a contaminant in SLES/PEG ingredients — children's lower body weight means higher effective dose" },
   // High added sugar — children's DV is half adults', and early sugar patterns drive lifelong metabolic outcomes
   { match: /high added sugar|>20g added sugar|>15g added sugar|extreme added sugar|sugar.*exceeds.*daily/i, bump: 1, reason: "Added sugar: children's recommended daily limit is 25g (half adult DV) — early high-sugar dietary patterns linked to metabolic and developmental outcomes" },
