@@ -6536,7 +6536,76 @@ app.post("/analyze", rateLimit, async (req, res) => {
         if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
           await attachIntelCards(nCached, userId);
-          stampCacheHit(nCached, inputMode, requestStartMs);
+          try {
+            stampCacheHit(nCached, inputMode, requestStartMs);
+          } catch (e) {
+            console.warn(`[stamp_cache_hit] error: ${e.message}`);
+          }
+
+          // foodScorer Phase-1 shadow scoring (image-V2 cache-hit path).
+          // Engine fires post-cascade against the cached ingredient list.
+          // ingredient_source preserves the original cached ingredient origin
+          // (label_ocr if vision had read the label directly when first cached).
+          let engineResult = null;
+          try {
+            const ingredientText = Array.isArray(nCached.ingredient_list)
+              ? nCached.ingredient_list.join(", ")
+              : (typeof nCached.ingredient_list === "string" ? nCached.ingredient_list : null);
+            if (ingredientText && (nCached.category || visionCat)) {
+              engineResult = scoreFoodEngine({
+                productName,
+                category: nCached.category || visionCat,
+                ingredients: ingredientText,
+              });
+            }
+          } catch (e) {
+            console.warn(`[food_scorer] engine error: ${e.message}`);
+            engineResult = { status: "engine_error", error: e.message, engine_latency_ms: 0 };
+          }
+
+          if (engineResult && engineResult.status !== "out_of_scope") {
+            try {
+              const er = engineResult;
+              const shadowLog = {
+                event: "food_scorer_shadow",
+                product_name: productName,
+                category: nCached.category || visionCat,
+                input_mode: inputMode,
+                ingredient_source: nCached.ingredient_source === "label_ocr" ? "label_ocr" : "cascade_resolved",
+                engine_execution: "post_cascade",
+                engine_status: er.status,
+                engine_score: er.score,
+                engine_latency_ms: er.engine_latency_ms,
+                cascade_score: nCached.score,
+                cascade_latency_ms: Date.now() - requestStartMs,
+                delta: (er.score != null && nCached.score != null)
+                  ? er.score - nCached.score
+                  : null,
+                matched_count: er.matched_ingredients?.length ?? 0,
+                unmatched_count: er.unmatched_ingredients?.length ?? 0,
+              };
+
+              if (er.status === "scored") {
+                shadowLog.top_match_name = er.top_match_name;
+                shadowLog.top_match_score = er.top_match_score;
+                shadowLog.matched_keys = er.matched_keys;
+                shadowLog.calculation_notes = er.breakdown?.calculation_notes;
+              }
+
+              if (er.unmatched_ingredients?.length > 0) {
+                shadowLog.unmatched_ingredients = er.unmatched_ingredients;
+              }
+
+              if (er.status === "insufficient_coverage") {
+                shadowLog.total_weight = er.total_weight;
+              }
+
+              console.log(JSON.stringify(shadowLog));
+            } catch (e) {
+              console.warn(`[shadow_log] error: ${e.message}`);
+            }
+          }
+
           return stream.complete({ ...nCached, cached: true });
         }
       }
@@ -7306,6 +7375,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
             category: visionCat,
             input_mode: inputMode,
             ingredient_source: useLabelAsSource ? "label_ocr" : "cascade_resolved",
+            engine_execution: "parallel",
             engine_status: er.status,
             engine_score: er.score,
             engine_latency_ms: er.engine_latency_ms,
@@ -7648,7 +7718,76 @@ app.post("/analyze", rateLimit, async (req, res) => {
       skipFuzzyCalibration = true; // bypass fuzzy cal this once so AI enriches the result
     } else {
       console.log(`[CACHE HIT] ${key} (${scoreCache.size} in memory${hasRedis?" + Redis":""})`);
-      stampCacheHit(cached, inputMode, requestStartMs);
+      try {
+        stampCacheHit(cached, inputMode, requestStartMs);
+      } catch (e) {
+        console.warn(`[stamp_cache_hit] error: ${e.message}`);
+      }
+
+      // foodScorer Phase-1 shadow scoring (text cache-hit path).
+      // Engine fires post-cascade against the cached ingredient list.
+      // engine_execution: "post_cascade" distinguishes this from the
+      // parallel-execution emits in fresh-cascade paths.
+      let engineResult = null;
+      try {
+        const ingredientText = Array.isArray(cached.ingredient_list)
+          ? cached.ingredient_list.join(", ")
+          : (typeof cached.ingredient_list === "string" ? cached.ingredient_list : null);
+        if (ingredientText && cached.category) {
+          engineResult = scoreFoodEngine({
+            productName,
+            category: cached.category,
+            ingredients: ingredientText,
+          });
+        }
+      } catch (e) {
+        console.warn(`[food_scorer] engine error: ${e.message}`);
+        engineResult = { status: "engine_error", error: e.message, engine_latency_ms: 0 };
+      }
+
+      if (engineResult && engineResult.status !== "out_of_scope") {
+        try {
+          const er = engineResult;
+          const shadowLog = {
+            event: "food_scorer_shadow",
+            product_name: productName,
+            category: cached.category || null,
+            input_mode: inputMode,
+            ingredient_source: "cascade_resolved",
+            engine_execution: "post_cascade",
+            engine_status: er.status,
+            engine_score: er.score,
+            engine_latency_ms: er.engine_latency_ms,
+            cascade_score: cached.score,
+            cascade_latency_ms: Date.now() - requestStartMs,
+            delta: (er.score != null && cached.score != null)
+              ? er.score - cached.score
+              : null,
+            matched_count: er.matched_ingredients?.length ?? 0,
+            unmatched_count: er.unmatched_ingredients?.length ?? 0,
+          };
+
+          if (er.status === "scored") {
+            shadowLog.top_match_name = er.top_match_name;
+            shadowLog.top_match_score = er.top_match_score;
+            shadowLog.matched_keys = er.matched_keys;
+            shadowLog.calculation_notes = er.breakdown?.calculation_notes;
+          }
+
+          if (er.unmatched_ingredients?.length > 0) {
+            shadowLog.unmatched_ingredients = er.unmatched_ingredients;
+          }
+
+          if (er.status === "insufficient_coverage") {
+            shadowLog.total_weight = er.total_weight;
+          }
+
+          console.log(JSON.stringify(shadowLog));
+        } catch (e) {
+          console.warn(`[shadow_log] error: ${e.message}`);
+        }
+      }
+
       return stream.complete({ ...cached, cached: true });
     }
   }
@@ -8187,6 +8326,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           category: cascadeOutcome.result?.category || null,
           input_mode: inputMode,
           ingredient_source: "cascade_resolved",
+          engine_execution: "parallel",
           engine_status: er.status,
           engine_score: er.score,
           engine_latency_ms: er.engine_latency_ms,
