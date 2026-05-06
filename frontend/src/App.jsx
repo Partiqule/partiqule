@@ -10427,7 +10427,7 @@ function App() {
                 <div style={{flex:1, height:1, background:"#e5e7eb"}}/>
               </div>
               <div style={{display:"flex", gap:8}}>
-                <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Tide Pods..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
+                <input value={modalQuery} onChange={e=>setModalQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} placeholder="e.g. Honey Nut Cheerios, Coppertone sunscreen..." style={{flex:1, padding:"10px 14px", borderRadius:10, border:`1px solid ${border}`, background:"#f9fafb", color:text, fontSize:14, outline:"none"}}/>
                 <button onClick={()=>{if(modalQuery.trim()){setScanSheetOpen(false);setQuery(modalQuery);analyze(modalQuery);setModalQuery("");}}} style={{padding:"10px 16px", borderRadius:"var(--cta-shape)", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer"}}>Search</button>
               </div>
             </div>
