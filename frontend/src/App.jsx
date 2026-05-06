@@ -8180,7 +8180,7 @@ function App() {
                 letterSpacing:"-0.005em",
                 animation:"heroReveal 0.6s ease 0.35s both",
               }}>
-                {isMobile ? "Understand what's in your products before it affects your health." : "Understand the chemical reality of every product in your home, before it affects your health."}
+                {isMobile ? "Understand what's in your home, before it affects your family's health." : "Know what's in every product in your home, before it affects your family's health."}
               </p>
             </div>
           </section>
