@@ -6609,7 +6609,8 @@ function App() {
     return "web";
   };
 
-  const saveToCloud = async (item, userId) => {
+  const saveToCloud = async (item, userId, opts = {}) => {
+    const owned = opts.owned !== false;
     try {
       const { error } = await supabase.from("scans").upsert({
         user_id:      userId,
@@ -6639,6 +6640,7 @@ function App() {
           original_scoring_path: item.original_scoring_path ?? null,
           latency_ms:            item.latency_ms            ?? null,
         },
+        owned,
         scanned_at:   new Date().toISOString(),
       }, { onConflict: "user_id,product_name" });
       if (error) console.warn("Cloud sync failed:", error.message);
