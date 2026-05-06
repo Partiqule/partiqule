@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partiqule Home Dashboard — Implementation Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E5;
+    --cream-deep: #EFE8D8;
+    --forest: #2D4A2A;
+    --forest-bright: #3D6B3A;
+    --orange: #C47A3D;
+    --orange-warm: #B86A2E;
+    --red: #A23E2E;
+    --highlight: #E8D4BC;
+    --ink: #2A2520;
+    --ink-soft: #6B6258;
+    --rule: #D9D0BD;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--cream);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+  }
+  .doc-eyebrow {
+    font-size: 11px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--forest);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Lora', serif;
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+    color: var(--ink);
+    margin-bottom: 18px;
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+    max-width: 600px;
+  }
+  h2 {
+    font-family: 'Lora', serif;
+    font-weight: 500;
+    font-size: 28px;
+    color: var(--ink);
+    letter-spacing: -0.4px;
+    margin-top: 48px;
+    margin-bottom: 14px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+  h2:first-of-type { padding-top: 0; border-top: none; }
+  h3 {
+    font-family: 'Lora', serif;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--ink);
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  h4 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--forest);
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  p { margin-bottom: 14px; font-size: 15px; }
+  ul, ol { margin-bottom: 14px; padding-left: 22px; font-size: 15px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; color: var(--ink); }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--cream-deep);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--forest);
+  }
+  pre {
+    background: var(--cream-deep);
+    padding: 16px 18px;
+    border-radius: 10px;
+    border-left: 3px solid var(--forest);
+    margin: 14px 0;
+    overflow-x: auto;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .track {
+    background: rgba(255,255,255,0.4);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin: 18px 0;
+  }
+  .track-num {
+    display: inline-block;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .track-num.optional { background: var(--orange); }
+  .track h3 { margin-top: 0; }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px 18px;
+    font-size: 13px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+  }
+  .meta-label {
+    color: var(--ink-soft);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-size: 11px;
+  }
+  .meta-value { color: var(--ink); }
+  .callout {
+    background: var(--highlight);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 18px 0;
+    font-size: 14px;
+  }
+  .callout strong { color: var(--ink); }
+  .voice-rules {
+    background: var(--cream-deep);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .voice-rules ul { margin-bottom: 0; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 32px 0;
+  }
+  .footer-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="doc-eyebrow">Implementation spec</div>
+<h1>Partiqule home dashboard</h1>
+<p class="lede">Replace the home page with a dashboard that answers one question: what's in my home, and what do I do about it. Reference design is in <code>dashboard-mock-v8.html</code>. Read <code>CLAUDE.md</code> before any code changes.</p>
+
+<h2>Context</h2>
+
+<p>The current home is scan-first: a big "What are you looking at?" card with a recent scans carousel underneath. The scan affordance is duplicated in the bottom nav FAB, and the carousel doesn't earn its space. The new home commits to discovery and intel as the primary intent. Action surfaces inside intel rather than alongside it.</p>
+
+<p>The single biggest data-layer change is treating <strong>ownership</strong> as its own state. Right now scanning and owning are conflated, so home metrics get skewed by store-aisle scans the user never bought. Every metric on the new home assumes owned-only filtering.</p>
+
+<div class="callout">
+  <strong>Reference file:</strong> Save <code>dashboard-mock-v8.html</code> somewhere in the repo (suggested: <code>docs/dashboard-mock-v8.html</code>). Use it as the source of truth for visual decisions, color tokens, type sizes, and spacing.
+</div>
+
+<h2>Working rules</h2>
+
+<ul>
+  <li>One track per session. Do not bundle.</li>
+  <li>Read <code>CLAUDE.md</code> first. Honor blast-radius rules on <code>App.jsx</code>, <code>server.js</code>, <code>calibration.js</code>.</li>
+  <li>Surgical patches only. No full-file overwrites mid-session.</li>
+  <li>Plan before edit. Show diffs before applying.</li>
+  <li>Pre-push: <code>npm run build && npm run preview</code> browser verification on any frontend change.</li>
+  <li>Commit messages plain English, no special characters or em dashes.</li>
+  <li>Backend changes on Railway reach users immediately. Frontend changes via Capacitor bundled mode require App Store resubmission.</li>
+</ul>
+
+<h2>Strategic prerequisite</h2>
+
+<p>The dashboard surfaces findings about a user's owned items. Findings depend on calibration coverage. Today's calibration covers colors (Bucket 1), preservatives (Bucket 2), and the start of sweeteners (Bucket 3). Three of the four planned home-finding categories require calibration that does not yet exist.</p>
+
+<div class="callout">
+  <strong>Sequencing principle:</strong> Calibration buildout precedes dashboard implementation. The dashboard ships when its findings can be evidence-backed, not before.
+</div>
+
+<h3>Findings calibration map</h3>
+
+<p>What each home finding requires from calibration:</p>
+
+<ul>
+  <li><strong>Banned in other countries</strong>: supported by current calibration. Yellow 5 and 6 EU labeling, Red 3 international restrictions, sulfites EFSA ADI withdrawal, BHA Federal Register active reassessment all map to this finding category. Ready to ship today.</li>
+  <li><strong>Highly processed foods</strong>: requires Bucket 6 (NOVA markers). Today's NOVA inference exists in cascade but is not engine-deterministic. Calibration entries needed for enriched flour markers, isolated proteins, modified starches, processing-aid signals.</li>
+  <li><strong>Hormone disruption</strong>: requires new bucket for endocrine-active substances. PFAS class, paraben class, oxybenzone, octinoxate, BPA. Currently zero calibration entries.</li>
+  <li><strong>Fertility risks</strong>: requires phthalate class (DEHP, DBP, DEP), BPA, certain pesticide entries. Currently zero calibration entries.</li>
+</ul>
+
+<h3>Sequencing decision: Path A</h3>
+
+<p>Calibration buildout precedes dashboard tracks 4 and 5. The dashboard ships when all four finding categories can be evidence-backed.</p>
+
+<ol>
+  <li>Complete Bucket 3 sweeteners (5 remaining entries: sucralose, acesulfame potassium, saccharin, stevia, erythritol)</li>
+  <li>Bucket 4 emulsifiers and processing aids (lecithin, EDTA, polysorbates, mono- and diglycerides)</li>
+  <li>Bucket 6 NOVA markers (enriched flour family, isolated proteins, modified starches, gum-class entries)</li>
+  <li>New bucket for endocrine-active substances (PFAS class, paraben class, oxybenzone, octinoxate, BPA, phthalate class)</li>
+  <li>Then proceed with dashboard Tracks 1 through 5 in order</li>
+</ol>
+
+<p>Tracks 1 and 2 (rename and ownership state) can ship in parallel with calibration buildout since they do not depend on findings coverage. Tracks 3 through 5 hold until calibration prerequisites complete.</p>
+
+<h2>Tracks</h2>
+
+<p>Five tracks, recommended in this order. Tracks 1 and 2 are quick wins that can ship in parallel with ongoing calibration buildout. Track 3 is the data foundation. Tracks 4 and 5 are the visible payoff and require calibration prerequisites complete.</p>
+
+<div class="track">
+<span class="track-num">Track 1</span>
+<h3>Rename "shelf" to "home" in user-facing copy</h3>
+<p>Smallest, lowest risk. Ship first to validate the language change with users before larger work.</p>
+
+<h4>Scope</h4>
+<ul>
+  <li>Bottom nav: <code>SHELF</code> tab label becomes <code>ITEMS</code>. The route stays the same. Icon stays the same.</li>
+  <li>Scan flow: the "Add to shelf" CTA becomes "Add to home".</li>
+  <li>Search <code>frontend/src/App.jsx</code> for any other "shelf" string in user-facing copy. Replace each with the appropriate "home" or "items in your home" phrasing. Keep CSS class names containing "shelf" untouched (internal only).</li>
+  <li>Screen titles: "Your shelf" becomes "Items in your home".</li>
+  <li>Empty states: rewrite any "your shelf is empty" copy to "no items yet".</li>
+</ul>
+
+<h4>Acceptance</h4>
+<ul>
+  <li>No user-visible "shelf" string remains anywhere in the app.</li>
+  <li>All routes and component names continue to work.</li>
+  <li>Build passes. Preview shows correct labels.</li>
+</ul>
+<div class="meta-grid">
+  <div class="meta-label">Files</div>
+  <div class="meta-value"><code>frontend/src/App.jsx</code></div>
+  <div class="meta-label">Risk</div>
+  <div class="meta-value">Low. Pure copy change. No structural risk.</div>
+  <div class="meta-label">Commit</div>
+  <div class="meta-value">"rename shelf to home in user-facing copy"</div>
+</div>
+</div>
+
+<div class="track">
+<span class="track-num">Track 2</span>
+<h3>Ownership state on data layer</h3>
+<p>Adds an <code>owned</code> boolean to scanned products. Default true on new scans. This is the foundation for accurate home metrics.</p>
+
+<h4>Scope</h4>
+<ul>
+  <li>Supabase migration: add <code>owned BOOLEAN DEFAULT TRUE</code> to the user scans table (or wherever scan history is stored, check actual schema).</li>
+  <li>Backend: scan endpoints set <code>owned: true</code> by default. Add support for explicit <code>owned: false</code> via "just looking" mode.</li>
+  <li>Backend: new endpoint <code>POST /scan/:id/ownership</code> with body <code>{ owned: boolean }</code> for toggling after the fact.</li>
+  <li>Frontend scan flow: small toggle near the scan capture button: "Just looking" vs default "Add to home". Persist preference per session, not per device.</li>
+  <li>Backfill: existing scans default to <code>owned: true</code> via migration. Users can clean up later via the bulk edit screen (Track 5).</li>
+</ul>
+
+<h4>Acceptance</h4>
+<ul>
+  <li>Schema migration applied successfully on Supabase.</li>
+  <li>New scans show <code>owned: true</code> in the database.</li>
+  <li>"Just looking" toggle visibly persists across the scan flow within a session.</li>
+  <li>Existing scans backfilled to true.</li>
+</ul>
+<div class="meta-grid">
+  <div class="meta-label">Files</div>
+  <div class="meta-value"><code>backend/server.js</code>, Supabase schema, <code>frontend/src/App.jsx</code> (scan flow only)</div>
+  <div class="meta-label">Risk</div>
+  <div class="meta-value">Medium. Schema change. Test with cache clear.</div>
+</div>
+</div>
+
+<div class="track">
+<span class="track-num">Track 3</span>
+<h3>Home data endpoint</h3>
+<p>One endpoint that returns everything the dashboard needs in a single payload. Cache aggressively. Compute from owned items only.</p>
+
+<h4>Scope</h4>
+<p>New endpoint <code>GET /home-data</code> returns:</p>
+<pre><code>{
+  homeScore: 4.2,                    // weighted avg of owned item scores
+  homeScoreTrend: "down",            // "up" | "down" | "flat" vs last month
+  monthlyDelta: 0.4,                 // points improved or regressed
+  itemCount: 50,                     // total owned items
+  scoreMakeup: {
+    clean: 12,                       // owned items scoring 1-3
+    watching: 24,                    // owned items scoring 4-5
+    swap: 14                         // owned items scoring 6-10
+  },
+  streak: 8,                         // consecutive days with at least one scan
+  todaysSwap: {
+    skipProduct: { name, score, category },
+    grabProduct: { name, score, category },
+    queueRemaining: 14               // total swap-eligible items remaining
+  }
+}</code></pre>
+
+<h4>Acceptance</h4>
+<ul>
+  <li>Endpoint returns valid payload for users with at least one owned scan.</li>
+  <li>Empty-state payload returns sensible defaults for users with zero owned items.</li>
+  <li>Cache TTL set so home loads fast (suggest 5 min Redis cache, invalidate on new scan or ownership change).</li>
+  <li>Today's swap rotates daily based on date hash + user ID, so the same user sees different picks across days but the pick is stable within a day.</li>
+</ul>
+<div class="meta-grid">
+  <div class="meta-label">Files</div>
+  <div class="meta-value"><code>backend/server.js</code>, possibly <code>backend/scoringCascade.js</code> for helpers</div>
+  <div class="meta-label">Risk</div>
+  <div class="meta-value">Medium. New endpoint, depends on Track 2 schema.</div>
+</div>
+</div>
+
+<div class="track">
+<span class="track-num">Track 4</span>
+<h3>Findings engine</h3>
+<p>Backend computes categorical findings about a user's owned items. Plain language, impact framing, with cleaner-swap counts inline.</p>
+
+<h4>Scope</h4>
+<p>New endpoint <code>GET /home-findings</code> returns top 4 findings by severity and relevance:</p>
+<pre><code>{
+  findings: [
+    {
+      id: "hormone_disruption",
+      severity: "severe",
+      count: 6,
+      label: "items linked to hormone disruption",
+      swapsAvailable: 4
+    },
+    ...
+  ],
+  totalFindings: 24
+}</code></pre>
+
+<h4>Finding types to support at launch</h4>
+<ul>
+  <li><strong>Hormone disruption</strong>: items containing PFAS, parabens, oxybenzone, octinoxate, etc. (severity: severe)</li>
+  <li><strong>Highly processed foods</strong>: NOVA 4 classified items (severity: severe)</li>
+  <li><strong>Fertility risks</strong>: items containing phthalates, BPA, certain pesticides (severity: moderate)</li>
+  <li><strong>Banned in other countries</strong>: items with ingredients banned in EU, California, or other strict regions (severity: severe)</li>
+</ul>
+
+<p>Backlog of finding types to add over time: forever chemicals (PFAS-specific), seed oils, artificial dyes (Red 40, Yellow 5), high sodium load, sulfates in personal care, fragrance-as-ingredient, microplastic shedders, and others.</p>
+
+<h4>Language rules for finding labels</h4>
+<div class="voice-rules">
+  <ul>
+    <li>Plain language only. No "PFAS," "NOVA 4," "phthalates," "oxybenzone." Those go in detail views, never on the home.</li>
+    <li>Impact-led: tell the user what it does, not what it is. "Linked to hormone disruption" not "contains parabens."</li>
+    <li>"Linked to" framing for any health claim. Never absolute.</li>
+    <li>No medical claims. No "causes cancer." Never panic framing.</li>
+    <li>Three-beat rhythm where natural.</li>
+    <li>No first person.</li>
+  </ul>
+</div>
+
+<h4>Acceptance</h4>
+<ul>
+  <li>Endpoint returns top 4 findings, sorted by severity then count.</li>
+  <li>Each finding includes a <code>swapsAvailable</code> count derived from the alternatives table.</li>
+  <li>Tap target on each finding leads to a filtered list of those products with cleaner alternatives ready to swap (Track 5 wires this up).</li>
+  <li>Rotation policy: same user sees varied findings across visits if they have more than 4 categories of issues.</li>
+</ul>
+<div class="meta-grid">
+  <div class="meta-label">Files</div>
+  <div class="meta-value">New <code>backend/findings.js</code>, <code>backend/server.js</code> for endpoint</div>
+  <div class="meta-label">Risk</div>
+  <div class="meta-value">Medium. Heavy ingredient logic. Test against real shelves.</div>
+</div>
+</div>
+
+<div class="track">
+<span class="track-num">Track 5</span>
+<h3>New home page UI</h3>
+<p>Replace home page content in <code>App.jsx</code> with the dashboard per <code>dashboard-mock-v8.html</code>. The biggest blast radius track. Plan thoroughly. Show diffs before applying.</p>
+
+<h4>Components on the home (in order, top to bottom)</h4>
+<ol>
+  <li><strong>Greeting subline</strong>: <code>TUE, MAY 5 · HOME SCORE 4.2 ↓ · 8 DAY STREAK</code></li>
+  <li><strong>Items in your home section</strong>: title, count, monthly trend, "edit what you own" link, makeup ribbon (color-segmented bar), three-count breakdown</li>
+  <li><strong>Worth knowing panel</strong>: eyebrow, list of 4 findings with count + label + cleaner-swaps-available, "see all 24 findings" footer</li>
+  <li><strong>Today's swap card</strong>: eyebrow, Skip / Grab pattern with strikethrough on skip, score pills, footer with category and queue position</li>
+</ol>
+
+<h4>Removed from current home</h4>
+<ul>
+  <li>The big "What are you looking at?" scan card (FAB at bottom carries the affordance)</li>
+  <li>The horizontal recent scans carousel (lives on Items tab now)</li>
+</ul>
+
+<h4>Loading states</h4>
+
+<p>The dashboard depends on aggregations that may not always resolve instantly. Loading state design must communicate "structure loaded, content loading" rather than "the app is broken."</p>
+
+<h4>Skeleton loader pattern</h4>
+
+<p>On home tab navigation, render the dashboard structure immediately with placeholder shapes where data-dependent content will appear. As endpoints resolve, real content fades in to replace placeholders. No layout shift between skeleton and real content.</p>
+
+<p>Renders immediately with no API dependency:</p>
+<ul>
+  <li>Greeting text ("Good morning, Paul" — name from local storage)</li>
+  <li>Date in subline ("TUE, MAY 5")</li>
+  <li>All eyebrow labels ("Worth knowing", "Today's swap")</li>
+  <li>Section structure (cards, dividers, layout)</li>
+  <li>Bottom nav</li>
+</ul>
+
+<p>Renders as cream-colored pulsing skeleton placeholders:</p>
+<ul>
+  <li>Home Score number and trend arrow</li>
+  <li>Streak count</li>
+  <li>Items count and makeup ribbon segments</li>
+  <li>Legend numbers</li>
+  <li>Each finding row (number, text, swaps-available count)</li>
+  <li>Today's swap product names and score pills</li>
+</ul>
+
+<p>Animation specifics:</p>
+<ul>
+  <li>Placeholder shapes pulse: opacity oscillates between 0.4 and 0.7 over 1.5 seconds</li>
+  <li>Real content fade-in: 200ms transition</li>
+  <li>Skeleton dimensions must match real content dimensions exactly so there is no jump when content loads</li>
+</ul>
+
+<h4>Cold app launch (separate from in-app navigation)</h4>
+
+<p>On cold app launch from device home screen, show a brief branded splash with the Partiqule wordmark before transitioning to the dashboard skeleton. This is the moment to introduce the brand. Only on cold launch, never on in-app tab navigation. Returning users navigating between tabs see the skeleton pattern, not the splash.</p>
+
+<p>Splash specifications:</p>
+<ul>
+  <li>Cream background, centered Partiqule wordmark in forest green</li>
+  <li>Subtle progress indicator below wordmark (single thin bar that fills from left to right)</li>
+  <li>Maximum duration 1.2 seconds. If app is ready before that, transition early. If not ready by 1.2 seconds, transition to skeleton anyway.</li>
+  <li>No tagline, no copy, just wordmark</li>
+</ul>
+
+<h4>Design tokens (from mock)</h4>
+<pre><code>--cream: #F5F0E5;
+--cream-deep: #EFE8D8;
+--forest: #2D4A2A;
+--forest-bright: #3D6B3A;
+--orange: #C47A3D;
+--highlight: #E8D4BC;
+--ink: #2A2520;
+--ink-soft: #6B6258;
+--rule: #D9D0BD;
+--score-green: #16a34a;
+--score-amber: #d97706;
+--score-red: #dc2626;</code></pre>
+
+<h4>Type system</h4>
+<ul>
+  <li>Lora 500 for headlines and product names</li>
+  <li>DM Sans 400-700 for everything else</li>
+  <li>Eyebrows: DM Sans 700, 10px, uppercase, 1.8px letter spacing</li>
+  <li>No italics anywhere</li>
+</ul>
+
+<h4>Edit what you own (sub-screen)</h4>
+<p>The "Edit what you own" link in the trend line opens a list of all scanned items with a per-item ownership toggle. Bulk actions: "mark all as owned," "mark all as just looking." Counts at top show how many are currently owned.</p>
+
+<h4>Acceptance</h4>
+<ul>
+  <li>Home page renders dashboard layout matching v8 mock proportions on iOS Safari (375pt and 430pt widths) and web Chrome.</li>
+  <li>All four modules pull live data from Track 3 and Track 4 endpoints.</li>
+  <li>Tap targets on findings lead to filtered item list views.</li>
+  <li>Today's swap tap leads to alternatives panel for that product.</li>
+  <li>Edit what you own opens functional bulk toggle screen.</li>
+  <li>No "shelf" copy anywhere on the home.</li>
+  <li>Pre-push verification per CLAUDE.md passes.</li>
+</ul>
+<div class="meta-grid">
+  <div class="meta-label">Files</div>
+  <div class="meta-value"><code>frontend/src/App.jsx</code> (high blast radius), possibly extracted components</div>
+  <div class="meta-label">Risk</div>
+  <div class="meta-value">High. App.jsx is 8000+ lines. Read carefully before editing. Surgical patches only. Browser preview verification mandatory before push.</div>
+  <div class="meta-label">Commit</div>
+  <div class="meta-value">"replace home page with dashboard per v8 mock"</div>
+</div>
+</div>
+
+<h2>Cross-cutting notes</h2>
+
+<h3>Voice and language rules</h3>
+<div class="voice-rules">
+  <ul>
+    <li>No first person ("I" or "we") in any user-facing copy.</li>
+    <li>No scientific terms on the home. Plain language only.</li>
+    <li>"Linked to" framing for impact claims. Never absolute.</li>
+    <li>Three-beat rhythm preferred ("Skip it. Grab it. Score it.").</li>
+    <li>No em dashes. No hyphens in display text where avoidable.</li>
+    <li>No emojis in headlines or eyebrows.</li>
+    <li>"Items in your home" is the canonical phrasing for what was "shelf."</li>
+  </ul>
+</div>
+
+<h3>Performance</h3>
+
+<p>The dashboard depends on aggregated data that may take time to resolve. Performance targets distinguish skeleton render time (instant) from full content resolution time (target).</p>
+
+<ul>
+  <li><strong>Skeleton renders in under 100ms</strong>: no API dependency, pure local render. Greeting, eyebrows, structure, bottom nav all visible immediately.</li>
+  <li><strong>Real content begins resolving in under 500ms for cached users</strong>: home-data and home-findings endpoints return cached payload quickly.</li>
+  <li><strong>Full content resolves in under 1.5 seconds for cached users on cellular</strong>: this is the experience target for returning users with warm cache.</li>
+  <li><strong>First-time users may see longer resolution</strong>: skeleton bridges the gap perceptually. Worst-case 3 to 4 seconds acceptable on first home load with no cache.</li>
+  <li><strong>Cold-start scenarios (post-deploy, post-cache-clear)</strong>: up to 4 seconds acceptable, skeleton masks the wait.</li>
+</ul>
+
+<p>Caching strategy:</p>
+<ul>
+  <li>Cache <code>/home-data</code> and <code>/home-findings</code> aggressively (5 min Redis suggested)</li>
+  <li>Invalidate cache on new scan, ownership toggle, or alternative confirmation</li>
+  <li>Stream findings in if needed so above-the-fold content (greeting, items section) is not blocked by findings computation</li>
+</ul>
+
+<h3>Empty states</h3>
+<ul>
+  <li>Zero scans: home shows greeting, single CTA encouraging first scan. No empty findings panel. No empty makeup ribbon.</li>
+  <li>One to four scans: show greeting, simplified items section ("Just getting started"), no findings yet ("Findings appear after 5 scans").</li>
+  <li>Five plus scans: full dashboard.</li>
+</ul>
+
+<h3>Analytics events to add</h3>
+<ul>
+  <li><code>home_dashboard_view</code></li>
+  <li><code>home_finding_tap</code> with <code>finding_id</code></li>
+  <li><code>home_swap_tap</code></li>
+  <li><code>home_edit_ownership_tap</code></li>
+  <li><code>scan_just_looking_toggle</code></li>
+</ul>
+
+<h2>How to use this doc</h2>
+
+<p>Open one Code session per track in the suggested order. Paste the relevant track spec into the session as the prompt. Provide the v8 mock file at <code>docs/dashboard-mock-v8.html</code> for visual reference.</p>
+
+<p>For Track 5, ask the session to plan and show the proposed component structure before any edits. Confirm the plan, then ask for diffs of each surgical patch. Verify in browser preview before pushing.</p>
+
+<p>If a track exposes a question that wasn't anticipated in this spec, stop and bring the question back to design before guessing in code.</p>
+
+<div class="footer-note">
+  Spec generated for Partiqule home dashboard implementation. Reference design: <code>dashboard-mock-v8.html</code>. Source intent: "what's in my home, and what do I do about it." Author: design conversation, May 2026.
+</div>
+
+</div>
+</body>
+</html>

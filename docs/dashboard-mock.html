@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Partiqule — Home (dashboard mock v8)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E5;
+    --cream-deep: #EFE8D8;
+    --forest: #2D4A2A;
+    --forest-bright: #3D6B3A;
+    --forest-soft: #5A7B57;
+    --orange: #C47A3D;
+    --orange-warm: #B86A2E;
+    --red: #A23E2E;
+    --red-deep: #7A2D20;
+    --highlight: #E8D4BC;
+    --ink: #2A2520;
+    --ink-soft: #6B6258;
+    --rule: #D9D0BD;
+    --score-green: #16a34a;
+    --score-amber: #d97706;
+    --score-red: #dc2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: #E8E1D0;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Toggle bar */
+  .toggle-bar {
+    width: 100%;
+    max-width: 430px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .toggle-label {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .toggle-switch {
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--forest);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .toggle-switch.on {
+    background: var(--forest);
+    color: var(--cream);
+    border-color: var(--forest);
+  }
+
+  /* Phone frame */
+  .frame {
+    width: 100%;
+    max-width: 430px;
+    background: var(--cream);
+    min-height: calc(100vh - 60px);
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 110px;
+  }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 22px 14px;
+  }
+
+  .wordmark {
+    font-family: 'Lora', serif;
+    font-size: 34px;
+    font-weight: 500;
+    color: var(--forest);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .top-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .avatar-pill {
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 4px;
+    background: var(--cream);
+  }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .icon-btn {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    background: var(--cream);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+    position: relative;
+  }
+  .icon-btn .dot {
+    position: absolute;
+    top: 8px; right: 9px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--forest-bright);
+  }
+
+  .top-divider {
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* Search */
+  .search {
+    margin: 16px 22px 0;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.35);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    display: flex; align-items: center; gap: 12px;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+
+  .section-divider {
+    height: 1px;
+    background: var(--rule);
+    margin: 16px 0 0;
+  }
+
+  /* Greeting */
+  .greeting {
+    padding: 26px 22px 0;
+  }
+  .greeting h1 {
+    font-family: 'Lora', serif;
+    font-weight: 500;
+    font-size: 38px;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+  }
+  .subline {
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+    align-items: center;
+  }
+  .subline .seg { display: inline-flex; align-items: center; gap: 6px; }
+  .subline .dot-sep { display: inline-block; margin: 0 8px; color: var(--ink-soft); }
+  .subline .home-score-val { color: var(--forest); font-weight: 700; }
+  .subline .arrow-down { color: var(--score-green); font-weight: 700; font-size: 10px; }
+
+  /* Annotation system */
+  .anno-marker {
+    display: none;
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(196, 122, 61, 0.35);
+  }
+  body.show-annos .anno-marker { display: flex; }
+  body.show-annos .anno {
+    outline: 2px dashed var(--orange);
+    outline-offset: 6px;
+    border-radius: 6px;
+  }
+  body.show-annos .anno.large {
+    outline-offset: 10px;
+    border-radius: 18px;
+  }
+
+  /* Next swap card (now the lead action card) */
+  /* Multi-finding panel */
+  .findings-wrap {
+    padding: 28px 22px 0;
+  }
+  .findings-card {
+    position: relative;
+  }
+  .findings-eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--forest);
+    font-weight: 700;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .findings-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .finding-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+  }
+  .finding-item:last-child {
+    border-bottom: none;
+  }
+  .finding-num {
+    font-family: 'Lora', serif;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    width: 36px;
+    text-align: left;
+  }
+  .finding-severe .finding-num { color: var(--score-red); }
+  .finding-moderate .finding-num { color: var(--score-amber); }
+  .finding-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .finding-text {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .finding-text strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .finding-action {
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--forest);
+    font-weight: 600;
+  }
+  .finding-arrow {
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+  }
+
+  /* Edit what you own link */
+  .edit-own {
+    color: var(--forest);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(45, 74, 42, 0.3);
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .findings-footer {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Today's swap card */
+  .worst-wrap {
+    padding: 22px 22px 0;
+  }
+  .worst-card {
+    background: var(--cream-deep);
+    border-radius: 18px;
+    padding: 18px 20px;
+    position: relative;
+  }
+  .worst-eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--forest);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .swap-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .swap-row {
+    display: grid;
+    grid-template-columns: 50px 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .swap-label {
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .swap-skip .swap-label { color: var(--red); }
+  .swap-grab .swap-label { color: var(--score-green); }
+  .swap-product-name {
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .swap-skip .swap-product-name {
+    text-decoration: line-through;
+    text-decoration-color: rgba(162, 62, 46, 0.5);
+    text-decoration-thickness: 1.5px;
+    color: var(--ink-soft);
+  }
+  .swap-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .swap-pill-red { background: var(--score-red); }
+  .swap-pill-green { background: var(--score-green); }
+  .swap-footer {
+    padding-top: 12px;
+    border-top: 1px solid var(--rule);
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Your shelf section */
+  .shelf-section {
+    padding: 28px 22px 0;
+  }
+  .shelf-header-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .shelf-title {
+    font-family: 'Lora', serif;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+  .shelf-title .accent { color: var(--forest); }
+  .shelf-title .count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .see-all {
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .shelf-trend-line {
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .shelf-trend-line .avg { color: var(--forest); font-weight: 700; }
+  .shelf-trend-line .trend-arrow { color: var(--score-green); font-weight: 700; font-size: 10px; }
+
+  /* Score makeup ribbon */
+  .makeup-bar {
+    display: flex;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--rule);
+    margin-bottom: 14px;
+  }
+  .makeup-seg-clean { background: var(--score-green); }
+  .makeup-seg-watching { background: var(--score-amber); }
+  .makeup-seg-fix { background: var(--score-red); }
+
+  .makeup-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .legend-dot.clean { background: var(--score-green); }
+  .legend-dot.watching { background: var(--score-amber); }
+  .legend-dot.fix { background: var(--score-red); }
+  .legend-num { font-weight: 700; color: var(--ink); }
+  .legend-label { color: var(--ink-soft); font-weight: 500; }
+
+  /* Recap card */
+  .recap-wrap { padding: 24px 22px 0; }
+  .recap-card {
+    background: var(--highlight);
+    border-radius: 18px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .recap-eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--orange-warm);
+    margin-bottom: 8px;
+  }
+  .recap-line {
+    font-family: 'Lora', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+  }
+  .recap-line .num { color: var(--forest); font-weight: 600; }
+  .recap-line .arrow { color: var(--score-green); font-weight: 700; }
+  .recap-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 92px;
+    background: var(--cream);
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding: 14px 12px 24px;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    flex: 1;
+  }
+  .nav-item.active { color: var(--forest); font-weight: 600; }
+  .nav-item.scan { margin-top: -22px; }
+  .scan-fab {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--forest);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cream);
+    box-shadow: 0 4px 12px rgba(45, 74, 42, 0.35);
+  }
+  .nav-item.scan .label { margin-top: 4px; color: var(--ink-soft); }
+
+  /* Caption */
+  .caption {
+    width: 100%;
+    max-width: 430px;
+    padding: 28px 24px 40px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .caption h3 {
+    font-family: 'Lora', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .caption ol {
+    list-style: none;
+    counter-reset: change;
+  }
+  .caption li {
+    counter-increment: change;
+    padding: 10px 0 10px 36px;
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+  }
+  .caption li:last-child { border-bottom: none; }
+  .caption li::before {
+    content: counter(change);
+    position: absolute;
+    left: 0; top: 10px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .caption strong { color: var(--ink); font-weight: 600; }
+  .caption .removed {
+    background: rgba(162, 62, 46, 0.06);
+    border: 1px solid rgba(162, 62, 46, 0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    color: var(--red);
+    font-size: 12px;
+  }
+  .caption .removed strong { color: var(--red-deep); }
+</style>
+</head>
+<body>
+
+<div class="toggle-bar">
+  <span class="toggle-label">Partiqule home · v8 (everyday user)</span>
+  <button class="toggle-switch" id="toggle">Show changes</button>
+</div>
+
+<div class="frame">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="wordmark">partiqule</div>
+    <div class="top-actions">
+      <div class="avatar-pill"><div class="avatar">P</div></div>
+      <div class="icon-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.5 1 6 2.5L21 8"/><path d="M21 3v5h-5"/></svg>
+        <span class="dot"></span>
+      </div>
+      <div class="icon-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-divider"></div>
+
+  <!-- Search -->
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Search any product...</span>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Greeting -->
+  <div class="greeting">
+    <h1>Good morning, Paul.</h1>
+    <div class="subline anno" style="position:relative;">
+      <span class="anno-marker" style="top:-12px; right:-26px;">1</span>
+      <span class="seg">TUE, MAY 5</span>
+      <span class="dot-sep">·</span>
+      <span class="seg">HOME SCORE <span class="home-score-val">4.2</span> <span class="arrow-down">↓</span></span>
+      <span class="dot-sep">·</span>
+      <span class="seg">8 DAY STREAK</span>
+    </div>
+  </div>
+
+  <!-- Your shelf glance (now the lead dashboard module) -->
+  <div class="shelf-section anno large" style="position:relative;">
+    <span class="anno-marker" style="top:-2px; right:18px;">2</span>
+    <div class="shelf-header-row">
+      <div class="shelf-title">
+        Items in your <span class="accent">home</span>
+        <span class="count">50</span>
+      </div>
+      <span class="see-all">See all
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </span>
+    </div>
+
+    <div class="shelf-trend-line">
+      <span class="avg">avg 4.2</span>
+      <span class="trend-arrow">↓</span>
+      this month
+      <span style="margin: 0 6px; color: var(--rule);">·</span>
+      <span class="edit-own">Edit what you own</span>
+    </div>
+
+    <div class="makeup-bar">
+      <div class="makeup-seg-clean" style="width: 24%;"></div>
+      <div class="makeup-seg-watching" style="width: 48%;"></div>
+      <div class="makeup-seg-fix" style="width: 28%;"></div>
+    </div>
+
+    <div class="makeup-legend">
+      <div class="legend-item">
+        <span class="legend-dot clean"></span>
+        <span class="legend-num">12</span>
+        <span class="legend-label">clean</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot watching"></span>
+        <span class="legend-num">24</span>
+        <span class="legend-label">watching</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot fix"></span>
+        <span class="legend-num">14</span>
+        <span class="legend-label">to swap</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worth knowing: findings panel -->
+  <div class="findings-wrap">
+    <div class="findings-card anno large" style="position:relative;">
+      <span class="anno-marker" style="top:-12px; right:-12px;">3</span>
+      <div class="findings-eyebrow">Worth knowing</div>
+      <ul class="findings-list">
+        <li class="finding-item finding-severe">
+          <span class="finding-num">6</span>
+          <div class="finding-body">
+            <div class="finding-text">items linked to <strong>hormone disruption</strong></div>
+            <div class="finding-action">4 cleaner swaps available</div>
+          </div>
+          <span class="finding-arrow">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </li>
+        <li class="finding-item finding-severe">
+          <span class="finding-num">12</span>
+          <div class="finding-body">
+            <div class="finding-text"><strong>highly processed foods</strong></div>
+            <div class="finding-action">8 cleaner swaps available</div>
+          </div>
+          <span class="finding-arrow">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </li>
+        <li class="finding-item finding-moderate">
+          <span class="finding-num">8</span>
+          <div class="finding-body">
+            <div class="finding-text">items linked to <strong>fertility risks</strong></div>
+            <div class="finding-action">6 cleaner swaps available</div>
+          </div>
+          <span class="finding-arrow">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </li>
+        <li class="finding-item finding-severe">
+          <span class="finding-num">3</span>
+          <div class="finding-body">
+            <div class="finding-text"><strong>banned in other countries</strong></div>
+            <div class="finding-action">2 cleaner swaps available</div>
+          </div>
+          <span class="finding-arrow">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </li>
+      </ul>
+      <div class="findings-footer">See all 24 findings
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's swap (was: Worst on your shelf) -->
+  <div class="worst-wrap">
+    <div class="worst-card anno large" style="position:relative;">
+      <span class="anno-marker" style="top:-12px; right:-12px;">4</span>
+      <div class="worst-eyebrow">Today's swap</div>
+      <div class="swap-pair">
+        <div class="swap-row swap-skip">
+          <span class="swap-label">Skip</span>
+          <span class="swap-product-name">Banana Boat Sport</span>
+          <span class="swap-pill swap-pill-red">7</span>
+        </div>
+        <div class="swap-row swap-grab">
+          <span class="swap-label">Grab</span>
+          <span class="swap-product-name">Badger Sport SPF 35</span>
+          <span class="swap-pill swap-pill-green">3</span>
+        </div>
+      </div>
+      <div class="swap-footer">Sunscreen · 1 of 14 to swap
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V9.5z"/></svg>
+      Home
+    </div>
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Feed
+    </div>
+    <div class="nav-item scan">
+      <div class="scan-fab">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <span class="label">Scan</span>
+    </div>
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      Shelf
+    </div>
+    <div class="nav-item">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </div>
+  </div>
+
+</div>
+
+<div class="caption">
+  <h3>v8: everyday user pass</h3>
+  <p style="margin-bottom: 14px;">Same intent ("what's in my home, and what do I do about it?"), different vocabulary. Plain language, impact-led, action available in two taps.</p>
+  <ol>
+    <li><strong>"Items in your home" replaces "Your shelf."</strong> Implies ownership, not history of scans. Backed by a new ownership state on the data layer (default new scans to owned, with a "just looking" toggle at scan time).</li>
+    <li><strong>"Edit what you own"</strong> link added inline. One tap to clean up scanned-but-not-owned items. Lightweight UX promise that the count actually means something.</li>
+    <li><strong>Findings rewritten in plain language with impact framing.</strong> Out: "PFAS," "NOVA 4," "phthalates," "banned in the EU." In: "linked to hormone disruption," "highly processed foods," "linked to fertility risks," "banned in other countries." Each row shows the count of cleaner swaps available, so the user goes from problem awareness to action path in one line. Tap a row to see a filtered list of those products with cleaner alternatives ready to swap, with bulk-swap available when alternatives exist for all.</li>
+    <li><strong>"Today's swap" replaces "Worst on your shelf."</strong> Skip / Grab pattern direct from the voice kit. Specific product, specific replacement, specific scores. The footer shows "1 of 14 to swap," nudging to the broader queue.</li>
+    <li><strong>Legend label "to fix" became "to swap."</strong> Action verb, parallel to other CTAs.</li>
+  </ol>
+  <div class="removed">
+    <strong>Removed:</strong> the big "What are you looking at?" scan card. Scan FAB at the bottom carries the affordance now. Home becomes a true dashboard.
+  </div>
+</div>
+
+<script>
+  const btn = document.getElementById('toggle');
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('show-annos');
+    btn.classList.toggle('on');
+    btn.textContent = document.body.classList.contains('show-annos') ? 'Hide changes' : 'Show changes';
+  });
+</script>
+
+</body>
+</html>
