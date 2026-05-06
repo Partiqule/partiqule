@@ -8161,18 +8161,6 @@ function App() {
           {/* Hero — cream with Lora headline */}
           <section style={{background:"var(--cream)", padding: isMobile ? `${60 + SAFE_TOP + 64}px 24px 40px` : "128px 40px 56px", transition:"opacity 0.4s ease", opacity: loading ? 0 : 1, pointerEvents: loading ? "none" : "auto"}}>
             <div style={{maxWidth:720, margin:"0 auto"}}>
-              <div style={{
-                fontFamily:"'DM Sans', system-ui, sans-serif",
-                fontSize:10, letterSpacing:"0.22em", color:"var(--moss)",
-                textTransform:"uppercase", fontWeight:500,
-                display:"flex", alignItems:"center", gap:10,
-                marginBottom:18,
-                animation:"heroReveal 0.6s ease 0.1s both",
-              }}>
-                <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                2,847 scanned today
-              </div>
-
               <h1 style={{
                 fontFamily:"'Lora', Georgia, serif",
                 fontSize: isMobile ? 42 : 60,
