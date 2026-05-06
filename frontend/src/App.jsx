@@ -3645,7 +3645,7 @@ const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, 
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Your <span style={{color:"var(--moss)"}}>shelf</span></h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Items in your <span style={{color:"var(--moss)"}}>home</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -5046,7 +5046,7 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
           {mode === "signup" ? "Make it yours." : mode === "reset" ? "Reset your password." : "Welcome back."}
         </h2>
         <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:mt, margin:"0 0 22px", lineHeight:1.55}}>
-          {mode === "signup" ? "Save your shelf and never lose it." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
+          {mode === "signup" ? "Save your items and never lose them." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
         </p>
 
         {error   && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{error}</div>}
@@ -5518,7 +5518,7 @@ const generateForYouCards = (history, childMode) => {
   const cards=[];
   // Lifestyle score card
   const lifestyleScore = computeLifestyleScore(history);
-  if(lifestyleScore&&lifestyleScore.productCount>=10){const at=lifestyleScore.trend==="improving"?`Down ${lifestyleScore.delta} — keep going`:lifestyleScore.worstCategory?`${lifestyleScore.worstCategory.label} pulling score up`:"See what is moving your score";cards.push({type:"lifestyle_score",priority:7,headline:`Your shelf scores ${lifestyleScore.current}`,body:at,label:lifestyleScore.trend==="improving"?"Improving":"Your shelf",labelColor:lifestyleScore.trend==="improving"?"#16a34a":"#d97706",action:"See breakdown",actionPage:"history"});}
+  if(lifestyleScore&&lifestyleScore.productCount>=10){const at=lifestyleScore.trend==="improving"?`Down ${lifestyleScore.delta} — keep going`:lifestyleScore.worstCategory?`${lifestyleScore.worstCategory.label} pulling score up`:"See what is moving your score";cards.push({type:"lifestyle_score",priority:7,headline:`Your home scores ${lifestyleScore.current}`,body:at,label:lifestyleScore.trend==="improving"?"Improving":"Your home",labelColor:lifestyleScore.trend==="improving"?"#16a34a":"#d97706",action:"See breakdown",actionPage:"history"});}
   const EU_BANNED=[{compound:"titanium dioxide",reason:"banned as a food additive in the EU since 2022",label:"EU banned food additive"},{compound:"Red 40",reason:"under restriction in the EU — requires warning label",label:"EU warning label required"},{compound:"Yellow 5",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"Yellow 6",reason:"requires warning label in EU for hyperactivity link",label:"EU warning label required"},{compound:"BHT",reason:"banned in several EU countries as a food preservative",label:"EU restricted preservative"},{compound:"BHA",reason:"classified as possible carcinogen, restricted in EU",label:"EU restricted preservative"},{compound:"propyl paraben",reason:"banned in EU cosmetics as endocrine disruptor",label:"EU banned in cosmetics"},{compound:"triclosan",reason:"banned in EU personal care products",label:"EU banned compound"},{compound:"oxybenzone",reason:"banned in EU reef-protection zones, under review",label:"EU under restriction"},{compound:"PFAS",reason:"comprehensive EU restriction effective 2025",label:"EU restricted PFAS"},{compound:"PFOA",reason:"banned globally under Stockholm Convention",label:"Globally banned"}];
   const euFindings=[];
   history.forEach(item=>{const ac=[...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),...(item.harmful_chemicals||[]),item.summary||""].join(" ").toLowerCase();EU_BANNED.forEach(b=>{if(ac.includes(b.compound.toLowerCase()))euFindings.push({product:item.product_name,compound:b.compound,reason:b.reason,label:b.label,score:item.overall_score||item.score});});});
@@ -5526,7 +5526,7 @@ const generateForYouCards = (history, childMode) => {
   const compoundMap={};
   history.forEach(item=>{[...(item.harmful_chemicals||[]),...(item.concerns||[]).map(c=>typeof c==="string"?c:c.concern||"").filter(c=>c.length>0)].forEach(chem=>{const k=chem.toLowerCase().slice(0,30);if(!compoundMap[k])compoundMap[k]={name:chem,products:[],count:0};if(!compoundMap[k].products.includes(item.product_name)){compoundMap[k].products.push(item.product_name);compoundMap[k].count++;}});});
   const patterns=Object.values(compoundMap).filter(c=>c.count>=2).sort((a,b)=>b.count-a.count);
-  if(patterns.length>0){const t=patterns[0];cards.push({type:"pattern",priority:8,headline:`${t.name} appears in ${t.count} of your products`,body:`Found in ${t.products.slice(0,3).join(", ")}${t.products.length>3?` and ${t.products.length-3} more`:""}. Cumulative exposure compounds over time.`,label:"Exposure pattern",labelColor:"#dc2626",action:"View my shelf",actionPage:"history"});}
+  if(patterns.length>0){const t=patterns[0];cards.push({type:"pattern",priority:8,headline:`${t.name} appears in ${t.count} of your products`,body:`Found in ${t.products.slice(0,3).join(", ")}${t.products.length>3?` and ${t.products.length-3} more`:""}. Cumulative exposure compounds over time.`,label:"Exposure pattern",labelColor:"#dc2626",action:"View my items",actionPage:"history"});}
   const highConcern=[...history].filter(h=>(h.overall_score||h.score||0)>=7).sort((a,b)=>(b.overall_score||b.score||0)-(a.overall_score||a.score||0))[0];
   if(highConcern){const tc=highConcern.concerns?.[0];const ct=tc?(typeof tc==="string"?tc:tc.concern||""):highConcern.summary||"";cards.push({type:"high_concern",priority:6,headline:`${highConcern.product_name} scores ${highConcern.overall_score||highConcern.score}`,body:ct?ct.slice(0,100)+(ct.length>100?"...":""):"One of the highest-concern products in your routine.",label:"High concern",labelColor:"#dc2626",score:highConcern.overall_score||highConcern.score,action:"Find safer alternatives",actionPage:"result",productName:highConcern.product_name});}
   const cleanWin=[...history].filter(h=>(h.overall_score||h.score||0)<=2).sort((a,b)=>new Date(b.scannedAt)-new Date(a.scannedAt))[0];
@@ -7359,7 +7359,7 @@ function App() {
                 {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
                 {label:"Feed",       action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active:page==="feed"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
-                {label:"Shelf",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
+                {label:"Items",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
                   fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?500:400,
@@ -7367,7 +7367,7 @@ function App() {
                   cursor:"pointer", padding:"6px 12px", borderRadius:8,
                   background:item.active?"var(--moss-soft)":"transparent",
                   transition:"all 0.15s",
-                }}>{item.label}{item.label==="Shelf"&&history.length>0&&<span style={{background:"var(--moss)",color:"var(--ivory)",fontSize:10,fontWeight:500,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
+                }}>{item.label}{item.label==="Items"&&history.length>0&&<span style={{background:"var(--moss)",color:"var(--ivory)",fontSize:10,fontWeight:500,padding:"2px 6px",borderRadius:10,marginLeft:6}}>{history.length}</span>}</span>
               ))}
               {isAdminUser(user) && (
                 <span onClick={()=>{setPage("admin"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--amber)", cursor:"pointer", fontWeight:500, padding:"6px 12px"}}>Admin</span>
@@ -7395,7 +7395,7 @@ function App() {
               {label:"The Science",  pg:"science"},
               {label:"How it Works", pg:"methodology"},
               {label:"Guides",       pg:"guides"},
-              {label:"Shelf",        pg:"history"},
+              {label:"Items",        pg:"history"},
               {label:"Settings",     pg:"settings"},
               ...(isAdminUser(user) ? [{label:"Admin", pg:"admin"}] : []),
             ].map(item=>(
@@ -7975,7 +7975,7 @@ function App() {
                       textTransform:"uppercase",
                       fontWeight:500,
                     }}>
-                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} on your shelf
+                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} in your home
                       {streak >= 2 && <> <span style={{color:"var(--ink-soft)"}}>·</span> {streak} day streak</>}
                     </div>
                   </div>
@@ -8022,8 +8022,7 @@ function App() {
                     <div style={{marginBottom:28}}>
                       <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:14}}>
                         <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
-                          Your <span style={{color:"var(--moss)"}}>shelf</span>
-                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.2em", color:"var(--ink-faint)", textTransform:"uppercase", fontWeight:500, marginLeft:10}}>{history.length} items</span>
+                          Items in your <span style={{color:"var(--moss)"}}>home</span>
                         </div>
                         <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--moss)", fontWeight:500, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer"}}>See all</span>
                       </div>
@@ -8066,8 +8065,8 @@ function App() {
                     if (scannedThisWeek === 0 && cleanWins === 0) return null;
                     const lines = [
                       { n: scannedThisWeek, label: "products scanned", sub: scannedThisWeek >= 10 ? "a full week of scans" : scannedThisWeek >= 3 ? "a quiet week, honestly" : "just getting started" },
-                      { n: addedThisWeek, label: "added to your shelf", sub: history.length > 0 ? `${history.slice(0, 2).map(h => h.product_name?.split(" ")[0] || "item").join(", ")}${history.length > 2 ? ", and more" : ""}` : null },
-                      { n: cleanWins, label: "clean choices on your shelf", sub: cleanWins > 0 ? "nice work keeping these" : null },
+                      { n: addedThisWeek, label: "added to your items", sub: history.length > 0 ? `${history.slice(0, 2).map(h => h.product_name?.split(" ")[0] || "item").join(", ")}${history.length > 2 ? ", and more" : ""}` : null },
+                      { n: cleanWins, label: "clean choices in your items", sub: cleanWins > 0 ? "nice work keeping these" : null },
                     ].filter(l => l.n != null && l.n > 0);
                     if (!lines.length) return null;
                     return (
@@ -8293,7 +8292,7 @@ function App() {
                   ))}
                 </div>
                 <div>
-                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:2, letterSpacing:"-0.005em"}}>Scan three to unlock your shelf score.</div>
+                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:"var(--ink)", marginBottom:2, letterSpacing:"-0.005em"}}>Scan three to unlock your home score.</div>
                   <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4}}>See your overall exposure across everything you use daily.</div>
                 </div>
               </div>
@@ -9102,7 +9101,7 @@ function App() {
                       )}
                       <button
                         onClick={()=>{
-                          // "Shelf anyway" — add to history (becomes shelf) and head home
+                          // "Add anyway" — add to history (becomes shelf) and head home
                           const alreadyInRoutine = history.some(h => h.product_name === result.product_name);
                           if (!alreadyInRoutine) {
                             const entry = {...result, scannedAt: new Date().toISOString()};
@@ -9123,7 +9122,7 @@ function App() {
                           fontFamily:"'DM Sans', system-ui, sans-serif",
                           fontWeight:500, fontSize:14, letterSpacing:"0.005em",
                         }}>
-                        Shelf anyway
+                        Add anyway
                       </button>
                     </div>
                   );
@@ -9366,7 +9365,7 @@ function App() {
                   fontFamily:"'DM Sans', system-ui, sans-serif",
                   fontSize:11, color:"var(--ink-soft)", fontWeight:500,
                 }}>
-                  Shelf <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{detailShelfCount}</strong>
+                  Items <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{detailShelfCount}</strong>
                 </div>
               </div>
 
@@ -10027,7 +10026,7 @@ function App() {
                           fontFamily:"'DM Sans', system-ui, sans-serif",
                           fontWeight:500, fontSize:14, letterSpacing:"0.005em",
                         }}>
-                        Shelf anyway
+                        Add anyway
                       </button>
                     </div>
                   );
@@ -10098,7 +10097,7 @@ function App() {
                   fontFamily:"'DM Sans', system-ui, sans-serif",
                   fontSize:11, color:"var(--ink-soft)", fontWeight:500, cursor:"pointer",
                 }} onClick={()=>{setShowAlts(false); setPage("history"); setResult(null);}}>
-                  Shelf <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{shelfCount}</strong>
+                  Items <strong style={{color:"var(--moss)", fontWeight:500, marginLeft:4}}>{shelfCount}</strong>
                 </div>
               </div>
 
@@ -10207,7 +10206,7 @@ function App() {
                     { rx: /\brecycled\b/i, text: "Recycled" },
                   ];
                   certPatterns.forEach(c => { if (c.rx.test(reason) || c.rx.test(composition)) tags.push({ text: c.text, kind: "cert" }); });
-                  if (onShelf(alt.name)) tags.push({ text: "On your shelf", kind: "shelf" });
+                  if (onShelf(alt.name)) tags.push({ text: "In your home", kind: "shelf" });
                   const buyUrl = altSource === "brand"
                     ? getBrandUrl(alt.brand || alt.name, alt.name)
                     : altSource === "bigbox"
@@ -10477,7 +10476,7 @@ function App() {
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"Feed",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active: page==="feed" },
               { label:"Scan",    icon:null, action:()=>{setScanSheetOpen(o=>!o); setModalQuery("");}, active:false, isScan:true },
-              { label:"Shelf",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
+              { label:"Items",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
               item.isScan ? (
@@ -10866,7 +10865,7 @@ function App() {
           {[
             {label:"About",           pg:"about",       path:"/about"},
             {label:"The Science",     pg:"science",     path:"/science"},
-            {label:"Shelf",           pg:"history",     path:"/history"},
+            {label:"Items",           pg:"history",     path:"/history"},
             {label:"How It Works",    pg:"methodology", path:"/methodology"},
             {label:"Privacy Policy",  pg:"privacy",     path:"/privacy"},
             {label:"Terms of Service",pg:"terms",       path:"/terms"},
