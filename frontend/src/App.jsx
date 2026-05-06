@@ -7975,7 +7975,7 @@ function App() {
                       textTransform:"uppercase",
                       fontWeight:500,
                     }}>
-                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} in your home
+                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} item{history.length!==1?"s":""} in your home
                       {streak >= 2 && <> <span style={{color:"var(--ink-soft)"}}>·</span> {streak} day streak</>}
                     </div>
                   </div>
