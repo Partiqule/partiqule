@@ -8655,6 +8655,29 @@ app.post("/delete-account", requireUserAuth, async (req, res) => {
   }
 });
 
+app.post("/scan/:id/ownership", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const userId = req.authUserId;
+  const scanId = req.params.id;
+  if (!/^[0-9a-f-]{30,40}$/i.test(scanId)) return res.status(400).json({ error: "Invalid scan id" });
+  const { owned } = req.body || {};
+  if (typeof owned !== "boolean") return res.status(400).json({ error: "owned must be boolean" });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("scans")
+      .update({ owned })
+      .eq("id", scanId)
+      .eq("user_id", userId)
+      .select("id")
+      .single();
+    if (error || !data) return res.status(404).json({ error: "Scan not found" });
+    return res.json({ ok: true, id: data.id, owned });
+  } catch (e) {
+    console.error("[OWNERSHIP]", e.message);
+    return res.status(500).json({ error: "Update failed" });
+  }
+});
+
 
 const stripe = process.env.STRIPE_SECRET_KEY ? require("stripe")(process.env.STRIPE_SECRET_KEY) : null;
 const STRIPE_PRICE_ID      = process.env.STRIPE_PRICE_ID || "";       // price_xxx from Stripe dashboard
