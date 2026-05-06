@@ -5046,7 +5046,7 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
           {mode === "signup" ? "Make it yours." : mode === "reset" ? "Reset your password." : "Welcome back."}
         </h2>
         <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:mt, margin:"0 0 22px", lineHeight:1.55}}>
-          {mode === "signup" ? "Save your items and never lose them." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
+          {mode === "signup" ? "Save what's in your home so you remember next time." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
         </p>
 
         {error   && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{error}</div>}
