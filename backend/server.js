@@ -6058,13 +6058,16 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
   }
 
-  // Track 3 home-data cache invalidation. Fire at request entry so any
-  // concurrent /home-data call after this scan recomputes against fresh
-  // Supabase data. Race window: frontend's saveToCloud lands ~200ms after
-  // /analyze response, so a /home-data call between invalidate and save
-  // will recompute without the new scan (cached again until TTL expires
-  // or until the next /analyze invalidate fires). Acceptable for v1.
-  if (userId) invalidateHomeDataCache(userId).catch(() => {});
+  // Track 3+4 dashboard cache invalidation. Fire at request entry so any
+  // concurrent /home-data or /home-findings call after this scan recomputes
+  // against fresh Supabase data. Race window: frontend's saveToCloud lands
+  // ~200ms after /analyze response, so a dashboard call between invalidate
+  // and save will recompute without the new scan (cached again until TTL
+  // expires or until the next /analyze invalidate fires). Acceptable for v1.
+  if (userId) {
+    invalidateHomeDataCache(userId).catch(() => {});
+    invalidateHomeFindingsCache(userId).catch(() => {});
+  }
 
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
   // Uses an atomic RPC so two concurrent scans don't both read the same count
@@ -8739,6 +8742,7 @@ app.post("/scan/:id/ownership", requireUserAuth, async (req, res) => {
       .single();
     if (error || !data) return res.status(404).json({ error: "Scan not found" });
     invalidateHomeDataCache(userId).catch(() => {});
+    invalidateHomeFindingsCache(userId).catch(() => {});
     return res.json({ ok: true, id: data.id, owned });
   } catch (e) {
     console.error("[OWNERSHIP]", e.message);
@@ -8979,6 +8983,213 @@ app.get("/home-data", requireUserAuth, async (req, res) => {
     return res.json({ ...payload, cached: false });
   } catch (e) {
     console.error("[home-data]", e.message);
+    return res.status(500).json({ error: "Aggregation failed" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME FINDINGS — Track 4 dashboard findings panel
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /home-findings returns the dashboard's "Worth Knowing" panel: top 4
+// findings by severity then count, plus totalFindings sum across all
+// computed findings. Computed from owned scans only.
+//
+// Five findings supported at launch (per dashboard implementation spec
+// plus family framing addendum):
+//   - kid_elevated_risk (severe, family-framing addendum addition)
+//   - banned_other_countries (severe)
+//   - highly_processed_foods (severe)
+//   - hormone_disruption (severe)
+//   - fertility_developmental_risks (moderate, reframed per addendum)
+//
+// Substance matching uses per-scan flagText built from result_json.concerns
+// plus child_bumps plus pregnancy_bumps, run through stripNegationFlags so
+// "BPA-free polypropylene" doesn't false-fire as a hormone disruption hit
+// (Track 18 BPA-free defamation fix, same NEGATION_TOKEN_RE).
+
+const HOME_FINDINGS_TTL_S = 300;
+const homeFindingsCacheKey = (userId) => `agg:home-findings:${userId}`;
+const invalidateHomeFindingsCache = async (userId) => {
+  if (!userId) return;
+  await redisDel(homeFindingsCacheKey(userId));
+};
+
+// Substance regex per finding. All apply to flagText (post stripNegationFlags),
+// so "X-free" tokens have already been removed from the corpus.
+//
+// HORMONE_DISRUPTION_RE — substances with documented endocrine activity.
+// Sourced from personalCareIngredients.js endocrine_disruptor entries
+// (parabens, oxybenzone class, triclosan, triclocarban) plus CHILD_CONCERN
+// regex coverage (PFAS, BPA/BPS, formaldehyde releasers, fragrance).
+const HORMONE_DISRUPTION_RE = /\bparabens?\b|\bmethylparaben\b|\bethylparaben\b|\bpropylparaben\b|\bbutylparaben\b|\bisobutylparaben\b|oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate|octocrylene|\bPFAS\b|\bPFOA\b|\bPFOS\b|perfluoro|\bbisphenol\b|\bBPA\b|\bBPS\b|\bBPF\b|formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea|triclosan|triclocarban|synthetic fragrance|artificial fragrance|\bparfum\b/i;
+
+// FERTILITY_DEV_RISKS_RE — phthalates plus bisphenols plus pesticides with
+// reproductive or developmental endpoints. Sourced from
+// personalCareIngredients.js reproductive_toxicant entries (DBP/BBP/DiBP/DnHP)
+// plus PREGNANCY_CONCERN_SUBSTANCES coverage.
+const FERTILITY_DEV_RISKS_RE = /\bphthalates?\b|\bDEHP\b|\bDBP\b|\bDEP\b|\bDnBP\b|\bDiBP\b|\bBBP\b|dibutyl phthalate|diethyl phthalate|diethylhexyl phthalate|butyl benzyl phthalate|diisobutyl phthalate|dimethyl phthalate|dihexyl phthalate|\bbisphenol\b|\bBPA\b|\bBPS\b|\bBPF\b|\bglyphosate\b|\batrazine\b|\bchlorpyrifos\b|\bchlorothalonil\b/i;
+
+// BANNED_OTHER_COUNTRIES_RE — substances with restrictive regulatory action
+// in EU/UK/Canada/California. Each substance below verified at curation time
+// against a citable regulatory action:
+//   - Red 3 / erythrosine: FDA Delaney revocation Jan 2025; CA AB 418 Oct 2023
+//   - Red 40, Yellow 5/6, Blue 1/2: EU mandatory child warning label
+//     (Reg 1333/2008 Annex V) since 2010
+//   - Titanium dioxide (food): EU food ban since 2022 (Reg 2022/63)
+//   - Caramel color IV / 4-MEI: California Prop 65
+//   - BHA: FDA Federal Register reassessment Feb 2026; IARC 2B
+//   - Potassium bromate: UK 1990 ban; Canada 1994; CA AB 418 effective Jan
+//     2027; banned in 40+ countries; IARC possible human carcinogen
+//   - Brominated vegetable oil (BVO): FDA final rule July 2024 revoked
+//     authorization (21 CFR 180.30); previously banned EU/UK/Japan
+//   - Azodicarbonamide / ADA: banned in EU since 2005; FDA reviewing under
+//     public list of chemicals; semicarbazide byproduct possible carcinogen
+const BANNED_OTHER_COUNTRIES_RE = /\bRed\s*3\b|\berythrosine\b|\bRed\s*40\b|\bYellow\s*5\b|\bYellow\s*6\b|\bBlue\s*1\b|\bBlue\s*2\b|\btartrazine\b|sunset yellow|allura red|\btitanium dioxide\b|caramel color\s*(iv|4)|\b4-?MEI\b|\b4-?methylimidazole\b|petroleum dye|\bBHA\b|butylated hydroxyanisole|potassium bromate|\bBVO\b|brominated vegetable oil|azodicarbonamide|\bADA\b/i;
+
+// Build the substance-matching corpus per scan. Concerns can be array of
+// strings or array of objects with .concern field (legacy AI shape).
+// child_bumps and pregnancy_bumps are bump REASON strings that contain the
+// matched substance names — including them broadens detection without
+// double-counting since per-scan match is binary.
+const buildScanFlagText = (scan) => {
+  const r = scan.result_json || {};
+  const parts = [];
+  if (Array.isArray(r.concerns)) {
+    for (const c of r.concerns) {
+      if (typeof c === "string") parts.push(c);
+      else if (c && typeof c === "object" && typeof c.concern === "string") parts.push(c.concern);
+    }
+  }
+  if (Array.isArray(r.child_bumps)) {
+    for (const b of r.child_bumps) if (typeof b === "string") parts.push(b);
+  }
+  if (Array.isArray(r.pregnancy_bumps)) {
+    for (const b of r.pregnancy_bumps) if (typeof b === "string") parts.push(b);
+  }
+  return parts.map(stripNegationFlags).filter(Boolean).join(" ");
+};
+
+// Per-scan predicate for kid_elevated_risk. delta>=2 threshold per Paul
+// 2026-05-07 decision: matches the addendum example "scored 5 for adults
+// and 7 for kids" exactly and aligns with CHILD_CONCERN_SUBSTANCES bump
+// magnitudes (most are +2).
+const isKidElevated = (scan) => {
+  const r = scan.result_json || {};
+  const adult = r.overall_score ?? r.score ?? scan.score ?? 0;
+  const kid = r.child_score;
+  return typeof kid === "number" && kid >= adult + 2;
+};
+
+// Per-scan predicate for highly_processed_foods. Checks composition_tier at
+// both top-level result_json and nested food_analysis since older scans may
+// have either shape. NOVA 4 means ultra-processed.
+const isNova4 = (scan) => {
+  const r = scan.result_json || {};
+  return r.composition_tier === 4 || r.food_analysis?.composition_tier === 4;
+};
+
+// Per-scan boolean: does this scan have at least one cleaner alternative in
+// the static products catalog? Result memoized across findings via the
+// hasAltMap so we don't call findAlternatives 5 times for the same scan.
+// findAlternatives is sub-millisecond per call (in-memory ~420 entries),
+// filterDbAlternatives applies the strictly-lower-scoring rule for
+// productScore>=3 (peer-clean for productScore<=2 — edge case noted but not
+// material for finding categories which target higher-scoring products).
+const hasCleanerAlternative = (scan) => {
+  const cat = scan.category || "other";
+  const productScore = scoreOf(scan);
+  const alts = filterDbAlternatives(
+    findAlternatives(scan.product_name, cat, 3, scan.product_name),
+    cat, scan.product_name, productScore
+  );
+  return alts.length > 0;
+};
+
+// Compute one finding given a per-scan predicate. Returns null when count is
+// zero so the caller can filter out empty findings (per spec: not returned
+// with count: 0). swapsAvailable counts the matched scans where
+// hasCleanerAlternative is true; precomputed per-scan via hasAltMap to
+// avoid redundant lookups across the 5 findings.
+const computeFinding = (id, severity, label, ownedScans, hasAltMap, predicate) => {
+  let count = 0;
+  let swapsAvailable = 0;
+  for (const scan of ownedScans) {
+    if (predicate(scan)) {
+      count++;
+      if (hasAltMap.get(scan.id)) swapsAvailable++;
+    }
+  }
+  if (count === 0) return null;
+  return { id, severity, count, label, swapsAvailable };
+};
+
+const SEVERITY_RANK = { severe: 3, moderate: 2, mild: 1 };
+
+app.get("/home-findings", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const userId = req.authUserId;
+  const cacheKey = homeFindingsCacheKey(userId);
+  if (hasRedis) {
+    try {
+      const cached = await redisGet(cacheKey);
+      if (cached) return res.json({ ...cached, cached: true });
+    } catch (e) { console.warn("[home-findings] cache read failed:", e.message); }
+  }
+  try {
+    const ownedScans = await readOwnedScans(userId);
+    if (!ownedScans.length) {
+      const empty = { findings: [], totalFindings: 0 };
+      if (hasRedis) redisSetEx(cacheKey, empty, HOME_FINDINGS_TTL_S).catch(() => {});
+      return res.json({ ...empty, cached: false });
+    }
+
+    // Precompute per-scan flagText and alternative-availability — avoids
+    // running findAlternatives 5 times for scans matching multiple findings.
+    const flagTextMap = new Map();
+    const hasAltMap = new Map();
+    for (const scan of ownedScans) {
+      flagTextMap.set(scan.id, buildScanFlagText(scan));
+      hasAltMap.set(scan.id, hasCleanerAlternative(scan));
+    }
+    const matchSubstance = (re) => (scan) => re.test(flagTextMap.get(scan.id) || "");
+
+    const computed = [
+      computeFinding("kid_elevated_risk", "severe",
+        "items score higher for kids than adults",
+        ownedScans, hasAltMap, isKidElevated),
+      computeFinding("banned_other_countries", "severe",
+        "items with ingredients banned in other countries",
+        ownedScans, hasAltMap, matchSubstance(BANNED_OTHER_COUNTRIES_RE)),
+      computeFinding("highly_processed_foods", "severe",
+        "highly processed foods",
+        ownedScans, hasAltMap, isNova4),
+      computeFinding("hormone_disruption", "severe",
+        "items linked to hormone disruption",
+        ownedScans, hasAltMap, matchSubstance(HORMONE_DISRUPTION_RE)),
+      computeFinding("fertility_developmental_risks", "moderate",
+        "items linked to fertility and developmental risks",
+        ownedScans, hasAltMap, matchSubstance(FERTILITY_DEV_RISKS_RE)),
+    ].filter(Boolean);
+
+    // totalFindings sums counts across ALL computed findings (not just top
+    // 4) so the frontend can render "X total, showing top 4" copy. A scan
+    // matching multiple findings counts in each — semantically "total
+    // finding hits" not "unique items affected."
+    const totalFindings = computed.reduce((sum, f) => sum + f.count, 0);
+
+    // Sort by severity then count descending; take top 4 per spec.
+    computed.sort((a, b) => {
+      const sd = (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0);
+      if (sd !== 0) return sd;
+      return b.count - a.count;
+    });
+    const findings = computed.slice(0, 4);
+
+    const payload = { findings, totalFindings };
+    if (hasRedis) redisSetEx(cacheKey, payload, HOME_FINDINGS_TTL_S).catch(() => {});
+    return res.json({ ...payload, cached: false });
+  } catch (e) {
+    console.error("[home-findings]", e.message);
     return res.status(500).json({ error: "Aggregation failed" });
   }
 });
@@ -10386,11 +10597,14 @@ app.post("/barcode", rateLimit, async (req, res) => {
     return res.status(400).json({ error: "Invalid barcode format" });
   }
 
-  // Track 3 home-data cache invalidation. Same race-window tradeoff as
+  // Track 3+4 dashboard cache invalidation. Same race-window tradeoff as
   // /analyze — invalidate at request entry, frontend saveToCloud lands
   // shortly after. userId comes from request body here (not JWT) so this
   // surface trusts the client; rate limiting bounds cache poisoning abuse.
-  if (userId) invalidateHomeDataCache(userId).catch(() => {});
+  if (userId) {
+    invalidateHomeDataCache(userId).catch(() => {});
+    invalidateHomeFindingsCache(userId).catch(() => {});
+  }
 
   const barcodeKey = `${promptVersion()}:barcode:${barcode}`;
 
