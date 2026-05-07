@@ -148,7 +148,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["coca-cola",                    { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["caramel color IV","HFCS"], reason:"Coca-Cola — HFCS + caramel color IV (4-MEI IARC 2B) + phosphoric acid. 39g sugar per 12oz.", confidence:"high", category:"beverage" }],
   ["coke classic",                 { floor:5, ceiling:7, kidsFloor:8, kidsCeiling:9, substances:["caramel color IV","HFCS"], reason:"Coke Classic — HFCS + caramel color IV. Same as Coca-Cola.", confidence:"high", category:"beverage" }],
-  ["diet coke",                    { floor:5, ceiling:7, kidsFloor:5, kidsCeiling:7, substances:["aspartame","caramel color IV"], reason:"Diet Coke — aspartame IARC 2B (2023) + caramel color IV. Zero sugar but artificial sweetener concern.", confidence:"high", category:"beverage" }],
+  ["diet coke",                    { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:9, substances:["aspartame","caramel color IV"], reason:"Diet Coke — aspartame IARC 2B (2023) + caramel color IV. Zero sugar but artificial sweetener concern.", confidence:"high", category:"beverage" }],
   ["mountain dew",                 { floor:6, ceiling:8, substances:["Yellow 5","HFCS"], reason:"Yellow 5 petroleum dye + HFCS — dye floor fires", confidence:"high", category:"beverage" }],
   ["zevia",                        { floor:1, ceiling:3, substances:[], reason:"Stevia only — no artificial dyes, no HFCS, no aspartame", confidence:"high", category:"beverage" }],
   ["olipop",                       { floor:2, ceiling:4, substances:[], reason:"Plant fiber + prebiotics + natural flavors — no HFCS, no artificial dyes", confidence:"high", category:"beverage" }],
@@ -159,8 +159,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["red bull",                     { floor:5, ceiling:7, substances:["taurine","B-vitamin megadose"], reason:"NOVA 4 stimulant formulation: 27g sugar + taurine + B-vitamin megadoses + 80mg caffeine", confidence:"high", category:"beverage" }],
   ["monster energy",               { floor:5, ceiling:8, substances:["artificial dyes","caffeine"], reason:"Artificial dyes in colored flavors + 160mg caffeine + 27g sugar", confidence:"high", category:"beverage" }],
-  ["celsius energy",               { floor:3, ceiling:5, substances:["sucralose"], reason:"Sucralose floor fires + 200mg caffeine — no artificial colors", confidence:"high", category:"beverage" }],
-  ["bang energy",                  { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium"], reason:"300mg caffeine + sucralose + acesulfame-K + artificial flavors", confidence:"high", category:"beverage" }],
+  ["celsius energy",               { floor:3, ceiling:5, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose floor fires + 200mg caffeine — no artificial colors", confidence:"high", category:"beverage" }],
+  ["bang energy",                  { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"300mg caffeine + sucralose + acesulfame-K + artificial flavors", confidence:"high", category:"beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // BEVERAGES — JUICES AND DRINKS
@@ -179,8 +179,8 @@ const ENTRIES = [
   ["pure leaf unsweetened",        { floor:1, ceiling:2, substances:[], reason:"Tea + water — zero sweetener, zero additives", confidence:"high", category:"beverage" }],
   ["honest tea",                   { floor:1, ceiling:3, substances:[], reason:"USDA Organic, fair trade, 10g natural sugar — genuinely clean", confidence:"high", category:"beverage" }],
   ["lmnt",                         { floor:1, ceiling:3, substances:[], reason:"Sodium + potassium + magnesium + natural flavors — no sweeteners, no additives", confidence:"high", category:"beverage" }],
-  ["liquid iv",                    { floor:3, ceiling:5, substances:["sucralose"], reason:"Sucralose floor fires + B-vitamin megadose stack — not clean despite marketing", confidence:"high", category:"beverage" }],
-  ["pedialyte",                    { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Two artificial sweeteners + artificial colors in some flavors", confidence:"high", category:"beverage" }],
+  ["liquid iv",                    { floor:3, ceiling:5, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose floor fires + B-vitamin megadose stack — not clean despite marketing", confidence:"high", category:"beverage" }],
+  ["pedialyte",                    { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Two artificial sweeteners + artificial colors in some flavors", confidence:"high", category:"beverage" }],
   ["athletic brewing",             { floor:1, ceiling:3, substances:[], reason:"Non-alcoholic craft beer — clean grain ingredients, no ethanol", confidence:"high", category:"beverage" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["pressed juicery",              { floor:1, ceiling:3, substances:[], reason:"Raw cold-pressed juice — minimal ingredients, no additives", confidence:"high", category:"beverage" }],
   ["jamba juice",                  { floor:3, ceiling:6, substances:["added sugar"], reason:"Classic = 4-5 (sherbet + high sugar). Heavy protein = 5+ (95g+ sugar). Range varies by order.", confidence:"medium", category:"restaurant" }],
-  ["smoothie king",                { floor:4, ceiling:6, substances:["sucralose"], reason:"Diet blends: sucralose + acesulfame-K. Hulk series: high calorie/sugar. Rarely clean.", confidence:"medium", category:"restaurant" }],
+  ["smoothie king",                { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Diet blends: sucralose + acesulfame-K. Hulk series: high calorie/sugar. Rarely clean.", confidence:"medium", category:"restaurant" }],
   ["dutch bros",                   { floor:4, ceiling:7, substances:["artificial flavors","Blue Rebel"], reason:"Blue Rebel base is an energy drink. All flavored drinks = high sugar syrups + artificial flavors. NEVER below 5 for flavored.", confidence:"high", category:"restaurant" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -199,15 +199,15 @@ const ENTRIES = [
   ["rx bar",                       { floor:1, ceiling:3, substances:[], reason:"Whole food ingredients — NOVA 1", confidence:"high", category:"food_beverage" }],
   ["gomacro",                      { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole food ingredients", confidence:"high", category:"food_beverage" }],
   ["perfect bar",                  { floor:2, ceiling:4, substances:[], reason:"Peanut butter + honey + nonfat milk — refrigerated, whole food base", confidence:"high", category:"food_beverage" }],
-  ["quest bar",                    { floor:4, ceiling:6, substances:["sucralose","palm kernel oil"], reason:"Sucralose + protein isolate + palm kernel oil + NOVA 4 — not clean", confidence:"high", category:"food_beverage" }],
-  ["david protein bar",            { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol","EPG modified plant fat"], reason:"David Protein Bar — milk protein isolate, whey, collagen. Binding system uses maltitol (sugar alcohol, GI effects), sucralose + acesulfame-K for sweetness, artificial flavors, and EPG (modified plant fat, novel ingredient with limited long-term data). No artificial dyes. High protein density is a positive. Score reflects additive load, not protein quality.", confidence:"high", category:"supplement" }],
-  ["david bar",                    { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Bar — sucralose + ace-K + maltitol + artificial flavors. Novel EPG fat system. Clean protein sources but synthetic additive load prevents clean score.", confidence:"high", category:"supplement" }],
-  ["david protein",                { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Protein — sucralose + acesulfame-K + maltitol + artificial flavors. Full ingredient list publicly available.", confidence:"high", category:"supplement" }],
-  ["david peanut",                 { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Peanut Butter bar — sucralose + ace-K + maltitol + artificial flavors + EPG fat. Confirmed ingredient list from davidprotein.com.", confidence:"high", category:"supplement" }],
-  ["david chocolate",              { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Chocolate bar — sucralose + ace-K + maltitol + artificial flavors. Same formulation platform as other David bars.", confidence:"high", category:"supplement" }],
-  ["david fudge",                  { floor:5, ceiling:6, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Fudge Brownie bar — sucralose + ace-K + maltitol + artificial flavors.", confidence:"high", category:"supplement" }],
-  ["one bar",                      { floor:4, ceiling:6, substances:["sucralose","erythritol"], reason:"Sucralose + erythritol + protein isolate + NOVA 4", confidence:"high", category:"food_beverage" }],
-  ["built bar",                    { floor:4, ceiling:6, substances:["sucralose","erythritol","carrageenan"], reason:"Sucralose + erythritol + carrageenan — multiple floors fire", confidence:"high", category:"food_beverage" }],
+  ["quest bar",                    { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","palm kernel oil"], reason:"Sucralose + protein isolate + palm kernel oil + NOVA 4 — not clean", confidence:"high", category:"food_beverage" }],
+  ["david protein bar",            { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol","EPG modified plant fat"], reason:"David Protein Bar — milk protein isolate, whey, collagen. Binding system uses maltitol (sugar alcohol, GI effects), sucralose + acesulfame-K for sweetness, artificial flavors, and EPG (modified plant fat, novel ingredient with limited long-term data). No artificial dyes. High protein density is a positive. Score reflects additive load, not protein quality.", confidence:"high", category:"supplement" }],
+  ["david bar",                    { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Bar — sucralose + ace-K + maltitol + artificial flavors. Novel EPG fat system. Clean protein sources but synthetic additive load prevents clean score.", confidence:"high", category:"supplement" }],
+  ["david protein",                { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Protein — sucralose + acesulfame-K + maltitol + artificial flavors. Full ingredient list publicly available.", confidence:"high", category:"supplement" }],
+  ["david peanut",                 { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Peanut Butter bar — sucralose + ace-K + maltitol + artificial flavors + EPG fat. Confirmed ingredient list from davidprotein.com.", confidence:"high", category:"supplement" }],
+  ["david chocolate",              { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Chocolate bar — sucralose + ace-K + maltitol + artificial flavors. Same formulation platform as other David bars.", confidence:"high", category:"supplement" }],
+  ["david fudge",                  { floor:5, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium","artificial flavor","maltitol"], reason:"David Fudge Brownie bar — sucralose + ace-K + maltitol + artificial flavors.", confidence:"high", category:"supplement" }],
+  ["one bar",                      { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","erythritol"], reason:"Sucralose + erythritol + protein isolate + NOVA 4", confidence:"high", category:"food_beverage" }],
+  ["built bar",                    { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","erythritol","carrageenan"], reason:"Sucralose + erythritol + carrageenan — multiple floors fire", confidence:"high", category:"food_beverage" }],
   ["kind bar",                     { floor:2, ceiling:4, substances:[], reason:"Nuts + honey — no sucralose, no dyes, relatively clean", confidence:"high", category:"food_beverage" }],
   ["clif bar",                     { floor:3, ceiling:5, substances:["conventional oats"], reason:"Conventional oats (glyphosate concern) + brown rice syrup + natural flavors + NOVA 3", confidence:"high", category:"food_beverage" }],
 
@@ -216,8 +216,8 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["haagen-dazs",                  { floor:2, ceiling:4, substances:[], reason:"Cream + milk + sugar + eggs + flavoring — simple, no carrageenan, no artificial additives", confidence:"high", category:"food_beverage" }],
   ["alden's organic",              { floor:1, ceiling:3, substances:[], reason:"USDA Organic, simple ingredients", confidence:"high", category:"food_beverage" }],
-  ["halo top",                     { floor:4, ceiling:6, substances:["sucralose","erythritol","chicory root"], reason:"Sucralose floor fires + NOVA 4 engineered formulation — not cleaner than real ice cream", confidence:"high", category:"food_beverage" }],
-  ["arctic zero",                  { floor:4, ceiling:6, substances:["sucralose","chicory root"], reason:"Sucralose + chicory root + NOVA 4 — sucralose floor fires", confidence:"high", category:"food_beverage" }],
+  ["halo top",                     { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","erythritol","chicory root"], reason:"Sucralose floor fires + NOVA 4 engineered formulation — not cleaner than real ice cream", confidence:"high", category:"food_beverage" }],
+  ["arctic zero",                  { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","chicory root"], reason:"Sucralose + chicory root + NOVA 4 — sucralose floor fires", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // FOOD — DAIRY AND PLANT MILKS
@@ -335,8 +335,8 @@ const ENTRIES = [
   ["garden of life raw",           { floor:1, ceiling:3, substances:[], reason:"USDA Organic, whole-food derived, no synthetic dyes", confidence:"high", category:"supplement" }],
   ["nordic naturals omega",        { floor:1, ceiling:3, substances:[], reason:"NSF tested, no artificial colors or flavors, Friend of the Sea certified", confidence:"high", category:"supplement" }],
   ["momentous protein",            { floor:1, ceiling:3, substances:[], reason:"NSF Certified for Sport + Informed Sport — no dyes, no artificial sweeteners", confidence:"high", category:"supplement" }],
-  ["c4 pre-workout",               { floor:5, ceiling:7, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K + possible artificial dyes — sucralose floor fires", confidence:"high", category:"supplement" }],
-  ["ghost pre-workout",            { floor:4, ceiling:7, substances:["sucralose"], reason:"Sucralose + artificial flavors + artificial colors in some", confidence:"high", category:"supplement" }],
+  ["c4 pre-workout",               { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K + possible artificial dyes — sucralose floor fires", confidence:"high", category:"supplement" }],
+  ["ghost pre-workout",            { floor:4, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose + artificial flavors + artificial colors in some", confidence:"high", category:"supplement" }],
   ["vital proteins collagen",      { floor:1, ceiling:3, substances:[], reason:"Plain collagen peptides — no artificial additives, minimal ingredients", confidence:"high", category:"supplement" }],
 
   // ══════════════════════════════════════════════════════════════
@@ -629,7 +629,7 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   ["lily's chocolate",              { floor:2, ceiling:4, substances:[], reason:"Stevia + erythritol — no sucralose, no petroleum dyes, clean keto chocolate", confidence:"high", category:"food_beverage" }],
   ["choczero",                       { floor:2, ceiling:4, substances:[], reason:"Monk fruit + erythritol — no sucralose, clean sweeteners", confidence:"high", category:"food_beverage" }],
-  ["rebel keto ice cream",          { floor:4, ceiling:6, substances:["sucralose"], reason:"Sucralose floor fires — not cleaner than real ice cream", confidence:"high", category:"food_beverage" }],
+  ["rebel keto ice cream",          { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose floor fires — not cleaner than real ice cream", confidence:"high", category:"food_beverage" }],
   ["maurten",                    { floor:1, ceiling:3, substances:[], reason:"Maltodextrin + water + electrolytes — no artificial additives whatsoever", confidence:"high", category:"food_beverage" }],
   ["honey stinger",                  { floor:1, ceiling:3, substances:[], reason:"Organic honey base — clean sports fuel", confidence:"high", category:"food_beverage" }],
   ["tailwind endurance",            { floor:1, ceiling:3, substances:[], reason:"Sucrose + glucose + electrolytes — no artificial dyes or flavors", confidence:"high", category:"food_beverage" }],
@@ -640,8 +640,8 @@ const ENTRIES = [
   // MLM NUTRITION
   // ══════════════════════════════════════════════════════════════
   ["herbalife",                      { floor:5, ceiling:7, substances:["sucralose","artificial dyes"], reason:"Artificial dyes + sucralose + proprietary blends without full disclosure — no NSF/Informed Sport certification", confidence:"high", category:"supplement" }],
-  ["isagenix",                       { floor:5, ceiling:7, substances:["sucralose"], reason:"Sucralose + proprietary blends + no third-party testing certification", confidence:"high", category:"supplement" }],
-  ["shakeology",                     { floor:4, ceiling:6, substances:["sucralose"], reason:"Proprietary blends, some sucralose, no NSF certification", confidence:"medium", category:"supplement" }],
+  ["isagenix",                       { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose + proprietary blends + no third-party testing certification", confidence:"high", category:"supplement" }],
+  ["shakeology",                     { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Proprietary blends, some sucralose, no NSF certification", confidence:"medium", category:"supplement" }],
 
   // ══════════════════════════════════════════════════════════════
   // CLEAN SKINCARE
@@ -843,12 +843,12 @@ const ENTRIES = [
   ["califia farms oat",             { floor:3, ceiling:5, substances:["rapeseed oil","dipotassium phosphate"], reason:"Rapeseed oil + dipotassium phosphate + multiple additives — not the same as 2-ingredient oat milk", confidence:"high", category:"beverage" }],
   ["gt's synergy",                  { floor:1, ceiling:3, substances:[], reason:"Raw kombucha — live cultures, USDA Organic, 4g sugar. Benchmark clean kombucha.", confidence:"high", category:"beverage" }],
   ["health-ade kombucha",           { floor:1, ceiling:3, substances:[], reason:"Raw, live cultures, clean ingredients", confidence:"high", category:"beverage" }],
-  ["kevita sparkling probiotic",    { floor:3, ceiling:5, substances:["stevia","citric acid"], reason:"Pasteurized — live culture benefit contested. Not equivalent to raw kombucha.", confidence:"high", category:"beverage" }],
+  ["kevita sparkling probiotic",    { floor:3, ceiling:5, kidsFloor:4, kidsCeiling:6, substances:["stevia","citric acid"], reason:"Pasteurized — live culture benefit contested. Not equivalent to raw kombucha.", confidence:"high", category:"beverage" }],
   ["gatorade zero",                 { floor:5, ceiling:7, kidsFloor:4, kidsCeiling:6, substances:["sucralose","acesulfame potassium","artificial dyes"], reason:"Two artificial sweeteners + petroleum dyes — sucralose + acesulfame-K + dye floors all fire. Not clean hydration.", confidence:"high", category:"beverage" }],
   ["powerade zero",                 { floor:5, ceiling:7, substances:["sucralose","Blue 1"], reason:"Sucralose floor + Blue 1 dye floor — both fire. Not clean hydration.", confidence:"high", category:"beverage" }],
-  ["prime hydration",               { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — sucralose floor fires despite coconut water base", confidence:"high", category:"beverage" }],
+  ["prime hydration",               { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — sucralose floor fires despite coconut water base", confidence:"high", category:"beverage" }],
   ["electrolit",                    { floor:2, ceiling:4, substances:[], reason:"Electrolytes + sucrose + fructose — no sucralose, no artificial dyes. Cleaner sports drink.", confidence:"high", category:"beverage" }],
-  ["bolthouse farms",               { floor:4, ceiling:6, substances:["carrageenan","sucralose"], reason:"Carrageenan in some + sucralose in protein blends — carrageenan floor fires", confidence:"medium", category:"beverage" }],
+  ["bolthouse farms",               { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["carrageenan","sucralose"], reason:"Carrageenan in some + sucralose in protein blends — carrageenan floor fires", confidence:"medium", category:"beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // GROCERY — FROZEN FOODS
@@ -910,15 +910,15 @@ const ENTRIES = [
   // ══════════════════════════════════════════════════════════════
   // PANTRY — SWEETENERS
   // ══════════════════════════════════════════════════════════════
-  ["splenda",                        { floor:5, ceiling:7, substances:["sucralose"], reason:"The product IS sucralose — sucralose floor fires on entire product. NEVER score below 5.", confidence:"high", category:"food_beverage" }],
-  ["equal",                        { floor:5, ceiling:7, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
-  ["equal packet",                 { floor:5, ceiling:7, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
-  ["equal sweetener",               { floor:5, ceiling:7, substances:["aspartame"], reason:"The product IS aspartame — aspartame floor fires (IARC 2B 2023). NEVER score below 5.", confidence:"high", category:"food_beverage" }],
-  ["sweet'n low",                   { floor:3, ceiling:5, substances:["saccharin"], reason:"Saccharin — bladder cancer in rodents, IARC removed Group 2B but concern remains", confidence:"high", category:"food_beverage" }],
-  ["sweet n low",                   { floor:3, ceiling:5, substances:["saccharin"], reason:"Saccharin — concern remains despite IARC reclassification", confidence:"high", category:"food_beverage" }],
-  ["truvia",                        { floor:2, ceiling:4, substances:[], reason:"Erythritol + stevia extract — no sucralose, no aspartame. Cleaner than Splenda/Equal.", confidence:"high", category:"food_beverage" }],
-  ["swerve sweetener",              { floor:2, ceiling:4, substances:[], reason:"Erythritol + oligosaccharides — no sucralose, no aspartame", confidence:"high", category:"food_beverage" }],
-  ["lakanto monk fruit",            { floor:1, ceiling:3, substances:[], reason:"Erythritol + monk fruit extract — no sucralose, cleanest mainstream sweetener", confidence:"high", category:"food_beverage" }],
+  ["splenda",                        { floor:5, ceiling:7, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"The product IS sucralose — sucralose floor fires on entire product. NEVER score below 5.", confidence:"high", category:"food_beverage" }],
+  ["equal",                        { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:9, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
+  ["equal packet",                 { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:9, substances:["aspartame"], reason:"Product IS aspartame — IARC 2B 2023 floor fires", confidence:"high", category:"food_beverage" }],
+  ["equal sweetener",               { floor:5, ceiling:7, kidsFloor:7, kidsCeiling:9, substances:["aspartame"], reason:"The product IS aspartame — aspartame floor fires (IARC 2B 2023). NEVER score below 5.", confidence:"high", category:"food_beverage" }],
+  ["sweet'n low",                   { floor:3, ceiling:5, kidsFloor:5, kidsCeiling:7, substances:["saccharin"], reason:"Saccharin — bladder cancer in rodents, IARC removed Group 2B but concern remains", confidence:"high", category:"food_beverage" }],
+  ["sweet n low",                   { floor:3, ceiling:5, kidsFloor:5, kidsCeiling:7, substances:["saccharin"], reason:"Saccharin — concern remains despite IARC reclassification", confidence:"high", category:"food_beverage" }],
+  ["truvia",                        { floor:2, ceiling:4, kidsFloor:6, kidsCeiling:8, substances:[], reason:"Erythritol + stevia extract — no sucralose, no aspartame. Cleaner than Splenda/Equal.", confidence:"high", category:"food_beverage" }],
+  ["swerve sweetener",              { floor:2, ceiling:4, kidsFloor:6, kidsCeiling:8, substances:[], reason:"Erythritol + oligosaccharides — no sucralose, no aspartame", confidence:"high", category:"food_beverage" }],
+  ["lakanto monk fruit",            { floor:1, ceiling:3, kidsFloor:6, kidsCeiling:8, substances:[], reason:"Erythritol + monk fruit extract — no sucralose, cleanest mainstream sweetener", confidence:"high", category:"food_beverage" }],
 
   // ══════════════════════════════════════════════════════════════
   // PANTRY — RICE AND MICROPLASTIC CONCERN
@@ -964,10 +964,10 @@ const ENTRIES = [
   ["truvani protein",               { floor:1, ceiling:3, substances:[], reason:"USDA Organic, 4 ingredients, stevia sweetened — no sucralose", confidence:"high", category:"supplement" }],
   ["vega sport protein",            { floor:2, ceiling:4, substances:[], reason:"Pea protein + stevia — no sucralose, no artificial dyes", confidence:"high", category:"supplement" }],
   ["orgain organic protein",        { floor:2, ceiling:4, substances:[], reason:"USDA Organic in most lines — check for stevia vs sucralose in specific SKU", confidence:"medium", category:"supplement" }],
-  ["optimum nutrition gold standard",{ floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K + artificial flavors — both floors fire", confidence:"high", category:"supplement" }],
-  ["myprotein impact whey",         { floor:4, ceiling:6, substances:["sucralose"], reason:"Sucralose floor fires + artificial flavors", confidence:"high", category:"supplement" }],
-  ["dymatize iso100",               { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — both floors fire", confidence:"high", category:"supplement" }],
-  ["isopure zero carb",             { floor:4, ceiling:6, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K floors fire", confidence:"high", category:"supplement" }],
+  ["optimum nutrition gold standard",{ floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K + artificial flavors — both floors fire", confidence:"high", category:"supplement" }],
+  ["myprotein impact whey",         { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose"], reason:"Sucralose floor fires + artificial flavors", confidence:"high", category:"supplement" }],
+  ["dymatize iso100",               { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K — both floors fire", confidence:"high", category:"supplement" }],
+  ["isopure zero carb",             { floor:4, ceiling:6, kidsFloor:6, kidsCeiling:8, substances:["sucralose","acesulfame potassium"], reason:"Sucralose + acesulfame-K floors fire", confidence:"high", category:"supplement" }],
 
   // ══════════════════════════════════════════════════════════════
   // PANTRY — PASTA AND BREAD
