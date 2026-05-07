@@ -1294,9 +1294,62 @@ function computeSafetyScores(finalScore, category, productName, p1, substanceTri
   ].filter(Boolean).join(" ");
   const { childScore, childBumps } = computeChild
     ? computeChildScore(finalScore, flagText, category, productName, isChild)
-    : { childScore: null, childBumps: [] };
+    : { childScore: finalScore, childBumps: [] };
   const { pregnancyScore, pregnancyBumps } = computePregnancyScore(finalScore, flagText, category, productName);
   return { childScore, childBumps, pregnancyScore, pregnancyBumps, isChild };
+}
+
+// Builds a calibration_short_circuit result object for the four sites that
+// resolve a calibration entry directly (productId calibration: scheme, vision
+// V2 cascade calibration tier, V1 image fuzzy hit, text fuzzy hit). All four
+// previously duplicated this prelude inline; consolidating ensures the
+// child_score gate (entry.kidsFloor ? kidsMid : safety.childScore) stays in
+// one place. After computeChildScore was changed to return baseScore on
+// no-bump, safety.childScore is never null — the conditional now reduces to
+// "kidsMid when entry has kidsFloor, midScore otherwise."
+//
+// Returns { result, midScore, safety } so callers can log midScore without
+// recomputing and inspect safety for downstream gating if needed. The
+// `extra` parameter merges into the result object, used for site-specific
+// fields like ingredient_list or vision_reconciliation.
+function buildCalibrationShortCircuitResult(entry, productName, category, alternatives, extra = {}) {
+  const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
+  const kidsFloor = entry.kidsFloor || entry.floor;
+  const kidsCeil  = entry.kidsCeiling || entry.ceiling;
+  const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+  const concernsText = (entry.substances || []).join(" ");
+  const safety = computeSafetyScores(midScore, category, productName,
+    { flagged_substances: entry.substances || [] }, [], concernsText);
+  const result = {
+    product_name: productName,
+    score: midScore,
+    overall_score: midScore,
+    category,
+    confidence: entry.confidence || "high",
+    is_child_product: safety.isChild,
+    child_score: entry.kidsFloor ? kidsMid : safety.childScore,
+    child_bumps: safety.childBumps || [],
+    pregnancy_score: safety.pregnancyScore,
+    pregnancy_bumps: safety.pregnancyBumps || [],
+    dimensions: buildFuzzyDimensions(entry, category, midScore),
+    concerns: entry.substances || [],
+    flagged_substances: entry.substances || [],
+    summary: entry.reason || "",
+    nutrition: entry.nutrition || null,
+    alternatives,
+    ai_alternatives: [],
+    product_family: classifyProductFamily(productName, entry.substances || [], category),
+    category_score_context: CATEGORY_CONTEXT[category] || CATEGORY_CONTEXT.other,
+    ingredient_source: "calibration",
+    ingredient_confidence: entry.confidence || "high",
+    ingredient_verified_at: new Date().toISOString(),
+    ingredient_source_url: null,
+    source: "calibration",
+    source_label: "Verified formula",
+    source_confidence: null,
+    ...extra,
+  };
+  return { result, midScore, safety };
 }
 
 function applySubstanceFloors(mScore, uScore, p1, p2) {
@@ -1683,9 +1736,13 @@ function computeChildScore(baseScore, concernsText, category, productName, isChi
     }
   }
 
-  // No bumps fired and product is not kid-marketed — return null so the UI
-  // hides the kid-mode delta entirely (clean formulas don't need a kid score).
-  if (bump === 0) return { childScore: null, childBumps: [] };
+  // No kid-specific signal fired — kids inherit the adult exposure level.
+  // childBumps stays empty so callers can gate kids-mode follow-through
+  // (calibration re-pass, UI delta cards) on whether real kid signal fired
+  // vs adult-equal fallback. Removes the prior null-return that caused
+  // 80%+ of /analyze responses to ship null kid_score and broke kid-mode
+  // dashboard surfaces (family framing addendum 2026-05-06).
+  if (bump === 0) return { childScore: baseScore, childBumps: [] };
 
   const childScore = Math.min(10, baseScore + bump);
   return { childScore, childBumps: bumps };
@@ -5985,45 +6042,17 @@ app.post("/analyze", rateLimit, async (req, res) => {
         if (!entry) return stream.errorJson(404, { error: "Unknown calibration key" });
         const productName = toTitleCase(key);
         const cat = entry.category || "other";
-        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
-        const kidsFloor = entry.kidsFloor || entry.floor;
-        const kidsCeil  = entry.kidsCeiling || entry.ceiling;
-        const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
-        const concernsText = (entry.substances || []).join(" ");
-        const safety = computeSafetyScores(midScore, cat, productName, { flagged_substances: entry.substances || [] }, [], concernsText);
         const alts = serializeAlternatives(
           filterDbAlternatives(
             findAlternatives(productName, cat, 3, productName),
-            cat, productName, midScore
+            cat, productName, Math.round((entry.floor + entry.ceiling) / 2)
           ),
           cat
         );
-        const result = applyProductCalibration({
-          product_name: productName,
-          score: midScore, overall_score: midScore,
-          category: cat,
-          confidence: entry.confidence || "high",
-          is_child_product: safety.isChild,
-          child_score: entry.kidsFloor ? kidsMid : safety.childScore,
-          child_bumps: safety.childBumps || [],
-          pregnancy_score: safety.pregnancyScore,
-          pregnancy_bumps: safety.pregnancyBumps || [],
-          dimensions: buildFuzzyDimensions(entry, cat, midScore),
-          concerns: entry.substances || [],
-          flagged_substances: entry.substances || [],
-          summary: entry.reason || "",
-          nutrition: entry.nutrition || null,
-          alternatives: alts, ai_alternatives: [],
-          product_family: classifyProductFamily(productName, entry.substances || [], cat),
-          category_score_context: CATEGORY_CONTEXT[cat] || CATEGORY_CONTEXT.other,
-          ingredient_source: "calibration",
-          ingredient_confidence: entry.confidence || "high",
-          ingredient_verified_at: new Date().toISOString(),
-          ingredient_source_url: null,
-          source: "calibration",
-          source_label: "Verified formula",
-          source_confidence: null,
-        });
+        const { result: shortCircuit, midScore } = buildCalibrationShortCircuitResult(
+          entry, productName, cat, alts
+        );
+        const result = applyProductCalibration(shortCircuit);
         await attachIntelCards(result, userId);
         log.info("product_id_resolve", { productId, source: "calibration", score: midScore });
         stampFresh(result, inputMode, "calibration_short_circuit", requestStartMs);
@@ -6533,7 +6562,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
       if (!cascadeHit) {
         const nameKey = cacheKey(productName, visionCat);
         const nCached = await cacheGet(nameKey);
-        if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded) {
+        // nCached.child_score == null marks pre-fix cache entries that
+        // shipped before computeChildScore returned baseScore on no-bump.
+        // Treat as stale and fall through to fresh scoring.
+        if (nCached && !evictIfPrePass0(nCached, nameKey) && nCached.dimensions && !nCached._preloaded && nCached.child_score != null) {
           log.info("vision_cascade_cache_hit", { product_name: productName });
           await attachIntelCards(nCached, userId);
           try {
@@ -6634,15 +6666,10 @@ app.post("/analyze", rateLimit, async (req, res) => {
       // Step 4a: cascade returned calibration entry → calibration scoring path.
       if (cascadeHit && (cascadeHit.tier === "calibration" || cascadeHit.tier === "fuzzy_calibration")) {
         const entry = cascadeHit.entry;
-        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
-        const concernsText = (entry.substances || []).join(" ");
-        const safety = computeSafetyScores(midScore, entry.category || visionCat, productName, { flagged_substances: entry.substances || [] }, [], concernsText);
-        const kidsFloor = entry.kidsFloor || entry.floor;
-        const kidsCeil  = entry.kidsCeiling || entry.ceiling;
-        const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
+        const visionFuzzyCat = entry.category || visionCat;
         const alts = serializeAlternatives(
-          filterDbAlternatives(findAlternatives(productName, entry.category || visionCat, 5, productName), entry.category || visionCat, productName, midScore),
-          entry.category || visionCat,
+          filterDbAlternatives(findAlternatives(productName, visionFuzzyCat, 5, productName), visionFuzzyCat, productName, Math.round((entry.floor + entry.ceiling) / 2)),
+          visionFuzzyCat,
         );
         const recon = reconcileIngredients(identification.label_ingredients, entry.substances || []);
         if (!recon.agreed && (identification.label_ingredients || []).length > 0) {
@@ -6655,37 +6682,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
             used: "cascade",
           });
         }
-        const result = applyProductCalibration({
-          product_name: productName,
-          score: midScore, overall_score: midScore,
-          category: entry.category || visionCat,
-          confidence: entry.confidence || "high",
-          is_child_product: safety.isChild,
-          child_score: entry.kidsFloor ? kidsMid : safety.childScore,
-          child_bumps: safety.childBumps || [],
-          pregnancy_score: safety.pregnancyScore,
-          pregnancy_bumps: safety.pregnancyBumps || [],
-          dimensions: buildFuzzyDimensions(entry, entry.category || visionCat, midScore),
-          concerns: entry.substances || [],
-          flagged_substances: entry.substances || [],
-          summary: entry.reason || "",
-          alternatives: alts, ai_alternatives: [],
-          nutrition: entry.nutrition || null,
-          ingredient_list: identification.label_ingredients || [],
-          product_family: classifyProductFamily(productName, identification.label_ingredients, entry.category || visionCat),
-          category_score_context: CATEGORY_CONTEXT[entry.category || visionCat] || CATEGORY_CONTEXT.other,
-          ingredient_source: "calibration",
-          ingredient_confidence: entry.confidence || "high",
-          ingredient_verified_at: new Date().toISOString(),
-          ingredient_source_url: null,
-          source: "calibration",
-          source_label: "Verified formula",
-          source_confidence: null,
-          vision_reconciliation: recon.agreementPct,
-        });
+        const { result: shortCircuit } = buildCalibrationShortCircuitResult(
+          entry, productName, visionFuzzyCat, alts,
+          {
+            ingredient_list: identification.label_ingredients || [],
+            product_family: classifyProductFamily(productName, identification.label_ingredients, visionFuzzyCat),
+            vision_reconciliation: recon.agreementPct,
+          }
+        );
+        const result = applyProductCalibration(shortCircuit);
         result.scoring_path = "calibration_short_circuit";
         result.input_mode = inputMode;
-        const imgKey = cacheKey(productName, entry.category || visionCat);
+        const imgKey = cacheKey(productName, visionFuzzyCat);
         cacheSet(imgKey, result);
         await attachIntelCards(result, userId);
         stampFresh(result, inputMode, "calibration_short_circuit", requestStartMs);
@@ -6827,7 +6835,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           label_legibility: identification.label_legibility,
         });
         await attachIntelCards(synth, userId);
-        stampFresh(synth, inputMode, "legacy_ai", requestStartMs);
+        stampFresh(synth, inputMode, "tier_5_synthetic", requestStartMs);
         return stream.complete({ ...synth, cached: false });
       }
 
@@ -7354,6 +7362,19 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const calibrated = applyProductCalibration(result);
       calibrated.scoring_path = "legacy_ai";
       calibrated.input_mode = inputMode;
+
+      // Always run a kids-mode calibration pass so kid-tier floors (sugar/
+      // sodium/satFat DV thresholds, kids NOVA bounds, kidsFloor/kidsCeiling
+      // overrides) apply even when no kid-specific bumps fired. After
+      // computeChildScore was changed to return baseScore on no-bump,
+      // calibrated.child_score is always a number.
+      const kidsCalibrated = applyProductCalibration({
+        ...result, kids_mode: true,
+        overall_score: calibrated.child_score,
+        score: calibrated.child_score,
+      });
+      calibrated.child_score = kidsCalibrated.overall_score;
+
       const imgKey = cacheKey(productName, visionCat);
       cacheSet(imgKey, calibrated);
       await attachIntelCards(calibrated, userId);
@@ -7422,10 +7443,11 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // ─────────────────────────────────────────────────────────────
   // LEGACY VISION V1 PATH — VISION_CONTRACT_V2=false ONLY
   // ─────────────────────────────────────────────────────────────
-  // scoring_path / input_mode / latency_ms instrumentation deliberately
-  // not applied here. V2 (above) is production. If V1 is ever re-enabled,
-  // scans served by this branch will surface in analytics with null
-  // scoring_path values — that is the intended signal.
+  // V1 fuzzy hit + V1 Pass 1/2 are now defensively tagged with
+  // scoring_path so analytics can distinguish them from V2 paths
+  // even when V2 is toggled off. Prior comment claimed V1 was
+  // intentionally untagged but that was 80%+ of /analyze responses
+  // shipping null scoring_path in production with V2 OFF.
   // If image provided, use vision to identify + analyze in one pass
   if (image) {
     try {
@@ -7453,7 +7475,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
           imgCached.dimensions.usage_exposure?.score === 5 &&
           imgCached.dimensions.packaging?.score      === 5 &&
           imgCached.dimensions.sustainability?.score === 5;
-        const imgStale = !imgCached.dimensions || imgCached._preloaded === true || (imgNoIng && imgNoFlag && imgAllFive);
+        // child_score == null marks pre-fix cache entries that shipped before
+        // computeChildScore returned baseScore on no-bump. Evict + rescore.
+        const imgStale = !imgCached.dimensions || imgCached._preloaded === true || (imgNoIng && imgNoFlag && imgAllFive) || imgCached.child_score == null;
         if (imgStale) {
           console.log(`[CACHE STALE] Vision "${productName}" — evicting placeholder, forcing full scan`);
           scoreCache.delete(imgKey);
@@ -7469,44 +7493,28 @@ app.post("/analyze", rateLimit, async (req, res) => {
       const imgFuzzy = !imgSkipFuzzy && fuzzyCalibrationLookup(productName, category);
       if (imgFuzzy) {
         const { entry } = imgFuzzy;
-        const midScore = Math.round((entry.floor + entry.ceiling) / 2);
         const imgFuzzyCat = entry.category || category;
-        const imgConcernsText = (entry.substances || []).join(" ");
-        const imgSafety = computeSafetyScores(midScore, imgFuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], imgConcernsText);
-        const imgKidsFloor = entry.kidsFloor || entry.floor;
-        const imgKidsCeil = entry.kidsCeiling || entry.ceiling;
-        const imgKidsMid = Math.round((imgKidsFloor + imgKidsCeil) / 2);
         const imgFuzzyAlts = serializeAlternatives(
           filterDbAlternatives(
             findAlternatives(productName, imgFuzzyCat, 3, productName),
-            imgFuzzyCat, productName, midScore
+            imgFuzzyCat, productName, Math.round((entry.floor + entry.ceiling) / 2)
           ),
           imgFuzzyCat
         );
-        const fuzzyResult = applyProductCalibration({
-          product_name: productName, score: midScore, overall_score: midScore,
-          category: imgFuzzyCat,
-          confidence: entry.confidence || "high",
-          is_child_product: imgSafety.isChild,
-          child_score: entry.kidsFloor ? imgKidsMid : imgSafety.childScore,
-          child_bumps: imgSafety.childBumps || [],
-          pregnancy_score: imgSafety.pregnancyScore,
-          pregnancy_bumps: imgSafety.pregnancyBumps || [],
-          dimensions: buildFuzzyDimensions(entry, imgFuzzyCat, midScore),
-          concerns: entry.substances || [],
-          flagged_substances: entry.substances || [],
-          summary: entry.reason || "",
-          alternatives: imgFuzzyAlts, ai_alternatives: [],
-          nutrition: entry.nutrition || p1.nutrition || p1.product_analysis?.nutrition || null,
-          ingredient_list: p1.ingredient_list || [],
-          product_family: classifyProductFamily(productName, p1.ingredient_list, imgFuzzyCat),
-          category_score_context: CATEGORY_CONTEXT[imgFuzzyCat] || CATEGORY_CONTEXT.other,
-          source: "calibration",
-          source_label: "Verified formula",
-          source_confidence: null,
-        });
+        const { result: shortCircuit, midScore } = buildCalibrationShortCircuitResult(
+          entry, productName, imgFuzzyCat, imgFuzzyAlts,
+          {
+            nutrition: entry.nutrition || p1.nutrition || p1.product_analysis?.nutrition || null,
+            ingredient_list: p1.ingredient_list || [],
+            product_family: classifyProductFamily(productName, p1.ingredient_list, imgFuzzyCat),
+          }
+        );
+        const fuzzyResult = applyProductCalibration(shortCircuit);
+        fuzzyResult.scoring_path = "calibration_short_circuit";
+        fuzzyResult.input_mode = inputMode;
         cacheSet(imgKey, fuzzyResult);
         console.log(`[FUZZY CAL HIT] Vision "${productName}" matched calibration — score ${midScore}`);
+        stampFresh(fuzzyResult, inputMode, "calibration_short_circuit", requestStartMs);
         return stream.complete({ ...fuzzyResult, cached: false });
       }
 
@@ -7665,10 +7673,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
       };
 
       const calibratedResult = applyProductCalibration(result);
+      calibratedResult.scoring_path = "legacy_ai";
+      calibratedResult.input_mode = inputMode;
+
+      // Always run a kids-mode calibration pass so kid-tier floors (sugar/
+      // sodium/satFat DV thresholds, kids NOVA bounds, kidsFloor/kidsCeiling
+      // overrides) apply even when no kid-specific bumps fired. After
+      // computeChildScore was changed to return baseScore on no-bump,
+      // calibratedResult.child_score is always a number.
+      const kidsCalibratedV1 = applyProductCalibration({
+        ...result, kids_mode: true,
+        overall_score: calibratedResult.child_score,
+        score: calibratedResult.child_score,
+      });
+      calibratedResult.child_score = kidsCalibratedV1.overall_score;
+
       // Cache the result so next camera scan of same product is instant
       cacheSet(imgKey, calibratedResult);
       console.log(`[CACHED] Vision "${productName}" → score ${calibratedResult.score}`);
       await attachIntelCards(calibratedResult, userId);
+      stampFresh(calibratedResult, inputMode, "legacy_ai", requestStartMs);
       return stream.complete(calibratedResult);
     } catch(err) {
       console.error("Vision analyze error:", err);
@@ -7711,7 +7735,9 @@ app.post("/analyze", rateLimit, async (req, res) => {
       cached.dimensions.usage_exposure?.score === 5 &&
       cached.dimensions.packaging?.score      === 5 &&
       cached.dimensions.sustainability?.score === 5;
-    const isStale = !cached.dimensions || cached._preloaded === true || (noIngredients && noFlags && allFiveDims);
+    // child_score == null marks pre-fix cache entries that shipped before
+    // computeChildScore returned baseScore on no-bump. Evict + rescore.
+    const isStale = !cached.dimensions || cached._preloaded === true || (noIngredients && noFlags && allFiveDims) || cached.child_score == null;
     if (isStale) {
       console.log(`[CACHE STALE] ${key} — evicting placeholder data, forcing full AI scan`);
       scoreCache.delete(key);
@@ -7821,46 +7847,18 @@ app.post("/analyze", rateLimit, async (req, res) => {
   const fuzzyHit = !skipFuzzyCalibration && fuzzyCalibrationLookup(productName);
   if (fuzzyHit) {
     const { entry } = fuzzyHit;
-    const midScore  = Math.round((entry.floor + entry.ceiling) / 2);
-    const kidsFloor = entry.kidsFloor || entry.floor;
-    const kidsCeil  = entry.kidsCeiling || entry.ceiling;
-    const kidsMid   = Math.round((kidsFloor + kidsCeil) / 2);
     const fuzzyCat  = entry.category || category;
-    const fuzzyConcernsText = (entry.substances || []).join(" ");
-    const fuzzySafety = computeSafetyScores(midScore, fuzzyCat, productName, { flagged_substances: entry.substances || [] }, [], fuzzyConcernsText);
     const fuzzyAlts = serializeAlternatives(
       filterDbAlternatives(
         findAlternatives(productName, fuzzyCat, 3, productName),
-        fuzzyCat, productName, midScore
+        fuzzyCat, productName, Math.round((entry.floor + entry.ceiling) / 2)
       ),
       fuzzyCat
     );
-    const fuzzyResult = applyProductCalibration({
-      product_name: productName,
-      score: midScore, overall_score: midScore,
-      category: fuzzyCat,
-      confidence: entry.confidence || "high",
-      is_child_product: fuzzySafety.isChild,
-      child_score: entry.kidsFloor ? kidsMid : fuzzySafety.childScore,
-      child_bumps: fuzzySafety.childBumps || [],
-      pregnancy_score: fuzzySafety.pregnancyScore,
-      pregnancy_bumps: fuzzySafety.pregnancyBumps || [],
-      dimensions: buildFuzzyDimensions(entry, fuzzyCat, midScore),
-      concerns: entry.substances || [],
-      flagged_substances: entry.substances || [],
-      summary: entry.reason || "",
-      nutrition: entry.nutrition || null,
-      alternatives: fuzzyAlts, ai_alternatives: [],
-      product_family: classifyProductFamily(productName, entry.substances || [], fuzzyCat),
-      category_score_context: CATEGORY_CONTEXT[fuzzyCat] || CATEGORY_CONTEXT.other,
-      ingredient_source: "calibration",
-      ingredient_confidence: entry.confidence || "high",
-      ingredient_verified_at: new Date().toISOString(),
-      ingredient_source_url: null,
-      source: "calibration",
-      source_label: "Verified formula",
-      source_confidence: null,
-    });
+    const { result: shortCircuit, midScore, safety: fuzzySafety } = buildCalibrationShortCircuitResult(
+      entry, productName, fuzzyCat, fuzzyAlts
+    );
+    const fuzzyResult = applyProductCalibration(shortCircuit);
     fuzzyResult.scoring_path = "calibration_short_circuit";
     fuzzyResult.input_mode = inputMode;
     cacheSet(key, fuzzyResult);
@@ -8289,15 +8287,23 @@ app.post("/analyze", rateLimit, async (req, res) => {
       if (novaInf && novaInf.nova === 4) {
         console.log(`[${tier}][nova_trace] AFTER applyProductCalibration: calibrated.score=${calibrated.score} calibrated.overall_score=${calibrated.overall_score} override=${JSON.stringify(calibrated.calibration_override || null).slice(0, 200)}`);
       }
-      if (calibrated.child_score != null) {
-        const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
-        calibrated.child_score = kidsCalibrated.overall_score;
-      }
+      // Always run a kids-mode calibration pass so kid-tier floors (sugar/
+      // sodium/satFat DV thresholds, kids NOVA bounds, kidsFloor/kidsCeiling
+      // overrides) apply even when no kid-specific bumps fired. After
+      // computeChildScore was changed to return baseScore on no-bump,
+      // calibrated.child_score is always a number — the prior null guard is
+      // dead code.
+      const kidsCalibrated = applyProductCalibration({ ...result, kids_mode: true, overall_score: calibrated.child_score, score: calibrated.child_score });
+      calibrated.child_score = kidsCalibrated.overall_score;
 
       return { tier, result: calibrated, skipCache: false, engineResult };
     });
 
-    cascadeOutcome.result.scoring_path = "legacy_ai";
+    // Re-tag Tier 5 synthetic results so analytics can distinguish them
+    // from genuine Pass 1/2 cascade hits. Both bucket as "legacy_ai" today
+    // which conflates the synthetic best-guess path with the AI-scored path.
+    const cascadePath = cascadeOutcome.tier === "tier5" ? "tier_5_synthetic" : "legacy_ai";
+    cascadeOutcome.result.scoring_path = cascadePath;
     cascadeOutcome.result.input_mode = inputMode;
     if (!cascadeOutcome.skipCache) {
       cacheSet(key, cascadeOutcome.result);
@@ -8307,7 +8313,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
     await attachIntelCards(cascadeOutcome.result, userId);
     try {
-      stampFresh(cascadeOutcome.result, inputMode, "legacy_ai", requestStartMs);
+      stampFresh(cascadeOutcome.result, inputMode, cascadePath, requestStartMs);
     } catch (e) {
       console.warn(`[stamp_fresh] error: ${e.message}`);
     }
@@ -10095,7 +10101,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
       bCached.dimensions.usage_exposure?.score === 5 &&
       bCached.dimensions.packaging?.score      === 5 &&
       bCached.dimensions.sustainability?.score === 5;
-    const bStale = !bCached.dimensions || bCached._preloaded || bCached._warmCache || (noIng && noFlag && allFive);
+    // child_score == null marks pre-fix cache entries that shipped before
+    // computeChildScore returned baseScore on no-bump. Evict + rescore.
+    const bStale = !bCached.dimensions || bCached._preloaded || bCached._warmCache || (noIng && noFlag && allFive) || bCached.child_score == null;
     if (!bStale) {
       console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
       stampCacheHit(bCached, inputMode, requestStartMs);
@@ -10268,7 +10276,9 @@ app.post("/barcode", rateLimit, async (req, res) => {
       nCached.dimensions.usage_exposure?.score === 5 &&
       nCached.dimensions.packaging?.score      === 5 &&
       nCached.dimensions.sustainability?.score === 5;
-    if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na))) {
+    // child_score == null marks pre-fix cache entries that shipped before
+    // computeChildScore returned baseScore on no-bump. Evict + rescore.
+    if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na) || nCached.child_score == null)) {
       cacheSet(barcodeKey, nCached);
       stampCacheHit(nCached, inputMode, requestStartMs);
       return res.json({ ...nCached, cached: true, barcode });
@@ -10471,6 +10481,18 @@ app.post("/barcode", rateLimit, async (req, res) => {
     const calibrated = applyProductCalibration(result);
     calibrated.scoring_path = "legacy_ai";
     calibrated.input_mode = inputMode;
+
+    // Always run a kids-mode calibration pass so kid-tier floors (sugar/
+    // sodium/satFat DV thresholds, kids NOVA bounds, kidsFloor/kidsCeiling
+    // overrides) apply even when no kid-specific bumps fired. After
+    // computeChildScore was changed to return baseScore on no-bump,
+    // calibrated.child_score is always a number.
+    const kidsCalibrated = applyProductCalibration({
+      ...result, kids_mode: true,
+      overall_score: calibrated.child_score,
+      score: calibrated.child_score,
+    });
+    calibrated.child_score = kidsCalibrated.overall_score;
 
     // Cache under both barcode key and product name key
     cacheSet(barcodeKey, calibrated);

@@ -148,17 +148,21 @@ function scoreIngredients(parsed, options = {}) {
 
   // Apply mode floors: any matched ingredient with kid_score_floor or
   // pregnancy_score_floor pushes the dimension up to that floor when
-  // the relevant mode is active.
+  // the relevant mode is active. Per CLAUDE.md schema rule: *_score_floor
+  // is a HARD MINIMUM regardless of the *_concern boolean (the booleans
+  // are advisory metadata for explanation generation, not a gate on the
+  // floor). The annotation example: an entry with kid_score_floor=3 and
+  // kid_concern=false still floors kid-mode hazard at 3.
   let hazardFloor = 0;
   let floorTriggeredBy = null;
   for (const m of matched) {
-    if (kidMode && m.entry.kid_concern && m.entry.kid_score_floor) {
+    if (kidMode && m.entry.kid_score_floor) {
       if (m.entry.kid_score_floor > hazardFloor) {
         hazardFloor = m.entry.kid_score_floor;
         floorTriggeredBy = { ingredient: m.entry.inci_name, mode: "kid", floor: m.entry.kid_score_floor };
       }
     }
-    if (pregnancyMode && m.entry.pregnancy_concern && m.entry.pregnancy_score_floor) {
+    if (pregnancyMode && m.entry.pregnancy_score_floor) {
       if (m.entry.pregnancy_score_floor > hazardFloor) {
         hazardFloor = m.entry.pregnancy_score_floor;
         floorTriggeredBy = { ingredient: m.entry.inci_name, mode: "pregnancy", floor: m.entry.pregnancy_score_floor };
