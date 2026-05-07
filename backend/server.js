@@ -1277,6 +1277,25 @@ function serializeAlternatives(rawAlts, category) {
 // Compute child + pregnancy scores from the final score and a flag text.
 // Collects flag text from multiple sources (p1 concerns, substance triggers,
 // raw ingredient text) so we catch concerns regardless of which path we're in.
+// Negation marker for the substance-matching corpus. Any substance string
+// containing a "[chemical-name]-free" token declares the chemical's ABSENCE,
+// so substance-matching regex must not fire on it. /\bBPA\b/ matching inside
+// "BPA-free polypropylene" was the canonical defamation-class failure (Dr
+// Brown's bottle, Tommee Tippee, Owala FreeSip et al. — products users chose
+// specifically because they're BPA-free were getting penalized for it).
+//
+// The list below is chemical-name stems only. Functional descriptors with
+// "-free" suffix ("wrinkle-free", "free-range", "sugar-free", "stain-free")
+// don't match — the token preceding -free isn't a known hazard chemical.
+// Note: "wrinkle-free" in "formaldehyde wrinkle-free" describes the FUNCTION
+// achieved by formaldehyde chemistry, not formaldehyde negation; that string
+// correctly survives and the formaldehyde bump fires. Whole-string drop is
+// preferred over surgical token strip so adjacent regex matches in the same
+// string (e.g. /\bDWR\b/ matching "DWR" inside "PFAS-free DWR") also stop
+// firing — the entry's intent is that the DWR is PFAS-free.
+const NEGATION_TOKEN_RE = /\b(?:BPA|BPS|BPF|bisphenol|PFAS|PFOA|PFOS|PTFE|perfluoro|fluoropolymer|phthalates?|DEHP|DBP|parabens?|oxybenzone|octinoxate|octocrylene|homosalate|octisalate|avobenzone|DWR|PVC|lead|formaldehyde|BHA|BHT|chlorine|fragrance|sulfates?|SLS|VOC|fluoride|MSG|GMO)-free\b/i;
+const stripNegationFlags = (s) => (typeof s === "string" && NEGATION_TOKEN_RE.test(s)) ? "" : s;
+
 function computeSafetyScores(finalScore, category, productName, p1, substanceTriggers = [], extraText = "") {
   const isChild = detectChildProduct(productName, category);
   const computeChild = shouldComputeChildScore(productName, category);
@@ -1287,11 +1306,20 @@ function computeSafetyScores(finalScore, category, productName, p1, substanceTri
   // detected substances from the structured list, not narrative text.
   // 2026-05-05: Pretzel Crisps petroleum dye fabrication was caused by
   // /artificial.*dye/ matching inside "No artificial dyes detected".
+  //
+  // Negation marker filter — even within structured detection, substance
+  // strings sometimes declare a chemical's ABSENCE ("BPA-free polypropylene",
+  // "PFAS-free DWR", "lead-free wick"). The regex /\bBPA\b/ matches "BPA"
+  // inside "BPA-free polypropylene" and falsely fires the bump. stripNegationFlags
+  // drops the whole substance string when any "[chemical-name]-free" token
+  // is present; functional descriptors like "wrinkle-free", "free-range",
+  // and "sugar-free" don't match because the token before -free isn't a
+  // known hazard chemical name.
   const flagText = [
     ...(p1?.flagged_substances || []),
     ...substanceTriggers,
     extraText || "",
-  ].filter(Boolean).join(" ");
+  ].map(stripNegationFlags).filter(Boolean).join(" ");
   const { childScore, childBumps } = computeChild
     ? computeChildScore(finalScore, flagText, category, productName, isChild)
     : { childScore: finalScore, childBumps: [] };
