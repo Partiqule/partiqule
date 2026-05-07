@@ -8926,8 +8926,15 @@ const pickTodaysSwap = (ownedScans, userId) => {
           category: pick.category || null,
         },
         grabProduct: {
+          // Field-name coalesce — alternatives come from three different
+          // sources with different score field names. Order is most
+          // authoritative first: serializeAlternatives output uses `score`,
+          // raw products.js static catalog entries use `plasticScore`,
+          // AI-generated alternatives use `estimated_score`. filterDbAlternatives
+          // is a pure filter that preserves input shape, so static entries
+          // here arrive with `plasticScore` not `score`.
           name: alt.name || alt.product_name || "",
-          score: alt.score ?? alt.estimated_score ?? null,
+          score: alt.score ?? alt.plasticScore ?? alt.estimated_score ?? null,
           category: alt.category || pick.category || null,
         },
         queueRemaining: eligible.length,
