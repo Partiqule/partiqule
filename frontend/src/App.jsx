@@ -6203,6 +6203,13 @@ function App() {
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
   const [childMode,     setChildMode]  = useState(()=>localStorage.getItem("partiqule_child_mode")==="1");
   const [pregnancyMode, setPregnancyMode] = useState(()=>localStorage.getItem("partiqule_pregnancy_mode")==="1");
+  // Track 2 Phase 4 — "Just looking" mode flips owned=false on the next scan,
+  // for store-aisle scans the user doesn't intend to bring home. sessionStorage
+  // (not localStorage) so the preference clears on tab close — per spec, this
+  // is a session-level intent, not a per-device default.
+  const [justLookingMode, setJustLookingMode] = useState(() => {
+    try { return sessionStorage.getItem("partiqule_just_looking") === "1"; } catch { return false; }
+  });
   const [revealDone,    setRevealDone]  = useState(false);
   // streamStage: null | "identified" | "scored" | "alternatives" — drives
   // the rotating caption + score-arc placeholder while the streaming /analyze
@@ -6650,6 +6657,53 @@ function App() {
     }
   };
 
+  // Just-looking pill toggle. Visual mirrors the kid mode toggle at App.jsx
+  // ~8870 (same shape, same color convention). Defined as a render function
+  // so the home scan card and scan modal share one source of truth for copy
+  // and styling. State and sessionStorage write live in this closure.
+  const renderJustLookingToggle = (extraStyle = {}) => (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        const next = !justLookingMode;
+        setJustLookingMode(next);
+        try {
+          if (next) sessionStorage.setItem("partiqule_just_looking", "1");
+          else sessionStorage.removeItem("partiqule_just_looking");
+        } catch {}
+      }}
+      style={{
+        display:"inline-flex", alignItems:"center", gap:10,
+        padding:"7px 16px", borderRadius:9999,
+        background: justLookingMode ? "var(--moss)" : "var(--cream-light)",
+        border: justLookingMode ? "none" : "1px solid var(--rule)",
+        cursor:"pointer", transition:"all 0.2s",
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+        ...extraStyle,
+      }}
+    >
+      <span style={{
+        fontSize:12, fontWeight:500,
+        color: justLookingMode ? "var(--ivory)" : "var(--ink-soft)",
+        letterSpacing:"0.02em",
+      }}>
+        {justLookingMode ? "Just looking" : "Add to home"}
+      </span>
+      <div style={{
+        width:30, height:16, borderRadius:8,
+        background: justLookingMode ? "rgba(249,245,234,0.25)" : "var(--rule)",
+        position:"relative", transition:"background 0.2s", flexShrink:0,
+      }}>
+        <div style={{
+          position:"absolute", top:3, left: justLookingMode ? 15 : 3,
+          width:10, height:10, borderRadius:"50%",
+          background: justLookingMode ? "var(--ivory)" : "var(--ink-faint)",
+          transition:"left 0.2s",
+        }}/>
+      </div>
+    </button>
+  );
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -6781,7 +6835,7 @@ function App() {
       }
       return updated;
     });
-    if (user) saveToCloud(item, user.id);
+    if (user) saveToCloud(item, user.id, { owned: !justLookingMode });
   };
 
   const analyze = async (q=query) => {
@@ -8018,6 +8072,14 @@ function App() {
                       fontSize:13, lineHeight:1.5, color:"var(--ink-soft)",
                     }}>Tap anywhere, point me at a label.</div>
                   </div>
+
+                  {/* Just-looking toggle — sits below the scan card so the user
+                      can set ownership intent before opening the scan flow. */}
+                  {user && (
+                    <div style={{display:"flex", justifyContent:"center", marginTop:-20, marginBottom:32}}>
+                      {renderJustLookingToggle()}
+                    </div>
+                  )}
 
                   {/* Your shelf — strip of placeholder illustrations from mockup */}
                   {history.length > 0 && (
@@ -10398,7 +10460,12 @@ function App() {
             <div onClick={()=>setScanSheetOpen(false)} style={{position:"fixed", inset:0, zIndex:9000, background:"rgba(0,0,0,0.5)"}}/>
             <div style={{position:"fixed", bottom:0, left:0, right:0, zIndex:9001, background:"#ffffff", borderRadius:"20px 20px 0 0", padding:"24px 20px 40px", boxShadow:"0 -4px 30px rgba(0,0,0,0.2)"}}>
               <div style={{width:40, height:4, borderRadius:2, background:"#e5e7eb", margin:"0 auto 20px"}}/>
-              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:20, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
+              <div style={{fontSize:16, fontWeight:700, color:text, marginBottom:14, textAlign:"center", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Scan a product</div>
+              {user && (
+                <div style={{display:"flex", justifyContent:"center", marginBottom:18}}>
+                  {renderJustLookingToggle()}
+                </div>
+              )}
               {/* Photo is the primary scan path — reads the actual label, works on any product
                   regardless of database coverage, and gives the most consistent result.
                   Barcode is demoted to a secondary "quick scan" for known packaged products. */}
