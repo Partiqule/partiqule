@@ -8882,42 +8882,59 @@ const computeStreak = (scanDateRows) => {
   return count;
 };
 
-// Daily deterministic pick from owned items scoring >=6 with at least one
-// alternative recommended. Same user sees a stable pick within a UTC day;
+// Daily deterministic pick from owned items scoring >=6, paired with a
+// fresh-lookup alternative. Same user sees a stable pick within a UTC day;
 // pick rotates across days via hash(userId + YYYY-MM-DD).
 //
-// STALENESS NOTE: alternatives are pulled from result_json.alternatives,
-// which reflects what was recommended at scan time. If the alternatives
-// catalog or affiliate links have changed since, the dashboard could show
-// outdated swap pairs. Fresh findAlternatives lookup at aggregation time is
-// more accurate but costs extra DB walks per /home-data call — deferred
-// until staleness becomes a real complaint.
+// Why fresh findAlternatives instead of result_json.alternatives: saveToCloud
+// in App.jsx persists a "lightweight" result_json that explicitly excludes
+// the alternatives array (per its inline comment about row size). Without a
+// fresh lookup, todaysSwap would always be null. findAlternatives is pure
+// in-memory JS over the static ~420-entry products catalog — no DB call,
+// no AI call, sub-millisecond per call — so calling it during aggregation
+// is cheap. Bonus: alternatives are always fresh against the current catalog,
+// no staleness concern.
+//
+// queueRemaining counts all score>=6 items (the swap bracket from
+// scoreMakeup) to match the dashboard mock's "1 of 14 to swap" phrasing.
+// If the hashed pick has no available alternative, walk forward through
+// the eligible list until one matches; falls through to null only if no
+// score>=6 owned item has any alternative in the catalog.
 const pickTodaysSwap = (ownedScans, userId) => {
   const eligible = ownedScans
     .filter(h => scoreOf(h) >= 6)
-    .filter(h => Array.isArray(h.result_json?.alternatives) && h.result_json.alternatives.length > 0)
     .sort((a, b) => scoreOf(b) - scoreOf(a));
   if (!eligible.length) return null;
   const today = new Date().toISOString().slice(0, 10);
   const seed = `${userId}:${today}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
-  const idx = Math.abs(hash) % eligible.length;
-  const pick = eligible[idx];
-  const alt = pick.result_json.alternatives[0];
-  return {
-    skipProduct: {
-      name: pick.product_name,
-      score: scoreOf(pick),
-      category: pick.category || null,
-    },
-    grabProduct: {
-      name: alt.name || alt.product_name || "",
-      score: alt.score ?? alt.estimated_score ?? null,
-      category: alt.category || pick.category || null,
-    },
-    queueRemaining: eligible.length,
-  };
+  const startIdx = Math.abs(hash) % eligible.length;
+  for (let step = 0; step < eligible.length; step++) {
+    const pick = eligible[(startIdx + step) % eligible.length];
+    const cat = pick.category || "other";
+    const alts = filterDbAlternatives(
+      findAlternatives(pick.product_name, cat, 3, pick.product_name),
+      cat, pick.product_name, scoreOf(pick)
+    );
+    if (alts.length > 0) {
+      const alt = alts[0];
+      return {
+        skipProduct: {
+          name: pick.product_name,
+          score: scoreOf(pick),
+          category: pick.category || null,
+        },
+        grabProduct: {
+          name: alt.name || alt.product_name || "",
+          score: alt.score ?? alt.estimated_score ?? null,
+          category: alt.category || pick.category || null,
+        },
+        queueRemaining: eligible.length,
+      };
+    }
+  }
+  return null;
 };
 
 app.get("/home-data", requireUserAuth, async (req, res) => {
