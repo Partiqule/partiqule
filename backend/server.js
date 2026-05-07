@@ -142,6 +142,31 @@ const redisKeys = async (pattern) => {
   } catch(e) { return []; }
 };
 
+// Set with custom TTL — separate from redisSet which uses the 90-day scoring
+// TTL. Used by aggregation caches like /home-data where short TTLs apply.
+const redisSetEx = async (key, value, ttlSec) => {
+  if (!hasRedis) return;
+  try {
+    await fetch(`${REDIS_URL}/pipeline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify([["SET", key, JSON.stringify(value), "EX", ttlSec]]),
+    });
+  } catch(e) { console.warn("[REDIS] setEx error:", e.message); }
+};
+
+// Redis-only delete — does not touch in-memory scoreCache (use cacheDelete
+// for that). Used by aggregation cache invalidation at write sites.
+const redisDel = async (key) => {
+  if (!hasRedis) return;
+  try {
+    await fetch(`${REDIS_URL}/del/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+  } catch(e) { console.warn("[REDIS] del error:", e.message); }
+};
+
 // ── FILE CACHE PERSISTENCE (fallback when Redis not configured) ─
 const fs   = require("fs");
 const path = require("path");
@@ -6033,6 +6058,14 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
   }
 
+  // Track 3 home-data cache invalidation. Fire at request entry so any
+  // concurrent /home-data call after this scan recomputes against fresh
+  // Supabase data. Race window: frontend's saveToCloud lands ~200ms after
+  // /analyze response, so a /home-data call between invalidate and save
+  // will recompute without the new scan (cached again until TTL expires
+  // or until the next /analyze invalidate fires). Acceptable for v1.
+  if (userId) invalidateHomeDataCache(userId).catch(() => {});
+
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
   // Uses an atomic RPC so two concurrent scans don't both read the same count
   // and each write +1 (producing +1 total instead of +2). The RPC must be
@@ -8705,10 +8738,224 @@ app.post("/scan/:id/ownership", requireUserAuth, async (req, res) => {
       .select("id")
       .single();
     if (error || !data) return res.status(404).json({ error: "Scan not found" });
+    invalidateHomeDataCache(userId).catch(() => {});
     return res.json({ ok: true, id: data.id, owned });
   } catch (e) {
     console.error("[OWNERSHIP]", e.message);
     return res.status(500).json({ error: "Update failed" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME DATA — Track 3 dashboard aggregation
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /home-data returns aggregated metrics for the dashboard's home view.
+// Computed from scans where owned=true so store-aisle "Just looking" scans
+// don't skew home metrics. Cached per-user in Redis with 300s TTL; the cache
+// is invalidated on /scan/:id/ownership flips and at the top of /analyze and
+// /barcode requests where userId is known.
+//
+// Phase boundary with Track 4: this endpoint owns home score, items section,
+// streak, today's swap. Track 4's /home-findings endpoint owns the Worth
+// Knowing panel (kid-elevated risk, hormone disruption, etc.). They're
+// separate concerns intentionally, per dashboard implementation spec.
+//
+// Aggregation strategy: pure JS in the endpoint. Reads up to 500 most recent
+// owned scans plus 500 most recent all-status scans (for streak), aggregates
+// in Node, returns a flat JSON shape matching the spec verbatim. No Postgres
+// RPC required — data volume per user is bounded.
+
+const HOME_DATA_TTL_S = 300;
+const homeDataCacheKey = (userId) => `agg:home-data:${userId}`;
+
+const invalidateHomeDataCache = async (userId) => {
+  if (!userId) return;
+  await redisDel(homeDataCacheKey(userId));
+};
+
+const readOwnedScans = async (userId) => {
+  if (!supabaseAdmin) return [];
+  const { data, error } = await supabaseAdmin
+    .from("scans")
+    .select("id, product_name, category, score, result_json, scanned_at, owned")
+    .eq("user_id", userId)
+    .eq("owned", true)
+    .order("scanned_at", { ascending: false })
+    .limit(500);
+  if (error) {
+    console.warn("[home-data] readOwnedScans error:", error.message);
+    return [];
+  }
+  return data || [];
+};
+
+const readAllScanDates = async (userId) => {
+  // Streak counts ANY scan day, not just owned. A user who scans store-aisle
+  // products is still engaged — the streak rewards engagement regardless of
+  // ownership intent. Smaller select payload (just scanned_at).
+  if (!supabaseAdmin) return [];
+  const { data, error } = await supabaseAdmin
+    .from("scans")
+    .select("scanned_at")
+    .eq("user_id", userId)
+    .order("scanned_at", { ascending: false })
+    .limit(500);
+  if (error) {
+    console.warn("[home-data] readAllScanDates error:", error.message);
+    return [];
+  }
+  return data || [];
+};
+
+// Mirrors computeLifestyleScore math in App.jsx:5220-5236 so the Track 5
+// frontend can swap local computation for endpoint consumption with parity.
+// Dedupe by product_name (most recent occurrence wins, since reads are
+// scanned_at DESC). Take top 50 unique. current = avg score across the 50.
+// previous = avg of unique.slice(5, 50) when length > 8. trend "down" means
+// score went down (improvement); "up" means regressed; "flat" otherwise.
+const scoreOf = (h) => h.result_json?.overall_score ?? h.result_json?.score ?? h.score ?? 0;
+
+const computeHomeScore = (ownedScans) => {
+  if (!ownedScans.length) return { homeScore: null, homeScoreTrend: "flat", monthlyDelta: null };
+  const seen = new Set();
+  const unique = [];
+  for (const h of ownedScans) {
+    const key = (h.product_name || "").toLowerCase().trim();
+    if (key && !seen.has(key)) { seen.add(key); unique.push(h); }
+  }
+  if (!unique.length) return { homeScore: null, homeScoreTrend: "flat", monthlyDelta: null };
+  const sample = unique.slice(0, 50);
+  const avg = sample.reduce((s, h) => s + scoreOf(h), 0) / sample.length;
+  const current = parseFloat(avg.toFixed(1));
+  let previous = null;
+  if (unique.length > 8) {
+    const older = unique.slice(5, 50);
+    if (older.length) {
+      const olderAvg = older.reduce((s, h) => s + scoreOf(h), 0) / older.length;
+      previous = parseFloat(olderAvg.toFixed(1));
+    }
+  }
+  let homeScoreTrend = "flat";
+  let monthlyDelta = null;
+  if (previous !== null) {
+    if (current < previous) homeScoreTrend = "down";
+    else if (current > previous) homeScoreTrend = "up";
+    monthlyDelta = parseFloat(Math.abs(current - previous).toFixed(1));
+  }
+  return { homeScore: current, homeScoreTrend, monthlyDelta };
+};
+
+const computeScoreMakeup = (ownedScans) => {
+  let clean = 0, watching = 0, swap = 0;
+  for (const h of ownedScans) {
+    const s = scoreOf(h);
+    if (s >= 1 && s <= 3) clean++;
+    else if (s >= 4 && s <= 5) watching++;
+    else if (s >= 6 && s <= 10) swap++;
+  }
+  return { clean, watching, swap };
+};
+
+// Walk distinct scan-dates (UTC YYYY-MM-DD) backward from today. If today
+// has no scan but yesterday does, allow yesterday as the start so the user
+// doesn't lose their streak just because they haven't scanned yet today.
+const computeStreak = (scanDateRows) => {
+  if (!scanDateRows || !scanDateRows.length) return 0;
+  const dates = new Set();
+  for (const r of scanDateRows) {
+    if (r.scanned_at) dates.add(new Date(r.scanned_at).toISOString().slice(0, 10));
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  let cursor = today;
+  if (!dates.has(cursor)) {
+    const y = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    if (!dates.has(y)) return 0;
+    cursor = y;
+  }
+  let count = 0;
+  while (dates.has(cursor)) {
+    count++;
+    const prev = new Date(cursor + "T00:00:00Z");
+    prev.setUTCDate(prev.getUTCDate() - 1);
+    cursor = prev.toISOString().slice(0, 10);
+  }
+  return count;
+};
+
+// Daily deterministic pick from owned items scoring >=6 with at least one
+// alternative recommended. Same user sees a stable pick within a UTC day;
+// pick rotates across days via hash(userId + YYYY-MM-DD).
+//
+// STALENESS NOTE: alternatives are pulled from result_json.alternatives,
+// which reflects what was recommended at scan time. If the alternatives
+// catalog or affiliate links have changed since, the dashboard could show
+// outdated swap pairs. Fresh findAlternatives lookup at aggregation time is
+// more accurate but costs extra DB walks per /home-data call — deferred
+// until staleness becomes a real complaint.
+const pickTodaysSwap = (ownedScans, userId) => {
+  const eligible = ownedScans
+    .filter(h => scoreOf(h) >= 6)
+    .filter(h => Array.isArray(h.result_json?.alternatives) && h.result_json.alternatives.length > 0)
+    .sort((a, b) => scoreOf(b) - scoreOf(a));
+  if (!eligible.length) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = `${userId}:${today}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % eligible.length;
+  const pick = eligible[idx];
+  const alt = pick.result_json.alternatives[0];
+  return {
+    skipProduct: {
+      name: pick.product_name,
+      score: scoreOf(pick),
+      category: pick.category || null,
+    },
+    grabProduct: {
+      name: alt.name || alt.product_name || "",
+      score: alt.score ?? alt.estimated_score ?? null,
+      category: alt.category || pick.category || null,
+    },
+    queueRemaining: eligible.length,
+  };
+};
+
+app.get("/home-data", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const userId = req.authUserId;
+  const cacheKey = homeDataCacheKey(userId);
+  // Cache check
+  if (hasRedis) {
+    try {
+      const cached = await redisGet(cacheKey);
+      if (cached) return res.json({ ...cached, cached: true });
+    } catch (e) { console.warn("[home-data] cache read failed:", e.message); }
+  }
+  try {
+    const [ownedScans, scanDateRows] = await Promise.all([
+      readOwnedScans(userId),
+      readAllScanDates(userId),
+    ]);
+    const homeScoreFields = computeHomeScore(ownedScans);
+    const scoreMakeup = computeScoreMakeup(ownedScans);
+    const streak = computeStreak(scanDateRows);
+    const todaysSwap = pickTodaysSwap(ownedScans, userId);
+    const payload = {
+      homeScore: homeScoreFields.homeScore,
+      homeScoreTrend: homeScoreFields.homeScoreTrend,
+      monthlyDelta: homeScoreFields.monthlyDelta,
+      itemCount: ownedScans.length,
+      scoreMakeup,
+      streak,
+      todaysSwap,
+    };
+    if (hasRedis) {
+      redisSetEx(cacheKey, payload, HOME_DATA_TTL_S).catch(() => {});
+    }
+    return res.json({ ...payload, cached: false });
+  } catch (e) {
+    console.error("[home-data]", e.message);
+    return res.status(500).json({ error: "Aggregation failed" });
   }
 });
 
@@ -10114,6 +10361,12 @@ app.post("/barcode", rateLimit, async (req, res) => {
   if (typeof barcode !== "string" || !/^\d{4,14}$/.test(barcode.trim())) {
     return res.status(400).json({ error: "Invalid barcode format" });
   }
+
+  // Track 3 home-data cache invalidation. Same race-window tradeoff as
+  // /analyze — invalidate at request entry, frontend saveToCloud lands
+  // shortly after. userId comes from request body here (not JWT) so this
+  // surface trusts the client; rate limiting bounds cache poisoning abuse.
+  if (userId) invalidateHomeDataCache(userId).catch(() => {});
 
   const barcodeKey = `${promptVersion()}:barcode:${barcode}`;
 
