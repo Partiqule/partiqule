@@ -5486,20 +5486,21 @@ function buildFuzzyDimensionMeta(category, substances, entryReason, fd) {
   const hasSynthFiber = fd.hasSynthFiber;
   const hasSynthFragrance = fd.hasSynthFragrance;
 
-  // ── Materials label: prefer calibration reason, fall back to category template ──
+  // ── Materials label: substances list, fall back to category template ──
+  // Deliberately does NOT use entry.reason here. The reason already drives
+  // result.summary AND result.summary_long fallback, so rendering it again
+  // as the materials.label produces three identical copies in the detail
+  // view (top score card + THE WHY + MATERIALS row note). Materials should
+  // answer "what's actually in the product" — substances list — not repeat
+  // "why this scored what it scored." entryReason param kept in signature
+  // for future per-dimension copy work; currently unused here.
   let materialsLabel = "";
-  if (entryReason && entryReason.trim().length > 0) {
-    // Trim to first sentence or 180 chars for a concise label
-    const first = entryReason.split(/(?<=\.)\s+/)[0] || entryReason;
-    materialsLabel = first.length > 180 ? first.slice(0, 177) + "..." : first;
-  } else if (substances.length > 0) {
+  if (substances.length > 0) {
     materialsLabel = "Contains: " + substances.slice(0, 4).join(", ");
-  } else {
-    if (isFood) materialsLabel = "Ingredient profile per calibration data.";
-    else if (isPC || isBaby) materialsLabel = "Formulation per calibration data.";
-    else if (isClothing) materialsLabel = "Fabric and construction per calibration data.";
-    else materialsLabel = "Material profile per calibration data.";
-  }
+  } else if (isFood) materialsLabel = "Ingredient profile per calibration data.";
+  else if (isPC || isBaby) materialsLabel = "Formulation per calibration data.";
+  else if (isClothing) materialsLabel = "Fabric and construction per calibration data.";
+  else materialsLabel = "Material profile per calibration data.";
 
   // ── Usage & Exposure meta ──
   let usageLabel = "", usageFreq = "daily", usageType = "ingestion", usageIntensity = null, vulnerable = false;
