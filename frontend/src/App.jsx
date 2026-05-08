@@ -7909,24 +7909,6 @@ function App() {
             const nameForGreet = (displayName && displayName.trim()) ? displayName.trim() : (user ? "there" : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
 
-            // ── Streak counter (Serial Position Effect: anchors the greeting) ──
-            const streak = (() => {
-              try {
-                const today = new Date().toDateString();
-                const visits = JSON.parse(localStorage.getItem("pq_visits")||"[]");
-                if (!visits.length || visits[0] !== today) {
-                  visits.unshift(today);
-                  localStorage.setItem("pq_visits", JSON.stringify(visits.slice(0,60)));
-                }
-                let s = 0;
-                for (let i = 0; i < visits.length; i++) {
-                  const exp = new Date(); exp.setDate(exp.getDate()-i);
-                  if (visits[i] === exp.toDateString()) s++; else break;
-                }
-                return s;
-              } catch { return 1; }
-            })();
-
             // ── New badge: tracks which For You products were seen before today ──
             const isNewCard = (() => {
               try {
@@ -8132,51 +8114,6 @@ function App() {
                       )}
                     </div>
                   </div>
-
-                  {/* Scan CTA card — moss-bordered cream, asymmetric */}
-                  <div
-                    onClick={()=>{ if(isMobile) setScanSheetOpen(true); else document.getElementById("home-search-input")?.focus(); }}
-                    style={{
-                      background:"var(--cream-light)",
-                      border:"1.5px solid var(--moss)",
-                      padding:"26px 24px 28px",
-                      borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
-                      cursor:"pointer",
-                      marginBottom:36,
-                      transition:"transform 0.2s, border-color 0.2s, background 0.2s",
-                    }}
-                  >
-                    <div style={{
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontSize:10, letterSpacing:"0.28em",
-                      color:"var(--moss)",
-                      textTransform:"uppercase",
-                      fontWeight:500,
-                      marginBottom:18,
-                    }}>Scan</div>
-                    <div style={{
-                      fontFamily:"'Lora', Georgia, serif",
-                      fontSize: isMobile ? 30 : 34,
-                      lineHeight:1.04,
-                      color:"var(--ink)",
-                      letterSpacing:"-0.015em",
-                      fontWeight:400,
-                      marginBottom:12,
-                      maxWidth:"92%",
-                    }}>What are you looking at?</div>
-                    <div style={{
-                      fontFamily:"'DM Sans', system-ui, sans-serif",
-                      fontSize:13, lineHeight:1.5, color:"var(--ink-soft)",
-                    }}>Tap anywhere, point me at a label.</div>
-                  </div>
-
-                  {/* Just-looking toggle — sits below the scan card so the user
-                      can set ownership intent before opening the scan flow. */}
-                  {user && (
-                    <div style={{display:"flex", justifyContent:"center", marginTop:-20, marginBottom:32}}>
-                      {renderJustLookingToggle()}
-                    </div>
-                  )}
 
                   {/* Phase 5B — Items in your home section per dashboard mock v8.
                       Replaces the prior ShelfStrip horizontal product strip. Pulls
@@ -8478,80 +8415,6 @@ function App() {
                           }}>
                             {(skipProduct?.category || "Item").replace(/_/g, " ")}{typeof queueRemaining === "number" ? ` · 1 of ${queueRemaining} to swap` : ""}
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Lifestyle score */}
-                  {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
-
-                  {/* Feed link */}
-                  {liveIntelCards?.length>0 && (
-                    <div style={{display:"flex", justifyContent:"flex-end", marginBottom:12}}>
-                      <span onClick={()=>{setPage("feed"); try{localStorage.setItem("ps_feed_last_visit", new Date().toISOString());}catch{}}}
-                        style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--moss)", fontWeight:500, letterSpacing:"0.15em", textTransform:"uppercase", cursor:"pointer"}}>
-                        {liveIntelCards.length} finding{liveIntelCards.length!==1?"s":""} in your feed →
-                      </span>
-                    </div>
-                  )}
-
-                  {/* For You intelligence carousel — static + live cards merged */}
-                  {(() => {
-                    const staticCards = generateForYouCards(history, childMode);
-                    const relevantLive = filterLiveCards(liveIntelCards, history).map(c=>({type:"live_intel",priority:c.priority||8,headline:c.headline,body:c.body,label:c.label||"News",labelColor:c.label_color||"#d97706",action:c.action_text||"Learn more",actionUrl:c.action_url||null,actionPage:c.action_page||null,sourceName:c.source_name,sourceUrl:c.source_url}));
-                    const allCards = [...relevantLive,...staticCards].sort((a,b)=>b.priority-a.priority).slice(0,8);
-                    if (!allCards.length) return null;
-                    return <ForYouCarousel cards={allCards} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze} history={history}/>;
-                  })()}
-
-                  {/* This Week recap — mockup pattern */}
-                  {history.length >= 3 && (() => {
-                    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-                    const recentScans = history.filter(h => {
-                      const t = h.scannedAt ? new Date(h.scannedAt).getTime() : 0;
-                      return t >= weekAgo;
-                    });
-                    const cleanWins = history.filter(h => (h.overall_score || h.score || 10) <= 3).length;
-                    const addedThisWeek = recentScans.length;
-                    const scannedThisWeek = recentScans.length;
-                    if (scannedThisWeek === 0 && cleanWins === 0) return null;
-                    const lines = [
-                      { n: scannedThisWeek, label: "products scanned", sub: scannedThisWeek >= 10 ? "a full week of scans" : scannedThisWeek >= 3 ? "a quiet week, honestly" : "just getting started" },
-                      { n: addedThisWeek, label: "added to your items", sub: history.length > 0 ? `${history.slice(0, 2).map(h => h.product_name?.split(" ")[0] || "item").join(", ")}${history.length > 2 ? ", and more" : ""}` : null },
-                      { n: cleanWins, label: "clean choices in your items", sub: cleanWins > 0 ? "nice work keeping these" : null },
-                    ].filter(l => l.n != null && l.n > 0);
-                    if (!lines.length) return null;
-                    return (
-                      <div style={{marginBottom:24}}>
-                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400, marginBottom:14}}>
-                          This <span style={{color:"var(--moss)"}}>week</span>
-                        </div>
-                        <div>
-                          {lines.map((l, i) => (
-                            <div key={i} style={{
-                              display:"flex", alignItems:"baseline", gap:16,
-                              padding:"14px 0",
-                              borderBottom: i < lines.length - 1 ? "1px solid var(--rule)" : "none",
-                            }}>
-                              <div style={{
-                                fontFamily:"'Lora', Georgia, serif",
-                                fontSize:30, color:"var(--moss)",
-                                letterSpacing:"-0.02em", lineHeight:1,
-                                minWidth:44, flexShrink:0, fontWeight:400,
-                              }}>{l.n}</div>
-                              <div style={{flex:1, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink)", lineHeight:1.35}}>
-                                {l.label}
-                                {l.sub && (
-                                  <div style={{
-                                    fontFamily:"'Lora', Georgia, serif",
-                                    color:"var(--ink-soft)", fontSize:13,
-                                    marginTop:3, fontWeight:400,
-                                  }}>{l.sub}</div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     );
