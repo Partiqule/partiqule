@@ -8178,18 +8178,109 @@ function App() {
                     </div>
                   )}
 
-                  {/* Your shelf — strip of placeholder illustrations from mockup */}
-                  {history.length > 0 && (
-                    <div style={{marginBottom:28}}>
-                      <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:14}}>
-                        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
-                          Items in your <span style={{color:"var(--moss)"}}>home</span>
+                  {/* Phase 5B — Items in your home section per dashboard mock v8.
+                      Replaces the prior ShelfStrip horizontal product strip. Pulls
+                      itemCount, homeScore, homeScoreTrend, and scoreMakeup from
+                      homeData (already in state from Phase 5A's /home-data fetch).
+                      Hidden entirely when itemCount is 0 per spec ("Zero scans:
+                      home shows greeting, single CTA. No empty makeup ribbon.").
+                      Edit-what-you-own link deferred to Track 6 (bulk-edit screen).
+                      ShelfStrip component definition kept in place; Phase 5D purges
+                      it once all v8 modules have replaced it. */}
+                  {homeData && homeData.itemCount > 0 && (() => {
+                    const { itemCount, homeScore, homeScoreTrend, scoreMakeup } = homeData;
+                    // Rounding-safe segment widths: compute first two rounded, last
+                    // = 100 - first - second so the three segments always sum to
+                    // exactly 100% (avoids 1px gap at ribbon's right edge).
+                    const cleanPct = Math.round((scoreMakeup?.clean || 0) / itemCount * 100);
+                    const watchingPct = Math.round((scoreMakeup?.watching || 0) / itemCount * 100);
+                    const swapPct = 100 - cleanPct - watchingPct;
+                    return (
+                      <div style={{marginBottom:28}}>
+                        {/* Header row: title + count badge, See all link */}
+                        <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:14}}>
+                          <div style={{
+                            fontFamily:"'Lora', Georgia, serif",
+                            fontSize:24, fontWeight:500,
+                            letterSpacing:"-0.3px", lineHeight:1.1,
+                            color:"var(--ink)",
+                          }}>
+                            Items in your <span style={{color:"var(--moss)"}}>home</span>
+                            <span style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:11, letterSpacing:"0.14em",
+                              textTransform:"uppercase", fontWeight:600,
+                              color:"var(--ink-soft)", marginLeft:6,
+                            }}>{itemCount}</span>
+                          </div>
+                          <span
+                            onClick={() => { setPage("history"); setResult(null); }}
+                            style={{
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                              fontSize:11, letterSpacing:"0.16em",
+                              textTransform:"uppercase", fontWeight:600,
+                              color:"var(--ink-soft)",
+                              flexShrink:0,
+                              display:"inline-flex", alignItems:"center", gap:4,
+                              cursor:"pointer",
+                            }}
+                          >
+                            See all
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                          </span>
                         </div>
-                        <span onClick={()=>{setPage("history"); setResult(null);}} style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, color:"var(--moss)", fontWeight:500, letterSpacing:"0.2em", textTransform:"uppercase", cursor:"pointer"}}>See all</span>
+
+                        {/* Trend line: avg X.X ↓ this month */}
+                        {typeof homeScore === "number" && (
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:11, letterSpacing:"0.14em",
+                            textTransform:"uppercase", fontWeight:600,
+                            color:"var(--ink-soft)", marginBottom:14,
+                          }}>
+                            avg{" "}
+                            <span style={{color:"var(--moss)", fontWeight:700}}>{homeScore.toFixed(1)}</span>
+                            {homeScoreTrend === "down" && (
+                              <span style={{color:"var(--score-green)", fontWeight:700, fontSize:10, marginLeft:4}}>↓</span>
+                            )}
+                            {homeScoreTrend === "up" && (
+                              <span style={{color:"var(--score-red)", fontWeight:700, fontSize:10, marginLeft:4}}>↑</span>
+                            )}
+                            {" "}this month
+                          </div>
+                        )}
+
+                        {/* Makeup ribbon: three colored segments proportional to scoreMakeup */}
+                        <div style={{
+                          display:"flex", width:"100%", height:8,
+                          borderRadius:4, overflow:"hidden",
+                          background:"var(--rule)", marginBottom:14,
+                        }}>
+                          <div style={{width:`${cleanPct}%`, background:"var(--score-green)"}}/>
+                          <div style={{width:`${watchingPct}%`, background:"var(--score-amber)"}}/>
+                          <div style={{width:`${swapPct}%`, background:"var(--score-red)"}}/>
+                        </div>
+
+                        {/* Legend: dot + count + label, three items */}
+                        <div style={{display:"flex", flexWrap:"wrap", gap:16, fontSize:12}}>
+                          {[
+                            { count: scoreMakeup?.clean    || 0, color: "var(--score-green)", label: "clean" },
+                            { count: scoreMakeup?.watching || 0, color: "var(--score-amber)", label: "watching" },
+                            { count: scoreMakeup?.swap     || 0, color: "var(--score-red)",   label: "to swap" },
+                          ].map((seg, i) => (
+                            <div key={i} style={{
+                              display:"inline-flex", alignItems:"center", gap:6,
+                              fontFamily:"'DM Sans', system-ui, sans-serif",
+                            }}>
+                              <span style={{width:8, height:8, borderRadius:"50%", background:seg.color, display:"inline-block"}}/>
+                              <span style={{fontWeight:700, color:"var(--ink)"}}>{seg.count}</span>
+                              <span style={{fontWeight:500, color:"var(--ink-soft)"}}>{seg.label}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <ShelfStrip items={history.slice(0,6)} onSelect={setResult}/>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Lifestyle score */}
                   {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
