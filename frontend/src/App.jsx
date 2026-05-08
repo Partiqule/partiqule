@@ -6174,6 +6174,20 @@ function App() {
   const [history,     setHistory]    = useState(()=>{try{return JSON.parse(localStorage.getItem("ps_history")||"[]");}catch{return [];}});
   const [displayName, setDisplayName] = useState(()=>{try{return localStorage.getItem("partiqule_display_name")||"";}catch{return "";}});
   const [liveIntelCards, setLiveIntelCards] = useState([]);
+  // Track 5 Phase 5A — dashboard data fetched from /home-data and
+  // /home-findings on home page mount when signed in. Last-good payload
+  // cached in localStorage for graceful degrade on fetch error: a stale
+  // dashboard reads better than an empty one. Both endpoints are already
+  // 300s Redis-cached server-side and invalidated at /analyze, /barcode,
+  // and /scan/:id/ownership write sites.
+  const [homeData, setHomeData] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ps_home_data") || "null"); } catch { return null; }
+  });
+  const [homeFindings, setHomeFindings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ps_home_findings") || "null"); } catch { return null; }
+  });
+  const [homeDataError, setHomeDataError] = useState(null);
+  const [homeFindingsError, setHomeFindingsError] = useState(null);
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -6776,6 +6790,44 @@ function App() {
 
   // Fetch live intelligence cards on mount
   useEffect(()=>{fetch(`${API_BASE}/api/intelligence-cards`).then(r=>r.json()).then(d=>setLiveIntelCards(d.cards||[])).catch(()=>{});},[]);
+
+  // Phase 5A — fetch /home-data and /home-findings on home page mount when
+  // signed in. Parallel via authedFetch (handles JWT refresh on 401).
+  // Stash payloads in localStorage as last-good fallback. On fetch error,
+  // existing localStorage-initialized state stays as the rendered value.
+  // Refetches when page or user changes (e.g. user signs in mid-session).
+  useEffect(() => {
+    if (page !== "home" || !user) return;
+    let cancelled = false;
+    (async () => {
+      const [dataRes, findRes] = await Promise.allSettled([
+        authedFetch(`${API_BASE}/home-data`),
+        authedFetch(`${API_BASE}/home-findings`),
+      ]);
+      if (cancelled) return;
+      if (dataRes.status === "fulfilled" && dataRes.value.ok) {
+        try {
+          const json = await dataRes.value.json();
+          setHomeData(json);
+          setHomeDataError(null);
+          try { localStorage.setItem("ps_home_data", JSON.stringify(json)); } catch {}
+        } catch (e) { setHomeDataError(e); }
+      } else {
+        setHomeDataError(dataRes.status === "rejected" ? dataRes.reason : new Error(`HTTP ${dataRes.value?.status}`));
+      }
+      if (findRes.status === "fulfilled" && findRes.value.ok) {
+        try {
+          const json = await findRes.value.json();
+          setHomeFindings(json);
+          setHomeFindingsError(null);
+          try { localStorage.setItem("ps_home_findings", JSON.stringify(json)); } catch {}
+        } catch (e) { setHomeFindingsError(e); }
+      } else {
+        setHomeFindingsError(findRes.status === "rejected" ? findRes.reason : new Error(`HTTP ${findRes.value?.status}`));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [page, user]);
 
   // Minimum-version check on mount. If the running APP_VERSION is below
   // the server-controlled MIN_*_VERSION, render the UpdateRequiredView
@@ -8031,8 +8083,53 @@ function App() {
                       textTransform:"uppercase",
                       fontWeight:500,
                     }}>
-                      {todayLabel} <span style={{color:"var(--ink-soft)"}}>·</span> {history.length} item{history.length!==1?"s":""} in your home
-                      {streak >= 2 && <> <span style={{color:"var(--ink-soft)"}}>·</span> {streak} day streak</>}
+                      {/* Phase 5A — date · HOME SCORE [arrow] · STREAK day streak.
+                          homeData consumed from /home-data with localStorage fallback.
+                          Each segment renders only when its data exists: zero-owned-scans
+                          users see just the date (no em-dash placeholder per voice kit;
+                          absence speaks for itself). Skeleton bars during cold-start
+                          cache miss; data renders as soon as either localStorage or
+                          fresh fetch resolves. */}
+                      {todayLabel}
+                      {homeData && typeof homeData.homeScore === "number" && (
+                        <>
+                          <span style={{color:"var(--ink-soft)", margin:"0 8px"}}>·</span>
+                          Home score{" "}
+                          <span style={{color:"var(--moss)", fontWeight:700}}>
+                            {homeData.homeScore.toFixed(1)}
+                          </span>
+                          {homeData.homeScoreTrend === "down" && (
+                            <span style={{color:"var(--score-green)", fontWeight:700, marginLeft:4}}>↓</span>
+                          )}
+                          {homeData.homeScoreTrend === "up" && (
+                            <span style={{color:"var(--score-red)", fontWeight:700, marginLeft:4}}>↑</span>
+                          )}
+                        </>
+                      )}
+                      {homeData && homeData.streak > 0 && (
+                        <>
+                          <span style={{color:"var(--ink-soft)", margin:"0 8px"}}>·</span>
+                          {homeData.streak} day streak
+                        </>
+                      )}
+                      {!homeData && (
+                        <>
+                          <span style={{color:"var(--ink-soft)", margin:"0 8px"}}>·</span>
+                          <span style={{
+                            display:"inline-block", width:80, height:8,
+                            background:"var(--rule-soft)", borderRadius:4,
+                            verticalAlign:"middle", opacity:0.5,
+                            animation:"partiqulePulse 1.5s ease-in-out infinite",
+                          }}/>
+                          <span style={{color:"var(--ink-soft)", margin:"0 8px"}}>·</span>
+                          <span style={{
+                            display:"inline-block", width:56, height:8,
+                            background:"var(--rule-soft)", borderRadius:4,
+                            verticalAlign:"middle", opacity:0.5,
+                            animation:"partiqulePulse 1.5s ease-in-out infinite",
+                          }}/>
+                        </>
+                      )}
                     </div>
                   </div>
 
