@@ -8377,6 +8377,112 @@ function App() {
                     </div>
                   )}
 
+                  {/* Phase 5D-i — Today's Swap card per dashboard mock v8.
+                      Informational-only for v1: no tap target, no chevron. Tap
+                      navigation deferred to a follow-up commit after Track 6
+                      backend deploys (skipProduct.id field needs to land first).
+                      Hides entirely when todaysSwap is null (no eligible
+                      score-6+ owned items with cleaner alternatives in catalog),
+                      matching the Phase 5B/5C hide-on-empty pattern. */}
+                  {homeData?.todaysSwap && (() => {
+                    const { skipProduct, grabProduct, queueRemaining } = homeData.todaysSwap;
+                    return (
+                      <div style={{padding:"22px 22px 0", marginBottom:28}}>
+                        <div style={{
+                          background:"var(--cream-deep)",
+                          borderRadius:18,
+                          padding:"18px 20px",
+                        }}>
+                          {/* Eyebrow */}
+                          <div style={{
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:10, letterSpacing:"0.18em",
+                            textTransform:"uppercase", fontWeight:700,
+                            color:"var(--moss)", marginBottom:14,
+                          }}>
+                            Today's swap
+                          </div>
+
+                          {/* Skip + Grab pair */}
+                          <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:14}}>
+                            {/* Skip row */}
+                            <div style={{
+                              display:"grid",
+                              gridTemplateColumns:"50px 1fr auto",
+                              gap:12, alignItems:"baseline",
+                            }}>
+                              <span style={{
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontSize:11, letterSpacing:"0.14em",
+                                textTransform:"uppercase", fontWeight:700,
+                                color:"var(--score-red)",
+                              }}>Skip</span>
+                              <span style={{
+                                fontFamily:"'Lora', Georgia, serif",
+                                fontSize:17, fontWeight:500, lineHeight:1.2,
+                                letterSpacing:"-0.2px",
+                                color:"var(--ink-soft)",
+                                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                                textDecoration:"line-through",
+                                textDecorationColor:"rgba(176, 73, 58, 0.5)",
+                                textDecorationThickness:"1.5px",
+                              }}>{skipProduct?.name || ""}</span>
+                              <span style={{
+                                width:32, height:32, borderRadius:"50%",
+                                background:"var(--score-red)", color:"#fff",
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontWeight:700, fontSize:14,
+                                display:"flex", alignItems:"center", justifyContent:"center",
+                                flexShrink:0,
+                              }}>{skipProduct?.score ?? ""}</span>
+                            </div>
+
+                            {/* Grab row */}
+                            <div style={{
+                              display:"grid",
+                              gridTemplateColumns:"50px 1fr auto",
+                              gap:12, alignItems:"baseline",
+                            }}>
+                              <span style={{
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontSize:11, letterSpacing:"0.14em",
+                                textTransform:"uppercase", fontWeight:700,
+                                color:"var(--score-green)",
+                              }}>Grab</span>
+                              <span style={{
+                                fontFamily:"'Lora', Georgia, serif",
+                                fontSize:17, fontWeight:500, lineHeight:1.2,
+                                letterSpacing:"-0.2px",
+                                color:"var(--ink)",
+                                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                              }}>{grabProduct?.name || ""}</span>
+                              <span style={{
+                                width:32, height:32, borderRadius:"50%",
+                                background:"var(--score-green)", color:"#fff",
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontWeight:700, fontSize:14,
+                                display:"flex", alignItems:"center", justifyContent:"center",
+                                flexShrink:0,
+                              }}>{grabProduct?.score ?? ""}</span>
+                            </div>
+                          </div>
+
+                          {/* Footer — informational only in v1 */}
+                          <div style={{
+                            paddingTop:12,
+                            borderTop:"1px solid var(--rule)",
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:11, letterSpacing:"0.14em",
+                            textTransform:"uppercase", fontWeight:600,
+                            color:"var(--ink-soft)",
+                          }}>
+                            {(skipProduct?.category || "Item").replace(/_/g, " ")}{typeof queueRemaining === "number" ? ` · 1 of ${queueRemaining} to swap` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Lifestyle score */}
                   {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
 
