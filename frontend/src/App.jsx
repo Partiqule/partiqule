@@ -5398,6 +5398,18 @@ const isValidShelfItem = (item) => {
   return true;
 };
 
+const SkeletonLine = ({ height = 12, width = "100%", style = {} }) => (
+  <div className="pq-skeleton" style={{ height, width, ...style }} />
+);
+
+const SkeletonCircle = ({ size = 32, style = {} }) => (
+  <div className="pq-skeleton" style={{ width: size, height: size, borderRadius: "50%", ...style }} />
+);
+
+const SkeletonRibbon = ({ height = 18, style = {} }) => (
+  <div className="pq-skeleton" style={{ height, width: "100%", borderRadius: 4, ...style }} />
+);
+
 const ShelfStrip = ({ items, onSelect }) => {
   const clean = (items || []).filter(isValidShelfItem);
   if (clean.length === 0) return null;
@@ -7435,6 +7447,8 @@ function App() {
         @keyframes ringDraw{from{stroke-dashoffset:var(--dash-total,440)}to{stroke-dashoffset:var(--dash-offset,220)}}.ring-animate{animation:ringDraw 1.2s cubic-bezier(0.4,0,0.2,1) forwards}
         @keyframes partiqulePulse{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.9;transform:scale(1.1)}}
         @keyframes whyFadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes pq-skeleton-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        .pq-skeleton{background:linear-gradient(90deg,var(--rule) 0%,var(--cream-deep) 50%,var(--rule) 100%);background-size:200% 100%;animation:pq-skeleton-shimmer 1.6s ease-in-out infinite;border-radius:4px}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3{font-family:'Lora',Georgia,serif;}
       `}</style>
@@ -8124,7 +8138,21 @@ function App() {
                       Edit-what-you-own link deferred to Track 6 (bulk-edit screen).
                       ShelfStrip component definition kept in place; Phase 5D purges
                       it once all v8 modules have replaced it. */}
-                  {homeData && homeData.itemCount > 0 && (() => {
+                  {!homeData ? (
+                    <div style={{marginBottom:28}}>
+                      <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:14}}>
+                        <SkeletonLine height={20} width="60%" />
+                        <SkeletonLine height={11} width={48} />
+                      </div>
+                      <SkeletonLine height={11} width="45%" style={{marginBottom:14}} />
+                      <SkeletonRibbon height={8} style={{marginBottom:14}} />
+                      <div style={{display:"flex", flexWrap:"wrap", gap:16}}>
+                        <SkeletonLine height={12} width={80} />
+                        <SkeletonLine height={12} width={90} />
+                        <SkeletonLine height={12} width={80} />
+                      </div>
+                    </div>
+                  ) : homeData.itemCount > 0 && (() => {
                     const { itemCount, homeScore, homeScoreTrend, scoreMakeup } = homeData;
                     // Rounding-safe segment widths: compute first two rounded, last
                     // = 100 - first - second so the three segments always sum to
@@ -8226,7 +8254,29 @@ function App() {
                       when findings array is empty (matches Phase 5B Items section
                       hide-on-empty pattern). All rows + footer route to Items tab
                       for v1 — filtered drill-down deferred to a future track. */}
-                  {homeFindings && Array.isArray(homeFindings.findings) && homeFindings.findings.length > 0 && (
+                  {!homeFindings ? (
+                    <div style={{marginBottom:28}}>
+                      <div style={{paddingBottom:10, marginBottom:14, borderBottom:"1px solid var(--rule)"}}>
+                        <SkeletonLine height={10} width={110} />
+                      </div>
+                      {[0,1,2,3].map(i => (
+                        <div key={i} style={{
+                          display:"grid",
+                          gridTemplateColumns:"36px 1fr auto",
+                          alignItems:"center", gap:14,
+                          padding:"14px 0",
+                          borderBottom: i === 3 ? "none" : "1px solid var(--rule)",
+                        }}>
+                          <SkeletonLine height={24} width={28} />
+                          <div style={{display:"flex", flexDirection:"column", gap:6, minWidth:0}}>
+                            <SkeletonLine height={14} width="85%" />
+                            <SkeletonLine height={10} width="40%" />
+                          </div>
+                          <SkeletonLine height={11} width={11} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : Array.isArray(homeFindings.findings) && homeFindings.findings.length > 0 && (
                     <div style={{marginBottom:28}}>
                       {/* Eyebrow with bottom rule */}
                       <div style={{
@@ -8321,7 +8371,33 @@ function App() {
                       Hides entirely when todaysSwap is null (no eligible
                       score-6+ owned items with cleaner alternatives in catalog),
                       matching the Phase 5B/5C hide-on-empty pattern. */}
-                  {homeData?.todaysSwap && (() => {
+                  {!homeData ? (
+                    <div style={{padding:"22px 22px 0", marginBottom:28}}>
+                      <div style={{
+                        background:"var(--cream-deep)",
+                        borderRadius:18,
+                        padding:"18px 20px",
+                      }}>
+                        <SkeletonLine height={10} width={100} style={{marginBottom:14}} />
+                        <div style={{display:"flex", flexDirection:"column", gap:10, marginBottom:14}}>
+                          {[0,1].map(i => (
+                            <div key={i} style={{
+                              display:"grid",
+                              gridTemplateColumns:"50px 1fr auto",
+                              gap:12, alignItems:"center",
+                            }}>
+                              <SkeletonLine height={11} width={40} />
+                              <SkeletonLine height={17} width="80%" />
+                              <SkeletonCircle size={32} />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{paddingTop:12, borderTop:"1px solid var(--rule)"}}>
+                          <SkeletonLine height={11} width="55%" />
+                        </div>
+                      </div>
+                    </div>
+                  ) : homeData?.todaysSwap && (() => {
                     const { skipProduct, grabProduct, queueRemaining } = homeData.todaysSwap;
                     return (
                       <div style={{padding:"22px 22px 0", marginBottom:28}}>
