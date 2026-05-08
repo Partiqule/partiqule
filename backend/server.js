@@ -6068,6 +6068,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
   if (userId) {
     invalidateHomeDataCache(userId).catch(() => {});
     invalidateHomeFindingsCache(userId).catch(() => {});
+    invalidateHomeFindingsItemsCache(userId).catch(() => {});
   }
 
   // Increment server-side scan count for logged-in users (fire-and-forget — not on critical path)
@@ -8744,6 +8745,7 @@ app.post("/scan/:id/ownership", requireUserAuth, async (req, res) => {
     if (error || !data) return res.status(404).json({ error: "Scan not found" });
     invalidateHomeDataCache(userId).catch(() => {});
     invalidateHomeFindingsCache(userId).catch(() => {});
+    invalidateHomeFindingsItemsCache(userId).catch(() => {});
     return res.json({ ok: true, id: data.id, owned });
   } catch (e) {
     console.error("[OWNERSHIP]", e.message);
@@ -9015,6 +9017,16 @@ const invalidateHomeFindingsCache = async (userId) => {
   await redisDel(homeFindingsCacheKey(userId));
 };
 
+// Per-finding-items cache. Track 6 ships filtered drill-down via
+// /home-findings/:id/items; one cache key per user per finding id.
+const homeFindingsItemsCacheKey = (userId, findingId) => `agg:home-findings-items:${userId}:${findingId}`;
+const invalidateHomeFindingsItemsCache = async (userId) => {
+  if (!userId) return;
+  await Promise.all(
+    Object.keys(FINDING_REGISTRY).map(id => redisDel(homeFindingsItemsCacheKey(userId, id)))
+  );
+};
+
 // Substance regex per finding. All apply to flagText (post stripNegationFlags),
 // so "X-free" tokens have already been removed from the corpus.
 //
@@ -9126,6 +9138,39 @@ const computeFinding = (id, severity, label, ownedScans, hasAltMap, predicate) =
 
 const SEVERITY_RANK = { severe: 3, moderate: 2, mild: 1 };
 
+// Track 6 — finding registry. Module-level so /home-findings (counts) and
+// /home-findings/:id/items (filtered scan lists) can share predicate logic
+// without duplicating it. buildPredicate takes a flagTextMap because
+// substance-matching predicates need per-scan precomputed flagText; kid-
+// elevated and NOVA-4 read scan fields directly so they ignore the arg.
+const FINDING_REGISTRY = {
+  kid_elevated_risk: {
+    severity: "severe",
+    label: "items score higher for kids than adults",
+    buildPredicate: () => isKidElevated,
+  },
+  banned_other_countries: {
+    severity: "severe",
+    label: "items with ingredients banned in other countries",
+    buildPredicate: (ftMap) => (scan) => BANNED_OTHER_COUNTRIES_RE.test(ftMap.get(scan.id) || ""),
+  },
+  highly_processed_foods: {
+    severity: "severe",
+    label: "highly processed foods",
+    buildPredicate: () => isNova4,
+  },
+  hormone_disruption: {
+    severity: "severe",
+    label: "items linked to hormone disruption",
+    buildPredicate: (ftMap) => (scan) => HORMONE_DISRUPTION_RE.test(ftMap.get(scan.id) || ""),
+  },
+  fertility_developmental_risks: {
+    severity: "moderate",
+    label: "items linked to fertility and developmental risks",
+    buildPredicate: (ftMap) => (scan) => FERTILITY_DEV_RISKS_RE.test(ftMap.get(scan.id) || ""),
+  },
+};
+
 app.get("/home-findings", requireUserAuth, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
   const userId = req.authUserId;
@@ -9152,25 +9197,15 @@ app.get("/home-findings", requireUserAuth, async (req, res) => {
       flagTextMap.set(scan.id, buildScanFlagText(scan));
       hasAltMap.set(scan.id, hasCleanerAlternative(scan));
     }
-    const matchSubstance = (re) => (scan) => re.test(flagTextMap.get(scan.id) || "");
 
-    const computed = [
-      computeFinding("kid_elevated_risk", "severe",
-        "items score higher for kids than adults",
-        ownedScans, hasAltMap, isKidElevated),
-      computeFinding("banned_other_countries", "severe",
-        "items with ingredients banned in other countries",
-        ownedScans, hasAltMap, matchSubstance(BANNED_OTHER_COUNTRIES_RE)),
-      computeFinding("highly_processed_foods", "severe",
-        "highly processed foods",
-        ownedScans, hasAltMap, isNova4),
-      computeFinding("hormone_disruption", "severe",
-        "items linked to hormone disruption",
-        ownedScans, hasAltMap, matchSubstance(HORMONE_DISRUPTION_RE)),
-      computeFinding("fertility_developmental_risks", "moderate",
-        "items linked to fertility and developmental risks",
-        ownedScans, hasAltMap, matchSubstance(FERTILITY_DEV_RISKS_RE)),
-    ].filter(Boolean);
+    // Iterate FINDING_REGISTRY so /home-findings and /home-findings/:id/items
+    // share predicate logic. Same response shape as before the registry hoist.
+    const computed = [];
+    for (const [id, def] of Object.entries(FINDING_REGISTRY)) {
+      const predicate = def.buildPredicate(flagTextMap);
+      const finding = computeFinding(id, def.severity, def.label, ownedScans, hasAltMap, predicate);
+      if (finding) computed.push(finding);
+    }
 
     // totalFindings sums counts across ALL computed findings (not just top
     // 4) so the frontend can render "X total, showing top 4" copy. A scan
@@ -9191,6 +9226,75 @@ app.get("/home-findings", requireUserAuth, async (req, res) => {
     return res.json({ ...payload, cached: false });
   } catch (e) {
     console.error("[home-findings]", e.message);
+    return res.status(500).json({ error: "Aggregation failed" });
+  }
+});
+
+// Track 6 — filtered drill-down for a single finding category. Returns the
+// matched scans flattened (result_json spread to top level) so the frontend
+// HistoryPage can render with no special handling — same shape as
+// /recent-scans. Path param validated against FINDING_REGISTRY keys (400 on
+// unknown). swapsAvailable mirrors /home-findings semantics: count of
+// matched scans where findAlternatives + filterDbAlternatives returns at
+// least one cleaner alternative. Per-user per-finding cache 300s.
+app.get("/home-findings/:id/items", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
+  const userId = req.authUserId;
+  const findingId = req.params.id;
+  const def = FINDING_REGISTRY[findingId];
+  if (!def) return res.status(400).json({ error: "Unknown finding id" });
+
+  const cacheKey = homeFindingsItemsCacheKey(userId, findingId);
+  if (hasRedis) {
+    try {
+      const cached = await redisGet(cacheKey);
+      if (cached) return res.json({ ...cached, cached: true });
+    } catch (e) { console.warn("[home-findings-items] cache read failed:", e.message); }
+  }
+
+  try {
+    const ownedScans = await readOwnedScans(userId);
+    if (!ownedScans.length) {
+      const empty = { id: findingId, label: def.label, severity: def.severity, count: 0, swapsAvailable: 0, scans: [] };
+      if (hasRedis) redisSetEx(cacheKey, empty, HOME_FINDINGS_TTL_S).catch(() => {});
+      return res.json({ ...empty, cached: false });
+    }
+
+    // flagTextMap is needed regardless of finding because buildPredicate
+    // takes it; substance-matching predicates use it, others ignore the arg.
+    const flagTextMap = new Map();
+    for (const scan of ownedScans) flagTextMap.set(scan.id, buildScanFlagText(scan));
+
+    const predicate = def.buildPredicate(flagTextMap);
+    const matched = ownedScans.filter(predicate);
+
+    let swapsAvailable = 0;
+    for (const scan of matched) if (hasCleanerAlternative(scan)) swapsAvailable++;
+
+    // Flatten result_json to top-level so HistoryPage can render directly.
+    // Mirrors /recent-scans flattening pattern (server.js around line 8997).
+    const scans = matched.map(row => ({
+      id: row.id,
+      product_name: row.product_name,
+      category: row.category,
+      score: row.score,
+      scanned_at: row.scanned_at,
+      owned: row.owned,
+      ...(row.result_json || {}),
+    }));
+
+    const payload = {
+      id: findingId,
+      label: def.label,
+      severity: def.severity,
+      count: matched.length,
+      swapsAvailable,
+      scans,
+    };
+    if (hasRedis) redisSetEx(cacheKey, payload, HOME_FINDINGS_TTL_S).catch(() => {});
+    return res.json({ ...payload, cached: false });
+  } catch (e) {
+    console.error("[home-findings-items]", e.message);
     return res.status(500).json({ error: "Aggregation failed" });
   }
 });
@@ -10605,6 +10709,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
   if (userId) {
     invalidateHomeDataCache(userId).catch(() => {});
     invalidateHomeFindingsCache(userId).catch(() => {});
+    invalidateHomeFindingsItemsCache(userId).catch(() => {});
   }
 
   const barcodeKey = `${promptVersion()}:barcode:${barcode}`;
