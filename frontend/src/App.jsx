@@ -8282,6 +8282,101 @@ function App() {
                     );
                   })()}
 
+                  {/* Phase 5C — Worth Knowing findings panel per dashboard mock v8.
+                      Consumes homeFindings state (already in scope from Phase 5A's
+                      /home-findings fetch). Top 4 findings already sorted by severity
+                      then count server-side; this just renders them. Hidden entirely
+                      when findings array is empty (matches Phase 5B Items section
+                      hide-on-empty pattern). All rows + footer route to Items tab
+                      for v1 — filtered drill-down deferred to a future track. */}
+                  {homeFindings && Array.isArray(homeFindings.findings) && homeFindings.findings.length > 0 && (
+                    <div style={{marginBottom:28}}>
+                      {/* Eyebrow with bottom rule */}
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:10, letterSpacing:"0.18em",
+                        textTransform:"uppercase", fontWeight:700,
+                        color:"var(--moss)",
+                        marginBottom:14, paddingBottom:10,
+                        borderBottom:"1px solid var(--rule)",
+                      }}>
+                        Worth knowing
+                      </div>
+
+                      {/* Finding rows. Severity drives the count color: severe → red,
+                          moderate → amber, anything else falls back to ink. Today only
+                          severe and moderate are emitted by /home-findings; the fallback
+                          is future-proofing rather than a styled state. */}
+                      {homeFindings.findings.map((f, i) => {
+                        const severityColor = { severe: "var(--score-red)", moderate: "var(--score-amber)" };
+                        const numColor = severityColor[f.severity] || "var(--ink)";
+                        const isLast = i === homeFindings.findings.length - 1;
+                        return (
+                          <div
+                            key={f.id || i}
+                            onClick={() => { setPage("history"); setResult(null); }}
+                            style={{
+                              display:"grid",
+                              gridTemplateColumns:"36px 1fr auto",
+                              alignItems:"center", gap:14,
+                              padding:"14px 0",
+                              borderBottom: isLast ? "none" : "1px solid var(--rule)",
+                              cursor:"pointer",
+                            }}
+                          >
+                            <span style={{
+                              fontFamily:"'Lora', Georgia, serif",
+                              fontSize:28, fontWeight:500, lineHeight:1,
+                              color: numColor,
+                            }}>{f.count}</span>
+                            <div style={{display:"flex", flexDirection:"column", gap:4, minWidth:0}}>
+                              <div style={{
+                                fontFamily:"'DM Sans', system-ui, sans-serif",
+                                fontSize:15, lineHeight:1.3,
+                                color:"var(--ink)", fontWeight:500,
+                              }}>
+                                {f.label}
+                              </div>
+                              {typeof f.swapsAvailable === "number" && f.swapsAvailable > 0 && (
+                                <div style={{
+                                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                                  fontSize:11, letterSpacing:"0.12em",
+                                  textTransform:"uppercase", fontWeight:600,
+                                  color:"var(--moss)",
+                                }}>
+                                  {f.swapsAvailable} cleaner swap{f.swapsAvailable !== 1 ? "s" : ""} available
+                                </div>
+                              )}
+                            </div>
+                            <span style={{display:"flex", alignItems:"center", color:"var(--ink-soft)"}}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      {/* Footer: "See all N findings →". Same target as rows for v1. */}
+                      {typeof homeFindings.totalFindings === "number" && (
+                        <div
+                          onClick={() => { setPage("history"); setResult(null); }}
+                          style={{
+                            marginTop:14, paddingTop:14,
+                            borderTop:"1px solid var(--rule)",
+                            fontFamily:"'DM Sans', system-ui, sans-serif",
+                            fontSize:11, letterSpacing:"0.14em",
+                            textTransform:"uppercase", fontWeight:600,
+                            color:"var(--ink-soft)",
+                            display:"inline-flex", alignItems:"center", gap:4,
+                            cursor:"pointer",
+                          }}
+                        >
+                          See all {homeFindings.totalFindings} findings
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Lifestyle score */}
                   {(() => {const ls=computeLifestyleScore(history);if(!ls)return null;return <LifestyleScoreCard score={ls} text={text} muted={muted} border={border} isMobile={isMobile} setPage={setPage}/>;})()}
 
