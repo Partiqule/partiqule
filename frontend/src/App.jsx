@@ -3533,9 +3533,17 @@ const CATEGORY_PRICE_ESTIMATES = {food:5,food_beverage:5.5,beverage:4.5,snack:4,
 
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
-const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, onSearch, isMobile}) => {
+const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter}) => {
   const [priceFilter, setPriceFilter] = useState("all");
   const [viewMode, setViewMode] = useState("date");
+  // Track 6 — when historyFilter is active, the page renders the filtered
+  // scan list returned by /home-findings/:id/items instead of the full
+  // owned-scans history. Shadowing the `history` identifier here keeps
+  // every downstream derived calculation (stats, grouping, alternatives)
+  // working unchanged — the user is intentionally drilling into one
+  // finding, so showing stats for the filtered subset is informative,
+  // not misleading.
+  const history = historyFilter ? (filteredItems || []) : historyProp;
   const avg = history.length ? Math.round(history.reduce((a,h)=>a+h.score,0)/history.length*10)/10 : 0;
   const highest = history.length ? history.reduce((a,h)=>h.score>a.score?h:a, history[0]) : null;
 
@@ -3656,7 +3664,83 @@ const HistoryPage = ({history, surface, border, text, muted, onSelect, onClear, 
         </div>
       </div>
 
-      {history.length === 0 ? (
+      {/* Track 6 — filter chip. Renders only when historyFilter is set,
+          immediately above the list. Severity-colored dot + label, swap
+          count tail, dismiss X. Dismiss clears the filter and falls back
+          to full owned-scans render. */}
+      {historyFilter && (() => {
+        const sevColor = historyFilter.severity === "severe" ? "#dc2626" : historyFilter.severity === "moderate" ? "#d97706" : "var(--ink-soft)";
+        return (
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:10,
+            background:"var(--cream-deep)",
+            borderRadius:999,
+            padding:"10px 16px",
+            marginBottom:24,
+          }}>
+            <span style={{width:8, height:8, borderRadius:"50%", background:sevColor, display:"inline-block", flexShrink:0}}/>
+            <span style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:13, fontWeight:500,
+              color:sevColor,
+            }}>{historyFilter.label}</span>
+            {historyFilter.swapsAvailable > 0 && (
+              <span style={{
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize:12, fontWeight:400,
+                color:"var(--ink-soft)",
+              }}>· {historyFilter.swapsAvailable} cleaner swap{historyFilter.swapsAvailable !== 1 ? "s" : ""} available</span>
+            )}
+            <button
+              onClick={onClearFilter}
+              aria-label="Clear filter"
+              style={{
+                background:"none", border:"none", padding:0, marginLeft:4,
+                cursor:"pointer", color:"var(--ink-soft)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Track 6 — filtered branch. Loading shows 5 skeleton rows that
+          mirror the renderHistoryItem geometry. Error shows a small
+          inline block with a retry button. Empty shows "No items match
+          this finding." Populated falls through to the standard list
+          render below the existing else branch. */}
+      {historyFilter ? (
+        (filteredItemsLoading || filteredItems === null) ? (
+          <div>
+            {[0,1,2,3,4].map(i => (
+              <div key={i} style={{marginBottom:12, padding:"16px 20px", background:surface, borderRadius:12, border:`1.5px solid ${border}`}}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
+                  <div style={{flex:1, minWidth:0}}>
+                    <SkeletonLine height={15} width="65%" style={{marginBottom:8}} />
+                    <SkeletonLine height={12} width="90%" />
+                  </div>
+                  <SkeletonLine height={28} width={48} style={{borderRadius:6, flexShrink:0}} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredItemsError ? (
+          <div style={{textAlign:"center", padding:"40px 0", color:muted}}>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:text, marginBottom:12}}>Could not load items.</div>
+            <button onClick={onRetryFilter} style={{padding:"8px 18px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:text, fontWeight:600, fontSize:13, cursor:"pointer"}}>Retry</button>
+          </div>
+        ) : history.length === 0 ? (
+          <div style={{textAlign:"center", padding:"60px 0", color:muted, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14}}>
+            No items match this finding.
+          </div>
+        ) : (
+          <div>
+            {history.map((item, i) => renderHistoryItem(item, i))}
+          </div>
+        )
+      ) : history.length === 0 ? (
         <div style={{textAlign:"center", padding:"80px 0", color:muted}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={48}/></div>
           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:600, fontSize:18, color:text, marginBottom:8}}>No scans yet</div>
@@ -6200,6 +6284,15 @@ function App() {
   });
   const [homeDataError, setHomeDataError] = useState(null);
   const [homeFindingsError, setHomeFindingsError] = useState(null);
+  // Track 6 — filtered findings drill-down. historyFilter holds the active
+  // finding context ({id, label, severity, swapsAvailable}); when set, the
+  // HistoryPage renders the filtered list from /home-findings/:id/items
+  // instead of the full owned-scans history. Cleared by chip dismiss or
+  // page reload (React state, no persistence — acceptable for v1).
+  const [historyFilter, setHistoryFilter] = useState(null);
+  const [filteredItems, setFilteredItems] = useState(null);
+  const [filteredItemsLoading, setFilteredItemsLoading] = useState(false);
+  const [filteredItemsError, setFilteredItemsError] = useState(null);
   const [emailDismissed, setEmailDismissed] = useState(()=>{try{return !!localStorage.getItem("ps_email_captured");}catch{return false;}});
   const [captureEmail,   setCaptureEmail]   = useState("");
   const [captureSubmitting, setCaptureSubmitting] = useState(false);
@@ -6840,6 +6933,34 @@ function App() {
     })();
     return () => { cancelled = true; };
   }, [page, user]);
+
+  // Track 6 — fetch filtered scans whenever historyFilter changes. Stale
+  // fetch guard via cancelled flag prevents an in-flight request from
+  // overwriting state if the user dismisses the chip mid-request. Server
+  // owns the 300s Redis dedup; no client cache.
+  useEffect(() => {
+    if (!historyFilter) {
+      setFilteredItems(null);
+      setFilteredItemsError(null);
+      return;
+    }
+    let cancelled = false;
+    setFilteredItemsLoading(true);
+    setFilteredItemsError(null);
+    authedFetch(`${API_BASE}/home-findings/${historyFilter.id}/items`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then(data => {
+        if (cancelled) return;
+        setFilteredItems(Array.isArray(data?.scans) ? data.scans : []);
+        setFilteredItemsLoading(false);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setFilteredItemsError(err.message || "fetch failed");
+        setFilteredItemsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [historyFilter]);
 
   // Minimum-version check on mount. If the running APP_VERSION is below
   // the server-controlled MIN_*_VERSION, render the UpdateRequiredView
@@ -7696,6 +7817,12 @@ function App() {
           onSelect={(item)=>{setResult(item); setPage("home");}}
           onClear={()=>{setHistory([]); try{localStorage.removeItem("ps_history")}catch{}}}
           onSearch={(q)=>{setPage("home"); setQuery(q); analyze(q);}}
+          historyFilter={historyFilter}
+          filteredItems={filteredItems}
+          filteredItemsLoading={filteredItemsLoading}
+          filteredItemsError={filteredItemsError}
+          onClearFilter={()=>{setHistoryFilter(null); setFilteredItems(null); setFilteredItemsError(null);}}
+          onRetryFilter={()=>{const cur = historyFilter; if (cur) { setHistoryFilter(null); setTimeout(()=>setHistoryFilter(cur), 0); }}}
         />
       ) : page === "science" ? (
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
@@ -8301,7 +8428,16 @@ function App() {
                         return (
                           <div
                             key={f.id || i}
-                            onClick={() => { setPage("history"); setResult(null); }}
+                            onClick={() => {
+                              setHistoryFilter({
+                                id: f.id,
+                                label: f.label,
+                                severity: f.severity,
+                                swapsAvailable: f.swapsAvailable || 0,
+                              });
+                              setPage("history");
+                              setResult(null);
+                            }}
                             style={{
                               display:"grid",
                               gridTemplateColumns:"36px 1fr auto",
@@ -8342,10 +8478,13 @@ function App() {
                         );
                       })}
 
-                      {/* Footer: "See all N findings →". Same target as rows for v1. */}
-                      {typeof homeFindings.totalFindings === "number" && (
+                      {/* Footer: "Showing top N of M findings." Per Track 6
+                          spec, no tap target — drill-down happens at the
+                          row level via setHistoryFilter, so the footer is
+                          informational only and does not need a navigation
+                          affordance. */}
+                      {typeof homeFindings.totalFindings === "number" && homeFindings.totalFindings > homeFindings.findings.length && (
                         <div
-                          onClick={() => { setPage("history"); setResult(null); }}
                           style={{
                             marginTop:14, paddingTop:14,
                             borderTop:"1px solid var(--rule)",
@@ -8353,12 +8492,9 @@ function App() {
                             fontSize:11, letterSpacing:"0.14em",
                             textTransform:"uppercase", fontWeight:600,
                             color:"var(--ink-soft)",
-                            display:"inline-flex", alignItems:"center", gap:4,
-                            cursor:"pointer",
                           }}
                         >
-                          See all {homeFindings.totalFindings} findings
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                          Showing top {homeFindings.findings.length} of {homeFindings.totalFindings} findings
                         </div>
                       )}
                     </div>
