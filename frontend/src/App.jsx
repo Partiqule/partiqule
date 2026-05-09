@@ -5277,26 +5277,6 @@ const TermsPage = ({text, muted, surface, border, isMobile}) => {
   );
 };
 
-// ── AUTO-SCROLL HOOK ──────────────────────────────────────────
-const useAutoScroll = (ref, intervalMs, itemWidth, itemCount) => {
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef(null);
-  const indexRef = useRef(0);
-  useEffect(()=>{
-    if(paused||itemCount<=1)return;
-    timerRef.current=setInterval(()=>{
-      indexRef.current=(indexRef.current+1)%itemCount;
-      if(ref.current)ref.current.scrollTo({left:indexRef.current*itemWidth,behavior:"smooth"});
-    },intervalMs);
-    return()=>clearInterval(timerRef.current);
-  },[paused,itemCount,intervalMs,itemWidth]);
-  return {pause:()=>setPaused(true),resume:()=>setPaused(false)};
-};
-
-// ── FOR YOU INTELLIGENCE CARDS ────────────────────────────────
-// ── AUDIT GRADE + COMPLETION ──────────────────────────────────
-
-
 // ── AUDIT SESSION ─────────────────────────────────────────────
 
 
@@ -5373,115 +5353,6 @@ const FeedPage = ({liveIntelCards, staticCards, history, surface, border, text, 
   );
 };
 
-// ── SHELF STRIP ────────────────────────────────────────────────
-// Placeholder hand-drawn illustrations by category.
-// Paul will swap these for proper illustrations later.
-const SHELF_TILE_SHAPES = [
-  "12px 14px 10px 15px / 14px 10px 15px 12px",
-  "14px 10px 15px 12px / 10px 15px 12px 14px",
-  "10px 15px 12px 14px / 15px 12px 14px 10px",
-  "15px 12px 14px 10px / 12px 14px 10px 15px",
-  "11px 13px 15px 12px / 13px 15px 12px 11px",
-  "13px 15px 11px 14px / 15px 11px 14px 13px",
-];
-
-const ShelfIllustration = ({ category }) => {
-  // Map category → one of six illustration types from the hero mockup.
-  const kind = (() => {
-    const c = (category || "").toLowerCase();
-    if (c === "clothing" || c === "accessory") return "brief";
-    if (c === "beverage" || c === "restaurant") return "can";
-    if (c === "personal_care" || c === "baby" || c === "supplement") return "bottle";
-    if (c === "home" || c === "home_furnishing" || c === "kitchen") return "pump";
-    if (c === "toy") return "shoe";
-    return "chocolate";
-  })();
-
-  const stroke = "var(--moss)";
-  const shared = {
-    stroke, strokeWidth: 1.5, fill: "none",
-    strokeLinecap: "round", strokeLinejoin: "round",
-    opacity: 0.82,
-  };
-
-  switch (kind) {
-    case "brief":
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <path d="M 14 18 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 18"/>
-          <path d="M 14 18 Q 17 14 20 14 L 28 14 Q 31 14 34 18"/>
-          <path d="M 20 14 Q 20 11 24 11 Q 28 11 28 14"/>
-          <path d="M 14 24 L 34 24" opacity="0.5"/>
-        </svg>
-      );
-    case "chocolate":
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <rect x="13" y="13" width="22" height="22" rx="1.5"/>
-          <line x1="19" y1="13" x2="19" y2="35" opacity="0.55"/>
-          <line x1="24" y1="13" x2="24" y2="35" opacity="0.55"/>
-          <line x1="29" y1="13" x2="29" y2="35" opacity="0.55"/>
-          <line x1="13" y1="20" x2="35" y2="20" opacity="0.55"/>
-          <line x1="13" y1="28" x2="35" y2="28" opacity="0.55"/>
-        </svg>
-      );
-    case "bottle":
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <path d="M 19 12 L 19 16 L 17 18 L 17 38 Q 17 39 18 39 L 30 39 Q 31 39 31 38 L 31 18 L 29 16 L 29 12 Z"/>
-          <line x1="19" y1="12" x2="29" y2="12" strokeWidth="1.8"/>
-          <rect x="19" y="22" width="10" height="10" opacity="0.55"/>
-          <line x1="21" y1="26" x2="27" y2="26" opacity="0.55"/>
-          <line x1="21" y1="28.5" x2="27" y2="28.5" opacity="0.55"/>
-        </svg>
-      );
-    case "shoe":
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <path d="M 10 30 Q 10 24 14 22 L 20 20 Q 22 17 26 16 Q 31 15 33 19 Q 35 22 37 24 Q 40 26 40 30 Q 40 33 37 33 L 13 33 Q 10 33 10 30 Z"/>
-          <path d="M 20 20 Q 21 23 22 25" opacity="0.55"/>
-          <path d="M 26 16 Q 27 19 27 22" opacity="0.55"/>
-          <line x1="12" y1="33" x2="38" y2="33" opacity="0.8"/>
-        </svg>
-      );
-    case "can":
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <rect x="17" y="11" width="14" height="26" rx="1.5"/>
-          <ellipse cx="24" cy="11" rx="7" ry="1.2" opacity="0.6"/>
-          <path d="M 21 11 Q 21 13 24 13 Q 27 13 27 11" opacity="0.6"/>
-          <line x1="17" y1="18" x2="31" y2="18" opacity="0.55"/>
-          <line x1="17" y1="30" x2="31" y2="30" opacity="0.55"/>
-          <path d="M 20 22 Q 22 24 24 22 Q 26 20 28 22" opacity="0.55"/>
-        </svg>
-      );
-    case "pump":
-    default:
-      return (
-        <svg width="48" height="48" viewBox="0 0 48 48" style={shared}>
-          <path d="M 14 16 L 14 36 Q 14 38 16 38 L 32 38 Q 34 38 34 36 L 34 16"/>
-          <rect x="12" y="12" width="24" height="5" rx="1"/>
-          <ellipse cx="24" cy="14.5" rx="3" ry="0.8" opacity="0.55"/>
-          <line x1="19" y1="24" x2="29" y2="24" opacity="0.55"/>
-          <line x1="19" y1="28" x2="29" y2="28" opacity="0.55"/>
-          <line x1="19" y1="32" x2="29" y2="32" opacity="0.55"/>
-        </svg>
-      );
-  }
-};
-
-// Filter out malformed history entries before rendering the shelf strip.
-// Pre-cascade scans sometimes saved placeholder or error text in
-// product_name (e.g. "(website/service ..." from a failed extract). Entries
-// stay in localStorage for data integrity — they just don't render here.
-const isValidShelfItem = (item) => {
-  const name = typeof item?.product_name === "string" ? item.product_name.trim() : "";
-  if (!name || name.length < 2) return false;
-  if (name.startsWith("(")) return false;
-  if (/website\/service/i.test(name)) return false;
-  return true;
-};
-
 const SkeletonLine = ({ height = 12, width = "100%", style = {} }) => (
   <div className="pq-skeleton" style={{ height, width, ...style }} />
 );
@@ -5493,121 +5364,6 @@ const SkeletonCircle = ({ size = 32, style = {} }) => (
 const SkeletonRibbon = ({ height = 18, style = {} }) => (
   <div className="pq-skeleton" style={{ height, width: "100%", borderRadius: 4, ...style }} />
 );
-
-const ShelfStrip = ({ items, onSelect }) => {
-  const clean = (items || []).filter(isValidShelfItem);
-  if (clean.length === 0) return null;
-  const sc = (s) => s == null ? "var(--ink-faint)" : s <= 3 ? "var(--score-green)" : s <= 5 ? "var(--score-amber)" : "var(--score-red)";
-  return (
-    <>
-      <div style={{
-        display:"flex", gap:12,
-        overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
-        padding:"4px 0 12px",
-        margin:"0 -4px",
-      }}>
-        <style>{`.shelf-strip-scroll::-webkit-scrollbar{display:none}`}</style>
-        {clean.map((item, i) => {
-          const score = item.overall_score || item.score;
-          const { brand, body: shelfBody } = extractBrand(item.product_name, item.brand);
-          const shortName = (() => {
-            const rest = shelfBody || item.product_name || "";
-            return rest.length > 18 ? rest.slice(0, 17) + "…" : rest;
-          })();
-          return (
-            <div key={i} onClick={() => onSelect && onSelect(item)} style={{flexShrink:0, width:92, cursor:"pointer"}}>
-              <div style={{
-                width:92, height:92,
-                background:"var(--cream-light)",
-                border:"1px solid var(--rule)",
-                borderRadius: SHELF_TILE_SHAPES[i % SHELF_TILE_SHAPES.length],
-                display:"flex", alignItems:"center", justifyContent:"center",
-                marginBottom:8, position:"relative",
-                transition:"transform 0.15s",
-              }}>
-                {score != null && (
-                  <div style={{
-                    position:"absolute", top:7, right:7,
-                    width:22, height:22,
-                    borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
-                    background: sc(score),
-                    color:"var(--ivory)",
-                    fontFamily:"'Lora', Georgia, serif",
-                    fontSize:13,
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    lineHeight:1, fontWeight:400,
-                  }}>{Math.round(score)}</div>
-                )}
-                <ShelfIllustration category={item.category}/>
-              </div>
-              <div style={{
-                fontFamily:"'DM Sans', system-ui, sans-serif",
-                fontSize:11, color:"var(--ink)", lineHeight:1.25,
-                fontWeight:500, padding:"0 2px",
-              }}>{shortName || (item.product_name || "").slice(0, 18)}</div>
-              {brand && (
-                <div style={{
-                  fontFamily:"'DM Sans', system-ui, sans-serif",
-                  fontSize:9, color:"var(--ink-faint)",
-                  marginTop:2, letterSpacing:"0.1em",
-                  padding:"0 2px", textTransform:"uppercase",
-                }}>{brand}</div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div style={{height:1, background:"var(--rule-strong)", margin:"6px 0 0"}}/>
-    </>
-  );
-};
-
-const LifestyleScoreCard = ({score, text, muted, border, isMobile, setPage}) => {
-  if(!score)return null;
-  const sc = score.current<=3 ? "var(--score-green)" : score.current<=5 ? "var(--score-amber)" : "var(--score-red)";
-  const scSoft = score.current<=3 ? "var(--score-green-soft)" : score.current<=5 ? "var(--score-amber-soft)" : "var(--score-red-soft)";
-  const tc = score.trend==="improving" ? "var(--moss)" : score.trend==="declining" ? "var(--score-red)" : "var(--ink-soft)";
-  const ta = score.trend==="improving" ? "↓" : score.trend==="declining" ? "↑" : "→";
-  const tl = score.trend==="improving" ? `${score.delta} better than before` : score.trend==="declining" ? `${score.delta} higher than before` : "holding steady";
-  return (
-    <div style={{marginBottom:20}}>
-      <div onClick={()=>setPage("history")} style={{
-        background: "var(--cream-light)",
-        borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
-        padding:"18px 22px",
-        border: "1px solid var(--rule)",
-        cursor:"pointer",
-        display:"flex", alignItems:"center", justifyContent:"space-between", gap:16,
-      }}>
-        <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <div style={{
-            display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-            width:64, height:64,
-            borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%",
-            background: scSoft,
-            border: `2px solid ${sc}`,
-            flexShrink:0,
-          }}>
-            <span style={{fontSize:26, fontWeight:400, fontFamily:"'Lora', Georgia, serif", color:sc, lineHeight:1, letterSpacing:"-0.02em"}}>{score.current}</span>
-            <span style={{fontSize:9, color:sc, opacity:0.7, marginTop:2, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
-          </div>
-          <div>
-            <div style={{fontSize:10, fontWeight:500, color:"var(--moss)", marginBottom:4, textTransform:"uppercase", letterSpacing:"0.22em", fontFamily:"'DM Sans', system-ui, sans-serif"}}>Routine score</div>
-            <div style={{fontSize:13, color:"var(--ink-soft)", marginBottom:2, fontFamily:"'DM Sans', system-ui, sans-serif"}}>{score.productCount} product{score.productCount!==1?"s":""} scored</div>
-            {score.previous && <div style={{fontSize:12, color:tc, fontWeight:500, display:"flex", alignItems:"center", gap:4, fontFamily:"'DM Sans', system-ui, sans-serif"}}><span>{ta}</span><span>{tl}</span></div>}
-          </div>
-        </div>
-        <div style={{textAlign:"right", flexShrink:0}}>
-          {score.worstCategory && (<>
-            <div style={{fontSize:10, color:"var(--ink-faint)", marginBottom:2, letterSpacing:"0.14em", textTransform:"uppercase", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500}}>Biggest pull</div>
-            <div style={{fontSize:14, fontWeight:400, color:"var(--ink)", fontFamily:"'Lora', Georgia, serif", letterSpacing:"-0.005em"}}>{score.worstCategory.label}</div>
-            <div style={{fontSize:11, color:"var(--ink-faint)", fontFamily:"'DM Sans', system-ui, sans-serif"}}>avg {score.worstCategory.avg}/10</div>
-          </>)}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const generateForYouCards = (history, childMode) => {
   if(!history||history.length===0)return [];
@@ -5635,90 +5391,7 @@ const generateForYouCards = (history, childMode) => {
   return cards.sort((a,b)=>b.priority-a.priority).slice(0,6);
 };
 
-const ForYouCarousel = ({cards, text, muted, isMobile, setPage, setResult, setQuery, analyze, history}) => {
-  const scrollRef = useRef(null);
-  const CW = isMobile ? 280 : 320;
-  const {pause, resume} = useAutoScroll(scrollRef, 3500, CW+12, cards.length);
-  if(!cards||cards.length===0)return null;
-  const handleAction=(card)=>{
-    if(card.type==="live_intel"){if(card.actionUrl)window.open(card.actionUrl,"_blank");else if(card.actionPage)setPage(card.actionPage);return;}
-    if(card.actionPage==="history")setPage("history");
-    else if(card.actionPage==="result"&&card.productName){const hi=history.find(h=>h.product_name===card.productName);if(hi){setResult(hi);setPage("home");}else{setQuery(card.productName);analyze(card.productName);}}
-    else setPage("home");
-  };
-  const sc=(s)=> s==null ? "var(--ink-soft)" : s<=3 ? "var(--score-green)" : s<=5 ? "var(--score-amber)" : "var(--score-red)";
-  const cardShapes = [
-    "16px 20px 14px 18px / 18px 14px 20px 16px",
-    "20px 14px 18px 16px / 14px 18px 16px 20px",
-    "14px 18px 16px 20px / 20px 16px 14px 18px",
-    "15px 16px 14px 18px / 16px 14px 18px 15px",
-  ];
-  return (
-    <div style={{marginBottom:28}}>
-      <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", padding:`0 ${isMobile?"16px":"40px"}`, marginBottom:14, maxWidth:1100, margin:"0 auto 14px"}}>
-        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, color:"var(--ink)", letterSpacing:"-0.005em", fontWeight:400}}>
-          Thought you'd <span style={{color:"var(--moss)"}}>want to know</span>
-        </div>
-        <div style={{display:"flex", gap:4}}>{cards.map((_,i)=><div key={i} style={{width:5, height:5, borderRadius:"50%", background:"var(--rule-strong)"}}/>)}</div>
-      </div>
-      <div ref={scrollRef} onMouseEnter={pause} onMouseLeave={resume} onTouchStart={pause} onTouchEnd={()=>setTimeout(resume,3000)} style={{display:"flex", gap:12, overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none", padding:`4px ${isMobile?"16px":"40px"} 8px`, scrollBehavior:"smooth", WebkitOverflowScrolling:"touch"}}>
-        <style>{`.foryou-scroll::-webkit-scrollbar{display:none}`}</style>
-        {cards.map((card,i)=>{
-          const shape = cardShapes[i % cardShapes.length];
-          return (
-            <div key={i} onClick={()=>handleAction(card)} style={{
-              flexShrink:0, width:CW,
-              borderRadius: shape,
-              padding:"18px 20px 20px",
-              cursor:"pointer",
-              background: "var(--cream-light)",
-              border: "1px solid var(--rule)",
-              display:"flex", flexDirection:"column", gap:10,
-              minHeight:140,
-              transition:"transform 0.15s, background 0.2s",
-            }}>
-              <div style={{
-                fontFamily:"'DM Sans', system-ui, sans-serif",
-                fontSize:10, fontWeight:500, color:"var(--moss)",
-                textTransform:"uppercase", letterSpacing:"0.22em",
-                display:"flex", alignItems:"center", gap:10,
-              }}>
-                <span style={{display:"inline-block", width:16, height:1, background:"var(--moss)", opacity:0.6}}/>
-                {card.label}
-              </div>
-              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:20, fontWeight:400, color:"var(--ink)", lineHeight:1.15, letterSpacing:"-0.005em", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.headline}</div>
-              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, flex:1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{card.body}</div>
-              <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4, gap:8}}>
-                <span style={{
-                  fontFamily:"'Lora', Georgia, serif", fontSize:14, color:"var(--moss)",
-                  paddingBottom:1, borderBottom:"1px dotted var(--moss)",
-                }}>{card.action}</span>
-                {card.score!=null && (
-                  <span style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:400, color:sc(card.score), letterSpacing:"-0.01em"}}>
-                    {card.score}<span style={{fontSize:11, opacity:0.55, marginLeft:1, fontFamily:"'DM Sans', system-ui, sans-serif", letterSpacing:"0.1em"}}>/10</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 // ── RESPONSIVE HOOK ───────────────────────────────────────────
-const filterLiveCards = (liveCards, history) => {
-  if(!liveCards?.length||!history?.length)return [];
-  return liveCards.filter(card=>{
-    const hasIng=card.ingredient_triggers?.length>0;
-    const hasCat=card.category_triggers?.length>0;
-    if(!hasIng&&!hasCat)return true;
-    if(hasIng){const uc=history.flatMap(h=>[...(h.harmful_chemicals||[]),...(h.concerns||[]).map(c=>typeof c==="string"?c:c.concern||""),h.summary||""]).join(" ").toLowerCase();if(card.ingredient_triggers.some(t=>uc.includes(t.toLowerCase().trim())))return true;}
-    if(hasCat){const cats=new Set(history.map(h=>h.category));if(card.category_triggers.some(c=>cats.has(c)))return true;}
-    return false;
-  });
-};
 
 function useWindowWidth() {
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
@@ -8257,14 +7930,12 @@ function App() {
                   </div>
 
                   {/* Phase 5B — Items in your home section per dashboard mock v8.
-                      Replaces the prior ShelfStrip horizontal product strip. Pulls
-                      itemCount, homeScore, homeScoreTrend, and scoreMakeup from
-                      homeData (already in state from Phase 5A's /home-data fetch).
-                      Hidden entirely when itemCount is 0 per spec ("Zero scans:
-                      home shows greeting, single CTA. No empty makeup ribbon.").
-                      Edit-what-you-own link deferred to Track 6 (bulk-edit screen).
-                      ShelfStrip component definition kept in place; Phase 5D purges
-                      it once all v8 modules have replaced it. */}
+                      Pulls itemCount, homeScore, homeScoreTrend, and scoreMakeup
+                      from homeData (already in state from Phase 5A's /home-data
+                      fetch). Hidden entirely when itemCount is 0 per spec
+                      ("Zero scans: home shows greeting, single CTA. No empty
+                      makeup ribbon."). Edit-what-you-own link deferred to a
+                      future bulk-edit screen. */}
                   {!homeData ? (
                     <div style={{marginBottom:28}}>
                       <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:14}}>
