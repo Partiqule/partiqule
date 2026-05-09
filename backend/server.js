@@ -10130,6 +10130,16 @@ app.get("/health", (req, res) => res.json({
   uptime: Math.round(process.uptime()) + "s",
 }));
 
+// Smart redirect for marketing links. iOS user agents go to the App
+// Store; everything else falls through to the home page.
+app.get("/app", (req, res) => {
+  const ua = req.headers["user-agent"] || "";
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    return res.redirect("https://apps.apple.com/us/app/partiqule/id6761738421");
+  }
+  res.redirect("/");
+});
+
 // ── PHASE 1 SPIKE: throwaway streaming endpoint ──────────────
 // Verifies whether chunked JSON streaming arrives incrementally
 // through the Capacitor iOS WebView, or buffers until response
