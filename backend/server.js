@@ -437,48 +437,86 @@ const requireUserAuth = async (req, res, next) => {
   }
 };
 
-// ── FREE TIER SCAN GATE ──
-// Server-side enforcement of the 10-scan free tier. Frontend enforcement
-// in App.jsx is a UX optimization; this is the safety net. A client that
-// clears localStorage, switches devices, edits state in DevTools, or
-// rotates a userId in the request body cannot get past this check.
+// ── SUBSCRIPTION STATE ──
+// Aggregated read of a user's subscription. Reads webhook-fed columns from
+// profiles (subscription_status + trial_ends_at), cached 60s in Redis to
+// keep the scan gate fast under burst traffic. The Stripe webhook and
+// /apple-iap-confirm are the writers; this helper never hits Stripe live.
 //
-// Returns one of three shapes:
-//   { allowed: true,  scanCount, isSubscribed }
-//   { allowed: false, reason: "auth_required" }
-//   { allowed: false, reason: "scan_limit_reached", scanCount, isSubscribed: false }
+// Returns:
+//   {
+//     status: "trialing" | "active" | "canceled" | "past_due" | "incomplete" | null,
+//     trialDaysRemaining: <int> | null,   // only when status === "trialing"
+//     currentPeriodEnd: <ISO timestamp> | null,
+//   }
 //
-// Reads scan_count and is_subscribed in a single round-trip. On Supabase
-// transient failure the gate fails open (allowed: true with isSubscribed
-// false and scanCount 0) so a brief outage cannot lock everyone out;
-// the next request retries.
-const FREE_SCAN_LIMIT = 10;
-async function enforceScanGate(userId, supabaseAdmin) {
-  if (!userId) {
-    return { allowed: false, reason: "auth_required" };
-  }
-  if (!supabaseAdmin) {
-    return { allowed: true, scanCount: 0, isSubscribed: false };
-  }
+// On Supabase transient failure returns null status — the gate then refuses
+// the scan with subscription_required, which is the safe default. (We do
+// NOT fail open on the new gate the way the old free-tier gate did, because
+// granting unlimited scans during an outage is more expensive than briefly
+// gating a paid user. Apple/Stripe outages are rare; profile reads are
+// already cached in memory by Supabase client.)
+async function getSubscriptionState(userId) {
+  if (!userId || !supabaseAdmin) return { status: null, trialDaysRemaining: null, currentPeriodEnd: null };
+
+  const cacheKey = `agg:subscription:${userId}`;
+  const cached = await redisGet(cacheKey);
+  if (cached) return cached;
+
+  let result = { status: null, trialDaysRemaining: null, currentPeriodEnd: null };
   try {
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("scan_count, is_subscribed")
+      .select("subscription_status, trial_ends_at, subscription_ends_at, is_subscribed")
       .eq("id", userId)
       .single();
-    if (error) {
-      console.warn("[scan_gate] profile lookup failed, failing open:", error.message);
-      return { allowed: true, scanCount: 0, isSubscribed: false };
+    if (!error && data) {
+      // Prefer the new column when present; fall back to is_subscribed for
+      // legacy profiles whose webhook hasn't rewritten the row since the
+      // 011 migration landed. Legacy is_subscribed=true reads as "active"
+      // since we cannot tell from that column alone whether the user is
+      // trialing or post-trial.
+      const status = data.subscription_status
+        || (data.is_subscribed ? "active" : null);
+      let trialDaysRemaining = null;
+      if (status === "trialing" && data.trial_ends_at) {
+        const ms = new Date(data.trial_ends_at).getTime() - Date.now();
+        trialDaysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+      }
+      result = {
+        status,
+        trialDaysRemaining,
+        currentPeriodEnd: data.trial_ends_at || data.subscription_ends_at || null,
+      };
     }
-    const scanCount    = data?.scan_count    || 0;
-    const isSubscribed = !!data?.is_subscribed;
-    if (isSubscribed) return { allowed: true, scanCount, isSubscribed };
-    if (scanCount < FREE_SCAN_LIMIT) return { allowed: true, scanCount, isSubscribed };
-    return { allowed: false, reason: "scan_limit_reached", scanCount, isSubscribed };
   } catch (e) {
-    console.warn("[scan_gate] threw, failing open:", e?.message);
-    return { allowed: true, scanCount: 0, isSubscribed: false };
+    console.warn("[subscription] state read failed:", e?.message);
   }
+  redisSetEx(cacheKey, result, 60).catch(() => {});
+  return result;
+}
+
+// Drop the cached subscription so the next /me or scan rereads from
+// profiles. Webhook + Apple IAP confirm call this whenever they change
+// the underlying row.
+async function invalidateSubscriptionState(userId) {
+  if (!userId) return;
+  await redisDel(`agg:subscription:${userId}`).catch(() => {});
+}
+
+// ── SCAN GATE ──
+// Server-side check that runs before /analyze and /barcode. Only users
+// with status="trialing" or "active" may scan. Anonymous callers (no
+// JWT) get auth_required; signed-in users without a subscription get
+// subscription_required, which the client renders as the trial-signup
+// paywall.
+async function enforceScanGate(userId, _supabaseAdmin) {
+  if (!userId) return { allowed: false, reason: "auth_required" };
+  const sub = await getSubscriptionState(userId);
+  if (sub.status === "trialing" || sub.status === "active") {
+    return { allowed: true, subscription: sub };
+  }
+  return { allowed: false, reason: "subscription_required", subscription: sub };
 }
 
 // ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
@@ -6100,8 +6138,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
     }
   }
 
-  // Server-side free-tier gate. Runs before cache lookup, before any work,
-  // before the increment. A cached payload for an over-limit user must
+  // Server-side trial gate. Runs before cache lookup, before any work,
+  // before the increment. A cached payload for an unsubscribed user must
   // still 402 instead of returning the cached scan. Anonymous scans (no
   // valid JWT) are refused with 401 so the client can prompt sign in.
   const gate = await enforceScanGate(userId, supabaseAdmin);
@@ -6110,9 +6148,8 @@ app.post("/analyze", rateLimit, async (req, res) => {
       return stream.errorJson(401, { error: "auth_required" });
     }
     return stream.errorJson(402, {
-      error: "scan_limit_reached",
-      scan_count: gate.scanCount,
-      free_limit: FREE_SCAN_LIMIT,
+      error: "subscription_required",
+      subscription: gate.subscription || null,
     });
   }
 
@@ -9428,6 +9465,35 @@ app.get("/scan-count", async (req, res) => {
   }
 });
 
+// /me — JWT-verified read of profile + subscription state. Replaces the
+// pattern of calling /subscription-status + /scan-count separately on
+// auth changes. Single round-trip, single Redis-cached subscription read.
+app.get("/me", requireUserAuth, async (req, res) => {
+  const userId = req.authUserId;
+  try {
+    const subscription = await getSubscriptionState(userId);
+    let profile = null;
+    if (supabaseAdmin) {
+      const { data } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, scan_count, stripe_customer_id")
+        .eq("id", userId)
+        .single();
+      profile = data || null;
+    }
+    res.json({
+      id: userId,
+      email: req.authEmail || profile?.email || null,
+      scan_count: profile?.scan_count || 0,
+      stripe_customer_id: profile?.stripe_customer_id || null,
+      subscription,
+    });
+  } catch (e) {
+    console.warn("/me error:", e?.message);
+    res.status(500).json({ error: "me_failed" });
+  }
+});
+
 app.get("/subscription-status", async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
   const { userId } = req.query;
@@ -10775,17 +10841,16 @@ app.post("/barcode", rateLimit, async (req, res) => {
     }
   }
 
-  // Server-side free-tier gate. Same shape as /analyze. Runs before cache
-  // lookup so a cached payload cannot leak past the limit.
+  // Server-side trial gate. Same shape as /analyze. Runs before cache
+  // lookup so a cached payload cannot leak past the gate.
   const gate = await enforceScanGate(userId, supabaseAdmin);
   if (!gate.allowed) {
     if (gate.reason === "auth_required") {
       return res.status(401).json({ error: "auth_required" });
     }
     return res.status(402).json({
-      error: "scan_limit_reached",
-      scan_count: gate.scanCount,
-      free_limit: FREE_SCAN_LIMIT,
+      error: "subscription_required",
+      subscription: gate.subscription || null,
     });
   }
 
