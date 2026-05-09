@@ -437,6 +437,50 @@ const requireUserAuth = async (req, res, next) => {
   }
 };
 
+// ── FREE TIER SCAN GATE ──
+// Server-side enforcement of the 10-scan free tier. Frontend enforcement
+// in App.jsx is a UX optimization; this is the safety net. A client that
+// clears localStorage, switches devices, edits state in DevTools, or
+// rotates a userId in the request body cannot get past this check.
+//
+// Returns one of three shapes:
+//   { allowed: true,  scanCount, isSubscribed }
+//   { allowed: false, reason: "auth_required" }
+//   { allowed: false, reason: "scan_limit_reached", scanCount, isSubscribed: false }
+//
+// Reads scan_count and is_subscribed in a single round-trip. On Supabase
+// transient failure the gate fails open (allowed: true with isSubscribed
+// false and scanCount 0) so a brief outage cannot lock everyone out;
+// the next request retries.
+const FREE_SCAN_LIMIT = 10;
+async function enforceScanGate(userId, supabaseAdmin) {
+  if (!userId) {
+    return { allowed: false, reason: "auth_required" };
+  }
+  if (!supabaseAdmin) {
+    return { allowed: true, scanCount: 0, isSubscribed: false };
+  }
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("scan_count, is_subscribed")
+      .eq("id", userId)
+      .single();
+    if (error) {
+      console.warn("[scan_gate] profile lookup failed, failing open:", error.message);
+      return { allowed: true, scanCount: 0, isSubscribed: false };
+    }
+    const scanCount    = data?.scan_count    || 0;
+    const isSubscribed = !!data?.is_subscribed;
+    if (isSubscribed) return { allowed: true, scanCount, isSubscribed };
+    if (scanCount < FREE_SCAN_LIMIT) return { allowed: true, scanCount, isSubscribed };
+    return { allowed: false, reason: "scan_limit_reached", scanCount, isSubscribed };
+  } catch (e) {
+    console.warn("[scan_gate] threw, failing open:", e?.message);
+    return { allowed: true, scanCount: 0, isSubscribed: false };
+  }
+}
+
 // ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
 // Prevents one bad IP (coffee shop wifi) from hitting the cap for everyone
 // and gives signed-in paid users a higher cap.
@@ -6039,9 +6083,6 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // client-supplied userId with the one from the JWT. This prevents a caller
   // from resetting someone else's scan_count (or their own, by rotating
   // fabricated UUIDs) to bypass the free-tier paywall.
-  //
-  // Anonymous scans are still supported — clients that don't pass an
-  // Authorization header just skip the per-user counter entirely.
   if (supabaseAdmin) {
     const header = req.headers.authorization || "";
     const m = header.match(/^Bearer\s+(.+)$/i);
@@ -6057,6 +6098,22 @@ app.post("/analyze", rateLimit, async (req, res) => {
     } else {
       userId = null;  // no auth header → treat as anonymous regardless of body
     }
+  }
+
+  // Server-side free-tier gate. Runs before cache lookup, before any work,
+  // before the increment. A cached payload for an over-limit user must
+  // still 402 instead of returning the cached scan. Anonymous scans (no
+  // valid JWT) are refused with 401 so the client can prompt sign in.
+  const gate = await enforceScanGate(userId, supabaseAdmin);
+  if (!gate.allowed) {
+    if (gate.reason === "auth_required") {
+      return stream.errorJson(401, { error: "auth_required" });
+    }
+    return stream.errorJson(402, {
+      error: "scan_limit_reached",
+      scan_count: gate.scanCount,
+      free_limit: FREE_SCAN_LIMIT,
+    });
   }
 
   // Track 3+4 dashboard cache invalidation. Fire at request entry so any
@@ -10694,7 +10751,7 @@ app.get("/admin/reload-redis", requireAdmin, async (req, res) => {
 // 3M+ products), passes exact ingredient list as ground truth to pass1/pass2,
 // and returns a fully scored result identical to a text scan.
 app.post("/barcode", rateLimit, async (req, res) => {
-  const { barcode, userId } = req.body || {};
+  const { barcode } = req.body || {};
   const requestStartMs = Date.now();
   const inputMode = "barcode";
   if (!barcode) return res.status(400).json({ error: "barcode required" });
@@ -10702,14 +10759,61 @@ app.post("/barcode", rateLimit, async (req, res) => {
     return res.status(400).json({ error: "Invalid barcode format" });
   }
 
+  // JWT verification — mirrors /analyze. Body-supplied userId is ignored;
+  // only the JWT-verified user id is trusted, so a caller cannot pass a
+  // different user id to bypass their own scan limit or pollute someone
+  // else's history.
+  let userId = null;
+  if (supabaseAdmin) {
+    const header = req.headers.authorization || "";
+    const m = header.match(/^Bearer\s+(.+)$/i);
+    if (m) {
+      try {
+        const { data, error } = await supabaseAdmin.auth.getUser(m[1]);
+        if (!error && data?.user?.id) userId = data.user.id;
+      } catch { userId = null; }
+    }
+  }
+
+  // Server-side free-tier gate. Same shape as /analyze. Runs before cache
+  // lookup so a cached payload cannot leak past the limit.
+  const gate = await enforceScanGate(userId, supabaseAdmin);
+  if (!gate.allowed) {
+    if (gate.reason === "auth_required") {
+      return res.status(401).json({ error: "auth_required" });
+    }
+    return res.status(402).json({
+      error: "scan_limit_reached",
+      scan_count: gate.scanCount,
+      free_limit: FREE_SCAN_LIMIT,
+    });
+  }
+
   // Track 3+4 dashboard cache invalidation. Same race-window tradeoff as
   // /analyze — invalidate at request entry, frontend saveToCloud lands
-  // shortly after. userId comes from request body here (not JWT) so this
-  // surface trusts the client; rate limiting bounds cache poisoning abuse.
+  // shortly after.
   if (userId) {
     invalidateHomeDataCache(userId).catch(() => {});
     invalidateHomeFindingsCache(userId).catch(() => {});
     invalidateHomeFindingsItemsCache(userId).catch(() => {});
+  }
+
+  // Increment server-side scan count. Mirrors /analyze:6088 — atomic RPC
+  // with non-atomic fallback. Fire-and-forget; not on the critical path.
+  // Closes the audit-flagged gap where /barcode never ticked the server
+  // counter, letting heavy-barcode users accumulate zero server-side count
+  // and reset to 0 on a new device after sync.
+  if (userId && supabaseAdmin) {
+    (async () => {
+      try {
+        const { error: rpcErr } = await supabaseAdmin.rpc("increment_scan_count", { uid: userId });
+        if (rpcErr) {
+          const { data: profile } = await supabaseAdmin.from("profiles").select("scan_count").eq("id", userId).single();
+          const newCount = (profile?.scan_count || 0) + 1;
+          await supabaseAdmin.from("profiles").upsert({ id: userId, scan_count: newCount }, { onConflict: "id" });
+        }
+      } catch(e) { console.warn("scan_count increment failed:", e.message); }
+    })();
   }
 
   const barcodeKey = `${promptVersion()}:barcode:${barcode}`;

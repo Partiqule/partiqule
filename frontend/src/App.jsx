@@ -6710,6 +6710,37 @@ function App() {
     if (user) saveToCloud(item, user.id, { owned: !justLookingMode });
   };
 
+  // Server-side scan-gate response handler. The backend now refuses
+  // /analyze and /barcode with 401 (no JWT) or 402 (over limit) so a
+  // client that bypassed the local pre-call gate (cleared localStorage,
+  // edited DevTools state, fresh device) still hits a hard wall. Clears
+  // any in-flight loading state and surfaces the appropriate modal.
+  // Returns true when the response was a gate refusal so callers can
+  // skip post-success processing; false otherwise.
+  const handleScanGateResponse = (statusOrErr, body) => {
+    const status = typeof statusOrErr === "number" ? statusOrErr : statusOrErr?.status;
+    const errCode = body?.error || statusOrErr?.body?.error;
+    if (status === 402 || errCode === "scan_limit_reached") {
+      setLoading(false);
+      setStreamStage(null);
+      setQuery("");
+      if (typeof body?.scan_count === "number") {
+        setScanCount(body.scan_count);
+        try { localStorage.setItem("ps_scan_count", String(body.scan_count)); } catch {}
+      }
+      setShowLimitModal(user ? "paywall" : "account");
+      return true;
+    }
+    if (status === 401 || errCode === "auth_required") {
+      setLoading(false);
+      setStreamStage(null);
+      setQuery("");
+      setShowAuth(true);
+      return true;
+    }
+    return false;
+  };
+
   const analyze = async (q=query) => {
     if (!q.trim()) return Promise.resolve();
     try { document.activeElement?.blur?.(); } catch {}
@@ -6765,6 +6796,7 @@ function App() {
       }, controller.signal);
       clearTimeout(timeout);
     } catch(e){
+      if (handleScanGateResponse(e, e?.body)) { return; }
       const msg = e.name === "AbortError"
         ? "Scan timed out — please try again in a moment."
         : e.message;
@@ -6812,6 +6844,7 @@ function App() {
         error: (e) => { throw new Error(e.error || e.message || "Couldn't load that product."); },
       });
     } catch (e) {
+      if (handleScanGateResponse(e, e?.body)) { return; }
       setError(e.message || "Couldn't load that product.");
       setStreamStage(null);
       track("Search Match Error", { error: e.message });
@@ -6949,13 +6982,26 @@ function App() {
       if (barcodeValue) {
         setQuery("Barcode found — looking up product...");
         try {
-          const barcodeRes = await fetch(`${API_BASE}/barcode`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({barcode:barcodeValue,userId:user?.id||null})});
+          const barcodeRes = await authedFetch(`${API_BASE}/barcode`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({barcode:barcodeValue})});
+          if (barcodeRes.status === 401 || barcodeRes.status === 402) {
+            const body = await barcodeRes.json().catch(() => ({}));
+            if (handleScanGateResponse(barcodeRes.status, body)) { if (onDone) onDone(); return; }
+          }
           if (barcodeRes.ok) {
             const barcodeData = await barcodeRes.json();
             if (barcodeData && !barcodeData.error) {
               setResult(barcodeData); saveToHistory(barcodeData); setLoading(false); setQuery(barcodeData.product_name||"");
               if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(barcodeData.category)) setPendingRoomTag(barcodeData.product_name); else setPendingRoomTag(null);
               track("Barcode Scan from Image",{barcode:barcodeValue,product:barcodeData.product_name});
+              // Mirror server-side increment locally so the pre-call gate
+              // and counter UI stay in sync. /barcode now ticks server-side
+              // too, but local state must agree for the next pre-call check.
+              if (!isSubscribed) {
+                const newCount = scanCount + 1;
+                setScanCount(newCount);
+                try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
+                if (newCount >= FREE_LIMIT) setShowLimitModal(user ? "paywall" : "account");
+              }
               if (onDone) onDone();
               return;
             }
@@ -7036,6 +7082,7 @@ function App() {
           error: (e) => { throw new Error(e.error || e.message || "Image scan failed"); },
         }, imgController.signal);
       } catch (streamErr) {
+        if (handleScanGateResponse(streamErr, streamErr?.body)) { if (onDone) onDone(); return; }
         if (streamErr.status === 429) { setLoading(false); setQuery(""); setError("Too many requests. Please wait a moment and try again."); if (onDone) onDone(); return; }
         throw streamErr;
       }
@@ -7115,6 +7162,7 @@ function App() {
         error: (e) => { showFailModal(e.error || e.message || "Couldn't score that product."); },
       });
     } catch (err) {
+      if (handleScanGateResponse(err, err?.body)) { return; }
       console.error("[resumeFromConfirmation] error:", err);
       if (err.status === 410) { showFailModal("That identification expired. Try scanning again."); return; }
       if (err.status === 429) { showFailModal("Too many scans right now. Try again in a few minutes."); return; }
@@ -10729,13 +10777,18 @@ function App() {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
             try {
-              const resp = await fetch(`${API_BASE}/barcode`, {
+              const resp = await authedFetch(`${API_BASE}/barcode`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ barcode, userId: user?.id || null }),
+                body: JSON.stringify({ barcode }),
                 signal: controller.signal,
               });
               clearTimeout(timeout);
+              if (resp.status === 401 || resp.status === 402) {
+                const body = await resp.json().catch(() => ({}));
+                setBarcodeLoadingPhase(null);
+                if (handleScanGateResponse(resp.status, body)) return;
+              }
               if (!resp.ok) throw new Error(`Server error ${resp.status}`);
               const data = await resp.json();
               // Graceful fallback — barcode not in any product database. Stay in the loading overlay and surface the error phase.
