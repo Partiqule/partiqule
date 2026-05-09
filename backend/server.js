@@ -10234,18 +10234,50 @@ app.post('/apple-iap-confirm', requireUserAuth, async (req, res) => {
     return res.status(403).json({ error: "Receipt verification failed", reason: verification.reason });
   }
 
+  // Derive trial state from the verified payload. StoreKit 2 JWS payloads
+  // carry expiresDate (ms) and offerType (1 = intro offer / free trial).
+  // Legacy verifyReceipt responses carry latest_receipt_info[*].expires_date_ms
+  // and is_trial_period. Treat presence of either trial signal as trialing
+  // and write trial_ends_at from the same expiry timestamp Apple reports;
+  // when the trial converts, App Store Server Notifications would normally
+  // push DID_RENEW with a fresh receipt, but until that path is wired this
+  // endpoint runs again on next foreground via the existing restore flow.
+  const payload = verification.payload || {};
+  let status = "active";
+  let trialEndsAt = null;
+  let periodEnd = null;
+  // StoreKit 2 JWS shape — payload is the transaction itself
+  if (typeof payload.expiresDate === "number") {
+    periodEnd = new Date(payload.expiresDate).toISOString();
+  }
+  if (payload.offerType === 1 || payload.offerType === "1") {
+    status = "trialing";
+    trialEndsAt = periodEnd;
+  }
+  // Legacy verifyReceipt shape — payload is the wrapped receipt
+  const latest = Array.isArray(payload.in_app) ? payload.in_app[payload.in_app.length - 1] : null;
+  if (latest) {
+    if (latest.expires_date_ms) periodEnd = new Date(Number(latest.expires_date_ms)).toISOString();
+    if (latest.is_trial_period === "true" || latest.is_trial_period === true) {
+      status = "trialing";
+      trialEndsAt = periodEnd;
+    }
+  }
+
   try {
-    // Flip profiles.is_subscribed so /subscription-status returns true on
-    // subsequent app launches. This is what checkSubscription() reads.
-    // Without this step the purchase appears to succeed in-session but reverts
-    // on the next app reload.
     const { error: profErr } = await supabaseAdmin.from('profiles')
-      .update({ is_subscribed: true })
+      .update({
+        subscription_status: status,
+        trial_ends_at: trialEndsAt,
+        is_subscribed: true,
+        subscription_ends_at: status === "active" ? null : periodEnd,
+      })
       .eq('id', userId);
     if (profErr) throw profErr;
+    await invalidateSubscriptionState(userId);
 
-    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId, 'env', verification.env || 'unknown');
-    res.json({ ok: true });
+    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId, 'env', verification.env || 'unknown', 'status', status);
+    res.json({ ok: true, status, trialEndsAt });
   } catch(e) {
     console.error('[IAP] Confirm error:', e.message);
     res.status(500).json({ error: e.message });
