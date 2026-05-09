@@ -471,13 +471,23 @@ async function getSubscriptionState(userId) {
       .eq("id", userId)
       .single();
     if (!error && data) {
-      // Prefer the new column when present; fall back to is_subscribed for
-      // legacy profiles whose webhook hasn't rewritten the row since the
-      // 011 migration landed. Legacy is_subscribed=true reads as "active"
-      // since we cannot tell from that column alone whether the user is
-      // trialing or post-trial.
-      const status = data.subscription_status
-        || (data.is_subscribed ? "active" : null);
+      // Defense in depth for the Migration 011 backfill case. 2026-05-09:
+      // Migration 011 added subscription_status with a NULL default and
+      // the Stripe + Apple webhooks only fire on FUTURE subscription
+      // events, so all five existing paid subscribers came back NULL
+      // despite is_subscribed=true and got their scans gated. A manual
+      // UPDATE patched the immediate incident; this explicit fallback
+      // catches the same shape if it recurs (a future column addition
+      // with NULL default, or a future code path that flips
+      // is_subscribed=true without also writing subscription_status).
+      // Trial users have subscription_status set correctly at trial
+      // creation, so this branch never fires for them. Refusing here
+      // when is_subscribed=false is the correct default — the gate
+      // then refuses with subscription_required.
+      let status = data.subscription_status || null;
+      if (!status && data.is_subscribed === true) {
+        status = "active";
+      }
       let trialDaysRemaining = null;
       if (status === "trialing" && data.trial_ends_at) {
         const ms = new Date(data.trial_ends_at).getTime() - Date.now();
