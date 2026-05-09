@@ -6066,6 +6066,11 @@ function App() {
   const [updateRequired, setUpdateRequired] = useState(null); // {minVersion} when running version is below MIN_*_VERSION
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  // Full subscription shape from /me: { status, trialDaysRemaining, currentPeriodEnd }.
+  // isSubscribed is the legacy boolean kept around for the existing call sites
+  // that branch on a binary; new UI reads subscription.status to distinguish
+  // trialing from active.
+  const [subscription, setSubscription] = useState(null);
   const [showLimitModal, setShowLimitModal] = useState(null); // "account" | "paywall" | null
   const [iapPrice,     setIapPrice]     = useState("$4.99/month"); // loaded from StoreKit
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -6115,13 +6120,28 @@ function App() {
   // ── Auth helper ──────────────────────────────────────────────
   // Returns { "Authorization": "Bearer <jwt>" } for the current session, or
   // ── Auth listener ────────────────────────────────────────────
+  // Reads /me which returns the aggregated subscription shape (status,
+  // trialDaysRemaining, currentPeriodEnd) plus profile basics. Falls back
+  // to the legacy /subscription-status endpoint on transient failure so
+  // the auth-state effect still derives a boolean. The userId arg is kept
+  // for the legacy fallback path; /me derives identity from the JWT.
   const checkSubscription = async (userId) => {
     try {
-      const r = await fetch(`${API_BASE}/subscription-status?userId=${userId}`);
-      const d = await r.json();
-      setIsSubscribed(!!d.is_subscribed);
-      return !!d.is_subscribed;
-    } catch { setIsSubscribed(false); return false; }
+      const r = await authedFetch(`${API_BASE}/me`);
+      if (r.ok) {
+        const d = await r.json();
+        const sub = d.subscription || null;
+        setSubscription(sub);
+        const subscribed = sub?.status === "trialing" || sub?.status === "active";
+        setIsSubscribed(subscribed);
+        return subscribed;
+      }
+      const r2 = await fetch(`${API_BASE}/subscription-status?userId=${userId}`);
+      const d2 = await r2.json();
+      setIsSubscribed(!!d2.is_subscribed);
+      setSubscription(d2.is_subscribed ? { status: "active", trialDaysRemaining: null, currentPeriodEnd: d2.ends_at || null } : null);
+      return !!d2.is_subscribed;
+    } catch { setIsSubscribed(false); setSubscription(null); return false; }
   };
 
   const syncScanCount = async (userId) => {
@@ -7596,10 +7616,18 @@ function App() {
                   <>
                     <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
                       <div style={{width:10, height:10, borderRadius:"50%", background:"#16a34a"}}/>
-                      <div style={{fontSize:15, fontWeight:700, color:text}}>You're subscribed</div>
+                      <div style={{fontSize:15, fontWeight:700, color:text}}>
+                        {subscription?.status === "trialing"
+                          ? (typeof subscription.trialDaysRemaining === "number"
+                              ? `Trial: ${subscription.trialDaysRemaining} day${subscription.trialDaysRemaining === 1 ? "" : "s"} remaining`
+                              : "Trial active")
+                          : "You're subscribed"}
+                      </div>
                     </div>
                     <div style={{fontSize:13, color:muted, lineHeight:1.55, marginBottom:14}}>
-                      Thanks for supporting Partiqule. You have unlimited scans, child and pregnancy scoring, and full access to all alternatives.
+                      {subscription?.status === "trialing"
+                        ? "You have unlimited scans, child and pregnancy scoring, and full access to alternatives during your trial. Cancel anytime in Settings before the trial ends and you will not be charged."
+                        : "Thanks for supporting Partiqule. You have unlimited scans, child and pregnancy scoring, and full access to all alternatives."}
                     </div>
                     {IS_NATIVE && (
                       <div style={{display:"flex", flexDirection:"column", gap:8}}>
