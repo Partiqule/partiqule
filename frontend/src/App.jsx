@@ -3532,6 +3532,123 @@ const CATEGORY_PRICE_ESTIMATES = {food:5,food_beverage:5.5,beverage:4.5,snack:4,
 
 
 
+// ── HOUSEHOLD EXPOSURE SUMMARY ───────────────────────────────
+// Extracted from an IIFE inside HistoryPage so its three useState hooks
+// live at the top of an actual component function. The previous IIFE
+// pattern was gated by `history.length >= 2` — under Track 6's filtered
+// HistoryPage that gate flips on/off as the user toggles the filter
+// chip, which changed the parent's hook count between renders and
+// triggered React error #310. Hosting the hooks in a real component
+// fixes that: the component mounts/unmounts with the gate, and React
+// handles unmount cleanup gracefully.
+const HouseholdExposureSummary = ({ history, text, muted, surface, border, onSelect }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [adults2, setAdults2] = useState(2);
+  const [kids2, setKids2] = useState(0);
+
+  const sorted     = [...history].sort((a,b)=>(b.overall_score||b.score)-(a.overall_score||a.score));
+  const highRisk   = sorted.filter(h=>(h.overall_score||h.score)>=6);
+  const totalScore = history.reduce((a,h)=>a+(h.overall_score||h.score),0);
+  const avgScore   = Math.round((totalScore/history.length)*10)/10;
+
+  const FREQ_MAP = {daily:365, weekly:52, occasional:18, rare:6};
+  let totalExposures = 0;
+  let totalAltExposures = 0;
+  history.forEach(item => {
+    const s     = item.overall_score || item.score;
+    const freq  = item.dimensions?.usage_exposure?.frequency || item.exposure_frequency || "daily";
+    const perYr = FREQ_MAP[freq] || 365;
+    const ppl   = adults2 + kids2 * 2.5;
+    totalExposures    += perYr * ppl;
+    totalAltExposures += Math.round(perYr * ppl * (Math.max(1,Math.round(s*0.3)) / s));
+  });
+  const totalReduction    = Math.round(totalExposures - totalAltExposures);
+  const totalReductionPct = Math.round((totalReduction / totalExposures) * 100);
+
+  const Stepper2 = ({label, value, setValue}) => (
+    <div>
+      <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:4}}>{label}</div>
+      <div style={{display:"flex", alignItems:"center", gap:5}}>
+        <button onClick={()=>setValue(v=>Math.max(0,v-1))} style={{width:24,height:24,borderRadius:5,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>−</button>
+        <span style={{fontWeight:700,fontSize:14,color:text,minWidth:16,textAlign:"center"}}>{value}</span>
+        <button onClick={()=>setValue(v=>Math.min(8,v+1))} style={{width:24,height:24,borderRadius:5,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{marginBottom:40, background:"#f0fdf4", borderRadius:16, border:`1.5px solid ${"#bbf7d0"}`, overflow:"hidden"}}>
+      <button onClick={()=>setExpanded(e=>!e)} style={{width:"100%", padding:"16px 20px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3}}>
+            Household Exposure Overview
+          </div>
+          <div style={{fontSize:14, color:text, fontWeight:600}}>
+            {history.length} products scanned — average score {avgScore}/10
+            {highRisk.length > 0 && <span style={{color:"#dc2626"}}> · {highRisk.length} high concern{highRisk.length!==1?"s":""}</span>}
+          </div>
+        </div>
+        <span style={{fontSize:13, color:"#16a34a", transition:"transform 0.2s", display:"inline-block", transform:expanded?"rotate(180deg)":"rotate(0deg)", flexShrink:0}}>▾</span>
+      </button>
+
+      {expanded && (
+        <div style={{padding:"0 20px 20px", borderTop:`1px solid ${"#bbf7d0"}`}}>
+          <div style={{display:"flex", gap:20, marginTop:16, marginBottom:16}}>
+            <Stepper2 label="Adults" value={adults2} setValue={v=>setAdults2(Math.max(1,v))}/>
+            <Stepper2 label="Children" value={kids2} setValue={setKids2}/>
+          </div>
+
+          {highRisk.length > 0 && (
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>Highest concern products</div>
+              <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                {sorted.slice(0,3).map((item,i) => {
+                  const s = item.overall_score||item.score;
+                  return (
+                    <button key={i} onClick={()=>onSelect(item)} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:surface, borderRadius:10, border:`1px solid ${border}`, cursor:"pointer", textAlign:"left"}}>
+                      <span style={{fontSize:13, color:text, fontWeight:600, flex:1, marginRight:8}}>{item.product_name}</span>
+                      <span style={{whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:4}}><ScoreBadge score={s} size="xs" showLabel /></span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div style={{background:"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#d1fae5"}`}}>
+            <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>
+              If you switched every high-risk product
+            </div>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12}}>
+              <div>
+                <div style={{fontSize:10, color:scoreColor(Math.round(avgScore)), fontWeight:700, textTransform:"uppercase", marginBottom:4}}>Current (all products)</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:scoreColor(Math.round(avgScore)), lineHeight:1}}>
+                  {Math.round(totalExposures).toLocaleString()}
+                </div>
+                <div style={{fontSize:11, color:muted}}>total annual exposures</div>
+              </div>
+              <div>
+                <div style={{fontSize:10, color:"#16a34a", fontWeight:700, textTransform:"uppercase", marginBottom:4}}>After switching</div>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", lineHeight:1}}>
+                  {Math.round(totalAltExposures).toLocaleString()}
+                </div>
+                <div style={{fontSize:11, color:muted}}>total annual exposures</div>
+              </div>
+            </div>
+            <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
+              {totalReductionPct}% reduction across your whole household
+            </div>
+            <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
+              Switching your scanned products to safer alternatives eliminates an estimated {totalReduction.toLocaleString()} exposure events per year
+              {kids2 > 0 && <span style={{color:"#d97706"}}> — including {kids2} child{kids2>1?"ren":""} at 2.5x sensitivity</span>}.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── HISTORY PAGE ─────────────────────────────────────────────
 const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter}) => {
   const [priceFilter, setPriceFilter] = useState("all");
@@ -3812,119 +3929,16 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
           )}
 
           {/* Household Exposure Summary */}
-          {history.length >= 2 && (() => {
-            const [expanded, setExpanded] = React.useState(false);
-            const [adults2,  setAdults2]  = React.useState(2);
-            const [kids2,    setKids2]    = React.useState(0);
-
-            // Sort by score descending, pick top concerns
-            const sorted      = [...history].sort((a,b)=>(b.overall_score||b.score)-(a.overall_score||a.score));
-            const highRisk    = sorted.filter(h=>(h.overall_score||h.score)>=6);
-            const totalScore  = history.reduce((a,h)=>a+(h.overall_score||h.score),0);
-            const avgScore    = Math.round((totalScore/history.length)*10)/10;
-
-            // Estimate total annual exposures across all daily-use products
-            const FREQ_MAP = {daily:365, weekly:52, occasional:18, rare:6};
-            let totalExposures = 0;
-            let totalAltExposures = 0;
-            history.forEach(item => {
-              const s     = item.overall_score || item.score;
-              const freq  = item.dimensions?.usage_exposure?.frequency || item.exposure_frequency || "daily";
-              const perYr = FREQ_MAP[freq] || 365;
-              const ppl   = adults2 + kids2 * 2.5;
-              totalExposures    += perYr * ppl;
-              totalAltExposures += Math.round(perYr * ppl * (Math.max(1,Math.round(s*0.3)) / s));
-            });
-            const totalReduction    = Math.round(totalExposures - totalAltExposures);
-            const totalReductionPct = Math.round((totalReduction / totalExposures) * 100);
-
-            const Stepper2 = ({label, value, setValue}) => (
-              <div>
-                <div style={{fontSize:10, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:4}}>{label}</div>
-                <div style={{display:"flex", alignItems:"center", gap:5}}>
-                  <button onClick={()=>setValue(v=>Math.max(0,v-1))} style={{width:24,height:24,borderRadius:5,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>−</button>
-                  <span style={{fontWeight:700,fontSize:14,color:text,minWidth:16,textAlign:"center"}}>{value}</span>
-                  <button onClick={()=>setValue(v=>Math.min(8,v+1))} style={{width:24,height:24,borderRadius:5,border:`1px solid ${border}`,background:surface,color:text,cursor:"pointer",fontSize:14,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
-                </div>
-              </div>
-            );
-
-            return (
-              <div style={{marginBottom:40, background:"#f0fdf4", borderRadius:16, border:`1.5px solid ${"#bbf7d0"}`, overflow:"hidden"}}>
-                <button onClick={()=>setExpanded(e=>!e)} style={{width:"100%", padding:"16px 20px", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-                  <div style={{textAlign:"left"}}>
-                    <div style={{fontSize:11, color:"#16a34a", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3}}>
-                      Household Exposure Overview
-                    </div>
-                    <div style={{fontSize:14, color:text, fontWeight:600}}>
-                      {history.length} products scanned — average score {avgScore}/10
-                      {highRisk.length > 0 && <span style={{color:"#dc2626"}}> · {highRisk.length} high concern{highRisk.length!==1?"s":""}</span>}
-                    </div>
-                  </div>
-                  <span style={{fontSize:13, color:"#16a34a", transition:"transform 0.2s", display:"inline-block", transform:expanded?"rotate(180deg)":"rotate(0deg)", flexShrink:0}}>▾</span>
-                </button>
-
-                {expanded && (
-                  <div style={{padding:"0 20px 20px", borderTop:`1px solid ${"#bbf7d0"}`}}>
-
-                    {/* Household inputs */}
-                    <div style={{display:"flex", gap:20, marginTop:16, marginBottom:16}}>
-                      <Stepper2 label="Adults" value={adults2} setValue={v=>setAdults2(Math.max(1,v))}/>
-                      <Stepper2 label="Children" value={kids2} setValue={setKids2}/>
-                    </div>
-
-                    {/* Top concerns */}
-                    {highRisk.length > 0 && (
-                      <div style={{marginBottom:16}}>
-                        <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:8}}>Highest concern products</div>
-                        <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                          {sorted.slice(0,3).map((item,i) => {
-                            const s = item.overall_score||item.score;
-                            return (
-                              <button key={i} onClick={()=>onSelect(item)} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background:surface, borderRadius:10, border:`1px solid ${border}`, cursor:"pointer", textAlign:"left"}}>
-                                <span style={{fontSize:13, color:text, fontWeight:600, flex:1, marginRight:8}}>{item.product_name}</span>
-                                <span style={{whiteSpace:"nowrap", display:"inline-flex", alignItems:"center", gap:4}}><ScoreBadge score={s} size="xs" showLabel /></span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Total exposure summary */}
-                    <div style={{background:"#fff", borderRadius:12, padding:"14px 16px", border:`1px solid ${"#d1fae5"}`}}>
-                      <div style={{fontSize:11, color:muted, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>
-                        If you switched every high-risk product
-                      </div>
-                      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12}}>
-                        <div>
-                          <div style={{fontSize:10, color:scoreColor(Math.round(avgScore)), fontWeight:700, textTransform:"uppercase", marginBottom:4}}>Current (all products)</div>
-                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:scoreColor(Math.round(avgScore)), lineHeight:1}}>
-                            {Math.round(totalExposures).toLocaleString()}
-                          </div>
-                          <div style={{fontSize:11, color:muted}}>total annual exposures</div>
-                        </div>
-                        <div>
-                          <div style={{fontSize:10, color:"#16a34a", fontWeight:700, textTransform:"uppercase", marginBottom:4}}>After switching</div>
-                          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:800, fontSize:28, color:"#16a34a", lineHeight:1}}>
-                            {Math.round(totalAltExposures).toLocaleString()}
-                          </div>
-                          <div style={{fontSize:11, color:muted}}>total annual exposures</div>
-                        </div>
-                      </div>
-                      <div style={{fontSize:13, color:"#16a34a", fontWeight:700, marginBottom:4}}>
-                        {totalReductionPct}% reduction across your whole household
-                      </div>
-                      <div style={{fontSize:12, color:muted, lineHeight:1.5}}>
-                        Switching your scanned products to safer alternatives eliminates an estimated {totalReduction.toLocaleString()} exposure events per year
-                        {kids2 > 0 && <span style={{color:"#d97706"}}> — including {kids2} child{kids2>1?"ren":""} at 2.5x sensitivity</span>}.
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          {history.length >= 2 && (
+            <HouseholdExposureSummary
+              history={history}
+              text={text}
+              muted={muted}
+              surface={surface}
+              border={border}
+              onSelect={onSelect}
+            />
+          )}
 
           {/* Recommended alternatives */}
           {filteredAlts.length > 0 && (
