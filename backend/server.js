@@ -9434,6 +9434,12 @@ app.post("/create-checkout", async (req, res) => {
       payment_method_types: ["card"],
       customer_email: email,
       line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+      // 7-day free trial. Stripe collects the card upfront on checkout,
+      // creates the subscription in trialing status, and converts to active
+      // (first charge) at trial_end. The customer.subscription.updated
+      // webhook fires on every transition so trial_ends_at and
+      // subscription_status stay in sync without polling.
+      subscription_data: { trial_period_days: 7 },
       success_url: `${process.env.FRONTEND_URL || "https://partiqule.com"}/account?subscribed=true`,
       cancel_url:  `${process.env.FRONTEND_URL || "https://partiqule.com"}/?cancelled=true`,
       metadata: { userId },
@@ -9522,51 +9528,66 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
     return res.status(400).send("Webhook signature verification failed");
   }
 
-  const setSubscribed = async (customerId, subscribed, endsAt = null) => {
-    if (!supabaseAdmin) return;
-    // Find user by stripe_customer_id
+  // Writes status + trial_ends_at + is_subscribed to profiles in one call.
+  // is_subscribed remains the legacy boolean for code paths that have not
+  // migrated to subscription_status; trial_ends_at is set only when the
+  // subscription is actually trialing (Stripe sets trial_end to a Unix
+  // timestamp during the trial, null otherwise).
+  const writeSubscriptionState = async (customerId, sub) => {
+    if (!supabaseAdmin) return null;
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("stripe_customer_id", customerId)
       .limit(1);
-    if (!profiles?.length) return;
+    if (!profiles?.length) return null;
+    const userId = profiles[0].id;
+    const status = sub.status || null;
+    const isActive = status === "active" || status === "trialing";
+    const trialEndsAt = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+    const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
     await supabaseAdmin.from("profiles").update({
-      is_subscribed: subscribed,
-      subscription_ends_at: endsAt,
-    }).eq("id", profiles[0].id);
-    console.log(`[Stripe] ${subscribed ? "Activated" : "Deactivated"} subscription for customer ${customerId}`);
+      subscription_status: status,
+      trial_ends_at: trialEndsAt,
+      is_subscribed: isActive,
+      subscription_ends_at: isActive ? null : periodEnd,
+    }).eq("id", userId);
+    await invalidateSubscriptionState(userId);
+    console.log(`[Stripe] ${status} for customer ${customerId} (user ${userId})`);
+    return userId;
   };
 
-  const session = event.data.object;
+  const obj = event.data.object;
 
   switch (event.type) {
     case "checkout.session.completed": {
-      // Link Stripe customer to Supabase user
-      const userId = session.metadata?.userId;
-      const customerId = session.customer;
+      // Link Stripe customer to Supabase user. The actual subscription
+      // status is set by the customer.subscription.* events that fire
+      // alongside, but linking the customer id here means the webhook
+      // can find the user when those events arrive.
+      const userId = obj.metadata?.userId;
+      const customerId = obj.customer;
       if (userId && customerId && supabaseAdmin) {
         await supabaseAdmin.from("profiles").upsert({
           id: userId,
           stripe_customer_id: customerId,
-          is_subscribed: true,
-          subscription_ends_at: null,
         });
+        await invalidateSubscriptionState(userId);
         console.log(`[Stripe] Checkout complete — linked ${userId} to customer ${customerId}`);
       }
       break;
     }
+    case "customer.subscription.created":
     case "customer.subscription.updated":
+    case "customer.subscription.trial_will_end":
     case "customer.subscription.deleted": {
-      const active = session.status === "active" || session.status === "trialing";
-      const endsAt = session.current_period_end
-        ? new Date(session.current_period_end * 1000).toISOString()
-        : null;
-      await setSubscribed(session.customer, active, active ? null : endsAt);
+      // obj is the subscription. Pass it through writeSubscriptionState so
+      // status, trial_ends_at, and the period end persist together.
+      await writeSubscriptionState(obj.customer, obj);
       break;
     }
     case "invoice.payment_failed": {
-      console.log(`[Stripe] Payment failed for customer ${session.customer}`);
+      console.log(`[Stripe] Payment failed for customer ${obj.customer}`);
       break;
     }
   }
