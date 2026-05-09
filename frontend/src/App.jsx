@@ -7321,6 +7321,8 @@ function App() {
         @keyframes partiqulePulse{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.9;transform:scale(1.1)}}
         @keyframes whyFadeIn{from{opacity:0}to{opacity:1}}
         @keyframes pq-skeleton-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes pqCycle{0%{opacity:0;transform:translateY(6px)}3%{opacity:1;transform:translateY(0)}18%{opacity:1;transform:translateY(0)}21%,100%{opacity:0;transform:translateY(-6px)}}
+        @keyframes pqDot{0%,21%,100%{background:var(--rule);transform:scale(1)}3%,18%{background:var(--moss);transform:scale(1.4)}}
         .pq-skeleton{background:linear-gradient(90deg,var(--rule) 0%,var(--cream-deep) 50%,var(--rule) 100%);background-size:200% 100%;animation:pq-skeleton-shimmer 1.6s ease-in-out infinite;border-radius:4px}
         input,button,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
         h1,h2,h3{font-family:'Lora',Georgia,serif;}
@@ -7813,8 +7815,129 @@ function App() {
             </div>
           )}
 
-          {/* ── RETURNING USER: compact scan bar + discovery feed ── */}
-          {history.length > 0 ? (() => {
+          {/* ── SIGNED OUT: receipts strip hero (replaces the prior "Sign up
+              to scan" funnel from commit cd39db4 — the hero IS the new
+              top experience for unauthenticated visitors). Try free routes
+              to the existing auth modal; after signup the trial paywall
+              fires automatically via the onAuth handler higher up.
+              Receipt scores are illustrative — see TODO markers below;
+              Paul will verify against live calibration before next push. */}
+          {!user ? (() => {
+            const RECEIPTS = [
+              // TODO: scores illustrative — verify against live calibration before next push
+              { cat: "Sunscreen", skip: { name: "Banana Boat Sport SPF 50", score: 7 }, grab: { name: "Thinksport SPF 50", score: 2 }, reason: "Octinoxate, octocrylene. Banned in Hawaii. Sold here." },
+              // TODO: scores illustrative — verify against live calibration before next push
+              { cat: "Cola", skip: { name: "Cherry Coke", score: 7 }, grab: { name: "Olipop Vintage Cola", score: 2 }, reason: "39g sugar. HFCS. Caramel color IV (4-MEI)." },
+              // TODO: scores illustrative — verify against live calibration before next push
+              { cat: "Air freshener", skip: { name: "Glade PlugIns Sweet Pea", score: 8 }, grab: { name: "P.F. Candle Co. Sandalwood", score: 3 }, reason: "Phthalates. Synthetic fragrance. No disclosure." },
+              // TODO: scores illustrative — verify against live calibration before next push
+              { cat: "Kids snack", skip: { name: "Goldfish Cheddar", score: 6 }, grab: { name: "Made Good Star Crackers", score: 3 }, reason: "TBHQ. Yellow 5 and 6. Vegetable shortening." },
+              // TODO: scores illustrative — verify against live calibration before next push
+              { cat: "Shampoo", skip: { name: "Tresemmé Keratin Smooth", score: 6 }, grab: { name: "Acure Curiously Clarifying", score: 3 }, reason: "Cocamidopropyl betaine. PEGs. DMDM hydantoin." },
+            ];
+            return (
+              <div style={{background:"var(--cream)", minHeight:"100vh", paddingBottom:60}}>
+                {/* Top bar */}
+                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding: isMobile ? "16px 20px" : "20px 32px", maxWidth:1100, margin:"0 auto"}}>
+                  <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 28 : 36, width:"auto", display:"block"}}/>
+                  <button onClick={()=>setShowAuth(true)} style={{padding:"8px 18px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, cursor:"pointer", letterSpacing:"0.005em"}}>Sign in</button>
+                </div>
+
+                {/* Eyebrow + headline + sub */}
+                <div style={{maxWidth:540, margin:"0 auto", padding: isMobile ? "32px 24px 24px" : "56px 24px 32px", textAlign:"center"}}>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:14}}>
+                    Read the label
+                  </div>
+                  <h1 style={{fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 32 : 38, fontWeight:400, color:"var(--ink)", margin:"0 0 18px", letterSpacing:"-0.02em", lineHeight:1.1}}>
+                    Same shelf. Same price.<br/>Very different score.
+                  </h1>
+                  <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, color:"var(--ink-soft)", margin:0, lineHeight:1.55}}>
+                    Partiqule scores every product 1 to 10 on what's actually in it. Lower is better. Built to surface what the label hides.
+                  </p>
+                </div>
+
+                {/* Receipts strip — five cards crossfading on a 17.5s loop. Each card
+                    holds for ~3s, fade in/out for ~0.5s. Indicator dots below match
+                    timing with the same staggered animation-delay. */}
+                <div style={{maxWidth:540, margin:"0 auto", padding:"0 24px 12px", position:"relative", height: isMobile ? 230 : 210}}>
+                  {RECEIPTS.map((card, i) => (
+                    <div key={i} style={{
+                      position:"absolute", top:0, left:24, right:24,
+                      background:"#ffffff",
+                      border:"1px solid var(--rule)",
+                      borderRadius:"22px 16px 24px 18px / 18px 22px 16px 24px",
+                      padding:"18px 18px 14px",
+                      opacity:0,
+                      animation:`pqCycle 17.5s ${i * 3.5}s infinite ease-in-out`,
+                    }}>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:14}}>{card.cat}</div>
+                      <div style={{display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap: isMobile ? 14 : 16, marginBottom:12}}>
+                        <div style={{textAlign:"left"}}>
+                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, fontWeight:400, color:"var(--ink-soft)", lineHeight:1.25, textDecoration:"line-through", textDecorationColor:"rgba(162,62,46,0.5)", textDecorationThickness:"1.5px", marginBottom:8}}>{card.skip.name}</div>
+                          <div style={{width:50, height:50, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--score-red)", color:"#ffffff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400}}>{card.skip.score}</div>
+                        </div>
+                        <div style={{color:"var(--moss)", flexShrink:0, opacity:0.6}}>
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </div>
+                        <div style={{textAlign:"right"}}>
+                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, fontWeight:400, color:"var(--ink)", lineHeight:1.25, marginBottom:8}}>{card.grab.name}</div>
+                          <div style={{width:50, height:50, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--score-green)", color:"#ffffff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, marginLeft:"auto"}}>{card.grab.score}</div>
+                        </div>
+                      </div>
+                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.45, paddingTop:10, borderTop:"1px solid var(--rule)"}}>{card.reason}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Indicator dots — same timing as the cards. */}
+                <div style={{display:"flex", justifyContent:"center", gap:10, padding:"4px 0 32px"}}>
+                  {RECEIPTS.map((_, i) => (
+                    <div key={i} style={{
+                      width:7, height:7, borderRadius:"50%",
+                      background:"var(--rule)",
+                      animation:`pqDot 17.5s ${i * 3.5}s infinite ease-in-out`,
+                      transformOrigin:"center",
+                    }}/>
+                  ))}
+                </div>
+
+                {/* CTA block — moss with cream button. Try free routes to auth
+                    modal; after signup the existing onAuth handler fires
+                    checkSubscription which surfaces the trial paywall. */}
+                <div style={{maxWidth:540, margin:"0 auto", padding:"0 24px"}}>
+                  <div style={{
+                    background:"var(--moss)",
+                    borderRadius:"22px 16px 24px 18px / 18px 22px 16px 24px",
+                    padding: isMobile ? "32px 24px 28px" : "40px 32px 36px",
+                    textAlign:"center",
+                  }}>
+                    <div style={{fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 22 : 26, fontWeight:400, color:"var(--cream)", margin:"0 0 18px", letterSpacing:"-0.01em", lineHeight:1.15}}>
+                      Score your home in 30 seconds.
+                    </div>
+                    <button
+                      onClick={()=>setShowAuth(true)}
+                      style={{
+                        background:"var(--cream)",
+                        color:"var(--moss)",
+                        padding:"14px 36px",
+                        borderRadius:999,
+                        border:"none",
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:15, fontWeight:600,
+                        cursor:"pointer",
+                        letterSpacing:"0.005em",
+                      }}
+                    >
+                      Try free
+                    </button>
+                    <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"rgba(243,237,226,0.8)", marginTop:14, lineHeight:1.5}}>
+                      7 days free, then $4.99/mo. Cancel anytime.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })() : (history.length > 0 ? (() => {
             // Greeting uses displayName only — never fall back to email username
             const nameForGreet = (displayName && displayName.trim()) ? displayName.trim() : (user ? "there" : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
@@ -8701,7 +8824,7 @@ function App() {
           )}
 
           </>
-          )}
+          ))}
 
           {history.length === 0 && (
           <div style={{paddingTop: isMobile?32:56}}>
