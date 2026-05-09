@@ -6720,14 +6720,10 @@ function App() {
   const handleScanGateResponse = (statusOrErr, body) => {
     const status = typeof statusOrErr === "number" ? statusOrErr : statusOrErr?.status;
     const errCode = body?.error || statusOrErr?.body?.error;
-    if (status === 402 || errCode === "scan_limit_reached") {
+    if (status === 402 || errCode === "subscription_required" || errCode === "scan_limit_reached") {
       setLoading(false);
       setStreamStage(null);
       setQuery("");
-      if (typeof body?.scan_count === "number") {
-        setScanCount(body.scan_count);
-        try { localStorage.setItem("ps_scan_count", String(body.scan_count)); } catch {}
-      }
       setShowLimitModal(user ? "paywall" : "account");
       return true;
     }
@@ -6750,7 +6746,7 @@ function App() {
     // 401 silently. The scanCount comparison below stays for signed-in
     // free-tier users.
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+    if (!isSubscribed) {
       setShowLimitModal("paywall");
       return;
     }
@@ -6813,7 +6809,7 @@ function App() {
     if (!match?.id) return;
     try { document.activeElement?.blur?.(); } catch {}
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+    if (!isSubscribed) {
       setShowLimitModal("paywall");
       return;
     }
@@ -6959,7 +6955,7 @@ function App() {
   const handleImageScan = async (file, onDone) => {
     if (!file) return;
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+    if (!isSubscribed) {
       setShowLimitModal("paywall");
       return;
     }
@@ -7492,19 +7488,19 @@ function App() {
                 display:"flex", alignItems:"center", gap:10,
               }}>
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                Partiqule Premium
+                Free trial
               </div>
-              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've found a lot to think about.</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>Start your 7 day free trial.</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>
                 Unlimited scans, child and pregnancy scoring, clean alternatives.
-                <span style={{display:"block", marginTop:8, fontFamily:"'Lora', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month. Cancel anytime.</span></span>
+                <span style={{display:"block", marginTop:8, fontFamily:"'Lora', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month after the trial. Cancel anytime in Settings. No charge until day 8.</span></span>
               </div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:12, letterSpacing:"0.005em", opacity:checkingOut?0.7:1}}>
-                {checkingOut ? "Loading..." : `Subscribe — ${iapPrice}`}
+                {checkingOut ? "Loading..." : "Start 7 day free trial"}
               </button>
               {IS_NATIVE && (
                 <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10.5, color:"var(--ink-soft)", textAlign:"center", marginTop:8, lineHeight:1.55}}>
-                  Partiqule Premium is a monthly subscription at {iapPrice}. Payment will be charged to your Apple ID at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings &gt; Apple ID &gt; Subscriptions.
+                  Partiqule Premium starts with a 7 day free trial, then renews monthly at {iapPrice}. Payment will be charged to your Apple ID at the end of the free trial. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings &gt; Apple ID &gt; Subscriptions.
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
