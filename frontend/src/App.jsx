@@ -6745,13 +6745,14 @@ function App() {
     if (!q.trim()) return Promise.resolve();
     try { document.activeElement?.blur?.(); } catch {}
     setShowScanModal(false); // always close the modal when a scan kicks off
-    // ── Scan limit gate ──
-    if (!isSubscribed) {
-      if (scanCount >= FREE_LIMIT) {
-        if (!user) setShowLimitModal("account");
-        else setShowLimitModal("paywall");
-        return;
-      }
+    // Anonymous scans are blocked server-side as of dee214c. Funnel signed-out
+    // users to signup before any scan attempt instead of letting the request
+    // 401 silently. The scanCount comparison below stays for signed-in
+    // free-tier users.
+    if (!user) { setShowLimitModal("account"); return; }
+    if (!isSubscribed && scanCount >= FREE_LIMIT) {
+      setShowLimitModal("paywall");
+      return;
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
@@ -6811,9 +6812,9 @@ function App() {
   const selectSearchMatch = async (match) => {
     if (!match?.id) return;
     try { document.activeElement?.blur?.(); } catch {}
+    if (!user) { setShowLimitModal("account"); return; }
     if (!isSubscribed && scanCount >= FREE_LIMIT) {
-      if (!user) setShowLimitModal("account");
-      else setShowLimitModal("paywall");
+      setShowLimitModal("paywall");
       return;
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
@@ -6957,10 +6958,9 @@ function App() {
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
     if (!file) return;
-    // ── Scan limit gate — same as text scan ──
+    if (!user) { setShowLimitModal("account"); return; }
     if (!isSubscribed && scanCount >= FREE_LIMIT) {
-      if (!user) setShowLimitModal("account");
-      else setShowLimitModal("paywall");
+      setShowLimitModal("paywall");
       return;
     }
     setShowScanModal(false); setScanSheetOpen(false);
@@ -7112,6 +7112,7 @@ function App() {
   // Same three response shapes can come back; we treat them the same way.
   const resumeFromConfirmation = async (editedName = null) => {
     if (!visionConfirmation?.identificationId) return;
+    if (!user) { setVisionConfirmation(null); setShowLimitModal("account"); return; }
     const { identificationId, productName: confirmedName } = visionConfirmation;
     setVisionConfirmation(null);
     setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
@@ -7466,11 +7467,20 @@ function App() {
                 display:"flex", alignItems:"center", gap:10,
               }}>
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                Free scans used
+                {scanCount > 0 ? "Free scans used" : "Sign up free"}
               </div>
-              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
-              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>That's your {FREE_LIMIT} free scans. Make a quick account to keep going — unlimited scans, child and pregnancy scoring, clean alternatives. $4.99 a month.</div>
-              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>Create account</button>
+              {scanCount > 0 ? (
+                <>
+                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>That's your {FREE_LIMIT} free scans. Make a quick account to keep going. Unlimited scans, child and pregnancy scoring, clean alternatives. $4.99 a month.</div>
+                </>
+              ) : (
+                <>
+                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>Sign up to scan.</div>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>Make a quick account to scan products. {FREE_LIMIT} scans free, then $4.99 a month for unlimited scans, child and pregnancy scoring, and clean alternatives.</div>
+                </>
+              )}
+              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>{scanCount > 0 ? "Create account" : "Sign up free"}</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
             </>)}
 
@@ -7841,7 +7851,7 @@ function App() {
                           if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                           analyze();
                         }}
-                        placeholder="Search any product…"
+                        placeholder={user ? "Search any product…" : "Sign up to scan products"}
                         style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                       />
                       {query.trim() && (
@@ -8392,7 +8402,7 @@ function App() {
                     if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                     analyze();
                   }}
-                  placeholder="Search any product…"
+                  placeholder={user ? "Search any product…" : "Sign up to scan products"}
                   style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
                 />
                 {query.trim() && (
@@ -10709,7 +10719,10 @@ function App() {
           {/* Floating Scan Another pill — only visible on results page */}
           {result && (
             <div
-              onClick={()=>{setScanSheetOpen(true); setModalQuery(""); setFabOpen(false);}}
+              onClick={()=>{
+                if (!user) { setShowLimitModal("account"); return; }
+                setScanSheetOpen(true); setModalQuery(""); setFabOpen(false);
+              }}
               style={{
                 position:"fixed", bottom:88, left:"50%", transform:"translateX(-50%)",
                 zIndex:8997,
@@ -10736,14 +10749,17 @@ function App() {
             {[
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"Feed",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active: page==="feed" },
-              { label:"Scan",    icon:null, action:()=>{setScanSheetOpen(o=>!o); setModalQuery("");}, active:false, isScan:true },
+              { label:"Scan",    icon:null, action:()=>{ if (!user) { setShowLimitModal("account"); return; } setScanSheetOpen(o=>!o); setModalQuery(""); }, active:false, isScan:true },
               { label:"Items",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
               item.isScan ? (
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
-                  <div onClick={()=>{isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();}}
+                  <div onClick={()=>{
+                    if (!user) { setShowLimitModal("account"); return; }
+                    isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();
+                  }}
                     style={{width:52, height:52, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginTop:-14}}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   </div>
@@ -10767,6 +10783,7 @@ function App() {
           onClose={() => setShowBarcodeScanner(false)}
           onBarcode={async (barcode) => {
             setShowBarcodeScanner(false);
+            if (!user) { setShowLimitModal("account"); return; }
             setBarcodeLoadingPhase("loading");
             setQuery("Scanning barcode…");
             setRevealDone(false);
