@@ -1425,6 +1425,54 @@ const PERSONAL_CARE_INGREDIENTS = {
     reasoning: "Dimethicone has a strong safety profile that contrasts with its frequent vilification in clean-beauty marketing. The base_hazard_score of 3 reflects the regulatory consensus across CIR (safe), EU (unrestricted), and FDA (GRAS) supported by the high molecular weight that prevents systemic absorption. The skin_absorption_modifier of 0.2 captures the well-documented finding that dimethicone sits on skin rather than penetrating, which is what makes it effective as an occlusive moisturizer and barrier ingredient. Dimethicone is functionally similar to petrolatum (also score 4 in this calibration) and serves the same protective barrier role with a slightly cleaner safety profile due to lower contamination concerns. The honest framing: clean-beauty conflation between dimethicone (safe) and cyclic silicones D4/D5/D6 (EU-restricted) is a common but inaccurate marketing pattern; this calibration entry treats dimethicone on its own scientific merits.",
   },
 
+  cyclotetrasiloxane: {
+    inci_name: "Cyclotetrasiloxane",
+    aliases: [
+      "cyclotetrasiloxane",
+      "d4",
+      "cyclomethicone",
+      "octamethylcyclotetrasiloxane",
+    ],
+    hazard_class: "endocrine_disruptor",
+    base_hazard_score: 7,
+    skin_absorption_modifier: 0.6,
+    pregnancy_concern: true,
+    pregnancy_score_floor: 8,
+    kid_concern: true,
+    kid_score_floor: 8,
+    regulatory_citations: [
+      "EU SVHC Candidate List (June 2018): cyclotetrasiloxane identified as a Substance of Very High Concern under REACH on the basis of vPvB (very persistent, very bioaccumulative) and PBT (persistent, bioaccumulative, toxic) properties",
+      "EU Cosmetics Regulation 1223/2009 Annex II: D4 prohibited in cosmetic products since January 2022, banning intentional use across the EU market",
+      "Commission Regulation (EU) 2024/1328: broader REACH restriction on D4, D5, and D6 in leave-on and rinse-off cosmetics and other consumer products at concentrations at or above 0.1%, with main provisions effective 6 June 2026 to phase remaining uses out of the EU market",
+      "Endocrine Society EDC-2 Statement (Gore et al. 2015, Endocrine Reviews 36:E1-E150, DOI 10.1210/er.2015-1010): cyclic siloxanes including D4 cited among emerging endocrine-disrupting chemicals with documented anti-estrogenic and anti-androgenic activity in mammalian assays",
+      "ECHA Risk Assessment Committee (RAC) opinion on D4 (2018): supported PBT and vPvB classification driving the EU restriction; cited reproductive toxicity in chronic inhalation studies as additional concern alongside environmental persistence",
+    ],
+    reasoning: "D4 (cyclotetrasiloxane) has historically been the most-used cyclic siloxane in personal care, appearing in hair products, deodorants, sunscreens, and cleansers as a volatile silicone that imparts a silky feel and evaporates off the skin without residue. The EU added it to the REACH SVHC list in June 2018 on the basis of vPvB and PBT classification, prohibited it in cosmetics outright from January 2022, and tightened the broader REACH restriction via Commission Regulation 2024/1328 with main provisions taking effect 6 June 2026. The Endocrine Society EDC-2 statement cites D4 among the cyclic siloxanes with documented anti-estrogenic and anti-androgenic activity in mammalian assays, which is the basis for the endocrine_disruptor hazard_class here rather than a generic environmental flag. The base_hazard_score of 7 reflects the convergence of regulatory severity (EU outright ban in cosmetics) plus the suspected ED signal plus the substantial historical exposure across daily-use product categories. Dimethicone (linear silicone, score 3) is chemically distinct and not implicated by this entry.",
+  },
+
+  cyclopentasiloxane: {
+    inci_name: "Cyclopentasiloxane",
+    aliases: [
+      "cyclopentasiloxane",
+      "d5",
+      "decamethylcyclopentasiloxane",
+    ],
+    hazard_class: "endocrine_disruptor",
+    base_hazard_score: 6,
+    skin_absorption_modifier: 0.6,
+    pregnancy_concern: true,
+    pregnancy_score_floor: 7,
+    kid_concern: true,
+    kid_score_floor: 7,
+    regulatory_citations: [
+      "EU SVHC Candidate List (June 2018): cyclopentasiloxane identified as a Substance of Very High Concern under REACH on the basis of vPvB (very persistent, very bioaccumulative) and PBT (persistent, bioaccumulative, toxic) properties",
+      "Commission Regulation (EU) 2024/1328: broader REACH restriction on D4, D5, and D6 in leave-on and rinse-off cosmetics and other consumer products at concentrations at or above 0.1%, with main provisions effective 6 June 2026; D5 was historically permitted in rinse-off cosmetics under earlier REACH restrictions but the 2024 regulation extends restrictions to leave-on cosmetics and other consumer surfaces",
+      "Endocrine Society EDC-2 Statement (Gore et al. 2015, Endocrine Reviews 36:E1-E150, DOI 10.1210/er.2015-1010): cyclic siloxanes flagged among emerging endocrine-disrupting chemicals; the direct mammalian EDC evidence for D5 is weaker than for D4 but the cyclic siloxane class is treated together in the umbrella citation",
+      "ECHA Risk Assessment Committee (RAC) opinion on D5 (2019): supported vPvB classification driving the EU restriction; cited environmental persistence and bioaccumulation as primary drivers rather than direct human EDC evidence",
+    ],
+    reasoning: "D5 (cyclopentasiloxane) is the most common cyclic siloxane in current personal care formulations, appearing in shampoos, conditioners, deodorants, makeup, and styling products as a volatile silicone that gives slip and dries down cleanly. The EU added it to the REACH SVHC list in June 2018 on the basis of vPvB and PBT classification, and Commission Regulation 2024/1328 broadens restrictions across leave-on and rinse-off cosmetics with main provisions taking effect 6 June 2026. The direct human endocrine-disruption evidence for D5 is weaker than for D4 — most regulatory action is driven by environmental persistence and bioaccumulation rather than confirmed ED activity. The Endocrine Society EDC-2 statement treats the cyclic siloxane class together, which is the basis for the endocrine_disruptor hazard_class here. The base_hazard_score of 6 sits one notch below D4 to reflect that distinction: same regulatory framework, less direct mammalian ED evidence, comparable consumer-product prevalence. Dimethicone (linear silicone, score 3) remains chemically distinct.",
+  },
+
 };
 
 // Alias lookup map, built once at module load for fast matching.
