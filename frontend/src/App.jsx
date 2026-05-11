@@ -6065,7 +6065,11 @@ function App() {
   const [scanCount,    setScanCount]    = useState(()=>{try{return parseInt(localStorage.getItem("ps_scan_count")||"0");}catch{return 0;}});
   const [updateRequired, setUpdateRequired] = useState(null); // {minVersion} when running version is below MIN_*_VERSION
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  // Tri-state: null = unknown / check in flight, true = confirmed subscribed
+  // (trialing or active), false = confirmed not subscribed. Default to null
+  // so the mount-time race against checkSubscription does not fire the
+  // paywall for paid users who tap Scan before /me resolves.
+  const [isSubscribed, setIsSubscribed] = useState(null);
   // Full subscription shape from /me: { status, trialDaysRemaining, currentPeriodEnd }.
   // isSubscribed is the legacy boolean kept around for the existing call sites
   // that branch on a binary; new UI reads subscription.status to distinguish
@@ -6141,7 +6145,13 @@ function App() {
       setIsSubscribed(!!d2.is_subscribed);
       setSubscription(d2.is_subscribed ? { status: "active", trialDaysRemaining: null, currentPeriodEnd: d2.ends_at || null } : null);
       return !!d2.is_subscribed;
-    } catch { setIsSubscribed(false); setSubscription(null); return false; }
+    } catch {
+      // Transient failure — stay in null (unknown) instead of poisoning to
+      // false. A network blip on /me should not lock a paid user out of
+      // scans for the rest of the session; the next scan attempt awaits
+      // checkSubscription again via the null-aware pre-call gate.
+      setIsSubscribed(null); setSubscription(null); return null;
+    }
   };
 
   const syncScanCount = async (userId) => {
@@ -6766,9 +6776,20 @@ function App() {
     // 401 silently. The scanCount comparison below stays for signed-in
     // free-tier users.
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed) {
+    // Tri-state subscription gate. Explicit false → fire paywall; null
+    // (check still in flight or transient failure) → await a fresh
+    // checkSubscription so a mount-time race does not bounce a paid user
+    // to the trial signup.
+    if (isSubscribed === false) {
       setShowLimitModal("paywall");
       return;
+    }
+    if (isSubscribed === null) {
+      const subscribed = await checkSubscription(user.id);
+      if (subscribed === false) {
+        setShowLimitModal("paywall");
+        return;
+      }
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
@@ -6799,7 +6820,7 @@ function App() {
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
-          if (!isSubscribed) {
+          if (isSubscribed === false) {
             const newCount = scanCount + 1;
             setScanCount(newCount);
             try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
@@ -6829,9 +6850,16 @@ function App() {
     if (!match?.id) return;
     try { document.activeElement?.blur?.(); } catch {}
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed) {
+    if (isSubscribed === false) {
       setShowLimitModal("paywall");
       return;
+    }
+    if (isSubscribed === null) {
+      const subscribed = await checkSubscription(user.id);
+      if (subscribed === false) {
+        setShowLimitModal("paywall");
+        return;
+      }
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
@@ -6848,7 +6876,7 @@ function App() {
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
-          if (!isSubscribed) {
+          if (isSubscribed === false) {
             const newCount = scanCount + 1;
             setScanCount(newCount);
             try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
@@ -6975,9 +7003,16 @@ function App() {
   const handleImageScan = async (file, onDone) => {
     if (!file) return;
     if (!user) { setShowLimitModal("account"); return; }
-    if (!isSubscribed) {
+    if (isSubscribed === false) {
       setShowLimitModal("paywall");
       return;
+    }
+    if (isSubscribed === null) {
+      const subscribed = await checkSubscription(user.id);
+      if (subscribed === false) {
+        setShowLimitModal("paywall");
+        return;
+      }
     }
     setShowScanModal(false); setScanSheetOpen(false);
     setResult(null); setError(null); setPage("home");
@@ -7012,7 +7047,7 @@ function App() {
               // Mirror server-side increment locally so the pre-call gate
               // and counter UI stay in sync. /barcode now ticks server-side
               // too, but local state must agree for the next pre-call check.
-              if (!isSubscribed) {
+              if (isSubscribed === false) {
                 const newCount = scanCount + 1;
                 setScanCount(newCount);
                 try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
@@ -7085,7 +7120,7 @@ function App() {
             saveToHistory(data);
             setStreamStage(null);
             if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
-            if (!isSubscribed) {
+            if (isSubscribed === false) {
               const newCount = scanCount + 1;
               setScanCount(newCount);
               try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
@@ -7166,7 +7201,7 @@ function App() {
           saveToHistory(data);
           setStreamStage(null);
           setLoading(false);
-          if (!isSubscribed) {
+          if (isSubscribed === false) {
             const newCount = scanCount + 1;
             setScanCount(newCount);
             try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
@@ -7434,7 +7469,10 @@ function App() {
         try { storedName = (localStorage.getItem("partiqule_display_name") || "").trim(); } catch {}
         if (!storedName) setShowNicknamePrompt(true);
         if (isAdminUser(u)) { setPage("admin"); setShowAuth(false); return; }
-        checkSubscription(u.id).then(subscribed => { if (!subscribed) setShowLimitModal("paywall"); });
+        // Only fire the paywall on a confirmed false. A null return means
+        // checkSubscription failed transiently — better to stay in unknown
+        // and re-check on next scan than show the paywall to a paid user.
+        checkSubscription(u.id).then(subscribed => { if (subscribed === false) setShowLimitModal("paywall"); });
       }} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
 
       {showNicknamePrompt && <NicknamePromptModal onSave={name=>{
@@ -7606,7 +7644,7 @@ function App() {
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
             {/* ── PARTIQULE PREMIUM — always visible, discoverable purchase path ── */}
-            <div style={{background:"var(--cream-light)", borderRadius:"var(--card-shape-1)", border:`1px solid ${isSubscribed?"var(--moss)":"var(--rule)"}`, overflow:"hidden", boxShadow: isSubscribed ? "none" : "var(--shadow-card)"}}>
+            <div style={{background:"var(--cream-light)", borderRadius:"var(--card-shape-1)", border:`1px solid ${isSubscribed===true?"var(--moss)":"var(--rule)"}`, overflow:"hidden", boxShadow: isSubscribed === true ? "none" : "var(--shadow-card)"}}>
               <div style={{padding:"14px 20px", borderBottom:"1px solid var(--rule-soft)", background:"var(--moss-soft)"}}>
                 <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", display:"flex", alignItems:"center", gap:6}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -7614,7 +7652,12 @@ function App() {
                 </div>
               </div>
               <div style={{padding:"18px 20px"}}>
-                {isSubscribed ? (
+                {isSubscribed === null ? (
+                  <div style={{display:"flex", alignItems:"center", gap:10, padding:"4px 0 8px"}}>
+                    <div style={{width:10, height:10, borderRadius:"50%", background:"var(--ink-faint)"}}/>
+                    <div style={{fontSize:14, color:muted, fontFamily:"'DM Sans', system-ui, sans-serif"}}>Checking subscription…</div>
+                  </div>
+                ) : isSubscribed === true ? (
                   <>
                     <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:8}}>
                       <div style={{width:10, height:10, borderRadius:"50%", background:"#16a34a"}}/>
@@ -10982,7 +11025,7 @@ function App() {
               setQuery(data.product_name || barcode);
               setResult(data);
               saveToHistory(data);
-              if (!isSubscribed) {
+              if (isSubscribed === false) {
                 const newCount = scanCount + 1;
                 setScanCount(newCount);
                 try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
