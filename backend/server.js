@@ -9138,7 +9138,21 @@ const invalidateHomeFindingsItemsCache = async (userId) => {
 // Sourced from personalCareIngredients.js endocrine_disruptor entries
 // (parabens, oxybenzone class, triclosan, triclocarban) plus CHILD_CONCERN
 // regex coverage (PFAS, BPA/BPS, formaldehyde releasers, fragrance).
-const HORMONE_DISRUPTION_RE = /\bparabens?\b|\bmethylparaben\b|\bethylparaben\b|\bpropylparaben\b|\bbutylparaben\b|\bisobutylparaben\b|oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate|octocrylene|\bPFAS\b|\bPFOA\b|\bPFOS\b|perfluoro|\bbisphenol\b|\bBPA\b|\bBPS\b|\bBPF\b|formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea|triclosan|triclocarban|synthetic fragrance|artificial fragrance|\bparfum\b/i;
+//
+// Phase 2A 2026-05-11 expansion citations:
+// - EU REACH SVHC and Annex XIV phthalates with ED properties (DEHP, DBP,
+//   BBP, DIBP, July 2017)
+// - EU REACH SVHC TBBPA (January 2023) and Stockholm Convention POP
+//   listings for PBDE (2009, 2017)
+// - Commission Decision 2004/248/EC withdrawing atrazine authorisations
+// - REACH Annex XVII entry 46 nonylphenol restriction; nonylphenol and
+//   ethoxylates SVHC for ED
+// - EU SVHC June 2018 and Commission Regulation 2024/1328 for D4/D5/D6
+//   siloxanes
+// - Endocrine Society EDC-2 Statement (Gore et al. 2015) umbrella citation
+// - DEP included on EDC-2 grounding (fragrance, daily exposure) rather
+//   than EU SVHC tier
+const HORMONE_DISRUPTION_RE = /\bparabens?\b|\bmethylparaben\b|\bethylparaben\b|\bpropylparaben\b|\bbutylparaben\b|\bisobutylparaben\b|oxybenzone|benzophenone-3|octinoxate|homosalate|octisalate|octocrylene|\bPFAS\b|\bPFOA\b|\bPFOS\b|perfluoro|\bbisphenol\b|\bBPA\b|\bBPS\b|\bBPF\b|formaldehyde|DMDM hydantoin|quaternium-15|diazolidinyl urea|imidazolidinyl urea|triclosan|triclocarban|synthetic fragrance|artificial fragrance|\bparfum\b|\bphthalate\b|\bDEHP\b|\bDBP\b|\bBBP\b|\bDEP\b|\bDnBP\b|\bDIBP\b|\bDiNP\b|\bDIDP\b|\bPBDE\b|\bTBBPA\b|\bTCEP\b|\bTDCPP\b|polybrominated|brominated.{0,15}flame|\batrazine\b|nonylphenol|octylphenol|\bNPE\b|cyclotetrasiloxane|cyclopentasiloxane|cyclohexasiloxane|\bD4\b|\bD5\b/i;
 
 // FERTILITY_DEV_RISKS_RE — phthalates plus bisphenols plus pesticides with
 // reproductive or developmental endpoints. Sourced from
