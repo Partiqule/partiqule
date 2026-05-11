@@ -88,10 +88,13 @@ function detectCategory(entry) {
   return entry.category || "other";
 }
 
-// Build a minimal scored result from a calibration entry
+// Build a minimal scored result from a calibration entry. Marked
+// enriched:false so the runtime trigger in /analyze and /barcode can
+// fire a one-shot Pass 1 enrichment that layers AI-generated reasoning
+// over the locked calibration score.
 function buildResult(name, entry) {
   const midScore = Math.round((entry.floor + entry.ceiling) / 2);
-  return applyProductCalibration({
+  const result = applyProductCalibration({
     product_name: name,
     score: midScore,
     overall_score: midScore,
@@ -111,6 +114,8 @@ function buildResult(name, entry) {
     _preloaded: true,
     _calibration: true,
   });
+  result.enriched = false;
+  return result;
 }
 
 async function redisSet(key, value) {
@@ -168,6 +173,7 @@ async function main() {
       _preloaded: true,
       _carousel: true,
     });
+    result.enriched = false;
     try {
       const k = cacheKey(c.name, c.category);
       await redisSet(k, result);

@@ -227,7 +227,17 @@ const cacheGet = async (key) => {
 // reason (we want the next visit to retry the cascade). Same flag, both
 // reasons.
 const cacheSet = (key, value) => {
-  if (value && (value._skipCache || value.source === "calibration" || value.ingredient_source === "calibration")) {
+  const isCalibrationDirect = value && (value._skipCache || value.source === "calibration" || value.ingredient_source === "calibration");
+  // Async enrichment plumbing: every cached entry carries an `enriched`
+  // boolean. Calibration-direct results land as enriched=false so a
+  // future /analyze or /barcode hit can trigger a one-shot Pass 1 backfill
+  // to layer in AI-generated reasoning over the locked calibration score.
+  // AI-pipeline results land as enriched=true — they already carry the
+  // richer copy the enrichment pass would produce.
+  if (value && typeof value === "object" && value.enriched === undefined) {
+    value.enriched = !isCalibrationDirect;
+  }
+  if (isCalibrationDirect) {
     scoreCache.set(key, value); // in-memory only — no Redis, no disk
     return;
   }
