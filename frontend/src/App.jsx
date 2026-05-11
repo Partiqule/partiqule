@@ -9853,15 +9853,18 @@ function App() {
                   </div>
                 </div>
 
-                {/* THE WHY — long version. Only renders when summary_long is
-                    explicitly set (textile scoring sets it from textileResult.explanation;
-                    Pass 1 paths populate it from p1.summary_long; personal-care fast/cascade
-                    paths populate from explanationPC). calibration_short_circuit results
-                    leave summary_long undefined — for those scans, the longCopy fallback
-                    chain (summary_long || summary_short || summary) would resolve to the
-                    same entry.reason that drives the top score card. Suppressing the long
-                    section in that case removes the back-to-back duplicate render. */}
-                {result.summary_long && longCopy && (
+                {/* THE WHY — long version. Renders for every category that has
+                    any why copy to show: summary_long when set (Pass 1, textile
+                    enrichment, personal-care cascade, Phase C async enrichment of
+                    calibration entries), falling back to summary_short and then
+                    summary so calibration_short_circuit results still surface a
+                    section. The fallback briefly duplicates Surface 1's short
+                    WHY for pre-enrichment calibration entries until the Phase C
+                    backend trigger overwrites summary with p1.summary_short and
+                    populates summary_long — at which point Surface 1 picks up
+                    the rich short copy and Surface 2 picks up the long
+                    paragraph. Per spec: do not show an empty section. */}
+                {longCopy && (
                   <div style={{padding:"4px 0 4px", textAlign:"left", marginBottom:12}}>
                     <div style={{
                       fontFamily:"'DM Sans', system-ui, sans-serif",
