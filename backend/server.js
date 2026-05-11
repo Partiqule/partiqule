@@ -291,6 +291,23 @@ async function enrichProductEntry(cachedEntry, productKey) {
   }
 }
 
+// Fire-and-forget trigger called from every /analyze and /barcode cache
+// hit. Idempotent: checks enriched=false before touching the lock,
+// returns the lock as the de-dup primitive when two requests race on
+// the same entry. Never awaited by callers — the response goes back to
+// the user immediately and enrichment runs in the background.
+function maybeTriggerEnrichment(cached, productKey) {
+  if (!cached || cached.enriched !== false || !productKey || !hasRedis) return;
+  acquireEnrichmentLock(productKey).then(acquired => {
+    if (acquired) {
+      // Do not await — caller has already returned the response.
+      enrichProductEntry(cached, productKey).catch(() => {});
+    } else {
+      enrichmentStats.skipped++;
+    }
+  }).catch(() => {});
+}
+
 // ── FILE CACHE PERSISTENCE (fallback when Redis not configured) ─
 const fs   = require("fs");
 const path = require("path");
@@ -6942,6 +6959,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
             }
           }
 
+          maybeTriggerEnrichment(nCached, nameKey);
           return stream.complete({ ...nCached, cached: true });
         }
       }
@@ -7788,6 +7806,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
           imgSkipFuzzy = true;
         } else {
           console.log(`[CACHE HIT] Vision identified "${productName}" — returning cached result`);
+          maybeTriggerEnrichment(imgCached, imgKey);
           return stream.complete({ ...imgCached, cached: true });
         }
       }
@@ -8118,6 +8137,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
         }
       }
 
+      maybeTriggerEnrichment(cached, key);
       return stream.complete({ ...cached, cached: true });
     }
   }
@@ -11122,6 +11142,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     if (!bStale) {
       console.log(`[BARCODE HIT] ${barcode} -> ${bCached.product_name}`);
       stampCacheHit(bCached, inputMode, requestStartMs);
+      maybeTriggerEnrichment(bCached, barcodeKey);
       return res.json({ ...bCached, cached: true });
     }
     scoreCache.delete(barcodeKey);
@@ -11296,6 +11317,7 @@ app.post("/barcode", rateLimit, async (req, res) => {
     if (!(!nCached.dimensions || nCached._preloaded || (ni && nf && na) || nCached.child_score == null)) {
       cacheSet(barcodeKey, nCached);
       stampCacheHit(nCached, inputMode, requestStartMs);
+      maybeTriggerEnrichment(nCached, barcodeKey);
       return res.json({ ...nCached, cached: true, barcode });
     }
     scoreCache.delete(nameKey);
