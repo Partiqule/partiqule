@@ -8864,7 +8864,16 @@ function App() {
       ) : (
         /* RESULTS */
         <>
-        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 0 60px":`40px 40px 80px`}}>
+        {/* Bottom padding on mobile clears the floating Scan Another pill so
+            the action buttons (Show me cleaner / Add anyway) sit above it
+            when the page is scrolled to the bottom. The pill anchors at
+            bottom:88 and is ~44px tall (top edge ~132px from viewport
+            bottom); 160px plus safe-area gives breathing room above the
+            pill's top edge. The outer App wrapper already reserves space
+            for the bottom nav itself; this reserves additional space for
+            the pill so the user does not have to scroll past the pill to
+            reach the actions. */}
+        <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 0 calc(160px + env(safe-area-inset-bottom, 0px))":`40px 40px 80px`}}>
           <div style={{padding: isMobile ? "0 12px" : 0}}>
           </div>
 
