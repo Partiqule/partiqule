@@ -199,6 +199,98 @@ const releaseEnrichmentLock = async (productKey) => {
   await redisDel(`enrichment_lock:${productKey}`);
 };
 
+// In-process counters surfaced to /admin/api-budget via existing
+// admin telemetry. Reset on process restart; not persisted because
+// per-request cost reporting is not the goal — incident triage is.
+const enrichmentStats = { success: 0, failed: 0, skipped: 0 };
+
+// Async one-shot enrichment of a calibration cache entry. Pass 1 runs
+// against the cached product name and category to produce richer
+// reasoning copy (summary, summary_long, verdict_adult, verdict_kid).
+// The calibration entry's score, overall_score, and dimension scores
+// are preserved verbatim — Pass 1 output is consulted only for the
+// reasoning fields, never for the score itself. The 1-year Redis TTL
+// preload_redis.js sets is preserved across the write-back.
+//
+// Pass 2 (alternatives, deeper synthesis) is intentionally skipped in
+// v1 — it costs another AI round trip per product and the existing
+// alternatives flow from products.js already populates the swap CTAs.
+// Re-enable here when AI budget allows.
+//
+// Caller is responsible for acquiring the lock before invoking; this
+// function releases the lock on every exit path including thrown
+// errors. Lock TTL is the 300s safety net from Phase B.
+//
+// CALIBRATION_TTL_S mirrors preload_redis.js — 1 year. Keeping the
+// number duplicated rather than importing to avoid pulling the
+// preload script into the server runtime.
+const CALIBRATION_TTL_S = 60 * 60 * 24 * 365;
+async function enrichProductEntry(cachedEntry, productKey) {
+  const startedAt = Date.now();
+  try {
+    if (!cachedEntry || typeof cachedEntry !== "object" || !cachedEntry.product_name) {
+      enrichmentStats.skipped++;
+      return;
+    }
+    const productName = cachedEntry.product_name;
+    const category    = cachedEntry.category || "other";
+
+    // Seed Pass 1 with the calibration entry's flagged substances so the
+    // model reasons about the known chemistry instead of re-guessing from
+    // the product name alone. Mirrors the shape /barcode uses when Open
+    // Food Facts hands it an ingredient list.
+    const subs = Array.isArray(cachedEntry.flagged_substances) ? cachedEntry.flagged_substances : [];
+    const context = subs.length > 0
+      ? `KNOWN FLAGGED SUBSTANCES: ${subs.join(", ")}\nThese substances are calibrated as present in this product. Reason about their concerns and write a summary grounded in this list. Do not invent additional substances.`
+      : null;
+
+    const p1 = await pass1(productName, context, category, null);
+    if (!p1 || typeof p1 !== "object") {
+      enrichmentStats.failed++;
+      console.warn("[enrich] pass1 returned non-object", productKey);
+      return;
+    }
+
+    // Build the enriched payload. Score, overall_score, and dimensions
+    // stay on the calibration values verbatim. Only reasoning copy is
+    // taken from Pass 1, with the cached entry as fallback so a Pass 1
+    // omission can never wipe an already-good field. enriched flips
+    // to true so the runtime trigger in Phase D never re-fires this
+    // entry until something explicitly resets it.
+    const enriched = {
+      ...cachedEntry,
+      summary:       (typeof p1.summary_short === "string" && p1.summary_short.trim().length > 0) ? p1.summary_short : (cachedEntry.summary || ""),
+      summary_long:  (typeof p1.summary_long  === "string" && p1.summary_long.trim().length  > 0) ? p1.summary_long  : (cachedEntry.summary_long || ""),
+      verdict_adult: (typeof p1.verdict_adult === "string" && p1.verdict_adult.trim().length > 0) ? p1.verdict_adult : (cachedEntry.verdict_adult || null),
+      verdict_kid:   (typeof p1.verdict_kid   === "string" && p1.verdict_kid.trim().length   > 0) ? p1.verdict_kid   : (cachedEntry.verdict_kid || null),
+      enriched: true,
+    };
+    // Explicit re-pin of the calibration-owned fields. The spread above
+    // already covers these but stating them makes the score-preservation
+    // contract obvious to a future reader and immune to a Pass 1 schema
+    // drift that adds top-level score keys.
+    enriched.score         = cachedEntry.score;
+    enriched.overall_score = cachedEntry.overall_score;
+    enriched.dimensions    = cachedEntry.dimensions;
+
+    await redisSetEx(productKey, enriched, CALIBRATION_TTL_S);
+    // Mirror to in-memory cache so the next hit in this process sees
+    // the enriched payload without a Redis round trip.
+    scoreCache.set(productKey, enriched);
+
+    enrichmentStats.success++;
+    console.log(`[enrich] ${productKey} in ${Date.now() - startedAt}ms (success=${enrichmentStats.success} failed=${enrichmentStats.failed})`);
+  } catch (e) {
+    enrichmentStats.failed++;
+    console.warn(`[enrich] ${productKey} failed:`, e?.message);
+    // Intentionally do NOT overwrite the cache on failure — the
+    // calibration entry stays exactly as it was so the gate keeps
+    // serving the user. A future scan re-attempts enrichment.
+  } finally {
+    await releaseEnrichmentLock(productKey);
+  }
+}
+
 // ── FILE CACHE PERSISTENCE (fallback when Redis not configured) ─
 const fs   = require("fs");
 const path = require("path");
