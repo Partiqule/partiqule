@@ -811,3 +811,9 @@ Always derive verdict from `displayScore`, never trust AI-generated verdict_kid/
 - `docs/mockups/` — HTML mockups per screen
 
 If a pattern isn't in one of those, pause and ask.
+
+---
+
+## Cache operations log
+
+- 2026-05-11: Production Redis flush plus warm up. Reason: stale entries from before kid_score fix and Bucket 3 sweeteners. Method: Upstash REST flushdb, then preload_redis.js. Result: 3,151 entries loaded.
