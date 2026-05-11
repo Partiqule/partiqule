@@ -167,6 +167,38 @@ const redisDel = async (key) => {
   } catch(e) { console.warn("[REDIS] del error:", e.message); }
 };
 
+// ── ENRICHMENT LOCK ──
+// SETNX-based mutex so two concurrent /analyze or /barcode hits on the
+// same enriched=false calibration entry don't both fire a Pass 1
+// enrichment. Lock auto-expires after 300s so a crashed worker doesn't
+// hold it forever. Released explicitly by enrichProductEntry on
+// completion or error in Phase C; the 300s ceiling is the safety net.
+//
+// Returns true when the caller acquired the lock and should proceed
+// with enrichment, false when another worker already holds it.
+const acquireEnrichmentLock = async (productKey) => {
+  if (!hasRedis) return false;
+  try {
+    const r = await fetch(`${REDIS_URL}/set/${encodeURIComponent(`enrichment_lock:${productKey}`)}?NX=true&EX=300`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify("1"),
+    });
+    if (!r.ok) return false;
+    const d = await r.json().catch(() => ({}));
+    // Upstash REST returns { result: "OK" } on success, { result: null } when NX failed.
+    return d?.result === "OK";
+  } catch (e) {
+    console.warn("[enrichment_lock] acquire error:", e?.message);
+    return false;
+  }
+};
+
+const releaseEnrichmentLock = async (productKey) => {
+  if (!hasRedis) return;
+  await redisDel(`enrichment_lock:${productKey}`);
+};
+
 // ── FILE CACHE PERSISTENCE (fallback when Redis not configured) ─
 const fs   = require("fs");
 const path = require("path");
