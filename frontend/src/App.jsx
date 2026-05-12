@@ -3058,6 +3058,8 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
   const [scansTotal,   setScansTotal]   = useState(0);
   const [feedback, setFeedback]         = useState([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [reviewQueue, setReviewQueue]   = useState([]);
+  const [reviewQueueLoading, setReviewQueueLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -3073,6 +3075,7 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
       fetchCacheStatus();
       fetchRecentScans();
       fetchFeedback();
+      fetchReviewQueue();
     })();
   }, []);
 
@@ -3094,6 +3097,47 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
       });
       setFeedback(f => f.filter(x => x.id !== id));
     } catch {}
+  };
+
+  // Phase 4 — flagged reviews moderation queue. Mirrors the score-feedback
+  // pattern: fetch on mount, optimistic remove from local state on resolve.
+  // Backend invalidates the agg:reviews:<product> cache so the public
+  // aggregate refreshes on its next cache miss.
+  const fetchReviewQueue = async () => {
+    setReviewQueueLoading(true);
+    try {
+      const r = await authedFetch(`${API_BASE}/admin/reviews?status=flagged`);
+      if (r.ok) {
+        const d = await r.json();
+        setReviewQueue(Array.isArray(d.reviews) ? d.reviews : []);
+      }
+    } catch {}
+    setReviewQueueLoading(false);
+  };
+
+  const resolveReview = async (id, action) => {
+    try {
+      await authedFetch(`${API_BASE}/admin/reviews/${encodeURIComponent(id)}/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      setReviewQueue(q => q.filter(r => r.id !== id));
+    } catch {}
+  };
+
+  // Inline relative-time formatter matching the pattern used elsewhere
+  // in App.jsx (ingredient_verified_at site). Keeps the admin tab
+  // self-contained with no shared util import.
+  const adminRelTime = (iso) => {
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return "";
+    const diff = Date.now() - t;
+    const day = 24 * 60 * 60 * 1000;
+    if (diff < 60 * 60 * 1000) { const m = Math.max(1, Math.floor(diff / (60 * 1000))); return m === 1 ? "1 min ago" : `${m} min ago`; }
+    if (diff < day) { const h = Math.floor(diff / (60 * 60 * 1000)); return h === 1 ? "1 hr ago" : `${h} hr ago`; }
+    if (diff < 7 * day) { const d = Math.floor(diff / day); return d === 1 ? "1 day ago" : `${d} days ago`; }
+    return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   const fetchCacheStatus = async () => {
@@ -3199,7 +3243,7 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
         <h1 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Admin</h1>
         {/* Tab bar */}
         <div style={{display:"flex", gap:8, borderBottom:`2px solid ${border}`, paddingBottom:0}}>
-          {[["dashboard","Dashboard"],["scores","Score Review"],["guides","Guides"],["intel","Intel Cards"]].map(([t,l])=>(
+          {[["dashboard","Dashboard"],["scores","Score Review"],["reviews","Reviews"],["guides","Guides"],["intel","Intel Cards"]].map(([t,l])=>(
             <button key={t} onClick={()=>setAdminTab(t)} style={{
               padding:"8px 20px", border:"none", background:"none", cursor:"pointer",
               fontSize:14, fontWeight:600,
@@ -3297,6 +3341,55 @@ const AdminPage = ({surface, border, text, muted, history: historyProp = []}) =>
               style={{width:"100%", marginTop:16, padding:"12px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:14, cursor:"pointer"}}>
               {scansLoading ? "Loading…" : "Load more"}
             </button>
+          )}
+        </div>
+      ) : adminTab==="reviews" ? (
+        <div>
+          <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:16}}>
+            <div>
+              <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:18, color:text, margin:"0 0 4px"}}>Flagged reviews</h2>
+              <div style={{fontSize:12, color:muted}}>
+                Single-report threshold flips a published review to flagged. Publish restores and resets the report count to zero. Remove hides the row from the public aggregate permanently.
+              </div>
+            </div>
+            <button onClick={fetchReviewQueue} style={{padding:"7px 12px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, fontWeight:600, cursor:"pointer", flexShrink:0}}>Refresh</button>
+          </div>
+
+          {reviewQueueLoading ? (
+            <div style={{fontSize:13, color:muted}}>Loading...</div>
+          ) : reviewQueue.length === 0 ? (
+            <div style={{fontSize:13, color:muted, padding:"24px 0"}}>No flagged reviews. All clear.</div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:10}}>
+              {reviewQueue.map(r => {
+                const displayName = (r.first_name && r.first_name.trim()) ? r.first_name.trim() : "Anonymous";
+                return (
+                  <div key={r.id} style={{padding:"14px 16px", background:"var(--cream-light)", borderRadius:10, border:`1px solid ${border}`}}>
+                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12, marginBottom:8}}>
+                      <div style={{flex:1, minWidth:0}}>
+                        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:4}}>
+                          <span style={{fontSize:14, fontWeight:700, color:text}}>{r.rating} / 5</span>
+                          <span style={{fontSize:11, color:muted}}>{r.product_name_normalized}</span>
+                        </div>
+                        <div style={{fontSize:11, color:muted}}>
+                          {displayName} · {adminRelTime(r.created_at)} · {r.report_count} report{r.report_count === 1 ? "" : "s"}
+                        </div>
+                      </div>
+                      <div style={{background:"var(--score-red)", color:"var(--ivory)", fontSize:10, fontWeight:700, padding:"3px 8px", borderRadius:20, textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0}}>Flagged</div>
+                    </div>
+                    {r.body && (
+                      <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, color:text, lineHeight:1.45, marginBottom:10, padding:"10px 12px", background:"var(--cream)", borderRadius:8, borderLeft:"3px solid var(--score-red)"}}>
+                        {r.body}
+                      </div>
+                    )}
+                    <div style={{display:"flex", gap:8}}>
+                      <button onClick={() => resolveReview(r.id, "publish")} style={{padding:"7px 14px", borderRadius:8, border:"none", background:"var(--moss)", color:"var(--ivory)", fontSize:12, fontWeight:600, cursor:"pointer"}}>Publish</button>
+                      <button onClick={() => resolveReview(r.id, "remove")} style={{padding:"7px 14px", borderRadius:8, border:`1px solid ${border}`, background:"none", color:muted, fontSize:12, fontWeight:600, cursor:"pointer"}}>Remove</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       ) : (<>
