@@ -9571,6 +9571,243 @@ app.get("/home-findings/:id/items", requireUserAuth, async (req, res) => {
   }
 });
 
+// ── REVIEWS MVP ──────────────────────────────────────────────
+// Per-product user reviews anchored by product_name_normalized (same
+// lowercase + trim normalisation calibration keys use). One review per
+// user per product, enforced by the DB unique index from migration 012.
+// Read aggregate cached 300s under agg:reviews:<normalized> mirroring
+// agg:home-data and agg:home-findings patterns. Cache invalidated at
+// every write site: POST /reviews, POST /reviews/:id/report, and
+// POST /admin/reviews/:id/resolve.
+const REVIEWS_TTL_S = 300;
+const reviewsCacheKey = (normalized) => `agg:reviews:${normalized}`;
+const invalidateReviewsCache = async (normalized) => {
+  if (!normalized) return;
+  await redisDel(reviewsCacheKey(normalized));
+};
+
+// POST /reviews — submit or edit a review. Edit path preserves status
+// and report_count so a flagged user cannot un-flag themselves by
+// re-submitting. We try UPDATE first (preserves status/report_count);
+// if no row matches the (product_name_normalized, user_id) tuple we
+// INSERT a fresh row at default status published.
+app.post("/reviews", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const userId = req.authUserId;
+  const { product_name_normalized, rating, body, first_name } = req.body || {};
+
+  const normalized = typeof product_name_normalized === "string"
+    ? normalise(product_name_normalized)
+    : null;
+  if (!normalized) return res.status(400).json({ error: "product_name_normalized required" });
+  const ratingInt = Number(rating);
+  if (!Number.isInteger(ratingInt) || ratingInt < 1 || ratingInt > 5) {
+    return res.status(400).json({ error: "rating must be an integer 1-5" });
+  }
+  const bodyTrimmed = typeof body === "string" ? body.trim() : null;
+  if (bodyTrimmed && bodyTrimmed.length > 500) {
+    return res.status(400).json({ error: "body too long (max 500 chars)" });
+  }
+  const firstNameTrimmed = typeof first_name === "string" ? first_name.trim() : null;
+  if (firstNameTrimmed && firstNameTrimmed.length > 50) {
+    return res.status(400).json({ error: "first_name too long (max 50 chars)" });
+  }
+
+  try {
+    // Try UPDATE first so edit preserves status and report_count.
+    const updateRes = await supabaseAdmin
+      .from("reviews")
+      .update({
+        rating: ratingInt,
+        body: bodyTrimmed || null,
+        first_name: firstNameTrimmed || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("product_name_normalized", normalized)
+      .eq("user_id", userId)
+      .select()
+      .maybeSingle();
+    if (updateRes.error) throw updateRes.error;
+
+    if (updateRes.data) {
+      await invalidateReviewsCache(normalized);
+      return res.json({ review: updateRes.data });
+    }
+
+    // No existing row — INSERT at default status published.
+    const insertRes = await supabaseAdmin
+      .from("reviews")
+      .insert({
+        product_name_normalized: normalized,
+        user_id: userId,
+        rating: ratingInt,
+        body: bodyTrimmed || null,
+        first_name: firstNameTrimmed || null,
+      })
+      .select()
+      .single();
+    if (insertRes.error) throw insertRes.error;
+    await invalidateReviewsCache(normalized);
+    return res.json({ review: insertRes.data });
+  } catch (e) {
+    console.error("[reviews POST]", e.message);
+    return res.status(500).json({ error: "review_save_failed" });
+  }
+});
+
+// GET /reviews?product=<normalized> — public aggregate for the result
+// page. Returns count, average rating to one decimal, and the top 5
+// published reviews newest-first. No auth required so signed-out hero
+// can preview if we surface it later. Cached 300s.
+app.get("/reviews", async (req, res) => {
+  const product = typeof req.query.product === "string"
+    ? normalise(req.query.product)
+    : null;
+  if (!product) return res.status(400).json({ error: "product query param required" });
+
+  const cacheKey = reviewsCacheKey(product);
+  if (hasRedis) {
+    const cached = await redisGet(cacheKey);
+    if (cached) return res.json({ ...cached, cached: true });
+  }
+
+  if (!supabaseAdmin) {
+    return res.json({ count: 0, average: null, reviews: [], cached: false });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("reviews")
+      .select("id, rating, body, first_name, created_at")
+      .eq("product_name_normalized", product)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    const all = data || [];
+    const count = all.length;
+    const average = count > 0
+      ? Math.round((all.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10
+      : null;
+    const reviews = all.slice(0, 5);
+
+    const payload = { count, average, reviews };
+    if (hasRedis) redisSetEx(cacheKey, payload, REVIEWS_TTL_S).catch(() => {});
+    return res.json({ ...payload, cached: false });
+  } catch (e) {
+    console.error("[reviews GET]", e.message);
+    return res.status(500).json({ error: "reviews_read_failed" });
+  }
+});
+
+// POST /reviews/:id/report — single-report-flags model. Threshold of 1
+// is acceptable at the current 26-active-user scale; revisit if
+// griefing surfaces. Only flips published to flagged so re-reports of
+// already-flagged or removed rows are no-ops at the status level
+// (report_count still ticks for visibility into pile-on).
+app.post("/reviews/:id/report", requireUserAuth, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const reviewId = req.params.id;
+  if (!/^[0-9a-f-]{36}$/i.test(reviewId)) {
+    return res.status(400).json({ error: "invalid review id" });
+  }
+
+  try {
+    const { data: existing, error: readErr } = await supabaseAdmin
+      .from("reviews")
+      .select("id, product_name_normalized, report_count, status")
+      .eq("id", reviewId)
+      .single();
+    if (readErr || !existing) return res.status(404).json({ error: "review not found" });
+
+    const newCount = (existing.report_count || 0) + 1;
+    const newStatus = newCount >= 1 && existing.status === "published"
+      ? "flagged"
+      : existing.status;
+
+    const { error: updErr } = await supabaseAdmin
+      .from("reviews")
+      .update({
+        report_count: newCount,
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", reviewId);
+    if (updErr) throw updErr;
+
+    await invalidateReviewsCache(existing.product_name_normalized);
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("[reviews report]", e.message);
+    return res.status(500).json({ error: "report_failed" });
+  }
+});
+
+// GET /admin/reviews?status=flagged — moderation queue. Default status
+// filter is flagged (the queue). Other status values supported for
+// reference reads but the admin UI in Phase 4 only consumes flagged.
+app.get("/admin/reviews", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const status = typeof req.query.status === "string" ? req.query.status : "flagged";
+  if (!["published", "flagged", "removed"].includes(status)) {
+    return res.status(400).json({ error: "invalid status filter" });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("reviews")
+      .select("id, product_name_normalized, user_id, rating, body, first_name, status, report_count, created_at")
+      .eq("status", status)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return res.json({ reviews: data || [] });
+  } catch (e) {
+    console.error("[admin reviews GET]", e.message);
+    return res.status(500).json({ error: "admin_reviews_read_failed" });
+  }
+});
+
+// POST /admin/reviews/:id/resolve — moderator action. publish restores
+// to published and resets report_count so future reports start fresh.
+// remove sets status to removed which never re-surfaces in the public
+// aggregate even if reported counters reset.
+app.post("/admin/reviews/:id/resolve", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const reviewId = req.params.id;
+  if (!/^[0-9a-f-]{36}$/i.test(reviewId)) {
+    return res.status(400).json({ error: "invalid review id" });
+  }
+  const action = typeof req.body?.action === "string" ? req.body.action : null;
+  if (!["publish", "remove"].includes(action)) {
+    return res.status(400).json({ error: "action must be 'publish' or 'remove'" });
+  }
+
+  try {
+    const { data: existing, error: readErr } = await supabaseAdmin
+      .from("reviews")
+      .select("product_name_normalized")
+      .eq("id", reviewId)
+      .single();
+    if (readErr || !existing) return res.status(404).json({ error: "review not found" });
+
+    const update = action === "publish"
+      ? { status: "published", report_count: 0, updated_at: new Date().toISOString() }
+      : { status: "removed", updated_at: new Date().toISOString() };
+
+    const { error: updErr } = await supabaseAdmin
+      .from("reviews")
+      .update(update)
+      .eq("id", reviewId);
+    if (updErr) throw updErr;
+
+    await invalidateReviewsCache(existing.product_name_normalized);
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("[admin reviews resolve]", e.message);
+    return res.status(500).json({ error: "resolve_failed" });
+  }
+});
+
 
 const stripe = process.env.STRIPE_SECRET_KEY ? require("stripe")(process.env.STRIPE_SECRET_KEY) : null;
 const STRIPE_PRICE_ID      = process.env.STRIPE_PRICE_ID || "";       // price_xxx from Stripe dashboard
