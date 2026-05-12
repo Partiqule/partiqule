@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // Lazy-load @capgo/native-purchases via dynamic import so it only runs in
@@ -5379,6 +5379,419 @@ const SkeletonRibbon = ({ height = 18, style = {} }) => (
   <div className="pq-skeleton" style={{ height, width: "100%", borderRadius: 4, ...style }} />
 );
 
+// Mirrors backend/calibration.js normalise() exactly so review keys match
+// calibration keys without a server round-trip. Lowercase, trim, drop
+// trademark glyphs, hyphens become spaces, collapse whitespace, normalize
+// curly quotes to straight.
+const normalizeProductName = (s) => (s || "")
+  .toLowerCase()
+  .trim()
+  .replace(/[®™©]/g, "")
+  .replace(/-+/g, " ")
+  .replace(/\s+/g, " ")
+  .replace(/['']/g, "'");
+
+// Star row. filled is 0-5 (or fractional for the aggregate average).
+// Fill uses --score-amber per design tokens (golden wheat). No inline
+// hex codes per Voice Kit. Empty uses --rule.
+const StarRow = ({ filled, size = 14, gap = 2 }) => {
+  const STAR_PATH = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z";
+  const fullCount = Math.floor(filled);
+  const hasHalf = filled - fullCount >= 0.5;
+  return (
+    <span style={{display:"inline-flex", alignItems:"center", gap}}>
+      {[0,1,2,3,4].map(i => {
+        let fill;
+        if (i < fullCount) fill = "var(--score-amber)";
+        else if (i === fullCount && hasHalf) fill = "var(--score-amber)"; // half rounded up; full visual for MVP
+        else fill = "var(--rule)";
+        return (
+          <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={fill} aria-hidden="true">
+            <path d={STAR_PATH}/>
+          </svg>
+        );
+      })}
+    </span>
+  );
+};
+
+// Tappable star picker for the composer. value 0-5; onChange(n) sets it.
+const StarPicker = ({ value, onChange, size = 28 }) => {
+  const STAR_PATH = "M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z";
+  return (
+    <div style={{display:"inline-flex", alignItems:"center", gap:6}} role="group" aria-label="Rating">
+      {[1,2,3,4,5].map(n => {
+        const fill = n <= value ? "var(--score-amber)" : "var(--rule)";
+        return (
+          <button
+            key={n}
+            type="button"
+            onClick={()=>onChange(n)}
+            aria-label={`${n} star${n===1?"":"s"}`}
+            style={{
+              background:"none", border:"none", padding:4, cursor:"pointer",
+              display:"inline-flex", alignItems:"center", justifyContent:"center",
+            }}
+          >
+            <svg width={size} height={size} viewBox="0 0 24 24" fill={fill}><path d={STAR_PATH}/></svg>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// Relative time helper. Inline mirror of the pattern used at App.jsx
+// ingredient_verified_at site so we don't import a shared util.
+const reviewRelativeTime = (iso) => {
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return "";
+  const diff = Date.now() - t;
+  const min = 60 * 1000;
+  const hour = 60 * min;
+  const day = 24 * hour;
+  if (diff < hour) { const m = Math.max(1, Math.floor(diff / min)); return m === 1 ? "1 minute ago" : `${m} minutes ago`; }
+  if (diff < day) { const h = Math.floor(diff / hour); return h === 1 ? "1 hour ago" : `${h} hours ago`; }
+  if (diff < 7 * day) { const d = Math.floor(diff / day); return d === 1 ? "1 day ago" : `${d} days ago`; }
+  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+// ReviewsSection — per-product user reviews on the scan result page.
+// Collapsed by default to keep result page scannable; tap to expand the
+// list + composer. Empty state collapses to a single "No reviews yet ·
+// Add yours" affordance. Backend at /reviews handles validation, cache,
+// and moderation; this is the user surface for it.
+const ReviewsSection = ({ result, user, isMobile }) => {
+  const productNorm = useMemo(() => normalizeProductName(result?.product_name), [result?.product_name]);
+  const [aggregate, setAggregate] = useState(null); // null = loading; {count, average, reviews} once loaded
+  const [expanded, setExpanded] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [body, setBody] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [hiddenIds, setHiddenIds] = useState(() => new Set());
+
+  useEffect(() => {
+    if (!productNorm) { setAggregate({ count: 0, average: null, reviews: [] }); return; }
+    let cancelled = false;
+    setAggregate(null);
+    fetch(`${API_BASE}/reviews?product=${encodeURIComponent(productNorm)}`)
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then(data => { if (!cancelled) setAggregate({ count: data.count || 0, average: data.average, reviews: data.reviews || [] }); })
+      .catch(() => { if (!cancelled) setAggregate({ count: 0, average: null, reviews: [] }); });
+    return () => { cancelled = true; };
+  }, [productNorm]);
+
+  if (!result?.product_name) return null;
+
+  const onSubmit = async () => {
+    if (rating < 1 || rating > 5) { setError("Pick a star rating to add yours."); return; }
+    if (!user) { setError("Sign in to add a review."); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await authedFetch(`${API_BASE}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_name_normalized: productNorm,
+          rating,
+          body: body.trim() || undefined,
+          first_name: firstName.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || `HTTP ${res.status}`);
+      }
+      const { review } = await res.json();
+      // Optimistic update. Prepend new review; recalc count + average.
+      setAggregate(prev => {
+        const existingIdx = (prev?.reviews || []).findIndex(r => r.id === review.id);
+        let nextReviews;
+        if (existingIdx >= 0) {
+          nextReviews = [...prev.reviews];
+          nextReviews[existingIdx] = review;
+        } else {
+          nextReviews = [review, ...(prev?.reviews || [])].slice(0, 5);
+        }
+        const isEdit = existingIdx >= 0;
+        const nextCount = (prev?.count || 0) + (isEdit ? 0 : 1);
+        // Recalc average from the visible list as a server-truth approximation;
+        // backend will return canonical numbers on next fetch via cache miss.
+        const sum = nextReviews.reduce((s, r) => s + (r.rating || 0), 0);
+        const nextAverage = nextReviews.length > 0 ? Math.round((sum / nextReviews.length) * 10) / 10 : null;
+        return { count: nextCount, average: nextAverage, reviews: nextReviews };
+      });
+      setRating(0); setBody(""); setFirstName("");
+      setComposerOpen(false);
+    } catch (e) {
+      setError(e?.message || "Could not save. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onReport = async (reviewId) => {
+    if (!user) { setError("Sign in to report a review."); return; }
+    // Hide immediately; backend flips to flagged on first report. No undo
+    // UI in v1 — admin queue handles restore.
+    setHiddenIds(prev => { const n = new Set(prev); n.add(reviewId); return n; });
+    try {
+      await authedFetch(`${API_BASE}/reviews/${encodeURIComponent(reviewId)}/report`, { method: "POST" });
+    } catch {
+      // If the report POST fails the local hide stays in place; next mount
+      // refetches and will reveal the row again if it was never actually
+      // flagged. Silent failure is fine for v1.
+    }
+  };
+
+  const visibleReviews = (aggregate?.reviews || []).filter(r => !hiddenIds.has(r.id));
+  const count = aggregate?.count || 0;
+  const average = aggregate?.average;
+
+  const cardStyle = {
+    background: "var(--cream-light)",
+    border: "1px solid var(--rule)",
+    borderRadius: "16px 20px 14px 18px / 18px 14px 20px 16px",
+    padding: isMobile ? "16px 18px" : "18px 22px",
+  };
+  const eyebrowStyle = {
+    fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontSize: 10, letterSpacing: "0.22em",
+    color: "var(--moss)", textTransform: "uppercase", fontWeight: 500,
+    marginBottom: 12, display: "flex", alignItems: "center", gap: 10,
+  };
+  const eyebrowRule = { display: "inline-block", width: 22, height: 1, background: "var(--moss)", opacity: 0.7 };
+
+  // Loading: 3 skeleton rows in a soft container, no card chrome.
+  if (aggregate === null) {
+    return (
+      <div style={{marginBottom: 16}}>
+        <div style={cardStyle}>
+          <div style={eyebrowStyle}><span style={eyebrowRule}/>Reviews</div>
+          {[0,1,2].map(i => (
+            <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 0"}}>
+              <SkeletonLine width={80} height={12} />
+              <SkeletonLine width="50%" height={12} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Collapsed: empty or summary line. Single tap expands the section.
+  if (!expanded) {
+    return (
+      <div style={{marginBottom: 16}}>
+        <div
+          style={{...cardStyle, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12}}
+          onClick={() => { setExpanded(true); if (count === 0) setComposerOpen(true); }}
+        >
+          <div style={{display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0}}>
+            <div style={{...eyebrowStyle, marginBottom: 0}}><span style={eyebrowRule}/>Reviews</div>
+            {count === 0 ? (
+              <span style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, color: "var(--ink-soft)"}}>
+                No reviews yet · Add yours
+              </span>
+            ) : (
+              <span style={{display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, color: "var(--ink-soft)"}}>
+                <span>{count} review{count === 1 ? "" : "s"}</span>
+                {typeof average === "number" && (
+                  <>
+                    <span style={{opacity: 0.4}}>·</span>
+                    <StarRow filled={average} size={13}/>
+                    <span>{average.toFixed(1)}</span>
+                  </>
+                )}
+                <span style={{opacity: 0.4}}>·</span>
+                <span style={{color: "var(--moss)"}}>Add yours</span>
+              </span>
+            )}
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+    );
+  }
+
+  // Expanded: aggregate header + review list + composer.
+  return (
+    <div style={{marginBottom: 16}}>
+      <div style={cardStyle}>
+        <div style={{...eyebrowStyle, justifyContent: "space-between"}}>
+          <span style={{display: "inline-flex", alignItems: "center", gap: 10}}>
+            <span style={eyebrowRule}/>Reviews
+          </span>
+          <button
+            type="button"
+            onClick={() => { setExpanded(false); setComposerOpen(false); setError(null); }}
+            aria-label="Collapse reviews"
+            style={{background: "none", border: "none", padding: 4, cursor: "pointer", color: "var(--ink-soft)"}}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+
+        {count > 0 && (
+          <div style={{display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid var(--rule)"}}>
+            <span style={{fontFamily: "'Lora', Georgia, serif", fontSize: 34, fontWeight: 400, color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1}}>
+              {typeof average === "number" ? average.toFixed(1) : ""}
+            </span>
+            <div style={{display: "flex", flexDirection: "column", gap: 4}}>
+              {typeof average === "number" && <StarRow filled={average} size={14}/>}
+              <span style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, color: "var(--ink-soft)"}}>
+                {count} review{count === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {visibleReviews.length === 0 && count > 0 && (
+          <div style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 13, color: "var(--ink-soft)", padding: "8px 0 16px"}}>
+            No published reviews to show.
+          </div>
+        )}
+
+        {visibleReviews.map((r, i) => {
+          const isLast = i === visibleReviews.length - 1;
+          const displayName = (r.first_name && r.first_name.trim()) ? r.first_name.trim() : "Anonymous";
+          return (
+            <div key={r.id} style={{padding: "12px 0", borderBottom: isLast ? "none" : "1px solid var(--rule-soft)"}}>
+              <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: r.body ? 6 : 0}}>
+                <StarRow filled={r.rating} size={13}/>
+                <button
+                  type="button"
+                  onClick={() => onReport(r.id)}
+                  style={{background: "none", border: "none", padding: 2, cursor: "pointer", fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.02em"}}
+                  aria-label="Report this review"
+                >
+                  Report
+                </button>
+              </div>
+              {r.body && (
+                <div style={{fontFamily: "'Lora', Georgia, serif", fontSize: 15, color: "var(--ink)", lineHeight: 1.45, marginBottom: 6, letterSpacing: "-0.005em"}}>
+                  {r.body}
+                </div>
+              )}
+              <div style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, color: "var(--ink-soft)"}}>
+                {displayName} · {reviewRelativeTime(r.created_at)}
+              </div>
+            </div>
+          );
+        })}
+
+        {!composerOpen && (
+          <div style={{marginTop: count > 0 ? 16 : 0}}>
+            <button
+              type="button"
+              onClick={() => setComposerOpen(true)}
+              style={{
+                width: "100%", padding: "11px 16px",
+                background: "var(--moss)", color: "var(--ivory)",
+                border: "none", borderRadius: "var(--cta-shape, 22px 18px 24px 20px / 20px 24px 18px 22px)",
+                fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
+                cursor: "pointer", letterSpacing: "0.005em",
+              }}
+            >
+              Add yours
+            </button>
+          </div>
+        )}
+
+        {composerOpen && (
+          <div style={{marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--rule)"}}>
+            <div style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 10, letterSpacing: "0.22em", color: "var(--moss)", textTransform: "uppercase", fontWeight: 500, marginBottom: 12, display: "flex", alignItems: "center", gap: 10}}>
+              <span style={eyebrowRule}/>Add yours
+            </div>
+
+            <div style={{marginBottom: 14}}>
+              <StarPicker value={rating} onChange={setRating} size={28}/>
+            </div>
+
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value.slice(0, 500))}
+              placeholder="Optional. What did you notice?"
+              rows={3}
+              style={{
+                width: "100%", boxSizing: "border-box",
+                padding: "10px 12px",
+                fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, color: "var(--ink)",
+                background: "var(--cream)", border: "1px solid var(--rule)",
+                borderRadius: 10, resize: "vertical", outline: "none",
+                marginBottom: 4,
+              }}
+            />
+            <div style={{textAlign: "right", fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 11, color: "var(--ink-faint)", marginBottom: 12}}>
+              {body.length} / 500
+            </div>
+
+            <input
+              type="text"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value.slice(0, 50))}
+              placeholder="Optional first name"
+              style={{
+                width: "100%", boxSizing: "border-box",
+                padding: "10px 12px",
+                fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, color: "var(--ink)",
+                background: "var(--cream)", border: "1px solid var(--rule)",
+                borderRadius: 10, outline: "none",
+                marginBottom: 14,
+              }}
+            />
+
+            {error && (
+              <div style={{fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, color: "var(--score-red)", marginBottom: 10}}>
+                {error}
+              </div>
+            )}
+
+            <div style={{display: "flex", gap: 10}}>
+              <button
+                type="button"
+                onClick={() => { setComposerOpen(false); setError(null); }}
+                disabled={submitting}
+                style={{
+                  flex: 1, padding: "11px 16px",
+                  background: "transparent", color: "var(--ink)",
+                  border: "1px solid var(--rule-strong)",
+                  borderRadius: "var(--cta-shape, 22px 18px 24px 20px / 20px 24px 18px 22px)",
+                  fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
+                  cursor: submitting ? "default" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={submitting || rating < 1}
+                style={{
+                  flex: 1, padding: "11px 16px",
+                  background: "var(--moss)", color: "var(--ivory)",
+                  border: "none",
+                  borderRadius: "var(--cta-shape, 22px 18px 24px 20px / 20px 24px 18px 22px)",
+                  fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, fontWeight: 500,
+                  cursor: submitting || rating < 1 ? "default" : "pointer",
+                  opacity: submitting || rating < 1 ? 0.6 : 1,
+                  letterSpacing: "0.005em",
+                }}
+              >
+                {submitting ? "Saving…" : "Add yours"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const generateForYouCards = (history, childMode) => {
   if(!history||history.length===0)return [];
   const cards=[];
@@ -9600,6 +10013,15 @@ function App() {
                 </div>
 
               </div>
+
+              {/* ── REVIEWS ────────────────────────────────────────
+                  Per-product user reviews. Collapsed by default so the
+                  result page stays scannable; tap to expand the list +
+                  composer. Backend at /reviews handles validation, cache,
+                  and moderation. */}
+              {result?.product_name && (
+                <ReviewsSection result={result} user={user} isMobile={isMobile}/>
+              )}
 
               {/* ACCOUNT / EMAIL CAPTURE — after 1st scan */}
               {result && !user && !emailDismissed && (
