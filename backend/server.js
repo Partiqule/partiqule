@@ -19,6 +19,7 @@ const {
   tier5CategoryPrior,
   dedupeInflight,
 } = require("./scoringCascade");
+const { resolveProductFromUrl } = require("./urlExtractor");
 const { scoreFood: scoreFoodEngine } = require("./foodScorer");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
@@ -6312,6 +6313,25 @@ app.post("/analyze", rateLimit, async (req, res) => {
       error: "subscription_required",
       subscription: gate.subscription || null,
     });
+  }
+
+  // R2 text-input lift — URL paste preprocessor. When `query` is an http(s)
+  // URL, fetch the page, extract a canonical brand + product name via a
+  // single Haiku call, and replace `query` with the resolved name so the
+  // rest of the pipeline runs the cascade against an actual product. All
+  // failure modes resolve to a structured 422 — never a 500.
+  if (typeof query === "string" && /^https?:\/\//i.test(query.trim())) {
+    const extraction = await resolveProductFromUrl(query.trim(), {
+      callClaude, redisGet, redisSetEx,
+    });
+    if (!extraction.ok) {
+      return stream.errorJson(422, {
+        error: extraction.error,
+        code: extraction.code || "url_extract_failed",
+      });
+    }
+    query = extraction.query;
+    if (req.body) req.body.query = query;
   }
 
   // Track 3+4 dashboard cache invalidation. Fire at request entry so any

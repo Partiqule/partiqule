@@ -7317,6 +7317,11 @@ function App() {
     }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
+    // R2 text-input lift — when the query is a URL, replace the search bar
+    // text with a status string while the backend fetches the page and
+    // extracts a canonical product name. Purely cosmetic. The captured q
+    // holds the URL so the request itself is unaffected.
+    if (/^https?:\/\//i.test(q.trim())) setQuery("Reading the link...");
     track("Scan", { product: q.trim() });
     try {
       const controller = new AbortController();
