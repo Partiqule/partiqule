@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
+import ListBuilderPage from "./lists/ListBuilderPage";
 
 // Lazy-load @capgo/native-purchases via dynamic import so it only runs in
 // Capacitor iOS (where require() doesn't exist and static import may fail
@@ -7113,10 +7114,11 @@ function App() {
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
     if (path === "/feed") { setPage("feed"); return; }
+    if (path === "/lists-prototype") { setPage("lists-prototype"); return; }
     if (path === "/account") { setPage("settings"); return; }
     if (path === "/reset-password") { setPage("reset-password"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed", "/reset-password"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed", "/lists-prototype", "/reset-password"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -8172,6 +8174,8 @@ function App() {
         </div>
       ) : page === "feed" ? (
         <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
+      ) : page === "lists-prototype" ? (
+        <ListBuilderPage history={history} isMobile={isMobile} safeTop={SAFE_TOP}/>
       ) : page === "history" ? (
         <HistoryPage history={history} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
