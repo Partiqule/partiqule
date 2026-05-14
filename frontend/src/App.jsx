@@ -6955,7 +6955,7 @@ function App() {
       .select("result_json, scanned_at")
       .eq("user_id", userId)
       .order("scanned_at", { ascending: false })
-      .limit(50);
+      .limit(500);
     if (!error && data?.length) {
       const items = data.map(r => ({...r.result_json, scannedAt: r.scanned_at}));
       setHistory(items);
@@ -7250,13 +7250,13 @@ function App() {
   const saveToHistory = (item) => {
     setHistory(prev=>{
       const filtered = prev.filter(h=>h.product_name!==item.product_name);
-      const updated  = [{...item, scannedAt: new Date().toISOString()}, ...filtered].slice(0, 100); // cap at 100 — prevents localStorage quota overflow
+      const updated  = [{...item, scannedAt: new Date().toISOString()}, ...filtered].slice(0, 500); // cap at 500 — prevents localStorage quota overflow
       try {
         localStorage.setItem("ps_history", JSON.stringify(updated));
       } catch(e) {
         // localStorage quota exceeded — trim further and retry
         try {
-          const trimmed = updated.slice(0, 50);
+          const trimmed = updated.slice(0, 250);
           localStorage.setItem("ps_history", JSON.stringify(trimmed));
           return trimmed;
         } catch { /* silent — cloud sync still works if signed in */ }

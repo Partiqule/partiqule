@@ -5,8 +5,8 @@
 // No backend calls, no Supabase, no persistence — Sara reviews UX and copy
 // here before R3b locks the schema and R3c wires real endpoints.
 
-import React, { useState, useMemo, useRef } from "react";
-import { FAKE_LISTS, FAKE_RECENT_SCANS } from "./fixtures";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { FAKE_LISTS, FAKE_RECENT_SCANS, FLAG_LABELS, FAKE_ALTERNATIVES, TEMPLATES } from "./fixtures";
 
 // ── Tokens-only helpers ───────────────────────────────────────────
 const CARD_SHAPE     = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -25,6 +25,69 @@ const scoreBg = (s) => {
   if (s <= 3) return "rgba(107, 140, 62, 0.10)";
   if (s <= 5) return "rgba(196, 154, 51, 0.10)";
   return "rgba(176, 73, 58, 0.10)";
+};
+
+// R3a r2 — aggregate substance flags across the list. Sorted by count
+// descending so the loudest concerns lead. First entry uses "N items
+// with X"; subsequent entries elide "items" to keep the line tight.
+const aggregateFlags = (items) => {
+  const counts = {};
+  for (const it of items || []) {
+    for (const f of (it.flags || [])) {
+      counts[f] = (counts[f] || 0) + 1;
+    }
+  }
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, count]) => ({ key, count, label: FLAG_LABELS[key] || key.replace(/_/g, " ") }));
+};
+
+const formatFlagsLine = (agg) => {
+  if (!agg.length) return null;
+  return agg.map((f, i) => i === 0
+    ? `${f.count} ${f.count === 1 ? "item" : "items"} with ${f.label}`
+    : `${f.count} with ${f.label}`
+  ).join(", ");
+};
+
+// R3a r2 — quick swap suggestion. Returns the alternative when the active
+// mode score on the item is >= 6 AND the alternative scores at least two
+// points lower in the same mode. Returns null otherwise so the row stays
+// quiet for items that don't need a nudge.
+const swapSuggestionFor = (item, kidsOn) => {
+  const activeScore = kidsOn ? item.kid_score : item.score;
+  if (activeScore == null || activeScore < 6) return null;
+  const alt = FAKE_ALTERNATIVES[item.product_name];
+  if (!alt) return null;
+  const altScore = kidsOn ? alt.kid_score : alt.score;
+  if (altScore == null || activeScore - altScore < 2) return null;
+  return { alt, altScore };
+};
+
+// R3a r2 — text block for share-via-clipboard. Matches the format Sara
+// specced verbatim: list name, average line with kids-mode tag, blank
+// line, bulleted items with score or unscored tag, blank line, count.
+const buildShareText = (list, kidsOn, scoreInfo) => {
+  const lines = [list.name];
+  if (scoreInfo.count > 0) {
+    lines.push(`Average: ${scoreInfo.avg} (kids mode: ${kidsOn ? "on" : "off"})`);
+  } else {
+    lines.push("No scores yet");
+  }
+  lines.push("");
+  for (const it of list.items) {
+    const name = it.product_name || it.product_name_normalized || "Unnamed";
+    if (it.anchor === "name") {
+      lines.push(`• ${name} — unscored`);
+    } else {
+      const s = kidsOn ? it.kid_score : it.score;
+      const cat = (it.category || "other").replace(/_/g, " ");
+      lines.push(`• ${name} — score ${s} (${cat})`);
+    }
+  }
+  lines.push("");
+  lines.push(`${list.items.length} items`);
+  return lines.join("\n");
 };
 
 // R3a r1 — average score across items that carry a numeric score. Items
@@ -106,6 +169,48 @@ const Share = ({ size = 16, color = "var(--moss)" }) => (
 const Clipboard = ({ size = 17, color = "var(--moss)" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
 );
+
+const CheckCircle = ({ filled, size = 20 }) => (
+  filled ? (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="var(--moss)" stroke="var(--moss)" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline fill="none" stroke="var(--ivory)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" points="7 12.5 11 16.5 17 9.5"/>
+    </svg>
+  ) : (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="9.5"/>
+    </svg>
+  )
+);
+
+const Pencil = ({ size = 12, color = "var(--ink-faint)" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+);
+
+const ArrowRight = ({ size = 13, color = "var(--moss)" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+);
+
+// R3a r2 — toast for share-to-clipboard confirmation. Mounts when message
+// is non-empty, animates in, and unmounts on the parent's setTimeout.
+const Toast = ({ message }) => {
+  if (!message) return null;
+  return (
+    <div style={{
+      position:"fixed", bottom: 110, left:"50%",
+      transform:"translateX(-50%)",
+      padding:"10px 18px",
+      background:"var(--ink)", color:"var(--ivory)",
+      borderRadius: CARD_SHAPE,
+      fontFamily:"'DM Sans', system-ui, sans-serif",
+      fontSize:13, fontWeight:500, letterSpacing:"0.005em",
+      zIndex:200,
+      animation:"fadeUp 0.25s ease",
+      boxShadow:"0 8px 24px rgba(0,0,0,0.15)",
+      whiteSpace:"nowrap",
+    }}>{message}</div>
+  );
+};
 
 // ── Score chip — small, no inline hex ─────────────────────────────
 const ScoreChip = ({ score, label }) => {
@@ -210,51 +315,88 @@ const ListsOverview = ({ lists, onOpen, onCreate, isMobile }) => {
 };
 
 // ── List detail ────────────────────────────────────────────────────
-const ItemRow = ({ item, onRemove, onToggleOwned }) => {
+const ItemRow = ({ item, kidsOn, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem }) => {
   const displayName = item.product_name || item.product_name_normalized || "Unnamed item";
   const isReading = item.placeholder === true;
+  const purchased = !!item.purchased;
+  const swap = !isReading ? swapSuggestionFor(item, kidsOn) : null;
+  const activeScore = kidsOn ? item.kid_score : item.score;
   return (
-    <div style={{display:"flex", alignItems:"flex-start", gap:14, padding:"14px 4px", borderBottom:"1px solid var(--rule-soft)"}}>
-      <div style={{flexShrink:0, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:TILE_SHAPE, background:"var(--cream-light)", border:"1px solid var(--rule-soft)"}}>
-        <CategoryIcon category={item.category} size={16} color="var(--moss)"/>
-      </div>
-      <div style={{flex:1, minWidth:0}}>
-        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.3, marginBottom:6, fontStyle: isReading ? "normal" : "normal", opacity: isReading ? 0.6 : 1}}>
-          {isReading ? "Reading the link..." : displayName}
+    <div style={{opacity: purchased ? 0.5 : 1, transition:"opacity 0.2s ease"}}>
+      <div style={{display:"flex", alignItems:"flex-start", gap:12, padding:"14px 4px", borderBottom:"1px solid var(--rule-soft)"}}>
+        {/* Purchased check — leftmost so the shopping run lives in the gutter */}
+        <button onClick={() => onTogglePurchased(item.id)} aria-label={purchased ? "Mark as not purchased" : "Mark as purchased"}
+          style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, marginTop:1, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
+          <CheckCircle filled={purchased} size={20}/>
+        </button>
+        <div style={{flexShrink:0, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:TILE_SHAPE, background:"var(--cream-light)", border:"1px solid var(--rule-soft)"}}>
+          <CategoryIcon category={item.category} size={16} color="var(--moss)"/>
         </div>
-        {item.note && !isReading && (
-          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4, marginBottom:6}}>{item.note}</div>
-        )}
-        <div style={{display:"flex", alignItems:"center", gap:10, marginTop:4, flexWrap:"wrap"}}>
-          {item.anchor === "name" ? (
-            <>
-              <ScoreChip score={null}/>
-              <button onClick={(e)=>e.preventDefault()} style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
-                Score it
+        <div style={{flex:1, minWidth:0}}>
+          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.3, marginBottom:6, textDecoration: purchased ? "line-through" : "none", textDecorationColor: purchased ? "var(--ink-faint)" : "transparent", opacity: isReading ? 0.6 : 1}}>
+            {isReading ? "Reading the link..." : displayName}
+          </div>
+
+          {item.added_at && !isReading && (
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:600, marginBottom:6}}>
+              Added {relativeTime(item.added_at)}
+            </div>
+          )}
+
+          {!isReading && (
+            item.note ? (
+              <div onClick={() => onEditNote(item)}
+                style={{display:"flex", alignItems:"center", gap:6, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4, marginBottom:8, cursor:"pointer"}}>
+                <span>{item.note}</span>
+                <Pencil size={11}/>
+              </div>
+            ) : (
+              <button onClick={() => onEditNote(item)}
+                style={{display:"inline-flex", alignItems:"center", gap:5, marginBottom:8, padding:0, background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", fontWeight:500, letterSpacing:"0.04em", cursor:"pointer"}}>
+                <Pencil size={10}/> Add a note
               </button>
-            </>
-          ) : (
-            <>
-              <ScoreChip score={item.score}/>
-              {item.anchor === "scan" && (
-                <button onClick={(e)=>{e.stopPropagation(); onToggleOwned(item.id);}}
-                  style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule)", background: item.owned ? "var(--moss-soft)" : "transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color: item.owned ? "var(--moss-deep)" : "var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
-                  {item.owned ? "Owned" : "Considering"}
+            )
+          )}
+
+          <div style={{display:"flex", alignItems:"center", gap:10, marginTop:2, flexWrap:"wrap"}}>
+            {item.anchor === "name" ? (
+              <>
+                <ScoreChip score={null}/>
+                <button onClick={(e)=>e.preventDefault()} style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
+                  Score it
                 </button>
-              )}
-            </>
+              </>
+            ) : (
+              <>
+                <ScoreChip score={activeScore}/>
+                {item.anchor === "scan" && (
+                  <button onClick={(e)=>{e.stopPropagation(); onToggleOwned(item.id);}}
+                    style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule)", background: item.owned ? "var(--moss-soft)" : "transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color: item.owned ? "var(--moss-deep)" : "var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
+                    {item.owned ? "Owned" : "Considering"}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {swap && (
+            <button onClick={() => onSwapItem(item.id, swap.alt)}
+              style={{display:"inline-flex", alignItems:"center", gap:8, marginTop:10, padding:"7px 12px", background:"var(--moss-soft)", border:"1px solid var(--moss)", color:"var(--moss-deep)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, cursor:"pointer"}}>
+              <span>Try {swap.alt.product_name} ({swap.altScore})</span>
+              <ArrowRight size={13} color="var(--moss-deep)"/>
+            </button>
           )}
         </div>
+        <button onClick={()=>onRemove(item.id)} aria-label="Remove item"
+          style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, marginTop:1, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
+          <X size={14}/>
+        </button>
       </div>
-      <button onClick={()=>onRemove(item.id)} aria-label="Remove item"
-        style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
-        <X size={14}/>
-      </button>
     </div>
   );
 };
 
-const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onDeleteList, isMobile }) => {
+const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onShare, onDeleteList, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
   // R3a r1 — kids toggle is local to this list view. State resets when the
@@ -262,6 +404,18 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
   // remounts the whole detail tree.
   const [kidsOn, setKidsOn] = useState(false);
   const scoreInfo = useMemo(() => computeListAverage(list.items, kidsOn), [list.items, kidsOn]);
+  const flagsAgg = useMemo(() => aggregateFlags(list.items), [list.items]);
+  const flagsLine = useMemo(() => formatFlagsLine(flagsAgg), [flagsAgg]);
+  // R3a r2 — purchased items sort to the bottom while preserving their
+  // relative order within each group. Memoize so we don't re-sort on every
+  // render-only change like the kids toggle.
+  const sortedItems = useMemo(() => {
+    return [...list.items].sort((a, b) => {
+      const ap = !!a.purchased, bp = !!b.purchased;
+      if (ap === bp) return 0;
+      return ap ? 1 : -1;
+    });
+  }, [list.items]);
   const inputRef = useRef(null);
   const commit = () => {
     const next = draft.trim();
@@ -298,7 +452,9 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
             {list.name}
           </h1>
         )}
-        <button aria-label="Share list" style={{flexShrink:0, width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
+        <button aria-label="Share list"
+          onClick={() => onShare(list, kidsOn, scoreInfo)}
+          style={{flexShrink:0, width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
           <Share/>
         </button>
       </div>
@@ -328,14 +484,21 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
       </div>
 
       {scoreInfo.count > 0 ? (
-        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:18}}>
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:flagsLine ? 6 : 18}}>
           Average across {scoreInfo.count} scored {scoreInfo.count === 1 ? "item" : "items"}.
         </div>
       ) : (
         <button onClick={onAddItem}
-          style={{display:"inline-block", marginBottom:18, padding:0, background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3, textAlign:"left"}}>
+          style={{display:"inline-block", marginBottom:flagsLine ? 6 : 18, padding:0, background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3, textAlign:"left"}}>
           Add scored items to see this list's score
         </button>
+      )}
+
+      {flagsLine && (
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:18}}>
+          <span style={{fontWeight:600, color:"var(--ink)", letterSpacing:"0.04em"}}>Flags: </span>
+          {flagsLine}.
+        </div>
       )}
 
       <div style={{display:"flex", alignItems:"center", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-soft)", marginBottom:24}}>
@@ -351,8 +514,13 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
         </div>
       ) : (
         <div style={{marginBottom:24}}>
-          {list.items.map(item => (
-            <ItemRow key={item.id} item={item} onRemove={onRemoveItem} onToggleOwned={onToggleOwned}/>
+          {sortedItems.map(item => (
+            <ItemRow key={item.id} item={item} kidsOn={kidsOn}
+              onRemove={onRemoveItem}
+              onToggleOwned={onToggleOwned}
+              onTogglePurchased={onTogglePurchased}
+              onEditNote={onEditNote}
+              onSwapItem={onSwapItem}/>
           ))}
         </div>
       )}
@@ -509,6 +677,84 @@ const ConfirmModal = ({ title, body, confirmLabel, onConfirm, onCancel }) => (
   </div>
 );
 
+// ── New-list chooser modal ─────────────────────────────────────────
+const NewListChooser = ({ onBlank, onTemplate, onCancel }) => (
+  <div onClick={onCancel}
+    style={{position:"fixed", inset:0, background:"rgba(26,31,21,0.40)", zIndex:130, display:"flex", alignItems:"center", justifyContent:"center", padding:24}}>
+    <div onClick={e=>e.stopPropagation()}
+      style={{width:"100%", maxWidth:420, background:"var(--cream)", borderRadius:CARD_SHAPE, padding:"24px 24px 22px"}}>
+      <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, letterSpacing:"-0.01em", color:"var(--ink)", marginBottom:6}}>Start a new list</div>
+      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:22}}>Blank, or start from a template.</div>
+      <div style={{display:"flex", flexDirection:"column", gap:10}}>
+        <PillButton onClick={onBlank} style={{width:"100%"}}>Start blank</PillButton>
+        <PillButton onClick={onTemplate} kind="secondary" style={{width:"100%"}}>Use a template</PillButton>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Template picker modal ──────────────────────────────────────────
+const TemplatePicker = ({ templates, onPick, onBack, onCancel, isMobile }) => (
+  <div onClick={onCancel}
+    style={{position:"fixed", inset:0, background:"rgba(26,31,21,0.32)", zIndex:130, display:"flex", alignItems:isMobile?"flex-end":"center", justifyContent:"center", padding:isMobile?0:24}}>
+    <div onClick={e=>e.stopPropagation()}
+      style={{width:"100%", maxWidth:isMobile?"none":520, maxHeight:"82vh", background:"var(--cream)", borderRadius:isMobile?"20px 20px 0 0":CARD_SHAPE, padding:isMobile?"20px 20px 28px":"24px 24px 28px", display:"flex", flexDirection:"column", boxShadow:"0 -8px 32px rgba(0,0,0,0.06)"}}>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
+        <button onClick={onBack}
+          style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 4px 6px 0", background:"transparent", border:"none", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, cursor:"pointer"}}>
+          <ChevronLeft size={14}/> Back
+        </button>
+        <button onClick={onCancel} aria-label="Close"
+          style={{width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"transparent", border:"none", cursor:"pointer"}}>
+          <X size={16} color="var(--ink)"/>
+        </button>
+      </div>
+      <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, letterSpacing:"-0.01em", color:"var(--ink)", marginBottom:4}}>Pick a template</div>
+      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:18}}>Each template lands as a list of items ready to score.</div>
+      <div style={{flex:1, overflowY:"auto"}}>
+        {templates.map(t => (
+          <div key={t.id} role="button" onClick={() => onPick(t)}
+            style={{padding:"14px 16px", marginBottom:10, background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, cursor:"pointer"}}>
+            <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:500, letterSpacing:"-0.005em", color:"var(--ink)", marginBottom:4}}>{t.name}</div>
+            {t.blurb && (
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4, marginBottom:6}}>{t.blurb}</div>
+            )}
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:600}}>{t.items.length} items</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ── Single-line note edit modal ────────────────────────────────────
+const NoteEditModal = ({ initialNote, productName, onSave, onCancel }) => {
+  const [draft, setDraft] = useState(initialNote || "");
+  const inputRef = useRef(null);
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 0); }, []);
+  const save = () => { onSave(draft.trim()); };
+  return (
+    <div onClick={onCancel}
+      style={{position:"fixed", inset:0, background:"rgba(26,31,21,0.40)", zIndex:140, display:"flex", alignItems:"center", justifyContent:"center", padding:24}}>
+      <div onClick={e=>e.stopPropagation()}
+        style={{width:"100%", maxWidth:440, background:"var(--cream)", borderRadius:CARD_SHAPE, padding:"24px 24px 22px"}}>
+        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:20, fontWeight:400, letterSpacing:"-0.01em", color:"var(--ink)", marginBottom:4}}>{initialNote ? "Edit note" : "Add a note"}</div>
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:14}}>{productName}</div>
+        <input ref={inputRef} value={draft}
+          onChange={e=>setDraft(e.target.value)}
+          onKeyDown={e=>{ if (e.key === "Enter") save(); if (e.key === "Escape") onCancel(); }}
+          placeholder="One line. Allergies, prefs, who it's for."
+          maxLength={140}
+          style={{width:"100%", padding:"12px 14px", borderRadius:CARD_SHAPE, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, color:"var(--ink)", marginBottom:18, boxSizing:"border-box"}}/>
+        <div style={{display:"flex", gap:10, justifyContent:"flex-end"}}>
+          <PillButton onClick={onCancel} kind="secondary">Cancel</PillButton>
+          <PillButton onClick={save}>Save</PillButton>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Top-level page ─────────────────────────────────────────────────
 const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
   const [lists, setLists] = useState(FAKE_LISTS);
@@ -516,6 +762,17 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
   const [activeListId, setActiveListId] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  // R3a r2 — new-list flow has a chooser step ("Start blank" or "Use a
+  // template") before the actual create. null when closed, "chooser" when
+  // the two-option modal is open, "templates" when the picker is open.
+  const [newListMode, setNewListMode] = useState(null);
+  // R3a r2 — note editor: holds the item being edited so the modal renders
+  // with the right product name and initial value.
+  const [editingNote, setEditingNote] = useState(null);
+  // R3a r2 — toast message for share-copy confirmation. Auto-clears via the
+  // timeout below.
+  const [toast, setToast] = useState("");
+  const toastTimer = useRef(null);
   const placeholderTimers = useRef({});
 
   const activeList = lists.find(l => l.id === activeListId) || null;
@@ -524,9 +781,12 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
   // if available — Sara should see her actual scans where possible. Falls back
   // to FAKE_RECENT_SCANS on a fresh session with no history.
   const recentScans = useMemo(() => {
+    // R3a r2 — full history surfaces in the picker (cap matches the bumped
+    // local + cloud limit of 500). Sara has hundreds of scans; the picker
+    // is the discovery surface for adding existing items to a list.
     const real = (history || [])
       .filter(h => h && h.product_name)
-      .slice(0, 8)
+      .slice(0, 500)
       .map(h => ({
         product_name: h.product_name,
         category:     h.category || "other",
@@ -540,7 +800,24 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
   const openList = (id) => { setActiveListId(id); setView("detail"); };
   const backToOverview = () => { setView("overview"); setActiveListId(null); };
 
-  const createList = () => {
+  // R3a r2 — show a toast for ~2.5s. Clears any pending fade so rapid
+  // successive shares replace the message instead of stacking timers.
+  const showToast = (message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(""), 2500);
+  };
+
+  // R3a r2 — new-list flow now starts with a chooser. The chooser dispatches
+  // either to the blank-name prompt (preserves current behavior) or to the
+  // template picker.
+  const startNewList = () => setNewListMode("chooser");
+  const cancelNewList = () => setNewListMode(null);
+  const goToTemplates = () => setNewListMode("templates");
+  const backToChooser = () => setNewListMode("chooser");
+
+  const createBlankList = () => {
+    setNewListMode(null);
     const name = window.prompt("Name this list", "");
     if (!name || !name.trim()) return;
     const id = `list_${Date.now()}`;
@@ -551,6 +828,27 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
     }, ...prev]);
     setActiveListId(id);
     setView("detail");
+  };
+
+  const createListFromTemplate = (template) => {
+    const now = new Date().toISOString();
+    const id = `list_${Date.now()}`;
+    const items = template.items.map((productName, i) => ({
+      id: `i_${Date.now()}_${i}`,
+      anchor: "name",
+      product_name: productName,
+      product_name_normalized: productName.toLowerCase().trim(),
+      purchased: false,
+      added_at: now,
+    }));
+    setLists(prev => [{
+      id, name: template.name, kind: "shopping",
+      created_at: now,
+      items,
+    }, ...prev]);
+    setActiveListId(id);
+    setView("detail");
+    setNewListMode(null);
   };
 
   const renameList = (id, nextName) => {
@@ -574,6 +872,9 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       score: scan.score,
       kid_score: scan.kid_score ?? scan.score,
       owned: true,
+      purchased: false,
+      added_at: new Date().toISOString(),
+      flags: scan.flags || [],
       scanned_at: scan.scanned_at,
     };
     setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
@@ -587,6 +888,9 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       anchor: "name",
       product_name_normalized: name.toLowerCase().trim(),
       product_name: name.trim(),
+      purchased: false,
+      added_at: new Date().toISOString(),
+      flags: [],
     };
     setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
     setAddOpen(false);
@@ -601,6 +905,9 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       product_name_normalized: "",
       product_name: rawUrl,
       placeholder: true,
+      purchased: false,
+      added_at: new Date().toISOString(),
+      flags: [],
     };
     setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
     setAddOpen(false);
@@ -640,6 +947,60 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       : l));
   };
 
+  // R3a r2 — purchased toggle. Cosmetic only at the prototype level; the
+  // sort-to-bottom logic lives in ListDetail's sortedItems memo.
+  const togglePurchased = (itemId) => {
+    setLists(prev => prev.map(l => l.id === activeListId
+      ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, purchased: !i.purchased } : i) }
+      : l));
+  };
+
+  // R3a r2 — note save. Empty string clears the note. Single-line only.
+  const saveNote = (itemId, nextNote) => {
+    setLists(prev => prev.map(l => l.id === activeListId
+      ? { ...l, items: l.items.map(i => i.id === itemId
+          ? { ...i, note: nextNote && nextNote.trim() ? nextNote.trim() : undefined }
+          : i) }
+      : l));
+    setEditingNote(null);
+  };
+
+  // R3a r2 — quick swap. Replaces product_name + score + kid_score + flags
+  // + category in place. Preserves id, anchor, owned, purchased, note,
+  // added_at so the row keeps its place and personal context.
+  const swapItem = (itemId, alt) => {
+    setLists(prev => prev.map(l => l.id === activeListId
+      ? { ...l, items: l.items.map(i => i.id === itemId
+          ? {
+              ...i,
+              product_name: alt.product_name,
+              category: alt.category || i.category,
+              score: alt.score,
+              kid_score: alt.kid_score,
+              flags: alt.flags || [],
+            }
+          : i) }
+      : l));
+    showToast(`Swapped in ${alt.product_name}.`);
+  };
+
+  // R3a r2 — share copy. Builds the text block and writes to clipboard.
+  // Toast confirms success; failure path (denied permission, non-secure
+  // context) falls back to a different message so the user sees something.
+  const shareList = async (list, kidsOn, scoreInfo) => {
+    const text = buildShareText(list, kidsOn, scoreInfo);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        showToast("Copied to clipboard.");
+      } else {
+        showToast("Clipboard not available.");
+      }
+    } catch {
+      showToast("Couldn't copy. Try again.");
+    }
+  };
+
   return (
     <div style={{
       minHeight:"100vh",
@@ -648,7 +1009,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       paddingBottom: isMobile ? 120 : 60,
     }}>
       {view === "overview" && (
-        <ListsOverview lists={lists} onOpen={openList} onCreate={createList} isMobile={isMobile}/>
+        <ListsOverview lists={lists} onOpen={openList} onCreate={startNewList} isMobile={isMobile}/>
       )}
       {view === "detail" && activeList && (
         <ListDetail
@@ -659,13 +1020,17 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           onAddItem={()=>setAddOpen(true)}
           onRemoveItem={removeItem}
           onToggleOwned={toggleOwned}
+          onTogglePurchased={togglePurchased}
+          onEditNote={(item) => setEditingNote(item)}
+          onSwapItem={swapItem}
+          onShare={shareList}
           onDeleteList={(id)=>setPendingDelete(id)}
           isMobile={isMobile}
         />
       )}
       {view === "detail" && !activeList && (
         // Active list was deleted while detail view was open — bounce back.
-        <ListsOverview lists={lists} onOpen={openList} onCreate={createList} isMobile={isMobile}/>
+        <ListsOverview lists={lists} onOpen={openList} onCreate={startNewList} isMobile={isMobile}/>
       )}
       {addOpen && (
         <AddItemSheet
@@ -677,6 +1042,30 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           isMobile={isMobile}
         />
       )}
+      {newListMode === "chooser" && (
+        <NewListChooser
+          onBlank={createBlankList}
+          onTemplate={goToTemplates}
+          onCancel={cancelNewList}
+        />
+      )}
+      {newListMode === "templates" && (
+        <TemplatePicker
+          templates={TEMPLATES}
+          onPick={createListFromTemplate}
+          onBack={backToChooser}
+          onCancel={cancelNewList}
+          isMobile={isMobile}
+        />
+      )}
+      {editingNote && (
+        <NoteEditModal
+          initialNote={editingNote.note || ""}
+          productName={editingNote.product_name || editingNote.product_name_normalized || "this item"}
+          onSave={(text) => saveNote(editingNote.id, text)}
+          onCancel={() => setEditingNote(null)}
+        />
+      )}
       {pendingDelete && (
         <ConfirmModal
           title="Delete this list?"
@@ -686,6 +1075,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           onCancel={()=>setPendingDelete(null)}
         />
       )}
+      <Toast message={toast}/>
     </div>
   );
 };
