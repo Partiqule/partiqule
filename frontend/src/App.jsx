@@ -5484,6 +5484,18 @@ const normalizeProductName = (s) => (s || "")
   .replace(/\s+/g, " ")
   .replace(/['']/g, "'");
 
+// Plausibility guard for the clipboard suggestion pill. We only surface a
+// "Paste 'XXX'?" affordance when the clipboard text looks like a product
+// name: 3-200 chars, contains a letter, not a bare 8-13 digit barcode.
+const isPlausibleProductPaste = (s) => {
+  if (typeof s !== "string") return false;
+  const t = s.trim();
+  if (t.length < 3 || t.length > 200) return false;
+  if (!/[a-zA-Z]/.test(t)) return false;
+  if (/^\d{8,13}$/.test(t)) return false;
+  return true;
+};
+
 // Star row. filled is 0-5 (or fractional for the aggregate average).
 // Fill uses --score-amber per design tokens (golden wheat). No inline
 // hex codes per Voice Kit. Empty uses --rule.
@@ -6429,6 +6441,12 @@ function TextileConfirmationCard({ visionConfirmation, onConfirm, onEdit, onDism
 function App() {
   const [query,       setQuery]      = useState("");
   const [searchMode,  setSearchMode] = useState("name");
+  // R1 text-input lift — clipboard suggestion pill. clipboardChecked gates
+  // the first-focus read so we don't re-prompt on every focus.
+  // dismissedClipboardRef tracks values the user closed in this session.
+  const [clipboardSuggestion, setClipboardSuggestion] = useState(null);
+  const [clipboardChecked, setClipboardChecked] = useState(false);
+  const dismissedClipboardRef = useRef(new Set());
   const [result,      setResult]     = useState(null);
   const [loading,     setLoading]    = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -7349,6 +7367,37 @@ function App() {
       track("Scan Error", { error: msg });
     }
     setLoading(false);
+  };
+
+  // R1 text-input lift — clipboard handlers. Safari requires a user gesture
+  // for navigator.clipboard.readText, so this fires on first focus rather
+  // than on mount. Silently no-ops on permission denial or unsupported envs.
+  const readClipboardAndMaybeSuggest = async () => {
+    if (!navigator.clipboard?.readText) return;
+    try {
+      const raw = (await navigator.clipboard.readText()) || "";
+      const text = raw.trim().replace(/[\r\n]+/g, " ");
+      if (!isPlausibleProductPaste(text)) return;
+      if (dismissedClipboardRef.current.has(text)) return;
+      if (text === query.trim()) return;
+      setClipboardSuggestion(text);
+    } catch {}
+  };
+  const checkClipboardOnFocus = () => {
+    if (clipboardChecked) return;
+    setClipboardChecked(true);
+    readClipboardAndMaybeSuggest();
+  };
+  const acceptClipboardSuggestion = () => {
+    if (!clipboardSuggestion) return;
+    setQuery(clipboardSuggestion);
+    setClipboardSuggestion(null);
+    document.getElementById("home-search-input")?.focus();
+    document.getElementById("hero-search-input")?.focus();
+  };
+  const dismissClipboardSuggestion = () => {
+    if (clipboardSuggestion) dismissedClipboardRef.current.add(clipboardSuggestion);
+    setClipboardSuggestion(null);
   };
 
   // ── Match picker: tapping a search match runs /analyze with productId ──
@@ -8533,13 +8582,14 @@ function App() {
                   padding: isMobile ? "10px 16px" : "12px 40px",
                 }}>
                   <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
-                    <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"10px 16px", cursor:"text"}}
+                    <div style={{flex:1, display:"flex", alignItems:"center", gap:12, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"13px 18px", cursor:"text"}}
                       onClick={()=>document.getElementById("home-search-input")?.focus()}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.55"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                       <input
                         id="home-search-input"
                         value={query}
                         onChange={e=>setQuery(e.target.value)}
+                        onFocus={checkClipboardOnFocus}
                         onKeyDown={e=>{
                           if (e.key !== "Enter" || !query.trim()) return;
                           // If the picker has verified matches, prefer picking the top match over
@@ -8547,14 +8597,20 @@ function App() {
                           if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                           analyze();
                         }}
-                        placeholder={user ? "Search any product…" : "Sign up to scan products"}
-                        style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
+                        placeholder={user ? "Search or paste a product…" : "Sign up to scan products"}
+                        style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:16, background:"transparent", color:"var(--ink)", minWidth:0}}
                       />
+                      <button onClick={(e)=>{e.stopPropagation(); setClipboardChecked(true); readClipboardAndMaybeSuggest();}}
+                        aria-label="Paste from clipboard"
+                        style={{display:"flex", alignItems:"center", justifyContent:"center", padding:6, background:"transparent", border:"none", cursor:"pointer", color:"var(--moss)", opacity:0.55, flexShrink:0}}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                      </button>
                       {query.trim() && (
-                        <button onClick={()=>{
+                        <button onClick={(e)=>{
+                          e.stopPropagation();
                           if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                           analyze();
-                        }} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
+                        }} style={{padding:"7px 16px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", flexShrink:0}}>Scan</button>
                       )}
                     </div>
                     {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
@@ -8566,6 +8622,21 @@ function App() {
                       <input id="home-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
                     </>)}
                   </div>
+
+                  {/* ── CLIPBOARD SUGGESTION PILL — first-focus paste affordance ── */}
+                  {clipboardSuggestion && !query.trim() && (
+                    <div style={{maxWidth:860, margin:"8px auto 0"}}>
+                      <div role="button"
+                        onClick={acceptClipboardSuggestion}
+                        style={{display:"inline-flex", alignItems:"center", gap:10, padding:"7px 6px 7px 14px", background:"var(--moss-soft)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss-deep)", cursor:"pointer"}}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                        <span>{`Paste "${clipboardSuggestion.length > 30 ? clipboardSuggestion.slice(0,30) + "…" : clipboardSuggestion}"?`}</span>
+                        <button onClick={(e)=>{e.stopPropagation(); dismissClipboardSuggestion();}}
+                          aria-label="Dismiss"
+                          style={{display:"flex", alignItems:"center", justifyContent:"center", width:22, height:22, padding:0, background:"transparent", border:"none", borderRadius:6, cursor:"pointer", color:"var(--ink-faint)", fontSize:16, lineHeight:1}}>×</button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* ── MATCH PICKER — renders when /search returns verified matches ── */}
                   {(() => {
@@ -9086,26 +9157,33 @@ function App() {
             padding: isMobile ? "10px 16px" : "12px 40px",
           }}>
             <div style={{maxWidth:860, margin:"0 auto", display:"flex", alignItems:"center", gap:10}}>
-              <div style={{flex:1, display:"flex", alignItems:"center", gap:10, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"10px 16px", cursor:"text"}}
+              <div style={{flex:1, display:"flex", alignItems:"center", gap:12, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"13px 18px", cursor:"text"}}
                 onClick={()=>document.getElementById("hero-search-input")?.focus()}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.55"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="2" opacity="0.6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input
                   id="hero-search-input"
                   value={query}
                   onChange={e=>setQuery(e.target.value)}
+                  onFocus={checkClipboardOnFocus}
                   onKeyDown={e=>{
                     if (e.key !== "Enter" || !query.trim()) return;
                     if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                     analyze();
                   }}
-                  placeholder={user ? "Search any product…" : "Sign up to scan products"}
-                  style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, background:"transparent", color:"var(--ink)", minWidth:0}}
+                  placeholder={user ? "Search or paste a product…" : "Sign up to scan products"}
+                  style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:16, background:"transparent", color:"var(--ink)", minWidth:0}}
                 />
+                <button onClick={(e)=>{e.stopPropagation(); setClipboardChecked(true); readClipboardAndMaybeSuggest();}}
+                  aria-label="Paste from clipboard"
+                  style={{display:"flex", alignItems:"center", justifyContent:"center", padding:6, background:"transparent", border:"none", cursor:"pointer", color:"var(--moss)", opacity:0.55, flexShrink:0}}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                </button>
                 {query.trim() && (
-                  <button onClick={()=>{
+                  <button onClick={(e)=>{
+                    e.stopPropagation();
                     if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                     analyze();
-                  }} style={{padding:"6px 14px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:13, cursor:"pointer", flexShrink:0}}>Scan</button>
+                  }} style={{padding:"7px 16px", borderRadius:10, background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", flexShrink:0}}>Scan</button>
                 )}
               </div>
               {/* Camera button — desktop only; mobile uses the bottom nav FAB */}
@@ -9117,6 +9195,21 @@ function App() {
                 <input id="hero-file-input" type="file" accept="image/*" style={{display:"none"}} onChange={async(e)=>{const f=e.target.files?.[0];if(!f)return;e.target.value="";await handleImageScan(f);}}/>
               </>)}
             </div>
+
+            {/* ── CLIPBOARD SUGGESTION PILL — first-focus paste affordance ── */}
+            {clipboardSuggestion && !query.trim() && (
+              <div style={{maxWidth:860, margin:"8px auto 0"}}>
+                <div role="button"
+                  onClick={acceptClipboardSuggestion}
+                  style={{display:"inline-flex", alignItems:"center", gap:10, padding:"7px 6px 7px 14px", background:"var(--moss-soft)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss-deep)", cursor:"pointer"}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                  <span>{`Paste "${clipboardSuggestion.length > 30 ? clipboardSuggestion.slice(0,30) + "…" : clipboardSuggestion}"?`}</span>
+                  <button onClick={(e)=>{e.stopPropagation(); dismissClipboardSuggestion();}}
+                    aria-label="Dismiss"
+                    style={{display:"flex", alignItems:"center", justifyContent:"center", width:22, height:22, padding:0, background:"transparent", border:"none", borderRadius:6, cursor:"pointer", color:"var(--ink-faint)", fontSize:16, lineHeight:1}}>×</button>
+                </div>
+              </div>
+            )}
           </div>
 
           <style>{`
