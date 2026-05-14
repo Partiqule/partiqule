@@ -148,6 +148,19 @@ export const FAKE_ALTERNATIVES = {
   },
 };
 
+// Smart completion suggestions surfaced below the items section on the
+// list detail view. Keyed by product_name as it appears on item rows.
+// Items scoring 6 or higher are skipped at collection time — the quick
+// swap UX already covers those.
+export const SMART_SUGGESTIONS = {
+  "Hipp Organic Apple Sauce": ["organic kid yogurt", "rice crackers"],
+  "Native Deodorant Coconut and Vanilla": ["mineral sunscreen", "natural body wash"],
+  "Siggi's Kids Yogurt Pouch": ["organic granola bars", "fruit pouches"],
+  "Branch Basics Spray": ["wool dryer balls", "castile soap"],
+  "Liquid Death Mountain": ["sparkling water", "coconut water"],
+  "Hipp Organic Apple": ["organic baby cereal", "frozen peas"],
+};
+
 // Starter templates for the "+ New list" template picker. Each template
 // produces a list named after the template, with anchor="name" items for
 // every entry. Users can score items individually once the list is live.

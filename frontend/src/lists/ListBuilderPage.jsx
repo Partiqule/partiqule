@@ -6,7 +6,7 @@
 // here before R3b locks the schema and R3c wires real endpoints.
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { FAKE_LISTS, FAKE_RECENT_SCANS, FLAG_LABELS, FAKE_ALTERNATIVES, TEMPLATES } from "./fixtures";
+import { FAKE_LISTS, FAKE_RECENT_SCANS, FLAG_LABELS, FAKE_ALTERNATIVES, TEMPLATES, SMART_SUGGESTIONS } from "./fixtures";
 
 // ── Tokens-only helpers ───────────────────────────────────────────
 const CARD_SHAPE     = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -25,6 +25,99 @@ const scoreBg = (s) => {
   if (s <= 3) return "rgba(107, 140, 62, 0.10)";
   if (s <= 5) return "rgba(196, 154, 51, 0.10)";
   return "rgba(176, 73, 58, 0.10)";
+};
+
+// R3a r3 — category fill palette for the donut chart. Token-only; each
+// category maps to a distinct hue so the breakdown is readable at a
+// 96px square. Categories that share a family (food / snack) intentionally
+// share a hue.
+const CATEGORY_FILL = {
+  food:          "var(--score-green)",
+  food_beverage: "var(--score-green)",
+  snack:         "var(--score-green)",
+  beverage:      "var(--sage)",
+  personal_care: "var(--score-amber)",
+  skincare:      "var(--score-amber)",
+  cleaning:      "var(--moss)",
+  home:          "var(--moss-deep)",
+  clothing:      "var(--ink-soft)",
+  baby:          "var(--amber)",
+  toy:           "var(--amber)",
+  supplement:    "var(--score-red)",
+  restaurant:    "var(--sage)",
+  other:         "var(--ink-faint)",
+};
+
+const CATEGORY_LABEL = {
+  food: "food", food_beverage: "food", snack: "snack",
+  beverage: "beverage",
+  personal_care: "personal care", skincare: "skincare",
+  cleaning: "cleaning", home: "home",
+  clothing: "clothing",
+  baby: "baby", toy: "toy",
+  supplement: "supplement",
+  restaurant: "restaurant",
+  other: "other",
+};
+
+// SVG donut helpers — produce a single annular-sector path for a slice.
+// Angles in radians, 0 = east, clockwise via positive sweep.
+const polarToCartesian = (cx, cy, r, angle) => ({
+  x: cx + r * Math.cos(angle),
+  y: cy + r * Math.sin(angle),
+});
+
+const describeAnnularSector = (cx, cy, rOuter, rInner, startAngle, endAngle) => {
+  const startOuter = polarToCartesian(cx, cy, rOuter, startAngle);
+  const endOuter   = polarToCartesian(cx, cy, rOuter, endAngle);
+  const startInner = polarToCartesian(cx, cy, rInner, endAngle);
+  const endInner   = polarToCartesian(cx, cy, rInner, startAngle);
+  const largeArc = (endAngle - startAngle) > Math.PI ? 1 : 0;
+  return [
+    "M", startOuter.x, startOuter.y,
+    "A", rOuter, rOuter, 0, largeArc, 1, endOuter.x, endOuter.y,
+    "L", startInner.x, startInner.y,
+    "A", rInner, rInner, 0, largeArc, 0, endInner.x, endInner.y,
+    "Z",
+  ].join(" ");
+};
+
+// R3a r3 — collect smart suggestions across the scored items in the list.
+// Skip items scoring 6 or higher (the swap UX handles those) and skip
+// suggestions whose names already appear in the list. Caps at three chips
+// total so the section stays calm.
+const collectSuggestions = (items) => {
+  const existingNames = new Set();
+  for (const it of items) {
+    const n = (it.product_name || it.product_name_normalized || "").toLowerCase().trim();
+    if (n) existingNames.add(n);
+  }
+  const out = [];
+  const seen = new Set();
+  for (const it of items) {
+    const score = it.score;
+    if (score == null || score >= 6) continue;
+    const suggs = SMART_SUGGESTIONS[it.product_name] || [];
+    for (const s of suggs) {
+      const key = s.toLowerCase().trim();
+      if (seen.has(key) || existingNames.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+      if (out.length >= 3) return out;
+    }
+  }
+  return out;
+};
+
+// R3a r3 — split a voice transcript into one or more product names.
+// Handles "diapers and wipes" → ["diapers","wipes"], "diapers, wipes,
+// formula" → three items, "diapers wipes" (no separator) → one item.
+const splitTranscript = (raw) => {
+  if (!raw) return [];
+  return String(raw)
+    .split(/,\s*|\s+and\s+|\s+or\s+|\s+plus\s+/i)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
 };
 
 // R3a r2 — aggregate substance flags across the list. Sorted by count
@@ -191,6 +284,23 @@ const ArrowRight = ({ size = 13, color = "var(--moss)" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
 );
 
+const Grip = ({ size = 14, color = "var(--ink-faint)" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+    <line x1="4" y1="17" x2="20" y2="17"/>
+  </svg>
+);
+
+const Mic = ({ size = 17, color = "var(--moss)" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="9" y="2" width="6" height="12" rx="3"/>
+    <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+    <line x1="12" y1="19" x2="12" y2="22"/>
+    <line x1="8" y1="22" x2="16" y2="22"/>
+  </svg>
+);
+
 // R3a r2 — toast for share-to-clipboard confirmation. Mounts when message
 // is non-empty, animates in, and unmounts on the parent's setTimeout.
 const Toast = ({ message }) => {
@@ -314,17 +424,167 @@ const ListsOverview = ({ lists, onOpen, onCreate, isMobile }) => {
   );
 };
 
+// ── Category donut (R3a r3) ───────────────────────────────────────
+// Hidden when the list has fewer than two items or only one category is
+// represented. A single-slice donut reads as a solid ring with no signal.
+const CategoryDonut = ({ items }) => {
+  const [activeSlice, setActiveSlice] = useState(null);
+  const counts = useMemo(() => {
+    const m = new Map();
+    for (const it of items || []) {
+      const cat = it.category || "other";
+      m.set(cat, (m.get(cat) || 0) + 1);
+    }
+    return m;
+  }, [items]);
+  if (!items || items.length < 2 || counts.size < 2) return null;
+
+  const total = items.length;
+  // Sort biggest slice first so the visual order leads with the
+  // dominant category at 12 o'clock.
+  const entries = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const cx = 50, cy = 50, rOuter = 44, rInner = 27;
+  let cursor = -Math.PI / 2; // start at top
+  const slices = entries.map(([cat, count]) => {
+    const sweep = (count / total) * 2 * Math.PI;
+    // Single-slice safety not needed (counts.size >= 2 guards), but if a
+    // slice were exactly 2π the arc would render as nothing — clamp.
+    const adjustedSweep = Math.min(sweep, 2 * Math.PI - 0.0001);
+    const start = cursor;
+    const end = cursor + adjustedSweep;
+    cursor = end;
+    return {
+      key: cat,
+      count,
+      color: CATEGORY_FILL[cat] || CATEGORY_FILL.other,
+      label: CATEGORY_LABEL[cat] || cat.replace(/_/g, " "),
+      path: describeAnnularSector(cx, cy, rOuter, rInner, start, end),
+    };
+  });
+
+  const active = activeSlice ? slices.find(s => s.key === activeSlice) : null;
+
+  return (
+    <div style={{display:"flex", flexDirection:"column", alignItems:"center", marginBottom:20}}>
+      <div style={{position:"relative", width:96, height:96}}>
+        <svg viewBox="0 0 100 100" width={96} height={96} style={{display:"block"}}>
+          {slices.map(s => (
+            <path key={s.key}
+              d={s.path}
+              fill={s.color}
+              stroke="var(--cream)"
+              strokeWidth="1.5"
+              style={{cursor:"pointer", transition:"opacity 0.15s ease"}}
+              opacity={activeSlice && activeSlice !== s.key ? 0.4 : 1}
+              onMouseEnter={() => setActiveSlice(s.key)}
+              onMouseLeave={() => setActiveSlice(null)}
+              onClick={() => setActiveSlice(prev => prev === s.key ? null : s.key)}
+            />
+          ))}
+        </svg>
+        <div style={{position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", pointerEvents:"none"}}>
+          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:500, letterSpacing:"-0.01em", color:"var(--ink)", lineHeight:1}}>{total}</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:9, color:"var(--ink-soft)", textTransform:"uppercase", letterSpacing:"0.16em", fontWeight:600, marginTop:2}}>items</div>
+        </div>
+      </div>
+      <div style={{marginTop:10, minHeight:18, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", letterSpacing:"0.04em", textAlign:"center"}}>
+        {active ? (
+          <span><span style={{color:"var(--ink)", fontWeight:600}}>{active.count}</span> {active.count === 1 ? "item" : "items"}: {active.label}</span>
+        ) : (
+          <span style={{color:"var(--ink-faint)"}}>{entries.length} categories</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Smart suggestions (R3a r3) ────────────────────────────────────
+const SuggestionsSection = ({ items, onAdd }) => {
+  const suggestions = useMemo(() => collectSuggestions(items), [items]);
+  if (!suggestions.length) return null;
+  return (
+    <div style={{marginBottom:28, paddingTop:8, borderTop:"1px solid var(--rule-soft)"}}>
+      <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10, marginTop:18}}>
+        <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+        <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", fontWeight:500, color:"var(--moss)"}}>Suggestions</span>
+      </div>
+      <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+        {suggestions.map(s => (
+          <button key={s} onClick={() => onAdd(s)}
+            style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ink)", cursor:"pointer"}}>
+            <span style={{color:"var(--moss)", fontWeight:700}}>+</span>
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ── List detail ────────────────────────────────────────────────────
-const ItemRow = ({ item, kidsOn, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem }) => {
+const ItemRow = ({ item, kidsOn, otherLists, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onOpenList, drag }) => {
   const displayName = item.product_name || item.product_name_normalized || "Unnamed item";
   const isReading = item.placeholder === true;
   const purchased = !!item.purchased;
   const swap = !isReading ? swapSuggestionFor(item, kidsOn) : null;
   const activeScore = kidsOn ? item.kid_score : item.score;
+  const isDragging = drag?.draggedId === item.id;
+
+  // Cross-list caption. Cap at two names; further matches collapse into
+  // a "+N others" tail so the row stays single-line.
+  const others = otherLists || [];
+  const renderOthers = () => {
+    if (!others.length) return null;
+    if (others.length <= 2) {
+      return others.map((o, i) => (
+        <React.Fragment key={o.id}>
+          {i > 0 && <span style={{color:"var(--ink-faint)"}}>, </span>}
+          <button onClick={(e) => { e.stopPropagation(); onOpenList(o.id); }}
+            style={{padding:0, background:"transparent", border:"none", fontFamily:"inherit", fontSize:"inherit", color:"var(--moss-deep)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}}>
+            {o.name}
+          </button>
+        </React.Fragment>
+      ));
+    }
+    const first = others[0];
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); onOpenList(first.id); }}
+          style={{padding:0, background:"transparent", border:"none", fontFamily:"inherit", fontSize:"inherit", color:"var(--moss-deep)", textDecoration:"underline", textUnderlineOffset:2, cursor:"pointer"}}>
+          {first.name}
+        </button>
+        <span style={{color:"var(--ink-faint)"}}>, +{others.length - 1} others</span>
+      </>
+    );
+  };
+
   return (
-    <div style={{opacity: purchased ? 0.5 : 1, transition:"opacity 0.2s ease"}}>
-      <div style={{display:"flex", alignItems:"flex-start", gap:12, padding:"14px 4px", borderBottom:"1px solid var(--rule-soft)"}}>
-        {/* Purchased check — leftmost so the shopping run lives in the gutter */}
+    <div
+      data-item-id={item.id}
+      draggable={!isReading}
+      onDragStart={drag?.onDragStart ? (e) => drag.onDragStart(item.id, e) : undefined}
+      onDragOver={drag?.onDragOver ? (e) => drag.onDragOver(item.id, e) : undefined}
+      onDragEnd={drag?.onDragEnd}
+      onDrop={drag?.onDrop}
+      onTouchStart={drag?.onTouchStart ? (e) => drag.onTouchStart(item.id, e) : undefined}
+      onTouchMove={drag?.onTouchMove}
+      onTouchEnd={drag?.onTouchEnd}
+      style={{
+        opacity: isDragging ? 0.4 : (purchased ? 0.5 : 1),
+        transform: isDragging ? "scale(1.01)" : "none",
+        boxShadow: isDragging ? "0 8px 20px rgba(26, 31, 21, 0.10)" : "none",
+        background: isDragging ? "var(--cream-light)" : "transparent",
+        borderRadius: isDragging ? CARD_SHAPE : 0,
+        transition: "opacity 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+    >
+      <div style={{display:"flex", alignItems:"flex-start", gap:10, padding:"14px 4px", borderBottom:"1px solid var(--rule-soft)"}}>
+        {/* Grip — drag handle on the left gutter */}
+        <div aria-label="Drag to reorder"
+          style={{flexShrink:0, width:22, height:30, display:"flex", alignItems:"center", justifyContent:"center", cursor:"grab", touchAction:"none", marginTop:1}}>
+          <Grip size={14}/>
+        </div>
+        {/* Purchased check */}
         <button onClick={() => onTogglePurchased(item.id)} aria-label={purchased ? "Mark as not purchased" : "Mark as purchased"}
           style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, marginTop:1, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
           <CheckCircle filled={purchased} size={20}/>
@@ -336,6 +596,13 @@ const ItemRow = ({ item, kidsOn, onRemove, onToggleOwned, onTogglePurchased, onE
           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.3, marginBottom:6, textDecoration: purchased ? "line-through" : "none", textDecorationColor: purchased ? "var(--ink-faint)" : "transparent", opacity: isReading ? 0.6 : 1}}>
             {isReading ? "Reading the link..." : displayName}
           </div>
+
+          {others.length > 0 && !isReading && (
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.4, marginBottom:6}}>
+              <span>Also in: </span>
+              {renderOthers()}
+            </div>
+          )}
 
           {item.added_at && !isReading && (
             <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:600, marginBottom:6}}>
@@ -396,7 +663,7 @@ const ItemRow = ({ item, kidsOn, onRemove, onToggleOwned, onTogglePurchased, onE
   );
 };
 
-const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onShare, onDeleteList, isMobile }) => {
+const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
   // R3a r1 — kids toggle is local to this list view. State resets when the
@@ -416,6 +683,133 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
       return ap ? 1 : -1;
     });
   }, [list.items]);
+
+  // R3a r3 — cross-list intel. For each item in this list, find the OTHER
+  // lists (excluding the current one) that contain the same product_name
+  // by case-insensitive exact match. Result: Map<itemId, [{id, name}]>.
+  const otherListsByItemId = useMemo(() => {
+    const out = new Map();
+    if (!allLists || allLists.length <= 1) return out;
+    for (const it of list.items) {
+      const needle = (it.product_name || "").toLowerCase().trim();
+      if (!needle) { out.set(it.id, []); continue; }
+      const matches = [];
+      for (const l of allLists) {
+        if (l.id === list.id) continue;
+        const hit = l.items.some(i => (i.product_name || "").toLowerCase().trim() === needle);
+        if (hit) matches.push({ id: l.id, name: l.name });
+      }
+      out.set(it.id, matches);
+    }
+    return out;
+  }, [list, allLists]);
+
+  // R3a r3 — drag-to-reorder state. orderOverride mirrors the live
+  // reordering during a drag so the row visually moves under the cursor.
+  // Committed to parent state via onReorderItems on drop.
+  const [draggedId, setDraggedId] = useState(null);
+  const [orderOverride, setOrderOverride] = useState(null);
+  const touchState = useRef({ id: null, longPressTimer: null, startY: 0, dragging: false });
+
+  // Items to render: orderOverride when actively reordering, sortedItems
+  // otherwise. Both arrays respect the purchased-at-bottom invariant.
+  const renderedItems = orderOverride || sortedItems;
+
+  const commitReorder = (nextOrder) => {
+    const ids = nextOrder.map(i => i.id);
+    onReorderItems(ids);
+    setDraggedId(null);
+    setOrderOverride(null);
+  };
+
+  const cancelDrag = () => {
+    setDraggedId(null);
+    setOrderOverride(null);
+  };
+
+  // Live-reorder shim shared by HTML5 dragover and touch move. Respects
+  // the purchased boundary: a dragged unpurchased item cannot land in the
+  // purchased segment, and vice versa.
+  const reorderForTarget = (targetId) => {
+    if (!draggedId || draggedId === targetId) return;
+    const current = orderOverride || sortedItems;
+    const fromIdx = current.findIndex(i => i.id === draggedId);
+    const toIdx   = current.findIndex(i => i.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const dragged = current[fromIdx];
+    const target  = current[toIdx];
+    if (!!dragged.purchased !== !!target.purchased) return;
+    const next = [...current];
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, dragged);
+    setOrderOverride(next);
+  };
+
+  const drag = {
+    draggedId,
+    onDragStart: (id, e) => {
+      // dataTransfer is required for Firefox to fire dragover events
+      try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id); } catch {}
+      setDraggedId(id);
+      setOrderOverride(sortedItems);
+    },
+    onDragOver: (id, e) => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+      reorderForTarget(id);
+    },
+    onDrop: (e) => {
+      e.preventDefault();
+      if (orderOverride) commitReorder(orderOverride);
+      else cancelDrag();
+    },
+    onDragEnd: () => {
+      if (orderOverride) commitReorder(orderOverride);
+      else cancelDrag();
+    },
+    onTouchStart: (id, e) => {
+      touchState.current.id = id;
+      touchState.current.startY = e.touches[0].clientY;
+      touchState.current.dragging = false;
+      touchState.current.longPressTimer = setTimeout(() => {
+        touchState.current.dragging = true;
+        setDraggedId(id);
+        setOrderOverride(sortedItems);
+        try { navigator.vibrate?.(15); } catch {}
+      }, 450);
+    },
+    onTouchMove: (e) => {
+      if (!touchState.current.dragging) {
+        const dy = Math.abs((e.touches[0]?.clientY ?? 0) - touchState.current.startY);
+        if (dy > 10 && touchState.current.longPressTimer) {
+          clearTimeout(touchState.current.longPressTimer);
+          touchState.current.longPressTimer = null;
+        }
+        return;
+      }
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+      let el = document.elementFromPoint(touch.clientX, touch.clientY);
+      while (el && !el.dataset?.itemId) el = el.parentElement;
+      if (el?.dataset?.itemId) {
+        reorderForTarget(el.dataset.itemId);
+      }
+    },
+    onTouchEnd: () => {
+      if (touchState.current.longPressTimer) {
+        clearTimeout(touchState.current.longPressTimer);
+        touchState.current.longPressTimer = null;
+      }
+      if (touchState.current.dragging) {
+        if (orderOverride) commitReorder(orderOverride);
+        else cancelDrag();
+      }
+      touchState.current.dragging = false;
+      touchState.current.id = null;
+    },
+  };
+
   const inputRef = useRef(null);
   const commit = () => {
     const next = draft.trim();
@@ -507,6 +901,10 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
         <span>Updated {relativeTime(updatedAt)}</span>
       </div>
 
+      {/* R3a r3 — category breakdown donut. Self-hides when fewer than two
+          items or only one category is present. */}
+      <CategoryDonut items={list.items}/>
+
       {list.items.length === 0 ? (
         <div style={{textAlign:"center", padding:"40px 20px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, marginBottom:24}}>
           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, color:"var(--ink)", marginBottom:8, letterSpacing:"-0.005em"}}>Nothing here yet.</div>
@@ -514,20 +912,25 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
         </div>
       ) : (
         <div style={{marginBottom:24}}>
-          {sortedItems.map(item => (
+          {renderedItems.map(item => (
             <ItemRow key={item.id} item={item} kidsOn={kidsOn}
+              otherLists={otherListsByItemId.get(item.id) || []}
               onRemove={onRemoveItem}
               onToggleOwned={onToggleOwned}
               onTogglePurchased={onTogglePurchased}
               onEditNote={onEditNote}
-              onSwapItem={onSwapItem}/>
+              onSwapItem={onSwapItem}
+              onOpenList={onOpenList}
+              drag={drag}/>
           ))}
         </div>
       )}
 
-      <div style={{marginBottom:32}}>
+      <div style={{marginBottom:24}}>
         <PillButton onClick={onAddItem}><Plus/> Add item</PillButton>
       </div>
+
+      <SuggestionsSection items={list.items} onAdd={(name) => onAddByName(name)}/>
 
       <div style={{borderTop:"1px solid var(--rule)", paddingTop:20, marginBottom:32}}>
         <button onClick={() => onDeleteList(list.id)}
@@ -561,10 +964,75 @@ const RecentScanRow = ({ scan, onPick }) => (
   </div>
 );
 
-const AddItemSheet = ({ recentScans, onClose, onAddFromScan, onAddByName, onAddByUrl, isMobile }) => {
+const AddItemSheet = ({ recentScans, onClose, onAddFromScan, onAddByName, onAddByNameMulti, onAddByUrl, isMobile }) => {
   const [tab, setTab] = useState("recent");
   const [nameInput, setNameInput] = useState("");
   const [urlInput, setUrlInput] = useState("");
+  // R3a r3 — voice input. recognitionRef holds the SpeechRecognition
+  // instance, lazily constructed on first mount. supportsVoice is checked
+  // at mount via the window global so the mic button hides entirely on
+  // browsers that don't implement the API (Firefox stable, older Safari).
+  const recognitionRef = useRef(null);
+  const [recording, setRecording] = useState(false);
+  const [supportsVoice, setSupportsVoice] = useState(false);
+
+  useEffect(() => {
+    const SR = typeof window !== "undefined"
+      ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+      : null;
+    if (!SR) return;
+    setSupportsVoice(true);
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.continuous = false;
+    rec.onresult = (e) => {
+      try {
+        const transcript = e.results[0][0].transcript || "";
+        const parts = splitTranscript(transcript);
+        if (parts.length > 1) {
+          // Multi-product utterance: add each as a separate name item.
+          if (typeof onAddByNameMulti === "function") {
+            onAddByNameMulti(parts);
+          } else {
+            parts.forEach(p => onAddByName(p));
+          }
+          setNameInput("");
+        } else if (parts.length === 1) {
+          setNameInput(parts[0]);
+        } else {
+          setNameInput(transcript.trim());
+        }
+      } finally {
+        setRecording(false);
+      }
+    };
+    rec.onerror = () => setRecording(false);
+    rec.onend = () => setRecording(false);
+    recognitionRef.current = rec;
+    return () => {
+      try { rec.abort?.(); } catch {}
+      recognitionRef.current = null;
+    };
+  }, [onAddByName, onAddByNameMulti]);
+
+  const startMic = () => {
+    if (!recognitionRef.current || recording) return;
+    try {
+      setRecording(true);
+      recognitionRef.current.start();
+    } catch {
+      // start() throws if a session is already running; ignore.
+      setRecording(false);
+    }
+  };
+
+  const stopMic = () => {
+    if (!recognitionRef.current) return;
+    try { recognitionRef.current.stop(); } catch {}
+    setRecording(false);
+  };
 
   const filteredRecent = useMemo(() => {
     if (!nameInput.trim() || tab !== "name") return recentScans;
@@ -615,11 +1083,21 @@ const AddItemSheet = ({ recentScans, onClose, onAddFromScan, onAddByName, onAddB
 
           {tab === "name" && (
             <div>
-              <input value={nameInput}
-                onChange={e=>setNameInput(e.target.value)}
-                onKeyDown={e=>{ if (e.key === "Enter") submitName(); }}
-                placeholder="Type a product name"
-                style={{width:"100%", padding:"12px 14px", borderRadius:CARD_SHAPE, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, color:"var(--ink)", marginBottom:14, boxSizing:"border-box"}}/>
+              <div style={{display:"flex", alignItems:"center", gap:10, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:CARD_SHAPE, padding:"4px 6px 4px 14px", marginBottom:14}}>
+                <input value={nameInput}
+                  onChange={e=>setNameInput(e.target.value)}
+                  onKeyDown={e=>{ if (e.key === "Enter") submitName(); }}
+                  placeholder={recording ? "Listening..." : "Type a product name"}
+                  style={{flex:1, padding:"10px 0", border:"none", outline:"none", background:"transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, color:"var(--ink)", minWidth:0}}/>
+                {supportsVoice && (
+                  <button onClick={recording ? stopMic : startMic}
+                    aria-label={recording ? "Stop listening" : "Start voice input"}
+                    aria-pressed={recording}
+                    style={{flexShrink:0, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background: recording ? "var(--moss-soft)" : "transparent", border:"none", borderRadius:999, cursor:"pointer", color: recording ? "var(--score-red)" : "var(--moss)", animation: recording ? "partiqulePulse 1.2s ease-in-out infinite" : "none"}}>
+                    <Mic size={17} color="currentColor"/>
+                  </button>
+                )}
+              </div>
               {filteredRecent.length > 0 && (
                 <div style={{marginBottom:14}}>
                   <SectionStamp label="Match from recents"/>
@@ -884,7 +1362,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
   const addItemByName = (name) => {
     if (!activeListId) return;
     const newItem = {
-      id: `i_${Date.now()}`,
+      id: `i_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
       anchor: "name",
       product_name_normalized: name.toLowerCase().trim(),
       product_name: name.trim(),
@@ -894,6 +1372,26 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
     };
     setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
     setAddOpen(false);
+  };
+
+  // R3a r3 — multi-product add path from voice input. Builds a batch of
+  // items and writes them in a single setLists call so the list doesn't
+  // re-render N times. Closes the add sheet once at the end.
+  const addItemByNameMulti = (names) => {
+    if (!activeListId || !names || !names.length) return;
+    const stamp = new Date().toISOString();
+    const newItems = names.map((name, idx) => ({
+      id: `i_${Date.now()}_${idx}_${Math.random().toString(36).slice(2,6)}`,
+      anchor: "name",
+      product_name_normalized: name.toLowerCase().trim(),
+      product_name: name.trim(),
+      purchased: false,
+      added_at: stamp,
+      flags: [],
+    }));
+    setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, ...newItems] } : l));
+    setAddOpen(false);
+    showToast(names.length === 1 ? `Added ${names[0]}.` : `Added ${names.length} items.`);
   };
 
   const addItemByUrl = (rawUrl) => {
@@ -965,6 +1463,23 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
     setEditingNote(null);
   };
 
+  // R3a r3 — drag-to-reorder commit. Receives an array of item IDs in the
+  // user's intended visual order and rewrites list.items to match. The
+  // existing purchased-at-bottom sort in ListDetail is stable, so a
+  // commit that respects the purchased boundary survives the re-sort.
+  const reorderItems = (orderedIds) => {
+    setLists(prev => prev.map(l => {
+      if (l.id !== activeListId) return l;
+      const byId = new Map(l.items.map(i => [i.id, i]));
+      const reordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
+      // Defensive: append any item the new order omitted (shouldn't happen
+      // with the current drag flow, but protects against future bugs).
+      const seen = new Set(orderedIds);
+      for (const i of l.items) if (!seen.has(i.id)) reordered.push(i);
+      return { ...l, items: reordered };
+    }));
+  };
+
   // R3a r2 — quick swap. Replaces product_name + score + kid_score + flags
   // + category in place. Preserves id, anchor, owned, purchased, note,
   // added_at so the row keeps its place and personal context.
@@ -1015,6 +1530,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
         <ListDetail
           key={activeList.id}
           list={activeList}
+          allLists={lists}
           onBack={backToOverview}
           onRename={renameList}
           onAddItem={()=>setAddOpen(true)}
@@ -1024,6 +1540,9 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           onEditNote={(item) => setEditingNote(item)}
           onSwapItem={swapItem}
           onShare={shareList}
+          onReorderItems={reorderItems}
+          onOpenList={openList}
+          onAddByName={addItemByName}
           onDeleteList={(id)=>setPendingDelete(id)}
           isMobile={isMobile}
         />
@@ -1038,6 +1557,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           onClose={()=>setAddOpen(false)}
           onAddFromScan={addItemFromScan}
           onAddByName={addItemByName}
+          onAddByNameMulti={addItemByNameMulti}
           onAddByUrl={addItemByUrl}
           isMobile={isMobile}
         />
