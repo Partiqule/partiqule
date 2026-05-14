@@ -27,6 +27,18 @@ const scoreBg = (s) => {
   return "rgba(176, 73, 58, 0.10)";
 };
 
+// R3a r1 — average score across items that carry a numeric score. Items
+// with anchor="name" never carry a score; they're skipped. kid_score
+// overrides overall score when kidsOn. Rounded to one decimal.
+const computeListAverage = (items, kidsOn) => {
+  const scored = (items || [])
+    .map(i => kidsOn ? i.kid_score : i.score)
+    .filter(s => typeof s === "number" && Number.isFinite(s));
+  if (scored.length === 0) return { avg: null, count: 0 };
+  const sum = scored.reduce((a, b) => a + b, 0);
+  return { avg: Math.round((sum / scored.length) * 10) / 10, count: scored.length };
+};
+
 const relativeTime = (iso) => {
   if (!iso) return "";
   const t = new Date(iso).getTime();
@@ -245,6 +257,11 @@ const ItemRow = ({ item, onRemove, onToggleOwned }) => {
 const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onDeleteList, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
+  // R3a r1 — kids toggle is local to this list view. State resets when the
+  // active list changes because the parent passes key={list.id}, which
+  // remounts the whole detail tree.
+  const [kidsOn, setKidsOn] = useState(false);
+  const scoreInfo = useMemo(() => computeListAverage(list.items, kidsOn), [list.items, kidsOn]);
   const inputRef = useRef(null);
   const commit = () => {
     const next = draft.trim();
@@ -285,6 +302,41 @@ const ListDetail = ({ list, onBack, onRename, onAddItem, onRemoveItem, onToggleO
           <Share/>
         </button>
       </div>
+
+      {/* R3a r1 — list-level score chip + kids toggle. Hidden toggle when no
+          scored items would create a confusing dead control, but we keep the
+          chip slot showing "No scores yet" so the user sees where the score
+          will land once items get scored. */}
+      <div style={{display:"flex", alignItems:"center", flexWrap:"wrap", gap:10, marginTop:6, marginBottom:6}}>
+        {scoreInfo.count > 0 ? (
+          <div key={`avg-${scoreInfo.avg}-${kidsOn ? "k" : "a"}`}
+            style={{display:"inline-flex", animation:"popIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both"}}>
+            <ScoreChip score={scoreInfo.avg}/>
+          </div>
+        ) : (
+          <span style={{display:"inline-flex", alignItems:"center", padding:"4px 10px", borderRadius:999, background:"var(--rule-soft)", border:"1px solid var(--rule)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-faint)"}}>
+            No scores yet
+          </span>
+        )}
+        {scoreInfo.count > 0 && (
+          <button onClick={() => setKidsOn(v => !v)} aria-pressed={kidsOn}
+            style={{display:"inline-flex", alignItems:"center", gap:8, padding:"5px 12px", borderRadius:999, background: kidsOn ? "var(--moss-soft)" : "transparent", border: kidsOn ? "1px solid var(--moss)" : "1px solid var(--rule-strong)", color: kidsOn ? "var(--moss-deep)" : "var(--ink-soft)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", cursor:"pointer"}}>
+            <span style={{width:7, height:7, borderRadius:"50%", background: kidsOn ? "var(--moss)" : "var(--ink-faint)", opacity: kidsOn ? 1 : 0.5}}/>
+            Kids
+          </button>
+        )}
+      </div>
+
+      {scoreInfo.count > 0 ? (
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:18}}>
+          Average across {scoreInfo.count} scored {scoreInfo.count === 1 ? "item" : "items"}.
+        </div>
+      ) : (
+        <button onClick={onAddItem}
+          style={{display:"inline-block", marginBottom:18, padding:0, background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3, textAlign:"left"}}>
+          Add scored items to see this list's score
+        </button>
+      )}
 
       <div style={{display:"flex", alignItems:"center", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-soft)", marginBottom:24}}>
         <span>{list.items.length} {list.items.length === 1 ? "item" : "items"}</span>
@@ -479,6 +531,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
         product_name: h.product_name,
         category:     h.category || "other",
         score:        h.overall_score ?? h.score ?? null,
+        kid_score:    h.child_score ?? h.kid_score ?? h.overall_score ?? h.score ?? null,
         scanned_at:   h.scanned_at || h.cached_at || new Date().toISOString(),
       }));
     return real.length >= 3 ? real : FAKE_RECENT_SCANS;
@@ -519,6 +572,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       product_name: scan.product_name,
       category: scan.category,
       score: scan.score,
+      kid_score: scan.kid_score ?? scan.score,
       owned: true,
       scanned_at: scan.scanned_at,
     };
@@ -598,6 +652,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       )}
       {view === "detail" && activeList && (
         <ListDetail
+          key={activeList.id}
           list={activeList}
           onBack={backToOverview}
           onRename={renameList}

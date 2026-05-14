@@ -22,6 +22,7 @@ export const FAKE_LISTS = [
         product_name: "Hipp Organic Apple Sauce",
         category: "food",
         score: 2,
+        kid_score: 2,
         owned: true,
       },
       {
@@ -37,6 +38,7 @@ export const FAKE_LISTS = [
         product_name: "Siggi's Kids Yogurt Pouch",
         category: "food",
         score: 3,
+        kid_score: 5,
       },
     ],
   },
@@ -53,6 +55,7 @@ export const FAKE_LISTS = [
         product_name: "Native Deodorant Coconut and Vanilla",
         category: "personal_care",
         score: 4,
+        kid_score: 7,
         owned: true,
       },
     ],
@@ -70,12 +73,12 @@ export const FAKE_LISTS = [
 // Renders the "From recent scans" picker with believable rows so Sara
 // can demo the flow on a fresh session.
 export const FAKE_RECENT_SCANS = [
-  { product_name: "Skittles Original",      category: "food",          score: 8, scanned_at: "2026-05-13T16:20:00Z" },
-  { product_name: "Liquid Death Mountain",  category: "beverage",      score: 1, scanned_at: "2026-05-13T11:05:00Z" },
-  { product_name: "Tide Pods Original",     category: "cleaning",      score: 7, scanned_at: "2026-05-12T20:14:00Z" },
-  { product_name: "Native Deodorant",       category: "personal_care", score: 4, scanned_at: "2026-05-12T08:30:00Z" },
-  { product_name: "Honey Nut Cheerios",     category: "food",          score: 6, scanned_at: "2026-05-11T07:42:00Z" },
-  { product_name: "Lululemon Align Pant",   category: "clothing",      score: 5, scanned_at: "2026-05-10T18:55:00Z" },
-  { product_name: "Hipp Organic Apple",     category: "food",          score: 2, scanned_at: "2026-05-09T12:10:00Z" },
-  { product_name: "Branch Basics Spray",    category: "cleaning",      score: 2, scanned_at: "2026-05-08T09:24:00Z" },
+  { product_name: "Skittles Original",      category: "food",          score: 8, kid_score: 9, scanned_at: "2026-05-13T16:20:00Z" },
+  { product_name: "Liquid Death Mountain",  category: "beverage",      score: 1, kid_score: 1, scanned_at: "2026-05-13T11:05:00Z" },
+  { product_name: "Tide Pods Original",     category: "cleaning",      score: 7, kid_score: 9, scanned_at: "2026-05-12T20:14:00Z" },
+  { product_name: "Native Deodorant",       category: "personal_care", score: 4, kid_score: 7, scanned_at: "2026-05-12T08:30:00Z" },
+  { product_name: "Honey Nut Cheerios",     category: "food",          score: 6, kid_score: 8, scanned_at: "2026-05-11T07:42:00Z" },
+  { product_name: "Lululemon Align Pant",   category: "clothing",      score: 5, kid_score: 5, scanned_at: "2026-05-10T18:55:00Z" },
+  { product_name: "Hipp Organic Apple",     category: "food",          score: 2, kid_score: 2, scanned_at: "2026-05-09T12:10:00Z" },
+  { product_name: "Branch Basics Spray",    category: "cleaning",      score: 2, kid_score: 3, scanned_at: "2026-05-08T09:24:00Z" },
 ];
