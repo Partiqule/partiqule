@@ -30,6 +30,7 @@
 
 const crypto = require("crypto");
 const { KNOWLEDGE_ENTRIES, findEntry: findKnowledgeEntryById } = require("./knowledge");
+const { CONTEXTS, findContext: findContextById } = require("./contexts");
 const { FLAG_DEFS, detectFlags } = require("./flagDetection");
 
 // ── ENV ──────────────────────────────────────────────────────────
@@ -66,12 +67,20 @@ const personalizationBucket = (n) => {
   if (n <= 2) return "few";
   return "many";
 };
-// v3 bumped when home_connection moved out of Pass 2 and became a
-// deterministic count headline. Pass 2 now only writes explanation +
-// context_lines; the count line is templated server-side so the number
-// is always accurate rather than LLM-framed.
+// v4 bumped when R5b.3 introduced context queries alongside knowledge.
+// Bumping the knowledge namespace at the same time keeps version
+// numbers aligned across related Ask caches. Old v3 entries naturally
+// expire under their TTL; no migration needed.
 const knowledgeCacheKey = (entryId, bucket) =>
-  `ask:knowledge:v3:${entryId}:${bucket}`;
+  `ask:knowledge:v4:${entryId}:${bucket}`;
+
+// R5b.3 context bundle caches. Per-context bundle intro framing is
+// invariant once curated; per-category framing varies by context-id
+// plus category-slug since reasoning ties the slot to the bundle.
+const contextIntroCacheKey = (contextId) =>
+  `ask:context_intro:v1:${contextId}`;
+const contextCategoryCacheKey = (contextId, slug) =>
+  `ask:context_cat:v1:${contextId}:${slug}`;
 
 const contextSignature = (intent) => {
   const audience = intent.audience || "any";
@@ -196,10 +205,44 @@ const CATEGORY_KEYWORDS = {
   cookware:            [/\bpan\b|\bskillet|\bcookware|\bdutch\s+oven|\bcast\s+iron|\bnonstick/],
 };
 
+// Context category slugs in backend/contexts.js are written in their
+// natural plural form ("diapers", "pacifiers", "yogurt_pouches") while
+// CATEGORY_KEYWORDS keys are singular ("diaper", "pacifier",
+// "yogurt_pouch"). Explicit alias map covers the live context slugs;
+// the trailing-s strip catches anything else regular.
+const PLURAL_ALIASES = {
+  diapers:         "diaper",
+  pacifiers:       "pacifier",
+  yogurt_pouches:  "yogurt_pouch",
+  fruit_pouches:   "fruit_pouch",
+  juice_boxes:     "juice_box",
+  swaddles:        "swaddle",
+  nursing_pads:    "nursing_pad",
+  // travel_snacks aliases to the general snack keyword set — vacation
+  // snacks are loosely defined, and the sparse flag would be misleading.
+  travel_snacks:   "snack",
+  // granola_bars deliberately NOT aliased: chip / pretzel / cracker matches
+  // would surface non-granola products. Sparse honestly until calibration
+  // grows granola-bar entries.
+  leggings:        "legging",
+  pajamas:         "pajama",
+};
+
 function categoryPatterns(slug) {
   if (!slug) return [];
   const direct = CATEGORY_KEYWORDS[slug];
   if (direct) return direct;
+  // Alias map for known plural / contextual slugs.
+  const alias = PLURAL_ALIASES[slug];
+  if (alias) {
+    const direct2 = CATEGORY_KEYWORDS[alias];
+    if (direct2) return direct2;
+  }
+  // Generic trailing-s strip for regular plurals not in the alias map.
+  if (/[a-z]s$/.test(slug) && !/ss$/.test(slug)) {
+    const direct3 = CATEGORY_KEYWORDS[slug.slice(0, -1)];
+    if (direct3) return direct3;
+  }
   // Fallback: try the slug words against the key
   const words = String(slug).toLowerCase().split(/[_\s]+/).filter(Boolean);
   if (!words.length) return [];
@@ -908,6 +951,307 @@ async function handleKnowledgeQuery(deps, ctx) {
   });
 }
 
+// ── CONTEXT: ENTRY LOOKUP ────────────────────────────────────────
+// Resolution order:
+//   1. Pass 1 may emit { context_id: "tpl_newborn" } when the model
+//      recognized the canonical bundle name. Exact id hit, status=live.
+//   2. Otherwise, exact id hit against the normalized query slug.
+//   3. Otherwise, substring match against entry.name (case-insensitive,
+//      shorter-name first to prefer "Pantry restock" over "First
+//      trimester pregnancy" when the query contains "restock").
+// Only live entries qualify; needs_review entries return null so the
+// caller emits a refuse SSE event.
+function findContextEntry(intent, normalizedQuery) {
+  const liveEntries = CONTEXTS.filter(c => c.status === "live");
+
+  // 1. Pass 1 supplied context_id.
+  if (intent && typeof intent.context_id === "string" && intent.context_id) {
+    const direct = findContextById(intent.context_id);
+    if (direct && direct.status === "live") return direct;
+  }
+
+  // 2. Normalized query as exact id.
+  const normalizedSlug = normalizeSubject(normalizedQuery)
+    .replace(/\s+/g, "_");
+  if (normalizedSlug) {
+    const direct = findContextById(normalizedSlug);
+    if (direct && direct.status === "live") return direct;
+  }
+
+  // 3. Substring match on entry.name. Sort shorter names first so
+  // generic matches don't capture more specific ones.
+  const needle = normalizeSubject(normalizedQuery);
+  if (!needle) return null;
+  const candidates = liveEntries
+    .map(c => ({ c, name: String(c.name || "").toLowerCase() }))
+    .filter(({ name }) => name && (name.includes(needle) || needle.includes(name)))
+    .sort((a, b) => a.name.length - b.name.length);
+  return candidates[0]?.c || null;
+}
+
+// ── CONTEXT: PASS 2 PROMPTS ──────────────────────────────────────
+const CONTEXT_INTRO_SYSTEM = `You write the one-sentence opening for a Partiqule context bundle. The bundle is a curated set of clean products for a life moment (newborn essentials, pantry restock, family vacation, etc.).
+
+Voice rules (HARD CONSTRAINTS — output must satisfy all):
+- Never use the word "safe" in any form.
+- Never use first person: "we", "our", "I" are forbidden.
+- No medical claims, no panic framing.
+- Refer to Partiqule by name, not as "we".
+- Address the reader directly with "you" when appropriate; never "the user".
+
+Input: a context (name, audience array, list of category labels).
+
+Return strict JSON only:
+{
+  "intro": "one short sentence opening the bundle. ≤25 words. Names the context and sets a calm framing. Examples: 'Newborn essentials: the small set that covers the first three months.' / 'Pantry restock: the cleaner choice for each staple you reach for daily.'"
+}
+
+Return strict JSON only. No backticks, no markdown.`;
+
+const CONTEXT_CATEGORY_SYSTEM = `You write the one-sentence reasoning line under a single product category inside a Partiqule context bundle. The reasoning ties this category to the bundle's purpose.
+
+Voice rules (HARD CONSTRAINTS — output must satisfy all):
+- Never use the word "safe" in any form.
+- Never use first person: "we", "our", "I" are forbidden.
+- No medical claims, no causation language ("causes", "linked to"), no panic framing.
+- Address the reader as "you" when appropriate; never "the user".
+- State the category-to-context tie in plain, calm, specific language. Score-anchored receipts (e.g. "fragrance-free", "stainless steel construction") preferred over abstract claims.
+
+Input: a context (name, audience) plus a category (label, slug).
+
+Return strict JSON only:
+{
+  "reasoning": "one short sentence, ≤30 words, tying this category to the context. Example for newborn essentials + baby wipes: 'For a newborn, fragrance-free wipes reduce contact irritation in the first months.'"
+}
+
+Return strict JSON only. No backticks, no markdown.`;
+
+const FORBIDDEN_BUNDLE_RE = FORBIDDEN_RE;
+
+function templatedContextIntro(context) {
+  const name = context.name || "Bundle";
+  return { intro: `${name}: a curated set of cleaner options for this moment.` };
+}
+
+function templatedCategoryReasoning(context, category) {
+  const label = category.label || category.slug || "this category";
+  return { reasoning: `${label} for ${context.name || "this bundle"}.` };
+}
+
+async function frameContextIntro({ callClaude, redisGet, redisSetEx, hasRedis }, context) {
+  const cacheKey = contextIntroCacheKey(context.id);
+  if (hasRedis) {
+    try {
+      const hit = await redisGet(cacheKey);
+      if (hit && typeof hit === "object" && typeof hit.intro === "string"
+          && !FORBIDDEN_BUNDLE_RE.some(re => re.test(hit.intro))) {
+        return { framing: hit, cached: true, fallback: false };
+      }
+    } catch {}
+  }
+
+  const slim = {
+    name: context.name,
+    audience: Array.isArray(context.audience) ? context.audience : [],
+    categories: (context.categories || []).map(c => c.label).filter(Boolean),
+  };
+  const userPrompt = `Context: ${JSON.stringify(slim)}`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const parsed = await callClaude(CONTEXT_INTRO_SYSTEM, userPrompt, 200, 1);
+      if (!parsed || typeof parsed !== "object") throw new Error("non-object");
+      const intro = String(parsed.intro || "").trim();
+      if (!intro || FORBIDDEN_BUNDLE_RE.some(re => re.test(intro))) throw new Error("voice violation");
+      const framing = { intro: intro.slice(0, 250) };
+      if (hasRedis) redisSetEx(cacheKey, framing, ASK_FRAMING_CACHE_TTL_S).catch(() => {});
+      return { framing, cached: false, fallback: false };
+    } catch (e) {
+      if (attempt === 1) {
+        return { framing: templatedContextIntro(context), cached: false, fallback: true };
+      }
+    }
+  }
+}
+
+async function frameCategoryReasoning({ callClaude, redisGet, redisSetEx, hasRedis }, context, category) {
+  const cacheKey = contextCategoryCacheKey(context.id, category.slug);
+  if (hasRedis) {
+    try {
+      const hit = await redisGet(cacheKey);
+      if (hit && typeof hit === "object" && typeof hit.reasoning === "string"
+          && !FORBIDDEN_BUNDLE_RE.some(re => re.test(hit.reasoning))) {
+        return { framing: hit, cached: true, fallback: false };
+      }
+    } catch {}
+  }
+
+  const slim = {
+    context_name: context.name,
+    audience: Array.isArray(context.audience) ? context.audience : [],
+    category_label: category.label,
+    category_slug: category.slug,
+  };
+  const userPrompt = `Context+category: ${JSON.stringify(slim)}`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const parsed = await callClaude(CONTEXT_CATEGORY_SYSTEM, userPrompt, 200, 1);
+      if (!parsed || typeof parsed !== "object") throw new Error("non-object");
+      const reasoning = String(parsed.reasoning || "").trim();
+      if (!reasoning || FORBIDDEN_BUNDLE_RE.some(re => re.test(reasoning))) throw new Error("voice violation");
+      const framing = { reasoning: reasoning.slice(0, 250) };
+      if (hasRedis) redisSetEx(cacheKey, framing, ASK_FRAMING_CACHE_TTL_S).catch(() => {});
+      return { framing, cached: false, fallback: false };
+    } catch (e) {
+      if (attempt === 1) {
+        return { framing: templatedCategoryReasoning(context, category), cached: false, fallback: true };
+      }
+    }
+  }
+}
+
+// ── CONTEXT: REQUEST HANDLER ─────────────────────────────────────
+async function handleContextQuery(deps, ctx) {
+  const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
+  const { CALIBRATION } = deps;
+
+  const context = findContextEntry(intent, normalized);
+
+  if (!context) {
+    sse.emit("refuse", {
+      reason: "context_not_live",
+      message: "Context bundles for that ship soon. Try asking for a specific product instead.",
+    });
+    sse.end();
+    writeAuditLog(deps, {
+      user_id: userId, query: rawQuery, normalized_query: normalized,
+      parsed_intent: intent, classification_confidence: intent.confidence,
+      error: "context_not_live",
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent, cached_framings: [],
+    });
+    return;
+  }
+
+  // Per-category retrieval is synchronous (in-memory calibration scan).
+  // Per-category framing + bundle intro framing are async (LLM calls).
+  // Fire everything in parallel and emit each event as it resolves so
+  // the frontend can render progressively.
+  const audience = Array.isArray(context.audience) && context.audience.length
+    ? context.audience[0] : null;
+  // Map audience labels to retrieval audience values. retrieveProducts
+  // expects "adult" | "child" | "baby"; context audience is freeform.
+  const audienceForRetrieve = (audience === "newborn" || audience === "baby") ? "baby"
+    : (audience === "kid" || audience === "child") ? "child"
+    : (audience === "parent" || audience === "household" || audience === "family") ? null
+    : null;
+
+  const cachedFramings = [];
+
+  // Bundle intro fires its own promise. Don't await; emit on resolve.
+  const introPromise = frameContextIntro(deps, context).then(({ framing, cached, fallback }) => {
+    if (cached) cachedFramings.push(`intro:${context.id}`);
+    sse.emit("bundle_intro", {
+      context_id: context.id,
+      name: context.name,
+      label: context.label || context.name,
+      intro: framing.intro,
+      framing_fallback: !!fallback,
+      framing_cached: !!cached,
+    });
+    return { framing, cached, fallback };
+  });
+
+  // Per-category: synchronous retrieval, async framing. Each category
+  // promise resolves to its emitted "category" event payload.
+  const allProductKeys = [];
+  const categoryPromises = (context.categories || []).map(async (cat) => {
+    const catIntent = {
+      type: "product",
+      category: cat.slug,
+      audience: audienceForRetrieve,
+      constraints: intent.constraints || [],
+    };
+    const retrieved = retrieveProducts({ CALIBRATION }, catIntent);
+    const maxItems = typeof cat.max_items === "number" ? cat.max_items : 3;
+    const minItems = typeof cat.min_items === "number" ? cat.min_items : 1;
+    const capped = retrieved.slice(0, maxItems);
+
+    const { framing, cached, fallback } = await frameCategoryReasoning(deps, context, cat);
+    if (cached) cachedFramings.push(`cat:${context.id}:${cat.slug}`);
+
+    const products = capped.map(({ key, entry, score }) => ({
+      id: key,
+      product_name: toTitleCaseForDisplay(key),
+      calibration_key: key,
+      score,
+      kid_score: typeof entry.kidsFloor === "number" ? entry.kidsFloor : null,
+      category: entry.category || null,
+      flags: Array.isArray(entry.substances)
+        ? entry.substances.map(s => String(s).slice(0, 60))
+        : [],
+      image_url: null,
+      // buy_links resolved on the frontend via buyLinksForName so the
+      // partner tag stays out of the server payload.
+      buy_links: null,
+    }));
+
+    for (const p of products) allProductKeys.push(p.id);
+
+    const payload = {
+      slug: cat.slug,
+      label: cat.label,
+      reasoning: framing.reasoning,
+      products,
+      sparse: products.length < minItems,
+      max_items: maxItems,
+      min_items: minItems,
+      framing_fallback: !!fallback,
+      framing_cached: !!cached,
+    };
+    sse.emit("category", payload);
+    return payload;
+  });
+
+  // Wait for everything before emitting done.
+  const [introResult, ...categoryResults] = await Promise.allSettled([introPromise, ...categoryPromises]);
+  const settledCategories = categoryResults
+    .filter(r => r.status === "fulfilled")
+    .map(r => r.value);
+  const totalProducts = settledCategories.reduce((n, c) => n + (c.products?.length || 0), 0);
+
+  sse.emit("done", {
+    response_type: "context",
+    context_id: context.id,
+    category_count: settledCategories.length,
+    product_count: totalProducts,
+  });
+  sse.end();
+
+  writeAuditLog(deps, {
+    user_id: userId,
+    query: rawQuery,
+    normalized_query: normalized,
+    parsed_intent: intent,
+    classification_confidence: intent.confidence,
+    context_id: context.id,
+    context_categories: settledCategories.map(c => c.slug),
+    retrieved_product_ids: allProductKeys,
+    framing_outputs: [
+      { kind: "intro", context_id: context.id, ok: introResult.status === "fulfilled" },
+      ...settledCategories.map(c => ({ kind: "category", slug: c.slug, ok: true })),
+    ],
+    final_response: {
+      response_type: "context",
+      context_id: context.id,
+      category_count: settledCategories.length,
+      product_count: totalProducts,
+    },
+    duration_ms: Date.now() - requestStartMs,
+    cached_intent: cachedIntent,
+    cached_framings: cachedFramings,
+  });
+}
+
 // ── ROUTE REGISTRATION ───────────────────────────────────────────
 function registerAskRoutes(app, deps) {
   const {
@@ -1020,14 +1364,10 @@ function registerAskRoutes(app, deps) {
       });
       return;
     }
+    // Type 3: context bundle. Route through the live context map.
     if (intent.type === "context") {
-      sse.emit("refuse", { reason: "context_not_yet", message: "Bundles for life moments ship soon. Try asking for a single product instead." });
-      sse.end();
-      writeAuditLog(deps, {
-        user_id: userId, query: rawQuery, normalized_query: normalized,
-        parsed_intent: intent, classification_confidence: intent.confidence,
-        error: "refused_context", duration_ms: Date.now() - requestStartMs,
-        cached_intent: cachedIntent, cached_framings: [],
+      await handleContextQuery(deps, {
+        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
       });
       return;
     }
