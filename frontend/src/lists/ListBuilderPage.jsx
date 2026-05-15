@@ -596,7 +596,29 @@ const SuggestionsSection = ({ items, onAdd }) => {
 };
 
 // ── List detail ────────────────────────────────────────────────────
-const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onOpenList, drag }) => {
+// Small retailer button row, mirrors the Ask r2 quiet style so it stays
+// consistent across surfaces. Each link hides when the URL isn't built;
+// whole row hides when none of the three resolved.
+const ItemBuyLinks = ({ links }) => {
+  const entries = [];
+  if (links?.amazon) entries.push({ key: "amazon", label: "Amazon", url: links.amazon });
+  if (links?.brand)  entries.push({ key: "brand",  label: "Brand site", url: links.brand });
+  if (links?.target) entries.push({ key: "target", label: "Target", url: links.target });
+  if (!entries.length) return null;
+  return (
+    <div style={{display:"flex", flexWrap:"wrap", gap:8, marginTop:10}}>
+      {entries.map(e => (
+        <a key={e.key} href={e.url} target="_blank" rel="noopener noreferrer"
+          aria-label={`Open on ${e.label}`}
+          style={{display:"inline-flex", alignItems:"center", gap:4, padding:"4px 10px", borderRadius:999, background:"transparent", border:"1px solid var(--rule)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:500, color:"var(--ink-soft)", letterSpacing:"0.01em", textDecoration:"none", cursor:"pointer"}}>
+          {e.label} <span style={{color:"var(--moss)"}}>→</span>
+        </a>
+      ))}
+    </div>
+  );
+};
+
+const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onOpenList, buyLinksFor, drag }) => {
   const displayName = item.product_name || item.product_name_normalized || "Unnamed item";
   const isReading = item.placeholder === true;
   const purchased = !!item.purchased;
@@ -663,8 +685,13 @@ const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned,
           style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, marginTop:1, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
           <CheckCircle filled={purchased} size={20}/>
         </button>
-        <div style={{flexShrink:0, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:TILE_SHAPE, background:"var(--cream-light)", border:"1px solid var(--rule-soft)"}}>
-          <CategoryIcon category={item.category} size={16} color="var(--moss)"/>
+        {/* R3g+ — decorative category indicator. The border was reading
+            as a tap target. Dropped the border and softened the icon
+            color so the eye groups it with the product name rather
+            than the action affordances. */}
+        <div aria-hidden="true"
+          style={{flexShrink:0, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", borderRadius:TILE_SHAPE, background:"var(--cream-light)"}}>
+          <CategoryIcon category={item.category} size={15} color="var(--ink-soft)"/>
         </div>
         <div style={{flex:1, minWidth:0}}>
           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:16, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.3, marginBottom:6, textDecoration: purchased ? "line-through" : "none", textDecorationColor: purchased ? "var(--ink-faint)" : "transparent", opacity: isReading ? 0.6 : 1}}>
@@ -738,6 +765,13 @@ const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned,
               <ArrowRight size={13} color="var(--moss-deep)"/>
             </button>
           )}
+
+          {/* Buy links: Amazon / Brand / Target. Brand only when the
+              product matches a known direct URL; otherwise hidden so we
+              don't surface a dead button. */}
+          {!isReading && typeof buyLinksFor === "function" && (
+            <ItemBuyLinks links={buyLinksFor(displayName)}/>
+          )}
         </div>
         <button onClick={()=>onRemove(item.id)} aria-label="Remove item"
           style={{flexShrink:0, width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", padding:0, marginTop:1, background:"transparent", border:"none", borderRadius:6, cursor:"pointer"}}>
@@ -748,7 +782,7 @@ const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned,
   );
 };
 
-const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, scoring, isMobile }) => {
+const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, scoring, buyLinksFor, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
   // R3a r1 — kids toggle is local to this list view. State resets when the
@@ -1034,6 +1068,7 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
               onSwapItem={onSwapItem}
               onScoreItem={onScoreItem}
               onOpenList={onOpenList}
+              buyLinksFor={buyLinksFor}
               drag={drag}/>
           ))}
         </div>
@@ -1347,7 +1382,7 @@ const NoteEditModal = ({ initialNote, productName, onSave, onCancel }) => {
 };
 
 // ── Top-level page ─────────────────────────────────────────────────
-const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFetch, apiBase, analyzeQuiet, onAuthRequired }) => {
+const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFetch, apiBase, analyzeQuiet, buyLinksFor, onAuthRequired }) => {
   // R3c — API factory. Memoized so handlers don't churn references.
   const api = useMemo(() => makeListsApi({ authedFetch, apiBase }), [authedFetch, apiBase]);
 
@@ -1995,6 +2030,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
           onAddByName={addItemByName}
           onDeleteList={(id) => setPendingDelete(id)}
           scoring={scoring}
+          buyLinksFor={buyLinksFor}
           isMobile={isMobile}
         />
       )}

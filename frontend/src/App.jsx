@@ -147,6 +147,27 @@ const BIGBOX_URLS = {
   walmart: (name) => `https://www.walmart.com/search?q=${encodeURIComponent(name)}`,
 };
 
+// Buy-link constructor shared with the Lists page. Builds the three
+// retailer URLs from a product name. Brand returns null unless the
+// brand maps to a known BRAND_URLS entry — no dead Google-fallback
+// buttons on rows. Amazon and Target are always returned because both
+// search by name and always resolve to something.
+const buyLinksForName = (productName) => {
+  const trimmed = String(productName || "").trim();
+  if (!trimmed) return {};
+  // Defer to extractBrand which is declared further down in this file;
+  // wrap in a guard since the call site can run before extractBrand is
+  // hoisted in some module orders. function declarations hoist; this
+  // belt-and-suspenders is for arrow assignments.
+  let brand = "";
+  try { brand = (typeof extractBrand === "function" ? extractBrand(trimmed) : "") || ""; } catch {}
+  return {
+    amazon: `https://www.amazon.com/s?k=${encodeURIComponent(trimmed)}&tag=partiqule-20`,
+    brand: hasBrandUrl(brand, trimmed) ? getBrandUrl(brand, trimmed) : null,
+    target: BIGBOX_URLS.target(trimmed),
+  };
+};
+
 function getBrandUrl(brandName, productName) {
   const key = (brandName || "").toLowerCase().trim();
   if (BRAND_URLS[key]) return BRAND_URLS[key];
@@ -3889,7 +3910,7 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Items in your <span style={{color:"var(--moss)"}}>home</span></h1>
+        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Items <span style={{color:"var(--moss)"}}>scanned</span></h1>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -8275,6 +8296,7 @@ function App() {
           authedFetch={authedFetch}
           apiBase={API_BASE}
           analyzeQuiet={analyzeQuiet}
+          buyLinksFor={buyLinksForName}
           onAuthRequired={() => setShowAuth(true)}
         />
       ) : page === "ask-prototype" ? (
@@ -10107,6 +10129,17 @@ function App() {
                           }}/>
                         </div>
                       </button>
+                      {/* Discoverability caption — Sara's review flagged
+                          the toggle didn't read as tappable. Small static
+                          line below makes the affordance and effect
+                          legible without crowding the row. */}
+                      <div style={{
+                        fontFamily:"'DM Sans', system-ui, sans-serif",
+                        fontSize:11, color:"var(--ink-faint)",
+                        textAlign:"center", marginTop:6, lineHeight:1.4,
+                      }}>
+                        {childMode ? "Stricter thresholds for kids applied." : "Tap to apply stricter thresholds for kids."}
+                      </div>
 
                       {/* Child score explanation card */}
                       {childMode && result.child_score && result.child_score !== (result.overall_score || result.score) && (
