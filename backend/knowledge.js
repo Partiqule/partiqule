@@ -36,9 +36,28 @@ const ENTRY_SHAPE = {
 
 const ENTRIES = [
   // ── Chemicals and ingredients ────────────────────────────────
-  { id: "pfas", subject: "PFAS (forever chemicals)", category: "chemical",
-    plain_language_explanation: "", health_safety_context: "",
-    partiqule_flags: ["pfas"], sources: [], status: "needs_curation" },
+  {
+    id: "pfas",
+    subject: "PFAS",
+    category: "chemical",
+    plain_language_explanation:
+      "PFAS stands for per and polyfluoroalkyl substances. A group of thousands of synthetic chemicals engineered to resist water, oil, stains, and heat. They show up in non stick cookware, waterproof clothing, stain resistant fabrics, food packaging like greaseproof wrappers and microwave popcorn bags, cosmetics, and firefighting foams. Often called forever chemicals because the fluorine to carbon bond is one of the strongest in chemistry. They do not break down in the environment over any realistic timeframe. They accumulate in soil, water, wildlife, and human bodies. Trace levels show up in nearly every American's blood.",
+    health_safety_context:
+      "The CDC Agency for Toxic Substances and Disease Registry tracks PFAS health effects from epidemiological studies. Associations identified to date include higher cholesterol levels, reduced antibody response to vaccines in children, changes in liver enzymes, kidney and testicular cancer, and pregnancy complications such as hypertension, preeclampsia, and lower birth weight. In April 2024 the EPA finalized the first enforceable federal drinking water limits for six PFAS at 4 parts per trillion. In May 2025 the agency kept limits on PFOA and PFOS, rescinded limits for four others, and extended compliance to 2031.",
+    partiqule_flags: ["pfas", "ptfe", "fluoropolymer"],
+    sources: [
+      { name: "ATSDR Health Effects of PFAS",
+        url: "https://www.atsdr.cdc.gov/pfas/about/health-effects.html",
+        date: "2025-07-22" },
+      { name: "EPA Per and Polyfluoroalkyl Substances",
+        url: "https://www.epa.gov/sdwa/and-polyfluoroalkyl-substances-pfas",
+        date: "2025-05-14" },
+      { name: "NIEHS PFAS",
+        url: "https://www.niehs.nih.gov/health/topics/agents/pfc/",
+        date: "2024" },
+    ],
+    status: "draft",
+  },
   { id: "phthalates", subject: "Phthalates", category: "chemical",
     plain_language_explanation: "", health_safety_context: "",
     partiqule_flags: ["phthalates"], sources: [], status: "needs_curation" },
