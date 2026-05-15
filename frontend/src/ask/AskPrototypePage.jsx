@@ -519,8 +519,12 @@ const AskPrototypePage = ({
     return next;
   };
 
-  const submit = async () => {
-    const q = query.trim();
+  const submit = async (overrideQuery) => {
+    // The suggested-action handler calls submit(q) with a synthetic query
+    // ("cleaner clothing" / "cleaner cookware"). Reading from the override
+    // bypasses React batching on setQuery, so the SSE stream uses the new
+    // query immediately even before the controlled textarea re-renders.
+    const q = (typeof overrideQuery === "string" ? overrideQuery : query).trim();
     if (!q) return;
     if (q.length < 3) {
       setPhase("tooShort");
@@ -736,9 +740,35 @@ const AskPrototypePage = ({
             matches={knowledgeMatches}
             isMobile={isMobile}
             onSuggestedAction={(action) => {
-              // R5b.2 leaves the suggested-action handler stubbed. Real
-              // navigation wires into the unified home search bar in R5c.
-              showToast(action?.label || "Coming soon.");
+              if (!action) return;
+              const kind = action.kind;
+              // see_options → submit a new Ask query through the existing
+              // flow. For category-specific actions, the friendly display
+              // name is already encoded in the label as "See cleaner
+              // <friendly>" — pull it back out rather than re-deriving
+              // friendly names from the slug on this side.
+              if (kind === "see_options") {
+                let nextQuery;
+                if (action.category) {
+                  const m = String(action.label || "").match(/^See cleaner (.+)$/i);
+                  const friendly = m ? m[1].trim() : action.category;
+                  nextQuery = `cleaner ${friendly}`;
+                } else {
+                  nextQuery = "cleaner alternatives";
+                }
+                setQuery(nextQuery);
+                submit(nextQuery);
+                return;
+              }
+              // scan_more → focus the Ask input so the user can pick the
+              // next question. The proper home-page scan affordance lives
+              // outside this prototype surface; routing into it is R5c.
+              if (kind === "scan_more") {
+                setTimeout(() => textareaRef.current?.focus(), 0);
+                return;
+              }
+              // learn_more → no-op for now. Future: expand sources in
+              // place or route to a glossary view.
             }}
           />
         )}
