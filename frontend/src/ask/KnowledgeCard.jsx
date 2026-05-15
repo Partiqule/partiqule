@@ -74,8 +74,11 @@ const ScoreDot = ({ score }) => {
   );
 };
 
-const HomeConnection = ({ message, matches }) => {
+const HomeConnection = ({ message, matches, matchedTotal }) => {
   if (!message && (!matches || matches.length === 0)) return null;
+  const shown = matches?.length || 0;
+  const total = typeof matchedTotal === "number" && matchedTotal > 0 ? matchedTotal : shown;
+  const hasOverflow = total > shown;
   return (
     <div style={{
       marginTop: 22,
@@ -118,6 +121,17 @@ const HomeConnection = ({ message, matches }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {hasOverflow && (
+        <div style={{
+          marginTop: 12,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontSize: 13,
+          color: "var(--ink-soft)",
+          lineHeight: 1.45,
+        }}>
+          Showing {shown} of {total} — more in your scan history.
         </div>
       )}
     </div>
@@ -241,6 +255,7 @@ const KnowledgeCard = ({ knowledge, matches = [], isMobile = false, onSuggestedA
       <HomeConnection
         message={knowledge.home_connection}
         matches={homeMatches}
+        matchedTotal={knowledge.matched_total}
       />
 
       <SourceChips sources={knowledge.sources}/>

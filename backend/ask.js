@@ -66,10 +66,12 @@ const personalizationBucket = (n) => {
   if (n <= 2) return "few";
   return "many";
 };
-// v2 bumped when the KNOWLEDGE_PASS2_SYSTEM voice rules tightened (direct
-// second-person on the home_connection line, no "likely contain" hedging).
+// v3 bumped when home_connection moved out of Pass 2 and became a
+// deterministic count headline. Pass 2 now only writes explanation +
+// context_lines; the count line is templated server-side so the number
+// is always accurate rather than LLM-framed.
 const knowledgeCacheKey = (entryId, bucket) =>
-  `ask:knowledge:v2:${entryId}:${bucket}`;
+  `ask:knowledge:v3:${entryId}:${bucket}`;
 
 const contextSignature = (intent) => {
   const audience = intent.audience || "any";
@@ -512,7 +514,8 @@ function scanHitsStructured(resultJson, groupKeys) {
 }
 
 async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
-  if (!supabaseAdmin || !userId || !entry) return [];
+  const empty = { matches: [], total: 0 };
+  if (!supabaseAdmin || !userId || !entry) return empty;
   const groupKeys = entryFlagGroupKeys(entry);
   // Non-FLAG_DEFS slugs (e.g. bpa_bps, lead) have no group to intersect
   // — they rely entirely on the text path. Still allow the query to
@@ -521,16 +524,20 @@ async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
   const hasFlagDefsCoverage = groupKeys.length > 0;
   try {
     const cutoff = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
+    // Limit raised from 200 to 500 so matched_total reflects more of
+    // the user's history. Real total cap is still the fetch limit; for
+    // current scale this is well beyond any single user's scan volume.
     const { data, error } = await supabaseAdmin
       .from("scans")
-      .select("id, product_name, result_json, scanned_at")
+      .select("id, product_name, category, result_json, scanned_at")
       .eq("user_id", userId)
       .gte("scanned_at", cutoff)
       .order("scanned_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     if (error) throw error;
-    const matches = [];
+    const display = [];
     const seenNames = new Set();
+    let total = 0;
     for (const row of data || []) {
       const r = row?.result_json || {};
       // Primary path: structured flags array written by attachFlags.
@@ -542,8 +549,6 @@ async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
         hit = scanHitsStructured(r, groupKeys);
         if (!hit) hit = scanHitsEntry(r, groupKeys);
       } else {
-        // No structured coverage available — bail. Future R5b.2.2 may
-        // widen this once non-FLAG_DEFS slugs gain detection support.
         continue;
       }
       if (!hit) continue;
@@ -551,21 +556,25 @@ async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
       const key = String(name).toLowerCase().trim();
       if (seenNames.has(key)) continue;
       seenNames.add(key);
-      const score = typeof r.overall_score === "number" ? r.overall_score
-        : (typeof r.score === "number" ? r.score : null);
-      matches.push({
-        id: row.id,
-        name,
-        score,
-        product_image_url: r.product_image_url || r.image_url || null,
-        scanned_at: row.scanned_at,
-      });
-      if (matches.length >= 5) break;
+      // Count every deduped hit — display only fills with the first 5.
+      total += 1;
+      if (display.length < 5) {
+        const score = typeof r.overall_score === "number" ? r.overall_score
+          : (typeof r.score === "number" ? r.score : null);
+        display.push({
+          id: row.id,
+          name,
+          score,
+          category: row.category || r.category || null,
+          product_image_url: r.product_image_url || r.image_url || null,
+          scanned_at: row.scanned_at,
+        });
+      }
     }
-    return matches;
+    return { matches: display, total };
   } catch (e) {
     console.warn("[ask] home-match scan lookup failed:", e?.message);
-    return [];
+    return empty;
   }
 }
 
@@ -581,32 +590,23 @@ Voice rules (HARD CONSTRAINTS — output must satisfy all):
 - No moralizing, no panic. Plain, calm, specific.
 - Knowledge entries describe associations and regulatory posture — paraphrasing those is allowed because the entry sources them. Do not introduce additional causation language ("causes", "linked to") beyond what the entry text already states.
 
-Address the reader directly in the home_connection line. Required phrasings:
-- Use "your home", "you have", "you've scanned" — NOT "the user's home", "the user has".
-- The matched products were validated by the detector with negation filtering already applied, so state the relationship directly. Use "contain" / "have" / "are sources of" — NOT "likely contain", "may contain", "possibly contain". Hedging language is reserved for unverified claims; matched products are verified.
-
-Examples of correct home_connection phrasings:
-- "Five things in your home contain PFAS."
-- "Three products you've scanned have phthalates in them."
-- "Two items at home are PFAS sources."
-- "One product on your shelf has this."
-
-Input: a knowledge entry (subject, plain_language_explanation, health_safety_context, sources) plus a personalization bucket ("none" / "few" / "many") indicating how many products the user has scanned with this concern.
+Input: a knowledge entry (subject, plain_language_explanation, health_safety_context, sources).
 
 Return strict JSON only:
 {
   "explanation": "paraphrase the plain_language_explanation in 60–90 words. Reads aloud well. No new facts.",
   "context_lines": [
     "one short sentence per major regulatory or health point from health_safety_context. 3–5 lines. Each line stands alone and reads cleanly."
-  ],
-  "home_connection": "one short second-person sentence acknowledging the personalization bucket. 'none' → null. 'few' → naming that one or two products in your home contain this. 'many' → naming the count (three, four, five) of products you have at home that contain this. Direct address only — never 'the user'. Never hedge with 'likely' or 'may'. Do not invent specifics about which products. Null when bucket is 'none'."
+  ]
 }
 
 Return strict JSON only. No backticks, no markdown.`;
 
-function templatedKnowledgeFraming(entry, matchCount) {
+function templatedKnowledgeFraming(entry) {
   // Defensive fallback: hand the curated copy straight through, broken
-  // into a paragraph plus short context lines. Trust the source.
+  // into a paragraph plus short context lines. Trust the source. The
+  // home_connection line is built deterministically in
+  // handleKnowledgeQuery from matched_total, not here.
   const explanation = String(entry.plain_language_explanation || "").trim();
   const contextRaw = String(entry.health_safety_context || "").trim();
   const lines = contextRaw
@@ -614,20 +614,17 @@ function templatedKnowledgeFraming(entry, matchCount) {
     .map(s => s.trim())
     .filter(s => s.length > 0)
     .slice(0, 5);
-  let home = null;
-  if (matchCount === 1) home = "One thing in your home has this.";
-  else if (matchCount === 2) home = "Two things in your home have this.";
-  else if (matchCount >= 3) home = `${matchCount} things in your home have this.`;
   return {
     explanation,
     context_lines: lines,
-    home_connection: home,
   };
 }
 
-async function frameKnowledgeEntry({ callClaude, redisGet, redisSetEx, hasRedis }, entry, matchCount) {
-  const bucket = personalizationBucket(matchCount);
-  const cacheKey = knowledgeCacheKey(entry.id, bucket);
+async function frameKnowledgeEntry({ callClaude, redisGet, redisSetEx, hasRedis }, entry) {
+  // No matchCount in the cache key any more — the framing is bucket-
+  // agnostic now that the count headline is deterministic. One entry
+  // produces one cached framing.
+  const cacheKey = knowledgeCacheKey(entry.id, "any");
   if (hasRedis) {
     try {
       const hit = await redisGet(cacheKey);
@@ -644,7 +641,6 @@ async function frameKnowledgeEntry({ callClaude, redisGet, redisSetEx, hasRedis 
     sources: Array.isArray(entry.sources)
       ? entry.sources.map(s => ({ name: s.name, date: s.date }))
       : [],
-    personalization_bucket: bucket,
   };
   const userPrompt = `Knowledge entry: ${JSON.stringify(slim)}`;
 
@@ -663,25 +659,15 @@ async function frameKnowledgeEntry({ callClaude, redisGet, redisSetEx, hasRedis 
             .slice(0, 5)
         : [];
 
-      let homeConnection = parsed.home_connection;
-      if (homeConnection != null) {
-        homeConnection = String(homeConnection).trim();
-        if (!homeConnection || containsForbidden(homeConnection)) homeConnection = null;
-      } else {
-        homeConnection = null;
-      }
-      if (bucket === "none") homeConnection = null;
-
       const framing = {
         explanation: explanation.slice(0, 800),
         context_lines: contextLines,
-        home_connection: homeConnection,
       };
       if (hasRedis) redisSetEx(cacheKey, framing, ASK_FRAMING_CACHE_TTL_S).catch(() => {});
       return { framing, cached: false, fallback: false };
     } catch (e) {
       if (attempt === 1) {
-        return { framing: templatedKnowledgeFraming(entry, matchCount), cached: false, fallback: true };
+        return { framing: templatedKnowledgeFraming(entry), cached: false, fallback: true };
       }
     }
   }
@@ -721,6 +707,71 @@ function suggestedActionFor(entry) {
   return { kind: "scan_more", label: "Scan a product to check" };
 }
 
+// Deterministic count headline. Numbers must be accurate, not framed —
+// the LLM no longer writes the home_connection line. Zero matches
+// suppresses the home connection block entirely (caller passes null).
+function buildHomeHeadline(entry, total) {
+  if (!total || total <= 0) return null;
+  const subj = entry?.subject || "this";
+  if (total === 1) return `1 product you've scanned contains ${subj}.`;
+  return `${total} products you've scanned contain ${subj}.`;
+}
+
+// Friendly category names for the dynamic suggested action label.
+// Maps the storage slug to display-ready copy.
+const CATEGORY_FRIENDLY = {
+  food:           "food",
+  food_beverage:  "food",
+  beverage:       "beverages",
+  personal_care:  "personal care",
+  baby:           "baby products",
+  clothing:       "clothing",
+  home:           "home goods",
+  kitchen:        "cookware",
+  cookware:       "cookware",
+  supplement:     "supplements",
+  toys:           "toys",
+  toy:            "toys",
+  accessory:      "accessories",
+  restaurant:     "restaurants",
+};
+
+// Derive the suggested action from the user's matched products instead
+// of the static SUGGESTED_ACTION_BY_ID map. A chemical like PFAS spans
+// cookware, clothing, food packaging, cosmetics — a single hardcoded
+// category misrepresents most users. When the matched products show a
+// clear category majority (>=60%), the label names it specifically.
+// Otherwise we fall back to a generic "in your home" phrasing. The
+// static map remains the fallback for anonymous users and entries with
+// no home-match component.
+function dynamicSuggestedAction(entry, matches) {
+  if (!Array.isArray(matches) || matches.length === 0) {
+    return suggestedActionFor(entry);
+  }
+  const counts = {};
+  for (const m of matches) {
+    const cat = String(m?.category || "other").toLowerCase().trim();
+    if (!cat || cat === "other") continue;
+    counts[cat] = (counts[cat] || 0) + 1;
+  }
+  let dominant = null, dominantCount = 0;
+  for (const [cat, n] of Object.entries(counts)) {
+    if (n > dominantCount) { dominant = cat; dominantCount = n; }
+  }
+  const share = dominantCount / matches.length;
+  if (dominant && share >= 0.60 && CATEGORY_FRIENDLY[dominant]) {
+    return {
+      kind: "see_options",
+      category: dominant,
+      label: `See cleaner ${CATEGORY_FRIENDLY[dominant]}`,
+    };
+  }
+  return {
+    kind: "see_options",
+    label: "See cleaner alternatives in your home",
+  };
+}
+
 // ── KNOWLEDGE: REQUEST HANDLER ───────────────────────────────────
 async function handleKnowledgeQuery(deps, ctx) {
   const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
@@ -743,12 +794,15 @@ async function handleKnowledgeQuery(deps, ctx) {
   }
 
   // Personalization: home matches. Anonymous users skip.
-  const matches = userId
+  const homeResult = userId
     ? await findHomeMatchesForEntry(deps, userId, entry)
-    : [];
+    : { matches: [], total: 0 };
+  const matches = homeResult.matches;
+  const matchedTotal = homeResult.total;
 
-  // Pass 2 framing — voice rewrite of curated copy.
-  const { framing, cached: framingCached, fallback } = await frameKnowledgeEntry(deps, entry, matches.length);
+  // Pass 2 framing — voice rewrite of curated copy. No longer carries
+  // the home_connection line; that's deterministic and built below.
+  const { framing, cached: framingCached, fallback } = await frameKnowledgeEntry(deps, entry);
 
   const knowledgePayload = {
     entry_id: entry.id,
@@ -756,12 +810,16 @@ async function handleKnowledgeQuery(deps, ctx) {
     category: entry.category,
     explanation: framing.explanation,
     context_lines: framing.context_lines || [],
-    home_connection: matches.length > 0 ? framing.home_connection : null,
-    match_count: matches.length,
+    // Deterministic count line. Zero matches → null (frontend
+    // suppresses the home connection block entirely).
+    home_connection: buildHomeHeadline(entry, matchedTotal),
+    matched_total: matchedTotal,
+    matched_products: matches,
+    match_count: matches.length, // kept for backward compat with older clients
     sources: Array.isArray(entry.sources)
       ? entry.sources.map(s => ({ name: s.name, url: s.url, date: s.date || null }))
       : [],
-    suggested_action: suggestedActionFor(entry),
+    suggested_action: dynamicSuggestedAction(entry, matches),
     framing_fallback: !!fallback,
     framing_cached: !!framingCached,
   };
@@ -775,6 +833,7 @@ async function handleKnowledgeQuery(deps, ctx) {
       id: m.id,
       name: m.name,
       score: m.score,
+      category: m.category || null,
       product_image_url: m.product_image_url || null,
       scanned_at: m.scanned_at || null,
     });
@@ -799,6 +858,7 @@ async function handleKnowledgeQuery(deps, ctx) {
     final_response: {
       response_type: "knowledge",
       entry_id: entry.id,
+      matched_total: matchedTotal,
       match_count: matches.length,
     },
     duration_ms: Date.now() - requestStartMs,
