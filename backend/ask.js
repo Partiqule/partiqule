@@ -333,19 +333,28 @@ User intent: ${JSON.stringify({
 }
 
 // ── RATE LIMITING ────────────────────────────────────────────────
-async function rateLimitTake({ redisGet, redisSetEx, hasRedis }, scopeKey, limit) {
+// Atomic INCR pattern. Upstash returns the new count after the increment;
+// when count===1 the key was missing pre-increment, so we set EXPIRE to
+// prime the 1-hour window. Subsequent hits skip EXPIRE so the window
+// elapses cleanly rather than rolling forward indefinitely.
+//
+// Replaces the prior GET + SETEX flow, which had a read-then-write race
+// where N parallel requests could all read count=0 before any of them
+// wrote count=1 — letting every concurrent burst skip the gate.
+async function rateLimitTake({ redisIncr, redisExpire, hasRedis }, scopeKey, limit) {
   if (!hasRedis) return { allowed: true, count: 0 };
   const key = `ask:rl:${scopeKey}`;
   try {
-    const current = (await redisGet(key)) || 0;
-    const count = Number(current) || 0;
-    if (count >= limit) return { allowed: false, count };
-    // Increment with 1-hour TTL. We use redisSetEx which always writes a
-    // value with EX; on first set, this primes the window. Re-setting the
-    // count + same TTL on every hit effectively rolls the window forward,
-    // which is acceptable for a soft rate limit.
-    await redisSetEx(key, count + 1, 3600).catch(() => {});
-    return { allowed: true, count: count + 1 };
+    const count = await redisIncr(key);
+    if (count === null) return { allowed: true, count: 0 }; // fail open on Redis error
+    if (count === 1) {
+      // Fire-and-forget: if EXPIRE fails, the key persists past the hour
+      // window. Soft failure — at worst the limit gets stricter, never
+      // looser. We do not await this in the hot path.
+      redisExpire(key, 3600).catch(() => {});
+    }
+    if (count > limit) return { allowed: false, count };
+    return { allowed: true, count };
   } catch {
     return { allowed: true, count: 0 }; // fail open
   }
@@ -369,6 +378,8 @@ function registerAskRoutes(app, deps) {
     redisGet,
     redisSetEx,
     redisDel,
+    redisIncr,
+    redisExpire,
     hasRedis,
     CALIBRATION,
   } = deps;

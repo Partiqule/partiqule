@@ -170,6 +170,32 @@ const redisDel = async (key) => {
   } catch(e) { console.warn("[REDIS] del error:", e.message); }
 };
 
+// Atomic INCR — returns the new integer value, or null on failure. Used by
+// the /ask rate limiter so concurrent requests can't race the read-then-
+// write pattern of the old GET + SETEX implementation. Pairs with redisExpire
+// on first-set to prime the window TTL.
+const redisIncr = async (key) => {
+  if (!hasRedis) return null;
+  try {
+    const r = await fetch(`${REDIS_URL}/incr/${encodeURIComponent(key)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+    const d = await r.json();
+    return typeof d.result === "number" ? d.result : null;
+  } catch(e) { console.warn("[REDIS] incr error:", e.message); return null; }
+};
+
+const redisExpire = async (key, ttlSec) => {
+  if (!hasRedis) return;
+  try {
+    await fetch(`${REDIS_URL}/expire/${encodeURIComponent(key)}/${ttlSec}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+  } catch(e) { console.warn("[REDIS] expire error:", e.message); }
+};
+
 // ── ENRICHMENT LOCK ──
 // SETNX-based mutex so two concurrent /analyze or /barcode hits on the
 // same enriched=false calibration entry don't both fire a Pass 1
@@ -9942,6 +9968,8 @@ registerAskRoutes(app, {
   redisGet,
   redisSetEx,
   redisDel,
+  redisIncr,
+  redisExpire,
   hasRedis,
   CALIBRATION,
 });
