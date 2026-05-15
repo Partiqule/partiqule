@@ -151,16 +151,25 @@ const BIGBOX_URLS = {
 // retailer URLs from a product name. Brand returns null unless the
 // brand maps to a known BRAND_URLS entry — no dead Google-fallback
 // buttons on rows. Amazon and Target are always returned because both
-// search by name and always resolve to something.
+// search by name and always resolve to something useful.
+//
+// Crash post-mortem: extractBrand returns { brand, body } (an object),
+// not a string. Passing the object straight into hasBrandUrl /
+// getBrandUrl tripped (e || "").toLowerCase() because the truthy
+// object short-circuited the || "" guard. Now we pluck .brand and
+// force-string before any downstream key normalization.
 const buyLinksForName = (productName) => {
   const trimmed = String(productName || "").trim();
   if (!trimmed) return {};
-  // Defer to extractBrand which is declared further down in this file;
-  // wrap in a guard since the call site can run before extractBrand is
-  // hoisted in some module orders. function declarations hoist; this
-  // belt-and-suspenders is for arrow assignments.
   let brand = "";
-  try { brand = (typeof extractBrand === "function" ? extractBrand(trimmed) : "") || ""; } catch {}
+  try {
+    const extracted = typeof extractBrand === "function" ? extractBrand(trimmed) : null;
+    if (extracted && typeof extracted === "object") {
+      brand = typeof extracted.brand === "string" ? extracted.brand : "";
+    } else if (typeof extracted === "string") {
+      brand = extracted;
+    }
+  } catch {}
   return {
     amazon: `https://www.amazon.com/s?k=${encodeURIComponent(trimmed)}&tag=partiqule-20`,
     brand: hasBrandUrl(brand, trimmed) ? getBrandUrl(brand, trimmed) : null,
@@ -169,24 +178,27 @@ const buyLinksForName = (productName) => {
 };
 
 function getBrandUrl(brandName, productName) {
-  const key = (brandName || "").toLowerCase().trim();
+  // String() coerce defensively — callers in the wild have passed
+  // { brand, body } objects through here in the past, and (e || "")
+  // alone doesn't catch the truthy-object case.
+  const key = String(brandName || "").toLowerCase().trim();
   if (BRAND_URLS[key]) return BRAND_URLS[key];
   // Try partial match
   for (const [k, v] of Object.entries(BRAND_URLS)) {
     if (key.includes(k) || k.includes(key)) return v;
   }
   // Fallback to Google search for brand website
-  return `https://www.google.com/search?q=${encodeURIComponent((brandName || productName) + " official site")}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(String(brandName || productName || "") + " official site")}`;
 }
 
 // Returns true if we have a known direct brand URL for this product
 function hasBrandUrl(brandName, productName) {
-  const key = (brandName || "").toLowerCase().trim();
+  const key = String(brandName || "").toLowerCase().trim();
   if (key && BRAND_URLS[key]) return true;
   for (const k of Object.keys(BRAND_URLS)) {
     if (key && (key.includes(k) || k.includes(key))) return true;
   }
-  const pkey = (productName || "").toLowerCase().trim();
+  const pkey = String(productName || "").toLowerCase().trim();
   if (pkey && BRAND_URLS[pkey]) return true;
   for (const k of Object.keys(BRAND_URLS)) {
     if (pkey && (pkey.includes(k) || k.includes(pkey))) return true;
@@ -8914,48 +8926,6 @@ function App() {
                     </div>
                   </div>
 
-                  {/* R3f — Worth knowing. General intel (top 3 of liveIntelCards,
-                      no filtering). The personalized Items page version applies
-                      matchesHistory from intel/matching.js. Section hides cleanly
-                      when there are no cards. See more routes to /feed (the
-                      deep archive surface, no longer in nav). */}
-                  {(() => {
-                    const all = liveIntelCards || [];
-                    const visible = all.slice(0, 3);
-                    if (!visible.length) return null;
-                    const hasMore = all.length > 3;
-                    const handleCardTap = (card) => {
-                      if (card.cardType === "live" && card.action_url) { window.open(card.action_url, "_blank"); return; }
-                      if (card.actionPage === "history") { setPage("history"); return; }
-                      if (card.actionPage === "result" && card.productName) {
-                        const hi = history?.find(h => h.product_name === card.productName);
-                        if (hi) { setResult(hi); }
-                        else { setQuery(card.productName); analyze(card.productName); }
-                      }
-                    };
-                    return (
-                      <div style={{marginBottom:32}}>
-                        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14}}>
-                          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", fontWeight:500, color:"var(--moss)"}}>Worth knowing</span>
-                        </div>
-                        <div style={{borderTop:"1px solid #f1f5f9", background:"transparent", marginLeft: isMobile ? -24 : -40, marginRight: isMobile ? -24 : -40}}>
-                          {visible.map((card, i) => (
-                            <IntelCard key={card.id || i} card={card} muted={muted} text={text} isMobile={isMobile} onTap={handleCardTap}/>
-                          ))}
-                        </div>
-                        {hasMore && (
-                          <div style={{textAlign:"right", padding:"12px 0 0"}}>
-                            <button onClick={() => setPage("feed")}
-                              style={{background:"transparent", border:"none", padding:0, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3}}>
-                              See more ({all.length - 3} more)
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
                   {/* Phase 5B — Items in your home section per dashboard mock v8.
                       Pulls itemCount, homeScore, homeScoreTrend, and scoreMakeup
                       from homeData (already in state from Phase 5A's /home-data
@@ -9068,6 +9038,49 @@ function App() {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* R3f post-r1 — Worth knowing intel tile moved here from above
+                      the Items section per Sara's review. Items in your home is
+                      the primary Home anchor; general intel sits secondary. The
+                      personalized version on the Items page applies matchesHistory
+                      from intel/matching.js; this one shows the top 3 unfiltered
+                      and routes See more to /feed. */}
+                  {(() => {
+                    const all = liveIntelCards || [];
+                    const visible = all.slice(0, 3);
+                    if (!visible.length) return null;
+                    const hasMore = all.length > 3;
+                    const handleCardTap = (card) => {
+                      if (card.cardType === "live" && card.action_url) { window.open(card.action_url, "_blank"); return; }
+                      if (card.actionPage === "history") { setPage("history"); return; }
+                      if (card.actionPage === "result" && card.productName) {
+                        const hi = history?.find(h => h.product_name === card.productName);
+                        if (hi) { setResult(hi); }
+                        else { setQuery(card.productName); analyze(card.productName); }
+                      }
+                    };
+                    return (
+                      <div style={{marginBottom:32}}>
+                        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14}}>
+                          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", fontWeight:500, color:"var(--moss)"}}>Worth knowing</span>
+                        </div>
+                        <div style={{borderTop:"1px solid #f1f5f9", background:"transparent", marginLeft: isMobile ? -24 : -40, marginRight: isMobile ? -24 : -40}}>
+                          {visible.map((card, i) => (
+                            <IntelCard key={card.id || i} card={card} muted={muted} text={text} isMobile={isMobile} onTap={handleCardTap}/>
+                          ))}
+                        </div>
+                        {hasMore && (
+                          <div style={{textAlign:"right", padding:"12px 0 0"}}>
+                            <button onClick={() => setPage("feed")}
+                              style={{background:"transparent", border:"none", padding:0, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3}}>
+                              See more ({all.length - 3} more)
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
