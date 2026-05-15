@@ -9274,49 +9274,6 @@ function App() {
                     );
                   })()}
 
-                  {/* R3f post-r1 — Worth knowing intel tile moved here from above
-                      the Items section per Sara's review. Items in your home is
-                      the primary Home anchor; general intel sits secondary. The
-                      personalized version on the Items page applies matchesHistory
-                      from intel/matching.js; this one shows the top 3 unfiltered
-                      and routes See more to /feed. */}
-                  {(() => {
-                    const all = liveIntelCards || [];
-                    const visible = all.slice(0, 3);
-                    if (!visible.length) return null;
-                    const hasMore = all.length > 3;
-                    const handleCardTap = (card) => {
-                      if (card.cardType === "live" && card.action_url) { window.open(card.action_url, "_blank"); return; }
-                      if (card.actionPage === "history") { setPage("history"); return; }
-                      if (card.actionPage === "result" && card.productName) {
-                        const hi = history?.find(h => h.product_name === card.productName);
-                        if (hi) { setResult(hi); }
-                        else { setQuery(card.productName); analyze(card.productName); }
-                      }
-                    };
-                    return (
-                      <div style={{marginBottom:32}}>
-                        <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14}}>
-                          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                          <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", fontWeight:500, color:"var(--moss)"}}>Worth knowing</span>
-                        </div>
-                        <div style={{borderTop:"1px solid #f1f5f9", background:"transparent", marginLeft: isMobile ? -24 : -40, marginRight: isMobile ? -24 : -40}}>
-                          {visible.map((card, i) => (
-                            <IntelCard key={card.id || i} card={card} muted={muted} text={text} isMobile={isMobile} onTap={handleCardTap}/>
-                          ))}
-                        </div>
-                        {hasMore && (
-                          <div style={{textAlign:"right", padding:"12px 0 0"}}>
-                            <button onClick={() => setPage("feed")}
-                              style={{background:"transparent", border:"none", padding:0, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3}}>
-                              See more ({all.length - 3} more)
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
                   {/* Phase 5C — Worth Knowing findings panel per dashboard mock v8.
                       Consumes homeFindings state (already in scope from Phase 5A's
                       /home-findings fetch). Top 4 findings already sorted by severity
@@ -9421,24 +9378,39 @@ function App() {
                         );
                       })}
 
-                      {/* Footer: "Showing top N of M findings." Per Track 6
-                          spec, no tap target — drill-down happens at the
-                          row level via setHistoryFilter, so the footer is
-                          informational only and does not need a navigation
-                          affordance. */}
+                      {/* Footer: top X of Y findings, now tappable to expand
+                          the panel to the full list. Hits /home-findings with
+                          limit=all on click and swaps homeFindings state so
+                          the rows above re-render in place. Hidden when the
+                          full list is already showing. */}
                       {typeof homeFindings.totalFindings === "number" && homeFindings.totalFindings > homeFindings.findings.length && (
-                        <div
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await authedFetch(`${API_BASE}/home-findings?limit=all`);
+                              if (!res.ok) return;
+                              const json = await res.json();
+                              setHomeFindings(json);
+                            } catch { /* silent — user can tap again */ }
+                          }}
                           style={{
-                            marginTop:14, paddingTop:14,
+                            width:"100%", marginTop:14, paddingTop:14,
+                            paddingBottom:0, paddingLeft:0, paddingRight:0,
                             borderTop:"1px solid var(--rule)",
+                            background:"transparent", border:"none",
+                            borderBottomLeftRadius:0, borderBottomRightRadius:0,
+                            display:"flex", alignItems:"center", justifyContent:"space-between",
                             fontFamily:"'DM Sans', system-ui, sans-serif",
                             fontSize:11, letterSpacing:"0.14em",
                             textTransform:"uppercase", fontWeight:600,
                             color:"var(--ink-soft)",
+                            cursor:"pointer",
+                            textAlign:"left",
                           }}
                         >
-                          Showing top {homeFindings.findings.length} of {homeFindings.totalFindings} findings
-                        </div>
+                          <span>Showing top {homeFindings.findings.length} of {homeFindings.totalFindings} findings</span>
+                          <span style={{color:"var(--moss)"}}>See all <span style={{marginLeft:4}}>→</span></span>
+                        </button>
                       )}
                     </div>
                   )}

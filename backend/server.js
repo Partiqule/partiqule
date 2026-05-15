@@ -9467,8 +9467,12 @@ const FINDING_REGISTRY = {
 app.get("/home-findings", requireUserAuth, async (req, res) => {
   if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
   const userId = req.authUserId;
+  // limit=all returns every computed finding instead of the top 4.
+  // Skips the Redis cache to keep the all-variant always fresh and
+  // avoid polluting the default key with a different payload shape.
+  const wantAll = String(req.query.limit || "").toLowerCase() === "all";
   const cacheKey = homeFindingsCacheKey(userId);
-  if (hasRedis) {
+  if (hasRedis && !wantAll) {
     try {
       const cached = await redisGet(cacheKey);
       if (cached) return res.json({ ...cached, cached: true });
@@ -9506,16 +9510,18 @@ app.get("/home-findings", requireUserAuth, async (req, res) => {
     // finding hits" not "unique items affected."
     const totalFindings = computed.reduce((sum, f) => sum + f.count, 0);
 
-    // Sort by severity then count descending; take top 4 per spec.
+    // Sort by severity then count descending. Default returns top 4;
+    // limit=all returns every finding so the Home "Worth knowing"
+    // section can expand inline when the user taps the see-all link.
     computed.sort((a, b) => {
       const sd = (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0);
       if (sd !== 0) return sd;
       return b.count - a.count;
     });
-    const findings = computed.slice(0, 4);
+    const findings = wantAll ? computed : computed.slice(0, 4);
 
     const payload = { findings, totalFindings };
-    if (hasRedis) redisSetEx(cacheKey, payload, HOME_FINDINGS_TTL_S).catch(() => {});
+    if (hasRedis && !wantAll) redisSetEx(cacheKey, payload, HOME_FINDINGS_TTL_S).catch(() => {});
     return res.json({ ...payload, cached: false });
   } catch (e) {
     console.error("[home-findings]", e.message);
