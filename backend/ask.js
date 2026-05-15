@@ -183,15 +183,23 @@ function effectiveScore(entry, intent) {
 
 function retrieveProducts({ CALIBRATION }, intent) {
   if (intent.type !== "product") return [];
-  const slug = String(intent.category || "").toLowerCase().trim();
+  // Normalize whitespace and hyphens to underscores so Pass 1's natural
+  // phrasing ("sippy cup", "laundry-detergent") resolves to the snake_case
+  // keys used by CATEGORY_KEYWORDS and entry.product_family tags.
+  const slug = String(intent.category || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, "_");
   const patterns = categoryPatterns(slug);
-  if (!patterns.length) return [];
 
   const candidates = [];
   for (const [key, entry] of CALIBRATION.entries()) {
-    if (!patterns.some(p => p.test(key))) continue;
-    // Audience filter: kid/baby queries prefer entries scored for kids,
-    // but don't hard-exclude — falls back to adult floor when needed.
+    // Prefer the explicit product_family tag on the calibration entry.
+    // Brand-named entries that don't repeat the category in their key
+    // (e.g. "ezpz tiny cup" as a sippy cup) only surface this way.
+    const familyHit = entry && entry.product_family && entry.product_family === slug;
+    const keyHit = !familyHit && patterns.length && patterns.some(p => p.test(key));
+    if (!familyHit && !keyHit) continue;
     candidates.push({ key, entry, score: effectiveScore(entry, intent) });
   }
 
