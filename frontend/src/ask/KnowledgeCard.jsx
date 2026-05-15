@@ -95,25 +95,25 @@ const HomeConnection = ({ message, matches }) => {
       )}
       {matches?.length > 0 && (
         <div style={{
-          display: "flex", flexWrap: "wrap", gap: 10,
+          display: "flex", flexDirection: "column", gap: 12,
         }}>
           {matches.map(m => (
             <div key={m.id} style={{
-              display: "flex", alignItems: "center", gap: 10,
-              padding: "8px 12px 8px 8px",
+              display: "flex", alignItems: "center", gap: 14,
+              padding: "12px 14px",
               background: "var(--cream)",
               border: "1px solid var(--rule)",
               borderRadius: TILE_SHAPE,
-              maxWidth: 260,
             }}>
-              <MatchAvatar url={m.product_image_url} name={m.name} score={m.score} size={36}/>
-              <div style={{minWidth:0, display:"flex", flexDirection:"column", gap:4}}>
-                <div style={{
-                  fontFamily:"'DM Sans', system-ui, sans-serif",
-                  fontSize: 13, fontWeight: 500,
-                  color: "var(--ink)", lineHeight: 1.3,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>{m.name}</div>
+              <MatchAvatar url={m.product_image_url} name={m.name} score={m.score} size={40}/>
+              <div style={{
+                flex: 1, minWidth: 0,
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontSize: 14, fontWeight: 500,
+                color: "var(--ink)", lineHeight: 1.35,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+              }}>{m.name}</div>
+              <div style={{flexShrink: 0}}>
                 <ScoreDot score={m.score}/>
               </div>
             </div>

@@ -66,8 +66,10 @@ const personalizationBucket = (n) => {
   if (n <= 2) return "few";
   return "many";
 };
+// v2 bumped when the KNOWLEDGE_PASS2_SYSTEM voice rules tightened (direct
+// second-person on the home_connection line, no "likely contain" hedging).
 const knowledgeCacheKey = (entryId, bucket) =>
-  `ask:knowledge:v1:${entryId}:${bucket}`;
+  `ask:knowledge:v2:${entryId}:${bucket}`;
 
 const contextSignature = (intent) => {
   const audience = intent.audience || "any";
@@ -579,6 +581,16 @@ Voice rules (HARD CONSTRAINTS — output must satisfy all):
 - No moralizing, no panic. Plain, calm, specific.
 - Knowledge entries describe associations and regulatory posture — paraphrasing those is allowed because the entry sources them. Do not introduce additional causation language ("causes", "linked to") beyond what the entry text already states.
 
+Address the reader directly in the home_connection line. Required phrasings:
+- Use "your home", "you have", "you've scanned" — NOT "the user's home", "the user has".
+- The matched products were validated by the detector with negation filtering already applied, so state the relationship directly. Use "contain" / "have" / "are sources of" — NOT "likely contain", "may contain", "possibly contain". Hedging language is reserved for unverified claims; matched products are verified.
+
+Examples of correct home_connection phrasings:
+- "Five things in your home contain PFAS."
+- "Three products you've scanned have phthalates in them."
+- "Two items at home are PFAS sources."
+- "One product on your shelf has this."
+
 Input: a knowledge entry (subject, plain_language_explanation, health_safety_context, sources) plus a personalization bucket ("none" / "few" / "many") indicating how many products the user has scanned with this concern.
 
 Return strict JSON only:
@@ -587,7 +599,7 @@ Return strict JSON only:
   "context_lines": [
     "one short sentence per major regulatory or health point from health_safety_context. 3–5 lines. Each line stands alone and reads cleanly."
   ],
-  "home_connection": "one short sentence acknowledging the personalization bucket. 'none' → null. 'few' → naming that a couple of products in the user's home contain this. 'many' → naming several products. Do not invent specifics. Null when bucket is 'none'."
+  "home_connection": "one short second-person sentence acknowledging the personalization bucket. 'none' → null. 'few' → naming that one or two products in your home contain this. 'many' → naming the count (three, four, five) of products you have at home that contain this. Direct address only — never 'the user'. Never hedge with 'likely' or 'may'. Do not invent specifics about which products. Null when bucket is 'none'."
 }
 
 Return strict JSON only. No backticks, no markdown.`;
