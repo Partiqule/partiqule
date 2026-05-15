@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ListBuilderPage from "./lists/ListBuilderPage";
+import { matchesHistory } from "./intel/matching";
 
 // Lazy-load @capgo/native-purchases via dynamic import so it only runs in
 // Capacitor iOS (where require() doesn't exist and static import may fail
@@ -3744,7 +3745,7 @@ const HouseholdExposureSummary = ({ history, text, muted, surface, border, onSel
 };
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
-const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter}) => {
+const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter, liveIntelCards, forYouCards, onCardTap, onSeeMoreCards}) => {
   const [priceFilter, setPriceFilter] = useState("all");
   const [viewMode, setViewMode] = useState("date");
   // Track 6 — when historyFilter is active, the page renders the filtered
@@ -3960,6 +3961,42 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
         </div>
       ) : (
         <>
+          {/* R3e — Worth knowing. For-you cards (already personalized) plus
+              live intel cards that match the user's history. Hidden when no
+              cards have anything to say. */}
+          {(() => {
+            const fy = (forYouCards || []).filter(c => ["eu_banned","pattern","iarc","high_concern","swap_pending"].includes(c.type))
+              .map(c => ({...c, cardType:"insight", isPersonal:true, affectedProducts:[], source_name:"Your scan history"}));
+            const matchedLive = (liveIntelCards || [])
+              .filter(c => matchesHistory(c, history))
+              .map(c => ({...c, cardType:"live", isPersonal:true}));
+            const combined = [...fy, ...matchedLive].sort((a,b) => (b.priority || 5) - (a.priority || 5));
+            if (!combined.length) return null;
+            const visible = combined.slice(0, 3);
+            const hasMore = combined.length > 3;
+            return (
+              <div style={{marginBottom: isMobile ? 32 : 40}}>
+                <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14, padding:`0 ${isMobile ? "4px" : "0"}`}}>
+                  <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
+                  <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", fontWeight:500, color:"var(--moss)"}}>Worth knowing</span>
+                </div>
+                <div style={{borderTop:`1px solid #f1f5f9`, background:"transparent", marginLeft: isMobile ? -16 : -40, marginRight: isMobile ? -16 : -40}}>
+                  {visible.map((card, i) => (
+                    <IntelCard key={card.id || i} card={card} muted={muted} text={text} isMobile={isMobile} onTap={onCardTap}/>
+                  ))}
+                </div>
+                {hasMore && (
+                  <div style={{textAlign:"right", padding:"12px 0 0"}}>
+                    <button onClick={onSeeMoreCards}
+                      style={{background:"transparent", border:"none", padding:0, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3}}>
+                      See more ({combined.length - 3} more)
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Stats cards */}
           <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:40}}>
             <div style={{background:surface, borderRadius:16, padding:"24px 28px", border:`1.5px solid ${border}`}}>
@@ -5407,6 +5444,46 @@ const computeLifestyleScore = (history) => {
   return {current,previous:prev,trend,delta,productCount:sample.length,worstCategory:worst?{label:CL[worst.cat]||worst.cat,avg:worst.avg}:null};
 };
 
+// R3e — shared intel card component. Extracted from the inline markup
+// FeedPage used so the Items page can render the same visual without
+// duplicating the markup. Click behavior + visual stays unchanged.
+const IntelCard = ({ card, muted, text, isMobile, onTap }) => {
+  const actionable = !!(card.action_url || card.actionPage || card.productName);
+  const labelColor = card.label_color || card.labelColor || "#d97706";
+  return (
+    <div onClick={() => onTap?.(card)} style={{padding:`16px ${isMobile?"16px":"40px"}`, borderBottom:`1px solid #f1f5f9`, cursor: actionable ? "pointer" : "default", background: card.isPersonal ? "#fafff9" : "transparent"}}>
+      {card.isPersonal && (
+        <div style={{fontSize:10, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6, display:"flex", alignItems:"center", gap:6}}>
+          <div style={{width:6, height:6, borderRadius:"50%", background:"#16a34a", flexShrink:0}}/>
+          Affects your products
+          {card.affectedProducts?.length > 0 && (
+            <span style={{color:muted, fontWeight:400, textTransform:"none", letterSpacing:0}}>
+              {" "}— {card.affectedProducts.slice(0,2).join(", ")}{card.affectedProducts.length > 2 ? ` +${card.affectedProducts.length - 2} more` : ""}
+            </span>
+          )}
+        </div>
+      )}
+      <div style={{display:"inline-block", fontSize:10, fontWeight:700, color:labelColor, background:`${labelColor}18`, borderRadius:20, padding:"2px 8px", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.06em"}}>{card.label}</div>
+      <div style={{fontSize:15, fontWeight:700, color:text, marginBottom:4, lineHeight:1.4}}>{card.headline}</div>
+      <div style={{fontSize:13, color:muted, lineHeight:1.5, marginBottom:8}}>{card.body}</div>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+        <div style={{fontSize:11, color:muted, display:"flex", alignItems:"center", gap:6}}>
+          {card.source_name && <span>{card.source_name}</span>}
+          {card.created_at && (<>
+            <span style={{opacity:0.4}}>·</span>
+            <span>{(() => {
+              const d = new Date(card.created_at);
+              const dd = Math.floor((Date.now() - d) / (1000 * 60 * 60 * 24));
+              return dd === 0 ? "Today" : dd === 1 ? "Yesterday" : `${dd} days ago`;
+            })()}</span>
+          </>)}
+        </div>
+        {actionable && <span style={{fontSize:12, fontWeight:700, color:labelColor, whiteSpace:"nowrap", flexShrink:0}}>{card.action_text || card.action || "Learn more"} →</span>}
+      </div>
+    </div>
+  );
+};
+
 const FeedPage = ({liveIntelCards, staticCards, history, surface, border, text, muted, isMobile, setPage, setResult, setQuery, analyze}) => {
   const [filter, setFilter] = useState("all");
   const allCards = [
@@ -5443,16 +5520,7 @@ const FeedPage = ({liveIntelCards, staticCards, history, surface, border, text, 
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:0}}>
           {filtered.map((card,i)=>(
-            <div key={card.id||i} onClick={()=>handleCardTap(card)} style={{padding:`16px ${isMobile?"16px":"40px"}`,borderBottom:`1px solid ${"#f1f5f9"}`,cursor:card.action_url||card.actionPage||card.productName?"pointer":"default",background:card.isPersonal?("#fafff9"):"transparent"}}>
-              {card.isPersonal&&<div style={{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6,display:"flex",alignItems:"center",gap:6}}><div style={{width:6,height:6,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>Affects your products{card.affectedProducts?.length>0&&<span style={{color:muted,fontWeight:400,textTransform:"none",letterSpacing:0}}> — {card.affectedProducts.slice(0,2).join(", ")}{card.affectedProducts.length>2?` +${card.affectedProducts.length-2} more`:""}</span>}</div>}
-              <div style={{display:"inline-block",fontSize:10,fontWeight:700,color:card.label_color||card.labelColor||"#d97706",background:`${card.label_color||card.labelColor||"#d97706"}18`,borderRadius:20,padding:"2px 8px",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>{card.label}</div>
-              <div style={{fontSize:15,fontWeight:700,color:text,marginBottom:4,lineHeight:1.4}}>{card.headline}</div>
-              <div style={{fontSize:13,color:muted,lineHeight:1.5,marginBottom:8}}>{card.body}</div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-                <div style={{fontSize:11,color:muted,display:"flex",alignItems:"center",gap:6}}>{card.source_name&&<span>{card.source_name}</span>}{card.created_at&&<><span style={{opacity:0.4}}>·</span><span>{(()=>{const d=new Date(card.created_at);const dd=Math.floor((Date.now()-d)/(1000*60*60*24));return dd===0?"Today":dd===1?"Yesterday":`${dd} days ago`;})()}</span></>}</div>
-                {(card.action_url||card.action_text||card.action||card.actionPage)&&<span style={{fontSize:12,fontWeight:700,color:card.label_color||card.labelColor||"#16a34a",whiteSpace:"nowrap",flexShrink:0}}>{card.action_text||card.action||"Learn more"} →</span>}
-              </div>
-            </div>
+            <IntelCard key={card.id||i} card={card} muted={muted} text={text} isMobile={isMobile} onTap={handleCardTap}/>
           ))}
         </div>
       )}
@@ -8198,6 +8266,18 @@ function App() {
           filteredItemsError={filteredItemsError}
           onClearFilter={()=>{setHistoryFilter(null); setFilteredItems(null); setFilteredItemsError(null);}}
           onRetryFilter={()=>{const cur = historyFilter; if (cur) { setHistoryFilter(null); setTimeout(()=>setHistoryFilter(cur), 0); }}}
+          liveIntelCards={liveIntelCards}
+          forYouCards={generateForYouCards(history, childMode)}
+          onSeeMoreCards={()=>setPage("feed")}
+          onCardTap={(card) => {
+            if (card.cardType === "live" && card.action_url) { window.open(card.action_url, "_blank"); return; }
+            if (card.actionPage === "history") { setPage("history"); return; }
+            if (card.actionPage === "result" && card.productName) {
+              const hi = history?.find(h => h.product_name === card.productName);
+              if (hi) { setResult(hi); setPage("home"); }
+              else { setQuery(card.productName); analyze(card.productName); }
+            }
+          }}
         />
       ) : page === "science" ? (
         <div style={{maxWidth:1100, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
