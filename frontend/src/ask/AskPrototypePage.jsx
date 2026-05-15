@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, NOVA_LABEL } from "./fixtures";
+import KnowledgeCard from "./KnowledgeCard";
 
 // ── Design tokens (token-only, no inline hex) ─────────────────────
 const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -468,7 +469,13 @@ const AskPrototypePage = ({
   const [query, setQuery] = useState("");
   // phase: "idle" | "thinking" | "answered" | "tooShort" | "nomatch" | "refused" | "error"
   const [phase, setPhase] = useState("idle");
+  // responseType determines which render path renders: "product" → ProductList
+  // (existing ResponseCard), "knowledge" → KnowledgeCard. Set from the first
+  // post-intent event that carries content. Reset to null on each submit.
+  const [responseType, setResponseType] = useState(null);
   const [response, setResponse] = useState(null);
+  const [knowledgeResponse, setKnowledgeResponse] = useState(null);
+  const [knowledgeMatches, setKnowledgeMatches] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
@@ -526,12 +533,15 @@ const AskPrototypePage = ({
 
     setPhase("thinking");
     setResponse(null);
+    setResponseType(null);
+    setKnowledgeResponse(null);
+    setKnowledgeMatches([]);
     setErrorMessage("");
     setExpandedItems({});
 
     // Streaming state held in refs so the SSE callbacks see latest values
     // without React batching deferring them between events.
-    const state = { intent: null, items: [], doneFired: false };
+    const state = { intent: null, items: [], doneFired: false, responseType: null };
     const flush = (extra = {}) => {
       const sorted = [...state.items].sort((a, b) => {
         const sa = a.score == null ? 99 : a.score;
@@ -563,12 +573,34 @@ const AskPrototypePage = ({
             return;
           }
           if (event === "item") {
+            // First content event after intent decides the render path.
+            if (!state.responseType) {
+              state.responseType = "product";
+              setResponseType("product");
+            }
             state.items.push(decorateItem(payload));
             flush();
             return;
           }
+          if (event === "knowledge") {
+            state.responseType = "knowledge";
+            setResponseType("knowledge");
+            setKnowledgeResponse(payload);
+            setPhase("answered");
+            return;
+          }
+          if (event === "match") {
+            // Knowledge matches arrive after the knowledge event. Accumulate.
+            setKnowledgeMatches(prev => [...prev, payload]);
+            return;
+          }
           if (event === "done") {
             state.doneFired = true;
+            if (state.responseType === "knowledge") {
+              // Knowledge response already rendered; done is just terminal.
+              setPhase("answered");
+              return;
+            }
             if (payload?.no_results) {
               setResponse({
                 intent_restatement: state.intent?.restatement || "",
@@ -698,7 +730,19 @@ const AskPrototypePage = ({
             }}/>
           </div>
         )}
-        {phase === "answered" && response && (
+        {phase === "answered" && responseType === "knowledge" && knowledgeResponse && (
+          <KnowledgeCard
+            knowledge={knowledgeResponse}
+            matches={knowledgeMatches}
+            isMobile={isMobile}
+            onSuggestedAction={(action) => {
+              // R5b.2 leaves the suggested-action handler stubbed. Real
+              // navigation wires into the unified home search bar in R5c.
+              showToast(action?.label || "Coming soon.");
+            }}
+          />
+        )}
+        {phase === "answered" && responseType !== "knowledge" && response && (
           <ResponseCard
             response={response}
             expandedItems={expandedItems}
