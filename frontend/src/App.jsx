@@ -7114,11 +7114,14 @@ function App() {
     if (path === "/guides") { setPage("guides"); return; }
     if (path.startsWith("/guides/")) { setPage("guide"); setGuideSlug(path.replace("/guides/","")); return; }
     if (path === "/feed") { setPage("feed"); return; }
-    if (path === "/lists-prototype") { setPage("lists-prototype"); return; }
+    if (path === "/lists") { setPage("lists"); return; }
+    // R3d — keep /lists-prototype as an alias so any cached deep link Sara
+    // already has open routes to the same page. Drop the alias in R3f.
+    if (path === "/lists-prototype") { setPage("lists"); return; }
     if (path === "/account") { setPage("settings"); return; }
     if (path === "/reset-password") { setPage("reset-password"); return; }
 
-    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed", "/lists-prototype", "/reset-password"];
+    const known = ["/", "/science", "/history", "/privacy", "/terms", "/about", "/methodology", "/guides", "/account", "/feed", "/lists", "/lists-prototype", "/reset-password"];
     const isScanPath = path.startsWith("/scan/");
     const isGuidePath = path.startsWith("/guides/");
     if (!known.includes(path) && !isScanPath && !isGuidePath) setPage("404");
@@ -7951,7 +7954,7 @@ function App() {
             <nav style={{display:"flex", gap:4, alignItems:"center"}}>
               {[
                 {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
-                {label:"Feed",       action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active:page==="feed"},
+                {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active: page==="lists" || page==="lists-prototype"},
                 {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
                 {label:"Items",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
               ].map((item,i)=>(
@@ -8174,7 +8177,7 @@ function App() {
         </div>
       ) : page === "feed" ? (
         <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
-      ) : page === "lists-prototype" ? (
+      ) : (page === "lists" || page === "lists-prototype") ? (
         <ListBuilderPage
           history={history}
           isMobile={isMobile}
@@ -11574,7 +11577,7 @@ function App() {
           }}>
             {[
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
-              { label:"Feed",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>, action:()=>{setPage("feed");setResult(null);try{localStorage.setItem("ps_feed_last_visit",new Date().toISOString());}catch{}}, active: page==="feed" },
+              { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 5 19 9 15"/><line x1="13" y1="18" x2="21" y2="18"/><polyline points="3 7 5 9 9 5"/><line x1="13" y1="8" x2="21" y2="8"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" || page==="lists-prototype" },
               { label:"Scan",    icon:null, action:()=>{ if (!user) { setShowLimitModal("account"); return; } setScanSheetOpen(o=>!o); setModalQuery(""); }, active:false, isScan:true },
               { label:"Items",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
