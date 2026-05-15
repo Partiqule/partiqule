@@ -338,6 +338,7 @@ const FLAG_DEFS = {
   pfas: {
     buckets: ["food", "personal_care", "home"],
     patterns: [
+      { label: "PFAS",                    regex: /\bpfas\b/i },
       { label: "PTFE",                    regex: /\bptfe\b/i },
       { label: "polytetrafluoroethylene", regex: /\bpolytetrafluoroethylene\b/i },
       { label: "Teflon",                  regex: /\bteflon\b/i },

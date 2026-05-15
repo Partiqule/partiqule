@@ -30,7 +30,7 @@
 
 const crypto = require("crypto");
 const { KNOWLEDGE_ENTRIES, findEntry: findKnowledgeEntryById } = require("./knowledge");
-const { FLAG_DEFS } = require("./flagDetection");
+const { FLAG_DEFS, detectFlags } = require("./flagDetection");
 
 // ── ENV ──────────────────────────────────────────────────────────
 const ASK_PASS1_MODEL = process.env.ASK_PASS1_MODEL || "claude-haiku-4-5-20251001";
@@ -41,11 +41,17 @@ const ASK_RATE_LIMIT_ANON = parseInt(process.env.ASK_RATE_LIMIT_ANON_PER_HOUR ||
 const ASK_RATE_LIMIT_AUTH = parseInt(process.env.ASK_RATE_LIMIT_AUTH_PER_HOUR || "100", 10);
 
 // ── HELPERS ──────────────────────────────────────────────────────
+// Trailing punctuation is stripped so "what is pfas?" and "what is pfas"
+// produce the same intent cache key. The substance/subject lookups apply
+// a stricter normalizeSubject in findKnowledgeEntry, but the intent cache
+// only needs query-level consistency.
 const normaliseQuery = (s) => String(s || "")
   .toLowerCase()
   .trim()
   .replace(/[\x00-\x1f]/g, "")
-  .replace(/\s+/g, " ");
+  .replace(/\s+/g, " ")
+  .replace(/[?!.,;:]+$/, "")
+  .trim();
 
 const intentCacheKey = (q) => `ask:intent:v1:${crypto.createHash("sha1").update(q).digest("hex").slice(0, 16)}`;
 
@@ -403,8 +409,19 @@ const slugify = (s) => String(s || "")
   .replace(/[^a-z0-9]+/g, "_")
   .replace(/^_+|_+$/g, "");
 
+// Pass 1 preserves the user's punctuation and articles in the subject
+// field — "pfas?" or "the PFAS" instead of "pfas". Strip those before
+// slugify so the direct id lookup hits cleanly without relying on the
+// last-resort substring fallback.
+const normalizeSubject = (s) => String(s || "")
+  .toLowerCase()
+  .trim()
+  .replace(/^the\s+/, "")
+  .replace(/[?!.,;:]+$/, "")
+  .trim();
+
 function findKnowledgeEntry(intent) {
-  const subject = String(intent?.subject || "").trim();
+  const subject = normalizeSubject(intent?.subject);
   if (!subject) return null;
   const wanted = slugify(subject);
   if (!wanted) return null;
@@ -436,66 +453,59 @@ function findKnowledgeEntry(intent) {
 }
 
 // ── KNOWLEDGE: FLAG INTERSECTION ─────────────────────────────────
-// Entry.partiqule_flags carries slugs that can be either:
-//   - A FLAG_DEFS bucket key (e.g. "pfas") → matches any label in that
-//     bucket.
-//   - A specific substance label (e.g. "ptfe", "fluoropolymer") →
-//     matches that exact label (case-insensitive).
-// Scans store canonical labels in result_json.flagged_substances (e.g.
-// "PTFE", "Red 40"). The intersection is ANY-match across these two
-// representations — see the PFAS detection commit architectural note.
-const normFlag = (s) => String(s || "")
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/g, " ")
-  .trim()
-  .replace(/\s+/g, " ");
+// INTERIM IMPLEMENTATION (R5b.2). The earlier design assumed scans
+// persist a structured flagged_substances array on result_json. They
+// don't — the deterministic flagDetection output is computed at scoring
+// time but not written to the scan record. result_json carries free-text
+// `concerns` arrays, AI summaries, materials descriptions, and the
+// calibration `reason` field; substance names are present as narrative
+// text only.
+//
+// Until structured flags persist on scan write (tracked as R5b.2.1 on
+// the backlog), this routine stringifies result_json and runs the
+// deterministic detectFlags() against the resulting text. detectFlags
+// already enforces word-boundary matching and negation filtering via
+// the same window-based isMatchNegated check used everywhere else, so
+// "PFAS-free", "no PTFE", "free of phthalates", and "without parabens"
+// all suppress correctly — no separate negation pass needed here.
+//
+// The entry.partiqule_flags array maps to FLAG_DEFS group keys. Slugs
+// that aren't FLAG_DEFS keys (e.g. raw substance names like "ptfe",
+// "fluoropolymer") are typically already covered as patterns inside the
+// parent group (FLAG_DEFS.pfas covers all of them), so missing groups
+// rarely matter in practice — but they will once entries like bpa_bps
+// land without an existing FLAG_DEFS.bpa group.
 
-function expandPartiquleFlag(flagSlug) {
-  const out = new Set();
-  const lower = String(flagSlug || "").toLowerCase().trim();
-  if (!lower) return out;
-  // Literal label form.
-  out.add(normFlag(lower));
-  // Bucket key form — expand to every label in the bucket.
-  const bucket = FLAG_DEFS[lower];
-  if (bucket && Array.isArray(bucket.patterns)) {
-    for (const p of bucket.patterns) {
-      if (p.label) out.add(normFlag(p.label));
-    }
+function entryFlagGroupKeys(entry) {
+  const out = [];
+  for (const f of entry?.partiqule_flags || []) {
+    const lower = String(f || "").toLowerCase().trim();
+    if (!lower) continue;
+    if (FLAG_DEFS[lower] && !out.includes(lower)) out.push(lower);
   }
   return out;
 }
 
-function entryFlagSet(entry) {
-  const set = new Set();
-  for (const f of entry.partiqule_flags || []) {
-    for (const v of expandPartiquleFlag(f)) set.add(v);
-  }
-  return set;
+function stringifyResultJson(r) {
+  if (!r) return "";
+  try { return JSON.stringify(r); } catch { return ""; }
 }
 
-function scanIntersectsEntry(scanFlaggedSubstances, entryFlagsSet) {
-  if (!entryFlagsSet || !entryFlagsSet.size) return false;
-  if (!Array.isArray(scanFlaggedSubstances)) return false;
-  for (const s of scanFlaggedSubstances) {
-    const n = normFlag(s);
-    if (!n) continue;
-    if (entryFlagsSet.has(n)) return true;
-    // Substring relax: bucket labels like "perfluoro compound" should
-    // match scan labels like "perfluorooctanoic acid". Only relax for
-    // labels at least 5 chars so we don't false-positive on short codes.
-    for (const f of entryFlagsSet) {
-      if (f.length < 5) continue;
-      if (n.includes(f) || f.includes(n)) return true;
-    }
+function scanHitsEntry(resultJson, groupKeys) {
+  if (!groupKeys.length) return false;
+  const haystack = stringifyResultJson(resultJson);
+  if (!haystack) return false;
+  const detection = detectFlags(haystack, null);
+  for (const k of groupKeys) {
+    if (detection.flags[k]?.present) return true;
   }
   return false;
 }
 
 async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
   if (!supabaseAdmin || !userId || !entry) return [];
-  const flagSet = entryFlagSet(entry);
-  if (!flagSet.size) return [];
+  const groupKeys = entryFlagGroupKeys(entry);
+  if (!groupKeys.length) return [];
   try {
     const cutoff = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabaseAdmin
@@ -510,7 +520,7 @@ async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
     const seenNames = new Set();
     for (const row of data || []) {
       const r = row?.result_json || {};
-      if (!scanIntersectsEntry(r.flagged_substances, flagSet)) continue;
+      if (!scanHitsEntry(r, groupKeys)) continue;
       const name = row.product_name || r.product_name || "Unnamed scan";
       const key = String(name).toLowerCase().trim();
       if (seenNames.has(key)) continue;
