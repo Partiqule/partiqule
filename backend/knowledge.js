@@ -56,7 +56,7 @@ const ENTRIES = [
         url: "https://www.niehs.nih.gov/health/topics/agents/pfc/",
         date: "2024" },
     ],
-    status: "draft",
+    status: "live",
   },
   { id: "phthalates", subject: "Phthalates", category: "chemical",
     plain_language_explanation: "", health_safety_context: "",

@@ -326,6 +326,30 @@ const FLAG_DEFS = {
       { label: "triclocarban", regex: /\btriclocarban\b/i },
     ],
   },
+
+  // PFAS spans food packaging, personal care (dental floss, fluorinated
+  // cosmetics), and home goods (paper products with grease barrier
+  // chemistry). Cookware ingredient lists hit this via the unset bucket
+  // path in detectFlags since "kitchen" / "cookware" map to null bucket
+  // and exercise every group. The "perfluoro" and "polyfluoro" patterns
+  // use a leading-only word boundary so variants like perfluorooctanoic
+  // acid and polyfluoroalkyl substances both match, while the leading
+  // boundary still blocks accidental matches inside unrelated words.
+  pfas: {
+    buckets: ["food", "personal_care", "home"],
+    patterns: [
+      { label: "PTFE",                    regex: /\bptfe\b/i },
+      { label: "polytetrafluoroethylene", regex: /\bpolytetrafluoroethylene\b/i },
+      { label: "Teflon",                  regex: /\bteflon\b/i },
+      { label: "PFOA",                    regex: /\bpfoa\b/i },
+      { label: "PFOS",                    regex: /\bpfos\b/i },
+      { label: "PFHxS",                   regex: /\bpfhxs\b/i },
+      { label: "PFNA",                    regex: /\bpfna\b/i },
+      { label: "perfluoro compound",      regex: /\bperfluoro/i },
+      { label: "polyfluoro compound",     regex: /\bpolyfluoro/i },
+      { label: "fluoropolymer",           regex: /\bfluoropolymer\b/i },
+    ],
+  },
 };
 
 // ── Negation handling ───────────────────────────────────────────
