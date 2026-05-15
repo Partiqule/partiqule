@@ -321,6 +321,29 @@ const authedFetch = async (url, options = {}) => {
   return res;
 };
 
+// R3g — quiet /analyze caller. POSTs without the ndjson Accept header
+// so the backend takes the non-streaming branch and returns a single
+// JSON payload. No UI side effects — caller decides what to do with
+// the result. Used by the list builder's "Score it" path to score a
+// typed-in name in the background and patch the item with the result.
+const analyzeQuiet = async (query) => {
+  const trimmed = String(query || "").trim();
+  if (!trimmed) throw new Error("query required");
+  const res = await authedFetch(`${API_BASE}/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: trimmed }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body?.error || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.body = body;
+    throw err;
+  }
+  return body;
+};
+
 // Streaming /analyze consumer. POSTs with Accept: application/x-ndjson,
 // reads the response as a ReadableStream, splits on newlines, and
 // dispatches each line's parsed object to handlers keyed by event name.
@@ -8252,6 +8275,7 @@ function App() {
           safeTop={SAFE_TOP}
           authedFetch={authedFetch}
           apiBase={API_BASE}
+          analyzeQuiet={analyzeQuiet}
           onAuthRequired={() => setShowAuth(true)}
         />
       ) : page === "history" ? (

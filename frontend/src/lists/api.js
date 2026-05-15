@@ -39,5 +39,9 @@ export function makeListsApi({ authedFetch, apiBase }) {
     createItem: (listId, body)         => request(`/lists/${listId}/items`,             { method: "POST",   body: JSON.stringify(body) }),
     updateItem: (listId, itemId, body) => request(`/lists/${listId}/items/${itemId}`,   { method: "PATCH",  body: JSON.stringify(body) }),
     deleteItem: (listId, itemId)       => request(`/lists/${listId}/items/${itemId}`,   { method: "DELETE" }),
+    // R3g — batch reorder. Single network call replaces N parallel
+    // PATCHes per drag motion; backend serializes the row updates and
+    // invalidates the cache once.
+    reorderItems: (listId, positions)  => request(`/lists/${listId}/reorder`,           { method: "POST",   body: JSON.stringify({ positions }) }),
   };
 }

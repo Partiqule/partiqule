@@ -580,7 +580,7 @@ const SuggestionsSection = ({ items, onAdd }) => {
 };
 
 // ── List detail ────────────────────────────────────────────────────
-const ItemRow = ({ item, kidsOn, otherLists, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onOpenList, drag }) => {
+const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onOpenList, drag }) => {
   const displayName = item.product_name || item.product_name_normalized || "Unnamed item";
   const isReading = item.placeholder === true;
   const purchased = !!item.purchased;
@@ -684,13 +684,24 @@ const ItemRow = ({ item, kidsOn, otherLists, onRemove, onToggleOwned, onTogglePu
           )}
 
           <div style={{display:"flex", alignItems:"center", gap:10, marginTop:2, flexWrap:"wrap"}}>
-            {item.anchor === "name" ? (
-              <>
-                <ScoreChip score={null}/>
-                <button onClick={(e)=>e.preventDefault()} style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
-                  Score it
-                </button>
-              </>
+            {/* R3g — anchor=name items without a score show the Score it
+                affordance. Once a score lands on the row (via the Score
+                it flow), it falls through to the scored branch even
+                though scan_id is still null in the database. */}
+            {item.anchor === "name" && item.score == null ? (
+              isScoring ? (
+                <span style={{display:"inline-flex", alignItems:"center", gap:6, padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule)", background:"var(--cream-light)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color:"var(--moss)", letterSpacing:"0.06em", textTransform:"uppercase", animation:"partiqulePulse 1.4s ease-in-out infinite"}}>
+                  Scoring...
+                </span>
+              ) : (
+                <>
+                  <ScoreChip score={null}/>
+                  <button onClick={(e)=>{e.stopPropagation(); onScoreItem?.(item);}}
+                    style={{padding:"3px 12px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer"}}>
+                    Score it
+                  </button>
+                </>
+              )
             ) : (
               <>
                 <ScoreChip score={activeScore}/>
@@ -721,7 +732,7 @@ const ItemRow = ({ item, kidsOn, otherLists, onRemove, onToggleOwned, onTogglePu
   );
 };
 
-const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, isMobile }) => {
+const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, scoring, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
   // R3a r1 — kids toggle is local to this list view. State resets when the
@@ -973,11 +984,13 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
           {renderedItems.map(item => (
             <ItemRow key={item.id} item={item} kidsOn={kidsOn}
               otherLists={otherListsByItemId.get(item.id) || []}
+              isScoring={!!(scoring && scoring[item.id])}
               onRemove={onRemoveItem}
               onToggleOwned={onToggleOwned}
               onTogglePurchased={onTogglePurchased}
               onEditNote={onEditNote}
               onSwapItem={onSwapItem}
+              onScoreItem={onScoreItem}
               onOpenList={onOpenList}
               drag={drag}/>
           ))}
@@ -1292,7 +1305,7 @@ const NoteEditModal = ({ initialNote, productName, onSave, onCancel }) => {
 };
 
 // ── Top-level page ─────────────────────────────────────────────────
-const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFetch, apiBase, onAuthRequired }) => {
+const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFetch, apiBase, analyzeQuiet, onAuthRequired }) => {
   // R3c — API factory. Memoized so handlers don't churn references.
   const api = useMemo(() => makeListsApi({ authedFetch, apiBase }), [authedFetch, apiBase]);
 
@@ -1312,6 +1325,9 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
   const [pendingDelete, setPendingDelete] = useState(null);
   const [newListMode, setNewListMode] = useState(null);
   const [editingNote, setEditingNote] = useState(null);
+  // R3g — per-item scoring state. Map<itemId, true> while Score it is
+  // running. Drives the spinner in ItemRow and prevents double submits.
+  const [scoring, setScoring] = useState({});
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
   const placeholderTimers = useRef({});
@@ -1738,8 +1754,11 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
     }
   };
 
-  // Drag-to-reorder commit. Optimistic local order swap, then PATCH each
-  // item's new position. Rollback on any failure.
+  // R3g — drag-to-reorder commit, batched. Previously fired N parallel
+  // PATCHes which 504'd in production because each PATCH ran a full
+  // ownership check + Redis cache invalidation. The new POST
+  // /lists/:id/reorder endpoint takes the full position map and runs
+  // one ownership check + N serial UPDATEs + one cache invalidation.
   const reorderItems = async (orderedIds) => {
     if (!activeListId) return;
     const prevDetail = detail[activeListId];
@@ -1749,16 +1768,82 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
     const seen = new Set(orderedIds);
     for (const i of prevDetail.items) if (!seen.has(i.id)) reordered.push(i);
     setDetail(d => ({ ...d, [activeListId]: { ...prevDetail, items: reordered } }));
-    // Fire PATCH per row in parallel. Skip temp IDs (still in flight).
-    const settled = await Promise.allSettled(
-      reordered
-        .filter(i => !String(i.id).startsWith("tmp_"))
-        .map((i, idx) => api.updateItem(activeListId, i.id, { position: idx }))
-    );
-    const failed = settled.filter(r => r.status === "rejected");
-    if (failed.length) {
+
+    // Skip temp IDs (still in flight from a parallel optimistic insert).
+    const positions = reordered
+      .map((i, idx) => ({ id: i.id, position: idx }))
+      .filter(p => !String(p.id).startsWith("tmp_"));
+    if (!positions.length) return;
+
+    try {
+      await api.reorderItems(activeListId, positions);
+    } catch (err) {
       setDetail(d => ({ ...d, [activeListId]: prevDetail }));
-      handleError(failed[0].reason, "Couldn't reorder.");
+      handleError(err, "Couldn't reorder.");
+    }
+  };
+
+  // R3g — Score it handler. Runs analyzeQuiet in the background to score
+  // the typed-in product name, then PATCHes the list item with the
+  // display fields (score, kid_score, flags, category). The PATCH
+  // endpoint does not accept scan_id today, so the item stays
+  // anchor="name" in the database, but the row now carries score data
+  // and renders with the score chip instead of the Score it button.
+  const scoreItem = async (item) => {
+    if (!item || !activeListId || scoring[item.id]) return;
+    if (typeof analyzeQuiet !== "function") {
+      showToast("Scoring is unavailable right now.");
+      return;
+    }
+    const query = (item.product_name || item.product_name_normalized || "").trim();
+    if (!query) return;
+    setScoring(s => ({ ...s, [item.id]: true }));
+    try {
+      const result = await analyzeQuiet(query);
+      const patch = {
+        product_name: result.product_name || query,
+        category: result.category || null,
+        score: typeof result.score === "number" ? result.score
+             : (typeof result.overall_score === "number" ? result.overall_score : null),
+        kid_score: typeof result.child_score === "number" ? result.child_score
+                  : (typeof result.kid_score === "number" ? result.kid_score
+                  : (typeof result.score === "number" ? result.score : null)),
+        flags: Array.isArray(result.flagged_substances)
+          ? result.flagged_substances
+              .map(f => typeof f === "string" ? f : (f && f.substance) || "")
+              .filter(f => typeof f === "string" && f.length > 0)
+              .slice(0, 20)
+          : [],
+      };
+
+      // Optimistic local patch so the chip and category icon flip in
+      // immediately while the network call completes.
+      setDetail(d => {
+        const ex = d[activeListId];
+        if (!ex) return d;
+        return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === item.id ? { ...i, ...patch } : i) } };
+      });
+
+      if (String(item.id).startsWith("tmp_")) {
+        // The item itself is still in flight — its real ID isn't known
+        // yet. The optimistic local patch above is the best we can do;
+        // when the create resolves, the server row already lacks score
+        // data, so a follow-up scoring pass may be needed.
+        return;
+      }
+
+      const res = await api.updateItem(activeListId, item.id, patch);
+      setDetail(d => {
+        const ex = d[activeListId];
+        if (!ex) return d;
+        return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === item.id ? res.item : i) } };
+      });
+    } catch (err) {
+      if (err && err.status === 401) onAuthRequired?.();
+      else if (err && err.status === 402) showToast("Subscribe to score items in your lists.");
+      else showToast("Couldn't score that one. Try again.");
+    } finally {
+      setScoring(s => { const { [item.id]: _, ...rest } = s; return rest; });
     }
   };
 
@@ -1851,11 +1936,13 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
           onTogglePurchased={togglePurchased}
           onEditNote={(item) => setEditingNote(item)}
           onSwapItem={swapItem}
+          onScoreItem={scoreItem}
           onShare={shareList}
           onReorderItems={reorderItems}
           onOpenList={openList}
           onAddByName={addItemByName}
           onDeleteList={(id) => setPendingDelete(id)}
+          scoring={scoring}
           isMobile={isMobile}
         />
       )}

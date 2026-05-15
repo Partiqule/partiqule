@@ -711,6 +711,95 @@ function registerListsRoutes(app, deps) {
     }
   });
 
+  // ── POST /lists/:id/reorder ─────────────────────────────────────
+  // R3g — batch reorder endpoint. The per-item PATCH path on position
+  // was firing N×Redis-cache-invalidations + N×ownership-checks for a
+  // single drag motion. Seven-item reorders 504'd in production. This
+  // batch endpoint does one ownership check, one membership check, N
+  // serial UPDATEs on a single connection, one updated_at touch, and
+  // one cache invalidation.
+  //
+  // Per-item PATCH /lists/:id/items/:itemId still accepts position for
+  // any single-position use case; this is purely additive.
+  app.post("/lists/:id/reorder", requireUserAuth, async (req, res) => {
+    if (!requireSupabase(req, res)) return;
+    const uid = req.authUserId;
+    const listId = req.params.id;
+    if (!/^[0-9a-f-]{30,40}$/i.test(listId)) {
+      return res.status(400).json({ error: "invalid_list_id" });
+    }
+    const positions = req.body && Array.isArray(req.body.positions) ? req.body.positions : null;
+    if (!positions) return res.status(422).json({ error: "positions array required" });
+    if (positions.length === 0) return res.status(422).json({ error: "positions empty" });
+    if (positions.length > 500) return res.status(422).json({ error: "positions too large" });
+    for (const p of positions) {
+      if (!p || typeof p !== "object") return res.status(422).json({ error: "invalid position entry" });
+      if (typeof p.id !== "string" || !/^[0-9a-f-]{30,40}$/i.test(p.id)) {
+        return res.status(422).json({ error: "invalid item id" });
+      }
+      if (!Number.isInteger(p.position) || p.position < 0) {
+        return res.status(422).json({ error: "invalid position value" });
+      }
+    }
+
+    try {
+      const list = await fetchListForUser(supabaseAdmin, listId, uid);
+      if (!list) return res.status(404).json({ error: "list_not_found" });
+      if (list.user_id !== uid) return res.status(403).json({ error: "forbidden" });
+
+      // Membership check: every id must belong to this list AND this user.
+      const ids = positions.map(p => p.id);
+      const { data: existing, error: serr } = await supabaseAdmin
+        .from("list_items")
+        .select("id")
+        .eq("list_id", listId)
+        .eq("user_id", uid)
+        .in("id", ids);
+      if (serr) throw serr;
+      if (!existing || existing.length !== ids.length) {
+        return res.status(422).json({ error: "items_not_in_list" });
+      }
+
+      // Sequential UPDATEs. Supabase has no native batched UPDATE-with-
+      // different-values; we serialize on a single client. N small writes
+      // beat N×network-round-trip-cache-invalidations in the per-PATCH
+      // path.
+      for (const p of positions) {
+        const { error } = await supabaseAdmin
+          .from("list_items")
+          .update({ position: p.position })
+          .eq("id", p.id)
+          .eq("list_id", listId);
+        if (error) throw error;
+      }
+
+      // Touch list updated_at once, not per item.
+      const nowIso = new Date().toISOString();
+      await supabaseAdmin
+        .from("lists")
+        .update({ updated_at: nowIso })
+        .eq("id", listId);
+
+      // Single cache invalidation, not per item.
+      await cache.invalidateUser(uid);
+
+      const { data: updated, error: uerr } = await supabaseAdmin
+        .from("list_items")
+        .select("*")
+        .eq("list_id", listId)
+        .order("position", { ascending: true });
+      if (uerr) throw uerr;
+      return res.json({
+        ok: true,
+        items: (updated || []).map(rowToItem),
+        list_updated_at: nowIso,
+      });
+    } catch (e) {
+      console.error("[lists reorder]", e?.message);
+      return res.status(500).json({ error: "reorder_failed" });
+    }
+  });
+
   // ── DELETE /lists/:id/items/:itemId ─────────────────────────────
   app.delete("/lists/:id/items/:itemId", requireUserAuth, async (req, res) => {
     if (!requireSupabase(req, res)) return;
