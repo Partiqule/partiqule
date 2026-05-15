@@ -7,7 +7,7 @@
 // before R5b builds the real backend.
 
 import React, { useState, useEffect, useRef } from "react";
-import { findResponse, PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES } from "./fixtures";
+import { findResponse, PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, NOVA_LABEL } from "./fixtures";
 
 // ── Design tokens (token-only, no inline hex) ─────────────────────
 const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -96,8 +96,86 @@ const Toast = ({ message }) => {
   );
 };
 
+// ── Buy links row (R5a r1) ───────────────────────────────────────
+// Mirrors the existing alternatives source toggle voice: bare retailer
+// labels with the "→" arrow, no commercial verbs. Buttons individually
+// hide when a link is missing; the whole row hides when none are present.
+const BuyLinks = ({ links }) => {
+  const entries = [];
+  if (links?.amazon) entries.push({ key: "amazon", label: "Amazon", url: links.amazon });
+  if (links?.brand)  entries.push({ key: "brand",  label: "Brand site", url: links.brand });
+  if (links?.target) entries.push({ key: "target", label: "Target", url: links.target });
+  if (!entries.length) return null;
+  return (
+    <div style={{display:"flex", flexWrap:"wrap", gap:8, marginBottom:14}}>
+      {entries.map(e => (
+        <a key={e.key} href={e.url} target="_blank" rel="noopener noreferrer"
+          style={{display:"inline-flex", alignItems:"center", gap:4, padding:"5px 11px", borderRadius:999, background:"transparent", border:"1px solid var(--rule)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--ink)", letterSpacing:"0.02em", textDecoration:"none", cursor:"pointer"}}>
+          {e.label} <span style={{color:"var(--moss)"}}>→</span>
+        </a>
+      ))}
+    </div>
+  );
+};
+
+// ── Flag dot ────────────────────────────────────────────────────
+const flagDotColor = (kind) => {
+  if (kind === "good") return "var(--score-green)";
+  if (kind === "concern") return "var(--score-red)";
+  return "var(--ink-faint)";
+};
+
+// ── Expanded scoring details (R5a r1) ────────────────────────────
+const ScoringDetails = ({ item }) => {
+  const showKidNote = item.kid_score != null && item.kid_score !== item.score;
+  return (
+    <div style={{padding:"16px 0 4px", borderTop:"1px dashed var(--rule)"}}>
+      {item.tier != null && item.tier_note && (
+        <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:15, fontWeight:400, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.5, marginBottom:14}}>
+          Tier {item.tier}. {item.tier_note}
+        </div>
+      )}
+
+      {Array.isArray(item.detailed_flags) && item.detailed_flags.length > 0 && (
+        <div style={{display:"flex", flexDirection:"column", gap:8, marginBottom:14}}>
+          {item.detailed_flags.map((f, i) => (
+            <div key={i} style={{display:"flex", alignItems:"flex-start", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, lineHeight:1.45}}>
+              <span style={{flexShrink:0, width:8, height:8, borderRadius:"50%", background:flagDotColor(f.kind), marginTop:6}}/>
+              <span style={{flex:1, color:"var(--ink-soft)"}}>
+                <span style={{color:"var(--ink)", fontWeight:600, marginRight:6}}>{f.label}</span>
+                {f.detail}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showKidNote && (
+        <div style={{display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:14}}>
+          <span style={{flexShrink:0, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--moss)"}}>Kids note</span>
+          <span>{item.kid_score_note || `Kids score ${item.kid_score} vs adult ${item.score}.`}</span>
+        </div>
+      )}
+
+      {item.nova != null && NOVA_LABEL[item.nova] && (
+        <div style={{display:"flex", alignItems:"baseline", gap:8, marginBottom:12, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)"}}>
+          <span style={{fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--moss)"}}>NOVA {item.nova}</span>
+          <span>{NOVA_LABEL[item.nova]}</span>
+        </div>
+      )}
+
+      {item.calibration_note && (
+        <div style={{display:"flex", alignItems:"baseline", gap:8, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.5}}>
+          <span style={{fontSize:10, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--moss)"}}>Verified</span>
+          <span>{item.calibration_note}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Result item row ──────────────────────────────────────────────
-const ResultItem = ({ item, onAddToList }) => (
+const ResultItem = ({ item, isExpanded, onToggleExpand, onAddToList }) => (
   <div style={{padding:"18px 0", borderBottom:"1px solid var(--rule-soft)"}}>
     <div style={{display:"flex", alignItems:"flex-start", gap:14}}>
       <div style={{flex:1, minWidth:0}}>
@@ -107,15 +185,28 @@ const ResultItem = ({ item, onAddToList }) => (
         <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.55, marginBottom:12}}>
           {item.why}
         </div>
-        <button onClick={() => onAddToList(item)}
-          style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--moss-deep)", letterSpacing:"0.04em", cursor:"pointer"}}>
-          <SmallPlus size={11} color="var(--moss-deep)"/> Add to list
-        </button>
+
+        <BuyLinks links={item.buy_links}/>
+
+        <div style={{display:"flex", flexWrap:"wrap", gap:8, alignItems:"center"}}>
+          <button onClick={() => onAddToList(item)}
+            style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--moss-deep)", letterSpacing:"0.04em", cursor:"pointer"}}>
+            <SmallPlus size={11} color="var(--moss-deep)"/> Add to list
+          </button>
+          <button onClick={() => onToggleExpand(item.id)}
+            aria-expanded={isExpanded}
+            style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.04em", cursor:"pointer"}}>
+            Why this score
+            <span style={{display:"inline-block", fontSize:13, color:"var(--moss)", transition:"transform 0.2s ease", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"}}>▾</span>
+          </button>
+        </div>
       </div>
       <div style={{flexShrink:0}}>
         <ScoreChip score={item.score}/>
       </div>
     </div>
+
+    {isExpanded && <ScoringDetails item={item}/>}
   </div>
 );
 
@@ -221,7 +312,7 @@ const TooShort = () => (
 );
 
 // ── Response card ────────────────────────────────────────────────
-const ResponseCard = ({ response, onAddToList, onSaveAll, isMobile }) => {
+const ResponseCard = ({ response, expandedItems, onToggleExpand, onAddToList, onSaveAll, isMobile }) => {
   const hasItems = response.items && response.items.length > 0;
   return (
     <div style={{paddingTop:24}}>
@@ -233,7 +324,10 @@ const ResponseCard = ({ response, onAddToList, onSaveAll, isMobile }) => {
         <>
           <div style={{borderTop:"1px solid var(--rule)"}}>
             {response.items.map(item => (
-              <ResultItem key={item.id} item={item} onAddToList={onAddToList}/>
+              <ResultItem key={item.id} item={item}
+                isExpanded={!!expandedItems[item.id]}
+                onToggleExpand={onToggleExpand}
+                onAddToList={onAddToList}/>
             ))}
           </div>
           <div style={{marginTop:24, display:"flex", justifyContent:"flex-start"}}>
@@ -260,6 +354,9 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [pickerItem, setPickerItem] = useState(null);
   const [savingAll, setSavingAll] = useState(false);
+  // R5a r1 — expanded scoring details per item, keyed by item.id.
+  // Reset on every new submit so a fresh response starts collapsed.
+  const [expandedItems, setExpandedItems] = useState({});
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
   const submitTimer = useRef(null);
@@ -295,6 +392,7 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
     }
     setPhase("thinking");
     setResponse(null);
+    setExpandedItems({});
     if (submitTimer.current) clearTimeout(submitTimer.current);
     submitTimer.current = setTimeout(() => {
       const fixture = findResponse(q);
@@ -307,6 +405,8 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
       }
     }, 1700);
   };
+
+  const toggleExpand = (id) => setExpandedItems(s => ({ ...s, [id]: !s[id] }));
 
   const autoGrow = (e) => {
     e.target.style.height = "auto";
@@ -392,6 +492,8 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
         {phase === "answered" && response && (
           <ResponseCard
             response={response}
+            expandedItems={expandedItems}
+            onToggleExpand={toggleExpand}
             onAddToList={onAddToList}
             onSaveAll={onSaveAll}
             isMobile={isMobile}
