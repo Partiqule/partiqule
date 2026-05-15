@@ -12,6 +12,7 @@ import { findResponse, PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, N
 // ── Design tokens (token-only, no inline hex) ─────────────────────
 const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
 const CTA_SHAPE  = "22px 18px 24px 20px / 20px 24px 18px 22px";
+const TILE_SHAPE = "12px 16px 14px 18px / 16px 12px 18px 14px";
 
 const scoreColor = (s) => {
   if (s == null) return "var(--ink-faint)";
@@ -31,12 +32,6 @@ const scoreBg = (s) => {
 const X = ({ size = 14, color = "var(--ink-faint)" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round">
     <line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>
-  </svg>
-);
-
-const Plus = ({ size = 14, color = "var(--ivory)" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round">
-    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 );
 
@@ -96,10 +91,75 @@ const Toast = ({ message }) => {
   );
 };
 
-// ── Buy links row (R5a r1) ───────────────────────────────────────
+// R5a r2 — quiet action button. Used for every action affordance on the
+// item card so the image + product name + score chip + why copy can
+// dominate the visual hierarchy. Ghost style, ink-soft text, small.
+const QuietButton = ({ onClick, children, style = {}, asAnchor = false, href, ariaLabel, ariaExpanded }) => {
+  const baseStyle = {
+    display:"inline-flex", alignItems:"center", gap:6,
+    padding:"4px 10px",
+    background:"transparent",
+    border:"1px solid var(--rule)",
+    borderRadius:999,
+    fontFamily:"'DM Sans', system-ui, sans-serif",
+    fontSize:12, fontWeight:500,
+    color:"var(--ink-soft)",
+    letterSpacing:"0.01em",
+    textDecoration:"none",
+    cursor:"pointer",
+    ...style,
+  };
+  if (asAnchor) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} style={baseStyle}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <button onClick={onClick} aria-label={ariaLabel} aria-expanded={ariaExpanded} style={baseStyle}>
+      {children}
+    </button>
+  );
+};
+
+// R5a r2 — product image / fallback avatar. Placeholder system for the
+// prototype: image_url is null on every fixture today, so the colored
+// initial avatar always fires. Real images wire in via R5b.
+const ProductImage = ({ url, name, score, size = 46 }) => {
+  if (url) {
+    return (
+      <div style={{flexShrink:0, width:size, height:size, borderRadius:TILE_SHAPE, overflow:"hidden", background:"var(--cream-light)"}}>
+        <img src={url} alt="" style={{width:"100%", height:"100%", objectFit:"cover", display:"block"}}/>
+      </div>
+    );
+  }
+  const initial = String(name || "?").trim().charAt(0).toUpperCase() || "?";
+  const bg = score == null ? "var(--ink-faint)"
+    : score <= 3 ? "var(--score-green)"
+    : score <= 5 ? "var(--score-amber)"
+    : "var(--score-red)";
+  return (
+    <div aria-hidden="true" style={{
+      flexShrink:0, width:size, height:size,
+      borderRadius:TILE_SHAPE,
+      background: bg,
+      color: "var(--ivory)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      fontFamily:"'Lora', Georgia, serif",
+      fontSize: Math.round(size * 0.46),
+      fontWeight:500,
+      letterSpacing:"-0.02em",
+    }}>{initial}</div>
+  );
+};
+
+// ── Buy links row ────────────────────────────────────────────────
 // Mirrors the existing alternatives source toggle voice: bare retailer
 // labels with the "→" arrow, no commercial verbs. Buttons individually
 // hide when a link is missing; the whole row hides when none are present.
+// R5a r2: rendered with the same quiet style as the rest of the item
+// actions so they recede behind the content.
 const BuyLinks = ({ links }) => {
   const entries = [];
   if (links?.amazon) entries.push({ key: "amazon", label: "Amazon", url: links.amazon });
@@ -107,12 +167,11 @@ const BuyLinks = ({ links }) => {
   if (links?.target) entries.push({ key: "target", label: "Target", url: links.target });
   if (!entries.length) return null;
   return (
-    <div style={{display:"flex", flexWrap:"wrap", gap:8, marginBottom:14}}>
+    <div style={{display:"flex", flexWrap:"wrap", gap:8, marginBottom:12}}>
       {entries.map(e => (
-        <a key={e.key} href={e.url} target="_blank" rel="noopener noreferrer"
-          style={{display:"inline-flex", alignItems:"center", gap:4, padding:"5px 11px", borderRadius:999, background:"transparent", border:"1px solid var(--rule)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--ink)", letterSpacing:"0.02em", textDecoration:"none", cursor:"pointer"}}>
+        <QuietButton key={e.key} asAnchor href={e.url} ariaLabel={`Open on ${e.label}`}>
           {e.label} <span style={{color:"var(--moss)"}}>→</span>
-        </a>
+        </QuietButton>
       ))}
     </div>
   );
@@ -178,6 +237,7 @@ const ScoringDetails = ({ item }) => {
 const ResultItem = ({ item, isExpanded, onToggleExpand, onAddToList }) => (
   <div style={{padding:"18px 0", borderBottom:"1px solid var(--rule-soft)"}}>
     <div style={{display:"flex", alignItems:"flex-start", gap:14}}>
+      <ProductImage url={item.image_url} name={item.product_name} score={item.score} size={46}/>
       <div style={{flex:1, minWidth:0}}>
         <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:17, fontWeight:500, color:"var(--ink)", letterSpacing:"-0.005em", lineHeight:1.3, marginBottom:8}}>
           {item.product_name}
@@ -189,16 +249,13 @@ const ResultItem = ({ item, isExpanded, onToggleExpand, onAddToList }) => (
         <BuyLinks links={item.buy_links}/>
 
         <div style={{display:"flex", flexWrap:"wrap", gap:8, alignItems:"center"}}>
-          <button onClick={() => onAddToList(item)}
-            style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--moss-deep)", letterSpacing:"0.04em", cursor:"pointer"}}>
-            <SmallPlus size={11} color="var(--moss-deep)"/> Add to list
-          </button>
-          <button onClick={() => onToggleExpand(item.id)}
-            aria-expanded={isExpanded}
-            style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 12px", background:"transparent", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, fontWeight:600, color:"var(--ink-soft)", letterSpacing:"0.04em", cursor:"pointer"}}>
+          <QuietButton onClick={() => onAddToList(item)} ariaLabel="Add to a list">
+            <SmallPlus size={10} color="var(--ink-soft)"/> Add to list
+          </QuietButton>
+          <QuietButton onClick={() => onToggleExpand(item.id)} ariaExpanded={isExpanded} ariaLabel="Why this score" style={{border:"none"}}>
             Why this score
-            <span style={{display:"inline-block", fontSize:13, color:"var(--moss)", transition:"transform 0.2s ease", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"}}>▾</span>
-          </button>
+            <span style={{display:"inline-block", fontSize:12, color:"var(--moss)", transition:"transform 0.2s ease", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"}}>▾</span>
+          </QuietButton>
         </div>
       </div>
       <div style={{flexShrink:0}}>
@@ -331,9 +388,9 @@ const ResponseCard = ({ response, expandedItems, onToggleExpand, onAddToList, on
             ))}
           </div>
           <div style={{marginTop:24, display:"flex", justifyContent:"flex-start"}}>
-            <PillButton onClick={onSaveAll}>
-              <Plus/> Save all as a list
-            </PillButton>
+            <QuietButton onClick={onSaveAll} ariaLabel="Save all items as a new list">
+              <SmallPlus size={10} color="var(--ink-soft)"/> Save all as a list
+            </QuietButton>
           </div>
         </>
       ) : (
@@ -351,7 +408,14 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
   // phase: "idle" | "thinking" | "answered" | "tooShort" | "nomatch"
   const [phase, setPhase] = useState("idle");
   const [response, setResponse] = useState(null);
-  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  // R5a r2 — placeholder is a single random pick per page load. Lazy
+  // useState initializer runs once on mount and never re-randomizes on
+  // focus or input changes. Sara called the rotating version distracting.
+  const [placeholderText] = useState(() => {
+    const list = PLACEHOLDER_EXAMPLES;
+    if (!list || !list.length) return "";
+    return list[Math.floor(Math.random() * list.length)];
+  });
   const [pickerItem, setPickerItem] = useState(null);
   const [savingAll, setSavingAll] = useState(false);
   // R5a r1 — expanded scoring details per item, keyed by item.id.
@@ -361,15 +425,6 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
   const toastTimer = useRef(null);
   const submitTimer = useRef(null);
   const textareaRef = useRef(null);
-
-  // Rotate placeholder while the input is empty.
-  useEffect(() => {
-    if (query.trim().length > 0) return;
-    const t = setInterval(() => {
-      setPlaceholderIdx(i => (i + 1) % PLACEHOLDER_EXAMPLES.length);
-    }, 3200);
-    return () => clearInterval(t);
-  }, [query]);
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -453,7 +508,7 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
               }
             }}
             rows={2}
-            placeholder={PLACEHOLDER_EXAMPLES[placeholderIdx]}
+            placeholder={placeholderText}
             style={{
               width:"100%",
               minHeight:60,

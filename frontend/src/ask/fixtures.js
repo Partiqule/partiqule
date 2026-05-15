@@ -1,40 +1,34 @@
-// R5a Ask prototype — fake responses for the 5 canonical example
-// queries plus one "intent clear, nothing scores well" case so Sara
-// can review that copy state too.
+// R5a Ask prototype — fake responses for the canonical example queries
+// plus one "intent clear, nothing scores well" case so Sara can review
+// that copy state too.
 //
 // The shape mirrors what R5b's real backend will return:
 //   { query, intent_restatement, items: [{
 //       id, product_name, score, kid_score, why, flags,
 //       tier, tier_note, detailed_flags, nova, calibration_note,
-//       kid_score_note, buy_links,
+//       kid_score_note, buy_links, image_url,
 //     }, ...] }
 //
-// R5a r1 enrichment fields per item:
-//   tier             1-4. 1 = pure / single ingredient, 4 = hard pass.
-//   tier_note        one short line that follows "Tier N." on render.
-//   detailed_flags   [{ label, kind: "good"|"concern"|"neutral", detail }]
-//   nova             1-4 for food items only. Omitted otherwise.
-//   calibration_note short line, optional.
-//   kid_score_note   short line, only when kid_score !== score.
-//   buy_links        { amazon?, brand?, target? } — buttons hide
-//                    individually when missing, whole row hides when
-//                    all three are absent.
+// R5a r2 voice rule: the word "safe" is off-limits in user-facing copy.
+// Endorsement language carries real liability. Score-anchored phrasing
+// ("scored cleanest", "scores well", "low score", "cleaner") plus
+// specific receipts is the substitute.
 //
-// Each fixture carries a `matches(q)` function. The first fixture
-// whose matcher fires wins. Order matters — most specific first.
+// R5a r2 density rule: default why copy targets ~80 characters. Full
+// detail lives under the expanded scoring panel.
 
 const FIXTURES = [
   {
     id: "sippy_cup",
     examples: ["sippy cup for my 18 month old"],
     matches: (q) => /\bsippy\b/.test(q) || /\btoddler\s+(cup|water)/.test(q) || /\b18\s+(month|mo)\b/.test(q),
-    intent_restatement: "Looking for a clean sippy cup for an 18 month old. Here's what scores well.",
+    intent_restatement: "Sippy cups for an 18 month old. Here's what scored cleanest.",
     items: [
       {
         id: "sippy_1",
         product_name: "ezpz Tiny Cup",
         score: 2, kid_score: 2,
-        why: "Pure platinum silicone. No plastic, no dyes, no spout to harbor mold. Built for little hands to learn open-cup drinking.",
+        why: "Pure platinum silicone. No plastic, no dyes, no spout to harbor mold.",
         flags: ["clean_materials"],
         tier: 1,
         tier_note: "Pure single-material build.",
@@ -44,6 +38,7 @@ const FIXTURES = [
           { label: "Cleaning", kind: "good", detail: "One molded piece. Nothing to scrub around." },
         ],
         calibration_note: "EWG verified, family-tested platinum cure spec.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B07TINY1",
           brand: "https://ezpzfun.com/products/tiny-cup",
@@ -54,7 +49,7 @@ const FIXTURES = [
         id: "sippy_2",
         product_name: "Pura Kiki Stainless Steel Toddler Bottle",
         score: 2, kid_score: 2,
-        why: "Medical-grade stainless steel body with a silicone sleeve. The sippy spout is silicone. Nothing leaches into liquid, hot or cold.",
+        why: "Medical-grade stainless steel with a silicone sleeve and silicone spout.",
         flags: ["clean_materials"],
         tier: 1,
         tier_note: "Stainless body with silicone parts.",
@@ -63,6 +58,7 @@ const FIXTURES = [
           { label: "Spout", kind: "neutral", detail: "Silicone, replaceable as it wears." },
           { label: "Sleeve", kind: "good", detail: "Silicone, no PVC." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0PURA01",
           brand: "https://purakiki.com/products/toddler-bottle",
@@ -72,7 +68,7 @@ const FIXTURES = [
         id: "sippy_3",
         product_name: "Munchkin Miracle 360 Trainer Cup",
         score: 5, kid_score: 6,
-        why: "BPA-free polypropylene body and a silicone valve. Plastic-on-liquid is fine for most kids, but warm liquids and dishwasher cycles wear the material faster than steel or silicone.",
+        why: "BPA-free polypropylene with a silicone valve. Plastic ages faster than steel.",
         flags: ["plastic_body"],
         tier: 3,
         tier_note: "BPA-free plastic, mainstream build.",
@@ -81,8 +77,9 @@ const FIXTURES = [
           { label: "Valve", kind: "concern", detail: "Tight 360 valve traps moisture, harder to fully dry." },
           { label: "Heat", kind: "concern", detail: "Plastic ages faster with warm liquids and frequent dishwashing." },
         ],
-        kid_score_note: "Kids score one higher because soft plastic on warm liquids ages faster and any wear leaches more.",
+        kid_score_note: "Kids score one higher because soft plastic on warm liquids ages faster.",
         calibration_note: "Variant scored: Miracle 360 only, not the spoutless cups.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0MUNCH1",
           target: "https://www.target.com/p/munchkin-miracle-360-trainer-cup/-/A-14523",
@@ -92,7 +89,7 @@ const FIXTURES = [
         id: "sippy_4",
         product_name: "Nuby Cup-eez Trainer Cup",
         score: 6, kid_score: 7,
-        why: "Mixed plastic with hard spout. The variant with synthetic dyes scores worse, and the tight crevices around the valve are hard to clean.",
+        why: "Mixed plastic with synthetic dyes on colored variants. Tight valve crevices.",
         flags: ["plastic_body", "synthetic_dye"],
         tier: 3,
         tier_note: "Plastic body with colored variants.",
@@ -102,6 +99,7 @@ const FIXTURES = [
           { label: "Cleaning", kind: "concern", detail: "Hard spout with many edges, mold risk at the seams." },
         ],
         kid_score_note: "Kids score one higher because of the synthetic dye exposure on top of the plastic.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0NUBYCP",
         },
@@ -113,13 +111,13 @@ const FIXTURES = [
     id: "mil_clean_beauty",
     examples: ["gift for my mother in law who likes clean beauty"],
     matches: (q) => (/\bclean beauty\b/.test(q) || /\bclean skincare\b/.test(q)) && (/\bgift\b/.test(q) || /\bmother\b/.test(q) || /\bmil\b/.test(q)),
-    intent_restatement: "A clean beauty gift for someone already discerning. These score top tier and read as gift-worthy.",
+    intent_restatement: "A clean beauty gift for someone already discerning. These scored top tier and read as gift-worthy.",
     items: [
       {
         id: "mil_1",
         product_name: "Tata Harper Hydrating Floral Essence",
         score: 2, kid_score: 2,
-        why: "Vermont-farmed botanicals, glass bottle, full ingredient transparency. No synthetic fragrance, no parabens. The kind of bottle that signals attention.",
+        why: "Vermont-farmed botanicals in glass. No synthetic fragrance, no parabens.",
         flags: ["clean_materials"],
         tier: 1,
         tier_note: "Single-source botanical formulation.",
@@ -129,6 +127,7 @@ const FIXTURES = [
           { label: "Packaging", kind: "good", detail: "Glass bottle, recyclable carton." },
         ],
         calibration_note: "Brand-level certified, sustainability report verified.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0TATA01",
           brand: "https://www.tataharperskincare.com/products/hydrating-floral-essence",
@@ -138,7 +137,7 @@ const FIXTURES = [
         id: "mil_2",
         product_name: "Pai Skincare Rosehip BioRegenerate Oil",
         score: 2, kid_score: 2,
-        why: "Cold-pressed rosehip oil in dark glass. Single ingredient story, EWG verified, gentle enough for sensitive skin.",
+        why: "Cold-pressed rosehip oil in amber glass. Single ingredient, EWG verified.",
         flags: ["clean_materials"],
         tier: 1,
         tier_note: "Single-ingredient oil.",
@@ -147,6 +146,7 @@ const FIXTURES = [
           { label: "Packaging", kind: "good", detail: "Amber glass with pipette." },
         ],
         calibration_note: "EWG verified, COSMOS organic.",
+        image_url: null,
         buy_links: {
           brand: "https://www.paiskincare.com/products/rosehip-bioregenerate-oil",
           target: "https://www.target.com/p/pai-rosehip-oil/-/A-99001",
@@ -156,7 +156,7 @@ const FIXTURES = [
         id: "mil_3",
         product_name: "Beautycounter Countertime Tetrapeptide Supreme Cream",
         score: 3, kid_score: 3,
-        why: "Plant-derived retinol alternative with a Never List ingredient screen. The peptide formula is the actual selling point; the packaging is plastic, not glass.",
+        why: "Plant-derived retinol alternative with the Never List ingredient screen.",
         flags: ["clean_materials"],
         tier: 2,
         tier_note: "Clean formula, plastic vessel.",
@@ -165,6 +165,7 @@ const FIXTURES = [
           { label: "Packaging", kind: "concern", detail: "PCR plastic jar, not glass. Solid but less recyclable." },
           { label: "Fragrance", kind: "neutral", detail: "Citrus essential oils. Light." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0BCTRY1",
           brand: "https://www.beautycounter.com/product/countertime-tetrapeptide-supreme-cream",
@@ -177,13 +178,13 @@ const FIXTURES = [
     id: "dairy_free_pouches",
     examples: ["dairy free snack pouches for my toddler"],
     matches: (q) => /\bdairy.?free\b/.test(q) && (/\bpouch\b/.test(q) || /\btoddler\b/.test(q) || /\bsnack\b/.test(q)),
-    intent_restatement: "Dairy free snack pouches that score well for toddlers. All three options below have zero dairy and clean macros.",
+    intent_restatement: "Dairy free snack pouches that scored well for toddlers. All three options below have zero dairy and clean macros.",
     items: [
       {
         id: "df_1",
         product_name: "Serenity Kids Veggie Puree Pouches",
         score: 3, kid_score: 3,
-        why: "Vegetable forward. Beets, carrots, butternut squash with grass-fed butter as an option, but the dairy-free SKUs use avocado oil instead. No added sugar.",
+        why: "Vegetable forward. Avocado oil in the dairy-free SKUs. No added sugar.",
         flags: ["dairy_free", "no_added_sugar"],
         tier: 2,
         tier_note: "Real food, minimal processing.",
@@ -193,6 +194,7 @@ const FIXTURES = [
           { label: "Dairy", kind: "good", detail: "Specific SKUs are dairy free — check the label." },
         ],
         nova: 3,
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0SERN01",
           brand: "https://www.myserenitykids.com/products/veggie-pouches",
@@ -203,7 +205,7 @@ const FIXTURES = [
         id: "df_2",
         product_name: "Once Upon a Farm Organic Fruit Pouches",
         score: 3, kid_score: 3,
-        why: "Cold-pressed organic fruit and veg. No dairy in any SKU. The sugar is all from real fruit. Refrigerated, which signals it isn't shelf stable for years.",
+        why: "Cold-pressed organic fruit and veg. No dairy in any SKU.",
         flags: ["dairy_free", "no_added_sugar"],
         tier: 2,
         tier_note: "Cold-pressed, refrigerated.",
@@ -214,6 +216,7 @@ const FIXTURES = [
         ],
         nova: 3,
         calibration_note: "Refrigerated section only.",
+        image_url: null,
         buy_links: {
           brand: "https://www.onceuponafarmorganics.com/collections/pouches",
           target: "https://www.target.com/p/once-upon-a-farm-pouch/-/A-77105",
@@ -223,7 +226,7 @@ const FIXTURES = [
         id: "df_3",
         product_name: "Plum Organics Mighty 4 Pouches",
         score: 4, kid_score: 5,
-        why: "Four food groups in one pouch, but the grain blend reads like added carbs that drive the sugar load up. Dairy free, but kid_score lands higher because of the sugar.",
+        why: "Four food groups, but the grain blend pushes total sugar past 10g per pouch.",
         flags: ["dairy_free", "added_sugar"],
         tier: 2,
         tier_note: "Convenient, sugar-heavier.",
@@ -234,6 +237,7 @@ const FIXTURES = [
         ],
         nova: 4,
         kid_score_note: "Kids score one higher because the sugar load matters more relative to a smaller body.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0PLUM01",
           target: "https://www.target.com/p/plum-organics-mighty-4/-/A-12055",
@@ -244,15 +248,15 @@ const FIXTURES = [
 
   {
     id: "pregnancy_sunscreen",
-    examples: ["safe sunscreen for pregnancy"],
+    examples: ["cleaner sunscreen for pregnancy"],
     matches: (q) => /\bsunscreen\b/.test(q) && (/\bpregnan/.test(q) || /\bexpect\b/.test(q) || /\btrimester\b/.test(q)),
-    intent_restatement: "Mineral sunscreens with no oxybenzone, no avobenzone, and nothing else that crosses the placenta. All four below are safe for pregnancy and nursing.",
+    intent_restatement: "Sunscreens that scored cleanest for pregnancy. Mineral filters only, nothing that crosses the placenta.",
     items: [
       {
         id: "preg_1",
         product_name: "Badger Active Mineral Sunscreen SPF 30",
         score: 2, kid_score: 2,
-        why: "Non-nano zinc oxide only. Five ingredients total. EWG verified, made in Vermont, recyclable metal tube.",
+        why: "Non-nano zinc oxide only. Five total ingredients. Recyclable metal tube.",
         flags: ["mineral_only"],
         tier: 1,
         tier_note: "Minimal ingredient mineral.",
@@ -261,7 +265,8 @@ const FIXTURES = [
           { label: "Ingredients", kind: "good", detail: "Five total ingredients, all named." },
           { label: "Packaging", kind: "good", detail: "Recyclable aluminum tube." },
         ],
-        calibration_note: "EWG verified, Made Safe certified.",
+        calibration_note: "EWG verified. Third-party non-toxic certifications.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0BDGR01",
           brand: "https://www.badgerbalm.com/products/active-mineral-sunscreen",
@@ -272,7 +277,7 @@ const FIXTURES = [
         id: "preg_2",
         product_name: "Babo Botanicals Daily Sheer Tinted Mineral SPF 50",
         score: 2, kid_score: 2,
-        why: "Zinc oxide with iron oxides for tint. Tinted finish means visible blue light protection on top of UV — relevant if you're pregnant and pigmenting.",
+        why: "Zinc oxide with iron oxides for tint. Adds visible blue light coverage.",
         flags: ["mineral_only"],
         tier: 1,
         tier_note: "Tinted mineral with iron oxides.",
@@ -281,6 +286,7 @@ const FIXTURES = [
           { label: "Fragrance", kind: "good", detail: "Fragrance free." },
           { label: "Skin tone", kind: "neutral", detail: "Single tinted shade — may not match every complexion." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0BABO01",
           brand: "https://www.babobotanicals.com/products/daily-sheer-tinted-mineral-sunscreen",
@@ -290,15 +296,16 @@ const FIXTURES = [
         id: "preg_3",
         product_name: "Stream2Sea Mineral Sunblock for Body",
         score: 2, kid_score: 2,
-        why: "Reef-safe certified, non-nano zinc, no titanium dioxide. The carrier oil is organic green tea extract. Water resistant for 80 minutes.",
+        why: "Non-nano zinc only. Carrier oil is organic green tea. 80-minute water resistant.",
         flags: ["mineral_only"],
         tier: 1,
-        tier_note: "Reef-safe mineral.",
+        tier_note: "Mineral with Protect Land + Sea certification.",
         detailed_flags: [
           { label: "Active", kind: "good", detail: "Non-nano zinc oxide only." },
           { label: "Carrier", kind: "good", detail: "Organic green tea extract, no chemical emollients." },
           { label: "Reef impact", kind: "good", detail: "Protect Land + Sea certified." },
         ],
+        image_url: null,
         buy_links: {
           brand: "https://www.stream2sea.com/products/mineral-sunblock-body",
         },
@@ -307,7 +314,7 @@ const FIXTURES = [
         id: "preg_4",
         product_name: "Pipette Mineral Sunscreen Lotion SPF 50",
         score: 3, kid_score: 3,
-        why: "Non-nano zinc with squalane from sugarcane. Lighter feel than Badger but the formula has more emulsifiers, which is why it lands at 3 not 2.",
+        why: "Non-nano zinc with sugarcane squalane. Lighter feel from more emulsifiers.",
         flags: ["mineral_only"],
         tier: 2,
         tier_note: "Light-feel mineral with more carriers.",
@@ -316,6 +323,7 @@ const FIXTURES = [
           { label: "Emulsifiers", kind: "neutral", detail: "Several plant-derived emulsifiers for the light feel." },
           { label: "Packaging", kind: "neutral", detail: "PCR plastic, recyclable but not glass." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0PIPE01",
           target: "https://www.target.com/p/pipette-mineral-sunscreen/-/A-78900",
@@ -328,13 +336,13 @@ const FIXTURES = [
     id: "laundry_detergent",
     examples: ["non toxic laundry detergent"],
     matches: (q) => /\blaundry\b/.test(q) && (/\bdetergent\b/.test(q) || /\bsoap\b/.test(q) || /\bnon.?toxic\b/.test(q) || /\bclean\b/.test(q)),
-    intent_restatement: "Laundry detergents without fragrance, optical brighteners, or 1,4-dioxane. These four are the cleanest in the database.",
+    intent_restatement: "Laundry detergents without fragrance, optical brighteners, or 1,4-dioxane. These four scored cleanest in the database.",
     items: [
       {
         id: "laundry_1",
         product_name: "Branch Basics Laundry Concentrate",
         score: 1, kid_score: 1,
-        why: "One bottle, full ingredient transparency, no fragrance, no enzymes, no brighteners. Dilutes from concentrate, which cuts plastic per load by 90 percent.",
+        why: "One bottle, six named ingredients. No fragrance, enzymes, or brighteners.",
         flags: ["fragrance_free", "transparent_ingredients"],
         tier: 1,
         tier_note: "Transparent single-formula concentrate.",
@@ -344,7 +352,8 @@ const FIXTURES = [
           { label: "Brighteners", kind: "good", detail: "No optical brighteners." },
           { label: "Packaging", kind: "good", detail: "Refillable concentrate cuts plastic per load." },
         ],
-        calibration_note: "Made Safe certified, brand-published full disclosure.",
+        calibration_note: "Brand-published full ingredient disclosure. Third-party clean certifications.",
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0BRBS01",
           brand: "https://www.branchbasics.com/products/laundry-concentrate",
@@ -354,7 +363,7 @@ const FIXTURES = [
         id: "laundry_2",
         product_name: "Molly's Suds Laundry Powder",
         score: 2, kid_score: 2,
-        why: "Five ingredients, all named on the label. No PVA film, no brighteners. Cardboard packaging means no plastic to the curb each month.",
+        why: "Five ingredients, all named on the label. No PVA film, cardboard packaging.",
         flags: ["fragrance_free", "transparent_ingredients"],
         tier: 1,
         tier_note: "Minimal-ingredient powder.",
@@ -363,6 +372,7 @@ const FIXTURES = [
           { label: "Format", kind: "good", detail: "Powder in cardboard, no plastic." },
           { label: "Scent", kind: "neutral", detail: "Light peppermint from essential oil, not synthetic fragrance." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0MOLY01",
           brand: "https://mollyssuds.com/products/laundry-powder",
@@ -373,7 +383,7 @@ const FIXTURES = [
         id: "laundry_3",
         product_name: "Dropps Stain and Odor Laundry Pods",
         score: 3, kid_score: 3,
-        why: "Single-dose pods are convenient and the formula screens out the worst offenders. The PVA film dissolves but recent research questions whether it fully degrades.",
+        why: "Pods with clean formula. PVA film dissolves but full degradation is debated.",
         flags: ["pva_film"],
         tier: 2,
         tier_note: "Clean formula, plastic-film question.",
@@ -382,6 +392,7 @@ const FIXTURES = [
           { label: "PVA film", kind: "concern", detail: "Dissolves but recent peer-reviewed work questions full degradation." },
           { label: "Packaging", kind: "good", detail: "Cardboard box, no plastic outer." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0DRPS01",
           brand: "https://www.dropps.com/products/stain-odor-pods",
@@ -391,7 +402,7 @@ const FIXTURES = [
         id: "laundry_4",
         product_name: "Tru Earth Laundry Strips",
         score: 3, kid_score: 3,
-        why: "Plastic-free format and zero water shipping. Same PVA film concern as Dropps — the strip itself is the film. Otherwise clean formula.",
+        why: "Plastic-free strips, no water shipping. Strip itself is PVA film.",
         flags: ["pva_film"],
         tier: 2,
         tier_note: "Strip format, PVA film body.",
@@ -400,6 +411,7 @@ const FIXTURES = [
           { label: "PVA strip", kind: "concern", detail: "The strip itself is PVA film. Same degradation question as pods." },
           { label: "Shipping", kind: "good", detail: "Light, plastic-free, no water to ship." },
         ],
+        image_url: null,
         buy_links: {
           amazon: "https://www.amazon.com/dp/B0TRUE01",
           brand: "https://www.tru.earth/products/laundry-eco-strips",
@@ -451,7 +463,7 @@ export const EXAMPLE_QUERIES = [
   "sippy cup for my 18 month old",
   "gift for my mother in law who likes clean beauty",
   "dairy free snack pouches for my toddler",
-  "safe sunscreen for pregnancy",
+  "cleaner sunscreen for pregnancy",
   "non toxic laundry detergent",
 ];
 
