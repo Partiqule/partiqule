@@ -5,8 +5,9 @@
 // No backend calls, no Supabase, no persistence — Sara reviews UX and copy
 // here before R3b locks the schema and R3c wires real endpoints.
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
-import { FAKE_LISTS, FAKE_RECENT_SCANS, FLAG_LABELS, FAKE_ALTERNATIVES, TEMPLATES, SMART_SUGGESTIONS } from "./fixtures";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { FAKE_RECENT_SCANS, FLAG_LABELS, FAKE_ALTERNATIVES, TEMPLATES, SMART_SUGGESTIONS } from "./fixtures";
+import { makeListsApi } from "./api";
 
 // ── Tokens-only helpers ───────────────────────────────────────────
 const CARD_SHAPE     = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -395,7 +396,16 @@ const ListCard = ({ list, onOpen }) => {
   );
 };
 
-const ListsOverview = ({ lists, onOpen, onCreate, isMobile }) => {
+const ListCardSkeleton = () => (
+  <div style={{display:"flex", alignItems:"center", gap:16, padding:"18px 20px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, marginBottom:12}}>
+    <div style={{flex:1, minWidth:0}}>
+      <div className="pq-skeleton" style={{height:18, width:"60%", borderRadius:4, marginBottom:8}}/>
+      <div className="pq-skeleton" style={{height:10, width:"40%", borderRadius:4}}/>
+    </div>
+  </div>
+);
+
+const ListsOverview = ({ lists, loading, error, onOpen, onCreate, onRetry, isMobile }) => {
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:`0 ${isMobile ? "20px" : "40px"}`}}>
       <SectionStamp label="Lists"/>
@@ -411,18 +421,66 @@ const ListsOverview = ({ lists, onOpen, onCreate, isMobile }) => {
           <Plus/> New list
         </PillButton>
       </div>
-      {lists.length === 0 ? (
+      {error ? (
+        <div style={{textAlign:"center", padding:"40px 20px", background:"var(--cream-light)", border:"1px solid var(--score-red)", borderRadius:CARD_SHAPE}}>
+          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, color:"var(--ink)", marginBottom:8, letterSpacing:"-0.005em"}}>Couldn't load lists.</div>
+          <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:16}}>{error}</div>
+          <PillButton onClick={onRetry} kind="secondary">Try again</PillButton>
+        </div>
+      ) : (lists == null && loading) ? (
+        <div>
+          <ListCardSkeleton/><ListCardSkeleton/><ListCardSkeleton/>
+        </div>
+      ) : (lists && lists.length === 0) ? (
         <div style={{textAlign:"center", padding:"60px 20px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE}}>
           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:20, color:"var(--ink)", marginBottom:10, letterSpacing:"-0.01em"}}>Start your first list.</div>
           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:18}}>Add what you want to remember. Add what you want to swap.</div>
           <PillButton onClick={onCreate}>Create a list</PillButton>
         </div>
       ) : (
-        <div>{lists.map(l => <ListCard key={l.id} list={l} onOpen={onOpen}/>)}</div>
+        <div>{(lists || []).map(l => <ListCard key={l.id} list={l} onOpen={onOpen}/>)}</div>
       )}
     </div>
   );
 };
+
+// R3c — skeleton placeholder shown while GET /lists/:id is in flight.
+// Matches the detail layout closely so the transition is calm: back
+// affordance, title block, score chip slot, and a few item rows.
+const ListDetailSkeleton = ({ onBack, isMobile }) => (
+  <div style={{maxWidth:720, margin:"0 auto", padding:`0 ${isMobile ? "20px" : "40px"}`}}>
+    <button onClick={onBack}
+      style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 4px 6px 0", background:"transparent", border:"none", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, cursor:"pointer", marginBottom:18}}>
+      <ChevronLeft size={14}/> Lists
+    </button>
+    <div className="pq-skeleton" style={{height: isMobile ? 32 : 38, width:"60%", borderRadius:4, marginBottom:14}}/>
+    <div className="pq-skeleton" style={{height:24, width:80, borderRadius:999, marginBottom:14}}/>
+    <div className="pq-skeleton" style={{height:12, width:"40%", borderRadius:4, marginBottom:24}}/>
+    {[0,1,2].map(i => (
+      <div key={i} style={{display:"flex", alignItems:"center", gap:14, padding:"14px 4px", borderBottom:"1px solid var(--rule-soft)"}}>
+        <div className="pq-skeleton" style={{width:32, height:32, borderRadius:TILE_SHAPE}}/>
+        <div style={{flex:1}}>
+          <div className="pq-skeleton" style={{height:14, width:"50%", borderRadius:4, marginBottom:8}}/>
+          <div className="pq-skeleton" style={{height:10, width:"30%", borderRadius:4}}/>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const ListDetailError = ({ message, onRetry, onBack, isMobile }) => (
+  <div style={{maxWidth:720, margin:"0 auto", padding:`0 ${isMobile ? "20px" : "40px"}`}}>
+    <button onClick={onBack}
+      style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 4px 6px 0", background:"transparent", border:"none", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, cursor:"pointer", marginBottom:18}}>
+      <ChevronLeft size={14}/> Lists
+    </button>
+    <div style={{textAlign:"center", padding:"40px 20px", background:"var(--cream-light)", border:"1px solid var(--score-red)", borderRadius:CARD_SHAPE}}>
+      <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, color:"var(--ink)", marginBottom:8, letterSpacing:"-0.005em"}}>Couldn't load this list.</div>
+      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5, marginBottom:16}}>{message}</div>
+      <PillButton onClick={onRetry} kind="secondary">Try again</PillButton>
+    </div>
+  </div>
+);
 
 // ── Category donut (R3a r3) ───────────────────────────────────────
 // Hidden when the list has fewer than two items or only one category is
@@ -1234,34 +1292,52 @@ const NoteEditModal = ({ initialNote, productName, onSave, onCancel }) => {
 };
 
 // ── Top-level page ─────────────────────────────────────────────────
-const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
-  const [lists, setLists] = useState(FAKE_LISTS);
-  const [view, setView] = useState("overview"); // overview | detail
+const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFetch, apiBase, onAuthRequired }) => {
+  // R3c — API factory. Memoized so handlers don't churn references.
+  const api = useMemo(() => makeListsApi({ authedFetch, apiBase }), [authedFetch, apiBase]);
+
+  // Data state. null on lists means unloaded (skeleton). Empty array means
+  // loaded and the user has no lists. detail is keyed by listId; entries
+  // appear when the user opens a list and we fetch its full payload.
+  const [lists, setLists] = useState(null);
+  const [detail, setDetail] = useState({});
+  const [loadingLists, setLoadingLists] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState({});
+  const [errorLists, setErrorLists] = useState(null);
+  const [errorDetail, setErrorDetail] = useState({});
+
+  const [view, setView] = useState("overview");
   const [activeListId, setActiveListId] = useState(null);
   const [addOpen, setAddOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
-  // R3a r2 — new-list flow has a chooser step ("Start blank" or "Use a
-  // template") before the actual create. null when closed, "chooser" when
-  // the two-option modal is open, "templates" when the picker is open.
   const [newListMode, setNewListMode] = useState(null);
-  // R3a r2 — note editor: holds the item being edited so the modal renders
-  // with the right product name and initial value.
   const [editingNote, setEditingNote] = useState(null);
-  // R3a r2 — toast message for share-copy confirmation. Auto-clears via the
-  // timeout below.
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
   const placeholderTimers = useRef({});
 
-  const activeList = lists.find(l => l.id === activeListId) || null;
+  const activeDetail = activeListId ? (detail[activeListId] || null) : null;
 
-  // Recent scans for the "From recent scans" picker. Prefer real user history
-  // if available — Sara should see her actual scans where possible. Falls back
-  // to FAKE_RECENT_SCANS on a fresh session with no history.
+  // ── Toast (carry-over from R3a) ─────────────────────────────────
+  const showToast = useCallback((message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(""), 2500);
+  }, []);
+
+  // Centralized error router. 401 → re-auth. Anything else → toast.
+  const handleError = useCallback((err, fallbackMessage) => {
+    if (err?.status === 401) {
+      onAuthRequired?.();
+      return;
+    }
+    const detail = err?.body?.details?.[0] || err?.body?.error || err?.message || fallbackMessage;
+    showToast(typeof detail === "string" ? detail : (fallbackMessage || "Something went wrong."));
+  }, [onAuthRequired, showToast]);
+
+  // Recent scans for the picker. Falls back to FAKE_RECENT_SCANS on fresh
+  // sessions with no real history yet (carry-over from R3a).
   const recentScans = useMemo(() => {
-    // R3a r2 — full history surfaces in the picker (cap matches the bumped
-    // local + cloud limit of 500). Sara has hundreds of scans; the picker
-    // is the discovery surface for adding existing items to a list.
     const real = (history || [])
       .filter(h => h && h.product_name)
       .slice(0, 500)
@@ -1271,237 +1347,451 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
         score:        h.overall_score ?? h.score ?? null,
         kid_score:    h.child_score ?? h.kid_score ?? h.overall_score ?? h.score ?? null,
         scanned_at:   h.scanned_at || h.cached_at || new Date().toISOString(),
+        flags:        Array.isArray(h.flags) ? h.flags : [],
       }));
     return real.length >= 3 ? real : FAKE_RECENT_SCANS;
   }, [history]);
 
-  const openList = (id) => { setActiveListId(id); setView("detail"); };
+  // ── Loading flows ───────────────────────────────────────────────
+  const loadLists = useCallback(async () => {
+    setLoadingLists(true);
+    setErrorLists(null);
+    try {
+      const res = await api.getLists();
+      setLists(Array.isArray(res?.lists) ? res.lists : []);
+    } catch (err) {
+      if (err.status === 401) onAuthRequired?.();
+      else setErrorLists(err?.body?.error || err?.message || "Couldn't reach the server.");
+    } finally {
+      setLoadingLists(false);
+    }
+  }, [api, onAuthRequired]);
+
+  useEffect(() => { loadLists(); }, [loadLists]);
+
+  const loadDetail = useCallback(async (id) => {
+    if (!id) return;
+    setLoadingDetail(ld => ({ ...ld, [id]: true }));
+    setErrorDetail(ed => { const { [id]: _, ...rest } = ed; return rest; });
+    try {
+      const res = await api.getList(id);
+      setDetail(d => ({ ...d, [id]: res.list }));
+    } catch (err) {
+      if (err.status === 401) onAuthRequired?.();
+      else setErrorDetail(ed => ({ ...ed, [id]: err?.body?.error || err?.message || "Couldn't load this list." }));
+    } finally {
+      setLoadingDetail(ld => { const { [id]: _, ...rest } = ld; return rest; });
+    }
+  }, [api, onAuthRequired]);
+
+  const openList = useCallback((id) => {
+    setActiveListId(id);
+    setView("detail");
+    // Lazy-load detail. Skip if already cached or a request is in flight.
+    // Reading detail / loadingDetail from closure is fine — a stale read
+    // at worst causes one redundant GET, which the server handles cheaply.
+    if (!detail[id] && !loadingDetail[id]) {
+      loadDetail(id);
+    }
+  }, [detail, loadingDetail, loadDetail]);
+
   const backToOverview = () => { setView("overview"); setActiveListId(null); };
 
-  // R3a r2 — show a toast for ~2.5s. Clears any pending fade so rapid
-  // successive shares replace the message instead of stacking timers.
-  const showToast = (message) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast(message);
-    toastTimer.current = setTimeout(() => setToast(""), 2500);
-  };
+  // ── Summary sync helper ─────────────────────────────────────────
+  // After any item-level mutation that affects display preview, refresh
+  // the list summary entry so the overview card stays accurate without
+  // refetching.
+  const refreshSummaryFromItems = useCallback((listId, itemsArr, listMeta = {}) => {
+    setLists(prev => prev ? prev.map(l => l.id === listId
+      ? {
+          ...l,
+          ...listMeta,
+          item_count: itemsArr.length,
+          items_preview: itemsArr.slice(0, 3),
+          updated_at: listMeta.updated_at || new Date().toISOString(),
+        }
+      : l) : prev);
+  }, []);
 
-  // R3a r2 — new-list flow now starts with a chooser. The chooser dispatches
-  // either to the blank-name prompt (preserves current behavior) or to the
-  // template picker.
+  // ── New-list flow ───────────────────────────────────────────────
   const startNewList = () => setNewListMode("chooser");
   const cancelNewList = () => setNewListMode(null);
   const goToTemplates = () => setNewListMode("templates");
   const backToChooser = () => setNewListMode("chooser");
 
-  const createBlankList = () => {
+  const createBlankList = async () => {
     setNewListMode(null);
     const name = window.prompt("Name this list", "");
     if (!name || !name.trim()) return;
-    const id = `list_${Date.now()}`;
-    setLists(prev => [{
-      id, name: name.trim(), kind: "shopping",
-      created_at: new Date().toISOString(),
-      items: [],
-    }, ...prev]);
-    setActiveListId(id);
-    setView("detail");
+    try {
+      const res = await api.createList({ name: name.trim() });
+      const real = res.list;
+      setLists(prev => [real, ...(prev || [])]);
+      setDetail(d => ({ ...d, [real.id]: real }));
+      setActiveListId(real.id);
+      setView("detail");
+    } catch (err) {
+      handleError(err, "Couldn't create the list.");
+    }
   };
 
-  const createListFromTemplate = (template) => {
-    const now = new Date().toISOString();
-    const id = `list_${Date.now()}`;
-    const items = template.items.map((productName, i) => ({
-      id: `i_${Date.now()}_${i}`,
-      anchor: "name",
-      product_name: productName,
-      product_name_normalized: productName.toLowerCase().trim(),
-      purchased: false,
-      added_at: now,
-    }));
-    setLists(prev => [{
-      id, name: template.name, kind: "shopping",
-      created_at: now,
-      items,
-    }, ...prev]);
-    setActiveListId(id);
-    setView("detail");
+  const createListFromTemplate = async (template) => {
     setNewListMode(null);
+    try {
+      const res = await api.createList({ template: template.id });
+      const real = res.list;
+      setLists(prev => [real, ...(prev || [])]);
+      setDetail(d => ({ ...d, [real.id]: real }));
+      setActiveListId(real.id);
+      setView("detail");
+    } catch (err) {
+      handleError(err, "Couldn't create from template.");
+    }
   };
 
-  const renameList = (id, nextName) => {
-    setLists(prev => prev.map(l => l.id === id ? { ...l, name: nextName } : l));
+  const renameList = async (id, nextName) => {
+    const prevLists = lists;
+    const prevDetail = detail[id];
+    // Optimistic
+    setLists(ls => ls ? ls.map(l => l.id === id ? { ...l, name: nextName } : l) : ls);
+    setDetail(d => d[id] ? { ...d, [id]: { ...d[id], name: nextName } } : d);
+    try {
+      const res = await api.updateList(id, { name: nextName });
+      // Server response carries updated_at + other top-level fields. Merge
+      // into both lists and detail; detail preserves items + also_in_map.
+      setLists(ls => ls ? ls.map(l => l.id === id ? { ...l, ...res.list } : l) : ls);
+      setDetail(d => d[id] ? { ...d, [id]: { ...d[id], ...res.list } } : d);
+    } catch (err) {
+      setLists(prevLists);
+      if (prevDetail) setDetail(d => ({ ...d, [id]: prevDetail }));
+      handleError(err, "Couldn't rename.");
+    }
   };
 
-  const deleteList = (id) => {
-    setLists(prev => prev.filter(l => l.id !== id));
+  const deleteList = async (id) => {
+    const prevLists = lists;
+    const prevDetail = detail;
+    setLists(ls => ls ? ls.filter(l => l.id !== id) : ls);
+    setDetail(d => { const { [id]: _, ...rest } = d; return rest; });
     if (activeListId === id) backToOverview();
     setPendingDelete(null);
+    try {
+      await api.deleteList(id);
+    } catch (err) {
+      setLists(prevLists);
+      setDetail(prevDetail);
+      handleError(err, "Couldn't delete.");
+    }
   };
 
-  const addItemFromScan = (scan) => {
+  // ── Item mutations ──────────────────────────────────────────────
+  // Optimistic insert helper for items. Adds row to the detail and the
+  // summary preview, returns the temp id used.
+  const optimisticAddItem = (listId, item) => {
+    setDetail(d => {
+      const ex = d[listId];
+      if (!ex) return d;
+      const nextItems = [...ex.items, item];
+      return { ...d, [listId]: { ...ex, items: nextItems, item_count: nextItems.length } };
+    });
+    setLists(ls => ls ? ls.map(l => l.id === listId
+      ? { ...l, item_count: (l.item_count || 0) + 1, items_preview: [...(l.items_preview || []), item].slice(0, 3) }
+      : l) : ls);
+  };
+
+  // Optimistic rollback for items.
+  const rollbackItemInsert = (listId, tempId) => {
+    setDetail(d => {
+      const ex = d[listId];
+      if (!ex) return d;
+      const nextItems = ex.items.filter(i => i.id !== tempId);
+      return { ...d, [listId]: { ...ex, items: nextItems, item_count: nextItems.length } };
+    });
+    setLists(ls => ls ? ls.map(l => l.id === listId
+      ? { ...l, item_count: Math.max(0, (l.item_count || 1) - 1), items_preview: (l.items_preview || []).filter(i => i.id !== tempId) }
+      : l) : ls);
+  };
+
+  // Replace optimistic temp with the row the server returned.
+  const replaceTempItem = (listId, tempId, serverItem) => {
+    setDetail(d => {
+      const ex = d[listId];
+      if (!ex) return d;
+      const nextItems = ex.items.map(i => i.id === tempId ? serverItem : i);
+      return { ...d, [listId]: { ...ex, items: nextItems } };
+    });
+    setLists(ls => ls ? ls.map(l => l.id === listId
+      ? { ...l, items_preview: (l.items_preview || []).map(i => i.id === tempId ? serverItem : i) }
+      : l) : ls);
+  };
+
+  const addItemFromScan = async (scan) => {
     if (!activeListId) return;
-    const newItem = {
-      id: `i_${Date.now()}`,
-      anchor: "scan",
-      scan_id: `local_${Date.now()}`,
+    const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const optimistic = {
+      id: tempId,
+      anchor: "name",
       product_name: scan.product_name,
+      product_name_normalized: (scan.product_name || "").toLowerCase().trim(),
       category: scan.category,
       score: scan.score,
       kid_score: scan.kid_score ?? scan.score,
-      owned: true,
       purchased: false,
       added_at: new Date().toISOString(),
       flags: scan.flags || [],
-      scanned_at: scan.scanned_at,
     };
-    setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
+    optimisticAddItem(activeListId, optimistic);
     setAddOpen(false);
+    try {
+      const res = await api.createItem(activeListId, {
+        product_name: scan.product_name,
+        product_name_normalized: optimistic.product_name_normalized,
+        category: scan.category || null,
+        score: typeof scan.score === "number" ? scan.score : null,
+        kid_score: typeof scan.kid_score === "number" ? scan.kid_score : (typeof scan.score === "number" ? scan.score : null),
+        flags: scan.flags || [],
+      });
+      replaceTempItem(activeListId, tempId, res.item);
+    } catch (err) {
+      rollbackItemInsert(activeListId, tempId);
+      handleError(err, "Couldn't add item.");
+    }
   };
 
-  const addItemByName = (name) => {
+  const addItemByName = async (name) => {
     if (!activeListId) return;
-    const newItem = {
-      id: `i_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
+    const trimmed = name.trim();
+    const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const optimistic = {
+      id: tempId,
       anchor: "name",
-      product_name_normalized: name.toLowerCase().trim(),
-      product_name: name.trim(),
+      product_name: trimmed,
+      product_name_normalized: trimmed.toLowerCase(),
       purchased: false,
       added_at: new Date().toISOString(),
       flags: [],
     };
-    setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
+    optimisticAddItem(activeListId, optimistic);
     setAddOpen(false);
+    try {
+      const res = await api.createItem(activeListId, {
+        product_name: trimmed,
+        product_name_normalized: trimmed.toLowerCase(),
+        flags: [],
+      });
+      replaceTempItem(activeListId, tempId, res.item);
+    } catch (err) {
+      rollbackItemInsert(activeListId, tempId);
+      handleError(err, "Couldn't add item.");
+    }
   };
 
-  // R3a r3 — multi-product add path from voice input. Builds a batch of
-  // items and writes them in a single setLists call so the list doesn't
-  // re-render N times. Closes the add sheet once at the end.
-  const addItemByNameMulti = (names) => {
+  const addItemByNameMulti = async (names) => {
     if (!activeListId || !names || !names.length) return;
-    const stamp = new Date().toISOString();
-    const newItems = names.map((name, idx) => ({
-      id: `i_${Date.now()}_${idx}_${Math.random().toString(36).slice(2,6)}`,
-      anchor: "name",
-      product_name_normalized: name.toLowerCase().trim(),
-      product_name: name.trim(),
-      purchased: false,
-      added_at: stamp,
-      flags: [],
-    }));
-    setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, ...newItems] } : l));
     setAddOpen(false);
-    showToast(names.length === 1 ? `Added ${names[0]}.` : `Added ${names.length} items.`);
+    // Fire all in parallel. Each handles its own optimistic + rollback.
+    const results = await Promise.allSettled(names.map(n => addItemByName(n)));
+    const failed = results.filter(r => r.status === "rejected").length;
+    if (!failed) {
+      showToast(names.length === 1 ? `Added ${names[0]}.` : `Added ${names.length} items.`);
+    }
   };
 
-  const addItemByUrl = (rawUrl) => {
+  const addItemByUrl = async (rawUrl) => {
     if (!activeListId) return;
-    const itemId = `i_${Date.now()}`;
-    const newItem = {
-      id: itemId,
+    const tempId = `tmp_${Date.now()}`;
+    const normalized = (rawUrl || "").toLowerCase().trim();
+    const optimistic = {
+      id: tempId,
       anchor: "name",
-      product_name_normalized: "",
       product_name: rawUrl,
+      product_name_normalized: normalized,
       placeholder: true,
       purchased: false,
       added_at: new Date().toISOString(),
       flags: [],
     };
-    setLists(prev => prev.map(l => l.id === activeListId ? { ...l, items: [...l.items, newItem] } : l));
+    optimisticAddItem(activeListId, optimistic);
     setAddOpen(false);
+    let serverItem = null;
+    try {
+      const res = await api.createItem(activeListId, {
+        product_name: rawUrl,
+        product_name_normalized: normalized,
+        flags: [],
+      });
+      serverItem = res.item;
+      // Keep placeholder flag locally so the row still renders "Reading the
+      // link..." until the resolve timer fires.
+      replaceTempItem(activeListId, tempId, { ...serverItem, placeholder: true });
+    } catch (err) {
+      rollbackItemInsert(activeListId, tempId);
+      handleError(err, "Couldn't add link.");
+      return;
+    }
 
-    // Mimic R2's fetch-and-resolve transition. After ~1.4s the placeholder
-    // settles into a fake resolved name derived from the URL hostname so
-    // Sara can demo the "Reading the link..." then resolved state in one go.
-    const settle = () => {
+    // Resolve placeholder name after ~1.4s (mimics R2 fetch + extract).
+    const settle = async () => {
       let resolved = rawUrl;
       try {
         const u = new URL(rawUrl);
         const host = u.hostname.replace(/^www\./, "").split(".")[0];
         const seg = u.pathname.split("/").filter(s => s && s.length > 2).pop() || "product";
         const tidy = seg.replace(/[-_]+/g, " ").replace(/[^a-zA-Z0-9 ]/g, "").trim();
-        resolved = (host.charAt(0).toUpperCase() + host.slice(1)) + (tidy && tidy.length > 3 ? ` ${tidy.split(" ").slice(0,3).join(" ")}` : " product");
+        resolved = (host.charAt(0).toUpperCase() + host.slice(1)) + (tidy && tidy.length > 3 ? ` ${tidy.split(" ").slice(0, 3).join(" ")}` : " product");
       } catch {}
-      setLists(prev => prev.map(l => l.id === activeListId
-        ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, placeholder: false, product_name: resolved, product_name_normalized: resolved.toLowerCase() } : i) }
-        : l));
+      // Optimistic local update + PATCH product_name.
+      setDetail(d => {
+        const ex = d[activeListId];
+        if (!ex) return d;
+        return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === serverItem.id ? { ...i, placeholder: false, product_name: resolved } : i) }};
+      });
+      try {
+        await api.updateItem(activeListId, serverItem.id, { product_name: resolved });
+      } catch (err) {
+        // Soft-fail: keep the local "resolved" name visible. The next detail
+        // refresh from the server will reconcile if needed.
+        console.warn("[lists] URL settle PATCH failed", err?.message);
+      }
     };
-    placeholderTimers.current[itemId] = setTimeout(settle, 1400);
+    placeholderTimers.current[serverItem.id] = setTimeout(settle, 1400);
   };
 
-  const removeItem = (itemId) => {
+  const removeItem = async (itemId) => {
+    if (!activeListId) return;
     if (placeholderTimers.current[itemId]) {
       clearTimeout(placeholderTimers.current[itemId]);
       delete placeholderTimers.current[itemId];
     }
-    setLists(prev => prev.map(l => l.id === activeListId
-      ? { ...l, items: l.items.filter(i => i.id !== itemId) }
-      : l));
+    const prevDetail = detail[activeListId];
+    const prevLists = lists;
+    setDetail(d => {
+      const ex = d[activeListId];
+      if (!ex) return d;
+      const nextItems = ex.items.filter(i => i.id !== itemId);
+      return { ...d, [activeListId]: { ...ex, items: nextItems, item_count: nextItems.length } };
+    });
+    setLists(ls => ls ? ls.map(l => l.id === activeListId
+      ? { ...l, item_count: Math.max(0, (l.item_count || 1) - 1), items_preview: (l.items_preview || []).filter(i => i.id !== itemId) }
+      : l) : ls);
+    if (String(itemId).startsWith("tmp_")) return; // never made it to the server
+    try {
+      await api.deleteItem(activeListId, itemId);
+    } catch (err) {
+      if (prevDetail) setDetail(d => ({ ...d, [activeListId]: prevDetail }));
+      setLists(prevLists);
+      handleError(err, "Couldn't remove.");
+    }
   };
 
+  // The Owned/Considering toggle is purely cosmetic at the row level; the
+  // R3b schema doesn't store an "owned" flag yet. Update detail state only
+  // so the UI reflects the user's choice within the session.
   const toggleOwned = (itemId) => {
-    setLists(prev => prev.map(l => l.id === activeListId
-      ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, owned: !i.owned } : i) }
-      : l));
+    if (!activeListId) return;
+    setDetail(d => {
+      const ex = d[activeListId];
+      if (!ex) return d;
+      return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === itemId ? { ...i, owned: !i.owned } : i) } };
+    });
   };
 
-  // R3a r2 — purchased toggle. Cosmetic only at the prototype level; the
-  // sort-to-bottom logic lives in ListDetail's sortedItems memo.
-  const togglePurchased = (itemId) => {
-    setLists(prev => prev.map(l => l.id === activeListId
-      ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, purchased: !i.purchased } : i) }
-      : l));
+  const togglePurchased = async (itemId) => {
+    if (!activeListId) return;
+    const prevDetail = detail[activeListId];
+    let nextPurchased = false;
+    setDetail(d => {
+      const ex = d[activeListId];
+      if (!ex) return d;
+      return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => {
+        if (i.id !== itemId) return i;
+        nextPurchased = !i.purchased;
+        return { ...i, purchased: nextPurchased };
+      }) } };
+    });
+    if (String(itemId).startsWith("tmp_")) return;
+    try {
+      await api.updateItem(activeListId, itemId, { purchased: nextPurchased });
+    } catch (err) {
+      if (prevDetail) setDetail(d => ({ ...d, [activeListId]: prevDetail }));
+      handleError(err, "Couldn't update.");
+    }
   };
 
-  // R3a r2 — note save. Empty string clears the note. Single-line only.
-  const saveNote = (itemId, nextNote) => {
-    setLists(prev => prev.map(l => l.id === activeListId
-      ? { ...l, items: l.items.map(i => i.id === itemId
-          ? { ...i, note: nextNote && nextNote.trim() ? nextNote.trim() : undefined }
-          : i) }
-      : l));
+  const saveNote = async (itemId, nextNote) => {
+    if (!activeListId) return;
+    const prevDetail = detail[activeListId];
+    setDetail(d => {
+      const ex = d[activeListId];
+      if (!ex) return d;
+      return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === itemId
+        ? { ...i, note: nextNote && nextNote.trim() ? nextNote.trim() : undefined }
+        : i) } };
+    });
     setEditingNote(null);
+    if (String(itemId).startsWith("tmp_")) return;
+    try {
+      await api.updateItem(activeListId, itemId, { note: nextNote && nextNote.trim() ? nextNote.trim() : null });
+    } catch (err) {
+      if (prevDetail) setDetail(d => ({ ...d, [activeListId]: prevDetail }));
+      handleError(err, "Couldn't save note.");
+    }
   };
 
-  // R3a r3 — drag-to-reorder commit. Receives an array of item IDs in the
-  // user's intended visual order and rewrites list.items to match. The
-  // existing purchased-at-bottom sort in ListDetail is stable, so a
-  // commit that respects the purchased boundary survives the re-sort.
-  const reorderItems = (orderedIds) => {
-    setLists(prev => prev.map(l => {
-      if (l.id !== activeListId) return l;
-      const byId = new Map(l.items.map(i => [i.id, i]));
-      const reordered = orderedIds.map(id => byId.get(id)).filter(Boolean);
-      // Defensive: append any item the new order omitted (shouldn't happen
-      // with the current drag flow, but protects against future bugs).
-      const seen = new Set(orderedIds);
-      for (const i of l.items) if (!seen.has(i.id)) reordered.push(i);
-      return { ...l, items: reordered };
-    }));
+  // Drag-to-reorder commit. Optimistic local order swap, then PATCH each
+  // item's new position. Rollback on any failure.
+  const reorderItems = async (orderedIds) => {
+    if (!activeListId) return;
+    const prevDetail = detail[activeListId];
+    if (!prevDetail) return;
+    const byId = new Map(prevDetail.items.map(i => [i.id, i]));
+    const reordered = orderedIds.map((id, idx) => byId.has(id) ? { ...byId.get(id), position: idx } : null).filter(Boolean);
+    const seen = new Set(orderedIds);
+    for (const i of prevDetail.items) if (!seen.has(i.id)) reordered.push(i);
+    setDetail(d => ({ ...d, [activeListId]: { ...prevDetail, items: reordered } }));
+    // Fire PATCH per row in parallel. Skip temp IDs (still in flight).
+    const settled = await Promise.allSettled(
+      reordered
+        .filter(i => !String(i.id).startsWith("tmp_"))
+        .map((i, idx) => api.updateItem(activeListId, i.id, { position: idx }))
+    );
+    const failed = settled.filter(r => r.status === "rejected");
+    if (failed.length) {
+      setDetail(d => ({ ...d, [activeListId]: prevDetail }));
+      handleError(failed[0].reason, "Couldn't reorder.");
+    }
   };
 
-  // R3a r2 — quick swap. Replaces product_name + score + kid_score + flags
-  // + category in place. Preserves id, anchor, owned, purchased, note,
-  // added_at so the row keeps its place and personal context.
-  const swapItem = (itemId, alt) => {
-    setLists(prev => prev.map(l => l.id === activeListId
-      ? { ...l, items: l.items.map(i => i.id === itemId
-          ? {
-              ...i,
-              product_name: alt.product_name,
-              category: alt.category || i.category,
-              score: alt.score,
-              kid_score: alt.kid_score,
-              flags: alt.flags || [],
-            }
-          : i) }
-      : l));
-    showToast(`Swapped in ${alt.product_name}.`);
+  const swapItem = async (itemId, alt) => {
+    if (!activeListId) return;
+    const prevDetail = detail[activeListId];
+    const patch = {
+      product_name: alt.product_name,
+      category: alt.category,
+      score: alt.score,
+      kid_score: alt.kid_score,
+      flags: alt.flags || [],
+    };
+    setDetail(d => {
+      const ex = d[activeListId];
+      if (!ex) return d;
+      return { ...d, [activeListId]: { ...ex, items: ex.items.map(i => i.id === itemId
+        ? { ...i, ...patch }
+        : i) } };
+    });
+    if (String(itemId).startsWith("tmp_")) {
+      showToast(`Swapped in ${alt.product_name}.`);
+      return;
+    }
+    try {
+      await api.updateItem(activeListId, itemId, patch);
+      showToast(`Swapped in ${alt.product_name}.`);
+    } catch (err) {
+      if (prevDetail) setDetail(d => ({ ...d, [activeListId]: prevDetail }));
+      handleError(err, "Couldn't swap.");
+    }
   };
 
-  // R3a r2 — share copy. Builds the text block and writes to clipboard.
-  // Toast confirms success; failure path (denied permission, non-secure
-  // context) falls back to a different message so the user sees something.
   const shareList = async (list, kidsOn, scoreInfo) => {
     const text = buildShareText(list, kidsOn, scoreInfo);
     try {
@@ -1516,6 +1806,20 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
     }
   };
 
+  // allLists for ListDetail cross-list intel. Cross-list info on the row
+  // is also already baked into detail.also_in_map by the server, but we
+  // continue to pass the summary list so optimistic adds in other lists
+  // surface immediately without a refetch.
+  const allListsForDetail = useMemo(() => {
+    if (!lists) return [];
+    return lists.map(l => ({
+      id: l.id,
+      name: l.name,
+      items: (l.items_preview || []).map(i => ({ product_name: i.product_name })),
+    }));
+  }, [lists]);
+
+  // ── Render ──────────────────────────────────────────────────────
   return (
     <div style={{
       minHeight:"100vh",
@@ -1524,16 +1828,24 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
       paddingBottom: isMobile ? 120 : 60,
     }}>
       {view === "overview" && (
-        <ListsOverview lists={lists} onOpen={openList} onCreate={startNewList} isMobile={isMobile}/>
+        <ListsOverview
+          lists={lists}
+          loading={loadingLists}
+          error={errorLists}
+          onOpen={openList}
+          onCreate={startNewList}
+          onRetry={loadLists}
+          isMobile={isMobile}
+        />
       )}
-      {view === "detail" && activeList && (
+      {view === "detail" && activeDetail && (
         <ListDetail
-          key={activeList.id}
-          list={activeList}
-          allLists={lists}
+          key={activeListId}
+          list={activeDetail}
+          allLists={allListsForDetail}
           onBack={backToOverview}
           onRename={renameList}
-          onAddItem={()=>setAddOpen(true)}
+          onAddItem={() => setAddOpen(true)}
           onRemoveItem={removeItem}
           onToggleOwned={toggleOwned}
           onTogglePurchased={togglePurchased}
@@ -1543,18 +1855,36 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           onReorderItems={reorderItems}
           onOpenList={openList}
           onAddByName={addItemByName}
-          onDeleteList={(id)=>setPendingDelete(id)}
+          onDeleteList={(id) => setPendingDelete(id)}
           isMobile={isMobile}
         />
       )}
-      {view === "detail" && !activeList && (
-        // Active list was deleted while detail view was open — bounce back.
-        <ListsOverview lists={lists} onOpen={openList} onCreate={startNewList} isMobile={isMobile}/>
+      {view === "detail" && !activeDetail && activeListId && loadingDetail[activeListId] && (
+        <ListDetailSkeleton onBack={backToOverview} isMobile={isMobile}/>
+      )}
+      {view === "detail" && !activeDetail && activeListId && errorDetail[activeListId] && (
+        <ListDetailError
+          message={errorDetail[activeListId]}
+          onRetry={() => loadDetail(activeListId)}
+          onBack={backToOverview}
+          isMobile={isMobile}
+        />
+      )}
+      {view === "detail" && !activeListId && (
+        <ListsOverview
+          lists={lists}
+          loading={loadingLists}
+          error={errorLists}
+          onOpen={openList}
+          onCreate={startNewList}
+          onRetry={loadLists}
+          isMobile={isMobile}
+        />
       )}
       {addOpen && (
         <AddItemSheet
           recentScans={recentScans}
-          onClose={()=>setAddOpen(false)}
+          onClose={() => setAddOpen(false)}
           onAddFromScan={addItemFromScan}
           onAddByName={addItemByName}
           onAddByNameMulti={addItemByNameMulti}
@@ -1591,8 +1921,8 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0 }) => {
           title="Delete this list?"
           body="The list and all its items go away. The scans behind them stay safe in your history."
           confirmLabel="Delete"
-          onConfirm={()=>deleteList(pendingDelete)}
-          onCancel={()=>setPendingDelete(null)}
+          onConfirm={() => deleteList(pendingDelete)}
+          onCancel={() => setPendingDelete(null)}
         />
       )}
       <Toast message={toast}/>

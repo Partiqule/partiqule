@@ -8175,7 +8175,14 @@ function App() {
       ) : page === "feed" ? (
         <FeedPage liveIntelCards={liveIntelCards} staticCards={generateForYouCards(history, childMode)} history={history} surface={surface} border={border} text={text} muted={muted} isMobile={isMobile} setPage={setPage} setResult={setResult} setQuery={setQuery} analyze={analyze}/>
       ) : page === "lists-prototype" ? (
-        <ListBuilderPage history={history} isMobile={isMobile} safeTop={SAFE_TOP}/>
+        <ListBuilderPage
+          history={history}
+          isMobile={isMobile}
+          safeTop={SAFE_TOP}
+          authedFetch={authedFetch}
+          apiBase={API_BASE}
+          onAuthRequired={() => setShowAuth(true)}
+        />
       ) : page === "history" ? (
         <HistoryPage history={history} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
