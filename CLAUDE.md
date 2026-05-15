@@ -215,6 +215,8 @@ All tables have RLS enabled. Backend uses service role key (bypasses RLS); front
 
 **Auto-create profile on signup** — trigger `on_auth_user_created` runs `INSERT INTO profiles (id, email)` from `auth.users`. Required to prevent IAP attribution failures.
 
+**SECURITY DEFINER function rule.** All SECURITY DEFINER functions must include `SET search_path = public, pg_catalog` and schema-qualify every table reference. Supabase can change the role that executes auth triggers without notice, and unqualified SECURITY DEFINER functions break silently when this happens. See migration 015 for the canonical fix pattern.
+
 ---
 
 ## Current Feature State
