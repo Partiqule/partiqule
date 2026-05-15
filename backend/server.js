@@ -20,6 +20,7 @@ const {
   dedupeInflight,
 } = require("./scoringCascade");
 const { resolveProductFromUrl } = require("./urlExtractor");
+const { registerListsRoutes } = require("./lists");
 const { scoreFood: scoreFoodEngine } = require("./foodScorer");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
@@ -9904,6 +9905,23 @@ app.get("/scan-count", async (req, res) => {
   } catch(e) {
     res.json({ scan_count: 0 });
   }
+});
+
+// R3b — register the /lists API. Endpoints live in backend/lists.js and
+// share supabaseAdmin + requireUserAuth + Redis helpers via dep injection.
+// All routes require auth and enforce ownership explicitly (service role
+// bypasses RLS at the SQL layer; we re-check user_id in every handler).
+registerListsRoutes(app, {
+  supabaseAdmin,
+  requireUserAuth,
+  hasRedis,
+  redisGet,
+  redisSetEx,
+  redisDel,
+  redisKeys,
+  normalise,
+  CALIBRATION,
+  toTitleCase,
 });
 
 // /me — JWT-verified read of profile + subscription state. Replaces the
