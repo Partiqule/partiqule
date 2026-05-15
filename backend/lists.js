@@ -11,27 +11,12 @@ const LIST_KIND = new Set(["shopping", "routine", "compare", "custom"]);
 const LISTS_TTL_S = 60;
 const ALSO_IN_CAP = 5;
 
-// Server-side mirror of frontend lists/fixtures.js TEMPLATES. Keys
-// match the frontend's template.id ("tpl_newborn" etc) so a POST
-// /lists body with template: "tpl_newborn" lands the right starter.
-const TEMPLATES = {
-  tpl_newborn: {
-    name: "Newborn essentials",
-    items: ["Diapers", "Baby wash", "Nursing pads", "Swaddles", "Pacifiers", "Baby wipes", "Formula"],
-  },
-  tpl_vacation: {
-    name: "Family vacation",
-    items: ["Sunscreen", "Bug spray", "Travel snacks", "Hand sanitizer", "Kid Tylenol", "First aid spray"],
-  },
-  tpl_lunches: {
-    name: "Back to school lunches",
-    items: ["Yogurt pouches", "Fruit pouches", "Granola bars", "Juice boxes", "Sandwich bread", "Deli turkey"],
-  },
-  tpl_pantry: {
-    name: "Pantry restock",
-    items: ["Olive oil", "Pasta", "Canned tomatoes", "Rice", "Peanut butter", "Cereal"],
-  },
-};
+// Lists templates flow through the consolidated context map. The
+// `TEMPLATES` export from contexts.js mirrors the original shape
+// ({ id: { name, items: [strings] } }) but is derived from
+// CONTEXTS so future templatizable contexts (status: live) light
+// up here automatically. needs_review contexts are excluded.
+const { TEMPLATES } = require("./contexts");
 
 // ── Helpers ────────────────────────────────────────────────────────
 const summaryCacheKey = (uid) => `lists:user:${uid}:summary`;
