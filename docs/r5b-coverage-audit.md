@@ -133,6 +133,29 @@ Recommended sequence: skincare gaps first (largest single-category coverage
 hole), then hair conditioner (literally 0 entries), then kid drinkware
 gaps (3 of 4 subcategories below threshold).
 
+## Brand diversity gaps (R5b.2.3 surfaced)
+
+The original audit measured subcategory coverage. R5b.2.3 retrieval
+verification surfaced a different gap: brand variety within categories
+that pass subcategory thresholds.
+
+**Severe gap: Clothing** — 1 brand (Sports Organics × multiple) at floor 1.
+The "cleaner clothing" query returns three Sports Organics entries because
+no other clothing brand is currently scored at floor 1. This breaks the
+demo experience — it reads as brand placement rather than impartial
+curation, and prevents the user from comparing options across brands.
+
+**Action:** curate 5 to 8 more floor 1 clothing brands before context
+bundles ship. Starting candidates: Pact, Patagonia, People Tree,
+Boll & Branch, Coyuchi, Tentree, MATE the Label, Outerknown.
+
+**Process note:** any time retrieval verification shows the same brand
+returning multiple times in the top 3, log it as a brand diversity gap.
+Future audits should include a brand diversity check alongside the
+existing subcategory coverage check — passing the subcategory count
+threshold does not guarantee a sound demo experience if one brand
+dominates the floor.
+
 ## Knowledge base scaffolding
 
 `backend/knowledge.js` created. 34 entries scaffolded, all
