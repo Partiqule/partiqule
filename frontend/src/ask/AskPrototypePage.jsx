@@ -1,13 +1,17 @@
-// R5a Ask prototype.
+// R5b.1 Ask page — live SSE consumer.
 //
-// /ask-prototype is reachable by direct URL only — no nav entry. Sara
-// bookmarks it for review. All responses come from fixtures.js; no real
-// /analyze call, no scan persistence, no list mutation. The point of
-// this round is to lock the response format, choreography, and copy
-// before R5b builds the real backend.
+// /ask-prototype POSTs to /ask and streams Server-Sent Events. The fixtures
+// import survives for placeholder copy, list-picker stub names, example
+// queries on the no-match state, and the NOVA label map. The findResponse
+// helper is no longer used: every render path is fed by streamed events.
+//
+// Event shape from backend/ask.js:
+//   event: thinking | intent | item | done | refuse | error
+// Items arrive in score-ascending order from the backend, but we sort
+// client-side as well so out-of-order delivery doesn't matter.
 
 import React, { useState, useEffect, useRef } from "react";
-import { findResponse, PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, NOVA_LABEL } from "./fixtures";
+import { PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, NOVA_LABEL } from "./fixtures";
 
 // ── Design tokens (token-only, no inline hex) ─────────────────────
 const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -402,12 +406,70 @@ const ResponseCard = ({ response, expandedItems, onToggleExpand, onAddToList, on
   );
 };
 
+// ── SSE stream parser ───────────────────────────────────────────
+// EventSource doesn't support POST, so we use fetch + ReadableStream and
+// parse the `event: <name>\ndata: <json>\n\n` framing by hand. Callbacks
+// fire for each event; abort signal cancels the in-flight stream when
+// the user submits again or unmounts.
+async function streamAskResponse({ apiBase, authHeaders, query, signal, onEvent }) {
+  const headers = { "Content-Type": "application/json", Accept: "text/event-stream" };
+  try {
+    const auth = await authHeaders?.();
+    if (auth && typeof auth === "object") Object.assign(headers, auth);
+  } catch {}
+
+  const res = await fetch(`${apiBase}/ask`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query }),
+    signal,
+  });
+  if (!res.ok || !res.body) {
+    onEvent("error", { error: "http", status: res.status, message: "Couldn't reach the Ask service." });
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n\n")) !== -1) {
+      const raw = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      if (!raw.trim()) continue;
+      let event = "message";
+      const dataLines = [];
+      for (const line of raw.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+      }
+      let payload = {};
+      if (dataLines.length) {
+        try { payload = JSON.parse(dataLines.join("\n")); } catch { payload = {}; }
+      }
+      onEvent(event, payload);
+    }
+  }
+}
+
 // ── Top-level page ──────────────────────────────────────────────
-const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
+const AskPrototypePage = ({
+  isMobile = false,
+  safeTop = 0,
+  apiBase,
+  authHeaders,
+  buyLinksFor,
+}) => {
   const [query, setQuery] = useState("");
-  // phase: "idle" | "thinking" | "answered" | "tooShort" | "nomatch"
+  // phase: "idle" | "thinking" | "answered" | "tooShort" | "nomatch" | "refused" | "error"
   const [phase, setPhase] = useState("idle");
   const [response, setResponse] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
   // focus or input changes. Sara called the rotating version distracting.
@@ -423,12 +485,12 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
   const [expandedItems, setExpandedItems] = useState({});
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
-  const submitTimer = useRef(null);
+  const abortRef = useRef(null);
   const textareaRef = useRef(null);
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    if (submitTimer.current) clearTimeout(submitTimer.current);
+    if (abortRef.current) { try { abortRef.current.abort(); } catch {} }
   }, []);
 
   const showToast = (message) => {
@@ -437,7 +499,20 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
     toastTimer.current = setTimeout(() => setToast(""), 2400);
   };
 
-  const submit = () => {
+  // Decorate a streamed item with frontend-computed buy_links. Backend
+  // intentionally sends buy_links: null to keep the partner tag in one
+  // module; the frontend resolves them via the same helper used on the
+  // scan-result CTAs and the list page.
+  const decorateItem = (raw) => {
+    const next = { ...raw };
+    if (!next.buy_links) {
+      try { next.buy_links = buyLinksFor ? buyLinksFor(next.product_name) : null; }
+      catch { next.buy_links = null; }
+    }
+    return next;
+  };
+
+  const submit = async () => {
     const q = query.trim();
     if (!q) return;
     if (q.length < 3) {
@@ -445,20 +520,85 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
       setResponse(null);
       return;
     }
+    if (abortRef.current) { try { abortRef.current.abort(); } catch {} }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setPhase("thinking");
     setResponse(null);
+    setErrorMessage("");
     setExpandedItems({});
-    if (submitTimer.current) clearTimeout(submitTimer.current);
-    submitTimer.current = setTimeout(() => {
-      const fixture = findResponse(q);
-      if (fixture) {
-        setResponse(fixture);
-        setPhase("answered");
-      } else {
-        setResponse(null);
-        setPhase("nomatch");
-      }
-    }, 1700);
+
+    // Streaming state held in refs so the SSE callbacks see latest values
+    // without React batching deferring them between events.
+    const state = { intent: null, items: [], doneFired: false };
+    const flush = (extra = {}) => {
+      const sorted = [...state.items].sort((a, b) => {
+        const sa = a.score == null ? 99 : a.score;
+        const sb = b.score == null ? 99 : b.score;
+        return sa - sb;
+      });
+      setResponse(prev => ({
+        intent_restatement: state.intent?.restatement || prev?.intent_restatement || "",
+        items: sorted,
+        ...extra,
+      }));
+    };
+
+    try {
+      await streamAskResponse({
+        apiBase,
+        authHeaders,
+        query: q,
+        signal: controller.signal,
+        onEvent: (event, payload) => {
+          if (controller.signal.aborted) return;
+          if (event === "thinking") return;
+          if (event === "intent") {
+            state.intent = payload;
+            // Surface restatement immediately so the user sees the
+            // rephrased question while items are still framing.
+            flush();
+            setPhase("answered");
+            return;
+          }
+          if (event === "item") {
+            state.items.push(decorateItem(payload));
+            flush();
+            return;
+          }
+          if (event === "done") {
+            state.doneFired = true;
+            if (payload?.no_results) {
+              setResponse({
+                intent_restatement: state.intent?.restatement || "",
+                items: [],
+                no_match_message: payload.no_results_message || null,
+              });
+              setPhase("answered");
+            } else {
+              flush();
+              setPhase("answered");
+            }
+            return;
+          }
+          if (event === "refuse") {
+            setErrorMessage(payload?.message || "Try asking for a specific product instead.");
+            setPhase("refused");
+            return;
+          }
+          if (event === "error") {
+            setErrorMessage(payload?.message || "Something went wrong. Try again.");
+            setPhase("error");
+            return;
+          }
+        },
+      });
+    } catch (e) {
+      if (e?.name === "AbortError") return;
+      setErrorMessage("Couldn't reach the Ask service.");
+      setPhase("error");
+    }
   };
 
   const toggleExpand = (id) => setExpandedItems(s => ({ ...s, [id]: !s[id] }));
@@ -543,6 +683,20 @@ const AskPrototypePage = ({ isMobile = false, safeTop = 0 }) => {
             setResponse(null);
             setTimeout(() => textareaRef.current?.focus(), 0);
           }}/>
+        )}
+        {(phase === "refused" || phase === "error") && (
+          <div style={{padding:"24px 0"}}>
+            <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, fontWeight:400, letterSpacing:"-0.005em", color:"var(--ink)", marginBottom:14, lineHeight:1.45}}>
+              {errorMessage}
+            </div>
+            <NoMatch onPickExample={(eq) => {
+              setQuery(eq);
+              setPhase("idle");
+              setResponse(null);
+              setErrorMessage("");
+              setTimeout(() => textareaRef.current?.focus(), 0);
+            }}/>
+          </div>
         )}
         {phase === "answered" && response && (
           <ResponseCard

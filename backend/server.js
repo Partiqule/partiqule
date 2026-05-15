@@ -21,6 +21,7 @@ const {
 } = require("./scoringCascade");
 const { resolveProductFromUrl } = require("./urlExtractor");
 const { registerListsRoutes } = require("./lists");
+const { registerAskRoutes, envChecks: askEnvChecks } = require("./ask");
 const { scoreFood: scoreFoodEngine } = require("./foodScorer");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
@@ -9930,6 +9931,21 @@ registerListsRoutes(app, {
   toTitleCase,
 });
 
+// R5b.1 — register the /ask API. Endpoints live in backend/ask.js and
+// stream SSE events. Pass 1 (Haiku) classifies intent; Pass 2 (Haiku,
+// parallel per item) frames the "why". Type 1 (product) ships now;
+// knowledge + context refuse for the moment. Rate limit anon by IP,
+// authed by user; both fail open when Redis is unavailable.
+registerAskRoutes(app, {
+  callClaude,
+  supabaseAdmin,
+  redisGet,
+  redisSetEx,
+  redisDel,
+  hasRedis,
+  CALIBRATION,
+});
+
 // /me — JWT-verified read of profile + subscription state. Replaces the
 // pattern of calling /subscription-status + /scan-count separately on
 // auth changes. Single round-trip, single Redis-cached subscription read.
@@ -10758,6 +10774,10 @@ app.listen(PORT, () => {
   console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
   console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
   console.log(`[CACHE] Prompt version: ${promptVersion()} — old-prefix entries are unreachable until Redis TTL expires them`);
+  try {
+    const a = askEnvChecks();
+    console.log(`[ENV] Ask: pass1=${a.ASK_PASS1_MODEL} pass2=${a.ASK_PASS2_MODEL} intentTTL=${a.ASK_INTENT_CACHE_TTL_S}s framingTTL=${a.ASK_FRAMING_CACHE_TTL_S}s rl=anon${a.ASK_RATE_LIMIT_ANON}/auth${a.ASK_RATE_LIMIT_AUTH}/hr`);
+  } catch {}
 
   // Daily intelligence feed scheduler — 7am UTC
   if (supabaseAdmin) {

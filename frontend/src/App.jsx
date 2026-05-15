@@ -8542,7 +8542,13 @@ function App() {
           onAuthRequired={() => setShowAuth(true)}
         />
       ) : page === "ask-prototype" ? (
-        <AskPrototypePage isMobile={isMobile} safeTop={SAFE_TOP}/>
+        <AskPrototypePage
+          isMobile={isMobile}
+          safeTop={SAFE_TOP}
+          apiBase={API_BASE}
+          authHeaders={authHeaders}
+          buyLinksFor={buyLinksForName}
+        />
       ) : page === "history" ? (
         <HistoryPage history={history} surface={surface} border={border} text={text} muted={muted}
           isMobile={isMobile}
