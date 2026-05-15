@@ -206,6 +206,34 @@ function categoryPatterns(slug) {
   return [new RegExp(`\\b${words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+")}\\b`)];
 }
 
+// Broad-query alias map for the entry.category match step. A query slug
+// like "food" needs to land on rows tagged food, food_beverage, AND
+// beverage — calibration stores 961 food_beverage rows vs only 39 food
+// rows, so strict equality alone would miss most of the bucket. The
+// suggested-action labels mirror the user-facing display names from the
+// dynamic action helper (food, cookware, home_goods), so the alias map
+// here covers the same surface in the opposite direction.
+const CATEGORY_EXPAND = {
+  food:           ["food", "food_beverage", "beverage"],
+  food_beverage:  ["food_beverage", "food", "beverage"],
+  beverage:       ["beverage", "food_beverage"],
+  cookware:       ["kitchen", "cookware"],
+  kitchen:        ["kitchen", "cookware"],
+  home:           ["home", "home_furnishing"],
+  home_goods:     ["home", "home_furnishing"],
+  toys:           ["toy"],
+  toy:            ["toy"],
+  accessories:    ["accessory"],
+  accessory:      ["accessory"],
+  supplements:    ["supplement"],
+  restaurants:    ["restaurant"],
+};
+
+function expandCategorySlug(slug) {
+  if (!slug) return [];
+  return CATEGORY_EXPAND[slug] || [slug];
+}
+
 function effectiveScore(entry, intent) {
   if (intent.audience === "child" || intent.audience === "baby") {
     if (typeof entry.kidsFloor === "number") return entry.kidsFloor;
@@ -223,15 +251,28 @@ function retrieveProducts({ CALIBRATION }, intent) {
     .trim()
     .replace(/[\s-]+/g, "_");
   const patterns = categoryPatterns(slug);
+  const acceptableCategories = expandCategorySlug(slug);
 
   const candidates = [];
   for (const [key, entry] of CALIBRATION.entries()) {
+    if (!entry) continue;
     // Prefer the explicit product_family tag on the calibration entry.
     // Brand-named entries that don't repeat the category in their key
     // (e.g. "ezpz tiny cup" as a sippy cup) only surface this way.
-    const familyHit = entry && entry.product_family && entry.product_family === slug;
+    const familyHit = entry.product_family && entry.product_family === slug;
+    // Key-string regex match — covers entries whose key contains the
+    // category keyword (e.g. "laundry detergent" / brand names with the
+    // category word in them).
     const keyHit = !familyHit && patterns.length && patterns.some(p => p.test(key));
-    if (!familyHit && !keyHit) continue;
+    // Category-field match — catches the broad case where the user asks
+    // for "cleaner clothing" and the calibration row is tagged
+    // category: "clothing" but the key is just a brand name ("lululemon
+    // align"). Alias map expands "food" → food/food_beverage/beverage
+    // since calibration tags 961 rows food_beverage vs 39 food.
+    const entryCat = entry.category && String(entry.category).toLowerCase();
+    const categoryHit = !familyHit && !keyHit
+      && entryCat && acceptableCategories.includes(entryCat);
+    if (!familyHit && !keyHit && !categoryHit) continue;
     candidates.push({ key, entry, score: effectiveScore(entry, intent) });
   }
 
