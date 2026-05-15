@@ -271,15 +271,93 @@ function makeCacheHelpers(deps) {
       if (!hasRedis) return;
       await redisSetEx(detailCacheKey(uid, listId), payload, LISTS_TTL_S).catch(() => {});
     },
-    async invalidateUser(uid) {
+    // R3g — surgical invalidation. Replaces the old user-wide
+    // redisKeys + N×redisDel scan with two targeted DELs at most:
+    // the affected list's detail key + the user's overview key.
+    // Cross-list intel (also_in_map) for OTHER lists may go stale
+    // until the 60s TTL refresh; accepted trade-off for fast writes.
+    async invalidateListAndOverview(uid, listId) {
       if (!hasRedis) return;
       try {
-        const keys = await redisKeys(userKeysPattern(uid));
-        await Promise.all((keys || []).map(k => redisDel(k)));
+        await Promise.all([
+          redisDel(detailCacheKey(uid, listId)),
+          redisDel(summaryCacheKey(uid)),
+        ]);
       } catch (e) {
         console.warn("[lists cache] invalidate failed:", e?.message);
       }
     },
+    async invalidateOverview(uid) {
+      if (!hasRedis) return;
+      try { await redisDel(summaryCacheKey(uid)); }
+      catch (e) { console.warn("[lists cache] invalidate failed:", e?.message); }
+    },
+  };
+}
+
+// R3g — assemble full detail shape for one list (items + items_preview
+// + also_in_map). Used by GET /lists/:id and by PATCH /lists/:id so
+// the frontend can replace its detail cache without a refetch round
+// trip after a mutation.
+async function assembleListDetail(supabaseAdmin, list, uid) {
+  const { data: items, error: ierr } = await supabaseAdmin
+    .from("list_items")
+    .select("*")
+    .eq("list_id", list.id);
+  if (ierr) throw ierr;
+  const sorted = (items || []).slice().sort(compareItems);
+
+  const { data: allUserItems, error: aerr } = await supabaseAdmin
+    .from("list_items")
+    .select("list_id, product_name")
+    .eq("user_id", uid);
+  if (aerr) throw aerr;
+
+  const namesInThisList = new Set();
+  for (const i of sorted) {
+    const norm = (i.product_name || "").toLowerCase().trim();
+    if (norm) namesInThisList.add(norm);
+  }
+  const byName = new Map();
+  for (const i of allUserItems || []) {
+    if (i.list_id === list.id) continue;
+    const norm = (i.product_name || "").toLowerCase().trim();
+    if (!norm || !namesInThisList.has(norm)) continue;
+    if (!byName.has(norm)) byName.set(norm, new Set());
+    byName.get(norm).add(i.list_id);
+  }
+  const otherListIds = new Set();
+  for (const ids of byName.values()) for (const id of ids) otherListIds.add(id);
+
+  let otherListNames = new Map();
+  if (otherListIds.size) {
+    const { data: namesData } = await supabaseAdmin
+      .from("lists")
+      .select("id, name")
+      .in("id", [...otherListIds])
+      .eq("user_id", uid);
+    otherListNames = new Map((namesData || []).map(r => [r.id, r.name]));
+  }
+
+  const also_in_map = {};
+  for (const item of sorted) {
+    const norm = (item.product_name || "").toLowerCase().trim();
+    const ids = byName.get(norm);
+    if (!ids || !ids.size) continue;
+    const entries = [];
+    for (const id of ids) {
+      if (!otherListNames.has(id)) continue;
+      entries.push({ list_id: id, list_name: otherListNames.get(id) });
+      if (entries.length >= ALSO_IN_CAP) break;
+    }
+    if (entries.length) also_in_map[item.product_name] = entries;
+  }
+
+  const itemsOut = sorted.map(rowToItem);
+  return {
+    ...rowToList(list, { itemCount: itemsOut.length, itemsPreview: itemsOut.slice(0, 3) }),
+    items: itemsOut,
+    also_in_map,
   };
 }
 
@@ -388,69 +466,8 @@ function registerListsRoutes(app, deps) {
       if (!list) return res.status(404).json({ error: "list_not_found" });
       if (list.user_id !== uid) return res.status(403).json({ error: "forbidden" });
 
-      const { data: items, error: ierr } = await supabaseAdmin
-        .from("list_items")
-        .select("*")
-        .eq("list_id", listId);
-      if (ierr) throw ierr;
-      const sorted = (items || []).slice().sort(compareItems);
-
-      // Cross-list intel — fetch all of the user's items in one query
-      // and build a map keyed by product_name. Cap each entry at five
-      // other lists.
-      const { data: allUserItems, error: aerr } = await supabaseAdmin
-        .from("list_items")
-        .select("list_id, product_name")
-        .eq("user_id", uid);
-      if (aerr) throw aerr;
-
-      const namesInThisList = new Set();
-      for (const i of sorted) {
-        const norm = (i.product_name || "").toLowerCase().trim();
-        if (norm) namesInThisList.add(norm);
-      }
-      const byName = new Map();
-      for (const i of allUserItems || []) {
-        if (i.list_id === listId) continue;
-        const norm = (i.product_name || "").toLowerCase().trim();
-        if (!norm || !namesInThisList.has(norm)) continue;
-        if (!byName.has(norm)) byName.set(norm, new Set());
-        byName.get(norm).add(i.list_id);
-      }
-      const otherListIds = new Set();
-      for (const ids of byName.values()) for (const id of ids) otherListIds.add(id);
-
-      let otherListNames = new Map();
-      if (otherListIds.size) {
-        const { data: namesData } = await supabaseAdmin
-          .from("lists")
-          .select("id, name")
-          .in("id", [...otherListIds])
-          .eq("user_id", uid);
-        otherListNames = new Map((namesData || []).map(r => [r.id, r.name]));
-      }
-
-      const also_in_map = {};
-      for (const item of sorted) {
-        const norm = (item.product_name || "").toLowerCase().trim();
-        const ids = byName.get(norm);
-        if (!ids || !ids.size) continue;
-        const entries = [];
-        for (const id of ids) {
-          if (!otherListNames.has(id)) continue;
-          entries.push({ list_id: id, list_name: otherListNames.get(id) });
-          if (entries.length >= ALSO_IN_CAP) break;
-        }
-        if (entries.length) also_in_map[item.product_name] = entries;
-      }
-
-      const payload = {
-        list: {
-          ...rowToList(list, { itemCount: sorted.length }),
-          items: sorted.map(rowToItem),
-          also_in_map,
-        },
-      };
+      const fullDetail = await assembleListDetail(supabaseAdmin, list, uid);
+      const payload = { list: fullDetail };
       await cache.writeDetail(uid, listId, payload);
       return res.json({ ...payload, cached: false });
     } catch (e) {
@@ -512,7 +529,9 @@ function registerListsRoutes(app, deps) {
         items = (inserted || []).slice().sort(compareItems);
       }
 
-      await cache.invalidateUser(uid);
+      // R3g — new list has no existing detail cache yet, just the
+      // overview needs invalidation.
+      await cache.invalidateOverview(uid);
       return res.status(201).json({
         list: {
           ...rowToList(list, { itemCount: items.length }),
@@ -552,8 +571,12 @@ function registerListsRoutes(app, deps) {
         .single();
       if (error) throw error;
 
-      await cache.invalidateUser(uid);
-      return res.json({ list: rowToList(data) });
+      await cache.invalidateListAndOverview(uid, listId);
+
+      // R3g — return the full detail shape so the frontend can replace
+      // its detail cache in one round trip instead of re-fetching.
+      const fullDetail = await assembleListDetail(supabaseAdmin, data, uid);
+      return res.json({ list: fullDetail });
     } catch (e) {
       console.error("[lists PATCH]", e?.message);
       return res.status(500).json({ error: "list_update_failed" });
@@ -581,7 +604,7 @@ function registerListsRoutes(app, deps) {
       if (error) throw error;
       // FK ON DELETE CASCADE removes list_items.
 
-      await cache.invalidateUser(uid);
+      await cache.invalidateListAndOverview(uid, listId);
       return res.json({ ok: true });
     } catch (e) {
       console.error("[lists DELETE]", e?.message);
@@ -655,7 +678,7 @@ function registerListsRoutes(app, deps) {
         .update({ updated_at: nowIso })
         .eq("id", listId);
 
-      await cache.invalidateUser(uid);
+      await cache.invalidateListAndOverview(uid, listId);
       return res.status(201).json({ item: rowToItem(insertedItem), list_updated_at: nowIso });
     } catch (e) {
       console.error("[lists items POST]", e?.message);
@@ -703,7 +726,7 @@ function registerListsRoutes(app, deps) {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", listId);
 
-      await cache.invalidateUser(uid);
+      await cache.invalidateListAndOverview(uid, listId);
       return res.json({ item: rowToItem(updated) });
     } catch (e) {
       console.error("[lists items PATCH]", e?.message);
@@ -781,7 +804,7 @@ function registerListsRoutes(app, deps) {
         .eq("id", listId);
 
       // Single cache invalidation, not per item.
-      await cache.invalidateUser(uid);
+      await cache.invalidateListAndOverview(uid, listId);
 
       const { data: updated, error: uerr } = await supabaseAdmin
         .from("list_items")
@@ -835,7 +858,7 @@ function registerListsRoutes(app, deps) {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", listId);
 
-      await cache.invalidateUser(uid);
+      await cache.invalidateListAndOverview(uid, listId);
       return res.json({ ok: true });
     } catch (e) {
       console.error("[lists items DELETE]", e?.message);

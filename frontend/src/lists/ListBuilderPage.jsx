@@ -162,16 +162,19 @@ const swapSuggestionFor = (item, kidsOn) => {
 // specced verbatim: list name, average line with kids-mode tag, blank
 // line, bulleted items with score or unscored tag, blank line, count.
 const buildShareText = (list, kidsOn, scoreInfo) => {
-  const lines = [list.name];
-  if (scoreInfo.count > 0) {
+  // R3g — defensive: list.items can be missing in transient states
+  // (e.g., right after rename if a stale shape sneaks through).
+  const items = Array.isArray(list?.items) ? list.items : [];
+  const lines = [list?.name || "Untitled list"];
+  if (scoreInfo?.count > 0) {
     lines.push(`Average: ${scoreInfo.avg} (kids mode: ${kidsOn ? "on" : "off"})`);
   } else {
     lines.push("No scores yet");
   }
   lines.push("");
-  for (const it of list.items) {
+  for (const it of items) {
     const name = it.product_name || it.product_name_normalized || "Unnamed";
-    if (it.anchor === "name") {
+    if (it.anchor === "name" && it.score == null) {
       lines.push(`• ${name} — unscored`);
     } else {
       const s = kidsOn ? it.kid_score : it.score;
@@ -180,7 +183,7 @@ const buildShareText = (list, kidsOn, scoreInfo) => {
     }
   }
   lines.push("");
-  lines.push(`${list.items.length} items`);
+  lines.push(`${items.length} items`);
   return lines.join("\n");
 };
 
@@ -368,11 +371,18 @@ const PrototypePill = () => (
 
 // ── Lists overview ─────────────────────────────────────────────────
 const ListCard = ({ list, onOpen }) => {
-  const itemCount = list.items.length;
-  const cats = [...new Set(list.items.map(i => i.category).filter(Boolean))].slice(0, 4);
-  const updatedAt = list.items.length
-    ? list.items.reduce((acc, i) => i.scanned_at && i.scanned_at > acc ? i.scanned_at : acc, list.created_at)
-    : list.created_at;
+  // R3g — Defensive reads. Summary objects from GET /lists carry
+  // items_preview + item_count, not items. The old `list.items.length`
+  // read crashed every overview render the moment a real summary came
+  // back. Fall back to items[] when the parent passes a full detail
+  // object (e.g., right after createList lands the freshly created
+  // list shape into the lists state).
+  const previewItems = Array.isArray(list?.items_preview)
+    ? list.items_preview
+    : (Array.isArray(list?.items) ? list.items : []);
+  const itemCount = typeof list?.item_count === "number" ? list.item_count : previewItems.length;
+  const cats = [...new Set(previewItems.map(i => i?.category).filter(Boolean))].slice(0, 4);
+  const updatedAt = list?.updated_at || list?.created_at;
   return (
     <div role="button" onClick={() => onOpen(list.id)}
       style={{display:"flex", alignItems:"center", gap:16, padding:"18px 20px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, cursor:"pointer", marginBottom:12}}>
@@ -891,9 +901,13 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
     setTimeout(()=>inputRef.current?.focus(), 0);
   };
 
-  const updatedAt = list.items.length
-    ? list.items.reduce((acc, i) => i.scanned_at && i.scanned_at > acc ? i.scanned_at : acc, list.created_at)
-    : list.created_at;
+  // R3g — defensive. list.items can be momentarily undefined during
+  // optimistic transitions; prefer the server-set updated_at if present.
+  const detailItems = Array.isArray(list?.items) ? list.items : [];
+  const updatedAt = list?.updated_at
+    || (detailItems.length
+      ? detailItems.reduce((acc, i) => i?.scanned_at && i.scanned_at > acc ? i.scanned_at : acc, list?.created_at)
+      : list?.created_at);
 
   return (
     <div style={{maxWidth:720, margin:"0 auto", padding:`0 ${isMobile ? "20px" : "40px"}`}}>
@@ -965,16 +979,16 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
       )}
 
       <div style={{display:"flex", alignItems:"center", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-soft)", marginBottom:24}}>
-        <span>{list.items.length} {list.items.length === 1 ? "item" : "items"}</span>
+        <span>{(list.items || []).length} {(list.items || []).length === 1 ? "item" : "items"}</span>
         <span style={{opacity:0.4}}>·</span>
         <span>Updated {relativeTime(updatedAt)}</span>
       </div>
 
       {/* R3a r3 — category breakdown donut. Self-hides when fewer than two
           items or only one category is present. */}
-      <CategoryDonut items={list.items}/>
+      <CategoryDonut items={list.items || []}/>
 
-      {list.items.length === 0 ? (
+      {(list.items || []).length === 0 ? (
         <div style={{textAlign:"center", padding:"40px 20px", background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:CARD_SHAPE, marginBottom:24}}>
           <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, color:"var(--ink)", marginBottom:8, letterSpacing:"-0.005em"}}>Nothing here yet.</div>
           <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)", lineHeight:1.5}}>Add what you want to remember.</div>
@@ -1473,10 +1487,20 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
     setDetail(d => d[id] ? { ...d, [id]: { ...d[id], name: nextName } } : d);
     try {
       const res = await api.updateList(id, { name: nextName });
-      // Server response carries updated_at + other top-level fields. Merge
-      // into both lists and detail; detail preserves items + also_in_map.
-      setLists(ls => ls ? ls.map(l => l.id === id ? { ...l, ...res.list } : l) : ls);
-      setDetail(d => d[id] ? { ...d, [id]: { ...d[id], ...res.list } } : d);
+      // R3g — PATCH now returns the full detail shape (items, items_preview,
+      // also_in_map). Replace detail outright. For the summary list, pick
+      // out just the fields that belong on a summary card so we don't bloat
+      // the overview state with full item arrays.
+      const full = res.list || {};
+      setLists(ls => ls ? ls.map(l => l.id === id ? {
+        ...l,
+        name: full.name ?? l.name,
+        kind: full.kind ?? l.kind,
+        updated_at: full.updated_at ?? l.updated_at,
+        item_count: full.item_count ?? l.item_count,
+        items_preview: full.items_preview ?? l.items_preview,
+      } : l) : ls);
+      setDetail(d => ({ ...d, [id]: full }));
     } catch (err) {
       setLists(prevLists);
       if (prevDetail) setDetail(d => ({ ...d, [id]: prevDetail }));
