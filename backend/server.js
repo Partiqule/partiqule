@@ -470,11 +470,42 @@ function makeStreamHelper(req, res) {
 // on scan results". Stamp scoring_path / input_mode / latency_ms onto
 // every terminal result so analytics can slice by request type and
 // path that produced the score.
+//
+// attachFlags (R5b.2.1) runs the deterministic flag detector over the
+// stringified result and writes a structured flags array onto the
+// payload. Replaces the interim text-based home-match join in
+// handleKnowledgeQuery with a clean JSONB intersection at query time.
+// Idempotent — safe to call multiple times; later runs overwrite the
+// flags array with the freshly-computed value. Negation is enforced by
+// detectFlags itself, so "PFAS-free" / "no PTFE" entries do not produce
+// flag rows.
+function attachFlags(result) {
+  if (!result || typeof result !== "object") return result;
+  let haystack = "";
+  try { haystack = JSON.stringify(result); } catch { return result; }
+  if (!haystack) return result;
+  // bucket=null exercises every FLAG_DEFS group, since the result
+  // category might not map cleanly (e.g. "kitchen" → null bucket).
+  const det = detectDeterministicFlags(haystack, null);
+  const out = [];
+  if (det && det.flags) {
+    for (const [group, info] of Object.entries(det.flags)) {
+      if (!info?.present) continue;
+      for (const label of info.matches || []) {
+        out.push({ group, label });
+      }
+    }
+  }
+  result.flags = out;
+  return result;
+}
+
 function stampCacheHit(cached, inputMode, requestStartMs) {
   cached.original_scoring_path = cached.scoring_path || null;
   cached.scoring_path = "cache_hit";
   cached.input_mode = inputMode;
   cached.latency_ms = Date.now() - requestStartMs;
+  attachFlags(cached);
   return cached;
 }
 
@@ -482,6 +513,7 @@ function stampFresh(result, inputMode, scoringPath, requestStartMs) {
   result.input_mode = inputMode;
   result.scoring_path = scoringPath;
   result.latency_ms = Date.now() - requestStartMs;
+  attachFlags(result);
   return result;
 }
 

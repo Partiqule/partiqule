@@ -453,28 +453,23 @@ function findKnowledgeEntry(intent) {
 }
 
 // ── KNOWLEDGE: FLAG INTERSECTION ─────────────────────────────────
-// INTERIM IMPLEMENTATION (R5b.2). The earlier design assumed scans
-// persist a structured flagged_substances array on result_json. They
-// don't — the deterministic flagDetection output is computed at scoring
-// time but not written to the scan record. result_json carries free-text
-// `concerns` arrays, AI summaries, materials descriptions, and the
-// calibration `reason` field; substance names are present as narrative
-// text only.
+// R5b.2.1 ships structured flags on every new scan via server.js
+// attachFlags + the saveToCloud whitelist on the frontend, plus a
+// one-shot backfill script for pre-existing rows. The primary join
+// path now reads result_json.flags directly. The text-based fallback
+// stays in place for two cases:
+//   1. Scans whose result_json predates the backfill (or whose flags
+//      array is empty even though the narrative mentions a substance).
+//   2. Knowledge entries whose partiqule_flags slugs are not FLAG_DEFS
+//      group keys (e.g. bpa_bps, lead — tracked as R5b.2.2 territory).
+//      For these the structured field has nothing to intersect against,
+//      so the text path remains the only signal.
 //
-// Until structured flags persist on scan write (tracked as R5b.2.1 on
-// the backlog), this routine stringifies result_json and runs the
-// deterministic detectFlags() against the resulting text. detectFlags
-// already enforces word-boundary matching and negation filtering via
-// the same window-based isMatchNegated check used everywhere else, so
-// "PFAS-free", "no PTFE", "free of phthalates", and "without parabens"
-// all suppress correctly — no separate negation pass needed here.
-//
-// The entry.partiqule_flags array maps to FLAG_DEFS group keys. Slugs
-// that aren't FLAG_DEFS keys (e.g. raw substance names like "ptfe",
-// "fluoropolymer") are typically already covered as patterns inside the
-// parent group (FLAG_DEFS.pfas covers all of them), so missing groups
-// rarely matter in practice — but they will once entries like bpa_bps
-// land without an existing FLAG_DEFS.bpa group.
+// detectFlags enforces word-boundary matching and the same window-based
+// isMatchNegated negation check as everywhere else, so "PFAS-free" /
+// "no PTFE" / "free of phthalates" / "without parabens" all suppress
+// correctly. No separate negation pass needed at query time — the
+// suppression already happened at write time (or in the text fallback).
 
 function entryFlagGroupKeys(entry) {
   const out = [];
@@ -502,10 +497,26 @@ function scanHitsEntry(resultJson, groupKeys) {
   return false;
 }
 
+function scanHitsStructured(resultJson, groupKeys) {
+  if (!groupKeys.length) return false;
+  const flags = resultJson && Array.isArray(resultJson.flags) ? resultJson.flags : null;
+  if (!flags || !flags.length) return false;
+  for (const f of flags) {
+    if (!f) continue;
+    const g = String(f.group || "").toLowerCase();
+    if (groupKeys.includes(g)) return true;
+  }
+  return false;
+}
+
 async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
   if (!supabaseAdmin || !userId || !entry) return [];
   const groupKeys = entryFlagGroupKeys(entry);
-  if (!groupKeys.length) return [];
+  // Non-FLAG_DEFS slugs (e.g. bpa_bps, lead) have no group to intersect
+  // — they rely entirely on the text path. Still allow the query to
+  // continue rather than refusing, so the entry's knowledge card renders
+  // even when the home connection produces no matches.
+  const hasFlagDefsCoverage = groupKeys.length > 0;
   try {
     const cutoff = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabaseAdmin
@@ -520,7 +531,20 @@ async function findHomeMatchesForEntry({ supabaseAdmin }, userId, entry) {
     const seenNames = new Set();
     for (const row of data || []) {
       const r = row?.result_json || {};
-      if (!scanHitsEntry(r, groupKeys)) continue;
+      // Primary path: structured flags array written by attachFlags.
+      // Fallback path: text matching for scans without a flags array
+      // yet (pre-backfill) or for entries whose slugs aren't in
+      // FLAG_DEFS so the structured intersection has no key to hit.
+      let hit = false;
+      if (hasFlagDefsCoverage) {
+        hit = scanHitsStructured(r, groupKeys);
+        if (!hit) hit = scanHitsEntry(r, groupKeys);
+      } else {
+        // No structured coverage available — bail. Future R5b.2.2 may
+        // widen this once non-FLAG_DEFS slugs gain detection support.
+        continue;
+      }
+      if (!hit) continue;
       const name = row.product_name || r.product_name || "Unnamed scan";
       const key = String(name).toLowerCase().trim();
       if (seenNames.has(key)) continue;

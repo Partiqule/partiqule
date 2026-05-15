@@ -7362,6 +7362,7 @@ function App() {
           scoring_path:          item.scoring_path          ?? null,
           original_scoring_path: item.original_scoring_path ?? null,
           latency_ms:            item.latency_ms            ?? null,
+          flags:                 Array.isArray(item.flags) ? item.flags : [],
         },
         owned,
         scanned_at:   new Date().toISOString(),
