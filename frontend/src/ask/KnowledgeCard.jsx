@@ -74,6 +74,46 @@ const ScoreDot = ({ score }) => {
   );
 };
 
+// Compact buy-chip row rendered under each match card. Mirrors the
+// BuyLinks chip set used on type 1 product results — Amazon, Brand,
+// Target — with smaller dimensions to fit inside the denser home
+// connection card. Chips with no URL hide rather than render empty.
+const BuyChips = ({ links }) => {
+  if (!links) return null;
+  const entries = [];
+  if (links.amazon) entries.push({ key: "amazon", label: "Amazon", url: links.amazon });
+  if (links.brand)  entries.push({ key: "brand",  label: "Brand",  url: links.brand });
+  if (links.target) entries.push({ key: "target", label: "Target", url: links.target });
+  if (!entries.length) return null;
+  return (
+    <div style={{
+      display: "flex", flexWrap: "wrap", gap: 6,
+      marginTop: 10,
+      // 40px avatar + 14px gap aligns chips under the product name.
+      paddingLeft: 54,
+    }}>
+      {entries.map(e => (
+        <a key={e.key} href={e.url} target="_blank" rel="noopener noreferrer"
+           aria-label={`Open on ${e.label}`}
+           style={{
+             display: "inline-flex", alignItems: "center", gap: 4,
+             padding: "3px 9px",
+             borderRadius: 999,
+             border: "1px solid var(--rule)",
+             background: "transparent",
+             fontFamily: "'DM Sans', system-ui, sans-serif",
+             fontSize: 11, fontWeight: 500,
+             color: "var(--ink-soft)",
+             textDecoration: "none",
+             letterSpacing: "0.01em",
+           }}>
+          {e.label} <span style={{color: "var(--moss)"}}>→</span>
+        </a>
+      ))}
+    </div>
+  );
+};
+
 const HomeConnection = ({ message, matches, matchedTotal }) => {
   if (!message && (!matches || matches.length === 0)) return null;
   const shown = matches?.length || 0;
@@ -102,23 +142,25 @@ const HomeConnection = ({ message, matches, matchedTotal }) => {
         }}>
           {matches.map(m => (
             <div key={m.id} style={{
-              display: "flex", alignItems: "center", gap: 14,
               padding: "12px 14px",
               background: "var(--cream)",
               border: "1px solid var(--rule)",
               borderRadius: TILE_SHAPE,
             }}>
-              <MatchAvatar url={m.product_image_url} name={m.name} score={m.score} size={40}/>
-              <div style={{
-                flex: 1, minWidth: 0,
-                fontFamily:"'DM Sans', system-ui, sans-serif",
-                fontSize: 14, fontWeight: 500,
-                color: "var(--ink)", lineHeight: 1.35,
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }}>{m.name}</div>
-              <div style={{flexShrink: 0}}>
-                <ScoreDot score={m.score}/>
+              <div style={{display: "flex", alignItems: "center", gap: 14}}>
+                <MatchAvatar url={m.product_image_url} name={m.name} score={m.score} size={40}/>
+                <div style={{
+                  flex: 1, minWidth: 0,
+                  fontFamily:"'DM Sans', system-ui, sans-serif",
+                  fontSize: 14, fontWeight: 500,
+                  color: "var(--ink)", lineHeight: 1.35,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>{m.name}</div>
+                <div style={{flexShrink: 0}}>
+                  <ScoreDot score={m.score}/>
+                </div>
               </div>
+              <BuyChips links={m.buy_links}/>
             </div>
           ))}
         </div>

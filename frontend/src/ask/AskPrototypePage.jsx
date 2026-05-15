@@ -509,11 +509,14 @@ const AskPrototypePage = ({
   // Decorate a streamed item with frontend-computed buy_links. Backend
   // intentionally sends buy_links: null to keep the partner tag in one
   // module; the frontend resolves them via the same helper used on the
-  // scan-result CTAs and the list page.
+  // scan-result CTAs and the list page. Works for type 1 items
+  // (product_name field) and type 2 match events (name field) — both
+  // route through the same chip set.
   const decorateItem = (raw) => {
     const next = { ...raw };
     if (!next.buy_links) {
-      try { next.buy_links = buyLinksFor ? buyLinksFor(next.product_name) : null; }
+      const nameForBuy = next.product_name || next.name || "";
+      try { next.buy_links = buyLinksFor ? buyLinksFor(nameForBuy) : null; }
       catch { next.buy_links = null; }
     }
     return next;
@@ -594,8 +597,10 @@ const AskPrototypePage = ({
             return;
           }
           if (event === "match") {
-            // Knowledge matches arrive after the knowledge event. Accumulate.
-            setKnowledgeMatches(prev => [...prev, payload]);
+            // Knowledge matches arrive after the knowledge event. Decorate
+            // with buy_links the same way type 1 items do — the partner
+            // tag lives in the frontend helper so the backend stays clean.
+            setKnowledgeMatches(prev => [...prev, decorateItem(payload)]);
             return;
           }
           if (event === "done") {
