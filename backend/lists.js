@@ -295,48 +295,51 @@ function makeCacheHelpers(deps) {
   };
 }
 
-// R3g — assemble full detail shape for one list (items + items_preview
-// + also_in_map). Used by GET /lists/:id and by PATCH /lists/:id so
-// the frontend can replace its detail cache without a refetch round
-// trip after a mutation.
+// R3g part 2 — assemble full detail shape for one list in ONE Supabase
+// round trip. Previously this was three sequential queries (this list's
+// items, then all user items, then other-list names). Renames against
+// real data could push past Railway's proxy timeout. The single-query
+// version pulls every list_item the user owns with the parent list's
+// name joined in, then partitions in memory.
+//
+// Trade-off: the response payload includes ALL user's list_items, not
+// just this list's. For a user with ~50 items the row count is small;
+// for power users with hundreds of items it's still one network call
+// rather than three.
 async function assembleListDetail(supabaseAdmin, list, uid) {
-  const { data: items, error: ierr } = await supabaseAdmin
+  const { data: allItems, error: aerr } = await supabaseAdmin
     .from("list_items")
-    .select("*")
-    .eq("list_id", list.id);
-  if (ierr) throw ierr;
-  const sorted = (items || []).slice().sort(compareItems);
-
-  const { data: allUserItems, error: aerr } = await supabaseAdmin
-    .from("list_items")
-    .select("list_id, product_name")
+    .select("*, lists!inner(name)")
     .eq("user_id", uid);
   if (aerr) throw aerr;
+  const all = allItems || [];
 
+  const thisListItems = [];
+  const otherListItems = [];
+  for (const i of all) {
+    if (i.list_id === list.id) thisListItems.push(i);
+    else otherListItems.push(i);
+  }
+  const sorted = thisListItems.slice().sort(compareItems);
+
+  // Build also_in_map. byName maps normalized product → Set of other
+  // list ids. listNameById carries the parent list's name from the
+  // join so we can label the entries without a follow-up query.
   const namesInThisList = new Set();
   for (const i of sorted) {
     const norm = (i.product_name || "").toLowerCase().trim();
     if (norm) namesInThisList.add(norm);
   }
   const byName = new Map();
-  for (const i of allUserItems || []) {
-    if (i.list_id === list.id) continue;
+  const listNameById = new Map();
+  for (const i of otherListItems) {
     const norm = (i.product_name || "").toLowerCase().trim();
     if (!norm || !namesInThisList.has(norm)) continue;
     if (!byName.has(norm)) byName.set(norm, new Set());
     byName.get(norm).add(i.list_id);
-  }
-  const otherListIds = new Set();
-  for (const ids of byName.values()) for (const id of ids) otherListIds.add(id);
-
-  let otherListNames = new Map();
-  if (otherListIds.size) {
-    const { data: namesData } = await supabaseAdmin
-      .from("lists")
-      .select("id, name")
-      .in("id", [...otherListIds])
-      .eq("user_id", uid);
-    otherListNames = new Map((namesData || []).map(r => [r.id, r.name]));
+    if (!listNameById.has(i.list_id) && i.lists?.name) {
+      listNameById.set(i.list_id, i.lists.name);
+    }
   }
 
   const also_in_map = {};
@@ -346,8 +349,9 @@ async function assembleListDetail(supabaseAdmin, list, uid) {
     if (!ids || !ids.size) continue;
     const entries = [];
     for (const id of ids) {
-      if (!otherListNames.has(id)) continue;
-      entries.push({ list_id: id, list_name: otherListNames.get(id) });
+      const name = listNameById.get(id);
+      if (!name) continue;
+      entries.push({ list_id: id, list_name: name });
       if (entries.length >= ALSO_IN_CAP) break;
     }
     if (entries.length) also_in_map[item.product_name] = entries;

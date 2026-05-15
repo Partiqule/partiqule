@@ -83,7 +83,7 @@ app.use(cors({
     if (isPartiquleVercel) return callback(null, true);
     callback(new Error(`CORS blocked: ${origin}`));
   },
-  methods: ["GET","POST","OPTIONS"],
+  methods: ["GET","POST","PATCH","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization","x-admin-key"],
   credentials: true,
 }));

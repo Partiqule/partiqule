@@ -267,6 +267,12 @@ const Clipboard = ({ size = 17, color = "var(--moss)" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
 );
 
+// R3g part 2 — bare check (for the rename save button). Distinct from
+// CheckCircle below which carries the purchased-state ring.
+const Check = ({ size = 18, color = "var(--ivory)" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+);
+
 const CheckCircle = ({ filled, size = 20 }) => (
   filled ? (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="var(--moss)" stroke="var(--moss)" strokeWidth="1.5">
@@ -918,22 +924,44 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
 
       <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, marginBottom:6}}>
         {editing ? (
-          <input ref={inputRef} value={draft}
-            onChange={e=>setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e=>{ if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
-            style={{flex:1, fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 30 : 36, fontWeight:400, letterSpacing:"-0.02em", color:"var(--ink)", background:"transparent", border:"none", borderBottom:"1px solid var(--moss)", outline:"none", padding:"2px 0"}}/>
+          <>
+            <input ref={inputRef} value={draft}
+              onChange={e=>setDraft(e.target.value)}
+              onBlur={commit}
+              onKeyDown={e=>{ if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
+              style={{flex:1, fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 30 : 36, fontWeight:400, letterSpacing:"-0.02em", color:"var(--ink)", background:"transparent", border:"none", borderBottom:"1px solid var(--moss)", outline:"none", padding:"2px 0", minWidth:0}}/>
+            {/* R3g part 2 — explicit save and cancel affordances. onMouseDown
+                preventDefault keeps the input focused so onBlur's commit
+                doesn't race the button onClick. Enter and blur still save;
+                Escape still cancels. */}
+            <div style={{display:"flex", gap:8, flexShrink:0}}>
+              <button aria-label="Save rename"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={commit}
+                style={{width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--moss)", border:"1px solid var(--moss)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
+                <Check size={18} color="var(--ivory)"/>
+              </button>
+              <button aria-label="Cancel rename"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setEditing(false)}
+                style={{width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
+                <X size={16} color="var(--ink)"/>
+              </button>
+            </div>
+          </>
         ) : (
-          <h1 onClick={startEdit}
-            style={{flex:1, fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 30 : 36, fontWeight:400, letterSpacing:"-0.02em", color:"var(--ink)", margin:0, cursor:"text"}}>
-            {list.name}
-          </h1>
+          <>
+            <h1 onClick={startEdit}
+              style={{flex:1, fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 30 : 36, fontWeight:400, letterSpacing:"-0.02em", color:"var(--ink)", margin:0, cursor:"text"}}>
+              {list.name}
+            </h1>
+            <button aria-label="Share list"
+              onClick={() => onShare(list, kidsOn, scoreInfo)}
+              style={{flexShrink:0, width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
+              <Share/>
+            </button>
+          </>
         )}
-        <button aria-label="Share list"
-          onClick={() => onShare(list, kidsOn, scoreInfo)}
-          style={{flexShrink:0, width:42, height:42, display:"flex", alignItems:"center", justifyContent:"center", padding:0, background:"var(--cream-light)", border:"1px solid var(--rule-strong)", borderRadius:TILE_SHAPE, cursor:"pointer"}}>
-          <Share/>
-        </button>
       </div>
 
       {/* R3a r1 — list-level score chip + kids toggle. Hidden toggle when no
