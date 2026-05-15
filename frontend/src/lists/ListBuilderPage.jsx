@@ -618,6 +618,86 @@ const ItemBuyLinks = ({ links }) => {
   );
 };
 
+// Buy-all row — three ghost buttons that open N retailer tabs each.
+// Purchased items and Reading-the-link placeholders are filtered out.
+// Brand only opens tabs for items with a known BRAND_URLS match (the
+// other items are skipped silently per spec).
+const POPUP_HINT_KEY = "pq_lists_popup_hint_dismissed";
+
+const retailerLabel = (r) => r === "amazon" ? "Amazon" : r === "target" ? "Target" : "brand sites";
+
+const BuyAllRow = ({ items, buyLinksFor, onToast }) => {
+  const [hintDismissed, setHintDismissed] = useState(() => {
+    try { return localStorage.getItem(POPUP_HINT_KEY) === "1"; } catch { return false; }
+  });
+
+  const openAll = (retailer) => {
+    if (!hintDismissed) {
+      try { localStorage.setItem(POPUP_HINT_KEY, "1"); } catch {}
+      setHintDismissed(true);
+    }
+    const candidates = (items || []).filter(i =>
+      !i.purchased &&
+      !i.placeholder &&
+      (i.product_name || i.product_name_normalized)
+    );
+    const urls = [];
+    for (const item of candidates) {
+      const name = item.product_name || item.product_name_normalized;
+      const links = typeof buyLinksFor === "function" ? buyLinksFor(name) : null;
+      const url = links && links[retailer];
+      if (url) urls.push(url);
+    }
+    if (!urls.length) {
+      onToast?.(`No items to open on ${retailerLabel(retailer)}.`);
+      return;
+    }
+    if (urls.length > 15) {
+      const ok = typeof window !== "undefined" && window.confirm
+        ? window.confirm(`Open ${urls.length} tabs on ${retailerLabel(retailer)}?`)
+        : true;
+      if (!ok) return;
+    }
+    // Sequential setTimeout so the browser handles each open as a
+    // discrete user gesture. The first one rides the click; the rest
+    // depend on the popup permission being granted after the first.
+    for (let i = 0; i < urls.length; i++) {
+      setTimeout(() => { try { window.open(urls[i], "_blank", "noopener,noreferrer"); } catch {} }, i * 100);
+    }
+    onToast?.(`Opening ${urls.length} tab${urls.length === 1 ? "" : "s"} on ${retailerLabel(retailer)}.`);
+  };
+
+  const btnStyle = {
+    display:"inline-flex", alignItems:"center", gap:4,
+    padding:"6px 12px", borderRadius:999,
+    background:"transparent", border:"1px solid var(--rule)",
+    fontFamily:"'DM Sans', system-ui, sans-serif",
+    fontSize:12, fontWeight:500, color:"var(--ink-soft)",
+    letterSpacing:"0.01em", cursor:"pointer",
+  };
+
+  return (
+    <div style={{marginBottom:18}}>
+      <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+        <button onClick={() => openAll("amazon")} style={btnStyle}>
+          Open all on Amazon <span style={{color:"var(--moss)"}}>→</span>
+        </button>
+        <button onClick={() => openAll("target")} style={btnStyle}>
+          Open all on Target <span style={{color:"var(--moss)"}}>→</span>
+        </button>
+        <button onClick={() => openAll("brand")} style={btnStyle}>
+          Open all on brand sites <span style={{color:"var(--moss)"}}>→</span>
+        </button>
+      </div>
+      {!hintDismissed && (
+        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", marginTop:6}}>
+          Your browser will ask to allow popups.
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onOpenList, buyLinksFor, drag }) => {
   const displayName = item.product_name || item.product_name_normalized || "Unnamed item";
   const isReading = item.placeholder === true;
@@ -782,7 +862,7 @@ const ItemRow = ({ item, kidsOn, otherLists, isScoring, onRemove, onToggleOwned,
   );
 };
 
-const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, scoring, buyLinksFor, isMobile }) => {
+const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem, onToggleOwned, onTogglePurchased, onEditNote, onSwapItem, onScoreItem, onShare, onReorderItems, onOpenList, onAddByName, onDeleteList, scoring, buyLinksFor, onToast, isMobile }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(list.name);
   // R3a r1 — kids toggle is local to this list view. State resets when the
@@ -1040,11 +1120,24 @@ const ListDetail = ({ list, allLists, onBack, onRename, onAddItem, onRemoveItem,
         </div>
       )}
 
-      <div style={{display:"flex", alignItems:"center", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-soft)", marginBottom:24}}>
+      <div style={{display:"flex", alignItems:"center", gap:10, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", fontWeight:600, color:"var(--ink-soft)", marginBottom:16}}>
         <span>{(list.items || []).length} {(list.items || []).length === 1 ? "item" : "items"}</span>
         <span style={{opacity:0.4}}>·</span>
         <span>Updated {relativeTime(updatedAt)}</span>
       </div>
+
+      {/* Buy all — opens N tabs on the chosen retailer in sequence so
+          the user can sweep an entire list into carts. Purchased items
+          and placeholder URL adds are skipped. Brand only opens tabs
+          for items with a known BRAND_URLS match. */}
+      {(list.items || []).length > 0 && (
+        <BuyAllRow
+          items={list.items}
+          buyLinksFor={buyLinksFor}
+          onToast={onToast}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* R3a r3 — category breakdown donut. Self-hides when fewer than two
           items or only one category is present. */}
@@ -2031,6 +2124,7 @@ const ListBuilderPage = ({ history = [], isMobile = false, safeTop = 0, authedFe
           onDeleteList={(id) => setPendingDelete(id)}
           scoring={scoring}
           buyLinksFor={buyLinksFor}
+          onToast={showToast}
           isMobile={isMobile}
         />
       )}

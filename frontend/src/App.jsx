@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ListBuilderPage from "./lists/ListBuilderPage";
 import AskPrototypePage from "./ask/AskPrototypePage";
+import { makeListsApi } from "./lists/api";
 import { matchesHistory } from "./intel/matching";
 
 // Lazy-load @capgo/native-purchases via dynamic import so it only runs in
@@ -354,6 +355,11 @@ const authedFetch = async (url, options = {}) => {
   } catch {}
   return res;
 };
+
+// Shared lists API client. Defined at module scope so it can be reused
+// across surfaces (ListBuilderPage already creates one internally; the
+// Items page uses this one for multi-select add-to-list).
+const listsApi = makeListsApi({ authedFetch, apiBase: API_BASE });
 
 // R3g — quiet /analyze caller. POSTs without the ndjson Accept header
 // so the backend takes the non-streaming branch and returns a single
@@ -3802,7 +3808,110 @@ const HouseholdExposureSummary = ({ history, text, muted, surface, border, onSel
 };
 
 // ── HISTORY PAGE ─────────────────────────────────────────────
-const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter, liveIntelCards, forYouCards, onCardTap, onSeeMoreCards}) => {
+const HistoryPage = ({history: historyProp, surface, border, text, muted, onSelect, onClear, onSearch, isMobile, historyFilter, filteredItems, filteredItemsLoading, filteredItemsError, onClearFilter, onRetryFilter, liveIntelCards, forYouCards, onCardTap, onSeeMoreCards, listsApi: listsApiProp, onAuthRequired}) => {
+  // Multi-select state. Selection mode is opt-in via the Select button
+  // in the header. selectedKeys holds product_name strings; the upsert
+  // key (user_id, product_name) ensures product_name is unique within a
+  // user's history, so it works as a stable selector key.
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [userLists, setUserLists] = useState([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerError, setPickerError] = useState(null);
+  const [addingBatch, setAddingBatch] = useState(false);
+  const [historyToast, setHistoryToast] = useState("");
+  const historyToastTimerRef = useRef(null);
+  const showHistoryToast = (msg) => {
+    if (historyToastTimerRef.current) clearTimeout(historyToastTimerRef.current);
+    setHistoryToast(msg);
+    historyToastTimerRef.current = setTimeout(() => setHistoryToast(""), 2500);
+  };
+  useEffect(() => () => { if (historyToastTimerRef.current) clearTimeout(historyToastTimerRef.current); }, []);
+
+  const enterSelection = () => { setSelectionMode(true); setSelectedKeys(new Set()); };
+  const exitSelection = () => { setSelectionMode(false); setSelectedKeys(new Set()); setPickerOpen(false); };
+  const toggleSelected = (key) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const openPicker = async () => {
+    if (selectedKeys.size === 0) return;
+    setPickerOpen(true);
+    setPickerLoading(true);
+    setPickerError(null);
+    try {
+      const res = await listsApiProp?.getLists();
+      setUserLists(Array.isArray(res?.lists) ? res.lists : []);
+    } catch (err) {
+      if (err?.status === 401) onAuthRequired?.();
+      else setPickerError(err?.body?.error || err?.message || "Couldn't load lists.");
+    } finally {
+      setPickerLoading(false);
+    }
+  };
+
+  const addSelectedToList = async (list) => {
+    if (!list || !listsApiProp || addingBatch) return;
+    const sourceHistory = historyFilter ? (filteredItems || []) : historyProp;
+    const itemsToAdd = (sourceHistory || []).filter(h => selectedKeys.has(h.product_name));
+    if (!itemsToAdd.length) { exitSelection(); return; }
+    setAddingBatch(true);
+    try {
+      // Parallel POSTs — the surgical cache invalidation from R3g
+      // handles this well. Each create is its own unit so a single
+      // failure doesn't block the rest.
+      const results = await Promise.allSettled(itemsToAdd.map(h => listsApiProp.createItem(list.id, {
+        product_name: h.product_name,
+        product_name_normalized: String(h.product_name || "").toLowerCase().trim(),
+        category: h.category || null,
+        score: typeof h.overall_score === "number" ? h.overall_score
+              : (typeof h.score === "number" ? h.score : null),
+        kid_score: typeof h.child_score === "number" ? h.child_score
+                  : (typeof h.kid_score === "number" ? h.kid_score : null),
+        flags: Array.isArray(h.flagged_substances)
+          ? h.flagged_substances.filter(f => typeof f === "string").slice(0, 20)
+          : [],
+      })));
+      const failed = results.filter(r => r.status === "rejected").length;
+      const ok = results.length - failed;
+      setPickerOpen(false);
+      setSelectionMode(false);
+      setSelectedKeys(new Set());
+      if (failed === 0) {
+        showHistoryToast(`${ok} ${ok === 1 ? "item" : "items"} added to ${list.name}.`);
+      } else if (ok === 0) {
+        const reason = results[0]?.reason;
+        if (reason?.status === 401) onAuthRequired?.();
+        else showHistoryToast("Couldn't add items. Try again.");
+      } else {
+        showHistoryToast(`${ok} of ${results.length} added to ${list.name}.`);
+      }
+    } catch (err) {
+      if (err?.status === 401) onAuthRequired?.();
+      else showHistoryToast("Couldn't add items. Try again.");
+    } finally {
+      setAddingBatch(false);
+    }
+  };
+
+  const createNewListThenAdd = async () => {
+    const name = typeof window !== "undefined" && window.prompt ? window.prompt("Name this list", "") : "";
+    if (!name || !name.trim()) return;
+    try {
+      const res = await listsApiProp?.createList({ name: name.trim() });
+      if (res?.list) {
+        await addSelectedToList(res.list);
+      }
+    } catch (err) {
+      if (err?.status === 401) onAuthRequired?.();
+      else showHistoryToast("Couldn't create list. Try again.");
+    }
+  };
   const [priceFilter, setPriceFilter] = useState("all");
   const [viewMode, setViewMode] = useState("date");
   // Track 6 — when historyFilter is active, the page renders the filtered
@@ -3893,36 +4002,86 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
     return acc;
   }, {});
 
-  const renderHistoryItem = (item, i) => (
-    <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}} onClick={()=>onSelect(item)}>
-      <div style={{position:"absolute", left:-24, top:16, width:12, height:12, borderRadius:"50%", background:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", border:`2px solid ${surface}`, zIndex:1}}/>
-      <div style={{background:surface, borderRadius:12, padding:"16px 20px", border:`1.5px solid ${border}`, transition:"all 0.15s"}}
-        onMouseEnter={e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateX(3px)";}}
-        onMouseLeave={e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
-          <div style={{flex:1, minWidth:0}}>
-            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
-            <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"...":""}</div>
+  const renderHistoryItem = (item, i) => {
+    const key = item.product_name;
+    const isSelected = selectionMode && selectedKeys.has(key);
+    const handleRowClick = () => {
+      if (selectionMode) toggleSelected(key);
+      else onSelect(item);
+    };
+    return (
+      <div key={i} style={{position:"relative", marginBottom:12, cursor:"pointer"}} onClick={handleRowClick}>
+        <div style={{position:"absolute", left:-24, top:16, width:12, height:12, borderRadius:"50%", background:item.score<=3?"#16a34a":item.score<=6?"#d97706":"#dc2626", border:`2px solid ${surface}`, zIndex:1}}/>
+        <div style={{
+          background: isSelected ? "var(--moss-soft)" : surface,
+          borderRadius:12, padding:"16px 20px",
+          border: isSelected ? `1.5px solid var(--moss)` : `1.5px solid ${border}`,
+          transition:"all 0.15s",
+        }}
+          onMouseEnter={selectionMode ? undefined : e=>{e.currentTarget.style.borderColor="#16a34a"; e.currentTarget.style.transform="translateX(3px)";}}
+          onMouseLeave={selectionMode ? undefined : e=>{e.currentTarget.style.borderColor=border; e.currentTarget.style.transform="none";}}>
+          <div style={{display:"flex", alignItems:"flex-start", gap:12}}>
+            {selectionMode && (
+              <div style={{flexShrink:0, marginTop:2}} aria-hidden="true">
+                {isSelected ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--moss)" stroke="var(--moss)" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline fill="none" stroke="var(--ivory)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" points="7 12.5 11 16.5 17 9.5"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="9.5"/>
+                  </svg>
+                )}
+              </div>
+            )}
+            <div style={{flex:1, minWidth:0, display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12}}>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:15, color:text, marginBottom:4, lineHeight:1.3}}>{item.product_name}</div>
+                <div style={{fontSize:12, color:muted}}>{item.summary?.slice(0,90)}{item.summary?.length>90?"...":""}</div>
+              </div>
+              <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
+                <ScoreBadge score={item.score} size="sm" showLabel />
+                <div style={{fontSize:11, color:muted}}>{formatDate(item.scannedAt)}</div>
+              </div>
+            </div>
           </div>
-          <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, flexShrink:0}}>
-            <ScoreBadge score={item.score} size="sm" showLabel />
-            <div style={{fontSize:11, color:muted}}>{formatDate(item.scannedAt)}</div>
-          </div>
+          {item.category && (
+            <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
+              {(() => { const cat = {clothing:{label:"Clothing",color:"#2d5a27",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#c8781a",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#c8781a",bg:"#fdf4e7"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
+              {!selectionMode && <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result</span>}
+            </div>
+          )}
         </div>
-        {item.category && (
-          <div style={{marginTop:10, display:"flex", alignItems:"center", gap:6}}>
-            {(() => { const cat = {clothing:{label:"Clothing",color:"#2d5a27",bg:"#eef2ff"},food_beverage:{label:"Food & Drink",color:"#0891b2",bg:"#ecfeff"},personal_care:{label:"Personal Care",color:"#c8781a",bg:"#fdf2f8"},kitchen:{label:"Kitchen",color:"#d97706",bg:"#fffbeb"},baby:{label:"Baby & Kids",color:"#c8781a",bg:"#fdf4e7"},other:{label:"General",color:"#6b7280",bg:"#f9fafb"}}[item.category]||{label:"General",color:"#6b7280",bg:"#f9fafb"}; return <span style={{background:cat.bg,color:cat.color,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{cat.label}</span>; })()}
-            <span style={{fontSize:11, color:"#16a34a", fontWeight:600}}>Tap to view full result</span>
-          </div>
-        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{maxWidth:900, margin:"0 auto", padding:isMobile?"20px 16px 60px":"48px 40px 80px"}}>
       <div style={{marginBottom:isMobile?24:40}}>
-        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>Items <span style={{color:"var(--moss)"}}>scanned</span></h1>
+        <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12}}>
+          <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?30:38, color:text, margin:"0 0 8px", letterSpacing:"-0.015em", lineHeight:1.05}}>
+            {selectionMode ? (
+              <span style={{display:"inline-flex", alignItems:"center", gap:12}}>
+                <span>{selectedKeys.size} <span style={{color:"var(--moss)"}}>selected</span></span>
+              </span>
+            ) : (
+              <>Items <span style={{color:"var(--moss)"}}>scanned</span></>
+            )}
+          </h1>
+          {selectionMode ? (
+            <button onClick={exitSelection} aria-label="Cancel selection"
+              style={{display:"inline-flex", alignItems:"center", justifyContent:"center", width:34, height:34, padding:0, background:"transparent", border:"1px solid var(--rule)", borderRadius:999, cursor:"pointer"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+            </button>
+          ) : (history && history.length > 0 && !historyFilter && typeof listsApiProp?.getLists === "function") && (
+            <button onClick={enterSelection}
+              style={{display:"inline-flex", alignItems:"center", gap:6, padding:"6px 14px", background:"transparent", border:"1px solid var(--rule-strong)", borderRadius:999, fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, color:"var(--ink-soft)", cursor:"pointer", letterSpacing:"0.01em"}}>
+              Select
+            </button>
+          )}
+        </div>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, marginTop:8}}>
           <p style={{fontSize:15, color:muted, margin:0}}>Your scan history and recommended safer alternatives</p>
           <div style={{display:"flex", gap:4, background:"#f1f5f9", borderRadius:10, padding:3, flexShrink:0}}>
@@ -4255,6 +4414,77 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
             </button>
           </div>
         </>
+      )}
+
+      {/* Selection-mode bottom action bar. Sits above the bottom nav so
+          the user has a clear path to Add to list or Cancel. */}
+      {selectionMode && (
+        <div style={{
+          position:"fixed", left:0, right:0, bottom:0,
+          zIndex:9100,
+          background:"var(--cream)",
+          borderTop:"1px solid var(--rule)",
+          padding:"12px 16px",
+          paddingBottom:"calc(12px + env(safe-area-inset-bottom))",
+          display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
+          boxShadow:"0 -8px 24px rgba(26,31,21,0.06)",
+        }}>
+          <button onClick={exitSelection}
+            style={{padding:"10px 18px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>
+            Cancel
+          </button>
+          <button onClick={openPicker} disabled={selectedKeys.size === 0}
+            style={{padding:"11px 20px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor: selectedKeys.size === 0 ? "not-allowed" : "pointer", opacity: selectedKeys.size === 0 ? 0.5 : 1}}>
+            Add to list ({selectedKeys.size})
+          </button>
+        </div>
+      )}
+
+      {/* List picker modal. Fetches the user's lists on open. Allows
+          creating a new list via window.prompt — minimal UI for now;
+          can become a proper input field in a follow-up. */}
+      {pickerOpen && (
+        <div onClick={() => setPickerOpen(false)}
+          style={{position:"fixed", inset:0, background:"rgba(26,31,21,0.40)", zIndex:9200, display:"flex", alignItems:"center", justifyContent:"center", padding:24}}>
+          <div onClick={e => e.stopPropagation()}
+            style={{width:"100%", maxWidth:440, background:"var(--cream)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", padding:"22px 22px 18px", maxHeight:"80vh", display:"flex", flexDirection:"column"}}>
+            <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:20, fontWeight:400, letterSpacing:"-0.01em", color:"var(--ink)", marginBottom:4}}>Add to a list</div>
+            <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", marginBottom:16}}>
+              {selectedKeys.size} {selectedKeys.size === 1 ? "item" : "items"} selected.
+            </div>
+            <div style={{flex:1, overflowY:"auto"}}>
+              <button onClick={createNewListThenAdd} disabled={addingBatch}
+                style={{width:"100%", display:"flex", alignItems:"center", gap:8, padding:"12px 14px", marginBottom:10, background:"var(--moss-soft)", border:"1px dashed var(--moss)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, color:"var(--moss-deep)", cursor: addingBatch ? "not-allowed" : "pointer", textAlign:"left"}}>
+                <span style={{fontSize:16, lineHeight:1}}>+</span> New list
+              </button>
+              {pickerLoading ? (
+                <div style={{textAlign:"center", padding:"24px 0", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)"}}>Loading lists...</div>
+              ) : pickerError ? (
+                <div style={{textAlign:"center", padding:"24px 0", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)"}}>{pickerError}</div>
+              ) : userLists.length === 0 ? (
+                <div style={{textAlign:"center", padding:"24px 0", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--ink-soft)"}}>No lists yet. Start one above.</div>
+              ) : (
+                userLists.map(l => (
+                  <button key={l.id} onClick={() => addSelectedToList(l)} disabled={addingBatch}
+                    style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:10, padding:"12px 14px", marginBottom:8, background:"var(--cream-light)", border:"1px solid var(--rule)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'Lora', Georgia, serif", fontSize:15, fontWeight:500, color:"var(--ink)", cursor: addingBatch ? "not-allowed" : "pointer", textAlign:"left", letterSpacing:"-0.005em"}}>
+                    <span>{l.name}</span>
+                    <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"var(--ink-faint)", letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:600}}>{l.item_count || 0} items</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <div style={{marginTop:12, textAlign:"right"}}>
+              <button onClick={() => setPickerOpen(false)} disabled={addingBatch}
+                style={{padding:"10px 18px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor: addingBatch ? "not-allowed" : "pointer"}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historyToast && (
+        <div style={{position:"fixed", bottom: selectionMode ? 90 : 110, left:"50%", transform:"translateX(-50%)", padding:"10px 18px", background:"var(--ink)", color:"var(--ivory)", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, zIndex:9300, boxShadow:"0 8px 24px rgba(0,0,0,0.15)", whiteSpace:"nowrap"}}>
+          {historyToast}
+        </div>
       )}
     </div>
   );
@@ -8328,6 +8558,8 @@ function App() {
           liveIntelCards={liveIntelCards}
           forYouCards={generateForYouCards(history, childMode)}
           onSeeMoreCards={()=>setPage("feed")}
+          listsApi={listsApi}
+          onAuthRequired={() => setShowAuth(true)}
           onCardTap={(card) => {
             if (card.cardType === "live" && card.action_url) { window.open(card.action_url, "_blank"); return; }
             if (card.actionPage === "history") { setPage("history"); return; }
