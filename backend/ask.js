@@ -1,4 +1,4 @@
-// R5b.1 + R5b.2 Ask mode backend.
+// R5b.1 + R5b.2 + R5b.3 v2 Ask mode backend.
 //
 // POST /ask streams SSE events with the pipeline:
 //   1. Pass 1 (Haiku) classifies intent + extracts structured fields.
@@ -10,10 +10,15 @@
 //       Pass 2 frames the curated copy into voice. Emits one
 //       "knowledge" event, then a "match" event per home-matched
 //       product. Refuses if no live entry covers the subject.
-//   3. SSE events: thinking → intent → (item | knowledge + match*) →
-//      done. Refusals fire "refuse"; failures fire "error".
-//
-// Type 3 (context) queries refuse pending the R5b.3 v2 redesign.
+//   2c. Type "context" → R5b.3 v2 personalized bundle composer
+//       (backend/composer.js). Resolve context from contexts.js,
+//       build a 30–50 entry pool from calibration, optionally
+//       classify user scans into Keep / Swap / Urgent buckets,
+//       hand off to the composer for a Keep/Swap/Add/Worth-knowing/
+//       Worth-scanning bundle. Streams: intent_classified →
+//       composer_thinking → bundle → done.
+//   3. SSE events: thinking → intent → (item | knowledge + match* |
+//      bundle) → done. Refusals fire "refuse"; failures fire "error".
 //
 // Trust safeguards (per partiqule-decision-log.md):
 //   - Knowledge content comes from curated entries in knowledge.js.
@@ -31,6 +36,13 @@
 const crypto = require("crypto");
 const { KNOWLEDGE_ENTRIES, findEntry: findKnowledgeEntryById } = require("./knowledge");
 const { FLAG_DEFS, detectFlags } = require("./flagDetection");
+const { CONTEXTS, findContext } = require("./contexts");
+const {
+  composePersonalizedBundle,
+  inferConsumableOrDurable,
+  CONSUMABLE_CATEGORIES,
+  DURABLE_CATEGORIES,
+} = require("./composer");
 
 // ── ENV ──────────────────────────────────────────────────────────
 const ASK_PASS1_MODEL = process.env.ASK_PASS1_MODEL || "claude-haiku-4-5-20251001";
@@ -814,6 +826,394 @@ function dynamicSuggestedAction(entry, matches) {
   };
 }
 
+// ── CONTEXT (TYPE 3): POOL BUILD + BUNDLE COMPOSE ────────────────
+// R5b.3 v2 — composer.js owns the personalization logic. ask.js
+// owns pool selection (calibration query) and SSE wrapping. Together
+// they produce a Keep / Swap / Add bundle for life moments.
+//
+// Pool selection: for each category slug in the matched context,
+// run the same retrieval shape used by type 1 product queries
+// (CATEGORY_KEYWORDS regex against keys, plus product_family /
+// entry.category match with CATEGORY_EXPAND alias). Dedupe across
+// slugs, rank by score ascending, cap 50. The pool is the trust
+// boundary the AI cannot escape.
+//
+// Cache: anonymous bundles are stable per context — week-long TTL.
+// Authed bundles depend on the user's scan history; the cache key
+// hashes a "scan signature" of the user's last six months of
+// context-relevant scans so a fresh scan in the category invalidates
+// the cached bundle naturally.
+
+// Bumped to v2 with the composer rewrite. v1 ("category-slot
+// filling") cache rows are abandoned with this prefix change and
+// expire under their original TTL.
+const bundleCacheKey = (contextId, audienceHash, scanSig) =>
+  `ask:bundle:v2:${contextId}:${audienceHash}:${scanSig || "anon"}`;
+
+// Match the natural-language query against contexts.js entries.
+// First tries exact id match, then exact name match, then name
+// substring containment in either direction. Returns null when no
+// confident match — handler refuses with a hint.
+function findContextFromQuery(query, intent) {
+  const q = String(query || "").toLowerCase().trim();
+  if (!q) return null;
+
+  // Pass 1 may surface an occasion that aligns with a context id or
+  // label (e.g., "newborn essentials" → "tpl_newborn"). Try that
+  // first when present.
+  const occ = String(intent?.occasion || "").toLowerCase().trim();
+  if (occ) {
+    const direct = findContext(occ);
+    if (direct) return direct;
+    for (const c of CONTEXTS) {
+      if (c.name.toLowerCase() === occ || c.label.toLowerCase() === occ) return c;
+    }
+  }
+
+  // Direct id lookup.
+  const byId = findContext(q.replace(/\s+/g, "_"));
+  if (byId) return byId;
+
+  // Name / label substring containment in either direction.
+  for (const c of CONTEXTS) {
+    const name = c.name.toLowerCase();
+    const label = c.label.toLowerCase();
+    if (q.includes(name) || name.includes(q)) return c;
+    if (q.includes(label) || label.includes(q)) return c;
+  }
+
+  // Last resort: keyword scoring. Pick the context with the most
+  // word overlap with the query. Threshold of 2 shared content words
+  // avoids matching on common stopwords alone.
+  const stop = new Set(["a", "an", "the", "for", "to", "what", "should", "buy", "need", "i", "do", "my", "with", "of", "on", "in", "and", "or", "kids", "kid", "baby"]);
+  const qWords = q.split(/[^a-z]+/).filter(w => w && !stop.has(w));
+  if (qWords.length === 0) return null;
+  let best = null;
+  let bestScore = 0;
+  for (const c of CONTEXTS) {
+    const cWords = `${c.name} ${c.label}`.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+    let overlap = 0;
+    for (const w of qWords) if (cWords.includes(w)) overlap++;
+    if (overlap > bestScore) {
+      bestScore = overlap;
+      best = c;
+    }
+  }
+  return bestScore >= 2 ? best : null;
+}
+
+// Build the calibration pool for a context. Iterates context
+// categories and gathers calibration entries matching by slug
+// keyword regex, product_family tag, or entry.category (with the
+// food/beverage/cookware alias expansion). Dedupes by key, ranks by
+// effective score ascending, caps at 50.
+function buildPool(CALIBRATION, context, intent) {
+  if (!context || !Array.isArray(context.categories)) return [];
+
+  const seen = new Set();
+  const candidates = [];
+
+  for (const cat of context.categories) {
+    const slug = String(cat.slug || "").toLowerCase().trim();
+    if (!slug) continue;
+    const patterns = categoryPatterns(slug);
+    const acceptableCategories = expandCategorySlug(slug);
+
+    for (const [key, entry] of CALIBRATION.entries()) {
+      if (!entry) continue;
+      if (seen.has(key)) continue;
+
+      const familyHit = entry.product_family && entry.product_family === slug;
+      const keyHit = !familyHit && patterns.length && patterns.some(p => p.test(key));
+      const entryCat = entry.category && String(entry.category).toLowerCase();
+      const categoryHit = !familyHit && !keyHit
+        && entryCat && acceptableCategories.includes(entryCat);
+      if (!familyHit && !keyHit && !categoryHit) continue;
+
+      seen.add(key);
+      candidates.push({
+        product_id: key,
+        product_name: toTitleCaseForDisplay(key),
+        score: effectiveScore(entry, intent),
+        category: entryCat || null,
+        substances: Array.isArray(entry.substances) ? entry.substances.slice(0, 6) : [],
+        // calibration_notes is what the AI cites in reasoning. Build
+        // it as a tight list from substances + a short slice of reason
+        // so the AI has something specific to anchor to without us
+        // shipping the full multi-sentence reason field.
+        calibration_notes: buildCalibrationNotes(entry),
+        // Inferred up front so the composer doesn't need the category
+        // alias map.
+        consumable_or_durable: inferConsumableOrDurable(entryCat),
+        // Keep the raw reason and confidence around in case the
+        // templated fallback needs them; the composer trims at use.
+        reason: typeof entry.reason === "string" ? entry.reason : "",
+        confidence: entry.confidence || null,
+        _slug: slug,
+      });
+    }
+  }
+
+  candidates.sort((a, b) => a.score - b.score);
+  return candidates.slice(0, 50);
+}
+
+// Trim the calibration entry down to 2-4 short receipt strings the
+// AI can cite verbatim. Substances are already short; the reason
+// field is sentence-broken so we pull the first clause.
+function buildCalibrationNotes(entry) {
+  const notes = [];
+  if (Array.isArray(entry.substances)) {
+    for (const s of entry.substances.slice(0, 3)) {
+      const t = String(s || "").trim();
+      if (t) notes.push(t.slice(0, 120));
+    }
+  }
+  if (typeof entry.reason === "string" && entry.reason.trim()) {
+    const firstClause = entry.reason.split(/[.\n]/)[0].trim();
+    if (firstClause && firstClause.length > 0) {
+      notes.push(firstClause.slice(0, 160));
+    }
+  }
+  return notes.slice(0, 4);
+}
+
+// Build the broad-category set the composer uses to filter scan
+// history. Walk each context category slug through the keyword map
+// and the alias expansion; collect all entry-category strings that
+// match anything in the context. Used by the composer to decide
+// "is this scan relevant to this context?".
+function buildContextBroadCategories(context) {
+  const out = new Set();
+  if (!context || !Array.isArray(context.categories)) return out;
+  for (const cat of context.categories) {
+    const slug = String(cat.slug || "").toLowerCase().trim();
+    if (!slug) continue;
+    for (const c of expandCategorySlug(slug)) out.add(c);
+  }
+  // If the context audience signals a population, fold in the most
+  // typical broad categories for that population. Newborn / baby
+  // audiences nearly always relate to "baby" category scans.
+  const aud = Array.isArray(context.audience) ? context.audience.map(s => String(s).toLowerCase()) : [];
+  if (aud.includes("newborn") || aud.includes("infant") || aud.includes("baby")) {
+    out.add("baby"); out.add("personal_care"); out.add("food_beverage"); out.add("food");
+  }
+  if (aud.includes("pregnant")) {
+    out.add("personal_care"); out.add("supplement"); out.add("baby");
+  }
+  return out;
+}
+
+// Pull scan history for a user in the relevant categories over the
+// last six months. The composer classifies into Keep/Swap/Urgent
+// based on score. Cap 200 — the dedupe step in the composer collapses
+// per-category to a single leader so the pool fed to the AI is small.
+async function fetchScanHistoryForContext({ supabaseAdmin }, userId, broadCategories) {
+  if (!supabaseAdmin || !userId || broadCategories.size === 0) return [];
+  try {
+    const cutoff = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from("scans")
+      .select("id, product_name, category, result_json, scanned_at")
+      .eq("user_id", userId)
+      .gte("scanned_at", cutoff)
+      .order("scanned_at", { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    return (data || []).map(row => {
+      const r = row.result_json || {};
+      const score = typeof r.overall_score === "number" ? r.overall_score
+        : (typeof r.score === "number" ? r.score : null);
+      return {
+        id: row.id,
+        product_name: row.product_name || r.product_name || "",
+        category: row.category || r.category || "",
+        score,
+        scanned_at: row.scanned_at,
+        result_json: { overall_score: score, category: row.category || r.category || "" },
+      };
+    });
+  } catch (e) {
+    console.warn("[ask] context scan history fetch failed:", e?.message);
+    return [];
+  }
+}
+
+// Stable signature over the user's context-relevant scan IDs +
+// scores so the cache invalidates naturally when the user scans
+// something new in a relevant category.
+function scanSignature(scans) {
+  if (!Array.isArray(scans) || !scans.length) return "none";
+  const pairs = scans
+    .slice(0, 50)
+    .map(s => `${s.id}:${s.score == null ? "" : s.score}`)
+    .sort();
+  return crypto.createHash("sha1").update(pairs.join("|")).digest("hex").slice(0, 12);
+}
+
+// Hash the audience/constraints triple so the cache key separates
+// "back to school for a 6yo" from "back to school for a 16yo" if/
+// when intent classification starts surfacing finer audience cuts.
+function audienceConstraintHash(intent) {
+  const aud = intent?.audience || "any";
+  const constraints = Array.isArray(intent?.constraints)
+    ? [...intent.constraints].map(s => String(s).toLowerCase().trim()).sort().join(",")
+    : "";
+  return crypto.createHash("sha1").update(`${aud}|${constraints}`).digest("hex").slice(0, 10);
+}
+
+async function handleContextQuery(deps, ctx) {
+  const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
+  const { callClaudeSonnet, supabaseAdmin, redisGet, redisSetEx, hasRedis, CALIBRATION } = deps;
+
+  // 1. Resolve the context from the query.
+  const context = findContextFromQuery(rawQuery, intent);
+  if (!context) {
+    sse.emit("refuse", {
+      reason: "context_not_recognized",
+      message: "That context isn't covered yet. Try asking for a specific product or category.",
+    });
+    sse.end();
+    writeAuditLog(deps, {
+      user_id: userId, query: rawQuery, normalized_query: normalized,
+      parsed_intent: intent, classification_confidence: intent.confidence,
+      error: "context_not_recognized",
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent, cached_framings: [],
+    });
+    return;
+  }
+
+  // 2. Build the pool from calibration.
+  const pool = buildPool(CALIBRATION, context, intent);
+  if (!pool.length) {
+    sse.emit("refuse", {
+      reason: "pool_empty",
+      message: "Calibration coverage for this context is thin. Worth scanning the categories yourself.",
+    });
+    sse.end();
+    writeAuditLog(deps, {
+      user_id: userId, query: rawQuery, normalized_query: normalized,
+      parsed_intent: intent, classification_confidence: intent.confidence,
+      context_id: context.id,
+      context_categories: context.categories.map(c => c.slug),
+      error: "pool_empty",
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent, cached_framings: [],
+    });
+    return;
+  }
+
+  // 3. Build user scan history when authed.
+  const broadCats = buildContextBroadCategories(context);
+  const scanHistory = userId
+    ? await fetchScanHistoryForContext(deps, userId, broadCats)
+    : [];
+  const scanSig = userId ? scanSignature(scanHistory) : null;
+
+  // 4. Cache lookup.
+  const audHash = audienceConstraintHash(intent);
+  const cacheKey = bundleCacheKey(context.id, audHash, scanSig);
+  const cacheTtlSec = userId ? 86400 : 604800; // authed 1d, anon 7d
+
+  let bundleResult = null;
+  let cachedBundle = false;
+  if (hasRedis) {
+    try {
+      const hit = await redisGet(cacheKey);
+      if (hit && typeof hit === "object" && hit.bundle && Array.isArray(hit.bundle.sections)) {
+        bundleResult = hit;
+        cachedBundle = true;
+      }
+    } catch {}
+  }
+
+  // 5. Emit early progress so the frontend can swap from "thinking"
+  // to a richer state while the composer runs (4-8 seconds).
+  sse.emit("intent_classified", { type: "context", context_id: context.id });
+  if (!cachedBundle) sse.emit("composer_thinking", { phase: "composing" });
+
+  // 6. Compose if no cache hit.
+  if (!bundleResult) {
+    try {
+      bundleResult = await composePersonalizedBundle({
+        context,
+        constraints: { audience: intent.audience, constraints: intent.constraints, occasion: intent.occasion },
+        pool,
+        scanHistory,
+        contextBroadCategories: broadCats,
+        callAI: (system, userPrompt, maxTokens) => callClaudeSonnet(system, userPrompt, maxTokens),
+      });
+    } catch (err) {
+      console.error("[ask] composer failed:", err?.message);
+      sse.emit("error", { error: "composer_failed", message: "Couldn't compose a bundle for that. Try a different angle." });
+      sse.end();
+      writeAuditLog(deps, {
+        user_id: userId, query: rawQuery, normalized_query: normalized,
+        parsed_intent: intent, classification_confidence: intent.confidence,
+        context_id: context.id,
+        context_categories: context.categories.map(c => c.slug),
+        error: `composer_failed:${err?.message?.slice(0, 80) || "unknown"}`,
+        duration_ms: Date.now() - requestStartMs,
+        cached_intent: cachedIntent, cached_framings: [],
+      });
+      return;
+    }
+    if (hasRedis) redisSetEx(cacheKey, bundleResult, cacheTtlSec).catch(() => {});
+  }
+
+  // 7. Emit bundle and finalize.
+  sse.emit("bundle", {
+    context_id: context.id,
+    name: context.name,
+    label: context.label,
+    title: bundleResult.bundle.title,
+    intro: bundleResult.bundle.intro,
+    sections: bundleResult.bundle.sections,
+    suggested_action: bundleResult.bundle.suggested_action,
+    cached: cachedBundle,
+    composition_source: bundleResult.metadata?.composition_source || "ai",
+  });
+
+  sse.emit("done", {
+    item_count: (bundleResult.bundle.sections || []).reduce((n, s) => n + (s.items?.length || 0), 0),
+    response_type: "context",
+  });
+  sse.end();
+
+  // 8. Audit log.
+  const meta = bundleResult.metadata || {};
+  writeAuditLog(deps, {
+    user_id: userId,
+    query: rawQuery,
+    normalized_query: normalized,
+    parsed_intent: intent,
+    classification_confidence: intent.confidence,
+    context_id: context.id,
+    context_categories: context.categories.map(c => c.slug),
+    retrieved_product_ids: meta.final_product_ids || [],
+    framing_outputs: [{ bundle: bundleResult.bundle, metadata: meta, cached: cachedBundle }],
+    final_response: {
+      response_type: "context",
+      title: bundleResult.bundle.title,
+      section_types: meta.final_section_types || [],
+    },
+    duration_ms: Date.now() - requestStartMs,
+    cached_intent: cachedIntent,
+    cached_framings: cachedBundle ? [context.id] : [],
+    // R5b.3 v2 composer-specific audit columns (migration 018).
+    pool_size: pool.length,
+    pool_ids: pool.map(p => p.product_id),
+    scan_history_size: meta.scan_history_size || (userId ? scanHistory.length : 0),
+    ai_attempts: meta.ai_attempts || 0,
+    voice_gate_failures: meta.voice_gate_failures || [],
+    dropped_ids: meta.dropped_ids || [],
+    final_section_types: meta.final_section_types || [],
+    final_product_ids: meta.final_product_ids || [],
+    composition_source: meta.composition_source || "ai",
+  });
+}
+
 // ── KNOWLEDGE: REQUEST HANDLER ───────────────────────────────────
 async function handleKnowledgeQuery(deps, ctx) {
   const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
@@ -1021,15 +1421,10 @@ function registerAskRoutes(app, deps) {
       });
       return;
     }
-    // Type 3 (context) refuses pending the R5b.3 v2 redesign.
+    // Type 3 (context) — R5b.3 v2 personalized bundle composer.
     if (intent.type === "context") {
-      sse.emit("refuse", { reason: "context_not_yet", message: "Bundles for life moments ship soon. Try asking for a single product instead." });
-      sse.end();
-      writeAuditLog(deps, {
-        user_id: userId, query: rawQuery, normalized_query: normalized,
-        parsed_intent: intent, classification_confidence: intent.confidence,
-        error: "refused_context", duration_ms: Date.now() - requestStartMs,
-        cached_intent: cachedIntent, cached_framings: [],
+      await handleContextQuery(deps, {
+        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
       });
       return;
     }
