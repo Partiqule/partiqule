@@ -2481,6 +2481,68 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
   }
 }
 
+// Sonnet companion to callClaude. Same retry/backoff/timeout shape
+// and JSON extraction, but routes to Sonnet 4 for composition tasks
+// that need the bigger model's editorial judgment (R5b.3 v2 bundle
+// composer). Same budget accounting — every Sonnet call still
+// increments apiCallCounts so the daily/monthly cap applies.
+async function callClaudeSonnet(system, userPrompt, maxTokens=2200, retries=2) {
+  checkApiBudget();
+  incrementApiCount();
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 40000);
+    try {
+      const res = await fetch(ANTHROPIC_API, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "anthropic-beta": "prompt-caching-2024-07-31",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: maxTokens,
+          temperature: 0.4,
+          system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+          messages: [{ role: "user", content: userPrompt }]
+        })
+      });
+      clearTimeout(timeout);
+      if ((res.status === 429 || res.status === 529) && attempt < retries) {
+        const wait = Math.min((attempt + 1) * 8000 + Math.random() * 2000, 30000);
+        console.log(`Anthropic ${res.status}, retrying in ${Math.round(wait)}ms (sonnet attempt ${attempt+1}/${retries})`);
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      if (!res.ok) throw new Error(`Anthropic Sonnet ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.content.map(b => b.text || "").join("").trim();
+      const raw  = extractJson(text);
+      if (!raw) {
+        console.error("Sonnet: no JSON in response at attempt", attempt, "text snippet:", text.slice(0, 200));
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1500)); continue; }
+        throw new Error("No JSON in Sonnet response");
+      }
+      try { return JSON.parse(fixJson(raw)); }
+      catch(e) {
+        console.error("Sonnet JSON parse failed at attempt", attempt, "raw snippet:", raw.slice(0, 300));
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        throw new Error(`Sonnet JSON parse error: ${e.message}`);
+      }
+    } catch(err) {
+      clearTimeout(timeout);
+      if (err.name === "AbortError") {
+        if (attempt < retries) { console.log(`Sonnet timeout, retrying (attempt ${attempt+1})`); continue; }
+        throw new Error("Sonnet request timed out after 40s");
+      }
+      throw err;
+    }
+  }
+}
+
 // Plain-text companion to callClaude. Same retry/backoff/timeout
 // shape, same model, same budget accounting. Skips the JSON
 // extraction step — returns the raw concatenated text from the
@@ -9996,6 +10058,7 @@ registerListsRoutes(app, {
 // authed by user; both fail open when Redis is unavailable.
 registerAskRoutes(app, {
   callClaude,
+  callClaudeSonnet,
   supabaseAdmin,
   redisGet,
   redisSetEx,
