@@ -477,6 +477,9 @@ const AskPrototypePage = ({
   const [response, setResponse] = useState(null);
   const [knowledgeResponse, setKnowledgeResponse] = useState(null);
   const [knowledgeMatches, setKnowledgeMatches] = useState([]);
+  // R5b.3 v2 — context bundle response from backend/composer.js.
+  // One "bundle" SSE event per request, no incremental items.
+  const [bundleResponse, setBundleResponse] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
@@ -544,6 +547,7 @@ const AskPrototypePage = ({
     setResponseType(null);
     setKnowledgeResponse(null);
     setKnowledgeMatches([]);
+    setBundleResponse(null);
     setErrorMessage("");
     setExpandedItems({});
 
@@ -604,10 +608,35 @@ const AskPrototypePage = ({
             setKnowledgeMatches(prev => [...prev, decorateItem(payload)]);
             return;
           }
+          if (event === "intent_classified") {
+            // R5b.3 v2 context bundles emit this immediately after intent
+            // so the surface can route to ContextBundleCard early without
+            // waiting for the composer (4-8s) to finish.
+            if (payload?.type === "context") {
+              state.responseType = "context";
+              setResponseType("context");
+              setPhase("answered");
+            }
+            return;
+          }
+          if (event === "composer_thinking") {
+            // Optional progress signal from the composer wrapper. The
+            // standard thinking state covers this; no UI change.
+            return;
+          }
+          if (event === "bundle") {
+            // Context bundle payload from backend/composer.js. Single
+            // event — no incremental items. Render through ContextBundleCard.
+            state.responseType = "context";
+            setResponseType("context");
+            setBundleResponse(payload);
+            setPhase("answered");
+            return;
+          }
           if (event === "done") {
             state.doneFired = true;
-            if (state.responseType === "knowledge") {
-              // Knowledge response already rendered; done is just terminal.
+            if (state.responseType === "knowledge" || state.responseType === "context") {
+              // Knowledge / bundle already rendered; done is just terminal.
               setPhase("answered");
               return;
             }
@@ -740,6 +769,34 @@ const AskPrototypePage = ({
             }}/>
           </div>
         )}
+        {phase === "answered" && responseType === "context" && bundleResponse && (
+          <ContextBundleCard
+            bundle={bundleResponse}
+            isMobile={isMobile}
+            buyLinksFor={buyLinksFor}
+            onSuggestedAction={(action) => {
+              if (!action) return;
+              // save_list → prompt user to name the bundle and save.
+              if (action.type === "save_list") {
+                setSavingAll(true);
+                return;
+              }
+              // scan_more → focus the input so the user can ask the
+              // next question. The real scan affordance lives outside
+              // this prototype.
+              if (action.type === "scan_more") {
+                setTimeout(() => textareaRef.current?.focus(), 0);
+                return;
+              }
+              // learn_more → no-op for now.
+            }}
+            onScanCta={() => {
+              // Worth-scanning section CTA. Mirror the scan_more
+              // behavior until R5c wires real scan routing.
+              setTimeout(() => textareaRef.current?.focus(), 0);
+            }}
+          />
+        )}
         {phase === "answered" && responseType === "knowledge" && knowledgeResponse && (
           <KnowledgeCard
             knowledge={knowledgeResponse}
@@ -778,7 +835,7 @@ const AskPrototypePage = ({
             }}
           />
         )}
-        {phase === "answered" && responseType !== "knowledge" && response && (
+        {phase === "answered" && responseType !== "knowledge" && responseType !== "context" && response && (
           <ResponseCard
             response={response}
             expandedItems={expandedItems}

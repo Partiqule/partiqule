@@ -1,15 +1,20 @@
-// R5b.3 Ask mode — ContextBundleCard render path.
+// R5b.3 v2 Ask mode — ContextBundleCard render path.
 //
-// Used when a type 3 (context bundle) response streams back from
-// /ask. Renders the bundle intro line and per-category sections.
-// Each category shows a reasoning line and 1-3 product cards.
+// Renders a bundle produced by backend/composer.js. The bundle ships
+// as one SSE "bundle" event with the shape:
 //
-// Streaming contract: parent receives one "bundle_intro" event
-// followed by N "category" events, then a terminal "done" event.
-// Parent passes the bundle_intro payload as `bundle` and the
-// accumulated category payloads as `categories`. Per-product buy
-// links are decorated upstream via decorateItem so each card
-// renders Amazon / Brand / Target chips.
+//   { title, intro, sections: [{type, label, items}], suggested_action }
+//
+// Section types arrive in composer-enforced order:
+//   keep → swap → add → worth_knowing → worth_scanning
+//
+// Per-item shape:
+//   { product_id, product_name, score, category,
+//     consumable_or_durable, reasoning, action_label }
+//
+// Worth-scanning section is rendered quieter (no score badge,
+// invitation copy, single CTA). All other sections render product
+// tiles with score badge, reasoning, action label, and buy chips.
 
 import React from "react";
 
@@ -17,6 +22,8 @@ const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
 const TILE_SHAPE = "12px 16px 14px 18px / 16px 12px 18px 14px";
 const CTA_SHAPE  = "22px 18px 24px 20px / 20px 24px 18px 22px";
 
+// Score color thresholds match the design law in CLAUDE.md and the
+// ScoreBadge contract used elsewhere in the app. Never change.
 const scoreColor = (s) => {
   if (s == null) return "var(--ink-faint)";
   if (s <= 3) return "var(--score-green)";
@@ -31,14 +38,27 @@ const scoreBg = (s) => {
   return "rgba(176, 73, 58, 0.10)";
 };
 
-const SectionStamp = ({ label, color = "var(--moss)" }) => (
-  <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
+// Section visual styling. Keep / Swap / Add / Worth knowing share a
+// register. Worth scanning is intentionally quieter (an invitation,
+// not a recommendation), so it gets a dashed border and no score.
+const SECTION_STYLES = {
+  keep:           { stamp: "Keep using",           color: "var(--score-green)" },
+  swap:           { stamp: "Worth swapping",       color: "var(--amber)" },
+  add:            { stamp: "Add to your routine",  color: "var(--moss)" },
+  worth_knowing:  { stamp: "Worth knowing about",  color: "var(--moss)" },
+  worth_scanning: { stamp: "Worth scanning",       color: "var(--ink-faint)" },
+};
+
+const SectionStamp = ({ label, color = "var(--moss)", count }) => (
+  <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
     <span style={{display:"inline-block", width:22, height:1, background:color, opacity:0.7}}/>
     <span style={{
       fontFamily:"'DM Sans', system-ui, sans-serif",
       fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase",
       fontWeight:500, color,
-    }}>{label}</span>
+    }}>
+      {label}{count != null ? ` (${count})` : ""}
+    </span>
   </div>
 );
 
@@ -94,7 +114,6 @@ const BuyChips = ({ links }) => {
     <div style={{
       display: "flex", flexWrap: "wrap", gap: 6,
       marginTop: 10,
-      paddingLeft: 54,  // align under product name (40px avatar + 14px gap)
     }}>
       {entries.map(e => (
         <a key={e.key} href={e.url} target="_blank" rel="noopener noreferrer"
@@ -118,107 +137,182 @@ const BuyChips = ({ links }) => {
   );
 };
 
-const ProductTile = ({ product }) => {
-  if (!product) return null;
+// Action labels are short editorial copy from the composer ("Keep
+// this one." / "Swap to this." / "Worth tasting."). Rendered as a
+// small caps caption above the buy chips so the reading order is:
+// reasoning → action prompt → way to act.
+const ActionLabel = ({ text, color }) => {
+  if (!text) return null;
   return (
     <div style={{
-      padding: "12px 14px",
+      fontFamily:"'DM Sans', system-ui, sans-serif",
+      fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase",
+      fontWeight:600, color: color || "var(--moss)",
+      marginTop:10,
+    }}>{text}</div>
+  );
+};
+
+const ProductTile = ({ item, sectionColor }) => {
+  if (!item) return null;
+  return (
+    <div style={{
+      padding: "14px 16px",
       background: "var(--cream)",
       border: "1px solid var(--rule)",
       borderRadius: TILE_SHAPE,
     }}>
-      <div style={{display: "flex", alignItems: "center", gap: 14}}>
-        <ProductAvatar url={product.image_url} name={product.product_name} score={product.score} size={40}/>
-        <div style={{
-          flex: 1, minWidth: 0,
-          fontFamily:"'DM Sans', system-ui, sans-serif",
-          fontSize: 14, fontWeight: 500,
-          color: "var(--ink)", lineHeight: 1.35,
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        }}>{product.product_name}</div>
-        <div style={{flexShrink: 0}}>
-          <ScoreDot score={product.score}/>
+      <div style={{display: "flex", alignItems: "flex-start", gap: 14}}>
+        <ProductAvatar url={item.image_url} name={item.product_name} score={item.score} size={44}/>
+        <div style={{flex: 1, minWidth: 0}}>
+          <div style={{
+            display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:10,
+            marginBottom:8,
+          }}>
+            <div style={{
+              flex:1, minWidth:0,
+              fontFamily:"'Lora', Georgia, serif",
+              fontSize:17, fontWeight:500, lineHeight:1.3,
+              color:"var(--ink)", letterSpacing:"-0.005em",
+            }}>{item.product_name}</div>
+            <div style={{flexShrink:0}}>
+              <ScoreDot score={item.score}/>
+            </div>
+          </div>
+          {item.reasoning && (
+            <div style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:13, color:"var(--ink-soft)",
+              lineHeight:1.55,
+            }}>{item.reasoning}</div>
+          )}
+          <ActionLabel text={item.action_label} color={sectionColor}/>
+          <BuyChips links={item.buy_links}/>
         </div>
       </div>
-      <BuyChips links={product.buy_links}/>
     </div>
   );
 };
 
-const CategorySection = ({ category }) => (
-  <div style={{marginTop: 24}}>
-    <div style={{display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8}}>
+const WorthScanningSection = ({ section, onScanCta }) => {
+  const style = SECTION_STYLES.worth_scanning;
+  return (
+    <div style={{marginTop: 28}}>
+      <SectionStamp label={style.stamp} color={style.color}/>
       <div style={{
-        fontFamily:"'Lora', Georgia, serif",
-        fontSize: 19, fontWeight: 400,
-        color:"var(--ink)", letterSpacing:"-0.005em", lineHeight: 1.3,
-      }}>{category.label}</div>
-      {category.sparse && (
-        <span style={{
-          fontFamily:"'DM Sans', system-ui, sans-serif",
-          fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase",
-          fontWeight: 600, color: "var(--amber)",
-        }}>Limited coverage</span>
-      )}
+        padding:"18px 18px 16px",
+        background:"var(--cream-light)",
+        border:"1px dashed var(--rule)",
+        borderRadius: TILE_SHAPE,
+      }}>
+        {(section.items || []).map((item, idx) => (
+          <div key={item.product_id || idx} style={{
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:13, color:"var(--ink-soft)", lineHeight:1.55,
+            marginBottom: idx === section.items.length - 1 ? 14 : 10,
+          }}>
+            {item.reasoning || item.product_name}
+          </div>
+        ))}
+        {(!section.items || section.items.length === 0) && (
+          <div style={{
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:13, color:"var(--ink-soft)", lineHeight:1.55, marginBottom:14,
+          }}>
+            Calibration is thin for this. Scan a few options and Partiqule learns.
+          </div>
+        )}
+        <button onClick={onScanCta}
+          style={{
+            display:"inline-flex", alignItems:"center", gap:8,
+            padding:"10px 18px", borderRadius:CTA_SHAPE,
+            background:"var(--moss)", color:"var(--ivory)",
+            border:"none", cursor:"pointer",
+            fontFamily:"'DM Sans', system-ui, sans-serif",
+            fontSize:13, fontWeight:500, letterSpacing:"0.005em",
+          }}>
+          Open scan camera
+        </button>
+      </div>
     </div>
-    {category.reasoning && (
-      <div style={{
-        fontFamily:"'DM Sans', system-ui, sans-serif",
-        fontSize: 13, color: "var(--ink-soft)",
-        lineHeight: 1.55, marginBottom: 14,
-      }}>{category.reasoning}</div>
-    )}
-    {Array.isArray(category.products) && category.products.length > 0 ? (
+  );
+};
+
+const StandardSection = ({ section }) => {
+  const style = SECTION_STYLES[section.type] || SECTION_STYLES.add;
+  const count = Array.isArray(section.items) ? section.items.length : 0;
+  if (count === 0) return null;
+  return (
+    <div style={{marginTop: 28}}>
+      <SectionStamp label={style.stamp} color={style.color} count={count}/>
       <div style={{display: "flex", flexDirection: "column", gap: 12}}>
-        {category.products.map(p => (
-          <ProductTile key={p.id} product={p}/>
+        {section.items.map((item, idx) => (
+          <ProductTile key={item.product_id || idx} item={item} sectionColor={style.color}/>
         ))}
       </div>
-    ) : (
-      <div style={{
-        padding: "12px 14px",
-        background: "var(--cream-light)",
-        border: "1px dashed var(--rule)",
-        borderRadius: TILE_SHAPE,
-        fontFamily:"'DM Sans', system-ui, sans-serif",
-        fontSize: 13, color: "var(--ink-soft)",
-        lineHeight: 1.5,
-      }}>
-        Nothing in our database scores well for this category yet. Worth scanning options yourself.
-      </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
 
-const SaveAllPlaceholder = ({ onClick }) => (
-  <div style={{marginTop: 28}}>
-    <button onClick={onClick}
-      style={{
-        display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
-        padding:"12px 20px", borderRadius:CTA_SHAPE,
-        background:"var(--moss)", color:"var(--ivory)",
-        border:"none",
-        fontFamily:"'DM Sans', system-ui, sans-serif",
-        fontSize:14, fontWeight:500, cursor:"pointer",
-        letterSpacing:"0.005em",
-      }}>
-      Save all to list
-    </button>
-  </div>
-);
+const SuggestedActionButton = ({ action, onClick }) => {
+  if (!action) return null;
+  return (
+    <div style={{marginTop: 32, display:"flex", justifyContent:"flex-start"}}>
+      <button onClick={() => onClick && onClick(action)}
+        style={{
+          display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
+          padding:"12px 22px", borderRadius:CTA_SHAPE,
+          background:"var(--moss)", color:"var(--ivory)",
+          border:"none", cursor:"pointer",
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize:14, fontWeight:500, letterSpacing:"0.005em",
+        }}>
+        {action.label || "Save list"}
+      </button>
+    </div>
+  );
+};
 
-const ContextBundleCard = ({ bundle, categories = [], isMobile = false, onSaveAll }) => {
+// Decorates a composer item with frontend-computed buy_links via the
+// same helper the rest of Ask uses. Backend intentionally ships
+// buy_links: null on items; the partner tag lives in the frontend
+// helper so the backend stays clean.
+const decorateBundleItems = (sections, buyLinksFor) => {
+  if (!Array.isArray(sections) || !buyLinksFor) return sections;
+  return sections.map(section => ({
+    ...section,
+    items: (section.items || []).map(item => {
+      const next = { ...item };
+      if (!next.buy_links) {
+        try { next.buy_links = buyLinksFor(next.product_name || ""); }
+        catch { next.buy_links = null; }
+      }
+      return next;
+    }),
+  }));
+};
+
+const ContextBundleCard = ({
+  bundle,
+  isMobile = false,
+  buyLinksFor,
+  onSuggestedAction,
+  onScanCta,
+}) => {
   if (!bundle) return null;
+
+  const sections = decorateBundleItems(bundle.sections || [], buyLinksFor);
+
   return (
     <div style={{paddingTop: 24, animation:"fadeUp 0.32s ease both"}}>
-      <SectionStamp label="Bundle"/>
+      <SectionStamp label="Bundle" color="var(--moss)"/>
       <h2 style={{
         fontFamily:"'Lora', Georgia, serif",
         fontSize: isMobile ? 26 : 32,
         fontWeight: 400, letterSpacing:"-0.02em",
         color:"var(--ink)", margin:"0 0 14px",
         lineHeight: 1.2,
-      }}>{bundle.label || bundle.name || "Bundle"}</h2>
+      }}>{bundle.title || bundle.label || bundle.name || "Bundle"}</h2>
 
       {bundle.intro && (
         <p style={{
@@ -230,11 +324,18 @@ const ContextBundleCard = ({ bundle, categories = [], isMobile = false, onSaveAl
         }}>{bundle.intro}</p>
       )}
 
-      {categories.map(cat => (
-        <CategorySection key={cat.slug} category={cat}/>
-      ))}
+      {sections.map((section, idx) => {
+        if (section.type === "worth_scanning") {
+          return (
+            <WorthScanningSection key={section.type + idx} section={section} onScanCta={onScanCta}/>
+          );
+        }
+        return (
+          <StandardSection key={section.type + idx} section={section}/>
+        );
+      })}
 
-      <SaveAllPlaceholder onClick={onSaveAll}/>
+      <SuggestedActionButton action={bundle.suggested_action} onClick={onSuggestedAction}/>
     </div>
   );
 };
