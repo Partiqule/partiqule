@@ -477,11 +477,6 @@ const AskPrototypePage = ({
   const [response, setResponse] = useState(null);
   const [knowledgeResponse, setKnowledgeResponse] = useState(null);
   const [knowledgeMatches, setKnowledgeMatches] = useState([]);
-  // R5b.3 — context bundle state. bundleResponse holds the bundle_intro
-  // payload; contextCategories accumulates "category" events as they
-  // resolve. Each category carries reasoning + capped products array.
-  const [bundleResponse, setBundleResponse] = useState(null);
-  const [contextCategories, setContextCategories] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
@@ -549,8 +544,6 @@ const AskPrototypePage = ({
     setResponseType(null);
     setKnowledgeResponse(null);
     setKnowledgeMatches([]);
-    setBundleResponse(null);
-    setContextCategories([]);
     setErrorMessage("");
     setExpandedItems({});
 
@@ -609,24 +602,6 @@ const AskPrototypePage = ({
             // with buy_links the same way type 1 items do — the partner
             // tag lives in the frontend helper so the backend stays clean.
             setKnowledgeMatches(prev => [...prev, decorateItem(payload)]);
-            return;
-          }
-          if (event === "bundle_intro") {
-            // R5b.3 type 3 entry point. First context event sets the
-            // render path and surfaces the bundle title + intro line.
-            state.responseType = "context";
-            setResponseType("context");
-            setBundleResponse(payload);
-            setPhase("answered");
-            return;
-          }
-          if (event === "category") {
-            // Each category's products are decorated with buy_links the
-            // same way type 1 items and type 2 matches are.
-            const products = Array.isArray(payload.products)
-              ? payload.products.map(decorateItem)
-              : [];
-            setContextCategories(prev => [...prev, { ...payload, products }]);
             return;
           }
           if (event === "done") {
@@ -803,19 +778,7 @@ const AskPrototypePage = ({
             }}
           />
         )}
-        {phase === "answered" && responseType === "context" && bundleResponse && (
-          <ContextBundleCard
-            bundle={bundleResponse}
-            categories={contextCategories}
-            isMobile={isMobile}
-            onSaveAll={() => {
-              // R5b.3.1 wires the Lists API. Tonight: surface intent
-              // via toast so the affordance is discoverable.
-              showToast("Saving bundles to Lists ships soon.");
-            }}
-          />
-        )}
-        {phase === "answered" && (responseType === "product" || responseType == null) && response && (
+        {phase === "answered" && responseType !== "knowledge" && response && (
           <ResponseCard
             response={response}
             expandedItems={expandedItems}
