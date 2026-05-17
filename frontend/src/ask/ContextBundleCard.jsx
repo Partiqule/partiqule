@@ -303,6 +303,19 @@ const ContextBundleCard = ({
 
   const sections = decorateBundleItems(bundle.sections || [], buyLinksFor);
 
+  // Defensive: if every section is empty (or there are no sections),
+  // render nothing rather than a hollow card. The primary empty-bundle
+  // gate lives in AskPrototypePage so this branch should rarely fire,
+  // but it catches any code path that builds an empty bundle locally.
+  const hasAnyItems = sections.some(s => Array.isArray(s?.items) && s.items.length > 0);
+  if (!hasAnyItems) {
+    console.warn("[ContextBundleCard] no sections with items; rendering null", {
+      title: bundle.title,
+      section_count: sections.length,
+    });
+    return null;
+  }
+
   return (
     <div style={{paddingTop: 24, animation:"fadeUp 0.32s ease both"}}>
       <SectionStamp label="Bundle" color="var(--moss)"/>

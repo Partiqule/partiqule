@@ -89,16 +89,41 @@ function scanFitsContext(scan, contextBroadCategories) {
   return contextBroadCategories.has(cat);
 }
 
+// Caps on what the AI gets to see from a real user's scan history.
+// Smoke runs used 0–3 items; real users can have hundreds. Without
+// these caps a single Sonnet request balloons to 100+ seconds and
+// the model gets noisy context that hurts composition quality.
+//   RAW_SCAN_CAP — applied before classification to keep that step
+//     fast. ask.js already orders scans newest-first so the first
+//     50 are the 50 most recent.
+//   PER_BUCKET_CAP — applied after classification to keep AI context
+//     small. Sorted by scanned_at DESC so the most recent activity
+//     in each bucket wins.
+const RAW_SCAN_CAP    = 50;
+const PER_BUCKET_CAP  = 5;
+
+function scanRecency(scan) {
+  if (!scan) return 0;
+  const t = scan.scanned_at || scan.result_json?.scanned_at;
+  if (!t) return 0;
+  const n = Date.parse(t);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function classifyScansForContext(scans, contextBroadCategories) {
   if (!Array.isArray(scans) || !scans.length) {
     return { keep: [], swap: [], urgent: [], total_relevant: 0 };
   }
 
+  // Cap raw input at the most recent RAW_SCAN_CAP scans BEFORE the
+  // per-scan loop runs. Keeps classification O(50) instead of O(200).
+  const cappedScans = scans.slice(0, RAW_SCAN_CAP);
+
   // Filter to context-relevant scans, dedupe by product_name (most
   // recent wins), and rank by score within category buckets.
   const relevant = [];
   const seenNames = new Set();
-  for (const s of scans) {
+  for (const s of cappedScans) {
     if (!s) continue;
     if (!scanFitsContext(s, contextBroadCategories)) continue;
     const name = String(s.product_name || s.result_json?.product_name || "").trim();
@@ -115,6 +140,7 @@ function classifyScansForContext(scans, contextBroadCategories) {
       product_name: name,
       score,
       category: String(s.category || s.result_json?.category || "").toLowerCase(),
+      scanned_at: s.scanned_at || s.result_json?.scanned_at || null,
     });
   }
 
@@ -134,7 +160,25 @@ function classifyScansForContext(scans, contextBroadCategories) {
     else if (r.score <= 5) swap.push(r);
     else urgent.push(r);
   }
-  return { keep, swap, urgent, total_relevant: relevant.length };
+
+  // Cap each bucket to the PER_BUCKET_CAP most-recent items so the
+  // AI prompt stays small (≤ 15 items total across 3 buckets) even
+  // when the user has many relevant scans. Total context shipped to
+  // Sonnet is bounded regardless of user history depth.
+  const byRecencyDesc = (a, b) => scanRecency(b) - scanRecency(a);
+  keep.sort(byRecencyDesc);
+  swap.sort(byRecencyDesc);
+  urgent.sort(byRecencyDesc);
+  const cappedKeep   = keep.slice(0, PER_BUCKET_CAP);
+  const cappedSwap   = swap.slice(0, PER_BUCKET_CAP);
+  const cappedUrgent = urgent.slice(0, PER_BUCKET_CAP);
+
+  return {
+    keep:   cappedKeep,
+    swap:   cappedSwap,
+    urgent: cappedUrgent,
+    total_relevant: relevant.length,
+  };
 }
 
 // ── SCAN→POOL MATCHING ───────────────────────────────────────────
@@ -776,6 +820,27 @@ function templatedFallback(context, pool) {
     action_label: "Try this.",
   }));
 
+  // Diagnostic: when templatedFallback ships in production, log
+  // enough state to diagnose why the AI failed AND verify the
+  // fallback itself produced renderable items. Production has shown
+  // templated bundles arriving with section.items === [] — this log
+  // pinpoints which step lost the content.
+  console.error("[composer] templatedFallback invoked", {
+    context_id: context?.id,
+    context_label: context?.label || context?.name,
+    pool_length: (pool || []).length,
+    pool_sample: (pool || []).slice(0, 3).map(p => ({
+      product_id: p?.product_id || null,
+      product_name: p?.product_name || null,
+      score: typeof p?.score === "number" ? p.score : null,
+      category: p?.category || null,
+    })),
+    top_after_filter: top.length,
+    top_dropped_count: (pool || []).length - top.length,
+    final_item_count: items.length,
+    final_item_ids: items.map(i => i.product_id),
+  });
+
   const ctxName = context?.label || context?.name || "this";
   return {
     bundle: {
@@ -1026,6 +1091,12 @@ async function composePersonalizedBundle({
         amendmentPrompt = "Previous attempt failed to return parseable JSON. Return strict JSON only, no backticks, no markdown.";
         continue;
       }
+      console.error("[composer] falling back after AI call error", {
+        context_id: context?.id,
+        attempts: aiAttempts,
+        error_name: err?.name,
+        error_message: err?.message?.slice(0, 200),
+      });
       const fb = templatedFallback(context, enrichedPool);
       fb.metadata = {
         ...fb.metadata,
@@ -1195,6 +1266,14 @@ async function composePersonalizedBundle({
   }
 
   // Both attempts failed validation. Ship templated fallback.
+  console.error("[composer] falling back after validation failure", {
+    context_id: context?.id,
+    attempts: aiAttempts,
+    voice_gate_failures: allVoiceFailures,
+    dropped_ids_count: allDropped.length,
+    dropped_self_swaps_count: allDroppedSelfSwaps.length,
+    pool_length: enrichedPool.length,
+  });
   const fb = templatedFallback(context, enrichedPool);
   fb.metadata = {
     ...fb.metadata,

@@ -627,6 +627,29 @@ const AskPrototypePage = ({
           if (event === "bundle") {
             // Context bundle payload from backend/composer.js. Single
             // event — no incremental items. Render through ContextBundleCard.
+            //
+            // Empty-bundle defense: production has shown bundles arriving
+            // with sections === [] or all items === []. Rendering an
+            // empty bundle card causes a render-then-disappear flicker.
+            // Treat empty bundles as a refuse so the user sees the same
+            // recoverable state as other type 3 misses, and console.warn
+            // for diagnosis.
+            const sections = Array.isArray(payload?.sections) ? payload.sections : [];
+            const hasAnyContent = sections.some(s => Array.isArray(s?.items) && s.items.length > 0);
+            if (!hasAnyContent) {
+              console.warn("[ask] empty bundle received; routing to refuse state", {
+                context_id: payload?.context_id,
+                title: payload?.title,
+                section_count: sections.length,
+                composition_source: payload?.composition_source,
+              });
+              state.responseType = "context";
+              setResponseType("context");
+              setBundleResponse(null);
+              setErrorMessage("We couldn't put together a strong bundle for that yet. Try a specific product instead.");
+              setPhase("refused");
+              return;
+            }
             state.responseType = "context";
             setResponseType("context");
             setBundleResponse(payload);
