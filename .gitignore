@@ -8,3 +8,14 @@ backend/.env
 frontend/public/products/
 frontend/public/sitemap.xml
 frontend/public/robots.txt
+
+# Voice review and calibration audit infrastructure.
+# The reusable scripts are tracked (voice_review_smoke.js,
+# calibration_voice_audit.js). The one-time bulk-fix scripts that
+# already ran their course are not tracked (apply.js, emdash_fix.js).
+# All generated markdown outputs from these scripts are ignored —
+# they're per-run artifacts, not source-of-truth content.
+backend/scripts/calibration_voice_apply.js
+backend/scripts/calibration_voice_emdash_fix.js
+docs/voice_review_*.md
+docs/calibration_voice_changes*.md
