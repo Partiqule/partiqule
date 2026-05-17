@@ -345,6 +345,27 @@ const ThinkingState = () => {
   );
 };
 
+// ── Composing state ──────────────────────────────────────────────
+// Fires for type 3 (context bundle) requests after intent_classified
+// has arrived but before the composer-produced bundle is ready. The
+// composer typically takes 4–8s on cache miss; the user otherwise
+// sees a blank screen during that window because phase has already
+// transitioned to "answered" but bundleResponse is still null.
+// Voice matches the rest of the surface: short, ambient, in kit.
+const ComposingState = () => (
+  <div style={{padding:"32px 0", textAlign:"center"}}>
+    <span style={{
+      fontFamily:"'DM Sans', system-ui, sans-serif",
+      fontSize:13, color:"var(--moss)", fontWeight:500,
+      letterSpacing:"0.04em",
+      animation:"partiqulePulse 1.4s ease-in-out infinite",
+      display:"inline-block",
+    }}>
+      Composing your bundle...
+    </span>
+  </div>
+);
+
 // ── No-match empty state ─────────────────────────────────────────
 const NoMatch = ({ onPickExample }) => (
   <div style={{padding:"32px 0"}}>
@@ -480,6 +501,12 @@ const AskPrototypePage = ({
   // R5b.3 v2 — context bundle response from backend/composer.js.
   // One "bundle" SSE event per request, no incremental items.
   const [bundleResponse, setBundleResponse] = useState(null);
+  // R5b.3 Phase 1 — loading indicator for the composer phase. True
+  // between composer_thinking and bundle SSE events. Closes the
+  // blank-screen gap caused by phase transitioning to "answered" on
+  // intent_classified while bundleResponse is still null. Reset on
+  // every submit so the prior state doesn't leak between requests.
+  const [composerThinking, setComposerThinking] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
@@ -548,6 +575,7 @@ const AskPrototypePage = ({
     setKnowledgeResponse(null);
     setKnowledgeMatches([]);
     setBundleResponse(null);
+    setComposerThinking(false);
     setErrorMessage("");
     setExpandedItems({});
 
@@ -620,8 +648,12 @@ const AskPrototypePage = ({
             return;
           }
           if (event === "composer_thinking") {
-            // Optional progress signal from the composer wrapper. The
-            // standard thinking state covers this; no UI change.
+            // Composer entered AI-call phase. Show the ComposingState
+            // loading indicator until the bundle (or a refuse/error)
+            // arrives. Without this, the surface goes blank between
+            // intent_classified and bundle because phase is already
+            // "answered" but bundleResponse is still null.
+            setComposerThinking(true);
             return;
           }
           if (event === "bundle") {
@@ -634,6 +666,7 @@ const AskPrototypePage = ({
             // Treat empty bundles as a refuse so the user sees the same
             // recoverable state as other type 3 misses, and console.warn
             // for diagnosis.
+            setComposerThinking(false);
             const sections = Array.isArray(payload?.sections) ? payload.sections : [];
             const hasAnyContent = sections.some(s => Array.isArray(s?.items) && s.items.length > 0);
             if (!hasAnyContent) {
@@ -677,11 +710,13 @@ const AskPrototypePage = ({
             return;
           }
           if (event === "refuse") {
+            setComposerThinking(false);
             setErrorMessage(payload?.message || "Try asking for a specific product instead.");
             setPhase("refused");
             return;
           }
           if (event === "error") {
+            setComposerThinking(false);
             setErrorMessage(payload?.message || "Something went wrong. Try again.");
             setPhase("error");
             return;
@@ -791,6 +826,9 @@ const AskPrototypePage = ({
               setTimeout(() => textareaRef.current?.focus(), 0);
             }}/>
           </div>
+        )}
+        {composerThinking && !bundleResponse && phase !== "refused" && phase !== "error" && (
+          <ComposingState/>
         )}
         {phase === "answered" && responseType === "context" && bundleResponse && (
           <ContextBundleCard
