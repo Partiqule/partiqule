@@ -911,15 +911,26 @@ function dynamicSuggestedAction(entry, matches) {
 // context-relevant scans so a fresh scan in the category invalidates
 // the cached bundle naturally.
 
-// Bumped to v4 with the narrative-wrapper bundle fields (section
-// thesis, anti_pattern callout, start_here close). v3 bundles
-// pre-date these fields and would render without them, which is
-// the wrong reading experience now that the frontend expects them
-// when available. v3 entries are abandoned with this prefix change
-// and expire under their original TTL. v2 was the composer rewrite;
-// v3 was the calibration notes cleanup; v4 is the narrative wrapper.
+// Bumped to v5 alongside the SSE-emit fix that forwards anti_pattern
+// and start_here to the frontend. v4 entries cached between the
+// narrative-wrapper deploy and the SSE forwarding fix were composed
+// against the new schema but never had the narrative fields reach
+// the wire — those cached rows now describe an incomplete bundle
+// shape that would render without the narrative wrapper if served
+// to a frontend expecting it. v4 entries are abandoned with this
+// prefix change and expire under their original TTL.
+//
+// Standing rule: bundle structure changes (new optional fields,
+// renamed fields, dropped fields, changed nesting) default to a
+// cache version bump in the same commit so stale-shape entries from
+// the previous version range can't render incorrectly under the
+// next version. Cheaper than reasoning about which cached rows are
+// still wire-compatible.
+//
+// History: v1 category-slot, v2 composer rewrite, v3 calibration
+// notes cleanup, v4 narrative wrapper, v5 SSE forwarding fix.
 const bundleCacheKey = (contextId, audienceHash, scanSig) =>
-  `ask:bundle:v4:${contextId}:${audienceHash}:${scanSig || "anon"}`;
+  `ask:bundle:v5:${contextId}:${audienceHash}:${scanSig || "anon"}`;
 
 // Match the natural-language query against contexts.js entries.
 // First tries exact id match, then exact name match, then name
@@ -1240,6 +1251,12 @@ async function handleContextQuery(deps, ctx) {
     label: context.label,
     title: bundleResult.bundle.title,
     intro: bundleResult.bundle.intro,
+    // Narrative wrapper fields. Optional — only present when the
+    // composer produced them and they survived validation. Forwarded
+    // verbatim so the frontend renders them via AntiPatternCallout
+    // and StartHereClose without further shape massaging.
+    anti_pattern: bundleResult.bundle.anti_pattern || null,
+    start_here:   bundleResult.bundle.start_here   || null,
     sections: bundleResult.bundle.sections,
     suggested_action: bundleResult.bundle.suggested_action,
     cached: cachedBundle,
