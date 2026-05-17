@@ -911,26 +911,27 @@ function dynamicSuggestedAction(entry, matches) {
 // context-relevant scans so a fresh scan in the category invalidates
 // the cached bundle naturally.
 
-// Bumped to v5 alongside the SSE-emit fix that forwards anti_pattern
-// and start_here to the frontend. v4 entries cached between the
-// narrative-wrapper deploy and the SSE forwarding fix were composed
-// against the new schema but never had the narrative fields reach
-// the wire — those cached rows now describe an incomplete bundle
-// shape that would render without the narrative wrapper if served
-// to a frontend expecting it. v4 entries are abandoned with this
-// prefix change and expire under their original TTL.
+// Bumped to v6 with the context-fit scan filter in
+// classifyScansForContext. v5 entries for kid-coded contexts
+// (tpl_newborn, tpl_lunches, first_foods, toddler_birthday,
+// back_to_school_kids, road_trip_kids, sick_kid_kit, halloween_candy)
+// were composed against unfiltered scan history and may carry Swap
+// items where the source is an adult-coded product (coffee, soda,
+// alcohol, energy drinks) — wrong shape for the new behavior. v5
+// entries are abandoned with this prefix change and expire under
+// their original TTL.
 //
-// Standing rule: bundle structure changes (new optional fields,
-// renamed fields, dropped fields, changed nesting) default to a
-// cache version bump in the same commit so stale-shape entries from
-// the previous version range can't render incorrectly under the
-// next version. Cheaper than reasoning about which cached rows are
-// still wire-compatible.
+// Standing rule: bundle structure or behavior changes default to a
+// cache version bump in the same commit so stale entries from the
+// previous version range can't render incorrectly under the next.
+// Cheaper than reasoning about which cached rows are still
+// behavior-compatible.
 //
 // History: v1 category-slot, v2 composer rewrite, v3 calibration
-// notes cleanup, v4 narrative wrapper, v5 SSE forwarding fix.
+// notes cleanup, v4 narrative wrapper, v5 SSE forwarding fix,
+// v6 context-fit scan filter.
 const bundleCacheKey = (contextId, audienceHash, scanSig) =>
-  `ask:bundle:v5:${contextId}:${audienceHash}:${scanSig || "anon"}`;
+  `ask:bundle:v6:${contextId}:${audienceHash}:${scanSig || "anon"}`;
 
 // Match the natural-language query against contexts.js entries.
 // First tries exact id match, then exact name match, then name

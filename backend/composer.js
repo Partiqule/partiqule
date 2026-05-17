@@ -61,6 +61,63 @@ function inferConsumableOrDurable(category) {
   return "consumable"; // default to consumable for "other" — Keep language reads cleaner
 }
 
+// ── CONTEXT-FIT FILTER FOR SCAN HISTORY ─────────────────────────
+// Adult-coded products in a user's scan history don't belong as Swap
+// sources when the bundle's context is kid-coded. Example failure
+// mode the prompt-only rule didn't catch: "Swap your Folgers for
+// [kid snack]" in a back-to-school-lunches bundle. The prompt told
+// the AI to drop these, but the swapCountOK gate forced reinstating
+// them to match the upstream count. This filter drops them BEFORE
+// classification so the count is correct from the start and the gate
+// doesn't fight the rule.
+//
+// Lists are intentionally small. Start with obvious cases, expand
+// from production audit-log evidence (scan_filter_drops metadata).
+const ADULT_CODED_KEYWORDS = [
+  // Coffee category. "starbucks" included as a brand catch since
+  // Starbucks Via and similar products don't include the word
+  // "coffee" in the name. Rare Starbucks non-coffee SKUs would
+  // miscategorize but the cost is low (kid bundle just doesn't
+  // surface them as Swap candidates).
+  "coffee", "espresso", "starbucks", "instant coffee",
+  // Alcohol.
+  "beer", "wine", "liquor", "cocktail",
+  "whiskey", "vodka", "tequila", "rum", "gin",
+  // Soft drinks. Major brands plus category words for catches
+  // where brand names don't include "soda" or "cola".
+  "soda", "cola", "diet coke", "coca cola", "pepsi", "sprite",
+  // Energy drinks + sport endurance products.
+  "energy drink", "red bull", "monster",
+  "pre workout", "pre-workout", "energy gel", "endurance fuel",
+  // Adult supplements.
+  "adult vitamin", "adult multivitamin",
+];
+
+// Real context IDs from backend/contexts.js where the audience is
+// kid / infant / newborn / toddler. The spec proposed idealized IDs
+// (tpl_back_to_school_lunches, tpl_kids_snacks, tpl_baby_food, etc.)
+// that don't exist in the registry — substituted with the actual
+// matching IDs whose audience arrays include a kid-coded entry.
+const KID_CODED_CONTEXTS = [
+  "tpl_newborn",
+  "tpl_lunches",
+  "first_foods",
+  "toddler_birthday",
+  "back_to_school_kids",
+  "road_trip_kids",
+  "sick_kid_kit",
+  "halloween_candy",
+];
+
+function isContextKidCoded(contextId) {
+  return KID_CODED_CONTEXTS.includes(String(contextId || ""));
+}
+
+function isProductAdultCoded(productName, category) {
+  const text = `${productName || ""} ${category || ""}`.toLowerCase();
+  return ADULT_CODED_KEYWORDS.some(kw => text.includes(kw));
+}
+
 // ── SCAN CLASSIFICATION ──────────────────────────────────────────
 // When the caller passes the user's recent scans, classify each by
 // score relative to the context's category buckets. The AI consumes
@@ -110,14 +167,40 @@ function scanRecency(scan) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function classifyScansForContext(scans, contextBroadCategories) {
+function classifyScansForContext(scans, contextBroadCategories, contextId = null) {
   if (!Array.isArray(scans) || !scans.length) {
-    return { keep: [], swap: [], urgent: [], total_relevant: 0 };
+    return { keep: [], swap: [], urgent: [], total_relevant: 0, scan_filter_drops: [] };
+  }
+
+  // Context-fit filter. When the bundle's context is kid-coded, drop
+  // adult-coded scans from the input BEFORE classification so the
+  // downstream swap count matches what the AI is allowed to render.
+  // Tracked in scan_filter_drops so the audit log shows the filter
+  // is firing correctly and what the operator can tune the keyword
+  // list against.
+  const scan_filter_drops = [];
+  let workingScans = scans;
+  if (isContextKidCoded(contextId)) {
+    workingScans = [];
+    for (const s of scans) {
+      if (!s) continue;
+      const name = String(s.product_name || s.result_json?.product_name || "");
+      const cat  = String(s.category || s.result_json?.category || "");
+      if (isProductAdultCoded(name, cat)) {
+        scan_filter_drops.push({
+          scan_id: s.id || null,
+          product_name: name,
+          reason: "adult_coded_in_kid_context",
+        });
+        continue;
+      }
+      workingScans.push(s);
+    }
   }
 
   // Cap raw input at the most recent RAW_SCAN_CAP scans BEFORE the
   // per-scan loop runs. Keeps classification O(50) instead of O(200).
-  const cappedScans = scans.slice(0, RAW_SCAN_CAP);
+  const cappedScans = workingScans.slice(0, RAW_SCAN_CAP);
 
   // Filter to context-relevant scans, dedupe by product_name (most
   // recent wins), and rank by score within category buckets.
@@ -178,6 +261,7 @@ function classifyScansForContext(scans, contextBroadCategories) {
     swap:   cappedSwap,
     urgent: cappedUrgent,
     total_relevant: relevant.length,
+    scan_filter_drops,
   };
 }
 
@@ -701,6 +785,10 @@ SECTION TYPES (use only the ones the data supports; the surface enforces orderin
 
   HARD RULE: The pool product chosen as the swap TARGET must be a DIFFERENT product from the scanned_product_name being swapped. If the closest pool match by name IS the scan (e.g., user scanned "Pirate's Booty" and the pool has "Pirates Booty"), pick the next-cleanest pool product in the same category instead. Never recommend a product as a swap target for itself.
 
+  HARD RULE (context fit): The user's scanned product (the source being swapped) MUST plausibly belong in the bundle's context. For kid-meal contexts (back to school lunches, kid snacks, family meals, after-school snacks), adult-coded products from scan history — coffee, espresso, energy fuels for adult athletes, alcohol, adult supplements — are NOT valid swap sources, even if a cleaner alternative exists in the pool. Do not propose "Swap your Folgers for [kid snack target]." If a pattern emerges across multiple adult-coded scans in the user's history, surface that observation in the anti_pattern field at bundle level instead ("Your scan history skews adult-coded; the lunch bundle pulls from a different category."). Otherwise drop these scans from the Swap section silently.
+
+  HARD RULE (brand specificity): The scanned_product_name named in Swap reasoning MUST include the brand name verbatim as the user scanned it. Acceptable: "Swap your Pirate's Booty for this." / "Swap your Bear Naked Granola for this." Not acceptable: "Swap your Peanut Butter for this." / "Swap your Granola for this." (generic category words with no brand are not valid swap sources). If a scanned product lacks a clear brand name in the input, do NOT generate a Swap item for it. Either promote the observation to the anti_pattern field at bundle level, or omit the scan entirely from the Swap section.
+
 - add: cleanest options for context categories the user has not scanned. Default section for anonymous users.
 
 - worth_knowing: 1 to 2 hidden gems from the pool worth flagging. Optional.
@@ -1135,7 +1223,7 @@ async function composePersonalizedBundle({
     : new Set(Array.isArray(contextBroadCategories) ? contextBroadCategories : []);
   const isAuthed = Array.isArray(scanHistory);
   const rawClassification = isAuthed && scanHistory.length
-    ? classifyScansForContext(scanHistory, broadCats)
+    ? classifyScansForContext(scanHistory, broadCats, context.id)
     : null;
 
   // 3. Pool-match filter. Keep candidates need the user's scanned
@@ -1387,6 +1475,12 @@ async function composePersonalizedBundle({
           } : null,
           unmatched_scan_history: unmatchedScanHistory.map(s => ({ scanned_product_name: s.product_name, score: s.score, category: s.category, reason: s.reason })),
           thin_coverage_categories: thinCoverage,
+          // Context-fit filter drops. Populated when scans were
+          // removed BEFORE classification because their product was
+          // adult-coded and the bundle context was kid-coded. Each
+          // entry carries scan_id, product_name, and a reason
+          // string for keyword-list tuning over time.
+          scan_filter_drops: scanClassification?.scan_filter_drops || [],
           // Self-swap drops surface here so audit logs can flag the
           // case where the AI tried to recommend a product for itself
           // (e.g., swap "Pirate's Booty" for "Pirates Booty"). Accumulated

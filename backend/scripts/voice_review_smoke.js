@@ -343,6 +343,14 @@ const SCENARIOS = [
       fabricateScan("Stonyfield Organic Plain Yogurt", "food", 3, 14),
       fabricateScan("Bear Naked Granola", "food", 7, 7),
       fabricateScan("Annie's Mac and Cheese", "food", 4, 21),
+      // Adult-coded scans intentionally mixed in to exercise the
+      // context-fit rule. None of these should appear as Swap section
+      // sources in a back-to-school lunches bundle. Composer should
+      // either fold the pattern into anti_pattern at bundle level or
+      // drop them silently from Swap.
+      fabricateScan("Folgers Classic Roast Coffee", "food_beverage", 5, 10),
+      fabricateScan("Diet Coke",                    "food_beverage", 7, 28),
+      fabricateScan("Starbucks Via Italian Roast",  "food_beverage", 5, 35),
     ],
   },
   {
