@@ -194,11 +194,28 @@ const ProductTile = ({ item, sectionColor }) => {
   );
 };
 
+// Section-level editorial framing. One-line gloss the AI may attach
+// to a section explaining WHY it matters before the user reads the
+// items. Backward compatible: bundles from before the narrative
+// wrapper (v3 cache) simply don't have this field and render nothing.
+const SectionThesis = ({ text }) => {
+  if (!text) return null;
+  return (
+    <div style={{
+      fontFamily:"'DM Sans', system-ui, sans-serif",
+      fontSize: 14, fontStyle: "italic",
+      color:"var(--ink-soft)", lineHeight: 1.5,
+      marginTop: 4, marginBottom: 12,
+    }}>{text}</div>
+  );
+};
+
 const WorthScanningSection = ({ section, onScanCta }) => {
   const style = SECTION_STYLES.worth_scanning;
   return (
     <div style={{marginTop: 28}}>
       <SectionStamp label={style.stamp} color={style.color}/>
+      <SectionThesis text={section.thesis}/>
       <div style={{
         padding:"18px 18px 16px",
         background:"var(--cream-light)",
@@ -245,11 +262,75 @@ const StandardSection = ({ section }) => {
   return (
     <div style={{marginTop: 28}}>
       <SectionStamp label={style.stamp} color={style.color} count={count}/>
+      <SectionThesis text={section.thesis}/>
       <div style={{display: "flex", flexDirection: "column", gap: 12}}>
         {section.items.map((item, idx) => (
           <ProductTile key={item.product_id || idx} item={item} sectionColor={style.color}/>
         ))}
       </div>
+    </div>
+  );
+};
+
+// Bundle-level callout that names a "skip this entire pattern" rule
+// the AI identified across categories. Renders between the intro and
+// the first section so it frames the whole bundle, not any one item.
+// Cream-light card with thin amber left border, matching the bundle's
+// existing palette (no new colors introduced).
+const AntiPatternCallout = ({ antiPattern, isMobile = false }) => {
+  if (!antiPattern || !antiPattern.headline || !antiPattern.reasoning) return null;
+  return (
+    <div style={{
+      marginTop: 18, marginBottom: 8,
+      padding: "16px 18px",
+      background: "var(--cream-light)",
+      borderLeft: "3px solid var(--amber)",
+      borderRadius: 8,
+    }}>
+      <h4 style={{
+        margin: 0,
+        fontFamily:"'Lora', Georgia, serif",
+        fontSize: isMobile ? 17 : 18,
+        fontWeight: 500, letterSpacing:"-0.005em",
+        color:"var(--ink)", lineHeight: 1.35,
+      }}>{antiPattern.headline}</h4>
+      <p style={{
+        margin: "6px 0 0",
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+        fontSize: 14, color:"var(--ink-soft)",
+        lineHeight: 1.55,
+      }}>{antiPattern.reasoning}</p>
+    </div>
+  );
+};
+
+// Bundle-level "first move" close. Distinct visual treatment from the
+// suggested_action button — a small caps label followed by the label
+// and a reasoning line. Sits above the suggested_action so it gives
+// the user the editorial pick before the global CTA.
+const StartHereClose = ({ startHere, isMobile = false }) => {
+  if (!startHere || !startHere.label || !startHere.reasoning) return null;
+  return (
+    <div style={{marginTop: 32}}>
+      <div style={{
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+        fontSize: 10, letterSpacing:"0.22em", textTransform: "uppercase",
+        fontWeight: 500, color:"var(--moss)",
+        marginBottom: 8,
+      }}>Suggested first step</div>
+      <p style={{
+        margin: 0,
+        fontFamily:"'Lora', Georgia, serif",
+        fontSize: isMobile ? 17 : 18,
+        fontWeight: 500, letterSpacing:"-0.005em",
+        color:"var(--ink)", lineHeight: 1.35,
+      }}>{startHere.label}</p>
+      <p style={{
+        margin: "6px 0 0",
+        fontFamily:"'DM Sans', system-ui, sans-serif",
+        fontSize: 14, color:"var(--ink-soft)",
+        lineHeight: 1.55,
+      }}>{startHere.reasoning}</p>
     </div>
   );
 };
@@ -337,6 +418,8 @@ const ContextBundleCard = ({
         }}>{bundle.intro}</p>
       )}
 
+      <AntiPatternCallout antiPattern={bundle.anti_pattern} isMobile={isMobile}/>
+
       {sections.map((section, idx) => {
         if (section.type === "worth_scanning") {
           return (
@@ -347,6 +430,8 @@ const ContextBundleCard = ({
           <StandardSection key={section.type + idx} section={section}/>
         );
       })}
+
+      <StartHereClose startHere={bundle.start_here} isMobile={isMobile}/>
 
       <SuggestedActionButton action={bundle.suggested_action} onClick={onSuggestedAction}/>
     </div>

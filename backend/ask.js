@@ -911,16 +911,15 @@ function dynamicSuggestedAction(entry, matches) {
 // context-relevant scans so a fresh scan in the category invalidates
 // the cached bundle naturally.
 
-// Bumped to v3 after the calibration notes voice cleanup (em-dash
-// bulk fix + targeted marketing/wellness/medical rewrites). v2
-// bundles cached against the stale calibration data — many of them
-// were templated fallbacks produced when the AI faithfully reproduced
-// "cleanest mainstream" and similar phrases from Hipp and other
-// notes — are abandoned with this prefix change and expire under
-// their original TTL. v1 ("category-slot filling") was abandoned
-// at v2; v3 abandons v2 for the same reason.
+// Bumped to v4 with the narrative-wrapper bundle fields (section
+// thesis, anti_pattern callout, start_here close). v3 bundles
+// pre-date these fields and would render without them, which is
+// the wrong reading experience now that the frontend expects them
+// when available. v3 entries are abandoned with this prefix change
+// and expire under their original TTL. v2 was the composer rewrite;
+// v3 was the calibration notes cleanup; v4 is the narrative wrapper.
 const bundleCacheKey = (contextId, audienceHash, scanSig) =>
-  `ask:bundle:v3:${contextId}:${audienceHash}:${scanSig || "anon"}`;
+  `ask:bundle:v4:${contextId}:${audienceHash}:${scanSig || "anon"}`;
 
 // Match the natural-language query against contexts.js entries.
 // First tries exact id match, then exact name match, then name

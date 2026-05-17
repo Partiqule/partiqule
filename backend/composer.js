@@ -476,10 +476,19 @@ function sanitizeBundleDashes(bundle) {
   if (typeof bundle.title === "string") bundle.title = fix(bundle.title);
   if (typeof bundle.intro === "string") bundle.intro = fix(bundle.intro);
   for (const section of bundle.sections || []) {
+    if (typeof section.thesis === "string") section.thesis = fix(section.thesis);
     for (const item of section.items || []) {
       if (typeof item.reasoning === "string")   item.reasoning   = fix(item.reasoning);
       if (typeof item.action_label === "string") item.action_label = fix(item.action_label);
     }
+  }
+  if (bundle.anti_pattern && typeof bundle.anti_pattern === "object") {
+    if (typeof bundle.anti_pattern.headline === "string")  bundle.anti_pattern.headline  = fix(bundle.anti_pattern.headline);
+    if (typeof bundle.anti_pattern.reasoning === "string") bundle.anti_pattern.reasoning = fix(bundle.anti_pattern.reasoning);
+  }
+  if (bundle.start_here && typeof bundle.start_here === "object") {
+    if (typeof bundle.start_here.label === "string")     bundle.start_here.label     = fix(bundle.start_here.label);
+    if (typeof bundle.start_here.reasoning === "string") bundle.start_here.reasoning = fix(bundle.start_here.reasoning);
   }
   if (bundle.suggested_action && typeof bundle.suggested_action.label === "string") {
     bundle.suggested_action.label = fix(bundle.suggested_action.label);
@@ -600,11 +609,16 @@ function orderSections(sections) {
   for (const t of SECTION_ORDER) {
     if (byType.has(t)) {
       const s = byType.get(t);
-      out.push({
+      const built = {
         type: t,
         label: SECTION_LABELS[t],
         items: s.items || [],
-      });
+      };
+      // Preserve the optional editorial thesis through ordering.
+      if (typeof s.thesis === "string" && s.thesis.trim()) {
+        built.thesis = s.thesis;
+      }
+      out.push(built);
     }
   }
   return out;
@@ -762,6 +776,111 @@ Match the consumable_or_durable flag on the pool entry:
 - Worth knowing:   "Worth knowing about."
 - Worth scanning:  "Open scan camera."
 
+NARRATIVE WRAPPER FIELDS (section thesis, anti_pattern, start_here):
+
+The three narrative-wrapper fields below are how the bundle stops sounding like a list and starts sounding like a knowing friend's briefing. They MUST fire by default. Omission is the exception, not the rule.
+
+MOAT LAYER RULE (applies to all three narrative-wrapper fields):
+
+When POOL-MATCHED SCAN HISTORY CLASSIFICATION counts.pool_matched_keep + counts.pool_matched_swap is greater than 0 (authed user with relevant scan history), every narrative-wrapper field you generate MUST reference user-specific data drawn from that classification:
+- section thesis MUST cite at least one scanned_product_name from the user's pool-matched scans OR name the specific score-gap pattern in the user's data when discussing the section's stakes
+- anti_pattern MUST tie to a pattern observed in the user's scan history ("Two of the three products you scanned have...") when one exists; if no pattern fits the user's specific data, omit anti_pattern rather than ship a category-general one
+- start_here MUST name a specific scanned_product_name from the user's pool-matched scans AND include a verifiable justification (the score gap between the user's product and the swap target; the leverage of one swap vs others; the position of this item in the user's routine)
+
+When scan history is empty (anonymous bundle or no pool-matched scans), these fields fall back to category-general framing — the AI uses the broader patterns of the context category instead. But the AI MUST NEVER produce category-general framing for an authed user when home data is available. A Partiqule bundle for an authed user should sound like nobody else could have written it because nobody else has the data underneath it. Generic editorial framing is the fallback shape for the anonymous case, not the default voice.
+
+──────────────────────────────────────────────────────────────────────
+
+SECTION THESIS (one per Keep, Swap, Add section by default):
+
+Each section SHOULD include a "thesis" field — one short sentence (under 20 words) that names WHY this section matters before the user reads the items. Think of it as the friend's verbal framing before walking the user through specific products.
+
+Default behavior: generate a thesis for every Keep, Swap, and Add section. Omit only for single-item Worth-knowing or Worth-scanning sections, or when the section is so self-evident that any sentence would be filler.
+
+For authed bundles (scan history present), the thesis MUST name a user scanned product or score-gap pattern (see MOAT LAYER RULE above). For anonymous bundles, the thesis cites the category pattern.
+
+CORRECT examples (authed):
+- Keep section thesis: "Your Stonyfield is the single solid pick in your lunch rotation. Build around it."
+- Swap section thesis: "Your Bear Naked is the widest single gap in this bundle. Get these swaps right first."
+- Add section thesis: "Sandwich base and protein are missing entirely from your lunch scans."
+
+CORRECT examples (anonymous):
+- Keep section thesis (rarely applies anonymously)
+- Swap section thesis: "These are the biggest single swaps in the bundle. Get these right first."
+- Add section thesis: "Categories that fill the lunch routine without daily research."
+
+WRONG examples:
+- "Here are some items worth keeping." (generic, no value, doesn't cite user data when authed)
+- "These are products to swap." (just restates the section type)
+- "All of these are scored well." (true for everything in any section, no signal)
+- "Your Stonyfield is the only solid pick" (uses "the only" which trips marketing_the_only gate; use "the single solid pick" instead)
+- "Your Bear Naked at 7 is the widest gap" (puts the score number in prose, which violates the score-as-evidence rule; refer to "the widest gap" without naming the number)
+- Authed bundle, Swap section thesis: "These are the biggest single swaps." (generic — fails MOAT LAYER RULE; should name the specific scanned product)
+
+Match voice rules: no first person, no banned phrases, three-beat rhythm where it fits.
+
+──────────────────────────────────────────────────────────────────────
+
+ANTI PATTERN (default on, bundle level):
+
+By default include an anti_pattern field with a headline and reasoning. Most life-moment contexts have at least one cross-category rule worth naming. Omit only when the bundle is genuinely pattern-free (generic restock with no obvious common thread).
+
+The headline is a short directive (under 10 words). The reasoning is one or two sentences (under 40 words).
+
+For authed bundles, the anti_pattern MUST tie to a pattern observed in the user's scan history when one exists (see MOAT LAYER RULE above). If the user's data shows a recurring failure mode across multiple scans, name that. If no pattern fits the user's specific data, omit the field rather than ship a category-general anti_pattern to an authed user.
+
+CORRECT examples (authed):
+- Back to school lunches with Bear Naked + Annie's Mac in scan history: headline "Both of your swap candidates share a pattern." reasoning "Bear Naked and Annie's Mac both lean on processed convenience over real ingredients. The cleaner versions exist and take no more prep time."
+- Beach day with Banana Boat Sport in scan history: headline "Skip chemical UV filters for the kids." reasoning "Your Banana Boat Sport uses oxybenzone and avobenzone. Mineral zinc options on this list do the same job without the same absorption profile."
+
+CORRECT examples (anonymous):
+- Back to school lunches: headline "Skip the marketing fortification." reasoning "Synthetic vitamins added back into processed food don't replace what was stripped out. Look for whole sources instead."
+- Newborn essentials: headline "Avoid 'natural' as a signal." reasoning "Without certifications backing it up, 'natural' on baby products means nothing. Look for USDA Organic, OEKO TEX, or specific ingredient absences instead."
+
+WRONG examples:
+- "Avoid products with sugar." (too generic, doesn't add information)
+- "Don't buy the cheapest option." (preachy, not a pattern)
+- "Skip anything from Brand X." (singles out a brand without sourced reasoning)
+- Authed bundle, generic anti_pattern that ignores the user's actual scans (fails MOAT LAYER RULE; either tie to the user's data or omit)
+
+Match voice rules. No medical claims unless sourced. No first person. No moralizing.
+
+──────────────────────────────────────────────────────────────────────
+
+START HERE (default on, bundle level):
+
+By default include a start_here field that names the single highest-impact action the user should take. This is more specific than suggested_action (which is the global CTA). The start_here points to one item or one step that delivers the most value if done first.
+
+Omit only when every item in the bundle is genuinely equivalent in impact (rare — even uniform-looking bundles usually have one move with the most leverage).
+
+Structure: a "label" (short imperative phrase, under 12 words) and a "reasoning" line (one sentence, under 30 words, explaining why this action is the highest leverage).
+
+For authed bundles, start_here MUST name a specific scanned_product_name from the user's pool-matched scans AND layer in a verifiable justification (see MOAT LAYER RULE above) — the score gap between the user's product and the swap target, the leverage of one swap vs others, or the position of this item in the user's daily routine.
+
+Priority order for selecting the start_here action:
+1. Authed with a Swap section containing a high score-gap candidate (user has a poor-scoring product, swap target is a top-scoring pool entry) — start with that swap, naming the user's product. Do NOT cite the score numbers in prose; refer to "the widest gap" or "the biggest delta" instead.
+2. Authed with multiple Keep candidates but a missing critical category — start with the highest-impact gap from Add, naming what's missing relative to what's already in the home.
+3. Anonymous or scan history sparse — start with the cleanest single item in Add, OR recommend scanning a specific category to build the home profile.
+
+CORRECT examples (authed):
+- Back to school lunches with Bear Naked Granola in scan history: label "Start with the Bear Naked Granola swap." reasoning "Widest single gap in the bundle. One Target run replaces it."
+- Beach day with Banana Boat Sport in scan history: label "Start with the Banana Boat Sport swap." reasoning "Sunscreen has the widest spread of any beach category. This single change delivers the biggest delta."
+- Pantry with Pirate's Booty in scan history: label "Start with the Pirate's Booty swap." reasoning "Skinnypop costs the same and ranks notably cleaner. Easy substitution on your next pantry run."
+
+CORRECT examples (anonymous):
+- Newborn essentials anonymous: label "Start by scanning your current diaper brand." reasoning "Diapers are the highest exposure product for a newborn. Worth knowing where yours ranks before stocking up."
+- Road trip anonymous: label "Start with the Larabar add." reasoning "Travels without melting or crumbs and works across age ranges. Easy single Target buy."
+
+WRONG examples:
+- "Start somewhere." (generic, no signal)
+- "Try the products in order." (no priority signal)
+- "Save this to your list." (that's suggested_action's job, not start_here)
+- "Score 7 down to 1 is the widest gap" (puts score numbers in prose, trips score_destination gate; refer to "widest gap" without naming numbers)
+- "Skinnypop scores 5 points lower" (same issue; use "ranks notably cleaner" instead)
+- Authed bundle, start_here that doesn't name a specific scanned product (fails MOAT LAYER RULE)
+
+Match voice rules. Directive but warm. No moralizing.
+
 SUGGESTED ACTION at bundle bottom:
 Pick one based on what the bundle contains:
 - "save_list" with a scenario-specific label like "Save the lunch lineup" / "Save the beach lineup" / "Save the pantry lineup" when there are 4+ items across sections worth saving.
@@ -772,9 +891,14 @@ OUTPUT FORMAT (strict JSON, no markdown, no backticks):
 {
   "title": "string",
   "intro": "string",
+  "anti_pattern": {
+    "headline": "short directive, under 10 words. DEFAULT ON. For authed bundles MUST tie to user scan history pattern; for anonymous use category-general pattern. Omit only when no real pattern exists.",
+    "reasoning": "one or two sentences, under 40 words"
+  },
   "sections": [
     {
       "type": "keep | swap | add | worth_knowing | worth_scanning",
+      "thesis": "one sentence under 20 words. DEFAULT ON for keep / swap / add sections. For authed bundles MUST cite at least one scanned_product_name or specific score-gap pattern. Omit only for single-item Worth-knowing/Worth-scanning or when section is truly self-evident.",
       "items": [
         {
           "product_id": "exactly as written in the pool (empty string for worth_scanning entries with no product anchor)",
@@ -784,6 +908,10 @@ OUTPUT FORMAT (strict JSON, no markdown, no backticks):
       ]
     }
   ],
+  "start_here": {
+    "label": "short imperative phrase, under 12 words. DEFAULT ON. For authed bundles MUST name a specific scanned_product_name with verifiable justification (score gap, leverage). Omit only when every item is genuinely equivalent in impact.",
+    "reasoning": "one sentence under 30 words"
+  },
   "suggested_action": {
     "type": "save_list | scan_more | learn_more",
     "label": "scenario-specific imperative"
@@ -1152,17 +1280,31 @@ async function composePersonalizedBundle({
         });
       }
       if (finalItems.length > 0) {
-        validatedSections.push({ type: s.type, items: finalItems });
+        // Pass through the optional editorial thesis when the AI provided
+        // one. Cap length defensively; the prompt instructs <20 words but
+        // we don't want runaway text in the bundle if the AI ignores that.
+        const thesisRaw = typeof s.thesis === "string" ? s.thesis.trim() : "";
+        const built = { type: s.type, items: finalItems };
+        if (thesisRaw) built.thesis = thesisRaw.slice(0, 200);
+        validatedSections.push(built);
       }
     }
     allDropped = allDropped.concat(dropped);
     allDroppedSelfSwaps = allDroppedSelfSwaps.concat(droppedSelfSwaps);
 
-    // Voice gate scans every user-facing string.
+    // Voice gate scans every user-facing string. New narrative-wrapper
+    // fields (section thesis, bundle-level anti_pattern headline/reasoning,
+    // start_here label/reasoning) are scanned the same way the original
+    // fields are — same gates, just a wider input set.
     const stringsToScan = [
       rawBundle.title,
       rawBundle.intro,
+      ...validatedSections.map(s => s.thesis).filter(Boolean),
       ...(validatedSections.flatMap(s => s.items.flatMap(i => [i.reasoning, i.action_label]))),
+      rawBundle.anti_pattern?.headline,
+      rawBundle.anti_pattern?.reasoning,
+      rawBundle.start_here?.label,
+      rawBundle.start_here?.reasoning,
       rawBundle.suggested_action?.label,
     ];
     const voiceFailures = voiceGateScan(stringsToScan);
@@ -1187,20 +1329,45 @@ async function composePersonalizedBundle({
 
     if (voiceFailures.length === 0 && structurallyOK && swapCountOK) {
       const ordered = orderSections(validatedSections);
+      // Narrative-wrapper extras. All optional — only attach when the AI
+      // produced something meaningful and the gate-cleaned version still
+      // has real content. Length caps mirror the prompt guidance so
+      // a runaway AI response can't pollute the bundle.
+      const bundleOut = {
+        title: String(rawBundle.title || `Bundle for ${context.label || context.name}`).slice(0, 140),
+        intro: String(rawBundle.intro || "").slice(0, 400),
+        sections: ordered,
+        suggested_action: rawBundle.suggested_action && typeof rawBundle.suggested_action === "object"
+          ? {
+              type: ["save_list", "scan_more", "learn_more"].includes(rawBundle.suggested_action.type)
+                ? rawBundle.suggested_action.type
+                : "scan_more",
+              label: String(rawBundle.suggested_action.label || "Scan more options").slice(0, 60),
+            }
+          : { type: "scan_more", label: "Scan more options" },
+      };
+      if (rawBundle.anti_pattern && typeof rawBundle.anti_pattern === "object") {
+        const head = typeof rawBundle.anti_pattern.headline  === "string" ? rawBundle.anti_pattern.headline.trim()  : "";
+        const reas = typeof rawBundle.anti_pattern.reasoning === "string" ? rawBundle.anti_pattern.reasoning.trim() : "";
+        if (head && reas) {
+          bundleOut.anti_pattern = {
+            headline:  head.slice(0, 120),
+            reasoning: reas.slice(0, 320),
+          };
+        }
+      }
+      if (rawBundle.start_here && typeof rawBundle.start_here === "object") {
+        const lbl  = typeof rawBundle.start_here.label     === "string" ? rawBundle.start_here.label.trim()     : "";
+        const reas = typeof rawBundle.start_here.reasoning === "string" ? rawBundle.start_here.reasoning.trim() : "";
+        if (lbl && reas) {
+          bundleOut.start_here = {
+            label:     lbl.slice(0, 100),
+            reasoning: reas.slice(0, 220),
+          };
+        }
+      }
       return {
-        bundle: {
-          title: String(rawBundle.title || `Bundle for ${context.label || context.name}`).slice(0, 140),
-          intro: String(rawBundle.intro || "").slice(0, 400),
-          sections: ordered,
-          suggested_action: rawBundle.suggested_action && typeof rawBundle.suggested_action === "object"
-            ? {
-                type: ["save_list", "scan_more", "learn_more"].includes(rawBundle.suggested_action.type)
-                  ? rawBundle.suggested_action.type
-                  : "scan_more",
-                label: String(rawBundle.suggested_action.label || "Scan more options").slice(0, 60),
-              }
-            : { type: "scan_more", label: "Scan more options" },
-        },
+        bundle: bundleOut,
         metadata: {
           ai_attempts: aiAttempts,
           voice_gate_failures: allVoiceFailures,
