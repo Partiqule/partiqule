@@ -574,6 +574,33 @@ Raw text queries hit cascade.
 
 ---
 
+## Ask Refinement Loop (Phase 2a)
+
+`/ask` is the natural-language query surface. Type 3 (context bundle) queries route through a multi-turn refinement loop when Pass 1 flags the query as ambiguous. Ships across `backend/ask.js`, `backend/refinement.js`, `backend/composer.js`, `frontend/src/ask/useAskConversation.js`, `frontend/src/ask/RefinementCard.jsx`.
+
+**Architecture (locked):**
+- Refinement is foundational, not optional polish. Pass 1.5 always runs for queries Pass 1 flags as `needs_refinement: true`. The composer is downstream of refinement state, not parallel to it.
+- `useAskConversation` hook owns all conversation state across type 1 (product list), type 2 (knowledge), type 3 (bundle), and refinement turns. The page renders and delegates.
+- Pass 1 in `backend/ask.js` (Haiku, 400 max_tokens) flags ambiguity; Pass 1.5 in `backend/refinement.js` (Haiku, 800 max_tokens) generates questions; composer in `backend/composer.js` (Sonnet, 2200 max_tokens) produces the final bundle.
+- SSE event surface: `intent` / `intent_classified` / `composer_thinking` / `refinement_question` / `bundle` / `done` / `refuse` / `error`. Frontend hook reduces these into a single state shape.
+- Refinement-answer endpoint is `POST /ask/refinement_answer` with `{conversation_id, answers, skipped}`. Conversation TTL: 7d anon / 30d authed in `conversations` table.
+
+**Audience is the gate (Pass 1 principle, locked session 5.5):**
+Pass 1 fires refinement when the query lacks audience signals (parent type, age range, household composition, adults-only, etc.). Secondary specifics like duration, dietary restrictions, and timing have composer defaults and do NOT trigger refinement on their own. Examples:
+- "newborn essentials" → fires (audience unclear)
+- "newborn essentials for my pregnant sister" → no refinement (audience clear)
+- "back to school lunches" → fires (age range unclear)
+- "back to school lunches for my 6 year old" → no refinement
+- "road trip snacks for adults only" → no refinement (audience clear; duration optional)
+
+**Two-row audit log pattern:** refinement queries write two rows to `ask_responses`. Row 1 fires on `/ask` with `refinement_fired: true`, `refinement_questions_count` set, `refinement_answered_count` null. Row 2 fires on `/ask/refinement_answer` with the bundle + `refinement_answered_count` + `refinement_skipped_count`. Correlate via `user_id` (when authed) + `query` + timestamp range (~5 min window). See `backend/docs/ask_audit_runbook.md` for canonical queries.
+
+**Cache version:** bundle cache prefix is `ask:bundle:v7:...`. v7 hashes refinement answers into the key (via `refinementHash()` in `backend/ask.js`) so refinement-flow bundles cache correctly. Sessions 1–5 used v1–v6; v7 ships in session 6.
+
+**Phase 2a known gap (closes in Phase 2b):** open-ended queries that don't map to a templated context (e.g., "I'm packing for Disney, help!") fire refinement correctly but refuse with `context_not_recognized` after the user answers, because `findContextFromQuery` only resolves against the templated context registry. Phase 2b dynamic context expansion populates `decomposed_categories` and `dynamic_pool_spec` on the intent so the composer can run against a constructed pool instead of a templated one.
+
+---
+
 ## Whole-foods Detection
 
 `detectWholeFood()` in `backend/scoringCascade.js`. ~50 patterns covering wild fish/seafood, eggs, fresh produce, dairy, conventional poultry, red meat, processed meats. Tier 5 intercepts whole foods BEFORE generic synthetic fallback.

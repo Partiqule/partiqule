@@ -989,15 +989,16 @@ function dynamicSuggestedAction(entry, matches) {
 // context-relevant scans so a fresh scan in the category invalidates
 // the cached bundle naturally.
 
-// Bumped to v6 with the context-fit scan filter in
-// classifyScansForContext. v5 entries for kid-coded contexts
-// (tpl_newborn, tpl_lunches, first_foods, toddler_birthday,
-// back_to_school_kids, road_trip_kids, sick_kid_kit, halloween_candy)
-// were composed against unfiltered scan history and may carry Swap
-// items where the source is an adult-coded product (coffee, soda,
-// alcohol, energy drinks) — wrong shape for the new behavior. v5
-// entries are abandoned with this prefix change and expire under
-// their original TTL.
+// Bumped to v7 in Phase 2a session 6: cache key now hashes the
+// refinement answers + skipped list so refinement-flow bundles cache
+// correctly. v6 entries didn't include refinement in the key, so
+// caching a refinement-flow bundle under a v6 key would have served
+// the wrong bundle to a no-refinement query on the same context.
+// Session 3 worked around this by setting useCache:false on the
+// refinement-answer path; v7 removes that bypass.
+//
+// v6 entries are abandoned with this prefix change and expire under
+// their original TTL (1d authed / 7d anonymous).
 //
 // Standing rule: bundle structure or behavior changes default to a
 // cache version bump in the same commit so stale entries from the
@@ -1007,9 +1008,9 @@ function dynamicSuggestedAction(entry, matches) {
 //
 // History: v1 category-slot, v2 composer rewrite, v3 calibration
 // notes cleanup, v4 narrative wrapper, v5 SSE forwarding fix,
-// v6 context-fit scan filter.
-const bundleCacheKey = (contextId, audienceHash, scanSig) =>
-  `ask:bundle:v6:${contextId}:${audienceHash}:${scanSig || "anon"}`;
+// v6 context-fit scan filter, v7 refinement-answers hash.
+const bundleCacheKey = (contextId, audienceHash, scanSig, refHash) =>
+  `ask:bundle:v7:${contextId}:${audienceHash}:${scanSig || "anon"}:${refHash || "none"}`;
 
 // Match the natural-language query against contexts.js entries.
 // First tries exact id match, then exact name match, then name
@@ -1223,6 +1224,28 @@ function audienceConstraintHash(intent) {
   return crypto.createHash("sha1").update(`${aud}|${constraints}`).digest("hex").slice(0, 10);
 }
 
+// Hash the refinement answers + skipped list so the cache key
+// separates "back to school lunches → 6 year old" from "back to school
+// lunches → 14 year old" when both arrived via the refinement flow.
+// Returns "none" when no refinement attached so the no-refinement path
+// stays cache-compatible with v6 entries that lacked this dimension.
+// Normalization: answers sorted by question_id, value lowercased +
+// trimmed; skipped sorted. Order-insensitive so equivalent answers
+// produce identical cache keys.
+function refinementHash(refinement) {
+  if (!refinement || typeof refinement !== "object") return "none";
+  const answers = Array.isArray(refinement.answers) ? refinement.answers : [];
+  const skipped = Array.isArray(refinement.skipped) ? refinement.skipped : [];
+  if (!answers.length && !skipped.length) return "none";
+  const aPart = answers
+    .filter(a => a && typeof a.question_id === "string")
+    .map(a => `${a.question_id}=${String(a.value || "").toLowerCase().trim()}`)
+    .sort()
+    .join("|");
+  const sPart = [...skipped].map(s => String(s)).sort().join(",");
+  return crypto.createHash("sha1").update(`${aPart}#${sPart}`).digest("hex").slice(0, 10);
+}
+
 // ── CONVERSATION TABLE HELPERS (Phase 2a session 3) ─────────────
 // Conversations table holds multi-turn state for Ask queries that
 // needed refinement. Each row is one conversation thread spanning
@@ -1330,11 +1353,11 @@ async function updateConversationWithAnswers({ supabaseAdmin }, conversationId, 
 // optional refinement payload, fires composer, streams bundle, and
 // writes the audit row.
 //
-// useCache controls whether to read/write the bundle cache. The
-// no-refinement path uses cache normally; the refinement-answered
-// path bypasses cache (the v6 cache key doesn't hash refinement
-// answers — session 6 work). Refinement-flow bundles compose fresh
-// every time until then.
+// useCache controls whether to read/write the bundle cache. Both the
+// no-refinement and refinement-answered paths use cache as of v7 —
+// the cache key hashes the refinement payload via refinementHash() so
+// "back to school lunches → 6yo" and "back to school lunches → 14yo"
+// land in distinct slots.
 async function composeBundleAndStream(deps, opts) {
   const {
     sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
@@ -1348,7 +1371,8 @@ async function composeBundleAndStream(deps, opts) {
 
   const scanSig = userId ? scanSignature(scanHistory) : null;
   const audHash = audienceConstraintHash(intent);
-  const cacheKey = bundleCacheKey(context.id, audHash, scanSig);
+  const refHash = refinementHash(refinement);
+  const cacheKey = bundleCacheKey(context.id, audHash, scanSig, refHash);
   const cacheTtlSec = userId ? 86400 : 604800;
 
   let bundleResult = null;
@@ -1658,8 +1682,9 @@ async function handleContextQuery(deps, ctx) {
 // skipped} from the client (after the user filled out the refinement
 // question form). Loads the conversation, validates ownership + TTL,
 // reconstructs the original intent, attaches refinement to constraints,
-// fires composer via composeBundleAndStream (bypassing cache since the
-// v6 cache key doesn't hash refinement answers yet — session 6 work).
+// fires composer via composeBundleAndStream. v7 hashes refinement
+// into the cache key so refinement-flow bundles cache normally
+// (session 6 closed the bypass).
 async function handleRefinementAnswer(deps, ctx) {
   const { sse, userId, requestStartMs, body } = ctx;
   const { CALIBRATION } = deps;
@@ -1752,7 +1777,7 @@ async function handleRefinementAnswer(deps, ctx) {
     context, pool, scanHistory, broadCats,
     refinement: { answers, skipped },
     conversationId,
-    useCache: false, // refinement-flow bypasses cache until session 6
+    useCache: true, // v7 hashes refinement into the cache key (session 6)
     refinementQuestionsCount: Array.isArray(initialTurn?.refinement_questions)
       ? initialTurn.refinement_questions.length
       : null,
