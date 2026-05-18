@@ -1552,12 +1552,19 @@ module.exports = {
   classifyScansForContext,
   inferConsumableOrDurable,
   voiceGateScan,
+  sanitizeDashes,
   templatedFallback,
   ComposerError,
   SECTION_ORDER,
   SECTION_LABELS,
   CONSUMABLE_CATEGORIES,
   DURABLE_CATEGORIES,
-  // exported for the surface (ask.js) to apply uniformly when
-  // building the broad-category set used to filter scan history.
+  // Context-fit filter helpers, exported for Phase 2a refinement
+  // (backend/refinement.js) to apply the same kid-context filter
+  // composer uses for Swap candidates. Phase 2b dynamic context
+  // expansion will reuse the same set.
+  ADULT_CODED_KEYWORDS,
+  KID_CODED_CONTEXTS,
+  isContextKidCoded,
+  isProductAdultCoded,
 };
