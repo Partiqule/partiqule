@@ -20,6 +20,18 @@ export const INITIAL_STATE = {
   refinementQuestions: null,
   refinementAnswers: null,
   bundle: null,
+  // Type 1 (product list) — items stream in via repeated `item` events
+  // and are appended in arrival order; the page sorts on render. Null
+  // when no type 1 response is active.
+  items: null,
+  // Type 2 (knowledge card) — single `knowledge` event populates the
+  // card; subsequent `match` events append to its `matches` array.
+  knowledgeCard: null,
+  // Type 1 `done` may carry `no_results: true` with a custom message
+  // when nothing scores well for the query. Surfaced separately so the
+  // page can swap the items render for a no-match note without losing
+  // the intent restatement.
+  noResultsMessage: null,
   errorMessage: null,
   errorCode: null,
   savedAt: null,
@@ -34,9 +46,22 @@ export function applyEvent(state, eventName, payload) {
       return state;
 
     case "intent":
-      // Type 1/2 paths emit `intent` with restatement. Type 3 emits
-      // `intent_classified` instead. Capture restatement either way.
-      return { ...state, intentRestatement: p.restatement || state.intentRestatement };
+      // Type 1/2 paths emit `intent` with restatement and then either
+      // stream `item` events (type 1) or fire a `knowledge` event
+      // (type 2). The page surfaces the restatement immediately while
+      // content arrives, so we transition to `answered` here and let
+      // the items/knowledgeCard fields fill in. Type 3 emits
+      // `intent_classified` instead and isn't affected by this case.
+      return {
+        ...state,
+        phase: "answered",
+        intentRestatement: p.restatement || state.intentRestatement,
+        // Initialize items to [] so a type 1 path with zero results
+        // (no `item` events before `done`) still renders as type 1
+        // rather than ambiguous. Knowledge events will override this
+        // by setting knowledgeCard.
+        items: state.items == null ? [] : state.items,
+      };
 
     case "intent_classified":
       // Stay in "thinking" until we see composer_thinking or
@@ -82,6 +107,40 @@ export function applyEvent(state, eventName, payload) {
       };
     }
 
+    case "item": {
+      // Type 1 product item arriving incrementally. Append in receive
+      // order; the page sorts by score on render. Defensive guard for
+      // a payload that arrived before `intent` (shouldn't happen but
+      // would otherwise discard the item).
+      const next = Array.isArray(state.items) ? [...state.items, p] : [p];
+      return { ...state, items: next };
+    }
+
+    case "knowledge":
+      // Type 2 knowledge card. Single event populates the whole card;
+      // subsequent `match` events append to `matches`. Phase transitions
+      // here (rather than waiting on `done`) so the user sees the card
+      // body immediately while related matches stream in.
+      return {
+        ...state,
+        phase: "answered",
+        knowledgeCard: { ...p, matches: [] },
+      };
+
+    case "match": {
+      // Related-product match for a type 2 knowledge response. Skip if
+      // we never saw the parent `knowledge` event — preserves invariant
+      // that knowledgeCard is always present when matches exist.
+      if (!state.knowledgeCard) return state;
+      const existing = Array.isArray(state.knowledgeCard.matches)
+        ? state.knowledgeCard.matches
+        : [];
+      return {
+        ...state,
+        knowledgeCard: { ...state.knowledgeCard, matches: [...existing, p] },
+      };
+    }
+
     case "refuse":
       return {
         ...state,
@@ -99,8 +158,18 @@ export function applyEvent(state, eventName, payload) {
       };
 
     case "done":
-      // Terminal marker — phase already set by the event before done
-      // (bundle / refuse / error). Nothing to do.
+      // Terminal marker. Type 3 (bundle), refuse, and error paths
+      // already set phase before `done` arrives. Type 1 with zero
+      // results carries `no_results: true` and an optional message —
+      // surface the message so the page can swap the items render
+      // for a no-match note while keeping the intent restatement.
+      if (p.no_results) {
+        return {
+          ...state,
+          phase: "answered",
+          noResultsMessage: p.no_results_message || null,
+        };
+      }
       return state;
 
     default:

@@ -282,6 +282,147 @@ console.log("\n[12] No-op storage (null) safe");
   checkTrue("persist(null) returns false", persistToStorage({ phase: "awaiting_refinement", conversationId: "x" }, null) === false);
 }
 
+console.log("\n[13] Type 1 (product list) path: intent + item events stream + done");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking", query: "sippy cup for my 18 month old" };
+  const final = replay([
+    ["thinking", {}],
+    ["intent", { restatement: "Sippy cup for an 18 month old" }],
+    ["item", { id: "k1", product_name: "Munchkin Miracle 360", score: 3 }],
+    ["item", { id: "k2", product_name: "Thinkbaby Sippy", score: 2 }],
+    ["item", { id: "k3", product_name: "Pura Kiki", score: 1 }],
+    ["done", { item_count: 3, no_results: false }],
+  ], start);
+  check("phase = answered after intent", final.phase, "answered");
+  check("intent restatement captured", final.intentRestatement, "Sippy cup for an 18 month old");
+  check("items length", final.items.length, 3);
+  check("items in arrival order", final.items.map(i => i.id), ["k1", "k2", "k3"]);
+  check("no bundle on type 1", final.bundle, null);
+  check("no knowledgeCard on type 1", final.knowledgeCard, null);
+  check("noResultsMessage stays null", final.noResultsMessage, null);
+}
+
+console.log("\n[14] Type 1 no-results path: intent + done(no_results=true)");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking", query: "specialty thing nothing scores" };
+  const final = replay([
+    ["thinking", {}],
+    ["intent", { restatement: "Specialty thing nothing scores" }],
+    ["done", { no_results: true, no_results_message: "Nothing scores well for this yet. Worth scanning options yourself." }],
+  ], start);
+  check("phase = answered", final.phase, "answered");
+  check("items initialized to empty array", final.items, []);
+  check("noResultsMessage captured", final.noResultsMessage, "Nothing scores well for this yet. Worth scanning options yourself.");
+}
+
+console.log("\n[15] Type 2 (knowledge card) path: knowledge + match events + done");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking", query: "what is sucralose" };
+  const afterKnowledge = replay([
+    ["thinking", {}],
+    ["intent", { restatement: "What is sucralose?" }],
+    ["knowledge", {
+      title: "Sucralose",
+      body: "Sucralose is a chlorinated sucrose derivative...",
+      sources: [{ label: "FDA", url: "https://fda.gov" }],
+    }],
+  ], start);
+  check("phase = answered after knowledge", afterKnowledge.phase, "answered");
+  check("knowledgeCard populated", afterKnowledge.knowledgeCard.title, "Sucralose");
+  check("matches initialized to empty array", afterKnowledge.knowledgeCard.matches, []);
+
+  const final = replay([
+    ["match", { id: "m1", name: "Lakanto Monk Fruit", score: 2 }],
+    ["match", { id: "m2", name: "Wholesome Cane Sugar", score: 2 }],
+    ["done", { response_type: "knowledge" }],
+  ], afterKnowledge);
+  check("matches appended", final.knowledgeCard.matches.length, 2);
+  check("matches in arrival order", final.knowledgeCard.matches.map(m => m.id), ["m1", "m2"]);
+  // `intent` initializes items to [] before we know it's type 2. The page
+  // derives responseType as `knowledgeCard ?? items`, so knowledgeCard
+  // wins and the empty items array is never rendered. Asserting the
+  // actual shape rather than null to lock in the precedence rule.
+  check("items stays empty array on type 2 (harmless, knowledgeCard wins)", final.items, []);
+}
+
+console.log("\n[16] Match before knowledge is dropped");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking" };
+  const out = applyEvent(start, "match", { id: "orphan" });
+  check("orphan match does not create knowledgeCard", out.knowledgeCard, null);
+}
+
+console.log("\n[17] Type 3 path unaffected by hook extension");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking", query: "back to school lunches" };
+  const final = replay([
+    ["thinking", {}],
+    ["intent_classified", { type: "context", context_id: "back_to_school_lunches" }],
+    ["composer_thinking", { phase: "composing" }],
+    ["bundle", {
+      conversation_id: "conv-t3",
+      title: "Back to school, dialed",
+      sections: [{ type: "keep", items: [{ key: "rxbar minis" }] }],
+    }],
+    ["done", { response_type: "context" }],
+  ], start);
+  check("phase = answered", final.phase, "answered");
+  check("bundle captured", final.bundle.title, "Back to school, dialed");
+  check("items still null (type 3 doesn't emit item)", final.items, null);
+  check("knowledgeCard still null (type 3 doesn't emit knowledge)", final.knowledgeCard, null);
+}
+
+console.log("\n[18] Refinement path still unaffected (regression guard)");
+{
+  const start = { ...INITIAL_STATE, phase: "thinking", query: "newborn essentials" };
+  const final = replay([
+    ["thinking", {}],
+    ["intent_classified", { type: "context", context_id: null }],
+    ["refinement_question", {
+      conversation_id: "conv-rg",
+      intent_restatement: "Newborn essentials",
+      questions: [{ id: "q1", text: "How old is the baby?", options: ["0-3mo"] }],
+    }],
+    ["done", { response_type: "refinement_question" }],
+  ], start);
+  check("phase = awaiting_refinement", final.phase, "awaiting_refinement");
+  check("conversationId captured", final.conversationId, "conv-rg");
+  check("items null on refinement path", final.items, null);
+  check("knowledgeCard null on refinement path", final.knowledgeCard, null);
+}
+
+console.log("\n[19] Type 1/2 paths do NOT persist (only awaiting_refinement does)");
+{
+  const storage = makeStorage();
+  const type1State = {
+    ...INITIAL_STATE,
+    phase: "answered",
+    conversationId: null,
+    items: [{ id: "x" }],
+  };
+  persistToStorage(type1State, storage);
+  check("type 1 answered does not persist", storage.getItem(STORAGE_KEY), null);
+
+  const type2State = {
+    ...INITIAL_STATE,
+    phase: "answered",
+    conversationId: null,
+    knowledgeCard: { title: "X", matches: [] },
+  };
+  persistToStorage(type2State, storage);
+  check("type 2 answered does not persist", storage.getItem(STORAGE_KEY), null);
+}
+
+console.log("\n[20] Reset semantics: INITIAL_STATE includes new fields");
+{
+  // Verifies that INITIAL_STATE has the new fields initialized so the
+  // hook's reset() (which calls setState(INITIAL_STATE)) automatically
+  // clears them without page-level help.
+  check("INITIAL_STATE.items = null", INITIAL_STATE.items, null);
+  check("INITIAL_STATE.knowledgeCard = null", INITIAL_STATE.knowledgeCard, null);
+  check("INITIAL_STATE.noResultsMessage = null", INITIAL_STATE.noResultsMessage, null);
+}
+
 // ── Summary ─────────────────────────────────────────────────────
 console.log(`\n${passCount} passed, ${failCount} failed`);
 if (failCount > 0) {
