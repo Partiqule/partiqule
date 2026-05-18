@@ -1,11 +1,18 @@
 #!/usr/bin/env node
-// Pass 1 ambiguity-detection smoke (Phase 2a, session 1 verification).
+// Pass 1 ambiguity-detection smoke (Phase 2a sessions 1 + 5.5).
 //
-// Calls the Pass 1 classifyIntent function on 8 test queries and verifies
-// that needs_refinement matches the expectation per query. The 5 templated
-// queries from the existing voice review smoke should NOT trigger
-// refinement; the 3 new open-ended queries SHOULD trigger refinement and
-// produce a meaningful ambiguity_reason.
+// Calls the Pass 1 classifyIntent function on 13 test queries and
+// verifies that needs_refinement matches the expectation per query.
+// Updated in session 5.5 to invert the templated-context defaults:
+// generic templated queries ("newborn essentials" alone) now SHOULD
+// trigger refinement, while specific templated queries with audience
+// or household signals ("newborn essentials for my pregnant sister")
+// stay needs_refinement=false.
+//
+// Layout:
+//   - cases 1-5:   specific templated queries with sufficient context (false)
+//   - cases 6-10:  generic templated queries lacking context (true + hint)
+//   - cases 11-13: open-ended dynamic queries (true + hint), unchanged
 //
 // Phase 2a's Pass 1 is dual-mode: detects ambiguity for both templated
 // context queries (newborn essentials with no baby age) and open-ended
@@ -16,8 +23,8 @@
 // Usage:
 //   ANTHROPIC_API_KEY=... node backend/scripts/pass1_ambiguity_smoke.js
 //
-// Cost: ~$0.01–$0.02 across 8 Haiku calls.
-// Runtime: 5–15s total.
+// Cost: ~$0.02–$0.04 across 13 Haiku calls.
+// Runtime: 10–25s total.
 
 "use strict";
 
@@ -81,60 +88,97 @@ async function callClaude(system, userPrompt, maxTokens = 400, retries = 1) {
 }
 
 // ── Test cases ────────────────────────────────────────────────────
-// Expected needs_refinement per query, with the reason for the
-// expectation. The 5 templated cases mirror the voice review smoke's
-// existing scenarios so a regression in classifier behavior on those
-// surfaces here too.
+// Expected needs_refinement per query. Session 5.5 restructures into
+// three groups: specific templated (false), generic templated (true),
+// open-ended dynamic (true). Each templated context has a paired
+// clear/ambiguous case so a regression in either direction surfaces.
 const CASES = [
-  // ── Clear queries: needs_refinement should be FALSE ──
+  // ── 1-5: Specific templated with sufficient context → FALSE ──
   {
     n: 1,
-    query: "newborn essentials",
+    query: "newborn essentials for my pregnant sister",
     expect_refinement: false,
-    why: "Templated context, audience clear (newborn)",
+    why: "Audience signal provided (pregnant sister)",
   },
   {
     n: 2,
-    query: "back to school lunches",
+    query: "back to school lunches for my 6 year old",
     expect_refinement: false,
-    why: "Templated context, occasion clear",
+    why: "Age signal provided (6 year old)",
   },
   {
     n: 3,
-    query: "pantry restock",
+    query: "beach day with my husband",
     expect_refinement: false,
-    why: "Templated context, household scope implied",
+    why: "Audience signal provided (husband, adults only)",
   },
   {
     n: 4,
-    query: "ski trip",
+    query: "pantry restock for our family of 4",
     expect_refinement: false,
-    why: "Templated context, occasion clear",
+    why: "Household composition provided (family of 4)",
   },
   {
     n: 5,
-    query: "beach day",
+    query: "road trip snacks for adults only",
     expect_refinement: false,
-    why: "Templated context, occasion clear",
+    why: "Audience signal provided (adults only)",
   },
 
-  // ── Ambiguous queries: needs_refinement should be TRUE ──
+  // ── 6-10: Generic templated lacking context → TRUE ──
   {
     n: 6,
+    query: "newborn essentials",
+    expect_refinement: true,
+    why: "Audience unclear (expecting parent, current parent, or gift)",
+    expect_reason_hints: ["audience", "parent", "gift", "expecting"],
+  },
+  {
+    n: 7,
+    query: "back to school lunches",
+    expect_refinement: true,
+    why: "Age range unclear (elementary, middle, high school)",
+    expect_reason_hints: ["age", "grade", "school", "dietary"],
+  },
+  {
+    n: 8,
+    query: "beach day",
+    expect_refinement: true,
+    why: "Audience unclear (adults, kids, infants)",
+    expect_reason_hints: ["audience", "kid", "adult", "infant", "family", "compos"],
+  },
+  {
+    n: 9,
+    query: "pantry restock",
+    expect_refinement: true,
+    why: "Household composition unclear (kids, adults, dietary restrictions)",
+    expect_reason_hints: ["household", "compos", "kid", "adult", "dietary", "family"],
+  },
+  {
+    n: 10,
+    query: "road trip snacks",
+    expect_refinement: true,
+    why: "Audience and trip duration unclear",
+    expect_reason_hints: ["audience", "duration", "trip", "kid", "adult"],
+  },
+
+  // ── 11-13: Open-ended dynamic queries → TRUE (unchanged from session 1) ──
+  {
+    n: 11,
     query: "I'm going to the pool with my kids today, what should I bring?",
     expect_refinement: true,
     why: "Kid ages unspecified, duration unclear (afternoon vs all day)",
     expect_reason_hints: ["age", "duration", "kid"],
   },
   {
-    n: 7,
+    n: 12,
     query: "I'm packing for Disney, help!",
     expect_refinement: true,
     why: "Multiple plausible category sets, audience composition unclear, trip dates unclear",
     expect_reason_hints: ["date", "audience", "compos", "trip", "duration", "destination"],
   },
   {
-    n: 8,
+    n: 13,
     query: "What's a good cleaner sunscreen?",
     expect_refinement: true,
     why: "Audience scope unclear — sunscreen recommendations differ materially by audience",

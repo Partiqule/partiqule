@@ -170,22 +170,41 @@ Ambiguity rules (set needs_refinement to true and populate ambiguity_reason when
 - Constraints are implied but not specified (e.g., "what should I bring" without budget or duration)
 - Open-ended natural language without enough anchors to compose a focused bundle
 
-For clear queries with no ambiguity, set needs_refinement to false and ambiguity_reason to null. The bar for refinement is "the AI can't responsibly compose a bundle without more info" — NOT "the bundle could be more specific." Queries that map to a known life-moment context (newborn essentials, back to school lunches, pantry restock, ski trip, beach day, road trip, baby first foods, toddler birthday, etc.) default to needs_refinement=false because the templated context carries audience and duration defaults; the composer handles those cases without clarification.
+For clear queries with no ambiguity, set needs_refinement to false and ambiguity_reason to null. The bar for refinement is "the bundle materially differs depending on audience or specifics" — if changing the audience (newborn vs pregnant sister, 6-year-old vs 14-year-old) would change which products are in the bundle, ask first.
 
-Examples that should NOT trigger refinement:
-- "newborn essentials" — context is clear, audience is unambiguous
-- "back to school lunches" — context is clear
-- "best laundry detergent" — product category is clear
+Examples that should NOT trigger refinement (specific products and knowledge queries):
+- "best laundry detergent" — product category is clear, no audience dependence
 - "what is pfas" — knowledge query, no refinement applicable
-- "pantry restock" — context is clear
-- "ski trip" — templated context, family audience defaulted by template
-- "beach day" — templated context, family audience defaulted by template
-- "road trip" — templated context, family audience defaulted by template
+- "best non-toxic sunscreen for adults" — audience signal provided
 
-Examples that SHOULD trigger refinement:
+TEMPLATED CONTEXT REFINEMENT EXAMPLES — paired clear vs ambiguous:
+
+Newborn essentials:
+- "newborn essentials" → needs_refinement: true, ambiguity_reason: "audience unclear (expecting parent, current parent, or gift)"
+- "newborn essentials for my pregnant sister" → needs_refinement: false (audience signal provided)
+
+Back to school lunches:
+- "back to school lunches" → needs_refinement: true, ambiguity_reason: "age range unclear (elementary, middle, high school) and dietary specifics unclear"
+- "back to school lunches for my 8 year old" → needs_refinement: false (age signal provided)
+
+Beach day:
+- "beach day" → needs_refinement: true, ambiguity_reason: "audience unclear (adults, kids, infants)"
+- "beach day for our family with two toddlers" → needs_refinement: false (audience signal provided)
+
+Pantry restock:
+- "pantry restock" → needs_refinement: true, ambiguity_reason: "household composition unclear (kids, adults, dietary restrictions)"
+- "pantry restock for our family of 4" → needs_refinement: false (household signal provided)
+
+Road trip snacks:
+- "road trip snacks" → needs_refinement: true, ambiguity_reason: "audience and trip duration unclear"
+- "road trip snacks for adults only" → needs_refinement: false (audience signal provided; duration is optional, composer defaults handle it)
+
+Open-ended dynamic examples that SHOULD trigger refinement:
 - "I'm going to the pool with my kids today, what should I bring?" — pool day context BUT kid ages unspecified, duration unclear (afternoon vs all day)
 - "I'm packing for Disney, help!" — multiple plausible category sets (travel, sun protection, snacks, comfort), audience composition unclear, trip duration unclear
-- "What's a good cleaner sunscreen?" — sunscreen category clear BUT audience scope unclear (adult vs kid vs newborn) — sunscreen recommendations differ materially by audience
+- "What's a good cleaner sunscreen?" — sunscreen category clear BUT audience scope unclear (adult vs kid vs newborn); sunscreen recommendations differ materially by audience
+
+General principle — AUDIENCE is the gating signal. If a templated query specifies who the bundle is for (age, household composition, adults-only, husband, pregnant sister, kids, family of N, etc.), set needs_refinement: false. The composer applies safe defaults for unspecified secondary attributes (trip duration, dietary restrictions, allergies, timing). Only set needs_refinement: true when the AUDIENCE itself is ambiguous or absent. Do not fire refinement just because secondary specifics like duration or dietary are unspecified — those have working defaults.
 
 Reserved fields (always null in Pass 1; Phase 2b populates):
 - decomposed_categories — null
