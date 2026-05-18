@@ -10,10 +10,12 @@
 // Items arrive in score-ascending order from the backend, but we sort
 // client-side as well so out-of-order delivery doesn't matter.
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { PLACEHOLDER_EXAMPLES, FAKE_LIST_NAMES, EXAMPLE_QUERIES, NOVA_LABEL } from "./fixtures";
 import ContextBundleCard from "./ContextBundleCard";
 import KnowledgeCard from "./KnowledgeCard";
+import RefinementCard from "./RefinementCard";
+import useAskConversation from "./useAskConversation";
 
 // ── Design tokens (token-only, no inline hex) ─────────────────────
 const CARD_SHAPE = "14px 10px 15px 12px / 10px 15px 12px 14px";
@@ -329,7 +331,7 @@ const SaveAllSheet = ({ defaultName, onCancel, onSave }) => {
 };
 
 // ── Thinking state ───────────────────────────────────────────────
-const THINKING_COPY = ["Reading labels...", "Scoring the options...", "Thinking..."];
+const THINKING_COPY = ["Reading your question...", "Scoring the options...", "Thinking..."];
 const ThinkingState = () => {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -429,55 +431,27 @@ const ResponseCard = ({ response, expandedItems, onToggleExpand, onAddToList, on
   );
 };
 
-// ── SSE stream parser ───────────────────────────────────────────
-// EventSource doesn't support POST, so we use fetch + ReadableStream and
-// parse the `event: <name>\ndata: <json>\n\n` framing by hand. Callbacks
-// fire for each event; abort signal cancels the in-flight stream when
-// the user submits again or unmounts.
-async function streamAskResponse({ apiBase, authHeaders, query, signal, onEvent }) {
-  const headers = { "Content-Type": "application/json", Accept: "text/event-stream" };
-  try {
-    const auth = await authHeaders?.();
-    if (auth && typeof auth === "object") Object.assign(headers, auth);
-  } catch {}
-
-  const res = await fetch(`${apiBase}/ask`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query }),
-    signal,
-  });
-  if (!res.ok || !res.body) {
-    onEvent("error", { error: "http", status: res.status, message: "Couldn't reach the Ask service." });
-    return;
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let idx;
-    while ((idx = buffer.indexOf("\n\n")) !== -1) {
-      const raw = buffer.slice(0, idx);
-      buffer = buffer.slice(idx + 2);
-      if (!raw.trim()) continue;
-      let event = "message";
-      const dataLines = [];
-      for (const line of raw.split("\n")) {
-        if (line.startsWith("event:")) event = line.slice(6).trim();
-        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
-      }
-      let payload = {};
-      if (dataLines.length) {
-        try { payload = JSON.parse(dataLines.join("\n")); } catch { payload = {}; }
-      }
-      onEvent(event, payload);
-    }
-  }
+// ── Error copy (voice-kit clean) ────────────────────────────────
+// Centralized so every refuse / error branch surfaces the same voice.
+// errorCode values come from backend/ask.js refuse reasons and the
+// hook's internal codes (empty_bundle, network, http).
+const ERROR_COPY = {
+  empty_bundle: "We couldn't put together a strong bundle for that yet. Try a specific product instead.",
+  context_not_recognized: "We don't have this mapped yet. Try a more specific question. Or scan products to expand coverage.",
+  conversation_expired: "That conversation expired. Ask again.",
+  conversation_not_found: "That conversation isn't available. Start a fresh question.",
+  conversation_ownership: "That conversation belongs to a different session. Start a fresh question.",
+  missing_conversation_id: "We lost the thread. Start a fresh question.",
+  pool_empty: "We don't have enough verified products for that yet. Worth scanning the category yourself.",
+  rate_limit: "Take a break. Try again in a bit.",
+  too_short: "Tell us what you're shopping for.",
+  unclear: "Tell us more about what you need.",
+  network: "We couldn't reach the Ask service. Try again in a moment.",
+  http: "Something didn't connect. Try again.",
+};
+function errorCopyFor(convo) {
+  if (convo?.errorCode && ERROR_COPY[convo.errorCode]) return ERROR_COPY[convo.errorCode];
+  return convo?.errorMessage || "Something didn't land. Try a different question.";
 }
 
 // ── Top-level page ──────────────────────────────────────────────
@@ -489,25 +463,19 @@ const AskPrototypePage = ({
   buyLinksFor,
 }) => {
   const [query, setQuery] = useState("");
-  // phase: "idle" | "thinking" | "answered" | "tooShort" | "nomatch" | "refused" | "error"
-  const [phase, setPhase] = useState("idle");
-  // responseType determines which render path renders: "product" → ProductList
-  // (existing ResponseCard), "knowledge" → KnowledgeCard. Set from the first
-  // post-intent event that carries content. Reset to null on each submit.
-  const [responseType, setResponseType] = useState(null);
-  const [response, setResponse] = useState(null);
-  const [knowledgeResponse, setKnowledgeResponse] = useState(null);
-  const [knowledgeMatches, setKnowledgeMatches] = useState([]);
-  // R5b.3 v2 — context bundle response from backend/composer.js.
-  // One "bundle" SSE event per request, no incremental items.
-  const [bundleResponse, setBundleResponse] = useState(null);
-  // R5b.3 Phase 1 — loading indicator for the composer phase. True
-  // between composer_thinking and bundle SSE events. Closes the
-  // blank-screen gap caused by phase transitioning to "answered" on
-  // intent_classified while bundleResponse is still null. Reset on
-  // every submit so the prior state doesn't leak between requests.
-  const [composerThinking, setComposerThinking] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  // R5b.3 Phase 2a session 5 — conversation state owned by the hook.
+  // The hook holds: phase, items (type 1), knowledgeCard (type 2),
+  // bundle (type 3), refinementQuestions / refinementAnswers /
+  // conversationId (type 3 refinement turn), errorMessage / errorCode,
+  // and the intent restatement. Persistence to sessionStorage with
+  // 7-day TTL is handled inside the hook.
+  const { state: convo, submitQuery, submitRefinementAnswers, reset: resetConvo } =
+    useAskConversation({ apiBase, authHeaders });
+
+  // tooShort is a pre-flight check before the hook even fires, so it
+  // stays at the page level. Cleared whenever the user types again.
+  const [tooShort, setTooShort] = useState(false);
+
   // R5a r2 — placeholder is a single random pick per page load. Lazy
   // useState initializer runs once on mount and never re-randomizes on
   // focus or input changes. Sara called the rotating version distracting.
@@ -523,13 +491,34 @@ const AskPrototypePage = ({
   const [expandedItems, setExpandedItems] = useState({});
   const [toast, setToast] = useState("");
   const toastTimer = useRef(null);
-  const abortRef = useRef(null);
   const textareaRef = useRef(null);
 
   useEffect(() => () => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    if (abortRef.current) { try { abortRef.current.abort(); } catch {} }
   }, []);
+
+  // Render-time response type derivation. Bundle wins over knowledge,
+  // knowledge wins over items. The `items` check is non-empty OR
+  // no-results: the hook initializes items=[] on the `intent` event
+  // before we know whether the path is type 1 or type 2, and we don't
+  // want to render an empty ResponseCard during the brief window
+  // before a type 2 `knowledge` event arrives.
+  const itemsReady = Array.isArray(convo.items)
+    && (convo.items.length > 0 || convo.noResultsMessage != null);
+  const responseType = convo.bundle
+    ? "context"
+    : convo.knowledgeCard
+      ? "knowledge"
+      : itemsReady
+        ? "product"
+        : null;
+
+  // Reset collapsed-detail tracking on every new conversation. Without
+  // this, expanding an item in result A would leak the expanded state
+  // into result B if they happened to share an id.
+  useEffect(() => {
+    if (convo.phase === "thinking") setExpandedItems({});
+  }, [convo.phase]);
 
   const showToast = (message) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -542,7 +531,8 @@ const AskPrototypePage = ({
   // module; the frontend resolves them via the same helper used on the
   // scan-result CTAs and the list page. Works for type 1 items
   // (product_name field) and type 2 match events (name field) — both
-  // route through the same chip set.
+  // route through the same chip set. Applied at render time now that
+  // the hook stores raw payloads.
   const decorateItem = (raw) => {
     const next = { ...raw };
     if (!next.buy_links) {
@@ -553,181 +543,51 @@ const AskPrototypePage = ({
     return next;
   };
 
-  const submit = async (overrideQuery) => {
-    // The suggested-action handler calls submit(q) with a synthetic query
-    // ("cleaner clothing" / "cleaner cookware"). Reading from the override
-    // bypasses React batching on setQuery, so the SSE stream uses the new
-    // query immediately even before the controlled textarea re-renders.
+  // Type 1: hook stores items in receive order. Sort by score ascending
+  // for the render path; decorate with buy_links at the same time.
+  const sortedItems = useMemo(() => {
+    if (!Array.isArray(convo.items)) return null;
+    const decorated = convo.items.map(decorateItem);
+    return decorated.sort((a, b) => {
+      const sa = a.score == null ? 99 : a.score;
+      const sb = b.score == null ? 99 : b.score;
+      return sa - sb;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convo.items, buyLinksFor]);
+
+  // Type 2: decorate knowledge matches with buy_links at render time.
+  const decoratedMatches = useMemo(() => {
+    const matches = convo.knowledgeCard?.matches;
+    if (!Array.isArray(matches)) return [];
+    return matches.map(decorateItem);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convo.knowledgeCard, buyLinksFor]);
+
+  const submit = (overrideQuery) => {
+    // Suggested-action handlers pass synthetic queries directly so the
+    // hook fires with the new value before the controlled textarea
+    // re-renders.
     const q = (typeof overrideQuery === "string" ? overrideQuery : query).trim();
     if (!q) return;
-    if (q.length < 3) {
-      setPhase("tooShort");
-      setResponse(null);
-      return;
-    }
-    if (abortRef.current) { try { abortRef.current.abort(); } catch {} }
-    const controller = new AbortController();
-    abortRef.current = controller;
+    if (q.length < 3) { setTooShort(true); return; }
+    setTooShort(false);
+    submitQuery(q);
+  };
 
-    setPhase("thinking");
-    setResponse(null);
-    setResponseType(null);
-    setKnowledgeResponse(null);
-    setKnowledgeMatches([]);
-    setBundleResponse(null);
-    setComposerThinking(false);
-    setErrorMessage("");
+  const handleRefinementSubmit = (payload) => {
+    submitRefinementAnswers(payload || { answers: [], skipped: [] });
+  };
+
+  // "Start a different question" — abandons an awaiting_refinement
+  // turn or wipes a finished result so the user can begin fresh. The
+  // hook's reset() clears all conversation state and persisted storage.
+  const startOver = () => {
+    resetConvo();
+    setTooShort(false);
+    setQuery("");
     setExpandedItems({});
-
-    // Streaming state held in refs so the SSE callbacks see latest values
-    // without React batching deferring them between events.
-    const state = { intent: null, items: [], doneFired: false, responseType: null };
-    const flush = (extra = {}) => {
-      const sorted = [...state.items].sort((a, b) => {
-        const sa = a.score == null ? 99 : a.score;
-        const sb = b.score == null ? 99 : b.score;
-        return sa - sb;
-      });
-      setResponse(prev => ({
-        intent_restatement: state.intent?.restatement || prev?.intent_restatement || "",
-        items: sorted,
-        ...extra,
-      }));
-    };
-
-    try {
-      await streamAskResponse({
-        apiBase,
-        authHeaders,
-        query: q,
-        signal: controller.signal,
-        onEvent: (event, payload) => {
-          if (controller.signal.aborted) return;
-          if (event === "thinking") return;
-          if (event === "intent") {
-            state.intent = payload;
-            // Surface restatement immediately so the user sees the
-            // rephrased question while items are still framing.
-            flush();
-            setPhase("answered");
-            return;
-          }
-          if (event === "item") {
-            // First content event after intent decides the render path.
-            if (!state.responseType) {
-              state.responseType = "product";
-              setResponseType("product");
-            }
-            state.items.push(decorateItem(payload));
-            flush();
-            return;
-          }
-          if (event === "knowledge") {
-            state.responseType = "knowledge";
-            setResponseType("knowledge");
-            setKnowledgeResponse(payload);
-            setPhase("answered");
-            return;
-          }
-          if (event === "match") {
-            // Knowledge matches arrive after the knowledge event. Decorate
-            // with buy_links the same way type 1 items do — the partner
-            // tag lives in the frontend helper so the backend stays clean.
-            setKnowledgeMatches(prev => [...prev, decorateItem(payload)]);
-            return;
-          }
-          if (event === "intent_classified") {
-            // R5b.3 v2 context bundles emit this immediately after intent
-            // so the surface can route to ContextBundleCard early without
-            // waiting for the composer (4-8s) to finish.
-            if (payload?.type === "context") {
-              state.responseType = "context";
-              setResponseType("context");
-              setPhase("answered");
-            }
-            return;
-          }
-          if (event === "composer_thinking") {
-            // Composer entered AI-call phase. Show the ComposingState
-            // loading indicator until the bundle (or a refuse/error)
-            // arrives. Without this, the surface goes blank between
-            // intent_classified and bundle because phase is already
-            // "answered" but bundleResponse is still null.
-            setComposerThinking(true);
-            return;
-          }
-          if (event === "bundle") {
-            // Context bundle payload from backend/composer.js. Single
-            // event — no incremental items. Render through ContextBundleCard.
-            //
-            // Empty-bundle defense: production has shown bundles arriving
-            // with sections === [] or all items === []. Rendering an
-            // empty bundle card causes a render-then-disappear flicker.
-            // Treat empty bundles as a refuse so the user sees the same
-            // recoverable state as other type 3 misses, and console.warn
-            // for diagnosis.
-            setComposerThinking(false);
-            const sections = Array.isArray(payload?.sections) ? payload.sections : [];
-            const hasAnyContent = sections.some(s => Array.isArray(s?.items) && s.items.length > 0);
-            if (!hasAnyContent) {
-              console.warn("[ask] empty bundle received; routing to refuse state", {
-                context_id: payload?.context_id,
-                title: payload?.title,
-                section_count: sections.length,
-                composition_source: payload?.composition_source,
-              });
-              state.responseType = "context";
-              setResponseType("context");
-              setBundleResponse(null);
-              setErrorMessage("We couldn't put together a strong bundle for that yet. Try a specific product instead.");
-              setPhase("refused");
-              return;
-            }
-            state.responseType = "context";
-            setResponseType("context");
-            setBundleResponse(payload);
-            setPhase("answered");
-            return;
-          }
-          if (event === "done") {
-            state.doneFired = true;
-            if (state.responseType === "knowledge" || state.responseType === "context") {
-              // Knowledge / bundle already rendered; done is just terminal.
-              setPhase("answered");
-              return;
-            }
-            if (payload?.no_results) {
-              setResponse({
-                intent_restatement: state.intent?.restatement || "",
-                items: [],
-                no_match_message: payload.no_results_message || null,
-              });
-              setPhase("answered");
-            } else {
-              flush();
-              setPhase("answered");
-            }
-            return;
-          }
-          if (event === "refuse") {
-            setComposerThinking(false);
-            setErrorMessage(payload?.message || "Try asking for a specific product instead.");
-            setPhase("refused");
-            return;
-          }
-          if (event === "error") {
-            setComposerThinking(false);
-            setErrorMessage(payload?.message || "Something went wrong. Try again.");
-            setPhase("error");
-            return;
-          }
-        },
-      });
-    } catch (e) {
-      if (e?.name === "AbortError") return;
-      setErrorMessage("Couldn't reach the Ask service.");
-      setPhase("error");
-    }
+    setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
   const toggleExpand = (id) => setExpandedItems(s => ({ ...s, [id]: !s[id] }));
@@ -769,7 +629,7 @@ const AskPrototypePage = ({
           <textarea
             ref={textareaRef}
             value={query}
-            onChange={e => { setQuery(e.target.value); autoGrow(e); }}
+            onChange={e => { setQuery(e.target.value); autoGrow(e); if (tooShort) setTooShort(false); }}
             onKeyDown={e => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -797,51 +657,51 @@ const AskPrototypePage = ({
             }}
           />
           <div>
-            <PillButton onClick={submit} disabled={query.trim().length === 0 || phase === "thinking"}>
-              {phase === "thinking" ? "Asking..." : "Ask"}
+            <PillButton onClick={() => submit()} disabled={query.trim().length === 0 || convo.phase === "thinking"}>
+              {convo.phase === "thinking" ? "Asking..." : "Ask"}
             </PillButton>
           </div>
         </div>
 
-        {phase === "thinking" && <ThinkingState/>}
-        {phase === "tooShort" && <TooShort/>}
-        {phase === "nomatch" && (
-          <NoMatch onPickExample={(eq) => {
-            setQuery(eq);
-            setPhase("idle");
-            setResponse(null);
-            setTimeout(() => textareaRef.current?.focus(), 0);
-          }}/>
+        {convo.phase === "thinking" && <ThinkingState/>}
+        {tooShort && convo.phase === "idle" && <TooShort/>}
+
+        {convo.phase === "awaiting_refinement" && (
+          <>
+            <RefinementCard
+              questions={convo.refinementQuestions}
+              intentRestatement={convo.intentRestatement}
+              isMobile={isMobile}
+              onSubmit={handleRefinementSubmit}
+            />
+            <div style={{marginTop: 20}}>
+              <QuietButton onClick={startOver} ariaLabel="Ask something else">
+                Ask something else
+              </QuietButton>
+            </div>
+          </>
         )}
-        {(phase === "refused" || phase === "error") && (
+
+        {convo.phase === "composing" && <ComposingState/>}
+
+        {(convo.phase === "refused" || convo.phase === "error") && (
           <div style={{padding:"24px 0"}}>
             <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:18, fontWeight:400, letterSpacing:"-0.005em", color:"var(--ink)", marginBottom:14, lineHeight:1.45}}>
-              {errorMessage}
+              {errorCopyFor(convo)}
             </div>
-            <NoMatch onPickExample={(eq) => {
-              setQuery(eq);
-              setPhase("idle");
-              setResponse(null);
-              setErrorMessage("");
-              setTimeout(() => textareaRef.current?.focus(), 0);
-            }}/>
+            <NoMatch onPickExample={(eq) => { setQuery(eq); startOver(); setTimeout(() => submit(eq), 0); }}/>
           </div>
         )}
-        {composerThinking && !bundleResponse && phase !== "refused" && phase !== "error" && (
-          <ComposingState/>
-        )}
-        {phase === "answered" && responseType === "context" && bundleResponse && (
+
+        {convo.phase === "answered" && responseType === "context" && convo.bundle && (
           <ContextBundleCard
-            bundle={bundleResponse}
+            bundle={convo.bundle}
             isMobile={isMobile}
             buyLinksFor={buyLinksFor}
             onSuggestedAction={(action) => {
               if (!action) return;
               // save_list → prompt user to name the bundle and save.
-              if (action.type === "save_list") {
-                setSavingAll(true);
-                return;
-              }
+              if (action.type === "save_list") { setSavingAll(true); return; }
               // scan_more → focus the input so the user can ask the
               // next question. The real scan affordance lives outside
               // this prototype.
@@ -858,10 +718,11 @@ const AskPrototypePage = ({
             }}
           />
         )}
-        {phase === "answered" && responseType === "knowledge" && knowledgeResponse && (
+
+        {convo.phase === "answered" && responseType === "knowledge" && convo.knowledgeCard && (
           <KnowledgeCard
-            knowledge={knowledgeResponse}
-            matches={knowledgeMatches}
+            knowledge={convo.knowledgeCard}
+            matches={decoratedMatches}
             isMobile={isMobile}
             onSuggestedAction={(action) => {
               if (!action) return;
@@ -884,21 +745,22 @@ const AskPrototypePage = ({
                 submit(nextQuery);
                 return;
               }
-              // scan_more → focus the Ask input so the user can pick the
-              // next question. The proper home-page scan affordance lives
-              // outside this prototype surface; routing into it is R5c.
               if (kind === "scan_more") {
                 setTimeout(() => textareaRef.current?.focus(), 0);
                 return;
               }
-              // learn_more → no-op for now. Future: expand sources in
-              // place or route to a glossary view.
+              // learn_more → no-op for now.
             }}
           />
         )}
-        {phase === "answered" && responseType !== "knowledge" && responseType !== "context" && response && (
+
+        {convo.phase === "answered" && responseType === "product" && sortedItems && (
           <ResponseCard
-            response={response}
+            response={{
+              intent_restatement: convo.intentRestatement || "",
+              items: sortedItems,
+              no_match_message: convo.noResultsMessage,
+            }}
             expandedItems={expandedItems}
             onToggleExpand={toggleExpand}
             onAddToList={onAddToList}
