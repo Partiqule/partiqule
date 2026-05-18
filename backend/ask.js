@@ -43,6 +43,7 @@ const {
   CONSUMABLE_CATEGORIES,
   DURABLE_CATEGORIES,
 } = require("./composer");
+const { generateRefinementQuestions, fetchScanHistoryForRefinement } = require("./refinement");
 
 // ── ENV ──────────────────────────────────────────────────────────
 const ASK_PASS1_MODEL = process.env.ASK_PASS1_MODEL || "claude-haiku-4-5-20251001";
@@ -1203,63 +1204,137 @@ function audienceConstraintHash(intent) {
   return crypto.createHash("sha1").update(`${aud}|${constraints}`).digest("hex").slice(0, 10);
 }
 
-async function handleContextQuery(deps, ctx) {
-  const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
-  const { callClaudeSonnet, supabaseAdmin, redisGet, redisSetEx, hasRedis, CALIBRATION } = deps;
+// ── CONVERSATION TABLE HELPERS (Phase 2a session 3) ─────────────
+// Conversations table holds multi-turn state for Ask queries that
+// needed refinement. Each row is one conversation thread spanning
+// the initial query, the refinement Q/A round, and the eventual
+// bundle. The turns jsonb array holds the sequence of intent +
+// refinement + bundle objects so Phase 3 (post-launch) can scan the
+// full history when composing follow-up bundles. TTL 7d anon / 30d
+// authed; cron implementation deferred per the Phase 2a spec.
+//
+// Ownership model: possession of the conversation_id UUID is the
+// auth token. The UUID is unguessable and only returned to the
+// client that triggered the conversation. Authed users get an
+// additional defense: server verifies user_id on the conversation
+// row matches the JWT user_id on the answer request. Anonymous
+// users have no additional check beyond UUID possession.
 
-  // 1. Resolve the context from the query.
-  const context = findContextFromQuery(rawQuery, intent);
-  if (!context) {
-    sse.emit("refuse", {
-      reason: "context_not_recognized",
-      message: "That context isn't covered yet. Try asking for a specific product or category.",
-    });
-    sse.end();
-    writeAuditLog(deps, {
-      user_id: userId, query: rawQuery, normalized_query: normalized,
-      parsed_intent: intent, classification_confidence: intent.confidence,
-      error: "context_not_recognized",
-      duration_ms: Date.now() - requestStartMs,
-      cached_intent: cachedIntent, cached_framings: [],
-    });
-    return;
+const CONVERSATION_TTL_ANON_DAYS  = 7;
+const CONVERSATION_TTL_AUTHED_DAYS = 30;
+
+async function createConversation({ supabaseAdmin }, { userId, sessionId, initialTurn }) {
+  if (!supabaseAdmin) return null;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("conversations")
+      .insert({
+        user_id: userId || null,
+        session_id: sessionId || null,
+        turns: [initialTurn],
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return data?.id || null;
+  } catch (e) {
+    console.warn("[ask] createConversation failed:", e?.message);
+    return null;
   }
+}
 
-  // 2. Build the pool from calibration.
-  const pool = buildPool(CALIBRATION, context, intent);
-  if (!pool.length) {
-    sse.emit("refuse", {
-      reason: "pool_empty",
-      message: "Calibration coverage for this context is thin. Worth scanning the categories yourself.",
-    });
-    sse.end();
-    writeAuditLog(deps, {
-      user_id: userId, query: rawQuery, normalized_query: normalized,
-      parsed_intent: intent, classification_confidence: intent.confidence,
-      context_id: context.id,
-      context_categories: context.categories.map(c => c.slug),
-      error: "pool_empty",
-      duration_ms: Date.now() - requestStartMs,
-      cached_intent: cachedIntent, cached_framings: [],
-    });
-    return;
+async function loadConversation({ supabaseAdmin }, conversationId) {
+  if (!supabaseAdmin || !conversationId) return null;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("conversations")
+      .select("id, user_id, session_id, turns, created_at, last_active_at")
+      .eq("id", conversationId)
+      .maybeSingle();
+    if (error) throw error;
+    return data || null;
+  } catch (e) {
+    console.warn("[ask] loadConversation failed:", e?.message);
+    return null;
   }
+}
 
-  // 3. Build user scan history when authed.
-  const broadCats = buildContextBroadCategories(context);
-  const scanHistory = userId
-    ? await fetchScanHistoryForContext(deps, userId, broadCats)
-    : [];
+function isConversationExpired(conversation) {
+  if (!conversation || !conversation.last_active_at) return true;
+  const ttlDays = conversation.user_id ? CONVERSATION_TTL_AUTHED_DAYS : CONVERSATION_TTL_ANON_DAYS;
+  const cutoff = Date.now() - (ttlDays * 24 * 60 * 60 * 1000);
+  return new Date(conversation.last_active_at).getTime() < cutoff;
+}
+
+function conversationOwnershipOK(conversation, requestUserId) {
+  if (!conversation) return false;
+  // Anonymous conversation: UUID possession is sufficient (the UUID
+  // was only returned to the originating client). For belt-and-
+  // suspenders, an authed user cannot answer an anonymous
+  // conversation and vice versa.
+  if (conversation.user_id === null) return requestUserId === null;
+  return conversation.user_id === requestUserId;
+}
+
+async function updateConversationWithAnswers({ supabaseAdmin }, conversationId, turnUpdate) {
+  if (!supabaseAdmin || !conversationId) return null;
+  try {
+    // Load current turns, mutate the last turn, write back. Simpler
+    // than a partial jsonb update; conversation turns are small.
+    const { data: row, error: loadErr } = await supabaseAdmin
+      .from("conversations")
+      .select("turns")
+      .eq("id", conversationId)
+      .single();
+    if (loadErr) throw loadErr;
+    const turns = Array.isArray(row?.turns) ? row.turns : [];
+    if (turns.length === 0) {
+      throw new Error("conversation has no turns to update");
+    }
+    turns[turns.length - 1] = { ...turns[turns.length - 1], ...turnUpdate };
+    const { error: updateErr } = await supabaseAdmin
+      .from("conversations")
+      .update({ turns, last_active_at: new Date().toISOString() })
+      .eq("id", conversationId);
+    if (updateErr) throw updateErr;
+    return turns;
+  } catch (e) {
+    console.warn("[ask] updateConversationWithAnswers failed:", e?.message);
+    return null;
+  }
+}
+
+// ── COMPOSE BUNDLE + STREAM (refactored from handleContextQuery) ─
+// Shared between the no-refinement path (direct from /ask handler)
+// and the refinement-answered path (from /ask/refinement_answer
+// handler). Takes the resolved context + pool + scan history +
+// optional refinement payload, fires composer, streams bundle, and
+// writes the audit row.
+//
+// useCache controls whether to read/write the bundle cache. The
+// no-refinement path uses cache normally; the refinement-answered
+// path bypasses cache (the v6 cache key doesn't hash refinement
+// answers — session 6 work). Refinement-flow bundles compose fresh
+// every time until then.
+async function composeBundleAndStream(deps, opts) {
+  const {
+    sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
+    context, pool, scanHistory, broadCats,
+    refinement,           // { answers: [...], skipped: [...] } or null
+    conversationId,       // null when no conversation active
+    useCache,
+    refinementQuestionsCount, // for audit when refinement was active
+  } = opts;
+  const { callClaudeSonnet, redisGet, redisSetEx, hasRedis } = deps;
+
   const scanSig = userId ? scanSignature(scanHistory) : null;
-
-  // 4. Cache lookup.
   const audHash = audienceConstraintHash(intent);
   const cacheKey = bundleCacheKey(context.id, audHash, scanSig);
-  const cacheTtlSec = userId ? 86400 : 604800; // authed 1d, anon 7d
+  const cacheTtlSec = userId ? 86400 : 604800;
 
   let bundleResult = null;
   let cachedBundle = false;
-  if (hasRedis) {
+  if (useCache && hasRedis) {
     try {
       const hit = await redisGet(cacheKey);
       if (hit && typeof hit === "object" && hit.bundle && Array.isArray(hit.bundle.sections)) {
@@ -1269,17 +1344,22 @@ async function handleContextQuery(deps, ctx) {
     } catch {}
   }
 
-  // 5. Emit early progress so the frontend can swap from "thinking"
-  // to a richer state while the composer runs (4-8 seconds).
   sse.emit("intent_classified", { type: "context", context_id: context.id });
   if (!cachedBundle) sse.emit("composer_thinking", { phase: "composing" });
 
-  // 6. Compose if no cache hit.
   if (!bundleResult) {
     try {
       bundleResult = await composePersonalizedBundle({
         context,
-        constraints: { audience: intent.audience, constraints: intent.constraints, occasion: intent.occasion },
+        // Refinement answers attach to constraints. The composer reads
+        // constraints as opaque JSON in its prompt, so the AI sees the
+        // refinement context without changes to composer behavior.
+        constraints: {
+          audience: intent.audience,
+          constraints: intent.constraints,
+          occasion: intent.occasion,
+          refinement: refinement || null,
+        },
         pool,
         scanHistory,
         contextBroadCategories: broadCats,
@@ -1297,29 +1377,29 @@ async function handleContextQuery(deps, ctx) {
         error: `composer_failed:${err?.message?.slice(0, 80) || "unknown"}`,
         duration_ms: Date.now() - requestStartMs,
         cached_intent: cachedIntent, cached_framings: [],
+        refinement_fired: refinement != null,
+        refinement_questions_count: refinementQuestionsCount || null,
+        refinement_answered_count: refinement?.answers?.length || null,
+        refinement_skipped_count:  refinement?.skipped?.length || null,
       });
       return;
     }
-    if (hasRedis) redisSetEx(cacheKey, bundleResult, cacheTtlSec).catch(() => {});
+    if (useCache && hasRedis) redisSetEx(cacheKey, bundleResult, cacheTtlSec).catch(() => {});
   }
 
-  // 7. Emit bundle and finalize.
   sse.emit("bundle", {
     context_id: context.id,
     name: context.name,
     label: context.label,
     title: bundleResult.bundle.title,
     intro: bundleResult.bundle.intro,
-    // Narrative wrapper fields. Optional — only present when the
-    // composer produced them and they survived validation. Forwarded
-    // verbatim so the frontend renders them via AntiPatternCallout
-    // and StartHereClose without further shape massaging.
     anti_pattern: bundleResult.bundle.anti_pattern || null,
     start_here:   bundleResult.bundle.start_here   || null,
     sections: bundleResult.bundle.sections,
     suggested_action: bundleResult.bundle.suggested_action,
     cached: cachedBundle,
     composition_source: bundleResult.metadata?.composition_source || "ai",
+    conversation_id: conversationId || null,
   });
 
   sse.emit("done", {
@@ -1328,7 +1408,6 @@ async function handleContextQuery(deps, ctx) {
   });
   sse.end();
 
-  // 8. Audit log.
   const meta = bundleResult.metadata || {};
   writeAuditLog(deps, {
     user_id: userId,
@@ -1348,7 +1427,6 @@ async function handleContextQuery(deps, ctx) {
     duration_ms: Date.now() - requestStartMs,
     cached_intent: cachedIntent,
     cached_framings: cachedBundle ? [context.id] : [],
-    // R5b.3 v2 composer-specific audit columns (migration 018).
     pool_size: pool.length,
     pool_ids: pool.map(p => p.product_id),
     scan_history_size: meta.scan_history_size || (userId ? scanHistory.length : 0),
@@ -1358,6 +1436,307 @@ async function handleContextQuery(deps, ctx) {
     final_section_types: meta.final_section_types || [],
     final_product_ids: meta.final_product_ids || [],
     composition_source: meta.composition_source || "ai",
+    refinement_fired: refinement != null,
+    refinement_questions_count: refinementQuestionsCount || null,
+    refinement_answered_count: refinement?.answers?.length || null,
+    refinement_skipped_count:  refinement?.skipped?.length || null,
+  });
+
+  // Persist the conversation turn update with the final bundle when
+  // a conversation was active.
+  if (conversationId && refinement) {
+    updateConversationWithAnswers(deps, conversationId, {
+      bundle: bundleResult.bundle,
+      bundle_at: new Date().toISOString(),
+    });
+  }
+}
+
+async function handleContextQuery(deps, ctx) {
+  const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
+  const { callClaude, supabaseAdmin, CALIBRATION } = deps;
+  const sessionId = ctx.sessionId || null;
+
+  // Try to resolve the templated context. This can return null for
+  // open-ended dynamic queries that don't map cleanly to contexts.js.
+  // Refinement can fire without a context (Phase 2a foundation for
+  // Phase 2b dynamic context expansion). The no-refinement path
+  // still requires a context — refuses if none found.
+  const context = findContextFromQuery(rawQuery, intent);
+
+  // ── REFINEMENT BRANCH (Phase 2a session 3) ────────────────────
+  // Fired first, BEFORE context-resolution refuse. Pass 1 set
+  // needs_refinement when the query is ambiguous enough to benefit
+  // from clarification — open-ended queries that don't match a
+  // template are exactly the ones that need refinement most. When
+  // context is null, the kid-context filter just doesn't apply
+  // (Pass 1.5 handles contextId=null fine). After the user answers
+  // the refinement, /ask/refinement_answer attempts context
+  // resolution again with the augmented intent; if still no
+  // context, refuses there (Phase 2b will close that gap with
+  // dynamic context expansion).
+  if (intent.needs_refinement === true) {
+    // Scan history for refinement uses fetchScanHistoryForRefinement
+    // (refinement.js) rather than fetchScanHistoryForContext (ask.js).
+    // The refinement variant returns ALL recent scans for the user
+    // (with only the kid-context filter applied) instead of pre-
+    // filtering by broad categories. Pass 1.5 needs the full picture
+    // to generate moat-aware questions; broad-category filtering only
+    // makes sense after a templated context is resolved, which may
+    // not happen for open-ended queries until Phase 2b.
+    const scanHistory = userId
+      ? await fetchScanHistoryForRefinement({
+          supabaseAdmin: deps.supabaseAdmin,
+          userId,
+          contextId: context?.id || null,
+        })
+      : [];
+
+    let refinementResult = null;
+    try {
+      refinementResult = await generateRefinementQuestions({
+        intent,
+        scanHistory,
+        contextId: context?.id || null,
+        callClaude,
+      });
+    } catch (err) {
+      // Pass 1.5 failed twice. Two recovery paths:
+      //   - If context was found: graceful degrade, compose without refinement.
+      //   - If context was null: refuse — can't compose anything.
+      console.warn("[ask] Pass 1.5 failed:", err?.message);
+      if (context) {
+        const pool = buildPool(CALIBRATION, context, intent);
+        if (pool.length) {
+          await composeBundleAndStream(deps, {
+            sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
+            context, pool, scanHistory, broadCats,
+            refinement: null,
+            conversationId: null,
+            useCache: true,
+            refinementQuestionsCount: null,
+          });
+          return;
+        }
+      }
+      sse.emit("refuse", {
+        reason: "refinement_failed",
+        message: "Couldn't generate clarifying questions for that. Try a more specific query.",
+      });
+      sse.end();
+      writeAuditLog(deps, {
+        user_id: userId, query: rawQuery, normalized_query: normalized,
+        parsed_intent: intent, classification_confidence: intent.confidence,
+        error: `refinement_failed:${err?.message?.slice(0, 80) || "unknown"}`,
+        duration_ms: Date.now() - requestStartMs,
+        cached_intent: cachedIntent, cached_framings: [],
+      });
+      return;
+    }
+
+    // Create the conversation, get id, then emit the question event.
+    const conversationId = await createConversation(deps, {
+      userId,
+      sessionId,
+      initialTurn: {
+        intent,
+        original_query: rawQuery,
+        refinement_questions: refinementResult.questions,
+        moat_alignment_count: refinementResult.moat_alignment_count,
+        scan_history_used: refinementResult.scan_history_used,
+        question_at: new Date().toISOString(),
+      },
+    });
+
+    sse.emit("intent_classified", { type: "context", context_id: context?.id || null });
+    sse.emit("refinement_question", {
+      conversation_id: conversationId,
+      intent_restatement: intent.restatement || null,
+      context_id: context?.id || null,
+      questions: refinementResult.questions,
+    });
+    sse.emit("done", { response_type: "refinement_question" });
+    sse.end();
+
+    writeAuditLog(deps, {
+      user_id: userId,
+      query: rawQuery,
+      normalized_query: normalized,
+      parsed_intent: intent,
+      classification_confidence: intent.confidence,
+      // context may be null for open-ended queries that triggered
+      // refinement without a templated context match. Phase 2b
+      // dynamic context expansion populates this slot later.
+      context_id: context?.id || null,
+      context_categories: context ? context.categories.map(c => c.slug) : [],
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent,
+      cached_framings: [],
+      refinement_fired: true,
+      refinement_questions_count: refinementResult.questions.length,
+      refinement_answered_count: null,
+      refinement_skipped_count: null,
+    });
+    return;
+  }
+
+  // ── NO-REFINEMENT PATH ────────────────────────────────────────
+  // Context is required here; refuse if not found (the refinement
+  // branch above handles open-ended queries that don't have a
+  // template). Pool must also be non-empty.
+  if (!context) {
+    sse.emit("refuse", {
+      reason: "context_not_recognized",
+      message: "That context isn't covered yet. Try asking for a specific product or category.",
+    });
+    sse.end();
+    writeAuditLog(deps, {
+      user_id: userId, query: rawQuery, normalized_query: normalized,
+      parsed_intent: intent, classification_confidence: intent.confidence,
+      error: "context_not_recognized",
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent, cached_framings: [],
+    });
+    return;
+  }
+
+  const pool = buildPool(CALIBRATION, context, intent);
+  if (!pool.length) {
+    sse.emit("refuse", {
+      reason: "pool_empty",
+      message: "Calibration coverage for this context is thin. Worth scanning the categories yourself.",
+    });
+    sse.end();
+    writeAuditLog(deps, {
+      user_id: userId, query: rawQuery, normalized_query: normalized,
+      parsed_intent: intent, classification_confidence: intent.confidence,
+      context_id: context.id,
+      context_categories: context.categories.map(c => c.slug),
+      error: "pool_empty",
+      duration_ms: Date.now() - requestStartMs,
+      cached_intent: cachedIntent, cached_framings: [],
+    });
+    return;
+  }
+
+  const broadCats = buildContextBroadCategories(context);
+  const scanHistory = userId
+    ? await fetchScanHistoryForContext(deps, userId, broadCats)
+    : [];
+
+  await composeBundleAndStream(deps, {
+    sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
+    context, pool, scanHistory, broadCats,
+    refinement: null,
+    conversationId: null,
+    useCache: true,
+    refinementQuestionsCount: null,
+  });
+}
+
+// ── REFINEMENT ANSWER HANDLER (Phase 2a session 3) ──────────────
+// Endpoint POST /ask/refinement_answer takes {conversation_id, answers,
+// skipped} from the client (after the user filled out the refinement
+// question form). Loads the conversation, validates ownership + TTL,
+// reconstructs the original intent, attaches refinement to constraints,
+// fires composer via composeBundleAndStream (bypassing cache since the
+// v6 cache key doesn't hash refinement answers yet — session 6 work).
+async function handleRefinementAnswer(deps, ctx) {
+  const { sse, userId, requestStartMs, body } = ctx;
+  const { CALIBRATION } = deps;
+
+  const conversationId = body?.conversation_id;
+  const rawAnswers = Array.isArray(body?.answers) ? body.answers : [];
+  const rawSkipped = Array.isArray(body?.skipped) ? body.skipped : [];
+
+  if (!conversationId || typeof conversationId !== "string") {
+    sse.emit("refuse", { reason: "missing_conversation_id", message: "conversation_id is required." });
+    sse.end();
+    return;
+  }
+
+  const conversation = await loadConversation(deps, conversationId);
+  if (!conversation) {
+    sse.emit("refuse", { reason: "conversation_not_found", message: "That conversation isn't available. Start a fresh query." });
+    sse.end();
+    return;
+  }
+  if (isConversationExpired(conversation)) {
+    sse.emit("refuse", { reason: "conversation_expired", message: "That conversation expired. Start a fresh query." });
+    sse.end();
+    return;
+  }
+  if (!conversationOwnershipOK(conversation, userId)) {
+    sse.emit("refuse", { reason: "conversation_ownership", message: "That conversation belongs to a different session." });
+    sse.end();
+    return;
+  }
+
+  // Reconstruct the original intent from turn 0.
+  const turns = Array.isArray(conversation.turns) ? conversation.turns : [];
+  const initialTurn = turns[turns.length - 1]; // active turn (last one)
+  const intent = initialTurn?.intent;
+  if (!intent || typeof intent !== "object") {
+    sse.emit("error", { error: "conversation_state", message: "Conversation has invalid state." });
+    sse.end();
+    return;
+  }
+
+  // Coerce answer + skip shapes defensively.
+  const answers = rawAnswers
+    .filter(a => a && typeof a === "object" && typeof a.question_id === "string")
+    .map(a => ({ question_id: a.question_id, value: a.value }));
+  const skipped = rawSkipped
+    .filter(s => typeof s === "string");
+
+  // Persist the answers/skips to the conversation BEFORE composer
+  // fires — even if composer fails, the audit shows the user got
+  // through the refinement step.
+  await updateConversationWithAnswers(deps, conversationId, {
+    refinement_answers: { answers, skipped },
+    answered_at: new Date().toISOString(),
+  });
+
+  // Resolve context + pool + scan history from the persisted intent.
+  // The original query lives on conversation.turns[0].intent or in
+  // the audit log; we reconstruct from intent.restatement when
+  // available, otherwise from the conversation's stored query field
+  // if added later.
+  const rawQuery = intent.restatement || "";
+  const normalized = rawQuery.toLowerCase().trim();
+  const context = findContextFromQuery(rawQuery, intent);
+  if (!context) {
+    sse.emit("refuse", { reason: "context_not_recognized", message: "Couldn't recompose the original context. Start a fresh query." });
+    sse.end();
+    return;
+  }
+  const pool = buildPool(CALIBRATION, context, intent);
+  if (!pool.length) {
+    sse.emit("refuse", { reason: "pool_empty", message: "Calibration coverage for this context is thin. Worth scanning the categories yourself." });
+    sse.end();
+    return;
+  }
+  const broadCats = buildContextBroadCategories(context);
+  const scanHistory = userId
+    ? await fetchScanHistoryForContext(deps, userId, broadCats)
+    : [];
+
+  // Compose with refinement context attached to constraints.
+  await composeBundleAndStream(deps, {
+    sse,
+    intent,
+    userId,
+    rawQuery,
+    normalized,
+    cachedIntent: false,
+    requestStartMs,
+    context, pool, scanHistory, broadCats,
+    refinement: { answers, skipped },
+    conversationId,
+    useCache: false, // refinement-flow bypasses cache until session 6
+    refinementQuestionsCount: Array.isArray(initialTurn?.refinement_questions)
+      ? initialTurn.refinement_questions.length
+      : null,
   });
 }
 
@@ -1570,8 +1949,14 @@ function registerAskRoutes(app, deps) {
     }
     // Type 3 (context) — R5b.3 v2 personalized bundle composer.
     if (intent.type === "context") {
+      // session_id from body — client-managed UUID for anonymous
+      // conversation grouping (Phase 3 multi-turn will use it more
+      // heavily; Phase 2a just persists it on conversations table).
+      const sessionId = typeof req.body?.session_id === "string"
+        ? req.body.session_id.slice(0, 100)
+        : null;
       await handleContextQuery(deps, {
-        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
+        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs, sessionId,
       });
       return;
     }
@@ -1652,6 +2037,46 @@ function registerAskRoutes(app, deps) {
       cached_framings: cachedFramingKeys,
     });
   });
+
+  // ── R5b.3 Phase 2a session 3 — refinement answer endpoint ─────
+  // POST /ask/refinement_answer takes { conversation_id, answers,
+  // skipped, session_id? } and resumes the conversation. The
+  // composer fires with refinement attached to constraints. SSE
+  // streams composer_thinking → bundle → done (or refuse on
+  // conversation-not-found / expired / ownership failure).
+  app.post("/ask/refinement_answer", async (req, res) => {
+    const requestStartMs = Date.now();
+    const sse = makeSseWriter(res);
+
+    let userId = null;
+    try {
+      const header = req.headers.authorization || "";
+      const m = header.match(/^Bearer\s+(.+)$/i);
+      if (m && supabaseAdmin) {
+        const { data } = await supabaseAdmin.auth.getUser(m[1]);
+        if (data?.user?.id) userId = data.user.id;
+      }
+    } catch {}
+
+    // Rate limit shares the /ask scope so a burst of refinement
+    // answers counts the same as a burst of /ask submissions.
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+    const scopeKey = userId ? `user:${userId}` : `ip:${ip}`;
+    const limit = userId ? ASK_RATE_LIMIT_AUTH : ASK_RATE_LIMIT_ANON;
+    const rl = await rateLimitTake(deps, scopeKey, limit);
+    if (!rl.allowed) {
+      sse.emit("error", { error: "rate_limit", message: "Take a break. Try again in a bit." });
+      sse.end();
+      return;
+    }
+
+    await handleRefinementAnswer(deps, {
+      sse,
+      userId,
+      requestStartMs,
+      body: req.body || {},
+    });
+  });
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────
@@ -1699,4 +2124,14 @@ function envChecks() {
   };
 }
 
-module.exports = { registerAskRoutes, envChecks, classifyIntent, PASS1_SYSTEM };
+module.exports = {
+  registerAskRoutes,
+  envChecks,
+  classifyIntent,
+  PASS1_SYSTEM,
+  // Exported for the Phase 2a e2e smoke. Production hits these via the
+  // registered routes, not directly. The smoke needs direct access so
+  // it can drive the flow with mocked supabaseAdmin + SSE writer.
+  handleContextQuery,
+  handleRefinementAnswer,
+};
