@@ -121,6 +121,22 @@ function makeSseWriter(res) {
 }
 
 // ── PASS 1: INTENT CLASSIFIER ────────────────────────────────────
+// Extended in Phase 2a (May 18, 2026) with ambiguity detection and
+// Phase 2b placeholder fields. Pass 1 stays at 400 max_tokens —
+// refinement question generation is Pass 1.5's job (ships separately
+// in backend/refinement.js, session 2). Pass 1 only signals whether
+// refinement should fire and a short reason for logging.
+//
+// Ambiguity detection trains on BOTH templated context queries
+// ("newborn essentials" without baby age) AND open-ended natural
+// language ("Disney trip, help!") so Phase 2b's dynamic context
+// expansion can compose against refined intent without retraining
+// Pass 1.
+//
+// decomposed_categories and dynamic_pool_spec are reserved fields
+// that Phase 2b will populate. Phase 2a always leaves them null.
+// Defining the shape now means Phase 2b is a populator, not a
+// contract-breaker.
 const PASS1_SYSTEM = `You classify product-safety questions and extract structured intent. Return strict JSON, no prose.
 
 Schema:
@@ -133,7 +149,11 @@ Schema:
   "audience": "adult" | "child" | "baby" | null,
   "age_range_months": [min, max] | null,
   "constraints": ["fragrance free", "non-toxic", ...],
-  "occasion": "pregnancy" | "newborn" | "back to school" | null
+  "occasion": "pregnancy" | "newborn" | "back to school" | null,
+  "needs_refinement": true | false,
+  "ambiguity_reason": "one short phrase naming what's ambiguous (e.g. 'baby age unspecified', 'destination type unclear', 'audience scope unclear'); null when needs_refinement is false",
+  "decomposed_categories": null,
+  "dynamic_pool_spec": null
 }
 
 Type rules:
@@ -141,6 +161,34 @@ Type rules:
 - "knowledge" — user asks about a chemical or term ("what is pfas", "are phthalates a concern")
 - "context"   — user wants a bundle for a life moment ("what should i buy for a ski trip", "newborn essentials")
 - "unclear"   — gibberish, too vague, or off-topic
+
+Ambiguity rules (set needs_refinement to true and populate ambiguity_reason when ANY of these apply):
+- Audience scope is unclear (kid age, family vs adult vs newborn unspecified when it matters)
+- Specific use case is unclear ("trip" without destination type, "snacks" without occasion, "lunches" without age)
+- Multiple plausible category sets fit the query (e.g., "Disney packing" could be travel, sun protection, snacks, comfort items)
+- Constraints are implied but not specified (e.g., "what should I bring" without budget or duration)
+- Open-ended natural language without enough anchors to compose a focused bundle
+
+For clear queries with no ambiguity, set needs_refinement to false and ambiguity_reason to null. The bar for refinement is "the AI can't responsibly compose a bundle without more info" — NOT "the bundle could be more specific." Queries that map to a known life-moment context (newborn essentials, back to school lunches, pantry restock, ski trip, beach day, road trip, baby first foods, toddler birthday, etc.) default to needs_refinement=false because the templated context carries audience and duration defaults; the composer handles those cases without clarification.
+
+Examples that should NOT trigger refinement:
+- "newborn essentials" — context is clear, audience is unambiguous
+- "back to school lunches" — context is clear
+- "best laundry detergent" — product category is clear
+- "what is pfas" — knowledge query, no refinement applicable
+- "pantry restock" — context is clear
+- "ski trip" — templated context, family audience defaulted by template
+- "beach day" — templated context, family audience defaulted by template
+- "road trip" — templated context, family audience defaulted by template
+
+Examples that SHOULD trigger refinement:
+- "I'm going to the pool with my kids today, what should I bring?" — pool day context BUT kid ages unspecified, duration unclear (afternoon vs all day)
+- "I'm packing for Disney, help!" — multiple plausible category sets (travel, sun protection, snacks, comfort), audience composition unclear, trip duration unclear
+- "What's a good cleaner sunscreen?" — sunscreen category clear BUT audience scope unclear (adult vs kid vs newborn) — sunscreen recommendations differ materially by audience
+
+Reserved fields (always null in Pass 1; Phase 2b populates):
+- decomposed_categories — null
+- dynamic_pool_spec — null
 
 Voice rules for the restatement field:
 - Never use the word "safe"
@@ -166,6 +214,16 @@ async function classifyIntent({ callClaude }, query) {
       parsed.audience = ["adult", "child", "baby"].includes(parsed.audience) ? parsed.audience : null;
       parsed.occasion = typeof parsed.occasion === "string" ? parsed.occasion : null;
       parsed.subject = typeof parsed.subject === "string" ? parsed.subject : null;
+      // Phase 2a additions.
+      parsed.needs_refinement = parsed.needs_refinement === true;
+      parsed.ambiguity_reason = typeof parsed.ambiguity_reason === "string"
+        ? parsed.ambiguity_reason
+        : null;
+      // Phase 2b placeholders — always null at Pass 1 layer regardless
+      // of what the AI returns. Phase 2b will populate these later in
+      // the pipeline based on Pass 1.5 output, not Pass 1.
+      parsed.decomposed_categories = null;
+      parsed.dynamic_pool_spec = null;
       return parsed;
     } catch (e) {
       if (attempt === 1) throw new Error(`Pass 1 failed: ${e.message}`);
@@ -1641,4 +1699,4 @@ function envChecks() {
   };
 }
 
-module.exports = { registerAskRoutes, envChecks };
+module.exports = { registerAskRoutes, envChecks, classifyIntent, PASS1_SYSTEM };
