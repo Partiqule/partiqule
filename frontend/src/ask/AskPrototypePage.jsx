@@ -331,18 +331,41 @@ const SaveAllSheet = ({ defaultName, onCancel, onSave }) => {
 };
 
 // ── Thinking state ───────────────────────────────────────────────
+// Always-mounted to avoid first-submit mount-time flash. Visibility
+// is toggled via the `visible` prop so the cycling interval pre-warms
+// and the keyframe animation has rendered at least once before the
+// user ever sees it. Three-dot indicator added so the loading state
+// is unmistakable even when the text is mid-pulse at lower opacity.
 const THINKING_COPY = ["Reading your question...", "Scoring the options...", "Thinking..."];
-const ThinkingState = () => {
+const ThinkingState = ({ visible = true }) => {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % THINKING_COPY.length), 550);
+    if (!visible) return; // pause cycling when hidden
+    const t = setInterval(() => setIdx(i => (i + 1) % THINKING_COPY.length), 1800);
     return () => clearInterval(t);
-  }, []);
+  }, [visible]);
   return (
-    <div style={{padding:"32px 0", textAlign:"center"}}>
-      <span style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", fontWeight:500, letterSpacing:"0.04em", animation:"partiqulePulse 1.4s ease-in-out infinite", display:"inline-block"}}>
-        {THINKING_COPY[idx]}
-      </span>
+    <div style={{
+      padding:"24px 0 32px",
+      textAlign:"center",
+      display: visible ? "block" : "none",
+    }}>
+      <div style={{display:"inline-flex", alignItems:"center", gap:10}}>
+        <span aria-hidden="true" style={{
+          display:"inline-flex", alignItems:"center", gap:5,
+        }}>
+          <span style={{width:6, height:6, borderRadius:"50%", background:"var(--moss)", animation:"partiqulePulse 1.4s ease-in-out 0s infinite"}}/>
+          <span style={{width:6, height:6, borderRadius:"50%", background:"var(--moss)", animation:"partiqulePulse 1.4s ease-in-out 0.18s infinite"}}/>
+          <span style={{width:6, height:6, borderRadius:"50%", background:"var(--moss)", animation:"partiqulePulse 1.4s ease-in-out 0.36s infinite"}}/>
+        </span>
+        <span style={{
+          fontFamily:"'DM Sans', system-ui, sans-serif",
+          fontSize: 15, color:"var(--moss)", fontWeight: 500,
+          letterSpacing:"0.04em",
+        }}>
+          {THINKING_COPY[idx]}
+        </span>
+      </div>
     </div>
   );
 };
@@ -663,7 +686,10 @@ const AskPrototypePage = ({
           </div>
         </div>
 
-        {convo.phase === "thinking" && <ThinkingState/>}
+        {/* ThinkingState is always-mounted so the first-submit doesn't
+            pay any mount-time/keyframe-warmup cost. Visibility toggled
+            by phase via the `visible` prop. */}
+        <ThinkingState visible={convo.phase === "thinking"}/>
         {tooShort && convo.phase === "idle" && <TooShort/>}
 
         {convo.phase === "awaiting_refinement" && (
