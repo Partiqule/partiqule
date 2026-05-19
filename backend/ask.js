@@ -134,10 +134,13 @@ function makeSseWriter(res) {
 // expansion can compose against refined intent without retraining
 // Pass 1.
 //
-// decomposed_categories and dynamic_pool_spec are reserved fields
-// that Phase 2b will populate. Phase 2a always leaves them null.
-// Defining the shape now means Phase 2b is a populator, not a
-// contract-breaker.
+// decomposed_categories and dynamic_pool_spec started as Phase 2a
+// reserved fields. Phase 2b session 1 (2026-05-19) wires Pass 1 to
+// populate them for open-ended queries with sufficient audience
+// context — see the DYNAMIC CONTEXT EXPANSION block in the prompt.
+// Templated queries and ambiguous open-ended queries still null both.
+// Vocabulary is constrained to the 15-slug viable set from the
+// calibration coverage audit (docs/calibration_coverage_audit_phase2b.md).
 const PASS1_SYSTEM = `You classify product-safety questions and extract structured intent. Return strict JSON, no prose.
 
 Schema:
@@ -153,8 +156,8 @@ Schema:
   "occasion": "pregnancy" | "newborn" | "back to school" | null,
   "needs_refinement": true | false,
   "ambiguity_reason": "one short phrase naming what's ambiguous (e.g. 'baby age unspecified', 'destination type unclear', 'audience scope unclear'); null when needs_refinement is false",
-  "decomposed_categories": null,
-  "dynamic_pool_spec": null
+  "decomposed_categories": ["slug", ...] | null,
+  "dynamic_pool_spec": { "audience": "family_with_kids" | "family_adults_only" | "kid_focused" | "adult_focused" | "infant_focused" | "pet_focused", "occasion_proxy": "snake_case_string", "category_weights": { "slug": 0.0-1.0 } | undefined } | null
 }
 
 Type rules:
@@ -206,9 +209,74 @@ Open-ended dynamic examples that SHOULD trigger refinement:
 
 General principle — AUDIENCE is the gating signal. If a templated query specifies who the bundle is for (age, household composition, adults-only, husband, pregnant sister, kids, family of N, etc.), set needs_refinement: false. The composer applies safe defaults for unspecified secondary attributes (trip duration, dietary restrictions, allergies, timing). Only set needs_refinement: true when the AUDIENCE itself is ambiguous or absent. Do not fire refinement just because secondary specifics like duration or dietary are unspecified — those have working defaults.
 
-Reserved fields (always null in Pass 1; Phase 2b populates):
-- decomposed_categories — null
-- dynamic_pool_spec — null
+DYNAMIC CONTEXT EXPANSION (Phase 2b) — decomposed_categories and dynamic_pool_spec:
+
+The TEMPLATED context set is FIXED. These EIGHT queries (and close paraphrases) are templated and route to context_id via the existing registry — they do NOT use decomposition:
+1. newborn essentials
+2. back to school lunches
+3. beach day
+4. pantry restock
+5. road trip snacks
+6. ski trip
+7. baby first foods
+8. toddler birthday
+
+Decision tree:
+
+Step 1 — Does the query contain one of the EIGHT templated context phrases above as a head phrase, including with trailing audience or constraint qualifiers?
+  YES → apply the AUDIENCE-is-the-gate rule (refinement fires when audience is missing; bundle composes when audience is clear). Leave decomposed_categories AND dynamic_pool_spec null. context_id resolves via the registry. Step 1 wins even when the trailing qualifiers contain enough context that Step 3 would also fire. Stop here.
+  NO  → continue to Step 2.
+
+Step 1 EXAMPLES (templated with audience qualifier — leave decomposed_categories AND dynamic_pool_spec null):
+- "beach day with my husband" → context_id resolves to beach_day; no decomposition
+- "beach day for our family with two toddlers" → context_id resolves to beach_day; no decomposition
+- "back to school lunches for my 6 year old" → context_id resolves to back_to_school_lunches; no decomposition
+- "pantry restock for our family of 4" → context_id resolves to pantry_restock; no decomposition
+- "newborn essentials for my pregnant sister" → context_id resolves to newborn_essentials; no decomposition
+- "road trip snacks for adults only" → context_id resolves to road_trip_snacks; no decomposition
+
+These match Step 1 because the templated phrase ("beach day", "back to school lunches", etc.) is the head of the query. Do NOT decompose them into category slugs — the templated context registry already knows how to compose the bundle.
+
+Step 2 — Is the (non-templated) query open-ended and AUDIENCE-AMBIGUOUS (e.g., "Disney trip", "pool day with kids", "what's a cleaner sunscreen")?
+  YES → set needs_refinement: true, ambiguity_reason populated, decomposed_categories null, dynamic_pool_spec null, context_id null. Pass 1.5 generates refinement questions; after the user answers, Pass 1 retries.
+  NO  → continue to Step 3.
+
+Step 3 — The query is non-templated AND has SUFFICIENT AUDIENCE CONTEXT (family / kid age / adult-only / etc. is named in the query). Populate decomposed_categories and dynamic_pool_spec; the composer composes against the dynamic pool.
+  - needs_refinement: false
+  - context_id: null
+  - decomposed_categories: array of slugs from the VIABLE VOCABULARY below
+  - dynamic_pool_spec: { audience, occasion_proxy, [category_weights] }
+
+EXCLUSIVITY INVARIANT (mandatory): when type is "context", EXACTLY ONE of the following must hold:
+  (a) the query matches one of the eight templated contexts → context_id is non-null OR needs_refinement is true; decomposed_categories AND dynamic_pool_spec are null
+  (b) the query is non-templated with audience clear → decomposed_categories AND dynamic_pool_spec are both populated; context_id is null
+  (c) the query is non-templated with audience ambiguous → needs_refinement is true; all three (context_id, decomposed_categories, dynamic_pool_spec) are null
+
+Never leave a context-typed result with all four fields null. If you are uncertain whether the query is templated, default to (b) when audience is clear, (c) when it's not. Do not invent a context_id for a query that doesn't match the eight templated names.
+
+Critical: a query like "road trip snacks" matches Step 1 (templated), so even though it has thin audience info, the audience-is-the-gate rule fires refinement — it does NOT decompose. A query like "summer camp essentials for my 9 year old" does NOT match Step 1 (summer camp is not in the templated eight), so it routes to Step 3 with audience kid_focused.
+
+dynamic_pool_spec shape:
+{
+  "audience": "family_with_kids" | "family_adults_only" | "kid_focused" | "adult_focused" | "infant_focused" | "pet_focused",
+  "occasion_proxy": "short_snake_case_string describing the use case (vacation_warm_weather, kids_birthday_party, weekend_camping, first_apartment_setup, summer_camp, post_workout_recovery, housewarming_gift)",
+  "category_weights": optional object mapping decomposed_categories slug to 0.0-1.0 importance weight; omit when uniform
+}
+
+decomposed_categories MUST only contain values from this constrained vocabulary (15 slugs with viable calibration coverage as of 2026-05-19):
+["baby_gifts", "beverages", "kitchen_basics", "snacks", "cleaning_supplies", "bathroom_essentials", "personal_care_kids", "hydration", "supplements", "party_beverages", "sunscreen", "pet_food", "party_food", "household_gifts", "bedding"]
+
+If a query implies categories outside this list (e.g., bug spray, party favors, gift bags, pet treats, pet grooming, pet toys, protein snacks, lip balm), either omit those categories from decomposed_categories (best effort with the remaining viable slugs), or — if the omission would leave the bundle incoherent — set needs_refinement: true with ambiguity_reason: "coverage gap in [category]" and let the user refine.
+
+Dynamic context examples (decomposed_categories + dynamic_pool_spec populated, needs_refinement: false, context_id: null):
+
+- "packing for our family Disney trip in July" → decomposed: ["sunscreen", "snacks", "hydration", "personal_care_kids"], dynamic_pool_spec: {"audience": "family_with_kids", "occasion_proxy": "vacation_warm_weather"}
+- "kids birthday party for my 6 year old" → decomposed: ["party_food", "party_beverages", "snacks"], dynamic_pool_spec: {"audience": "kid_focused", "occasion_proxy": "kids_birthday_party"}
+- "weekend cabin trip for me and my wife" → decomposed: ["snacks", "beverages", "sunscreen"], dynamic_pool_spec: {"audience": "adult_focused", "occasion_proxy": "weekend_camping"}
+- "first apartment essentials" → decomposed: ["cleaning_supplies", "bathroom_essentials", "kitchen_basics", "bedding"], dynamic_pool_spec: {"audience": "adult_focused", "occasion_proxy": "first_apartment_setup"}
+- "housewarming gift for a new parent" → decomposed: ["baby_gifts", "household_gifts"], dynamic_pool_spec: {"audience": "family_with_kids", "occasion_proxy": "housewarming_gift"}
+- "summer camp essentials for my 9 year old" → decomposed: ["sunscreen", "snacks", "hydration", "personal_care_kids"], dynamic_pool_spec: {"audience": "kid_focused", "occasion_proxy": "summer_camp"}
+- "post workout recovery for my husband" → decomposed: ["supplements", "hydration"], dynamic_pool_spec: {"audience": "adult_focused", "occasion_proxy": "post_workout_recovery"}
 
 Voice rules for the restatement field:
 - Never use the word "safe"
@@ -217,6 +285,53 @@ Voice rules for the restatement field:
 - Score-anchored when possible ("here's what scored cleanest")
 
 Return strict JSON only. No backticks, no markdown.`;
+
+// Phase 2b dynamic context expansion vocabulary. Source of truth lives
+// in the Pass 1 prompt + docs/calibration_coverage_audit_phase2b.md.
+// Re-running calibration_coverage_audit.js after a backfill cycle may
+// expand this list — update both places.
+const VIABLE_DECOMPOSED_SLUGS = new Set([
+  "baby_gifts", "beverages", "kitchen_basics", "snacks", "cleaning_supplies",
+  "bathroom_essentials", "personal_care_kids", "hydration", "supplements",
+  "party_beverages", "sunscreen", "pet_food", "party_food", "household_gifts",
+  "bedding",
+]);
+const VIABLE_AUDIENCE_VALUES = new Set([
+  "family_with_kids", "family_adults_only", "kid_focused",
+  "adult_focused", "infant_focused", "pet_focused",
+]);
+
+function validateDecomposedCategories(v) {
+  if (!Array.isArray(v) || v.length === 0) return null;
+  const cleaned = v
+    .filter(s => typeof s === "string" && VIABLE_DECOMPOSED_SLUGS.has(s))
+    // De-dupe while preserving first-seen order.
+    .filter((s, i, a) => a.indexOf(s) === i);
+  return cleaned.length ? cleaned : null;
+}
+
+function validateDynamicPoolSpec(v) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  const audience = typeof v.audience === "string" && VIABLE_AUDIENCE_VALUES.has(v.audience)
+    ? v.audience : null;
+  const occasion_proxy = typeof v.occasion_proxy === "string" && v.occasion_proxy.trim()
+    ? v.occasion_proxy.trim().slice(0, 60) : null;
+  if (!audience || !occasion_proxy) return null;
+  // category_weights is optional; drop silently if malformed.
+  let category_weights;
+  if (v.category_weights && typeof v.category_weights === "object" && !Array.isArray(v.category_weights)) {
+    const filtered = {};
+    for (const [k, w] of Object.entries(v.category_weights)) {
+      if (VIABLE_DECOMPOSED_SLUGS.has(k) && typeof w === "number" && w >= 0 && w <= 1) {
+        filtered[k] = w;
+      }
+    }
+    if (Object.keys(filtered).length) category_weights = filtered;
+  }
+  const out = { audience, occasion_proxy };
+  if (category_weights) out.category_weights = category_weights;
+  return out;
+}
 
 async function classifyIntent({ callClaude }, query) {
   const userPrompt = `Query: "${query}"`;
@@ -239,11 +354,18 @@ async function classifyIntent({ callClaude }, query) {
       parsed.ambiguity_reason = typeof parsed.ambiguity_reason === "string"
         ? parsed.ambiguity_reason
         : null;
-      // Phase 2b placeholders — always null at Pass 1 layer regardless
-      // of what the AI returns. Phase 2b will populate these later in
-      // the pipeline based on Pass 1.5 output, not Pass 1.
-      parsed.decomposed_categories = null;
-      parsed.dynamic_pool_spec = null;
+      // Phase 2b dynamic context expansion — validate decomposed_categories
+      // and dynamic_pool_spec. Drop invalid values back to null rather
+      // than passing them downstream where the pool builder would choke.
+      parsed.decomposed_categories = validateDecomposedCategories(parsed.decomposed_categories);
+      parsed.dynamic_pool_spec = validateDynamicPoolSpec(parsed.dynamic_pool_spec);
+      // Mutual exclusivity guard — if one is null the other must be too.
+      // Prevents a half-populated dynamic context payload from reaching
+      // the composer (which would compose against an undefined pool).
+      if (parsed.decomposed_categories == null || parsed.dynamic_pool_spec == null) {
+        parsed.decomposed_categories = null;
+        parsed.dynamic_pool_spec = null;
+      }
       return parsed;
     } catch (e) {
       if (attempt === 1) throw new Error(`Pass 1 failed: ${e.message}`);

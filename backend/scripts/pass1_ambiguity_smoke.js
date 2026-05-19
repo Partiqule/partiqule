@@ -1,30 +1,26 @@
 #!/usr/bin/env node
-// Pass 1 ambiguity-detection smoke (Phase 2a sessions 1 + 5.5).
+// Pass 1 ambiguity-detection smoke (Phase 2a sessions 1 + 5.5,
+// extended in Phase 2b session 1).
 //
-// Calls the Pass 1 classifyIntent function on 13 test queries and
+// Calls the Pass 1 classifyIntent function on 20 test queries and
 // verifies that needs_refinement matches the expectation per query.
-// Updated in session 5.5 to invert the templated-context defaults:
-// generic templated queries ("newborn essentials" alone) now SHOULD
-// trigger refinement, while specific templated queries with audience
-// or household signals ("newborn essentials for my pregnant sister")
-// stay needs_refinement=false.
+// Phase 2b session 1 extends Pass 1 to populate decomposed_categories
+// and dynamic_pool_spec for open-ended queries with sufficient audience
+// context (cases 14-20). Templated and ambiguous queries still null
+// both fields.
 //
 // Layout:
-//   - cases 1-5:   specific templated queries with sufficient context (false)
+//   - cases 1-5:   specific templated queries with context (false)
 //   - cases 6-10:  generic templated queries lacking context (true + hint)
-//   - cases 11-13: open-ended dynamic queries (true + hint), unchanged
-//
-// Phase 2a's Pass 1 is dual-mode: detects ambiguity for both templated
-// context queries (newborn essentials with no baby age) and open-ended
-// natural language (Disney trip, help!). Training Pass 1 on dual mode
-// from day one means Phase 2b's dynamic context expansion ships without
-// retraining the classifier.
+//   - cases 11-13: open-ended dynamic queries needing refinement (true + hint)
+//   - cases 14-20: open-ended dynamic queries with audience context (false +
+//                  populated decomposed_categories + dynamic_pool_spec)
 //
 // Usage:
 //   ANTHROPIC_API_KEY=... node backend/scripts/pass1_ambiguity_smoke.js
 //
-// Cost: ~$0.02–$0.04 across 13 Haiku calls.
-// Runtime: 10–25s total.
+// Cost: ~$0.04–$0.06 across 20 Haiku calls.
+// Runtime: 15–35s total.
 
 "use strict";
 
@@ -162,7 +158,7 @@ const CASES = [
     expect_reason_hints: ["audience", "duration", "trip", "kid", "adult"],
   },
 
-  // ── 11-13: Open-ended dynamic queries → TRUE (unchanged from session 1) ──
+  // ── 11-13: Open-ended dynamic queries needing refinement → TRUE ──
   {
     n: 11,
     query: "I'm going to the pool with my kids today, what should I bring?",
@@ -184,7 +180,93 @@ const CASES = [
     why: "Audience scope unclear — sunscreen recommendations differ materially by audience",
     expect_reason_hints: ["audience", "scope", "kid", "adult", "baby"],
   },
+
+  // ── 14-20: Phase 2b dynamic context expansion — open-ended with
+  //          sufficient audience context → FALSE + populated fields ──
+  // Vocabulary constraint: decomposed_categories must only contain
+  // values from VIABLE_SLUGS below (15-slug set from the audit).
+  {
+    n: 14,
+    query: "packing for our family Disney trip in July",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["sunscreen", "snacks", "hydration", "personal_care_kids"],
+    expect_audience_in: ["family_with_kids"],
+    why: "Open-ended; family + warm-weather travel; audience clear",
+  },
+  {
+    n: 15,
+    query: "kids birthday party for my 6 year old",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["party_food", "party_beverages", "snacks"],
+    expect_audience_in: ["kid_focused"],
+    why: "Open-ended; kid-focused birthday party; party_favors/gift_bags omitted (thin coverage)",
+  },
+  {
+    n: 16,
+    query: "weekend cabin trip for me and my wife",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["snacks", "beverages", "sunscreen"],
+    expect_audience_in: ["adult_focused", "family_adults_only"],
+    why: "Open-ended; adults-only camping; bug_spray omitted (thin coverage)",
+  },
+  {
+    n: 17,
+    // Audience signal needed — "first apartment essentials" alone is
+    // audience-ambiguous (solo adult vs couple vs roommates vs family),
+    // so Pass 1 correctly fires refinement. Adding "for me, single
+    // adult" routes to Step 3 with adult_focused.
+    query: "first apartment essentials for me, moving in alone",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["cleaning_supplies", "bathroom_essentials", "kitchen_basics", "bedding"],
+    expect_audience_in: ["adult_focused"],
+    why: "Open-ended; adult-focused setup; all slugs viable",
+  },
+  {
+    n: 18,
+    query: "housewarming gift for a new parent",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["baby_gifts", "household_gifts"],
+    expect_audience_in: ["family_with_kids", "infant_focused"],
+    why: "Open-ended; gift for new parent (family_with_kids implied); both slugs viable",
+  },
+  {
+    n: 19,
+    query: "summer camp essentials for my 9 year old",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["sunscreen", "snacks", "hydration", "personal_care_kids"],
+    expect_audience_in: ["kid_focused"],
+    why: "Open-ended; kid-focused outdoor; bug_spray omitted (thin coverage)",
+  },
+  {
+    n: 20,
+    query: "post workout recovery for my husband",
+    expect_refinement: false,
+    expect_dynamic_populated: true,
+    expect_decomposed_includes_any: ["supplements", "hydration"],
+    expect_audience_in: ["adult_focused"],
+    why: "Open-ended; adult-focused; protein_snacks subsumed into supplements/snacks (thin)",
+  },
 ];
+
+// Viable slugs vocabulary — Pass 1 must only emit values from this
+// list in decomposed_categories. From docs/calibration_coverage_audit_phase2b.md.
+const VIABLE_SLUGS = new Set([
+  "baby_gifts", "beverages", "kitchen_basics", "snacks", "cleaning_supplies",
+  "bathroom_essentials", "personal_care_kids", "hydration", "supplements",
+  "party_beverages", "sunscreen", "pet_food", "party_food", "household_gifts",
+  "bedding",
+]);
+
+const VIABLE_AUDIENCES = new Set([
+  "family_with_kids", "family_adults_only", "kid_focused",
+  "adult_focused", "infant_focused", "pet_focused",
+]);
 
 // ── Run ───────────────────────────────────────────────────────────
 async function main() {
@@ -241,18 +323,61 @@ async function main() {
       }
     }
 
-    // Phase 2b placeholders must always be null in Pass 1.
-    let placeholdersOK = true;
-    let placeholderNote = "";
-    if (intent.decomposed_categories !== null) {
-      placeholdersOK = false;
-      placeholderNote = `decomposed_categories should be null, got ${JSON.stringify(intent.decomposed_categories)}`;
-    } else if (intent.dynamic_pool_spec !== null) {
-      placeholdersOK = false;
-      placeholderNote = `dynamic_pool_spec should be null, got ${JSON.stringify(intent.dynamic_pool_spec)}`;
+    // Phase 2b fields. For cases 14-20 these MUST be populated and
+    // conform to the viable-vocabulary + audience-enum constraints.
+    // For all other cases they MUST stay null.
+    let dynamicOK = true;
+    let dynamicNote = "";
+    if (c.expect_dynamic_populated) {
+      const dc = intent.decomposed_categories;
+      const ps = intent.dynamic_pool_spec;
+      if (!Array.isArray(dc) || dc.length === 0) {
+        dynamicOK = false;
+        dynamicNote = `decomposed_categories should be a non-empty array, got ${JSON.stringify(dc)}`;
+      } else {
+        const offenders = dc.filter(s => typeof s !== "string" || !VIABLE_SLUGS.has(s));
+        if (offenders.length) {
+          dynamicOK = false;
+          dynamicNote = `decomposed_categories contains values outside viable vocabulary: ${JSON.stringify(offenders)}`;
+        } else if (Array.isArray(c.expect_decomposed_includes_any)) {
+          const hit = c.expect_decomposed_includes_any.some(s => dc.includes(s));
+          if (!hit) {
+            dynamicOK = false;
+            dynamicNote = `decomposed_categories ${JSON.stringify(dc)} included none of expected ${JSON.stringify(c.expect_decomposed_includes_any)}`;
+          }
+        }
+      }
+      if (dynamicOK) {
+        if (!ps || typeof ps !== "object") {
+          dynamicOK = false;
+          dynamicNote = `dynamic_pool_spec should be an object, got ${JSON.stringify(ps)}`;
+        } else if (typeof ps.audience !== "string" || !VIABLE_AUDIENCES.has(ps.audience)) {
+          dynamicOK = false;
+          dynamicNote = `dynamic_pool_spec.audience invalid: ${JSON.stringify(ps.audience)}`;
+        } else if (typeof ps.occasion_proxy !== "string" || !ps.occasion_proxy.trim()) {
+          dynamicOK = false;
+          dynamicNote = `dynamic_pool_spec.occasion_proxy missing or empty`;
+        } else if (Array.isArray(c.expect_audience_in) && !c.expect_audience_in.includes(ps.audience)) {
+          dynamicOK = false;
+          dynamicNote = `dynamic_pool_spec.audience=${ps.audience} not in expected ${JSON.stringify(c.expect_audience_in)}`;
+        }
+      }
+      if (dynamicOK && intent.context_id) {
+        dynamicOK = false;
+        dynamicNote = `context_id should be null for dynamic-context cases, got ${JSON.stringify(intent.context_id)}`;
+      }
+    } else {
+      // Non-dynamic cases (1-13): both fields must be null.
+      if (intent.decomposed_categories !== null) {
+        dynamicOK = false;
+        dynamicNote = `decomposed_categories should be null, got ${JSON.stringify(intent.decomposed_categories)}`;
+      } else if (intent.dynamic_pool_spec !== null) {
+        dynamicOK = false;
+        dynamicNote = `dynamic_pool_spec should be null, got ${JSON.stringify(intent.dynamic_pool_spec)}`;
+      }
     }
 
-    const ok = refinementOK && reasonOK && placeholdersOK;
+    const ok = refinementOK && reasonOK && dynamicOK;
     if (ok) {
       console.log(`PASS (${dur}ms, refinement=${gotRefinement})`);
       pass++;
@@ -260,7 +385,7 @@ async function main() {
       const issues = [];
       if (!refinementOK) issues.push(`refinement expected=${c.expect_refinement} got=${gotRefinement}`);
       if (!reasonOK) issues.push(reasonNote);
-      if (!placeholdersOK) issues.push(placeholderNote);
+      if (!dynamicOK) issues.push(dynamicNote);
       console.log(`FAIL (${dur}ms): ${issues.join(" | ")}`);
       fail++;
     }
