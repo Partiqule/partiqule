@@ -181,7 +181,75 @@ const CASES = [
     expect_max_questions: 3,
     expect_any_moat_aligned: false,
   },
+  // ── Session 1.5 proper — hedge-phrase regression cases ─────────
+  // Production logs (May 19) showed Pass 1.5 prepending framing
+  // clauses like "Next 2 weeks, ..." onto duration options, blowing
+  // past the 6-word gate. The prompt now explicitly bans this pattern.
+  // These two cases reproduce the production failure scenarios and
+  // assert that no option starts with the known hedge prefixes.
+  {
+    n: 7,
+    label: "Disney trip (production failure case for hedge prefix)",
+    intent: {
+      type: "context",
+      restatement: "Disney trip packing help",
+      ambiguity_reason: "dates unknown, audience composition unknown, park visits per day unknown",
+      needs_refinement: true,
+    },
+    contextId: null,
+    scanHistory: [],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: false,
+    assert_no_hedge_prefix: true,
+  },
+  {
+    n: 8,
+    label: "Pool with kids (production failure case for hedge prefix)",
+    intent: {
+      type: "context",
+      restatement: "what should I bring to the pool with my kids",
+      ambiguity_reason: "kid ages and pool duration unspecified",
+      needs_refinement: true,
+    },
+    contextId: null,
+    scanHistory: [],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: false,
+    assert_no_hedge_prefix: true,
+  },
 ];
+
+// Hedge-phrase prefixes Pass 1.5 must not emit on any option. Drawn
+// from the production failure pattern (May 19): Haiku prepended
+// framing clauses like "Next 2 weeks, 2 to 3 days" instead of the
+// raw value "2 to 3 days". Applies to ALL cases — Pass 1.5 should
+// never hedge regardless of which prompt path it took.
+const HEDGE_PREFIXES = [
+  "next ",
+  "going to ",
+  "probably ",
+  "when we ",
+  "we'll ",
+  "in the ",
+];
+
+function findHedgeViolations(questions) {
+  const out = [];
+  for (const q of questions) {
+    for (const opt of q.suggested_options || []) {
+      const lower = String(opt).toLowerCase().trim();
+      for (const prefix of HEDGE_PREFIXES) {
+        if (lower.startsWith(prefix)) {
+          out.push({ option: opt, prefix, question_text: q.text });
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
 
 // Case 7 uses a planted bad-output mock to verify gates fire.
 async function runPlantedBadOutputCase() {
@@ -308,7 +376,14 @@ async function main() {
       // (even if first attempt had some, the retry produced clean output).
       ;
 
-    const ok = countOK && moatOK && shapeOK && gateOK;
+    // Hedge-prefix scan (session 1.5 proper). Runs on every case so a
+    // regression surfaces anywhere it happens, not just on the dedicated
+    // regression cases. The assert_no_hedge_prefix flag is informational
+    // only — a hedge prefix fails the suite for any case it appears in.
+    const hedgeViolations = findHedgeViolations(qs);
+    const hedgeOK = hedgeViolations.length === 0;
+
+    const ok = countOK && moatOK && shapeOK && gateOK && hedgeOK;
     if (ok) {
       console.log(`PASS (${dur}ms, ${qs.length} qs, moat=${moatCount})`);
       pass++;
@@ -318,6 +393,12 @@ async function main() {
       if (!moatOK) issues.push(`moat_count=${moatCount} expected ${c.expect_any_moat_aligned ? ">=1" : "0"}`);
       if (!shapeOK) issues.push("at least one question failed shape validation");
       if (!gateOK) issues.push(`voice_gate_failures: ${JSON.stringify(result.voice_gate_failures)}`);
+      if (!hedgeOK) {
+        const detail = hedgeViolations
+          .map(v => `"${v.option}" (prefix "${v.prefix.trim()}" under question "${v.question_text}")`)
+          .join("; ");
+        issues.push(`hedge_prefix violations: ${detail}`);
+      }
       console.log(`FAIL (${dur}ms): ${issues.join(" | ")}`);
       fail++;
     }

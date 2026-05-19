@@ -165,6 +165,46 @@ HARD RULES:
 - When SCAN HISTORY is non-empty, exactly one question carries moat_aligned: true (cites the user's actual scans). The other questions can be category-general (moat_aligned: false).
 - When SCAN HISTORY is empty, all questions are moat_aligned: false. Don't invent scan references.
 
+OPTION FORMAT: RAW VALUES ONLY, NO HEDGE PHRASES
+
+Refinement options must be raw values without framing clauses. The following pattern is the most common failure mode and must be avoided:
+
+Bad option (hedge phrase prepended, 8 words):
+"Next 2 weeks, 2 to 3 days"
+
+Good option (raw value only, 4 words):
+"2 to 3 days"
+
+Bad option (hedge phrase, 7 words):
+"Next 2 weeks, 4 plus days"
+
+Good option (3 words):
+"4 plus days"
+
+Bad option (framing clause, 6 words):
+"Going to be there for 3 days"
+
+Good option (2 words):
+"3 days"
+
+Bad option (qualifier prepended):
+"Probably just kids in our family"
+
+Good option:
+"Just kids"
+
+ENFORCEMENT: Options MUST be 5 words or fewer. Do NOT prepend framing clauses such as "Next 2 weeks", "Going to be", "Probably", "When we", "We'll be", "In the future", or any other lead-in. Write the raw value only.
+
+TIMING-ANSWER GUIDANCE — never start any option with the word "Next" (e.g., "Next 2 weeks", "Next month", "Next year"). The word "Next" reads as a hedge. For timing/duration options, use absolute references instead:
+
+Bad: "Next 2 weeks"        →  Good: "Within 2 weeks"
+Bad: "Next month"          →  Good: "This month"
+Bad: "Next year"           →  Good: "This year" or "Later this year"
+Bad: "Next few weeks"      →  Good: "A few weeks out"
+Bad: "Next summer"         →  Good: "This summer" or "Next summer trip" reframed to "Summer"
+
+The hedge ban applies to STANDALONE options too, not only prepended phrases. An option starting with "Next " will be rejected even if the option is short.
+
 VOICE RULES (output is rejected and retried if these break):
 - No first-person pronouns: never use I, me, my, we, our, us.
 - No banned wellness language: never use safe, eco friendly, non toxic, pure, wholesome, chemical free, mom approved.
@@ -384,7 +424,7 @@ async function generateRefinementQuestions({
         parts.push("At least one question was too vague (under 4 words or matched a boilerplate pattern like 'What do you need?'). Make each question specific and actionable.");
       }
       if (refineFailures.includes("option_text_length")) {
-        parts.push(`At least one option exceeded ${MAX_OPTION_WORDS} words. Keep options tight enough for tappable buttons.`);
+        parts.push(`At least one option exceeded ${MAX_OPTION_WORDS} words by prepending a framing clause (e.g., "Next 2 weeks", "Going to be", "Probably") before the actual value. Regenerate with the raw value only. Example: instead of "Next 2 weeks, 2 to 3 days", write "2 to 3 days". Instead of "Probably just kids", write "Just kids".`);
       }
       amendment = parts.join(" ");
       console.log(`[pass1_5] ${requestId} retry amendment=${JSON.stringify(amendment)}`);
