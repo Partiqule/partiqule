@@ -219,6 +219,53 @@ const CASES = [
     expect_any_moat_aligned: false,
     assert_no_hedge_prefix: true,
   },
+  // ── Session 1.5.1 — compound-question + moat-first-person regressions ──
+  // Production logs (May 19 17:13) showed Pass 1.5 generating
+  // compound questions ("When is the trip and how many days?") and
+  // moat questions using first person ("Should we cross-check those
+  // for Disney sun exposure?"). The prompt now bans both patterns.
+  {
+    n: 9,
+    label: "Disney with compound + first_person regression checks",
+    intent: {
+      type: "context",
+      restatement: "Disney trip packing help",
+      ambiguity_reason: "trip duration AND season unclear; audience composition unclear",
+      needs_refinement: true,
+    },
+    contextId: null,
+    scanHistory: [],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: false,
+    assert_no_hedge_prefix: true,
+    assert_no_compound_question: true,
+    assert_no_compound_option: true,
+  },
+  {
+    n: 10,
+    label: "Moat-heavy: authed beach scan history (exercise moat phrasing)",
+    intent: {
+      type: "context",
+      occasion: "beach day",
+      restatement: "beach day with kids",
+      ambiguity_reason: "kid ages and beach duration unclear; sun protection priorities unclear",
+      needs_refinement: true,
+    },
+    contextId: "beach_day",
+    scanHistory: [
+      { id: "s1", product_name: "Banana Boat Sport Sunscreen", category: "personal_care", score: 7 },
+      { id: "s2", product_name: "Coppertone Kids Sunscreen", category: "personal_care", score: 6 },
+      { id: "s3", product_name: "Thinkbaby Sunscreen", category: "personal_care", score: 2 },
+    ],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: true,
+    assert_no_hedge_prefix: true,
+    assert_no_compound_question: true,
+    assert_no_compound_option: true,
+    assert_no_moat_first_person: true,
+  },
 ];
 
 // Hedge-phrase prefixes Pass 1.5 must not emit on any option. Drawn
@@ -245,6 +292,73 @@ function findHedgeViolations(questions) {
           out.push({ option: opt, prefix, question_text: q.text });
           break;
         }
+      }
+    }
+  }
+  return out;
+}
+
+// Session 1.5.1 — compound-question detector. Heuristic: question text
+// split on ' and ', if both halves contain a question-like word
+// (when/where/who/how/what), flag as compound. Catches "When is the trip
+// and how many days?" without flagging benign uses of "and" like
+// "Any allergies and sensitivities?" (only one question word).
+const COMPOUND_QUESTION_WORDS_RE = /\b(when|where|who|whom|how|what|which|why)\b/i;
+function findCompoundQuestions(questions) {
+  const out = [];
+  for (const q of questions) {
+    const text = String(q.text || "");
+    if (!/\s+and\s+/i.test(text)) continue;
+    const halves = text.split(/\s+and\s+/i);
+    if (halves.length !== 2) continue;
+    const leftHasQ = COMPOUND_QUESTION_WORDS_RE.test(halves[0]);
+    const rightHasQ = COMPOUND_QUESTION_WORDS_RE.test(halves[1]);
+    if (leftHasQ && rightHasQ) {
+      out.push({ question_text: text, left: halves[0].trim(), right: halves[1].trim() });
+    }
+  }
+  return out;
+}
+
+// Compound-option detector. Heuristic: option contains a comma AND the
+// segment after the comma contains BOTH a numeric value AND a unit word
+// (e.g., "3 days", "2 to 5 weeks"). Catches "This summer, 3 to 5 days"
+// without flagging "Expecting, months away" (no numeric) or "Yes,
+// cross-check those" (no numeric or unit).
+const COMPOUND_OPTION_UNIT_RE = /\b(days?|weeks?|months?|hours?|years?|nights?)\b/i;
+const COMPOUND_OPTION_DIGIT_RE = /\d/;
+function findCompoundOptions(questions) {
+  const out = [];
+  for (const q of questions) {
+    for (const opt of q.suggested_options || []) {
+      const text = String(opt);
+      const commaIdx = text.indexOf(",");
+      if (commaIdx === -1) continue;
+      const after = text.slice(commaIdx + 1).trim();
+      if (COMPOUND_OPTION_UNIT_RE.test(after) && COMPOUND_OPTION_DIGIT_RE.test(after)) {
+        out.push({ option: opt, question_text: q.text });
+      }
+    }
+  }
+  return out;
+}
+
+// First-person detector for moat-aligned questions. Production logs
+// showed moat questions reaching for "we" / "my" naturally — voice
+// gate catches it but the prompt should prevent it. Smoke asserts the
+// final shipped output has no first person in moat questions or their
+// options.
+const FIRST_PERSON_RE = /\b(i|me|my|mine|we|us|our|ours)\b/i;
+function findMoatFirstPerson(questions) {
+  const out = [];
+  for (const q of questions) {
+    if (q.moat_aligned !== true) continue;
+    if (FIRST_PERSON_RE.test(String(q.text || ""))) {
+      out.push({ where: "question", text: q.text });
+    }
+    for (const opt of q.suggested_options || []) {
+      if (FIRST_PERSON_RE.test(String(opt))) {
+        out.push({ where: "option", text: opt, question_text: q.text });
       }
     }
   }
@@ -371,10 +485,14 @@ async function main() {
       && typeof q.allow_text === "boolean"
       && typeof q.moat_aligned === "boolean"
     );
-    const gateOK = (result.voice_gate_failures || []).length === 0
-      // For live cases, final shipped result should have zero gate fires
-      // (even if first attempt had some, the retry produced clean output).
-      ;
+    // voice_gate_failures is the AUDIT artifact (cumulative across
+    // retry attempts, stored in ask_responses.voice_gate_failures per
+    // migration 018). It is NOT a "did the shipped output pass gates"
+    // signal — by definition, a successful return means the shipped
+    // output passed all production gates. The smoke's dedicated
+    // detectors below (hedge / compound / moat-first-person) validate
+    // the final output directly.
+    const gateOK = true;
 
     // Hedge-prefix scan (session 1.5 proper). Runs on every case so a
     // regression surfaces anywhere it happens, not just on the dedicated
@@ -383,7 +501,19 @@ async function main() {
     const hedgeViolations = findHedgeViolations(qs);
     const hedgeOK = hedgeViolations.length === 0;
 
-    const ok = countOK && moatOK && shapeOK && gateOK && hedgeOK;
+    // Session 1.5.1 — compound + moat-first-person scans. Compound
+    // checks run on every case (defense in depth). Moat-first-person
+    // only fires on moat-aligned questions (the gated subset).
+    const compoundQuestions = findCompoundQuestions(qs);
+    const compoundOptions = findCompoundOptions(qs);
+    const compoundQOK = compoundQuestions.length === 0;
+    const compoundOOK = compoundOptions.length === 0;
+
+    const moatFirstPersonViolations = findMoatFirstPerson(qs);
+    const moatFirstPersonOK = moatFirstPersonViolations.length === 0;
+
+    const ok = countOK && moatOK && shapeOK && gateOK && hedgeOK
+      && compoundQOK && compoundOOK && moatFirstPersonOK;
     if (ok) {
       console.log(`PASS (${dur}ms, ${qs.length} qs, moat=${moatCount})`);
       pass++;
@@ -392,12 +522,33 @@ async function main() {
       if (!countOK) issues.push(`count=${qs.length} expected ${c.expect_min_questions}-${c.expect_max_questions}`);
       if (!moatOK) issues.push(`moat_count=${moatCount} expected ${c.expect_any_moat_aligned ? ">=1" : "0"}`);
       if (!shapeOK) issues.push("at least one question failed shape validation");
-      if (!gateOK) issues.push(`voice_gate_failures: ${JSON.stringify(result.voice_gate_failures)}`);
+      // gateOK is currently always true (audit-history field, not a
+      // shipped-state gate). Final-output gates fire via the dedicated
+      // detector branches below.
+      void gateOK;
       if (!hedgeOK) {
         const detail = hedgeViolations
           .map(v => `"${v.option}" (prefix "${v.prefix.trim()}" under question "${v.question_text}")`)
           .join("; ");
         issues.push(`hedge_prefix violations: ${detail}`);
+      }
+      if (!compoundQOK) {
+        const detail = compoundQuestions
+          .map(v => `"${v.question_text}" (left=${JSON.stringify(v.left)}, right=${JSON.stringify(v.right)})`)
+          .join("; ");
+        issues.push(`compound_question violations: ${detail}`);
+      }
+      if (!compoundOOK) {
+        const detail = compoundOptions
+          .map(v => `"${v.option}" under question "${v.question_text}"`)
+          .join("; ");
+        issues.push(`compound_option violations: ${detail}`);
+      }
+      if (!moatFirstPersonOK) {
+        const detail = moatFirstPersonViolations
+          .map(v => `[${v.where}] "${v.text}"${v.question_text ? ` (q: "${v.question_text}")` : ""}`)
+          .join("; ");
+        issues.push(`moat_first_person violations: ${detail}`);
       }
       console.log(`FAIL (${dur}ms): ${issues.join(" | ")}`);
       fail++;

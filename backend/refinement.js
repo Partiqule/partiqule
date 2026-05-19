@@ -160,7 +160,9 @@ OUTPUT SHAPE (strict JSON, no markdown, no backticks):
 HARD RULES:
 - Return EXACTLY 2 or 3 questions. Not 1, not 4+.
 - Each question independent — answering one does NOT require answering another. Order by importance (highest-impact first).
+- Each question asks EXACTLY ONE thing. Never use 'and' to combine two asks into one question.
 - Each option under 6 words for button readability.
+- NEVER start any option with the word "Next" (e.g., "Next 2 weeks", "Next month", "Next year", "Next summer"). "Next" reads as a hedge. For timing/duration answers use absolute references: "Within 2 weeks", "This month", "This year", "Later this year", "This summer".
 - Questions specific and actionable. NEVER generate vague boilerplate like "What do you need?" or "Any preferences?" or "Tell us more."
 - When SCAN HISTORY is non-empty, exactly one question carries moat_aligned: true (cites the user's actual scans). The other questions can be category-general (moat_aligned: false).
 - When SCAN HISTORY is empty, all questions are moat_aligned: false. Don't invent scan references.
@@ -205,8 +207,51 @@ Bad: "Next summer"         →  Good: "This summer" or "Next summer trip" refram
 
 The hedge ban applies to STANDALONE options too, not only prepended phrases. An option starting with "Next " will be rejected even if the option is short.
 
+ONE ASK PER QUESTION
+
+Each refinement question must ask exactly one thing. Compound questions force the model to generate compound options, which always exceed word limits.
+
+Bad (compound, two dimensions in one question):
+"When is the trip and how many days?"
+Produces compound options like:
+- "This summer, 3 to 5 days" (combines season + duration)
+- "This fall or winter, 2 to 3 days" (compound)
+
+Good (split into two questions):
+Q: "When is the trip?"
+Options: "This summer", "This fall", "Winter", "Spring"
+Q: "How many days at Disney?"
+Options: "1 to 2 days", "3 to 4 days", "5 plus days"
+
+If the Pass 1 ambiguity_reason names multiple dimensions (e.g., 'trip duration AND season unclear'), split them into separate questions. Do not bundle them.
+
+ENFORCEMENT: Each question must have a single subject. Do not use 'and' to combine two asks into one question. Do not generate options that combine multiple answer types (e.g., timing + duration in the same option).
+
 VOICE RULES (output is rejected and retried if these break):
 - No first-person pronouns: never use I, me, my, we, our, us.
+
+MOAT QUESTION PHRASING
+
+Moat-aligned questions reference the user's scan history and feel collaborative. The natural phrasing uses 'we' and 'my', which violates the no-first-person rule. Rephrase to drop first person:
+
+Bad (uses 'we' and 'my'):
+"Should we cross-check the sunscreens you've scanned?"
+Option: "Yes, cross-check my picks"
+
+Good (no first person):
+"Cross-check the sunscreens you've scanned?"
+Option: "Yes, cross-check those"
+Option: "Yes, use those"
+
+Bad:
+"Should we include those brands?"
+
+Good:
+"Include those brands in recommendations?"
+
+Pattern: rewrite 'Should we X' as 'X?' or 'X those?' Rewrite 'my Y' as 'those Y' or 'the scanned Y'.
+
+Continuing VOICE RULES:
 - No banned wellness language: never use safe, eco friendly, non toxic, pure, wholesome, chemical free, mom approved.
 - No "clean" as adjective (use "real ingredients" / "minimal" / "no added X" instead). Comparative "cleaner" is allowed.
 - No unsourced medical claims: never use linked to, causes, studies show, scientifically proven, doctor recommended.
@@ -241,12 +286,24 @@ function validateQuestionShape(q) {
 }
 
 // ── Voice gates specific to refinement ──────────────────────────
-// option_text_length: each option under MAX_OPTION_WORDS words
+// option_text_length:   each option under MAX_OPTION_WORDS words
 // question_specificity: question text >= MIN_QUESTION_WORDS words
-//                        AND doesn't match a vague-phrase pattern
+//                       AND doesn't match a vague-phrase pattern
+// option_hedge_prefix:  no option starts with a hedge word
+//                       (Next/Going to/Probably/etc.); session 1.5.1
+//                       backstop for the brand-voice timing rule
 function wordCount(s) {
   return String(s || "").trim().split(/\s+/).filter(Boolean).length;
 }
+
+// Lead-in words/phrases that read as hedges when used as the first
+// token of a refinement option. Mirrors the prompt's TIMING-ANSWER
+// GUIDANCE and the smoke's HEDGE_PREFIXES list. Production-side gate
+// so the retry amendment fires when Haiku drifts (e.g., "Next year"
+// for Disney-style timing questions).
+const HEDGE_OPTION_PREFIXES = [
+  "next ", "going to ", "probably ", "when we ", "we'll ", "in the ",
+];
 
 function refinementGateFailures(questions) {
   const failures = [];
@@ -259,6 +316,10 @@ function refinementGateFailures(questions) {
     }
     for (const opt of q.suggested_options) {
       if (wordCount(opt) > MAX_OPTION_WORDS) note("option_text_length");
+      const lower = String(opt).toLowerCase().trim();
+      for (const prefix of HEDGE_OPTION_PREFIXES) {
+        if (lower.startsWith(prefix)) { note("option_hedge_prefix"); break; }
+      }
     }
   }
   return failures;
@@ -417,14 +478,28 @@ async function generateRefinementQuestions({
       if (!countOK) {
         parts.push(`Previous attempt returned ${validated.length} questions. Return EXACTLY 2 or 3.`);
       }
-      if (voiceFailures.length) {
-        parts.push(`Voice gates failed: ${voiceFailures.join(", ")}. Reread the voice rules and rewrite.`);
+      // first_person gets a dedicated amendment with rewrite patterns —
+      // production logs (May 19) showed moat-aligned questions naturally
+      // reaching for "Should we" and "my" phrasings. The generic voice
+      // gate message was too vague to teach the rewrite.
+      const hasFirstPerson = voiceFailures.includes("first_person");
+      if (hasFirstPerson) {
+        parts.push(`Voice gate failed: first_person. At least one question or option used first person ('we', 'us', 'our', 'my', 'I', 'me'). Most common pattern: 'Should we X' or 'my X'. Rewrite as: 'Should we cross-check X?' → 'Cross-check X?'; 'cross-check my picks' → 'cross-check those'; 'we' → drop or use 'you'; 'my' → 'those' or 'the scanned'. Regenerate ALL questions and options without first person.`);
+      }
+      // Other voice failures (banned wellness, clean adjective, medical
+      // claims, etc.) still use the generic message.
+      const otherVoice = voiceFailures.filter(f => f !== "first_person");
+      if (otherVoice.length) {
+        parts.push(`Voice gates failed: ${otherVoice.join(", ")}. Reread the voice rules and rewrite.`);
       }
       if (refineFailures.includes("question_specificity")) {
         parts.push("At least one question was too vague (under 4 words or matched a boilerplate pattern like 'What do you need?'). Make each question specific and actionable.");
       }
       if (refineFailures.includes("option_text_length")) {
-        parts.push(`At least one option exceeded ${MAX_OPTION_WORDS} words by prepending a framing clause (e.g., "Next 2 weeks", "Going to be", "Probably") before the actual value. Regenerate with the raw value only. Example: instead of "Next 2 weeks, 2 to 3 days", write "2 to 3 days". Instead of "Probably just kids", write "Just kids".`);
+        parts.push(`At least one option exceeded ${MAX_OPTION_WORDS} words. Two common patterns cause this: 1. Hedge prefix: 'Next 2 weeks, 2 to 3 days' (8 words). Drop the prefix: '2 to 3 days'. 2. Compound answer: 'This summer, 3 to 5 days' combines two answers (season + duration) into one option. This means the QUESTION asks two things at once. Split the question into two separate questions, each with raw-value options. Regenerate with one-ask questions and raw-value options.`);
+      }
+      if (refineFailures.includes("option_hedge_prefix")) {
+        parts.push(`At least one option started with a hedge word ('Next', 'Going to', 'Probably', 'When we', 'We'll', 'In the'). Never start an option with these words. For timing answers, use absolute references: 'Next year' → 'This year' or 'Later this year'; 'Next 2 weeks' → 'Within 2 weeks'; 'Next month' → 'This month'; 'Next summer' → 'This summer' or 'Summer'. Regenerate ALL options without hedge prefixes.`);
       }
       amendment = parts.join(" ");
       console.log(`[pass1_5] ${requestId} retry amendment=${JSON.stringify(amendment)}`);
