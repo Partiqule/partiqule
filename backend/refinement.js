@@ -274,6 +274,7 @@ async function generateRefinementQuestions({
   scanHistory,
   contextId = null,
   callClaude,
+  requestId = "noid",
 }) {
   if (!intent || typeof intent !== "object") {
     throw new Error("generateRefinementQuestions: intent is required");
@@ -282,6 +283,8 @@ async function generateRefinementQuestions({
     throw new Error("generateRefinementQuestions: callClaude dep is required");
   }
   const history = Array.isArray(scanHistory) ? scanHistory : [];
+
+  console.log(`[pass1_5] ${requestId} entry ambiguity_reason=${JSON.stringify(intent.ambiguity_reason || null)} restatement=${JSON.stringify(intent.restatement || "")} context_id=${JSON.stringify(contextId)} scan_history_count=${history.length}`);
 
   const userPrompt = buildRefinementPrompt({ intent, scanHistory: history, contextId });
 
@@ -298,14 +301,24 @@ async function generateRefinementQuestions({
     try {
       parsed = await callClaude(sys, userPrompt, 800, 1);
     } catch (err) {
+      console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} ERROR: ${err?.message || "unknown"}`);
       if (attempt === 0) {
         amendment = "Previous attempt failed to return parseable JSON. Return strict JSON only, no backticks, no markdown.";
+        console.log(`[pass1_5] ${requestId} retry amendment=${JSON.stringify(amendment)}`);
         continue;
       }
+      console.log(`[pass1_5] ${requestId} THROW: Pass 1.5 failed: ${err?.message || "unknown"}`);
       throw new Error(`Pass 1.5 failed: ${err?.message || "unknown"}`);
     }
+    console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} raw=${JSON.stringify(parsed)}`);
     if (!parsed || typeof parsed !== "object") {
-      if (attempt === 0) { amendment = "Previous attempt returned non-object. Return strict JSON object with a `questions` array."; continue; }
+      console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} non-object response`);
+      if (attempt === 0) {
+        amendment = "Previous attempt returned non-object. Return strict JSON object with a `questions` array.";
+        console.log(`[pass1_5] ${requestId} retry amendment=${JSON.stringify(amendment)}`);
+        continue;
+      }
+      console.log(`[pass1_5] ${requestId} THROW: non-object both attempts`);
       throw new Error("Pass 1.5 returned non-object both attempts");
     }
 
@@ -314,6 +327,10 @@ async function generateRefinementQuestions({
     const validated = rawQuestions
       .map(validateQuestionShape)
       .filter(Boolean);
+
+    if (validated.length !== rawQuestions.length) {
+      console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} structural drop: raw=${rawQuestions.length} validated=${validated.length}`);
+    }
 
     // Sanitize dashes BEFORE voice gates so silent drift doesn't trigger retries.
     sanitizeRefinementDashes(validated);
@@ -325,6 +342,13 @@ async function generateRefinementQuestions({
     const allLocalFailures = [...voiceFailures, ...refineFailures];
     allFailures = allFailures.concat(allLocalFailures);
 
+    if (voiceFailures.length) {
+      console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} voice_gate_failures=${JSON.stringify(voiceFailures)} scanned_strings=${JSON.stringify(stringsToScan)}`);
+    }
+    if (refineFailures.length) {
+      console.log(`[pass1_5] ${requestId} attempt=${attempt + 1} refinement_gate_failures=${JSON.stringify(refineFailures)} questions=${JSON.stringify(validated.map(q => ({ text: q.text, options: q.suggested_options })))}`);
+    }
+
     // Count check: must be 2-3 questions.
     const countOK = validated.length >= 2 && validated.length <= 3;
 
@@ -334,8 +358,10 @@ async function generateRefinementQuestions({
       // Enforce the "scan history non-empty → at least one moat_aligned" rule.
       if (history.length > 0 && moatCount === 0 && attempt === 0) {
         amendment = "Previous attempt had non-empty scan history but no question carried moat_aligned: true. When scan history exists, exactly one question MUST reference the user's actual scans with moat_aligned: true.";
+        console.log(`[pass1_5] ${requestId} retry amendment (moat): ${JSON.stringify(amendment)}`);
         continue;
       }
+      console.log(`[pass1_5] ${requestId} SUCCESS attempt=${attempt + 1} questions_count=${validated.length} moat_count=${moatCount} voice_failures_seen=${allFailures.length}`);
       return {
         questions: validated,
         scan_history_used: history.length > 0,
@@ -361,6 +387,7 @@ async function generateRefinementQuestions({
         parts.push(`At least one option exceeded ${MAX_OPTION_WORDS} words. Keep options tight enough for tappable buttons.`);
       }
       amendment = parts.join(" ");
+      console.log(`[pass1_5] ${requestId} retry amendment=${JSON.stringify(amendment)}`);
     }
   }
 
@@ -371,6 +398,7 @@ async function generateRefinementQuestions({
   // composition without refinement, OR surface a generic refuse to the
   // user. Defer that decision to the caller; never ship malformed
   // refinement questions.
+  console.log(`[pass1_5] ${requestId} THROW: validation failed both attempts. all_failures=${JSON.stringify(allFailures)}`);
   throw new Error(`Pass 1.5 failed validation both attempts. Failures: ${allFailures.join(", ") || "unknown"}`);
 }
 

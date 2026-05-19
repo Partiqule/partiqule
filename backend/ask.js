@@ -333,11 +333,13 @@ function validateDynamicPoolSpec(v) {
   return out;
 }
 
-async function classifyIntent({ callClaude }, query) {
+async function classifyIntent({ callClaude }, query, requestId = "noid") {
   const userPrompt = `Query: "${query}"`;
+  console.log(`[pass1] ${requestId} entry query=${JSON.stringify(query)}`);
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const parsed = await callClaude(PASS1_SYSTEM, userPrompt, 400, 1);
+      console.log(`[pass1] ${requestId} attempt=${attempt + 1} raw=${JSON.stringify(parsed)}`);
       if (!parsed || typeof parsed !== "object") throw new Error("non-object");
       if (!["product", "knowledge", "context", "unclear"].includes(parsed.type)) throw new Error("bad type");
       let conf = Number(parsed.confidence);
@@ -357,17 +359,34 @@ async function classifyIntent({ callClaude }, query) {
       // Phase 2b dynamic context expansion — validate decomposed_categories
       // and dynamic_pool_spec. Drop invalid values back to null rather
       // than passing them downstream where the pool builder would choke.
+      const rawDecomposed = parsed.decomposed_categories;
+      const rawPoolSpec = parsed.dynamic_pool_spec;
       parsed.decomposed_categories = validateDecomposedCategories(parsed.decomposed_categories);
       parsed.dynamic_pool_spec = validateDynamicPoolSpec(parsed.dynamic_pool_spec);
+      if (rawDecomposed != null && parsed.decomposed_categories == null) {
+        console.log(`[pass1] ${requestId} validator dropped decomposed_categories: invalid value=${JSON.stringify(rawDecomposed)} (must be non-empty array of viable slugs)`);
+      }
+      if (rawPoolSpec != null && parsed.dynamic_pool_spec == null) {
+        console.log(`[pass1] ${requestId} validator dropped dynamic_pool_spec: invalid value=${JSON.stringify(rawPoolSpec)} (must have valid audience + occasion_proxy)`);
+      }
       // Mutual exclusivity guard — if one is null the other must be too.
       // Prevents a half-populated dynamic context payload from reaching
       // the composer (which would compose against an undefined pool).
+      const beforeMutex = {
+        d: parsed.decomposed_categories,
+        s: parsed.dynamic_pool_spec,
+      };
       if (parsed.decomposed_categories == null || parsed.dynamic_pool_spec == null) {
+        if (parsed.decomposed_categories != null || parsed.dynamic_pool_spec != null) {
+          console.log(`[pass1] ${requestId} mutex guard fired: half-populated dynamic payload, nulling both. before=${JSON.stringify(beforeMutex)}`);
+        }
         parsed.decomposed_categories = null;
         parsed.dynamic_pool_spec = null;
       }
+      console.log(`[pass1] ${requestId} final type=${parsed.type} confidence=${parsed.confidence} needs_refinement=${parsed.needs_refinement} ambiguity_reason=${JSON.stringify(parsed.ambiguity_reason)} decomposed=${JSON.stringify(parsed.decomposed_categories)} pool_spec=${JSON.stringify(parsed.dynamic_pool_spec)}`);
       return parsed;
     } catch (e) {
+      console.log(`[pass1] ${requestId} attempt=${attempt + 1} ERROR: ${e.message}`);
       if (attempt === 1) throw new Error(`Pass 1 failed: ${e.message}`);
     }
   }
@@ -1621,6 +1640,9 @@ async function handleContextQuery(deps, ctx) {
   const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
   const { callClaude, supabaseAdmin, CALIBRATION } = deps;
   const sessionId = ctx.sessionId || null;
+  // Per-request id seeded by the /ask handler so Pass 1.5 + composer
+  // logs correlate with the upstream Pass 1 log line.
+  const requestId = ctx.requestId || "noid";
 
   // Try to resolve the templated context. This can return null for
   // open-ended dynamic queries that don't map cleanly to contexts.js.
@@ -1664,6 +1686,7 @@ async function handleContextQuery(deps, ctx) {
         scanHistory,
         contextId: context?.id || null,
         callClaude,
+        requestId,
       });
     } catch (err) {
       // Pass 1.5 failed twice. Two recovery paths:
@@ -2017,8 +2040,12 @@ function registerAskRoutes(app, deps) {
 
   app.post("/ask", async (req, res) => {
     const requestStartMs = Date.now();
+    // Short hex id for log correlation across Pass 1 / Pass 1.5 / composer.
+    // 8 chars of randomness — plenty for a few minutes of traffic.
+    const requestId = crypto.randomBytes(4).toString("hex");
     const sse = makeSseWriter(res);
     sse.emit("thinking", {});
+    console.log(`[ask] ${requestId} entry path=/ask`);
 
     // Parse body. The express.json middleware already ran.
     const rawQuery = typeof req.body?.query === "string" ? req.body.query : "";
@@ -2078,7 +2105,7 @@ function registerAskRoutes(app, deps) {
     }
     if (!intent) {
       try {
-        intent = await classifyIntent({ callClaude }, query);
+        intent = await classifyIntent({ callClaude }, query, requestId);
       } catch (e) {
         console.error("[ask] Pass 1 failed:", e.message);
         sse.emit("refuse", { reason: "unclear", message: "Tell us more about what you need." });
@@ -2122,7 +2149,7 @@ function registerAskRoutes(app, deps) {
         ? req.body.session_id.slice(0, 100)
         : null;
       await handleContextQuery(deps, {
-        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs, sessionId,
+        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs, sessionId, requestId,
       });
       return;
     }
