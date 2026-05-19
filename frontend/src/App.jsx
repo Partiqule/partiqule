@@ -8591,7 +8591,7 @@ function App() {
             <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?28:34, color:text, margin:"0 0 8px", letterSpacing:"-0.015em"}}>Settings</h1>
             <p style={{fontSize:15, color:muted, margin:0}}>Personalise your Partiqule experience</p>
           </div>
-          <StreamSpike isMobile={isMobile} text={text} muted={muted}/>
+          {isAdminUser(user) && <StreamSpike isMobile={isMobile} text={text} muted={muted}/>}
 
           <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
