@@ -150,3 +150,90 @@ GROUP BY authed;
 ```
 
 Phase 2a moat-layer rule: authed bundles cite scan history; anonymous bundles fall back to generic framing. Fire rates should be roughly comparable — Pass 1 doesn't know auth state.
+
+---
+
+## Phase 2b — dynamic context expansion queries
+
+Added in Phase 2b session 2. `framing_outputs` changed from a single composer record to an incremental stage ledger. Each entry has shape `{ stage, status, output, failure_metadata, timestamp }` with stage in `pass_1 | pass_1_5 | pass_1_enriched | composer`.
+
+### Dynamic context query success rate
+
+```sql
+SELECT
+  date_trunc('day', created_at) AS day,
+  count(*) FILTER (WHERE context_id = 'dynamic' OR context_id LIKE 'dynamic:%') AS dynamic_total,
+  count(*) FILTER (WHERE (context_id = 'dynamic' OR context_id LIKE 'dynamic:%') AND error IS NULL) AS dynamic_success,
+  count(*) FILTER (WHERE error = 'empty_dynamic_pool') AS empty_pool_refuse
+FROM ask_responses
+WHERE created_at > now() - interval '7 days'
+GROUP BY day
+ORDER BY day DESC;
+```
+
+Healthy shape: most dynamic queries should land in `dynamic_success`. High `empty_pool_refuse` rate means Pass 1 is emitting `decomposed_categories` that don't have calibration coverage — investigate which slugs.
+
+### buildDynamicPool empty-pool rate by slug
+
+```sql
+WITH pool_misses AS (
+  SELECT
+    jsonb_array_elements(context_categories::jsonb) ->> 0 AS slug,
+    1 AS missed
+  FROM ask_responses
+  WHERE error = 'empty_dynamic_pool'
+    AND created_at > now() - interval '14 days'
+)
+SELECT slug, count(*) AS empty_pool_count
+FROM pool_misses
+GROUP BY slug
+ORDER BY empty_pool_count DESC;
+```
+
+`context_categories` carries `decomposed_categories` for dynamic refusals. High counts here point to specific slugs that need calibration backfill.
+
+### framing_outputs stage breakdown (where do requests land?)
+
+```sql
+WITH stage_counts AS (
+  SELECT
+    id,
+    EXISTS (SELECT 1 FROM jsonb_array_elements(framing_outputs) f WHERE f->>'stage' = 'pass_1') AS has_p1,
+    EXISTS (SELECT 1 FROM jsonb_array_elements(framing_outputs) f WHERE f->>'stage' = 'pass_1_5') AS has_p15,
+    EXISTS (SELECT 1 FROM jsonb_array_elements(framing_outputs) f WHERE f->>'stage' = 'pass_1_enriched') AS has_p1e,
+    EXISTS (SELECT 1 FROM jsonb_array_elements(framing_outputs) f WHERE f->>'stage' = 'composer' AND f->>'status' = 'success') AS composer_ok
+  FROM ask_responses
+  WHERE created_at > now() - interval '7 days'
+    AND framing_outputs IS NOT NULL
+)
+SELECT
+  count(*) AS total,
+  count(*) FILTER (WHERE has_p1 AND NOT has_p15 AND composer_ok) AS clear_to_bundle,
+  count(*) FILTER (WHERE has_p1 AND has_p15 AND has_p1e AND composer_ok) AS refined_to_bundle,
+  count(*) FILTER (WHERE has_p1 AND has_p15 AND NOT has_p1e) AS refined_question_only_no_answer_yet,
+  count(*) FILTER (WHERE NOT composer_ok) AS composer_failed_or_refused
+FROM stage_counts;
+```
+
+Useful for understanding the funnel: how many users get to bundle directly vs. through refinement, and where the largest drop-off occurs.
+
+### Composer success vs refuse (with reason)
+
+```sql
+SELECT
+  f->>'status' AS composer_status,
+  f->'failure_metadata'->>'reason' AS reason,
+  count(*) AS n
+FROM ask_responses ar,
+  jsonb_array_elements(ar.framing_outputs) f
+WHERE created_at > now() - interval '7 days'
+  AND f->>'stage' = 'composer'
+GROUP BY composer_status, reason
+ORDER BY n DESC;
+```
+
+Surfaces which composer refusal reasons are most common: `empty_dynamic_pool` (P2b coverage gap), `context_not_recognized` (P2a residual), `pool_empty` (templated context with thin calibration).
+
+### Schema migration note for analytics
+
+Pre-Phase-2b queries that read `framing_outputs[0]` expecting a `{bundle, metadata, cached}` shape (composer-only) will now find a `pass_1` stage record. Update to either filter `WHERE (f->>'stage') = 'composer'` or read the last element. The composer record's content lives under `output.bundle / output.metadata / output.cached`.

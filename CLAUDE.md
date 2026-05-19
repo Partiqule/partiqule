@@ -595,9 +595,34 @@ Pass 1 fires refinement when the query lacks audience signals (parent type, age 
 
 **Two-row audit log pattern:** refinement queries write two rows to `ask_responses`. Row 1 fires on `/ask` with `refinement_fired: true`, `refinement_questions_count` set, `refinement_answered_count` null. Row 2 fires on `/ask/refinement_answer` with the bundle + `refinement_answered_count` + `refinement_skipped_count`. Correlate via `user_id` (when authed) + `query` + timestamp range (~5 min window). See `backend/docs/ask_audit_runbook.md` for canonical queries.
 
-**Cache version:** bundle cache prefix is `ask:bundle:v7:...`. v7 hashes refinement answers into the key (via `refinementHash()` in `backend/ask.js`) so refinement-flow bundles cache correctly. Sessions 1–5 used v1–v6; v7 ships in session 6.
+**Cache version:** bundle cache prefix is `ask:bundle:v8:...` (Phase 2b session 2). v7 hashed refinement answers; v8 adds dynamic context expansion (a new context id space `dynamic:<occasion>` and a different pool shape produced by `buildDynamicPool`). Sessions 1–6 used v1–v7; v8 ships in Phase 2b session 2.
 
-**Phase 2a known gap (closes in Phase 2b):** open-ended queries that don't map to a templated context (e.g., "I'm packing for Disney, help!") fire refinement correctly but refuse with `context_not_recognized` after the user answers, because `findContextFromQuery` only resolves against the templated context registry. Phase 2b dynamic context expansion populates `decomposed_categories` and `dynamic_pool_spec` on the intent so the composer can run against a constructed pool instead of a templated one.
+---
+
+## Ask Dynamic Context Expansion (Phase 2b)
+
+Closes the Phase 2a gap where open-ended queries that don't map to a templated context refused with `context_not_recognized`. Ships across `backend/dynamicPool.js` (new), `backend/ask.js` (handleContextQuery + handleRefinementAnswer wiring), `backend/composer.js` (observability logging).
+
+**buildDynamicPool** (`backend/dynamicPool.js`): consumes Pass 1's `decomposed_categories` + `dynamic_pool_spec` and produces a pool the composer can consume without modification. Per-slug strict regex patterns derived from the calibration coverage audit (`docs/calibration_coverage_audit_phase2b.md`). Audience filter excludes adult-only items for kid/infant audiences and kid-only items for adult audiences. Returns null when the spec is malformed or every slug returned zero items.
+
+**Vocabulary (15 slugs, see SLUG_PATTERNS):** baby_gifts, beverages, kitchen_basics, snacks, cleaning_supplies, bathroom_essentials, personal_care_kids, hydration, supplements, party_beverages, sunscreen, pet_food, party_food, household_gifts, bedding. Source-of-truth lives in three places that must stay in sync:
+- `backend/ask.js` Pass 1 prompt (DYNAMIC CONTEXT EXPANSION section)
+- `backend/ask.js` VIABLE_DECOMPOSED_SLUGS (Pass 1 validator)
+- `backend/dynamicPool.js` SLUG_PATTERNS
+
+**Path A — refined-Disney leg 2:** when the user answers a refinement, `handleRefinementAnswer` re-runs `classifyIntent` on an enriched query (original + refinement answers concatenated). Pass 1 then emits `decomposed_categories` / `dynamic_pool_spec` populated, and buildDynamicPool consumes the cleaned intent. Single source of truth: Pass 1 always produces canonical intent. ~700ms re-run latency post-refinement.
+
+**framing_outputs** is now an incremental stage ledger written to `ask_responses` regardless of where the request lands. Stages:
+- `[0] pass_1` — initial Pass 1 classification
+- `[1] pass_1_5` — refinement question generation (when fired)
+- `[2] pass_1_enriched` — Pass 1 re-run on enriched query (leg 2 only)
+- `[3] composer` — bundle composition or refusal
+
+For clear queries only `[0]` and `[3]` populate. For refined queries all four populate. Each entry carries `{ stage, status, output, failure_metadata, timestamp }`. Status is `success | failure | refused`. Existing analytics queries that read `framing_outputs[0].bundle.title` must now read the `composer` stage entry — see runbook.
+
+**Composer observability:** `backend/composer.js` (via wrappers in ask.js) logs `[composer] <requestId> entry pool_source=dynamic|static items_count=N` and `[composer] <requestId> SUCCESS|REFUSED ...` correlated with the request_id seeded at the /ask handler entry.
+
+**End-to-end smoke:** `node backend/scripts/phase2b_e2e_smoke.js` exercises clear dynamic query, adult-focused filter, out-of-vocabulary refuse, and refined-Disney Path A leg 2 against live Anthropic. Cost ~$0.15.
 
 ---
 
