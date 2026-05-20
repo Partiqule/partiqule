@@ -1,0 +1,1344 @@
+{
+  "run_meta": {
+    "mode": "anonymous",
+    "started_at": "2026-05-20T18:34:19.779Z",
+    "finished_at": "2026-05-20T18:35:26.014Z",
+    "elapsed_ms": 66235,
+    "query_count": 20,
+    "apiBase": "https://partiqule-production.up.railway.app",
+    "bank_summary": {
+      "total": 20,
+      "byAudience": {
+        "kid_focused": 5,
+        "infant_focused": 3,
+        "family_with_kids": 5,
+        "adult_focused": 3,
+        "pet_focused": 2,
+        "pregnancy_focused": 1,
+        "knowledge": 1
+      },
+      "byOccasion": {
+        "daily": 12,
+        "travel": 6,
+        "hosting": 1,
+        "none": 1
+      },
+      "bySpecificity": {
+        "medium_specific": 8,
+        "highly_specific": 7,
+        "ambiguous": 4,
+        "very_vague": 1
+      },
+      "byCoverage": {
+        "in_vocab": 12,
+        "out_of_vocab": 6,
+        "cross_vocab": 2
+      },
+      "byType": {
+        "product_recommendation": 11,
+        "multi_category_context": 9
+      },
+      "regressionAnchors": 3,
+      "expectsRefinement": 5
+    }
+  },
+  "results": [
+    {
+      "id": "kf01",
+      "query": "snacks for my picky 4 year old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 490
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 798
+          }
+        ],
+        "latency_ms": 798,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 798,
+      "audit_row": {
+        "id": "db06ffee-448d-4f64-8456-2a5b6a5923a9",
+        "user_id": null,
+        "query": "snacks for my picky 4 year old",
+        "normalized_query": "snacks for my picky 4 year old",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 241,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:21.526418+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "kf02",
+      "query": "sippy cup for my 18 month old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 343
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 521
+          }
+        ],
+        "latency_ms": 521,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 521,
+      "audit_row": {
+        "id": "740ac741-7921-4b6e-8401-bd4488eeb83c",
+        "user_id": null,
+        "query": "sippy cup for my 18 month old",
+        "normalized_query": "sippy cup for my 18 month old",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 176,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:25.54001+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "kf04",
+      "query": "summer camp essentials for my 9 year old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 115
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 182
+          }
+        ],
+        "latency_ms": 182,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 182,
+      "audit_row": {
+        "id": "626158b1-2c98-48f3-9d68-35dcfa5b03d7",
+        "user_id": null,
+        "query": "summer camp essentials for my 9 year old",
+        "normalized_query": "summer camp essentials for my 9 year old",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 67,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:28.975482+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "kf07",
+      "query": "lunch ideas for picky toddler",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 187
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 248
+          }
+        ],
+        "latency_ms": 249,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 249,
+      "audit_row": {
+        "id": "c03c7ddb-02d7-407f-a2e7-197c92266f90",
+        "user_id": null,
+        "query": "lunch ideas for picky toddler",
+        "normalized_query": "lunch ideas for picky toddler",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 66,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:32.419455+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "kf10",
+      "query": "non toxic toys for toddler",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 117
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 183
+          }
+        ],
+        "latency_ms": 183,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 183,
+      "audit_row": {
+        "id": "d5f7d771-6675-4cbb-aacc-1dac1ca97c61",
+        "user_id": null,
+        "query": "non toxic toys for toddler",
+        "normalized_query": "non toxic toys for toddler",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 66,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:35.701636+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "if02",
+      "query": "diaper rash cream for sensitive baby",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 145
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 186
+          }
+        ],
+        "latency_ms": 187,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 187,
+      "audit_row": {
+        "id": "7b4e0c1b-1f2f-4055-aa13-0887bfba21d2",
+        "user_id": null,
+        "query": "diaper rash cream for sensitive baby",
+        "normalized_query": "diaper rash cream for sensitive baby",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 70,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:39.110021+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "if04",
+      "query": "newborn essentials",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 126
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 190
+          }
+        ],
+        "latency_ms": 190,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 190,
+      "audit_row": {
+        "id": "3779fb35-b206-4c8b-bc8b-a2a59d1ae209",
+        "user_id": null,
+        "query": "newborn essentials",
+        "normalized_query": "newborn essentials",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 66,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:42.38695+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "if05",
+      "query": "what to bring to the hospital for baby arrival",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "travel",
+        "specificity": "medium_specific",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 118
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 183
+          }
+        ],
+        "latency_ms": 184,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 184,
+      "audit_row": {
+        "id": "f7667cf9-9cbb-4709-a4bf-f27cd69fa9d0",
+        "user_id": null,
+        "query": "what to bring to the hospital for baby arrival",
+        "normalized_query": "what to bring to the hospital for baby arrival",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 68,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:45.682649+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "fk01",
+      "query": "road trip snacks for adults only",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 113
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 251
+          }
+        ],
+        "latency_ms": 251,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 251,
+      "audit_row": {
+        "id": "a915fba6-77d9-4aa4-9873-091e804e5b86",
+        "user_id": null,
+        "query": "road trip snacks for adults only",
+        "normalized_query": "road trip snacks for adults only",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 65,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:48.949954+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "fk05",
+      "query": "back to school lunches",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 118
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 184
+          }
+        ],
+        "latency_ms": 184,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 184,
+      "audit_row": {
+        "id": "5b4be6ac-a1f6-4883-b06e-140253c69c5a",
+        "user_id": null,
+        "query": "back to school lunches",
+        "normalized_query": "back to school lunches",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 66,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:52.350755+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "fk10",
+      "query": "summer party drinks for backyard bbq",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "hosting",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 116
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 181
+          }
+        ],
+        "latency_ms": 181,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 181,
+      "audit_row": {
+        "id": "b2410fbc-e940-4912-97f0-186ea6d62a59",
+        "user_id": null,
+        "query": "summer party drinks for backyard bbq",
+        "normalized_query": "summer party drinks for backyard bbq",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 67,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:34:55.613449+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "af01",
+      "query": "first apartment essentials for me, moving in alone",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [],
+        "latency_ms": 49,
+        "event_summary": ""
+      },
+      "leg2": null,
+      "total_latency_ms": 49,
+      "audit_row": {
+        "fetch_error": "no row matched"
+      },
+      "error": "leg1: fetch failed"
+    },
+    {
+      "id": "af04",
+      "query": "clean sunscreen for hiking, adult",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 294
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 516
+          }
+        ],
+        "latency_ms": 517,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 517,
+      "audit_row": {
+        "id": "1696902c-d7b1-45a3-9f56-c13f0391a183",
+        "user_id": null,
+        "query": "clean sunscreen for hiking, adult",
+        "normalized_query": "clean sunscreen for hiking, adult",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 207,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:02.420432+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "af08",
+      "query": "skincare routine for sensitive adult skin",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 117
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 194
+          }
+        ],
+        "latency_ms": 194,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 194,
+      "audit_row": {
+        "id": "f2d146d9-8295-4c43-8ab1-6a1a1d064963",
+        "user_id": null,
+        "query": "skincare routine for sensitive adult skin",
+        "normalized_query": "skincare routine for sensitive adult skin",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 76,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:05.68979+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "pt02",
+      "query": "cat food for sensitive stomach",
+      "bank_tags": {
+        "audience": "pet_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 149
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 194
+          }
+        ],
+        "latency_ms": 194,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 194,
+      "audit_row": {
+        "id": "587aa487-2301-4c19-b668-51878067012b",
+        "user_id": null,
+        "query": "cat food for sensitive stomach",
+        "normalized_query": "cat food for sensitive stomach",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 78,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:09.110297+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "pt04",
+      "query": "starter kit for new puppy",
+      "bank_tags": {
+        "audience": "pet_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 121
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 200
+          }
+        ],
+        "latency_ms": 201,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 201,
+      "audit_row": {
+        "id": "02f09398-610c-45aa-86e2-3be78be3fc9c",
+        "user_id": null,
+        "query": "starter kit for new puppy",
+        "normalized_query": "starter kit for new puppy",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 78,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:12.459445+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "pg01",
+      "query": "clean sunscreen for pregnancy",
+      "bank_tags": {
+        "audience": "pregnancy_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 137
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 190
+          }
+        ],
+        "latency_ms": 190,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 190,
+      "audit_row": {
+        "id": "622351e8-3c93-49fb-ac9b-7d9a3d7e6b65",
+        "user_id": null,
+        "query": "clean sunscreen for pregnancy",
+        "normalized_query": "clean sunscreen for pregnancy",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 77,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:15.874355+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "vg01",
+      "query": "Disney trip",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "very_vague",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 118
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 197
+          }
+        ],
+        "latency_ms": 197,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 197,
+      "audit_row": {
+        "id": "f299f726-d5ed-44d1-8e9d-7b57f33fe1bb",
+        "user_id": null,
+        "query": "Disney trip",
+        "normalized_query": "disney trip",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 80,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:19.229903+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "amb01",
+      "query": "sunscreen recommendations",
+      "bank_tags": {
+        "audience": "knowledge",
+        "occasion": null,
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 118
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 235
+          }
+        ],
+        "latency_ms": 235,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 235,
+      "audit_row": {
+        "id": "90885702-0e27-4922-9bd0-8ea2de2bead2",
+        "user_id": null,
+        "query": "sunscreen recommendations",
+        "normalized_query": "sunscreen recommendations",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 78,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:22.590817+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    },
+    {
+      "id": "oov01",
+      "query": "best bug spray for camping with kids",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 142
+          },
+          {
+            "event": "error",
+            "payload": {
+              "error": "rate_limit",
+              "message": "Take a break. Try again in a bit."
+            },
+            "at_ms": 221
+          }
+        ],
+        "latency_ms": 221,
+        "event_summary": "thinking,error"
+      },
+      "leg2": null,
+      "total_latency_ms": 221,
+      "audit_row": {
+        "id": "80123b9a-afc2-4cf1-a352-a78213795297",
+        "user_id": null,
+        "query": "best bug spray for camping with kids",
+        "normalized_query": "best bug spray for camping with kids",
+        "parsed_intent": null,
+        "classification_confidence": null,
+        "retrieved_product_ids": null,
+        "framing_outputs": null,
+        "final_response": null,
+        "duration_ms": 77,
+        "error": "rate_limit",
+        "cached_intent": false,
+        "cached_framings": [],
+        "created_at": "2026-05-20T18:35:25.917879+00:00",
+        "context_id": null,
+        "context_categories": null,
+        "pool_size": null,
+        "pool_ids": null,
+        "scan_history_size": null,
+        "ai_attempts": null,
+        "voice_gate_failures": null,
+        "dropped_ids": null,
+        "final_section_types": null,
+        "final_product_ids": null,
+        "composition_source": null,
+        "refinement_fired": false,
+        "refinement_questions_count": null,
+        "refinement_answered_count": null,
+        "refinement_skipped_count": null,
+        "dynamic_query": false
+      },
+      "error": null
+    }
+  ]
+}
