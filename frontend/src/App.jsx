@@ -7021,6 +7021,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
       fontWeight: 400, letterSpacing: "-0.015em",
       color: "var(--ink)", lineHeight: 1.2,
       margin: "0 0 24px",
+      textAlign: "center",
     }}>{children}</h2>
   );
 
