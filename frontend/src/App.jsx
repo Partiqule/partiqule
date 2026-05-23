@@ -4802,6 +4802,19 @@ const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate})
         <Body>This isn't customer service theater. It's the methodology's accountability layer.</Body>
       </section>
 
+      {/* SECTION: The qualification is the methodology
+          Addresses the credentials question proactively — the system
+          (not any single founder) is the qualification. Inserted between
+          Corrections and The team so the framing lands before founder
+          photos. */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>The qualification is the methodology.</H2>
+        <Body>Partiqule's founders aren't food scientists or agricultural experts. They're technologists with deep experience in data systems, AI powered evaluation pipelines, and production grade infrastructure.</Body>
+        <Body>The scientific work behind every score lives somewhere else. Ingredient safety research from peer reviewed sources. Regulatory positions from agencies like the EU, California Prop 65, and the FDA. Documented composition tier methodology. All of it is traceable. Brands can see the reasoning behind any score. Users can see the same.</Body>
+        <Body>What the engineering team brings is the discipline to apply that science consistently across thousands of products. Ship updates when evidence justifies them. Respond to corrections within 48 hours. Log every methodology change with a timestamp. Build a system that produces the same answer for the same product across thousands of users.</Body>
+        <Body>The qualification isn't a person. It's a system that shows its work.</Body>
+      </section>
+
       {/* SECTION: The team — founder photos PRESERVED from prior version */}
       <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
         <H2>The team.</H2>
@@ -10736,6 +10749,17 @@ function App() {
                         pre-deploy scans. Friendly fallback uses the design system voice (knowing
                         friend, not dashboard) so cached scans never show "Caution — real concerns". */}
                     {(() => {
+                      // Loading-state gate: don't render a verdict while the
+                      // score is still resolving. Mirrors the ScoreArc guard
+                      // above so the placeholder ring and an empty verdict
+                      // slot appear together, then both swap to the real
+                      // values when scoring completes. Prior bug: stale
+                      // verdict ("For a kid: Probably fine") could render
+                      // next to a still-loading ring during the ~2-4s
+                      // composer wait.
+                      if (displayScore == null || isNaN(displayScore) || (result._streaming && result._stage === "identified")) {
+                        return null;
+                      }
                       // Verdict ALWAYS derived from displayScore so it can't
                       // contradict the score number on screen. Past bug: AI-
                       // generated verdict_adult / verdict_kid fields stored
