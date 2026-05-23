@@ -7046,7 +7046,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
     </div>
   );
 
-  const ModeColumn = ({ heading, body, iconPath }) => (
+  const ModeColumn = ({ heading, body, iconPath, badge }) => (
     <div style={{
       flex: "1 1 0",
       padding: isMobile ? "20px 0" : "8px 4px",
@@ -7062,11 +7062,25 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
           {iconPath}
         </svg>
       </div>
-      <h3 style={{
-        fontFamily: "'Lora', Georgia, serif",
-        fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em",
-        color: "var(--ink)", margin: "0 0 10px",
-      }}>{heading}</h3>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+        <h3 style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em",
+          color: "var(--ink)", margin: 0,
+        }}>{heading}</h3>
+        {badge && (
+          <span style={{
+            display: "inline-flex", alignItems: "center",
+            padding: "3px 9px", borderRadius: 999,
+            background: "transparent",
+            border: "1px solid var(--amber)",
+            color: "var(--amber)",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 10, fontWeight: 600,
+            letterSpacing: "0.14em", textTransform: "uppercase",
+          }}>{badge}</span>
+        )}
+      </div>
       <p style={{
         fontFamily: "'DM Sans', system-ui, sans-serif",
         fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6,
@@ -7111,6 +7125,18 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
       a: "Scans are tied to the user account for the lists and exposure tracker. No data sales. No advertiser sharing." },
   ];
 
+  // Receipts carousel — five crossfading "skip this, grab that" cards
+  // restored as the hero visual (was the previous landing's strongest
+  // brand element + the highest-converting Instagram format). Scores
+  // are illustrative; verify against live calibration before next push.
+  const RECEIPTS = [
+    { cat: "Sunscreen",     skip: { name: "Banana Boat Sport SPF 50", score: 7 }, grab: { name: "Thinksport SPF 50",         score: 2 }, reason: "Octinoxate, octocrylene. Banned in Hawaii. Sold here." },
+    { cat: "Cola",          skip: { name: "Cherry Coke",              score: 7 }, grab: { name: "Olipop Vintage Cola",       score: 2 }, reason: "39g sugar. HFCS. Caramel color IV (4-MEI)." },
+    { cat: "Air freshener", skip: { name: "Glade PlugIns Sweet Pea",  score: 8 }, grab: { name: "P.F. Candle Co. Sandalwood",score: 3 }, reason: "Phthalates. Synthetic fragrance. No disclosure." },
+    { cat: "Kids snack",    skip: { name: "Goldfish Cheddar",         score: 6 }, grab: { name: "Made Good Star Crackers",   score: 3 }, reason: "TBHQ. Yellow 5 and 6. Vegetable shortening." },
+    { cat: "Shampoo",       skip: { name: "Tresemmé Keratin Smooth",  score: 6 }, grab: { name: "Acure Curiously Clarifying",score: 3 }, reason: "Cocamidopropyl betaine. PEGs. DMDM hydantoin." },
+  ];
+
   return (
     <div style={{ background: "var(--cream)", minHeight: "100vh", paddingBottom: 80 }}>
       {/* Top bar */}
@@ -7119,8 +7145,54 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
         <button onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid var(--rule-strong)", background: "transparent", color: "var(--ink)", fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 13, fontWeight: 500, cursor: "pointer", letterSpacing: "0.005em" }}>Sign in</button>
       </div>
 
-      {/* HERO */}
-      <section style={{ ...sectionWidth, padding: isMobile ? "44px 24px 36px" : "80px 40px 56px", textAlign: "center" }}>
+      {/* Receipts carousel — hero visual, sits above the headline. Each
+          card holds ~3s, fade in/out ~0.5s, 17.5s loop total. Indicator
+          dots match the same staggered timing via pqCycle + pqDot
+          keyframes defined globally in App. */}
+      <div style={{ maxWidth: 540, margin: "0 auto", padding: isMobile ? "32px 24px 8px" : "56px 24px 8px", position: "relative", height: isMobile ? 230 : 210 }}>
+        {RECEIPTS.map((card, i) => (
+          <div key={i} style={{
+            position: "absolute", top: 0, left: 24, right: 24,
+            background: "#ffffff",
+            border: "1px solid var(--rule)",
+            borderRadius: "22px 16px 24px 18px / 18px 22px 16px 24px",
+            padding: "18px 18px 14px",
+            opacity: 0,
+            animation: `pqCycle 17.5s ${i * 3.5}s infinite ease-in-out`,
+          }}>
+            <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 10, letterSpacing: "0.22em", color: "var(--moss)", textTransform: "uppercase", fontWeight: 500, marginBottom: 14 }}>{card.cat}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: isMobile ? 14 : 16, marginBottom: 12 }}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 14, fontWeight: 400, color: "var(--ink-soft)", lineHeight: 1.25, textDecoration: "line-through", textDecorationColor: "rgba(162,62,46,0.5)", textDecorationThickness: "1.5px", marginBottom: 8 }}>{card.skip.name}</div>
+                <div style={{ width: 50, height: 50, borderRadius: "49% 51% 50% 50% / 52% 48% 52% 48%", background: "var(--score-red)", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora', Georgia, serif", fontSize: 22, fontWeight: 400 }}>{card.skip.score}</div>
+              </div>
+              <div style={{ color: "var(--moss)", flexShrink: 0, opacity: 0.6 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 14, fontWeight: 400, color: "var(--ink)", lineHeight: 1.25, marginBottom: 8 }}>{card.grab.name}</div>
+                <div style={{ width: 50, height: 50, borderRadius: "49% 51% 50% 50% / 52% 48% 52% 48%", background: "var(--score-green)", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora', Georgia, serif", fontSize: 22, fontWeight: 400, marginLeft: "auto" }}>{card.grab.score}</div>
+              </div>
+            </div>
+            <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, color: "var(--ink-soft)", lineHeight: 1.45, paddingTop: 10, borderTop: "1px solid var(--rule)" }}>{card.reason}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Indicator dots — same timing as the cards */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, padding: "4px 0 16px" }}>
+        {RECEIPTS.map((_, i) => (
+          <div key={i} style={{
+            width: 7, height: 7, borderRadius: "50%",
+            background: "var(--rule)",
+            animation: `pqDot 17.5s ${i * 3.5}s infinite ease-in-out`,
+            transformOrigin: "center",
+          }} />
+        ))}
+      </div>
+
+      {/* HERO — sits below the receipts carousel */}
+      <section style={{ ...sectionWidth, padding: isMobile ? "20px 24px 36px" : "32px 40px 56px", textAlign: "center" }}>
         <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: isMobile ? 38 : 56, fontWeight: 400, letterSpacing: "-0.025em", color: "var(--ink)", margin: "0 0 22px", lineHeight: 1.05 }}>
           Family product safety,<br/>scored.
         </h1>
@@ -7164,6 +7236,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
           />
           <ModeColumn
             heading="Ask"
+            badge="Coming soon"
             body={'Describe what\'s needed. "Sippy cup for an 18 month old." "Clean sunscreen for pregnancy." "Snacks for a road trip with the kids." Get scored recommendations, not search results.'}
             iconPath={<><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></>}
           />
