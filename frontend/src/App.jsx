@@ -1440,6 +1440,171 @@ const ScorePlaceholder = ({ stage }) => {
   );
 };
 
+// ── PENDING CALIBRATION CARD ────────────────────────────────
+// Renders when the backend returns status: "pending_calibration"
+// (Tier 5 generic fallback). Replaces the misleading midpoint
+// score with a clear "not enough data yet" state + actions for
+// the user to help us calibrate. Brand principle: don't publish
+// scores Partiqule can't show the work behind.
+const PendingCalibrationCard = ({ result, isMobile, onReset, authedFetch }) => {
+  const [submitState, setSubmitState] = useState("idle");
+  const [ingredientText, setIngredientText] = useState("");
+  const [productUrl, setProductUrl] = useState("");
+  const [showInput, setShowInput] = useState(null);
+  const reason = result?.pending_reason
+    || "We don't have enough data to score this product yet.";
+
+  const submitToQueue = async () => {
+    setSubmitState("sending");
+    try {
+      const body = {
+        product_name: result?.product_name || null,
+        product_image_url: result?.image_url || null,
+        ingredient_text: ingredientText.trim() || null,
+        product_url: productUrl.trim() || null,
+        notes: null,
+      };
+      const res = await authedFetch(`${API_BASE}/api/calibration-queue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`http ${res.status}`);
+      setSubmitState("sent");
+    } catch (e) {
+      console.warn("calibration queue submit failed:", e?.message);
+      setSubmitState("error");
+    }
+  };
+
+  const buttonStyle = {
+    width: "100%",
+    padding: "14px 18px",
+    background: "var(--cream-light)",
+    border: "1px solid var(--rule)",
+    borderRadius: "var(--card-shape-1)",
+    fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontSize: 14,
+    fontWeight: 500,
+    color: "var(--ink)",
+    cursor: "pointer",
+    textAlign: "left",
+    transition: "background 0.15s, border-color 0.15s",
+  };
+
+  return (
+    <div style={{
+      maxWidth: 600, margin: "0 auto",
+      padding: isMobile ? "32px 20px 120px" : "60px 40px 80px",
+    }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: isMobile ? 26 : 32,
+          fontWeight: 400, letterSpacing: "-0.015em",
+          color: "var(--ink)", margin: "0 0 12px",
+          lineHeight: 1.3,
+        }}>
+          Not enough data to score this yet
+        </h1>
+        <p style={{
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: isMobile ? 16 : 18,
+          color: "var(--ink-soft)", margin: 0, lineHeight: 1.5,
+        }}>
+          {reason}
+        </p>
+        {result?.product_name && (
+          <p style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase",
+            color: "var(--ink-faint)", margin: "16px 0 0",
+          }}>
+            For: {result.product_name}
+          </p>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+        <button style={buttonStyle} onClick={() => setShowInput(showInput === "ingredients" ? null : "ingredients")}>
+          Paste the ingredient list →
+        </button>
+        {showInput === "ingredients" && (
+          <textarea
+            value={ingredientText}
+            onChange={(e) => setIngredientText(e.target.value)}
+            placeholder="Paste ingredients separated by commas"
+            rows={4}
+            style={{
+              width: "100%", padding: "12px 14px",
+              borderRadius: "var(--card-shape-1)",
+              border: "1px solid var(--rule-strong)",
+              background: "var(--cream-light)", outline: "none",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 14, color: "var(--ink)",
+              resize: "vertical", boxSizing: "border-box",
+            }}
+          />
+        )}
+        <button style={buttonStyle} onClick={onReset}>
+          Take a photo of the label →
+        </button>
+        <button style={buttonStyle} onClick={() => setShowInput(showInput === "url" ? null : "url")}>
+          Send a link to the product page →
+        </button>
+        {showInput === "url" && (
+          <input
+            type="url"
+            value={productUrl}
+            onChange={(e) => setProductUrl(e.target.value)}
+            placeholder="https://..."
+            style={{
+              width: "100%", padding: "12px 14px",
+              borderRadius: "var(--card-shape-1)",
+              border: "1px solid var(--rule-strong)",
+              background: "var(--cream-light)", outline: "none",
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 14, color: "var(--ink)",
+              boxSizing: "border-box",
+            }}
+          />
+        )}
+      </div>
+
+      <div style={{ marginBottom: 32 }}>
+        <button
+          onClick={submitToQueue}
+          disabled={submitState === "sending" || submitState === "sent"}
+          style={{
+            width: "100%",
+            padding: "14px 22px",
+            borderRadius: "var(--cta-shape)",
+            background: submitState === "sent" ? "var(--moss-deep)" : "var(--moss)",
+            color: "var(--ivory)", border: "none",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 14, fontWeight: 500, letterSpacing: "0.005em",
+            cursor: submitState === "sending" || submitState === "sent" ? "default" : "pointer",
+            opacity: submitState === "sending" ? 0.6 : 1,
+          }}
+        >
+          {submitState === "sent" ? "Added to the queue. Thanks." :
+           submitState === "sending" ? "Adding..." :
+           submitState === "error" ? "Try again" :
+           "Add to calibration queue"}
+        </button>
+      </div>
+
+      <p style={{
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontSize: 12, color: "var(--ink-faint)",
+        margin: 0, textAlign: "center", lineHeight: 1.5,
+      }}>
+        Partiqule doesn't publish scores it can't show the work behind.
+      </p>
+    </div>
+  );
+};
+
 // ── SCAN VS SAFE SPLIT VIEW ───────────────────────────────────
 // ── BUNDLE RECOMMENDATION (replaced with simple CTA) ─────────
 const BundleCard = ({category}) => {
@@ -9915,6 +10080,17 @@ function App() {
           </div>
           )}
         </>
+      ) : result?.status === "pending_calibration" ? (
+        /* PENDING CALIBRATION — backend returned status=pending_calibration
+           (Tier 5 fallback gate, hotfix 2026-05-23). Render the
+           "not enough data to score yet" UX instead of a misleading
+           midpoint score. */
+        <PendingCalibrationCard
+          result={result}
+          isMobile={isMobile}
+          onReset={reset}
+          authedFetch={authedFetch}
+        />
       ) : (
         /* RESULTS */
         <>

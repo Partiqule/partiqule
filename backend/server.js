@@ -7281,17 +7281,22 @@ app.post("/analyze", rateLimit, async (req, res) => {
           categoryContext: CATEGORY_CONTEXT,
         });
         const synth = t5.syntheticResult;
-        const safety = computeSafetyScores(synth.score, visionCat, productName, {}, [], "");
-        synth.is_child_product = safety.isChild;
-        synth.child_score      = safety.childScore;
-        synth.child_bumps      = safety.childBumps || [];
-        synth.pregnancy_score  = safety.pregnancyScore;
-        synth.pregnancy_bumps  = safety.pregnancyBumps || [];
+        // Pending-calibration response carries score=null — skip safety
+        // bumps and alternatives filtering (no score to compare against).
+        // See tier5CategoryPrior hotfix 2026-05-23.
+        if (synth.score != null) {
+          const safety = computeSafetyScores(synth.score, visionCat, productName, {}, [], "");
+          synth.is_child_product = safety.isChild;
+          synth.child_score      = safety.childScore;
+          synth.child_bumps      = safety.childBumps || [];
+          synth.pregnancy_score  = safety.pregnancyScore;
+          synth.pregnancy_bumps  = safety.pregnancyBumps || [];
+          synth.alternatives = serializeAlternatives(
+            filterDbAlternatives(findAlternatives(productName, visionCat, 3, productName), visionCat, productName, synth.score),
+            visionCat,
+          );
+        }
         synth.brand            = identification.brand || "";
-        synth.alternatives = serializeAlternatives(
-          filterDbAlternatives(findAlternatives(productName, visionCat, 3, productName), visionCat, productName, synth.score),
-          visionCat,
-        );
         log.info("vision_cascade_tier5", {
           product_name: productName,
           category: visionCat,
@@ -8418,23 +8423,26 @@ app.post("/analyze", rateLimit, async (req, res) => {
       }
 
       // ── Tier 5: synthetic category-prior best guess ──
-      // No AI call. No chemistry fields populated. summary names the limitation.
-      // _skipCache flag tells the caller not to persist this result.
+      // Whole-food path returns a legitimate score; generic path returns
+      // status="pending_calibration" with score=null (hotfix 2026-05-23
+      // — see tier5CategoryPrior). Safety helper only runs when we have
+      // a real score; null score skips safety because there's nothing
+      // to bump.
       if (!tier) {
         const t5 = tier5CategoryPrior(productName, category, {
           categoryAverages: CATEGORY_AVERAGES,
           categoryContext: CATEGORY_CONTEXT,
         });
         const synth = t5.syntheticResult;
-        // Replace the placeholder safety scores with shared-helper output for
-        // consistency with other paths (uses category + product name only).
-        const safety = computeSafetyScores(synth.score, category, productName, {}, [], "");
-        synth.is_child_product = safety.isChild;
-        synth.child_score      = safety.childScore;
-        synth.child_bumps      = safety.childBumps || [];
-        synth.pregnancy_score  = safety.pregnancyScore;
-        synth.pregnancy_bumps  = safety.pregnancyBumps || [];
-        log.info("cascade_tier5", { productName, category, score: synth.score });
+        if (synth.score != null) {
+          const safety = computeSafetyScores(synth.score, category, productName, {}, [], "");
+          synth.is_child_product = safety.isChild;
+          synth.child_score      = safety.childScore;
+          synth.child_bumps      = safety.childBumps || [];
+          synth.pregnancy_score  = safety.pregnancyScore;
+          synth.pregnancy_bumps  = safety.pregnancyBumps || [];
+        }
+        log.info("cascade_tier5", { productName, category, score: synth.score, status: synth.status || "scored" });
         return { tier: "tier5", result: synth, skipCache: true };
       }
 
@@ -10462,6 +10470,60 @@ app.delete("/api/intelligence-cards/:id", requireAdmin, async (req, res) => {
 });
 
 // ── RECIPE INGREDIENTS — AI-powered ingredient expansion ──
+// Hotfix 2026-05-23 — calibration queue submission. Frontend posts
+// here when a user sees the pending_calibration state and offers
+// info to help us calibrate the product. Writes to the
+// pending_calibration_requests table (migration 021). Sara/Paul
+// review manually; high-signal entries become calibration registry
+// entries. No notification yet.
+app.post("/api/calibration-queue", rateLimit, async (req, res) => {
+  try {
+    // Optional auth — attach user_id if a JWT is present, otherwise
+    // accept anonymous submissions.
+    let userId = null;
+    try {
+      const header = req.headers.authorization || "";
+      const m = header.match(/^Bearer\s+(.+)$/i);
+      if (m && supabaseAdmin) {
+        const { data } = await supabaseAdmin.auth.getUser(m[1]);
+        if (data?.user?.id) userId = data.user.id;
+      }
+    } catch {}
+
+    const body = req.body || {};
+    const product_name      = typeof body.product_name === "string" ? body.product_name.slice(0, 200) : null;
+    const product_image_url = typeof body.product_image_url === "string" ? body.product_image_url.slice(0, 500) : null;
+    const ingredient_text   = typeof body.ingredient_text === "string" ? body.ingredient_text.slice(0, 4000) : null;
+    const product_url       = typeof body.product_url === "string" ? body.product_url.slice(0, 500) : null;
+    const notes             = typeof body.notes === "string" ? body.notes.slice(0, 1000) : null;
+
+    // Require at least one info field so we don't queue empty rows.
+    if (!product_name && !product_image_url && !ingredient_text && !product_url) {
+      return res.status(400).json({ error: "at least one of product_name, product_image_url, ingredient_text, product_url is required" });
+    }
+
+    if (!supabaseAdmin) {
+      // No Supabase configured — log and return success so the UI
+      // doesn't show an error in environments without a backing DB.
+      log.warn("calibration_queue_no_supabase", { product_name });
+      return res.json({ ok: true, persisted: false });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("pending_calibration_requests")
+      .insert({ user_id: userId, product_name, product_image_url, ingredient_text, product_url, notes });
+    if (error) {
+      log.warn("calibration_queue_insert_failed", { error: error.message });
+      return res.status(500).json({ error: "queue write failed" });
+    }
+    log.info("calibration_queue_submitted", { user_id: userId, product_name });
+    return res.json({ ok: true, persisted: true });
+  } catch (e) {
+    log.warn("calibration_queue_endpoint_error", { error: e.message });
+    return res.status(500).json({ error: "internal error" });
+  }
+});
+
 app.post("/api/recipe-ingredients", rateLimit, async (req, res) => {
   const { dish, servings } = req.body;
   if (!dish || !dish.trim()) return res.status(400).json({ error: "dish is required" });

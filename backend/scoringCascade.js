@@ -668,21 +668,38 @@ function tier5CategoryPrior(productName, category, { categoryAverages, categoryC
     };
   }
 
+  // Hotfix 2026-05-23 — pending_calibration response replaces the
+  // tier midpoint score for category-prior fallback. The midpoint
+  // (typically 5.5 → rounds to 6 for unknown categories) is the
+  // single biggest defamation surface in the scoring path — it
+  // ships a confident-looking number with no ingredient evidence
+  // behind it. Returning status="pending_calibration" with
+  // score=null forces the UI to render a "not enough data" state
+  // instead of publishing a number we can't defend.
+  //
+  // Whole-foods path above stays as-is (legitimate scoring — the
+  // product IS the ingredient, score reflects category-typical
+  // contaminant profile from a small known set).
   const cat = category || "other";
-  const avgEntry = (categoryAverages || {})[cat] || (categoryAverages || {}).other || { avg: 5.5 };
-  const score = Math.round(avgEntry.avg);
-  const summaryShort = `Without the ingredient list I'm guessing from the product type. Scan the barcode or label for a verified score.`;
+  const pendingReason = "Without the ingredient list we can't score this product yet. Help us by scanning the label, pasting the ingredients, or adding the product page link.";
   return {
     syntheticResult: {
       product_name: productName,
       category: cat,
-      score,
-      overall_score: score,
+      // Pending-calibration marker — frontend reads this status to
+      // render the "not enough data to score yet" UX instead of a
+      // score number. score / overall_score / precise_score are all
+      // null so the UI can't accidentally render a number.
+      status: "pending_calibration",
+      pending_reason: pendingReason,
+      score: null,
+      overall_score: null,
+      precise_score: null,
       confidence: "low",
-      confidence_note: "No verified ingredient data available — score reflects the typical range for this product category, not this specific item.",
-      summary: summaryShort,
-      summary_short: summaryShort,
-      summary_long: summaryShort,
+      confidence_note: "No verified ingredient data available.",
+      summary: pendingReason,
+      summary_short: pendingReason,
+      summary_long: pendingReason,
       concerns: [],
       flagged_substances: [],
       identified_plastics: [],
@@ -690,17 +707,17 @@ function tier5CategoryPrior(productName, category, { categoryAverages, categoryC
       natural_materials: [],
       ingredient_list: [],
       dimensions: {
-        materials:      { score, label: "", concerns: [] },
-        usage_exposure: { score, label: "", concerns: [], frequency: "unknown", type: "unknown", intensity: "unknown", vulnerable: false },
-        packaging:      { score, label: "", concerns: [], primary: "unknown", refillable: false, end_of_life: "unknown" },
-        sustainability: { score, label: "", concerns: [], reusable: false, replaces_single_use: false, replaces_count: null, circularity: "unknown" },
+        materials:      { score: null, label: "", concerns: [] },
+        usage_exposure: { score: null, label: "", concerns: [], frequency: "unknown", type: "unknown", intensity: "unknown", vulnerable: false },
+        packaging:      { score: null, label: "", concerns: [], primary: "unknown", refillable: false, end_of_life: "unknown" },
+        sustainability: { score: null, label: "", concerns: [], reusable: false, replaces_single_use: false, replaces_count: null, circularity: "unknown" },
       },
       is_child_product: false,
-      child_score: score,
+      child_score: null,
       child_bumps: [],
-      pregnancy_score: score,
+      pregnancy_score: null,
       pregnancy_bumps: [],
-      peer_comparison: "Estimate only — scan the label for a real score",
+      peer_comparison: null,
       scan_next: [],
       nutrition: null,
       alternatives: [],
@@ -708,8 +725,8 @@ function tier5CategoryPrior(productName, category, { categoryAverages, categoryC
       product_family: null,
       category_score_context: (categoryContext || {})[cat] || (categoryContext || {}).other || "",
       // Source-provenance fields (see "Five-Tier Scoring Cascade" in CLAUDE.md)
-      source: "ai_text_only_estimate",
-      source_label: "Best guess from product name",
+      source: "pending_calibration",
+      source_label: "Pending calibration",
       source_confidence: "low",
       // Tier 5 is intentionally NOT cached. Callers should skip cacheSet for
       // this result so that next visit re-runs the cascade — OFF or web search
