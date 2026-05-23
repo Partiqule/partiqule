@@ -4660,182 +4660,197 @@ const HistoryPage = ({history: historyProp, surface, border, text, muted, onSele
 
 
 const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate}) => {
+  // Refreshed 2026-05-23 with new positioning + methodology
+  // transparency framing. Founder photos (/paul.jpg, /sara.jpg)
+  // preserved exactly from the prior version per Paul's spec.
+  // Body copy avoids first person ("we", "I") and never applies
+  // "safe" to products. Compound-adjective hyphens stripped where
+  // they read naturally as two words.
+  const H2 = ({ children }) => (
+    <h2 style={{
+      fontFamily: "'Lora', Georgia, serif",
+      fontWeight: 400, fontSize: isMobile ? 26 : 34,
+      letterSpacing: "-0.015em", color: text,
+      lineHeight: 1.2, margin: "0 0 22px",
+    }}>{children}</h2>
+  );
+  const Body = ({ children }) => (
+    <p style={{
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      fontSize: isMobile ? 15 : 16,
+      color: muted, lineHeight: 1.75,
+      margin: "0 0 18px", maxWidth: 720,
+    }}>{children}</p>
+  );
+
   return (
-    <div style={{maxWidth:860, margin:"0 auto", padding:isMobile?"24px 16px 60px":"48px 40px 80px"}}>
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: isMobile ? "24px 16px 60px" : "48px 40px 80px" }}>
 
-      {/* Hero header */}
-      <div style={{marginBottom:48}}>
-        <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, fontWeight:500, color:"var(--moss)", textTransform:"uppercase", letterSpacing:"0.22em", marginBottom:16, display:"flex", alignItems:"center", gap:10}}>
-          <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-          About Partiqule
-        </div>
-        <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:isMobile?36:54, color:text, margin:"0 0 24px", letterSpacing:"-0.015em", lineHeight:1.04}}>
-          Know what's <span style={{color:"var(--moss)"}}>in your products.</span>
+      {/* Eyebrow */}
+      <div style={{
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontSize: 10, fontWeight: 500, color: "var(--moss)",
+        textTransform: "uppercase", letterSpacing: "0.22em",
+        marginBottom: 16, display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <span style={{ display: "inline-block", width: 22, height: 1, background: "var(--moss)", opacity: 0.7 }} />
+        About Partiqule
+      </div>
+
+      {/* SECTION: The why */}
+      <section style={{ marginBottom: isMobile ? 56 : 80 }}>
+        <h1 style={{
+          fontFamily: "'Lora', Georgia, serif", fontWeight: 400,
+          fontSize: isMobile ? 36 : 54, color: text,
+          margin: "0 0 28px", letterSpacing: "-0.02em", lineHeight: 1.05,
+        }}>
+          Cleaner shelves<br/>for the next generation.
         </h1>
-        <p style={{fontSize:isMobile?16:18, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          The food you eat, the clothes you wear, the cookware you cook with, the cleaning products in your home. All of it has a measurable impact on your health, your family's health, and the health of the planet. Most of that impact is invisible. There's no label, no warning, no easy way to know what to trust.
-        </p>
-        <p style={{fontSize:isMobile?17:20, color:"#16a34a", fontWeight:700, lineHeight:1.5, marginBottom:16}}>
-          Partiqule exists to change that.
-        </p>
-        <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:16, maxWidth:680}}>
-          We score every product across four dimensions: materials, exposure, packaging and sustainability. The result is a complete picture of its chemical and environmental impact on you, your home, and the planet. Free, instant, and grounded in published science.
-        </p>
-        <p style={{fontSize:isMobile?15:16, color:muted, lineHeight:1.85, marginBottom:32, maxWidth:680}}>
-          Because when you understand what you're buying, you can make better decisions for yourself and the people you love.
-        </p>
-        <button onClick={()=>onScan()}
-          style={{padding:"12px 28px", borderRadius:10, border:"none", background:"#052e16", color:"#4ade80", fontWeight:700, fontSize:15, cursor:"pointer"}}>
-          Try your first scan →
-        </button>
-      </div>
+        <Body>Partiqule was built around a single observation: the labels don't tell the truth, and most people don't have the time or expertise to translate ingredient lists into actual decisions.</Body>
+        <Body>The next generation should inherit cleaner shelves than the one before. That requires a tool that turns the chemistry into a decision in under thirty seconds. A scan, a score, a swap.</Body>
+        <Body>The label says natural. The score says no. The next product over scores cleaner at the same price. Skip this. Grab that. Move on with the day.</Body>
+      </section>
 
-      {/* Mission */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Our mission</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          The things that affect your health most aren't always the things on the front of the label. Microplastics in food-contact packaging. Synthetic dyes linked to carcinogenicity. PFAS in non-stick coatings. PVA film dissolving into waterways. Synthetic textiles shedding microfibers onto your skin every day. The research is there — but it's scattered, technical, and inaccessible to most people.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Partiqule is built to close that gap. We combine peer-reviewed science with two independent research passes to give every person access to the kind of information that used to require a toxicologist. Scan anything — a cleaning product, a piece of clothing, a food item, a baby product — and get a complete health picture in seconds.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Every score we produce is grounded in published research, including the New England Journal of Medicine, Nature Medicine, The Lancet, and the FDA. We flag what matters, explain why it matters, and show you what to do about it.
-        </p>
-      </div>
+      {/* SECTION: The how */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>How the scoring works.</H2>
+        <Body>Two pass AI scoring drives every result. Pass 1 reads the ingredient list, maps each ingredient against the calibration database, and produces an initial score from 1 to 10 with the reasoning attached. Pass 2 finds alternatives in the same category that score cleaner.</Body>
+        <Body>Named calibration entries override generic rules. When a product is in the database, the entry's safety data drives the score. When a product isn't yet in the database, composition tiers fall back to ingredient class scoring.</Body>
+        <Body>When the data isn't sufficient to score honestly, the system returns a pending calibration state with a path to add the missing data. No tier fallback. No false confidence.</Body>
+        <Body>Kids mode applies stricter thresholds for products with children in mind. Pregnancy mode flags ingredients with first or second trimester concerns. The cumulative exposure tracker rolls the household routine into a single picture.</Body>
+      </section>
 
-      {/* What we stand for */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 24px"}}>What we stand for</h2>
-        <div style={{display:"flex", flexDirection:"column", gap:20}}>
-          {[
-            {title:"The full picture", body:"Microplastics are one part of the story. We score four dimensions: materials, exposure, packaging and sustainability. Your health, your home, and the planet are all affected differently by the same product."},
-            {title:"Radical transparency", body:"Our scoring methodology is open. We show you the full breakdown across all four dimensions with the research behind each score. Judge for yourself rather than just trusting a number."},
-            {title:"No conflicts of interest", body:"We recommend products because they're genuinely safer, not because we're paid to. Affiliate relationships are always clearly disclosed and never influence our scores."},
-            {title:"Free to start", body:"Your first scans are on us. No account needed to get started — create a free account to save your history."},
-            {title:"Science first", body:"Every score is grounded in published research. We cite our sources, maintain our methodology, and update our scoring when the science evolves."},
-          ].map((v,i)=>(
-            <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start"}}>
-              <div style={{width:8, height:8, borderRadius:"50%", background:"#16a34a", flexShrink:0, marginTop:6}}/>
-              <div>
-                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{v.title}</div>
-                <div style={{fontSize:15, color:muted, lineHeight:1.7}}>{v.body}</div>
-              </div>
-            </div>
-          ))}
+      {/* SECTION: The principles (two-column will/won't) */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>What Partiqule will and won't do.</H2>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 28 : 36, marginTop: 16 }}>
+          <div style={{ flex: "1 1 0" }}>
+            <div style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600,
+              color: "var(--moss)",
+              textTransform: "uppercase", letterSpacing: "0.14em",
+              marginBottom: 14,
+            }}>Partiqule will:</div>
+            <ul style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 14, color: muted, lineHeight: 1.75,
+              margin: 0, paddingLeft: 18,
+            }}>
+              <li style={{ marginBottom: 10 }}>Show the calibration entry and reasoning for every score</li>
+              <li style={{ marginBottom: 10 }}>Publish a pending calibration state when data is insufficient</li>
+              <li style={{ marginBottom: 10 }}>Respond to brand corrections within 48 hours</li>
+              <li style={{ marginBottom: 10 }}>Update scores when products reformulate, with a timestamped log</li>
+              <li style={{ marginBottom: 10 }}>Apply consistent methodology across categories</li>
+              <li>Disclose any brand partnerships</li>
+            </ul>
+          </div>
+          <div style={{ flex: "1 1 0" }}>
+            <div style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600,
+              color: "var(--score-red)",
+              textTransform: "uppercase", letterSpacing: "0.14em",
+              marginBottom: 14,
+            }}>Partiqule won't:</div>
+            <ul style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 14, color: muted, lineHeight: 1.75,
+              margin: 0, paddingLeft: 18,
+            }}>
+              <li style={{ marginBottom: 10 }}>Publish scores it can't defend with documented reasoning</li>
+              <li style={{ marginBottom: 10 }}>Use "safe" as a product claim (the word implies a medical endorsement that's not Partiqule's to make)</li>
+              <li style={{ marginBottom: 10 }}>Sell user data to advertisers or anyone else</li>
+              <li style={{ marginBottom: 10 }}>Take money from scored brands in exchange for score adjustments</li>
+              <li style={{ marginBottom: 10 }}>Run political content or align with political movements</li>
+              <li>Score human beings, only products</li>
+            </ul>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Founders & human oversight */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Built by humans. Guided by expertise.</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:24}}>
-          Partiqule was founded by <strong style={{color:text}}>Paul and Sara Miller</strong>, combining 20+ years of experience across technology and operations. Every scoring framework, weighting decision, and quality standard on this platform is grounded in peer-reviewed research and intentionally designed by its founders. AI powers the scale — but the system itself is human-built and continuously refined.
+      {/* SECTION: Methodology transparency */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>Open methodology.</H2>
+        <Body>The scoring methodology is documented and reproducible. Composition tiers run from 1 (clean, plant based, minimally processed) to 4 (high concern, multiple flagged ingredients). Kids floor and ceiling thresholds adjust the score range for products with children in mind. Pregnancy flags surface during pregnancy mode.</Body>
+        <Body>Regulatory context informs the scoring engine. Substances banned in the EU but legal in the US get flagged. California Prop 65 warnings are referenced where applicable. International regulatory differences are documented in the methodology log.</Body>
+        <p style={{ margin: "8px 0 0" }}>
+          <span onClick={() => onNavigate("methodology")} style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 14, fontWeight: 500,
+            color: "var(--moss)", textDecoration: "underline",
+            cursor: "pointer",
+          }}>Read the full methodology →</span>
         </p>
+      </section>
 
-        {/* Founder cards */}
-        <div style={{display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:16, marginBottom:24}}>
+      {/* SECTION: Corrections */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>Wrong score? Say so.</H2>
+        <Body>Brands or users who think a score is wrong can email paul@partiqule.com. The review process:</Body>
+        <ol style={{
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontSize: isMobile ? 15 : 16,
+          color: muted, lineHeight: 1.7,
+          margin: "0 0 18px", paddingLeft: 22, maxWidth: 720,
+        }}>
+          <li style={{ marginBottom: 8 }}>Email arrives. Acknowledgment within 48 hours.</li>
+          <li style={{ marginBottom: 8 }}>Calibration entry pulled, reasoning reviewed against the claim.</li>
+          <li style={{ marginBottom: 8 }}>If the score updates, the change is logged with the date and the reason.</li>
+          <li>Response back to the sender with the resolution.</li>
+        </ol>
+        <Body>This isn't customer service theater. It's the methodology's accountability layer.</Body>
+      </section>
+
+      {/* SECTION: The team — founder photos PRESERVED from prior version */}
+      <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
+        <H2>The team.</H2>
+
+        {/* Founder cards (preserved JSX from prior version — /paul.jpg + /sara.jpg) */}
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 28 }}>
           {[
-            {name:"Paul Miller", role:"Co-Founder, Product Development", detail:"Leads product development and defines the scoring framework behind every result.", photo:"/paul.jpg"},
-            {name:"Sara Miller", role:"Co-Founder, Operations & Integrity", detail:"Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale.", photo:"/sara.jpg"},
+            { name: "Paul Miller", role: "Co-Founder, Product Development", detail: "Leads product development and defines the scoring framework behind every result.", photo: "/paul.jpg" },
+            { name: "Sara Miller", role: "Co-Founder, Operations & Integrity", detail: "Leads day-to-day operations, ensuring Partiqule delivers consistent, trustworthy results at scale.", photo: "/sara.jpg" },
           ].map((person, i) => (
-            <div key={i} style={{background:surface, borderRadius:14, padding:"24px 22px", border:`1.5px solid ${border}`, display:"flex", gap:18, alignItems:"flex-start"}}>
-              <div style={{width:110, height:110, borderRadius:"50%", flexShrink:0, overflow:"hidden", border:"2px solid #16a34a"}}>
+            <div key={i} style={{ background: surface, borderRadius: 14, padding: "24px 22px", border: `1.5px solid ${border}`, display: "flex", gap: 18, alignItems: "flex-start" }}>
+              <div style={{ width: 110, height: 110, borderRadius: "50%", flexShrink: 0, overflow: "hidden", border: "2px solid var(--moss)" }}>
                 <img src={person.photo} alt={person.name} style={{
-                  width:"170%", height:"170%",
-                  objectFit:"cover",
-                  marginLeft:"-35%", marginTop:"-35%",
-                }}/>
+                  width: "170%", height: "170%",
+                  objectFit: "cover",
+                  marginLeft: "-35%", marginTop: "-35%",
+                }} />
               </div>
               <div>
-                <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:16, color:text, marginBottom:4}}>{person.name}</div>
-                <div style={{fontSize:12, fontWeight:600, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10}}>{person.role}</div>
-                <div style={{fontSize:14, color:muted, lineHeight:1.7}}>{person.detail}</div>
+                <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontWeight: 600, fontSize: 16, color: text, marginBottom: 4 }}>{person.name}</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "var(--moss)", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10 }}>{person.role}</div>
+                <div style={{ fontSize: 14, color: muted, lineHeight: 1.7 }}>{person.detail}</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Founders story */}
-        <div style={{background:"#f0fdf4", borderRadius:16, padding:"28px", border:`1px solid ${"#bbf7d0"}`, marginBottom:16}}>
-          <div style={{fontSize:12, fontWeight:700, color:"#16a34a", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:16}}>Why we started Partiqule</div>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            We started Partiqule after what we now call our awakening to product health.
-          </p>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            It began with plastics. One night, after putting our kids to bed, we landed on <em>The Plastic Detox</em>. What we thought would be background noise quickly became a turning point. The documentary follows couples facing infertility challenges who, working with researcher Shanna Swan, explore the impact of microplastics on their fertility, highlighting how everyday exposures from food packaging to clothing to household items can accumulate in ways most of us never consider.
-          </p>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            As parents who experienced fertility challenges with our second child, this hit close to home. We were paying attention to things like sugar and ingredients, but we had almost no awareness of how much plastic we were interacting with daily, or what that meant for our family's health.
-          </p>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            But the more we dug in, the bigger the picture became. It was not just plastic. It was the PFAS coating on the pan we cooked in every night. It was the artificial dyes in the snacks our kids loved. It was the synthetic chemicals in the cleaning products we used around the house every week. It was the PVA film in the laundry pods dissolving into the water supply. Each discovery led to another, and the thread connecting all of them was the same: the products most of us use without a second thought are doing things to our health, our children's health, and the planet that we were never told about.
-          </p>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:14}}>
-            So we started asking questions. What products are actually safe? How do you weigh the different kinds of risk? Are there realistic alternatives for everyday life? Where do you even start? There was no simple, trustworthy tool that looked at the full picture.
-          </p>
-          <p style={{fontSize:15, color:muted, lineHeight:1.85, marginBottom:0}}>
-            So we built one. Partiqule was designed to look at every product the way we wished something had looked at them for us: across materials, exposure, packaging and sustainability. The full picture, not just one piece of it. We are just two parents trying to do better for our family, and hoping to make it easier for yours.
-          </p>
-        </div>
+        <Body>Paul Miller built Partiqule after spending a year reading every clean product app he could find and not finding one that did all three things at once: covered every category, applied US family values to scoring, and respected the user's time.</Body>
+        <Body>Sara Miller leads brand voice, content, and operations. Sara writes every Instagram post, designs every carousel, and shapes the editorial voice that drives the brand outside the app.</Body>
+        <Body>Partiqule Ltd. is registered in Colorado. The company is founder owned and self funded.</Body>
+      </section>
 
-        <div style={{padding:"14px 18px", background:"#f8fafc", borderRadius:12, border:`1px solid ${border}`}}>
-          <span style={{fontSize:14, color:muted, lineHeight:1.7}}>
-            Learn more:{" "}
-            <span onClick={()=>onNavigate("science")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>The Science</span>
-            {" "}behind our scores, or see a full breakdown of our process on the{" "}
-            <span onClick={()=>onNavigate("methodology")} style={{color:"#16a34a", fontWeight:600, cursor:"pointer", textDecoration:"underline"}}>How It Works</span>
-            {" "}page.
-          </span>
-        </div>
-      </div>
-
-      {/* The impact */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>The impact we're working toward</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Every scan is a small act of informed decision-making. When enough people start checking before they buy, manufacturers notice. We have already seen this happen. Public pressure and consumer awareness led to bans on microbeads across dozens of countries, forced reformulations of PFAS-coated cookware, and drove major brands to rethink their packaging. That change started with information.
+      {/* SECTION: Contact */}
+      <section>
+        <H2>Contact.</H2>
+        <Body>
+          Questions, corrections, brand inquiries, press:{" "}
+          <a href="mailto:paul@partiqule.com" onClick={e => { e.preventDefault(); window.location.href = "mailto:paul@partiqule.com"; }} style={{ color: "var(--moss)", textDecoration: "none", fontWeight: 600 }}>paul@partiqule.com</a>
+        </Body>
+        <p style={{
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontSize: isMobile ? 15 : 16,
+          color: muted, lineHeight: 1.7,
+          margin: "16px 0 0", maxWidth: 720,
+        }}>
+          Social:{" "}
+          <a href="https://instagram.com/partiquleapp" target="_blank" rel="noopener noreferrer" style={{ color: "var(--moss)", textDecoration: "underline", fontWeight: 500 }}>@partiquleapp</a>
         </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We're not anti-product. We're pro-information. The goal is a world where every product that touches your food, your skin, your children, or your home carries the same transparency as a nutrition label: materials, exposure risk, sustainability impact, and what to choose instead.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Your health. Your family's health. The planet's health. That's the full picture Partiqule is built to give you.
-        </p>
-      </div>
-
-      {/* AI Environmental Transparency */}
-      <div style={{marginBottom:48, paddingBottom:48, borderBottom:`1px solid ${border}`}}>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>A note on AI energy and water use</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We know this question is coming. We'd rather address it directly than hope nobody asks.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          Each Partiqule scan runs two AI passes to generate your score. Based on current lifecycle research, a single AI query uses roughly 5–10ml of water when you account for data centre cooling and electricity generation. Two passes means a scan uses approximately <strong style={{color:text}}>15–20ml of water</strong> — about the same as brushing your teeth.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We're not pretending AI is free. It isn't. But we think the trade-off is worth being transparent about. If a scan helps you replace a non-stick pan you cook on every day, or switch away from a detergent releasing synthetic chemicals into your home and waterways, the health payback is significant and ongoing. One scan. Years of impact.
-        </p>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85, marginBottom:16}}>
-          We also use Claude Haiku, Anthropic's most efficient model, specifically because it produces accurate results with a smaller compute footprint than larger models. We run the minimum number of passes needed for accuracy and cache results so the same product is never scored twice unnecessarily.
-        </p>
-        <div style={{background:"#f0fdf4", borderRadius:14, padding:"20px 24px", border:`1px solid ${"#bbf7d0"}`}}>
-          <div style={{fontSize:13, fontWeight:700, color:"#16a34a", marginBottom:8}}>Our commitment</div>
-          <p style={{fontSize:15, color:muted, lineHeight:1.7, margin:0}}>
-            As Partiqule grows, we'll publish an annual transparency note on our AI usage, water and energy estimates, and what we're doing to reduce them. We believe the tools that expose environmental harm should hold themselves to the same standard.
-          </p>
-        </div>
-      </div>
-
-      {/* Contact */}
-      <div>
-        <h2 style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:700, fontSize:26, color:text, margin:"0 0 16px"}}>Get in touch</h2>
-        <p style={{fontSize:16, color:muted, lineHeight:1.85}}>
-          Questions, partnerships, press, or just want to say hi? Reach us at{" "}
-          <a href="mailto:paul@partiqule.com" onClick={e=>{e.preventDefault(); window.location.href="mailto:paul@partiqule.com";}} style={{color:"#16a34a", textDecoration:"none", fontWeight:600}}>paul@partiqule.com</a>.
-          We read every email.
-        </p>
-      </div>
+      </section>
     </div>
   );
 };
@@ -6958,6 +6973,358 @@ function TextileConfirmationCard({ visionConfirmation, onConfirm, onEdit, onDism
   );
 }
 
+// ── PUBLIC LANDING PAGE (2026-05-23 refresh) ─────────────────
+// Unauthenticated visitors land here. Shipped with the May 14
+// positioning shift ("shopping intelligence platform for family
+// product safety" + three input modes) plus methodology
+// transparency framing post-pending_calibration hotfix.
+//
+// CTA wiring: every "Start scanning free" routes to setShowAuth(true)
+// (same handler as the previous receipts-carousel hero). After auth,
+// the onAuth handler upstream fires checkSubscription and surfaces
+// the trial paywall.
+const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const sectionPadX = isMobile ? "0 24px" : "0 40px";
+  const sectionWidth = { maxWidth: 760, margin: "0 auto" };
+  const sectionGap = isMobile ? 56 : 88;
+
+  const startFree = () => setShowAuth(true);
+
+  // Asymmetric divider — uses the design system's token aesthetic
+  // (1px moss rule with offset width) in place of a wave SVG that
+  // doesn't exist yet. Marks section transitions visually.
+  const Divider = () => (
+    <div style={{ display: "flex", justifyContent: "center", padding: `${isMobile ? 32 : 48}px 0` }}>
+      <div style={{ width: 64, height: 1, background: "var(--moss)", opacity: 0.4 }} />
+    </div>
+  );
+
+  const SectionHeading = ({ children }) => (
+    <h2 style={{
+      fontFamily: "'Lora', Georgia, serif",
+      fontSize: isMobile ? 26 : 34,
+      fontWeight: 400, letterSpacing: "-0.015em",
+      color: "var(--ink)", lineHeight: 1.2,
+      margin: "0 0 24px",
+    }}>{children}</h2>
+  );
+
+  const BodyP = ({ children, muted = false }) => (
+    <p style={{
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      fontSize: isMobile ? 15 : 16,
+      color: muted ? "var(--ink-faint)" : "var(--ink-soft)",
+      lineHeight: 1.65,
+      margin: "0 0 18px",
+    }}>{children}</p>
+  );
+
+  const PrimaryCta = ({ label = "Start scanning free" }) => (
+    <button
+      onClick={startFree}
+      style={{
+        padding: "14px 32px",
+        borderRadius: "var(--cta-shape)",
+        background: "var(--moss)", color: "var(--ivory)",
+        border: "none",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontSize: 15, fontWeight: 500, letterSpacing: "0.005em",
+        cursor: "pointer",
+      }}
+    >{label}</button>
+  );
+
+  const CtaCaption = () => (
+    <div style={{
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      fontSize: 12, color: "var(--ink-faint)",
+      marginTop: 12, lineHeight: 1.55,
+    }}>
+      7 days free. $4.99/month after. Cancel anytime.
+    </div>
+  );
+
+  const ModeColumn = ({ heading, body, iconPath }) => (
+    <div style={{
+      flex: "1 1 0",
+      padding: isMobile ? "20px 0" : "8px 4px",
+    }}>
+      <div style={{
+        width: 36, height: 36,
+        borderRadius: "var(--tile-shape-3)",
+        background: "var(--moss-soft)",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        marginBottom: 14,
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--moss)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {iconPath}
+        </svg>
+      </div>
+      <h3 style={{
+        fontFamily: "'Lora', Georgia, serif",
+        fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em",
+        color: "var(--ink)", margin: "0 0 10px",
+      }}>{heading}</h3>
+      <p style={{
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6,
+        margin: 0,
+      }}>{body}</p>
+    </div>
+  );
+
+  const PricingColumn = ({ heading, body, highlighted = false }) => (
+    <div style={{
+      flex: "1 1 0",
+      padding: isMobile ? "20px 18px" : "24px 22px",
+      background: highlighted ? "var(--cream-light)" : "transparent",
+      border: highlighted ? "1px solid var(--moss-soft)" : "1px solid var(--rule)",
+      borderRadius: "var(--card-shape-2)",
+    }}>
+      <h3 style={{
+        fontFamily: "'Lora', Georgia, serif",
+        fontSize: 18, fontWeight: 500, letterSpacing: "-0.005em",
+        color: "var(--ink)", margin: "0 0 12px",
+      }}>{heading}</h3>
+      <p style={{
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.6,
+        margin: 0,
+      }}>{body}</p>
+    </div>
+  );
+
+  const FAQ_ITEMS = [
+    { q: "How are scores calculated?",
+      a: "A two pass scoring engine reads the ingredient list, maps each ingredient against a calibration database of known safety data, applies family adjustments, and surfaces a score from 1 to 10. Lower is better. The reasoning is visible on every product page." },
+    { q: "What's behind the calibration database?",
+      a: "Thousands of named product entries with documented composition tiers, regulatory context, and ingredient level safety data. Each entry is traceable to its sources. Brands can request review at paul@partiqule.com." },
+    { q: "What happens when data is insufficient?",
+      a: "The system returns a clear pending calibration state instead of a tier fallback number. No false confidence. A path to add the missing data shows on the product page." },
+    { q: "What's different from Yuka, EWG, Think Dirty?",
+      a: "Three things. First, multi category coverage in one app, not just food or just cosmetics. Second, US audience values in the scoring engine, with kids and pregnancy thresholds built in. Third, three input modes (scan, search, ask) instead of just barcode lookup." },
+    { q: "Is the iOS app available?",
+      a: "Yes. Free download on the App Store. Subscription unlocks unlimited scanning." },
+    { q: "What happens to data?",
+      a: "Scans are tied to the user account for the lists and exposure tracker. No data sales. No advertiser sharing." },
+  ];
+
+  return (
+    <div style={{ background: "var(--cream)", minHeight: "100vh", paddingBottom: 80 }}>
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: isMobile ? "16px 20px" : "20px 32px", maxWidth: 1200, margin: "0 auto" }}>
+        <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{ height: isMobile ? 28 : 36, width: "auto", display: "block" }} />
+        <button onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", borderRadius: 999, border: "1px solid var(--rule-strong)", background: "transparent", color: "var(--ink)", fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 13, fontWeight: 500, cursor: "pointer", letterSpacing: "0.005em" }}>Sign in</button>
+      </div>
+
+      {/* HERO */}
+      <section style={{ ...sectionWidth, padding: isMobile ? "44px 24px 36px" : "80px 40px 56px", textAlign: "center" }}>
+        <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: isMobile ? 38 : 56, fontWeight: 400, letterSpacing: "-0.025em", color: "var(--ink)", margin: "0 0 22px", lineHeight: 1.05 }}>
+          Family product safety,<br/>scored.
+        </h1>
+        <p style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: isMobile ? 16 : 19, color: "var(--ink-soft)", lineHeight: 1.55, margin: "0 auto 32px", maxWidth: 560 }}>
+          Scan any product. Search by name. Or describe what's needed. Get answers in seconds, backed by transparent methodology.
+        </p>
+        <PrimaryCta />
+        <CtaCaption />
+      </section>
+
+      <Divider />
+
+      {/* SECTION: The problem labels create */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>The label doesn't tell the whole story.</SectionHeading>
+        <BodyP>Marketing claims obscure ingredients. Front of pack labels promise things the back of pack contradicts. EU regulators flag substances that US labels never have to disclose. Reading the chemistry yourself takes a degree, a search engine, and a free afternoon.</BodyP>
+        <p style={{ fontFamily: "'Lora', Georgia, serif", fontSize: isMobile ? 20 : 24, fontWeight: 400, letterSpacing: "-0.01em", color: "var(--ink)", lineHeight: 1.4, margin: "28px 0", textAlign: "center" }}>
+          Most parents don't have any of the three.
+        </p>
+        <BodyP>Partiqule was built to translate the chemistry into a single score on a 1 to 10 scale. Lower is better. The score reflects ingredient safety and nutritional impact, not brand reputation.</BodyP>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* SECTION: Three ways to use it */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>Three ways to use it.</SectionHeading>
+        <div style={{
+          display: "flex", flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 8 : 28, marginTop: 8,
+        }}>
+          <ModeColumn
+            heading="Scan"
+            body="Point the camera at any product, anywhere. Food, beauty, clothing, cleaning, kid products, home goods. Real time scoring on any category, not just barcoded items."
+            iconPath={<><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M7 6l1.5-2h7L17 6"/></>}
+          />
+          <ModeColumn
+            heading="Search"
+            body="Type or paste any product name. Drop in an Amazon link. Snap a screenshot from Instagram. The scoring engine reads the input and surfaces the score."
+            iconPath={<><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></>}
+          />
+          <ModeColumn
+            heading="Ask"
+            body={'Describe what\'s needed. "Sippy cup for an 18 month old." "Clean sunscreen for pregnancy." "Snacks for a road trip with the kids." Get scored recommendations, not search results.'}
+            iconPath={<><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></>}
+          />
+        </div>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* SECTION: Methodology */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>Show the work.</SectionHeading>
+        <BodyP>Every score has reasoning behind it. The scoring engine reads the ingredient list, maps each ingredient against a calibration database of known safety data, applies family adjustments where relevant, and produces a number with the reasoning visible underneath.</BodyP>
+        <BodyP>When the data isn't sufficient to score honestly, the system says so. No tier fallback. No false confidence number. A clear pending calibration state with a path to add the missing data.</BodyP>
+
+        {/* Pull quote — major visual moment */}
+        <blockquote style={{
+          margin: isMobile ? "44px 0" : "60px 0",
+          padding: isMobile ? "0 8px" : "0 24px",
+          borderLeft: `3px solid var(--moss)`,
+          fontFamily: "'Lora', Georgia, serif",
+          fontSize: isMobile ? 24 : 32,
+          fontWeight: 400, letterSpacing: "-0.02em",
+          color: "var(--moss)", lineHeight: 1.3,
+        }}>
+          Partiqule doesn't publish scores it can't show the work behind.
+        </blockquote>
+
+        <BodyP>Brand thinks a score is wrong? The reasoning is visible on every product page. A correction inbox at paul@partiqule.com responds within 48 hours. When evidence justifies an update, the score updates and the change is logged.</BodyP>
+
+        <p style={{ margin: "24px 0 0" }}>
+          <span onClick={() => setPage("methodology")} style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 14, fontWeight: 500,
+            color: "var(--moss)", textDecoration: "underline",
+            cursor: "pointer",
+          }}>Read the full methodology →</span>
+        </p>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* SECTION: Family-first */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>Built for parents, not just consumers.</SectionHeading>
+        <BodyP>Most scoring engines treat every shopper the same. Partiqule doesn't.</BodyP>
+        <BodyP>Scores shift for kids. Some ingredients adults tolerate well create different risk profiles for developing bodies. Kids mode applies stricter thresholds automatically.</BodyP>
+        <BodyP>Scores shift again for pregnancy. Some ingredients in routine beauty and personal care products carry different concerns during the first and second trimesters. Pregnancy mode flags those automatically.</BodyP>
+        <BodyP>The cumulative exposure tracker shows the total picture across a household's routine, not just one product at a time.</BodyP>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* SECTION: What's covered */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>Every aisle. Every category.</SectionHeading>
+        <BodyP>Food, beauty, personal care, cleaning, clothing, baby gear, toys, home goods. The calibration database holds thousands of named product entries across all categories, with the database growing as new products are added.</BodyP>
+        <BodyP>The competition focuses on one category at a time. Yuka does food barcodes. Think Dirty does cosmetics. EWG runs a database lookup. Partiqule covers the full cart.</BodyP>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* SECTION: Pricing */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>$4.99 a month.</SectionHeading>
+        <div style={{
+          display: "flex", flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 12 : 18, marginTop: 16,
+        }}>
+          <PricingColumn
+            heading="Free trial"
+            body="7 days free when you create an account. Full access during the trial: scoring, reasoning, alternatives, lists, kids and pregnancy modes. No card required up front."
+          />
+          <PricingColumn
+            heading="Subscriber ($4.99/month)"
+            body="Unlimited scans across all categories. Kids and pregnancy scoring. The cumulative exposure tracker. Lists that hold scanned products. Ask mode for recommendations."
+            highlighted
+          />
+          <PricingColumn
+            heading="What's not in subscription"
+            body="No ads. No data sales. No advertiser influence on scores. Brand partnerships are disclosed."
+          />
+        </div>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* FAQ */}
+      <section style={{ ...sectionWidth, padding: sectionPadX }}>
+        <SectionHeading>Questions.</SectionHeading>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0, marginTop: 12 }}>
+          {FAQ_ITEMS.map((item, i) => {
+            const open = openFaq === i;
+            return (
+              <div key={i} style={{ borderTop: "1px solid var(--rule)" }}>
+                <button
+                  onClick={() => setOpenFaq(open ? null : i)}
+                  style={{
+                    width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "18px 4px", background: "transparent", border: "none",
+                    fontFamily: "'Lora', Georgia, serif",
+                    fontSize: isMobile ? 16 : 18, fontWeight: 400,
+                    color: "var(--ink)", textAlign: "left",
+                    cursor: "pointer", letterSpacing: "-0.005em",
+                  }}
+                >
+                  <span>{item.q}</span>
+                  <span style={{ color: "var(--moss)", fontSize: 18, marginLeft: 12, transition: "transform 0.2s", transform: open ? "rotate(45deg)" : "rotate(0)" }}>+</span>
+                </button>
+                {open && (
+                  <div style={{
+                    padding: "0 4px 22px",
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontSize: 14, color: "var(--ink-soft)", lineHeight: 1.65,
+                  }}>{item.a}</div>
+                )}
+              </div>
+            );
+          })}
+          <div style={{ borderTop: "1px solid var(--rule)" }} />
+        </div>
+      </section>
+
+      <div style={{ height: sectionGap }} />
+
+      {/* Bottom CTA */}
+      <section style={{ ...sectionWidth, padding: sectionPadX, textAlign: "center" }}>
+        <div style={{
+          background: "var(--moss)",
+          borderRadius: "var(--card-shape-1)",
+          padding: isMobile ? "36px 24px 32px" : "52px 40px 44px",
+        }}>
+          <h2 style={{
+            fontFamily: "'Lora', Georgia, serif",
+            fontSize: isMobile ? 24 : 30, fontWeight: 400,
+            color: "var(--cream)", margin: "0 0 22px",
+            letterSpacing: "-0.015em", lineHeight: 1.2,
+          }}>
+            Ready to read the labels?
+          </h2>
+          <button onClick={startFree} style={{
+            background: "var(--cream)", color: "var(--moss)",
+            padding: "14px 36px", borderRadius: 999, border: "none",
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 15, fontWeight: 600, cursor: "pointer",
+            letterSpacing: "0.005em",
+          }}>
+            Start scanning free
+          </button>
+          <div style={{
+            fontFamily: "'DM Sans', system-ui, sans-serif",
+            fontSize: 11, color: "rgba(243,237,226,0.8)",
+            marginTop: 14, lineHeight: 1.5,
+          }}>
+            7 days free. $4.99/month after. Cancel anytime.
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 // ── MAIN APP ──────────────────────────────────────────────────
 function App() {
   const [query,       setQuery]      = useState("");
@@ -8472,10 +8839,11 @@ function App() {
             /* Desktop nav */
             <nav style={{display:"flex", gap:4, alignItems:"center"}}>
               {[
-                {label:"About",      action:()=>{setPage("about"); setResult(null);},     active:page==="about"},
-                {label:"Lists",      action:()=>{setPage("lists"); setResult(null);},      active: page==="lists"},
-                {label:"The Science",action:()=>{setPage("science"); setResult(null);},    active:page==="science"},
-                {label:"Items",      action:()=>{setPage("history"); setResult(null);},    active:page==="history"},
+                {label:"About",       action:()=>{setPage("about"); setResult(null);},       active:page==="about"},
+                {label:"Methodology", action:()=>{setPage("methodology"); setResult(null);}, active:page==="methodology"},
+                {label:"Lists",       action:()=>{setPage("lists"); setResult(null);},       active:page==="lists"},
+                {label:"The Science", action:()=>{setPage("science"); setResult(null);},     active:page==="science"},
+                {label:"Items",       action:()=>{setPage("history"); setResult(null);},     active:page==="history"},
               ].map((item,i)=>(
                 <span key={i} onClick={item.action} style={{
                   fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:item.active?500:400,
@@ -8509,7 +8877,7 @@ function App() {
             {[
               {label:"About",        pg:"about"},
               {label:"The Science",  pg:"science"},
-              {label:"How it Works", pg:"methodology"},
+              {label:"Methodology",  pg:"methodology"},
               {label:"Guides",       pg:"guides"},
               {label:"Items",        pg:"history"},
               {label:"Settings",     pg:"settings"},
@@ -8944,7 +9312,7 @@ function App() {
               </div>
               {[
                 {label:"The Science",   action:()=>{setPage("science"); }},
-                {label:"How it Works",  action:()=>{setPage("methodology"); }},
+                {label:"Methodology",   action:()=>{setPage("methodology"); }},
                 {label:"About us",      action:()=>{setPage("about"); }},
                 {label:"Privacy Policy",action:()=>{setPage("privacy"); }},
               ].map((item, i, arr) => (
@@ -8975,129 +9343,13 @@ function App() {
             </div>
           )}
 
-          {/* ── SIGNED OUT: receipts strip hero (replaces the prior "Sign up
-              to scan" funnel from commit cd39db4 — the hero IS the new
-              top experience for unauthenticated visitors). Try free routes
-              to the existing auth modal; after signup the trial paywall
-              fires automatically via the onAuth handler higher up.
-              Receipt scores are illustrative — see TODO markers below;
-              Paul will verify against live calibration before next push. */}
-          {!user ? (() => {
-            const RECEIPTS = [
-              // TODO: scores illustrative — verify against live calibration before next push
-              { cat: "Sunscreen", skip: { name: "Banana Boat Sport SPF 50", score: 7 }, grab: { name: "Thinksport SPF 50", score: 2 }, reason: "Octinoxate, octocrylene. Banned in Hawaii. Sold here." },
-              // TODO: scores illustrative — verify against live calibration before next push
-              { cat: "Cola", skip: { name: "Cherry Coke", score: 7 }, grab: { name: "Olipop Vintage Cola", score: 2 }, reason: "39g sugar. HFCS. Caramel color IV (4-MEI)." },
-              // TODO: scores illustrative — verify against live calibration before next push
-              { cat: "Air freshener", skip: { name: "Glade PlugIns Sweet Pea", score: 8 }, grab: { name: "P.F. Candle Co. Sandalwood", score: 3 }, reason: "Phthalates. Synthetic fragrance. No disclosure." },
-              // TODO: scores illustrative — verify against live calibration before next push
-              { cat: "Kids snack", skip: { name: "Goldfish Cheddar", score: 6 }, grab: { name: "Made Good Star Crackers", score: 3 }, reason: "TBHQ. Yellow 5 and 6. Vegetable shortening." },
-              // TODO: scores illustrative — verify against live calibration before next push
-              { cat: "Shampoo", skip: { name: "Tresemmé Keratin Smooth", score: 6 }, grab: { name: "Acure Curiously Clarifying", score: 3 }, reason: "Cocamidopropyl betaine. PEGs. DMDM hydantoin." },
-            ];
-            return (
-              <div style={{background:"var(--cream)", minHeight:"100vh", paddingBottom:60}}>
-                {/* Top bar */}
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding: isMobile ? "16px 20px" : "20px 32px", maxWidth:1100, margin:"0 auto"}}>
-                  <img src="/partiqule-wordmark.svg" alt="Partiqule" style={{height: isMobile ? 28 : 36, width:"auto", display:"block"}}/>
-                  <button onClick={()=>setShowAuth(true)} style={{padding:"8px 18px", borderRadius:999, border:"1px solid var(--rule-strong)", background:"transparent", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, fontWeight:500, cursor:"pointer", letterSpacing:"0.005em"}}>Sign in</button>
-                </div>
-
-                {/* Eyebrow + headline + sub */}
-                <div style={{maxWidth:540, margin:"0 auto", padding: isMobile ? "32px 24px 24px" : "56px 24px 32px", textAlign:"center"}}>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:14}}>
-                    Read the label
-                  </div>
-                  <h1 style={{fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 32 : 38, fontWeight:400, color:"var(--ink)", margin:"0 0 18px", letterSpacing:"-0.02em", lineHeight:1.1}}>
-                    Same shelf. Same price.<br/>Very different score.
-                  </h1>
-                  <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:15, color:"var(--ink-soft)", margin:0, lineHeight:1.55}}>
-                    Partiqule scores every product 1 to 10 on what's actually in it. Lower is better. Built to surface what the label hides.
-                  </p>
-                </div>
-
-                {/* Receipts strip — five cards crossfading on a 17.5s loop. Each card
-                    holds for ~3s, fade in/out for ~0.5s. Indicator dots below match
-                    timing with the same staggered animation-delay. */}
-                <div style={{maxWidth:540, margin:"0 auto", padding:"0 24px 12px", position:"relative", height: isMobile ? 230 : 210}}>
-                  {RECEIPTS.map((card, i) => (
-                    <div key={i} style={{
-                      position:"absolute", top:0, left:24, right:24,
-                      background:"#ffffff",
-                      border:"1px solid var(--rule)",
-                      borderRadius:"22px 16px 24px 18px / 18px 22px 16px 24px",
-                      padding:"18px 18px 14px",
-                      opacity:0,
-                      animation:`pqCycle 17.5s ${i * 3.5}s infinite ease-in-out`,
-                    }}>
-                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10, letterSpacing:"0.22em", color:"var(--moss)", textTransform:"uppercase", fontWeight:500, marginBottom:14}}>{card.cat}</div>
-                      <div style={{display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap: isMobile ? 14 : 16, marginBottom:12}}>
-                        <div style={{textAlign:"left"}}>
-                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, fontWeight:400, color:"var(--ink-soft)", lineHeight:1.25, textDecoration:"line-through", textDecorationColor:"rgba(162,62,46,0.5)", textDecorationThickness:"1.5px", marginBottom:8}}>{card.skip.name}</div>
-                          <div style={{width:50, height:50, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--score-red)", color:"#ffffff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400}}>{card.skip.score}</div>
-                        </div>
-                        <div style={{color:"var(--moss)", flexShrink:0, opacity:0.6}}>
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                        </div>
-                        <div style={{textAlign:"right"}}>
-                          <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:14, fontWeight:400, color:"var(--ink)", lineHeight:1.25, marginBottom:8}}>{card.grab.name}</div>
-                          <div style={{width:50, height:50, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--score-green)", color:"#ffffff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Lora', Georgia, serif", fontSize:22, fontWeight:400, marginLeft:"auto"}}>{card.grab.score}</div>
-                        </div>
-                      </div>
-                      <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:12, color:"var(--ink-soft)", lineHeight:1.45, paddingTop:10, borderTop:"1px solid var(--rule)"}}>{card.reason}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Indicator dots — same timing as the cards. */}
-                <div style={{display:"flex", justifyContent:"center", gap:10, padding:"4px 0 32px"}}>
-                  {RECEIPTS.map((_, i) => (
-                    <div key={i} style={{
-                      width:7, height:7, borderRadius:"50%",
-                      background:"var(--rule)",
-                      animation:`pqDot 17.5s ${i * 3.5}s infinite ease-in-out`,
-                      transformOrigin:"center",
-                    }}/>
-                  ))}
-                </div>
-
-                {/* CTA block — moss with cream button. Try free routes to auth
-                    modal; after signup the existing onAuth handler fires
-                    checkSubscription which surfaces the trial paywall. */}
-                <div style={{maxWidth:540, margin:"0 auto", padding:"0 24px"}}>
-                  <div style={{
-                    background:"var(--moss)",
-                    borderRadius:"22px 16px 24px 18px / 18px 22px 16px 24px",
-                    padding: isMobile ? "32px 24px 28px" : "40px 32px 36px",
-                    textAlign:"center",
-                  }}>
-                    <div style={{fontFamily:"'Lora', Georgia, serif", fontSize: isMobile ? 22 : 26, fontWeight:400, color:"var(--cream)", margin:"0 0 18px", letterSpacing:"-0.01em", lineHeight:1.15}}>
-                      Score your home in 30 seconds.
-                    </div>
-                    <button
-                      onClick={()=>setShowAuth(true)}
-                      style={{
-                        background:"var(--cream)",
-                        color:"var(--moss)",
-                        padding:"14px 36px",
-                        borderRadius:999,
-                        border:"none",
-                        fontFamily:"'DM Sans', system-ui, sans-serif",
-                        fontSize:15, fontWeight:600,
-                        cursor:"pointer",
-                        letterSpacing:"0.005em",
-                      }}
-                    >
-                      Try free
-                    </button>
-                    <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:11, color:"rgba(243,237,226,0.8)", marginTop:14, lineHeight:1.5}}>
-                      7 days free, then $4.99/mo. Cancel anytime.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })() : (history.length > 0 ? (() => {
+          {/* ── SIGNED OUT: public landing page (2026-05-23 refresh).
+              Replaces the receipts-strip hero with the 7-section
+              positioning page (Family product safety, scored.). See
+              LandingPage component above for the structure. Try free
+              CTAs still route to setShowAuth so the trial paywall
+              fires automatically via the onAuth handler higher up. */}
+          {!user ? <LandingPage setShowAuth={setShowAuth} setPage={setPage} isMobile={isMobile} /> : (history.length > 0 ? (() => {
             // Greeting uses displayName only — never fall back to email username
             const nameForGreet = (displayName && displayName.trim()) ? displayName.trim() : (user ? "there" : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
@@ -12558,7 +12810,7 @@ function App() {
             {label:"About",           pg:"about",       path:"/about"},
             {label:"The Science",     pg:"science",     path:"/science"},
             {label:"Items",           pg:"history",     path:"/history"},
-            {label:"How It Works",    pg:"methodology", path:"/methodology"},
+            {label:"Methodology",     pg:"methodology", path:"/methodology"},
             {label:"Privacy Policy",  pg:"privacy",     path:"/privacy"},
             {label:"Terms of Service",pg:"terms",       path:"/terms"},
           ].map(item => (
