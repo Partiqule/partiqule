@@ -504,6 +504,57 @@ function detectSourcingFlags(productName) {
   return flags;
 }
 
+// Prepared-form category words — when present in the product NAME, the
+// product is a prepared/baked/processed item that happens to contain an
+// ingredient like beef, salmon, or chicken. It is NOT a whole food.
+//
+// Hotfix 2026-05-26: MELT N' MOO Sea Salt Chocolate Chip Beef Protein Cookie
+// scored as conventional red meat because the unanchored red-meat pattern
+// matched the word "beef" in the cookie's name. The category-word early-exit
+// is the structural defense: if the name contains "cookie", we never reach
+// the pattern table at all.
+//
+// Excluded on purpose: jerky, sausage, patty, link, ground, fillet, chop,
+// loin — these PRESERVE meat identity rather than changing food category
+// (beef jerky IS still a meat product, scored as processed meat by the
+// dedicated pattern below).
+const CATEGORY_WORDS_IN_NAME = [
+  // Baked goods
+  "cookie", "cookies", "bar", "bars", "brownie", "brownies", "cake", "cakes",
+  "muffin", "muffins", "pie", "pies", "tart", "tarts", "donut", "donuts",
+  "doughnut", "doughnuts", "scone", "scones", "biscuit", "biscuits", "wafer",
+  "wafers", "croissant", "danish", "pastry", "pastries", "bread", "loaf",
+  "bun", "buns", "roll", "rolls", "bagel", "bagels", "tortilla", "tortillas",
+  "pita", "naan", "flatbread",
+  // Snacks
+  "chip", "chips", "crisp", "crisps", "cracker", "crackers", "pretzel",
+  "pretzels", "popcorn", "puffs", "rings", "snack", "snacks",
+  // Cereal / breakfast
+  "cereal", "granola", "oatmeal", "porridge",
+  // Candy / sweets
+  "candy", "candies", "gummy", "gummies", "lollipop", "chocolate", "fudge",
+  "truffle", "truffles", "caramel", "marshmallow", "marshmallows",
+  // Sauces / condiments / spreads
+  "sauce", "ketchup", "mustard", "mayo", "salsa", "dip", "dips", "spread",
+  "spreads", "dressing", "dressings", "syrup", "syrups", "jam", "jelly",
+  "marinade", "glaze", "rub",
+  // Beverages
+  "smoothie", "smoothies", "shake", "shakes", "drink", "drinks", "juice",
+  "tea", "coffee", "latte", "lemonade", "soda", "kombucha",
+  // Prepared meals / handhelds
+  "pizza", "taco", "burrito", "wrap", "sandwich", "burger", "nugget",
+  "nuggets", "ravioli", "lasagna", "casserole",
+  // Soup / stew / canned
+  "soup", "broth", "stew", "chili", "curry", "ramen",
+  // Other prepared
+  "powder", "mix", "kit", "blend",
+];
+// Compile once into a single alternation regex for speed.
+const CATEGORY_WORDS_RE = new RegExp(
+  "\\b(" + CATEGORY_WORDS_IN_NAME.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")\\b",
+  "i"
+);
+
 // ── Whole-foods detector ──────────────────────────────────────────
 // Whole foods (salmon, chicken, eggs, fresh produce, plain dairy) ARE the
 // ingredient — there's no printed ingredient list to scan because the
@@ -527,19 +578,36 @@ function detectWholeFood(productName) {
   const norm = String(productName || "").toLowerCase().trim();
   if (!norm) return null;
 
+  // Early-exit: if the product name contains a prepared-form category
+  // word, the product is a prepared/baked/processed item — even if it
+  // contains a whole-food ingredient like beef or salmon. Skip whole-food
+  // typing entirely so downstream scoring treats it as the prepared form
+  // it actually is. Hotfix 2026-05-26 for MELT N' MOO beef protein cookie.
+  if (CATEGORY_WORDS_RE.test(norm)) return null;
+
   // Strip common brand prefixes so "trader joe's atlantic salmon" matches
   // the same patterns as "atlantic salmon".
+  //
+  // Hotfix 2026-05-26: removed meat-NAME terms (tenderloin, loin, chuck,
+  // rib/ribeye, brisket, short rib, sirloin) from the cut-modifier strip.
+  // They are alternatives in the red-meat / pork patterns and stripping
+  // them out before the now-anchored patterns run leaves an empty string.
+  // Only modifier terms that are NOT named in the patterns stay here.
   const stripped = norm
     .replace(/\b(trader joe'?s?|whole foods|365|kirkland|costco|aldi|publix|wegmans|sprouts|natural grocers|fresh market|kroger|safeway|walmart|target|sam'?s club|harris teeter)\b/g, "")
     .replace(/\b(pro cut|fresh|frozen|raw|wild caught|wild-caught|skin on|skinless|boneless|center cut|cage-?free|free-?range|pasture-?raised|grass-?fed|grass fed|organic|natural|certified humane|antibiotic-?free|hormone-?free|all natural)\b/g, "")
-    .replace(/\b(filet|fillet|portion|portions|steaks?|chops?|breasts?|thighs?|wings?|drumsticks?|tenderloin|loin|chuck|rib(eye)?|brisket|roast|short rib|sirloin)\b/g, "")
+    .replace(/\b(filet|fillet|portion|portions|steaks?|chops?|breasts?|thighs?|wings?|drumsticks?|roast)\b/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
   // Order matters — most specific patterns first.
   const patterns = [
     // Wild fish & shellfish — clean
-    { match: /(wild salmon|wild-caught salmon|alaskan salmon|sockeye|coho|chinook|king salmon|pink salmon|chum salmon)/, floor:1, ceiling:3,
+    // Hotfix 2026-05-26: anchored. The species names (sockeye, coho,
+    // chinook) appear in real-world products like "Salmon Flavored
+    // Crackers" — without anchoring, those misfired. Species names may
+    // appear alone (just "sockeye") OR followed by "salmon" — both legal.
+    { match: /^(wild salmon|wild-caught salmon|alaskan salmon|sockeye(\s+salmon)?|coho(\s+salmon)?|chinook(\s+salmon)?|king salmon|pink salmon|chum salmon)\s*$/, floor:1, ceiling:3,
       why:"Wild-caught salmon — clean protein with omega-3s. Lower contaminant load than farmed counterparts. Sustainably caught Pacific salmon (sockeye, coho, chinook) is the cleanest tier." },
     { match: /(halibut|cod|haddock|pollock|mahi mahi|mahi-mahi|sea bass|black bass|striped bass|snapper|rockfish|sole|flounder|trout|arctic char|tilapia)/, floor:1, ceiling:3,
       why:"Whole white fish — clean lean protein. Wild-caught is the cleanest; farmed varieties (especially imported tilapia) have somewhat higher contaminant exposure." },
@@ -553,9 +621,12 @@ function detectWholeFood(productName) {
       why:"Shellfish — clean protein. Farmed and imported varieties may carry higher antibiotic and PCB exposure than wild domestic." },
 
     // Farmed Atlantic salmon — middle tier, common case
-    { match: /(atlantic salmon|farmed salmon|farm-?raised salmon|norwegian salmon|scottish salmon)/, floor:2, ceiling:4,
+    // Hotfix 2026-05-26: anchored.
+    { match: /^(atlantic salmon|farmed salmon|farm-?raised salmon|norwegian salmon|scottish salmon)\s*$/, floor:2, ceiling:4,
       why:"Farmed Atlantic salmon — typically carries higher PCB and contaminant load than wild caught due to feed and pen conditions. Color is added via astaxanthin. Still a clean protein source with omega-3s, just one tier below the wild-caught benchmark. For maximum clean omega-3 density, choose wild Pacific salmon when available." },
-    { match: /(salmon)/, floor:2, ceiling:4,
+    // Hotfix 2026-05-26: anchored — was the worst offender. Bare "salmon"
+    // matched anywhere in any string (e.g. "salmon flavored crackers").
+    { match: /^salmon\s*$/, floor:2, ceiling:4,
       why:"Salmon — clean protein with omega-3s. Wild-caught (sockeye, coho, chinook) is the cleanest tier; farmed Atlantic carries higher PCB load. The product page didn't specify which — the score reflects the typical range." },
 
     // Whole eggs
@@ -571,7 +642,9 @@ function detectWholeFood(productName) {
       why:"Whole grain — minimally processed carbohydrate source. Look for organic when possible (especially for oats due to glyphosate residue concerns) and watch for added flavorings on flavored varieties." },
 
     // Wild game
-    { match: /(elk|venison|bison|buffalo|wild boar|rabbit)(?!\s+(chip|jerky|sausage|hot dog))/, floor:1, ceiling:3,
+    // Hotfix 2026-05-26: anchored. "Bison protein bar" and "venison snack
+    // stick" used to misfire as whole-food wild game.
+    { match: /^(elk|venison|bison|buffalo|wild boar|rabbit)\s*$/, floor:1, ceiling:3,
       why:"Wild game / pasture-raised alternatives — leaner than conventional red meat, no feedlot exposure. Naturally lower in saturated fat and higher in CLA and omega-3." },
 
     // Conventional poultry
@@ -591,11 +664,20 @@ function detectWholeFood(productName) {
       why:"Pork — conventional pigs raised in concentrated feeding operations carry higher antibiotic and arsenic exposure. Look for pasture-raised, heritage breed, or certified humane labels for cleaner sourcing." },
 
     // Conventional red meat
-    { match: /(ground beef|beef|ribeye|sirloin|chuck|brisket|tenderloin|filet mignon|flank steak|skirt steak|hanger steak|t-bone|porterhouse|new york strip|strip steak|short rib|prime rib|chuck roast|round roast|stew meat|veal|lamb|leg of lamb|lamb chop)(?!\s+(jerky|stick|crisp|chip))/, floor:3, ceiling:5,
+    // Hotfix 2026-05-26: anchored. This is the canonical Melt N' Moo failure:
+    // "Sea Salt Chocolate Chip Beef Protein Cookie" matched on the word
+    // "beef" and got scored as red meat. The adjective-tolerance is
+    // handled by the brand-and-cut strip step above, so a real query like
+    // "Grass-Fed Ground Beef" becomes "ground beef" and still matches.
+    { match: /^(ground beef|beef|ribeye|sirloin|chuck|brisket|tenderloin|filet mignon|flank steak|skirt steak|hanger steak|t-bone|porterhouse|new york strip|strip steak|short rib|prime rib|chuck roast|round roast|stew meat|veal|lamb|leg of lamb|lamb chop)\s*$/, floor:3, ceiling:5,
       why:"Conventional red meat — feedlot-raised cattle carry higher hormone, antibiotic, and saturated fat profiles. Grass-fed and pasture-raised have measurably better omega-3 ratios and lower inflammatory load. Look for 100% grass-fed labels (not just 'grass-fed') to avoid grain-finished beef." },
 
     // Processed meats — IARC group 1 carcinogen
-    { match: /(bacon|sausage|ham|salami|pepperoni|hot dog|deli meat|lunch meat|cold cut|prosciutto|mortadella|chorizo|kielbasa|bratwurst|pastrami|corned beef|jerky|meat stick)/, floor:5, ceiling:7,
+    // Hotfix 2026-05-26: anchored. "Pepperoni-flavored crackers" and
+    // "Sausage-flavored snacks" used to fire the processed-meat tier from
+    // the substring "pepperoni" / "sausage". A real query like
+    // "Applegate Organic Bacon" strips brand prefix and matches "bacon".
+    { match: /^(bacon|sausage|ham|salami|pepperoni|hot dog|deli meat|lunch meat|cold cut|prosciutto|mortadella|chorizo|kielbasa|bratwurst|pastrami|corned beef|jerky|meat stick)\s*$/, floor:5, ceiling:7,
       why:"Processed meat — IARC Group 1 carcinogen due to nitrates, sodium, and smoke compounds (HCAs, PAHs). Even 'uncured' varieties typically use celery powder which contributes the same nitrates. Limit consumption; look for nitrate-free pasture-raised options for occasional use." },
 
     // Fresh produce — broad catch-all (last because pattern is loose)
