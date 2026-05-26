@@ -252,6 +252,52 @@ const CASES = [
     expect_audience_in: ["adult_focused"],
     why: "Open-ended; adult-focused; protein_snacks subsumed into supplements/snacks (thin)",
   },
+
+  // ── 21-25: Knowledge classification + borderline discriminators
+  //          (session 4). Verifies Pass 1 routes definitional/risk-
+  //          assessment questions to type="knowledge" AND routes
+  //          shopping queries that name the same substance to product
+  //          or context, not knowledge.
+  {
+    n: 21,
+    query: "what is pfas",
+    expect_refinement: false,
+    expect_type: "knowledge",
+    why: "Definitional knowledge query — bare 'what is X'",
+  },
+  {
+    n: 22,
+    query: "are phthalates a concern",
+    expect_refinement: false,
+    expect_type: "knowledge",
+    why: "Risk-assessment knowledge query — 'are X bad/concerning'",
+  },
+  {
+    n: 23,
+    query: "does sunscreen cause cancer",
+    expect_refinement: false,
+    expect_type: "knowledge",
+    why: "Risk-assessment knowledge query — 'does X cause Y'",
+  },
+  {
+    n: 24,
+    // PRIMARY assertion: type discrimination (phthalates appears in the
+    // query but the user is shopping, not asking what phthalates are).
+    // refinement gating is orthogonal here — "kids" plural without
+    // specific age may still legitimately fire refinement under the
+    // existing audience-is-the-gate rule; don't assert on it.
+    query: "phthalate-free shampoo for my 6 year old",
+    expect_refinement: false,
+    expect_type_not: "knowledge",
+    why: "Shopping query with phthalates as exclusion criterion + specific age — must NOT route knowledge",
+  },
+  {
+    n: 25,
+    query: "GOTS certified baby clothing for my 18 month old",
+    expect_refinement: false,
+    expect_type_not: "knowledge",
+    why: "Shopping query naming GOTS as constraint + specific age — must NOT route knowledge",
+  },
 ];
 
 // Viable slugs vocabulary — Pass 1 must only emit values from this
@@ -377,15 +423,33 @@ async function main() {
       }
     }
 
-    const ok = refinementOK && reasonOK && dynamicOK;
+    // Session 4 — knowledge classification checks (cases 21-25).
+    // Either expect_type (must equal) or expect_type_not (must NOT equal).
+    let typeOK = true;
+    let typeNote = "";
+    if (c.expect_type) {
+      if (intent.type !== c.expect_type) {
+        typeOK = false;
+        typeNote = `type expected=${c.expect_type} got=${intent.type}`;
+      }
+    }
+    if (c.expect_type_not) {
+      if (intent.type === c.expect_type_not) {
+        typeOK = false;
+        typeNote = `type should NOT be ${c.expect_type_not} but got ${intent.type}`;
+      }
+    }
+
+    const ok = refinementOK && reasonOK && dynamicOK && typeOK;
     if (ok) {
-      console.log(`PASS (${dur}ms, refinement=${gotRefinement})`);
+      console.log(`PASS (${dur}ms, refinement=${gotRefinement}, type=${intent.type})`);
       pass++;
     } else {
       const issues = [];
       if (!refinementOK) issues.push(`refinement expected=${c.expect_refinement} got=${gotRefinement}`);
       if (!reasonOK) issues.push(reasonNote);
       if (!dynamicOK) issues.push(dynamicNote);
+      if (!typeOK) issues.push(typeNote);
       console.log(`FAIL (${dur}ms): ${issues.join(" | ")}`);
       fail++;
     }

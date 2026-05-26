@@ -24,7 +24,7 @@
 "use strict";
 
 const { CALIBRATION } = require("../calibration");
-const { handleContextQuery, handleRefinementAnswer, classifyIntent } = require("../ask");
+const { handleContextQuery, handleRefinementAnswer, classifyIntent, handleKnowledgeQuery } = require("../ask");
 
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 if (!API_KEY) {
@@ -308,6 +308,130 @@ async function runHandle(handleFn, ctx, requestId = "smoke") {
         }
       }
     }
+  }
+
+  console.log("\n[5] Path A leg 2 fallback (session 4): force unusable enriched intent → expect original-fallback bundle OR graceful refuse");
+  {
+    // Build a leg-1 turn with a USABLE original intent (decomposed_categories
+    // + dynamic_pool_spec) but seed answers that, when concatenated, will
+    // likely make enriched Pass 1 swing to knowledge or context_not_recognized.
+    // Real-world example: Disney query where user picks "Adults only" for
+    // audience AND "Babies" for ages — the contradiction confuses enriched Pass 1.
+    //
+    // Since the original turn0 intent in this smoke doesn't have decomposed_categories
+    // (Disney → needs_refinement → no decomposed_categories), we synthesize a
+    // hybrid: original intent IS usable for pool, but enriched will fail.
+    const usableOriginal = {
+      type: "context", confidence: 0.85,
+      restatement: "halloween snacks for the family",
+      category: null, subject: null, audience: null,
+      age_range_months: null, constraints: [], occasion: "halloween",
+      needs_refinement: true,
+      ambiguity_reason: "audience composition + kid age unclear",
+      decomposed_categories: ["snacks", "party_food"],
+      dynamic_pool_spec: { audience: "family_with_kids", occasion_proxy: "halloween" },
+    };
+
+    // Seed a leg-1 conversation with the usable original intent + a faked
+    // refinement question list (so the loadConversation path returns turn0).
+    const convoId = `mock-convo-fallback-${Date.now()}`;
+    conversations.set(convoId, {
+      id: convoId,
+      created_at: new Date().toISOString(),
+      last_active_at: new Date().toISOString(),
+      session_id: "smoke-session",
+      user_id: null,
+      turns: [{
+        intent: usableOriginal,
+        original_query: "halloween snacks for the family",
+        refinement_questions: [
+          { id: "audience", text: "Who is celebrating?", suggested_options: ["Adults only", "Family with kids"] },
+          { id: "ages", text: "What ages are the kids?", suggested_options: ["Babies", "Toddlers", "School age"] },
+        ],
+        moat_alignment_count: 0,
+        scan_history_used: false,
+      }],
+    });
+
+    // Submit contradictory answers (the failure mode hierarchical encoding
+    // is supposed to prevent at source). Enriched Pass 1 sees:
+    // "halloween snacks for the family. Additional context: Adults only; Babies."
+    // which usually swings to a confused/unusable intent.
+    const leg2 = await runHandle(handleRefinementAnswer, {
+      body: {
+        conversation_id: convoId,
+        answers: [
+          { question_id: "audience", value: "Adults only" },
+          { question_id: "ages", value: "Babies" },
+        ],
+        skipped: [],
+      },
+    }, "smoke5-fallback");
+
+    console.log(`    SSE events: ${eventNames(leg2.sse.events).join(", ")}`);
+    const bundle = getBundle(leg2.sse.events);
+    const refuse = getRefuse(leg2.sse.events);
+    const refuseReason = refuse?.reason;
+    console.log(`    outcome: bundle=${!!bundle} refuse=${refuseReason || "none"}`);
+    // Acceptable outcomes:
+    //   (a) bundle — enriched still usable somehow, composer ran
+    //   (b) bundle — enriched unusable but original fallback fired
+    //   (c) refuse empty_dynamic_pool — fallback fired but pool too thin
+    //   (d) refuse refinement_unhelpful — both unusable, graceful refusal
+    // Unacceptable: refuse context_not_recognized (the old bug)
+    check("did NOT refuse with old context_not_recognized",
+      refuseReason !== "context_not_recognized",
+      refuseReason === "context_not_recognized" ? "leg 2 hit the old bug path" : "");
+    check("outcome is bundle OR known refusal type",
+      bundle != null || ["empty_dynamic_pool", "refinement_unhelpful"].includes(refuseReason),
+      `unexpected outcome: bundle=${!!bundle} refuse=${refuseReason}`);
+    if (leg2.audit) {
+      const stages = leg2.audit.framing_outputs?.map(f => f.stage) || [];
+      const fallbackFraming = leg2.audit.framing_outputs?.find(
+        f => f.stage === "pass_1_enriched" && f.status === "fallback");
+      console.log(`    leg 2 framings: ${stages.join(" → ")}`);
+      console.log(`    fallback framing present: ${!!fallbackFraming}`);
+      // Fallback framing is informational — it'll only be present when
+      // enriched intent was actually unusable. Don't fail the smoke on
+      // its absence (enriched might have still been usable for this query).
+    }
+  }
+
+  console.log("\n[6] Knowledge SKIP routing (session 4): unrecognized subject → knowledge_query_not_supported");
+  {
+    // Synthesize a knowledge intent for a subject not in the curated
+    // knowledge.js. The handler should refuse with the new code and the
+    // audit row should carry composition_source=knowledge_skip.
+    const intent = {
+      type: "knowledge", confidence: 0.9,
+      restatement: "User wants to know about a substance.",
+      category: null,
+      subject: "completely_fake_substance_xyz_qpr",
+      audience: null, age_range_months: null,
+      constraints: [], occasion: null,
+      needs_refinement: false, ambiguity_reason: null,
+      decomposed_categories: null, dynamic_pool_spec: null,
+    };
+    const { sse, audit } = await runHandle(handleKnowledgeQuery, {
+      intent, rawQuery: "what is completely_fake_substance_xyz_qpr",
+      normalized: "what is completely_fake_substance_xyz_qpr",
+      cachedIntent: false,
+    }, "smoke6-knowledge-skip");
+    const refuse = getRefuse(sse.events);
+    console.log(`    SSE events: ${eventNames(sse.events).join(", ")}`);
+    console.log(`    refuse reason: ${refuse?.reason} message: ${refuse?.message?.slice(0, 60)}…`);
+    check("refuse with knowledge_query_not_supported",
+      refuse?.reason === "knowledge_query_not_supported",
+      refuse ? `got reason=${refuse.reason}` : "no refuse event");
+    check("refuse message is voice-clean (no 'ships soon' / placeholder copy)",
+      refuse?.message && !/ships soon|coming soon|TODO|placeholder/i.test(refuse.message),
+      refuse?.message);
+    check("audit composition_source is knowledge_skip",
+      audit?.composition_source === "knowledge_skip",
+      `got composition_source=${audit?.composition_source}`);
+    check("audit error is knowledge_query_not_supported",
+      audit?.error === "knowledge_query_not_supported",
+      `got error=${audit?.error}`);
   }
 
   console.log(`\n${passCount} passed, ${failCount} failed`);

@@ -266,6 +266,47 @@ const CASES = [
     assert_no_compound_option: true,
     assert_no_moat_first_person: true,
   },
+  // ── Session 4 — HIERARCHICAL QUESTION DESIGN regressions ──
+  // When Pass 1's ambiguity_reason names CORRELATED dimensions (audience
+  // composition + age of those audience members), Pass 1.5 must encode
+  // both in a single composite question. Asking them as separate
+  // questions produces contradictory enriched queries on default tap
+  // ("Adults only" + "Babies" → contradiction). Production stress test
+  // (session 3) showed three queries hitting this failure mode.
+  {
+    n: 11,
+    label: "Disney trip — audience + age must be ONE composite question",
+    intent: {
+      type: "context",
+      restatement: "Disney trip packing help",
+      ambiguity_reason: "audience composition (adults vs family) AND kid age unclear",
+      needs_refinement: true,
+    },
+    contextId: null,
+    scanHistory: [],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: false,
+    assert_no_hedge_prefix: true,
+    assert_hierarchical_encoding: true,
+  },
+  {
+    n: 12,
+    label: "Halloween candy — audience + age must be ONE composite question",
+    intent: {
+      type: "context",
+      restatement: "halloween candy for the family",
+      ambiguity_reason: "audience composition unclear (adults vs family with kids) and kid age unspecified",
+      needs_refinement: true,
+    },
+    contextId: null,
+    scanHistory: [],
+    expect_min_questions: 2,
+    expect_max_questions: 3,
+    expect_any_moat_aligned: false,
+    assert_no_hedge_prefix: true,
+    assert_hierarchical_encoding: true,
+  },
 ];
 
 // Hedge-phrase prefixes Pass 1.5 must not emit on any option. Drawn
@@ -363,6 +404,33 @@ function findMoatFirstPerson(questions) {
     }
   }
   return out;
+}
+
+// Hierarchical-encoding detector (session 4). When the prompt instructs
+// hierarchical encoding, audience composition (who) and age range must
+// be a SINGLE composite question, not two orthogonal questions. Flags
+// when one question text is about audience (who/going/with) AND another
+// question text is about ages (age/old/babies/toddlers/years). Loose
+// heuristic — false negatives are acceptable (we can't reliably catch
+// every separation pattern), but a true positive means the prompt rule
+// got ignored.
+const AUDIENCE_QUESTION_RE = /\b(who|whose|going|with|adults?|family|alone)\b/i;
+const AGE_QUESTION_RE = /\b(age|ages|old|baby|babies|toddler|toddlers|infant|kid|kids|child|children|year[ -]?old|years?)\b/i;
+function findHierarchicalViolations(questions) {
+  const audienceQs = questions.filter(q => AUDIENCE_QUESTION_RE.test(String(q.text || "")));
+  const ageQs = questions.filter(q => AGE_QUESTION_RE.test(String(q.text || "")));
+  // Same question caught by both regexes (composite) is fine — that's
+  // the desired pattern. Only flag when audience question and age
+  // question are DIFFERENT question objects.
+  const overlapping = audienceQs.filter(aq => !ageQs.includes(aq));
+  const ageOnly = ageQs.filter(aq => !audienceQs.includes(aq));
+  if (overlapping.length > 0 && ageOnly.length > 0) {
+    return [{
+      audience_q: overlapping[0].text,
+      age_q: ageOnly[0].text,
+    }];
+  }
+  return [];
 }
 
 // Case 7 uses a planted bad-output mock to verify gates fire.
@@ -512,8 +580,17 @@ async function main() {
     const moatFirstPersonViolations = findMoatFirstPerson(qs);
     const moatFirstPersonOK = moatFirstPersonViolations.length === 0;
 
+    // Session 4 — hierarchical encoding only fires when the case flags it.
+    // The rule is correlated-dimension-specific (audience + age), so it
+    // doesn't run on every case (would false-positive on legitimately
+    // orthogonal age questions like "how old is your kid?").
+    const hierarchicalViolations = c.assert_hierarchical_encoding
+      ? findHierarchicalViolations(qs)
+      : [];
+    const hierarchicalOK = hierarchicalViolations.length === 0;
+
     const ok = countOK && moatOK && shapeOK && gateOK && hedgeOK
-      && compoundQOK && compoundOOK && moatFirstPersonOK;
+      && compoundQOK && compoundOOK && moatFirstPersonOK && hierarchicalOK;
     if (ok) {
       console.log(`PASS (${dur}ms, ${qs.length} qs, moat=${moatCount})`);
       pass++;
@@ -549,6 +626,12 @@ async function main() {
           .map(v => `[${v.where}] "${v.text}"${v.question_text ? ` (q: "${v.question_text}")` : ""}`)
           .join("; ");
         issues.push(`moat_first_person violations: ${detail}`);
+      }
+      if (!hierarchicalOK) {
+        const detail = hierarchicalViolations
+          .map(v => `audience-only: "${v.audience_q}" + age-only: "${v.age_q}" (should be one composite question)`)
+          .join("; ");
+        issues.push(`hierarchical_encoding violations: ${detail}`);
       }
       console.log(`FAIL (${dur}ms): ${issues.join(" | ")}`);
       fail++;

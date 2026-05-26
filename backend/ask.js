@@ -181,6 +181,26 @@ Examples that should NOT trigger refinement (specific products and knowledge que
 - "what is pfas" — knowledge query, no refinement applicable
 - "best non-toxic sunscreen for adults" — audience signal provided
 
+KNOWLEDGE CLASSIFICATION — when to set type="knowledge" vs type="product" or type="context":
+
+Knowledge queries ask ABOUT a substance, certification, or material as an educational topic. The user wants to UNDERSTAND something, not buy something. Set type="knowledge" only when the user is asking for explanation, definition, or risk assessment of a named substance/term.
+
+Borderline discriminators — same noun, different intent:
+- "what is pfas" → knowledge (definitional)
+- "pfas-free water bottle" → product (shopping query, pfas is a constraint)
+- "are phthalates a concern" → knowledge (risk assessment)
+- "phthalate-free shampoo for kids" → product (shopping query with constraint + audience)
+- "what does GOTS certified mean" → knowledge (definitional)
+- "GOTS certified baby clothing" → product (shopping query with cert as constraint)
+- "is red 40 bad for kids" → knowledge (risk assessment)
+- "snacks without red 40 for my 6 year old" → product or context (shopping query, red 40 is exclusion criterion)
+- "what is parabens" → knowledge
+- "paraben-free moisturizer" → product
+- "does sunscreen cause cancer" → knowledge
+- "best mineral sunscreen for babies" → product
+
+Discriminator rule: when the query contains a verb of shopping/wanting/finding ("best", "for my", "recommend", "without X", "X-free", "alternatives to") OR a category noun the user wants to BUY, prefer product/context over knowledge. When the query is a definitional or risk-assessment question ("what is X", "why is X bad", "are X safe", "should I avoid X"), prefer knowledge.
+
 TEMPLATED CONTEXT REFINEMENT EXAMPLES — paired clear vs ambiguous:
 
 Newborn essentials:
@@ -301,6 +321,20 @@ const VIABLE_AUDIENCE_VALUES = new Set([
   "family_with_kids", "family_adults_only", "kid_focused",
   "adult_focused", "infant_focused", "pet_focused",
 ]);
+
+// Path A leg 2 fallback — a Pass 1 intent is "usable for pool building"
+// when buildDynamicPool can construct a non-trivial pool from it. classifyIntent
+// already nulls invalid values, so at point of use we just check non-emptiness.
+function isIntentUsableForPool(intent) {
+  return (
+    !!intent
+    && Array.isArray(intent.decomposed_categories)
+    && intent.decomposed_categories.length > 0
+    && !!intent.dynamic_pool_spec
+    && typeof intent.dynamic_pool_spec.audience === "string"
+    && typeof intent.dynamic_pool_spec.occasion_proxy === "string"
+  );
+}
 
 function validateDecomposedCategories(v) {
   if (!Array.isArray(v) || v.length === 0) return null;
@@ -2042,21 +2076,39 @@ async function handleRefinementAnswer(deps, ctx) {
   const refinementQuestionsCount = Array.isArray(initialTurn?.refinement_questions)
     ? initialTurn.refinement_questions.length : null;
 
-  // ── Compose: pool source depends on what enriched Pass 1 emitted ──
-  // (a) decomposed_categories populated → dynamic pool
-  // (b) templated context resolvable → static pool
-  // (c) neither → refuse empty_dynamic_pool
-  if (Array.isArray(enrichedIntent.decomposed_categories)
-    && enrichedIntent.decomposed_categories.length > 0
-    && enrichedIntent.dynamic_pool_spec) {
+  // ── Pool intent selection — enriched first, then original fallback ──
+  // Path A leg 2 hardening: enriched Pass 1 can return an unusable intent
+  // when refinement answers are contradictory (Pass 1.5 asked overlapping
+  // questions) or when the user skipped everything. If enriched intent
+  // can't drive buildDynamicPool but the ORIGINAL intent can, fall back
+  // to original — it's stale by one turn but still better than refusing.
+  const enrichedUsable = isIntentUsableForPool(enrichedIntent);
+  const originalUsable = isIntentUsableForPool(originalIntent);
+  let poolIntent = null;
+  let intentSource = null;
+  if (enrichedUsable) {
+    poolIntent = enrichedIntent;
+    intentSource = "enriched";
+  } else if (originalUsable) {
+    console.warn(`[ask:fallback] ${requestId} enriched intent unusable, falling back to original Pass 1 intent`);
+    appendFraming({ framings }, "pass_1_enriched", "fallback", null, {
+      reason: "enriched_intent_unusable",
+      used_original: true,
+    });
+    poolIntent = originalIntent;
+    intentSource = "original_fallback";
+  }
+
+  if (poolIntent) {
     const dynamicPool = buildDynamicPool({
-      intent: enrichedIntent, scanHistory: [], calibration: CALIBRATION,
+      intent: poolIntent, scanHistory: [], calibration: CALIBRATION,
     });
     if (!dynamicPool || !dynamicPool.items.length) {
       appendFraming({ framings }, "composer", "refused", null, {
         reason: "empty_dynamic_pool",
-        decomposed_categories: enrichedIntent.decomposed_categories,
-        audience: enrichedIntent.dynamic_pool_spec.audience,
+        decomposed_categories: poolIntent.decomposed_categories,
+        audience: poolIntent.dynamic_pool_spec.audience,
+        intent_source: intentSource,
       });
       sse.emit("refuse", {
         reason: "empty_dynamic_pool",
@@ -2065,9 +2117,9 @@ async function handleRefinementAnswer(deps, ctx) {
       sse.end();
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
-        parsed_intent: enrichedIntent, classification_confidence: enrichedIntent.confidence,
+        parsed_intent: poolIntent, classification_confidence: poolIntent.confidence,
         context_id: "dynamic",
-        context_categories: enrichedIntent.decomposed_categories,
+        context_categories: poolIntent.decomposed_categories,
         error: "empty_dynamic_pool",
         duration_ms: Date.now() - requestStartMs,
         cached_intent: false, cached_framings: [],
@@ -2079,14 +2131,14 @@ async function handleRefinementAnswer(deps, ctx) {
       });
       return;
     }
-    const synthContext = makeDynamicContext(dynamicPool, enrichedIntent);
+    const synthContext = makeDynamicContext(dynamicPool, poolIntent);
     const broadCats = buildContextBroadCategories(synthContext);
     const scanHistory = userId
       ? await fetchScanHistoryForContext(deps, userId, broadCats)
       : [];
-    console.log(`[ask] ${requestId} leg2 dynamic pool items=${dynamicPool.items.length} per_slug=${JSON.stringify(dynamicPool.metadata.per_slug_counts)}`);
+    console.log(`[ask] ${requestId} leg2 dynamic pool items=${dynamicPool.items.length} per_slug=${JSON.stringify(dynamicPool.metadata.per_slug_counts)} intent_source=${intentSource}`);
     await composeBundleAndStream(deps, {
-      sse, intent: enrichedIntent, userId, rawQuery, normalized,
+      sse, intent: poolIntent, userId, rawQuery, normalized,
       cachedIntent: false, requestStartMs,
       context: synthContext, pool: dynamicPool.items, scanHistory, broadCats,
       refinement: { answers, skipped },
@@ -2098,19 +2150,20 @@ async function handleRefinementAnswer(deps, ctx) {
     return;
   }
 
-  // Templated path — enriched intent maps to a static context.
+  // Templated path — neither intent had dynamic decomposition, try the
+  // static context map as a last resort before refusing.
   const context = findContextFromQuery(rawQuery, enrichedIntent);
   if (!context) {
-    appendFraming({ framings }, "composer", "refused", null, { reason: "context_not_recognized" });
+    appendFraming({ framings }, "composer", "refused", null, { reason: "refinement_unhelpful" });
     sse.emit("refuse", {
-      reason: "context_not_recognized",
-      message: "Couldn't recompose the original context. Start a fresh question.",
+      reason: "refinement_unhelpful",
+      message: "Tell us more about what you need to refine the recommendations.",
     });
     sse.end();
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
       parsed_intent: enrichedIntent, classification_confidence: enrichedIntent.confidence,
-      error: "context_not_recognized",
+      error: "refinement_unhelpful",
       duration_ms: Date.now() - requestStartMs,
       cached_intent: false, cached_framings: [],
       refinement_fired: true,
@@ -2169,14 +2222,15 @@ async function handleKnowledgeQuery(deps, ctx) {
 
   if (!entry) {
     sse.emit("refuse", {
-      reason: "knowledge_subject_not_live",
-      message: "Knowledge on that subject ships soon. Try asking for a product instead.",
+      reason: "knowledge_query_not_supported",
+      message: "Ask is built for product recommendations. Try a product or category query instead.",
     });
     sse.end();
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
       parsed_intent: intent, classification_confidence: intent.confidence,
-      error: "knowledge_subject_not_live",
+      error: "knowledge_query_not_supported",
+      composition_source: "knowledge_skip",
       duration_ms: Date.now() - requestStartMs,
       cached_intent: cachedIntent, cached_framings: [],
     });
@@ -2565,4 +2619,5 @@ module.exports = {
   // it can drive the flow with mocked supabaseAdmin + SSE writer.
   handleContextQuery,
   handleRefinementAnswer,
+  handleKnowledgeQuery,
 };

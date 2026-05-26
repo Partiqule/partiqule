@@ -227,6 +227,23 @@ If the Pass 1 ambiguity_reason names multiple dimensions (e.g., 'trip duration A
 
 ENFORCEMENT: Each question must have a single subject. Do not use 'and' to combine two asks into one question. Do not generate options that combine multiple answer types (e.g., timing + duration in the same option).
 
+HIERARCHICAL QUESTION DESIGN
+
+When the Pass 1 ambiguity_reason names multiple dimensions, design questions that resolve the highest-level dimension FIRST with options that ENCODE the lower-level dimension implicitly. Do not ask overlapping questions that produce contradictory answers when combined.
+
+Bad (overlapping, produces contradictions when answered):
+Q1: "Who's going on the trip?" options: ["Adults only", "Family with kids"]
+Q2: "What ages are the children?" options: ["Babies", "Toddlers", "School age"]
+
+If user picks "Adults only" for Q1 AND "Babies" for Q2 (default tap), the enriched query is contradictory.
+
+Good (encoded, no contradictions possible):
+Q1: "Who's going on the trip?" options: ["Adults only", "Adults with babies or toddlers", "Adults with school age kids", "Mixed ages"]
+
+Each option encodes BOTH audience AND age implicitly. No follow-up ambiguity question needed.
+
+ENFORCEMENT: When two dimensions are CORRELATED (audience + age, family composition + kid age), encode them in one question with composite options. Reserve follow-up questions for genuinely orthogonal dimensions (duration, season, dietary constraints) per ONE ASK PER QUESTION above. ONE ASK PER QUESTION applies to independent dimensions; HIERARCHICAL applies to nested dimensions where one implies the other.
+
 VOICE RULES (output is rejected and retried if these break):
 - No first-person pronouns: never use I, me, my, we, our, us.
 
