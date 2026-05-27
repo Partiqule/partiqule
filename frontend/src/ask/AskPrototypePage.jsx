@@ -464,6 +464,7 @@ const ERROR_COPY = {
   conversation_expired: "That conversation expired. Ask again.",
   conversation_not_found: "That conversation isn't available. Start a fresh question.",
   conversation_ownership: "That conversation belongs to a different session. Start a fresh question.",
+  composer_timeout: "This is taking longer than expected. Try a more specific query, or scan the product directly.",
   empty_dynamic_pool: "Calibration coverage for that mix is thin. Worth scanning the categories yourself.",
   knowledge_query_not_supported: "Ask is built for product recommendations. Try a product or category query instead.",
   missing_conversation_id: "We lost the thread. Start a fresh question.",

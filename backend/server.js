@@ -10301,6 +10301,77 @@ app.get("/admin/api-budget", requireAdmin, async (req, res) => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// /admin/ask-timing-stats — Phase 2b session 5a launch-gate telemetry
+// ─────────────────────────────────────────────────────────────────────────────
+// Aggregates ask_timing_telemetry over a configurable window (default 24h,
+// max 168h = 7 days). Returns p50/p95/p99 first-item + total latencies +
+// timeout rate + per-status breakdown + gate_status booleans.
+//
+// gate_status lets the launch decision check the three thresholds without
+// re-deriving the math: p95 first-item < 3s, p95 total < 8s, timeout < 2%.
+app.get("/admin/ask-timing-stats", requireAdmin, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "supabase_unavailable" });
+  const hoursReq = Number(req.query.hours);
+  const hours = Number.isFinite(hoursReq) && hoursReq > 0 ? Math.min(hoursReq, 168) : 24;
+  const sinceIso = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+  try {
+    // Page through rows so large windows don't truncate at the default 1000.
+    const PAGE = 1000;
+    const rows = [];
+    let from = 0;
+    for (;;) {
+      const { data, error } = await supabaseAdmin
+        .from("ask_timing_telemetry")
+        .select("status, query_type, first_item_ms, total_ms")
+        .gte("created_at", sinceIso)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(error.message);
+      if (!data || !data.length) break;
+      rows.push(...data);
+      if (data.length < PAGE) break;
+      from += PAGE;
+    }
+
+    const byStatus = {};
+    for (const r of rows) byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+
+    const meaningful = rows.filter(r => r.status === "ok" || r.status === "refused");
+    const firstItems = meaningful.map(r => r.first_item_ms).filter(v => v != null);
+    const totals = meaningful.map(r => r.total_ms).filter(v => v != null);
+    const pct = (arr, p) => {
+      if (!arr.length) return null;
+      const sorted = arr.slice().sort((a, b) => a - b);
+      return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))];
+    };
+
+    const total = rows.length;
+    const timeoutRate = total > 0 ? (byStatus.timeout || 0) / total : 0;
+    const stats = {
+      window_hours: hours,
+      total_queries: total,
+      by_status: byStatus,
+      latency_p50: { first_item_ms: pct(firstItems, 50), total_ms: pct(totals, 50) },
+      latency_p95: { first_item_ms: pct(firstItems, 95), total_ms: pct(totals, 95) },
+      latency_p99: { first_item_ms: pct(firstItems, 99), total_ms: pct(totals, 99) },
+      timeout_rate: timeoutRate,
+    };
+    const gate = {
+      p95_first_item_lt_3s: stats.latency_p95.first_item_ms != null && stats.latency_p95.first_item_ms < 3000,
+      p95_total_lt_8s: stats.latency_p95.total_ms != null && stats.latency_p95.total_ms < 8000,
+      timeout_rate_lt_2pct: timeoutRate < 0.02,
+    };
+    gate.all_pass = gate.p95_first_item_lt_3s && gate.p95_total_lt_8s && gate.timeout_rate_lt_2pct;
+    stats.gate_status = gate;
+    res.json(stats);
+  } catch (e) {
+    console.error("[admin/ask-timing-stats]", e.message);
+    res.status(500).json({ error: "query_failed", message: e.message });
+  }
+});
+
 // Recent scans — returns last N cached product names and scores for admin dashboard
 app.get("/recent-scans", requireAdmin, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 50, 100);

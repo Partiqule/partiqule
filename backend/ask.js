@@ -45,6 +45,21 @@ const {
 } = require("./composer");
 const { generateRefinementQuestions, fetchScanHistoryForRefinement } = require("./refinement");
 const { buildDynamicPool } = require("./dynamicPool");
+const {
+  createTimingContext,
+  setQueryType,
+  setActivePhase,
+  finalize: finalizeTiming,
+  flushTiming,
+  wrapSseForTiming,
+  withHardTimeout,
+  TimeoutError,
+} = require("./askTiming");
+
+// Hotfix-grade hard timeout on the composer. Spec: 30s, gated to launch
+// telemetry. Increase only with telemetry data — the launch gate caps
+// the user-facing wait at this number.
+const COMPOSER_HARD_TIMEOUT_MS = 30000;
 
 // ── ENV ──────────────────────────────────────────────────────────
 const ASK_PASS1_MODEL = process.env.ASK_PASS1_MODEL || "claude-haiku-4-5-20251001";
@@ -1567,6 +1582,7 @@ async function composeBundleAndStream(deps, opts) {
     requestId,            // Phase 2b: log correlation id
     poolSource,           // Phase 2b: "static" | "dynamic" for logs
     dynamicPoolMetadata,  // Phase 2b: per-slug counts when dynamic
+    timing,               // Session 5a: timing telemetry context (may be null)
   } = opts;
   const { callClaudeSonnet, redisGet, redisSetEx, hasRedis } = deps;
   const fr = framings || [];
@@ -1591,29 +1607,78 @@ async function composeBundleAndStream(deps, opts) {
       }
     } catch {}
   }
+  if (timing) {
+    if (cachedBundle) timing.cache_hits += 1; else timing.cache_misses += 1;
+  }
 
   sse.emit("intent_classified", { type: "context", context_id: context.id });
   if (!cachedBundle) sse.emit("composer_thinking", { phase: "composing" });
 
   if (!bundleResult) {
+    const tComposer = Date.now();
+    if (timing) setActivePhase(timing, "composer");
     try {
-      bundleResult = await composePersonalizedBundle({
-        context,
-        // Refinement answers attach to constraints. The composer reads
-        // constraints as opaque JSON in its prompt, so the AI sees the
-        // refinement context without changes to composer behavior.
-        constraints: {
-          audience: intent.audience,
-          constraints: intent.constraints,
-          occasion: intent.occasion,
-          refinement: refinement || null,
-        },
-        pool,
-        scanHistory,
-        contextBroadCategories: broadCats,
-        callAI: (system, userPrompt, maxTokens) => callClaudeSonnet(system, userPrompt, maxTokens),
-      });
+      // Session 5a: hard 30s timeout wraps the entire composer call so
+      // pathological Anthropic latency cannot hang the user. The inner
+      // composer continues to run (we can't AbortController-cancel the
+      // Sonnet fetch from here without refactoring callClaudeSonnet) but
+      // its result is discarded. Frontend gets a clean refusal.
+      bundleResult = await withHardTimeout(
+        () => composePersonalizedBundle({
+          context,
+          // Refinement answers attach to constraints. The composer reads
+          // constraints as opaque JSON in its prompt, so the AI sees the
+          // refinement context without changes to composer behavior.
+          constraints: {
+            audience: intent.audience,
+            constraints: intent.constraints,
+            occasion: intent.occasion,
+            refinement: refinement || null,
+          },
+          pool,
+          scanHistory,
+          contextBroadCategories: broadCats,
+          callAI: (system, userPrompt, maxTokens) => callClaudeSonnet(system, userPrompt, maxTokens),
+        }),
+        COMPOSER_HARD_TIMEOUT_MS,
+        () => ({ phase: "composer", elapsed_ms: Date.now() - tComposer }),
+      );
+      if (timing) timing.composer_ms = Date.now() - tComposer;
     } catch (err) {
+      if (timing) timing.composer_ms = Date.now() - tComposer;
+      // ── Session 5a: hard-timeout branch ──
+      if (err instanceof TimeoutError) {
+        const partial = err.partial || {};
+        console.log(`[ask:timeout] requestId=${rid} phase=${partial.phase || "composer"} retries=${0} partial_completion=false`);
+        appendFraming({ framings: fr }, "composer", "timeout", null, {
+          reason: "composer_timeout",
+          timeout_ms: COMPOSER_HARD_TIMEOUT_MS,
+          context_id: context.id,
+          pool_size: pool.length,
+        });
+        sse.emit("refuse", {
+          reason: "composer_timeout",
+          message: "This is taking longer than expected. Try a more specific query, or scan the product directly.",
+        });
+        sse.end();
+        if (timing) timing.status = "timeout";
+        writeAuditLog(deps, {
+          user_id: userId, query: rawQuery, normalized_query: normalized,
+          parsed_intent: intent, classification_confidence: intent.confidence,
+          context_id: context.id,
+          context_categories: context.categories.map(c => c.slug),
+          error: "composer_timeout",
+          duration_ms: Date.now() - requestStartMs,
+          cached_intent: cachedIntent, cached_framings: [],
+          refinement_fired: refinement != null,
+          refinement_questions_count: refinementQuestionsCount || null,
+          refinement_answered_count: refinement?.answers?.length || null,
+          refinement_skipped_count:  refinement?.skipped?.length || null,
+          framing_outputs: fr,
+        });
+        return;
+      }
+      // ── Existing composer-error branch ──
       console.error("[ask] composer failed:", err?.message);
       console.log(`[composer] ${rid} REFUSED reason=composer_failed message=${JSON.stringify(err?.message || "unknown")}`);
       appendFraming({ framings: fr }, "composer", "failure", null, {
@@ -1624,6 +1689,7 @@ async function composeBundleAndStream(deps, opts) {
       });
       sse.emit("error", { error: "composer_failed", message: "Couldn't compose a bundle for that. Try a different angle." });
       sse.end();
+      if (timing) timing.status = "error";
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         parsed_intent: intent, classification_confidence: intent.confidence,
@@ -1641,6 +1707,10 @@ async function composeBundleAndStream(deps, opts) {
       return;
     }
     if (useCache && hasRedis) redisSetEx(cacheKey, bundleResult, cacheTtlSec).catch(() => {});
+  }
+  // Capture composer retry count from metadata (works for cache hit too).
+  if (timing && bundleResult && bundleResult.metadata) {
+    timing.retries = bundleResult.metadata.ai_attempts || 0;
   }
   console.log(`[composer] ${rid} SUCCESS cached=${cachedBundle} bundle_sections=${(bundleResult.bundle.sections || []).length} bundle_items=${(bundleResult.bundle.sections || []).reduce((n, s) => n + (s.items?.length || 0), 0)}`);
   appendFraming({ framings: fr }, "composer", "success", {
@@ -1670,6 +1740,7 @@ async function composeBundleAndStream(deps, opts) {
     response_type: "context",
   });
   sse.end();
+  if (timing) timing.status = "ok";
 
   const meta = bundleResult.metadata || {};
   writeAuditLog(deps, {
@@ -1725,6 +1796,8 @@ async function handleContextQuery(deps, ctx) {
   // Framings ledger inherited from /ask handler (Pass 1 already
   // appended). Mutated in-place — the audit row uses framings.
   const framings = ctx.framings || [];
+  // Session 5a timing context (may be null in legacy callers / tests).
+  const timing = ctx.timing || null;
 
   // Try to resolve the templated context. This can return null for
   // open-ended dynamic queries that don't map cleanly to contexts.js.
@@ -1748,10 +1821,13 @@ async function handleContextQuery(deps, ctx) {
       : [];
 
     let refinementResult = null;
+    const t15 = Date.now();
+    if (timing) setActivePhase(timing, "pass_1_5");
     try {
       refinementResult = await generateRefinementQuestions({
         intent, scanHistory, contextId: context?.id || null, callClaude, requestId,
       });
+      if (timing) timing.pass1_5_ms = Date.now() - t15;
       appendFraming({ framings }, "pass_1_5", "success", {
         questions: refinementResult.questions,
         moat_alignment_count: refinementResult.moat_alignment_count,
@@ -1760,6 +1836,7 @@ async function handleContextQuery(deps, ctx) {
         voice_gate_failures: refinementResult.voice_gate_failures,
       });
     } catch (err) {
+      if (timing) timing.pass1_5_ms = Date.now() - t15;
       console.warn("[ask] Pass 1.5 failed:", err?.message);
       appendFraming({ framings }, "pass_1_5", "failure", null, {
         reason: "pass1_5_failed",
@@ -1775,7 +1852,7 @@ async function handleContextQuery(deps, ctx) {
             context, pool: recoveryPool, scanHistory, broadCats: recoveryBroadCats,
             refinement: null, conversationId: null, useCache: true,
             refinementQuestionsCount: null,
-            framings, requestId,
+            framings, requestId, timing,
           });
           return;
         }
@@ -1785,6 +1862,7 @@ async function handleContextQuery(deps, ctx) {
         message: "Couldn't generate clarifying questions for that. Try a more specific query.",
       });
       sse.end();
+      if (timing) timing.status = "refused";
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         parsed_intent: intent, classification_confidence: intent.confidence,
@@ -1816,6 +1894,7 @@ async function handleContextQuery(deps, ctx) {
     });
     sse.emit("done", { response_type: "refinement_question" });
     sse.end();
+    if (timing) timing.status = "ok"; // refinement question shipped — that's a successful response
 
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
@@ -1852,6 +1931,7 @@ async function handleContextQuery(deps, ctx) {
         message: "Calibration coverage for that mix is thin. Worth scanning the categories yourself.",
       });
       sse.end();
+      if (timing) timing.status = "refused";
       appendFraming({ framings }, "composer", "refused", null, {
         reason: "empty_dynamic_pool",
         decomposed_categories: intent.decomposed_categories,
@@ -1880,7 +1960,7 @@ async function handleContextQuery(deps, ctx) {
       context: synthContext, pool: dynamicPool.items, scanHistory, broadCats,
       refinement: null, conversationId: null, useCache: true,
       refinementQuestionsCount: null,
-      framings, requestId,
+      framings, requestId, timing,
       poolSource: "dynamic", dynamicPoolMetadata: dynamicPool.metadata,
     });
     return;
@@ -1893,6 +1973,7 @@ async function handleContextQuery(deps, ctx) {
       message: "That context isn't covered yet. Try asking for a specific product or category.",
     });
     sse.end();
+    if (timing) timing.status = "refused";
     appendFraming({ framings }, "composer", "refused", null, { reason: "context_not_recognized" });
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
@@ -1912,6 +1993,7 @@ async function handleContextQuery(deps, ctx) {
       message: "Calibration coverage for this context is thin. Worth scanning the categories yourself.",
     });
     sse.end();
+    if (timing) timing.status = "refused";
     appendFraming({ framings }, "composer", "refused", null, { reason: "pool_empty", context_id: context.id });
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
@@ -1936,7 +2018,7 @@ async function handleContextQuery(deps, ctx) {
     context, pool, scanHistory, broadCats,
     refinement: null, conversationId: null, useCache: true,
     refinementQuestionsCount: null,
-    framings, requestId,
+    framings, requestId, timing,
     poolSource: "static",
   });
 }
@@ -1979,6 +2061,7 @@ async function handleRefinementAnswer(deps, ctx) {
   const { sse, userId, requestStartMs, body } = ctx;
   const { callClaude, CALIBRATION } = deps;
   const requestId = ctx.requestId || "noid";
+  const timing = ctx.timing || null;
 
   const conversationId = body?.conversation_id;
   const rawAnswers = Array.isArray(body?.answers) ? body.answers : [];
@@ -1987,22 +2070,26 @@ async function handleRefinementAnswer(deps, ctx) {
   if (!conversationId || typeof conversationId !== "string") {
     sse.emit("refuse", { reason: "missing_conversation_id", message: "conversation_id is required." });
     sse.end();
+    if (timing) timing.status = "refused";
     return;
   }
   const conversation = await loadConversation(deps, conversationId);
   if (!conversation) {
     sse.emit("refuse", { reason: "conversation_not_found", message: "That conversation isn't available. Start a fresh query." });
     sse.end();
+    if (timing) timing.status = "refused";
     return;
   }
   if (isConversationExpired(conversation)) {
     sse.emit("refuse", { reason: "conversation_expired", message: "That conversation expired. Start a fresh question." });
     sse.end();
+    if (timing) timing.status = "refused";
     return;
   }
   if (!conversationOwnershipOK(conversation, userId)) {
     sse.emit("refuse", { reason: "conversation_ownership", message: "That conversation belongs to a different session." });
     sse.end();
+    if (timing) timing.status = "refused";
     return;
   }
 
@@ -2012,6 +2099,7 @@ async function handleRefinementAnswer(deps, ctx) {
   if (!originalIntent || typeof originalIntent !== "object") {
     sse.emit("error", { error: "conversation_state", message: "Conversation has invalid state." });
     sse.end();
+    if (timing) timing.status = "error";
     return;
   }
 
@@ -2056,10 +2144,14 @@ async function handleRefinementAnswer(deps, ctx) {
     : originalQuery;
 
   let enrichedIntent;
+  const tEnriched = Date.now();
+  if (timing) setActivePhase(timing, "pass_1_enriched");
   try {
     enrichedIntent = await classifyIntent({ callClaude }, enrichedQuery, requestId);
+    if (timing) timing.enriched_pass1_ms = Date.now() - tEnriched;
     appendFraming({ framings }, "pass_1_enriched", "success", enrichedIntent);
   } catch (err) {
+    if (timing) timing.enriched_pass1_ms = Date.now() - tEnriched;
     console.warn(`[ask] ${requestId} enriched Pass 1 failed: ${err.message}`);
     appendFraming({ framings }, "pass_1_enriched", "failure", null, {
       reason: "pass1_enriched_failed",
@@ -2115,6 +2207,7 @@ async function handleRefinementAnswer(deps, ctx) {
         message: "Calibration coverage for that mix is thin. Worth scanning the categories yourself.",
       });
       sse.end();
+      if (timing) timing.status = "refused";
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         parsed_intent: poolIntent, classification_confidence: poolIntent.confidence,
@@ -2144,7 +2237,7 @@ async function handleRefinementAnswer(deps, ctx) {
       refinement: { answers, skipped },
       conversationId, useCache: true,
       refinementQuestionsCount,
-      framings, requestId,
+      framings, requestId, timing,
       poolSource: "dynamic", dynamicPoolMetadata: dynamicPool.metadata,
     });
     return;
@@ -2160,6 +2253,7 @@ async function handleRefinementAnswer(deps, ctx) {
       message: "Tell us more about what you need to refine the recommendations.",
     });
     sse.end();
+    if (timing) timing.status = "refused";
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
       parsed_intent: enrichedIntent, classification_confidence: enrichedIntent.confidence,
@@ -2182,6 +2276,7 @@ async function handleRefinementAnswer(deps, ctx) {
       message: "Calibration coverage for this context is thin. Worth scanning the categories yourself.",
     });
     sse.end();
+    if (timing) timing.status = "refused";
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
       parsed_intent: enrichedIntent, classification_confidence: enrichedIntent.confidence,
@@ -2210,7 +2305,7 @@ async function handleRefinementAnswer(deps, ctx) {
     refinement: { answers, skipped },
     conversationId, useCache: true,
     refinementQuestionsCount,
-    framings, requestId,
+    framings, requestId, timing,
     poolSource: "static",
   });
 }
@@ -2218,6 +2313,7 @@ async function handleRefinementAnswer(deps, ctx) {
 // ── KNOWLEDGE: REQUEST HANDLER ───────────────────────────────────
 async function handleKnowledgeQuery(deps, ctx) {
   const { sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs } = ctx;
+  const timing = ctx.timing || null;
   const entry = findKnowledgeEntry(intent);
 
   if (!entry) {
@@ -2226,6 +2322,7 @@ async function handleKnowledgeQuery(deps, ctx) {
       message: "Ask is built for product recommendations. Try a product or category query instead.",
     });
     sse.end();
+    if (timing) timing.status = "refused";
     writeAuditLog(deps, {
       user_id: userId, query: rawQuery, normalized_query: normalized,
       parsed_intent: intent, classification_confidence: intent.confidence,
@@ -2247,6 +2344,9 @@ async function handleKnowledgeQuery(deps, ctx) {
   // Pass 2 framing — voice rewrite of curated copy. No longer carries
   // the home_connection line; that's deterministic and built below.
   const { framing, cached: framingCached, fallback } = await frameKnowledgeEntry(deps, entry);
+  if (timing) {
+    if (framingCached) timing.cache_hits += 1; else timing.cache_misses += 1;
+  }
 
   const knowledgePayload = {
     entry_id: entry.id,
@@ -2289,6 +2389,7 @@ async function handleKnowledgeQuery(deps, ctx) {
     response_type: "knowledge",
   });
   sse.end();
+  if (timing) timing.status = "ok";
 
   writeAuditLog(deps, {
     user_id: userId,
@@ -2330,7 +2431,12 @@ function registerAskRoutes(app, deps) {
     // Short hex id for log correlation across Pass 1 / Pass 1.5 / composer.
     // 8 chars of randomness — plenty for a few minutes of traffic.
     const requestId = crypto.randomBytes(4).toString("hex");
-    const sse = makeSseWriter(res);
+    // Session 5a — permanent timing telemetry. Created once at route entry,
+    // mutated through the pipeline, flushed in the finally block below.
+    const timing = createTimingContext({ requestId, requestStartMs });
+    const rawSse = makeSseWriter(res);
+    const sse = wrapSseForTiming(rawSse, timing);
+    try {
     sse.emit("thinking", {});
     console.log(`[ask] ${requestId} entry path=/ask`);
 
@@ -2342,6 +2448,7 @@ function registerAskRoutes(app, deps) {
     if (!normalized || normalized.length < 3) {
       sse.emit("refuse", { reason: "too_short", message: "Tell us what you're shopping for." });
       sse.end();
+      timing.status = "refused";
       writeAuditLog(deps, {
         query: rawQuery, normalized_query: normalized,
         error: "too_short", duration_ms: Date.now() - requestStartMs,
@@ -2361,6 +2468,9 @@ function registerAskRoutes(app, deps) {
       }
     } catch {}
 
+    // Once we have userId, fold it into the timing context too.
+    timing.user_id = userId;
+
     // Rate limit: anon by IP, authed by user.
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const scopeKey = userId ? `user:${userId}` : `ip:${ip}`;
@@ -2369,6 +2479,7 @@ function registerAskRoutes(app, deps) {
     if (!rl.allowed) {
       sse.emit("error", { error: "rate_limit", message: "Take a break. Try again in a bit." });
       sse.end();
+      timing.status = "error";
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         error: "rate_limit", duration_ms: Date.now() - requestStartMs,
@@ -2390,16 +2501,22 @@ function registerAskRoutes(app, deps) {
         }
       } catch {}
     }
+    if (cachedIntent) timing.cache_hits += 1;
     // ctx-level framings ledger accumulates per-stage outputs for the
     // audit row. Stages: pass_1, pass_1_5, pass_1_enriched, composer.
     const framings = [];
     if (!intent) {
+      timing.cache_misses += 1;
+      setActivePhase(timing, "pass_1");
+      const t0 = Date.now();
       try {
         intent = await classifyIntent({ callClaude }, query, requestId);
       } catch (e) {
+        timing.pass1_ms = Date.now() - t0;
         console.error("[ask] Pass 1 failed:", e.message);
         sse.emit("refuse", { reason: "unclear", message: "Tell us more about what you need." });
         sse.end();
+        timing.status = "error";
         appendFraming({ framings }, "pass_1", "failure", null, { reason: "pass1_failed", message: e.message });
         writeAuditLog(deps, {
           user_id: userId, query: rawQuery, normalized_query: normalized,
@@ -2409,8 +2526,10 @@ function registerAskRoutes(app, deps) {
         });
         return;
       }
+      timing.pass1_ms = Date.now() - t0;
       if (hasRedis) redisSetEx(intentKey, intent, ASK_INTENT_CACHE_TTL_S).catch(() => {});
     }
+    setQueryType(timing, intent.type || "unclear");
     appendFraming({ framings }, "pass_1", "success", intent);
 
     sse.emit("intent", {
@@ -2429,7 +2548,7 @@ function registerAskRoutes(app, deps) {
     // Type 2: knowledge. Route through the curated knowledge base.
     if (intent.type === "knowledge") {
       await handleKnowledgeQuery(deps, {
-        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs,
+        sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs, timing,
       });
       return;
     }
@@ -2443,13 +2562,14 @@ function registerAskRoutes(app, deps) {
         : null;
       await handleContextQuery(deps, {
         sse, intent, userId, rawQuery, normalized, cachedIntent, requestStartMs, sessionId, requestId,
-        framings,
+        framings, timing,
       });
       return;
     }
     if (intent.type === "unclear" || intent.confidence < 0.4) {
       sse.emit("refuse", { reason: "unclear", message: "Tell us more about what you need." });
       sse.end();
+      timing.status = "refused";
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         parsed_intent: intent, classification_confidence: intent.confidence,
@@ -2468,6 +2588,7 @@ function registerAskRoutes(app, deps) {
         no_results_message: "Nothing in our database scores well for this yet. Worth scanning options yourself.",
       });
       sse.end();
+      timing.status = "ok"; // empty result is a "shipped" result, not an error
       writeAuditLog(deps, {
         user_id: userId, query: rawQuery, normalized_query: normalized,
         parsed_intent: intent, classification_confidence: intent.confidence,
@@ -2489,7 +2610,8 @@ function registerAskRoutes(app, deps) {
           { callClaude, redisGet, redisSetEx, hasRedis },
           key, entry, intent
         );
-        if (cached) cachedFramingKeys.push(key);
+        if (cached) { cachedFramingKeys.push(key); timing.cache_hits += 1; }
+        else { timing.cache_misses += 1; }
         const item = buildItemPayload(key, entry, intent, framing, score);
         sse.emit("item", item);
         framingsForLog.push({ key, framing, cached });
@@ -2509,6 +2631,7 @@ function registerAskRoutes(app, deps) {
 
     sse.emit("done", { item_count: candidates.length, no_results: false });
     sse.end();
+    timing.status = "ok";
 
     writeAuditLog(deps, {
       user_id: userId,
@@ -2523,6 +2646,14 @@ function registerAskRoutes(app, deps) {
       cached_intent: cachedIntent,
       cached_framings: cachedFramingKeys,
     });
+    } finally {
+      // Session 5a — flush timing telemetry exactly once per request,
+      // regardless of which terminal branch fired. status is set by the
+      // branch that exited; default to "ok" if a handler returned normally
+      // without setting it.
+      finalizeTiming(timing, timing.status || "ok");
+      flushTiming(deps, timing);
+    }
   });
 
   // ── R5b.3 Phase 2a session 3 — refinement answer endpoint ─────
@@ -2534,9 +2665,12 @@ function registerAskRoutes(app, deps) {
   app.post("/ask/refinement_answer", async (req, res) => {
     const requestStartMs = Date.now();
     const requestId = crypto.randomBytes(4).toString("hex");
-    const sse = makeSseWriter(res);
+    const timing = createTimingContext({ requestId, requestStartMs, queryType: "refinement_answer" });
+    const rawSse = makeSseWriter(res);
+    const sse = wrapSseForTiming(rawSse, timing);
     console.log(`[ask] ${requestId} entry path=/ask/refinement_answer`);
 
+    try {
     let userId = null;
     try {
       const header = req.headers.authorization || "";
@@ -2546,6 +2680,7 @@ function registerAskRoutes(app, deps) {
         if (data?.user?.id) userId = data.user.id;
       }
     } catch {}
+    timing.user_id = userId;
 
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
     const scopeKey = userId ? `user:${userId}` : `ip:${ip}`;
@@ -2554,13 +2689,19 @@ function registerAskRoutes(app, deps) {
     if (!rl.allowed) {
       sse.emit("error", { error: "rate_limit", message: "Take a break. Try again in a bit." });
       sse.end();
+      timing.status = "error";
       return;
     }
 
     await handleRefinementAnswer(deps, {
       sse, userId, requestStartMs, requestId,
       body: req.body || {},
+      timing,
     });
+    } finally {
+      finalizeTiming(timing, timing.status || "ok");
+      flushTiming(deps, timing);
+    }
   });
 }
 
