@@ -1,0 +1,4510 @@
+{
+  "run_meta": {
+    "mode": "authed",
+    "started_at": "2026-06-01T19:06:12.887Z",
+    "finished_at": "2026-06-01T19:11:53.702Z",
+    "elapsed_ms": 340815,
+    "query_count": 30,
+    "apiBase": "https://partiqule-production.up.railway.app",
+    "bank_summary": {
+      "total": 30,
+      "byAudience": {
+        "kid_focused": 7,
+        "infant_focused": 6,
+        "family_with_kids": 5,
+        "adult_focused": 6,
+        "pet_focused": 3,
+        "pregnancy_focused": 2,
+        "knowledge": 1
+      },
+      "byOccasion": {
+        "daily": 17,
+        "travel": 6,
+        "hosting": 2,
+        "gifting": 3,
+        "none": 2
+      },
+      "bySpecificity": {
+        "medium_specific": 14,
+        "highly_specific": 8,
+        "ambiguous": 7,
+        "very_vague": 1
+      },
+      "byCoverage": {
+        "in_vocab": 22,
+        "cross_vocab": 5,
+        "out_of_vocab": 3
+      },
+      "byType": {
+        "product_recommendation": 15,
+        "multi_category_context": 14,
+        "knowledge": 1
+      },
+      "regressionAnchors": 3,
+      "expectsRefinement": 8
+    }
+  },
+  "results": [
+    {
+      "id": "kf01",
+      "query": "snacks for my picky 4 year old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 207
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want snack options that appeal to a selective 4-year-old.",
+              "category": "snacks",
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                48,
+                48
+              ],
+              "constraints": [
+                "picky eater"
+              ],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 1068
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "annie's organic fruit snacks",
+              "product_name": "Annie's Organic Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "annie's organic fruit snacks",
+              "flags": [],
+              "why": "USDA Organic certified, no HFCS or artificial dyes",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certification confirms production standards"
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "No high-fructose corn syrup; uses cane sugar instead"
+                },
+                {
+                  "label": "Color",
+                  "kind": "good",
+                  "detail": "No synthetic dyes; uses fruit juice and vegetable concentrates"
+                },
+                {
+                  "label": "Texture",
+                  "kind": "neutral",
+                  "detail": "Chewy format typical for picky eaters; familiar fruit flavors"
+                }
+              ],
+              "calibration_note": "Scores 1–3 range; benchmark clean option in kids fruit snack category",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 1068
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "sahale snacks",
+              "product_name": "Sahale Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "sahale snacks",
+              "flags": [],
+              "why": "Premium nuts + real fruit + spices, zero artificial additives",
+              "detailed_flags": [
+                {
+                  "label": "Ingredient Composition",
+                  "kind": "good",
+                  "detail": "Real fruit and spices; no artificial additives in formulation"
+                },
+                {
+                  "label": "Nut Allergen",
+                  "kind": "concern",
+                  "detail": "Tree nuts present; verify child has no nut allergy before serving"
+                },
+                {
+                  "label": "Texture & Choking Risk",
+                  "kind": "concern",
+                  "detail": "Whole nuts may pose choking risk for 4-year-old; consider crushing or supervising closely"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range (cleanest tier). Ingredient quality high; age-appropriateness requires parental judgment on nut size and choking risk.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 1260
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "yumearth fruit snacks",
+              "product_name": "Yumearth Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "yumearth fruit snacks",
+              "flags": [],
+              "why": "USDA Organic, fruit juice sweetened, no artificial dyes or flavors",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certified"
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "Fruit juice sweetened, no added sugar alcohols"
+                },
+                {
+                  "label": "Colorants",
+                  "kind": "good",
+                  "detail": "No artificial dyes or synthetic colorants"
+                },
+                {
+                  "label": "Flavor",
+                  "kind": "good",
+                  "detail": "No artificial flavors"
+                }
+              ],
+              "calibration_note": "Benchmark leading mainstream fruit snack option for picky eaters; scored 1–3 range",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 1260
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 1261
+          }
+        ],
+        "latency_ms": 1262,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 1262,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kf03",
+      "query": "kids vitamins under 5",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 44
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want vitamin recommendations for children under 5 years old.",
+              "category": "supplements",
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                0,
+                60
+              ],
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 306
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "ritual multivitamin",
+              "product_name": "Ritual Multivitamin",
+              "score": 1,
+              "kid_score": null,
+              "category": "supplement",
+              "anchor": "calibration",
+              "calibration_key": "ritual multivitamin",
+              "flags": [],
+              "why": "Third-party tested formulation with no synthetic dyes",
+              "detailed_flags": [
+                {
+                  "label": "Testing",
+                  "kind": "good",
+                  "detail": "Third-party tested supplement"
+                },
+                {
+                  "label": "Dyes",
+                  "kind": "good",
+                  "detail": "No synthetic dyes in formulation"
+                },
+                {
+                  "label": "Age Suitability",
+                  "kind": "concern",
+                  "detail": "Verify dosing appropriate for 0–60 month age range with pediatrician"
+                }
+              ],
+              "calibration_note": "Score 1–3 range indicates cleaner formulation tier. Confirm product-specific pediatric guidance before use.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 359
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "ritual prenatal",
+              "product_name": "Ritual Prenatal",
+              "score": 1,
+              "kid_score": null,
+              "category": "supplement",
+              "anchor": "calibration",
+              "calibration_key": "ritual prenatal",
+              "flags": [],
+              "why": "Third-party tested prenatal with no synthetic dyes; delayed-release capsule desi",
+              "detailed_flags": [
+                {
+                  "label": "Third-Party Testing",
+                  "kind": "good",
+                  "detail": "Independent verification completed; scored cleanest in prenatal category."
+                },
+                {
+                  "label": "Synthetic Dyes",
+                  "kind": "good",
+                  "detail": "No synthetic dyes present; formulation uses alternative colorants."
+                },
+                {
+                  "label": "Vegan Formulation",
+                  "kind": "good",
+                  "detail": "Plant-based capsule and ingredients; no animal-derived components."
+                },
+                {
+                  "label": "Age Appropriateness",
+                  "kind": "concern",
+                  "detail": "Prenatal vitamin formulated for pregnant/nursing adults; not intended for infants or young children (0–60 months)."
+                }
+              ],
+              "calibration_note": "Product is benchmark-clean prenatal supplement but mismatched to stated audience age range (0–60 months).",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 359
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "ritual",
+              "product_name": "Ritual",
+              "score": 1,
+              "kid_score": null,
+              "category": "supplement",
+              "anchor": "calibration",
+              "calibration_key": "ritual",
+              "flags": [],
+              "why": "Third-party tested supplement with no synthetic dyes in formulation.",
+              "detailed_flags": [
+                {
+                  "label": "Formulation Transparency",
+                  "kind": "good",
+                  "detail": "Full ingredient disclosure, no proprietary blends or hidden additives."
+                },
+                {
+                  "label": "Synthetic Dyes",
+                  "kind": "good",
+                  "detail": "No synthetic colorants in formulation."
+                },
+                {
+                  "label": "Third-Party Testing",
+                  "kind": "good",
+                  "detail": "Independent verification of product composition and purity."
+                },
+                {
+                  "label": "Age Suitability (0–60 months)",
+                  "kind": "concern",
+                  "detail": "Supplement formulations require pediatric dosing verification; consult product label for age-specific guidance."
+                }
+              ],
+              "calibration_note": "Scores 1–3 range (cleanest supplement tier). Verify age-appropriate dosing on label before use.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 368
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 368
+          }
+        ],
+        "latency_ms": 368,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 368,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kf04",
+      "query": "summer camp essentials for my 9 year old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 85
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want to assemble essentials for your 9-year-old attending summer camp.",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                108,
+                120
+              ],
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 283
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:summer_camp"
+            },
+            "at_ms": 1133
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:summer_camp",
+              "name": "dynamic:summer_camp",
+              "label": "You want to assemble essentials for your 9-year-old attending summer camp.",
+              "title": "Summer camp essentials: sunscreen and personal care that hold up",
+              "intro": "Your home has 0 solid picks. 5 need swaps. Here's the version that lands.",
+              "anti_pattern": {
+                "headline": "Your sunscreen choices lean chemical. Switch to mineral for camp.",
+                "reasoning": "Banana Boat Sport and Supergoop both use chemical UV filters. Mineral zinc options work just as well for water play and all day outdoor time, without the same absorption profile."
+              },
+              "start_here": {
+                "label": "Start with the Banana Boat Sport swap.",
+                "reasoning": "Widest single gap in the bundle. One Target run replaces it with mineral zinc before camp starts."
+              },
+              "sections": [
+                {
+                  "type": "swap",
+                  "label": "Worth swapping",
+                  "items": [
+                    {
+                      "product_id": "raw elements sunscreen",
+                      "product_name": "Raw Elements Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Raw Elements Sunscreen. Non nano zinc oxide, organic. Swap your Banana Boat Sport for this. Built for sport and water.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "think sport sunscreen",
+                      "product_name": "Think Sport Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Think Sport Sunscreen. Zinc oxide only, no chemical filters. Swap your Supergoop Unseen Clear for this. Same protection, different formula.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "hello kids toothpaste",
+                      "product_name": "Hello Kids Toothpaste",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Hello Kids Toothpaste. Fluoride toothpaste for daily brushing. Swap your Tom's of Maine fluoride free for this. Works better for cavity prevention at camp.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "equate mineral sunscreen",
+                      "product_name": "Equate Mineral Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Equate Mineral Sunscreen. Zinc oxide mineral formula, budget friendly. Swap your Cerave for this. Dedicated sunscreen beats moisturizer with SPF for camp days.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "babyganics mineral sunscreen",
+                      "product_name": "Babyganics Mineral Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Babyganics Mineral Sunscreen. Zinc oxide and titanium dioxide, no chemical UV filters. Swap your Tom's of Maine natural fluoride free for this. Mineral protection for outdoor time.",
+                      "action_label": "Next trip, swap to this."
+                    }
+                  ],
+                  "thesis": "Your Banana Boat Sport is the widest single gap in this bundle. Get this swap right first."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Snacks, hydration, and kids personal care. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the camp lineup"
+              },
+              "cached": true,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 1133
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 6,
+              "response_type": "context"
+            },
+            "at_ms": 1133
+          }
+        ],
+        "latency_ms": 1133,
+        "event_summary": "thinking,intent,intent_classified,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 1133,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kf06",
+      "query": "kids birthday party for my 6 year old",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "hosting",
+        "specificity": "medium_specific",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 76
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You're planning a birthday party for a 6-year-old and want product recommendations for the occasion.",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                72,
+                72
+              ],
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 446
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:kids_birthday_party"
+            },
+            "at_ms": 736
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 736
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:kids_birthday_party",
+              "name": "dynamic:kids_birthday_party",
+              "label": "You're planning a birthday party for a 6-year-old and want product recommendations for the occasion.",
+              "title": "Birthday party for a 6 year old without the ingredient research",
+              "intro": "Three categories worth covering for a kids birthday party. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Skip the bright colored drinks.",
+                "reasoning": "Kool Aid Jammers, Capri Sun, and Great Value Fruit Punch all rely on HFCS and petroleum based dyes. Cleaner options exist that still feel like party drinks."
+              },
+              "start_here": {
+                "label": "Start with the Capri Sun Roarin Waters.",
+                "reasoning": "Beverage is the highest exposure category at a party. This swap removes HFCS and dyes without losing the pouch format kids expect."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "kind trail mix",
+                      "product_name": "Kind Trail Mix",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Kind Trail Mix. Nuts, fruit, dark chocolate in one pouch. Travels well, works for mixed ages, no mess on the cake table. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "alter eco chocolate",
+                      "product_name": "Alter Eco Chocolate",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Alter Eco Chocolate. USDA Organic, Fair Trade, simple ingredients. Party favor or cake side treat. Cleaner fit for a birthday spread.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "siete tortilla chip",
+                      "product_name": "Siete Tortilla Chip",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Siete Tortilla Chip. Avocado oil base, no petroleum dyes or HFCS. Works for the savory side of the table. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Snacks and treats that work for a group without requiring special handling."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Party food, party beverages, and snacks. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Categories where calibration is still building."
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the party lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 10792
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 4,
+              "response_type": "context"
+            },
+            "at_ms": 10792
+          }
+        ],
+        "latency_ms": 10792,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 10792,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kf07",
+      "query": "lunch ideas for picky toddler",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 37
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want lunch ideas that appeal to a picky toddler's preferences.",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                12,
+                36
+              ],
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 364
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:picky_eater_meals"
+            },
+            "at_ms": 669
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 669
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:picky_eater_meals",
+              "name": "dynamic:picky_eater_meals",
+              "label": "You want lunch ideas that appeal to a picky toddler's preferences.",
+              "title": "Lunch ideas that actually appeal to picky toddlers",
+              "intro": "Two categories worth covering for picky eater meals. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Skip the \"kid friendly\" marketing trap.",
+                "reasoning": "Products labeled for kids often trade real ingredients for sweetness or texture gimmicks. Toddlers eat what's on the plate. Simpler, whole ingredient options work better than branded convenience."
+              },
+              "start_here": {
+                "label": "Start with the Epic Bar.",
+                "reasoning": "Portable protein that doesn't require a spoon or prep. Travels in a lunch box and works across age ranges."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "epic bar",
+                      "product_name": "Epic Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Epic Bar. Whole prey ingredients, no nitrites, no celery powder. Portable protein that reads like real food, not a processed bar. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "rx bar",
+                      "product_name": "rx Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "RX Bar. Whole food ingredients, no fillers. Simple enough for a toddler to recognize what's inside. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "siete tortilla chip",
+                      "product_name": "Siete Tortilla Chip",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Siete Tortilla Chip. Avocado oil base, no seed oils or artificial flavors. Familiar crunch without the ingredient list that reads like chemistry. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "kind trail mix",
+                      "product_name": "Kind Trail Mix",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Kind Trail Mix. Nuts, fruit, dark chocolate in one pouch. Works as a snack or lunch box filler without added sugar or gums. Cleaner fit for picky palates.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Proteins and snacks that don't require negotiation at the table."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Snacks and kitchen basics. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan three more snacks from your shelf"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 7659
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 5,
+              "response_type": "context"
+            },
+            "at_ms": 7659
+          }
+        ],
+        "latency_ms": 7659,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 7659,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kf09",
+      "query": "after school snacks",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 40
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want snack recommendations for kids after school.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.65,
+              "cached": true
+            },
+            "at_ms": 398
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": null
+            },
+            "at_ms": 3470
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "b4c44b0c-5331-4153-8cb2-572abbb466ba",
+              "intent_restatement": "You want snack recommendations for kids after school.",
+              "context_id": null,
+              "questions": [
+                {
+                  "id": "child_age_range",
+                  "text": "What age are the kids?",
+                  "suggested_options": [
+                    "Elementary school",
+                    "Middle school",
+                    "High school"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "snack_type_preference",
+                  "text": "Based on scans like Goldfish, Pretzel Crisps, and Lineage protein bars, focus on savory or sweet?",
+                  "suggested_options": [
+                    "Savory",
+                    "Sweet",
+                    "Mix of both"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                },
+                {
+                  "id": "dietary_constraints",
+                  "text": "Any allergies or foods to avoid?",
+                  "suggested_options": [
+                    "No restrictions",
+                    "Peanut allergy",
+                    "Other allergies"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                }
+              ]
+            },
+            "at_ms": 3470
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 3470
+          }
+        ],
+        "latency_ms": 3470,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "b4c44b0c-5331-4153-8cb2-572abbb466ba",
+        "answers_submitted": [
+          {
+            "question_id": "child_age_range",
+            "value": "Elementary school"
+          },
+          {
+            "question_id": "snack_type_preference",
+            "value": "Savory"
+          },
+          {
+            "question_id": "dietary_constraints",
+            "value": "No restrictions"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:after_school_snacks"
+            },
+            "at_ms": 2872
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2872
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:after_school_snacks",
+              "name": "dynamic:after_school_snacks",
+              "label": "You want savory snack options for elementary school children after school.",
+              "title": "After school savory snacks that don't need a cleanup crew",
+              "intro": "One category worth covering for after school snacks. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Skip the artificially flavored chip aisle.",
+                "reasoning": "Mass market savory snacks rely on petroleum dyes and synthetic flavoring to hit the taste mark. Real oil and whole ingredients do the same job without the additives."
+              },
+              "start_here": {
+                "label": "Start with the Siete Tortilla Chip.",
+                "reasoning": "Most accessible swap from mainstream chip brands. One Target run replaces what's already in rotation."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "siete tortilla chip",
+                      "product_name": "Siete Tortilla Chip",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Siete Tortilla Chip. Avocado oil base, no artificial flavoring. Holds up in a lunchbox and tastes like actual corn. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "epic bar",
+                      "product_name": "Epic Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Epic Bar. Whole prey ingredients, no nitrites, no artificial additives. Protein forward and travels well. Cleaner fit for after school hunger.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "kind trail mix",
+                      "product_name": "Kind Trail Mix",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Kind Trail Mix. Nuts, fruit, dark chocolate in one pouch. No added sugar, no artificial binders. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Savory options that travel from backpack to kitchen table without falling apart."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Savory snacks. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the after school lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": "b4c44b0c-5331-4153-8cb2-572abbb466ba"
+            },
+            "at_ms": 9423
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 4,
+              "response_type": "context"
+            },
+            "at_ms": 9423
+          }
+        ],
+        "latency_ms": 9423,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 12894,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "if03",
+      "query": "baby first foods at 6 months",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 118
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want product recommendations for introducing solid foods to a 6-month-old.",
+              "category": null,
+              "subject": null,
+              "audience": "baby",
+              "age_range_months": [
+                6,
+                6
+              ],
+              "constraints": [],
+              "occasion": "newborn",
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 433
+          },
+          {
+            "event": "refuse",
+            "payload": {
+              "reason": "pool_empty",
+              "message": "Calibration coverage for this context is thin. Worth scanning the categories yourself."
+            },
+            "at_ms": 433
+          }
+        ],
+        "latency_ms": 434,
+        "event_summary": "thinking,intent,refuse"
+      },
+      "leg2": null,
+      "total_latency_ms": 434,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "if04",
+      "query": "newborn essentials",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 72
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want a bundle of essential products for a newborn.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": "newborn",
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 280
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "tpl_newborn"
+            },
+            "at_ms": 3244
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "c346450c-eeb3-4fb4-b29d-c96adb3eba3f",
+              "intent_restatement": "You want a bundle of essential products for a newborn.",
+              "context_id": "tpl_newborn",
+              "questions": [
+                {
+                  "id": "parent_status",
+                  "text": "Are you expecting a baby or is baby already here?",
+                  "suggested_options": [
+                    "Expecting, due soon",
+                    "Expecting, months away",
+                    "Baby already arrived",
+                    "Shopping for someone else"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "feeding_plan",
+                  "text": "Will baby be breastfed, formula fed, or both?",
+                  "suggested_options": [
+                    "Breastfeeding",
+                    "Formula feeding",
+                    "Both breast and formula",
+                    "Not sure yet"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                },
+                {
+                  "id": "known_sensitivities",
+                  "text": "Any known allergies or sensitivities in the family?",
+                  "suggested_options": [
+                    "No known allergies",
+                    "Dairy or soy",
+                    "Nut allergies",
+                    "Multiple or unsure"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                }
+              ]
+            },
+            "at_ms": 3244
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 3244
+          }
+        ],
+        "latency_ms": 3244,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "c346450c-eeb3-4fb4-b29d-c96adb3eba3f",
+        "answers_submitted": [
+          {
+            "question_id": "parent_status",
+            "value": "Expecting, due soon"
+          },
+          {
+            "question_id": "feeding_plan",
+            "value": "Breastfeeding"
+          },
+          {
+            "question_id": "known_sensitivities",
+            "value": "No known allergies"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "tpl_newborn"
+            },
+            "at_ms": 2626
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2626
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "tpl_newborn",
+              "name": "Newborn essentials",
+              "label": "Newborn essentials",
+              "title": "Newborn weeks one to four, the essentials not the marketing",
+              "intro": "Your Huggies overnight diapers and Supergoop! sunscreen need urgent swaps. Your Cerave needs a swap too. Here's the version that lands.",
+              "anti_pattern": {
+                "headline": "Skip personal care products in the newborn bundle.",
+                "reasoning": "Your Supergoop! and Cerave are adult coded skincare. Newborn essentials focus on diapers, wipes, wash, and feeding. Scan those categories first to build the home profile."
+              },
+              "start_here": {
+                "label": "Start with the Huggies overnight diapers swap.",
+                "reasoning": "Diapers are the highest exposure product for a newborn. This single change delivers the biggest delta in the bundle."
+              },
+              "sections": [
+                {
+                  "type": "swap",
+                  "label": "Worth swapping",
+                  "items": [
+                    {
+                      "product_id": "parasol diapers",
+                      "product_name": "Parasol Diapers",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Parasol Diapers. OEKO TEX certified, no dyes, no fragrance, no latex. Swap your Huggies overnight diapers for this. Same overnight protection, fewer additives.",
+                      "action_label": "Next diaper order, swap to this."
+                    },
+                    {
+                      "product_id": "raw elements sunscreen",
+                      "product_name": "Raw Elements Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Raw Elements Sunscreen. Non nano zinc oxide, organic formula. Swap your Supergoop! Unseen Clear & Invisible Face Sunscreen for this. Mineral protection without chemical UV filters.",
+                      "action_label": "Swap to this."
+                    },
+                    {
+                      "product_id": "tubby todd",
+                      "product_name": "Tubby Todd",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Tubby Todd. No SLS, no parabens, no fragrance, no phenoxyethanol. Swap your Cerave for this. Gentler base for newborn skin.",
+                      "action_label": "Next restock, swap to this."
+                    }
+                  ],
+                  "thesis": "Your Huggies overnight diapers are the widest gap in this bundle. Get the diaper swap right first."
+                },
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "waterwipes",
+                      "product_name": "Waterwipes",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Waterwipes. 99 percent water, no additives. Gentlest option for newborn diaper changes. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "california baby",
+                      "product_name": "California Baby",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "California Baby. Fragrance free, plant based, no synthetic preservatives, no petroleum derivatives. Works for newborn wash and bath. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "bibs pacifier",
+                      "product_name": "Bibs Pacifier",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Bibs Pacifier. Natural rubber construction. Durable choice for pacifier rotation. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "bambo nature",
+                      "product_name": "Bambo Nature",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Bambo Nature. FSC wood pulp, no chlorine, no fragrance, OEKO TEX certified. Daytime diaper with Nordic Swan Ecolabel. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "holle organic formula",
+                      "product_name": "Holle Organic Formula",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Holle Organic Formula. EU organic certified, simple formula. If supplementing or transitioning to formula, this is the baseline. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "earth mama diaper balm",
+                      "product_name": "Earth Mama Diaper Balm",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Earth Mama Diaper Balm. Organic diaper rash prevention. Small jar lasts weeks. Earns a spot on the changing table.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "pura kiki",
+                      "product_name": "Pura Kiki",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Pura Kiki. Stainless steel and silicone bottle. Durable through multiple kids. Worth adding for expressed milk or formula.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Diapers, wipes, wash, and feeding are the foundation. Fill these categories with top scoring options."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Nursing pads and swaddles. Calibration is still building here. Scan options the household is considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the newborn essentials lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": "c346450c-eeb3-4fb4-b29d-c96adb3eba3f"
+            },
+            "at_ms": 30355
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 11,
+              "response_type": "context"
+            },
+            "at_ms": 30355
+          }
+        ],
+        "latency_ms": 30355,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 33599,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "if05",
+      "query": "what to bring to the hospital for baby arrival",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "travel",
+        "specificity": "medium_specific",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 290
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want to know what items to pack for a hospital stay during labor and delivery with a newborn.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": "newborn",
+              "confidence": 0.92,
+              "cached": true
+            },
+            "at_ms": 662
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:hospital_newborn_arrival"
+            },
+            "at_ms": 963
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 963
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:hospital_newborn_arrival",
+              "name": "dynamic:hospital_newborn_arrival",
+              "label": "You want to know what items to pack for a hospital stay during labor and delivery with a newborn.",
+              "title": "Best scored options for You want to know what items to pack for a hospital stay during labor and delivery with a newborn.",
+              "intro": "Top picks from the calibration database.",
+              "anti_pattern": null,
+              "start_here": null,
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "hipp organic formula",
+                      "product_name": "Hipp Organic Formula",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Hipp Organic Formula. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "holle organic formula",
+                      "product_name": "Holle Organic Formula",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Holle Organic Formula. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "natracare baby wipes",
+                      "product_name": "Natracare Baby Wipes",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Natracare Baby Wipes. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "california baby",
+                      "product_name": "California Baby",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "California Baby. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "beautycounter baby",
+                      "product_name": "Beautycounter Baby",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Beautycounter Baby. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan more options"
+              },
+              "cached": false,
+              "composition_source": "templated_fallback",
+              "conversation_id": null
+            },
+            "at_ms": 27758
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 5,
+              "response_type": "context"
+            },
+            "at_ms": 27758
+          }
+        ],
+        "latency_ms": 27758,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 27758,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "fk01",
+      "query": "road trip snacks for adults only",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 143
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want snack recommendations for adults on a road trip.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 351
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "road_trip_kids"
+            },
+            "at_ms": 835
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 835
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "road_trip_kids",
+              "name": "Road trip with kids",
+              "label": "Road trip with kids",
+              "title": "Road trip with kids, snacks to wipes, without the research project",
+              "intro": "Five categories worth covering for road trip with kids. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Wet wipes on a road trip need real thought.",
+                "reasoning": "Most mainstream wipes carry synthetic fragrance and preservatives. For a confined car with kids, fragrance free options exist and travel just as easily. Worth the swap."
+              },
+              "start_here": {
+                "label": "Start by scanning your current wipes brand.",
+                "reasoning": "Wipes are the highest exposure product on a road trip. Worth knowing where yours ranks before packing."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "natracare baby wipes",
+                      "product_name": "Natracare Baby Wipes",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Natracare Baby Wipes. USDA Organic certified, no synthetic fragrance. Handles spills, sticky hands, and car seat cleanup without the chemical load. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "seventh generation wipes",
+                      "product_name": "Seventh Generation Wipes",
+                      "score": 2,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Seventh Generation Wipes. Fragrance free, no parabens, no chlorine. Works for the kids and the car interior. Earns a spot in the road trip kit.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Wet wipes are the single highest leverage category for a road trip. Get this right first."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Car snacks, kid water bottle, ziplock or stash bags, motion sickness aid. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Calibration is still building on the road trip categories that matter most."
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan three more from your road trip shelf"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 7918
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "response_type": "context"
+            },
+            "at_ms": 7918
+          }
+        ],
+        "latency_ms": 7918,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 7918,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "fk02",
+      "query": "beach day for our family with two toddlers",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 36
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You're planning a beach day with two toddlers and want product recommendations for the outing.",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": [
+                12,
+                36
+              ],
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 402
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "beach_day"
+            },
+            "at_ms": 772
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 772
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "beach_day",
+              "name": "Beach day",
+              "label": "Beach day",
+              "title": "Beach day essentials for the family",
+              "intro": "Five categories worth covering for beach day. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Mineral sunscreen matters most for kids.",
+                "reasoning": "Chemical UV filters absorb into skin. Mineral options sit on top and reflect sun instead. For children spending hours in water, mineral zinc or titanium dioxide is the simpler choice."
+              },
+              "start_here": {
+                "label": "Start with a mineral sunscreen for the kids.",
+                "reasoning": "Sunscreen is the highest exposure product on a beach day. Mineral options work differently than chemical filters and are worth knowing about."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "babyganics mineral sunscreen",
+                      "product_name": "Babyganics Mineral Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Babyganics Mineral Sunscreen. Zinc oxide and titanium dioxide, no chemical filters. Formulated for kids and water time. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "after sun lotion",
+                      "product_name": "After Sun Lotion",
+                      "score": 3,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "After Sun Lotion. Moisturizer for sun exposed skin after the beach. Dimethicone base holds hydration. Earns a spot in the beach bag.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Mineral sunscreen and after sun care are the foundation. Water bottles and snacks round out the day."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Mineral sunscreen, after sun lotion, kid swimwear, beach snacks, and reusable water bottles. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Calibration is still building on beach day categories."
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan your current beach gear"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 6586
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "response_type": "context"
+            },
+            "at_ms": 6586
+          }
+        ],
+        "latency_ms": 6586,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 6586,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "fk05",
+      "query": "back to school lunches",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 50
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want lunch product recommendations for back-to-school season.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": "back to school",
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 379
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "tpl_lunches"
+            },
+            "at_ms": 3480
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "22e06804-5cf9-40c9-9785-bc9ae3a1ef10",
+              "intent_restatement": "You want lunch product recommendations for back-to-school season.",
+              "context_id": "tpl_lunches",
+              "questions": [
+                {
+                  "id": "child_age_range",
+                  "text": "What age is the child starting back to school?",
+                  "suggested_options": [
+                    "Elementary school",
+                    "Middle school",
+                    "High school"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "lunch_format_preference",
+                  "text": "Based on scans like Lineage protein bars and Angel Acres eggs, include similar shelf stable or cooler friendly options?",
+                  "suggested_options": [
+                    "Yes, shelf stable items",
+                    "Yes, cooler friendly items",
+                    "Mix of both"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                },
+                {
+                  "id": "dietary_restrictions",
+                  "text": "Any allergies or foods to avoid in lunch recommendations?",
+                  "suggested_options": [
+                    "No restrictions",
+                    "Nut allergy",
+                    "Multiple restrictions"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                }
+              ]
+            },
+            "at_ms": 3480
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 3480
+          }
+        ],
+        "latency_ms": 3480,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "22e06804-5cf9-40c9-9785-bc9ae3a1ef10",
+        "answers_submitted": [
+          {
+            "question_id": "child_age_range",
+            "value": "Elementary school"
+          },
+          {
+            "question_id": "lunch_format_preference",
+            "value": "Yes, shelf stable items"
+          },
+          {
+            "question_id": "dietary_restrictions",
+            "value": "No restrictions"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "tpl_lunches"
+            },
+            "at_ms": 2257
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2257
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "tpl_lunches",
+              "name": "Back to school lunches",
+              "label": "Back to school lunches",
+              "title": "Back to school lunches that pack in five minutes",
+              "intro": "Your home has 0 solid picks. 8 need swaps. Here's the version that lands.",
+              "anti_pattern": {
+                "headline": "Skip the candy and ultra processed bars.",
+                "reasoning": "Reese's, Nerds, and Lucky Charms are in your scan history. Whole food bars travel just as well, cost the same, and don't crash mid afternoon."
+              },
+              "start_here": {
+                "label": "Start with the Peanut Butter swap.",
+                "reasoning": "Widest single gap in the bundle. One Target run replaces it with a two ingredient alternative."
+              },
+              "sections": [
+                {
+                  "type": "swap",
+                  "label": "Worth swapping",
+                  "items": [
+                    {
+                      "product_id": "smucker's natural peanut butter",
+                      "product_name": "Smucker's Natural Peanut Butter",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Smucker's Natural Peanut Butter. Peanuts plus salt only, no added oils or sugar. Swap your Peanut Butter for this. Same sandwich base, fewer ingredients.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "once again organic",
+                      "product_name": "Once Again Organic",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Once Again Organic. USDA Organic peanuts plus salt, no additives. Swap your Jif Peanut Butter for this. Spreads the same, ranks notably cleaner.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "larabar",
+                      "product_name": "Larabar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Larabar. Dates plus nuts, whole food ingredients. Swap your Reese's for this. Travels without melting or crumbs, works across lunch and snack time.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "rxbar",
+                      "product_name": "Rxbar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Rxbar. Egg whites plus dates plus nuts, no additives. Swap your Nerds Candy by Wonka for this. Same shelf stable format, real ingredients.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "nature's path organic granola",
+                      "product_name": "Nature's Path Organic Granola",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Nature's Path Organic Granola. USDA Organic, no BHT, no petroleum dyes. Swap your Lucky Charms by General Mills for this. Breakfast bowl or snack pouch, no artificial color.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "gomacro",
+                      "product_name": "Gomacro",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Gomacro. USDA Organic, whole food ingredients, no synthetic additives. Swap your Lineage provisions protein bar mixed berry for this. Portable protein that holds up in a lunchbox.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "epic bar",
+                      "product_name": "Epic Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Epic Bar. Whole prey ingredients, no nitrites, no artificial additives. Swap your Angel acres nourish food club for this. Shelf stable protein bar built for kids on the go.",
+                      "action_label": "Next pantry trip, swap to this."
+                    },
+                    {
+                      "product_id": "diestel turkey",
+                      "product_name": "Diestel Turkey",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Diestel Turkey. Genuinely no nitrites, no celery powder masking. Swap your Folgers for this. Deli turkey for sandwiches, cleaner than mainstream lunch meat.",
+                      "action_label": "Next pantry trip, swap to this."
+                    }
+                  ],
+                  "thesis": "Your Peanut Butter and Jif Peanut Butter are the widest gaps in the bundle. Get these swaps right first."
+                },
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "ezekiel",
+                      "product_name": "Ezekiel",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Ezekiel. Sprouted grain, minimal ingredients, no additives. Sandwich base that holds up to lunchbox transport. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "stonyfield organic plain",
+                      "product_name": "Stonyfield Organic Plain",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Stonyfield Organic Plain. USDA Organic milk plus live cultures. Yogurt pouch or bowl, works for breakfast or lunch. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "pirates booty",
+                      "product_name": "Pirates Booty",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Pirates Booty. Whole corn plus aged white cheddar, three ingredients. Shelf stable snack that travels without mess or melting. Worth adding.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Sandwich bread, juice boxes, and fruit pouches are missing entirely from your lunch scans. These fill the gaps without daily research."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Fruit pouches and juice boxes. These categories have thin pool coverage. Scanning your current options helps personalize the next lunch bundle.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Calibration is still building on fruit pouches and juice boxes. Scan options you're considering and they show up in future bundles."
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the lunch lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": "22e06804-5cf9-40c9-9785-bc9ae3a1ef10"
+            },
+            "at_ms": 27746
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 12,
+              "response_type": "context"
+            },
+            "at_ms": 27746
+          }
+        ],
+        "latency_ms": 27746,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 31226,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "fk06",
+      "query": "halloween candy for the kids",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "hosting",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 374
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want Halloween candy options suitable for children.",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 761
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "halloween_candy"
+            },
+            "at_ms": 6972
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "c1b3b2ee-b4c1-4a0a-be1e-bb9e8232a8fd",
+              "intent_restatement": "You want Halloween candy options suitable for children.",
+              "context_id": "halloween_candy",
+              "questions": [
+                {
+                  "id": "child_age_range",
+                  "text": "How old is the child or children getting candy?",
+                  "suggested_options": [
+                    "Toddlers (1 to 3 years)",
+                    "Preschool (4 to 5 years)",
+                    "Elementary (6 to 11 years)",
+                    "Teens (12 plus years)"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "dietary_restrictions",
+                  "text": "Any allergies or foods to avoid?",
+                  "suggested_options": [
+                    "No restrictions",
+                    "Peanuts or tree nuts",
+                    "Dairy",
+                    "Multiple or other"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "candy_preference_vs_scans",
+                  "text": "You've rated Nerds, Reese's, and Twizzlers highly. Stick with those brands or explore new options?",
+                  "suggested_options": [
+                    "Stick with those brands",
+                    "Mix of familiar and new",
+                    "Explore new options"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                }
+              ]
+            },
+            "at_ms": 6972
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 6972
+          }
+        ],
+        "latency_ms": 6972,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "c1b3b2ee-b4c1-4a0a-be1e-bb9e8232a8fd",
+        "answers_submitted": [
+          {
+            "question_id": "child_age_range",
+            "value": "Toddlers (1 to 3 years)"
+          },
+          {
+            "question_id": "dietary_restrictions",
+            "value": "No restrictions"
+          },
+          {
+            "question_id": "candy_preference_vs_scans",
+            "value": "Stick with those brands"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:halloween_candy_toddlers"
+            },
+            "at_ms": 2916
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2916
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:halloween_candy_toddlers",
+              "name": "dynamic:halloween_candy_toddlers",
+              "label": "You want Halloween candy recommendations for toddlers ages 1–3 years old.",
+              "title": "Best scored options for You want Halloween candy recommendations for toddlers ages 1–3 years old.",
+              "intro": "Top picks from the calibration database.",
+              "anti_pattern": null,
+              "start_here": null,
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "rx bar",
+                      "product_name": "rx Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "rx Bar. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "epic bar",
+                      "product_name": "Epic Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Epic Bar. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "nature's path organic granola",
+                      "product_name": "Nature's Path Organic Granola",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Nature's Path Organic Granola. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "kind trail mix",
+                      "product_name": "Kind Trail Mix",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Kind Trail Mix. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "siete tortilla chip",
+                      "product_name": "Siete Tortilla Chip",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Siete Tortilla Chip. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan more options"
+              },
+              "cached": false,
+              "composition_source": "templated_fallback",
+              "conversation_id": "c1b3b2ee-b4c1-4a0a-be1e-bb9e8232a8fd"
+            },
+            "at_ms": 17078
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 5,
+              "response_type": "context"
+            },
+            "at_ms": 17078
+          }
+        ],
+        "latency_ms": 17078,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 24050,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "af01",
+      "query": "first apartment essentials for me, moving in alone",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 123
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You're looking for essential products to stock a first apartment as a solo adult.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 467
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:first_apartment_setup"
+            },
+            "at_ms": 653
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 653
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:first_apartment_setup",
+              "name": "dynamic:first_apartment_setup",
+              "label": "You're looking for essential products to stock a first apartment as a solo adult.",
+              "title": "First apartment essentials without the guesswork",
+              "intro": "Four categories worth covering for first apartment setup. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Skip the marketing on 'natural' alone.",
+                "reasoning": "Without certifications or specific ingredient lists backing it up, 'natural' on personal care and home products means nothing. Look for what's actually absent instead."
+              },
+              "start_here": {
+                "label": "Start with the toothpaste and shampoo.",
+                "reasoning": "Daily use items worth getting right first. Both rank cleanly and cost the same as mainstream alternatives."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "hello toothpaste",
+                      "product_name": "Hello Toothpaste",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Hello Toothpaste. SLS free, no artificial sweeteners, no titanium dioxide. Daily essential that earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "olaplex shampoo",
+                      "product_name": "Olaplex Shampoo",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Olaplex Shampoo. No SLS, no DMDM, no parabens. Works for regular use without the ingredient load.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "blueland laundry",
+                      "product_name": "Blueland Laundry",
+                      "score": 1,
+                      "category": "home",
+                      "consumable_or_durable": "durable",
+                      "reasoning": "Blueland Laundry. No PVA, no synthetic fragrance, tablet format. Laundry detergent that takes up less space and cuts plastic.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "vinegar cleaner",
+                      "product_name": "Vinegar Cleaner",
+                      "score": 1,
+                      "category": "home",
+                      "consumable_or_durable": "durable",
+                      "reasoning": "Vinegar Cleaner. Acetic acid base, white vinegar. Single ingredient option for kitchen and bathroom surfaces.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "silk pillowcase",
+                      "product_name": "Silk Pillowcase",
+                      "score": 2,
+                      "category": "home_furnishing",
+                      "consumable_or_durable": "durable",
+                      "reasoning": "Silk Pillowcase. Silk with natural dyes. Durable addition that outlasts cotton and resists pilling.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "primal kitchen",
+                      "product_name": "Primal Kitchen",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Primal Kitchen. Avocado oil base, no EDTA, no soybean oil. Pantry staple for dressing and cooking.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Personal care and home essentials that work without unnecessary additives."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Cleaning supplies, bathroom essentials, kitchen basics, and bedding. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Categories still building calibration."
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the apartment starter lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 8558
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 7,
+              "response_type": "context"
+            },
+            "at_ms": 8558
+          }
+        ],
+        "latency_ms": 8559,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 8559,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "af03",
+      "query": "clean coffee setup for my morning routine",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "cross_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 68
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want to assemble a morning coffee routine with cleaner product choices.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [
+                "clean",
+                "non-toxic"
+              ],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 460
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:morning_routine_coffee"
+            },
+            "at_ms": 805
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 805
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:morning_routine_coffee",
+              "name": "dynamic:morning_routine_coffee",
+              "label": "You want to assemble a morning coffee routine with cleaner product choices.",
+              "title": "Morning coffee routine without the research project",
+              "intro": "Three categories worth covering for a morning coffee routine. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Flavored additions often hide added sugars.",
+                "reasoning": "Creamers, syrups, and sweetened beverages marketed as morning staples frequently contain refined sugars or synthetic additives. Real ingredients in coffee companions keep the routine simple."
+              },
+              "start_here": {
+                "label": "Start with the sparkling water swap.",
+                "reasoning": "Replaces sugared morning drinks with real fruit and water. Single Target run, immediate daily impact."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "spindrift sparkling",
+                      "product_name": "Spindrift Sparkling",
+                      "score": 1,
+                      "category": "beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Spindrift Sparkling. Real squeezed fruit plus sparkling water, nothing synthetic. Hydration between cups without the sugar load. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "honest tea",
+                      "product_name": "Honest Tea",
+                      "score": 1,
+                      "category": "beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Honest Tea. USDA Organic, fair trade, 10g natural sugar per serving. Works as a second beverage without the caffeine jolt. Worth adding.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "hu kitchen",
+                      "product_name": "hu Kitchen",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "hu Kitchen. No refined sugar, no lecithin, minimal real ingredients. Pairs with coffee as a breakfast anchor. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Coffee pairs best with minimal, real ingredient companions."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Beverages, kitchen basics, and personal care items. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan your current coffee and creamer brands."
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 14508
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 4,
+              "response_type": "context"
+            },
+            "at_ms": 14508
+          }
+        ],
+        "latency_ms": 14508,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 14508,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "af04",
+      "query": "clean sunscreen for hiking, adult",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "travel",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 105
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want a sunscreen formulated with clean ingredients suitable for adult outdoor hiking.",
+              "category": "sunscreen",
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [
+                "clean ingredients"
+              ],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 423
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "badger",
+              "product_name": "Badger",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "badger",
+              "flags": [],
+              "why": "Zinc oxide only, organic ingredients, no chemical UV filters.",
+              "detailed_flags": [
+                {
+                  "label": "UV Filter",
+                  "kind": "good",
+                  "detail": "Zinc oxide mineral filter, no synthetic UV absorbers."
+                },
+                {
+                  "label": "Ingredients",
+                  "kind": "good",
+                  "detail": "Organic ingredient base aligns with clean ingredient preference."
+                }
+              ],
+              "calibration_note": "Benchmark cleanest sunscreen in category; scored 1–2 floor.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 595
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "raw elements sunscreen",
+              "product_name": "Raw Elements Sunscreen",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "raw elements sunscreen",
+              "flags": [],
+              "why": "Non-nano zinc oxide formulation scores cleanest in sport sunscreen category",
+              "detailed_flags": [
+                {
+                  "label": "UV Filter",
+                  "kind": "good",
+                  "detail": "Non-nano zinc oxide mineral filter, no chemical absorbers"
+                },
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "Organic certification aligns with clean ingredient constraint"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range: cleanest sport sunscreen option for mineral UV protection seekers",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 617
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "think sport sunscreen",
+              "product_name": "Think Sport Sunscreen",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "think sport sunscreen",
+              "flags": [],
+              "why": "Zinc oxide mineral formula, sport-certified composition",
+              "detailed_flags": [
+                {
+                  "label": "Active Ingredient",
+                  "kind": "good",
+                  "detail": "Zinc oxide mineral sunscreen, no chemical UV filters"
+                },
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "Sport-certified formulation for water and sweat resistance"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range: mineral-only, no flagged substances detected",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 626
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 626
+          }
+        ],
+        "latency_ms": 626,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 626,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "af07",
+      "query": "morning routine basics for a single adult",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 149
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want product recommendations for a single adult's morning routine essentials.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 367
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:morning_routine_essentials"
+            },
+            "at_ms": 638
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 638
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:morning_routine_essentials",
+              "name": "dynamic:morning_routine_essentials",
+              "label": "You want product recommendations for a single adult's morning routine essentials.",
+              "title": "Morning routine essentials for a single adult, without the research",
+              "intro": "Two categories worth covering for morning routine essentials. Sign in to compare with what's already in your home.",
+              "anti_pattern": {
+                "headline": "Toothpaste choice matters more than brand loyalty.",
+                "reasoning": "Most mainstream toothpastes contain SLS or titanium dioxide. The alternatives in this bundle work the same way and cost the same. Worth switching once, then forgetting about it."
+              },
+              "start_here": {
+                "label": "Start with the Hello Toothpaste add.",
+                "reasoning": "Toothpaste is twice daily exposure. Switching to SLS free takes one Target run and compounds across the year."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "olaplex shampoo",
+                      "product_name": "Olaplex Shampoo",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Olaplex Shampoo. No SLS, no DMDM, no parabens. Daily wash without the synthetic buildup. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "hello toothpaste",
+                      "product_name": "Hello Toothpaste",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Hello Toothpaste. SLS free, no artificial sweeteners, no titanium dioxide. Fluoride protection without the additives. Worth adding.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Hair and oral care are the foundation of a morning that feels intentional."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Bathroom essentials. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan your current shampoo and toothpaste to build your profi"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 6643
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "response_type": "context"
+            },
+            "at_ms": 6643
+          }
+        ],
+        "latency_ms": 6644,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 6644,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "pt01",
+      "query": "treats for my dog with allergies",
+      "bank_tags": {
+        "audience": "pet_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 37
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want dog treats formulated for animals with food sensitivities or allergies.",
+              "category": "pet_food",
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [
+                "allergen_friendly",
+                "limited_ingredient"
+              ],
+              "occasion": null,
+              "confidence": 0.92,
+              "cached": true
+            },
+            "at_ms": 515
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 0,
+              "no_results": true,
+              "no_results_message": "Nothing in our database scores well for this yet. Worth scanning options yourself."
+            },
+            "at_ms": 515
+          }
+        ],
+        "latency_ms": 515,
+        "event_summary": "thinking,intent,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 515,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "pt02",
+      "query": "cat food for sensitive stomach",
+      "bank_tags": {
+        "audience": "pet_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 94
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want cat food formulated for digestive sensitivity.",
+              "category": "pet_food",
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [
+                "sensitive_stomach"
+              ],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 287
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 0,
+              "no_results": true,
+              "no_results_message": "Nothing in our database scores well for this yet. Worth scanning options yourself."
+            },
+            "at_ms": 287
+          }
+        ],
+        "latency_ms": 288,
+        "event_summary": "thinking,intent,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 288,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "pt03",
+      "query": "non toxic pet shampoo for my dog",
+      "bank_tags": {
+        "audience": "pet_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 166
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want a pet shampoo formulated without toxic ingredients for your dog.",
+              "category": "pet_shampoo",
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [
+                "non-toxic"
+              ],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 248
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 0,
+              "no_results": true,
+              "no_results_message": "Nothing in our database scores well for this yet. Worth scanning options yourself."
+            },
+            "at_ms": 248
+          }
+        ],
+        "latency_ms": 248,
+        "event_summary": "thinking,intent,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 248,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "pg01",
+      "query": "clean sunscreen for pregnancy",
+      "bank_tags": {
+        "audience": "pregnancy_focused",
+        "occasion": "daily",
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 167
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want sunscreen formulated with clean ingredients suitable for use during pregnancy.",
+              "category": "sunscreen",
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [
+                "clean",
+                "pregnancy-compatible"
+              ],
+              "occasion": "pregnancy",
+              "confidence": 0.92,
+              "cached": true
+            },
+            "at_ms": 334
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "badger",
+              "product_name": "Badger",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "badger",
+              "flags": [],
+              "why": "Zinc oxide only, organic ingredients, no chemical UV filters.",
+              "detailed_flags": [
+                {
+                  "label": "UV Filter",
+                  "kind": "good",
+                  "detail": "Zinc oxide mineral filter, no chemical UV absorbers."
+                },
+                {
+                  "label": "Ingredients",
+                  "kind": "good",
+                  "detail": "Organic ingredient base, minimal synthetic additives."
+                },
+                {
+                  "label": "Formulation",
+                  "kind": "good",
+                  "detail": "Scored cleanest in sunscreen category benchmark."
+                }
+              ],
+              "calibration_note": "Benchmark cleanest sunscreen. Floor 1, ceiling 2.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 334
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "raw elements sunscreen",
+              "product_name": "Raw Elements Sunscreen",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "raw elements sunscreen",
+              "flags": [],
+              "why": "Non-nano zinc oxide formulation scores cleanest in sport sunscreen category",
+              "detailed_flags": [
+                {
+                  "label": "UV Filter",
+                  "kind": "good",
+                  "detail": "Non-nano zinc oxide mineral filter, no chemical absorbers"
+                },
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "Organic certification indicates minimal synthetic additives"
+                },
+                {
+                  "label": "Fragrance",
+                  "kind": "neutral",
+                  "detail": "No fragrance concerns noted in calibration data"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range (cleanest tier) for personal care; mineral-only UV approach aligns with pregnancy-compatible preference",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 514
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "think sport sunscreen",
+              "product_name": "Think Sport Sunscreen",
+              "score": 1,
+              "kid_score": null,
+              "category": "personal_care",
+              "anchor": "calibration",
+              "calibration_key": "think sport sunscreen",
+              "flags": [],
+              "why": "Zinc oxide mineral formulation, sport certified",
+              "detailed_flags": [
+                {
+                  "label": "UV Filter",
+                  "kind": "good",
+                  "detail": "Zinc oxide only—mineral UV filter, no chemical absorbers"
+                },
+                {
+                  "label": "Sport Certification",
+                  "kind": "good",
+                  "detail": "Sport certified formulation"
+                },
+                {
+                  "label": "Pregnancy Compatibility",
+                  "kind": "good",
+                  "detail": "Mineral-only composition aligns with pregnancy-compatible preference"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range (cleanest tier). Zinc oxide mineral sunscreens are commonly recommended during pregnancy.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 514
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 514
+          }
+        ],
+        "latency_ms": 514,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 514,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "pg03",
+      "query": "morning sickness snacks first trimester",
+      "bank_tags": {
+        "audience": "pregnancy_focused",
+        "occasion": "daily",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 97
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want snack recommendations that help manage nausea during the first trimester of pregnancy.",
+              "category": "snacks",
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": "pregnancy",
+              "confidence": 0.92,
+              "cached": true
+            },
+            "at_ms": 224
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "yumearth fruit snacks",
+              "product_name": "Yumearth Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "yumearth fruit snacks",
+              "flags": [],
+              "why": "USDA Organic certified, fruit juice sweetened, zero artificial dyes.",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certification confirms production standards."
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "Fruit juice sweetened avoids refined sugar and artificial sweeteners."
+                },
+                {
+                  "label": "Additives",
+                  "kind": "good",
+                  "detail": "No artificial dyes or synthetic flavors in formulation."
+                }
+              ],
+              "calibration_note": "Benchmark leading mainstream fruit snack in category; scored 1–3 range.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 490
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "annie's organic fruit snacks",
+              "product_name": "Annie's Organic Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "annie's organic fruit snacks",
+              "flags": [],
+              "why": "USDA Organic certified, no HFCS or artificial dyes",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certification confirms production standards"
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "No high-fructose corn syrup; uses cane sugar"
+                },
+                {
+                  "label": "Colorants",
+                  "kind": "good",
+                  "detail": "No synthetic dyes; uses fruit juice concentrates"
+                }
+              ],
+              "calibration_note": "Benchmark clean kids fruit snack; score 1–3 range reflects minimal flagged substances",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 491
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "sahale snacks",
+              "product_name": "Sahale Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "sahale snacks",
+              "flags": [],
+              "why": "Premium nuts + real fruit + spices, zero artificial additives",
+              "detailed_flags": [
+                {
+                  "label": "Composition",
+                  "kind": "good",
+                  "detail": "Real fruit and spices with no artificial additives in formulation"
+                },
+                {
+                  "label": "Ingredient Sourcing",
+                  "kind": "good",
+                  "detail": "Premium nut base provides whole-food protein and micronutrients"
+                }
+              ],
+              "calibration_note": "Scored 1–3 range (cleanest tier). Whole-food snack profile aligns with pregnancy nutrition needs; verify individual nut allergies.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 491
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 491
+          }
+        ],
+        "latency_ms": 491,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 491,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "gf01",
+      "query": "baby shower gift for first time mom",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "gifting",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 35
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want gift recommendations for a first-time mother at a baby shower.",
+              "category": null,
+              "subject": null,
+              "audience": "baby",
+              "age_range_months": [
+                0,
+                12
+              ],
+              "constraints": [],
+              "occasion": "newborn",
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 345
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "new_baby_gift"
+            },
+            "at_ms": 755
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 755
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "new_baby_gift",
+              "name": "New baby gift (shower)",
+              "label": "Baby shower gift",
+              "title": "Best scored options for Baby shower gift",
+              "intro": "Top picks from the calibration database.",
+              "anti_pattern": null,
+              "start_here": null,
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "badger",
+                      "product_name": "Badger",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Badger. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "think sport sunscreen",
+                      "product_name": "Think Sport Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Think Sport Sunscreen. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "raw elements sunscreen",
+                      "product_name": "Raw Elements Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Raw Elements Sunscreen. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "olaplex no.4",
+                      "product_name": "Olaplex No.4",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Olaplex No.4. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "olaplex shampoo",
+                      "product_name": "Olaplex Shampoo",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Olaplex Shampoo. Verified formula. Worth trying.",
+                      "action_label": "Try this."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan more options"
+              },
+              "cached": false,
+              "composition_source": "templated_fallback",
+              "conversation_id": null
+            },
+            "at_ms": 18739
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 5,
+              "response_type": "context"
+            },
+            "at_ms": 18739
+          }
+        ],
+        "latency_ms": 18739,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 18739,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "gf02",
+      "query": "housewarming gift for a new parent",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "gifting",
+        "specificity": "medium_specific",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 39
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want gift ideas for someone who just became a parent.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 423
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:housewarming_gift"
+            },
+            "at_ms": 695
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 695
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:housewarming_gift",
+              "name": "dynamic:housewarming_gift",
+              "label": "You want gift ideas for someone who just became a parent.",
+              "title": "Housewarming gifts for new parents, the ones they'll actually use",
+              "intro": "Two categories worth covering for a new parent gift. Calibration is still building on some options here.",
+              "anti_pattern": {
+                "headline": "Skip the scent products for the nursery.",
+                "reasoning": "New parents are managing enough sensory input. Fragrance diffusers and scented candles add VOCs to a space where the baby sleeps. Unscented or plant based care products work better."
+              },
+              "start_here": {
+                "label": "Start with the Natracare Baby Wipes.",
+                "reasoning": "Wipes are a daily essential from day one. Organic certified option removes one concern from the new parent's mental load."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "natracare baby wipes",
+                      "product_name": "Natracare Baby Wipes",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Natracare Baby Wipes. USDA Organic certified, no synthetic additives. First thing new parents reach for at 3 a.m. Worth adding to the diaper bag.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "holle organic formula",
+                      "product_name": "Holle Organic Formula",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Holle Organic Formula. EU organic certified, simple ingredient list. If they're formula feeding, this one carries fewer concerns than mainstream options. Earns a spot on the shelf.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Baby care essentials that arrive ready to use, no research required."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Baby gifts and household gifts. Calibration is still building here. Scan options they're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ]
+                }
+              ],
+              "suggested_action": {
+                "type": "learn_more",
+                "label": "See why organic matters for baby wipes"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": null
+            },
+            "at_ms": 6891
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "response_type": "context"
+            },
+            "at_ms": 6891
+          }
+        ],
+        "latency_ms": 6892,
+        "event_summary": "thinking,intent,intent_classified,composer_thinking,bundle,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 6892,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "gf03",
+      "query": "gift for my mother in law who likes clean beauty",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "gifting",
+        "specificity": "medium_specific",
+        "coverage": "out_of_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 146
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want a clean beauty product gift for an adult woman.",
+              "category": null,
+              "subject": null,
+              "audience": "adult",
+              "age_range_months": null,
+              "constraints": [
+                "clean beauty"
+              ],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 365
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 0,
+              "no_results": true,
+              "no_results_message": "Nothing in our database scores well for this yet. Worth scanning options yourself."
+            },
+            "at_ms": 365
+          }
+        ],
+        "latency_ms": 366,
+        "event_summary": "thinking,intent,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 366,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "kn01",
+      "query": "what's wrong with parabens",
+      "bank_tags": {
+        "audience": "knowledge",
+        "occasion": null,
+        "specificity": "highly_specific",
+        "coverage": "in_vocab",
+        "type": "knowledge",
+        "expects_refinement": false,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 37
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "knowledge",
+              "restatement": "You want to understand the concerns and criticisms surrounding parabens as a preservative ingredient.",
+              "category": null,
+              "subject": "parabens",
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.95,
+              "cached": true
+            },
+            "at_ms": 267
+          },
+          {
+            "event": "refuse",
+            "payload": {
+              "reason": "knowledge_query_not_supported",
+              "message": "Ask is built for product recommendations. Try a product or category query instead."
+            },
+            "at_ms": 267
+          }
+        ],
+        "latency_ms": 268,
+        "event_summary": "thinking,intent,refuse"
+      },
+      "leg2": null,
+      "total_latency_ms": 268,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "vg01",
+      "query": "Disney trip",
+      "bank_tags": {
+        "audience": "family_with_kids",
+        "occasion": "travel",
+        "specificity": "very_vague",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": true
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 46
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You're packing for a Disney trip and want product recommendations for the experience.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.7,
+              "cached": true
+            },
+            "at_ms": 239
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": null
+            },
+            "at_ms": 2975
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "fc207ba8-3f87-41d8-9ea5-ae430d9ac324",
+              "intent_restatement": "You're packing for a Disney trip and want product recommendations for the experience.",
+              "context_id": null,
+              "questions": [
+                {
+                  "id": "audience_composition",
+                  "text": "Who is going on the Disney trip?",
+                  "suggested_options": [
+                    "Adults only",
+                    "Adults with babies or toddlers",
+                    "Adults with school age kids",
+                    "Mixed ages"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "trip_duration",
+                  "text": "How many days at Disney parks?",
+                  "suggested_options": [
+                    "1 to 2 days",
+                    "3 to 4 days",
+                    "5 plus days"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "snack_preferences",
+                  "text": "Cross check snacks and drinks you've scanned for the trip?",
+                  "suggested_options": [
+                    "Yes, use those brands",
+                    "No, fresh suggestions",
+                    "Mix of both"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                }
+              ]
+            },
+            "at_ms": 2975
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 2975
+          }
+        ],
+        "latency_ms": 2976,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "fc207ba8-3f87-41d8-9ea5-ae430d9ac324",
+        "answers_submitted": [
+          {
+            "question_id": "audience_composition",
+            "value": "Adults only"
+          },
+          {
+            "question_id": "trip_duration",
+            "value": "1 to 2 days"
+          },
+          {
+            "question_id": "snack_preferences",
+            "value": "Yes, use those brands"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:vacation_warm_weather"
+            },
+            "at_ms": 2937
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2937
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:vacation_warm_weather",
+              "name": "dynamic:vacation_warm_weather",
+              "label": "You're packing for a 1–2 day Disney trip with adults only and want product recommendations from preferred brands.",
+              "title": "Disney trip packing for adults, one bag approach",
+              "intro": "Your home has 0 solid picks. 5 need swaps. Here's the version that lands.",
+              "anti_pattern": {
+                "headline": "Chemical sunscreens absorb differently than mineral.",
+                "reasoning": "Your Banana Boat Sport and Supergoop both use chemical UV filters. Mineral zinc options work faster on skin and don't require the same absorption window before water exposure."
+              },
+              "start_here": {
+                "label": "Start with the Banana Boat Sport swap.",
+                "reasoning": "Widest single gap in the bundle. One Target run replaces it before the trip."
+              },
+              "sections": [
+                {
+                  "type": "swap",
+                  "label": "Worth swapping",
+                  "items": [
+                    {
+                      "product_id": "raw elements sunscreen",
+                      "product_name": "Raw Elements Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Raw Elements Sunscreen. Non nano zinc oxide, organic. Swap your Banana Boat Sport for this. Built for sport and water.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "think sport sunscreen",
+                      "product_name": "Think Sport Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Think Sport Sunscreen. Zinc oxide only, no chemical filters. Swap your Supergoop Unseen Clear & Invisible Face Sunscreen for this. Same protection, different approach.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "equate mineral sunscreen",
+                      "product_name": "Equate Mineral Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Equate Mineral Sunscreen. Zinc oxide mineral base, no oxybenzone. Swap your Cerave for this. Works for face and body on a one bag trip.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "babyganics mineral sunscreen",
+                      "product_name": "Babyganics Mineral Sunscreen",
+                      "score": 1,
+                      "category": "personal_care",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Babyganics Mineral Sunscreen. Zinc oxide and titanium dioxide, no chemical UV filters. Swap your Tom's Of Maine for this. Covers the personal care gap.",
+                      "action_label": "Next trip, swap to this."
+                    },
+                    {
+                      "product_id": "babo botanicals sunscreen",
+                      "product_name": "Babo Botanicals Sunscreen",
+                      "score": 1,
+                      "category": "baby",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Babo Botanicals Sunscreen. Zinc oxide, USDA certified organic. Swap your Tom's of Maine Natural fluoride free for this. Single product handles sun and skin.",
+                      "action_label": "Next trip, swap to this."
+                    }
+                  ],
+                  "thesis": "Your Banana Boat Sport is the widest single gap in this bundle. Get this swap right first."
+                },
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "liquid death mountain water",
+                      "product_name": "Liquid Death Mountain Water",
+                      "score": 1,
+                      "category": "beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Liquid Death Mountain Water. Austrian mountain water in aluminum, no BPA. Worth adding. Travels light, refillable at park fountains.",
+                      "action_label": "Try this."
+                    },
+                    {
+                      "product_id": "epic bar",
+                      "product_name": "Epic Bar",
+                      "score": 1,
+                      "category": "food_beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Epic Bar. Whole prey ingredients, no nitrites, no artificial additives. Worth tasting. Protein and energy without the research.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Hydration and snacks round out the one bag approach without daily research."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Snacks and hydration. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Calibration is still building on a few categories worth covering."
+                }
+              ],
+              "suggested_action": {
+                "type": "save_list",
+                "label": "Save the Disney trip lineup"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": "fc207ba8-3f87-41d8-9ea5-ae430d9ac324"
+            },
+            "at_ms": 12416
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 8,
+              "response_type": "context"
+            },
+            "at_ms": 12416
+          }
+        ],
+        "latency_ms": 12416,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 15392,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "amb02",
+      "query": "snacks for the baby",
+      "bank_tags": {
+        "audience": "infant_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "product_recommendation",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 182
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "product",
+              "restatement": "You want snack options appropriate for a baby.",
+              "category": "snacks",
+              "subject": null,
+              "audience": "baby",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 514
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "annie's organic fruit snacks",
+              "product_name": "Annie's Organic Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "annie's organic fruit snacks",
+              "flags": [],
+              "why": "USDA Organic certified, no HFCS or artificial dyes",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certification confirms production standards"
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "No high-fructose corn syrup; uses cane sugar instead"
+                },
+                {
+                  "label": "Colorants",
+                  "kind": "good",
+                  "detail": "No synthetic artificial dyes; uses fruit juice concentrates"
+                }
+              ],
+              "calibration_note": "Benchmark clean kids fruit snack in category; score 1–3 range reflects minimal ingredient flags",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 626
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "yumearth fruit snacks",
+              "product_name": "Yumearth Fruit Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "yumearth fruit snacks",
+              "flags": [],
+              "why": "USDA Organic certified, fruit juice sweetened, no artificial dyes",
+              "detailed_flags": [
+                {
+                  "label": "Certification",
+                  "kind": "good",
+                  "detail": "USDA Organic certification confirms production standards"
+                },
+                {
+                  "label": "Sweetener",
+                  "kind": "good",
+                  "detail": "Fruit juice sweetened instead of refined sugar or synthetics"
+                },
+                {
+                  "label": "Colorants",
+                  "kind": "good",
+                  "detail": "No artificial dyes or synthetic color additives"
+                },
+                {
+                  "label": "Age Suitability",
+                  "kind": "concern",
+                  "detail": "Fruit snacks pose choking risk for babies under 12 months"
+                }
+              ],
+              "calibration_note": "Benchmark leading mainstream fruit snack in category; score floor 1–ceiling 3 reflects clean ingredient profile",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 665
+          },
+          {
+            "event": "item",
+            "payload": {
+              "id": "sahale snacks",
+              "product_name": "Sahale Snacks",
+              "score": 1,
+              "kid_score": null,
+              "category": "food_beverage",
+              "anchor": "calibration",
+              "calibration_key": "sahale snacks",
+              "flags": [],
+              "why": "Premium nuts + real fruit + spices, zero artificial additives",
+              "detailed_flags": [
+                {
+                  "label": "Ingredients",
+                  "kind": "good",
+                  "detail": "Real fruit and spices; no artificial additives detected"
+                },
+                {
+                  "label": "Choking Risk",
+                  "kind": "concern",
+                  "detail": "Whole nuts present; not appropriate for babies under 4 years"
+                }
+              ],
+              "calibration_note": "Scored 1–3 (cleanest tier). Unsuitable for stated baby audience due to choking hazard.",
+              "image_url": null,
+              "buy_links": null
+            },
+            "at_ms": 700
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 3,
+              "no_results": false
+            },
+            "at_ms": 700
+          }
+        ],
+        "latency_ms": 700,
+        "event_summary": "thinking,intent,item,item,item,done"
+      },
+      "leg2": null,
+      "total_latency_ms": 700,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "amb04",
+      "query": "what should we get for the kids",
+      "bank_tags": {
+        "audience": "kid_focused",
+        "occasion": null,
+        "specificity": "ambiguous",
+        "coverage": "in_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 99
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "unclear",
+              "restatement": "",
+              "category": null,
+              "subject": null,
+              "audience": "child",
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.3,
+              "cached": true
+            },
+            "at_ms": 304
+          },
+          {
+            "event": "refuse",
+            "payload": {
+              "reason": "unclear",
+              "message": "Tell us more about what you need."
+            },
+            "at_ms": 304
+          }
+        ],
+        "latency_ms": 305,
+        "event_summary": "thinking,intent,refuse"
+      },
+      "leg2": null,
+      "total_latency_ms": 305,
+      "audit_row": null,
+      "error": null
+    },
+    {
+      "id": "cv01",
+      "query": "post workout recovery essentials",
+      "bank_tags": {
+        "audience": "adult_focused",
+        "occasion": "daily",
+        "specificity": "ambiguous",
+        "coverage": "cross_vocab",
+        "type": "multi_category_context",
+        "expects_refinement": true,
+        "regression_anchor": false
+      },
+      "leg1": {
+        "events": [
+          {
+            "event": "thinking",
+            "payload": {},
+            "at_ms": 46
+          },
+          {
+            "event": "intent",
+            "payload": {
+              "type": "context",
+              "restatement": "You want products to support recovery after exercise.",
+              "category": null,
+              "subject": null,
+              "audience": null,
+              "age_range_months": null,
+              "constraints": [],
+              "occasion": null,
+              "confidence": 0.85,
+              "cached": true
+            },
+            "at_ms": 272
+          },
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": null
+            },
+            "at_ms": 3053
+          },
+          {
+            "event": "refinement_question",
+            "payload": {
+              "conversation_id": "ef8c9737-54fe-4c1c-acb6-cbcb3170b223",
+              "intent_restatement": "You want products to support recovery after exercise.",
+              "context_id": null,
+              "questions": [
+                {
+                  "id": "audience_type",
+                  "text": "Who is the recovery for?",
+                  "suggested_options": [
+                    "Adult athlete",
+                    "Teen athlete",
+                    "Family with mixed ages"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                },
+                {
+                  "id": "recovery_focus",
+                  "text": "What recovery need matters most?",
+                  "suggested_options": [
+                    "Muscle repair and protein",
+                    "Hydration and electrolytes",
+                    "Soreness and inflammation"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": true
+                },
+                {
+                  "id": "dietary_constraints",
+                  "text": "Any dietary restrictions or preferences?",
+                  "suggested_options": [
+                    "No restrictions",
+                    "Dairy free or soy free",
+                    "Specific allergies"
+                  ],
+                  "allow_text": true,
+                  "moat_aligned": false
+                }
+              ]
+            },
+            "at_ms": 3053
+          },
+          {
+            "event": "done",
+            "payload": {
+              "response_type": "refinement_question"
+            },
+            "at_ms": 3053
+          }
+        ],
+        "latency_ms": 3053,
+        "event_summary": "thinking,intent,intent_classified,refinement_question,done"
+      },
+      "leg2": {
+        "conversation_id": "ef8c9737-54fe-4c1c-acb6-cbcb3170b223",
+        "answers_submitted": [
+          {
+            "question_id": "audience_type",
+            "value": "Adult"
+          },
+          {
+            "question_id": "recovery_focus",
+            "value": "Hydration and protein"
+          },
+          {
+            "question_id": "dietary_constraints",
+            "value": "Strength training"
+          }
+        ],
+        "events": [
+          {
+            "event": "intent_classified",
+            "payload": {
+              "type": "context",
+              "context_id": "dynamic:post_workout_recovery"
+            },
+            "at_ms": 2800
+          },
+          {
+            "event": "composer_thinking",
+            "payload": {
+              "phase": "composing"
+            },
+            "at_ms": 2800
+          },
+          {
+            "event": "bundle",
+            "payload": {
+              "context_id": "dynamic:post_workout_recovery",
+              "name": "dynamic:post_workout_recovery",
+              "label": "You want product recommendations for post-workout recovery tailored to strength training, emphasizing hydration and protein.",
+              "title": "Post workout recovery without the research project",
+              "intro": "Two categories worth covering for post workout recovery. Calibration is still building on some products in your home.",
+              "anti_pattern": {
+                "headline": "Hydration alone won't complete recovery.",
+                "reasoning": "Water handles fluid replacement. Protein handles muscle repair. Both matter after strength training. The bundle pairs them intentionally."
+              },
+              "start_here": {
+                "label": "Start by scanning your current protein source.",
+                "reasoning": "Protein is the highest impact post workout category. Worth knowing where your current option ranks before adding to your routine."
+              },
+              "sections": [
+                {
+                  "type": "add",
+                  "label": "Add to your routine",
+                  "items": [
+                    {
+                      "product_id": "liquid death mountain water",
+                      "product_name": "Liquid Death Mountain Water",
+                      "score": 1,
+                      "category": "beverage",
+                      "consumable_or_durable": "consumable",
+                      "reasoning": "Liquid Death Mountain Water. Austrian mountain water in aluminum, no BPA. Hydration without additives or plastic waste. Worth adding.",
+                      "action_label": "Try this."
+                    }
+                  ],
+                  "thesis": "Hydration options are thin in the pool right now. These are what's available to start."
+                },
+                {
+                  "type": "worth_scanning",
+                  "label": "Worth scanning",
+                  "items": [
+                    {
+                      "product_id": "",
+                      "product_name": null,
+                      "score": null,
+                      "category": null,
+                      "consumable_or_durable": null,
+                      "reasoning": "Hydration. Calibration is still building here. Scan options you're considering and they show up in future bundles.",
+                      "action_label": "Open scan camera."
+                    }
+                  ],
+                  "thesis": "Hydration category needs more pool coverage to build better recommendations."
+                }
+              ],
+              "suggested_action": {
+                "type": "scan_more",
+                "label": "Scan three more recovery products on your shelf"
+              },
+              "cached": false,
+              "composition_source": "ai",
+              "conversation_id": "ef8c9737-54fe-4c1c-acb6-cbcb3170b223"
+            },
+            "at_ms": 9962
+          },
+          {
+            "event": "done",
+            "payload": {
+              "item_count": 2,
+              "response_type": "context"
+            },
+            "at_ms": 9962
+          }
+        ],
+        "latency_ms": 9963,
+        "event_summary": "intent_classified,composer_thinking,bundle,done"
+      },
+      "total_latency_ms": 13017,
+      "audit_row": null,
+      "error": null
+    }
+  ]
+}
