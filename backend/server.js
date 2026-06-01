@@ -2486,7 +2486,11 @@ async function callClaude(system, userPrompt, maxTokens=800, retries=3) {
 // that need the bigger model's editorial judgment (R5b.3 v2 bundle
 // composer). Same budget accounting — every Sonnet call still
 // increments apiCallCounts so the daily/monthly cap applies.
-async function callClaudeSonnet(system, userPrompt, maxTokens=2200, retries=2) {
+// `model` added in session 5b so the /ask composer can route to Haiku via
+// ASK_COMPOSER_MODEL. Defaults to Sonnet, so every existing caller is
+// unchanged. The "Sonnet" name is retained to avoid a wide rename; this is
+// the JSON-returning composer call helper regardless of the model passed.
+async function callClaudeSonnet(system, userPrompt, maxTokens=2200, retries=2, model="claude-sonnet-4-20250514") {
   checkApiBudget();
   incrementApiCount();
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -2503,7 +2507,7 @@ async function callClaudeSonnet(system, userPrompt, maxTokens=2200, retries=2) {
           "x-api-key": process.env.ANTHROPIC_API_KEY,
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: model,
           max_tokens: maxTokens,
           temperature: 0.4,
           system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
@@ -10301,6 +10305,53 @@ app.get("/admin/api-budget", requireAdmin, async (req, res) => {
   });
 });
 
+// Session 5b — collapse refinement two-row pairs into one logical query.
+// A refinement query writes a /ask row (parent_request_id null) and a
+// /ask/refinement_answer row (parent_request_id = the /ask request_id).
+// Returns one record per logical query: child rolled into parent, total_ms
+// summed across legs, first_item_ms + terminal status taken from the child
+// (where the bundle/refuse/timeout lands). Rows with no parent linkage pass
+// through unchanged, so non-refinement and pre-023 rows are unaffected.
+function rollupRefinementRows(rawRows) {
+  const childrenByParent = new Map();
+  const nonChildren = [];
+  for (const r of rawRows) {
+    if (r.parent_request_id) {
+      const arr = childrenByParent.get(r.parent_request_id) || [];
+      arr.push(r);
+      childrenByParent.set(r.parent_request_id, arr);
+    } else {
+      nonChildren.push(r);
+    }
+  }
+  const merged = [];
+  const consumedParents = new Set();
+  for (const p of nonChildren) {
+    const kids = p.request_id ? childrenByParent.get(p.request_id) : null;
+    if (kids && kids.length) {
+      consumedParents.add(p.request_id);
+      // rawRows are ordered created_at desc, so kids[0] is the latest (terminal) leg.
+      const terminal = kids[0];
+      const sumTotal = (p.total_ms || 0) + kids.reduce((n, k) => n + (k.total_ms || 0), 0);
+      merged.push({
+        ...terminal,
+        status: terminal.status,
+        query_type: terminal.query_type || p.query_type,
+        first_item_ms: terminal.first_item_ms != null ? terminal.first_item_ms : p.first_item_ms,
+        total_ms: sumTotal,
+      });
+    } else {
+      merged.push(p);
+    }
+  }
+  // Orphan children whose parent row fell outside the window — count once.
+  for (const [parentId, kids] of childrenByParent) {
+    if (consumedParents.has(parentId)) continue;
+    merged.push(kids[0]);
+  }
+  return merged;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // /admin/ask-timing-stats — Phase 2b session 5a launch-gate telemetry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10315,25 +10366,44 @@ app.get("/admin/ask-timing-stats", requireAdmin, async (req, res) => {
   const hoursReq = Number(req.query.hours);
   const hours = Number.isFinite(hoursReq) && hoursReq > 0 ? Math.min(hoursReq, 168) : 24;
   const sinceIso = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  // Session 5b: ?include=composer_detail returns the per-attempt composer
+  // call distribution (latency percentiles, retry rate, attempt status mix).
+  const includeComposerDetail = String(req.query.include || "").split(",").includes("composer_detail");
 
   try {
     // Page through rows so large windows don't truncate at the default 1000.
+    // request_id + parent_request_id are always selected so refinement
+    // two-row pairs can be rolled up into one logical query (session 5b).
+    const baseCols = "status, query_type, first_item_ms, total_ms, request_id, parent_request_id";
+    const selectCols = includeComposerDetail
+      ? `${baseCols}, composer_ms, retries, composer_attempt_timings`
+      : baseCols;
     const PAGE = 1000;
-    const rows = [];
+    const rawRows = [];
     let from = 0;
     for (;;) {
       const { data, error } = await supabaseAdmin
         .from("ask_timing_telemetry")
-        .select("status, query_type, first_item_ms, total_ms")
+        .select(selectCols)
         .gte("created_at", sinceIso)
         .order("created_at", { ascending: false })
         .range(from, from + PAGE - 1);
       if (error) throw new Error(error.message);
       if (!data || !data.length) break;
-      rows.push(...data);
+      rawRows.push(...data);
       if (data.length < PAGE) break;
       from += PAGE;
     }
+
+    // Session 5b — refinement two-row dedupe. A refinement query writes two
+    // rows: the /ask leg (parent_request_id null) and the /ask/refinement_answer
+    // leg (parent_request_id = the /ask request_id). Roll the child into the
+    // parent so the query counts ONCE: total_ms sums both legs (backend time
+    // across leg1+leg2, excluding user think time), first_item_ms and terminal
+    // status come from the child (where the bundle/refuse/timeout lands).
+    // Rows with no parent linkage (all non-refinement, and all pre-023 rows)
+    // pass through unchanged, so this is backward-compatible.
+    const rows = rollupRefinementRows(rawRows);
 
     const byStatus = {};
     for (const r of rows) byStatus[r.status] = (byStatus[r.status] || 0) + 1;
@@ -10365,6 +10435,41 @@ app.get("/admin/ask-timing-stats", requireAdmin, async (req, res) => {
     };
     gate.all_pass = gate.p95_first_item_lt_3s && gate.p95_total_lt_8s && gate.timeout_rate_lt_2pct;
     stats.gate_status = gate;
+
+    // Session 5b — composer sub-phase detail. Computed from RAW rows (each
+    // composer execution is one row; refinement composer runs live on the
+    // child row), not the deduped set — we want per-call, not per-query, stats.
+    if (includeComposerDetail) {
+      const composerRows = rawRows.filter(r => r.composer_ms != null);
+      const composerMs = composerRows.map(r => r.composer_ms).filter(v => v != null);
+      const attempts = [];
+      for (const r of composerRows) {
+        if (Array.isArray(r.composer_attempt_timings)) attempts.push(...r.composer_attempt_timings);
+      }
+      const attemptMs = attempts.map(a => a && a.ms).filter(v => v != null);
+      const attemptsByStatus = {};
+      const attemptsByModel = {};
+      for (const a of attempts) {
+        if (!a) continue;
+        attemptsByStatus[a.status] = (attemptsByStatus[a.status] || 0) + 1;
+        attemptsByModel[a.model]   = (attemptsByModel[a.model]   || 0) + 1;
+      }
+      // retries column counts total attempts; > 1 means at least one retry fired.
+      const retried = composerRows.filter(r => (r.retries || 0) > 1).length;
+      stats.composer_detail = {
+        composer_queries: composerRows.length,
+        composer_ms_p50: pct(composerMs, 50),
+        composer_ms_p95: pct(composerMs, 95),
+        composer_ms_p99: pct(composerMs, 99),
+        total_attempts: attempts.length,
+        attempt_ms_p50: pct(attemptMs, 50),
+        attempt_ms_p95: pct(attemptMs, 95),
+        attempts_by_status: attemptsByStatus,
+        attempts_by_model: attemptsByModel,
+        retry_rate: composerRows.length ? retried / composerRows.length : 0,
+      };
+    }
+
     res.json(stats);
   } catch (e) {
     console.error("[admin/ask-timing-stats]", e.message);

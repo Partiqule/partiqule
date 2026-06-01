@@ -23,7 +23,7 @@
 
 "use strict";
 
-function createTimingContext({ requestId, requestStartMs, queryType, userId }) {
+function createTimingContext({ requestId, requestStartMs, queryType, userId, parentRequestId }) {
   return {
     request_id: requestId || "noid",
     request_start_ms: requestStartMs || Date.now(),
@@ -34,6 +34,13 @@ function createTimingContext({ requestId, requestStartMs, queryType, userId }) {
     enriched_pass1_ms: null,
     composer_ms: null,
     retries: null,
+    // Session 5b: per-attempt composer timings (jsonb). One entry per AI
+    // call (initial + voice-gate/structure retries). Null when the composer
+    // doesn't run (fast path / cache hit).
+    composer_attempt_timings: null,
+    // Session 5b: links a /ask/refinement_answer row back to the originating
+    // /ask row so the stats endpoint counts the refinement query once.
+    parent_request_id: parentRequestId || null,
     cache_hits: 0,
     cache_misses: 0,
     first_item_ms: null,
@@ -87,6 +94,8 @@ function flushTiming(deps, timing) {
     `enriched_pass1=${fmt(timing.enriched_pass1_ms)}`,
     `composer=${fmt(timing.composer_ms)}`,
     `retries=${fmt(timing.retries)}`,
+    `composer_attempts=${fmtAttempts(timing.composer_attempt_timings)}`,
+    `parent=${timing.parent_request_id || "-"}`,
     `cache_hits=${timing.cache_hits || 0}`,
     `cache_misses=${timing.cache_misses || 0}`,
     `first_item_ms=${fmt(timing.first_item_ms)}`,
@@ -103,6 +112,12 @@ function flushTiming(deps, timing) {
 
 function fmt(v) { return v == null ? "-" : v; }
 
+// Compact per-attempt summary for the Railway log line, e.g. "4200:ok|3800:ok".
+function fmtAttempts(arr) {
+  if (!Array.isArray(arr) || !arr.length) return "-";
+  return arr.map(a => `${a.ms}:${a.status}`).join("|");
+}
+
 async function persistRow(deps, timing) {
   const supabase = deps && deps.supabaseAdmin;
   if (!supabase) return; // no-op when supabase isn't configured (smokes/tests)
@@ -115,6 +130,8 @@ async function persistRow(deps, timing) {
     enriched_pass1_ms: timing.enriched_pass1_ms,
     composer_ms: timing.composer_ms,
     retries: timing.retries,
+    composer_attempt_timings: timing.composer_attempt_timings || null,
+    parent_request_id: timing.parent_request_id || null,
     cache_hits: timing.cache_hits || 0,
     cache_misses: timing.cache_misses || 0,
     first_item_ms: timing.first_item_ms,

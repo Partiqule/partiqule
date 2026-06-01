@@ -64,6 +64,11 @@ const COMPOSER_HARD_TIMEOUT_MS = 30000;
 // ── ENV ──────────────────────────────────────────────────────────
 const ASK_PASS1_MODEL = process.env.ASK_PASS1_MODEL || "claude-haiku-4-5-20251001";
 const ASK_PASS2_MODEL = process.env.ASK_PASS2_MODEL || "claude-haiku-4-5-20251001";
+// Session 5b: composer model. Swapped from Sonnet to Haiku to cut the
+// single-call generation latency that owns 100% of the launch-gate failure.
+// Env-overridable so a revert is a config change, not a redeploy: set
+// ASK_COMPOSER_MODEL=claude-sonnet-4-20250514 to roll back.
+const ASK_COMPOSER_MODEL = process.env.ASK_COMPOSER_MODEL || "claude-haiku-4-5-20251001";
 const ASK_INTENT_CACHE_TTL_S  = parseInt(process.env.ASK_INTENT_CACHE_TTL_SECONDS  || "86400",  10);
 const ASK_FRAMING_CACHE_TTL_S = parseInt(process.env.ASK_FRAMING_CACHE_TTL_SECONDS || "604800", 10);
 const ASK_RATE_LIMIT_ANON = parseInt(process.env.ASK_RATE_LIMIT_ANON_PER_HOUR || "20",  10);
@@ -1638,7 +1643,13 @@ async function composeBundleAndStream(deps, opts) {
           pool,
           scanHistory,
           contextBroadCategories: broadCats,
-          callAI: (system, userPrompt, maxTokens) => callClaudeSonnet(system, userPrompt, maxTokens),
+          // Session 5b: composer model is env-configurable (ASK_COMPOSER_MODEL,
+          // default Haiku). callClaudeSonnet now takes a trailing model arg;
+          // passing Haiku here routes the composer call to Haiku without
+          // touching Pass 1 / Pass 1.5 / framing (those use callClaude).
+          callAI: (system, userPrompt, maxTokens) =>
+            callClaudeSonnet(system, userPrompt, maxTokens, 2, ASK_COMPOSER_MODEL),
+          modelLabel: ASK_COMPOSER_MODEL,
         }),
         COMPOSER_HARD_TIMEOUT_MS,
         () => ({ phase: "composer", elapsed_ms: Date.now() - tComposer }),
@@ -1711,6 +1722,12 @@ async function composeBundleAndStream(deps, opts) {
   // Capture composer retry count from metadata (works for cache hit too).
   if (timing && bundleResult && bundleResult.metadata) {
     timing.retries = bundleResult.metadata.ai_attempts || 0;
+    // Session 5b: per-attempt composer timings. Null on cache hits (no AI
+    // call ran) — the cached bundle's metadata predates this field for v7
+    // entries, so coalesce to null rather than persisting stale attempt data.
+    timing.composer_attempt_timings = cachedBundle
+      ? null
+      : (bundleResult.metadata.composer_attempt_timings || null);
   }
   console.log(`[composer] ${rid} SUCCESS cached=${cachedBundle} bundle_sections=${(bundleResult.bundle.sections || []).length} bundle_items=${(bundleResult.bundle.sections || []).reduce((n, s) => n + (s.items?.length || 0), 0)}`);
   appendFraming({ framings: fr }, "composer", "success", {
@@ -1882,6 +1899,10 @@ async function handleContextQuery(deps, ctx) {
         moat_alignment_count: refinementResult.moat_alignment_count,
         scan_history_used: refinementResult.scan_history_used,
         question_at: new Date().toISOString(),
+        // Session 5b: stash the originating /ask request_id so the
+        // /ask/refinement_answer leg can link its telemetry row back as a
+        // child (parent_request_id) and the stats endpoint dedupes the pair.
+        origin_request_id: requestId,
       },
     });
 
@@ -2095,6 +2116,11 @@ async function handleRefinementAnswer(deps, ctx) {
 
   const turns = Array.isArray(conversation.turns) ? conversation.turns : [];
   const initialTurn = turns[turns.length - 1];
+  // Session 5b: link this refinement_answer telemetry row back to the
+  // originating /ask row so the stats endpoint counts the pair once.
+  if (timing && initialTurn?.origin_request_id) {
+    timing.parent_request_id = initialTurn.origin_request_id;
+  }
   const originalIntent = initialTurn?.intent;
   if (!originalIntent || typeof originalIntent !== "object") {
     sse.emit("error", { error: "conversation_state", message: "Conversation has invalid state." });

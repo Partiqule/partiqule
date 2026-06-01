@@ -1199,6 +1199,10 @@ async function composePersonalizedBundle({
   scanHistory,
   contextBroadCategories,
   callAI,
+  // Session 5b: label for the model `callAI` invokes, recorded in the
+  // per-attempt timing telemetry. Purely descriptive — does not change
+  // which model runs (that's decided by the injected callAI).
+  modelLabel = "unknown",
 }) {
   if (!context || typeof context !== "object") {
     throw new ComposerError("context is required", "missing_context");
@@ -1294,13 +1298,28 @@ async function composePersonalizedBundle({
   let allDroppedSelfSwaps = [];
   let totalDashSubs = 0;
   let amendmentPrompt = null;
+  // Session 5b: per-attempt timing telemetry. One entry per AI call (the
+  // initial composition + any voice-gate/structure retry). ms measures the
+  // model call itself (the dominant cost), not the sync validation after it.
+  const attemptTimings = [];
 
   for (let attempt = 0; attempt < 2; attempt++) {
     aiAttempts++;
     let rawBundle;
+    const _attemptStart = Date.now();
+    let _callMs = null;
     try {
       rawBundle = await callComposerAI({ callAI }, userPrompt, amendmentPrompt);
+      _callMs = Date.now() - _attemptStart;
     } catch (err) {
+      _callMs = Date.now() - _attemptStart;
+      attemptTimings.push({
+        attempt: aiAttempts,
+        model: modelLabel,
+        ms: _callMs,
+        status: "error",
+        retry_reason: attempt === 0 ? "ai_error" : "ai_error_final",
+      });
       // AI call itself failed (network, parse). Retry once, else fall
       // through to templated fallback below.
       if (attempt === 0) {
@@ -1319,6 +1338,7 @@ async function composePersonalizedBundle({
         ai_attempts: aiAttempts,
         voice_gate_failures: allVoiceFailures,
         dropped_ids: allDropped,
+        composer_attempt_timings: attemptTimings,
         composition_source: "templated_fallback",
         fallback_reason: "ai_error",
       };
@@ -1416,6 +1436,13 @@ async function composePersonalizedBundle({
       : actualSwapCount === expectedSwapCount;
 
     if (voiceFailures.length === 0 && structurallyOK && swapCountOK) {
+      attemptTimings.push({
+        attempt: aiAttempts,
+        model: modelLabel,
+        ms: _callMs,
+        status: "ok",
+        retry_reason: null,
+      });
       const ordered = orderSections(validatedSections);
       // Narrative-wrapper extras. All optional — only attach when the AI
       // produced something meaningful and the gate-cleaned version still
@@ -1460,6 +1487,7 @@ async function composePersonalizedBundle({
           ai_attempts: aiAttempts,
           voice_gate_failures: allVoiceFailures,
           dropped_ids: allDropped,
+          composer_attempt_timings: attemptTimings,
           final_section_types: ordered.map(s => s.type),
           final_product_ids: ordered.flatMap(s => s.items.map(i => i.product_id)),
           composition_source: "ai",
@@ -1494,6 +1522,20 @@ async function composePersonalizedBundle({
         },
       };
     }
+
+    // Record this attempt's failure before the (optional) retry amendment.
+    // attempt 0 → "voice_gate_retry" (a second call follows); attempt 1 →
+    // "voice_gate_fail" (loop ends, templated fallback ships next).
+    const _failReason = voiceFailures.length
+      ? `voice_gate:${voiceFailures.join("|")}`
+      : (!structurallyOK ? "no_sections" : (!swapCountOK ? "swap_count" : "unknown"));
+    attemptTimings.push({
+      attempt: aiAttempts,
+      model: modelLabel,
+      ms: _callMs,
+      status: attempt === 0 ? "voice_gate_retry" : "voice_gate_fail",
+      retry_reason: _failReason,
+    });
 
     // Retry with explicit amendment naming what broke.
     if (attempt === 0) {
@@ -1541,6 +1583,7 @@ async function composePersonalizedBundle({
     ai_attempts: aiAttempts,
     voice_gate_failures: allVoiceFailures,
     dropped_ids: allDropped,
+    composer_attempt_timings: attemptTimings,
     composition_source: "templated_fallback",
     fallback_reason: allVoiceFailures.length ? "voice_gate" : "structure_or_swap_count",
   };
