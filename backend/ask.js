@@ -1225,9 +1225,12 @@ function dynamicSuggestedAction(entry, matches) {
 // History: v1 category-slot, v2 composer rewrite, v3 calibration
 // notes cleanup, v4 narrative wrapper, v5 SSE forwarding fix,
 // v6 context-fit scan filter, v7 refinement-answers hash,
-// v8 dynamic context expansion (Phase 2b).
+// v8 dynamic context expansion (Phase 2b),
+// v9 composer model swap Sonnet→Haiku (session 5b) — the key does NOT
+//    encode the model, so without this bump production would keep serving
+//    Sonnet-composed bundles from cache for up to the TTL after the swap.
 const bundleCacheKey = (contextId, audienceHash, scanSig, refHash) =>
-  `ask:bundle:v8:${contextId}:${audienceHash}:${scanSig || "anon"}:${refHash || "none"}`;
+  `ask:bundle:v9:${contextId}:${audienceHash}:${scanSig || "anon"}:${refHash || "none"}`;
 
 // Match the natural-language query against contexts.js entries.
 // First tries exact id match, then exact name match, then name
