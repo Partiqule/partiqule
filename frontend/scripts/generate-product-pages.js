@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
 import crypto from "node:crypto";
+import { SUNSET_MODE } from "../src/sunset.js";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
@@ -504,18 +505,20 @@ function escapeHtml(s) {
 }
 
 // ── Generate sitemap.xml ──
-function renderSitemap(entries) {
+function renderSitemap(entries, { homeOnly = false } = {}) {
   const today = new Date().toISOString().slice(0, 10);
-  const urls = [
-    { loc: "https://partiqule.com/", priority: "1.0", changefreq: "weekly" },
-    { loc: "https://partiqule.com/methodology", priority: "0.7", changefreq: "monthly" },
-    { loc: "https://partiqule.com/guides", priority: "0.7", changefreq: "weekly" },
-    ...entries.map(({ slug }) => ({
-      loc: `https://partiqule.com/products/${slug}`,
-      priority: "0.6",
-      changefreq: "monthly",
-    })),
-  ];
+  const urls = homeOnly
+    ? [{ loc: "https://partiqule.com/", priority: "1.0", changefreq: "weekly" }]
+    : [
+        { loc: "https://partiqule.com/", priority: "1.0", changefreq: "weekly" },
+        { loc: "https://partiqule.com/methodology", priority: "0.7", changefreq: "monthly" },
+        { loc: "https://partiqule.com/guides", priority: "0.7", changefreq: "weekly" },
+        ...entries.map(({ slug }) => ({
+          loc: `https://partiqule.com/products/${slug}`,
+          priority: "0.6",
+          changefreq: "monthly",
+        })),
+      ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(u => `  <url>
@@ -554,7 +557,9 @@ async function main() {
     seenSlugs.add(slug);
 
     try {
-      const html = renderProductPage(productName, entry);
+      // Sunset: keep the URL working, but send it to the farewell page.
+      // The real product template stays in this file for when the flag is off.
+      const html = SUNSET_MODE ? sunsetProductHtml() : renderProductPage(productName, entry);
       fs.writeFileSync(path.join(OUT_DIR, `${slug}.html`), html, "utf8");
       entries.push({ slug, name: productName });
       written++;
@@ -564,8 +569,8 @@ async function main() {
     }
   }
 
-  // Write sitemap
-  const sitemap = renderSitemap(entries);
+  // Write sitemap. While sunset is on, only the homepage is listed.
+  const sitemap = renderSitemap(entries, { homeOnly: SUNSET_MODE });
   fs.writeFileSync(path.join(PUBLIC_DIR, "sitemap.xml"), sitemap, "utf8");
 
   // Write robots.txt if it doesn't exist
@@ -575,7 +580,30 @@ async function main() {
       "User-agent: *\nAllow: /\n\nSitemap: https://partiqule.com/sitemap.xml\n", "utf8");
   }
 
-  console.log(`[SEO] ✓ Generated ${written} product pages, skipped ${skipped}, sitemap has ${entries.length} URLs`);
+  console.log(SUNSET_MODE
+    ? `[SEO] Sunset mode. Wrote ${written} redirect pages. Sitemap lists the homepage only.`
+    : `[SEO] Generated ${written} product pages, skipped ${skipped}, sitemap has ${entries.length} URLs`);
+}
+
+// Tiny page at each old product URL. It matches the farewell note and
+// sends the browser to the homepage, which is the same screen.
+function sunsetProductHtml() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<link rel="canonical" href="https://partiqule.com/" />
+<title>Partiqule</title>
+<meta http-equiv="refresh" content="0; url=/" />
+<script>location.replace("/");</script>
+</head>
+<body>
+<p><a href="/">Partiqule</a> is taking a break.</p>
+</body>
+</html>
+`;
 }
 
 main().catch(err => {
