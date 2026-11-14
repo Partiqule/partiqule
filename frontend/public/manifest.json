@@ -1,7 +1,7 @@
 {
-  "name": "Partiqule — Know What's In Your Products",
+  "name": "Partiqule — Smarter shopping, scored",
   "short_name": "Partiqule",
-  "description": "Scan any product for microplastics risk. Find safer alternatives instantly.",
+  "description": "Score everyday products from 1 to 10. Lower is safer. One score is free.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#052e16",
@@ -28,7 +28,7 @@
     {
       "name": "Scan a product",
       "short_name": "Scan",
-      "description": "Search for any product to get its risk score",
+      "description": "Score a product from 1 to 10",
       "url": "/",
       "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
     },

@@ -1,6 +1,8 @@
 # Partiqule
 
-Partiqule scores everyday products from 1 to 10. Lower is safer. A person can search a name, scan a barcode, or photograph a label. The result names the chemicals that drove the score, shows a child score and a pregnancy score, and suggests a cleaner alternative.
+Partiqule is a shopping tool. It scores everyday products from 1 to 10 so a buying decision is easier to make. Lower is safer. A person can search a name, scan a barcode, or photograph a label. The result explains the number. Kids mode and pregnancy mode apply stricter rules to the same ingredients. They are not medical advice. When a cleaner option is already in the library, it can be listed next to the score.
+
+One score is free, with no account and no card. On the web, the first subscription is 7 days free and a card is required, then $4.99 a month. On iPhone, the price and any trial are whatever Apple shows on the payment sheet.
 
 The public site is [partiqule.com](https://partiqule.com). The iOS app is on the App Store (`com.partiqule.app`). This repo is the whole product: the website, the API, and the iOS wrapper.
 
@@ -10,7 +12,7 @@ A longer, plain-language tour is in [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md)
 
 ## What is interesting in the code
 
-Most products never wait on a model. About 3,156 products have a hand-checked score in `backend/calibration.js`. Clothing is scored from the fiber label by `backend/textileScorer.js` (26 fibers, no model call). Food and personal care have the same kind of deterministic scorer in `backend/foodScorer.js` and `backend/personalCareScorer.js`.
+Most products never wait on a model. About 3,156 products have a hand-checked score in `backend/calibration.js`. Clothing is scored from the fiber label by `backend/textileScorer.js` (26 fibers, no model call). Personal care can be scored from the ingredient list by `backend/personalCareScorer.js`. `backend/foodScorer.js` is the same kind of rule scorer for food. A shopper sees it only where the server has promoted it. Otherwise an unknown food still uses the model.
 
 A model (Claude Haiku) is the fallback when the product is not in that library and the ingredients had to be looked up. The API refuses to invent a confident score when it does not have the ingredients.
 

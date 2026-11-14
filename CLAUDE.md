@@ -8,7 +8,7 @@ Guidance for Claude Code working in this repo.
 
 ## Project Overview
 
-Partiqule — AI-powered product health scoring app. Search, scan a barcode, or photograph a product → 1-10 risk score with chemical concerns, child/pregnancy safety scores, and curated alternatives. **Lower score = safer.**
+Partiqule is a shopping tool. Search, scan a barcode, or photograph a product and get a 1 to 10 score. Lower is safer. About 3,156 products are hand-checked. Clothing and personal care can be scored from the label by rules. A model is the fallback. Kids mode and pregnancy mode apply stricter rules. They are not medical advice. One score is free, with no card.
 
 Paul is CEO/developer. Sara is co-founder (content + Instagram).
 
