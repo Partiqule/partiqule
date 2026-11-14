@@ -4,6 +4,7 @@ import ListBuilderPage from "./lists/ListBuilderPage";
 import AskPrototypePage from "./ask/AskPrototypePage";
 import { makeListsApi } from "./lists/api";
 import { matchesHistory } from "./intel/matching";
+import { SUNSET_MODE } from "./sunset.js";
 
 // Lazy-load @capgo/native-purchases via dynamic import so it only runs in
 // Capacitor iOS (where require() doesn't exist and static import may fail
@@ -19,6 +20,7 @@ let nativePurchasesLoading = null;
 // so every `await` of an async function returning the raw Proxy hangs forever.
 // Wrapping in an object shields Promise.resolve from seeing a thenable.
 const loadNativePurchases = async () => {
+  if (SUNSET_MODE) return { plugin: null };
   if (NativePurchases) { console.log("[IAP] loadNativePurchases cache hit"); return { plugin: NativePurchases }; }
   if (nativePurchasesLoading) { console.log("[IAP] loadNativePurchases already loading, awaiting"); return nativePurchasesLoading; }
   console.log("[IAP] loadNativePurchases starting dynamic import");
@@ -5692,6 +5694,7 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
   };
 
   const submit = async () => {
+    if (SUNSET_MODE) return;
     if (!email.includes("@") || (mode !== "reset" && password.length < 6)) {
       setError(mode === "reset" ? "Enter a valid email." : "Enter a valid email and a password of at least 6 characters.");
       return;
@@ -7485,6 +7488,7 @@ function App() {
   const [captureMsg,     setCaptureMsg]     = useState("");
 
   const submitCaptureEmail = async () => {
+    if (SUNSET_MODE) return;
     if (!captureEmail.includes("@")) return;
     setCaptureSubmitting(true);
     try {
@@ -7695,7 +7699,7 @@ function App() {
   // Load product price from StoreKit on iOS so we show the real App Store price
   useEffect(() => {
     console.log("[IAP] price-fetch effect fired, IS_NATIVE:", IS_NATIVE);
-    if (!IS_NATIVE) return;
+    if (SUNSET_MODE || !IS_NATIVE) return;
     (async () => {
       try {
         console.log("[IAP] price-fetch: loading native purchases");
@@ -7723,6 +7727,7 @@ function App() {
   // the getPurchases check any user could tap Restore on a fresh install and
   // appear subscribed until reload.
   const restoreSubscription = async () => {
+    if (SUNSET_MODE) return;
     if (!user) { setShowAuth(true); return; }
     try {
       const { plugin: np } = await loadNativePurchases();
@@ -7781,6 +7786,8 @@ function App() {
   };
 
   const startCheckout = async () => {
+    // Sunset flag: never open Stripe Checkout or the App Store sheet.
+    if (SUNSET_MODE) return;
     if (!user) { setShowAuth(true); return; }
 
     if (IS_NATIVE) {

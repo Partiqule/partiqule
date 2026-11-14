@@ -1,13 +1,29 @@
 import "./tokens.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
+import FarewellPage from "./FarewellPage.jsx";
+import { SUNSET_MODE } from "./sunset.js";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+// While the sunset flag is on, App.jsx stays in the repo but the import
+// below is dead code, so the production build does not ship the app.
+// Set SUNSET_MODE to false in sunset.js and rebuild to mount it again.
+if (SUNSET_MODE) {
+  root.render(
+    <React.StrictMode>
+      <FarewellPage />
+    </React.StrictMode>
+  );
+} else {
+  import("./App.jsx").then(({ default: App }) => {
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  });
+}
 
 // Register PWA service worker
 if ('serviceWorker' in navigator) {

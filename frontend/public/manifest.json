@@ -1,15 +1,15 @@
 {
-  "name": "Partiqule — Know What's In Your Products",
+  "name": "Partiqule",
   "short_name": "Partiqule",
-  "description": "Scan any product for microplastics risk. Find safer alternatives instantly.",
+  "description": "Partiqule is taking a break. New sign ups and subscriptions are closed.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#052e16",
-  "theme_color": "#052e16",
+  "background_color": "#f3ede2",
+  "theme_color": "#f3ede2",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["health", "lifestyle", "utilities"],
+  "categories": ["health", "lifestyle"],
   "icons": [
     {
       "src": "/favicon-192.png",
@@ -22,22 +22,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Scan a product",
-      "short_name": "Scan",
-      "description": "Search for any product to get its risk score",
-      "url": "/",
-      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "My Scans",
-      "short_name": "History",
-      "description": "View your scan history and recommendations",
-      "url": "/history",
-      "icons": [{ "src": "/favicon-192.png", "sizes": "192x192" }]
     }
   ]
 }
