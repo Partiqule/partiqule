@@ -12,7 +12,12 @@
  */
 
 const API_BASE  = "https://partiqule-production.up.railway.app";
-const ADMIN_KEY = process.env.ADMIN_KEY || "RowenaRavenclaw2024!";
+const ADMIN_KEY = process.env.ADMIN_KEY || "";
+if (!ADMIN_KEY) {
+  console.error("Set ADMIN_KEY in the environment before running this script.");
+  console.error("The old fallback password was removed because it is in the public git history. Rotate it in Railway if it is still the live key.");
+  process.exit(1);
+}
 
 async function main() {
   console.log("\nPartiqule — Full Redis Reload");
