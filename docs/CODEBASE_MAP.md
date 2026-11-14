@@ -163,51 +163,64 @@ About 4,600 files under `frontend/node_modules`, the built `frontend/dist`, and 
 
 ## iOS sign-in
 
-The last known bug was sign-in on the iPhone app. Here is what the code actually does, what was going wrong, what this pull request changes, and what only you can do in the Apple and Supabase dashboards.
+The bug that mattered is this: people who were paying subscribers opened the iPhone app and were signed out. This section is what the code does, why that happened, what this branch changes, and what you have to confirm on a real phone. The installed App Store build does not contain the fix until you ship a new one.
 
-### How sign-in works
+### How a session is supposed to work
 
-The iPhone app does not have its own login screen in Swift. It loads the React app. Accounts are Supabase accounts.
+The iPhone app loads the React site inside a web view. There is no separate native login screen. Supabase issues two tokens:
 
-Before this change, the only method was email and password. There was no Sign in with Apple button, the entitlements file was empty, and there was no URL scheme to bring an email link back into the app. Password reset always sent the person to `https://partiqule.com/reset-password`, which opens Safari, not the app.
+- An access token, which lasts about an hour. Every API call sends it.
+- A refresh token, which lasts much longer. The app trades it for a new access token. Supabase rotates it: the old refresh token stops working as soon as a new one is issued.
 
-Checked live on the Supabase project:
+The app is supposed to save both tokens and refresh the access token while the app is open. Signing out, in code, means deleting those saved tokens. The only buttons that are supposed to do that are Sign out and Delete account.
 
-- Email sign-in is on.
-- Sign in with Apple is off.
-- New accounts must click a confirmation email before they can sign in (`mailer_autoconfirm` is false).
-- The auth service itself is up.
+Apple payments do not keep the login. StoreKit and the receipt check only update the subscription row. A failed receipt returns "verification failed" and leaves the session alone. There is no RevenueCat. Stripe webhooks do the same job for web subscribers: they write the profile, they do not delete the login.
 
-Bundle id `com.partiqule.app` matches the Capacitor app id and the start of the subscription product id. The Xcode team id is `39AMCG49RK`. There is no Services ID, no Apple private key, and no provisioning profile in the repo. Those live in the Apple Developer account.
+### Why paying subscribers were signed out
 
-### Most likely causes, in order
+1. **The tokens were saved in the web view's localStorage.** iOS throws that store away when it reclaims the web view. The next launch has no refresh token, so the person is signed out. People who pay use the app often enough to notice. This is the main cause.
 
-1. **The sign-in call hangs inside the iOS web view.** The Supabase library takes a browser lock (`navigator.locks`) around every login. That lock often never finishes in the iOS web view, so the button stays on "Please wait...". This is a known problem with this library on Capacitor. The web version is less affected because desktop Safari does release the lock.
+2. **A failed refresh deletes the saved session.** The Supabase library does this on purpose when the server rejects the refresh token. On this app it also happened in cases that should have been temporary:
+   - The web view's "page is visible" event is a poor stand-in for "the app is in the foreground." A refresh could run while the phone was asleep, fail, and delete the login.
+   - Two refreshes could overlap. The first one rotated the token. The second one still held the old token, the server rejected it, and the library deleted the new good session along with the old one.
+   - The same library takes a browser lock around every auth call. That lock often never finishes in this web view, so a refresh stalls and then the session is cleared.
 
-2. **A new account looked signed in when it was not.** Because confirmation email is required, sign-up returns a user and no session. The old code still closed the dialog and treated the person as signed in. The next request had no token and failed. On an iPhone, the confirmation link also opened Safari, so the app never saw the confirmation.
+3. **A billing error was treated as "not subscribed."** If the profile read failed, the API cached "no subscription" and the app showed the paywall. A separate bug in May 2026 did the same thing to real subscribers whose `is_subscribed` flag was true but whose `subscription_status` column was still empty. The status fallback for that shape was already in the code. A failed read was still counted as unpaid. That looks like being locked out of a paid account. It does not, by itself, delete the tokens. The sign-in modal also opened on any 401, including an expired access token, which felt like a sign-out even when the session was still there.
 
-3. **Password reset could not get back into the app.** The link was hard-coded to the website. There was no custom URL scheme and no associated domain. A second bug then replaced `/reset-password` with `/` as soon as the page loaded, which can throw away the reset token before the form uses it.
+4. **New accounts and password reset were also broken, and they are a different bug.** Confirmation email is required. The old sign-up screen treated a user with no session as signed in. Reset links opened Safari, and the page then replaced `/reset-password` with `/`, which can drop the token. From about 24 April to 15 May 2026 every new account failed in the database (`handle_new_user`). Migration 015 fixed that, and the auth service is answering now. None of that logs an existing subscriber out.
 
-4. **The session was stored where iOS can delete it.** After a real sign-in, killing the app could drop the web view's local storage. The person came back signed out.
+An expired Apple signing certificate does not sign anyone out of an app that is already installed. It only blocks a new upload. Certificates are not in the repo. One created between March and June 2026 would still be inside Apple's one-year window on 14 November 2026. Check the Signing tab in Xcode to be sure.
 
-5. **A database bug broke every new account for about three weeks in spring 2026.** From roughly 24 April to 15 May 2026, the `handle_new_user` trigger failed and Supabase returned "Database error saving new user." Migration `015` fixes that, and the auth service is answering now. If someone tried the app in that window, this is the bug they hit. It is not an Apple certificate problem.
+### What this branch changes
 
-6. **Sign in with Apple was never built.** If the report was "the Apple button does not work," that is because there was no Apple button. Apple's rule that requires Sign in with Apple applies when an app offers Google or Facebook login. This app only offered email, so Apple did not require the button. It is still the login people expect in an iOS app, and it is the one that does not depend on a confirmation email.
+The first pass stored the session in Capacitor Preferences and stopped using the browser lock on the phone. That was not the whole fix. A failed refresh still deleted whatever Preferences had just saved, and the app still refreshed from the web view's visibility signal.
 
-Signing certificates are not in the repo, so this review cannot see an expiry date. An Apple distribution certificate lasts one year. One created with the app (March to June 2026) would still be valid on 14 November 2026. An older one would not. An expired certificate blocks a new upload. It does not log existing users out of an app that is already installed. Open Xcode once and read the signing status. That is the only reliable check.
+This update adds the rest:
 
-### What this pull request changes
+- Token refresh starts when the app comes to the foreground and stops when it backgrounds, using Capacitor's app-state event instead of the web view's visibility event.
+- If a refresh deletes the saved session, one backup of the last value is kept. The next read puts it back. If that same token fails a second time, it is dropped, so a token Supabase has actually revoked does not loop forever.
+- Sign out and Delete account set a flag first, so those actions delete the backup too.
+- If the library announces "signed out" on the phone, the UI waits and reads storage again before it clears the person. A restored session stays on screen.
+- A 401 no longer opens the sign-in modal while a session is still on screen.
+- A failed subscription lookup is not cached and is not treated as unpaid. The scan is allowed and the app leaves the subscription flag unknown, so it does not show the paywall. A row that really says "not subscribed" still shows the paywall.
+- A profile with `is_subscribed: true` and an empty status is still treated as active.
 
-- On the iPhone, sign-in no longer uses the web lock that hangs. The session is stored with Capacitor Preferences, which survives a relaunch.
-- Sign-up with no session stays on the form and tells the person to confirm the email.
-- Password reset and confirmation use `partiqule://auth/callback` inside the app, and the website no longer wipes a `/reset-password` link.
-- The iPhone sign-in form has a Sign in with Apple button. It uses a small plugin that talks to Apple's own sign-in API and then hands the token to Supabase. It does not include the Google or Facebook SDKs.
-- The app entitlement and the `partiqule` URL scheme are in the Xcode project.
-- The website does not show the Apple button. On the web, email still works, and a bad password now shows a plain sentence. That path was clicked through in Chrome against the live Supabase project.
+Sign in with Apple, the URL scheme, and the email-confirmation copy from the first pass are unchanged. The website still does not show the Apple button.
 
-The App Store build that is already installed does not contain any of this. It ships when you archive a new build.
+Tests cover the backup rules (`frontend/src/auth/nativeAuth.test.js`) and the subscription decision (`backend/subscriptionState.test.js`). They do not run inside an iPhone web view. That check is yours, below.
 
-### What you have to do
+### What you have to verify on a phone
+
+Ship a build from this branch first. The App Store app people have today does not include it.
+
+1. Sign in with an account that is an active subscriber. Force-quit the app. Open it again. You should still be signed in, on the home screen, not on the sign-in form.
+2. Leave that app in the background for more than an hour (the access token lasts about an hour), then open it and run a scan. You should still be signed in. The scan should run, not bounce you to the paywall.
+3. Turn on airplane mode, open the app, then turn the network back on. You should still be signed in after the network returns.
+4. Tap Sign out. Force-quit. Open the app. You should be signed out. The backup must not sign you back in.
+5. Sign in with Apple once the provider is on (steps below). Force-quit and reopen. The Apple session should still be there.
+6. On a subscriber, confirm a scan does not show the paywall. If you can, watch one scan while the phone is on a normal connection. A receipt failure in the purchase flow should show an error and leave you signed in.
+
+### What you have to do in the dashboards
 
 These cannot be done from the repo.
 
@@ -217,7 +230,7 @@ These cannot be done from the repo.
    - `partiqule://auth/callback`
    - `https://partiqule.com/reset-password`
    - `https://partiqule.com/`
-   
+
    Until `partiqule://auth/callback` is allowed, the app's reset email still falls back to the website.
 
 3. **In the Apple Developer account** (team `39AMCG49RK`):
@@ -227,13 +240,11 @@ These cannot be done from the repo.
 
 4. **In Supabase, Authentication, Providers, Apple**, turn the provider on.
    - Client IDs: `com.partiqule.app`
-   - The dashboard may also ask for the Services ID secret (a JWT you generate from the `.p8`, the Key ID, and the team id). For the native button, the bundle id is the client id that matters. Supabase's own Apple guide is the form to follow. Do not paste the `.p8` into the repo or into Slack.
+   - The dashboard may also ask for a secret generated from the `.p8`, the Key ID, and the team id. For the native button, the bundle id is the client id that matters. Follow Supabase's Apple guide. Do not paste the `.p8` into the repo.
 
-5. **On a Mac**, open `frontend/ios/App/App.xcodeproj`, let the Swift packages download, and archive. The new entitlement will fail to sign until step 3 is done. That failure is expected, and it is the signal that the capability is not on the App ID yet.
+5. **On a Mac**, open `frontend/ios/App/App.xcodeproj`, let the Swift packages download, and archive. The new entitlement will fail to sign until step 3 is done.
 
-6. **Ship the build.** Test three paths on a phone: email sign-in for an existing account, a brand-new account (including the confirmation email), and Sign in with Apple. The Apple sheet should appear. If Supabase still has the Apple provider off, the app says so in a sentence instead of spinning.
-
-7. **Keep Supabase from pausing.** The project is awake today. On the free plan it sleeps after a stretch of inactivity, and sign-in dies for everyone until you wake it.
+6. **Keep Supabase from pausing.** The project is awake today. On the free plan it sleeps after inactivity, and every session refresh then fails. A failed refresh is one of the ways this bug deleted the login.
 
 ## How the repo looks to a reviewer
 
@@ -259,7 +270,7 @@ Worth doing next, if the goal is a strong first impression:
 ## Plan to make it demoable
 
 1. Rotate the admin key and the Upstash token. Update Railway. This is the only urgent item.
-2. Do the Apple and Supabase steps in the sign-in section, then archive a new iOS build and try the three login paths on a phone.
+2. Do the Apple and Supabase steps in the sign-in section, archive a new iOS build, and run the six phone checks in that section. The important one is: a paying account stays signed in after a force-quit and after an hour in the background.
 3. For a recruiter on a laptop: `npm install` in both folders, `npm test` in `backend`, `npm run dev` in `frontend`. The home page and the sign-in form work with no keys. Say up front that a live score needs a subscribed account.
 4. If you want them to finish a scan on their own, add a single demo account in Supabase with an active subscription, or a clearly labeled sample-result mode that does not call the paid model. That is a small follow-up. It was not done here, because a hidden bypass of the paywall would be the wrong fix.
 5. Keep Railway and Supabase on a plan that does not sleep. The API process has already stayed up since the last deploy. The risk is Supabase pausing, not the Node code failing to start.

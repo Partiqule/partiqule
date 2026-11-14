@@ -5,7 +5,9 @@ import {
   friendlyAuthError,
   isAppleCancel,
   signInWithAppleNative,
+  signOutPartiqule,
   listenForAuthCallback,
+  bindNativeAuthLifecycle,
 } from "./auth/nativeAuth.js";
 import ListBuilderPage from "./lists/ListBuilderPage";
 import AskPrototypePage from "./ask/AskPrototypePage";
@@ -7643,7 +7645,7 @@ function App() {
       });
       const d = await r.json();
       if (!r.ok) { setShowDeleteConfirm(false); setError("Delete failed. Please try again."); setTimeout(()=>setError(null),4000); return; }
-      await supabase.auth.signOut().catch(()=>{});
+      await signOutPartiqule(supabase);
       setUser(null);
       setShowDeleteConfirm(false);
       setHistory([]);
@@ -7688,12 +7690,27 @@ function App() {
       if (r.ok) {
         const d = await r.json();
         const sub = d.subscription || null;
+        // A billing lookup error is not "unpaid". Leave the flag unknown
+        // so a paying subscriber is not sent to the paywall.
+        if (sub?.readError) {
+          setIsSubscribed(null);
+          setSubscription(sub);
+          return null;
+        }
         setSubscription(sub);
         const subscribed = sub?.status === "trialing" || sub?.status === "active";
         setIsSubscribed(subscribed);
         return subscribed;
       }
+      if (r.status === 401 || r.status >= 500) {
+        setIsSubscribed(null);
+        return null;
+      }
       const r2 = await fetch(`${API_BASE}/subscription-status?userId=${userId}`);
+      if (!r2.ok) {
+        setIsSubscribed(null);
+        return null;
+      }
       const d2 = await r2.json();
       setIsSubscribed(!!d2.is_subscribed);
       setSubscription(d2.is_subscribed ? { status: "active", trialDaysRemaining: null, currentPeriodEnd: d2.ends_at || null } : null);
@@ -7732,13 +7749,27 @@ function App() {
         });
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user || null;
-      setUser(u);
-      if (u) {
-        loadCloudHistory(u.id);
-        checkSubscription(u.id).then(() => syncScanCount(u.id));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        loadCloudHistory(session.user.id);
+        checkSubscription(session.user.id).then(() => syncScanCount(session.user.id));
+        return;
       }
+      // A failed token refresh fires SIGNED_OUT. On the iPhone that used to
+      // stick, because the web view had already thrown the saved session
+      // away. Give the durable store one chance to put it back before the
+      // UI drops the person. Do not call getSession inside this callback:
+      // it runs while the auth lock is held.
+      if (event === "SIGNED_OUT" && IS_NATIVE) {
+        setTimeout(() => {
+          supabase.auth.getSession().then(({ data }) => {
+            setUser(data?.session?.user || null);
+          }).catch(() => setUser(null));
+        }, 0);
+        return;
+      }
+      setUser(null);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -7748,6 +7779,7 @@ function App() {
   useEffect(() => {
     if (!IS_NATIVE) return undefined;
     let remove = () => {};
+    let removeLife = () => {};
     let cancelled = false;
     listenForAuthCallback(supabase, (event) => {
       if (cancelled) return;
@@ -7766,7 +7798,13 @@ function App() {
     }).catch((e) => {
       console.warn("[auth] deep link listener failed", e?.message);
     });
-    return () => { cancelled = true; remove(); };
+    bindNativeAuthLifecycle(supabase).then((unsubscribe) => {
+      if (cancelled) unsubscribe();
+      else removeLife = unsubscribe;
+    }).catch((e) => {
+      console.warn("[auth] lifecycle listener failed", e?.message);
+    });
+    return () => { cancelled = true; remove(); removeLife(); };
   }, []);
 
   // ── Stripe checkout ───────────────────────────────────────────
@@ -8121,7 +8159,7 @@ function App() {
   );
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await signOutPartiqule(supabase);
     setUser(null);
   };
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -8346,7 +8384,11 @@ function App() {
       setLoading(false);
       setStreamStage(null);
       setQuery("");
-      setShowAuth(true);
+      // A 401 while the person is still signed in is an expired access
+      // token the refresh step already tried. Opening the sign-in modal
+      // on top of a live session is what paying users described as being
+      // signed out. Only show it when there is no session left.
+      if (!user) setShowAuth(true);
       return true;
     }
     return false;

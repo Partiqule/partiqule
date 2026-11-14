@@ -1,27 +1,41 @@
-// iOS sign-in helpers.
+// iOS session helpers.
 //
-// The Apple app is a Capacitor WKWebView around this same React code.
-// Two things in that webview break ordinary Supabase email sign-in:
+// Paying subscribers were coming back to the iPhone app signed out.
+// The app is a Capacitor web view, and three things in that web view
+// caused it:
 //
-// 1. supabase-js takes a Web Locks lock (navigator.locks) around every
-//    auth call. WKWebView's lock implementation often never settles, so
-//    the Sign in button stays on "Please wait..." forever.
-// 2. The session is stored in localStorage, which iOS can drop. The
-//    person signs in, leaves the app, and comes back signed out.
+// 1. The session lived in localStorage. iOS drops that store when it
+//    reclaims the web view, so the next launch had no refresh token.
+// 2. Supabase refreshes the access token on a timer and deletes the
+//    saved session when a refresh fails. The web view's visibility
+//    events are a bad signal for "the app is in the foreground," so a
+//    refresh could run while the phone was asleep, fail, and wipe a
+//    good login. A second refresh that still holds the previous
+//    refresh token does the same thing, because Supabase rotates that
+//    token and then rejects the old one.
+// 3. supabase-js also takes a browser lock (navigator.locks) around
+//    every auth call. That lock often never finishes in this web view,
+//    so Sign in sits on "Please wait..." and a refresh can stall until
+//    the library gives up and clears the session.
 //
-// Native sign-in therefore uses an in-process lock and Capacitor
-// Preferences. Web keeps the library defaults.
+// Native sign-in stores the session in Capacitor Preferences, pauses
+// token refresh while the app is backgrounded, and keeps one backup of
+// the last saved session so a single failed refresh can be undone.
+// A real Sign out deletes both copies.
 //
-// Sign in with Apple is a small local plugin (AuthenticationServices only,
-// no Google or Facebook SDK). The identity token is exchanged with
-// supabase.auth.signInWithIdToken. Email links come back through the
-// partiqule://auth/callback scheme because the app has no universal link.
+// A billing lookup error used to be stored as "not subscribed." That
+// path is in backend/subscriptionState.js. It does not clear the session.
+//
+// Sign in with Apple is a small local plugin. Email links come back
+// through partiqule://auth/callback.
 
 import { createClient } from "@supabase/supabase-js";
 
 export const NATIVE_AUTH_CALLBACK = "partiqule://auth/callback";
+const BACKUP_SUFFIX = "::backup";
 
 let lockTail = Promise.resolve();
+let explicitSignOut = false;
 
 // One-at-a-time lock that does not touch navigator.locks.
 export function inProcessLock(_name, _acquireTimeout, fn) {
@@ -30,9 +44,91 @@ export function inProcessLock(_name, _acquireTimeout, fn) {
   return run;
 }
 
-function preferencesStorage() {
+export function noteExplicitSignOut() { explicitSignOut = true; }
+export function clearExplicitSignOut() { explicitSignOut = false; }
+
+export function refreshActionForAppState(isActive) {
+  return isActive ? "start" : "stop";
+}
+
+function readLegacy(key) {
+  try {
+    if (typeof localStorage === "undefined") return null;
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLegacy(key, value) {
+  try {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+// prefs: { get(key) -> string|null, set(key, value), remove(key) }
+export function createDurableAuthStorage(prefs, { isExplicitSignOut } = {}) {
+  const explicit = () => (isExplicitSignOut ? isExplicitSignOut() : explicitSignOut);
+  const backupKey = (key) => key + BACKUP_SUFFIX;
+
+  return {
+    async getItem(key) {
+      try {
+        const primary = await prefs.get(key);
+        if (primary != null) return primary;
+        if (!explicit()) {
+          const backup = await prefs.get(backupKey(key));
+          if (backup != null) {
+            await prefs.set(key, backup);
+            return backup;
+          }
+        }
+      } catch {}
+      const legacy = readLegacy(key);
+      if (legacy != null && !explicit()) {
+        try { await prefs.set(key, legacy); } catch {}
+      }
+      return legacy;
+    },
+    async setItem(key, value) {
+      try {
+        await prefs.set(key, value);
+        // The value just written is the source of truth. A backup of an
+        // older token must not be restored over it.
+        await prefs.remove(backupKey(key));
+        return;
+      } catch {}
+      writeLegacy(key, value);
+    },
+    async removeItem(key) {
+      if (explicit()) {
+        try {
+          await prefs.remove(key);
+          await prefs.remove(backupKey(key));
+        } catch {}
+        try { localStorage.removeItem(key); } catch {}
+        return;
+      }
+      try {
+        const existing = await prefs.get(key);
+        const backup = await prefs.get(backupKey(key));
+        if (existing != null && existing === backup) {
+          // Same token already failed once. Keeping it would loop.
+          await prefs.remove(key);
+          await prefs.remove(backupKey(key));
+          return;
+        }
+        if (existing != null) await prefs.set(backupKey(key), existing);
+        await prefs.remove(key);
+      } catch {}
+    },
+  };
+}
+
+function capacitorPrefs() {
   let prefsPromise = null;
-  const loadPrefs = () => {
+  const load = () => {
     if (!prefsPromise) {
       prefsPromise = import("@capacitor/preferences")
         .then((mod) => mod.Preferences)
@@ -40,49 +136,28 @@ function preferencesStorage() {
     }
     return prefsPromise;
   };
-
   return {
-    async getItem(key) {
-      const Preferences = await loadPrefs();
-      if (Preferences) {
-        try {
-          const { value } = await Preferences.get({ key });
-          if (value != null) return value;
-        } catch {}
-      }
-      // Older builds kept the session in localStorage. Copy it once so a
-      // relaunch still finds it after iOS clears the webview store.
-      try {
-        const legacy = localStorage.getItem(key);
-        if (legacy != null && Preferences) {
-          try { await Preferences.set({ key, value: legacy }); } catch {}
-        }
-        return legacy;
-      } catch {
-        return null;
-      }
+    async get(key) {
+      const Preferences = await load();
+      if (!Preferences) return null;
+      const { value } = await Preferences.get({ key });
+      return value ?? null;
     },
-    async setItem(key, value) {
-      const Preferences = await loadPrefs();
-      if (Preferences) {
-        try {
-          await Preferences.set({ key, value });
-          return;
-        } catch {}
-      }
-      try { localStorage.setItem(key, value); } catch {}
+    async set(key, value) {
+      const Preferences = await load();
+      if (!Preferences) throw new Error("Preferences unavailable");
+      await Preferences.set({ key, value });
     },
-    async removeItem(key) {
-      const Preferences = await loadPrefs();
-      if (Preferences) {
-        try {
-          await Preferences.remove({ key });
-          return;
-        } catch {}
-      }
-      try { localStorage.removeItem(key); } catch {}
+    async remove(key) {
+      const Preferences = await load();
+      if (!Preferences) return;
+      await Preferences.remove({ key });
     },
   };
+}
+
+function preferencesStorage() {
+  return createDurableAuthStorage(capacitorPrefs());
 }
 
 export function createPartiquleSupabase(url, key, { isNative } = {}) {
@@ -197,5 +272,34 @@ export async function listenForAuthCallback(supabase, onEvent) {
       onEvent({ type: "error", message: friendlyAuthError(error?.message) });
     }
   });
+  return () => { handle.remove(); };
+}
+
+// Marks the following removeItem calls as a real sign-out so the backup
+// copy is deleted too. The flag is cleared when this function returns,
+// which is after supabase has already removed the stored session.
+export async function signOutPartiqule(supabase) {
+  noteExplicitSignOut();
+  try {
+    await supabase.auth.signOut();
+  } finally {
+    clearExplicitSignOut();
+  }
+}
+
+// WKWebView visibility is not a reliable "app is in the foreground" signal.
+// Capacitor's appStateChange is. startAutoRefresh also turns off the
+// library's own visibility watcher, so the two cannot both refresh and
+// invalidate the refresh token.
+export async function bindNativeAuthLifecycle(supabase) {
+  const { App } = await import("@capacitor/app");
+  const apply = (isActive) => {
+    if (refreshActionForAppState(isActive) === "start") return supabase.auth.startAutoRefresh();
+    return supabase.auth.stopAutoRefresh();
+  };
+  const handle = await App.addListener("appStateChange", ({ isActive }) => {
+    apply(!!isActive).catch(() => {});
+  });
+  await apply(true);
   return () => { handle.remove(); };
 }
