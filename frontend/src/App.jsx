@@ -350,6 +350,30 @@ const authHeaders = async () => {
     return token ? { "Authorization": `Bearer ${token}` } : {};
   } catch { return {}; }
 };
+function getGuestId() {
+  try {
+    let id = localStorage.getItem("pq_guest_id");
+    if (!id || !/^[A-Za-z0-9_-]{8,80}$/.test(id)) {
+      const uuid = globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `g${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+      id = uuid;
+      localStorage.setItem("pq_guest_id", id);
+    }
+    return id;
+  } catch {
+    return "guestfallback1";
+  }
+}
+
+function noteFreeScan(data) {
+  if (!data || typeof data !== "object") return;
+  if (data.guest_id) {
+    try { localStorage.setItem("pq_guest_id", data.guest_id); } catch {}
+  }
+  if (data.free_scan) {
+    try { localStorage.setItem("pq_free_score_used", "1"); } catch {}
+  }
+}
+
 const authedFetch = async (url, options = {}) => {
   const buildOpts = async () => ({
     ...options,
@@ -381,7 +405,7 @@ const analyzeQuiet = async (query) => {
   const res = await authedFetch(`${API_BASE}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query: trimmed }),
+    body: JSON.stringify({ query: trimmed, guestId: getGuestId() }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -406,7 +430,7 @@ const streamingAnalyze = async (body, handlers, signal) => {
   const res = await authedFetch(`${API_BASE}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Accept": "application/x-ndjson" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, guestId: body.guestId || getGuestId() }),
     signal,
   });
   if (!res.ok) {
@@ -1113,9 +1137,178 @@ const ShareCompareCard = ({result, alternative, onClose}) => {
   );
 };
 
+function scoreShareUrl(result) {
+  const calibrated = result && (result.source === "calibration" || result.ingredient_source === "calibration");
+  if (!calibrated) return "https://partiqule.com";
+  const slug = String(result.product_name || "")
+    .toLowerCase()
+    .trim()
+    .replace(/['’]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return slug ? `https://partiqule.com/products/${slug}` : "https://partiqule.com";
+}
 
+function scoreShareVerdict(score) {
+  if (score <= 3) return "Looks good.";
+  if (score <= 5) return "Could be cleaner.";
+  if (score <= 6) return "Swap when you can.";
+  if (score <= 7) return "Better options exist.";
+  if (score <= 9) return "Hard pass.";
+  return "Avoid.";
+}
 
+const ShareScoreCard = ({ result, score, onClose }) => {
+  const canvasRef = useRef(null);
+  const [status, setStatus] = useState("idle");
+  const name = result?.product_name || "This product";
+  const numeric = Number(score);
+  const url = scoreShareUrl(result);
+  const blurb = `${name} scored ${numeric.toFixed(1)}/10 on Partiqule. Lower is safer.`;
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !Number.isFinite(numeric)) return;
+    let cancelled = false;
+    const draw = () => {
+      if (cancelled) return;
+      const css = getComputedStyle(document.documentElement);
+      const pick = (token, fallback) => (css.getPropertyValue(token) || fallback).trim();
+      const cream = pick("--cream", "#f3ede2");
+      const ink = pick("--ink", "#1a1f15");
+      const inkSoft = pick("--ink-soft", "#4a5342");
+      const moss = pick("--moss", "#2d5a27");
+      const color = numeric <= 3 ? pick("--score-green", "#6b8c3e") : numeric <= 5 ? pick("--score-amber", "#c49a33") : pick("--score-red", "#b0493a");
+      const W = 1080;
+      const H = 1080;
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = cream;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = moss;
+      ctx.fillRect(80, 120, 64, 4);
+      ctx.font = "500 42px 'DM Sans', system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillStyle = ink;
+      ctx.fillText("parti", 80, 210);
+      const partiW = ctx.measureText("parti").width;
+      ctx.fillStyle = moss;
+      ctx.fillText("q", 80 + partiW, 210);
+      const qW = ctx.measureText("q").width;
+      ctx.fillStyle = ink;
+      ctx.fillText("ule", 80 + partiW + qW, 210);
+      ctx.fillStyle = inkSoft;
+      ctx.font = "500 22px 'DM Sans', system-ui, sans-serif";
+      ctx.fillText("LOWER IS SAFER", 80, 250);
+
+      ctx.fillStyle = ink;
+      ctx.font = "400 64px 'Lora', Georgia, serif";
+      const words = name.split(" ");
+      let line = "";
+      const lines = [];
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > 920 && line) { lines.push(line); line = word; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+      const shown = lines.slice(0, 3);
+      shown.forEach((text, i) => ctx.fillText(text, 80, 380 + i * 76));
+
+      ctx.beginPath();
+      ctx.arc(540, 700, 120, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = "400 92px 'Lora', Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(numeric.toFixed(1), 540, 690);
+      ctx.font = "500 22px 'DM Sans', system-ui, sans-serif";
+      ctx.fillStyle = inkSoft;
+      ctx.fillText("/10", 540, 760);
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = ink;
+      ctx.font = "400 36px 'Lora', Georgia, serif";
+      ctx.fillText(scoreShareVerdict(numeric), 540, 900);
+      ctx.fillStyle = inkSoft;
+      ctx.font = "500 22px 'DM Sans', system-ui, sans-serif";
+      ctx.fillText("partiqule.com", 540, 980);
+    };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+    else draw();
+    return () => { cancelled = true; };
+  }, [name, numeric]);
+
+  const share = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setStatus("copying");
+    try {
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      const file = new File([blob], "partiqule-score.png", { type: "image/png" });
+      if (navigator.share) {
+        const withFile = navigator.canShare && navigator.canShare({ files: [file] });
+        if (withFile) {
+          await navigator.share({ title: name, text: blurb, files: [file] });
+        } else {
+          await navigator.share({ title: name, text: blurb, url });
+        }
+      } else if (navigator.clipboard && blob) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        } catch {
+          await navigator.clipboard.writeText(`${blurb} ${url}`);
+        }
+      } else {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = "partiqule-score.png";
+        a.click();
+        URL.revokeObjectURL(objectUrl);
+      }
+      setStatus("copied");
+    } catch (err) {
+      if (err && err.name === "AbortError") { setStatus("idle"); return; }
+      setStatus("idle");
+    }
+    setTimeout(() => setStatus("idle"), 2500);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(26,31,21,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        background: "var(--cream)",
+        borderRadius: "var(--card-shape-1)",
+        padding: 20,
+        maxWidth: 420,
+        width: "100%",
+        border: "1px solid var(--rule)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <span style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--moss)" }}>Share this score</span>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--ink-faint)", lineHeight: 1 }}>x</button>
+        </div>
+        <div style={{ borderRadius: "var(--tile-shape-1)", overflow: "hidden", border: "1px solid var(--rule)" }}>
+          <canvas ref={canvasRef} style={{ display: "block", width: "100%" }} />
+        </div>
+        <button onClick={share} style={{
+          width: "100%", marginTop: 12, padding: "13px 16px",
+          borderRadius: "var(--cta-shape)", border: "none",
+          background: "var(--moss)", color: "var(--ivory)",
+          fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer",
+        }}>
+          {status === "copying" ? "Preparing..." : status === "copied" ? "Shared" : "Share"}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ── GLOBE LOADING — cream typewriter for text/image scan flows ─────
 // Mirrors BarcodeLoadingView's typewriter: cycles through TYPEWRITER_STEPS
@@ -7052,14 +7245,18 @@ function TextileConfirmationCard({ visionConfirmation, onConfirm, onEdit, onDism
 // (same handler as the previous receipts-carousel hero). After auth,
 // the onAuth handler upstream fires checkSubscription and surfaces
 // the trial paywall.
-const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
+const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
   const [openFaq, setOpenFaq] = useState(null);
+  const [scoreQuery, setScoreQuery] = useState("");
 
   const sectionPadX = isMobile ? "0 24px" : "0 40px";
   const sectionWidth = { maxWidth: 760, margin: "0 auto" };
   const sectionGap = isMobile ? 56 : 88;
 
-  const startFree = () => setShowAuth(true);
+  const startFree = () => {
+    const el = document.getElementById("landing-score-input");
+    if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  };
 
   // Asymmetric divider — uses the design system's token aesthetic
   // (1px moss rule with offset width) in place of a wave SVG that
@@ -7112,7 +7309,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
       fontSize: 12, color: "var(--ink-faint)",
       marginTop: 12, lineHeight: 1.55,
     }}>
-      7 days free. $4.99/month after. Cancel anytime.
+      One score free. No account and no card. Then $4.99 a month.
     </div>
   );
 
@@ -7190,7 +7387,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
     { q: "What's different from Yuka, EWG, Think Dirty?",
       a: "Three things. First, multi category coverage in one app, not just food or just cosmetics. Second, US audience values in the scoring engine, with kids and pregnancy thresholds built in. Third, three input modes (scan, search, ask) instead of just barcode lookup." },
     { q: "Is the iOS app available?",
-      a: "Yes. Free download on the App Store. Subscription unlocks unlimited scanning." },
+      a: "Yes. The download is free, and the first score is free. A subscription is $4.99 a month after that." },
     { q: "What happens to data?",
       a: "Scans are tied to the user account for the lists and exposure tracker. No data sales. No advertiser sharing." },
   ];
@@ -7269,7 +7466,39 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
         <p style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: isMobile ? 16 : 19, color: "var(--ink-soft)", lineHeight: 1.55, margin: "0 auto 32px", maxWidth: 560 }}>
           Scan any product. Search by name. Or describe what's needed. Get answers in seconds, backed by transparent methodology.
         </p>
-        <PrimaryCta />
+        <form onSubmit={(e) => { e.preventDefault(); if (scoreQuery.trim() && onScan) onScan(scoreQuery.trim()); }} style={{ maxWidth: 520, margin: "0 auto" }}>
+          <div style={{ display: "flex", gap: 8, flexDirection: isMobile ? "column" : "row" }}>
+            <input
+              id="landing-score-input"
+              value={scoreQuery}
+              onChange={(e) => setScoreQuery(e.target.value)}
+              placeholder="Type a product, like Cheerios"
+              style={{
+                flex: 1, padding: "14px 16px",
+                borderRadius: "14px 10px 15px 12px / 10px 15px 12px 14px",
+                border: "1px solid var(--rule-strong)",
+                background: "var(--cream-light)", color: "var(--ink)",
+                fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 15, outline: "none",
+              }}
+            />
+            <button type="submit" style={{
+              padding: "14px 22px", border: "none", cursor: "pointer",
+              borderRadius: "var(--cta-shape)", background: "var(--moss)", color: "var(--ivory)",
+              fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 15, fontWeight: 500,
+            }}>Score it</button>
+          </div>
+          <label style={{
+            display: "inline-block", marginTop: 14, cursor: "pointer",
+            fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: 13, color: "var(--moss)",
+          }}>
+            Or photograph the label
+            <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => {
+              const file = e.target.files && e.target.files[0];
+              e.target.value = "";
+              if (file && onPhoto) onPhoto(file);
+            }} />
+          </label>
+        </form>
         <CtaCaption />
       </section>
 
@@ -7376,12 +7605,12 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
           gap: isMobile ? 12 : 18, marginTop: 16,
         }}>
           <PricingColumn
-            heading="Free trial"
-            body="7 days free when you create an account. Full access during the trial: scoring, reasoning, alternatives, lists, kids and pregnancy modes. No card required up front."
+            heading="One score free"
+            body="Type a product or photograph the label. The first score is real, with no account and no card. A new account gets one score of its own before a card."
           />
           <PricingColumn
             heading="Subscriber ($4.99/month)"
-            body="Unlimited scans across all categories. Kids and pregnancy scoring. The cumulative exposure tracker. Lists that hold scanned products. Ask mode for recommendations."
+            body="Unlimited scans. On the web, the first subscription is 7 days free and a card is required up front. Cancel in Manage subscription before day 8 and you will not be charged. On iPhone, Apple's payment sheet is the price and any trial."
             highlighted
           />
           <PricingColumn
@@ -7460,7 +7689,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile }) => {
             fontSize: 11, color: "rgba(243,237,226,0.8)",
             marginTop: 14, lineHeight: 1.5,
           }}>
-            7 days free. $4.99/month after. Cancel anytime.
+            One score free. No card. Then $4.99 a month.
           </div>
         </div>
       </section>
@@ -7588,6 +7817,7 @@ function App() {
   const [showAlts,    setShowAlts]   = useState(false);
   const [showDetail,  setShowDetail] = useState(false);
   const [compareAlt,  setCompareAlt] = useState(null);
+  const [showShareScore, setShowShareScore] = useState(false);
   const [fabOpen,     setFabOpen]    = useState(false);
   const [altSource,   setAltSource]  = useState("amazon"); // "amazon" | "brand" | "bigbox"
   const [showScanModal, setShowScanModal] = useState(false);
@@ -7658,7 +7888,7 @@ function App() {
   };
   const [checkingOut,  setCheckingOut]  = useState(false);
   const [iapTimedOut,  setIapTimedOut]  = useState(false);
-  const FREE_LIMIT = 10;
+  const [iapTrial, setIapTrial] = useState(null);
   const PAID_LIMIT = 20;
   // ── Accessibility: font scale ────────────────────────────────
   const [fontScale,   setFontScale]  = useState(()=>{try{return parseFloat(localStorage.getItem("ps_font_scale")||"1");}catch{return 1;}});
@@ -7698,7 +7928,7 @@ function App() {
           return null;
         }
         setSubscription(sub);
-        const subscribed = sub?.status === "trialing" || sub?.status === "active";
+        const subscribed = sub?.status === "trialing" || sub?.status === "active" || sub?.status === "past_due";
         setIsSubscribed(subscribed);
         return subscribed;
       }
@@ -7826,8 +8056,12 @@ function App() {
         });
         console.log("[IAP] price-fetch: getProducts returned", JSON.stringify(result).slice(0, 500));
         const products = result?.products;
-        if (products?.[0]?.priceString) setIapPrice(products[0].priceString + "/month");
-        else console.log("[IAP] price-fetch: no priceString in result — product not found in StoreKit?");
+        const product = products?.[0];
+        if (product?.priceString) setIapPrice(product.priceString);
+        const intro = product?.introductoryPrice || product?.introPrice || null;
+        const introFree = intro && (intro.paymentMode === "freeTrial" || intro.price === 0 || intro.type === "FREE_TRIAL");
+        setIapTrial(introFree ? (intro.periodCount && intro.periodUnit ? `${intro.periodCount} ${intro.periodUnit}` : "a free trial") : null);
+        if (!product?.priceString) console.log("[IAP] price-fetch: no priceString in result — product not found in StoreKit?");
       } catch (e) {
         console.error("[IAP] price-fetch FAILED:", e?.name, e?.message, e?.stack);
       }
@@ -7874,7 +8108,7 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transactionId: txnId,
-          receipt: active.receipt || active.jwsRepresentation || null,
+          receipt: active.jwsRepresentation || active.receipt || null,
         }),
       });
       if (!confirmRes.ok) {
@@ -7968,7 +8202,7 @@ function App() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 transactionId: txnId,
-                receipt: txn?.receipt || txn?.jwsRepresentation || null,
+                receipt: txn?.jwsRepresentation || txn?.receipt || null,
               }),
             });
             backendOk = confirmRes.ok;
@@ -8019,7 +8253,7 @@ function App() {
         const msg = e?.message || "";
         if (!msg.includes("cancelled") && !msg.includes("cancel")) {
           setIapTimedOut(true);
-          setError("Purchase could not be completed. Try again or subscribe on our website.");
+          setError("Purchase could not be completed. If Apple already charged you, use Restore purchases.");
           setTimeout(() => setError(null), 5000);
         }
       }
@@ -8030,14 +8264,36 @@ function App() {
     // Web — Stripe checkout
     setCheckingOut(true);
     try {
-      const r = await fetch(`${API_BASE}/create-checkout`, {
+      const r = await authedFetch(`${API_BASE}/create-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, email: user.email }),
+        body: JSON.stringify({ email: user.email }),
       });
       const d = await r.json();
       if (d.url) { window.location.href = d.url; }
     } catch { setError("Something went wrong. Please try again."); setTimeout(()=>setError(null),4000); }
+    setCheckingOut(false);
+  };
+
+  const openBillingPortal = async () => {
+    if (!user) { setShowAuth(true); return; }
+    setCheckingOut(true);
+    try {
+      const r = await authedFetch(`${API_BASE}/create-portal-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const d = await r.json().catch(() => ({}));
+      if (d.url) { window.location.href = d.url; return; }
+      setError(d.error === "no_stripe_customer"
+        ? "No web subscription is on this account yet."
+        : "The billing page is not available yet. Email paul@partiqule.com and we will cancel it.");
+      setTimeout(() => setError(null), 6000);
+    } catch {
+      setError("Couldn't open billing. Please try again.");
+      setTimeout(() => setError(null), 4000);
+    }
     setCheckingOut(false);
   };
 
@@ -8377,7 +8633,7 @@ function App() {
       setLoading(false);
       setStreamStage(null);
       setQuery("");
-      setShowLimitModal(user ? "paywall" : "account");
+      setShowLimitModal("paywall");
       return true;
     }
     if (status === 401 || errCode === "auth_required") {
@@ -8398,26 +8654,8 @@ function App() {
     if (!q.trim()) return Promise.resolve();
     try { document.activeElement?.blur?.(); } catch {}
     setShowScanModal(false); // always close the modal when a scan kicks off
-    // Anonymous scans are blocked server-side as of dee214c. Funnel signed-out
-    // users to signup before any scan attempt instead of letting the request
-    // 401 silently. The scanCount comparison below stays for signed-in
-    // free-tier users.
-    if (!user) { setShowLimitModal("account"); return; }
-    // Tri-state subscription gate. Explicit false → fire paywall; null
-    // (check still in flight or transient failure) → await a fresh
-    // checkSubscription so a mount-time race does not bounce a paid user
-    // to the trial signup.
-    if (isSubscribed === false) {
-      setShowLimitModal("paywall");
-      return;
-    }
-    if (isSubscribed === null) {
-      const subscribed = await checkSubscription(user.id);
-      if (subscribed === false) {
-        setShowLimitModal("paywall");
-        return;
-      }
-    }
+    // The server allows one real score before a card. A subscribed account,
+    // and a subscription check that has not come back yet, always goes through.
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
     // R2 text-input lift — when the query is a URL, replace the search bar
@@ -8452,15 +8690,7 @@ function App() {
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category });
-          if (isSubscribed === false) {
-            const newCount = scanCount + 1;
-            setScanCount(newCount);
-            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-            if (newCount >= FREE_LIMIT) {
-              if (!user) setShowLimitModal("account");
-              else setShowLimitModal("paywall");
-            }
-          }
+          noteFreeScan(data);
         },
         error: (e) => { throw new Error(e.error || e.message || "Scan failed"); },
       }, controller.signal);
@@ -8512,18 +8742,6 @@ function App() {
   const selectSearchMatch = async (match) => {
     if (!match?.id) return;
     try { document.activeElement?.blur?.(); } catch {}
-    if (!user) { setShowLimitModal("account"); return; }
-    if (isSubscribed === false) {
-      setShowLimitModal("paywall");
-      return;
-    }
-    if (isSubscribed === null) {
-      const subscribed = await checkSubscription(user.id);
-      if (subscribed === false) {
-        setShowLimitModal("paywall");
-        return;
-      }
-    }
     setLoading(true); setError(null); setResult(null); setRevealDone(false);
     setStreamStage(null);
     setSearchMatches([]); // collapse picker so result can render cleanly
@@ -8539,15 +8757,7 @@ function App() {
           setStreamStage(null);
           if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
           track("Score Returned", { product: data.product_name, score: data.score, category: data.category, via: "search_match" });
-          if (isSubscribed === false) {
-            const newCount = scanCount + 1;
-            setScanCount(newCount);
-            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-            if (newCount >= FREE_LIMIT) {
-              if (!user) setShowLimitModal("account");
-              else setShowLimitModal("paywall");
-            }
-          }
+          noteFreeScan(data);
         },
         error: (e) => { throw new Error(e.error || e.message || "Couldn't load that product."); },
       });
@@ -8665,18 +8875,6 @@ function App() {
   // Shared image scan handler — used by hero and scan modal
   const handleImageScan = async (file, onDone) => {
     if (!file) return;
-    if (!user) { setShowLimitModal("account"); return; }
-    if (isSubscribed === false) {
-      setShowLimitModal("paywall");
-      return;
-    }
-    if (isSubscribed === null) {
-      const subscribed = await checkSubscription(user.id);
-      if (subscribed === false) {
-        setShowLimitModal("paywall");
-        return;
-      }
-    }
     setShowScanModal(false); setScanSheetOpen(false);
     setResult(null); setError(null); setPage("home");
     setLoading(true); setQuery("Reading label..."); setRevealDone(false); setResult(null);
@@ -8707,15 +8905,7 @@ function App() {
               setResult(barcodeData); saveToHistory(barcodeData); setLoading(false); setQuery(barcodeData.product_name||"");
               if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(barcodeData.category)) setPendingRoomTag(barcodeData.product_name); else setPendingRoomTag(null);
               track("Barcode Scan from Image",{barcode:barcodeValue,product:barcodeData.product_name});
-              // Mirror server-side increment locally so the pre-call gate
-              // and counter UI stay in sync. /barcode now ticks server-side
-              // too, but local state must agree for the next pre-call check.
-              if (isSubscribed === false) {
-                const newCount = scanCount + 1;
-                setScanCount(newCount);
-                try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-                if (newCount >= FREE_LIMIT) setShowLimitModal(user ? "paywall" : "account");
-              }
+              noteFreeScan(barcodeData);
               if (onDone) onDone();
               return;
             }
@@ -8783,15 +8973,7 @@ function App() {
             saveToHistory(data);
             setStreamStage(null);
             if (["cleaning","home","personal_care","skincare","clothing","baby","toy","food","food_beverage","beverage","snack"].includes(data.category)) setPendingRoomTag(data.product_name); else setPendingRoomTag(null);
-            if (isSubscribed === false) {
-              const newCount = scanCount + 1;
-              setScanCount(newCount);
-              try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-              if (newCount >= FREE_LIMIT) {
-                if (!user) setShowLimitModal("account");
-                else setShowLimitModal("paywall");
-              }
-            }
+            noteFreeScan(data);
           },
           error: (e) => { throw new Error(e.error || e.message || "Image scan failed"); },
         }, imgController.signal);
@@ -8826,7 +9008,6 @@ function App() {
   // Same three response shapes can come back; we treat them the same way.
   const resumeFromConfirmation = async (editedName = null) => {
     if (!visionConfirmation?.identificationId) return;
-    if (!user) { setVisionConfirmation(null); setShowLimitModal("account"); return; }
     const { identificationId, productName: confirmedName } = visionConfirmation;
     setVisionConfirmation(null);
     setLoading(true); setQuery("Scoring..."); setResult(null); setError(null);
@@ -8864,15 +9045,7 @@ function App() {
           saveToHistory(data);
           setStreamStage(null);
           setLoading(false);
-          if (isSubscribed === false) {
-            const newCount = scanCount + 1;
-            setScanCount(newCount);
-            try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-            if (newCount >= FREE_LIMIT) {
-              if (!user) setShowLimitModal("account");
-              else setShowLimitModal("paywall");
-            }
-          }
+          noteFreeScan(data);
         },
         error: (e) => { showFailModal(e.error || e.message || "Couldn't score that product."); },
       });
@@ -9133,10 +9306,9 @@ function App() {
         try { storedName = (localStorage.getItem("partiqule_display_name") || "").trim(); } catch {}
         if (!storedName) setShowNicknamePrompt(true);
         if (isAdminUser(u)) { setPage("admin"); setShowAuth(false); return; }
-        // Only fire the paywall on a confirmed false. A null return means
-        // checkSubscription failed transiently — better to stay in unknown
-        // and re-check on next scan than show the paywall to a paid user.
-        checkSubscription(u.id).then(subscribed => { if (subscribed === false) setShowLimitModal("paywall"); });
+        // A new account still has one free score. Do not open the paywall
+        // on top of the sign-in. The next scan the server refuses will.
+        checkSubscription(u.id);
       }} onSetName={name=>{setDisplayName(name);try{localStorage.setItem("partiqule_display_name",name);}catch{}}}/>}
 
       {showNicknamePrompt && <NicknamePromptModal onSave={name=>{
@@ -9161,7 +9333,7 @@ function App() {
         <div onClick={()=>setShowDeleteConfirm(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:16,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)"}}>
             <div style={{fontSize:20,fontWeight:700,color:"#dc2626",marginBottom:8}}>Delete account?</div>
-            <div style={{fontSize:14,color:"#64748b",marginBottom:24,lineHeight:1.6}}>This will permanently delete your account, scan history, and cancel any active subscription. This cannot be undone.</div>
+            <div style={{fontSize:14,color:"#64748b",marginBottom:24,lineHeight:1.6}}>This deletes the account and scan history, and cancels the web subscription, including a trial that has not been charged yet. If you subscribed on an iPhone, also cancel in Settings, Apple ID, Subscriptions. Apple keeps billing until you do. This cannot be undone.</div>
             <button onClick={deleteAccount} style={{width:"100%",padding:"13px",borderRadius:10,background:"#dc2626",border:"none",color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:10}}>Yes, delete my account</button>
             <button onClick={()=>setShowDeleteConfirm(false)} style={{width:"100%",padding:"11px",borderRadius:10,background:"none",border:`1px solid ${"#e2e8f0"}`,color:"#64748b",fontSize:14,cursor:"pointer"}}>Cancel</button>
           </div>
@@ -9187,20 +9359,11 @@ function App() {
                 display:"flex", alignItems:"center", gap:10,
               }}>
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                {scanCount > 0 ? "Free scans used" : "Sign up free"}
+                Save the next one
               </div>
-              {scanCount > 0 ? (
-                <>
-                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>You've been busy.</div>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>That's your {FREE_LIMIT} free scans. Make a quick account to keep going. Unlimited scans, child and pregnancy scoring, clean alternatives. $4.99 a month.</div>
-                </>
-              ) : (
-                <>
-                  <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>Sign up to scan.</div>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>Make a quick account to scan products. {FREE_LIMIT} scans free, then $4.99 a month for unlimited scans, child and pregnancy scoring, and clean alternatives.</div>
-                </>
-              )}
-              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>{scanCount > 0 ? "Create account" : "Sign up free"}</button>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>One score is free.</div>
+              <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>Make an account when you want the score saved. A new account gets one score of its own before a card.</div>
+              <button onClick={()=>{setShowLimitModal(null); setShowAuth(true);}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:10, letterSpacing:"0.005em"}}>Create account</button>
               <button onClick={()=>setShowLimitModal(null)} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
             </>)}
 
@@ -9212,19 +9375,22 @@ function App() {
                 display:"flex", alignItems:"center", gap:10,
               }}>
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
-                Free trial
+                Another score
               </div>
-              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>Start your 7 day free trial.</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>That first score is free.</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>
-                Unlimited scans, child and pregnancy scoring, clean alternatives.
-                <span style={{display:"block", marginTop:8, fontFamily:"'Lora', Georgia, serif", fontSize:20, color:"var(--ink)", letterSpacing:"-0.01em"}}>{iapPrice} <span style={{fontSize:14, color:"var(--ink-soft)"}}>a month after the trial. Cancel anytime in Settings. No charge until day 8.</span></span>
+                {IS_NATIVE
+                  ? (iapTrial
+                    ? `Unlimited scans after that. Apple is offering ${iapTrial} free, then ${iapPrice}. Apple bills your Apple ID when the trial ends. Cancel anytime in Settings, Apple ID, Subscriptions.`
+                    : `Unlimited scans after that. ${iapPrice}. Apple bills your Apple ID. The payment sheet is the price Apple will charge. Cancel anytime in Settings, Apple ID, Subscriptions.`)
+                  : "Unlimited scans after that. The first web subscription is 7 days free, then $4.99 a month. A card is required to start the trial. Cancel in the billing page before day 8 and you will not be charged."}
               </div>
               <button onClick={startCheckout} disabled={checkingOut} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", border:"none", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer", marginBottom:12, letterSpacing:"0.005em", opacity:checkingOut?0.7:1}}>
-                {checkingOut ? "Loading..." : "Start 7 day free trial"}
+                {checkingOut ? "Loading..." : (IS_NATIVE ? (iapTrial ? "Start free trial" : `Subscribe, ${iapPrice}`) : "Start 7 day trial")}
               </button>
-              {IS_NATIVE && (
+              {!IS_NATIVE && (
                 <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:10.5, color:"var(--ink-soft)", textAlign:"center", marginTop:8, lineHeight:1.55}}>
-                  Partiqule Premium starts with a 7 day free trial, then renews monthly at {iapPrice}. Payment will be charged to your Apple ID at the end of the free trial. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings &gt; Apple ID &gt; Subscriptions.
+                  Card required. $4.99 a month after the 7 day trial. Cancel anytime from Manage subscription.
                 </div>
               )}
               <button onClick={()=>{setShowLimitModal(null);setIapTimedOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", border:"1px solid var(--rule-strong)", color:"var(--ink)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Maybe later</button>
@@ -9238,8 +9404,8 @@ function App() {
               </div>
               {iapTimedOut && (
                 <div style={{padding:"20px 0 0", textAlign:"center", borderTop:"1px solid var(--rule)", marginTop:16}}>
-                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:16, lineHeight:1.6}}>Purchase is taking longer than expected. You can also subscribe on our website.</div>
-                  <button onClick={()=>{const url="https://partiqule.com?subscribe=1";if(window.Capacitor?.isNativePlatform?.())window.open(url,"_system");else window.open(url,"_blank");}} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:10}}>Subscribe on partiqule.com</button>
+                  <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:16, lineHeight:1.6}}>The App Store is taking a while. If the payment sheet already went through, restore the purchase. That uses the same Apple subscription.</div>
+                  <button onClick={restoreSubscription} style={{width:"100%", padding:"13px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"var(--moss)", color:"var(--ivory)", border:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:14, cursor:"pointer", marginBottom:10}}>Restore purchases</button>
                   <button onClick={()=>{setIapTimedOut(false);setCheckingOut(false);}} style={{width:"100%", padding:"12px 16px", borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px", background:"transparent", color:"var(--ink)", border:"1px solid var(--rule-strong)", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, fontWeight:500, cursor:"pointer"}}>Try again</button>
                 </div>
               )}
@@ -9371,7 +9537,7 @@ function App() {
                         ? "You have unlimited scans, child and pregnancy scoring, and full access to alternatives during your trial. Cancel anytime in Settings before the trial ends and you will not be charged."
                         : "Thanks for supporting Partiqule. You have unlimited scans, child and pregnancy scoring, and full access to all alternatives."}
                     </div>
-                    {IS_NATIVE && (
+                    {IS_NATIVE ? (
                       <div style={{display:"flex", flexDirection:"column", gap:8}}>
                         <button onClick={()=>{ try { window.open("https://apps.apple.com/account/subscriptions", "_blank"); } catch {} }} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
                           Manage subscription
@@ -9380,6 +9546,10 @@ function App() {
                           Restore purchases
                         </button>
                       </div>
+                    ) : (
+                      <button onClick={openBillingPortal} style={{width:"100%", padding:"11px", borderRadius:10, background:"none", border:`1px solid ${border}`, color:muted, fontSize:13, fontWeight:600, cursor:"pointer"}}>
+                        Manage subscription
+                      </button>
                     )}
                   </>
                 ) : (
@@ -9415,11 +9585,13 @@ function App() {
                       Subscribe — {iapPrice}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ivory)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
-                    {IS_NATIVE && (
-                      <div style={{fontSize:10, color:muted, textAlign:"center", marginTop:10, lineHeight:1.5}}>
-                        Payment will be charged to your Apple ID. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings.
-                      </div>
-                    )}
+                    <div style={{fontSize:10, color:muted, textAlign:"center", marginTop:10, lineHeight:1.5}}>
+                      {IS_NATIVE
+                        ? (iapTrial
+                          ? `Apple is offering ${iapTrial} free, then ${iapPrice}. Cancel in Settings, Apple ID, Subscriptions.`
+                          : `${iapPrice}. Apple bills your Apple ID. Cancel in Settings, Apple ID, Subscriptions.`)
+                        : "First web subscription: 7 days free, then $4.99 a month. A card is required. Cancel from Manage subscription before the trial ends and you will not be charged."}
+                    </div>
                   </>
                 )}
               </div>
@@ -9561,7 +9733,7 @@ function App() {
               LandingPage component above for the structure. Try free
               CTAs still route to setShowAuth so the trial paywall
               fires automatically via the onAuth handler higher up. */}
-          {!user ? <LandingPage setShowAuth={setShowAuth} setPage={setPage} isMobile={isMobile} /> : (history.length > 0 ? (() => {
+          {!user ? <LandingPage setShowAuth={setShowAuth} setPage={setPage} isMobile={isMobile} onScan={(name) => analyze(name)} onPhoto={(file) => handleImageScan(file)} /> : (history.length > 0 ? (() => {
             // Greeting uses displayName only — never fall back to email username
             const nameForGreet = (displayName && displayName.trim()) ? displayName.trim() : (user ? "there" : null);
             const greet = nameForGreet ? `Good ${new Date().getHours()<12?"morning":new Date().getHours()<17?"afternoon":"evening"}, ${nameForGreet.charAt(0).toUpperCase()+nameForGreet.slice(1)}` : "Welcome back";
@@ -10936,6 +11108,28 @@ function App() {
                         </div>
                       );
                     })()}
+
+                    {displayScore != null && !isNaN(displayScore) && !(result._streaming && result._stage === "identified") && (
+                      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                        {result.free_scan && (
+                          <div style={{
+                            fontFamily: "'DM Sans', system-ui, sans-serif",
+                            fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.5, maxWidth: 360,
+                          }}>
+                            That's the free score. The next one asks for a subscription.
+                          </div>
+                        )}
+                        <button onClick={() => setShowShareScore(true)} style={{
+                          padding: "12px 18px",
+                          background: "transparent",
+                          border: "1px solid var(--moss)",
+                          color: "var(--moss)",
+                          borderRadius: "var(--cta-shape)",
+                          fontFamily: "'DM Sans', system-ui, sans-serif",
+                          fontWeight: 500, fontSize: 14, cursor: "pointer",
+                        }}>Share this score</button>
+                      </div>
+                    )}
 
                     {/* Pregnancy mode indicator — shown when pregnancy mode active in settings */}
                     {pregnancyMode && result.pregnancy_score && (
@@ -12549,6 +12743,13 @@ function App() {
       {compareAlt && result && (
         <ShareCompareCard result={result} alternative={compareAlt} onClose={() => setCompareAlt(null)}/>
       )}
+      {showShareScore && result && (
+        <ShareScoreCard
+          result={result}
+          score={pregnancyMode && result.pregnancy_score ? result.pregnancy_score : (childMode && result.child_score) ? result.child_score : (result.overall_score || result.score)}
+          onClose={() => setShowShareScore(false)}
+        />
+      )}
 
       {/* ── PERSISTENT MOBILE BOTTOM NAV + FLOATING SCAN ── */}
       {isMobile && (
@@ -12604,7 +12805,6 @@ function App() {
           {result && (
             <div
               onClick={()=>{
-                if (!user) { setShowLimitModal("account"); return; }
                 setScanSheetOpen(true); setModalQuery(""); setFabOpen(false);
               }}
               style={{
@@ -12633,7 +12833,7 @@ function App() {
             {[
               { label:"Home",    icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, action:()=>{reset(); setPage("home");},    active: page==="home" && !result },
               { label:"Lists",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 5 19 9 15"/><line x1="13" y1="18" x2="21" y2="18"/><polyline points="3 7 5 9 9 5"/><line x1="13" y1="8" x2="21" y2="8"/></svg>, action:()=>{setPage("lists"); setResult(null);}, active: page==="lists" },
-              { label:"Scan",    icon:null, action:()=>{ if (!user) { setShowLimitModal("account"); return; } setScanSheetOpen(o=>!o); setModalQuery(""); }, active:false, isScan:true },
+              { label:"Scan",    icon:null, action:()=>{ setScanSheetOpen(o=>!o); setModalQuery(""); }, active:false, isScan:true },
               { label:"Items",   icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="7" cy="6" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="17" cy="18" r="1" fill="currentColor"/></svg>, action:()=>{setPage("history"); setResult(null);}, active: page==="history" },
               { label:"Profile", icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, action:()=>{ user ? setPage("settings") : setShowAuth(true); }, active: page==="settings" },
             ].map((item,i) => (
@@ -12641,7 +12841,6 @@ function App() {
                 /* Center: floating scan button */
                 <div key={i} style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4}}>
                   <div onClick={()=>{
-                    if (!user) { setShowLimitModal("account"); return; }
                     isMobile?setScanSheetOpen(true):document.getElementById("nav-file-input").click();
                   }}
                     style={{width:52, height:52, borderRadius:"49% 51% 50% 50% / 52% 48% 52% 48%", background:"var(--moss)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", marginTop:-14}}>
@@ -12667,7 +12866,6 @@ function App() {
           onClose={() => setShowBarcodeScanner(false)}
           onBarcode={async (barcode) => {
             setShowBarcodeScanner(false);
-            if (!user) { setShowLimitModal("account"); return; }
             setBarcodeLoadingPhase("loading");
             setQuery("Scanning barcode…");
             setRevealDone(false);
@@ -12681,7 +12879,7 @@ function App() {
               const resp = await authedFetch(`${API_BASE}/barcode`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ barcode }),
+                body: JSON.stringify({ barcode, guestId: getGuestId() }),
                 signal: controller.signal,
               });
               clearTimeout(timeout);
@@ -12707,15 +12905,7 @@ function App() {
               setQuery(data.product_name || barcode);
               setResult(data);
               saveToHistory(data);
-              if (isSubscribed === false) {
-                const newCount = scanCount + 1;
-                setScanCount(newCount);
-                try { localStorage.setItem("ps_scan_count", String(newCount)); } catch {}
-                if (newCount >= FREE_LIMIT) {
-                  if (!user) setShowLimitModal("account");
-                  else       setShowLimitModal("paywall");
-                }
-              }
+              noteFreeScan(data);
             } catch(err) {
               clearTimeout(timeout);
               const elapsed = Date.now() - started;
