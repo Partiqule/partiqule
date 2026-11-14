@@ -4906,20 +4906,19 @@ const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate})
           fontSize: isMobile ? 36 : 54, color: text,
           margin: "0 0 28px", letterSpacing: "-0.02em", lineHeight: 1.05,
         }}>
-          Cleaner shelves<br/>for the next generation.
+          A clearer cart,<br/>one score at a time.
         </h1>
-        <Body>Partiqule was built around a single observation: the labels don't tell the truth, and most people don't have the time or expertise to translate ingredient lists into actual decisions.</Body>
-        <Body>The next generation should inherit cleaner shelves than the one before. That requires a tool that turns the chemistry into a decision in under thirty seconds. A scan, a score, a swap.</Body>
-        <Body>The label says natural. The score says no. The next product over scores cleaner at the same price. Skip this. Grab that. Move on with the day.</Body>
+        <Body>Partiqule is a shopping tool. It scores everyday products from 1 to 10 so the choice in the aisle is easier to make. Lower is safer.</Body>
+        <Body>About 3,156 products are hand-checked. Clothing and personal care can be scored from the label by rules. A model is the fallback when the product is not in the library and the ingredients had to be looked up. The reason sits under the number.</Body>
+        <Body>One score is free, with no account and no card. The score is not medical advice, and it is not a ranking of brands.</Body>
       </section>
 
       {/* SECTION: The how */}
       <section style={{ marginBottom: isMobile ? 56 : 80, paddingBottom: isMobile ? 40 : 56, borderBottom: `1px solid ${border}` }}>
         <H2>How the scoring works.</H2>
-        <Body>Two pass AI scoring drives every result. Pass 1 reads the ingredient list, maps each ingredient against the calibration database, and produces an initial score from 1 to 10 with the reasoning attached. Pass 2 finds alternatives in the same category that score cleaner.</Body>
-        <Body>Named calibration entries override generic rules. When a product is in the database, the entry's safety data drives the score. When a product isn't yet in the database, composition tiers fall back to ingredient class scoring.</Body>
-        <Body>When the data isn't sufficient to score honestly, the system returns a pending calibration state with a path to add the missing data. No tier fallback. No false confidence.</Body>
-        <Body>Kids mode applies stricter thresholds for products with children in mind. Pregnancy mode flags ingredients with first or second trimester concerns. The cumulative exposure tracker rolls the household routine into a single picture.</Body>
+        <Body>A hand-checked entry wins. If the product is in the library, that entry is the score. Clothing and personal care can skip the model when the label can be read. Otherwise a model scores from the ingredients it can actually see.</Body>
+        <Body>When a cleaner option is already in the library, it can be listed next to the score. Partiqule does not invent one.</Body>
+        <Body>Kids mode and pregnancy mode apply stricter rules to the same ingredients. They are shopping settings, not medical advice. An account keeps the scores you have checked.</Body>
       </section>
 
       {/* SECTION: The principles (two-column will/won't) */}
@@ -4939,10 +4938,10 @@ const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate})
               fontSize: 14, color: muted, lineHeight: 1.75,
               margin: 0, paddingLeft: 18,
             }}>
-              <li style={{ marginBottom: 10 }}>Show the calibration entry and reasoning for every score</li>
-              <li style={{ marginBottom: 10 }}>Publish a pending calibration state when data is insufficient</li>
-              <li style={{ marginBottom: 10 }}>Respond to brand corrections within 48 hours</li>
-              <li style={{ marginBottom: 10 }}>Update scores when products reformulate, with a timestamped log</li>
+              <li style={{ marginBottom: 10 }}>Show the reason under a score</li>
+              <li style={{ marginBottom: 10 }}>Say when a product cannot be scored from a known formula</li>
+              <li style={{ marginBottom: 10 }}>Read a correction sent to paul@partiqule.com</li>
+              <li style={{ marginBottom: 10 }}>Change a library entry when the formula has changed</li>
               <li style={{ marginBottom: 10 }}>Apply consistent methodology across categories</li>
               <li>Disclose any brand partnerships</li>
             </ul>
@@ -4996,7 +4995,7 @@ const AboutPage = ({text, muted, surface, border, isMobile, onScan, onNavigate})
           color: muted, lineHeight: 1.7,
           margin: "0 0 18px", paddingLeft: 22, maxWidth: 720,
         }}>
-          <li style={{ marginBottom: 8 }}>Email arrives. Acknowledgment within 48 hours.</li>
+          <li style={{ marginBottom: 8 }}>The note is read against the library entry.</li>
           <li style={{ marginBottom: 8 }}>Calibration entry pulled, reasoning reviewed against the claim.</li>
           <li style={{ marginBottom: 8 }}>If the score updates, the change is logged with the date and the reason.</li>
           <li>Response back to the sender with the resolution.</li>
@@ -5988,7 +5987,7 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
           {mode === "signup" ? "Make it yours." : mode === "reset" ? "Reset your password." : "Welcome back."}
         </h2>
         <p style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:mt, margin:"0 0 22px", lineHeight:1.55}}>
-          {mode === "signup" ? "Save what's in your home so you remember next time." : mode === "reset" ? "We'll send you a reset link." : "Pick up where you left off."}
+          {mode === "signup" ? "An account keeps the scores you have already checked. The first one is free either way." : mode === "reset" ? "We'll send you a reset link." : "Your saved scores are here."}
         </p>
 
         {error   && <div style={{background:"var(--score-red-soft)", border:"1px solid var(--score-red)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--score-red)", marginBottom:14}}>{error}</div>}
@@ -7379,17 +7378,17 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
 
   const FAQ_ITEMS = [
     { q: "How are scores calculated?",
-      a: "A two pass scoring engine reads the ingredient list, maps each ingredient against a calibration database of known safety data, applies family adjustments, and surfaces a score from 1 to 10. Lower is better. The reasoning is visible on every product page." },
-    { q: "What's behind the calibration database?",
-      a: "Thousands of named product entries with documented composition tiers, regulatory context, and ingredient level safety data. Each entry is traceable to its sources. Brands can request review at paul@partiqule.com." },
-    { q: "What happens when data is insufficient?",
-      a: "The system returns a clear pending calibration state instead of a tier fallback number. No false confidence. A path to add the missing data shows on the product page." },
-    { q: "What's different from Yuka, EWG, Think Dirty?",
-      a: "Three things. First, multi category coverage in one app, not just food or just cosmetics. Second, US audience values in the scoring engine, with kids and pregnancy thresholds built in. Third, three input modes (scan, search, ask) instead of just barcode lookup." },
+      a: "A known product uses a hand-checked entry. There are about 3,156 of those. Clothing and personal care can be scored from the label by rules. When a product is not in the library, a model reads the ingredients. The reason is on the page. Lower is safer." },
+    { q: "What's behind the library?",
+      a: "Named products with a checked formula, a score range, and a written reason. Brands can write paul@partiqule.com if an entry is out of date." },
+    { q: "What if the product is not in the library?",
+      a: "The score says how it was made. A model is the fallback, and only when the ingredients can be read. Partiqule does not invent a confident number for a blank label." },
+    { q: "What can I actually do?",
+      a: "Search a name, scan a barcode, or photograph a label. One score is free, with no account and no card. Kids mode and pregnancy mode apply stricter rules to the same ingredients. They are not medical advice." },
     { q: "Is the iOS app available?",
-      a: "Yes. The download is free, and the first score is free. A subscription is $4.99 a month after that." },
+      a: "Yes. The download is free, and the first score is free. A subscription is $4.99 a month after that. On the web, the first subscription is 7 days free and a card is required. On iPhone, Apple's payment sheet is the price and any trial." },
     { q: "What happens to data?",
-      a: "Scans are tied to the user account for the lists and exposure tracker. No data sales. No advertiser sharing." },
+      a: "An account saves your scores and lists. Partiqule does not sell that data." },
   ];
 
   // Receipts carousel — five crossfading "skip this, grab that" cards
@@ -7461,10 +7460,10 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
       {/* HERO — sits below the receipts carousel */}
       <section style={{ ...sectionWidth, padding: isMobile ? "20px 24px 36px" : "32px 40px 56px", textAlign: "center" }}>
         <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: isMobile ? 38 : 56, fontWeight: 400, letterSpacing: "-0.025em", color: "var(--ink)", margin: "0 0 22px", lineHeight: 1.05 }}>
-          Family product safety,<br/>scored.
+          Smarter shopping,<br/>scored.
         </h1>
         <p style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: isMobile ? 16 : 19, color: "var(--ink-soft)", lineHeight: 1.55, margin: "0 auto 32px", maxWidth: 560 }}>
-          Scan any product. Search by name. Or describe what's needed. Get answers in seconds, backed by transparent methodology.
+          Everyday products, 1 to 10. Lower is safer. About 3,156 are hand-checked. Rules read the label when they can. A model is only the fallback.
         </p>
         <form onSubmit={(e) => { e.preventDefault(); if (scoreQuery.trim() && onScan) onScan(scoreQuery.trim()); }} style={{ maxWidth: 520, margin: "0 auto" }}>
           <div style={{ display: "flex", gap: 8, flexDirection: isMobile ? "column" : "row" }}>
@@ -7506,12 +7505,12 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
 
       {/* SECTION: The problem labels create */}
       <section style={{ ...sectionWidth, padding: sectionPadX }}>
-        <SectionHeading>The label doesn't tell the whole story.</SectionHeading>
-        <BodyP>Marketing claims obscure ingredients. Front of pack labels promise things the back of pack contradicts. EU regulators flag substances that US labels never have to disclose. Reading the chemistry yourself takes a degree, a search engine, and a free afternoon.</BodyP>
+        <SectionHeading>The front of the package is a pitch.</SectionHeading>
+        <BodyP>The useful part is usually on the back: the ingredient line, the fiber label, the barcode. Partiqule turns that into a number you can shop with.</BodyP>
         <p style={{ fontFamily: "'Lora', Georgia, serif", fontSize: isMobile ? 20 : 24, fontWeight: 400, letterSpacing: "-0.01em", color: "var(--ink)", lineHeight: 1.4, margin: "28px 0", textAlign: "center" }}>
-          Most parents don't have any of the three.
+          One score. The reason under it.
         </p>
-        <BodyP>Partiqule was built to translate the chemistry into a single score on a 1 to 10 scale. Lower is better. The score reflects ingredient safety and nutritional impact, not brand reputation.</BodyP>
+        <BodyP>Lower is safer. The number is not a brand ranking and it is not medical advice. It is what is in the product, scored the same way every time.</BodyP>
       </section>
 
       <div style={{ height: sectionGap }} />
@@ -7525,18 +7524,18 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
         }}>
           <ModeColumn
             heading="Scan"
-            body="Point the camera at any product, anywhere. Food, beauty, clothing, cleaning, kid products, home goods. Real time scoring on any category, not just barcoded items."
+            body="Photograph a label or a barcode. Food, beauty, clothing, cleaning, baby gear, and the rest of the cart."
             iconPath={<><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M7 6l1.5-2h7L17 6"/></>}
           />
           <ModeColumn
             heading="Search"
-            body="Type or paste any product name. Drop in an Amazon link. Snap a screenshot from Instagram. The scoring engine reads the input and surfaces the score."
+            body="Type a name. If it is in the hand-checked library, the score comes back from that entry."
             iconPath={<><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></>}
           />
           <ModeColumn
             heading="Ask"
             badge="Coming soon"
-            body={'Describe what\'s needed. "Sippy cup for an 18 month old." "Clean sunscreen for pregnancy." "Snacks for a road trip with the kids." Get scored recommendations, not search results.'}
+            body="Describe a shopping need in a sentence. This is not in the app yet."
             iconPath={<><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></>}
           />
         </div>
@@ -7547,8 +7546,8 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
       {/* SECTION: Methodology */}
       <section style={{ ...sectionWidth, padding: sectionPadX }}>
         <SectionHeading>Show the work.</SectionHeading>
-        <BodyP>Every score has reasoning behind it. The scoring engine reads the ingredient list, maps each ingredient against a calibration database of known safety data, applies family adjustments where relevant, and produces a number with the reasoning visible underneath.</BodyP>
-        <BodyP>When the data isn't sufficient to score honestly, the system says so. No tier fallback. No false confidence number. A clear pending calibration state with a path to add the missing data.</BodyP>
+        <BodyP>A known product uses its hand-checked entry. Clothing and personal care can be scored from the label by rules, with no model call. When the product is not in the library and the label is not enough, a model reads the ingredients. The reason stays on the page either way.</BodyP>
+        <BodyP>When the ingredients are not known, the result says so. Partiqule does not invent a confident number for a product it cannot read.</BodyP>
 
         {/* Pull quote — major visual moment */}
         <blockquote style={{
@@ -7563,7 +7562,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
           Partiqule doesn't publish scores it can't show the work behind.
         </blockquote>
 
-        <BodyP>Brand thinks a score is wrong? The reasoning is visible on every product page. A correction inbox at paul@partiqule.com responds within 48 hours. When evidence justifies an update, the score updates and the change is logged.</BodyP>
+        <BodyP>If a score looks wrong, the reasoning is on the page. Write paul@partiqule.com. A correction is a change to the library, not a quieter number.</BodyP>
 
         <p style={{ margin: "24px 0 0" }}>
           <span onClick={() => setPage("methodology")} style={{
@@ -7579,11 +7578,9 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
 
       {/* SECTION: Family-first */}
       <section style={{ ...sectionWidth, padding: sectionPadX }}>
-        <SectionHeading>Built for parents, not just consumers.</SectionHeading>
-        <BodyP>Most scoring engines treat every shopper the same. Partiqule doesn't.</BodyP>
-        <BodyP>Scores shift for kids. Some ingredients adults tolerate well create different risk profiles for developing bodies. Kids mode applies stricter thresholds automatically.</BodyP>
-        <BodyP>Scores shift again for pregnancy. Some ingredients in routine beauty and personal care products carry different concerns during the first and second trimesters. Pregnancy mode flags those automatically.</BodyP>
-        <BodyP>The cumulative exposure tracker shows the total picture across a household's routine, not just one product at a time.</BodyP>
+        <SectionHeading>The same product, two stricter reads.</SectionHeading>
+        <BodyP>Kids mode and pregnancy mode rescore the same ingredients with stricter rules. They are shopping settings, not medical advice.</BodyP>
+        <BodyP>An account keeps the scores you have already checked. Those scores can roll up to one number for the products on your list.</BodyP>
       </section>
 
       <div style={{ height: sectionGap }} />
@@ -7591,8 +7588,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
       {/* SECTION: What's covered */}
       <section style={{ ...sectionWidth, padding: sectionPadX }}>
         <SectionHeading>Every aisle. Every category.</SectionHeading>
-        <BodyP>Food, beauty, personal care, cleaning, clothing, baby gear, toys, home goods. The calibration database holds thousands of named product entries across all categories, with the database growing as new products are added.</BodyP>
-        <BodyP>The competition focuses on one category at a time. Yuka does food barcodes. Think Dirty does cosmetics. EWG runs a database lookup. Partiqule covers the full cart.</BodyP>
+        <BodyP>Food, beauty, personal care, cleaning, clothing, baby gear, toys, home goods. About 3,156 named products are hand-checked. The library grows when a formula is verified, not when a claim is repeated.</BodyP>
       </section>
 
       <div style={{ height: sectionGap }} />
@@ -7673,7 +7669,7 @@ const LandingPage = ({ setShowAuth, setPage, isMobile, onScan, onPhoto }) => {
             color: "var(--cream)", margin: "0 0 22px",
             letterSpacing: "-0.015em", lineHeight: 1.2,
           }}>
-            Ready to read the labels?
+            Score one product.
           </h2>
           <button onClick={startFree} style={{
             background: "var(--cream)", color: "var(--moss)",
@@ -8482,10 +8478,10 @@ function App() {
     if (result?.product_name) {
       const slug = toSlug(result.product_name);
       window.history.pushState({}, "", `/scan/${slug}`);
-      document.title = `${result.product_name} Microplastics Score — Partiqule`;
+      document.title = `${result.product_name} — Partiqule`;
     } else if (!result) {
       window.history.pushState({}, "", "/");
-      document.title = "Partiqule — Know What's In Your Products";
+      document.title = "Partiqule — Smarter shopping, scored";
     }
   }, [result]);
 
@@ -9377,7 +9373,7 @@ function App() {
                 <span style={{display:"inline-block", width:22, height:1, background:"var(--moss)", opacity:0.7}}/>
                 Another score
               </div>
-              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>That first score is free.</div>
+              <div style={{fontFamily:"'Lora', Georgia, serif", fontSize:28, fontWeight:400, color:"var(--ink)", marginBottom:12, letterSpacing:"-0.015em", lineHeight:1.08}}>Score the next one.</div>
               <div style={{fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:14, color:"var(--ink-soft)", marginBottom:22, lineHeight:1.55}}>
                 {IS_NATIVE
                   ? (iapTrial
@@ -9435,7 +9431,7 @@ function App() {
         <div style={{maxWidth:600, margin:"0 auto", padding:"100px 40px", textAlign:"center"}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><IcoScan size={64}/></div>
           <h1 style={{fontFamily:"'Lora', Georgia, serif", fontWeight:400, fontSize:36, color:text, margin:"0 0 12px", letterSpacing:"-0.015em"}}>Page not found.</h1>
-          <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist — but we can scan any product for microplastics risk.</p>
+          <p style={{fontSize:16, color:muted, margin:"0 0 32px", lineHeight:1.6}}>That page doesn't exist. A product score is one search away.</p>
           <button onClick={reset} style={{padding:"12px 28px", borderRadius:"var(--cta-shape)", border:"none", background:"var(--moss)", color:"var(--ivory)", fontFamily:"'DM Sans', system-ui, sans-serif", fontWeight:500, fontSize:15, cursor:"pointer"}}>
             Go to Partiqule →
           </button>
@@ -9729,7 +9725,7 @@ function App() {
 
           {/* ── SIGNED OUT: public landing page (2026-05-23 refresh).
               Replaces the receipts-strip hero with the 7-section
-              positioning page (Family product safety, scored.). See
+              positioning page (Smarter shopping, scored.). See
               LandingPage component above for the structure. Try free
               CTAs still route to setShowAuth so the trial paywall
               fires automatically via the onAuth handler higher up. */}
@@ -9795,7 +9791,7 @@ function App() {
                           if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                           analyze();
                         }}
-                        placeholder={user ? "Search or paste a product…" : "Sign up to scan products"}
+                        placeholder="Search or paste a product…"
                         style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:16, background:"transparent", color:"var(--ink)", minWidth:0}}
                       />
                       <button onClick={(e)=>{e.stopPropagation(); setClipboardChecked(true); readClipboardAndMaybeSuggest();}}
@@ -10383,7 +10379,7 @@ function App() {
                     if (searchMatches && searchMatches.length > 0) { selectSearchMatch(searchMatches[0]); return; }
                     analyze();
                   }}
-                  placeholder={user ? "Search or paste a product…" : "Sign up to scan products"}
+                  placeholder="Search or paste a product…"
                   style={{flex:1, border:"none", outline:"none", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:16, background:"transparent", color:"var(--ink)", minWidth:0}}
                 />
                 <button onClick={(e)=>{e.stopPropagation(); setClipboardChecked(true); readClipboardAndMaybeSuggest();}}

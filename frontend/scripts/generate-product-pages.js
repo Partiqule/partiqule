@@ -132,7 +132,7 @@ function renderProductPage(productName, entry) {
   const title       = `${titleCase(productName)} Score: ${score}/10 — ${label} | Partiqule`;
   const description = reason
     ? `${reason.slice(0, 155)}${reason.length > 155 ? "..." : ""}`
-    : `${titleCase(productName)} scored ${score}/10 (${label}) for microplastic and chemical concerns. See what's in it and find cleaner alternatives on Partiqule.`;
+    : `${titleCase(productName)} scored ${score}/10 on Partiqule. Lower is safer. The reason is on the page.`;
   const canonicalUrl = `https://partiqule.com/products/${slug}`;
   // Per-product OG preview if one exists in public/og/<slug>.png, else the
   // shared site-wide card at /og-image.png. Per-product files are generated
