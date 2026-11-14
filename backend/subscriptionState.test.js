@@ -44,6 +44,6 @@ const trialing = decideSubscription({
 }, null, now);
 assert.equal(trialing.status, "trialing");
 assert.equal(trialing.trialDaysRemaining, 2);
-assert.equal(gateDecision(trialing).allowed, true);
+assert.equal(gateDecision(trialing, { nowMs: now }).allowed, true);
 
 console.log("subscriptionState tests passed");

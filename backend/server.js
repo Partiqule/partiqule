@@ -23,6 +23,20 @@ const { resolveProductFromUrl } = require("./urlExtractor");
 const { registerListsRoutes } = require("./lists");
 const { registerAskRoutes, envChecks: askEnvChecks } = require("./ask");
 const { scoreFood: scoreFoodEngine } = require("./foodScorer");
+const { normalizeGuestId, decideFreeScan, isScoredResult } = require("./freeScan");
+const {
+  planCheckout,
+  newerLiveSubscriptionIds,
+  subscriptionIdsToCancelOnDelete,
+  userIdFromStripeObject,
+  profileFromCompletedCheckout,
+} = require("./stripeEntitlement");
+const {
+  entitlementFromTransaction,
+  entitlementFromNotification,
+  columnsFromAppleEntitlement,
+} = require("./appleEntitlement");
+const { resolveSignedTransaction, verifyNotification } = require("./appleVerify");
 const { parseComposition, scoreComposition, isSleepwearFromName } = require("./textileScorer");
 const {
   parseIngredients: parsePersonalCareIngredients,
@@ -433,8 +447,8 @@ function makeStreamHelper(req, res) {
     return {
       streaming: false,
       emit: () => {},
-      complete: (final) => res.json(final),
-      errorJson: (status, body) => res.status(status).json(body),
+    complete: (final) => res.json(decorateScoredBody(req, final)),
+    errorJson: (status, body) => res.status(status).json(body),
     };
   }
   let started = false;
@@ -455,7 +469,8 @@ function makeStreamHelper(req, res) {
     },
     complete: (final) => {
       begin();
-      res.write(JSON.stringify({ event: "complete", ...final }) + "\n");
+      const body = decorateScoredBody(req, final);
+      res.write(JSON.stringify({ event: "complete", ...body }) + "\n");
       res.end();
     },
     errorJson: (status, body) => {
@@ -708,11 +723,99 @@ async function invalidateSubscriptionState(userId) {
 // JWT) get auth_required; signed-in users without a subscription get
 // subscription_required, which the client renders as the trial-signup
 // paywall.
-async function enforceScanGate(userId, _supabaseAdmin) {
-  if (!userId) return { allowed: false, reason: "auth_required" };
-  const sub = await getSubscriptionState(userId);
-  const decision = gateDecision(sub);
-  return { allowed: decision.allowed, reason: decision.reason, subscription: sub };
+const freeScoreUsers = new Set();
+const freeScoreGuests = new Set();
+
+async function freeScoreAlreadyUsed(userId, guestId) {
+  if (userId) {
+    if (freeScoreUsers.has(userId)) return true;
+    if (hasRedis) {
+      const hit = await redisGet(`free:user:${userId}`);
+      if (hit) return true;
+    }
+    if (typeof supabaseAdmin !== "undefined" && supabaseAdmin) {
+      try {
+        const { data, error } = await supabaseAdmin
+          .from("profiles")
+          .select("free_score_used")
+          .eq("id", userId)
+          .single();
+        if (!error && data && data.free_score_used) return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }
+  if (!guestId) return false;
+  if (freeScoreGuests.has(guestId)) return true;
+  if (hasRedis) {
+    const hit = await redisGet(`free:guest:${guestId}`);
+    if (hit) return true;
+  }
+  return false;
+}
+
+async function markFreeScoreUsed(pending) {
+  if (!pending || pending.marked) return;
+  pending.marked = true;
+  if (pending.userId) {
+    freeScoreUsers.add(pending.userId);
+    if (hasRedis) redisSet(`free:user:${pending.userId}`, { used: true }).catch(() => {});
+    if (typeof supabaseAdmin !== "undefined" && supabaseAdmin) {
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ free_score_used: true })
+        .eq("id", pending.userId);
+      if (error) console.warn("[free-score] profile flag skipped:", error.message);
+    }
+  }
+  if (pending.guestId) {
+    freeScoreGuests.add(pending.guestId);
+    if (hasRedis) redisSet(`free:guest:${pending.guestId}`, { used: true }).catch(() => {});
+  }
+}
+
+function decorateScoredBody(req, body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+  if (req && req.generatedGuestId && body.guest_id == null) body.guest_id = req.generatedGuestId;
+  if (req && req.freeScanPending && isScoredResult(body)) {
+    markFreeScoreUsed(req.freeScanPending).catch((e) => console.warn("[free-score]", e.message));
+    req.freeScanPending = null;
+    body.free_scan = true;
+    body.free_scans_remaining = 0;
+  }
+  return body;
+}
+
+// One free real score for a visitor or a new account. A subscribed
+// account, including one whose profile read just failed, never spends it.
+async function enforceScanGate(userId, req) {
+  let sub = null;
+  if (userId) {
+    sub = await getSubscriptionState(userId);
+    const paid = gateDecision(sub, { freeScanAvailable: false });
+    if (paid.allowed) return { allowed: true, reason: paid.reason, subscription: sub };
+  }
+  const guestId = normalizeGuestId(req && req.body && req.body.guestId);
+  const used = await freeScoreAlreadyUsed(userId, guestId);
+  const free = decideFreeScan({ entitled: false, alreadyUsed: used });
+  if (free.reason === "free_scan") {
+    let rememberedGuest = guestId;
+    if (!userId && !rememberedGuest) {
+      rememberedGuest = crypto.randomBytes(16).toString("hex");
+      if (req) req.generatedGuestId = rememberedGuest;
+    }
+    if (req) {
+      req.freeScanPending = {
+        userId: userId || null,
+        guestId: userId ? null : rememberedGuest,
+        marked: false,
+      };
+    }
+    return { allowed: true, reason: "free_scan", subscription: sub };
+  }
+  return { allowed: false, reason: "subscription_required", subscription: sub };
 }
 
 // ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
@@ -6404,7 +6507,7 @@ app.post("/analyze", rateLimit, async (req, res) => {
   // before the increment. A cached payload for an unsubscribed user must
   // still 402 instead of returning the cached scan. Anonymous scans (no
   // valid JWT) are refused with 401 so the client can prompt sign in.
-  const gate = await enforceScanGate(userId, supabaseAdmin);
+  const gate = await enforceScanGate(userId, req);
   if (!gate.allowed) {
     if (gate.reason === "auth_required") {
       return stream.errorJson(401, { error: "auth_required" });
@@ -9090,14 +9193,16 @@ app.post("/delete-account", requireUserAuth, async (req, res) => {
   // body.userId is ignored — users can only delete their own account.
   const userId = req.authUserId;
   try {
-    // Cancel Stripe subscription if active
+    // Cancel every Stripe subscription that could still bill, including a
+    // trial that has not charged yet. Apple billing cannot be cancelled
+    // from here. The app tells the person to cancel that in Apple Settings.
     if (stripe) {
       const { data: profile } = await supabaseAdmin
         .from("profiles").select("stripe_customer_id").eq("id", userId).single();
-      if (profile?.stripe_customer_id) {
-        const subs = await stripe.subscriptions.list({ customer: profile.stripe_customer_id, status: "active", limit: 5 });
-        for (const sub of subs.data) {
-          await stripe.subscriptions.cancel(sub.id);
+      if (profile && profile.stripe_customer_id) {
+        const subs = await listCustomerSubscriptions(profile.stripe_customer_id);
+        for (const id of subscriptionIdsToCancelOnDelete(subs)) {
+          await stripe.subscriptions.cancel(id);
         }
       }
     }
@@ -9972,30 +10077,71 @@ function buildRegulatoryContext(category) {
 }
 
 // Create Stripe checkout session
-app.post("/create-checkout", async (req, res) => {
+const stripeReturnUrl = () => `${process.env.FRONTEND_URL || "https://partiqule.com"}/account`;
+
+async function listCustomerSubscriptions(customerId) {
+  if (!stripe || !customerId) return [];
+  const page = await stripe.subscriptions.list({ customer: customerId, status: "all", limit: 20 });
+  return page && page.data ? page.data : [];
+}
+
+async function openBillingPortal(customerId) {
+  return stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: stripeReturnUrl(),
+  });
+}
+
+// Checkout is tied to the signed-in account. The Stripe customer is saved
+// before the session exists, so a subscription event can find the person
+// even if it arrives before checkout.session.completed. A second checkout
+// while a subscription is still live opens the portal instead of starting
+// another subscription.
+app.post("/create-checkout", requireUserAuth, async (req, res) => {
   if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
-  const { userId, email, promo } = req.body;
-  if (!userId || !email) return res.status(400).json({ error: "userId and email required" });
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  const userId = req.authUserId;
+  const email = req.authEmail;
+  if (!email) return res.status(400).json({ error: "email required" });
 
   try {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", userId)
+      .single();
+    let customerId = profile && profile.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email, metadata: { userId } });
+      customerId = customer.id;
+      await supabaseAdmin.from("profiles").upsert(
+        { id: userId, stripe_customer_id: customerId },
+        { onConflict: "id" },
+      );
+    }
+    const subs = await listCustomerSubscriptions(customerId);
+    const plan = planCheckout(subs);
+    if (plan.action === "portal") {
+      const portal = await openBillingPortal(customerId);
+      return res.json({ url: portal.url, alreadySubscribed: true });
+    }
     const params = {
       mode: "subscription",
-      payment_method_types: ["card"],
-      customer_email: email,
+      customer: customerId,
+      client_reference_id: userId,
       line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
-      // 7-day free trial. Stripe collects the card upfront on checkout,
-      // creates the subscription in trialing status, and converts to active
-      // (first charge) at trial_end. The customer.subscription.updated
-      // webhook fires on every transition so trial_ends_at and
-      // subscription_status stay in sync without polling.
-      subscription_data: { trial_period_days: 7 },
       success_url: `${process.env.FRONTEND_URL || "https://partiqule.com"}/account?subscribed=true`,
-      cancel_url:  `${process.env.FRONTEND_URL || "https://partiqule.com"}/?cancelled=true`,
+      cancel_url: `${process.env.FRONTEND_URL || "https://partiqule.com"}/?cancelled=true`,
       metadata: { userId },
+      subscription_data: { metadata: { userId } },
       allow_promotion_codes: true,
     };
+    // First web subscription includes a 7 day trial. Stripe collects the
+    // card up front and charges when the trial ends. A person who already
+    // had a subscription does not get another trial.
+    if (plan.offerTrial) params.subscription_data.trial_period_days = 7;
+    const promo = req.body && req.body.promo;
     if (promo) {
-      // Validate promo code
       const codes = await stripe.promotionCodes.list({ code: promo, active: true, limit: 1 });
       if (codes.data.length > 0) params.discounts = [{ promotion_code: codes.data[0].id }];
     }
@@ -10003,7 +10149,33 @@ app.post("/create-checkout", async (req, res) => {
     res.json({ url: session.url });
   } catch (err) {
     console.error("Stripe checkout error:", err.message);
-    res.status(500).json({ error: "Could not create checkout session" });
+    const portalMissing = /portal/i.test(err.message || "");
+    res.status(portalMissing ? 503 : 500).json({
+      error: portalMissing ? "portal_not_configured" : "Could not create checkout session",
+    });
+  }
+});
+
+app.post("/create-portal-session", requireUserAuth, async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: "Stripe not configured" });
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+  try {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", req.authUserId)
+      .single();
+    if (!profile || !profile.stripe_customer_id) {
+      return res.status(400).json({ error: "no_stripe_customer" });
+    }
+    const portal = await openBillingPortal(profile.stripe_customer_id);
+    res.json({ url: portal.url });
+  } catch (err) {
+    console.error("Stripe portal error:", err.message);
+    const portalMissing = /portal/i.test(err.message || "");
+    res.status(portalMissing ? 503 : 500).json({
+      error: portalMissing ? "portal_not_configured" : "Could not open billing portal",
+    });
   }
 });
 
@@ -10118,65 +10290,89 @@ app.post("/stripe-webhook", express.raw({ type: "application/json" }), async (re
     return res.status(400).send("Webhook signature verification failed");
   }
 
-  // Writes status + trial_ends_at + is_subscribed to profiles in one call.
-  // is_subscribed remains the legacy boolean for code paths that have not
-  // migrated to subscription_status; trial_ends_at is set only when the
-  // subscription is actually trialing (Stripe sets trial_end to a Unix
-  // timestamp during the trial, null otherwise).
+  // Finds the account from the subscription metadata first, then from
+  // the customer id. Either event can arrive first. past_due stays paid
+  // so a card retry does not lock the person out. canceled and unpaid do not.
   const writeSubscriptionState = async (customerId, sub) => {
-    if (!supabaseAdmin) return null;
-    const { data: profiles } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("stripe_customer_id", customerId)
-      .limit(1);
-    if (!profiles?.length) return null;
-    const userId = profiles[0].id;
-    const status = sub.status || null;
-    const isActive = status === "active" || status === "trialing";
-    const trialEndsAt = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
-    const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
-    await supabaseAdmin.from("profiles").update({
-      subscription_status: status,
-      trial_ends_at: trialEndsAt,
-      is_subscribed: isActive,
-      subscription_ends_at: isActive ? null : periodEnd,
-    }).eq("id", userId);
+    if (!supabaseAdmin || !sub) return null;
+    let userId = userIdFromStripeObject(sub);
+    if (!userId && customerId) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", customerId)
+        .limit(1);
+      if (profiles && profiles.length) userId = profiles[0].id;
+    }
+    if (!userId) return null;
+    const patch = profileFromCompletedCheckout({ customer: customerId }, sub);
+    await supabaseAdmin.from("profiles").update(patch).eq("id", userId);
     await invalidateSubscriptionState(userId);
-    console.log(`[Stripe] ${status} for customer ${customerId} (user ${userId})`);
+    console.log(`[Stripe] ${patch.subscription_status} for customer ${customerId} (user ${userId})`);
     return userId;
+  };
+
+  const collapseDuplicateSubscriptions = async (customerId, userId) => {
+    const subs = await listCustomerSubscriptions(customerId);
+    const cancelIds = newerLiveSubscriptionIds(subs);
+    for (const id of cancelIds) {
+      try { await stripe.subscriptions.cancel(id); }
+      catch (e) { console.warn("[Stripe] cancel duplicate failed:", e.message); }
+    }
+    const kept = subs
+      .filter((s) => ["active", "trialing", "past_due"].includes(s.status) && !cancelIds.includes(s.id))
+      .sort((a, b) => (a.created || 0) - (b.created || 0))[0];
+    if (kept && userId) await writeSubscriptionState(customerId, kept);
+    return kept;
   };
 
   const obj = event.data.object;
 
   switch (event.type) {
     case "checkout.session.completed": {
-      // Link Stripe customer to Supabase user. The actual subscription
-      // status is set by the customer.subscription.* events that fire
-      // alongside, but linking the customer id here means the webhook
-      // can find the user when those events arrive.
-      const userId = obj.metadata?.userId;
-      const customerId = obj.customer;
+      const userId = userIdFromStripeObject(obj);
+      const customerId = typeof obj.customer === "string" ? obj.customer : null;
       if (userId && customerId && supabaseAdmin) {
-        await supabaseAdmin.from("profiles").upsert({
-          id: userId,
-          stripe_customer_id: customerId,
-        });
-        await invalidateSubscriptionState(userId);
-        console.log(`[Stripe] Checkout complete — linked ${userId} to customer ${customerId}`);
+        await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", userId);
+        let subscription = null;
+        if (obj.subscription) {
+          try { subscription = await stripe.subscriptions.retrieve(obj.subscription); }
+          catch (e) { console.warn("[Stripe] retrieve subscription failed:", e.message); }
+        }
+        const kept = await collapseDuplicateSubscriptions(customerId, userId);
+        if (!kept) {
+          const patch = profileFromCompletedCheckout(obj, subscription);
+          await supabaseAdmin.from("profiles").update(patch).eq("id", userId);
+          await invalidateSubscriptionState(userId);
+        }
+        console.log(`[Stripe] Checkout complete for user ${userId}`);
       }
       break;
     }
     case "customer.subscription.created":
     case "customer.subscription.updated":
-    case "customer.subscription.trial_will_end":
+    case "customer.subscription.trial_will_end": {
+      const userId = userIdFromStripeObject(obj);
+      const kept = obj.customer
+        ? await collapseDuplicateSubscriptions(obj.customer, userId)
+        : null;
+      if (!kept) await writeSubscriptionState(obj.customer, obj);
+      break;
+    }
     case "customer.subscription.deleted": {
-      // obj is the subscription. Pass it through writeSubscriptionState so
-      // status, trial_ends_at, and the period end persist together.
-      await writeSubscriptionState(obj.customer, obj);
+      // A duplicate we just cancelled also sends deleted. If another live
+      // subscription remains, keep that one. Only the last cancellation
+      // turns access off.
+      const userId = userIdFromStripeObject(obj);
+      const kept = obj.customer
+        ? await collapseDuplicateSubscriptions(obj.customer, userId)
+        : null;
+      if (!kept) await writeSubscriptionState(obj.customer, obj);
       break;
     }
     case "invoice.payment_failed": {
+      // The subscription.updated event sets past_due. Access stays on
+      // while Stripe retries the card.
       console.log(`[Stripe] Payment failed for customer ${obj.customer}`);
       break;
     }
@@ -10509,40 +10705,51 @@ app.get("/recent-scans", requireAdmin, async (req, res) => {
   res.json(entries);
 });
 
-// ── APPLE IAP — STUBS (ready to implement post-approval) ──────
-const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET || "";
-
-// Receipt verification — called by iOS app after purchase
-// TODO: implement full receipt verification with Apple sandbox/production endpoints
-app.post("/verify-apple-receipt", async (req, res) => {
-  if (!supabaseAdmin) return res.status(503).json({ error: "Not configured" });
-  const { receipt, userId } = req.body;
-  if (!receipt || !userId) return res.status(400).json({ error: "receipt and userId required" });
+// App Store Server Notifications V2. The body is { signedPayload }.
+// A bad signature is rejected. A matched expiry, refund, or revocation
+// turns that one account off. An unmatched notice does not touch anyone else.
+async function handleAppleServerNotification(req, res) {
   try {
-    // Placeholder — verify receipt with Apple and activate subscription
-    // Will call https://buy.itunes.apple.com/verifyReceipt (prod) or
-    // https://sandbox.itunes.apple.com/verifyReceipt (sandbox)
-    // For now just log and return pending
-    console.log(`[APPLE IAP] Receipt verification pending for user ${userId}`);
-    res.json({ ok: false, message: "Apple IAP verification not yet implemented" });
-  } catch(e) {
-    console.error("[APPLE IAP]", e.message);
-    res.status(500).json({ error: e.message });
+    const signedPayload = req.body && req.body.signedPayload;
+    const verified = await verifyNotification(signedPayload);
+    if (!verified.ok) {
+      console.warn("[APPLE] notification rejected:", verified.reason || verified.detail);
+      return res.status(400).json({ error: "invalid_notification" });
+    }
+    const decision = entitlementFromNotification(verified);
+    if (decision.ignore || !decision.originalTransactionId) {
+      return res.status(200).json({ ok: true, ignored: true });
+    }
+    if (!supabaseAdmin) return res.status(503).json({ error: "Supabase not configured" });
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("apple_original_transaction_id", decision.originalTransactionId)
+      .limit(1);
+    if (error) {
+      console.warn("[APPLE] lookup failed:", error.message);
+      return res.status(503).json({ error: "entitlement_store_unavailable" });
+    }
+    const userId = data && data[0] && data[0].id;
+    if (!userId) {
+      console.warn("[APPLE] no account for transaction ending", String(decision.originalTransactionId).slice(-4));
+      return res.status(200).json({ ok: true, matched: false });
+    }
+    const applied = await applyAppleEntitlement(userId, decision);
+    if (!applied.ok) return res.status(200).json({ ok: true, matched: false });
+    return res.status(200).json({ ok: true, matched: true, status: decision.status });
+  } catch (e) {
+    console.error("[APPLE] notification error:", e.message);
+    return res.status(500).json({ error: "notification_failed" });
   }
-});
+}
 
-// Apple App Store Server Notifications — called by Apple when subscription status changes
-// TODO: parse and verify Apple signed JWT notifications
-app.post("/apple-webhook", async (req, res) => {
-  try {
-    // Always return 200 so Apple doesn't retry indefinitely
-    // Will implement JWT verification and subscription activation here
-    console.log("[APPLE WEBHOOK] Notification received — implementation pending");
-    res.status(200).json({ ok: true });
-  } catch(e) {
-    console.error("[APPLE WEBHOOK]", e.message);
-    res.status(200).json({ ok: true }); // still return 200
-  }
+app.post("/apple-webhook", handleAppleServerNotification);
+app.post("/apple-notifications", handleAppleServerNotification);
+
+// Older clients called this stub. Purchases go through /apple-iap-confirm.
+app.post("/verify-apple-receipt", (_req, res) => {
+  res.status(410).json({ ok: false, error: "Use /apple-iap-confirm" });
 });
 
 
@@ -10996,124 +11203,67 @@ app.get("/min-version", (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-// ── Apple IAP confirmation — called after successful StoreKit purchase ──
-// Requires an authenticated user (Supabase JWT in Authorization header) — any
-// trusted-client userId in the body is ignored. Also verifies the Apple
-// receipt cryptographically so an authenticated user cannot fabricate a
-// transactionId to grant themselves premium. Before these gates landed, this
-// endpoint accepted any {userId, transactionId} pair from any caller and
-// flipped profiles.is_subscribed to true — a trivial path to free premium.
-async function verifyAppleReceipt(receipt, expectedProductId) {
-  // StoreKit 2 returns a signed JWS in `receipt`. Parse the payload without
-  // full signature verification (rotating trust roots is a heavier lift —
-  // worth doing but beyond the scope of this auth patch) and at least confirm
-  // the bundle/product/environment match. Non-JWS receipts (legacy base64
-  // bodies) fall back to Apple's verifyReceipt endpoint.
-  if (typeof receipt !== "string" || receipt.length < 20) return { ok: false, reason: "empty_receipt" };
-  // JWS = three base64url-safe segments joined by "." — header.payload.signature
-  const jwsMatch = receipt.match(/^([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/);
-  if (jwsMatch) {
-    try {
-      const payloadB64 = jwsMatch[2].replace(/-/g, "+").replace(/_/g, "/");
-      const padded = payloadB64 + "=".repeat((4 - (payloadB64.length % 4)) % 4);
-      const payload = JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
-      if (payload.bundleId !== "com.partiqule.app") return { ok: false, reason: `wrong_bundle:${payload.bundleId}` };
-      if (payload.productId !== expectedProductId)   return { ok: false, reason: `wrong_product:${payload.productId}` };
-      // environment === "Sandbox" | "Production" — we accept both since
-      // TestFlight uses Sandbox. Rejecting Sandbox would break Apple review.
-      return { ok: true, payload, env: payload.environment };
-    } catch (e) {
-      return { ok: false, reason: `jws_parse_failed:${e.message}` };
+// Writes one account's Apple entitlement. A failed verification never
+// calls this, so a blip cannot clear a person who is already paid.
+// Linking the original transaction id is what later notifications use.
+// If that id is already on another account, this account is left unchanged.
+async function applyAppleEntitlement(userId, ent) {
+  if (ent.originalTransactionId) {
+    const { error: linkErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ apple_original_transaction_id: ent.originalTransactionId })
+      .eq("id", userId);
+    if (linkErr && /23505|duplicate|unique/i.test(`${linkErr.code || ""} ${linkErr.message || ""}`)) {
+      return { ok: false, reason: "already_linked" };
     }
+    if (linkErr) console.warn("[IAP] apple id not stored:", linkErr.message);
   }
-  // Legacy verifyReceipt path — used only if the frontend sent a base64
-  // app-receipt instead of a JWS transaction. Kept for completeness.
-  if (!process.env.APPLE_SHARED_SECRET) return { ok: false, reason: "shared_secret_missing" };
-  try {
-    const body = JSON.stringify({ "receipt-data": receipt, password: process.env.APPLE_SHARED_SECRET });
-    let r = await fetch("https://buy.itunes.apple.com/verifyReceipt", { method: "POST", body });
-    let d = await r.json();
-    if (d.status === 21007) {
-      r = await fetch("https://sandbox.itunes.apple.com/verifyReceipt", { method: "POST", body });
-      d = await r.json();
-    }
-    if (d.status !== 0) return { ok: false, reason: `apple_status:${d.status}` };
-    const bundleOk = d.receipt?.bundle_id === "com.partiqule.app";
-    if (!bundleOk) return { ok: false, reason: `wrong_bundle:${d.receipt?.bundle_id}` };
-    return { ok: true, payload: d.receipt };
-  } catch (e) {
-    return { ok: false, reason: `verifyReceipt_failed:${e.message}` };
-  }
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update(columnsFromAppleEntitlement(ent))
+    .eq("id", userId);
+  if (error) throw error;
+  await invalidateSubscriptionState(userId);
+  return { ok: true };
 }
 
-app.post('/apple-iap-confirm', requireUserAuth, async (req, res) => {
-  const { transactionId, receipt } = req.body;
+app.post("/apple-iap-confirm", requireUserAuth, async (req, res) => {
+  const { transactionId, receipt } = req.body || {};
   const userId = req.authUserId;
-  if (!transactionId) return res.status(400).json({ error: 'Missing transactionId' });
-  if (!supabaseAdmin) return res.status(503).json({ error: 'Supabase admin not configured' });
+  if (!transactionId && !receipt) return res.status(400).json({ error: "Missing transaction" });
+  if (!supabaseAdmin) return res.status(503).json({ error: "Supabase admin not configured" });
 
-  // Cryptographic receipt check — guards against an authenticated user
-  // submitting a fabricated transactionId for a product they did not buy.
-  const verification = await verifyAppleReceipt(receipt, "com.partiqule.app.premium.monthly");
-  if (!verification.ok) {
-    console.warn("[IAP] receipt verification failed", { userId, reason: verification.reason });
-    return res.status(403).json({ error: "Receipt verification failed", reason: verification.reason });
+  const verified = await resolveSignedTransaction(receipt, transactionId);
+  if (!verified.ok) {
+    console.warn("[IAP] verification failed", { userId, reason: verified.reason });
+    return res.status(403).json({ error: "Receipt verification failed", reason: verified.reason });
   }
-
-  // Derive trial state from the verified payload. StoreKit 2 JWS payloads
-  // carry expiresDate (ms) and offerType (1 = intro offer / free trial).
-  // Legacy verifyReceipt responses carry latest_receipt_info[*].expires_date_ms
-  // and is_trial_period. Treat presence of either trial signal as trialing
-  // and write trial_ends_at from the same expiry timestamp Apple reports;
-  // when the trial converts, App Store Server Notifications would normally
-  // push DID_RENEW with a fresh receipt, but until that path is wired this
-  // endpoint runs again on next foreground via the existing restore flow.
-  const payload = verification.payload || {};
-  let status = "active";
-  let trialEndsAt = null;
-  let periodEnd = null;
-  // StoreKit 2 JWS shape — payload is the transaction itself
-  if (typeof payload.expiresDate === "number") {
-    periodEnd = new Date(payload.expiresDate).toISOString();
+  const ent = entitlementFromTransaction(verified.transaction);
+  if (!ent.ok) {
+    return res.status(403).json({ error: "Receipt verification failed", reason: ent.reason });
   }
-  if (payload.offerType === 1 || payload.offerType === "1") {
-    status = "trialing";
-    trialEndsAt = periodEnd;
-  }
-  // Legacy verifyReceipt shape — payload is the wrapped receipt
-  const latest = Array.isArray(payload.in_app) ? payload.in_app[payload.in_app.length - 1] : null;
-  if (latest) {
-    if (latest.expires_date_ms) periodEnd = new Date(Number(latest.expires_date_ms)).toISOString();
-    if (latest.is_trial_period === "true" || latest.is_trial_period === true) {
-      status = "trialing";
-      trialEndsAt = periodEnd;
-    }
-  }
-
   try {
-    const { error: profErr } = await supabaseAdmin.from('profiles')
-      .update({
-        subscription_status: status,
-        trial_ends_at: trialEndsAt,
-        is_subscribed: true,
-        subscription_ends_at: status === "active" ? null : periodEnd,
-      })
-      .eq('id', userId);
-    if (profErr) throw profErr;
-    await invalidateSubscriptionState(userId);
-
-    console.log('[IAP] Apple subscription confirmed for user', userId, 'txn', transactionId, 'env', verification.env || 'unknown', 'status', status);
-    res.json({ ok: true, status, trialEndsAt });
-  } catch(e) {
-    console.error('[IAP] Confirm error:', e.message);
-    res.status(500).json({ error: e.message });
+    const applied = await applyAppleEntitlement(userId, ent);
+    if (!applied.ok && applied.reason === "already_linked") {
+      return res.status(409).json({ error: "This Apple subscription is already on another account." });
+    }
+    console.log("[IAP] Apple subscription saved", { userId, status: ent.status, entitled: ent.entitled });
+    res.json({
+      ok: true,
+      status: ent.status,
+      entitled: ent.entitled,
+      trialEndsAt: ent.status === "trialing" ? ent.expiresAt : null,
+    });
+  } catch (e) {
+    console.error("[IAP] Confirm error:", e.message);
+    res.status(500).json({ error: "Could not save subscription" });
   }
 });
 app.listen(PORT, () => {
   console.log(`Partiqule API running on port ${PORT}`);
   console.log(`[ENV] Stripe: ${process.env.STRIPE_SECRET_KEY ? "configured" : "MISSING"}`);
   console.log(`[ENV] Supabase: ${process.env.SUPABASE_URL ? "configured" : "MISSING"}`);
-  console.log(`[ENV] Apple IAP: ${process.env.APPLE_SHARED_SECRET ? "configured" : "pending - add APPLE_SHARED_SECRET when ready"}`);
+  console.log(`[ENV] Apple IAP: signed transactions on; server api ${process.env.APPLE_ISSUER_ID ? "configured" : "not set"}`);
   console.log(`[CACHE] Prompt version: ${promptVersion()} — old-prefix entries are unreachable until Redis TTL expires them`);
   try {
     const a = askEnvChecks();
@@ -11726,7 +11876,10 @@ app.post("/barcode", rateLimit, async (req, res) => {
 
   // Server-side trial gate. Same shape as /analyze. Runs before cache
   // lookup so a cached payload cannot leak past the gate.
-  const gate = await enforceScanGate(userId, supabaseAdmin);
+  const sendJson = res.json.bind(res);
+  res.json = (body) => sendJson(decorateScoredBody(req, body));
+
+  const gate = await enforceScanGate(userId, req);
   if (!gate.allowed) {
     if (gate.reason === "auth_required") {
       return res.status(401).json({ error: "auth_required" });
