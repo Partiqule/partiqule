@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { createClient } from "@supabase/supabase-js";
+import {
+  createPartiquleSupabase,
+  authRedirectUrl,
+  friendlyAuthError,
+  isAppleCancel,
+  signInWithAppleNative,
+  listenForAuthCallback,
+} from "./auth/nativeAuth.js";
 import ListBuilderPage from "./lists/ListBuilderPage";
 import AskPrototypePage from "./ask/AskPrototypePage";
 import { makeListsApi } from "./lists/api";
@@ -329,7 +336,7 @@ const extractBrand = (productName, providedBrand) => {
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPA_URL = "https://hciyibnoipqvspmrflzh.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXlpYm5vaXBxdnNwbXJmbHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzk5NzcsImV4cCI6MjA5MDY1NTk3N30.ue_WmeiLbiCxMojsaXHzaOtRtSDoaP_0Ajlilx-0gjU";
-const supabase = createClient(SUPA_URL, SUPA_KEY);
+const supabase = createPartiquleSupabase(SUPA_URL, SUPA_KEY, { isNative: IS_NATIVE });
 
 // Module-scoped auth helpers — same shape as the App-component versions, but
 // reachable from top-level admin components (AdminPage, IntelAdminPage) so
@@ -5703,28 +5710,59 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
     setLoading(true); setError(null); setSuccess(null);
     try {
       if (mode === "signup") {
-        const { data, error: e } = await supabase.auth.signUp({ email, password });
+        const { data, error: e } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: authRedirectUrl("signup", IS_NATIVE) },
+        });
         if (e) throw e;
         const nick = nickname.trim();
         if (onSetName) onSetName(nick);
-        if (data?.user) onAuth(data.user);
+        // Email confirmation is on until Supabase says otherwise. A user
+        // object with no session is not a signed-in account.
+        if (!data?.session?.user) {
+          setSuccess("Check your email and confirm the account, then sign in here.");
+          setMode("signin");
+          return;
+        }
+        onAuth(data.session.user);
         onClose();
       } else if (mode === "signin") {
         const { data, error: e } = await supabase.auth.signInWithPassword({ email, password });
         if (e) throw e;
-        onAuth(data.user);
+        if (!data?.session?.user) throw new Error("Sign-in did not return a session.");
+        onAuth(data.session.user);
         onClose();
       } else if (mode === "reset") {
         const { error: e } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: "https://partiqule.com/reset-password",
+          redirectTo: authRedirectUrl("recovery", IS_NATIVE),
         });
         if (e) throw e;
-        setSuccess("Password reset email sent. Check your inbox.");
+        setSuccess(IS_NATIVE
+          ? "Reset email sent. Open it on this iPhone and the app will pick it up."
+          : "Password reset email sent. Check your inbox.");
       }
     } catch(e) {
-      setError(e.message || "Something went wrong. Please try again.");
+      setError(friendlyAuthError(e.message));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const appleSignIn = async () => {
+    setLoading(true); setError(null); setSuccess(null);
+    try {
+      const { user, displayName } = await signInWithAppleNative(supabase);
+      if (!user) throw new Error("Apple sign-in did not return an account.");
+      if (displayName && onSetName) onSetName(displayName);
+      onAuth(user);
+      onClose();
+    } catch (e) {
+      if (isAppleCancel(e)) return;
+      setError(friendlyAuthError(e.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -5762,6 +5800,22 @@ const AuthModal = ({onClose, onAuth, onSetName}) => {
         {success && <div style={{background:"var(--score-green-soft)", border:"1px solid var(--score-green)", borderRadius:"12px 16px 14px 18px / 16px 12px 18px 14px", padding:"10px 14px", fontFamily:"'DM Sans', system-ui, sans-serif", fontSize:13, color:"var(--moss)", marginBottom:14}}>{success}</div>}
 
         <div style={{display:"flex", flexDirection:"column", gap:12}}>
+          {IS_NATIVE && mode !== "reset" && (
+            <>
+              <button onClick={appleSignIn} disabled={loading} style={{
+                padding:"13px 16px",
+                borderRadius:"22px 18px 24px 20px / 20px 24px 18px 22px",
+                background:"#000", color:"#fff", border:"none",
+                fontFamily:"'DM Sans', system-ui, sans-serif",
+                fontWeight:500, fontSize:14,
+                cursor: loading ? "default" : "pointer",
+                opacity: loading ? 0.7 : 1,
+              }}>
+                Sign in with Apple
+              </button>
+              <div style={{textAlign:"center", fontSize:12, letterSpacing:"0.14em", textTransform:"uppercase", color:mt}}>or</div>
+            </>
+          )}
           <input type="email" placeholder="Email address" value={email} onChange={e=>setEmail(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&submit()}
             style={{padding:"11px 14px", borderRadius:"14px 10px 15px 12px / 10px 15px 12px 14px", border:`1px solid ${bd}`, background:fieldBg, color:tx, fontSize:14, fontFamily:"'DM Sans', system-ui, sans-serif", outline:"none"}}/>
@@ -7689,6 +7743,32 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Email confirmation and password reset return through partiqule://auth/callback
+  // because the native app does not receive https://partiqule.com links.
+  useEffect(() => {
+    if (!IS_NATIVE) return undefined;
+    let remove = () => {};
+    let cancelled = false;
+    listenForAuthCallback(supabase, (event) => {
+      if (cancelled) return;
+      if (event.type === "error") {
+        setError(event.message);
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+      if (event.type === "recovery") {
+        window.history.replaceState({}, "", "/reset-password");
+        setPage("reset-password");
+      }
+    }).then((unsubscribe) => {
+      if (cancelled) unsubscribe();
+      else remove = unsubscribe;
+    }).catch((e) => {
+      console.warn("[auth] deep link listener failed", e?.message);
+    });
+    return () => { cancelled = true; remove(); };
+  }, []);
+
   // ── Stripe checkout ───────────────────────────────────────────
   const IAP_PRODUCT_ID = "com.partiqule.app.premium.monthly";
 
@@ -8102,6 +8182,9 @@ function App() {
 
   // Update browser URL when result changes
   useEffect(() => {
+    // A password-reset landing has no product result. Replacing the URL
+    // with "/" drops the recovery token before the form can use it.
+    if (window.location.pathname === "/reset-password" && !result?.product_name) return;
     if (result?.product_name) {
       const slug = toSlug(result.product_name);
       window.history.pushState({}, "", `/scan/${slug}`);

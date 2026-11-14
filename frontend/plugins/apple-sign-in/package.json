@@ -1,0 +1,17 @@
+{
+  "name": "partiqule-apple-sign-in",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native Sign in with Apple for the Partiqule iOS app. Apple only. No Google or Facebook SDK.",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  }
+}
