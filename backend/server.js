@@ -662,60 +662,36 @@ const requireUserAuth = async (req, res, next) => {
 //     currentPeriodEnd: <ISO timestamp> | null,
 //   }
 //
-// On Supabase transient failure returns null status — the gate then refuses
-// the scan with subscription_required, which is the safe default. (We do
-// NOT fail open on the new gate the way the old free-tier gate did, because
-// granting unlimited scans during an outage is more expensive than briefly
-// gating a paid user. Apple/Stripe outages are rare; profile reads are
-// already cached in memory by Supabase client.)
+// On a failed profile read, status is null and readError is true. The scan
+// gate then allows the request (subscription_unconfirmed) instead of
+// treating a database blip as "not subscribed." A confirmed unpaid row
+// still gets subscription_required. Failed reads are not cached.
+const { decideSubscription, gateDecision } = require("./subscriptionState");
+
 async function getSubscriptionState(userId) {
   if (!userId || !supabaseAdmin) return { status: null, trialDaysRemaining: null, currentPeriodEnd: null };
 
   const cacheKey = `agg:subscription:${userId}`;
   const cached = await redisGet(cacheKey);
-  if (cached) return cached;
+  if (cached && !cached.readError) return cached;
 
-  let result = { status: null, trialDaysRemaining: null, currentPeriodEnd: null };
   try {
     const { data, error } = await supabaseAdmin
       .from("profiles")
       .select("subscription_status, trial_ends_at, subscription_ends_at, is_subscribed")
       .eq("id", userId)
       .single();
-    if (!error && data) {
-      // Defense in depth for the Migration 011 backfill case. 2026-05-09:
-      // Migration 011 added subscription_status with a NULL default and
-      // the Stripe + Apple webhooks only fire on FUTURE subscription
-      // events, so all five existing paid subscribers came back NULL
-      // despite is_subscribed=true and got their scans gated. A manual
-      // UPDATE patched the immediate incident; this explicit fallback
-      // catches the same shape if it recurs (a future column addition
-      // with NULL default, or a future code path that flips
-      // is_subscribed=true without also writing subscription_status).
-      // Trial users have subscription_status set correctly at trial
-      // creation, so this branch never fires for them. Refusing here
-      // when is_subscribed=false is the correct default — the gate
-      // then refuses with subscription_required.
-      let status = data.subscription_status || null;
-      if (!status && data.is_subscribed === true) {
-        status = "active";
-      }
-      let trialDaysRemaining = null;
-      if (status === "trialing" && data.trial_ends_at) {
-        const ms = new Date(data.trial_ends_at).getTime() - Date.now();
-        trialDaysRemaining = Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
-      }
-      result = {
-        status,
-        trialDaysRemaining,
-        currentPeriodEnd: data.trial_ends_at || data.subscription_ends_at || null,
-      };
-    }
+    // A database error is not "unpaid". decideSubscription marks those
+    // readError so the scan gate can let an already-signed-in person
+    // through instead of showing the paywall. Confirmed unpaid rows and
+    // a missing profile still come back as not subscribed.
+    const result = decideSubscription(data, error);
+    if (!result.readError) redisSetEx(cacheKey, result, 60).catch(() => {});
+    return result;
   } catch (e) {
     console.warn("[subscription] state read failed:", e?.message);
+    return { status: null, trialDaysRemaining: null, currentPeriodEnd: null, readError: true };
   }
-  redisSetEx(cacheKey, result, 60).catch(() => {});
-  return result;
 }
 
 // Drop the cached subscription so the next /me or scan rereads from
@@ -735,10 +711,8 @@ async function invalidateSubscriptionState(userId) {
 async function enforceScanGate(userId, _supabaseAdmin) {
   if (!userId) return { allowed: false, reason: "auth_required" };
   const sub = await getSubscriptionState(userId);
-  if (sub.status === "trialing" || sub.status === "active") {
-    return { allowed: true, subscription: sub };
-  }
-  return { allowed: false, reason: "subscription_required", subscription: sub };
+  const decision = gateDecision(sub);
+  return { allowed: decision.allowed, reason: decision.reason, subscription: sub };
 }
 
 // ── RATE LIMITER — per user (when signed in) or per IP (anonymous) ──
@@ -10120,10 +10094,16 @@ app.get("/subscription-status", async (req, res) => {
       .select("is_subscribed, stripe_customer_id, subscription_ends_at")
       .eq("id", userId)
       .single();
+    // A lookup failure is not the same as "this person does not pay."
+    // Returning false here made the iOS app show the paywall to subscribers
+    // whenever the profile read blipped.
+    if (error && error.code !== "PGRST116") {
+      return res.status(503).json({ error: "subscription_lookup_failed" });
+    }
     if (error) return res.json({ is_subscribed: false });
     res.json({ is_subscribed: !!data?.is_subscribed, ends_at: data?.subscription_ends_at || null });
   } catch (err) {
-    res.json({ is_subscribed: false });
+    res.status(503).json({ error: "subscription_lookup_failed" });
   }
 });
 

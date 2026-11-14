@@ -10,15 +10,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.2",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
     "@capacitor/ios": "^8.3.0",
+    "@capacitor/preferences": "^8.0.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@capgo/native-purchases": "^8.3.0",
     "@supabase/supabase-js": "^2.101.1",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
+    "partiqule-apple-sign-in": "file:plugins/apple-sign-in",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "roughjs": "^4.6.6"

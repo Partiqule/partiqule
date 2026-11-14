@@ -19,7 +19,7 @@ const TESTS = [
   { name: "m&ms",                     expectMin: 7, expectMax: 9, cat: "food_beverage", note: "4 petroleum dyes" },
   { name: "skittles",                 expectMin: 7, expectMax: 9, cat: "food_beverage", note: "Petroleum dyes" },
   { name: "reese's",                  expectMin: 6, expectMax: 8, cat: "food_beverage" },
-  { name: "oreo",                     expectMin: 5, expectMax: 7, cat: "food_beverage" },
+  { name: "oreo cookies",             expectMin: 5, expectMax: 7, cat: "food_beverage" },
   { name: "pop tarts",                expectMin: 6, expectMax: 8, cat: "food_beverage" },
   { name: "froot loops",              expectMin: 7, expectMax: 9, cat: "food_beverage", note: "Petroleum dyes" },
 

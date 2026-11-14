@@ -1,7 +1,12 @@
 #!/bin/bash
 # Drives the /admin/reload-redis endpoint in batches until complete.
-# Usage: bash run_reload.sh
-URL="https://partiqule-production.up.railway.app/admin/reload-redis?key=RowenaRavenclaw2024!&batch=25"
+# Usage: ADMIN_KEY=... bash run_reload.sh
+if [ -z "$ADMIN_KEY" ]; then
+  echo "Set ADMIN_KEY in the environment before running this script."
+  echo "The old fallback password was removed because it is in the public git history. Rotate it in Railway if it is still the live key."
+  exit 1
+fi
+URL="https://partiqule-production.up.railway.app/admin/reload-redis?key=${ADMIN_KEY}&batch=25"
 while true; do
   RESP=$(curl -s --max-time 300 "$URL")
   STATUS=$(echo "$RESP" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const r=JSON.parse(d);console.log(r.status+' '+(r.pct||0)+'% '+(r.nextIndex||0)+'/'+(r.total||0)+' reloaded='+(r.reloaded||0)+' failed='+(r.failed||0));}catch{console.log('parse_error');}})")

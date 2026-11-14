@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Internal working notes for the coding agent. Start with [README.md](README.md) and [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md).
+
 Guidance for Claude Code working in this repo.
 
 ---
